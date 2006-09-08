@@ -1,0 +1,156 @@
++-------------------------------------------------------------+
+| MySQL Connector/ODBC                                        |
+| Install                                                     |
++-------------------------------------------------------------+
+
+INTRODUCTION
+---------------------------------------------------------------
+
+In this document we explain how to install MySQL Connector/ODBC.
+This document does not describe platform specific details - see
+INSTALL.<platform> for details on your specific platform.
+
+REQUIREMENTS
+---------------------------------------------------------------
+
+Platforms
+
+        Binary Distributions
+
+                * MS Windows 2000 or newer 
+                * Solaris 8 or newer
+                * OSX 10.3 or newer
+                * Linux (SuSE 10 or compatible)
+                * HPUX
+        
+        Source Distributions
+                
+                Connector/ODBC is designed to be portable and can be 
+                built for a wide variety of platforms without any 
+                changes or, in some cases, with minor changes.
+
+ODBC Systems
+
+        Strictly speaking, the driver can be used without any ODBC system
+        but in practice this is seldom done. Depending upon your 
+        system - one of the following is needed and is usually 
+        available with your operating system (and is often installed
+        by default).
+
+                * unixODBC
+                * Apple iODBC
+                * iODBC
+                * Microsoft ODBC
+
+DISTRIBUTIONS
+---------------------------------------------------------------
+
+You will need either a source or binary distribution which is 
+compatible with your platform (machine and operating system). 
+Various types of distributions are available. Some distribution
+types are not supported on some platforms. See downloads at
+www.mysql.com.
+
+Binary With Installer
+
+        This is the recommended distribution type. 
+        
+        Some platforms have package systems which manage the 
+        install and uninstall of software packages.
+        
+        MS Windows      - msi or setup.exe
+        Solaris         - pkg
+        OSX             - pkg
+        Linux           - rpm
+
+        See INSTALL.<platform> for details on how to install
+        and uninstall a package and any special considerations
+        for doing so.
+
+Binary Without Installer
+
+        Some platforms do not have a commonly accepted package
+        system or for some other reason we have elected not to
+        support it. In this case we provide a binary without
+        any installer. This may also be useful for those 
+        wishing more control over the install process.
+
+        This is either provided as;
+
+        MS Windows      - zip
+        Linux           - source rpm, tar-ball
+        others          - tar-ball
+
+Source With Installer
+
+        We provide a source distribution with installer on one
+        platform, linux, as this is common practice on rpm based
+        linux platforms.
+
+Source Without Installer
+
+        We provide source distributions which can be built on
+        a variety of platforms. Source distributions are 
+        derived from the source repository but is cleaned up
+        to make using it easier. This type of distributions is
+        as;
+
+        MS Windows      - zip
+        others          - tar-ball
+
+Source Repository
+
+        The source repository has been bitkeeper (bk) in the past
+        and this had read-only public access. The new source
+        code repository is subversion (svn) and is, currently, 
+        just for MySQL internal use.
+
+
+INSTALLING
+---------------------------------------------------------------
+
+Connector/ODBC is installed by doing the following steps;
+
+1. copy the driver to the system
+2. register the driver with systems ODBC (possibly with myodbc3i)
+
+Binary With Installer
+
+        Both install steps are done for you when you use a binary 
+        distribution which includes an installer. See 
+        INSTALL.<platform> for details.
+
+Binary Without Installer
+
+        In this case one must first extract the files and then 
+        manually copy the files to a desired location and then
+        manually register the driver with the ODBC system. 
+
+        In some cases there may be install/uninstall scripts to 
+        aid in this process. See INSTALL.<platform> for details.
+
+Source
+
+        In this case one must first build the driver and programs
+        and then install them. The install is the same as
+        'Binary Without Installer' except there is no need to 
+        extract files as they will be in place after a build.
+
+RESOURCES
+---------------------------------------------------------------
+
+MySQL, Connector/ODBC 3.51 is brought to you by the MySQL 
+team at MySQL AB, and MySQL is the trademark of MySQL AB.
+
+For more information about MySQL, see
+http://www.mysql.com
+
+For more information about MySQL ODBC 3.51 Driver, including
+installation instructions, please visit;
+http://www.mysql.com/products/myodbc/index.html
+
+
++-------------------------------------------------------------+
+| Peter Harvey <pharvey@mysql.com                             |
++-------------------------------------------------------------+
+
