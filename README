@@ -1,0 +1,179 @@
++-------------------------------------------------------------+
+| Connector/ODBC                                              |
+| README                                                      |
++-------------------------------------------------------------+
+
+INTRODUCTION
+---------------------------------------------------------------
+
+This is the source or binary distribution of ODBC for 
+MySQL. This software is distributed with restrictions - please
+see the LICENSE or COPYING file for details. 
+
+Open Database Connectivity (ODBC) is a widely accepted standard
+for reading/writing data. ODBC is designed in a similar manner
+to the MS Windows printing system in that it has a Driver Manager
+and Drivers. Connector/ODBC is a driver for the ODBC system which
+allows applications to communicate with the MySQL server using
+the ODBC standard. ODBC implementations exist on all popular
+platforms and Connector/ODBC is also available on those 
+platforms. 
+
+MySQL, the most popular Open Source SQL database, is 
+provided by MySQL AB. MySQL AB is a commercial company 
+that builds its business providing services around the 
+MySQL database.
+
+MySQL provides the support for ODBC by means of Connector/ODBC 
+driver and programs. Connector/ODBC is the ODBC driver 
+for MySQL which is ODBC 3.5x compliant and MyODBC is 
+2.5x compliant.
+
+If you want to ensure the development of this product, you 
+should register for MySQL support and tell that you are 
+using Connector/ODBC 3.51 in the comment field!
+
+To get all functionality from the ODBC 3.51 driver (like 
+transaction support) you should use it against MySQL 
+3.23.36 or above.
+
+LICENSE
+---------------------------------------------------------------
+
+Please see LICENSE or COPYING for information about licensing
+and use restrictions of this software.
+ 
+BUILDING SOURCE
+---------------------------------------------------------------
+
+Please see the BUILD file for details on building the source
+code. This is included with the source distribution.
+
+INSTALLING
+---------------------------------------------------------------
+
+Please see the INSTALL file for details on installing.
+
+BINARY FILES
+---------------------------------------------------------------
+
+The following, key, files are provided by Connector/ODBC (the MS 
+Windows names are included for reference but the file names for 
+other platforms would be similar).
+
+Driver (myodbc3.dll)
+
+        The most important part of Connector/ODBC is the driver. The
+        driver is a single file called myodbc3.dll on windows. 
+        Application developers can link directly to the driver but 
+        more often use the driver indirectly, via a Driver Manager
+        such as the one provided by Microsoft or unixODBC.
+
+        Many options can be provided to the driver to adjust its
+        behaviour. 
+
+Setup Library (myodbc3S.dll)
+
+        The setup library provides a graphical user interface needed
+        during certian activities provided by the driver. For example;
+        it provides the GUI when you use the ODBC Administrator to
+        create/edit a Data Source Name (DSN).
+
+Installer (myodbc3i.exe)
+
+        This command-line utility program can be used to manage ODBC
+        system information. For example it can be used to register
+        or deregister a driver. It can also manage data source names.
+        This was created to test the ODBC system information abstraction
+        and portability layer within Connector/ODBC but is also useful
+        for installing and uninstalling Conector/ODBC.
+
+        Invoke myodbc3i, in a command shell and without options, to 
+        get help on its use.
+
+Monitor (myodbc3m.exe)
+
+        This command-line utility can be used to; send statements to the
+        MySQL server and to view the results. It can provide output in 
+        several different formats - making it useful as a batch processing
+        tool but it was developed to test a connection and for problem
+        solving.
+                
+        Invoke myodbc3m, in a command shell and without options, to 
+        get help on its use.
+
+Library Loading Tester (dltest.exe)
+
+        This command-line utility is useful fo debugging problems related
+        to loading a library and resolving symbols in it.
+
+Data Source Name Editor (myodbc3c.exe)
+
+        This is a GUI application designed to be invoked from the 
+        command-line. It allows a GUI to be invoked to add/edit a DSN. It
+        is not useful on all platforms but on most platforms it can be a
+        great aid during an install process.
+
+ODBC Browser (MYODBCBrw.exe)
+
+        This is a GUI application which extends the concept of the MS
+        Windows ODBC Administrator. In general it provides the ability to
+        browse ODBC system information - right down to the data source 
+        catalog (databases, tables, columns etc etc). It provides the 
+        following additional functionality;
+
+        * register/deregister a driver
+        * create/edit/delete a Data Source Name (User/System/File)
+        * connect/disconnect to a data source
+        * execute SQL and view results
+        * build query filters with no SQL and view results
+        * browse driver features 
+        * see data types supported by driver
+        
+
+Connector/ODBC SDK
+---------------------------------------------------------------
+
+Connector/ODBC provides an SDK for developers in the form of several
+reusable libraries. These libraries can be used to save development
+time/effort and to increase stability of resulting software.
+
+myodbc3u
+        This library provides the ODBC system information abstraction
+        and portability used by Connector/ODBC.
+
+MYODBCCls
+
+        This is a portable, C++ class library, which provides a very thin 
+        C++ wrapper to the ODBC API.
+
+MYQTODBCCls
+
+        This is a portable, C++ class library, which utilizes Qt to increase
+        the functionality of MYODBCCls.
+
+MYODBCBrwLib
+
+        This includes GUI widgets which extend functionality found in Qt for
+        ODBC developers. This uses MYODBCCls, MYQTODBCCls, and is used by 
+        the MYODBCBrw application.
+
+
+RESOURCES
+---------------------------------------------------------------
+
+MySQL, MyODBC, MyODBC 3.51 is brought to you by the MySQL 
+team at MySQL AB, and MySQL is the trademark of MySQL AB.
+
+For more information about MySQL, see
+http://www.mysql.com
+
+For more information about MySQL ODBC 3.51 Driver, including
+installation instructions, please visit;
+http://www.mysql.com/products/myodbc/index.html
+
+
++-------------------------------------------------------------+
+| Peter Harvey <pharvey@mysql.com                             |
++-------------------------------------------------------------+
+
