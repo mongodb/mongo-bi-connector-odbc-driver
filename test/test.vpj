@@ -1,0 +1,118 @@
+<!DOCTYPE Project SYSTEM "http://www.slickedit.com/dtd/vse/10.0/vpj.dtd">
+<Project
+	Version="10.0"
+	VendorName="SlickEdit"
+	WorkingDir=".">
+	<Config
+		Name="Release"
+		OutputFile=""
+		CompilerConfigName="Latest Version">
+		<Menu>
+			<Target
+				Name="Compile"
+				MenuCaption="&amp;Compile"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveCurrent"
+				RunFromDir="%rw">
+				<Exec CmdLine=""/>
+			</Target>
+			<Target
+				Name="Build"
+				MenuCaption="&amp;Build"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveWorkspaceFiles"
+				RunFromDir="%rw">
+				<Exec CmdLine="make"/>
+			</Target>
+			<Target
+				Name="Rebuild"
+				MenuCaption="&amp;Rebuild"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveWorkspaceFiles"
+				RunFromDir="%rw">
+				<Exec/>
+			</Target>
+			<Target
+				Name="Debug"
+				MenuCaption="&amp;Debug"
+				SaveOption="SaveNone"
+				RunFromDir="%rw">
+				<Exec/>
+			</Target>
+			<Target
+				Name="Execute"
+				MenuCaption="E&amp;xecute"
+				SaveOption="SaveNone"
+				RunFromDir="%rw">
+				<Exec CmdLine='"test.exe"'/>
+			</Target>
+		</Menu>
+	</Config>
+	<Files>
+		<Folder
+			Name="Source Files"
+			Filters="*.c;*.C;*.cc;*.cpp;*.cp;*.cxx;*.prg;*.pas;*.dpr;*.asm;*.s;*.bas;*.java;*.cs;*.sc;*.e;*.cob;*.html;*.rc;*.tcl;*.py;*.pl">
+			<F N="basics/my_basics.c"/>
+			<F N="blob/my_blob.c"/>
+			<F N="bulk/my_bulk.c"/>
+			<F N="catalog/my_catalog.c"/>
+			<F N="col_length/my_col_length.c"/>
+			<F N="connect/my_connect.c"/>
+			<F N="curext/my_curext.c"/>
+			<F N="cursor/my_cursor.c"/>
+			<F N="dyn_cursor/my_dyn_cursor.c"/>
+			<F N="error/my_error.c"/>
+			<F N="keys/my_keys.c"/>
+			<F N="param/my_param.c"/>
+			<F N="position/my_position.c"/>
+			<F N="relative/my_relative.c"/>
+			<F N="result/my_result.c"/>
+			<F N="scroll/my_scroll.c"/>
+			<F N="tran/my_tran.c"/>
+			<F N="tran_ext/my_tran_ext.c"/>
+			<F N="timestamp/my_ts.c"/>
+			<F N="unixodbc/my_unixodbc.c"/>
+			<F N="use_result/my_use_result.c"/>
+			<F N="test32/mytest32.c"/>
+		</Folder>
+		<Folder
+			Name="Header Files"
+			Filters="*.h;*.H;*.hh;*.hpp;*.hxx;*.inc;*.sh;*.cpy;*.if">
+			<F N="include/mytest3.h"/>
+		</Folder>
+		<Folder
+			Name="Resource Files"
+			Filters="*.ico;*.cur;*.dlg"/>
+		<Folder
+			Name="Bitmaps"
+			Filters="*.bmp"/>
+		<Folder
+			Name="Other Files"
+			Filters="">
+			<F N="basics/basics.pro"/>
+			<F N="blob/blob.pro"/>
+			<F N="bulk/bulk.pro"/>
+			<F N="catalog/catalog.pro"/>
+			<F N="col_length/col_length.pro"/>
+			<F N="connect/connect.pro"/>
+			<F N="curext/curext.pro"/>
+			<F N="cursor/cursor.pro"/>
+			<F N="dyn_cursor/dyn_cursor.pro"/>
+			<F N="error/error.pro"/>
+			<F N="keys/keys.pro"/>
+			<F N="param/param.pro"/>
+			<F N="position/position.pro"/>
+			<F N="README"/>
+			<F N="relative/relative.pro"/>
+			<F N="result/result.pro"/>
+			<F N="scroll/scroll.pro"/>
+			<F N="test.pro"/>
+			<F N="test32/test32.pro"/>
+			<F N="timestamp/timestamp.pro"/>
+			<F N="tran/tran.pro"/>
+			<F N="tran_ext/tran_ext.pro"/>
+			<F N="unixodbc/unixodbc.pro"/>
+			<F N="use_result/use_result.pro"/>
+		</Folder>
+	</Files>
+</Project>

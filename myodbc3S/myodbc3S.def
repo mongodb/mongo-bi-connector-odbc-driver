@@ -1,0 +1,11 @@
+LIBRARY MYODBC3S.DLL
+; NOTE: These are done in rc file.
+;VERSION 03.51.13
+;DESCRIPTION "MySQL ODBC 3.51 Driver, (C) Copyright MySQL AB 1995-2006"
+EXPORTS
+ConfigDSN
+MYODBCSetupDriverConnect
+;
+
+
+

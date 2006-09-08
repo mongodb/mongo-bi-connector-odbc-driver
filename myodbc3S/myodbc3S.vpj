@@ -1,0 +1,117 @@
+<!DOCTYPE Project SYSTEM "http://www.slickedit.com/dtd/vse/10.0/vpj.dtd">
+<Project
+	Version="10.0"
+	VendorName="SlickEdit"
+	WorkingDir=".">
+	<Config
+		Name="Release"
+		OutputFile=""
+		CompilerConfigName="Latest Version">
+		<Menu>
+			<Target
+				Name="Compile"
+				MenuCaption="&amp;Compile"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveCurrent"
+				RunFromDir="%rw">
+				<Exec/>
+			</Target>
+			<Target
+				Name="Build"
+				MenuCaption="&amp;Build"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveWorkspaceFiles"
+				RunFromDir="%rw">
+				<Exec CmdLine="make"/>
+			</Target>
+			<Target
+				Name="Rebuild"
+				MenuCaption="&amp;Rebuild"
+				CaptureOutputWith="ProcessBuffer"
+				SaveOption="SaveWorkspaceFiles"
+				RunFromDir="%rw">
+				<Exec/>
+			</Target>
+			<Target
+				Name="Debug"
+				MenuCaption="&amp;Debug"
+				SaveOption="SaveNone"
+				RunFromDir="%rw">
+				<Exec/>
+			</Target>
+			<Target
+				Name="Execute"
+				MenuCaption="E&amp;xecute"
+				SaveOption="SaveNone"
+				RunFromDir="%rw">
+				<Exec CmdLine='"setup.exe"'/>
+			</Target>
+		</Menu>
+	</Config>
+	<Files>
+		<Folder
+			Name="Source Files"
+			Filters="*.c;*.C;*.cc;*.cpp;*.cp;*.cxx;*.prg;*.pas;*.dpr;*.asm;*.s;*.bas;*.java;*.cs;*.sc;*.e;*.cob;*.html;*.rc;*.tcl;*.py;*.pl">
+			<F N="ConfigDriver.c"/>
+			<F N="ConfigDSN.c"/>
+			<F N="ConfigTranslator.c"/>
+			<F N="myodbc3S.rc"/>
+			<F N="MYODBCSetupAssistText.cpp"/>
+			<F N="MYODBCSetupCheckBox.cpp"/>
+			<F N="MYODBCSetupComboBox.cpp"/>
+			<F N="MYODBCSetupComboBoxDatabases.cpp"/>
+			<F N="MYODBCSetupConfigDSNAdd.c"/>
+			<F N="MYODBCSetupConfigDSNEdit.c"/>
+			<F N="MYODBCSetupConfigDSNRemove.c"/>
+			<F N="MYODBCSetupDataSourceConfig.cpp"/>
+			<F N="MYODBCSetupDataSourceDialog.cpp"/>
+			<F N="MYODBCSetupDataSourceTab1.cpp"/>
+			<F N="MYODBCSetupDataSourceTab2.cpp"/>
+			<F N="MYODBCSetupDataSourceTab3.cpp"/>
+			<F N="MYODBCSetupDataSourceTab3a.cpp"/>
+			<F N="MYODBCSetupDataSourceTab3b.cpp"/>
+			<F N="MYODBCSetupDataSourceTab3c.cpp"/>
+			<F N="MYODBCSetupDataSourceTab3d.cpp"/>
+			<F N="MYODBCSetupDriverConnect.c"/>
+			<F N="MYODBCSetupDriverConnectPrompt.cpp"/>
+			<F N="MYODBCSetupHandleInstallerError.c"/>
+			<F N="MYODBCSetupLineEdit.cpp"/>
+			<F N="MYODBCSetupWriteConnectStr.c"/>
+		</Folder>
+		<Folder
+			Name="Header Files"
+			Filters="*.h;*.H;*.hh;*.hpp;*.hxx;*.inc;*.sh;*.cpy;*.if">
+			<F N="MYODBCSetup.h"/>
+			<F N="MYODBCSetupAssistText.h"/>
+			<F N="MYODBCSetupCheckBox.h"/>
+			<F N="MYODBCSetupComboBox.h"/>
+			<F N="MYODBCSetupComboBoxDatabases.h"/>
+			<F N="MYODBCSetupDataSourceDialog.h"/>
+			<F N="MYODBCSetupDataSourceTab1.h"/>
+			<F N="MYODBCSetupDataSourceTab2.h"/>
+			<F N="MYODBCSetupDataSourceTab3.h"/>
+			<F N="MYODBCSetupDataSourceTab3a.h"/>
+			<F N="MYODBCSetupDataSourceTab3b.h"/>
+			<F N="MYODBCSetupDataSourceTab3c.h"/>
+			<F N="MYODBCSetupDataSourceTab3d.h"/>
+			<F N="MYODBCSetupLineEdit.h"/>
+		</Folder>
+		<Folder
+			Name="Resource Files"
+			Filters="*.ico;*.cur;*.dlg"/>
+		<Folder
+			Name="Bitmaps"
+			Filters="*.bmp"/>
+		<Folder
+			Name="Other Files"
+			Filters="">
+			<F N="Makefile.am"/>
+			<F N="myodbc3S.def"/>
+			<F N="myodbc3S.export"/>
+			<F N="myodbc3S.pro"/>
+			<F N="MySQL-16.xpm"/>
+			<F N="SideImage.xpm"/>
+			<F N="TopImage.xpm"/>
+		</Folder>
+	</Files>
+</Project>

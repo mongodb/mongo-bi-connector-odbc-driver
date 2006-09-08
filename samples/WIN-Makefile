@@ -1,0 +1,96 @@
+##########################################################################
+#                     MAKEFILE FOR MYODBC 3.51 SAMPLES                   #
+#                                 WINDOWS                                #
+#                         (C) MySQL AB 1997-2002                         #
+##########################################################################
+
+!MESSAGE *****************************************************************
+!MESSAGE *           MySQL ODBC 3.51 Driver, WINDOWS SAMPLES             *          
+!MESSAGE *              (C) Copyright MySQL AB 1997-2002                 *
+!MESSAGE *                                                               *
+!MESSAGE *    AUTHORS: Monty (monty@mysql.com), Venu (venu@mysql.com)    *
+!MESSAGE *****************************************************************
+!MESSAGE *                                                               *
+!MESSAGE *****************************************************************
+!MESSAGE * This program is free software; you can redistribute it and/or *
+!MESSAGE * modify it under the terms of the GNU General Public License   *
+!MESSAGE * as published by the Free Software Foundation; either version  *
+!MESSAGE * 2 of the License, or (at your option) any later version.      *
+!MESSAGE *****************************************************************
+!MESSAGE *                                                               *
+
+#
+# SPECIFY THE DSN, UID and PWD COMMAND LINE OPTIONS FOR RUNALL NET
+#
+
+MYDSN      = myodbc3-test
+MYUID      = root
+MYPWD      = 
+
+#	
+# COMPILER SPECIFICATION
+# 
+
+CC         = cl
+LINK       = link
+CFLAGS     = -I -I. /G5 -DWINDOWS -DWIN32 -o3 /nologo
+OBJEXT     = .obj
+EXEEXT     = .exe
+
+#
+# BASED ON THE OS, PICK THE SYSTEM DIRECTORY
+#
+
+!IF "$(OS)" == "Windows_NT"
+MYODBC_LIB_PATH  = $(WINDIR)\system32
+!ELSE
+MYODBC_LIB_PATH  = $(WINDIR)\system
+!ENDIF
+
+LFLAGS     = $(MYODBC_LIB_PATH)\myodbc3.lib
+
+#	
+# BUILDALL SPECIFICATION, BUILD AND RUN ALL SAMPLES
+# 
+
+all    : build execute
+execute: run
+
+#	
+# COMPILATION, BUILD SPECIFICATION
+# 
+
+.c$(OBJEXT):
+	$(CC) $(CFLAGS) $*.c $(LFLAGS) -o$*$(EXEEXT)
+	
+#	
+# SPECIFY THE LIST OF SAMPLES TO BE COMPILED
+# 
+	
+build:my_connect$(OBJEXT)\
+      my_basics$(OBJEXT)\
+      my_param$(OBJEXT)\
+      my_result$(OBJEXT)\
+      my_tran$(OBJEXT)\
+      my_cursor$(OBJEXT)
+	
+#	
+# RUN ALL NET SPECIFICATION
+# PASS DSN UID PWD as the command line arguments to each sample
+#
+
+run: 
+     my_connect$(EXEEXT) $(MYDSN) $(MYUID) $(MYPWD)
+     my_basics$(EXEEXT) $(MYDSN) $(MYUID) $(MYPWD)
+     my_param$(EXEEXT) $(MYDSN) $(MYUID) $(MYPWD)
+     my_result$(EXEEXT) $(MYDSN) $(MYUID) $(MYPWD)
+     my_cursor$(EXEEXT) $(MYDSN) $(MYUID) $(MYPWD)
+     my_tran$(EXEEXT) $(MYDSN) $(MYUID) $(MYPWD)
+     
+#	
+# CLEAN SPECIFICATION
+#            
+
+clean: 
+     -@erase my_*$(OBJEXT)
+     -@erase my_*$(EXEEXT)

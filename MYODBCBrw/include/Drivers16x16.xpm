@@ -1,0 +1,30 @@
+/* XPM */
+static const char * xpmDrivers16x16[] = {
+/* width height num_colors chars_per_pixel */
+"    16    16        6            1",
+/* colors */
+". c #000000",
+"# c #c0c0c0",
+"a c #ffffff",
+"b c #a0a0a4",
+"c c #c0c0c0",
+"d c None",
+/* pixels */
+"dddddd....dddddd",
+"ddd....##c...ddd",
+"ddd.aaa.#c.cc.dd",
+"d....###.c.ca.dd",
+"d.aaa.ccccacb.dd",
+"d.###ccccccaca.d",
+"......cccacabb.d",
+".cc#cccc..acac.d",
+".cc#cccc..acaa.d",
+"......cccacabb.d",
+"d.####cacacaaa.d",
+"d.###.ccacacb.dd",
+"d....ccc.c.aa.dd",
+"ddd.###.ca.aa.dd",
+"ddd....cca...ddd",
+"dddddd....dddddd"
+};
+
