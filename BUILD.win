@@ -1,0 +1,97 @@
++-------------------------------------------------------------+
+| MySQL Connector/ODBC                                        |
+| Build on MS Windows                                         |
++-------------------------------------------------------------+
+
+INTRODUCTION
+---------------------------------------------------------------
+
+In this document we explain how to build MySQL Connector/ODBC on
+Windows platforms. We will be as brief as possible.
+
+WHAT YOU NEED
+---------------------------------------------------------------
+
+Windows
+
+        ODBC has been a standard part of Windows since 3.1 but we do
+        not build for very old versions of Windows. Consider building 
+        on and for Windows XP or newer. Windows 2000 should be fine also.
+
+Compiler Tools
+
+        We regularly build using either MS Visual C/C++ v6 or MS
+        Visual C/C++ v7 (.NET). Other compilers may work as well.
+
+Source Code
+
+        The source code is the main thing. You can get it from the 
+        source repository if you want the 'bleeding edge' code but most
+        people will simply download the zip of the source.
+        
+        NOTE: The source was kept in a public bk repository but is now
+              in a svn repository.
+
+Qt Class Library
+
+        The old GUI was based upon CTL3D and was Windows specific. The 
+        old GUI has been phased out - in its place you will find 
+        a Qt based GUI which works on all platforms.
+        
+        You must use a recent (latest) version of Qt v3 - not Qt v4. For
+        example; Qt v3.3.5. We have done some work to make this work with 
+        Qt v4 but it is incomplete.
+        
+        It is possible to build the driver only - no GUI bits - but this
+        build process is currently geared to building everything.
+        
+        see;
+        	http://www.trolltech.com
+
+MySQL
+
+        We usually build with the latest stable release of MySQL - 
+        using a static client lib and other development files.   
+
+
+BUILD
+---------------------------------------------------------------
+
+Build Connector/ODBC using the Qt qmake command-line tool by doing 
+the following from the source root directory (in a command prompt
+window);
+
+1. review the *pro and *pri files in the root dir
+2. execute Build.bat from the source root dir
+
+Upon completion; you will find the executables in the bin sub-dir 
+and the libraries in the lib sub-dir.
+
+NOTE: At some point in the future we may create a configure.bat which 
+      will automagically create qmake pri files.
+ 
+NOTE: You will need the env vars for your tool-chain to be set
+      before you try to build. Microsoft provides a batch file
+      for Visual Studio folks.
+
+INSTALL
+---------------------------------------------------------------
+
+Execute the Install.bat script to copy the files to your system
+directory and to register the driver.
+
+Those wishing to install over an existing installation
+should consider executing the Uninstall.bat script first. This
+will avoid incrementing the internal usage counter beyond what
+is needed.
+
+NOTE: The Uninstall script does not, currently, honour the 
+      usage count - it will remove the files regardless of the
+      value of the usage counter.
+
+See the INSTALL file for more details.
+
++-------------------------------------------------------------+
+| Peter Harvey <pharvey@mysql.com                             |
++-------------------------------------------------------------+
+

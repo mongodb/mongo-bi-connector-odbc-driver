@@ -1,0 +1,28 @@
+<!DOCTYPE Workspace SYSTEM "http://www.slickedit.com/dtd/vse/10.0/vpw.dtd">
+<Workspace Version="10.0" VendorName="SlickEdit">
+	<Projects>
+		<Project File="connector-odbc3.vpj" />
+		<Project File="dltest/dltest.vpj" />
+		<Project File="../connector-odbc/trunk/examples/CPP/ADO/exampleADO.vpj" />
+		<Project File="myodbc3/myodbc3.vpj" />
+		<Project File="myodbc3c/myodbc3c.vpj" />
+		<Project File="myodbc3i/myodbc3i.vpj" />
+		<Project File="myodbc3m/myodbc3m.vpj" />
+		<Project File="myodbc3S/myodbc3S.vpj" />
+		<Project File="myodbc3u/myodbc3u.vpj" />
+		<Project File="MYODBCBrw/MYODBCBrw.vpj" />
+		<Project File="MYODBCBrw/MYODBCBrwApp/MYODBCBrwApp.vpj" />
+		<Project File="MYODBCBrw/MYODBCBrwLib/MYODBCBrwLib.vpj" />
+		<Project File="MYODBCCls/MYODBCCls.vpj" />
+		<Project File="MYODBCCls/MYODBCClsApp/MYODBCClsApp.vpj" />
+		<Project File="MYODBCCls/MYODBCClsLib/MYODBCClsLib.vpj" />
+		<Project File="MYODBCDbg/MYODBCDbg.vpj" />
+		<Project File="MYODBCDbg/MYODBCDbgLib/MYODBCDbgLib.vpj" />
+		<Project File="MYQTODBCCls/MYQTODBCCls.vpj" />
+		<Project File="MYQTODBCCls/MYQTODBCClsApp/MYQTODBCClsApp.vpj" />
+		<Project File="MYQTODBCCls/MYQTODBCClsLib/MYQTODBCClsLib.vpj" />
+		<Project File="../mysql-include.vpj" />
+		<Project File="scripts/scripts.vpj" />
+		<Project File="test/test.vpj" />
+	</Projects>
+</Workspace>

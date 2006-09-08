@@ -1,0 +1,565 @@
+		***************************************
+		*       MySQL ODBC 3.51 Driver        *
+		*             CHANGELOG               *
+		***************************************
+
+---------------------------------------------
+25-AUG-2006 (3.51.14): pharvey@mysql.com
+---------------------------------------------
+-- Added support of HENV handlers in SQLEndTran(), updated tran
+   test case
+-- Added auto-reconnect option since default auto-reconnecting
+   was disabled in mysqlclient library.
+
+---------------------------------------------
+22-FEB-2006 (3.51.13): pharvey@mysql.com
+---------------------------------------------
+-- result of SQLGetInfo(SQL_MAX_DRIVER_CONNECTIONS) parameter is 
+   treated as SQLSMALLINT
+-- fixed problem with memory allocation in Windows for BLOB and long
+   queries that need re-allocation of net->buf
+-- updated fix for GlobalAlloc-ated memory
+-- fixed bug #20547 - SQL_LEN_DATA_AT_EXEC not working
+-- fixed problem with query log
+-- added support for SQLMoreResults
+-- SQL_ATTR_CONNECTION_DEAD now calls mysql_ping everytime
+-- lost connection once again detected (prob. need to make 
+   CHECK_IF_ALIVE a connection/dsn option to make even better)    
+-- added MYODBCBrowser to distro
+-- now handles statements embraced by {} (removes the braces)
+-- fixed the windows-specifie problem with GUI and SQL_DRIVER_PROMPT
+-- fixed issue with numeric/decimal rounding
+-- improved post-build/smoke tests
+-- release made with MySQL 4.1.18
+-- added ODBC Browser 
+-- fixed issue with SQLDriverConnect
+-- fixed memory leak in SQLDriverConnect()
+
+---------------------------------------------
+25-Aug-2005 (3.51.12): pharvey@mysql.com
+---------------------------------------------
+
+-- improved README etc doc
+-- greatly improved windows source distro
+-- reviewed configure script - made it smarter and a bit more reliable
+-- renamed package from 'MyODBC' to 'mysql-connector-odbc'
+-- added -w option to myodbc3i (to disable gui popups)
+-- a redone help screen in myodbc3i
+-- ODBCINI env var now used (if exists) for SQLConnect
+-- fixed problem with positioned update
+-- source: moved source towards Qt4
+-- source: started move of win32 dir into root
+-- source: improvements with qmake-based build
+-- source: code cleanup (mostly having to do with old gui)
+-- source: started to add diagnostics/other gui improvements
+-- fixed issue with SQLForeignKeys() when more than 18 fkeys
+-- fixed issue with SQLForeignKeys() and quotes
+-- fixed issue with SQLGetTypeInfo() and date/time/timestamp
+-- fixed issue with SQLBulkOperations()
+-- fixed issue when SOCKET other than 'MySQL'
+-- fixed issue with SQL_C_BIT
+-- added CLIENT_MULTI_RESULTS flag for SP in mysql v5
+-- added more flexability for debug 
+-- added support for FIELD_TYPE_NEWDECIMAL for mysql v5
+-- moved to WiX based installer
+-- renamed some files to be more WiX friendly
+-- adjusted code/build for OSX 10.4
+-- smarter implied insert (minimized cols used)
+-- source: added VS project files to source
+-- remove useless warning message from command line tools
+-- tweeks to make connection pooling easier
+-- escape column names
+-- improvements for working with time/timestamp
+-- fixed unbalanced "#if" affecting WIN32 build
+-- fixed incorrect call to int2str() affecting WIN32 build
+-- fixed typo for non-qt build affecting WIN32 build
+-- binaries made using MySQL 4.1.13
+-- binaries made using unixODBC 2.2.11 (where applicable)
+
+---------------------------------------------
+11-Feb-2005 (3.51.11-2): pharvey@mysql.com 
+---------------------------------------------
+
+-- resources for last thread now freed
+-- rolled back a fix for CR (force v3) as it messed up MS 
+   Access (wants v2)
+-- Tweeked binary rpm spec. No longer tries to create a sample
+   DSN upon install.   
+-- Tweeked myodbcinst. Was exiting with error when should have
+   been success.
+      
+---------------------------------------------
+28-Jan-2005 (3.51.11): pharvey@mysql.com 
+---------------------------------------------
+
+-- Corrected SQLDriverConnect now *always* prompting when
+   SQL_DRIVER_PROMPT
+-- Corrected a number of problems with connecting via SQLDriverConnect
+   This helps; MS Access and ADO/VB.
+-- Enhanced SQLGetTypeInfo - mostly for blob types.
+-- Allows alternate keywords for DSN for read - silently converts upon write.
+   
+---------------------------------------------
+15-Dec-2004 : pharvey@mysql.com
+---------------------------------------------
+This is the 'bug fix' release of Connector/ODBC '3.51.10a'. Here is
+the list of changes in the 3.51.10a:
+
+-- SQLDriverConnect heavily reworked to more fully support prompting
+-- Port now saves in new GUI
+-- 6369, 
+-- Improvements for working with Crystal Reports
+
+---------------------------------------------		
+25-Oct-2004 : pharvey@mysql.com
+---------------------------------------------
+This is the 'bug fix' release of Connector/ODBC '3.51.10'. Here is 
+the list of changes in the 3.51.10:
+
+-- Use MyODBC with 4.1 client library
+-- Introduction of a Qt based setup library
+-- Bug fix: #3456
+-- Updated documentation
+
+---------------------------------------------		
+10-Oct-2003 : monty@mysql.com, venu@mysql.com
+---------------------------------------------
+This is the 'bug fix' release of Connector/ODBC '3.51.07'. Here is 
+the list of changes in the 3.51.07:
+
+-- Use MyODBC with 4.0 client library
+-- Fix configure to take options from mysql_config.
+   Now one only have to supply --with-mysql-path instead of
+   --with-mysql-libs and --with-mysql-includes
+   This also fixes linking problems with libraries like ssl
+-- Fix compiler warnings
+-- Compile thread safe library as default
+-- Disable sigpipe if not compiling threadsafe
+-- Test are now run with users 'odbc', password ''
+-- Big code cleanup to make the code (more) conformant to MYSQL coding
+   conventions
+-- Fixed a crash when SQLSetPos is called with SQL_ADD to insert
+   a record with empty value i.e. when pcbValue is SQL_COLUMN_IGNORE
+-- Fixed SQLFetch to return and update SQL_ATTR_ROWS_FETCHED_PTR and
+   SQL_ATTR_ROW_STATUS_PTR statement attribute pointers appropriately
+-- Fixed SQLFetch to take care SQL_ROWSET_SIZE correctly.
+-- Added internal MyODBC test library under 'test' directory
+-- Added bin-tar to Makefile.am to generate the binary distro directly
+-- Added make_win_src_distribution.sh to scripts/ to generate Windows
+   source archieve.
+-- Source code structure change to take care of Windows files and its
+   Makefiles separately into 'win32' directory.
+-- Fix for .NET crash when creating the MFC database project (BR #913)
+-- Added search pattern for all catalog APIs for all input parameters
+   (Catalog, Table and Column names) (back port feature from 3.52).
+-- Added the support of SQLProcedures when talking with MySQL 5.0
+   (back port feature from 3.52).
+-- Fixed SQL_ATTR_CURRENT_CATALOG to take correct length pointer.
+-- Portability fixups while using the platform dependant compilers
+
+---------------------------------------------		
+27-Feb-2003 : monty@mysql.com, venu@mysql.com
+---------------------------------------------
+This is the 'stable' release of Connector/ODBC '3.51.06'.
+
+The development is started in 3.52 tree which mainly 
+aims to support the following features:
+
+  - Binary protocol compatible with MySQL 4.1 to improve
+    the performance.
+  - Missed features from 3.51 (descriptors)
+  - Array parameter handling
+  - Unicode API
+
+Here is the list of changes in the 3.51.06:
+
+-- Fix for the ADO when handling long text field with 0 
+   length data.
+
+-- Fixed a ADO/Visual Basic when using with MySQL server 
+   >= 4.0.8 when there is a syntax error due to the 
+   error message buffer over flow.
+
+-- Fixed a bug when the dynamic cursor is used for cursor 
+   based updates/deletes and when 
+    - there are no key fields present in the table & 
+    - the schema of the table is changed.
+
+-- Fixed to refresh the initialized SQLSTATEs in the 
+   driver when the ODBC version is changed and when the 
+   multiple instances of driver is loaded into to the 
+   memory.
+
+-- Fixed a minor bug when the bulk inserts are performed 
+   from SQLBulkOperations or SQLSetPos with SQL_ADD and 
+   when the wrong pcbValue is passed.
+
+Recommended upgrade to all earlier versions of MyODBC 
+on all platforms.
+ 
+---------------------------------------------		
+19-Dec-2002 : monty@mysql.com, venu@mysql.com
+---------------------------------------------
+This is the gamma release of MyODBC 3.51.05. This 
+should be the final release in the development series 
+before making the stable announcement unless if 
+there is any criticil bugs from this version. 
+
+So, please test this, and let us know the status back 
+to proceed onto stable release.
+
+Here is the list of changes:
+
+-- Fix for the thread-safe library core dumps when the 
+   driver is built with the debug options. 
+
+-- Fix for OpenOffice to return valid list of catalog 
+   names SQLTables along with a valid catalog name.
+
+-- Fixed SQLTablePrivileges and SQLColumnPrivileges to 
+   return each privilege type in a individual rows.
+
+-- Fixed the time connersion format error from SQL_TIME_STRUCT
+
+   (Thanks to Ocke Janssen<ocke.janssen@sun.com> for the 
+    above 3 bugs from OpenOffice team).
+
+-- Fixed SQLSpecialColumns coredump on HP-UX (threaded 
+   library)
+
+-- Fixed SQLGetTypeInfo to return individual rows for 
+   auto_increment status for all numeric types.
+   (Request from Gerry Sweeney <gerry@support-works.com>)
+
+-- Fixed to return an error when the conversion is from 
+   SQL_C_NUMERIC as the driver is not cabale to handle 
+   SQL_NUMERIC_STRUCT conversion due to lack of descriptors 
+   support.
+   (Request from Michael Thomas <mithomas@microsoft.com>
+    from Microsoft ODBC team)
+
+-- Added missed ROWS_FETCH_PTR status to SQLFetch and 
+   SQLExtendedFetch as that of SQLFetchScroll along 
+   with PARAMA_PROCESSED_PTR.
+
+-- Fixed to not to set the default attributes for the 
+   new DSN when the attributes are set through the config 
+   APIs (Windows specific).
+
+-- Added to return the DRIVER name when there is no DSN 
+   is specified (Linux only).
+
+-- Support for the new autoconf tools along with few 
+   new configurations options.
+
+-- Lot of cleanups to configure script to work on all 
+   unix platforms along with gcc 3.x compatibility.
+
+-- Added distribution uitlity scripts under scripts 
+   sub-directory.
+
+    * Binary distribution support for all platforms
+    * Snapshot source distribution
+
+-- Minor fix-ups to work with native compilers.
+
+-- Lot of code cleanup.
+
+Recommended upgrade to earlier versions on all 
+platforms.
+
+---------------------------------------------		
+30-Sep-2002 : monty@mysql.com, venu@mysql.com
+---------------------------------------------
+Release of 3.51.04 with the following bug fixes or 
+improvements:
+
+-- Support for handling large tables without 
+   caching the entire result set. Now one can force 
+   the driver to use non-cache result sets (mysql_use_
+   result instead of mysql_store_result). Note that 
+   this can be used only with forward-only cursors.
+   
+-- Added --enable-thread-safe and --disable-thread-safe
+   options to configure, so that driver links directly 
+   with thread-safe or non thread-safe client libraries 
+   instead of using the explicit symbolic links.
+   
+-- Fixed SQLTables to not to return any data related 
+   to SYSTEM TABLES due to the conflict of database 
+   names. This should allow 'WinSQL' to show the 
+   correct user tables without any duplicates.
+   
+-- Fixed few core dumps from HP-UX and AIX 
+
+-- Cleanups to thread-safe code (debug calls)
+
+-- Added the driver to check for pre-connection 
+   attributes (AUTOCOMMIT, TXN_ISOLATION) values after 
+   the connection instead of returning error when they
+   are set before the connection.
+
+-- Poratbility changes for MySQL 4.0.3 and 4.1.
+  
+-- Fix to SQLForeignKeys when the CREATE TABLE had a 
+   COMMENT syntax.
+   
+-- Two new options 'Force use of forward-only cursors' 
+   and 'Don't cache results' to help large scale 
+   customers.
+   
+-- Fix to rs.update when server side cursor is used. 
+
+-- Changes for error handling w.r.t. MySQL 4.3.
+
+-- Multi-step generated error fixups.
+
+-- Lot of code cleanup
+   
+-- Improvements to driver logging calls (myodbc.log 
+   and myodbc.sql)
+
+-- Few misc portability changes to build the driver 
+   on various UNIX platforms, and
+
+-- Lot of code cleanup to have better performance:   
+
+Recommended upgrade to earlier versions on all 
+platforms.
+
+---------------------------------------------		
+29-May-2002 : monty@mysql.com, venu@mysql.com
+---------------------------------------------
+Release of 3.51.03 with the following bug fixes or 
+improvements:
+
+-- New DSN configuration dialog window.
+
+-- Support of SQLForeignKeys for InnoDB table type
+
+-- Fix for multi-step generated errors (when server side 
+   cursor is used) (Bug from vrincon_dtt@hotmail.com and 
+   AdoAnywhere [mike@adoanywhere.com])
+
+-- Fix for time conversion using SQL_C_TIME when hour has 3 
+   digits (Bug from Michael Thomas [mithomas@microsoft.com])
+
+-- Fix for ADO/DAO empty string issue (Bug from Tom 
+   DeGerlia [tom@denverdata.com])
+   
+-- Fix for BLOB data reading from ADO/DAO (Bug from   
+   Justin Goodwin [justin.andre.goodwin@ntlworld.com])
+  
+-- Support of new Query Log option, which allows the 
+   driver to log all SQL queries that it is processing 
+   to c:/myodbc.sql file (or /tmp/myodbc.sql)
+  
+-- Added code to have one time initialization when the 
+   ODBC version specified is SQL_OV_ODBC2, so that the 
+   subsequent driver calls will not perform any checks 
+   on ODBC version.
+   
+-- Fix to return an error when the float fields are used 
+   in positioned options( Info from Jim Dickenson 
+   [dickenson@cfmc.com])
+
+-- Fix for errors generated during the export of tables with
+   VARCHAR/TEXT from Access/MS DTS to MySQL using MyODBC. Now
+   driver should be capable of handling all types of 
+   conversions.
+
+-- Fix to handle SQL_C_BINARY properly (Info from 
+   Spilka [spilka@adash.cz])
+
+-- Added MY_SQL_PRIMARY_KEY(1212) option to SQLColAttribute 
+   to make rs.resync to work from ADO (Info from 
+   Dan Perik [dan_perik-work@ntm.org.pg])
+
+-- Updated SQLSTATE to return correct truncated data during 
+   the warning cases (Info from akbar ali [akbar_ali@lycos.com])
+
+-- Fixed type casting issues in SQLGetInfo to make Open Office 
+   to work-Memory overwrite (Bug from Ocke Janssen 
+   [Ocke.Janssen@sun.com])
+   
+-- Fix to SQLFetch when it is called after SQLFetchScroll 
+   with SQL_FETCH_FIRST (Bug from Simone Tregnago 
+   [simone@arco3.it]).
+   
+-- Minor fix in mapping SQL_ATTR_CONNECTION_TIMEOUT option to 
+   mysql_options with MYSQL_OPT_CONNECT_TIMEOUT.
+   
+-- Changes made to error handling to eliminate some misc 
+   conditions.
+   
+-- Improvements to driver logging calls.
+
+-- Few misc compatibility changes, and
+
+-- Lot of code cleanup to have better performance.
+	
+Recommended upgrade from earlier versions.	
+
+---------------------------------------------		
+05-Mar-2002 : monty@mysql.com, venu@mysql.com
+---------------------------------------------
+Release of 3.51.02 with the following bug fixes or 
+improvements:
+
+-- Fix to SQLDriverConnect to return  correct output 
+   string. This is the main fix for 'Reserved error 
+   (-7778)' from all Windows ODBC applications. 
+   
+-- Fix to hang from unixODBC when there is a exception. 
+   Modified SQLError to clear the error buffers on the 
+   first call when the ODBC version is SQL_OV_ODBC3, so 
+   that the subsequent calls will return SQL_NO_DATA.
+   
+-- Fix to SQL_UPDATE and SQL_ADD from SQLSetPos. Also 
+   changed to have different way of using the NULL 
+   values from WHERE clause.
+   
+-- Fix to SQLSetPos and SQLBulkOperations, when the 
+   application passes SQL_NTS as pcbValue.
+   
+-- Fix to SQLColumns to return the correct Nullability.
+   
+-- Added the support of SQLTablePrivileges and 
+   SQLColumnPrivileges.   
+   
+-- Fix to SQL_ATTR_CONNECTION_DEAD. This should fix the 
+   issues from SQLExpress for XBase++ and .NET connection 
+   closed issues.
+   
+-- Fix to SQLGetTypeInfo to return correct values for 
+   SQL_DATE/SQL_TYPE_DATE, SQL_TIME/SQL_TYPE_TIME and 
+   SQL_TIMESTAMP/SQL_TYPE_TIMESTAMP.
+   
+-- Fix to tab ordering ordering from DSN configuration 
+   dialog.
+   
+-- Added default values for the new DSN creation.
+
+-- Fix to export of tables from ACCESS 97 or MS DTS(
+   Data Transformation Services) when one of the field 
+   types are TEXT or VARCHAR.
+   
+-- Added few more questions to MyODBC FAQ and also added 
+   simple ODBC.NET samples.
+   
+If anybody is using the older versions of MyODBC 3.51, 
+then recommended to upgrade to this version for all 
+platforms. 
+
+---------------------------------------------		
+30-Jan-2002 : monty@mysql.com, venu@mysql.com
+---------------------------------------------
+Release of 3.51.01 with the support of following 
+APIs and/or features:
+
+-- SQLAllocHandle
+
+-- SQLFreeHandle
+
+-- SQLSetEnvAttr, using this, the driver can be configured
+   its functionality based on the ODBC version
+   
+-- SQLGetEnvAttr
+
+-- SQLSetConnectAttr
+
+-- SQLGetConnectAttr
+
+-- SQLSetStmtAttr
+
+-- SQLGetStmtAttr
+
+-- SQLFetchScroll
+
+-- SQLBulkOperations with SQL_ADD (Bulk Inserts)
+
+-- SQLGetDiagRec
+
+-- SQLGetDiagField
+
+-- SQLCloseCursor
+
+-- SQLEndTran
+
+-- SQLGetInfo, re-written completely
+
+-- SQLGetFunctions, re-written completely
+
+-- Complete changes to error handling. Also driver returns
+   the SQLSTATE values based on the ODBC version.
+   
+-- Enhanced cursor handling
+
+-- Changed SQLGetTypeInfo to return column headers as 
+   per 3.5 spec
+   
+-- Changed all catalog APIs to return column headers 
+   as per 3.5 spec
+   
+-- Support of dynamic cursor type
+
+-- New feature called 'Test Data Source' in the DSN setup
+   dialog, so that the DSN settings can be tested while
+   configuring.
+   
+-- Added 'HELP' button to DSN setup dialog, which links
+   to online MyODBC manual.
+   
+-- Added SOCKET option to SQLConnect API i.e. in odbc.ini
+
+-- Support of deprecated API 'SQLParamOptions'
+   so that one can supply batch parameter processing
+   with 2.x applications
+   
+-- Added server name and version to the statement 
+   error prefix i.e. the error prefix looks something 
+   like [MySQL][ODBC 3.51 Driver][mysqld-3.23.46-max]
+   
+-- Added SOCKET option to SQLConnect API i.e. in odbc.ini
+
+-- Fix to SQL_FETCH_RELATIVE from SQLExtendedFetch or 
+   SQLFetchScroll, to handle the following cases:
+  
+   - BeforeStart AND FetchOffset <= 0
+   - CurrRowsetStart = 1 AND FetchOffset < 0
+   - CurrRowsetStart > 1 AND 
+     CurrRowsetStart + FetchOffset < 1 AND
+     |FetchOffset| > RowsetSize
+   - CurrRowsetStart > 1 AND 
+     CurrRowsetStart + FetchOffset < 1 AND
+     |FetchOffset| <= RowsetSize         
+     
+-- Fix to SQL_FETCH_RELATIVE from SQLExtendedFetch or 
+   SQLFetchScroll, to handle the case when 
+   
+    FetchOffset  < 0 AND
+    |FetchOffset| > LastResultRow AND
+    |FetchOffset| > RowsetSize    
+    
+-- Fix to memory leaks on UNIX when linked with 
+   iodbc or unixODBC.
+   
+-- FILEDSN support
+   
+Apart from the above,
+   
+-- MyODBC 3.51 allows backward compatibility, i.e. all 
+   2.50 applications will work without any problems. 
+
+-- MySQL ODBC 3.51 Programmer's Reference Manual and 
+   frequently Asked Questions(FAQs) are live from
+
+   http://www.mysql.com/products/myodbc/index.html
+     
+
+    
+    
+
+
+
+
