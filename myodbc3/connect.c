@@ -41,7 +41,11 @@
 #include "myodbc3.h"
 
 #ifndef _UNIX_
-    #include <odbcinst.h>
+    #ifdef USE_IODBC
+        #include <iodbcinst.h>
+    #else
+        #include <odbcinst.h>
+    #endif
 #endif
 
 #include "../myodbc3u/MYODBCUtil.h"

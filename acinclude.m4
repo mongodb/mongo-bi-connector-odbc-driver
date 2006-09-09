@@ -113,18 +113,21 @@ then
 
   odbc_headers="$odbc_headers iodbcinst.h"
 	save_LIBS="$LIBS"
-	LIBS="-L$2 $LIBS"
+        save_LDFLAGS="$LDFLAGS"
+	LDFLAGS="-L$2 $LDFLAGS"
 
 	AC_CHECK_LIB(iodbcadm,_iodbcdm_admin_dialbox,
 	[LIBS="$LIBS -liodbcadm"
 	have_iodbcadm=yes],
-	[LIBS="$save_LIBS"])
+        [LIBS="$save_LIBS"
+         LDFLAGS="$save_LDFLAGS"])
 
 	AC_CHECK_LIB(iodbcinst,SQLGetPrivateProfileString,
 	[AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING,1,[Define if SQLGetPrivateProfileString is defined])
 	LIBS="$LIBS -liodbcinst"
 	have_iodbcinst=yes],
-	[LIBS="$save_LIBS"])
+        [LIBS="$save_LIBS"
+         LDFLAGS="$save_LDFLAGS"])
 fi
 ])
 
@@ -168,13 +171,15 @@ then
 
   odbc_headers="$odbc_headers odbcinst.h"
 	save_LIBS="$LIBS"
-	LIBS="-L$2 $LIBS"
+        save_LDFLAGS="$LDFLAGS"
+	LDFLAGS="-L$2 $LDFLAGS"
 
   AC_CHECK_LIB(odbcinst,SQLGetPrivateProfileString,
   [AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING,1,[Define if SQLGetPrivateProfileString is defined])
   LIBS="$LIBS -lodbcinst"
   have_odbcinst=yes],
-  [LIBS="$save_LIBS"])
+  [LIBS="$save_LIBS"
+   LDFLAGS="$save_LDFLAGS"])
 fi   
 ])
 

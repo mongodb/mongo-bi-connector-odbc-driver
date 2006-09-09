@@ -31,7 +31,7 @@
 
 #include <sqlext.h>
 
-#ifdef Q_WS_MACX
+#ifdef USE_IODBC
 #include <iodbcinst.h>
 #else
 #include <odbcinst.h>

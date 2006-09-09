@@ -29,7 +29,11 @@
 ##########################################################################
 
 AUTOMAKE_OPTIONS=foreign
+if SEPARATE_THREAD_SAFE_DRIVER
+lib_LTLIBRARIES=libmyodbc3.la libmyodbc3_r.la 
+else
 lib_LTLIBRARIES=libmyodbc3.la
+endif
 
 ###################################################################
 #                                                                 #
@@ -54,21 +58,30 @@ transact.c \
 utility.c \
 myodbc3.h
 
+libmyodbc3_r_la_SOURCES=$(libmyodbc3_la_SOURCES)
+
 ###################################################################
 #                                                                 #
 # Linker options                                                  #
 #                                                                 #
 ###################################################################
 if ENABLE_BUNDLES
-        libmyodbc3_la_LDFLAGS = \
-        -release @myodbc_version@ \
-        -module 
+libmyodbc3_la_LDFLAGS   = -release @myodbc_version@ -module 
+libmyodbc3_r_la_LDFLAGS = -release @myodbc_version@ -module 
 else
-        libmyodbc3_la_LDFLAGS = -release @myodbc_version@
+libmyodbc3_la_LDFLAGS   = -release @myodbc_version@
+libmyodbc3_r_la_LDFLAGS = -release @myodbc_version@
 endif
 
-libmyodbc3_la_LIBADD=@MYSQL_LIB@ ../myodbc3u/libmyodbc3u.la ../MYODBCDbg/MYODBCDbgLib/libMYODBCDbg.la
-libmyodbc3_la_DEPENDENCIES = ../myodbc3u/libmyodbc3u.la ../MYODBCDbg/MYODBCDbgLib/libMYODBCDbg.la
+LTLIBS_DEPS=\
+	../myodbc3u/libmyodbc3u.la \
+	../MYODBCDbg/MYODBCDbgLib/libMYODBCDbg.la
+
+libmyodbc3_la_LIBADD         = $(LTLIBS_DEPS) @LTDL_LIB@ @MYSQL_LIB@
+libmyodbc3_la_DEPENDENCIES   = $(LTLIBS_DEPS)
+
+libmyodbc3_r_la_LIBADD       = $(LTLIBS_DEPS) @LTDL_LIB@ @MYSQL_THREADSAFE_LIB@
+libmyodbc3_r_la_DEPENDENCIES = $(LTLIBS_DEPS)
 
 LDFLAGS=@EXTRA_LDFLAGS@ 
 

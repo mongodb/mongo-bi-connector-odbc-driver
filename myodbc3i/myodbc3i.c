@@ -52,10 +52,13 @@
     #include <ltdl.h>
 #endif
 
-#include <odbcinst.h>
-
 #include "../myodbc3u/MYODBCUtil.h"
 
+#ifdef USE_IODBC
+#include <iodbcinst.h>
+#else
+#include <odbcinst.h>
+#endif
 
 /*! Our syntax. This is likely to expand over time. */
 char *szSyntax =

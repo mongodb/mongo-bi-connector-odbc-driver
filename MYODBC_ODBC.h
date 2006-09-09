@@ -7,7 +7,11 @@
     #include <ltdl.h>
     #include <sql.h>
     #include <sqlext.h>
-    #include <odbcinst.h>
+    #ifdef USE_IODBC
+        #include <iodbcinst.h>
+    #else
+        #include <odbcinst.h>
+    #endif
 
     #ifndef SYSTEM_ODBC_INI
         #define BOTH_ODBC_INI ODBC_BOTH_DSN
