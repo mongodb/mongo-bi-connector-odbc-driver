@@ -111,7 +111,7 @@ SQLRETURN SQL_API my_SQLBindParameter(SQLHSTMT hstmt,SQLUSMALLINT ipar,
 				      SQLLEN cbValueMax,
 				      SQLLEN *pcbValue);
 SQLRETURN SQL_API my_SQLExtendedFetch(SQLHSTMT hstmt, SQLUSMALLINT fFetchType,
-				      SQLLEN irow, SQLULEN *pcrow,
+				      SQLROWOFFSET irow, SQLROWSETSIZE *pcrow,
 				      SQLUSMALLINT FAR *rgfRowStatus, bool upd_status);
 SQLRETURN copy_stmt_error(STMT FAR *src, STMT FAR *dst);
 int unireg_to_c_datatype(MYSQL_FIELD *field);

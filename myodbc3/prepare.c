@@ -317,8 +317,8 @@ SQLRETURN SQL_API SQLDescribeParam( SQLHSTMT        hstmt,
 */
 
 SQLRETURN SQL_API SQLParamOptions( SQLHSTMT     hstmt, 
-                                   SQLULEN      crow,
-                                   SQLULEN *    pirow __attribute__((unused)) )
+                                   SQLUINTEGER  crow,
+                                   SQLUINTEGER *pirow __attribute__((unused)) )
 {
     MYODBCDbgEnter("SQLParamOptions");
 

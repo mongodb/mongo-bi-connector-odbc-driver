@@ -61,7 +61,7 @@ static void t_basic(SQLHDBC hdbc,SQLHSTMT hstmt)
   int nOutData, nRowCount=1;
   char szOutData[255];
 
-  myheader("t_basic");
+  printMessageHeader();
 
     /* CREATE TABLE 'myodbc' */
     SQLExecDirect(hstmt,"drop table tmyodbc ",SQL_NTS);
@@ -147,7 +147,7 @@ static void tmysql_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLUINTEGER pcrow;
   SQLUSMALLINT rgfRowStatus;
 
-  myheader("tmysql_setpos_del");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_setpos1");
     
@@ -242,7 +242,7 @@ static void tmysql_setpos_del1(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
-  myheader("tmysql_setpos_del1");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_setpos");
     rc = tmysql_exec(hstmt,"create table tmysql_setpos(col1 int, col2 varchar(30))");
@@ -314,7 +314,7 @@ static void t_setpos_del_all(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLINTEGER nData[4], nlen;
   SQLCHAR szData[4][10];
 
-  myheader("t_setpos_del_all");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_sp_del_all");
     rc = tmysql_exec(hstmt,"create table t_sp_del_all(col1 int not null primary key,\
@@ -396,7 +396,7 @@ static void tmysql_setpos_upd(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
-  myheader("tmysql_setpos_upd");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_setpos");
     rc = tmysql_exec(hstmt,"create table tmysql_setpos(col1 int, col2 varchar(30))");
@@ -501,7 +501,7 @@ static void t_setpos_upd_decimal(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLRETURN  rc;
   SQLINTEGER rec;
 
-  myheader("t_setpos_upd_decimal");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_setpos_upd_decimal");
     rc = tmysql_exec(hstmt,"create table t_setpos_upd_decimal(record decimal(3,0),\
@@ -558,7 +558,7 @@ static void tmysql_specialcols(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
 
-  myheader("tmysql_specialcols");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_specialcols");
     rc = tmysql_exec(hstmt,"create table tmysql_specialcols(col1 int primary key, col2 varchar(30), col3 int)");
@@ -614,7 +614,7 @@ static void tmysql_bindcol(SQLHDBC hdbc, SQLHSTMT hstmt)
   long     nlen, nidata = 200, length;
   char    szodata[20],szidata[20]="MySQL";
 
-  myheader("tmysql_bindcol");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_bindcol");
 
@@ -686,7 +686,7 @@ static void tmysql_pos_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLUINTEGER pcrow;
   SQLUSMALLINT rgfRowStatus;
 
-  myheader("tmysql_pos_delete");
+  printMessageHeader();
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
     mycon(hdbc,rc);    
@@ -757,7 +757,7 @@ static void tmysql_pos_update(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLUINTEGER pcrow;
   SQLUSMALLINT rgfRowStatus;
 
-  myheader("tmysql_pos_update");
+  printMessageHeader();
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
     mycon(hdbc,rc);
@@ -831,7 +831,7 @@ static void tmysql_mtab_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
-  myheader("tmysql_mtab_setpos_del");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_t1");
     tmysql_exec(hstmt,"drop table tmysql_t2");
@@ -895,7 +895,7 @@ static void tmysql_showkeys(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
 
-  myheader("tmysql_showkeys\n");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_spk");
     
@@ -923,7 +923,7 @@ static void tmysql_setpos_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
-  myheader("tmysql_setpos_pkdel");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_setpos1");
     
@@ -1005,7 +1005,7 @@ static void t_alias_setpos_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
-  myheader("t_alias_setpos_pkdel");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_alias_setpos_del");
     
@@ -1080,7 +1080,7 @@ static void t_alias_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLINTEGER nData[4], nlen;
   SQLCHAR szData[4][10];
 
-  myheader("t_alias_setpos_del");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_alias_setpos_del");
     
@@ -1165,7 +1165,7 @@ static void tmysql_setpos_pkdel1(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
-  myheader("tmysql_setpos_pkdel1");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_setpos1");
     
@@ -1241,7 +1241,7 @@ static void tmysql_setpos_pkdel2(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
-  myheader("tmysql_setpos_pkdel2");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_setpos1");
     
@@ -1320,7 +1320,7 @@ static void t_refresh(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
   
-  myheader("t_refresh");
+  printMessageHeader();
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -1369,7 +1369,7 @@ static void tmysql_setpos_pkdel3(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
-  myheader("tmysql_setpos_pkdel3");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_setpos1");
     
@@ -1439,7 +1439,7 @@ static void t_mul_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
-  myheader("t_mul_pkdel");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_mul_pkdel");
     
@@ -1515,7 +1515,7 @@ static void t_mul_pkdel1(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
-  myheader("t_mul_pkdel1");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_mul_pkdel");
     
@@ -1587,7 +1587,7 @@ static void t_max_select(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR szData[255];
   SQLINTEGER i;
   
-  myheader("t_max_select");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_max_select");
     
@@ -1642,7 +1642,7 @@ static void t_tran(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
   
-  myheader("t_tran");
+  printMessageHeader();
 
     if (!server_supports_trans(hdbc))
       return;
@@ -1697,7 +1697,7 @@ static void t_max_con(SQLHSTMT hstmt)
   SQLHENV    env;
   SQLHDBC    dbc[101];
   
-  myheader("t_max_con");
+  printMessageHeader();
 
   /* Get max_connections */
   rc = SQLExecDirect(hstmt, "SHOW VARIABLES like 'max_connections'",SQL_NTS);
@@ -1765,7 +1765,7 @@ static void t_max_con(SQLHSTMT hstmt)
 
   fprintf(stdout,"\n establishing '%d'th connection, it should fail",i);
   rc = SQLConnect(dbc[i], mydsn, SQL_NTS, myuid, SQL_NTS,  mypwd, SQL_NTS);
-  myerror(rc, SQL_HANDLE_DBC, dbc[i]);
+  myerror(rc, SQL_HANDLE_DBC, dbc[i], __FILE__, __LINE__);
   if (rc != SQL_ERROR)
     fprintf(stderr,"\n test failed");
 
@@ -1799,7 +1799,7 @@ static void t_tstotime(SQLHDBC hdbc, SQLHSTMT hstmt)
   ts.second = 45;
   ts.fraction = 05;   
   
-  myheader("t_tstotime");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_tstotime");
     
@@ -1897,7 +1897,7 @@ static void t_tstotime1(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLRETURN rc;
   SQLCHAR ts[40] = "2001-08-02 18:20:45.05", szData[50];
   
-  myheader("t_tstotime1");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_tstotime1");
     
@@ -1977,7 +1977,7 @@ static void t_enumset(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR szEnum[40]="MYSQL_E1";
   SQLCHAR szSet[40]="THREE,ONE,TWO";
   
-  myheader("t_enumset");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_enumset");
     
@@ -2038,7 +2038,7 @@ static void t_bigint(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR id[20]="999";
   SQLINTEGER nlen;
   
-  myheader("t_bingint");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_bingint");
     
@@ -2155,7 +2155,7 @@ static void t_odbc3_envattr()
   SQLHDBC hdbc;
   SQLPOINTER ov_version;
 
-  myheader("t_odbc3_envattr");
+  printMessageHeader();
 
     rc = SQLAllocEnv(&henv);
     myenv(henv,rc);
@@ -2222,7 +2222,7 @@ static void t_odbc3_handle()
   SQLHSTMT hstmt;
   SQLPOINTER ov_version;
 
-  myheader("t_odbc3_handle");
+  printMessageHeader();
 
     rc = SQLAllocHandle(SQL_HANDLE_ENV,SQL_NULL_HANDLE,&henv);
     myenv(henv,rc);
@@ -2273,7 +2273,7 @@ static void t_getcursor(SQLHDBC hdbc)
   SQLCHAR curname[50];
   SQLSMALLINT nlen;
 
-  myheader("t_getcursor");
+  printMessageHeader();
     
     rc = SQLAllocHandle(SQL_HANDLE_STMT,hdbc,&hstmt1);
     mycon(hdbc, rc);
@@ -2336,7 +2336,7 @@ static void t_getcursor1(SQLHDBC hdbc)
   SQLCHAR curname[50];
   SQLSMALLINT nlen,index;;
   
-  myheader("t_getcursor1");
+  printMessageHeader();
     
   for(index=0; index < 100; index++)
   {
@@ -2357,7 +2357,7 @@ static void t_gettypeinfo(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLRETURN rc;
   SQLSMALLINT pccol;
   
-  myheader("t_gettypeinfo");
+  printMessageHeader();
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
@@ -2383,7 +2383,7 @@ static void t_getinfo(SQLHDBC hdbc)
   SQLCHAR   rgbValue[100];
   SQLSMALLINT pcbInfo;
   
-  myheader("t_getinfo");
+  printMessageHeader();
 
     rc = SQLGetInfo(hdbc,SQL_DRIVER_ODBC_VER,rgbValue,100,&pcbInfo);
     mycon(hdbc,rc);
@@ -2395,7 +2395,7 @@ static void t_stmt_attr_status(SQLHDBC hdbc,SQLHSTMT hstmt)
   SQLUSMALLINT rowStatusPtr[3];
   SQLUINTEGER rowsFetchedPtr;
 
-  myheader("t_stmt_attr_status");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_stmtstatus");
     
@@ -2467,7 +2467,7 @@ static void t_max_rows(SQLHDBC hdbc,SQLHSTMT hstmt)
   SQLRETURN rc; 
   SQLINTEGER i;
 
-  myheader("t_max_rows");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_max_rows");
     
@@ -2552,7 +2552,7 @@ static void t_prepare(SQLHDBC hdbc, SQLHSTMT hstmt)
   char      szodata[20],szidata[20]="MySQL";
   short     pccol;
 
-  myheader("t_prepare");  
+  printMessageHeader();  
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
@@ -2614,7 +2614,7 @@ static void t_prepare1(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLRETURN rc;
   long      nidata = 1000;
 
-  myheader("t_prepare1");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_prepare1");
 
@@ -2681,7 +2681,7 @@ static void t_diagrec(SQLHENV henv,SQLHDBC hdbc,SQLHSTMT hstmt)
 {
   SQLRETURN rc;
 
-  myheader("t_diagrec");
+  printMessageHeader();
 
   fprintf(stdout," ** SQL_HANDLE_STMT ** \n");
 		
@@ -2726,7 +2726,7 @@ static void t_diaglist(SQLHDBC hdbc,SQLHSTMT hstmt)
   SQLINTEGER native_err=0;
   SQLSMALLINT msglen=0;
 
-  myheader("t_diaglist");
+  printMessageHeader();
 		
   rc = SQLSetPos(hstmt,100,SQL_DELETE,SQL_LOCK_NO_CHANGE);
   myassert(rc == SQL_ERROR);
@@ -2758,7 +2758,7 @@ static void t_scroll(SQLHDBC hdbc,SQLHSTMT hstmt)
   SQLRETURN rc;
   SQLINTEGER i;
 
-  myheader("t_scroll");
+  printMessageHeader();
 
   tmysql_exec(hstmt,"drop table t_scroll");
 
@@ -2882,7 +2882,7 @@ static void t_acc_crash(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR     name[20], data[30];
   SQL_TIMESTAMP_STRUCT ts;
 
-  myheader("t_acc_crash");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table if exists t_acc_crash");
     rc = tmysql_exec(hstmt,"create table t_acc_crash(id int(11) not null auto_increment,\
@@ -2964,7 +2964,7 @@ static void tmysql_pcbvalue(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLINTEGER  nlen, slen,tlen;
   SQLCHAR     szdata[20],sztdata[100];  
 
-  myheader("tmysql_pcbvalue");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_pcbvalue");
 
@@ -3056,7 +3056,7 @@ static void my_setpos_upd_pk_order(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
-  myheader("my_setpos_upd_pk_order");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table my_setpos_upd_pk_order");
     rc = tmysql_exec(hstmt,"create table my_setpos_upd_pk_order(col1 int not null, col2 varchar(30) NOT NULL, primary key(col2,col1))");
@@ -3138,7 +3138,7 @@ static void my_setpos_upd_pk_order1(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
-  myheader("my_setpos_upd_pk_order1");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table my_setpos_upd_pk_order");
     rc = tmysql_exec(hstmt,"create table my_setpos_upd_pk_order(col1 int not null, col2 varchar(30) NOT NULL, col3 int not null, primary key(col2,col1,col3))");
@@ -3197,7 +3197,7 @@ static void tmysql_pos_update_ex(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLUSMALLINT rgfRowStatus;
   SQLCHAR cursor[30],sql[100],data[]="updated";
 
-  myheader("tmysql_pos_update_ex");
+  printMessageHeader();
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
     mycon(hdbc,rc);
@@ -3275,7 +3275,7 @@ static void tmysql_pos_update_ex1(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLUSMALLINT rgfRowStatus;
   SQLCHAR cursor[30],sql[100],data[]="updated";
 
-  myheader("tmysql_pos_update_ex1");
+  printMessageHeader();
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
     mycon(hdbc,rc);
@@ -3353,7 +3353,7 @@ static void tmysql_pos_update_ex2(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLUSMALLINT rgfRowStatus;
   SQLCHAR cursor[30],sql[100],data[]="updated";
 
-  myheader("tmysql_pos_update_ex2");
+  printMessageHeader();
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
     mycon(hdbc,rc);
@@ -3430,7 +3430,7 @@ static void tmysql_pos_update_ex3(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLUINTEGER pcrow;
   SQLCHAR cursor[30],sql[100];
 
-  myheader("tmysql_pos_update_ex3");
+  printMessageHeader();
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
     mycon(hdbc,rc);
@@ -3482,7 +3482,7 @@ static void t_msdev_bug(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR    catalog[30];
   SQLINTEGER len;
 
-  myheader("t_msdev_bug");
+  printMessageHeader();
 
    rc = SQLGetConnectOption(hdbc,SQL_CURRENT_QUALIFIER,&catalog);
    mycon(hdbc,rc);
@@ -3500,7 +3500,7 @@ static void t_setpos_position(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
-  myheader("t_setpos_position");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_setpos_position");
     rc = tmysql_exec(hstmt,"create table t_setpos_position(col1 int, col2 varchar(30))");
@@ -3609,7 +3609,7 @@ static void t_error(SQLHDBC hdbc,SQLHSTMT hstmt)
   SQLSMALLINT pclen;
   SQLHENV     henvl;
 
-  myheader("t_error");
+  printMessageHeader();
 
     if (!server_is_mysql(hdbc))
       return;
@@ -3691,7 +3691,7 @@ static void t_pos_column_ignore(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR szData[]="updated";
   SQLINTEGER nData,pcbValue, nlen, pcrow;
 
-  myheader("t_pos_column_ignore");
+  printMessageHeader();
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
     mycon(hdbc,rc);
@@ -3829,7 +3829,7 @@ static void t_longlong1(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLRETURN   rc;
   SQLINTEGER  session_id, ctn;
   
-  myheader("t_longlong1");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_longlong");
     rc = tmysql_exec(hstmt,"create table t_longlong (\
@@ -3887,7 +3887,7 @@ static void t_time(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQL_TIME_STRUCT tm;
   SQLCHAR         str[20];
 
-  myheader("t_time");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_time");
     rc = tmysql_exec(hstmt,"create table t_time(tm time, ts timestamp(14))");
@@ -3949,7 +3949,7 @@ static void t_numeric(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLRETURN       rc;
   SQL_NUMERIC_STRUCT num;
 
-  myheader("t_numeric");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_decimal");
     rc = tmysql_exec(hstmt,"create table t_decimal(d1 decimal(10,6))");
@@ -4010,7 +4010,7 @@ static void t_decimal(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLINTEGER      i_data=189, l_data=-23;
   SQLRETURN       rc;
 
-  myheader("t_decimal");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_decimal");
     rc = tmysql_exec(hstmt,"create table t_decimal(d1 decimal(10,6))");
@@ -4102,7 +4102,7 @@ static void t_warning(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR szData[20];
   SQLINTEGER pcbValue;
 
-  myheader("t_warning");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_warning");
     rc = tmysql_exec(hstmt,"create table t_warning(col2 char(20))");
@@ -4157,7 +4157,7 @@ static void t_multistep(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR    szData[150];
   SQLINTEGER pcbValue,id;
 
-  myheader("t_multistep");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_multistep");
     rc = tmysql_exec(hstmt,"create table t_multistep(col1 int,col2 varchar(200))");
@@ -4261,7 +4261,7 @@ static void t_zerolength(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR    szData[100], bData[100], bData1[100];
   SQLINTEGER pcbValue,pcbValue1,pcbValue2;
 
-  myheader("t_zerolength");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_zerolength");
     rc = tmysql_exec(hstmt,"create table t_zerolength(str varchar(20), bin binary(20), blb blob)");
@@ -4446,7 +4446,7 @@ static void t_pos_datetime_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLHSTMT hstmt1;
   SQLINTEGER row_count, int_data, cur_type;
 
-  myheader("t_pos_datetime_delete");
+  printMessageHeader();
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
     mycon(hdbc,rc);    
@@ -4569,7 +4569,7 @@ static void t_pos_datetime_delete1(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLHSTMT hstmt1;
   SQLINTEGER row_count, int_data, cur_type;
 
-  myheader("t_pos_datetime_delete1");
+  printMessageHeader();
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
     mycon(hdbc,rc);    
@@ -4696,7 +4696,7 @@ static void t_text_fetch(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLINTEGER i, row_count, length;
   SQLCHAR    data[TEST_ODBC_TEXT_LEN+1];
 
-  myheader("t_text_fetch");
+  printMessageHeader();
 
     SQLExecDirect(hstmt,"drop table t_text_fetch",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table t_text_fetch(t1 tinytext, \
@@ -4800,7 +4800,7 @@ static void t_columns(SQLHDBC hdbc, SQLHSTMT hstmt)
     { {65530,2}, {4,4}, {0,2},  {10,2},  {1,2}}
   };
   
-  myheader("t_columns");
+  printMessageHeader();
   
     SQLFreeStmt(hstmt, SQL_CLOSE);
     SQLExecDirect(hstmt,"DROP TABLE test_column",SQL_NTS);
@@ -4908,7 +4908,7 @@ static void t_convert_type(SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR     DbVersion[MAX_NAME_LEN];
   SQLINTEGER  OdbcVersion;
   
-  myheader("t_convert_type");
+  printMessageHeader();
   
     SQLFreeStmt(hstmt, SQL_CLOSE);
 
@@ -5034,7 +5034,7 @@ static void t_cache_bug()
   SQLHSTMT   hstmt1, hstmt2;
   SQLCHAR    conn[MAX_NAME_LEN];
 
-  myheader("t_cache_bug");
+  printMessageHeader();
     
     sprintf(conn,"DSN=%s;USER=%s;PASSWORD=%s;OPTION=1048579",
             mydsn,myuid,mypwd);
@@ -5121,7 +5121,7 @@ static void t_non_cache_bug()
   SQLHSTMT   hstmt1, hstmt2;
   SQLCHAR    conn[MAX_NAME_LEN];
 
-  myheader("t_non_cache_bug");
+  printMessageHeader();
     
     sprintf(conn,"DSN=%s;USER=%s;PASSWORD=%s;OPTION=3",
             mydsn,myuid,mypwd);
@@ -5207,7 +5207,7 @@ static void t_blob_bug(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLINTEGER length, i;
   const SQLINTEGER max_blob_size=1024*100;
 
-  myheader("t_blob_bug");
+  printMessageHeader();
         
     SQLExecDirect(hstmt,"drop table t_blob",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table t_blob(blb long varbinary)",SQL_NTS);
@@ -5294,7 +5294,7 @@ static void t_tables_bug(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLUINTEGER pcbColDef;
   SQLCHAR     szColName[MAX_NAME_LEN];  
 
-  myheader("t_tables_bug");
+  printMessageHeader();
 
    SQLFreeStmt(hstmt, SQL_CLOSE);
 
@@ -5342,7 +5342,7 @@ static void t_putdata(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR    data[255];
   SQLPOINTER token;
 
-  myheader("t_putdata");
+  printMessageHeader();
     
 
     SQLExecDirect(hstmt,"drop table t_putdata",SQL_NTS);
@@ -5409,7 +5409,7 @@ static void t_putdata1(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR    data[255];
   SQLPOINTER token;
 
-  myheader("t_putdata1");
+  printMessageHeader();
     
 
     SQLExecDirect(hstmt,"drop table t_putdata",SQL_NTS);
@@ -5478,7 +5478,7 @@ static void t_putdata2(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR    data[255];
   SQLPOINTER token;
 
-  myheader("t_putdata2");    
+  printMessageHeader();    
 
     SQLExecDirect(hstmt,"drop table t_putdata",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table t_putdata(c1 int, c2 long varchar, c3 long varchar)",SQL_NTS);
@@ -5562,7 +5562,7 @@ static void t_time1(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR         data[30];
   SQLINTEGER      length;
 
-  myheader("t_time1");    
+  printMessageHeader();    
 
     SQLExecDirect(hstmt,"drop table t_time",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table t_time(t time, t1 timestamp, t2 datetime, t3 date)",SQL_NTS);
@@ -5831,7 +5831,7 @@ void t_row_array_size(SQLHDBC hdbc,SQLHSTMT hstmt)
   SQLINTEGER i,nrows,iarray[15];
   const int max_rows=9;
 
-  myheader("t_row_array_size");
+  printMessageHeader();
 
     SQLExecDirect(hstmt,"drop table t_row_array_size",SQL_NTS);
 
@@ -5928,7 +5928,7 @@ static void t_rows_fetched_ptr(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLINTEGER  rows_fetched, data[4], pcb_value[4], i;
   SQLUSMALLINT row_status[4];
 
-  myheader("t_rows_fetched_ptr"); 
+  printMessageHeader(); 
   
     SQLExecDirect(hstmt,"drop table t_rows_fetched_ptr",SQL_NTS);
 
@@ -6036,7 +6036,7 @@ static void t_empty_str_bug(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLINTEGER   id, name_len, desc_len;
   SQLCHAR      name[20], desc[20];
 
-  myheader("t_empty_str_bug");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_empty_str_bug");
     
@@ -6121,7 +6121,7 @@ static void t_current_catalog(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLRETURN   rc;
   SQLUINTEGER len;
 
-  myheader("t_current_catalog");
+  printMessageHeader();
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
@@ -6201,7 +6201,7 @@ static void t_desc_param(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLRETURN   rc;
   SQLSMALLINT ParamCount;
   
-  myheader("t_desc_param");
+  printMessageHeader();
   
     SQLFreeStmt(hstmt, SQL_CLOSE);
     
@@ -6251,7 +6251,7 @@ static void t_rows_fetched_ptr1(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLRETURN   rc;
   SQLUINTEGER rowsFetched, i, rowsSize;
   
-  myheader("t_rows_fetched_ptr1");
+  printMessageHeader();
     
     SQLExecDirect(hstmt,"drop table t_rows_fetched_ptr",SQL_NTS);
     
@@ -6417,7 +6417,7 @@ static void t_desc_col(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLRETURN   rc;
   SQLSMALLINT ColumnCount;
   
-  myheader("t_desc_col");
+  printMessageHeader();
   
     SQLFreeStmt(hstmt, SQL_CLOSE);
     
@@ -6506,7 +6506,7 @@ static void t_putdata3(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLINTEGER  resData;
 
 
-  myheader("t_putdata3");
+  printMessageHeader();
     
 
     SQLExecDirect(hstmt,"drop table t_putdata3",SQL_NTS);
@@ -6635,7 +6635,7 @@ static void t_convert(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLINTEGER data_len;
   SQLCHAR    data[50];
 
-  myheader("t_convert");
+  printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_convert");
     

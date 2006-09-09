@@ -1152,11 +1152,11 @@ SQLRETURN SQL_API SQLRowCount( SQLHSTMT hstmt,
   returns data for all bound columns. Rowsets can be specified
   at an absolute or relative position
 */
-SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt, 
+SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                                        SQLUSMALLINT         fFetchType,
-                                       SQLLEN               irow, 
-                                       SQLULEN *            pcrow,
-                                       SQLUSMALLINT FAR *   rgfRowStatus, 
+                                       SQLROWOFFSET         irow,
+                                       SQLROWSETSIZE       *pcrow,
+                                       SQLUSMALLINT FAR    *rgfRowStatus,
                                        bool                 upd_status )
 {
     ulong rows_to_fetch;
@@ -1404,8 +1404,8 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
 
 SQLRETURN SQL_API SQLExtendedFetch( SQLHSTMT        hstmt,
                                     SQLUSMALLINT    fFetchType,
-                                    SQLLEN          irow,
-                                    SQLULEN *       pcrow,
+                                    SQLROWOFFSET    irow,
+                                    SQLROWSETSIZE  *pcrow,
                                     SQLUSMALLINT FAR *rgfRowStatus )
 {
     return my_SQLExtendedFetch( hstmt, 
