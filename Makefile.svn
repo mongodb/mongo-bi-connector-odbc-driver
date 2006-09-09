@@ -1,0 +1,21 @@
+all:
+	@echo "" 
+	@echo "This is used to build configure; useful when building"
+	@echo "from a sources retreived from source code repository."
+	@echo "It requires the GNU autotools, including:"
+	@echo "- libtool"
+	@echo "- automake"
+	@echo "- autoheader"
+	@echo "- autoconf"
+	@echo ""
+	@autoheader
+	@aclocal
+	@if [ -f /usr/bin/glibtoolize ]; then \
+	  glibtoolize --automake --force; \
+	 else \
+	  libtoolize --automake --force; \
+	 fi
+	@automake --add-missing --force
+	@autoconf
+	@echo "Done!"
+	@echo "Now run ./configure --help"
