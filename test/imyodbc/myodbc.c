@@ -67,19 +67,19 @@ void SetConsole(SQLSMALLINT	siDisplaySize, bool	fInvert);
 /*****************************************/
 
 
-#define	DISPLAY_MAX	50			// Arbitrary limit on column width to display
-#define	DISPLAY_FORMAT_EXTRA 3	// Per column extra display bytes (| <data> )
+#define	DISPLAY_MAX	50		/* Arbitrary limit on column width to display */
+#define	DISPLAY_FORMAT_EXTRA 3		/* Per column extra display bytes (| <data> ) */
 #define	DISPLAY_FORMAT		"%c %*.*s "
 #define	DISPLAY_FORMAT_C	"%c %-*.*s "
-#define	NULL_SIZE			6	// <NULL>
+#define	NULL_SIZE			6	/* <NULL> */
 
 #ifdef UNICODE
 #define	PIPE				TEXT('|')
 #else
-#define PIPE				179 // |
+#define PIPE				179	/* | */
 #endif
 
-SHORT	gHeight = 80;		// Users screen height
+SHORT	gHeight = 80;			/* Users screen height */
 
 /***********************************************************************
 /* Program to implement ODBC SQL command-line interpreter.
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
 	SQLCHAR  *szConnStr;
 	SQLCHAR	 szInput[2000];
 
-	// Allocate an environment
+	/* Allocate an environment */
 
 	if (SQLAllocHandle(SQL_HANDLE_ENV,SQL_NULL_HANDLE,&lpEnv) == SQL_ERROR)
 	{
@@ -108,8 +108,8 @@ int main(int argc, char **argv)
 		exit(-1);
 	}
 
-	// Register this as an application that expects 2.x behavior,
-	// you must register something if you use AllocHandle
+	/* Register this as an application that expects 2.x behavior, */
+	/* you must register something if you use AllocHandle */
 
 	TRYODBC(lpEnv,
 			SQL_HANDLE_ENV,
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
 						  (SQLPOINTER)SQL_OV_ODBC2,
 						  0));
 
-	// Allocate a connection
+	/* Allocate a connection */
 
 	TRYODBC(lpEnv,
 			SQL_HANDLE_ENV,
@@ -134,8 +134,8 @@ int main(int argc, char **argv)
 		szConnStr = NULL;
 	}
 
-	// Connect to the driver.  Use the connection string if supplied
-	// on the input, otherwise let the driver manager prompt for input.
+	/* Connect to the driver.  Use the connection string if supplied */
+	/* on the input, otherwise let the driver manager prompt for input. */
 
 	TRYODBC(lpDbc,
 			SQL_HANDLE_DBC,
@@ -157,14 +157,14 @@ int main(int argc, char **argv)
 
 	printf("Enter SQL commands, type (control)Z to exit\n\nmyodbc>");
 
-	// Loop to get input and execute queries
+	/* Loop to get input and execute queries */
 
 	while(_getts(szInput))
 	{
 		SQLRETURN		RetCode;
 		SQLSMALLINT	sNumResults;
 
-		// Execute the query
+		/* Execute the query */
 
 		if (!(*szInput))
 		{
@@ -178,12 +178,12 @@ int main(int argc, char **argv)
 			case	SQL_SUCCESS_WITH_INFO:
 			{
 				HandleError(lpStmt,SQL_HANDLE_STMT,RetCode);
-				// fall through
+				/* fall through */
 			}
 			case	SQL_SUCCESS:
 			{
-				// If this is a row-returning query, display
-				// results
+				/* If this is a row-returning query, display */
+				/* results */
 				TRYODBC(lpStmt,
 						SQL_HANDLE_STMT,
 						SQLNumResultCols(lpStmt,&sNumResults));
@@ -228,7 +228,7 @@ int main(int argc, char **argv)
 
 Exit:
 
-	// Free ODBC handles and exit
+	/* Free ODBC handles and exit */
 
 	if (lpDbc)
 	{
@@ -259,19 +259,19 @@ void DisplayResults(SQLHSTMT		lpStmt,	SQLSMALLINT	cCols)
 	SQLRETURN		 RetCode;
 	SQLINTEGER   iCount = 0;
 
-	// Allocate memory for each column 
+	/* Allocate memory for each column */
 
 	AllocateBindings(lpStmt,cCols,&pFirstBinding, &siDisplaySize);
 
-	// Set the display mode and write the titles
+	/* Set the display mode and write the titles */
 
 	DisplayTitles(lpStmt,siDisplaySize, pFirstBinding);
 
 
-	// Fetch and display the data
+	/* Fetch and display the data */
 
 	do {
-		// Fetch a row
+		/* Fetch a row */
 
 		if (iCount++ >= gHeight - 2)
 		{
@@ -295,7 +295,7 @@ void DisplayResults(SQLHSTMT		lpStmt,	SQLSMALLINT	cCols)
 			break;
 			
 
-		// Display the data.   Ignore truncations
+		/* Display the data.   Ignore truncations*/
 
 		for (pThisBinding = pFirstBinding;
 			 pThisBinding;
@@ -329,7 +329,7 @@ void DisplayResults(SQLHSTMT		lpStmt,	SQLSMALLINT	cCols)
 	printf("\n");
 
 Exit:
-	// Clean up the allocated buffers
+	/* Clean up the allocated buffers */
 
 	while (pFirstBinding)
 	{
@@ -382,11 +382,12 @@ void AllocateBindings(SQLHSTMT			lpStmt,
 		}
 		lpLastBinding=lpThisBinding;
 
-
-		// Figure out the display length of the column (we will
-		// bind to char since we are only displaying data, in general
-		// you should bind to the appropriate C type if you are going
-		// to manipulate data since it is much faster...)
+		/*
+		 * Figure out the display length of the column (we will
+		 * bind to char since we are only displaying data, in general
+		 * you should bind to the appropriate C type if you are going
+		 * to manipulate data since it is much faster...)
+		 */
 		
 		TRYODBC(lpStmt,
 				SQL_HANDLE_STMT,
@@ -398,16 +399,17 @@ void AllocateBindings(SQLHSTMT			lpStmt,
 							   NULL,
 							   &cchDisplay));
 
-
-		// Figure out if this is a character or numeric column; this is
-		// used to determine if we want to display the data left- or right-
-		// aligned.
-
-		// !! Note a bug in the 3.x documentation.  We claim that 
-		// SQL_DESC_TYPE is a 1.x feature.   That is not true, SQL_DESC_TYPE
-		// is a 3.x feature.   SQL_DESC_CONCISE_TYPE maps to the 1.x 
-		// SQL_COLUMN_TYPE.   This is what you must use if you want to work
-		// against a 2.x driver.  Sorry for the inconvenience...
+		/*
+		 * Figure out if this is a character or numeric column; this is
+		 * used to determine if we want to display the data left- or right-
+		 * aligned.
+		 *
+		 * !! Note a bug in the 3.x documentation.  We claim that 
+		 * SQL_DESC_TYPE is a 1.x feature.   That is not true, SQL_DESC_TYPE
+		 * is a 3.x feature.   SQL_DESC_CONCISE_TYPE maps to the 1.x 
+		 * SQL_COLUMN_TYPE.   This is what you must use if you want to work
+		 * against a 2.x driver.  Sorry for the inconvenience...
+		 */
 
 		TRYODBC(lpStmt,
 				SQL_HANDLE_STMT,
@@ -426,12 +428,12 @@ void AllocateBindings(SQLHSTMT			lpStmt,
 
 		lpThisBinding->sNext = NULL;
 
-		// Arbitrary limit on display size
+		/* Arbitrary limit on display size */
 		if (cchDisplay > DISPLAY_MAX)
 			cchDisplay = DISPLAY_MAX;
 
-		// Allocate a buffer big enough to hold the text representation
-		// of the data.  Add one character for the null terminator
+		/* Allocate a buffer big enough to hold the text representation */
+		/* of the data.  Add one character for the null terminator */
 
 		lpThisBinding->szBuffer = (TCHAR *)malloc((cchDisplay+1) * sizeof(TCHAR));
 
@@ -441,12 +443,13 @@ void AllocateBindings(SQLHSTMT			lpStmt,
 			exit(-100);
 		}
 
-		// Map this buffer to the driver's buffer.   At Fetch time,
-		// the driver will fill in this data.  Note that the size is 
-		// count of bytes (for Unicode).  All ODBC functions that take
-		// SQLPOINTER use count of bytes; all functions that take only
-		// strings use count of characters.
-
+		/*
+		 * Map this buffer to the driver's buffer.   At Fetch time,
+		 * the driver will fill in this data.  Note that the size is 
+		 * count of bytes (for Unicode).  All ODBC functions that take
+		 * SQLPOINTER use count of bytes; all functions that take only
+		 * strings use count of characters.
+		 */
 
 		TRYODBC(lpStmt,
 				SQL_HANDLE_STMT,
@@ -458,8 +461,8 @@ void AllocateBindings(SQLHSTMT			lpStmt,
 						   &lpThisBinding->indPtr));
 
 
-		// Now set the display size that we will use to display
-		// the data.   Figure out the length of the column name
+		/* Now set the display size that we will use to display */
+		/* the data.   Figure out the length of the column name */
 
 		TRYODBC(lpStmt,
 				SQL_HANDLE_STMT,
@@ -480,8 +483,8 @@ void AllocateBindings(SQLHSTMT			lpStmt,
 	}
 
 	Exit:
-		// Not really a good error exit handler, we should free
-		// up any memory that we allocated.   But this is a sample...
+		/* Not really a good error exit handler, we should free */
+		/* up any memory that we allocated.   But this is a sample... */
 
 		return;
 }
@@ -515,7 +518,7 @@ void	DisplayTitles(SQLHSTMT		lpStmt,
 								iCol++,
 								SQL_DESC_NAME,
 								szTitle,
-								sizeof(szTitle),	// Note count of bytes!
+								sizeof(szTitle),	/* Note count of bytes! */
 								NULL,
 								NULL));
 
@@ -550,8 +553,8 @@ void	SetConsole(SQLSMALLINT      		siDisplaySize,
 	CONSOLE_SCREEN_BUFFER_INFO		csbInfo;
 
 
-    // A little bit of fun here -- reset the console screen
-    // buffer size if necessary
+    /* A little bit of fun here -- reset the console screen */
+    /* buffer size if necessary */
 
 
     hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -615,7 +618,7 @@ void HandleError(SQLHANDLE	hHandle,
 						 (SQLSMALLINT *)NULL) == SQL_SUCCESS)
 	{
 		
-		// Hide data truncated..
+		/* Hide data truncated.. */
 		if (_tcsncmp(szState,TEXT("01004"),5))
 			_ftprintf(stderr,TEXT("[%5.5s] %s (%d)\n"),szState,szMessage,iError);
 	}

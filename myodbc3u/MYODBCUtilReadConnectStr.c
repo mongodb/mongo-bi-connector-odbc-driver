@@ -64,7 +64,7 @@ BOOL MYODBCUtilReadConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszStr
                       /* To prevent a memory leak when use such connection strings UID=root;PWD=;SERVER=localhost;... */
                         if( pszName )
                             free( pszName );
-                        pszName = (char *)strndup( pAnchorChar, pScanChar - pAnchorChar );
+                        pszName = (char *)_global_strndup( pAnchorChar, pScanChar - pAnchorChar );
 
                         if ( *pScanChar == '=' )
                             nState = MYODBCUTIL_ATTR_PARSE_STATE_VALUE_START;

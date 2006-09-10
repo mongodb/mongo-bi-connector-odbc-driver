@@ -1,4 +1,4 @@
-// mytest.cpp 
+/* mytest.cpp */
 
 #include <unistd.h>
 #include <stdio.h>
@@ -8,11 +8,11 @@
 #include <sqlext.h>
 #include <sqltypes.h>
 
-// defines
+/* defines */
 
 #define NUM_CONCUR_USER 100
 
-// types
+/* types */
 
 typedef struct
 {
@@ -21,39 +21,39 @@ typedef struct
     pthread_t m_hThread;
 } myconn_t;
 
-// globals
+/* globals */
 
 myconn_t g_myconns[NUM_CONCUR_USER] = {0};
 
-// functions
+/* functions */
 
 bool CreateConns(char *dsn, char *user, char *password)
 {
     SQLRETURN rc;
     for (int i = 0; i < NUM_CONCUR_USER; i++)
     {
-        // Allocate the environment handle.
+        /* Allocate the environment handle. */
         rc = SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HENV, &(g_myconns[i].m_hEnvironment));
         if (!SQL_SUCCEEDED(rc))
         {
             printf("SQLAllocHandle(environment) failed. [%d]\n", i);
             return false;
         }
-        // Set the ODBC compliance level of the application.
+        /* Set the ODBC compliance level of the application. */
         rc = SQLSetEnvAttr(g_myconns[i].m_hEnvironment, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC3, SQL_IS_INTEGER);
         if (!SQL_SUCCEEDED(rc))
         {
             printf("SQLSetEnvAttr(ODBC3) failed. [%d]\n", i);
             return false;
         }
-        // Allocate the session handle.
+        /* Allocate the session handle. */
         rc = SQLAllocHandle(SQL_HANDLE_DBC, g_myconns[i].m_hEnvironment, &(g_myconns[i].m_hSession));
         if (!SQL_SUCCEEDED(rc))
         {
             printf("SQLAllocHandle(environment) failed. [%d]\n", i);
             return false;
         }
-        // Connect to the database.
+        /* Connect to the database. */
         rc = SQLConnect(g_myconns[i].m_hSession, (SQLCHAR *)dsn, strlen(dsn), (SQLCHAR *)user, strlen(user), (SQLCHAR *)password, strlen(password));
         if (!SQL_SUCCEEDED(rc))
         {
@@ -68,7 +68,7 @@ bool CreateConns(char *dsn, char *user, char *password)
             return false;
         }
 #if 0
-        // Initialize tables
+        /* Initialize tables */
         SQLExecDirect(hstmt, "DROP TABLE PickNum", SQL_NTS);
         rc = SQLExecDirect(hstmt, "CREATE TABLE PickNum ( \
                                           DEPARTMENT varchar(32) NOT NULL default '', \
@@ -82,7 +82,7 @@ bool CreateConns(char *dsn, char *user, char *password)
         }
 #endif       
 
-        // Auto commit off
+        /* Auto commit off */
         rc = SQLSetConnectAttr(g_myconns[i].m_hSession, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER)SQL_AUTOCOMMIT_OFF, SQL_IS_INTEGER);
         if (!SQL_SUCCEEDED(rc))
         {
@@ -230,9 +230,9 @@ void *ThreadFunc(void *lpParam)
         cust_id = AutoRecNum(hConn, dept_name);
         if (cust_id == 0)
         {
-            // abort transactiom
+            /* abort transactiom*/
             (void)SQLEndTran(SQL_HANDLE_DBC, hConn, SQL_ROLLBACK);	
-            // stop using this connection if error
+            /* stop using this connection if error */
             break;
         }
         printf("Thread[%d]: %s now serving customer %d\n", pContext->m_hThread, dept_name, cust_id);
@@ -270,7 +270,7 @@ void ClearConns(void)
     }
 }
 
-// main
+/* main */
 
 int main(int argc, char** argv)
 {

@@ -20,8 +20,8 @@
 
 #include "MYODBCUtil.h"
 
-#if defined(__APPLE__) || defined(WIN32) || defined(__sparc) || defined(NO_STRNDUP)
-char *strndup( const char *s, size_t n )
+#ifndef HAVE_STRNDUP
+char *myodbc_strndup( const char *s, size_t n )
 {
     size_t nAvail;
     char *p;
@@ -40,7 +40,7 @@ char *strndup( const char *s, size_t n )
 
     return p; 
 }
-#endif
+#endif /* ! HAVE_STRNDUP */
 
 #if defined(WIN32)
 char *strglobaldup( const char *s )
@@ -164,7 +164,7 @@ BOOL MYODBCUtilReadDataSourceStr( MYODBCUTIL_DATASOURCE *pDataSource, MYODBCUTIL
                 {
                     if ( (!isalpha( *pScanChar ) && !isdigit( *pScanChar )) || *pScanChar == '=' )
                     {
-                        pszName = (char *)strndup( pAnchorChar, pScanChar - pAnchorChar );
+                        pszName = (char *)_global_strndup( pAnchorChar, pScanChar - pAnchorChar );
 
                         if ( *pScanChar == '=' )
                             nState = MYODBCUTIL_ATTR_PARSE_STATE_VALUE_START;

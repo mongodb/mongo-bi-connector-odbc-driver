@@ -89,13 +89,15 @@ dnl ---------------------------------------------------------
 
 AC_DEFUN([AC_CHECK_IODBC],
 [
-CPPFLAGS="$CPPFLAGS $ODBC_FLAGS -I$1"
+check_iobc_inc_path="$1"
+check_iobc_lib_path="$2"
+CPPFLAGS="$CPPFLAGS $ODBC_FLAGS -I$check_iobc_inc_path"
 AC_CHECK_HEADERS([isql.h isqlext.h isqltypes.h],
 [iodbc_ok=yes;odbc_headers="$odbc_headers $ac_hdr"],[iodbc_ok=no; break])
 
 if test "x$iodbc_ok" != "xyes"
 then
-	AC_MSG_ERROR([Unable to find the iodbc headers in '$1'])
+	AC_MSG_ERROR([Unable to find the iodbc headers in '$check_iobc_inc_path'])
 fi
 
 
@@ -111,20 +113,20 @@ AC_CHECK_HEADERS(iodbcinst.h)
 if test "x$ac_cv_header_iodbcinst_h" = "xyes"
 then
 
-  odbc_headers="$odbc_headers iodbcinst.h"
+	odbc_headers="$odbc_headers iodbcinst.h"
 	save_LIBS="$LIBS"
-        save_LDFLAGS="$LDFLAGS"
-	LDFLAGS="-L$2 $LDFLAGS"
+	save_LDFLAGS="$LDFLAGS"
+	LDFLAGS="-L$check_iobc_lib_path $LDFLAGS"
 
 	AC_CHECK_LIB(iodbcadm,_iodbcdm_admin_dialbox,
-	[LIBS="$LIBS -liodbcadm"
+	[LIBS="$LIBS -L$check_iobc_lib_path -liodbcadm"
 	have_iodbcadm=yes],
         [LIBS="$save_LIBS"
          LDFLAGS="$save_LDFLAGS"])
 
 	AC_CHECK_LIB(iodbcinst,SQLGetPrivateProfileString,
 	[AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING,1,[Define if SQLGetPrivateProfileString is defined])
-	LIBS="$LIBS -liodbcinst"
+	LIBS="$LIBS -L$check_iobc_lib_path -liodbcinst"
 	have_iodbcinst=yes],
         [LIBS="$save_LIBS"
          LDFLAGS="$save_LDFLAGS"])
@@ -148,13 +150,15 @@ dnl ---------------------------------------------------------
 
 AC_DEFUN([AC_CHECK_UNIXODBC],
 [
-CPPFLAGS="$CPPFLAGS $ODBC_FLAGS -I$1"
+check_iobc_inc_path="$1"
+check_iobc_lib_path="$2"
+CPPFLAGS="$CPPFLAGS $ODBC_FLAGS -I$check_iobc_inc_path"
 AC_CHECK_HEADERS([sql.h sqlext.h sqltypes.h],
 [unixODBC_ok=yes;odbc_headers="$odbc_headers $ac_hdr"],[unixODBC_ok=no; break])
 
 if test "x$unixODBC_ok" != "xyes"
 then
-	AC_MSG_ERROR([Unable to find the unixODBC headers in '$1'])
+	AC_MSG_ERROR([Unable to find the unixODBC headers in '$check_iobc_inc_path'])
 fi
 
 # new autoconf tools doesn't detect through ac_hdr, so define
@@ -170,13 +174,13 @@ if test "x$ac_cv_header_odbcinst_h" = "xyes"
 then
 
   odbc_headers="$odbc_headers odbcinst.h"
-	save_LIBS="$LIBS"
-        save_LDFLAGS="$LDFLAGS"
-	LDFLAGS="-L$2 $LDFLAGS"
+  save_LIBS="$LIBS"
+  save_LDFLAGS="$LDFLAGS"
+  LDFLAGS="-L$check_iobc_lib_path $LDFLAGS"
 
   AC_CHECK_LIB(odbcinst,SQLGetPrivateProfileString,
   [AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING,1,[Define if SQLGetPrivateProfileString is defined])
-  LIBS="$LIBS -lodbcinst"
+  LIBS="$LIBS -L$check_iobc_lib_path -lodbcinst"
   have_odbcinst=yes],
   [LIBS="$save_LIBS"
    LDFLAGS="$save_LDFLAGS"])

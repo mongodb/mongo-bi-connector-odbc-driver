@@ -176,7 +176,9 @@ int main(int argc, char *argv[])
     */
     myconnect(&henv,&hdbc,&hstmt); 
 
-	// create another connection to check whether transactions were committed/rolled back
+    /*
+      create another connection to check whether transactions were committed/rolled back
+    */
     myconnect(&henv2,&hdbc2,&hstmt2); 
 
     /* 

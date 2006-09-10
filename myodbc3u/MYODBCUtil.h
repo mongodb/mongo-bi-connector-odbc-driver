@@ -34,10 +34,6 @@
 #define strcasecmp( a, b ) stricmp( a, b )
 #endif
 
-#if defined(__APPLE__) || defined(WIN32) || defined(__sparc) || defined(NO_STRNDUP) 
-char *strndup( const char *s, size_t n );
-#endif
-
 /* 
     Handle case on OSX where we want to use GetPrivateProfileString (because it 
     actually works properly) instead of SQLGetPrivateProfileString but 
@@ -216,15 +212,20 @@ BOOL                    MYODBCUtilWriteConnectStr( MYODBCUTIL_DATASOURCE *pDataS
 BOOL                    MYODBCUtilInsertStr( char *pszStr, LPCSTR pszStrIn, SQLSMALLINT nMaxLen, int *pnIndex );
 
 #if defined(WIN32)
-char *strglobaldup( const char *s);
-char *strnglobaldup( const char *s, size_t n);
-#define _global_strdup(s) strglobaldup(s)
-#define _global_strndup(s, n) strnglobaldup(s, n)
-#define _global_free(p) GlobalFree(p)
+   char *strglobaldup( const char *s);
+   char *strnglobaldup( const char *s, size_t n);
+#  define _global_strdup(s) strglobaldup(s)
+#  define _global_strndup(s, n) strnglobaldup(s, n)
+#  define _global_free(p) GlobalFree(p)
 #else
-#define _global_strdup(s) strdup(s)
-#define _global_strndup(s, n) strndup(s, n)
-#define _global_free(p) free(p)
+#  define _global_strdup(s) strdup(s)
+#  ifdef HAVE_STRNDUP
+#    define _global_strndup(s, n) strndup(s, n)
+#  else
+     char *myodbc_strndup( const char *s, size_t n );
+#    define _global_strndup(s, n) myodbc_strndup(s, n)
+#  endif
+#  define _global_free(p) free(p)
 #endif
 
 #ifdef __cplusplus
