@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef _UNIX_
-    #include <ltdl.h>
-#else
+#ifdef WIN32
     #include <windows.h>
+#else
+    #include <ltdl.h>
 #endif
 
 char *szSyntax =
@@ -62,7 +62,7 @@ int main( int argc, char *argv[] )
      * initialize libtool
      */
 
-#ifdef _UNIX_
+#ifndef WIN32
     if ( lt_dlinit() )
     {
         printf( "[%s][%d] ERROR: Failed to lt_dlinit()\n", __FILE__, __LINE__ );

@@ -56,15 +56,16 @@ DIST_SUBDIRS = \
 	myodbc3m \
 	samples \
 	test \
-	scripts
+	scripts \
+	dltest
 
 #
 # Create the binary distribution
 #
-bin-dist:all
+bin-dist: all
 	$(top_builddir)/scripts/make_binary_distribution
 
-bin-tar:all
+bin-tar: all
 	mkdir $(build) 
 	$(MAKE) install prefix=`pwd`/$(build) 
 	cp  EXCEPTIONS COPYING README ChangeLog $(build)/
@@ -75,20 +76,20 @@ bin-tar:all
 #
 # Run the samples
 #
-test:all
+test: all
 	cd samples; \
 	$(MAKE); \
 	./run-samples
-  
+
 #
 # Run the test library
 #
-testlib:all
+testlib: all
 	cd test; \
 	$(MAKE); \
 	$(MAKE) testall
-  
-  
+
+ 
 #
 # Create a source snapshot
 #
