@@ -908,6 +908,7 @@ AC_OUTPUT([
   samples/Makefile
   test/Makefile
   scripts/Makefile
+  dltest/Makefile
 ])
 
 echo
