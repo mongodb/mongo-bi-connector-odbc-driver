@@ -183,13 +183,13 @@ AC_DEFUN([FUN_QT_VERSION],
 [
   dnl the 2x versions need the extra sed 
   if test -r "$1/qglobal.h"; then
-    qt_current_version=`grep -w '#define QT_VERSION' "$1"/qglobal.h |
-      sed s/'#define QT_VERSION 0x'// | sed s/'#define QT_VERSION'//`
+    qt_current_version=`grep '#define QT_VERSION ' "$1"/qglobal.h |
+      sed s/'#define QT_VERSION 0x'// | sed s/'#define QT_VERSION  *'//`
   else
     if test -r "$1/Qt/qglobal.h"; then
 # if test "x$qt_current_version" = "x" ; then
-      qt_current_version=`grep -w '#define QT_VERSION' "$1"/Qt/qglobal.h |
-        sed s/'#define QT_VERSION 0x'// | sed s/'#define QT_VERSION'//`
+      qt_current_version=`grep '#define QT_VERSION ' "$1"/Qt/qglobal.h |
+        sed s/'#define QT_VERSION 0x'// | sed s/'#define QT_VERSION  *'//`
     fi
   fi
 ])#FUN_QT_VERSION
@@ -345,14 +345,13 @@ AC_DEFUN([FUN_QT_COMPILE],
   AC_REQUIRE([FUN_QT_LIBRARIES])
   AC_REQUIRE([FUN_QT_PROGRAMS])
 
+  AC_MSG_NOTICE([qt_libraries=$qt_libraries])
+  AC_MSG_NOTICE([LDFLAGS=$LDFLAGS])
+  AC_MSG_NOTICE([X_LIBS=$X_LIBS])
+
   AC_MSG_CHECKING([whether a simple Qt program compiles])
 
   AC_LANG_PUSH(C++)
-
-AC_MSG_NOTICE([qt_libraries=$qt_libraries])
-AC_MSG_NOTICE([LDFLAGS=$LDFLAGS])
-AC_MSG_NOTICE([X_LIBS=$X_LIBS])
-
 
   ac_cxxflags_save="$CXXFLAGS"
   ac_ldflags_save="$LDFLAGS"
