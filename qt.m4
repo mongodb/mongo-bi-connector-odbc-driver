@@ -205,29 +205,22 @@ AC_DEFUN([FUN_QT_LIBRARIES],
   AC_MSG_CHECKING([for Qt libraries])
 
   # Ensure we have the lib dir...
-  if test "x$qt_libraries" = "x" ; then
+  if test "x$qt_libraries" = "x"; then
     # see if it is relative to the includes
     qt_tree="$qt_includes"
-    while test "x$qt_tree" != "x" ; do
-      # first go around will fail...
-      if expr "$QTVERSION" '>=' "040000" > /dev/null ; then
-        if ls $qt_tree/lib/libQt* > /dev/null 2> /dev/null ; then
-          qt_libraries=$qt_tree/lib
-          break
-        else
-          # lop off tail of path
-          dnl not as portable as it should be...
-          qt_tree="`dirname $qt_tree`"
-	fi
+    while test "x$qt_tree" != "x" -a "x$qt_tree" != "x/" ; do
+      # Old test used "ls $qt_tree/lib/libQt*" but on Mac OS X 10.3 and
+      # NetBSD 1.4 "ls" always return zero. Also different shells have
+      # behaviour when there is no match, return the patter or empty string.
+      qt_match_pat="$qt_tree/lib/lib[[qQ]]t*"
+      qt_match_res=`echo $qt_match_pat 2>/dev/null`
+      if test -n "$qt_match_res" -a "$qt_match_res" != "$qt_match_pat" ; then
+	qt_libraries="$qt_tree/lib"
+	break
       else
-        if ls $qt_tree/lib/libqt* > /dev/null 2> /dev/null ; then
-          qt_libraries=$qt_tree/lib
-          break
-        else
-          # lop off tail of path
-          dnl not as portable as it should be...
-          qt_tree="`dirname $qt_tree`"
-	fi
+	# lop off tail of path
+	dnl not as portable as it should be...
+	qt_tree="`dirname $qt_tree`"
       fi
     done
   fi  
@@ -262,12 +255,12 @@ AC_DEFUN([FUN_QT_PROGRAMS],
 
   AC_MSG_CHECKING([for Qt utilities])
 
-  if test "x$q_programs" = "x" ; then
+  if test "x$qt_programs" = "x" ; then
     # see if it is relative to the libraries
     qt_tree="$qt_libraries"
-    while test "x$qt_tree" != "x" ; do
+    while test "x$qt_tree" != "x" -a "x$qt_tree" != "x/" ; do
       # first go around will fail
-      if ls $qt_tree/bin/moc* > /dev/null 2> /dev/null ; then
+      if test -x "$qt_tree/bin/moc" ; then
         qt_programs=$qt_tree/bin
         break
       else
@@ -289,11 +282,11 @@ AC_DEFUN([FUN_QT_PROGRAMS],
       AC_CHECK_PROG(MOC, moc, moc)
       if test "x$MOC" = "x" ; then
         # could be renamed to avoid clashes
-        if ls $qt_programs/moc > /dev/null 2> /dev/null ; then
+        if test -x "$qt_programs/moc" ; then
           MOC="$qt_programs/moc"
         else
           if expr "$QTVERSION" '>=' "200" > /dev/null ; then
-            if ls $qt_programs/moc2 > /dev/null 2> /dev/null ; then
+            if test -x "$qt_programs/moc2" ; then
               MOC="$qt_programs/moc2"
             fi
           else
@@ -317,11 +310,11 @@ AC_DEFUN([FUN_QT_PROGRAMS],
         AC_CHECK_PROG(UIC, uic, uic)
         if test "x$UIC" = "x" ; then
           # could be renamed to avoid clashes
-          if ls $qt_programs/uic > /dev/null 2> /dev/null ; then
+          if test -x "$qt_programs/uic" ; then
             UIC="$qt_programs/uic"
           else
             if expr "$QTVERSION" '>=' "300" > /dev/null ; then
-              if ls $qt_programs/uic3 > /dev/null 2> /dev/null ; then
+              if test -x "$qt_programs/uic3" ; then
                 UIC="$qt_programs/uic3"
               fi
             fi
