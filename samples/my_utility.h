@@ -34,6 +34,8 @@
 #ifdef HAVE_CONFIG_H
 #include <myconf.h>
 #endif
+/* Work around iODBC header bug on Mac OS X 10.3 */
+#undef HAVE_CONFIG_H
 
 #ifdef WIN32
 #include <windows.h>

@@ -4,7 +4,8 @@
 #ifdef HAVE_CONFIG_H
     #include "myodbc3/myconf.h" 
     #define SETUP_VERSION VERSION
-#else
+    /* Work around iODBC header bug on Mac OS X 10.3 */
+    #undef HAVE_CONFIG_H
 #endif
 
 #endif

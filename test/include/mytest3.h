@@ -21,6 +21,8 @@
 #ifdef HAVE_CONFIG_H
     #include <myconf.h>
 #endif
+/* Work around iODBC header bug on Mac OS X 10.3 */
+#undef HAVE_CONFIG_H
 
 #ifdef WIN32
     #include <windows.h>
@@ -151,11 +153,25 @@ SQLUINTEGER myresult(SQLHSTMT hstmt);
             myerror( rc, 3, hstmt, __FILE__, __LINE__ ); \
         my_assert( r )
 
+#if defined(USE_C99_FUNC_MACRO)
+#define printMessageHeader()\
+    {\
+        g_nCursor = sprintf( g_szHeader, "[%s][%s][%d]\n", __FILE__, __func__, __LINE__ );\
+        fprintf( stdout, g_szHeader );\
+    }
+#elif defined(USE_GNU_FUNC_MACRO)
 #define printMessageHeader()\
     {\
         g_nCursor = sprintf( g_szHeader, "[%s][%s][%d]\n", __FILE__, __FUNCTION__, __LINE__ );\
         fprintf( stdout, g_szHeader );\
     }
+#else
+#define printMessageHeader()\
+    {\
+        g_nCursor = sprintf( g_szHeader, "[%s][%d]\n", __FILE__, __LINE__ );\
+        fprintf( stdout, g_szHeader );\
+    }
+#endif
 
 #define printMessageFooter( A )\
     {\

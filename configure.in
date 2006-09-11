@@ -91,10 +91,6 @@ else
   ldflags_is_set=yes
 fi
 
-# The following hack should ensure that configure doesn't add optimizing
-# or debugging flags to CFLAGS or CXXFLAGS
-CFLAGS="$CFLAGS "
-
 dnl Checks for programs.
 AC_PROG_AWK
 AC_PROG_CC
@@ -538,7 +534,7 @@ then
 fi
 # We have to remove any ' around paths as this confuses configure
 OPT=`echo $OPT | sed -e "s;';;g"`
-CFLAGS="$CFLAGS $OPT"
+CFLAGS="$OPT $CFLAGS"
 
 MYSQL_LIB=`$mysql_config --libs | sed -e "s;';;g"`
 OPT=`$mysql_config --libs_r`
@@ -876,6 +872,27 @@ then
   myodbc_test_linklib="$myodbc_link_dmlib"
 fi
 AC_SUBST(myodbc_test_linklib)
+
+###################################################################
+#                                                                 #
+# Find out if compiler defines __func__ or __FUNCTION__ macro     #
+#                                                                 #
+###################################################################
+
+# Use expression that will result in syntax error if undefined
+AC_MSG_CHECKING([if compiler defines the __FUNCTION__ macro])
+AC_TRY_COMPILE([],[const char *cp = __FUNCTION__;],
+ [AC_MSG_RESULT([yes])
+  AC_DEFINE(USE_GNU_FUNC_MACRO, 1,
+            [Define if compiler defines __FUNCTION__])],
+ [AC_MSG_RESULT([no])])
+
+AC_MSG_CHECKING([if compiler defines the C99 __func__ macro])
+AC_TRY_COMPILE([], [const char *cp = __func__;],
+ [AC_MSG_RESULT([yes])
+  AC_DEFINE(USE_C99_FUNC_MACRO, 1,
+            [Define if compiler defines C99 __func__ macro])],
+ [AC_MSG_RESULT([no])])
 
 ###################################################################
 #                                                                 #
