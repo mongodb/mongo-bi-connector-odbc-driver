@@ -154,7 +154,7 @@ AM_CONDITIONAL(SEPARATE_THREAD_SAFE_DRIVER, test "x$gotthread" != "xno")
 # FIXME handle 64 bit if other than "lib" directory
 AC_ARG_WITH(ltdl-path,
 [AC_HELP_STRING([--with-ltdl-path=DIR],
-	        [Where libtool "libltdl" and "ltdl.h" are installed])],
+                [Where libtool "libltdl" and "ltdl.h" are installed])],
 [
  CPPFLAGS="$CPPFLAGS -I$withval/include"
  LDFLAGS="$LDFLAGS -L$withval/lib"
@@ -376,7 +376,7 @@ case "$target_os" in
          case "$LDFLAGS" in
            *-belf*) ;;
            *)
-	     echo "Adding -belf option to ldflags."
+             echo "Adding -belf option to ldflags."
              LDFLAGS="$LDFLAGS -belf"
            ;;
          esac
@@ -492,7 +492,7 @@ AC_SUBST(PERL5)
 ###################################################################
 #                                                                 #
 # Check for the client libraries and compile options              #
-# Options are taken from the output of mysql_config		  #
+# Options are taken from the output of mysql_config               #
 #                                                                 #
 ###################################################################
 
@@ -655,7 +655,7 @@ AC_DEFINE([USE_UNIXODBC], [1], [use iODBC])
 # Default to /usr if not specified
 if test "x$unixODBC" = "x"
 then
-	unixODBC="/usr";
+  unixODBC="/usr";
 fi
 
 myodbc_link_dmlib="-lodbc"
@@ -905,6 +905,108 @@ case "$host_os" in
   *aix*) ;;
   *) AC_CHECK_FUNCS(strndup) ;;
 esac
+
+###################################################################
+#                                                                 #
+# Handle declaration compatibility problems                       #
+#                                                                 #
+###################################################################
+
+# Function SQLParamOptions() is depricated in ODBC 3
+AC_MSG_CHECKING([if SQLParamOptions() 2/3rd arg is compatible with SQLULEN])
+AC_COMPILE_IFELSE(
+[
+  AC_LANG_SOURCE(
+  [
+    #include <sql.h>
+    #include <sqlext.h>
+
+    SQLRETURN SQL_API SQLParamOptions( SQLHSTMT     hstmt, 
+				       SQLULEN      crow,
+				       SQLULEN      *pirow __attribute__((unused)) )
+    { return 1; }
+  ])
+],
+[
+  AC_MSG_RESULT([yes])
+  AC_DEFINE(USE_SQLPARAMOPTIONS_SQLULEN_PTR, 1,
+            [Define if SQLParamOptions() 2/3rd arg is compatible with SQLULEN])
+],
+[
+  AC_MSG_RESULT([no])
+  AC_MSG_CHECKING([if SQLParamOptions() 2/3rd arg is compatible with SQLUINTEGER])
+  AC_COMPILE_IFELSE(
+  [
+    AC_LANG_SOURCE(
+    [
+      #include <sql.h>
+      #include <sqlext.h>
+
+      SQLRETURN SQL_API SQLParamOptions( SQLHSTMT     hstmt, 
+                                         SQLUINTEGER  crow,
+                                         SQLUINTEGER *pirow __attribute__((unused)) )
+      { return 1; }
+    ])
+  ],
+  [
+    AC_MSG_RESULT([yes])
+    AC_DEFINE(USE_SQLPARAMOPTIONS_SQLUINTEGER_PTR, 1,
+              [Define if SQLParamOptions() 2/3rd arg is compatible with SQLUINTEGER])
+  ],
+  [ AC_MSG_RESULT([no]) ])
+])
+
+# Microsoft changed declaration for 64 bits to SQLLEN*, from SQLPOINTER
+AC_MSG_CHECKING([if SQLColAttribute() last arg is compatible with SQLLEN*])
+AC_COMPILE_IFELSE(
+[
+  AC_LANG_SOURCE(
+  [
+    #include <sql.h>
+    #include <sqlext.h>
+
+    SQLRETURN SQL_API SQLColAttribute( SQLHSTMT  StatementHandle,
+                                       SQLUSMALLINT ColumnNumber,
+                                       SQLUSMALLINT FieldIdentifier,
+                                       SQLPOINTER  CharacterAttributePtr,
+                                       SQLSMALLINT BufferLength,
+                                       SQLSMALLINT *StringLengthPtr,
+                                       SQLLEN *  NumericAttributePtr )
+    { return 1; }
+  ])
+],
+[
+  AC_MSG_RESULT([yes])
+  AC_DEFINE(USE_SQLCOLATTRIBUTE_SQLLEN_PTR, 1,
+            [Define if SQLColAttribute() last arg is compatible with SQLLEN*])
+],
+[
+  AC_MSG_RESULT([no])
+  AC_MSG_CHECKING([if SQLColAttribute() last arg is compatible with SQLPOINTER])
+  AC_COMPILE_IFELSE(
+  [
+    AC_LANG_SOURCE(
+    [
+      #include <sql.h>
+      #include <sqlext.h>
+
+      SQLRETURN SQL_API SQLColAttribute( SQLHSTMT  StatementHandle,
+                                         SQLUSMALLINT ColumnNumber,
+                                         SQLUSMALLINT FieldIdentifier,
+                                         SQLPOINTER  CharacterAttributePtr,
+                                         SQLSMALLINT BufferLength,
+                                         SQLSMALLINT *StringLengthPtr,
+                                         SQLPOINTER  NumericAttributePtr )
+      { return 1; }
+    ])
+  ],
+  [
+    AC_MSG_RESULT([yes])
+    AC_DEFINE(USE_SQLCOLATTRIBUTE_SQLPOINTER, 1,
+              [Define if SQLColAttribute() last arg is compatible with SQLPOINTER])
+  ],
+  [ AC_MSG_RESULT([no]) ])
+])
 
 ###################################################################
 #                                                                 #

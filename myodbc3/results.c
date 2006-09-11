@@ -546,21 +546,15 @@ get_col_attr(SQLHSTMT     StatementHandle,
   @purpose : rerunrs column atribute values
 */
 
-#if defined(__APPLE__)
 SQLRETURN SQL_API SQLColAttribute( SQLHSTMT  StatementHandle,
                                    SQLUSMALLINT ColumnNumber,
                                    SQLUSMALLINT FieldIdentifier,
                                    SQLPOINTER  CharacterAttributePtr,
                                    SQLSMALLINT BufferLength,
                                    SQLSMALLINT *StringLengthPtr,
+#ifdef USE_SQLCOLATTRIBUTE_SQLLEN_PTR
                                    SQLLEN *  NumericAttributePtr )
 #else
-SQLRETURN SQL_API SQLColAttribute( SQLHSTMT  StatementHandle,
-                                   SQLUSMALLINT ColumnNumber,
-                                   SQLUSMALLINT FieldIdentifier,
-                                   SQLPOINTER  CharacterAttributePtr,
-                                   SQLSMALLINT BufferLength,
-                                   SQLSMALLINT *StringLengthPtr,
                                    SQLPOINTER  NumericAttributePtr )
 #endif
 {

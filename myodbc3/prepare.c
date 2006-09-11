@@ -316,9 +316,15 @@ SQLRETURN SQL_API SQLDescribeParam( SQLHSTMT        hstmt,
   @purpose : sets multiple values (arrays) for the set of parameter markers
 */
 
+#ifdef USE_SQLPARAMOPTIONS_SQLULEN_PTR
+SQLRETURN SQL_API SQLParamOptions( SQLHSTMT     hstmt, 
+                                   SQLULEN      crow,
+                                   SQLULEN      *pirow __attribute__((unused)) )
+#else
 SQLRETURN SQL_API SQLParamOptions( SQLHSTMT     hstmt, 
                                    SQLUINTEGER  crow,
                                    SQLUINTEGER *pirow __attribute__((unused)) )
+#endif
 {
     MYODBCDbgEnter("SQLParamOptions");
 
