@@ -10,6 +10,11 @@
 
 #include <sqlext.h>
 
+/* Disable _attribute__ on non-gcc compilers. */
+#if !defined(__attribute__) && !define(__GNUC__)
+# define __attribute__(arg)
+#endif
+
 #ifdef HAVE_STRTOL
 
 char *szSyntax =
