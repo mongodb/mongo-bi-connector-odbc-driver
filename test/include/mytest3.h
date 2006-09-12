@@ -597,7 +597,7 @@ bool driver_supports_positioned_ops(SQLHDBC hdbc)
     rc = SQLGetInfo(hdbc, SQL_POS_OPERATIONS, &status, 0, NULL);
     mycon(hdbc,rc);
 
-    if (status & (SQL_POS_UPDATE || SQL_POS_DELETE))
+    if ((status & SQL_POS_UPDATE) || (status & SQL_POS_DELETE))
         return true;
     return false;
 }
