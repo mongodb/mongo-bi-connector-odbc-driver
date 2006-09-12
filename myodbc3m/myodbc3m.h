@@ -11,7 +11,7 @@
 #include <sqlext.h>
 
 /* Disable _attribute__ on non-gcc compilers. */
-#if !defined(__attribute__) && !define(__GNUC__)
+#if !defined(__attribute__) && !defined(__GNUC__)
 # define __attribute__(arg)
 #endif
 
