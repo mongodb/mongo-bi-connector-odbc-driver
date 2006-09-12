@@ -30,8 +30,8 @@
 void my_init_table(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN   rc;
-    SQLINTEGER  id;
-    SQLCHAR     name[50];
+    long        id;
+    char        name[50];
 
     /* drop table 'my_demo_param' if it already exists */
     printMessage(" creating table 'my_demo_cursor'\n");
@@ -101,7 +101,7 @@ void my_init_table(SQLHDBC hdbc, SQLHSTMT hstmt)
 void my_positioned_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN   rc;
-    SQLINTEGER  nRowCount;
+    SQLLEN      nRowCount;
     SQLHSTMT    hstmt_pos;
 
     /* create new statement handle */
@@ -184,8 +184,9 @@ void my_positioned_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
 void my_setpos_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN   rc;
-    SQLINTEGER  id, nRowCount;
-    SQLCHAR     name[50];
+    SQLLEN      nRowCount;
+    long        id;
+    char        name[50];
 
     printMessage("\nmy_setpos_cursor:\n");
 

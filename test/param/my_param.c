@@ -112,8 +112,9 @@ void my_param_insert(SQLHDBC hdbc, SQLHSTMT hstmt)
 void my_param_update(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN   rc;
-    SQLINTEGER  id=9, nRowCount;
-    SQLCHAR     name[]="update";
+    SQLLEN nRowCount;
+    long id=9;
+    char name[]="update";
 
     /* prepare the insert statement with parameters */
     rc = SQLPrepare(hstmt,"UPDATE my_demo_param set name = ? WHERE id = ?",SQL_NTS);
@@ -165,7 +166,8 @@ void my_param_update(SQLHDBC hdbc, SQLHSTMT hstmt)
 void my_param_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN   rc;
-    SQLINTEGER  id, nRowCount;
+    SQLLEN nRowCount;
+    long id;
 
     /* supply data to parameter 1 */    
     rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, 

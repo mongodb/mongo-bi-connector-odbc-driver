@@ -21,11 +21,11 @@ BLOB SPEED TEST
 */
 void t_blob(SQLHDBC hdbc, SQLHSTMT hstmt, SQLUINTEGER blob_size)
 {
-    SQLRETURN rc;  
-    SQLUINTEGER cbValue;
+    SQLRETURN rc;
+    SQLULEN cbValue;
     SQLUINTEGER j= 0;
-    SQLINTEGER l;
-    SQLCHAR* blobbuf;
+    long l;
+    char *blobbuf;
     SQLUINTEGER blobbuf_size = 1024 * 1 * 6L;
     SQLUINTEGER blob_read;
     SQLPOINTER token;
@@ -88,7 +88,7 @@ void t_blob(SQLHDBC hdbc, SQLHSTMT hstmt, SQLUINTEGER blob_size)
     finish = clock();
 
     duration = (finish-start)/CLOCKS_PER_SEC;
-    printMessage("\n j: %d", j);
+    printMessage("\n j: %d\n", j);
     myassert(j == blob_size);
     printMessage("Wrote %ld bytes in %3.3lf seconds (%lg bytes/s)\n",
                  j, duration, duration == 0.0 ? 9.99e99 : j / duration);
@@ -134,7 +134,8 @@ void t_blob(SQLHDBC hdbc, SQLHSTMT hstmt, SQLUINTEGER blob_size)
 void t_1piecewrite2(HDBC hdbc, HSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER cbValue,cbValue2,l;
+    SQLLEN cbValue,cbValue2;
+    long l;
     SQLCHAR* blobbuf;
     size_t i;
 

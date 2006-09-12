@@ -22,7 +22,7 @@ Testing basic scrolling feature
 void t_scroll(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER i;
+    long      i;
 
     SQLExecDirect(hstmt,"drop table t_scroll",SQL_NTS);
 
@@ -145,8 +145,9 @@ Testing SQL_FETCH_RELATIVE with row_set_size as 10
 void t_relative(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER i,index,nrows,iarray[15];
-    SQLCHAR name[21];
+    SQLINTEGER nrows;
+    long      i,index,iarray[15];
+    char      name[21];
 
     SQLExecDirect(hstmt,"drop table t_relative",SQL_NTS);
 
@@ -192,7 +193,7 @@ void t_relative(SQLHDBC hdbc,SQLHSTMT hstmt)
     rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);/* 1-10 */
     mystmt(hstmt,rc);
 
-    printMessage("1-10, total rows:%d\n",nrows);
+    printMessage("1-10, total rows:%ld\n",nrows);
     myassert(nrows == 10);
 
     for (index=1; index<=nrows; index++)
@@ -282,7 +283,8 @@ Testing SQL_FETCH_RELATIVE with row_set_size as 1
 void t_relative1(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER i,nrows;
+    SQLINTEGER nrows;
+    long i;
     const int max_rows=10;
 
     SQLExecDirect(hstmt,"drop table t_relative1",SQL_NTS);
@@ -485,7 +487,8 @@ Testing SQL_FETCH_RELATIVE with row_set_size as 2
 void t_relative2(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER i,nrows,iarray[15];
+    SQLINTEGER nrows;
+    long i,iarray[15];
     const int max_rows=10;
 
     SQLExecDirect(hstmt,"drop table t_relative2",SQL_NTS);

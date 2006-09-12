@@ -65,13 +65,13 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
     {
         
         case SQL_ATTR_ASYNC_ENABLE:
-            if ((SQLUINTEGER)ValuePtr == SQL_ASYNC_ENABLE_ON)
+            if (ValuePtr == (SQLPOINTER) SQL_ASYNC_ENABLE_ON)
                 MYODBCDbgReturn(set_handle_error(HandleType,Handle,MYERR_01S02,
                                                  "Doesn't support asynchronous, changed to default",0));
             break;
 
         case SQL_ATTR_CURSOR_SENSITIVITY:
-            if ((SQLUINTEGER)ValuePtr != SQL_UNSPECIFIED)
+            if (ValuePtr != (SQLPOINTER) SQL_UNSPECIFIED)
             {
                 MYODBCDbgReturn(set_handle_error(HandleType,Handle,MYERR_01S02,
                                                  "Option value changed to default cursor sensitivity(unspecified)",0));
@@ -82,13 +82,13 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
             if (((STMT FAR*)Handle)->dbc->flag & FLAG_FORWARD_CURSOR)
             {
                 options->cursor_type= SQL_CURSOR_FORWARD_ONLY;
-                if ((SQLUINTEGER) ValuePtr != SQL_CURSOR_FORWARD_ONLY)
+                if (ValuePtr != (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY)
                     MYODBCDbgReturn(set_handle_error(HandleType,Handle,MYERR_01S02,
                                                      "Forcing the use of forward-only cursor)",0));
             }
             else if (((STMT FAR*)Handle)->dbc->flag & FLAG_DYNAMIC_CURSOR)
             {
-                if ((SQLUINTEGER) ValuePtr != SQL_CURSOR_KEYSET_DRIVEN)
+                if (ValuePtr != (SQLPOINTER)SQL_CURSOR_KEYSET_DRIVEN)
                     options->cursor_type= (SQLUINTEGER)ValuePtr;
 
                 else
@@ -100,8 +100,8 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
             }
             else
             {
-                if ((SQLUINTEGER) ValuePtr == SQL_CURSOR_FORWARD_ONLY ||
-                    (SQLUINTEGER) ValuePtr == SQL_CURSOR_STATIC)
+                if (ValuePtr == (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY ||
+                    ValuePtr == (SQLPOINTER)SQL_CURSOR_STATIC)
                     options->cursor_type= (SQLUINTEGER)ValuePtr;
 
                 else
@@ -122,7 +122,7 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
             break;
 
         case SQL_ATTR_METADATA_ID:
-            if ((SQLUINTEGER)ValuePtr == SQL_TRUE)
+            if (ValuePtr == (SQLPOINTER) SQL_TRUE)
                 MYODBCDbgReturn(set_handle_error(HandleType,Handle,MYERR_01S02,
                                                  "Doesn't support SQL_ATTR_METADATA_ID to true, changed to default",0));
             break;
@@ -136,7 +136,7 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
             break;
 
         case SQL_ATTR_SIMULATE_CURSOR:
-            if ((SQLUINTEGER)ValuePtr != SQL_SC_TRY_UNIQUE)
+            if (ValuePtr != (SQLPOINTER) SQL_SC_TRY_UNIQUE)
                 MYODBCDbgReturn(set_handle_error(HandleType,Handle,MYERR_01S02,
                                                  "Option value changed to default cursor simulation",0));
             break;
@@ -295,7 +295,7 @@ set_con_attr(SQLHDBC    hdbc,
             break;
 
         case SQL_ATTR_AUTOCOMMIT:
-            if ((SQLUINTEGER)ValuePtr != SQL_AUTOCOMMIT_ON)
+            if (ValuePtr != (SQLPOINTER) SQL_AUTOCOMMIT_ON)
             {
                 if (!dbc->server) /* no connection yet */
                 {
@@ -361,7 +361,7 @@ set_con_attr(SQLHDBC    hdbc,
 
         case SQL_ATTR_ODBC_CURSORS:
             if ((dbc->flag & FLAG_FORWARD_CURSOR) &&
-                (SQLUINTEGER)ValuePtr != SQL_CUR_USE_ODBC)
+                ValuePtr != (SQLPOINTER) SQL_CUR_USE_ODBC)
                 MYODBCDbgReturn(set_conn_error(hdbc,MYERR_01S02,
                                                "Forcing the Driver Manager to use ODBC cursor library",0));
             break;
@@ -565,17 +565,17 @@ set_stmt_attr(SQLHSTMT   hstmt,
     {
         
         case SQL_ATTR_CURSOR_SCROLLABLE:
-            if ((SQLUINTEGER)ValuePtr == SQL_NONSCROLLABLE &&
+            if (ValuePtr == (SQLPOINTER)SQL_NONSCROLLABLE &&
                 options->cursor_type != SQL_CURSOR_FORWARD_ONLY)
                 options->cursor_type= SQL_CURSOR_FORWARD_ONLY;
 
-            else if ((SQLUINTEGER)ValuePtr == SQL_SCROLLABLE &&
+            else if (ValuePtr == (SQLPOINTER)SQL_SCROLLABLE &&
                      options->cursor_type == SQL_CURSOR_FORWARD_ONLY)
                 options->cursor_type= SQL_CURSOR_STATIC;
             break;
 
         case SQL_ATTR_AUTO_IPD:
-            if ((SQLUINTEGER) ValuePtr != SQL_FALSE)
+            if (ValuePtr != (SQLPOINTER)SQL_FALSE)
                 MYODBCDbgReturn(set_error(hstmt,MYERR_01S02,
                                           "Option value changed to default auto ipd",0));
             break;
@@ -589,7 +589,7 @@ set_stmt_attr(SQLHSTMT   hstmt,
             break;
 
         case SQL_ATTR_PARAMSET_SIZE:
-            if ((SQLUINTEGER)ValuePtr != 1)
+            if (ValuePtr != (SQLPOINTER)1)
                 MYODBCDbgReturn(set_error(hstmt,MYERR_01S02,
                                           "Option value changed to default parameter size",
                                           0));
@@ -843,7 +843,7 @@ SQLSetEnvAttr(SQLHENV    henv,
             break;
 
         case SQL_ATTR_OUTPUT_NTS:
-            if ((SQLINTEGER)ValuePtr == SQL_TRUE)
+            if (ValuePtr == (SQLPOINTER)SQL_TRUE)
                 break;
 
         default:

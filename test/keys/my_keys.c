@@ -23,7 +23,8 @@ UPDATE with primary keys ...
 void my_primary_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER nData,rowcount;
+    SQLLEN rowcount;
+    long nData;
 
     SQLExecDirect(hstmt,"drop table my_primary_keys",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table my_primary_keys(col1 int not null,\
@@ -123,7 +124,8 @@ UPDATE with unique and notnull  keys ...
 void my_unique_notnull_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER nData,rowcount;
+    SQLLEN rowcount;
+    long nData;
 
     SQLExecDirect(hstmt,"drop table my_unique_notnull_keys",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table my_unique_notnull_keys(col1 int not null,\
@@ -223,7 +225,8 @@ UPDATE with unique keys ...
 void my_unique_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER nData,rowcount;
+    SQLLEN rowcount;
+    long nData;
 
     SQLExecDirect(hstmt,"drop table my_unique_keys",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table my_unique_keys(col1 int not null,\
@@ -322,7 +325,8 @@ UPDATE with not null keys ...
 void my_notnull_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER nData,rowcount;
+    SQLLEN rowcount;
+    long nData;
 
     SQLExecDirect(hstmt,"drop table my_unique_keys",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table my_notnull_keys(col1 int,\
@@ -421,7 +425,8 @@ UPDATE with no keys ...
 void my_no_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER nData,rowcount;
+    long nData;
+    SQLLEN rowcount;
 
     /* INIT */
     SQLExecDirect(hstmt,"drop table my_no_keys",SQL_NTS);
@@ -521,7 +526,8 @@ UPDATE with no keys with all duplicate columns...
 void my_no_keys_all_dups(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER nData,rowcount;
+    SQLLEN rowcount;
+    long nData;
 
     SQLExecDirect(hstmt,"drop table my_no_keys_all_dups",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table my_no_keys_all_dups (col1 int,\
@@ -786,7 +792,7 @@ static void my_init_fkey(SQLHDBC hdbc,SQLHSTMT hstmt)
 void my_foreign_keys(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
     SQLRETURN   rc=0;
-    SQLCHAR   dbc[255];
+    char        dbc[255];
 
     server_is_mysql(hdbc) ? my_init_mysql_fkey(hdbc,hstmt) : my_init_fkey(hdbc,hstmt);
 
@@ -1006,9 +1012,9 @@ void my_foreign_keys(SQLHDBC hdbc,SQLHSTMT hstmt)
 
 void t_strstr()
 {
-    SQLCHAR *string = "'TABLE','VIEW','SYSTEM TABLE'";
-    SQLCHAR *str=",";
-    SQLCHAR *type;
+    char    *string = "'TABLE','VIEW','SYSTEM TABLE'";
+    char    *str=",";
+    char    *type;
 
     type = strstr((const char *)string,(const char *)str);
     while (type++)
@@ -1026,14 +1032,14 @@ static void my_tables(SQLHENV henv,SQLHDBC hdbc,SQLHSTMT hstmt)
 {
     SQLHDBC   hdbc1;
     SQLHSTMT  hstmt1;
-    SQLRETURN rc; 
-    SQLCHAR   conn[155];
+    SQLRETURN rc;
+    char      conn[155];
 
     SQLExecDirect(hstmt,"DROP DATABASE my_tables_test_db",SQL_NTS);
     rc = SQLExecDirect(hstmt,"CREATE DATABASE my_tables_test_db",SQL_NTS);
     mystmt(hstmt,rc);
 
-    sprintf(conn,"DSN=%s;UID=%s;PASSWORD=%s;DATABASE=%s",
+    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PASSWORD=%s;DATABASE=%s",
             mydsn,myuid,mypwd,"my_tables_test_db");
 
     rc = SQLAllocConnect(henv,&hdbc1);
@@ -1192,7 +1198,6 @@ int main(int argc, char *argv[])
     my_foreign_keys(hdbc,hstmt);   
     if (driver_supports_setpos(hdbc))
     {
-        my_no_keys(hdbc,hstmt);
         my_primary_keys(hdbc,hstmt);
         my_unique_notnull_keys(hdbc,hstmt);
         my_unique_keys(hdbc,hstmt);

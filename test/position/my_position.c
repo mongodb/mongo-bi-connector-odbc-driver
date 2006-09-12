@@ -22,8 +22,8 @@ Test SQL_POSITION
 void t_chunk(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLCHAR   txt[100];
-    SQLINTEGER len;
+    char      txt[100];
+    SQLLEN    len;
 
     if (!driver_supports_setpos(hdbc))
         return;

@@ -24,14 +24,14 @@ void t_true_length(SQLHENV henv)
     SQLRETURN rc;
     SQLHDBC hdbc;
     SQLHSTMT hstmt;
-    SQLCHAR data1[25],data2[25];
+    char     conn[100];
+    char     data1[25],data2[25];
     SQLINTEGER len1,len2,desc_len;
-    SQLCHAR  conn[100];
 
     rc = SQLAllocConnect(henv,&hdbc);
     myenv(henv,rc);
 
-    sprintf(conn,"DSN=%s;UID=%s;PWD=%s;OPTION=0",mydsn,myuid,mypwd); 
+    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=0",mydsn,myuid,mypwd); 
     rc = SQLDriverConnect(hdbc,NULL,conn,sizeof(conn),NULL,0,NULL,SQL_DRIVER_COMPLETE);
     mycon(hdbc,rc);
 
@@ -102,19 +102,20 @@ void t_max_length(SQLHENV henv)
     SQLHDBC hdbc;
     SQLHSTMT hstmt;
     SQLCHAR data1[25],data2[25];
-    SQLINTEGER len1,len2,desc_len;
+    SQLULEN desc_len;
+    SQLINTEGER len1,len2;
     SQLCHAR  conn[100];
 
     rc = SQLAllocConnect(henv,&hdbc);
     myenv(henv,rc);
 
-    sprintf(conn,"DSN=%s;UID=%s;PWD=%s;OPTION=1",mydsn,myuid,mypwd); 
+    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=1",mydsn,myuid,mypwd); 
     rc = SQLDriverConnect(hdbc,NULL,conn,sizeof(conn),NULL,0,NULL,SQL_DRIVER_COMPLETE);
     mycon(hdbc,rc);
 
     rc = SQLAllocStmt(hdbc,&hstmt);
     mycon(hdbc,rc);
-    sprintf(conn,"DSN=%s;UID=%s;PWD=%s;OPTION=0",mydsn,myuid,mypwd); 
+    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=0",mydsn,myuid,mypwd); 
 
     rc = SQLExecDirect(hstmt,"CREATE DATABASE IF NOT EXISTS client_odbc_test",SQL_NTS);
     mystmt(hstmt,rc);

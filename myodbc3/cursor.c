@@ -408,25 +408,26 @@ static SQLRETURN exec_stmt_query(STMT FAR *stmt,char *query,
   @purpose : copy row buffers to statement
 */
 
-static SQLRETURN copy_field_data(STMT FAR *stmt, PARAM_BIND  param,
+static SQLRETURN copy_field_data(STMT FAR *stmt, PARAM_BIND *param,
                                  NET **net, SQLCHAR **to)
 {
+    PARAM_BIND dummy;
     MYSQL mysql= stmt->dbc->mysql;
-    SQLUINTEGER length= *(param.actual_len)+5;
+    SQLUINTEGER length= *(param->actual_len)+5;
 
     if ( !(*to= (SQLCHAR*) extend_buffer(*net, (char*) *to,length)) )
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
-    if ( !(*to= (SQLCHAR*) insert_param(&mysql, (char*) *to, &param)) )
+    if ( !(*to= (SQLCHAR*) insert_param(&mysql, (char*) *to, param)) )
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
     /* Insert " AND ", where clause with multiple search */
-    param.SqlType= SQL_INTEGER;
-    param.CType= SQL_C_CHAR;
-    param.buffer= (gptr) " AND ";
-    *param.actual_len= 5;
+    dummy.SqlType= SQL_INTEGER;
+    dummy.CType= SQL_C_CHAR;
+    dummy.buffer= (gptr) " AND ";
+    *dummy.actual_len= 5;
 
-    if ( !(*to= (SQLCHAR*) insert_param(&mysql, (char*) *to, &param)) )
+    if ( !(*to= (SQLCHAR*) insert_param(&mysql, (char*) *to, &dummy)) )
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
     return SQL_SUCCESS;
@@ -467,7 +468,7 @@ static my_bool insert_field(STMT FAR *stmt, MYSQL_RES *result,
 
         param.actual_len= &length;
 
-        if ( copy_field_data(stmt,param,&net,&to) != SQL_SUCCESS )
+        if ( copy_field_data(stmt,&param,&net,&to) != SQL_SUCCESS )
             return 1;
 
         length= (uint) ((char *)to - (char*) net->buff);
