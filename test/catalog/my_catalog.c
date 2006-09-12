@@ -358,7 +358,8 @@ void my_tablepriv(SQLHDBC hdbc,SQLHSTMT hstmt)
                              "test_tabprev3",SQL_NTS);  /* TableName  */
     mystmt(hstmt,rc);
 
-    assert( 9 == my_print_non_format_result(hstmt));
+    // value changed due to two additional rows in the result related to VIEWs
+    assert( 11 == my_print_non_format_result(hstmt));
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
@@ -384,7 +385,8 @@ void my_tablepriv(SQLHDBC hdbc,SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
 
-    assert( 11  == my_print_non_format_result(hstmt));
+    // value changed due to two additional rows in the result related to VIEWs
+    assert( 13  == my_print_non_format_result(hstmt));
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
