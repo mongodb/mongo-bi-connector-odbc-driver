@@ -416,7 +416,7 @@ int ExecuteSQL( SQLHDBC hDbc, char *szSQL, char cDelimiter, int bColumnNames, in
 
     do
     {
-        strcpy ( szSepLine, "" ) ;
+        strcpy ( (char *)szSepLine, "" ) ;
 
         /*
          * check to see if it has generated a result set
@@ -608,7 +608,7 @@ void WriteBodyHTMLTable( SQLHSTMT hStmt )
 {
     SQLUSMALLINT    nCol                            = 0;
     SQLSMALLINT     nColumns                        = 0;
-    SQLINTEGER      nIndicator                      = 0;
+    SQLLEN          nIndicator                      = 0;
     SQLCHAR         szColumnValue[MAX_DATA_WIDTH+1] = "";
     SQLRETURN       nReturn                         = 0;
     SQLRETURN       ret;
@@ -647,7 +647,7 @@ void WriteBodyHTMLTable( SQLHSTMT hStmt )
     }
 }
 
-void WriteFooterHTMLTable( SQLHSTMT hStmt )
+void WriteFooterHTMLTable( SQLHSTMT hStmt __attribute__((unused)))
 {
     printf( "</table>\n" );
 }
@@ -681,7 +681,7 @@ void WriteBodyDelimited( SQLHSTMT hStmt, char cDelimiter )
 {
     SQLUSMALLINT    nCol                            = 0;
     SQLSMALLINT     nColumns                        = 0;
-    SQLINTEGER      nIndicator                      = 0;
+    SQLLEN          nIndicator                      = 0;
     SQLCHAR         szColumnValue[MAX_DATA_WIDTH+1] = "";
     SQLRETURN       nReturn                         = 0;
     SQLRETURN       ret;
@@ -766,7 +766,7 @@ SQLINTEGER WriteBodyNormal( SQLHSTMT hStmt )
 {
     SQLUSMALLINT    nCol                            = 0;
     SQLSMALLINT     nColumns                        = 0;
-    SQLINTEGER      nIndicator                      = 0;
+    SQLLEN          nIndicator                      = 0;
     SQLCHAR         szColumn[MAX_DATA_WIDTH+20]     = "";
     SQLCHAR         szColumnValue[MAX_DATA_WIDTH+1] = "";
     SQLRETURN       nReturn                         = 0;
@@ -818,12 +818,12 @@ SQLINTEGER WriteBodyNormal( SQLHSTMT hStmt )
 
 void WriteFooterNormal( SQLHSTMT hStmt, SQLCHAR *szSepLine, SQLINTEGER nRows )
 {
-    SQLINTEGER nRowsAffected    = -1;
+    SQLLEN     nRowsAffected    = -1;
 
     printf( (char*)szSepLine );
 
     SQLRowCount( hStmt, &nRowsAffected );
-    printf( "SQLRowCount returns %d\n", nRowsAffected );
+    printf( "SQLRowCount returns %ld\n", nRowsAffected );
 
     if ( nRows )
     {

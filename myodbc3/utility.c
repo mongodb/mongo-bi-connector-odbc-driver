@@ -232,7 +232,7 @@ SQLRETURN copy_str_data(SQLSMALLINT HandleType, SQLHANDLE Handle,
 SQLRETURN
 copy_lresult(SQLSMALLINT HandleType, SQLHANDLE Handle,
              SQLCHAR FAR *rgbValue, SQLINTEGER cbValueMax,
-             SQLINTEGER FAR *pcbValue,char *src,long src_length,
+             SQLLEN *pcbValue,char *src,long src_length,
              long max_length,long fill_length,ulong *offset,
              my_bool binary_data)
 {

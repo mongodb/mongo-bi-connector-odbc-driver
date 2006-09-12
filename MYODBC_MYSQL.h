@@ -1,7 +1,7 @@
 #ifndef MYODBC_MYSQL_H
 #define MYODBC_MYSQL_H
 
-#define MIN_MYSQL_VERSION 40000
+#define MIN_MYSQL_VERSION 40000L
 
 #ifdef __cplusplus
 extern "C"
@@ -25,6 +25,14 @@ error "MyODBC need a newer version of the MYSQL client library to compile"
 #define pthread_mutex_unlock(A)
 #define pthread_mutex_init(A,B)
 #define pthread_mutex_destroy(A)
+#endif
+
+/* Get rid of defines from my_config.h that conflict with our myconf.h */
+#ifdef VERSION
+# undef VERSION
+#endif
+#ifdef PACKAGE
+# undef PACKAGE
 #endif
 
 #ifdef __cplusplus

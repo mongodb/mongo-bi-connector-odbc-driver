@@ -21,6 +21,13 @@
 #ifndef MYODBCUTIL_H
 #define MYODBCUTIL_H
 
+/*
+  We define _GNU_SOURCE to get the definition of strndup() from string.h
+*/
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>

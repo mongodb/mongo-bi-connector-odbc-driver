@@ -82,13 +82,13 @@ static const char *my_next_token(const char *prev_token,
   @purpose : gets valid input buffer
 */
 
-static char *myodbc_get_valid_buffer( SQLCHAR *to, SQLCHAR *from, int length)
+static char *myodbc_get_valid_buffer(char *to, SQLCHAR *from, int length)
 {
     if ( !from )
         return "\0";
     if ( length == SQL_NTS )
-        length= strlen(from);
-    strmake( to, from, length );
+        length= strlen( (char *)from );
+    strmake( to, (char *)from, length );
     return to;
 }
 
@@ -274,15 +274,15 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
                             SQLCHAR FAR *szTableType,
                             SQLSMALLINT cbTableType)
 {
-    SQLCHAR      Qualifier_buff[NAME_LEN+1], 
-    Owner_buff[NAME_LEN+1],
-    Name_buff[NAME_LEN+1], 
-    Type_buff[NAME_LEN+1], 
-    *TableQualifier,
-    *TableOwner, 
-    *TableName, 
-    *TableType;
-    STMT FAR  *stmt= (STMT FAR*) hstmt;  
+    char Qualifier_buff[NAME_LEN+1],
+         Owner_buff[NAME_LEN+1],
+         Name_buff[NAME_LEN+1],
+         Type_buff[NAME_LEN+1],
+         *TableQualifier,
+         *TableOwner,
+         *TableName,
+         *TableType;
+    STMT FAR  *stmt= (STMT FAR*) hstmt;
     MYSQL_RES *result, *sys_result;
     my_bool   all_dbs= 1, sys_tables, user_tables;
 
@@ -434,8 +434,8 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
         }
     }
     {
-        MYSQL_ROW    data, row;
-        MEM_ROOT     *alloc;
+        MYSQL_ROW    data= 0, row;
+        MEM_ROOT     *alloc= 0;
         char         *db, *owner= "";
         my_ulonglong row_count;
 
@@ -707,10 +707,12 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
 {
     STMT FAR    *stmt= (STMT FAR*) hstmt;
     char        buff[80];
-    SQLCHAR     Qualifier_buff[NAME_LEN+1],
-    Table_buff[NAME_LEN+1], 
-    Column_buff[NAME_LEN+1], 
-    *TableQualifier, *TableName,*ColumnName;
+    char        Qualifier_buff[NAME_LEN+1],
+                Table_buff[NAME_LEN+1],
+                Column_buff[NAME_LEN+1],
+                *TableQualifier,
+                *TableName,
+                *ColumnName;
     char        *db= "";
     MYSQL_RES   *result;
     MYSQL_FIELD *curField;
@@ -1145,7 +1147,8 @@ SQLRETURN SQL_API SQLTablePrivileges(SQLHSTMT hstmt,
                                      SQLCHAR FAR *szTableQualifier,
                                      SQLSMALLINT cbTableQualifier,
                                      SQLCHAR FAR *szTableOwner,
-                                     SQLSMALLINT cbTableOwner,
+                                     SQLSMALLINT cbTableOwner
+                                       __attribute__((unused)),
                                      SQLCHAR FAR *szTableName,
                                      SQLSMALLINT cbTableName)
 {
@@ -1315,7 +1318,8 @@ SQLRETURN SQL_API SQLColumnPrivileges(SQLHSTMT hstmt,
                                       SQLCHAR FAR *szTableQualifier,
                                       SQLSMALLINT cbTableQualifier,
                                       SQLCHAR FAR *szTableOwner,
-                                      SQLSMALLINT cbTableOwner,
+                                      SQLSMALLINT cbTableOwner
+                                       __attribute__((unused)),
                                       SQLCHAR FAR *szTableName,
                                       SQLSMALLINT cbTableName,
                                       SQLCHAR FAR *szColumnName,
@@ -1462,7 +1466,8 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
                                     SQLCHAR FAR *szTableQualifier,
                                     SQLSMALLINT cbTableQualifier,
                                     SQLCHAR FAR *szTableOwner,
-                                    SQLSMALLINT cbTableOwner,
+                                    SQLSMALLINT cbTableOwner
+                                      __attribute__((unused)),
                                     SQLCHAR FAR *szTableName,
                                     SQLSMALLINT cbTableName,
                                     SQLUSMALLINT fScope,
@@ -1534,9 +1539,9 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
             row[3]= strdup_root(alloc,buff);
             sprintf(buff,"%d",type);
             row[2]= strdup_root(alloc,buff);
-            sprintf(buff,"%d",precision);
+            sprintf(buff,"%ld",precision);
             row[4]= strdup_root(alloc,buff);
-            sprintf(buff,"%d",transfer_length);
+            sprintf(buff,"%ld",transfer_length);
             row[5]= strdup_root(alloc,buff);
             sprintf(buff,"%d",field->decimals);
             row[6]= strdup_root(alloc,buff);
@@ -1605,9 +1610,9 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
         row[3]= strdup_root(alloc,buff);
         sprintf(buff,"%d",type);
         row[2]= strdup_root(alloc,buff);
-        sprintf(buff,"%d",precision);
+        sprintf(buff,"%ld",precision);
         row[4]= strdup_root(alloc,buff);
-        sprintf(buff,"%d",transfer_length);
+        sprintf(buff,"%ld",transfer_length);
         row[5]= strdup_root(alloc,buff);
         sprintf(buff,"%d",field->decimals);
         row[6]= strdup_root(alloc,buff);

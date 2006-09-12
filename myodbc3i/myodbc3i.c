@@ -159,7 +159,7 @@ char *szSyntax =
 char    cAction         = '\0';
 char    cObject         = '\0';
 char    cObjectSub      = '\0';
-char    nWnd            = 1;
+long    nWnd            = 1;
 char *  pszName         = NULL;
 char *  pszAttributes   = NULL;
 

@@ -37,7 +37,6 @@ BOOL MYODBCUtilReadConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszStr
     char *                  pAnchorChar    = (char *)pszStr;
     char *                  pScanChar      = (char *)pszStr;
     char *                  pszName        = 0;     
-    BOOL                    bInBraces      = 0;
 
     /* short circuit if we have not been given stuff to parse */
     if ( !pszStr || !(*pszStr) )
@@ -64,7 +63,7 @@ BOOL MYODBCUtilReadConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszStr
                       /* To prevent a memory leak when use such connection strings UID=root;PWD=;SERVER=localhost;... */
                         if( pszName )
                             free( pszName );
-                        pszName = (char *)_global_strndup( pAnchorChar, pScanChar - pAnchorChar );
+                        pszName = _global_strndup( pAnchorChar, pScanChar - pAnchorChar );
 
                         if ( *pScanChar == '=' )
                             nState = MYODBCUTIL_ATTR_PARSE_STATE_VALUE_START;

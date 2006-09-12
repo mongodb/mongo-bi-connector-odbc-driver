@@ -168,14 +168,15 @@ extern "C"
 
 typedef struct stmt_options
 {
-  SQLUINTEGER	bind_type,rows_in_set,cursor_type;
-  SQLUINTEGER * paramProcessedPtr;
-  SQLULEN *     rowsFetchedPtr;
+  SQLUINTEGER	   bind_type,rows_in_set,cursor_type;
+  SQLUINTEGER     *paramProcessedPtr;
+  SQLROWSETSIZE   *rowsFetchedPtr;
   SQLUINTEGER	   simulateCursor;
-  SQLINTEGER	   max_length,max_rows, *bind_offset;
-  SQLUSMALLINT	   *paramStatusPtr;
-  SQLUSMALLINT	   *rowStatusPtr;
-  SQLUSMALLINT	   *rowOperationPtr;
+  SQLINTEGER	   max_length, max_rows,
+                  *bind_offset;
+  SQLUSMALLINT	  *paramStatusPtr;
+  SQLUSMALLINT	  *rowStatusPtr;
+  SQLUSMALLINT	  *rowOperationPtr;
   my_bool	   retrieve_data;
 } STMT_OPTIONS;
 

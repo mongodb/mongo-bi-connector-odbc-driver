@@ -37,7 +37,6 @@
 char *default_locale, *decimal_point, *thousands_sep;
 uint decimal_point_length,thousands_sep_length;
 static my_bool myodbc_inited=0;
-static sig_handler myodbc_pipe_sig_handler(int sig);
 
 /*
   Sigpipe handler

@@ -69,7 +69,8 @@ SQLRETURN do_query(STMT FAR *stmt,char *query)
             if ( (tmp_buffer= my_malloc(length+30,MYF(0))) )
             {
                 memcpy(tmp_buffer,query,length);
-                sprintf(tmp_buffer+length," limit %lu",stmt->stmt_options.max_rows);
+                sprintf(tmp_buffer+length, " limit %lu",
+                        (unsigned long)stmt->stmt_options.max_rows);
                 if ( query != stmt->query )
                     my_free((gptr) query,MYF(0));
                 query= tmp_buffer;
@@ -275,7 +276,7 @@ char *insert_params(STMT FAR *stmt)
 
 char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param)
 {
-    uint length;
+    int length;
     char buff[128],*data;
     my_bool convert= 0;
     NET *net= &mysql->net;
@@ -686,12 +687,13 @@ SQLRETURN SQL_API SQLNativeSql(SQLHDBC hdbc,
                                SQLINTEGER cbSqlStrIn,
                                SQLCHAR FAR *szSqlStr,
                                SQLINTEGER cbSqlStrMax,
-                               SQLINTEGER FAR *pcbSqlStr)
+                               SQLINTEGER *pcbSqlStr)
 {
     ulong offset= 0;
     MYODBCDbgEnter("SQLNativeSql");
     MYODBCDbgReturn(copy_lresult(SQL_HANDLE_DBC, hdbc,
-                                 szSqlStr,cbSqlStrMax,pcbSqlStr,
+                                 szSqlStr,cbSqlStrMax,
+                                 (SQLLEN *)pcbSqlStr,
                                  (char*) szSqlStrIn, cbSqlStrIn,0L,0L,
                                  &offset,0));
 }

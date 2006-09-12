@@ -88,7 +88,7 @@ char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param);
 char *add_to_buffer(NET *net,char *to,char *from,ulong length);
 SQLRETURN copy_lresult(SQLSMALLINT HandleType, SQLHANDLE handle,
 		       SQLCHAR FAR *rgbValue, SQLINTEGER cbValueMax,
-		       SQLINTEGER FAR *pcbValue, char *src,
+		       SQLLEN *pcbValue, char *src,
 		       long src_length, long max_length,
 		       long fill_length,ulong *offset,my_bool binary_data);
 SQLRETURN copy_binary_result(SQLSMALLINT HandleType, SQLHANDLE handle,

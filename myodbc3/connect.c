@@ -286,44 +286,6 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
 
 
 /*
-  @type    : myodbc3 internal
-  @purpose : this function as its "normal" behavior is supposed to
-  bring up a dialog box if it isn't given enough information via
-  "szConnStrIn". If it is given enough information, it's supposed
-  to use "szConnStrIn" to  establish a database connection.
-  In either case, it returns a string to the user that is the
-  string that was eventually used to establish the connection
-*/
-
-static char *my_strtok(char *s1, pchar separator, char **save)
-{
-    reg1 char *rtnval,*end;
-
-    rtnval= NULL;
-    if (s1 != NULL)
-        end= s1;
-    else
-        end= *save;
-    if (end != NULL && *end != 0)
-    {
-        rtnval= end;
-        do
-        {
-            if (*end++ == separator)
-            {
-                if (separator)
-                    end[-1]= 0;
-                else
-                    end--;      /* \0 as separator */
-                break;
-            }
-        } while (*end != 0);
-        *save= end;
-    }
-    return(rtnval);
-}
-
-/*
 
 */
 SQLRETURN my_SQLDriverConnectTry( DBC *dbc, MYODBCUTIL_DATASOURCE *pDataSource )
@@ -363,7 +325,8 @@ SQLRETURN my_SQLDriverConnectTry( DBC *dbc, MYODBCUTIL_DATASOURCE *pDataSource )
 SQLRETURN SQL_API my_SQLDriverConnect( SQLHDBC             hdbc,
                                        SQLHWND             hwnd,
                                        SQLCHAR FAR *       szConnStrIn,
-                                       SQLSMALLINT         cbConnStrIn,
+                                       SQLSMALLINT         cbConnStrIn
+                                         __attribute__((unused)),
                                        SQLCHAR FAR *       szConnStrOut,
                                        SQLSMALLINT         cbConnStrOutMax,
                                        SQLSMALLINT FAR *   pcbConnStrOut,
@@ -675,7 +638,7 @@ SQLRETURN SQL_API my_SQLDriverConnect( SQLHDBC             hdbc,
         }
 
         if ( pcbConnStrOut )
-            *pcbConnStrOut = strlen( szConnStrOut );
+            *pcbConnStrOut = strlen( (char *)szConnStrOut );
     }
 
     exitDriverConnect0:

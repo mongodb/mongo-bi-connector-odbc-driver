@@ -724,7 +724,8 @@ static SQLRETURN build_where_clause( STMT FAR *       pStmt,
     {
         char buff[32];
 
-        sprintf( buff, " LIMIT %lu", pStmt->stmt_options.rows_in_set );
+        sprintf( buff, " LIMIT %lu",
+                 (unsigned long)pStmt->stmt_options.rows_in_set );
         dynstr_append( dynQuery, buff );
     }
     else
@@ -765,13 +766,13 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
 {
     PARAM_BIND    param;
     ulong         transfer_length,precision,display_size;
-    SQLINTEGER    length;
+    SQLLEN        length;
     uint          ncol, ignore_count= 0;
     MYSQL_FIELD *field;
     MYSQL_RES   *result= stmt->result;
     BIND        *bind;
     NET         *net=&stmt->dbc->mysql.net;
-    SQLINTEGER  *pcbValue;
+    SQLLEN      *pcbValue;
 
     dynstr_append_mem(dynQuery," SET ",5);
 
@@ -832,7 +833,7 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
         /*
             Check when SQL_LEN_DATA_AT_EXEC() macro was used instead of data length
         */
-        if ( length == (SQLUINTEGER)SQL_NTS )
+        if ( length == SQL_NTS )
             length= strlen(param.buffer);
                 else if ( length <= SQL_LEN_DATA_AT_EXEC_OFFSET )
                     length= -( length - SQL_LEN_DATA_AT_EXEC_OFFSET );
@@ -1078,7 +1079,7 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
     MYSQL_RES    *result= stmt->result;     /* result set we are working with                               */
     SQLUINTEGER  insert_count= 1;           /* num rows to insert - will be real value when row is 0 (all)  */
     SQLUINTEGER  count= 0;                  /* current row                                                  */
-    SQLINTEGER   length;
+    SQLLEN       length;
     NET          *net;
     SQLUSMALLINT ncol;
     SQLCHAR      *to;
@@ -1169,7 +1170,7 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
 
             /* We have a limited capacity to shove data across the wire. 
                but we handle this by sending in multiple calls to exec_stmt_query(). */
-            if ( ext_query->length+length >= net_buffer_length )
+            if ( ext_query->length + length >= (SQLLEN) net_buffer_length )
             {
                 break_insert= TRUE;
                 break;
