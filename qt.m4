@@ -277,26 +277,22 @@ AC_DEFUN([FUN_QT_PROGRAMS],
     AC_MSG_ERROR([cannot find Qt utilities!])
   else
     AC_MSG_RESULT([$qt_programs])
-    # find the right moc
-    if test -z "$MOC" ; then
-      AC_CHECK_PROG(MOC, moc, moc)
-      if test "x$MOC" = "x" ; then
-        # could be renamed to avoid clashes
-        if test -x "$qt_programs/moc" ; then
-          MOC="$qt_programs/moc"
-        else
-          if expr "$QTVERSION" '>=' "200" > /dev/null ; then
-            if test -x "$qt_programs/moc2" ; then
-              MOC="$qt_programs/moc2"
-            fi
-          else
-            if expr "$QTVERSION" '>=' "300" > /dev/null ; then
-              if $qt_programs/moc3 > /dev/null 2> /dev/null ; then
-                MOC="$qt_programs/moc3"
-              fi
-            fi
-          fi
-        fi
+    if test "x$MOC" = "x" ; then
+      # could be renamed to avoid clashes
+      if test -x "$qt_programs/moc" ; then
+	MOC="$qt_programs/moc"
+      else
+	if expr "$QTVERSION" '>=' "200" > /dev/null ; then
+	  if test -x "$qt_programs/moc2" ; then
+	    MOC="$qt_programs/moc2"
+	  fi
+	else
+	  if expr "$QTVERSION" '>=' "300" > /dev/null ; then
+	    if $qt_programs/moc3 > /dev/null 2> /dev/null ; then
+	      MOC="$qt_programs/moc3"
+	    fi
+	  fi
+	fi
       fi
       if test "x$MOC" = "x" ; then
         AC_MSG_RESULT([no])
@@ -306,19 +302,16 @@ AC_DEFUN([FUN_QT_PROGRAMS],
 
     # find the right uic
     if expr "$QTVERSION" '>=' "220" > /dev/null ; then
-      if test -z "$UIC" ; then
-        AC_CHECK_PROG(UIC, uic, uic)
-        if test "x$UIC" = "x" ; then
-          # could be renamed to avoid clashes
-          if test -x "$qt_programs/uic" ; then
-            UIC="$qt_programs/uic"
-          else
-            if expr "$QTVERSION" '>=' "300" > /dev/null ; then
-              if test -x "$qt_programs/uic3" ; then
-                UIC="$qt_programs/uic3"
-              fi
-            fi
-          fi
+      if test "x$UIC" = "x" ; then
+	# could be renamed to avoid clashes
+	if test -x "$qt_programs/uic" ; then
+	  UIC="$qt_programs/uic"
+	else
+	  if expr "$QTVERSION" '>=' "300" > /dev/null ; then
+	    if test -x "$qt_programs/uic3" ; then
+	      UIC="$qt_programs/uic3"
+	    fi
+	  fi
         fi
       fi
     else
