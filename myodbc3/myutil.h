@@ -31,6 +31,19 @@
 #ifndef __MYUTIL_H__
 #define __MYUTIL_H__
 
+#ifdef __GNUC__
+# ifndef GCC_VERSION
+#  define GCC_VERSION (__GNUC__ * 1000 + __GNUC_MINOR__)
+# endif
+#endif
+
+/*
+  Disable __attribute__() on GCC < 2.7 and non-GCC compilers.
+*/
+#if !defined(__attribute__) && (!defined(__GNUC__) || GCC_VERSION < 2007)
+#define __attribute__(A)
+#endif
+
 /*
   Utility macros
 */
