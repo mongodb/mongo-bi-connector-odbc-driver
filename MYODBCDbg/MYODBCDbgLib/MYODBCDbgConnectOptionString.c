@@ -61,7 +61,5 @@ const char *MYODBCDbgConnectOptionString( SQLUSMALLINT nOption )
             /* in 2.x stm attr can be set (as default) in dbc */
             return MYODBCDbgStmtAttrString( (SQLINTEGER)nOption );
     }
-
-    return "unknown";
 }
 
