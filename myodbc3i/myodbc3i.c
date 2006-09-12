@@ -350,8 +350,6 @@ int doQuery()
             fprintf( stderr, "[%s][%d][ERROR] Missing or invalid object type specified.\n", __FILE__, __LINE__ );
             return 0;
     }
-
-    return 1;
 }
 
 int doQueryDriver()
@@ -519,8 +517,6 @@ int doAdd()
             fprintf( stderr, "[%s][%d][ERROR] Missing or invalid object type specified.\n", __FILE__, __LINE__ );
             return 0;
     }
-
-    return 1;
 }
 
 /*!
@@ -565,7 +561,7 @@ int doAddDriver()
     char  *pszDriverInfo = NULL;
     char  szLoc[FILENAME_MAX];
     WORD  nLocLen;
-    DWORD nUsageCount = -1;
+    DWORD nUsageCount;
     int   nChar;
 
     if ( !pszAttributes )
@@ -658,8 +654,6 @@ int doEdit()
             fprintf( stderr, "[%s][%d][ERROR] Missing or invalid object type specified.\n", __FILE__, __LINE__ );
             return 0;
     }
-
-    return 1;
 }
 
 int doEditDriver()
@@ -715,8 +709,6 @@ int doRemove()
             fprintf( stderr, "[%s][%d][ERROR] Missing or invalid object type specified.\n", __FILE__, __LINE__ );
             return 0;
     }
-
-    return 1;
 }
 
 /*!

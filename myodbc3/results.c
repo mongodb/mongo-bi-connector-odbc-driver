@@ -801,7 +801,7 @@ SQLRETURN SQL_API sql_get_data( STMT *          stmt,
                                 char *          value,
                                 uint            length )
 {
-    long tmp;
+    SQLLEN tmp;
     if ( !pcbValue )
         pcbValue= &tmp; /* Easier code */
 

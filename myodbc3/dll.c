@@ -77,7 +77,6 @@ void myodbc_init(void)
     thousands_sep=my_strdup(tmp->thousands_sep,MYF(0));
     thousands_sep_length=strlen(thousands_sep);
     setlocale(LC_NUMERIC,default_locale);
-    return;
   }
   /*
     If we are not using threads, we may get an SIGPIPE signal when a client
