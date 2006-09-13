@@ -30,7 +30,7 @@ static void verify_col_data(SQLHSTMT hstmt, const char *table,
     sprintf(query,"SELECT %s FROM %s",col,table);
     fprintf(stdout,"\n %s", query);
 
-    rc = SQLExecDirect(hstmt, (char *)query, SQL_NTS);
+    rc = SQLExecDirect(hstmt, query, SQL_NTS);
     mystmt(hstmt,rc);
   }
 
@@ -57,8 +57,8 @@ static void verify_col_data(SQLHSTMT hstmt, const char *table,
 static void t_basic(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  int nInData = 1;
-  int nOutData, nRowCount=1;
+  long nInData = 1;
+  long nOutData, nRowCount=1;
   char szOutData[255];
 
   printMessageHeader();
@@ -142,10 +142,11 @@ static void t_basic(SQLHDBC hdbc,SQLHSTMT hstmt)
 static void tmysql_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData = 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
-  SQLUSMALLINT rgfRowStatus;
+  SQLSMALLINT rgfRowStatus;
 
   printMessageHeader();
 
@@ -238,7 +239,8 @@ static void tmysql_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void tmysql_setpos_del1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen, pccol;
+  long nData= 500;
+  SQLLEN nlen, pccol;
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
@@ -311,7 +313,8 @@ static void tmysql_setpos_del1(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void t_setpos_del_all(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData[4], nlen;
+  long nData[4];
+  SQLLEN nlen;
   SQLCHAR szData[4][10];
 
   printMessageHeader();
@@ -392,7 +395,8 @@ static void t_setpos_del_all(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void tmysql_setpos_upd(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData = 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
@@ -499,7 +503,7 @@ static void tmysql_setpos_upd(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void t_setpos_upd_decimal(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN  rc;
-  SQLINTEGER rec;
+  long rec;
 
   printMessageHeader();
 
@@ -610,8 +614,8 @@ static void tmysql_specialcols(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void tmysql_bindcol(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  int     nodata;
-  long     nlen, nidata = 200, length;
+  long    nodata, nidata = 200;
+  SQLLEN  nlen, length;
   char    szodata[20],szidata[20]="MySQL";
 
   printMessageHeader();
@@ -827,7 +831,8 @@ static void tmysql_pos_update(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void tmysql_mtab_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData= 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
@@ -919,7 +924,8 @@ static void tmysql_showkeys(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void tmysql_setpos_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData= 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
@@ -1001,7 +1007,8 @@ static void tmysql_setpos_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void t_alias_setpos_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData= 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
@@ -1077,7 +1084,8 @@ static void t_alias_setpos_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void t_alias_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData[4], nlen;
+  long nData[4];
+  SQLLEN nlen;
   SQLCHAR szData[4][10];
 
   printMessageHeader();
@@ -1161,7 +1169,8 @@ static void t_alias_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void tmysql_setpos_pkdel1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData= 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
@@ -1237,7 +1246,8 @@ static void tmysql_setpos_pkdel1(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void tmysql_setpos_pkdel2(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData= 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
@@ -1365,7 +1375,8 @@ static void t_refresh(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void tmysql_setpos_pkdel3(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData= 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
@@ -1435,7 +1446,8 @@ static void tmysql_setpos_pkdel3(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void t_mul_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData= 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
@@ -1511,7 +1523,8 @@ static void t_mul_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void t_mul_pkdel1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData= 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
@@ -1585,7 +1598,7 @@ static void t_max_select(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
   SQLCHAR szData[255];
-  SQLINTEGER i;
+  long i;
   
   printMessageHeader();
 
@@ -1693,7 +1706,7 @@ static void t_tran(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void t_max_con(SQLHSTMT hstmt)
 {
   SQLRETURN  rc;
-  SQLINTEGER i, max_connections, used_connections, test_connections;
+  long       i, max_connections, used_connections, test_connections;
   SQLHENV    env;
   SQLHDBC    dbc[101];
   
@@ -2036,7 +2049,7 @@ static void t_bigint(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc; 
   SQLCHAR id[20]="999";
-  SQLINTEGER nlen;
+  SQLLEN nlen;
   
   printMessageHeader();
 
@@ -2271,7 +2284,7 @@ static void t_getcursor(SQLHDBC hdbc)
   SQLRETURN rc; 
   SQLHSTMT hstmt1,hstmt2,hstmt3;
   SQLCHAR curname[50];
-  SQLSMALLINT nlen;
+  SQLLEN nlen;
 
   printMessageHeader();
     
@@ -2465,7 +2478,7 @@ static void t_stmt_attr_status(SQLHDBC hdbc,SQLHSTMT hstmt)
 static void t_max_rows(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
   SQLRETURN rc; 
-  SQLINTEGER i;
+  long i;
 
   printMessageHeader();
 
@@ -2547,8 +2560,8 @@ static void t_max_rows(SQLHDBC hdbc,SQLHSTMT hstmt)
 static void t_prepare(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  int       nodata;
-  long      nlen, nidata = 200;
+  long      nidata= 200, nodata;
+  SQLLEN    nlen;
   char      szodata[20],szidata[20]="MySQL";
   short     pccol;
 
@@ -2756,7 +2769,7 @@ static void t_diaglist(SQLHDBC hdbc,SQLHSTMT hstmt)
 static void t_scroll(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER i;
+  long i;
 
   printMessageHeader();
 
@@ -2878,7 +2891,7 @@ static void t_scroll(SQLHDBC hdbc,SQLHSTMT hstmt)
 static void t_acc_crash(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN   rc;
-  SQLINTEGER  id;
+  long id;
   SQLCHAR     name[20], data[30];
   SQL_TIMESTAMP_STRUCT ts;
 
@@ -2960,8 +2973,8 @@ static void t_acc_crash(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void tmysql_pcbvalue(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN   rc;
-  SQLINTEGER  nodata;
-  SQLINTEGER  nlen, slen,tlen;
+  long nodata;
+  SQLLEN nlen, slen,tlen;
   SQLCHAR     szdata[20],sztdata[100];  
 
   printMessageHeader();
@@ -3052,7 +3065,8 @@ static void tmysql_pcbvalue(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void my_setpos_upd_pk_order(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData = 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
@@ -3134,7 +3148,7 @@ static void my_setpos_upd_pk_order(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void my_setpos_upd_pk_order1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500;
+  long nData = 500;
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
@@ -3480,7 +3494,7 @@ static void t_msdev_bug(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN  rc;
   SQLCHAR    catalog[30];
-  SQLINTEGER len;
+  SQLLEN     len;
 
   printMessageHeader();
 
@@ -3496,7 +3510,8 @@ static void t_msdev_bug(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void t_setpos_position(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData= 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
   SQLUINTEGER pcrow;
 
@@ -3689,7 +3704,8 @@ static void t_pos_column_ignore(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLRETURN rc;
   SQLHSTMT hstmt1;
   SQLCHAR szData[]="updated";
-  SQLINTEGER nData,pcbValue, nlen, pcrow;
+  long nData;
+  SQLLEN  pcbValue, nlen, pcrow;
 
   printMessageHeader();
 
@@ -4007,7 +4023,7 @@ static void t_decimal(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLCHAR         str[20],s_data[]="189.4567";
   SQLDOUBLE       d_data=189.4567;
-  SQLINTEGER      i_data=189, l_data=-23;
+  long            i_data=189, l_data=-23;
   SQLRETURN       rc;
 
   printMessageHeader();
@@ -4443,8 +4459,9 @@ static void t_zerolength(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void t_pos_datetime_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLHSTMT hstmt1;
-  SQLINTEGER row_count, int_data, cur_type;
+  SQLHSTMT  hstmt1;
+  long      int_data;
+  SQLLEN    row_count, cur_type;
 
   printMessageHeader();
 
@@ -4567,7 +4584,8 @@ static void t_pos_datetime_delete1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
   SQLHSTMT hstmt1;
-  SQLINTEGER row_count, int_data, cur_type;
+  long int_data;
+  SQLLEN row_count, cur_type;
 
   printMessageHeader();
 
@@ -4693,7 +4711,8 @@ static void t_pos_datetime_delete1(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void t_text_fetch(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN  rc;
-  SQLINTEGER i, row_count, length;
+  long       i;
+  SQLLEN     row_count, length;
   SQLCHAR    data[TEST_ODBC_TEXT_LEN+1];
 
   printMessageHeader();
@@ -4785,7 +4804,7 @@ static void t_columns(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLUINTEGER   cbColumnSize, cbDecimalDigits, cbNumPrecRadix, 
                 cbDatabaseName, cbDataType, cbNullable;
   SQLRETURN     rc;
-  SQLUINTEGER   ColumnSize, i;
+  long          ColumnSize, i;
   SQLUINTEGER   ColumnCount= 7;
   SQLUSMALLINT  DecimalDigits;
   SQLCHAR       ColumnName[MAX_NAME_LEN], DatabaseName[MAX_NAME_LEN];
@@ -5204,7 +5223,8 @@ static void t_blob_bug(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN  rc;
   SQLCHAR    *data;
-  SQLINTEGER length, i;
+  long       i;
+  SQLLEN     length;
   const SQLINTEGER max_blob_size=1024*100;
 
   printMessageHeader();
@@ -5338,7 +5358,8 @@ static void t_tables_bug(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void t_putdata(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN  rc;
-  SQLINTEGER pcbLength, c1;
+  SQLLEN     pcbLength;
+  long       c1;
   SQLCHAR    data[255];
   SQLPOINTER token;
 
@@ -5405,7 +5426,8 @@ static void t_putdata(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void t_putdata1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN  rc;
-  SQLINTEGER pcbLength, c1;
+  SQLLEN     pcbLength;
+  long       c1;
   SQLCHAR    data[255];
   SQLPOINTER token;
 
@@ -5474,7 +5496,8 @@ static void t_putdata1(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void t_putdata2(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN  rc;
-  SQLINTEGER pcbLength, c1;
+  SQLLEN     pcbLength;
+  long       c1;
   SQLCHAR    data[255];
   SQLPOINTER token;
 
@@ -5560,7 +5583,7 @@ static void t_time1(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLRETURN       rc;
   SQL_TIME_STRUCT tt;
   SQLCHAR         data[30];
-  SQLINTEGER      length;
+  SQLLEN          length;
 
   printMessageHeader();    
 
@@ -5828,7 +5851,8 @@ static void t_time1(SQLHDBC hdbc, SQLHSTMT hstmt)
 void t_row_array_size(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER i,nrows,iarray[15];
+  long      i, iarray[15];
+  SQLLEN    nrows;
   const int max_rows=9;
 
   printMessageHeader();
@@ -5925,7 +5949,8 @@ static void t_rows_fetched_ptr(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLCHAR     name[255];
   SQLSMALLINT pccol;
   SQLRETURN   rc;
-  SQLINTEGER  rows_fetched, data[4], pcb_value[4], i;
+  SQLLEN      rows_fetched, pcb_value[4];
+  long        i, data[4];
   SQLUSMALLINT row_status[4];
 
   printMessageHeader(); 
@@ -6033,7 +6058,8 @@ static void t_rows_fetched_ptr(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void t_empty_str_bug(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN    rc;
-  SQLINTEGER   id, name_len, desc_len;
+  long         id;
+  SQLLEN       name_len, desc_len;
   SQLCHAR      name[20], desc[20];
 
   printMessageHeader();
@@ -6249,7 +6275,8 @@ static void t_desc_param(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void t_rows_fetched_ptr1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN   rc;
-  SQLUINTEGER rowsFetched, i, rowsSize;
+  SQLLEN      rowsFetched, rowsSize;
+  long        i;
   
   printMessageHeader();
     
@@ -6499,7 +6526,7 @@ static void t_putdata3(SQLHDBC hdbc, SQLHSTMT hstmt)
   int dynData;
   int commonLen= 20;
 
-  SQLINTEGER  id, id1, id2, id3, resId;
+  long        id, id1, id2, id3, resId;
   SQLINTEGER  resUTimeSec;
   SQLINTEGER  resUTimeMSec;
   SQLINTEGER  resDataLen;
@@ -6632,7 +6659,7 @@ static void t_putdata3(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void t_convert(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN  rc;
-  SQLINTEGER data_len;
+  SQLLEN     data_len;
   SQLCHAR    data[50];
 
   printMessageHeader();

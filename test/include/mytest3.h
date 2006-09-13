@@ -19,14 +19,14 @@
 #define __TMYODBC__TEST__H
 
 #ifdef HAVE_CONFIG_H
-    #include <myconf.h>
+# include <myconf.h>
 #endif
 /* Work around iODBC header bug on Mac OS X 10.3 */
 #undef HAVE_CONFIG_H
 
 #ifdef WIN32
-    #include <windows.h>
-#endif 
+# include <windows.h>
+#endif
 
 /* STANDARD C HEADERS */
 #include <stdio.h>
@@ -38,56 +38,52 @@
 #include <sqlext.h>
 
 /* for clock() */
-#include <time.h> 
+#include <time.h>
 
 #ifndef NULL
-    #define NULL 0
+# define NULL 0
 #endif
 
 #ifndef ushort
-    #define ushort unsigned short
+# define ushort unsigned short
 #endif
 
 #ifndef bool
-    #define bool unsigned char
+# define bool unsigned char
 #endif
 
 #ifndef true
-    #define true 1
+# define true 1
 #endif
 
 #ifndef false
-    #define false 0
+# define false 0
 #endif
 
 #ifndef my_assert
-    #define my_assert assert
+# define my_assert assert
 #endif
 
 #ifndef myassert
-    #define myassert assert
+# define myassert assert
 #endif
 
 #ifndef Sleep
-    #define Sleep _sleep
+# define Sleep _sleep
 #endif
 
-#if DEBUG_LEVEL > 1
-    #define printMessage printf
-#else
-    #define printMessage
-#endif
+#define printMessage printf
 
 #define MAX_NAME_LEN 255
 #define MAX_COLUMNS 500
 #define MAX_ROW_DATA_LEN 1000
 #define MYSQL_NAME_LEN 64
 
-SQLCHAR *mydsn = "myodbc3";
-SQLCHAR *myuid = "root";
-SQLCHAR *mypwd = "";
-SQLCHAR *myserver = "localhost";
-SQLCHAR *mydb     = "test";
+SQLCHAR *mydsn= "test";
+SQLCHAR *myuid= "root";
+SQLCHAR *mypwd= "";
+SQLCHAR *myserver= "localhost";
+SQLCHAR *mydb= "test";
 SQLCHAR *test_db= "client_odbc_test";
 
 int g_nCursor;
@@ -392,7 +388,8 @@ RESULT SET
 int my_print_non_format_result(SQLHSTMT hstmt)
 {
     SQLRETURN   rc;
-    SQLUINTEGER nRowCount=0, pcColDef;
+    SQLUINTEGER nRowCount=0;
+    SQLULEN     pcColDef;
     SQLCHAR     szColName[MAX_NAME_LEN];
     SQLCHAR     szData[MAX_COLUMNS][MAX_ROW_DATA_LEN]={0};
     SQLSMALLINT nIndex,ncol,pfSqlType, pcbScale, pfNullable;
@@ -444,7 +441,7 @@ SQLUINTEGER myresult(SQLHSTMT hstmt)
     SQLUINTEGER nRowCount;
     SQLCHAR     ColName[MAX_NAME_LEN+1];
     SQLCHAR     Data[MAX_ROW_DATA_LEN+1];
-    SQLINTEGER  size, pcbLength;
+    SQLLEN      pcbLength, size;
     SQLUSMALLINT nIndex;
     SQLSMALLINT  ncol;
 
@@ -521,26 +518,26 @@ SQLUINTEGER myrowcount(SQLHSTMT hstmt)
 /**
   SQLExecDirect
 */
-SQLRETURN tmysql_exec(SQLHSTMT hstmt, SQLCHAR *sql_stmt)
+SQLRETURN tmysql_exec(SQLHSTMT hstmt, char *sql_stmt)
 {
     return(SQLExecDirect(hstmt,(SQLCHAR *)sql_stmt,SQL_NTS));
 }
 /**
   SQLPrepare
 */
-SQLRETURN tmysql_prepare(SQLHSTMT hstmt, SQLCHAR *sql_stmt)
+SQLRETURN tmysql_prepare(SQLHSTMT hstmt, char *sql_stmt)
 {
-    return(SQLPrepare(hstmt,sql_stmt,SQL_NTS));
+    return(SQLPrepare(hstmt, (SQLCHAR *)sql_stmt, SQL_NTS));
 }
 /**
   return integer data by fetching it
 */
 SQLINTEGER my_fetch_int(SQLHSTMT hstmt, SQLUSMALLINT irow)
 {
-    SQLINTEGER nData;
+    long nData;
 
     SQLGetData(hstmt,irow,SQL_INTEGER,&nData,0,NULL);
-    printMessage( " my_fetch_int: %d\n",nData);
+    printMessage(" my_fetch_int: %ld\n", nData);
     return(nData);
 }
 /**
@@ -548,10 +545,10 @@ SQLINTEGER my_fetch_int(SQLHSTMT hstmt, SQLUSMALLINT irow)
 */
 const char *my_fetch_str(SQLHSTMT hstmt, SQLCHAR *szData,SQLUSMALLINT irow)
 {
-    SQLINTEGER nLen=0;
+    SQLLEN nLen= 0;
 
     SQLGetData(hstmt,irow,SQL_CHAR,szData,MAX_ROW_DATA_LEN+1,&nLen);
-    printMessage( " my_fetch_str: %s(%d)\n",szData,nLen);
+    printMessage( " my_fetch_str: %s(%ld)\n",szData,nLen);
     return((const char *)szData);
 }
 
@@ -560,7 +557,7 @@ const char *my_fetch_str(SQLHSTMT hstmt, SQLCHAR *szData,SQLUSMALLINT irow)
 */
 bool server_is_mysql(SQLHDBC hdbc)
 {
-    SQLCHAR driver_name[MYSQL_NAME_LEN];
+    char driver_name[MYSQL_NAME_LEN];
 
     SQLGetInfo(hdbc,SQL_DRIVER_NAME,driver_name,MYSQL_NAME_LEN,NULL);
 

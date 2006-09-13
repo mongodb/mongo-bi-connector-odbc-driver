@@ -34,8 +34,9 @@ SQLRETURN rc;
 
 void t_prep_basic()
 {
-    SQLINTEGER pcrow, id, length1, length2;
-    SQLCHAR    name[20];
+    SQLLEN     pcrow, length1, length2;
+    long       id;
+    char       name[20];
 
     SQLExecDirect(hstmt,"drop table t_prep_basic",SQL_NTS);
 
@@ -75,7 +76,7 @@ void t_prep_basic()
     mystmt(hstmt,rc);
 
     printMessage( "\n outdata: %d(%d), %s(%d)",id,length1,name,length2);
-    myassert(id == 100 && length1 == sizeof(SQLINTEGER));
+    myassert(id == 100 && length1 == sizeof(long));
     myassert(strcmp(name,"venu")==0 && length2 == 4);
 
     rc = SQLFetch(hstmt);
@@ -94,8 +95,8 @@ void t_prep_basic()
 
 void t_prep_buffer_length()
 {
-    SQLINTEGER length;
-    SQLCHAR    buffer[20];
+    SQLLEN     length;
+    char       buffer[20];
 
     SQLExecDirect(hstmt,"drop table t_prep_buffer_length",SQL_NTS);
 
@@ -189,7 +190,7 @@ void t_prep_buffer_length()
 
 void t_prep_truncate()
 {
-    SQLINTEGER pcrow, length, length1;
+    SQLLEN     pcrow, length, length1;
     SQLCHAR    name[20], bin[10];
 
 
@@ -257,7 +258,7 @@ void t_prep_truncate()
 
 void t_prep_scroll()
 {
-    SQLINTEGER i, data, max_rows= 5;
+    long i, data, max_rows= 5;
 
 
     SQLExecDirect(hstmt,"drop table t_prep_scroll",SQL_NTS);
@@ -373,7 +374,7 @@ void t_prep_scroll()
 void t_prep_getdata()
 {
     SQLCHAR    name[10];
-    SQLINTEGER data, length;
+    long       data, length;
     SQLCHAR    tiny;
 
     SQLExecDirect(hstmt,"drop table t_prep_getdata",SQL_NTS);
@@ -456,7 +457,7 @@ void t_prep_getdata()
 void t_prep_getdata1()
 {
     SQLCHAR     data[11];
-    SQLUINTEGER length;
+    SQLLEN      length;
 
     SQLExecDirect(hstmt,"drop table t_prep_getdata",SQL_NTS);
 
@@ -578,7 +579,7 @@ void t_prep_getdata1()
 void t_prep_catalog()
 {
     SQLCHAR     table[20];
-    SQLUINTEGER length;
+    SQLLEN      length;
 
     SQLExecDirect(hstmt,"drop table t_prep_catalog",SQL_NTS);
 
@@ -741,7 +742,8 @@ void t_catalog()
 
 void t_rows_fetched_ptr()
 {
-    SQLUINTEGER  rowsFetched, i, rowsSize;
+    SQLLEN       rowsFetched, rowsSize;
+    long         i;
 
     SQLExecDirect(hstmt,"drop table t_rows_fetched_ptr",SQL_NTS);
 
@@ -867,9 +869,10 @@ void t_rows_fetched_ptr()
 }
 
 void t_sps()
-{  
-    SQLINTEGER a, a1, length, length1;
-    SQLCHAR    b[]= "abcdefghij", b1[10];
+{
+    SQLLEN length, length1;
+    long a, a1;
+    char b[]= "abcdefghij", b1[10];
 
 /*
     if (!mysql_min_version(hdbc, "5.0",3))
