@@ -412,6 +412,7 @@ static SQLRETURN copy_field_data(STMT FAR *stmt, PARAM_BIND *param,
                                  NET **net, SQLCHAR **to)
 {
     PARAM_BIND dummy;
+    SQLLEN     dummy_len= 5; /* sizeof(" AND ") */
     MYSQL mysql= stmt->dbc->mysql;
     SQLUINTEGER length= *(param->actual_len)+5;
 
@@ -425,7 +426,7 @@ static SQLRETURN copy_field_data(STMT FAR *stmt, PARAM_BIND *param,
     dummy.SqlType= SQL_INTEGER;
     dummy.CType= SQL_C_CHAR;
     dummy.buffer= (gptr) " AND ";
-    *dummy.actual_len= 5;
+    dummy.actual_len= &dummy_len;
 
     if ( !(*to= (SQLCHAR*) insert_param(&mysql, (char*) *to, &dummy)) )
         return set_error(stmt,MYERR_S1001,NULL,4001);
