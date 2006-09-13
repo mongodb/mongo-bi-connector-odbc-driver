@@ -33,18 +33,18 @@ INCLUDES = @MYSQL_INCLUDES@
 LDFLAGS=@EXTRA_LDFLAGS@
 build="mysql-connector-odbc-@VERSION@-@SYSTEM_TYPE@-@MACHINE_TYPE@"
 
-#          @myodbc_thread_dir@
-
-SUBDIRS = MYODBCDbg \
-	  myodbc3u \
-          myodbc3 \
-          myodbc3S \
-	  myodbc3c \
-          myodbc3i \
-          myodbc3m \
-          @myodbc_samples_dir@ \
-          @myodbc_test_dir@ \
-          scripts
+SUBDIRS = \
+	MYODBCDbg \
+	myodbc3u \
+	myodbc3 \
+	myodbc3S \
+	myodbc3c \
+	myodbc3i \
+	myodbc3m \
+	@myodbc_samples_dir@ \
+	@myodbc_test_dir@ \
+	scripts \
+	dltest
 
 DIST_SUBDIRS = \
 	MYODBCDbg \

@@ -1,0 +1,8 @@
+[myodbc3]
+Driver          = MySQL ODBC 3.51 Driver
+DATABASE        = @TEST_DATABASE@
+DESCRIPTION     = test
+SERVER          = @TEST_SERVER@
+UID             = @TEST_UID@
+PASSWORD        = @TEST_PASSWORD@
+SOCKET          = @TEST_SOCKET@

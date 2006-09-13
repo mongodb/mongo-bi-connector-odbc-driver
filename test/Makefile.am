@@ -4,7 +4,16 @@
 #                    (C) MySQL AB 1995-2003                              #
 #                         venu@mysql.com                                 # 
 ##########################################################################
-include Makefile.ini
+
+# Set up to be able to run tests
+TEST_ODBCINI   = test.ini
+TEST_DSN       = myodbc3
+TEST_DRIVER    = MySQL ODBC 3.51 Driver
+TEST_DATABASE  = test
+TEST_SERVER    = localhost
+TEST_UID       = root
+TEST_PASSWORD  = 
+TEST_SOCKET    = /tmp/mysql.sock
 
 noinst_PROGRAMS= \
 my_connect \
@@ -65,9 +74,9 @@ mytest3_SOURCES=	test3/mytest3.c
 mytest32_SOURCES=	test32/mytest32.c
 
 
-#	
+#
 # BUILDALL SPECIFICATION, BUILD AND RUN ALL SAMPLES
-# 
+#
 
 buildall: all
 testall  : all run trun
@@ -75,41 +84,42 @@ runall: testall
 test: testall
 testlib: testall
 
-# PASS DSN UID PWD as the command line arguments to each sample
+# ----------------------------------------------------------------------
+# Pass DSN UID PASSWORD as the command line arguments to each sample
+# ----------------------------------------------------------------------
+
+run: make-test-ini
+	-ODBCINI=$(TEST_ODBCINI) ./my_connect         $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./my_basics          $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./my_param           $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./my_result          $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./my_cursor          $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./my_tran            $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./my_position        $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./my_relative        $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./my_scroll          $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./my_col_length      $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./my_blob            $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./my_bulk            $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./my_keys            $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./my_unixodbc        $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./my_dyn_cursor      $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./my_tran_ext        $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./my_catalog         $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./my_error           $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./my_use_result 1000 $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+
+trun: make-test-ini
+	-ODBCINI=$(TEST_ODBCINI) ./mytest32           $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./mytest32           $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./mytest3 -1         $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./mytest3 -1         $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./mytest  -1         $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	-ODBCINI=$(TEST_ODBCINI) ./mytest  -1         $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+
 #
-
-run: 
-	./my_connect $(MYDSN) $(MYUID) $(MYPWD)
-	./my_basics $(MYDSN) $(MYUID) $(MYPWD)
-	./my_param $(MYDSN) $(MYUID) $(MYPWD)
-	./my_result $(MYDSN) $(MYUID) $(MYPWD)
-	./my_cursor $(MYDSN) $(MYUID) $(MYPWD)
-	./my_tran $(MYDSN) $(MYUID) $(MYPWD)
-	./my_position $(MYDSN) $(MYUID) $(MYPWD)
-	./my_relative $(MYDSN) $(MYUID) $(MYPWD)
-	./my_scroll $(MYDSN) $(MYUID) $(MYPWD)
-	./my_col_length $(MYDSN) $(MYUID) $(MYPWD)
-	./my_blob $(MYDSN) $(MYUID) $(MYPWD)
-	./my_bulk $(MYDSN) $(MYUID) $(MYPWD)
-	./my_keys $(MYDSN) $(MYUID) $(MYPWD)
-	./my_unixodbc $(MYDSN) $(MYUID) $(MYPWD)
-	./my_dyn_cursor $(MYDSN) $(MYUID) $(MYPWD)
-	./my_tran_ext $(MYDSN) $(MYUID) $(MYPWD)
-	./my_catalog $(MYDSN) $(MYUID) $(MYPWD)
-	./my_error $(MYDSN) $(MYUID) $(MYPWD)
-	./my_use_result 1000 $(MYDSN) $(MYUID) $(MYPWD)	
-
-trun:
-	./mytest32 $(MYDSN) $(MYUID) $(MYPWD)
-	./mytest32 $(MYDSN) $(MYUID) $(MYPWD)
-	./mytest3 -1 $(MYDSN) $(MYUID) $(MYPWD)
-	./mytest3 -1 $(MYDSN) $(MYUID) $(MYPWD)
-	./mytest -1 $(MYDSN) $(MYUID) $(MYPWD)
-	./mytest -1 $(MYDSN) $(MYUID) $(MYPWD)
-
-#	
 # CLEAN SPECIFICATION
-#            
+#
 
 clean-local:
 	rm -f my*dump
@@ -124,6 +134,7 @@ clean-local:
 
 EXTRA_DIST= \
 	README \
+	test.ini.in \
 	include/mytest3.h \
 	Makefile.ini \
 	test.vpj \
@@ -156,3 +167,21 @@ EXTRA_DIST= \
 	thread_coredump/thread-coredump.c \
 	thread_test/thread_test.c \
 	timestamp/my_ts.c
+
+# ----------------------------------------------------------------------
+# We want to rebuild the "test.ini" file each time, as it might
+# need an update from overriding variables on the command line
+# ----------------------------------------------------------------------
+
+.PHONY: make-test-ini
+
+make-test-ini:
+	sed \
+	  -e 's!@''TEST_DSN''@!$(TEST_DSN)!g' \
+	  -e 's!@''TEST_DRIVER''@!$(TEST_DRIVER)!g' \
+	  -e 's!@''TEST_DATABASE''@!$(TEST_DATABASE)!g' \
+	  -e 's!@''TEST_SERVER''@!$(TEST_SERVER)!g' \
+	  -e 's!@''TEST_UID''@!$(TEST_UID)!g' \
+	  -e 's!@''TEST_PASSWORD''@!$(TEST_PASSWORD)!g' \
+	  -e 's!@''TEST_SOCKET''@!$(TEST_SOCKET)!g' \
+	test.ini.in > test.ini
