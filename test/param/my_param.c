@@ -60,8 +60,8 @@ void my_init_table(SQLHDBC hdbc, SQLHSTMT hstmt)
 void my_param_insert(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN   rc;
-    SQLINTEGER  id;
-    SQLCHAR     name[50];
+    long        id;
+    char        name[50];
 
     /* prepare the insert statement with parameters */
     rc = SQLPrepare(hstmt,"INSERT INTO my_demo_param(id,name) VALUES(?,?)",SQL_NTS);
@@ -120,13 +120,13 @@ void my_param_update(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLPrepare(hstmt,"UPDATE my_demo_param set name = ? WHERE id = ?",SQL_NTS);
     mystmt(hstmt,rc);
 
-    /* now supply data to parameter 1 and 2 */    
-    rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, 
+    /* now supply data to parameter 1 and 2 */
+    rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT,
                           SQL_C_CHAR, SQL_CHAR, 0,0,
                           name, sizeof(name), NULL);
     mystmt(hstmt,rc);
 
-    rc = SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, 
+    rc = SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT,
                           SQL_C_LONG, SQL_INTEGER, 0,0,
                           &id, 0, NULL);
     mystmt(hstmt,rc);

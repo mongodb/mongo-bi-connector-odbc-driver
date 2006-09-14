@@ -15,7 +15,7 @@ TEST_UID       = root
 TEST_PASSWORD  = 
 TEST_SOCKET    = /tmp/mysql.sock
 
-noinst_PROGRAMS= \
+plain_tests= \
 my_connect \
 my_basics \
 my_param \
@@ -34,12 +34,16 @@ my_keys \
 my_tran_ext \
 my_catalog \
 my_error \
-my_use_result \
-dbtest \
+mytest32
+fancy_tests= \
 mytest \
 mytest2 \
-mytest3 \
-mytest32
+mytest3
+odd_tests= \
+dbtest \
+my_use_result
+
+noinst_PROGRAMS= $(plain_tests) $(fancy_tests) $(odd_tests)
 
 #	
 # COMPILATION SPECIFICATION
@@ -89,33 +93,21 @@ testlib: testall
 # ----------------------------------------------------------------------
 
 run: make-test-ini
-	-ODBCINI=$(TEST_ODBCINI) ./my_connect         $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./my_basics          $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./my_param           $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./my_result          $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./my_cursor          $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./my_tran            $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./my_position        $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./my_relative        $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./my_scroll          $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./my_col_length      $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./my_blob            $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./my_bulk            $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./my_keys            $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./my_unixodbc        $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./my_dyn_cursor      $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./my_tran_ext        $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./my_catalog         $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./my_error           $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./my_use_result 1000 $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	for test in $(plain_tests); do \
+	  echo ODBCINI=$(TEST_ODBCINI) \
+	    ./$$test $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD) || exit 1; \
+	  ODBCINI=$(TEST_ODBCINI) \
+	    ./$$test $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD) || exit 1; \
+	done
+	ODBCINI=$(TEST_ODBCINI) ./my_use_result 1000 $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
 
 trun: make-test-ini
-	-ODBCINI=$(TEST_ODBCINI) ./mytest32           $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./mytest32           $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./mytest3 -1         $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./mytest3 -1         $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./mytest  -1         $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
-	-ODBCINI=$(TEST_ODBCINI) ./mytest  -1         $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	for test in $(fancy_tests); do \
+	  echo ODBCINI=$(TEST_ODBCINI) \
+	    ./$$test -1 $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD) || exit 1; \
+	  ODBCINI=$(TEST_ODBCINI) \
+	    ./$$test -1 $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD) || exit 1; \
+	done
 
 #
 # CLEAN SPECIFICATION
