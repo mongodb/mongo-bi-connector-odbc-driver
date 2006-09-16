@@ -113,23 +113,19 @@ AC_CHECK_HEADERS(iodbcinst.h)
 if test "x$ac_cv_header_iodbcinst_h" = "xyes"
 then
 
-	odbc_headers="$odbc_headers iodbcinst.h"
-	save_LIBS="$LIBS"
-	save_LDFLAGS="$LDFLAGS"
-	LDFLAGS="-L$check_iobc_lib_path $LDFLAGS"
+  odbc_headers="$odbc_headers iodbcinst.h"
+  save_LDFLAGS="$LDFLAGS"
+  LDFLAGS="-L$check_iobc_lib_path $LDFLAGS"
 
-	AC_CHECK_LIB(iodbcadm,_iodbcdm_admin_dialbox,
-	[LIBS="$LIBS -L$check_iobc_lib_path -liodbcadm"
-	have_iodbcadm=yes],
-        [LIBS="$save_LIBS"
-         LDFLAGS="$save_LDFLAGS"])
+  AC_CHECK_LIB(iodbcadm,_iodbcdm_admin_dialbox,
+  [LIBS="$LIBS -L$check_iobc_lib_path -liodbcadm"  ; have_iodbcadm=yes],  [])
 
-	AC_CHECK_LIB(iodbcinst,SQLGetPrivateProfileString,
-	[AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING,1,[Define if SQLGetPrivateProfileString is defined])
-	LIBS="$LIBS -L$check_iobc_lib_path -liodbcinst"
-	have_iodbcinst=yes],
-        [LIBS="$save_LIBS"
-         LDFLAGS="$save_LDFLAGS"])
+  AC_CHECK_LIB(iodbcinst,SQLGetPrivateProfileString,
+  [AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING,1,[Define if SQLGetPrivateProfileString is defined])
+   LIBS="$LIBS -L$check_iobc_lib_path -liodbcinst" ; have_iodbcinst=yes], [])
+
+  LDFLAGS="$save_LDFLAGS"
+
 fi
 ])
 
@@ -174,16 +170,14 @@ if test "x$ac_cv_header_odbcinst_h" = "xyes"
 then
 
   odbc_headers="$odbc_headers odbcinst.h"
-  save_LIBS="$LIBS"
   save_LDFLAGS="$LDFLAGS"
   LDFLAGS="-L$check_iobc_lib_path $LDFLAGS"
 
   AC_CHECK_LIB(odbcinst,SQLGetPrivateProfileString,
   [AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING,1,[Define if SQLGetPrivateProfileString is defined])
-  LIBS="$LIBS -L$check_iobc_lib_path -lodbcinst"
-  have_odbcinst=yes],
-  [LIBS="$save_LIBS"
-   LDFLAGS="$save_LDFLAGS"])
+  LIBS="$LIBS -L$check_iobc_lib_path -lodbcinst" ; have_odbcinst=yes], [])
+  LDFLAGS="$save_LDFLAGS"
+
 fi   
 ])
 

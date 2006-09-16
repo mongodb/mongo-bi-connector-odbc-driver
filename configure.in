@@ -475,22 +475,6 @@ AC_SUBST(PERL5)
 
 ###################################################################
 #                                                                 #
-# Check if we want to link with thread safe client libraries      #
-#                                                                 #
-###################################################################
-# echo ""
-# echo "MySQL CONFIGURATION - CLIENT LIBS AND HEADERS"
-#
-# if test "x$thread" = "xtrue"; then
-#   myodbc_thread_dir="driver_r"
-#   myodbc_test_linklib="../driver_r/libmyodbc3_r.la"
-#   AC_SUBST(myodbc_thread_dir)
-# else
-   myodbc_test_linklib="../myodbc3/libmyodbc3.la"
-# fi
-
-###################################################################
-#                                                                 #
 # Check for the client libraries and compile options              #
 # Options are taken from the output of mysql_config               #
 #                                                                 #
@@ -577,7 +561,10 @@ echo "ODBC DRIVER MANAGER CONFIGURATION - LIBRARIES AND HEADERS"
 use_iODBC=no
 AC_ARG_WITH(iODBC,
 [  --with-iODBC[=DIR]        Use iODBC located in DIR],
-[use_iODBC=yes;iODBC="$withval"],use_iODBC="")
+[ use_iODBC=yes
+  iodbc="$withval"
+],
+[ use_iODBC="" ])
 
 if test "x$use_iODBC" = "xyes"
 then
@@ -650,7 +637,7 @@ AC_ARG_WITH(unixODBC,
 [ unixODBC="$withval" ],
 [ unixODBC="" ])
 
-AC_DEFINE([USE_UNIXODBC], [1], [use iODBC])
+AC_DEFINE([USE_UNIXODBC], [1], [use unixODBC])
 
 # Default to /usr if not specified
 if test "x$unixODBC" = "x"
@@ -867,9 +854,12 @@ AC_ARG_ENABLE(dmlink,
  ],[enable_dmlink=no])
  AC_MSG_RESULT([$enable_dmlink])
 
-if test "x$enable_dmlink" = "xyes"
-then
+if test "x$enable_dmlink" = "xyes" ; then
   myodbc_test_linklib="$myodbc_link_dmlib"
+elif test "x$gotthread" = "xno" ; then
+  myodbc_test_linklib="../myodbc3/libmyodbc3.la"
+else
+  myodbc_test_linklib="../myodbc3/libmyodbc3_r.la"
 fi
 AC_SUBST(myodbc_test_linklib)
 
@@ -913,7 +903,7 @@ esac
 ###################################################################
 
 # Function SQLParamOptions() is depricated in ODBC 3
-AC_MSG_CHECKING([if SQLParamOptions() 2/3rd arg is compatible with SQLULEN])
+AC_MSG_CHECKING([if SQLParamOptions() 2nd and 3rd arg is compatible with SQLULEN])
 AC_COMPILE_IFELSE(
 [
   AC_LANG_SOURCE(
@@ -923,18 +913,18 @@ AC_COMPILE_IFELSE(
 
     SQLRETURN SQL_API SQLParamOptions( SQLHSTMT     hstmt, 
 				       SQLULEN      crow,
-				       SQLULEN      *pirow __attribute__((unused)) )
+				       SQLULEN      *pirow )
     { return 1; }
   ])
 ],
 [
   AC_MSG_RESULT([yes])
   AC_DEFINE(USE_SQLPARAMOPTIONS_SQLULEN_PTR, 1,
-            [Define if SQLParamOptions() 2/3rd arg is compatible with SQLULEN])
+            [Define if SQLParamOptions() 2nd and 3rd arg is compatible with SQLULEN])
 ],
 [
   AC_MSG_RESULT([no])
-  AC_MSG_CHECKING([if SQLParamOptions() 2/3rd arg is compatible with SQLUINTEGER])
+  AC_MSG_CHECKING([if SQLParamOptions() 2nd and 3rd arg is compatible with SQLUINTEGER])
   AC_COMPILE_IFELSE(
   [
     AC_LANG_SOURCE(
@@ -944,14 +934,14 @@ AC_COMPILE_IFELSE(
 
       SQLRETURN SQL_API SQLParamOptions( SQLHSTMT     hstmt, 
                                          SQLUINTEGER  crow,
-                                         SQLUINTEGER *pirow __attribute__((unused)) )
+                                         SQLUINTEGER *pirow )
       { return 1; }
     ])
   ],
   [
     AC_MSG_RESULT([yes])
     AC_DEFINE(USE_SQLPARAMOPTIONS_SQLUINTEGER_PTR, 1,
-              [Define if SQLParamOptions() 2/3rd arg is compatible with SQLUINTEGER])
+              [Define if SQLParamOptions() 2nd and 3rd arg is compatible with SQLUINTEGER])
   ],
   [ AC_MSG_RESULT([no]) ])
 ])
