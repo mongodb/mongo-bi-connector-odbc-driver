@@ -16,6 +16,8 @@
  ***************************************************************************/
 #include "mytest3.h"
 
+SQLCHAR *mysock= NULL;
+
 /**
 TESTING FOR TRUE LENGTH
 */
@@ -24,7 +26,7 @@ void t_true_length(SQLHENV henv)
     SQLRETURN rc;
     SQLHDBC hdbc;
     SQLHSTMT hstmt;
-    char     conn[100];
+    char     conn[256];
     char     data1[25],data2[25];
     SQLINTEGER len1,len2,desc_len;
 
@@ -32,7 +34,12 @@ void t_true_length(SQLHENV henv)
     myenv(henv,rc);
 
     sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=0",mydsn,myuid,mypwd); 
-    rc = SQLDriverConnect(hdbc,NULL,conn,sizeof(conn),NULL,0,NULL,SQL_DRIVER_COMPLETE);
+    if (mysock != NULL)
+    {
+      strcat(conn, ";SOCKET=");
+      strcat(conn, mysock);
+    }
+    rc = SQLDriverConnect(hdbc,NULL,conn,sizeof(conn),NULL,0,NULL,SQL_DRIVER_NOPROMPT);
     mycon(hdbc,rc);
 
     rc = SQLAllocStmt(hdbc,&hstmt);
@@ -104,13 +111,18 @@ void t_max_length(SQLHENV henv)
     SQLCHAR data1[25],data2[25];
     SQLULEN desc_len;
     SQLINTEGER len1,len2;
-    SQLCHAR  conn[100];
+    SQLCHAR  conn[256];
 
     rc = SQLAllocConnect(henv,&hdbc);
     myenv(henv,rc);
 
     sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=1",mydsn,myuid,mypwd); 
-    rc = SQLDriverConnect(hdbc,NULL,conn,sizeof(conn),NULL,0,NULL,SQL_DRIVER_COMPLETE);
+    if (mysock != NULL)
+    {
+      strcat(conn, ";SOCKET=");
+      strcat(conn, mysock);
+    }
+    rc = SQLDriverConnect(hdbc,NULL,conn,sizeof(conn),NULL,0,NULL,SQL_DRIVER_NOPROMPT);
     mycon(hdbc,rc);
 
     rc = SQLAllocStmt(hdbc,&hstmt);
@@ -194,7 +206,8 @@ int main(int argc, char *argv[])
             myuid = argv[2];
         else if ( narg == 3 )
             mypwd = argv[3];
-
+        else if ( narg == 4 )
+            mysock= argv[4];
     }    
 
     rc = SQLAllocEnv(&henv);

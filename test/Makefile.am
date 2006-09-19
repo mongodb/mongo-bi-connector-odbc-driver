@@ -95,18 +95,18 @@ testlib: testall
 run: make-test-ini
 	for test in $(plain_tests); do \
 	  echo ODBCINI=$(TEST_ODBCINI) \
-	    ./$$test $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD) || exit 1; \
+	    ./$$test "$(TEST_DSN)" "$(TEST_UID)" "$(TEST_PASSWORD)" "$(TEST_SOCKET)" || exit 1; \
 	  ODBCINI=$(TEST_ODBCINI) \
-	    ./$$test $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD) || exit 1; \
+	    ./$$test "$(TEST_DSN)" "$(TEST_UID)" "$(TEST_PASSWORD)" "$(TEST_SOCKET)" || exit 1; \
 	done
-	ODBCINI=$(TEST_ODBCINI) ./my_use_result 1000 $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD)
+	ODBCINI=$(TEST_ODBCINI) ./my_use_result 1000 "$(TEST_DSN)" "$(TEST_UID)" "$(TEST_PASSWORD)"
 
 trun: make-test-ini
 	for test in $(fancy_tests); do \
 	  echo ODBCINI=$(TEST_ODBCINI) \
-	    ./$$test -1 $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD) || exit 1; \
+	    ./$$test -1 "$(TEST_DSN)" "$(TEST_UID)" "$(TEST_PASSWORD)" || exit 1; \
 	  ODBCINI=$(TEST_ODBCINI) \
-	    ./$$test -1 $(TEST_DSN) $(TEST_UID) $(TEST_PASSWORD) || exit 1; \
+	    ./$$test -1 "$(TEST_DSN)" "$(TEST_UID)" "$(TEST_PASSWORD)" || exit 1; \
 	done
 
 #
