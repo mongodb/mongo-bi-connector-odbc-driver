@@ -4030,7 +4030,7 @@ int main(int argc, char *argv[])
     SQLHENV   henv;
     SQLHDBC   hdbc;
     SQLHSTMT  hstmt;
-    SQLINTEGER narg, tno = -1;      
+    SQLINTEGER narg, tno = -1;
 
     /*
      *  show the usage string when the user asks for this

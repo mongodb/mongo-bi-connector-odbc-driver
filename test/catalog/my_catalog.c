@@ -720,7 +720,7 @@ int main(int argc, char *argv[])
             mypwd = argv[3];
     }
 
-    sprintf(conn,"DSN=%s;UID=%s;PWD=%s;OPTION=3;",mydsn,myuid,mypwd);
+    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=3;",mydsn,myuid,mypwd);
     mydrvconnect(&henv,&hdbc,&hstmt,conn);
 
     my_columns_null(hdbc,hstmt);

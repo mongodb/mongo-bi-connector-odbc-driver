@@ -22,9 +22,9 @@
 void my_dynamic_pos_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN   rc;
-    SQLINTEGER  nRowCount;
+    SQLLEN      nRowCount;
     SQLHSTMT    hstmt_pos;
-    SQLINTEGER  nData = 500;
+    long        nData = 500;
     SQLCHAR     szData[255]={0};
 
     /* initialize data */
@@ -155,10 +155,10 @@ void my_dynamic_pos_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
 void my_dynamic_pos_cursor1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN   rc;
-    SQLINTEGER  nRowCount;
+    SQLLEN      nRowCount;
     SQLHSTMT    hstmt_pos;
-    SQLINTEGER  i,nData[15];
-    SQLCHAR     data[30],szData[15][10]={0};
+    long        i,nData[15];
+    char        data[30],szData[15][10]={0};
 
     /* initialize data */
     SQLExecDirect(hstmt,"drop table my_dynamic_cursor",SQL_NTS);
@@ -307,8 +307,8 @@ DELETE with IGNORE ..
 void my_setpos_delete_ignore(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER nlen;
-    SQLCHAR szData[255]={0};
+    SQLLEN    nlen;
+    char      szData[255]={0};
 
     /* INIT */
     SQLExecDirect(hstmt,"drop table setpos_delete_ignore",SQL_NTS);
@@ -382,8 +382,8 @@ UPDATE with duplicate..
 void my_setpos_update_ignore(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER nlen;
-    SQLCHAR szData[255]={0};
+    SQLLEN     nlen;
+    char    szData[255]={0};
 
     SQLExecDirect(hstmt,"drop table setpos_update_ignore",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table setpos_update_ignore(col1 int, col2 varchar(30))",SQL_NTS);
@@ -453,8 +453,8 @@ UPDATE with duplicate..
 void my_setpos_update_ignore1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER nlen;
-    SQLCHAR szData[255]={0};
+    SQLLEN     nlen;
+    char    szData[255]={0};
 
     SQLExecDirect(hstmt,"drop table setpos_update_ignore",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table setpos_update_ignore(col1 int, col2 varchar(30))",SQL_NTS);
@@ -524,10 +524,10 @@ CURSOR POSITION - rowset size 1
 void my_position(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER nlen;
-    SQLCHAR szData[255]={0};
-    SQLUINTEGER nData;
-    SQLINTEGER nrow;
+    SQLLEN    nlen;
+    char      szData[255]={0};
+    long      nData;
+    SQLLEN    nrow;
 
     SQLExecDirect(hstmt,"drop table my_position",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table my_position(col1 int, col2 varchar(30))",SQL_NTS);
@@ -629,9 +629,9 @@ CURSOR POSITION - rowset size 3
 void my_position1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER nlen[15];
-    SQLCHAR szData[15][15]={0};
-    SQLINTEGER nData[15], nrow[15];
+    SQLLEN    nlen[15];
+    char      szData[15][15]={0};
+    long      nData[15], nrow[15];
 
     SQLExecDirect(hstmt,"drop table my_position",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table my_position(col1 int, col2 varchar(30))",SQL_NTS);
@@ -735,9 +735,9 @@ IROW VALUE - 0
 void my_zero_irow_update(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER nlen[15];
-    SQLCHAR szData[15][15]={0};
-    SQLUINTEGER nData[15], nrow[15];
+    SQLLEN    nlen[15];
+    char      szData[15][15]={0};
+    long      nData[15], nrow[15];
 
     SQLExecDirect(hstmt,"drop table my_zero_irow",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table my_zero_irow(col1 int, col2 varchar(30))",SQL_NTS);
@@ -825,9 +825,9 @@ IROW VALUE - 0 - DELETE
 void my_zero_irow_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER nlen[15];
-    SQLCHAR szData[15][15]={0};
-    SQLUINTEGER nData[15], nrow[15];
+    SQLLEN    nlen[15];
+    char      szData[15][15]={0};
+    long      nData[15], nrow[15];
 
     SQLExecDirect(hstmt,"drop table my_zero_irow",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table my_zero_irow(col1 int, col2 varchar(30))",SQL_NTS);
@@ -864,7 +864,7 @@ void my_zero_irow_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLExecDirect(hstmt,"select * from my_zero_irow",SQL_NTS);
     mystmt(hstmt,rc);
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,(long *)&nrow);
+    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,&nrow);
     mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,sizeof(szData[0]),(long *)&nlen);
@@ -1031,7 +1031,7 @@ int main(int argc, char *argv[])
             mypwd = argv[3];
     }    
 
-    sprintf(conn,"DSN=%s;USER=%s;PASSWORD=%s;OPTION=35",mydsn,myuid,mypwd);
+    sprintf(conn,"DRIVER=MyODBC;DSN=%s;USER=%s;PASSWORD=%s;OPTION=35",mydsn,myuid,mypwd);
     mydrvconnect(&henv,&hdbc,&hstmt,conn); 
     if (driver_supports_setpos(hdbc))
     {

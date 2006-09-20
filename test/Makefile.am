@@ -92,7 +92,7 @@ testlib: testall
 # Pass DSN UID PASSWORD as the command line arguments to each sample
 # ----------------------------------------------------------------------
 
-run: make-test-ini
+run: make-test-ini $(plain_tests) my_use_result
 	for test in $(plain_tests); do \
 	  echo ODBCINI=$(TEST_ODBCINI) \
 	    ./$$test "$(TEST_DSN)" "$(TEST_UID)" "$(TEST_PASSWORD)" "$(TEST_SOCKET)" || exit 1; \
@@ -101,7 +101,7 @@ run: make-test-ini
 	done
 	ODBCINI=$(TEST_ODBCINI) ./my_use_result 1000 "$(TEST_DSN)" "$(TEST_UID)" "$(TEST_PASSWORD)"
 
-trun: make-test-ini
+trun: make-test-ini $(fancy_tests)
 	for test in $(fancy_tests); do \
 	  echo ODBCINI=$(TEST_ODBCINI) \
 	    ./$$test -1 "$(TEST_DSN)" "$(TEST_UID)" "$(TEST_PASSWORD)" || exit 1; \
