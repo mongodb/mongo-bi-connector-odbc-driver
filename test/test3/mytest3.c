@@ -16,6 +16,8 @@
  ***************************************************************************/
 #include "mytest3.h"
 
+SQLCHAR *mysock= NULL;
+
 /*
   Utility function to verify a particular column data
 */
@@ -5055,8 +5057,13 @@ static void t_cache_bug()
 
   printMessageHeader();
     
-    sprintf(conn,"DSN=%s;USER=%s;PASSWORD=%s;OPTION=1048579",
+    sprintf(conn,"DRIVER=MyODBC;DSN=%s;USER=%s;PASSWORD=%s;OPTION=1048579",
             mydsn,myuid,mypwd);
+    if (mysock != NULL)
+    {
+      strcat(conn, ";SOCKET=");
+      strcat(conn, mysock);
+    }
     mydrvconnect(&henv,&hdbc,&hstmt1,conn);  
     
     tmysql_exec(hstmt1,"drop table t_cache");
@@ -5142,8 +5149,13 @@ static void t_non_cache_bug()
 
   printMessageHeader();
     
-    sprintf(conn,"DSN=%s;USER=%s;PASSWORD=%s;OPTION=3",
+    sprintf(conn,"DRIVER=MyODBC;DSN=%s;USER=%s;PASSWORD=%s;OPTION=3",
             mydsn,myuid,mypwd);
+    if (mysock != NULL)
+    {
+      strcat(conn, ";SOCKET=");
+      strcat(conn, mysock);
+    }
     mydrvconnect(&henv,&hdbc,&hstmt1,conn);  
     
     tmysql_exec(hstmt1,"drop table t_cache");
@@ -6872,11 +6884,12 @@ int main(int argc, char *argv[])
        )
     {
       fprintf(stdout,"------------------------------------------\n");
-      fprintf(stdout,"usage: mytest3 testno [DSN] [UID] [PWD] \n\n");      
+      fprintf(stdout,"usage: mytest3 testno [DSN] [UID] [PWD] [SOCK]\n\n");      
       fprintf(stdout,"       testno <-- test number\n");
       fprintf(stdout,"       DSN    <-- data source name\n");
       fprintf(stdout,"       UID    <-- user name\n");
       fprintf(stdout,"       PWD    <-- password\n");
+      fprintf(stdout,"       SOCK   <-- socket path\n");
       
       fprintf(stdout,"\ntestno:\n");            
       fprintf(stdout,"   -1 : all\n");            
@@ -6910,8 +6923,9 @@ int main(int argc, char *argv[])
       else if ( narg == 3 )
         myuid = argv[3];
       else if ( narg == 4 )
-        mypwd = argv[4];      
-          
+        mypwd = argv[4];
+      else if ( narg == 4 )
+        mysock= argv[4];
     }   
 
     myconnect(&henv,&hdbc,&hstmt);

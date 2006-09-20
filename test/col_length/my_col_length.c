@@ -45,7 +45,7 @@ void t_true_length(SQLHENV henv)
     rc = SQLAllocStmt(hdbc,&hstmt);
     mycon(hdbc,rc);
     /* PMG 2004.05.04 Added this in order for the test to pass. */
-    sprintf(conn,"DSN=%s;UID=%s;PWD=%s;OPTION=0",mydsn,myuid,mypwd); 
+    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=0",mydsn,myuid,mypwd); 
     rc = SQLExecDirect(hstmt,"CREATE DATABASE IF NOT EXISTS client_odbc_test",SQL_NTS);
     mystmt(hstmt,rc);
 

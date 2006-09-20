@@ -16,6 +16,8 @@
  ***************************************************************************/
 #include "mytest3.h"
 
+SQLCHAR *mysock= NULL;
+
 SQLINTEGER my_max_rows = 10000;
 clock_t t_start, t_end;
 SQLDOUBLE my_time;
@@ -146,8 +148,13 @@ void t_use_result()
     SQLCHAR   conn[255];
     SQLINTEGER option = 131072L * 8;
 
-    sprintf(conn,"DSN=%s;UID=%s;PWD=%s;OPTION=%d;",
+    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=%d",
             mydsn,myuid,mypwd,option);
+    if (mysock != NULL)
+    {
+      strcat(conn, ";SOCKET=");
+      strcat(conn, mysock);
+    }
     mydrvconnect(&henv1,&hdbc1,&hstmt1,conn);
     my_assert(t_fetch_data(hdbc1,hstmt1) == my_max_rows); 
     mydisconnect(&henv1,&hdbc1,&hstmt1);
@@ -164,8 +171,13 @@ void t_store_result()
     SQLCHAR   conn[255];
     SQLINTEGER option = 3;
 
-    sprintf(conn,"DSN=%s;UID=%s;PWD=%s;OPTION=%d;",
+    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=%d",
             mydsn,myuid,mypwd,option);
+    if (mysock != NULL)
+    {
+      strcat(conn, ";SOCKET=");
+      strcat(conn, mysock);
+    }
     mydrvconnect(&henv1,&hdbc1,&hstmt1,conn);
     my_assert(t_fetch_data(hdbc1,hstmt1) == my_max_rows); 
     mydisconnect(&henv1,&hdbc1,&hstmt1);
@@ -188,12 +200,14 @@ int main(int argc, char *argv[])
     {
         if ( narg == 1 )
             my_max_rows = atoi(argv[1]);
-        if ( narg == 2 )
+        else if ( narg == 2 )
             mydsn = argv[2];
         else if ( narg == 3 )
             myuid = argv[3];
         else if ( narg == 4 )
             mypwd = argv[4];
+        else if ( narg == 4 )
+            mysock= argv[4];
     }
 
     t_init_data();

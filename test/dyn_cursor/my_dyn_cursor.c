@@ -16,6 +16,8 @@
  ***************************************************************************/
 #include "mytest3.h"
 
+SQLCHAR *mysock= NULL;
+
 /********************************************************
 * perform positioned update and delete                  *
 *********************************************************/
@@ -1029,9 +1031,16 @@ int main(int argc, char *argv[])
             myuid = argv[2];
         else if ( narg == 3 )
             mypwd = argv[3];
+        else if ( narg == 4 )
+            mysock= argv[4];
     }    
 
     sprintf(conn,"DRIVER=MyODBC;DSN=%s;USER=%s;PASSWORD=%s;OPTION=35",mydsn,myuid,mypwd);
+    if (mysock != NULL)
+    {
+      strcat(conn, ";SOCKET=");
+      strcat(conn, mysock);
+    }
     mydrvconnect(&henv,&hdbc,&hstmt,conn); 
     if (driver_supports_setpos(hdbc))
     {

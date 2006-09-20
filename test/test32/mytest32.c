@@ -374,7 +374,8 @@ void t_prep_scroll()
 void t_prep_getdata()
 {
     SQLCHAR    name[10];
-    long       data, length;
+    long       data;
+    SQLINTEGER length;
     SQLCHAR    tiny;
 
     SQLExecDirect(hstmt,"drop table t_prep_getdata",SQL_NTS);
@@ -432,7 +433,12 @@ void t_prep_getdata()
     rc = SQLGetData(hstmt,3,SQL_C_CHAR,name,5,&length);
     mystmt(hstmt,rc);
 
-    printMessage("\n record 3 : %s(%ld)", name, length);
+    /*
+      FIXME how to do this test nicely? We don't know if SQLINTEGER is
+      32 or 64 bits, and to use "%d" or "%ld"? Microsoft changed this.
+    */
+    printMessage("\n record 3 : %s(%d)", name, length);
+
     myassert(strcmp(name,"venu")== 0 && length == 4);
 
     data = 0;

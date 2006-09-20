@@ -16,6 +16,8 @@
  ***************************************************************************/
 #include "mytest3.h"
 
+SQLCHAR *mysock= NULL;
+
 void t_odbc3_envattr()
 {
     SQLRETURN rc; 
@@ -110,9 +112,14 @@ void t_driver_connect()
     rc = SQLAllocConnect(henv,&hdbc);
     myenv(henv,rc);
 
-    sprintf(conn_in,"DRIVER={MySQL ODBC 3.51 Driver};USER=%s;PASSWORD=%s;DATABASE=%s;SERVER=%s;OPTION=3;SOCKET=/tmp/mysql.sock;STMT=use mysql;",
+    sprintf(conn_in,"DRIVER={MySQL ODBC 3.51 Driver};USER=%s;PASSWORD=%s;"
+                    "DATABASE=%s;SERVER=%s;OPTION=3;STMT=use mysql",
             myuid, mypwd, mydb, myserver);
-
+    if (mysock != NULL)
+    {
+      strcat(conn_in, ";SOCKET=");
+      strcat(conn_in, mysock);
+    }
     rc = SQLDriverConnect(hdbc, (SQLHWND)0, (SQLCHAR *)conn_in, sizeof(conn_in),
                           (SQLCHAR *)conn_out, sizeof(conn_out), 0, 
                           SQL_DRIVER_NOPROMPT);
@@ -156,7 +163,8 @@ int main(int argc, char *argv[])
             myuid = argv[2];
         else if ( narg == 3 )
             mypwd = argv[3];
-
+        else if ( narg == 4 )
+            mysock= argv[4];
     }   
 
     t_odbc3_envattr();

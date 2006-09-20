@@ -16,6 +16,7 @@
  ***************************************************************************/
 #include "mytest3.h"
 
+SQLCHAR *mysock= NULL;
 
 /**
 * to test the pcbValue on cursor ops
@@ -718,9 +719,16 @@ int main(int argc, char *argv[])
             myuid = argv[2];
         else if ( narg == 3 )
             mypwd = argv[3];
+        else if ( narg == 4 )
+            mysock= argv[4];
     }
 
-    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=3;",mydsn,myuid,mypwd);
+    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=3",mydsn,myuid,mypwd);
+    if (mysock != NULL)
+    {
+      strcat(conn, ";SOCKET=");
+      strcat(conn, mysock);
+    }
     mydrvconnect(&henv,&hdbc,&hstmt,conn);
 
     my_columns_null(hdbc,hstmt);

@@ -16,6 +16,7 @@
  ***************************************************************************/
 #include "mytest3.h"
 
+SQLCHAR *mysock= NULL;
 
 /*
 UPDATE with primary keys ... 
@@ -1045,9 +1046,13 @@ static void my_tables(SQLHENV henv,SQLHDBC hdbc,SQLHSTMT hstmt)
     rc = SQLExecDirect(hstmt,"CREATE DATABASE my_tables_test_db",SQL_NTS);
     mystmt(hstmt,rc);
 
-	sprintf(conn,"DRIVER={MySQL ODBC 3.51 Driver};DSN=%s;UID=%s;PASSWORD=%s;DATABASE=%s",
+    sprintf(conn,"DRIVER={MySQL ODBC 3.51 Driver};DSN=%s;UID=%s;PASSWORD=%s;DATABASE=%s",
             mydsn,myuid,mypwd,"my_tables_test_db");
-
+    if (mysock != NULL)
+    {
+      strcat(conn, ";SOCKET=");
+      strcat(conn, mysock);
+    }
     rc = SQLAllocConnect(henv,&hdbc1);
     myenv(henv,rc);
 
@@ -1197,6 +1202,8 @@ int main(int argc, char *argv[])
             myuid = argv[2];
         else if ( narg == 3 )
             mypwd = argv[3];
+        else if ( narg == 4 )
+            mysock= argv[4];
     }    
 
     myconnect(&henv,&hdbc,&hstmt); 

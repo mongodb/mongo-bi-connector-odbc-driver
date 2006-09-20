@@ -24,6 +24,7 @@
 
 #include "mytest3.h" /* MyODBC 3.51 sample utility header */
 
+SQLCHAR *mysock= NULL;
 
 /********************************************************
 * Transactional behaviour before and the connection     *
@@ -42,20 +43,28 @@ void test_tran_ext(SQLHDBC hdbc)
     rc = SQLSetConnectAttr(hdbc,SQL_TXN_ISOLATION,(SQLPOINTER)SQL_TXN_REPEATABLE_READ,0);
     mycon(hdbc,rc);    
 
-    sprintf(conn,"DSN=%s;UID=%s;PWD=%s;OPTION=%d;",
+    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=%d",
             mydsn,myuid,mypwd,option);
+    if (mysock != NULL)
+    {
+      strcat(conn, ";SOCKET=");
+      strcat(conn, mysock);
+    }
     rc = SQLDriverConnect(hdbc,NULL,conn,255,
                           NULL,0,NULL,SQL_DRIVER_COMPLETE);
     mycon(hdbc,rc);
-
-    my_assert(rc == SQL_SUCCESS_WITH_INFO);
 
     rc = SQLDisconnect(hdbc);
     mycon(hdbc,rc);    
 
     option = 1 + 4;
-    sprintf(conn,"DSN=%s;UID=%s;PWD=%s;OPTION=%d;",
+    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=%d",
             mydsn,myuid,mypwd,option);
+    if (mysock != NULL)
+    {
+      strcat(conn, ";SOCKET=");
+      strcat(conn, mysock);
+    }
     rc = SQLDriverConnect(hdbc,NULL,conn,255,
                           NULL,0,NULL,SQL_DRIVER_COMPLETE);
     mycon(hdbc,rc);
@@ -89,7 +98,8 @@ int main(int argc, char *argv[])
             myuid = argv[2];
         else if ( narg == 3 )
             mypwd = argv[3];
-
+        else if ( narg == 4 )
+            mysock= argv[4];
     }
     rc = SQLAllocHandle(SQL_HANDLE_ENV,SQL_NULL_HANDLE,&henv);
     myenv(henv,rc);   
