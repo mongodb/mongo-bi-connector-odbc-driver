@@ -969,20 +969,54 @@ SQLRETURN SQL_API sql_get_data( STMT *          stmt,
             case SQL_C_TIME:
             case SQL_C_TYPE_TIME:
                 {
-                    SQL_TIME_STRUCT ts;
-                    if ( str_to_time_st(&ts,value) )
-                        *pcbValue= SQL_NULL_DATA;
+                    if (field->type == FIELD_TYPE_TIMESTAMP ||
+                        field->type == FIELD_TYPE_DATETIME)
+                    {
+                      SQL_TIMESTAMP_STRUCT ts;
+                      if ( str_to_ts(&ts,value) )
+                          *pcbValue= SQL_NULL_DATA;
+                      else
+                      {
+                          SQL_TIME_STRUCT *time_info= (SQL_TIME_STRUCT *)rgbValue;
+
+                          if ( time_info )
+                          {
+                              time_info->hour= ts.hour;
+                              time_info->minute= ts.minute;
+                              time_info->second= ts.second;
+                          }
+                          *pcbValue=sizeof(TIME_STRUCT);
+                      }
+                    }
+                    else if (field->type == FIELD_TYPE_DATE)
+                    {
+                          SQL_TIME_STRUCT *time_info= (SQL_TIME_STRUCT *)rgbValue;
+
+                          if ( time_info )
+                          {
+                              time_info->hour= 0;
+                              time_info->minute= 0;
+                              time_info->second= 0;
+                          }
+                          *pcbValue=sizeof(TIME_STRUCT);
+                    }
                     else
                     {
-                        SQL_TIME_STRUCT *time_info= (SQL_TIME_STRUCT *)rgbValue;
+                      SQL_TIME_STRUCT ts;
+                      if ( str_to_time_st(&ts,value) )
+                          *pcbValue= SQL_NULL_DATA;
+                      else
+                      {
+                          SQL_TIME_STRUCT *time_info= (SQL_TIME_STRUCT *)rgbValue;
 
-                        if ( time_info )
-                        {
-                            time_info->hour= ts.hour;
-                            time_info->minute= ts.minute;
-                            time_info->second= ts.second;          
-                        }
-                        *pcbValue=sizeof(TIME_STRUCT);
+                          if ( time_info )
+                          {
+                              time_info->hour= ts.hour;
+                              time_info->minute= ts.minute;
+                              time_info->second= ts.second;          
+                          }
+                          *pcbValue=sizeof(TIME_STRUCT);
+                      }
                     }
                     break;
                 }
