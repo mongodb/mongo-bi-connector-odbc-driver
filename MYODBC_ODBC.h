@@ -26,7 +26,7 @@
         #define SQL_API
     #endif
 #else
-    #include <windowsx.h>
+    #include <windows.h>
     #ifndef RC_INVOKED
         #pragma pack(1)
     #endif
