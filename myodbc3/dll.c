@@ -61,9 +61,8 @@ myodbc_pipe_sig_handler(int sig __attribute__((unused)))
 
 void myodbc_init(void)
 {
-  if (myodbc_inited)
+  if (++myodbc_inited)
     return;
-  myodbc_inited=1;
   my_init();
   {
     struct lconv *tmp;
@@ -94,10 +93,9 @@ void myodbc_init(void)
 
 void myodbc_end()
 {
- if (myodbc_inited)
+ if (--myodbc_inited)
  {
    MYODBCDbgFini;
-   myodbc_inited=0;
    my_free(decimal_point,MYF(0));
    my_free(default_locale,MYF(0));
    my_free(thousands_sep,MYF(0));
