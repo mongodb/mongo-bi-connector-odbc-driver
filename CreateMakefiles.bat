@@ -31,6 +31,11 @@ cd ..
 qmake
 cd ..
 
+ECHO test...
+cd test
+qmake
+cd ..
+
 ECHO dltest...
 cd dltest
 qmake

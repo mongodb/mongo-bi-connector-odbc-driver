@@ -29,7 +29,7 @@
 #ifndef MYODBC_DBG_H
 #define MYODBC_DBG_H
 
-#include "../../MYODBC_MYSQL.h"
+/* #include "../../MYODBC_MYSQL.h" */
 #include "../../MYODBC_CONF.h"
 #include "../../MYODBC_ODBC.h"
 
