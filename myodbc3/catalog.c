@@ -146,9 +146,10 @@ static MYSQL_RES *mysql_list_dbtables( DBC FAR    *dbc,
 my_bool is_default_db(char *def_db, char *user_db)
 {
     /* Fix this to return a valid qualifier for all APIs */
-    if ( valid_input_parameter(user_db) && 
-         !strchr(user_db,'%') && 
-         cmp_database(def_db, user_db) )
+    if ( !valid_input_parameter(def_db) ||
+         (valid_input_parameter(user_db) &&
+          !strchr(user_db,'%') &&
+          cmp_database(def_db, user_db)) )
         return FALSE;
     return TRUE;
 }
@@ -395,7 +396,7 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
     /* User Tables with type as 'TABLE' or 'VIEW' */
     if ( user_tables )
     {
-        if ( szTableQualifier && cmp_database(stmt->dbc->mysql.db, TableQualifier) )
+        if ( szTableQualifier && (!stmt->dbc->mysql.db || cmp_database(stmt->dbc->mysql.db, TableQualifier)) )
         {
             /* Return tables from a perticular database */
             MYODBCDbgPrint("info ",("Return set of tables '%s' from '%s'",TableName, TableQualifier));
