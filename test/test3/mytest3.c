@@ -2165,10 +2165,10 @@ static void t_bigint(SQLHDBC hdbc, SQLHSTMT hstmt)
 }
 static void t_odbc3_envattr()
 {
-  SQLRETURN rc; 
+  SQLRETURN rc;
   SQLHENV henv;
   SQLHDBC hdbc;
-  SQLPOINTER ov_version;
+  SQLINTEGER ov_version;
 
   printMessageHeader();
 
@@ -2187,10 +2187,10 @@ static void t_odbc3_envattr()
     rc = SQLSetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)SQL_OV_ODBC3,0);
     myenv_err(henv,rc == SQL_ERROR,rc);
 	
-    rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,&ov_version,0,0);
+    rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)&ov_version,0,0);
     myenv(henv,rc);
-    fprintf(stdout,"\n default odbc version:%d",ov_version);
-    my_assert(ov_version == (SQLPOINTER)SQL_OV_ODBC2);
+    fprintf(stdout,"default odbc version:%d\n",ov_version);
+    my_assert(ov_version == SQL_OV_ODBC2);
 
     rc = SQLFreeConnect(hdbc);
     mycon(hdbc,rc);
@@ -2198,11 +2198,11 @@ static void t_odbc3_envattr()
     rc = SQLSetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)SQL_OV_ODBC3,0);
     myenv(henv,rc);
 
-    rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,&ov_version,0,0);
+    rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)&ov_version,0,0);
     myenv(henv,rc);
-    fprintf(stdout,"\n new odbc version:%d",ov_version);
-    my_assert(ov_version == (SQLPOINTER)SQL_OV_ODBC3);
-    
+    fprintf(stdout,"new odbc version:%d\n",ov_version);
+    my_assert(ov_version == SQL_OV_ODBC3);
+
     rc = SQLFreeEnv(henv);
     myenv(henv,rc);
 
@@ -2211,16 +2211,16 @@ static void t_odbc3_envattr()
 
     rc = SQLSetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)SQL_OV_ODBC3,0);
     myenv(henv,rc);
-    
+
     rc = SQLAllocConnect(henv,&hdbc);
     myenv(henv,rc);
 
     rc = SQLSetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)SQL_OV_ODBC3,0);
     myenv_err(henv,rc == SQL_ERROR,rc);
-	
+
     rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,&ov_version,0,0);
     myenv(henv,rc);
-    fprintf(stdout,"\n default odbc version:%d",ov_version);
+    fprintf(stdout,"default odbc version:%d\n",ov_version);
     my_assert(ov_version == (SQLPOINTER)SQL_OV_ODBC3);
 
     rc = SQLFreeHandle(SQL_HANDLE_DBC, hdbc);
@@ -2231,7 +2231,7 @@ static void t_odbc3_envattr()
 }
 static void t_odbc3_handle()
 {
-  SQLRETURN rc; 
+  SQLRETURN rc;
   SQLHENV henv;
   SQLHDBC hdbc;
   SQLHSTMT hstmt;
@@ -2286,7 +2286,7 @@ static void t_getcursor(SQLHDBC hdbc)
   SQLRETURN rc; 
   SQLHSTMT hstmt1,hstmt2,hstmt3;
   SQLCHAR curname[50];
-  SQLLEN nlen;
+  SQLSMALLINT nlen;
 
   printMessageHeader();
     
@@ -3139,7 +3139,7 @@ static void my_setpos_upd_pk_order(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLExecDirect(hstmt,"DELETE FROM my_setpos_upd_pk_order WHERE col2 = 'updated'",SQL_NTS);
     mystmt(hstmt,rc);
 
-    rc = SQLRowCount(hstmt,(SQLINTEGER *)&nlen);
+    rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
     fprintf(stdout,"\n total rows affceted:%d",nlen);
     my_assert(nlen == 1);
@@ -4277,12 +4277,12 @@ static void t_zerolength(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN  rc;
   SQLCHAR    szData[100], bData[100], bData1[100];
-  SQLINTEGER pcbValue,pcbValue1,pcbValue2;
+  SQLLEN     pcbValue,pcbValue1,pcbValue2;
 
   printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_zerolength");
-    rc = tmysql_exec(hstmt,"create table t_zerolength(str varchar(20), bin binary(20), blb blob)");
+    rc = tmysql_exec(hstmt,"create table t_zerolength(str varchar(20), bin varbinary(20), blb blob)");
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into t_zerolength values('','','')");
@@ -6539,10 +6539,10 @@ static void t_putdata3(SQLHDBC hdbc, SQLHSTMT hstmt)
   int commonLen= 20;
 
   long        id, id1, id2, id3, resId;
-  SQLINTEGER  resUTimeSec;
-  SQLINTEGER  resUTimeMSec;
-  SQLINTEGER  resDataLen;
-  SQLINTEGER  resData;
+  long        resUTimeSec;
+  long        resUTimeMSec;
+  long        resDataLen;
+  long        resData;
 
 
   printMessageHeader();
@@ -6823,7 +6823,9 @@ static void mytest(int tno, SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt)
     t_putdata2(hdbc,hstmt);
     t_tables_bug(hdbc,hstmt); /* To be fixed in 3.52 */
     t_convert_type(henv,hdbc,hstmt);
+#if SQLColumns_NOT_BROKEN
     t_columns(hdbc,hstmt);
+#endif
     t_multistep(hdbc,hstmt);
     t_warning(hdbc,hstmt);
     t_scroll(hdbc,hstmt);

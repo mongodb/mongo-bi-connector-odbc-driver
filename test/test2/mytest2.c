@@ -22,8 +22,8 @@
 void t_basic(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  int nInData = 1;
-  int nOutData, nRowCount=0;
+  long nInData = 1;
+  long nOutData, nRowCount=0;
   char szOutData[31]={0};
 
   printMessageHeader();
@@ -103,9 +103,9 @@ void t_basic(SQLHDBC hdbc,SQLHSTMT hstmt)
 void tmysql_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
-  SQLCHAR szData[255]={0};
-  SQLUINTEGER pcrow;
+  long      nData = 500, nlen;
+  char      szData[255]={0};
+  SQLLEN    pcrow;
   SQLUSMALLINT rgfRowStatus;
 
     printMessageHeader();
@@ -202,9 +202,10 @@ void tmysql_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
 void tmysql_setpos_del1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
-  SQLCHAR szData[255]={0};
-  SQLUINTEGER pcrow;
+  long nData = 500;
+  SQLLEN nlen;
+  char szData[255]={0};
+  SQLROWSETSIZE pcrow;
 
     printMessageHeader();
 
@@ -275,9 +276,10 @@ void tmysql_setpos_del1(SQLHDBC hdbc, SQLHSTMT hstmt)
 void tmysql_setpos_del_all(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
-  SQLCHAR szData[255]={0};
-  SQLUINTEGER pcrow;
+  long nData = 500;
+  SQLLEN nlen;
+  char szData[255]={0};
+  SQLROWSETSIZE pcrow;
 
     printMessageHeader();
 
@@ -354,9 +356,10 @@ void tmysql_setpos_del_all(SQLHDBC hdbc, SQLHSTMT hstmt)
 void tmysql_setpos_upd(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
-  SQLCHAR szData[255]={0};
-  SQLUINTEGER pcrow;
+  long nData = 500;
+  SQLLEN nlen;
+  char szData[255]={0};
+  SQLROWSETSIZE pcrow;
 
     printMessageHeader();
 
@@ -458,9 +461,10 @@ void tmysql_setpos_upd(SQLHDBC hdbc, SQLHSTMT hstmt)
 void tmysql_setpos_add(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
-  SQLCHAR szData[255]={0};
-  SQLUINTEGER pcrow;
+  long nData = 500;
+  SQLLEN nlen;
+  char szData[255]={0};
+  SQLROWSETSIZE pcrow;
 
     printMessageHeader();
 
@@ -663,8 +667,8 @@ void t_sqltables(SQLHDBC hdbc, SQLHSTMT hstmt)
 void tmysql_bindcol(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  int     nodata;
-  long    nlen, nidata = 200;
+  long    nodata, nidata = 200;
+  SQLLEN  nlen;
   char    szodata[20],szidata[20]="MySQL";
 
     printMessageHeader();
@@ -734,8 +738,8 @@ void tmysql_bindcol(SQLHDBC hdbc, SQLHSTMT hstmt)
 void tmysql_pcbvalue(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN  rc;
-  int        nodata;
-  SQLINTEGER nlen, slen,tlen;
+  long       nodata;
+  SQLLEN     nlen, slen,tlen;
   char       szdata[20],sztdata[100];
   SQLUSMALLINT   rgfRowStatus[20];
 
@@ -826,8 +830,8 @@ void tmysql_pcbvalue(SQLHDBC hdbc, SQLHSTMT hstmt)
 void tmysql_bindparam(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  int       nodata;
-  long      nlen, nidata = 200;
+  long      nodata, nidata = 200;
+  SQLLEN    nlen;
   char      szodata[20],szidata[20]="MySQL";
   short     pccol;
 
@@ -992,7 +996,7 @@ void tmysql_fix(SQLHDBC hdbc, SQLHSTMT hstmt)
     SQLCHAR     sqlerr[30]="error";
     SQLCHAR     fixerr[30]= "fixerr";
     SQLCHAR     progerr[30]="progerr";
-    SQLINTEGER  pcbParamDef;
+    SQLULEN     pcbParamDef;
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
     rc = SQLPrepare(hstmt,"insert into sqlerr (TD, NODE, TAG, SQLNAME, SQL_ERR, FIX_ERR, PROG_ERR)\
@@ -1037,7 +1041,7 @@ void tmysql_pos_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
   SQLHSTMT hstmt1;
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
 
   printMessageHeader();
 
@@ -1105,7 +1109,7 @@ void tmysql_pos_update(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
   SQLHSTMT hstmt1;
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
   SQLUSMALLINT rgfRowStatus;
 
   printMessageHeader();
@@ -1182,7 +1186,7 @@ void tmysql_pos_update_ex(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
   SQLHSTMT hstmt1;
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
   SQLUSMALLINT rgfRowStatus;
   SQLCHAR cursor[30],sql[100],data[]="updated";
 
@@ -1261,7 +1265,7 @@ void tmysql_pos_update_ex1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
   SQLHSTMT hstmt1;
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
   SQLUSMALLINT rgfRowStatus;
   SQLCHAR cursor[30],sql[100],data[]="updated";
 
@@ -1341,7 +1345,7 @@ void tmysql_pos_update_ex2(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
   SQLHSTMT hstmt1;
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
   SQLUSMALLINT rgfRowStatus;
   SQLCHAR cursor[30],sql[100],data[]="updated";
 
@@ -1421,7 +1425,7 @@ void tmysql_pos_update_ex3(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
   SQLHSTMT hstmt1;
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
   SQLCHAR cursor[30],sql[100];
 
   printMessageHeader();
@@ -1474,7 +1478,7 @@ void tmysql_pos_update_ex4(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
   SQLHSTMT hstmt1;
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
   SQLCHAR sql[100],data[]="venu";
 
   printMessageHeader();
@@ -1625,9 +1629,10 @@ void tmysql_pos_dyncursor(SQLHDBC hdbc, SQLHSTMT hstmt)
 void tmysql_mtab_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData = 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
 
   printMessageHeader();
 
@@ -1716,9 +1721,10 @@ void tmysql_showkeys(SQLHDBC hdbc, SQLHSTMT hstmt)
 void tmysql_setpos_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData = 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
 
   printMessageHeader();
 
@@ -1792,9 +1798,10 @@ void tmysql_setpos_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
 void t_alias_setpos_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData = 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
 
   printMessageHeader();
 
@@ -1868,9 +1875,10 @@ void t_alias_setpos_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
 void t_alias_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData = 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
 
   printMessageHeader();
 
@@ -1945,9 +1953,10 @@ void t_alias_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
 void tmysql_setpos_pkdel1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData = 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
 
   printMessageHeader();
 
@@ -2021,9 +2030,10 @@ void tmysql_setpos_pkdel1(SQLHDBC hdbc, SQLHSTMT hstmt)
 void tmysql_setpos_pkdel2(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData = 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
 
   printMessageHeader();
 
@@ -2098,9 +2108,9 @@ void tmysql_rowstatus(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;    
   SQLHSTMT hstmt1;
-  SQLUINTEGER pcrow[4];
+  SQLROWSETSIZE pcrow[4];
   SQLUSMALLINT rgfRowStatus[6];
-  SQLINTEGER nData = 555;
+  long nData = 555;
   SQLCHAR szData[255] = "setpos-update";
 
   printMessageHeader();
@@ -2243,9 +2253,10 @@ void t_refresh(SQLHDBC hdbc, SQLHSTMT hstmt)
 void tmysql_setpos_pkdel3(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData = 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
 
   printMessageHeader();
 
@@ -2314,9 +2325,10 @@ void tmysql_setpos_pkdel3(SQLHDBC hdbc, SQLHSTMT hstmt)
 void t_mul_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData = 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
 
   printMessageHeader();
 
@@ -2385,9 +2397,10 @@ void t_mul_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
 void t_mul_pkdel1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData = 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
 
   printMessageHeader();
 
@@ -2457,7 +2470,7 @@ void t_max_select(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
   SQLCHAR szData[255]={0};
-  SQLINTEGER i;
+  long i;
   
   printMessageHeader();
 
@@ -2601,7 +2614,7 @@ void t_tran_ddl(SQLHDBC hdbc, SQLHSTMT hstmt)
 void t_max_con(HENV henv)
 {
   SQLRETURN rc;
-  SQLINTEGER i;
+  long i;
   SQLHDBC hdbc;
   
   printMessageHeader();
@@ -3136,7 +3149,7 @@ void t_bigint(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc; 
   SQLCHAR id[20]="999";
-  SQLINTEGER nlen;
+  SQLLEN     nlen;
   
   printMessageHeader();
 
@@ -3252,7 +3265,8 @@ void t_bigint(SQLHDBC hdbc, SQLHSTMT hstmt)
 void t_setpos_upd_bug1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER id, len,id_len,f_len,l_len,ts_len;
+  long id;
+  SQLLEN len,id_len,f_len,l_len,ts_len;
   SQLCHAR fname[21],lname[21],ts[17],szTable[256];
   SQLUSMALLINT pccol;
   
@@ -3358,8 +3372,8 @@ void t_setpos_upd_bug1(SQLHDBC hdbc, SQLHSTMT hstmt)
 void t_acc_update(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER id,id1;
-  SQLINTEGER pcrow;
+  long id,id1;
+  SQLROWSETSIZE pcrow;
   SQLHSTMT hstmt1;
 
   printMessageHeader();
@@ -3652,7 +3666,7 @@ void t_contest(SQLHDBC hdbc,SQLHSTMT hstmt)
 void t_exfetch(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER i;
+  long i;
 
   printMessageHeader();
 
@@ -3774,9 +3788,10 @@ void t_exfetch(SQLHDBC hdbc,SQLHSTMT hstmt)
 void my_setpos_upd_pk_order(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500, nlen;
+  long nData = 500;
+  SQLLEN nlen;
   SQLCHAR szData[255]={0};
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
 
   printMessageHeader();
 
@@ -3854,9 +3869,9 @@ void my_setpos_upd_pk_order(SQLHDBC hdbc, SQLHSTMT hstmt)
 void my_setpos_upd_pk_order1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLINTEGER nData = 500;
+  long nData = 500;
   SQLCHAR szData[255]={0};
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
 
   printMessageHeader();
 

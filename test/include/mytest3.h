@@ -127,7 +127,7 @@ SQLUINTEGER myresult(SQLHSTMT hstmt);
 #define mycon_r(hdbc,r)  \
         if ( r == SQL_ERROR ) \
             myerror( r, 2, hdbc,  __FILE__, __LINE__ ); \
-        my_assert(rc==SQL_ERROR)
+        my_assert(r==SQL_ERROR)
 
 #define mycon_err(hdbc,r,rc)  \
         if ( rc == SQL_ERROR || rc == SQL_SUCCESS_WITH_INFO ) \

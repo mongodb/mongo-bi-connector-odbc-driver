@@ -23,18 +23,18 @@ void t_odbc3_envattr()
     SQLRETURN rc; 
     SQLHENV henv;
     SQLHDBC hdbc;
-    SQLPOINTER ov_version;
+    SQLINTEGER ov_version;
 
     rc = SQLAllocEnv(&henv);
     myenv(henv,rc);
 
-    rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,&ov_version,0,0);
+    rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)&ov_version,0,0);
     myenv(henv,rc);
     printMessage("\ndefault odbc version:%d",ov_version);
 
     rc = SQLSetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)SQL_OV_ODBC3,0);
     myenv(henv,rc);
-    my_assert(ov_version == (SQLPOINTER)SQL_OV_ODBC2);
+    my_assert(ov_version == SQL_OV_ODBC2);
 
     rc = SQLAllocConnect(henv,&hdbc);
     myenv(henv,rc);
@@ -45,10 +45,10 @@ void t_odbc3_envattr()
     rc = SQLSetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)SQL_OV_ODBC3,0);
     myenv(henv,rc);
 
-    rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,&ov_version,0,0);
+    rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)&ov_version,0,0);
     myenv(henv,rc);
     printMessage("\nnew odbc version:%d",ov_version);
-    my_assert(ov_version == (SQLPOINTER)SQL_OV_ODBC3);
+    my_assert(ov_version == SQL_OV_ODBC3);
 
     rc = SQLFreeEnv(henv);
     myenv(henv,rc);
@@ -59,7 +59,7 @@ void t_odbc3_handle()
     SQLHENV henv;
     SQLHDBC hdbc;
     SQLHSTMT hstmt;
-    SQLPOINTER ov_version;
+    SQLINTEGER ov_version;
 
     rc = SQLAllocHandle(SQL_HANDLE_ENV,SQL_NULL_HANDLE,&henv);
     myenv(henv,rc);
@@ -68,18 +68,18 @@ void t_odbc3_handle()
     rc = SQLAllocHandle(SQL_HANDLE_DBC,henv,&hdbc);
     myenv_err(henv,rc == SQL_ERROR,rc);
 
-    rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,&ov_version,0,0);
+    rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)&ov_version,0,0);
     myenv(henv,rc);
     printMessage("\ndefault odbc version:%d",ov_version);
-    my_assert(ov_version == (SQLPOINTER)SQL_OV_ODBC2);
+    my_assert(ov_version == SQL_OV_ODBC2);
 #endif
 
     rc = SQLSetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)SQL_OV_ODBC3,0);
     myenv(henv,rc);
 
-    rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,&ov_version,0,0);
+    rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)&ov_version,0,0);
     myenv(henv,rc);
-    my_assert(ov_version == (SQLPOINTER)SQL_OV_ODBC3);
+    my_assert(ov_version == SQL_OV_ODBC3);
 
     rc = SQLAllocHandle(SQL_HANDLE_DBC,henv,&hdbc);
     myenv(henv,rc);

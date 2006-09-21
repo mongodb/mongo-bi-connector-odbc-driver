@@ -43,7 +43,7 @@ void t_odbc3_error()
     SQLHENV henv;
     SQLHDBC hdbc;
     SQLHSTMT hstmt;
-    SQLPOINTER ov_version;
+    SQLINTEGER ov_version;
 
     rc = SQLAllocHandle(SQL_HANDLE_ENV,SQL_NULL_HANDLE,&henv);
     myenv(henv,rc);
@@ -54,10 +54,10 @@ void t_odbc3_error()
     rc = SQLAllocHandle(SQL_HANDLE_DBC,henv,&hdbc);
     myenv(henv,rc);
 
-    rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,&ov_version,0,0);
+    rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)&ov_version,0,0);
     myenv(henv,rc);
     printMessage("\n default odbc version:%d",ov_version);
-    my_assert(ov_version == (SQLPOINTER)SQL_OV_ODBC3);
+    my_assert(ov_version == SQL_OV_ODBC3);
 
     rc = SQLConnect(hdbc, mydsn, SQL_NTS, myuid, SQL_NTS,  mypwd, SQL_NTS);
     mycon(hdbc,rc);
@@ -107,7 +107,7 @@ void t_odbc2_error()
     SQLHENV henv;
     SQLHDBC hdbc;
     SQLHSTMT hstmt;
-    SQLPOINTER ov_version;
+    SQLINTEGER ov_version;
 
     rc = SQLAllocHandle(SQL_HANDLE_ENV,SQL_NULL_HANDLE,&henv);
     myenv(henv,rc);
@@ -118,10 +118,10 @@ void t_odbc2_error()
     rc = SQLAllocHandle(SQL_HANDLE_DBC,henv,&hdbc);
     myenv(henv,rc);
 
-    rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,&ov_version,0,0);
+    rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)&ov_version,0,0);
     myenv(henv,rc);
     printMessage("\ndefault odbc version:%d",ov_version);
-    my_assert(ov_version == (SQLPOINTER)SQL_OV_ODBC2);
+    my_assert(ov_version == SQL_OV_ODBC2);
 
     rc = SQLConnect(hdbc, mydsn, SQL_NTS, myuid, SQL_NTS,  mypwd, SQL_NTS);
     mycon(hdbc,rc);
