@@ -23,6 +23,7 @@ SQLCHAR *mysock= NULL;
 *********************************************************/
 void my_dynamic_pos_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
+#if BUG_22796_FIXED
     SQLRETURN   rc;
     SQLLEN      nRowCount;
     SQLHSTMT    hstmt_pos;
@@ -148,6 +149,7 @@ void my_dynamic_pos_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
     SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
+#endif
 }
 
 
@@ -308,6 +310,7 @@ DELETE with IGNORE ..
 */
 void my_setpos_delete_ignore(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
+#if BUG_22796_FIXED
     SQLRETURN rc;
     SQLLEN    nlen;
     char      szData[255]={0};
@@ -377,12 +380,14 @@ printf( "\n[PAH][%s][%d]\n", __FILE__, __LINE__ );
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+#endif
 }
 /*
 UPDATE with duplicate..
 */
 void my_setpos_update_ignore(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
+#if BUG_22796_FIXED
     SQLRETURN rc;
     SQLLEN     nlen;
     char    szData[255]={0};
@@ -447,6 +452,7 @@ void my_setpos_update_ignore(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+#endif
 }
 
 /*
@@ -454,6 +460,7 @@ UPDATE with duplicate..
 */
 void my_setpos_update_ignore1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
+#if BUG_22796_FIXED
     SQLRETURN rc;
     SQLLEN     nlen;
     char    szData[255]={0};
@@ -518,6 +525,7 @@ void my_setpos_update_ignore1(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+#endif
 }
 
 /*
@@ -525,6 +533,7 @@ CURSOR POSITION - rowset size 1
 */
 void my_position(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
+#if BUG_22796_FIXED
     SQLRETURN rc;
     SQLLEN    nlen;
     char      szData[255]={0};
@@ -623,6 +632,7 @@ void my_position(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+#endif
 }
 
 /*
@@ -630,6 +640,7 @@ CURSOR POSITION - rowset size 3
 */
 void my_position1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
+#if BUG_22796_FIXED
     SQLRETURN rc;
     SQLLEN    nlen[15];
     char      szData[15][15]={0};
@@ -729,6 +740,7 @@ void my_position1(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)1 , 0);
     mystmt(hstmt, rc); 
+#endif
 }
 
 /*
@@ -736,6 +748,7 @@ IROW VALUE - 0
 */
 void my_zero_irow_update(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
+#if BUG_22796_FIXED
     SQLRETURN rc;
     SQLLEN    nlen[15];
     char      szData[15][15]={0};
@@ -820,12 +833,14 @@ void my_zero_irow_update(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)1 , 0);
     mystmt(hstmt, rc); 
+#endif
 }
 /*
 IROW VALUE - 0 - DELETE
 */
 void my_zero_irow_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
+#if BUG_22796_FIXED
     SQLRETURN rc;
     SQLLEN    nlen[15];
     char      szData[15][15]={0};
@@ -905,6 +920,7 @@ void my_zero_irow_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)1 , 0);
     mystmt(hstmt, rc); 
+#endif
 }
 
 /**
