@@ -2579,7 +2579,7 @@ void t_tran_ddl(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLGetInfo(hdbc,SQL_TXN_CAPABLE,&rgbValue,0,&len);
     mycon(hdbc,rc);
-    my_assert(rgbValue == SQL_TC_ALL);
+    my_assert(rgbValue == SQL_TC_DDL_COMMIT);
     my_assert(len == 2);
 
     tmysql_exec(hstmt,"drop table if exists t_tran1");    

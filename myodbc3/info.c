@@ -823,7 +823,7 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
 
         case SQL_TXN_CAPABLE:
             if ( trans_supported(dbc) && !(dbc->flag & FLAG_NO_TRANSACTIONS) )
-                *((SQLUSMALLINT*) rgbInfoValue)= SQL_TC_ALL;
+                *((SQLUSMALLINT*) rgbInfoValue)= SQL_TC_DDL_COMMIT;
             else
                 *((SQLUSMALLINT*) rgbInfoValue)= SQL_TC_NONE;
             *pcbInfoValue= sizeof(SQLUSMALLINT);

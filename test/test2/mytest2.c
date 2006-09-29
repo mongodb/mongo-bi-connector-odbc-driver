@@ -605,6 +605,7 @@ void t_sqlspecialcols(SQLHDBC hdbc, SQLHSTMT hstmt)
 }
 void t_sqltables(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
+#ifdef BUG_22797_FIXED
   SQLRETURN r;
   printMessageHeader();
 
@@ -663,6 +664,7 @@ void t_sqltables(SQLHDBC hdbc, SQLHSTMT hstmt)
 
   r = SQLFreeStmt(hstmt, SQL_CLOSE);
   mystmt(hstmt,r);
+#endif
 }
 void tmysql_bindcol(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
@@ -2221,7 +2223,7 @@ void t_refresh(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = tmysql_exec(hstmt,"create table t_refresh(col1 int ,col2 varchar(30)) TYPE = BDB");
+    rc = tmysql_exec(hstmt,"create table t_refresh(col1 int ,col2 varchar(30)) TYPE = InnoDB");
     mystmt(hstmt,rc);   
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
@@ -2541,7 +2543,7 @@ void t_tran(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = tmysql_exec(hstmt,"create table t_tran(col1 int ,col2 varchar(30)) TYPE = BDB");
+    rc = tmysql_exec(hstmt,"create table t_tran(col1 int ,col2 varchar(30)) TYPE = InnoDB");
     mystmt(hstmt,rc);   
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
@@ -2576,7 +2578,8 @@ void t_tran(SQLHDBC hdbc, SQLHSTMT hstmt)
 void t_tran_ddl(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  SQLSMALLINT rgbValue,len;
+  SQLUSMALLINT rgbValue;
+  SQLSMALLINT len;
   
   printMessageHeader();
    
@@ -2586,7 +2589,7 @@ void t_tran_ddl(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLSetConnectOption(hdbc,SQL_AUTOCOMMIT,SQL_AUTOCOMMIT_OFF);
     mycon(hdbc,rc);
 
-    rc = SQLGetInfo(hdbc,SQL_TXN_CAPABLE,&rgbValue,0,&len);
+    rc = SQLGetInfo(hdbc,SQL_TXN_CAPABLE,(SQLPOINTER)&rgbValue,0,&len);
     mycon(hdbc,rc);
     my_assert(rgbValue == SQL_TC_DDL_COMMIT);
     my_assert(len == 2);
@@ -2596,7 +2599,7 @@ void t_tran_ddl(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = tmysql_exec(hstmt,"create table t_tran1(col1 int ,col2 varchar(30)) TYPE = BDB");
+    rc = tmysql_exec(hstmt,"create table t_tran1(col1 int ,col2 varchar(30)) TYPE = InnoDB");
     mystmt(hstmt,rc);   
     
     rc = SQLTransact(NULL,hdbc,SQL_ROLLBACK);
@@ -3948,16 +3951,14 @@ void mytest(int tno, SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt)
     tmysql_setpos_pkdel3(hdbc,hstmt);
     tmysql_setpos_del(hdbc,hstmt);
     tmysql_setpos_del1(hdbc,hstmt);
-#endif
     tmysql_setpos_upd(hdbc,hstmt);
     tmysql_mtab_setpos_del(hdbc,hstmt); 
-#if 0
     t_setpos_del_all(hdbc,hstmt);
     t_alias_setpos_del(hdbc,hstmt);
     t_refresh(hdbc,hstmt);
-#endif
     tmysql_rowstatus(hdbc,hstmt);
     t_alias_setpos_pkdel(hdbc,hstmt);
+#endif
     tmy_cursor1(hstmt);
 #if 0
     tmy_cursor2(hdbc,hstmt);
@@ -3968,14 +3969,18 @@ void mytest(int tno, SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt)
   }
   if( tno == 3 || tno == -1) /* positioned updates and deletes */
   { 
-    /*tmysql_pos_update_ex4(hdbc,hstmt);*/
+#if 0
+    tmysql_pos_update_ex4(hdbc,hstmt);
     tmysql_pos_update_ex(hdbc,hstmt);
     tmysql_pos_update_ex1(hdbc,hstmt);
     tmysql_pos_update_ex2(hdbc,hstmt);
     tmysql_pos_update_ex3(hdbc,hstmt);
+#endif
     tmysql_pos_delete(hdbc,hstmt);
+#if 0
     tmysql_pos_update(hdbc,hstmt);
     tmysql_pos_dyncursor(hdbc,hstmt);
+#endif
   }
   if( tno == 4 || tno == -1)    /* catalogs */
   {     
