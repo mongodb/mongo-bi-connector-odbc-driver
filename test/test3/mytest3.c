@@ -6738,10 +6738,10 @@ static void mytest(int tno, SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt)
      /* sqlsetpos */
     t_pos_datetime_delete(hdbc,hstmt);
     t_pos_datetime_delete1(hdbc,hstmt);
-    //t_setpos_upd_decimal(hdbc,hstmt);
+    /* t_setpos_upd_decimal(hdbc,hstmt); */
     t_pos_column_ignore(hdbc,hstmt);
-    //my_setpos_upd_pk_order(hdbc,hstmt);
-    //my_setpos_upd_pk_order1(hdbc,hstmt);
+    /* my_setpos_upd_pk_order(hdbc,hstmt); */
+    /* my_setpos_upd_pk_order1(hdbc,hstmt); */
     t_mul_pkdel(hdbc,hstmt);
     t_mul_pkdel1(hdbc,hstmt);
 #if 0

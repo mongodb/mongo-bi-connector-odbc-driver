@@ -217,7 +217,8 @@ typedef struct tagDBC
   pthread_mutex_t lock;
 #endif
 #if defined(_WIN32) || defined(WIN32)
-  char      *oldbuf;   // old buffer to store memory pointer allocated previously in another heap
+  /* old buffer to store memory pointer allocated previously in another heap */
+  char      *oldbuf;
 #endif
 } DBC;
 
