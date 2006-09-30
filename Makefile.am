@@ -73,21 +73,19 @@ bin-tar: all
 	gzip -9vf $(build).tar 
 	rm -rf $(build)
 
+test:	samples testlib
+
 #
 # Run the samples
 #
-test: all
-	cd samples; \
-	$(MAKE); \
-	./run-samples
+samples: all
+	(cd samples; $(MAKE) test)
 
 #
 # Run the test library
 #
 testlib: all
-	cd test; \
-	$(MAKE); \
-	$(MAKE) testall
+	(cd test; $(MAKE) testall)
 
  
 #
