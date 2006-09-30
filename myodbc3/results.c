@@ -1436,11 +1436,14 @@ SQLRETURN SQL_API SQLExtendedFetch( SQLHSTMT        hstmt,
                                     SQLROWSETSIZE  *pcrow,
                                     SQLUSMALLINT FAR *rgfRowStatus )
 {
-    return my_SQLExtendedFetch( hstmt, 
-                                fFetchType, 
+    STMT_OPTIONS *options= &((STMT FAR *)hstmt)->stmt_options;
+    if (!options->rowStatusPtr && rgfRowStatus)
+      options->rowStatusPtr= rgfRowStatus;
+    return my_SQLExtendedFetch( hstmt,
+                                fFetchType,
                                 irow,
-                                pcrow, 
-                                rgfRowStatus, 
+                                pcrow,
+                                rgfRowStatus,
                                 1 );
 }
 
