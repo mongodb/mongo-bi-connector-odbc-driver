@@ -61,7 +61,7 @@ myodbc_pipe_sig_handler(int sig __attribute__((unused)))
 
 void myodbc_init(void)
 {
-  if (++myodbc_inited)
+  if (myodbc_inited++)
     return;
   my_init();
   {
@@ -93,7 +93,7 @@ void myodbc_init(void)
 
 void myodbc_end()
 {
- if (--myodbc_inited)
+ if (!--myodbc_inited)
  {
    MYODBCDbgFini;
    my_free(decimal_point,MYF(0));
@@ -102,7 +102,7 @@ void myodbc_end()
 #ifdef NOT_YET_USED
    mysql_server_end();
 #endif
-   my_end(0);
+   my_end(MY_DONT_FREE_DBUG);
  }
 }
 
