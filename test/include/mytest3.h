@@ -72,7 +72,11 @@
 # define Sleep _sleep
 #endif
 
-#define printMessage printf
+#if DEBUG_LEVEL > 1
+# define printMessage printf
+#else
+void printMessage(char *fmt, ...) {}
+#endif
 
 #define MAX_NAME_LEN 255
 #define MAX_COLUMNS 500

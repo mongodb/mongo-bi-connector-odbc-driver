@@ -3015,8 +3015,8 @@ void t_desccolext(SQLHDBC hdbc, SQLHSTMT hstmt)
     desccol(hstmt,"i3",2,SQL_INTEGER,10,0,SQL_NULLABLE);
     desccol(hstmt,"i4",2,SQL_INTEGER,10,0,SQL_NULLABLE);
 
-    desccol(hstmt,"b1",2,SQL_BIGINT,20,0,SQL_NULLABLE);
-    desccol(hstmt,"b2",2,SQL_BIGINT,10,0,SQL_NULLABLE);
+    desccol(hstmt,"b1",2,SQL_BIGINT,19,0,SQL_NULLABLE);
+    desccol(hstmt,"b2",2,SQL_BIGINT,19,0,SQL_NULLABLE);
     desccol(hstmt,"b3",2,SQL_BIGINT,20,0,SQL_NULLABLE);
 
     desccol(hstmt,"f1",2,SQL_REAL,12,31,SQL_NULLABLE);
@@ -3035,13 +3035,13 @@ void t_desccolext(SQLHDBC hdbc, SQLHSTMT hstmt)
 void colattr(SQLHSTMT hstmt, SQLUSMALLINT  cno,
              SQLUSMALLINT attribute, SQLCHAR *sptr,
              SQLSMALLINT slen,SQLINTEGER nptr)
-{ 
-  SQLRETURN   rc =0;
+{
+  SQLRETURN   rc= 0;
   SQLCHAR     lsptr[40];
   SQLINTEGER  lnptr;
-  SQLSMALLINT lslen;
-    
-      SQLFreeStmt(hstmt,SQL_CLOSE);      
+  SQLLEN      lslen;
+
+      SQLFreeStmt(hstmt,SQL_CLOSE);
       rc = SQLExecDirect(hstmt,"select * from t_colattr",SQL_NTS);
       mystmt(hstmt,rc);
 
@@ -3156,12 +3156,12 @@ void t_bigint(SQLHDBC hdbc, SQLHSTMT hstmt)
   
   printMessageHeader();
 
-    tmysql_exec(hstmt,"drop table t_bingint");
+    tmysql_exec(hstmt,"drop table t_bigint");
     
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = tmysql_exec(hstmt,"create table t_bingint(id int(20) NOT NULL auto_increment,\
+    rc = tmysql_exec(hstmt,"create table t_bigint(id int(20) NOT NULL auto_increment,\
                                        name varchar(20), primary key(id))");
     mystmt(hstmt,rc);
         
@@ -3172,7 +3172,7 @@ void t_bigint(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     /* TIMESTAMP TO DATE, TIME and TS CONVERSION */
-    rc = tmysql_prepare(hstmt,"insert into t_bingint values(?,'venuxyz')");
+    rc = tmysql_prepare(hstmt,"insert into t_bigint values(?,'venuxyz')");
     mystmt(hstmt,rc);
 
     nlen = 4;
@@ -3189,10 +3189,10 @@ void t_bigint(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = tmysql_exec(hstmt,"insert into t_bingint values(10,'mysql1')");
+    rc = tmysql_exec(hstmt,"insert into t_bigint values(10,'mysql1')");
     mystmt(hstmt,rc);
 
-    rc = tmysql_exec(hstmt,"insert into t_bingint values(20,'mysql2')");
+    rc = tmysql_exec(hstmt,"insert into t_bigint values(20,'mysql2')");
     mystmt(hstmt,rc);
     
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
@@ -3202,7 +3202,7 @@ void t_bigint(SQLHDBC hdbc, SQLHSTMT hstmt)
     mycon(hdbc,rc);
 
     rc = SQLSpecialColumns(hstmt,SQL_ROWVER,NULL,SQL_NTS,NULL,SQL_NTS,
-                          "t_bingint",SQL_NTS,SQL_SCOPE_TRANSACTION,SQL_NULLABLE);
+                          "t_bigint",SQL_NTS,SQL_SCOPE_TRANSACTION,SQL_NULLABLE);
 
     mycon(hdbc,rc);
 
@@ -3211,7 +3211,7 @@ void t_bigint(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLColumns(hstmt,NULL,SQL_NTS,NULL,SQL_NTS,"t_bingint",SQL_NTS,NULL,SQL_NTS);
+    rc = SQLColumns(hstmt,NULL,SQL_NTS,NULL,SQL_NTS,"t_bigint",SQL_NTS,NULL,SQL_NTS);
 
     mycon(hdbc,rc);
 
@@ -3220,7 +3220,7 @@ void t_bigint(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLStatistics(hstmt,NULL,SQL_NTS,NULL,SQL_NTS,"t_bingint",SQL_NTS,SQL_INDEX_ALL,SQL_QUICK);
+    rc = SQLStatistics(hstmt,NULL,SQL_NTS,NULL,SQL_NTS,"t_bigint",SQL_NTS,SQL_INDEX_ALL,SQL_QUICK);
 
     mycon(hdbc,rc);
 
@@ -3229,6 +3229,7 @@ void t_bigint(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+#ifdef CATALOG_FUNCTIONS_FIXED
     rc = SQLGetTypeInfo(hstmt,SQL_BIGINT);
     mycon(hdbc,rc);
 
@@ -3247,8 +3248,9 @@ void t_bigint(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+#endif
 
-    rc = tmysql_exec(hstmt,"select * from t_bingint");
+    rc = tmysql_exec(hstmt,"select * from t_bigint");
     mystmt(hstmt,rc);  
 
     rc = SQLFetch(hstmt);

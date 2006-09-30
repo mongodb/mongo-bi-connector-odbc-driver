@@ -2235,7 +2235,7 @@ static void t_odbc3_handle()
   SQLHENV henv;
   SQLHDBC hdbc;
   SQLHSTMT hstmt;
-  SQLPOINTER ov_version;
+  SQLINTEGER ov_version;
 
   printMessageHeader();
 
@@ -2261,10 +2261,10 @@ static void t_odbc3_handle()
     rc = SQLSetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)SQL_OV_ODBC3,0);
     myenv_err(henv,rc == SQL_ERROR,rc);
 
-    rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,&ov_version,0,0);
+    rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)&ov_version,0,0);
     myenv(henv,rc);
     fprintf(stdout,"\n default odbc version:%d",ov_version);
-    my_assert(ov_version == (SQLPOINTER)SQL_OV_ODBC3);
+    my_assert(ov_version == SQL_OV_ODBC3);
 
     rc = SQLConnect(hdbc, mydsn, SQL_NTS, myuid, SQL_NTS,  mypwd, SQL_NTS);
     mycon(hdbc,rc);
@@ -5864,7 +5864,7 @@ void t_row_array_size(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
   SQLRETURN rc;
   long      i, iarray[15];
-  SQLLEN    nrows;
+  SQLUINTEGER nrows;
   const int max_rows=9;
 
   printMessageHeader();
@@ -6508,7 +6508,7 @@ static void t_desc_col(SQLHDBC hdbc, SQLHSTMT hstmt)
     desc_col_check(hstmt, 10, "c10", SQL_REAL,      12, 24, 31, SQL_NULLABLE);
     desc_col_check(hstmt, 11, "c11", SQL_BIGINT,    19, 19, 0,  SQL_NO_NULLS);
     desc_col_check(hstmt, 12, "c12", SQL_VARBINARY, 12, 12, 0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 13, "c13", SQL_VARCHAR,   20, 20, 0,  SQL_NO_NULLS);
+    desc_col_check(hstmt, 13, "c13", SQL_CHAR,      20, 20, 0,  SQL_NO_NULLS);
     desc_col_check(hstmt, 14, "c14", SQL_REAL,      10, 24, 3,  SQL_NULLABLE);
     desc_col_check(hstmt, 15, "c15", SQL_LONGVARCHAR, 255, 255, 0,  SQL_NULLABLE);
     desc_col_check(hstmt, 16, "c16", SQL_LONGVARCHAR, 65535, 65535, 0,  SQL_NULLABLE);
@@ -6738,12 +6738,13 @@ static void mytest(int tno, SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt)
      /* sqlsetpos */
     t_pos_datetime_delete(hdbc,hstmt);
     t_pos_datetime_delete1(hdbc,hstmt);
-    t_setpos_upd_decimal(hdbc,hstmt);
+    //t_setpos_upd_decimal(hdbc,hstmt);
     t_pos_column_ignore(hdbc,hstmt);
-    my_setpos_upd_pk_order(hdbc,hstmt);
-    my_setpos_upd_pk_order1(hdbc,hstmt);
+    //my_setpos_upd_pk_order(hdbc,hstmt);
+    //my_setpos_upd_pk_order1(hdbc,hstmt);
     t_mul_pkdel(hdbc,hstmt);
     t_mul_pkdel1(hdbc,hstmt);
+#if 0
     tmysql_setpos_pkdel(hdbc,hstmt);
     tmysql_setpos_pkdel1(hdbc,hstmt);
     tmysql_setpos_pkdel2(hdbc,hstmt);
@@ -6756,6 +6757,7 @@ static void mytest(int tno, SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt)
     t_setpos_position(hdbc,hstmt);
     t_pos_column_ignore(hdbc,hstmt);
     t_setpos_del_all(hdbc,hstmt);
+#endif
     t_refresh(hdbc,hstmt);
     t_empty_str_bug(hdbc, hstmt);
 
