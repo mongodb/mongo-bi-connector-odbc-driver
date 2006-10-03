@@ -35,7 +35,7 @@
 ###################################################################
 
 AC_INIT(myodbc3/myodbc3.c)
-#AC_PREREQ(2.53)
+AC_PREREQ(2.12)dnl    Minimum Autoconf version required.
 #AC_INIT([MySQL ODBC 3.51 Driver],[3.51.12],[myodbc@lists.mysql.com],[libmyodbc3])
 AC_CANONICAL_SYSTEM
 AM_INIT_AUTOMAKE(mysql-connector-odbc,3.51.13)
@@ -60,12 +60,6 @@ AC_SUBST(SYSTEM_TYPE)
 AC_SUBST(MACHINE_TYPE)
 # AC_DEFINE_UNQUOTED(MACHINE_TYPE, "$MACHINE_TYPE", [Define MACHINE_TYPE])
 
-# Detect intel x86 like processor
-BASE_MACHINE_TYPE=$MACHINE_TYPE
-case $MACHINE_TYPE in
-  i?86) BASE_MACHINE_TYPE=i386 ;;
-esac
-
 # Save some variables and the command line options for mysqlbug
 SAVE_CFLAGS="$CFLAGS"
 SAVE_LDFLAGS="$LDFLAGS"
@@ -73,8 +67,6 @@ CONF_COMMAND="$0 $ac_configure_args"
 AC_SUBST(CONF_COMMAND)
 AC_SUBST(SAVE_CFLAGS)
 AC_SUBST(SAVE_LDFLAGS)
-
-AC_PREREQ(2.12)dnl    Minimum Autoconf version required.
 
 # This is need before AC_PROG_CC
 #
@@ -447,31 +439,7 @@ fi
 #                                                                 #
 ###################################################################
 
-AC_CHECK_LIB(c, localtime_r, 
-             [AC_DEFINE(HAVE_LOCALTIME_R, 1, 
-                        [Define if we detected a localtime_r])
-             ]
-            )
-###################################################################
-#                                                                 #
-# Perl existance (For Docs)                                       #
-#                                                                 #
-###################################################################
-AC_PATH_PROG(PERL, perl, no)
-if test "$PERL" != "no" && $PERL -e 'require 5' > /dev/null 2>&1
-then
-  PERL5=$PERL
-else
-  AC_PATH_PROG(PERL5, perl5, no)
-  if test "$PERL5" != no
-  then
-    PERL=$PERL5
-    ac_cv_path_PERL=$ac_cv_path_PERL5
-  fi
-fi
-
-AC_SUBST(PERL)
-AC_SUBST(PERL5)
+AC_CHECK_FUNCS(localtime_r)
 
 ###################################################################
 #                                                                 #
@@ -481,16 +449,26 @@ AC_SUBST(PERL5)
 ###################################################################
 
 AC_ARG_WITH(mysql-path,
-[  --with-mysql-path=DIR   Path where MySQL is installed],
-mysql_path=$withval,mysql_path="")
+            [  --with-mysql-path=DIR   Path where MySQL is installed],
+            mysql_path=$withval,
+            mysql_path="")
 
 mysql_config=""
+building_against_source=""
 if test "$mysql_path" != ""
 then
-  mysql_config="$mysql_path/bin/mysql_config"
-  if test ! -x $mysql_config
+  if test -f $mysql_path/libmysql/libmysqlclient.la
   then
-    AC_MSG_ERROR([File $mysql_config doesn't exists or isn't executable.  Please specify with --with-mysql-path where bin/mysql_config can be found]);
+    building_against_source="true"
+    CFLAGS="-I$mysql_path/include"
+    MYSQL_LIB="$mysql_path/libmysql/libmysqlclient.la"
+    MYSQL_THREADSAFE_LIB="$mysql_path/libmysql_r/libmysqlclient_r.la"
+  else
+    mysql_config="$mysql_path/bin/mysql_config"
+    if test ! -x $mysql_config
+    then
+      AC_MSG_ERROR([File $mysql_config doesn't exists or isn't executable.  Please specify with --with-mysql-path where bin/mysql_config can be found]);
+    fi
   fi
 else
   # Search where mysql_config is installed
@@ -511,43 +489,47 @@ else
   fi
 fi
 
-OPT=`$mysql_config --cflags`
-if test $? != "0"
+if test "x$building_against_source" = x
 then
-  AC_MSG_ERROR([Could not execute $mysql_config. Please check your installation])
-fi
-# We have to remove any ' around paths as this confuses configure
-OPT=`echo $OPT | sed -e "s;';;g"`
-CFLAGS="$OPT $CFLAGS"
+  OPT=`$mysql_config --cflags`
+  if test $? != "0"
+  then
+    AC_MSG_ERROR([Could not execute $mysql_config. Please check your installation])
+  fi
 
-MYSQL_LIB=`$mysql_config --libs | sed -e "s;';;g"`
-OPT=`$mysql_config --libs_r`
-if test $? != "0"
-then
-  # mysql_config that is before 4.0.17
-  # In this case assume we can use the same compile options for the
-  # thread safe library as for the normal
-  OPT=`echo $MYSQL_LIB | sed -e 's;lmysqlclient;lmysqlclient_r;'`
-else
+  # We have to remove any ' around paths as this confuses configure
   OPT=`echo $OPT | sed -e "s;';;g"`
+  CFLAGS="$OPT $CFLAGS"
+
+  MYSQL_LIB=`$mysql_config --libs | sed -e "s;';;g"`
+  OPT=`$mysql_config --libs_r`
+  if test $? != "0"
+  then
+    # mysql_config that is before 4.0.17
+    # In this case assume we can use the same compile options for the
+    # thread safe library as for the normal
+    OPT=`echo $MYSQL_LIB | sed -e 's;lmysqlclient;lmysqlclient_r;'`
+  else
+    OPT=`echo $OPT | sed -e "s;';;g"`
+  fi
+  MYSQL_THREADSAFE_LIB="$OPT"
+
+  SAVE_LIBS=$LIBS
+  LIBS="$LIBS $MYSQL_LIB"
+  AC_CHECK_FUNC(mysql_real_query,[],
+  [ AC_MSG_ERROR([Could not use the single thread MySQL client library, please check config.log for errors]) ])
+
+  if test "x$gotthread" != "xno"
+  then
+    LIBS="$LIBS $MYSQL_THREADSAFE_LIB"
+    AC_CHECK_FUNC(mysql_real_query,[],
+    [ AC_MSG_ERROR([Could not use the thread safe MySQL client library, please check config.log for errors]) ])
+  fi
+  LIBS=$SAVE_LIBS
 fi
-MYSQL_THREADSAFE_LIB="$OPT"
 
 AC_SUBST(MYSQL_LIB)
 AC_SUBST(MYSQL_THREADSAFE_LIB)
-
-SAVE_LIBS=$LIBS
-LIBS="$LIBS $MYSQL_LIB"
-AC_CHECK_FUNC(mysql_real_query,[],
-[ AC_MSG_ERROR([Could not use the single thread MySQL client library, please check config.log for errors]) ])
-
-if test "x$gotthread" != "xno"
-then
-  LIBS="$LIBS $MYSQL_THREADSAFE_LIB"
-  AC_CHECK_FUNC(mysql_real_query,[],
-  [ AC_MSG_ERROR([Could not use the thread safe MySQL client library, please check config.log for errors]) ])
-fi
-LIBS=$SAVE_LIBS
 
 echo "END OF MYSQL CONFIGURATION"
 echo ""
@@ -731,7 +713,7 @@ then
 cat <<EOF
 ----------------------------------------------------------------
 Warning: using iODBC but libiodbcinst library not found.
-Enabling workaround, which will search for mysql datasource
+Enabling workaround, which will search for MySQL datasource
 configuration as follows:
 
 1. \$ODBCINI, and if not found - \$HOME/.odbc.ini (User data sources)
@@ -902,7 +884,7 @@ esac
 #                                                                 #
 ###################################################################
 
-# Function SQLParamOptions() is depricated in ODBC 3
+# Function SQLParamOptions() is deprecated in ODBC 3
 AC_MSG_CHECKING([if SQLParamOptions() 2nd and 3rd arg is compatible with SQLULEN])
 AC_COMPILE_IFELSE(
 [
