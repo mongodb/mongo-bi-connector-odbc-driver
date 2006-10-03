@@ -99,7 +99,7 @@ run: make-test-ini $(plain_tests) my_use_result
 	  ODBCINI=$(TEST_ODBCINI) \
 	    ./$$test "$(TEST_DSN)" "$(TEST_UID)" "$(TEST_PASSWORD)" "$(TEST_SOCKET)" || exit 1; \
 	done
-	ODBCINI=$(TEST_ODBCINI) ./my_use_result 1000 "$(TEST_DSN)" "$(TEST_UID)" "$(TEST_PASSWORD)"
+	ODBCINI=$(TEST_ODBCINI) ./my_use_result 1000 "$(TEST_DSN)" "$(TEST_UID)" "$(TEST_PASSWORD)" "$(TEST_SOCKET)"
 
 trun: make-test-ini $(fancy_tests)
 	for test in $(fancy_tests); do \

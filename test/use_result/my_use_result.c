@@ -206,8 +206,8 @@ int main(int argc, char *argv[])
             myuid = argv[3];
         else if ( narg == 4 )
             mypwd = argv[4];
-        else if ( narg == 4 )
-            mysock= argv[4];
+        else if ( narg == 5 )
+            mysock= argv[5];
     }
 
     t_init_data();

@@ -1040,7 +1040,7 @@ static void my_tables(SQLHENV henv,SQLHDBC hdbc,SQLHSTMT hstmt)
     SQLHDBC   hdbc1;
     SQLHSTMT  hstmt1;
     SQLRETURN rc;
-    char      conn[155];
+    char      conn[256];
 
     SQLExecDirect(hstmt,"DROP DATABASE my_tables_test_db",SQL_NTS);
     rc = SQLExecDirect(hstmt,"CREATE DATABASE my_tables_test_db",SQL_NTS);

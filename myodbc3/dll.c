@@ -102,7 +102,15 @@ void myodbc_end()
 #ifdef NOT_YET_USED
    mysql_server_end();
 #endif
+#ifdef MY_DONT_FREE_DBUG
+   /* 
+      Function my_end() was changed to deallocate DBUG memory by default,
+      a flag MY_DONT_FREE_DBUG was added to disable this new behaviour
+   */
    my_end(MY_DONT_FREE_DBUG);
+#else
+   my_end(0);
+#endif
  }
 }
 
