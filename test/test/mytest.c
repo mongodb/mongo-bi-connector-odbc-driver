@@ -16,6 +16,8 @@
  ***************************************************************************/
 #include "mytest3.h"
 
+SQLCHAR *mysock= NULL;
+
 /**
  Simple function to do basic ops with MySQL
 */
@@ -4044,15 +4046,16 @@ int main(int argc, char *argv[])
                                      !strcmp (argv[1], "--h") ||
                                      !strcmp (argv[1], "--help")
                                     ))
-                    ) || argc > 5
+                    ) || argc > 6
        )
     {
         printMessage("------------------------------------------\n");
-        printMessage("usage: mytest testno [DSN] [UID] [PWD] \n\n");      
+        printMessage("usage: mytest testno [DSN] [UID] [PWD] [SOCK]\n\n");      
         printMessage("       testno <-- test number\n");
         printMessage("       DSN    <-- data source name\n");
         printMessage("       UID    <-- user name\n");
         printMessage("       PWD    <-- password\n");
+        printMessage("       SOCK   <-- socket path\n");
 
         printMessage("\ntestno:\n");            
         printMessage("   -1 : all\n");            
@@ -4087,8 +4090,9 @@ int main(int argc, char *argv[])
             myuid = argv[3];
         else if ( narg == 4 )
             mypwd = argv[4];
-
-    }   
+        else if ( narg == 5 )
+            mysock= argv[5];
+    }
 
     myconnect(&henv,&hdbc,&hstmt);
     mytest(tno,henv,hdbc,hstmt);

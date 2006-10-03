@@ -6884,7 +6884,7 @@ int main(int argc, char *argv[])
                                      !strcmp (argv[1], "--h") ||
                                      !strcmp (argv[1], "--help")
                                    ))
-                    ) || argc > 5
+                    ) || argc > 6
        )
     {
       fprintf(stdout,"------------------------------------------\n");
@@ -6928,9 +6928,9 @@ int main(int argc, char *argv[])
         myuid = argv[3];
       else if ( narg == 4 )
         mypwd = argv[4];
-      else if ( narg == 4 )
-        mysock= argv[4];
-    }   
+      else if ( narg == 5 )
+        mysock= argv[5];
+    }
 
     myconnect(&henv,&hdbc,&hstmt);
     mytest(tno,henv,hdbc,hstmt);
