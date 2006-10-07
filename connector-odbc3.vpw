@@ -3,7 +3,6 @@
 	<Projects>
 		<Project File="connector-odbc3.vpj" />
 		<Project File="dltest/dltest.vpj" />
-		<Project File="../connector-odbc/trunk/examples/CPP/ADO/exampleADO.vpj" />
 		<Project File="myodbc3/myodbc3.vpj" />
 		<Project File="myodbc3c/myodbc3c.vpj" />
 		<Project File="myodbc3i/myodbc3i.vpj" />
@@ -21,7 +20,6 @@
 		<Project File="MYQTODBCCls/MYQTODBCCls.vpj" />
 		<Project File="MYQTODBCCls/MYQTODBCClsApp/MYQTODBCClsApp.vpj" />
 		<Project File="MYQTODBCCls/MYQTODBCClsLib/MYQTODBCClsLib.vpj" />
-		<Project File="../mysql-include.vpj" />
 		<Project File="scripts/scripts.vpj" />
 		<Project File="test/test.vpj" />
 	</Projects>
