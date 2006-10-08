@@ -580,7 +580,8 @@ SQLRETURN do_my_pos_cursor( STMT FAR *pStmt, STMT FAR *pStmtCursor )
 
 SQLRETURN SQL_API SQLExecute(SQLHSTMT hstmt)
 {
-    return my_SQLExecute( (STMT FAR*)hstmt );
+    MYODBCDbgEnter;
+    MYODBCDbgReturnReturn( my_SQLExecute( (STMT FAR*)hstmt ) );
 }
 
 

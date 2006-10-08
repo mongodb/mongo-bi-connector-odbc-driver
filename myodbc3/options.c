@@ -35,7 +35,7 @@
  *   SQLSetEnvAttr	 (ISO 92)					   *
  *   SQLGetEnvAttr	 (ISO 92)					   *
  *   SQLSetConnectAttr	 (ISO 92)					   *
- *   SQLGetConnecyAttr	 (ISO 92)					   *
+ *   SQLGetConnectAttr	 (ISO 92)					   *
  *   SQLSetStmtAttr	 (ISO 92)					   *
  *   SQLGetStmtAttr	 (ISO 92)					   *
  *   SQLSetConnectOption (ODBC, Deprecated)				   *

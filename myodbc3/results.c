@@ -563,13 +563,8 @@ SQLRETURN SQL_API SQLColAttribute( SQLHSTMT  StatementHandle,
                                    SQLPOINTER  NumericAttributePtr )
 #endif
 {
-    return get_col_attr( StatementHandle, 
-                         ColumnNumber,
-                         FieldIdentifier, 
-                         CharacterAttributePtr,
-                         BufferLength, 
-                         StringLengthPtr,
-                         NumericAttributePtr );
+    MYODBCDbgEnter;
+    MYODBCDbgReturnReturn( get_col_attr( StatementHandle, ColumnNumber, FieldIdentifier, CharacterAttributePtr, BufferLength, StringLengthPtr, NumericAttributePtr ) );
 }
 
 
@@ -1453,14 +1448,18 @@ SQLRETURN SQL_API SQLExtendedFetch( SQLHSTMT        hstmt,
                                     SQLUSMALLINT FAR *rgfRowStatus )
 {
     STMT_OPTIONS *options= &((STMT FAR *)hstmt)->stmt_options;
+
+    MYODBCDbgEnter;
+
     if (!options->rowStatusPtr && rgfRowStatus)
       options->rowStatusPtr= rgfRowStatus;
-    return my_SQLExtendedFetch( hstmt,
+
+    MYODBCDbgReturnReturn( my_SQLExtendedFetch( hstmt,
                                 fFetchType,
                                 irow,
                                 pcrow,
                                 rgfRowStatus,
-                                1 );
+                                1 ) );
 }
 
 

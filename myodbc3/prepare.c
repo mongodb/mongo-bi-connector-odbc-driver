@@ -56,7 +56,8 @@
 SQLRETURN SQL_API SQLPrepare(SQLHSTMT hstmt,SQLCHAR FAR *szSqlStr,
                              SQLINTEGER cbSqlStr)
 {
-    return my_SQLPrepare(hstmt,szSqlStr,cbSqlStr);
+    MYODBCDbgEnter;
+    MYODBCDbgReturnReturn( my_SQLPrepare( hstmt, szSqlStr, cbSqlStr ) );
 }
 
 /*
@@ -277,7 +278,8 @@ SQLRETURN SQL_API SQLBindParameter( SQLHSTMT        hstmt,
                                     SQLLEN          cbValueMax,
                                     SQLLEN *        pcbValue )
 {
-    return my_SQLBindParameter( hstmt, 
+    MYODBCDbgEnter;
+    MYODBCDbgReturnReturn( my_SQLBindParameter( hstmt, 
                                 ipar, 
                                 fParamType, 
                                 fCType, 
@@ -286,7 +288,7 @@ SQLRETURN SQL_API SQLBindParameter( SQLHSTMT        hstmt,
                                 ibScale, 
                                 rgbValue, 
                                 cbValueMax,
-                                pcbValue );
+                                pcbValue ) );
 }
 
 
@@ -341,10 +343,9 @@ SQLRETURN SQL_API SQLParamOptions( SQLHSTMT     hstmt,
           Currently return warning for batch processing request,
           but need to handle in the future..
         */
-        return(set_error(hstmt,MYERR_01S02,
-                         "Option value changed to default parameter size",0));
+        MYODBCDbgReturnReturn( set_error( hstmt, MYERR_01S02, "Option value changed to default parameter size", 0 ) );
     }
-    MYODBCDbgReturnReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 }
 
 
@@ -382,5 +383,5 @@ SQLRETURN SQL_API SQLSetScrollOptions(  SQLHSTMT        hstmt,
 
     stmt->stmt_options.rows_in_set= crowRowset;
 
-    MYODBCDbgReturnReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 }

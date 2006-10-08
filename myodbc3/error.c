@@ -675,9 +675,8 @@ SQLRETURN SQL_API SQLGetDiagRec(SQLSMALLINT HandleType,
                                 SQLSMALLINT BufferLength,
                                 SQLSMALLINT *TextLengthPtr)
 {
-    return my_SQLGetDiagRec(HandleType,Handle,RecNumber,Sqlstate,
-                            NativeErrorPtr,MessageText,
-                            BufferLength,TextLengthPtr);
+    MYODBCDbgEnter;
+    MYODBCDbgReturnReturn( my_SQLGetDiagRec( HandleType, Handle, RecNumber, Sqlstate, NativeErrorPtr, MessageText, BufferLength, TextLengthPtr ) );
 }
 
 

@@ -673,9 +673,8 @@ SQLDriverConnect(SQLHDBC hdbc,SQLHWND hwnd,
                  SQLSMALLINT FAR *pcbConnStrOut,
                  SQLUSMALLINT fDriverCompletion)
 {
-    return my_SQLDriverConnect(hdbc,hwnd,szConnStrIn,cbConnStrIn,
-                               szConnStrOut,cbConnStrOutMax,
-                               pcbConnStrOut,fDriverCompletion);
+    MYODBCDbgEnter;
+    MYODBCDbgReturnReturn( my_SQLDriverConnect( hdbc, hwnd, szConnStrIn, cbConnStrIn, szConnStrOut, cbConnStrOutMax, pcbConnStrOut, fDriverCompletion ) );
 }
 
 
@@ -740,5 +739,6 @@ SQLRETURN SQL_API my_SQLDisconnect(SQLHDBC hdbc)
 
 SQLRETURN SQL_API SQLDisconnect(SQLHDBC hdbc)
 {
-    return my_SQLDisconnect(hdbc);
+    MYODBCDbgEnter;
+    MYODBCDbgReturnReturn( my_SQLDisconnect(hdbc) );
 }

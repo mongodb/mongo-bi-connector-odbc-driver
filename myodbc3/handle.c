@@ -95,7 +95,10 @@ SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV FAR *phenv)
 
 SQLRETURN SQL_API SQLAllocEnv(SQLHENV FAR *phenv)
 {
-    return my_SQLAllocEnv(phenv);
+    MYODBCDbgEnter;
+    MYODBCDbgInfo( "phenv: %p", phenv );
+
+    MYODBCDbgReturnReturn( my_SQLAllocEnv(phenv) );
 }
 
 
@@ -123,7 +126,10 @@ SQLRETURN SQL_API my_SQLFreeEnv(SQLHENV henv)
 */
 SQLRETURN SQL_API SQLFreeEnv(SQLHENV henv)
 {
-    return my_SQLFreeEnv(henv);
+    MYODBCDbgEnter;
+    MYODBCDbgInfo( "henv: %p", henv );
+
+    MYODBCDbgReturnReturn( my_SQLFreeEnv(henv) );
 }
 
 #ifndef _UNIX_
@@ -226,7 +232,11 @@ SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc)
 
 SQLRETURN SQL_API SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc)
 {
-    return my_SQLAllocConnect(henv, phdbc);
+    MYODBCDbgEnter;
+    MYODBCDbgInfo( "henv: %p", henv );
+    MYODBCDbgInfo( "phdbc: %p", phdbc );
+
+    MYODBCDbgReturnReturn( my_SQLAllocConnect(henv, phdbc) );
 }
 
 
@@ -267,7 +277,10 @@ SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc)
 */
 SQLRETURN SQL_API SQLFreeConnect(SQLHDBC hdbc)
 {
-    return my_SQLFreeConnect(hdbc);
+    MYODBCDbgEnter;
+    MYODBCDbgInfo( "hdbc: %p", hdbc );
+
+    MYODBCDbgReturnReturn( my_SQLFreeConnect(hdbc) );
 }
 
 
@@ -324,7 +337,11 @@ SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
 
 SQLRETURN SQL_API SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
 {
-    return my_SQLAllocStmt(hdbc,phstmt);
+    MYODBCDbgEnter;
+    MYODBCDbgInfo( "hdbc: %p", hdbc );
+    MYODBCDbgInfo( "phstmt: %p", phstmt );
+
+    MYODBCDbgReturnReturn( my_SQLAllocStmt(hdbc,phstmt) );
 }
 
 
@@ -338,7 +355,11 @@ SQLRETURN SQL_API SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
 
 SQLRETURN SQL_API SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption)
 {
-    return my_SQLFreeStmt(hstmt,fOption);
+    MYODBCDbgEnter;
+    MYODBCDbgInfo( "hstmt: %p", hstmt );
+    MYODBCDbgInfo( "fOption: %d", fOption );
+
+    MYODBCDbgReturnReturn( my_SQLFreeStmt(hstmt,fOption) );
 }
 
 
@@ -461,6 +482,13 @@ SQLRETURN SQL_API SQLAllocHandle(SQLSMALLINT HandleType,
 {
     SQLRETURN error= SQL_ERROR;
 
+    MYODBCDbgEnter;
+
+    MYODBCDbgInfo( "HandleType: %s", MYODBCDbgHandleTypeString( HandleType ) );
+    MYODBCDbgInfo( "HandleType: %d", HandleType );
+    MYODBCDbgInfo( "InputHandle: %p", InputHandle );
+    MYODBCDbgInfo( "OutputHandlePtr: %p", OutputHandlePtr );
+
     switch (HandleType)
     {
         case SQL_HANDLE_ENV:
@@ -476,9 +504,10 @@ SQLRETURN SQL_API SQLAllocHandle(SQLSMALLINT HandleType,
             break;
 
         default:
-            return(set_conn_error(InputHandle,MYERR_S1C00,NULL,0));
+            MYODBCDbgReturnReturn( set_conn_error(InputHandle,MYERR_S1C00,NULL,0) );
     }
-    return(error);
+
+    MYODBCDbgReturnReturn( error );
 }
 
 
@@ -492,6 +521,12 @@ SQLRETURN SQL_API SQLFreeHandle(SQLSMALLINT HandleType,
                                 SQLHANDLE   Handle)
 {
     SQLRETURN error= SQL_ERROR;
+
+    MYODBCDbgEnter;
+
+    MYODBCDbgInfo( "HandleType: %s", MYODBCDbgHandleTypeString( HandleType ) );
+    MYODBCDbgInfo( "HandleType: %d", HandleType );
+    MYODBCDbgInfo( "Handle: %p", Handle );
 
     switch (HandleType)
     {
@@ -509,5 +544,7 @@ SQLRETURN SQL_API SQLFreeHandle(SQLSMALLINT HandleType,
         default:
             break;
     }
-    return(error);
+
+    MYODBCDbgReturnReturn( error );
 }
+
