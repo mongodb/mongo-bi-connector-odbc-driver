@@ -2198,5 +2198,5 @@ SQLProcedureColumns(SQLHSTMT hstmt,
                     SQLSMALLINT cbColumnName __attribute__((unused)))
 {
     MYODBCDbgEnter;
-    MYODBCDbgReturnRewturn( set_error( hstmt,MYERR_S1000, "Driver doesn't support this yet",4000 ) );
+    MYODBCDbgReturnReturn( set_error( hstmt,MYERR_S1000, "Driver doesn't support this yet",4000 ) );
 }

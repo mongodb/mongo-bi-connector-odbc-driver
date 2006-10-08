@@ -523,7 +523,6 @@ SQLRETURN SQL_API SQLFreeHandle(SQLSMALLINT HandleType,
     SQLRETURN error= SQL_ERROR;
 
     MYODBCDbgEnter;
-
     MYODBCDbgInfo( "HandleType: %s", MYODBCDbgHandleTypeString( HandleType ) );
     MYODBCDbgInfo( "HandleType: %d", HandleType );
     MYODBCDbgInfo( "Handle: %p", Handle );
