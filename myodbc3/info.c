@@ -110,6 +110,7 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
 
     MYODBCDbgEnter;
 
+    MYODBCDbgInfo( "fInfoType: %s", MYODBCDbgInfoTypeString( fInfoType ) );
     MYODBCDbgInfo( "fInfoType: %d", fInfoType );
     MYODBCDbgInfo( "rgbInfoValue: 0x%x", rgbInfoValue );
     MYODBCDbgInfo( "cbInfoValueMax :%d", cbInfoValueMax );
@@ -875,7 +876,7 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
                 MYODBCDbgReturnReturn(set_conn_error(hdbc,MYERR_S1C00,buff,4000));
             }
     }/* end of switch */
-    MYODBCDbgReturnReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 }
 
 

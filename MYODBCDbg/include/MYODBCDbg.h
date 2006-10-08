@@ -91,7 +91,7 @@ extern  int     MYODBCDbgNest;
         { \
             fprintf( MYODBCDbgFile, "|   " ); \
         } \
-        fprintf( MYODBCDbgFile, "[ENTER][%s][%s][%d]\n", __FILE__, __FUNCTION__, __LINE__ ); \
+        fprintf( MYODBCDbgFile, "[ENTER][%s][%s][%d]\n", __FUNCTION__, __FILE__, __LINE__ ); \
     } \
     MYODBCDbgNest++; \
 }
@@ -99,15 +99,15 @@ extern  int     MYODBCDbgNest;
 #define MYODBCDbgReturn( A ) \
 { \
     int nNest = 0; \
+    MYODBCDbgNest--; \
     if ( MYODBCDbgOn && MYODBCDbgFile ) \
     { \
         for ( nNest = 0; nNest < MYODBCDbgNest; nNest++ ) \
         { \
             fprintf( MYODBCDbgFile, "|   " ); \
         } \
-        fprintf( MYODBCDbgFile, "[RETURN][%s][%s][%d]\n", __FILE__, __FUNCTION__, __LINE__ ); \
+        fprintf( MYODBCDbgFile, "[RETURN][%s][%s][%d]\n", __FUNCTION__, __FILE__, __LINE__ ); \
     } \
-    MYODBCDbgNest--; \
     return ( A ); \
 }
 
@@ -115,30 +115,30 @@ extern  int     MYODBCDbgNest;
 { \
     int nNest = 0; \
     SQLRETURN nReturn_ = A; \
+    MYODBCDbgNest--; \
     if ( MYODBCDbgOn && MYODBCDbgFile ) \
     { \
         for ( nNest = 0; nNest < MYODBCDbgNest; nNest++ ) \
         { \
             fprintf( MYODBCDbgFile, "|   " ); \
         } \
-        fprintf( MYODBCDbgFile, "[RETURN][%s][%s][%d] %s\n", __FILE__, __FUNCTION__, __LINE__, MYODBCDbgReturnString( nReturn_ ) ); \
+        fprintf( MYODBCDbgFile, "[RETURN][%s][%s][%d] %s\n", __FUNCTION__, __FILE__, __LINE__, MYODBCDbgReturnString( nReturn_ ) ); \
     } \
-    MYODBCDbgNest--; \
     return ( nReturn_ ); \
 }
 
 #define MYODBCDbgReturnVoid \
 { \
     int nNest = 0; \
+    MYODBCDbgNest--; \
     if ( MYODBCDbgOn && MYODBCDbgFile ) \
     { \
         for ( nNest = 0; nNest < MYODBCDbgNest; nNest++ ) \
         { \
             fprintf( MYODBCDbgFile, "|   " ); \
         } \
-        fprintf( MYODBCDbgFile, "[RETURN][%s][%s][%d]\n", __FILE__, __FUNCTION__, __LINE__ ); \
+        fprintf( MYODBCDbgFile, "[RETURN][%s][%s][%d]\n", __FUNCTION__, __FILE__, __LINE__ ); \
     } \
-    MYODBCDbgNest--; \
 }
 
 #define MYODBCDbgInfo( A, B ) \
@@ -150,7 +150,7 @@ extern  int     MYODBCDbgNest;
         { \
             fprintf( MYODBCDbgFile, "|   " ); \
         } \
-        fprintf( MYODBCDbgFile, "[INFO][%s][%s][%d]" A "\n", __FILE__, __FUNCTION__, __LINE__, B ); \
+        fprintf( MYODBCDbgFile, "[INFO][%s][%s][%d]" A "\n", __FUNCTION__, __FILE__, __LINE__, B ); \
     } \
 }
 
@@ -163,7 +163,7 @@ extern  int     MYODBCDbgNest;
         { \
             fprintf( MYODBCDbgFile, "|   " ); \
         } \
-        fprintf( MYODBCDbgFile, "[WARNING][%s][%s][%d]" A "\n", __FILE__, __FUNCTION__, __LINE__, B ); \
+        fprintf( MYODBCDbgFile, "[WARNING][%s][%s][%d]" A "\n", __FUNCTION__, __FILE__, __LINE__, B ); \
     } \
 }
 
@@ -176,7 +176,7 @@ extern  int     MYODBCDbgNest;
         { \
             fprintf( MYODBCDbgFile, "|   " ); \
         } \
-        fprintf( MYODBCDbgFile, "[ERROR][%s][%s][%d]" A "\n", __FILE__, __FUNCTION__, __LINE__, B ); \
+        fprintf( MYODBCDbgFile, "[ERROR][%s][%s][%d]" A "\n", __FUNCTION__, __FILE__, __LINE__, B ); \
     } \
 }
 
@@ -405,6 +405,7 @@ const char *MYODBCDbgStmtTypeString( SQLUSMALLINT nType );
     \sa     MYODBCDbgPrint
 */
 const char *MYODBCDbgTransactionTypeString( SQLSMALLINT nType );
+
 
 #endif
 

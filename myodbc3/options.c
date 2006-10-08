@@ -773,6 +773,9 @@ SQLRETURN SQL_API SQLSetConnectOption( SQLHDBC      hdbc,
     SQLRETURN result= SQL_SUCCESS;
 
     MYODBCDbgEnter;
+    MYODBCDbgInfo( "hdbc: %p", hdbc );
+    MYODBCDbgInfo( "fOption: %s", MYODBCDbgConnectOptionString( fOption ) );
+    MYODBCDbgInfo( "fOption: %d", fOption );
 
     result= set_con_attr(hdbc,fOption,(SQLPOINTER)vParam,SQL_NTS);
 
@@ -791,6 +794,9 @@ SQLRETURN SQL_API SQLGetConnectOption(SQLHDBC hdbc,SQLUSMALLINT fOption,
     SQLRETURN result= SQL_SUCCESS;
 
     MYODBCDbgEnter;
+    MYODBCDbgInfo( "hdbc: %p", hdbc );
+    MYODBCDbgInfo( "fOption: %s", MYODBCDbgConnectOptionString( fOption ) );
+    MYODBCDbgInfo( "fOption: %d", fOption );
 
     result= get_con_attr(hdbc,fOption,vParam,SQL_NTS,(SQLINTEGER *)NULL);
 
@@ -810,6 +816,9 @@ SQLRETURN SQL_API SQLSetStmtOption( SQLHSTMT        hstmt,
     SQLRETURN result= SQL_SUCCESS;
 
     MYODBCDbgEnter;
+    MYODBCDbgInfo( "hstmt: %p", hstmt );
+    MYODBCDbgInfo( "fOption: %s", MYODBCDbgStmtOptionString( fOption ) );
+    MYODBCDbgInfo( "fOption: %d", fOption );
 
     result= set_stmt_attr(hstmt,fOption,(SQLPOINTER)vParam,SQL_NTS);
 
@@ -828,6 +837,9 @@ SQLRETURN SQL_API SQLGetStmtOption(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     SQLRETURN result= SQL_SUCCESS;
 
     MYODBCDbgEnter;
+    MYODBCDbgInfo( "hstmt: %p", hstmt );
+    MYODBCDbgInfo( "fOption: %s", MYODBCDbgStmtOptionString( fOption ) );
+    MYODBCDbgInfo( "fOption: %d", fOption );
 
     result= get_stmt_attr(hstmt,fOption,vParam,SQL_NTS,(SQLINTEGER *)NULL);
 
@@ -847,6 +859,8 @@ SQLSetEnvAttr(SQLHENV    henv,
               SQLINTEGER StringLength __attribute__((unused)))
 {
     MYODBCDbgEnter;
+    MYODBCDbgInfo( "henv: %p", henv );
+    MYODBCDbgInfo( "Atrr: %s", MYODBCDbgEnvAttrString( Attribute ) );
     MYODBCDbgInfo( "Atrr: %d", Attribute );
     MYODBCDbgInfo( "ValuePtr: 0x%lx", ValuePtr );
 
@@ -884,6 +898,8 @@ SQLGetEnvAttr(SQLHENV    henv,
               SQLINTEGER *StringLengthPtr __attribute__((unused)))
 {
     MYODBCDbgEnter;
+    MYODBCDbgInfo( "henv: %p", henv );
+    MYODBCDbgInfo( "Atrr: %s", MYODBCDbgEnvAttrString( Attribute ) );
     MYODBCDbgInfo( "Atrr: %d", Attribute );
 
     switch ( Attribute )
@@ -917,7 +933,11 @@ SQLRETURN SQL_API SQLSetConnectAttr(SQLHDBC hdbc,
                                     SQLPOINTER ValuePtr,
                                     SQLINTEGER StringLength)
 {
-    return set_con_attr(hdbc,Attribute, ValuePtr,StringLength);
+    MYODBCDbgEnter;
+    MYODBCDbgInfo( "hdbc: %p", hdbc );
+    MYODBCDbgInfo( "Attribute: %s", MYODBCDbgConnectAttrString( Attribute ) );
+    MYODBCDbgInfo( "Attribute: %d", Attribute );
+    MYODBCDbgReturnReturn( set_con_attr(hdbc,Attribute, ValuePtr,StringLength) );
 }
 
 /*
@@ -931,8 +951,11 @@ SQLRETURN SQL_API SQLGetConnectAttr(SQLHDBC hdbc,
                                     SQLINTEGER BufferLength,
                                     SQLINTEGER *StringLengthPtr)
 {
-    return get_con_attr(hdbc,Attribute, ValuePtr,BufferLength,
-                        StringLengthPtr);
+    MYODBCDbgEnter;
+    MYODBCDbgInfo( "hdbc: %p", hdbc );
+    MYODBCDbgInfo( "Attribute: %s", MYODBCDbgConnectAttrString( Attribute ) );
+    MYODBCDbgInfo( "Attribute: %d", Attribute );
+    MYODBCDbgReturnReturn( get_con_attr( hdbc,Attribute, ValuePtr,BufferLength, StringLengthPtr ) );
 }
 
 /*
@@ -945,7 +968,11 @@ SQLRETURN SQL_API SQLSetStmtAttr(SQLHSTMT   hstmt,
                                  SQLPOINTER ValuePtr,
                                  SQLINTEGER StringLength)
 {
-    return set_stmt_attr(hstmt, Attribute, ValuePtr, StringLength);
+    MYODBCDbgEnter;
+    MYODBCDbgInfo( "hstmt: %p", hstmt );
+    MYODBCDbgInfo( "Attribute: %s", MYODBCDbgStmtAttrString( Attribute ) );
+    MYODBCDbgInfo( "Attribute: %d", Attribute );
+    MYODBCDbgReturnReturn( set_stmt_attr( hstmt, Attribute, ValuePtr, StringLength ) );
 }
 
 /*
@@ -958,6 +985,9 @@ SQLRETURN SQL_API SQLGetStmtAttr(SQLHSTMT   hstmt,
                                  SQLINTEGER BufferLength,
                                  SQLINTEGER *StringLengthPtr)
 {
-    return get_stmt_attr(hstmt,Attribute, ValuePtr,BufferLength,
-                         StringLengthPtr);
+    MYODBCDbgEnter;
+    MYODBCDbgInfo( "hstmt: %p", hstmt );
+    MYODBCDbgInfo( "Attribute: %s", MYODBCDbgStmtAttrString( Attribute ) );
+    MYODBCDbgInfo( "Attribute: %d", Attribute );
+    MYODBCDbgReturnReturn( get_stmt_attr( hstmt,Attribute, ValuePtr,BufferLength, StringLengthPtr ) );
 }
