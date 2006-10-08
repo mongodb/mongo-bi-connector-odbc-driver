@@ -29,9 +29,198 @@
 #ifndef MYODBC_DBG_H
 #define MYODBC_DBG_H
 
+#include <stdio.h>
+
 /* #include "../../MYODBC_MYSQL.h" */
+
 #include "../../MYODBC_CONF.h"
 #include "../../MYODBC_ODBC.h"
+
+extern	int     MYODBCDbgOn;
+extern	FILE *  MYODBCDbgFile;
+extern  int     MYODBCDbgNest;
+
+#ifdef MYODBC_DBG
+
+#define MYODBCDbgInit \
+{ \
+    char *pszMyODBCLog = getenv( "MYODBC_LOG" ); \
+    MYODBCDbgOn = 0; \
+    MYODBCDbgFile = NULL; \
+    MYODBCDbgNest = 0; \
+    if ( pszMyODBCLog && *pszMyODBCLog ) \
+    { \
+        if ( strcmp( pszMyODBCLog, "off" ) == 0 ) \
+        { \
+        } \
+        else if ( strcmp( pszMyODBCLog, "stdout" ) == 0 || strcmp( pszMyODBCLog, "stderr" ) == 0 ) \
+        { \
+            MYODBCDbgSetFile( pszMyODBCLog ); \
+        } \
+        else \
+        { \
+            MYODBCDbgSetFile( pszMyODBCLog ); \
+            if ( !MYODBCDbgFile ) \
+            { \
+                MYODBCDbgSetFile( "stderr" ); \
+            } \
+        } \
+    } \
+    if ( MYODBCDbgFile ) \
+        MYODBCDbgSetOn; \
+}
+
+#define MYODBCDbgFini \
+{ \
+    if ( MYODBCDbgFile ) \
+    { \
+        if ( MYODBCDbgFile != stdout && MYODBCDbgFile != stderr ) \
+            fclose( MYODBCDbgFile ); \
+    } \
+    MYODBCDbgOn = 0; \
+    MYODBCDbgFile = NULL; \
+    MYODBCDbgNest = 0; \
+}
+
+#define MYODBCDbgEnter \
+{ \
+    int nNest = 0; \
+    if ( MYODBCDbgOn && MYODBCDbgFile ) \
+    { \
+        for ( nNest = 0; nNest < MYODBCDbgNest; nNest++ ) \
+        { \
+            fprintf( MYODBCDbgFile, "|   " ); \
+        } \
+        fprintf( MYODBCDbgFile, "[ENTER][%s][%s][%d]\n", __FILE__, __FUNCTION__, __LINE__ ); \
+    } \
+    MYODBCDbgNest++; \
+}
+
+#define MYODBCDbgReturn( A ) \
+{ \
+    int nNest = 0; \
+    if ( MYODBCDbgOn && MYODBCDbgFile ) \
+    { \
+        for ( nNest = 0; nNest < MYODBCDbgNest; nNest++ ) \
+        { \
+            fprintf( MYODBCDbgFile, "|   " ); \
+        } \
+        fprintf( MYODBCDbgFile, "[RETURN][%s][%s][%d]\n", __FILE__, __FUNCTION__, __LINE__ ); \
+    } \
+    MYODBCDbgNest--; \
+    return ( A ); \
+}
+
+#define MYODBCDbgReturnReturn( A ) \
+{ \
+    int nNest = 0; \
+    SQLRETURN nReturn_ = A; \
+    if ( MYODBCDbgOn && MYODBCDbgFile ) \
+    { \
+        for ( nNest = 0; nNest < MYODBCDbgNest; nNest++ ) \
+        { \
+            fprintf( MYODBCDbgFile, "|   " ); \
+        } \
+        fprintf( MYODBCDbgFile, "[RETURN][%s][%s][%d] %s\n", __FILE__, __FUNCTION__, __LINE__, MYODBCDbgReturnString( nReturn_ ) ); \
+    } \
+    MYODBCDbgNest--; \
+    return ( nReturn_ ); \
+}
+
+#define MYODBCDbgReturnVoid \
+{ \
+    int nNest = 0; \
+    if ( MYODBCDbgOn && MYODBCDbgFile ) \
+    { \
+        for ( nNest = 0; nNest < MYODBCDbgNest; nNest++ ) \
+        { \
+            fprintf( MYODBCDbgFile, "|   " ); \
+        } \
+        fprintf( MYODBCDbgFile, "[RETURN][%s][%s][%d]\n", __FILE__, __FUNCTION__, __LINE__ ); \
+    } \
+    MYODBCDbgNest--; \
+}
+
+#define MYODBCDbgInfo( A, B ) \
+{ \
+    int nNest = 0; \
+    if ( MYODBCDbgOn && MYODBCDbgFile ) \
+    { \
+        for ( nNest = 0; nNest < MYODBCDbgNest; nNest++ ) \
+        { \
+            fprintf( MYODBCDbgFile, "|   " ); \
+        } \
+        fprintf( MYODBCDbgFile, "[INFO][%s][%s][%d]" A "\n", __FILE__, __FUNCTION__, __LINE__, B ); \
+    } \
+}
+
+#define MYODBCDbgWarning( A, B ) \
+{ \
+    int nNest = 0; \
+    if ( MYODBCDbgOn && MYODBCDbgFile ) \
+    { \
+        for ( nNest = 0; nNest < MYODBCDbgNest; nNest++ ) \
+        { \
+            fprintf( MYODBCDbgFile, "|   " ); \
+        } \
+        fprintf( MYODBCDbgFile, "[WARNING][%s][%s][%d]" A "\n", __FILE__, __FUNCTION__, __LINE__, B ); \
+    } \
+}
+
+#define MYODBCDbgError( A, B ) \
+{ \
+    int nNest = 0; \
+    if ( MYODBCDbgOn && MYODBCDbgFile ) \
+    { \
+        for ( nNest = 0; nNest < MYODBCDbgNest; nNest++ ) \
+        { \
+            fprintf( MYODBCDbgFile, "|   " ); \
+        } \
+        fprintf( MYODBCDbgFile, "[ERROR][%s][%s][%d]" A "\n", __FILE__, __FUNCTION__, __LINE__, B ); \
+    } \
+}
+
+#define MYODBCDbgSetOn \
+{ \
+    MYODBCDbgOn = 1; \
+}
+
+#define MYODBCDbgSetOff \
+{ \
+    MYODBCDbgOn = 0; \
+}
+
+#define MYODBCDbgSetFile( A ) \
+{ \
+    if ( MYODBCDbgFile ) \
+    { \
+        if ( MYODBCDbgFile != stdout && MYODBCDbgFile != stderr ) \
+            fclose( MYODBCDbgFile ); \
+    } \
+    if ( strcmp( A, "stdout" ) == 0 ) \
+        MYODBCDbgFile = stdout; \
+    else if ( strcmp( A, "stderr" ) == 0 ) \
+        MYODBCDbgFile = stderr; \
+    else \
+    { \
+        MYODBCDbgFile = fopen( A, "aw+" ); \
+    } \
+}
+
+#else
+    #define MYODBCDbgInit
+    #define MYODBCDbgFini
+    #define MYODBCDbgEnter
+    #define MYODBCDbgReturn( A ) return ( A )
+    #define MYODBCDbgReturnReturn( A ) return ( A )
+    #define MYODBCDbgReturnVoid return
+    #define MYODBCDbgInfo( A, B )
+    #define MYODBCDbgWarning( A, B )
+    #define MYODBCDbgError( A, B )
+    #define MYODBCDbgSetOn
+    #define MYODBCDbgSetOff
+    #define MYODBCDbgSetFile( A )
+#endif
 
 /*! 
     \brief  Returns a string version of a connection attribute.
@@ -134,25 +323,6 @@ const char *MYODBCDbgHandleTypeString( SQLSMALLINT nHandleType );
 const char *MYODBCDbgInfoTypeString( SQLUSMALLINT nInfoType );
 
 /*! 
-    \brief  Initializes debug output.
-                
-            Call this before using any of the MYODBCDbg functions.
-            
-    \sa     MYODBCDbgPrint
-            MYODBCDbgSetFile
-*/
-#ifdef DBUG_OFF
-#define MYODBCDbgInit
-#else
-#define MYODBCDbgInit \
-{ \
-    char *psz = getenv( "MYODBC_LOG" ); \
-    if ( psz && *psz ) \
-        MYODBCDbgSetFile( psz ) \
-}
-#endif
-
-/*! 
     \brief  Returns a string version of the position type as found in SQLSetPos.
                 
             Returns a string version of position type. This is great for
@@ -235,146 +405,6 @@ const char *MYODBCDbgStmtTypeString( SQLUSMALLINT nType );
     \sa     MYODBCDbgPrint
 */
 const char *MYODBCDbgTransactionTypeString( SQLSMALLINT nType );
-
-/*! 
-    \brief  Sets debug control information.
-                
-            Sets debug control information including filename for output.
-
-    \note   This has not effect if DBUG_OFF is set.
-
-    \param  pszControl  This is a "const char *" which indicates the control
-                        information. Example;
-
-                        "d:t:S:O,/tmp/myodbc.log"
-    
-    \return void
-    
-    \sa     MYODBCDbgInit
-            MYODBCDbgFini
-            MYODBCDbgPrint
-*/
-#define MYODBCDbgSetFile(A) \
-{ \
-    DBUG_PUSH(A); \
-    DBUG_PROCESS( "MYODBC" ); \
-    MYODBCDbgPrint( "start", ( "Driver name: Connector/ODBC  Version: %s", VERSION ) ); \
-}
-
-/*! 
-    \brief  Inits debug for a function.
-                
-            This declares some working vars for dbg interface and logs that
-            we have entered the function. 
-
-    \note   This has not effect if DBUG_OFF is set.
-
-    \param  pszMsg  This is a "const char *" which can be any message.
-    
-    \return void
-    
-    \sa     MYODBCDbgInit
-            MYODBCDbgFini
-            MYODBCDbgPrint
-            MYODBCDbgReturn
-*/
-#define MYODBCDbgEnter DBUG_ENTER
-
-/*! 
-    \brief  Prints useful debug information.
-                
-            This processes the given keyword & argslist and prints the result according 
-            to the debug control information.
-
-    \note   This has not effect if DBUG_OFF is set.
-
-    \param  keyword
-    \param  arglist 
-    
-    \return void
-    
-    \sa     MYODBCDbgInit
-            MYODBCDbgFini
-*/
-#define MYODBCDbgPrint DBUG_PRINT
-
-/*! 
-    \brief  Stops the debug.
-
-            Stops the debug and frees resources allocated in MYODBCDbgInit.
-
-    \note   This has not effect if DBUG_OFF is set.
-
-    \return void
-    
-    \sa     MYODBCDbgInit
-            MYODBCDbgFini
-*/
-#define MYODBCDbgFini {}
-
-/*! 
-    \brief  Returns from a function.
-                
-            Prints that we are leaving a function and what the retval is.
-
-    \note   This has not effect if DBUG_OFF is set.
-
-    \param  SQLRETURN
-    
-    \return SQLRETURN
-    
-    \sa     MYODBCDbgInit
-            MYODBCDbgFini
-            MYODBCDbgEnter
-            MYODBCDbgReturn2
-            MYODBCDbgReturn3
-*/
-#ifdef DBUG_OFF
-#define MYODBCDbgReturn(A) return (A);
-#else
-#define MYODBCDbgReturn(A) \
-{ \
-  SQLRETURN rc= (A); \
-  MYODBCDbgPrint("exit", ("%s", MYODBCDbgReturnString( rc )) ); \
-  DBUG_RETURN( rc ); \
-}
-#endif
-
-const char *MYODBCDbgGetFileDefault();
-
-/*! 
-    \brief  Returns from a function.
-                
-            Prints that we are leaving a function and what the retval is.
-
-    \note   This has not effect if DBUG_OFF is set.
-
-    \param  SQLRETURN
-    
-    \return SQLRETURN
-    
-    \sa     MYODBCDbgInit
-            MYODBCDbgFini
-            MYODBCDbgEnter
-            MYODBCDbgReturn
-            MYODBCDbgReturn3
-*/
-#define MYODBCDbgReturn2 DBUG_RETURN
-
-/*! 
-    \brief  Returns from a function.
-                
-            Prints that we are leaving a function.
-
-    \note   This has not effect if DBUG_OFF is set.
-
-    \sa     MYODBCDbgInit
-            MYODBCDbgFini
-            MYODBCDbgEnter
-            MYODBCDbgReturn2
-            MYODBCDbgReturn
-*/
-#define MYODBCDbgReturn3 DBUG_VOID_RETURN
 
 #endif
 

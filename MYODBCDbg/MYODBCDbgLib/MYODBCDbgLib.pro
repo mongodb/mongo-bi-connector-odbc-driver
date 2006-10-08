@@ -39,7 +39,6 @@ SOURCES		= \
                 MYODBCDbgDiagFieldString.c \
                 MYODBCDbgEnvAttrString.c \
                 MYODBCDbgFunctionsString.c \
-                MYODBCDbgGetFileDefault.c \
                 MYODBCDbgHandleTypeString.c \
                 MYODBCDbgInfoTypeString.c \
                 MYODBCDbgPosTypeString.c \

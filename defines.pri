@@ -11,6 +11,7 @@
 # #########################################################
 
 DEFINES += SETUP_VERSION=\"3.51.13\"
+DEFINES += VERSION=\"3.51.13\"
 
 win32 {
         DEFINES -= UNICODE
@@ -25,10 +26,19 @@ unix {
 }
 
 # #########################################################
-# Define DBUG_OFF to leave trace code out of the build. The
-# default is to include the trace code.
+# Define MYODBC_DBG to enable debug trace/log. Set environment 
+# variable.
+#
+# Set MYODBC_LOG to enable/disable at exec time.
+#
+#       1. undefined MYODBC_LOG         - No log
+#       2. SET MYODBC_LOG=off           - No log 
+#       3. SET MYODBC_LOG=stdout        - Log to stdout
+#       4. SET MYODBC_LOG=stderr        - Log to stderr
+#       5. SET MYODBC_LOG=<filename>    - Log appended to <filename>
+#
 # #########################################################
-DEFINES += DBUG_OFF 
+DEFINES += MYODBC_DBG
 
 # #########################################################
 # Define the ammount of output from post-build tests. The

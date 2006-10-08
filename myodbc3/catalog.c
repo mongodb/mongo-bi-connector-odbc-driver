@@ -287,7 +287,7 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
     MYSQL_RES *result, *sys_result;
     my_bool   all_dbs= 1, sys_tables, user_tables;
 
-    MYODBCDbgEnter("SQLTables");
+    MYODBCDbgEnter;
 
     CLEAR_STMT_ERROR(hstmt);
     my_SQLFreeStmt(hstmt,MYSQL_RESET);
@@ -305,7 +305,7 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
          !TableOwner[0] && !TableName[0] )
     {
         /* Return set of allowed qualifiers */
-        MYODBCDbgPrint("info ",("Return set of table qualifiers / Catalog names"));
+        MYODBCDbgInfo( "%s", "Return set of table qualifiers / Catalog names" );
 
         if ( !all_dbs )
             TableQualifier= "%";
@@ -316,8 +316,8 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
 
         if ( !stmt->result )
         {
-            MYODBCDbgPrint("error",("%d:%s", mysql_errno(&stmt->dbc->mysql),
-                                mysql_error(&stmt->dbc->mysql)));
+            MYODBCDbgError( "%d", mysql_errno(&stmt->dbc->mysql) );
+            MYODBCDbgError( "%s", mysql_errno(&stmt->dbc->mysql) );
             goto empty_set;
         }
 
@@ -328,7 +328,7 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
                                            sizeof(SQLTABLES_qualifier_values),
                                            MYF(0));
         mysql_link_fields(stmt,SQLTABLES_fields,SQLTABLES_FIELDS);
-        MYODBCDbgReturn(SQL_SUCCESS);
+        MYODBCDbgReturnReturn( SQL_SUCCESS );
     }
 
     if ( !TableQualifier[0] && (!strcmp(TableOwner,"%") ||
@@ -336,14 +336,14 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
          !TableName[0] )
     {
         /* Return set of allowed Table owners */
-        MYODBCDbgPrint("info ",("Return set of table owners / Schema names"));
+        MYODBCDbgInfo( "%s", "Return set of table owners / Schema names" );
         stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
         stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLTABLES_owner_values,
                                                   sizeof(SQLTABLES_owner_values),
                                                   MYF(0));
         stmt->result->row_count= 1;
         mysql_link_fields(stmt,SQLTABLES_fields, SQLTABLES_FIELDS);
-        MYODBCDbgReturn(SQL_SUCCESS);
+        MYODBCDbgReturnReturn( SQL_SUCCESS );
     }
 
     TableType=   myodbc_get_valid_buffer( Type_buff, szTableType, cbTableType );
@@ -353,7 +353,7 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
           !myodbc_casecmp(TableType,"SQL_ALL_TABLE_TYPES",19)) )
     {
         /* Return set of TableType qualifiers */
-        MYODBCDbgPrint("info ",("Return set of table types"));
+        MYODBCDbgInfo( "%s", "Return set of table types" );
         stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
         stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLTABLES_type_values,
                                                   sizeof(SQLTABLES_type_values),
@@ -362,7 +362,7 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
         stmt->result->row_count= sizeof(SQLTABLES_type_values)/
                                  sizeof(SQLTABLES_type_values[0]);
         mysql_link_fields(stmt,SQLTABLES_fields,SQLTABLES_FIELDS);
-        MYODBCDbgReturn(SQL_SUCCESS);
+        MYODBCDbgReturnReturn( SQL_SUCCESS );
     }
     sys_tables= 0;
     sys_result= result= 0;
@@ -399,7 +399,8 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
         if ( szTableQualifier && (!stmt->dbc->mysql.db || cmp_database(stmt->dbc->mysql.db, TableQualifier)) )
         {
             /* Return tables from a perticular database */
-            MYODBCDbgPrint("info ",("Return set of tables '%s' from '%s'",TableName, TableQualifier));
+            MYODBCDbgInfo( "Return set of tables '%s'", TableName );
+            MYODBCDbgInfo( " from '%s'", TableQualifier );
             pthread_mutex_lock(&stmt->dbc->lock);                         
             result= mysql_list_dbtables(stmt->dbc,TableQualifier,TableName);
             pthread_mutex_unlock(&stmt->dbc->lock);
@@ -407,31 +408,29 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
         else
         {
             /* Return tables from default/current database */    
-            MYODBCDbgPrint("info ",("Returning set of current database tables '%s'",TableName));
+            MYODBCDbgInfo( "Returning set of current database tables '%s'", TableName );
             pthread_mutex_lock(&stmt->dbc->lock);
             result= mysql_list_tables(&stmt->dbc->mysql,TableName);
             pthread_mutex_unlock(&stmt->dbc->lock);
         }
         if ( !result )
         {
-            MYODBCDbgPrint("error",("%d:%s", 
-                                mysql_errno(&stmt->dbc->mysql),
-                                mysql_error(&stmt->dbc->mysql)));
+            MYODBCDbgError( "%d", mysql_errno(&stmt->dbc->mysql) );
+            MYODBCDbgError( "%s", mysql_error(&stmt->dbc->mysql) );
         }
     }
     /* System tables with type as 'SYSTEM' or 'SYSTEM TABLE' */
     if ( sys_tables )
     {
-        MYODBCDbgPrint("info ",("Return set of system tables"));
+        MYODBCDbgInfo( "%s", "Return set of system tables" );
         pthread_mutex_lock(&stmt->dbc->lock);                         
         stmt->result= mysql_list_dbtables(stmt->dbc,"mysql",TableName);
         pthread_mutex_unlock(&stmt->dbc->lock);
 
         if ( !(sys_result= stmt->result) )
         {
-            MYODBCDbgPrint("error",("%d:%s", 
-                                mysql_errno(&stmt->dbc->mysql),
-                                mysql_error(&stmt->dbc->mysql)));
+            MYODBCDbgError( "%d", mysql_errno(&stmt->dbc->mysql) );
+            MYODBCDbgError( "%s", mysql_error(&stmt->dbc->mysql) );
         }
     }
     {
@@ -472,7 +471,7 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
             if ( !(stmt->result_array= (char**) my_malloc(
                                                          (uint)(sizeof(char *)*SQLTABLES_FIELDS*row_count), 
                                                          MYF(MY_FAE | MY_ZEROFILL))) )
-                MYODBCDbgReturn(set_error(stmt,MYERR_S1001,NULL,4001));
+                MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1001,NULL,4001) );
 
             data= stmt->result_array;
 
@@ -532,18 +531,18 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
         stmt->result->row_count= row_count;
     }
     mysql_link_fields(stmt,SQLTABLES_fields,SQLTABLES_FIELDS);
-    MYODBCDbgPrint("info ",("total tables: %ld", stmt->result->row_count));
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgInfo( "total tables: %ld", stmt->result->row_count );
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     empty_set:
-    MYODBCDbgPrint("info ",("Can't match anything; Returning empty set"));
+    MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
     stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
     stmt->result->row_count= 0;
     stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLTABLES_values,
                                               sizeof(SQLTABLES_values), 
                                               MYF(0));
     mysql_link_fields(stmt,SQLTABLES_fields, SQLTABLES_FIELDS);
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 }
 
 
@@ -656,7 +655,7 @@ static MYSQL_RES* mysql_list_dbcolumns(STMT FAR   *stmt,
         if ( !(select= (char *) my_malloc(sizeof(char *)*(ulong)result->row_count*
                                           (NAME_LEN+1)+NAME_LEN *2, MYF(MY_FAE))) )
         {
-            MYODBCDbgPrint("error",("Memory allocation failed"));
+            MYODBCDbgError( "%s", "Memory allocation failed" );
             return 0;
         }
         to= strxmov(select,"SELECT ",NullS);
@@ -721,13 +720,16 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
     MEM_ROOT    *alloc;
     ulong       transfer_length,precision,display_size;
 
-    MYODBCDbgEnter("SQLColumns");  
+    MYODBCDbgEnter;
 
-    MYODBCDbgPrint("enter",("Qualifier: '%s'(%d)  Owner: '%s'(%d)  Table: '%s'(%d)  Column: '%s'(%d)",
-                        szTableQualifier ? (char*) szTableQualifier : "null", cbTableQualifier,
-                        szTableOwner ? (char*) szTableOwner : "null", cbTableOwner,
-                        szTableName ? (char*) szTableName : "null", cbTableName,
-                        szColumnName ? (char*) szColumnName : "null", cbColumnName));
+    MYODBCDbgInfo( "Qualifier: '%s'", szTableQualifier ? (char*) szTableQualifier : "null" );
+    MYODBCDbgInfo( "Qualifier: (%d)", cbTableQualifier );
+    MYODBCDbgInfo( "Owner: '%s'", szTableOwner ? (char*) szTableOwner : "null" );
+    MYODBCDbgInfo( "Owner: (%d)", cbTableOwner );
+    MYODBCDbgInfo( "Table: '%s'", szTableName ? (char*) szTableName : "null" );
+    MYODBCDbgInfo( "Table: (%d)", cbTableName );
+    MYODBCDbgInfo( "Column: '%s'", szColumnName ? (char*) szColumnName : "null" );
+    MYODBCDbgInfo( "Column: (%d)", cbColumnName );
 
     TableQualifier= myodbc_get_valid_buffer( Qualifier_buff, szTableQualifier, cbTableQualifier );
     TableName=      myodbc_get_valid_buffer( Table_buff, szTableName, cbTableName );
@@ -746,8 +748,8 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
     stmt->result= mysql_list_dbcolumns(stmt,TableQualifier,TableName,ColumnName);
     if ( !(result= stmt->result) )
     {
-        MYODBCDbgPrint("error",("%d:%s", mysql_errno(&stmt->dbc->mysql),
-                            mysql_error(&stmt->dbc->mysql)));
+        MYODBCDbgError( "%d", mysql_errno(&stmt->dbc->mysql) );
+        MYODBCDbgError( "%s", mysql_error(&stmt->dbc->mysql) );
         goto empty_set;
     }
     stmt->result_array= (char**) my_malloc(sizeof(char*)*SQLCOLUMNS_FIELDS*
@@ -857,18 +859,18 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
     }
     result->row_count= result->field_count;
     mysql_link_fields(stmt,SQLCOLUMNS_fields,SQLCOLUMNS_FIELDS);
-    MYODBCDbgPrint("info ",("total columns: %ld", result->row_count));
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgInfo( "total columns: %ld", result->row_count );
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     empty_set:
-    MYODBCDbgPrint("info ",("Can't match anything; Returning empty set"));
+    MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
     stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
     stmt->result->row_count= 0;
     stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLCOLUMNS_values,
                                               sizeof(SQLCOLUMNS_values), 
                                               MYF(0));
     mysql_link_fields(stmt,SQLCOLUMNS_fields, SQLCOLUMNS_FIELDS);
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 }
 
 /*
@@ -966,13 +968,16 @@ SQLRETURN SQL_API SQLStatistics(SQLHSTMT hstmt,
     Table_buff[NAME_LEN+1], 
     *TableQualifier, *TableName;
 
-    MYODBCDbgEnter("SQLStatistics");
+    MYODBCDbgEnter;
 
-    MYODBCDbgPrint("enter",("Qualifier: '%s'(%d)  Owner: '%s'(%d)  Table: '%s'(%d)  fUnique: %d, fAccuracy: %d)",
-                        szTableQualifier ? (char*) szTableQualifier : "null", cbTableQualifier,
-                        szTableOwner ? (char*) szTableOwner : "null", cbTableOwner,
-                        szTableName ? (char*) szTableName : "null", cbTableName,
-                        fUnique, fAccuracy));
+    MYODBCDbgInfo( "Qualifier: '%s'", szTableQualifier ? (char*) szTableQualifier : "null" );
+    MYODBCDbgInfo( "Qualifier: (%d)", cbTableQualifier );
+    MYODBCDbgInfo( "Owner: '%s'", szTableOwner ? (char*) szTableOwner : "null" );
+    MYODBCDbgInfo( "Owner: (%d)", cbTableOwner );
+    MYODBCDbgInfo( "Table: '%s'", szTableName ? (char*) szTableName : "null" );
+    MYODBCDbgInfo( "Table: (%d)", cbTableName );
+    MYODBCDbgInfo( "fUnique: %d", fUnique );
+    MYODBCDbgInfo( "fAccuracy: %d)", fAccuracy );
 
     TableQualifier= myodbc_get_valid_buffer( Qualifier_buff, szTableQualifier, cbTableQualifier );
     TableName=      myodbc_get_valid_buffer( Table_buff, szTableName, cbTableName );
@@ -989,7 +994,8 @@ SQLRETURN SQL_API SQLStatistics(SQLHSTMT hstmt,
     pthread_mutex_lock(&dbc->lock);
     if ( !(stmt->result= mysql_list_dbkeys(stmt->dbc,TableQualifier,TableName)) )
     {
-        MYODBCDbgPrint("error",("%d:%s", mysql_errno(mysql),mysql_error(mysql)));
+        MYODBCDbgError( "%d", mysql_errno(mysql) );
+        MYODBCDbgError( "%s", mysql_error(mysql) );
         pthread_mutex_unlock(&dbc->lock);
         goto empty_set;
     }
@@ -1031,18 +1037,18 @@ SQLRETURN SQL_API SQLStatistics(SQLHSTMT hstmt,
         mysql_data_seek(stmt->result,0);  /* Restore pointer */
     }
     mysql_link_fields(stmt,SQLSTAT_fields,SQLSTAT_FIELDS);
-    MYODBCDbgPrint("info ",("total stats count: %ld", stmt->result->row_count));
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgInfo( "total stats count: %ld", stmt->result->row_count );
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     empty_set:
-    MYODBCDbgPrint("info ",("Can't match anything; Returning empty set"));
+    MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
     stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
     stmt->result->row_count= 0;
     stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLSTAT_values,
                                               sizeof(SQLSTAT_values), 
                                               MYF(0));
     mysql_link_fields(stmt,SQLSTAT_fields, SQLSTAT_FIELDS);
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 }
 
 /*
@@ -1160,12 +1166,11 @@ SQLRETURN SQL_API SQLTablePrivileges(SQLHSTMT hstmt,
     STMT FAR *stmt= (STMT FAR*) hstmt;
     uint     row_count;
 
-    MYODBCDbgEnter("SQLTablePrivileges");
+    MYODBCDbgEnter;
 
-    MYODBCDbgPrint("enter",("Qualifier: '%s'  Owner: '%s'  Table: '%s'",
-                        szTableQualifier ? (char*) szTableQualifier : "null",
-                        szTableOwner ? (char*) szTableOwner : "null",
-                        szTableName ? (char*) szTableName : "null"));
+    MYODBCDbgInfo( "Qualifier: '%s'", szTableQualifier ? (char*) szTableQualifier : "null" );
+    MYODBCDbgInfo( "Owner: '%s'", szTableOwner ? (char*) szTableOwner : "null" );
+    MYODBCDbgInfo( "Table: '%s'", szTableName ? (char*) szTableName : "null" );
 
     TableQualifier= myodbc_get_valid_buffer( Qualifier_buff, szTableQualifier, cbTableQualifier );
     TableName= myodbc_get_valid_buffer( Name_buff, szTableName, cbTableName );
@@ -1180,8 +1185,8 @@ SQLRETURN SQL_API SQLTablePrivileges(SQLHSTMT hstmt,
     if ( !(stmt->result= mysql_list_table_priv(stmt->dbc,
                                                TableQualifier,TableName)) )
     {
-        MYODBCDbgPrint("error",("%d:%s", mysql_errno(&stmt->dbc->mysql),
-                            mysql_error(&stmt->dbc->mysql)));
+        MYODBCDbgError( "%d", mysql_errno(&stmt->dbc->mysql) );
+        MYODBCDbgError( "%s", mysql_error(&stmt->dbc->mysql) );
         pthread_mutex_unlock(&stmt->dbc->lock);
         goto empty_set;
     }
@@ -1224,18 +1229,18 @@ SQLRETURN SQL_API SQLTablePrivileges(SQLHSTMT hstmt,
     }  
     stmt->result->row_count= row_count;
     mysql_link_fields(stmt,SQLTABLES_priv_fields,SQLTABLES_PRIV_FIELDS);
-    MYODBCDbgPrint("info ",("total table priv count: %ld", row_count));
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgInfo( "total table priv count: %ld", row_count );
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     empty_set:
-    MYODBCDbgPrint("info ",("Can't match anything; Returning empty set"));
+    MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
     stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
     stmt->result->row_count= 0;
     stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLTABLES_priv_values,
                                               sizeof(SQLTABLES_priv_values), 
                                               MYF(0));
     mysql_link_fields(stmt,SQLTABLES_priv_fields,SQLTABLES_PRIV_FIELDS);
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 }
 
 
@@ -1334,13 +1339,12 @@ SQLRETURN SQL_API SQLColumnPrivileges(SQLHSTMT hstmt,
     MEM_ROOT *alloc;
     uint     row_count;
 
-    MYODBCDbgEnter("SQLColumnPrivileges");
+    MYODBCDbgEnter;
 
-    MYODBCDbgPrint("enter",("Qualifier: '%s'  Owner: '%s'  Table: '%s'  column: '%s'",
-                        szTableQualifier ? (char*) szTableQualifier : "null",
-                        szTableOwner ? (char*) szTableOwner : "null",
-                        szTableName ? (char*) szTableName : "null",
-                        szColumnName ? (char*) szColumnName : "null"));
+    MYODBCDbgInfo( "Qualifier: '%s'", szTableQualifier ? (char*) szTableQualifier : "null" );
+    MYODBCDbgInfo( "Owner: '%s'", szTableOwner ? (char*) szTableOwner : "null" );
+    MYODBCDbgInfo( "Table: '%s'", szTableName ? (char*) szTableName : "null" );
+    MYODBCDbgInfo( "Column: '%s'", szColumnName ? (char*) szColumnName : "null" );
 
     TableQualifier=myodbc_get_valid_buffer( Qualifier_buff, szTableQualifier, cbTableQualifier );
     TableName=   myodbc_get_valid_buffer( Table_buff, szTableName, cbTableName );
@@ -1358,8 +1362,8 @@ SQLRETURN SQL_API SQLColumnPrivileges(SQLHSTMT hstmt,
                                                 TableQualifier,
                                                 TableName,ColumnName)) )
     {
-        MYODBCDbgPrint("error",("%d:%s", mysql_errno(&stmt->dbc->mysql),
-                            mysql_error(&stmt->dbc->mysql)));
+        MYODBCDbgError( "%d", mysql_errno(&stmt->dbc->mysql) );
+        MYODBCDbgError( "%s", mysql_error(&stmt->dbc->mysql) );
         pthread_mutex_unlock(&stmt->dbc->lock);
         goto empty_set;
     }
@@ -1399,18 +1403,18 @@ SQLRETURN SQL_API SQLColumnPrivileges(SQLHSTMT hstmt,
     }
     stmt->result->row_count= row_count;  
     mysql_link_fields(stmt,SQLCOLUMNS_priv_fields,SQLCOLUMNS_PRIV_FIELDS);
-    MYODBCDbgPrint("info ",("total columns priv count: %ld", row_count));
-    MYODBCDbgReturn(SQL_SUCCESS); 
+    MYODBCDbgInfo( "total columns priv count: %ld", row_count );
+    MYODBCDbgReturnReturn( SQL_SUCCESS ); 
 
     empty_set:
-    MYODBCDbgPrint("info ",("Can't match anything; Returning empty set"));
+    MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
     stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
     stmt->result->row_count= 0;
     stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLCOLUMNS_priv_values,
                                               sizeof(SQLCOLUMNS_priv_values), 
                                               MYF(0)); 
     mysql_link_fields(stmt,SQLCOLUMNS_priv_fields,SQLCOLUMNS_PRIV_FIELDS);
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 }
 
 /*
@@ -1486,14 +1490,14 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
     uint        field_count;
     my_bool     primary_key;
 
-    MYODBCDbgEnter("SQLSpecialColumns");
+    MYODBCDbgEnter;
 
-    MYODBCDbgPrint("enter",("ColType: %d  Qualifier: '%s'  Owner: '%s' Table: '%s'  Scope: '%d'  Nullable: %d",
-                        fColType,
-                        szTableQualifier ? (char*) szTableQualifier : "null",
-                        szTableOwner ? (char*) szTableOwner : "null",
-                        szTableName ? (char*) szTableName : "null",
-                        fScope, fNullable));
+    MYODBCDbgInfo( "ColType: %d", fColType );
+    MYODBCDbgInfo( "Qualifier: '%s'", szTableQualifier ? (char*) szTableQualifier : "null" );
+    MYODBCDbgInfo( "Owner: '%s'", szTableOwner ? (char*) szTableOwner : "null" );
+    MYODBCDbgInfo( "Table: '%s'", szTableName ? (char*) szTableName : "null" );
+    MYODBCDbgInfo( "Scope: '%d'", fScope );
+    MYODBCDbgInfo( "Nullable: %d", fNullable );
 
     TableQualifier=myodbc_get_valid_buffer( Qualifier_buff, szTableQualifier, cbTableQualifier );
     TableName=   myodbc_get_valid_buffer( Table_buff, szTableName, cbTableName );
@@ -1506,8 +1510,8 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
     stmt->result= mysql_list_dbcolumns(stmt,TableQualifier,TableName,0);
     if ( !(result= stmt->result) )
     {
-        MYODBCDbgPrint("error",("%d:%s", mysql_errno(&stmt->dbc->mysql),
-                            mysql_error(&stmt->dbc->mysql)));
+        MYODBCDbgError( "%d", mysql_errno(&stmt->dbc->mysql) );
+        MYODBCDbgError( "%s", mysql_error(&stmt->dbc->mysql) );
         goto empty_set;
     }
 
@@ -1517,7 +1521,7 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
         if ( !(stmt->result_array= (char**) my_malloc(sizeof(char*)*SQLSPECIALCOLUMNS_FIELDS*
                                                       result->field_count, MYF(MY_FAE | MY_ZEROFILL))) )
         {
-            MYODBCDbgPrint("error",("Memory allocation failed"));
+            MYODBCDbgError( "%s", "Memory allocation failed" );
             goto empty_set;
         }
 
@@ -1552,15 +1556,15 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
         }
         result->row_count= field_count;
         mysql_link_fields(stmt,SQLSPECIALCOLUMNS_fields,SQLSPECIALCOLUMNS_FIELDS);
-        MYODBCDbgPrint("info ",("total columns count: %ld", field_count));
-        MYODBCDbgReturn(SQL_SUCCESS);
+        MYODBCDbgInfo( "total columns count: %ld", field_count );
+        MYODBCDbgReturnReturn( SQL_SUCCESS );
     }
 
     if ( fColType != SQL_BEST_ROWID )
     {
-        MYODBCDbgReturn(set_error(stmt,MYERR_S1000,
+        MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1000,
                               "Unsupported argument to SQLSpecialColumns",
-                              4000));
+                              4000) );
     }
 
     /*
@@ -1582,7 +1586,7 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
     if ( !(stmt->result_array= (char**) my_malloc(sizeof(char*)*SQLSPECIALCOLUMNS_FIELDS*
                                                   result->field_count, MYF(MY_FAE | MY_ZEROFILL))) )
     {
-        MYODBCDbgPrint("error",("Memory allocation failed"));
+        MYODBCDbgError( "%s", "Memory allocation failed" );
         goto empty_set;
     }
 
@@ -1623,18 +1627,18 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
     }
     result->row_count= field_count;
     mysql_link_fields(stmt,SQLSPECIALCOLUMNS_fields,SQLSPECIALCOLUMNS_FIELDS);
-    MYODBCDbgPrint("info ",("total columns count: %ld", field_count));
-    MYODBCDbgReturn(SQL_SUCCESS); 
+    MYODBCDbgInfo( "total columns count: %ld", field_count );
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     empty_set:
-    MYODBCDbgPrint("info ",("Can't match anything; Returning empty set"));
+    MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
     stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
     stmt->result->row_count= 0;
     stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLSPECIALCOLUMNS_values,
                                               sizeof(SQLSPECIALCOLUMNS_values), 
                                               MYF(0)); 
     mysql_link_fields(stmt,SQLSPECIALCOLUMNS_fields,SQLSPECIALCOLUMNS_FIELDS);
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 }
 
 /*
@@ -1694,12 +1698,14 @@ SQLRETURN SQL_API SQLPrimaryKeys(SQLHSTMT hstmt,
     char      **data;  
     uint      row_count;
 
-    MYODBCDbgEnter("SQLPrimaryKeys"); 
+    MYODBCDbgEnter;
 
-    MYODBCDbgPrint("enter",("Qualifier: '%s'(%d)  Owner: '%s'(%d)  Table: '%s'(%d)",
-                        szTableQualifier ? (char*) szTableQualifier : "null", cbTableQualifier,
-                        szTableOwner ? (char*) szTableOwner : "null", cbTableOwner,
-                        szTableName ? (char*) szTableName : "null", cbTableName));
+    MYODBCDbgInfo( "Qualifier: '%s'", szTableQualifier ? (char*) szTableQualifier : "null" );
+    MYODBCDbgInfo( "Qualifier: (%d)", cbTableQualifier );
+    MYODBCDbgInfo( "Owner: '%s'", szTableOwner ? (char*) szTableOwner : "null" );
+    MYODBCDbgInfo( "Owner: (%d)", cbTableOwner );
+    MYODBCDbgInfo( "Table: '%s'", szTableName ? (char*) szTableName : "null" );
+    MYODBCDbgInfo( "Table: (%d)", cbTableName );
 
     TableQualifier= myodbc_get_valid_buffer( Qualifier_buff, szTableQualifier, cbTableQualifier );
     TableName=      myodbc_get_valid_buffer( Table_buff, szTableName, cbTableName );
@@ -1713,8 +1719,8 @@ SQLRETURN SQL_API SQLPrimaryKeys(SQLHSTMT hstmt,
     pthread_mutex_lock(&stmt->dbc->lock);
     if ( !(stmt->result= mysql_list_dbkeys(stmt->dbc,TableQualifier,TableName)) )
     {
-        MYODBCDbgPrint("error",("%d:%s", mysql_errno(&stmt->dbc->mysql),
-                            mysql_error(&stmt->dbc->mysql)));
+        MYODBCDbgError( "%d", mysql_errno(&stmt->dbc->mysql) );
+        MYODBCDbgError( "%s", mysql_error(&stmt->dbc->mysql) );
         pthread_mutex_unlock(&stmt->dbc->lock);
         goto empty_set;
     }
@@ -1742,18 +1748,18 @@ SQLRETURN SQL_API SQLPrimaryKeys(SQLHSTMT hstmt,
     stmt->result->row_count= row_count;
 
     mysql_link_fields(stmt,SQLPRIM_KEYS_fields,SQLPRIM_KEYS_FIELDS);
-    MYODBCDbgPrint("info ",("total keys count: %ld", row_count));
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgInfo( "total keys count: %ld", row_count );
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     empty_set:
-    MYODBCDbgPrint("info ",("Can't match anything; Returning empty set"));
+    MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
     stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
     stmt->result->row_count= 0;
     stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLPRIM_KEYS_values,
                                               sizeof(SQLPRIM_KEYS_values), 
                                               MYF(0)); 
     mysql_link_fields(stmt,SQLPRIM_KEYS_fields,SQLPRIM_KEYS_FIELDS);
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 }
 
 /*
@@ -1854,16 +1860,20 @@ SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT hstmt,
     STMT FAR *stmt=(STMT FAR*) hstmt;
     uint row_count= 0;
 
-    MYODBCDbgEnter("SQLForeignKeys");
+    MYODBCDbgEnter;
 
-    MYODBCDbgPrint("enter",("PKQualifier: '%s'(%d)  PKOwner: '%s'(%d)  PKTable: '%s'(%d) \
-          FKQualifier: '%s'(%d)  FKOwner: '%s'(%d)  FKTable: '%s'(%d)",
-                        szPkTableQualifier ? (char*) szPkTableQualifier : "null", cbPkTableQualifier,
-                        szPkTableOwner ? (char*) szPkTableOwner : "null", cbPkTableOwner,
-                        szPkTableName ? (char*) szPkTableName : "null", cbPkTableName,
-                        szFkTableQualifier ? (char*) szFkTableQualifier : "null", cbFkTableQualifier,
-                        szFkTableOwner ? (char*) szFkTableOwner : "null", cbFkTableOwner,
-                        szFkTableName ? (char*) szFkTableName : "null", cbFkTableName));
+    MYODBCDbgInfo( "PKQualifier: '%s'", szPkTableQualifier ? (char*) szPkTableQualifier : "null" );
+    MYODBCDbgInfo( "PKQualifier: (%d)", cbPkTableQualifier );
+    MYODBCDbgInfo( "PKOwner: '%s'", szPkTableOwner ? (char*) szPkTableOwner : "null" );
+    MYODBCDbgInfo( "PKOwner: (%d)", cbPkTableOwner );
+    MYODBCDbgInfo( "PKTable: '%s'", szPkTableName ? (char*) szPkTableName : "null" );
+    MYODBCDbgInfo( "PKTable: (%d)", cbPkTableName );
+    MYODBCDbgInfo( "FKQualifier: '%s'", szFkTableQualifier ? (char*) szFkTableQualifier : "null" );
+    MYODBCDbgInfo( "FKQualifier: (%d)", cbFkTableQualifier );
+    MYODBCDbgInfo( "FKOwner: '%s'", szFkTableOwner ? (char*) szFkTableOwner : "null" );
+    MYODBCDbgInfo( "FKOwner: (%d)", cbFkTableOwner );
+    MYODBCDbgInfo( "FKTable: '%s'", szFkTableName ? (char*) szFkTableName : "null" );
+    MYODBCDbgInfo( "FKTable: (%d)", cbFkTableName );
 
     CLEAR_STMT_ERROR(hstmt);
     my_SQLFreeStmt(hstmt,MYSQL_RESET);
@@ -1894,8 +1904,8 @@ SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT hstmt,
         pthread_mutex_lock(&stmt->dbc->lock);
         if ( !(stmt->result= mysql_table_status(stmt,FkTableQualifier,FkTableName)) )
         {
-            MYODBCDbgPrint("error",("%d:%s", mysql_errno(&stmt->dbc->mysql),
-                                mysql_error(&stmt->dbc->mysql)));
+            MYODBCDbgError( "%d", mysql_errno(&stmt->dbc->mysql) )
+            MYODBCDbgError( "%s", mysql_error(&stmt->dbc->mysql) );
             pthread_mutex_unlock(&stmt->dbc->lock);
             goto empty_set;
         }
@@ -2019,18 +2029,18 @@ SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT hstmt,
     }  
     stmt->result->row_count= row_count;
     mysql_link_fields(stmt,SQLFORE_KEYS_fields,SQLFORE_KEYS_FIELDS);
-    MYODBCDbgPrint("info ",("total keys count: %ld", row_count));
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgInfo( "total keys count: %ld", row_count );
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     empty_set:
-    MYODBCDbgPrint("info ",("Can't match anything; Returning empty set"));
+    MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
     stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
     stmt->result->row_count= 0;
     stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLFORE_KEYS_values,
                                               sizeof(SQLFORE_KEYS_values), 
                                               MYF(0)); 
     mysql_link_fields(stmt,SQLFORE_KEYS_fields,SQLFORE_KEYS_FIELDS);
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 }
 
 /*
@@ -2111,19 +2121,21 @@ SQLRETURN SQL_API SQLProcedures(SQLHSTMT    hstmt,
     *ProcName;
     STMT FAR  *stmt= (STMT FAR*) hstmt; 
 
-    MYODBCDbgEnter("SQLProcedures");
+    MYODBCDbgEnter;
 
-    MYODBCDbgPrint("enter",("Qualifier: '%s'(%d)  Owner: '%s'(%d)  Procedure: '%s'(%d)",
-                        szProcQualifier ? (char*) szProcQualifier : "null", cbProcQualifier,
-                        szProcOwner ? (char*) szProcOwner : "null", cbProcOwner,
-                        szProcName ? (char*) szProcName : "null", cbProcName));
+    MYODBCDbgInfo( "Qualifier: '%s'", szProcQualifier ? (char*) szProcQualifier : "null" );
+    MYODBCDbgInfo( "Qualifier: (%d)", cbProcQualifier );
+    MYODBCDbgInfo( "Owner: '%s'", szProcOwner ? (char*) szProcOwner : "null" );
+    MYODBCDbgInfo( "Owner: (%d)", cbProcOwner );
+    MYODBCDbgInfo( "Procedure: '%s'", szProcName ? (char*) szProcName : "null" );
+    MYODBCDbgInfo( "Procedure: (%d)", cbProcName );
 
     CLEAR_STMT_ERROR(hstmt);
     my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
     if ( !is_minimum_version(stmt->dbc->mysql.server_version,"5.0",3) )
     {
-        MYODBCDbgPrint("error",("%s", "Driver doesn't support for this MySQL server version, upgrade to >= 5.0"));
+        MYODBCDbgError( "%s", "Driver doesn't support for this MySQL server version, upgrade to >= 5.0" );
         goto empty_set;
     }
     my_SQLFreeStmt(hstmt,MYSQL_RESET);
@@ -2140,8 +2152,8 @@ SQLRETURN SQL_API SQLProcedures(SQLHSTMT    hstmt,
 
     if ( !stmt->result )
     {
-        MYODBCDbgPrint("error",("%d:%s",mysql_errno(&stmt->dbc->mysql),
-                            mysql_error(&stmt->dbc->mysql)));
+        MYODBCDbgError( "%d", mysql_errno(&stmt->dbc->mysql) );
+        MYODBCDbgError( "%s", mysql_error(&stmt->dbc->mysql) );
         goto empty_set;
     }
     stmt->order      = SQLPROCEDURES_order;
@@ -2152,18 +2164,18 @@ SQLRETURN SQL_API SQLProcedures(SQLHSTMT    hstmt,
                                             sizeof(SQLPROCEDURES_values),MYF(0));
 
     mysql_link_fields(stmt,SQLPROCEDURES_fields,SQLPROCEDURES_FIELDS);  
-    MYODBCDbgPrint("info ",("total procedures count: %ld", stmt->result->row_count));
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgInfo( "total procedures count: %ld", stmt->result->row_count );
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     empty_set:
-    MYODBCDbgPrint("info ",("Can't match anything; Returning empty set"));
+    MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
     stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
     stmt->result->row_count= 0;
     stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLPROCEDURES_values,
                                               sizeof(SQLPROCEDURES_values), 
                                               MYF(0)); 
     mysql_link_fields(stmt,SQLPROCEDURES_fields,SQLPROCEDURES_FIELDS);
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 }
 
 /*

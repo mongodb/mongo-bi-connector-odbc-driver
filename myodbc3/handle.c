@@ -57,7 +57,7 @@ SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV FAR *phenv)
     myodbc_init(); /* This is done in LibMain on XP so it probably needs to be in this func only when in UNIX - PAH */
 #endif
 
-    MYODBCDbgEnter("my_SQLAllocEnv");
+    MYODBCDbgEnter;
 
 #ifndef _UNIX_
     {
@@ -66,14 +66,14 @@ SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV FAR *phenv)
         {
             GlobalFree (henv);      /* Free it if lock fails */
             *phenv= SQL_NULL_HENV;
-            MYODBCDbgReturn( SQL_ERROR );
+            MYODBCDbgReturnReturn( SQL_ERROR );
         }
     }
 #else
     if (!(*phenv= (SQLHENV) my_malloc(sizeof(ENV),MYF(MY_ZEROFILL))))
     {
         *phenv= SQL_NULL_HENV;
-        MYODBCDbgReturn( SQL_ERROR );
+        MYODBCDbgReturnReturn( SQL_ERROR );
     }
 #endif /* _UNIX_ */
 
@@ -84,7 +84,7 @@ SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV FAR *phenv)
     ((ENV FAR*) *phenv)->odbc_ver= SQL_OV_ODBC2;
 #endif /* WIN32 */
 
-    MYODBCDbgReturn( SQL_SUCCESS );
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 }
 
 
@@ -239,7 +239,8 @@ SQLRETURN SQL_API SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc)
 SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc)
 {
     DBC FAR *dbc= (DBC FAR*) hdbc;
-    MYODBCDbgEnter("SQLFreeConnect");
+
+    MYODBCDbgEnter;
 
     dbc->env->connections= list_delete(dbc->env->connections,&dbc->list);
     my_free(dbc->dsn,MYF(MY_ALLOW_ZERO_PTR));
@@ -255,7 +256,7 @@ SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc)
 #else
     my_free((char*) hdbc,MYF(0));
 #endif
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn(SQL_SUCCESS);
 }
 
 
@@ -282,7 +283,8 @@ SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
 #endif
     STMT FAR *stmt;
     DBC FAR *dbc= (DBC FAR*) hdbc;
-    MYODBCDbgEnter("SQLAllocStmt");
+
+    MYODBCDbgEnter;
 
 #ifndef _UNIX_
     hstmt= GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(STMT));
@@ -290,14 +292,14 @@ SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
     {
         GlobalFree(hstmt);
         *phstmt= SQL_NULL_HSTMT;
-        MYODBCDbgReturn(SQL_ERROR);
+        MYODBCDbgReturnReturn(SQL_ERROR);
     }
 #else
     *phstmt= (SQLHSTMT) my_malloc(sizeof (STMT), MYF(MY_ZEROFILL | MY_WME));
     if (*phstmt == SQL_NULL_HSTMT)
     {
         *phstmt= SQL_NULL_HSTMT;
-        MYODBCDbgReturn(SQL_ERROR);
+        MYODBCDbgReturnReturn(SQL_ERROR);
     }
 #endif /* IS UNIX */
     stmt= (STMT FAR*) *phstmt;
@@ -311,7 +313,7 @@ SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
 #else
     init_dynamic_array(&stmt->params,sizeof(PARAM_BIND),32,64);
 #endif
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn(SQL_SUCCESS);
 }
 
 
@@ -361,16 +363,18 @@ SQLRETURN SQL_API my_SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption)
 {
     STMT FAR *stmt= (STMT FAR*) hstmt;
     uint i;
-    MYODBCDbgEnter("SQLFreeStmt");
-    MYODBCDbgPrint("enter",("stmt: 0x%lx  option: %s", hstmt,
-                            MYODBCDbgStmtTypeString(fOption)));
+
+    MYODBCDbgEnter;
+
+    MYODBCDbgInfo( "stmt: 0x%lx", hstmt );
+    MYODBCDbgInfo( "option: %s", MYODBCDbgStmtTypeString(fOption) );
 
     if (fOption == SQL_UNBIND)
     {
         x_free(stmt->bind);
         stmt->bind= 0;
         stmt->bound_columns= 0;
-        MYODBCDbgReturn(SQL_SUCCESS);
+        MYODBCDbgReturnReturn( SQL_SUCCESS );
     }
     for (i= 0 ; i < stmt->params.elements ; i++)
     {
@@ -387,7 +391,7 @@ SQLRETURN SQL_API my_SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption)
         }
     }
     if (fOption == SQL_RESET_PARAMS)
-        MYODBCDbgReturn(SQL_SUCCESS);
+        MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     mysql_free_result(stmt->result);
     x_free((gptr) stmt->fields);
@@ -407,7 +411,7 @@ SQLRETURN SQL_API my_SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption)
     stmt->state= ST_UNKNOWN;
 
     if (fOption == MYSQL_RESET_BUFFERS)
-        MYODBCDbgReturn(SQL_SUCCESS);
+        MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     x_free((gptr) stmt->table_name);
     stmt->table_name= 0;
@@ -419,7 +423,7 @@ SQLRETURN SQL_API my_SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption)
     stmt->cursor.pk_count= 0;
 
     if (fOption == SQL_CLOSE)
-        MYODBCDbgReturn(SQL_SUCCESS);
+        MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     /* At this point, only MYSQL_RESET and SQL_DROP left out */
     x_free((gptr) stmt->query);
@@ -427,7 +431,7 @@ SQLRETURN SQL_API my_SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption)
     stmt->param_count= 0;
 
     if (fOption == MYSQL_RESET)
-        MYODBCDbgReturn(SQL_SUCCESS);
+        MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     odbc_reset_stmt_options(&stmt->stmt_options);
 
@@ -441,7 +445,7 @@ SQLRETURN SQL_API my_SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption)
 #else
     my_free((char*) hstmt,MYF(0));
 #endif /* _UNIX_*/
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 }
 
 

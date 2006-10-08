@@ -58,8 +58,10 @@ static SQLRETURN set_connect_defaults(DBC *dbc)
 {
     SQLRETURN error= 0;
     my_bool reconnect = 1;
-    MYODBCDbgEnter("set_connect_defaults");
-#ifndef DBUG_OFF
+
+    MYODBCDbgEnter;
+
+#ifdef MYODBC_DBG
     if (dbc->flag & FLAG_LOG_QUERY && !dbc->query_log)
         dbc->query_log= init_query_log();
 #endif
@@ -85,13 +87,13 @@ SQL_AUTOCOMMIT_ON",
                                   0);
         else if (autocommit_on(dbc) &&
                  (odbc_stmt(dbc,"SET AUTOCOMMIT=0") != SQL_SUCCESS))
-            MYODBCDbgReturn(SQL_ERROR);
+            MYODBCDbgReturnReturn( SQL_ERROR );
     }
     else if ((dbc->commit_flag == CHECK_AUTOCOMMIT_ON) &&
              trans_supported(dbc) && !autocommit_on(dbc))
     {
         if (odbc_stmt(dbc,"SET AUTOCOMMIT=1") != SQL_SUCCESS)
-            MYODBCDbgReturn(SQL_ERROR);
+            MYODBCDbgReturnReturn( SQL_ERROR );
     }
 
     if (!(dbc->txn_isolation & DEFAULT_TXN_ISOLATION))/* TXN_ISOLATION */
@@ -109,19 +111,17 @@ SQL_AUTOCOMMIT_ON",
             level="READ UNCOMMITTED";
         if (trans_supported(dbc))
         {
-            MYODBCDbgPrint("info",("setting transaction isolation to level '%s'",
-                                   level));
+            MYODBCDbgInfo( "setting transaction isolation to level '%s'", level );
             sprintf(buff,"SET SESSION TRANSACTION ISOLATION LEVEL %s",level);
             if (odbc_stmt(dbc,buff) != SQL_SUCCESS)
                 error= SQL_ERROR;
         }
         else
         {
-            MYODBCDbgPrint("info",("SQL_ATTR_TXN_ISOLATION %ld ignored",
-                                   dbc->txn_isolation));
+            MYODBCDbgInfo( "SQL_ATTR_TXN_ISOLATION %ld ignored", dbc->txn_isolation );
         }
     }
-    MYODBCDbgReturn(error);
+    MYODBCDbgReturnReturn( error );
 }
 
 
@@ -134,7 +134,8 @@ ulong get_client_flag(MYSQL *mysql, ulong option_flag,uint connect_timeout,
                       char *init_stmt)
 {
     ulong client_flag= CLIENT_ODBC;
-    MYODBCDbgEnter("get_client_flag");
+
+    MYODBCDbgEnter;
 
     mysql_init(mysql);
 
@@ -162,9 +163,10 @@ ulong get_client_flag(MYSQL *mysql, ulong option_flag,uint connect_timeout,
     if (connect_timeout)
         mysql_options(mysql, MYSQL_OPT_CONNECT_TIMEOUT,(char*) &connect_timeout);
 
-    MYODBCDbgPrint("info",("option_flag: %ld  client_flag: %ld", option_flag,
-                           client_flag));
-    MYODBCDbgReturn2( client_flag );
+    MYODBCDbgInfo( "option_flag: %ld", option_flag );
+    MYODBCDbgInfo( "client_flag: %ld", client_flag );
+
+    MYODBCDbgReturn( client_flag );
 }
 
 
@@ -204,17 +206,18 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
     ulong flag_nr,client_flag;
     uint port_nr= 0;
     DBC FAR *dbc= (DBC FAR*) hdbc;
-    MYODBCDbgEnter("SQLConnect");
+
+    MYODBCDbgEnter;
 
     if (dbc->mysql.net.vio != 0)
-        MYODBCDbgReturn(set_conn_error(hdbc,MYERR_08002,NULL,0));
+        MYODBCDbgReturnReturn( set_conn_error(hdbc,MYERR_08002,NULL,0) );
 
     /* Reset error state */
     CLEAR_DBC_ERROR(dbc);
 
     dsn_ptr= fix_str(dsn, (char*) szDSN, cbDSN);
     if (dsn_ptr && !dsn_ptr[0])
-        MYODBCDbgReturn(set_conn_error(hdbc, MYERR_S1000, "Invalid Connection Parameters",0));
+        MYODBCDbgReturnReturn( set_conn_error(hdbc, MYERR_S1000, "Invalid Connection Parameters",0) );
 
     SQLGetPrivateProfileString(dsn_ptr,"user","", user, sizeof(user), MYODBCUtilGetIniFileName( TRUE ) );
     SQLGetPrivateProfileString(dsn_ptr,"password","", passwd, sizeof(passwd), MYODBCUtilGetIniFileName( TRUE ) );
@@ -231,24 +234,18 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
 
     SQLGetPrivateProfileString(dsn_ptr,"stmt", "", init_stmt, sizeof(init_stmt), MYODBCUtilGetIniFileName( TRUE ) );
 
-#ifndef DBUG_OFF
-    if ( flag_nr & FLAG_DEBUG && !_db_on_ )
+#ifdef MYODBC_DBG
+    if ( flag_nr & FLAG_DEBUG && !MYODBCDbgOn )
     {
-        char  szMYODBC_LOG[FILENAME_MAX+20]= "";
-
         SQLGetPrivateProfileString(dsn_ptr, "TRACE", "", szTRACE, sizeof(szTRACE),  MYODBCUtilGetIniFileName( TRUE ) );
         if ( strcasecmp( szTRACE, "ON" ) == 1 || strcasecmp( szTRACE, "YES" ) == 1 || strcasecmp( szTRACE, "Y" ) == 1 || *szTRACE == '1' )
         {
             char  szTRACEFILE[FILENAME_MAX+1]= "";
             SQLGetPrivateProfileString(dsn_ptr, "TRACEFILE", "", szTRACEFILE, sizeof(szTRACEFILE), MYODBCUtilGetIniFileName( TRUE ) );
             if ( *szTRACEFILE )
-                sprintf(szMYODBC_LOG, "d:t:F:L:S:A,%s", szTRACEFILE);
+                MYODBCDbgSetFile( szTRACEFILE );
+            MYODBCDbgSetOn( 1 );
         }
-
-        if ( *szMYODBC_LOG )
-            MYODBCDbgSetFile( szMYODBC_LOG )
-        else
-            MYODBCDbgSetFile( MYODBCDbgGetFileDefault() )
     }
 #endif
     client_flag= get_client_flag(&dbc->mysql,flag_nr,(uint) dbc->login_timeout,
@@ -271,7 +268,7 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
                       mysql_errno(&dbc->mysql));
         translate_error(dbc->error.sqlstate,
                         MYERR_S1000,mysql_errno(&dbc->mysql));
-        MYODBCDbgReturn(SQL_ERROR);
+        MYODBCDbgReturnReturn( SQL_ERROR );
     }
     dbc->dsn= my_strdup(dsn_ptr ? dsn_ptr : database ,MYF(MY_WME));
     dbc->database= my_strdup(database,MYF(MY_WME));
@@ -281,7 +278,7 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
     dbc->port= port_nr;
     dbc->flag= flag_nr;
 
-    MYODBCDbgReturn(set_connect_defaults(dbc));
+    MYODBCDbgReturnReturn( set_connect_defaults(dbc) );
 }
 
 
@@ -344,7 +341,7 @@ SQLRETURN SQL_API my_SQLDriverConnect( SQLHDBC             hdbc,
     void *                  hModule     = NULL;
 #endif
 
-    MYODBCDbgEnter("SQLDriverConnect");
+    MYODBCDbgEnter;
 
     /* parse incoming string */
     if ( !MYODBCUtilReadConnectStr( pDataSource, (LPCSTR)szConnStrIn ) )
@@ -386,10 +383,10 @@ SQLRETURN SQL_API my_SQLDriverConnect( SQLHDBC             hdbc,
     */
     MYODBCUtilDefaultDataSource( pDataSource );
 
-#ifndef DBUG_OFF
-    if ( atol( pDataSource->pszOPTION ) & FLAG_DEBUG && ! _db_on_ )
-        MYODBCDbgSetFile( MYODBCDbgGetFileDefault() );
-    MYODBCDbgPrint( "enter",( "fDriverCompletion: %d", fDriverCompletion ) );
+#ifdef MYODBC_DBG
+    if ( atol( pDataSource->pszOPTION ) & FLAG_DEBUG && !MYODBCDbgOn )
+        MYODBCDbgSetFile( "stderr" );
+    MYODBCDbgInfo( "fDriverCompletion: %d", fDriverCompletion );
 #endif
 
     /*!
@@ -654,7 +651,7 @@ SQLRETURN SQL_API my_SQLDriverConnect( SQLHDBC             hdbc,
     MYODBCUtilFreeDriver( pDriver );
     MYODBCUtilFreeDataSource( pDataSource );
 
-    MYODBCDbgReturn( nReturn );
+    MYODBCDbgReturnReturn( nReturn );
 }
 
 
@@ -697,9 +694,9 @@ SQLBrowseConnect(SQLHDBC hdbc,
                  SQLSMALLINT cbConnStrOutMax __attribute__((unused)),
                  SQLSMALLINT FAR *pcbConnStrOut __attribute__((unused)))
 {
-    MYODBCDbgEnter("SQLBrowseConnect");
-    MYODBCDbgReturn(set_conn_error(hdbc,MYERR_S1000,
-                                   "Driver Does not support this API",0));
+    MYODBCDbgEnter;
+    MYODBCDbgReturnReturn( set_conn_error(hdbc,MYERR_S1000,
+                                   "Driver Does not support this API",0 ) );
 }
 
 
@@ -712,7 +709,8 @@ SQLRETURN SQL_API my_SQLDisconnect(SQLHDBC hdbc)
 {
     LIST *list_element,*next_element;
     DBC FAR *dbc= (DBC FAR*) hdbc;
-    MYODBCDbgEnter("my_SQLDisconnect");
+
+    MYODBCDbgEnter;
 
     for (list_element= dbc->statements ; list_element ;
         list_element= next_element)
@@ -727,11 +725,11 @@ SQLRETURN SQL_API my_SQLDisconnect(SQLHDBC hdbc)
     my_free(dbc->user,MYF(0));
     my_free(dbc->password,MYF(0));
     dbc->dsn= dbc->database= dbc->server= dbc->user= dbc->password= 0;
-#ifndef DBUG_OFF
+#ifdef MYODBC_DBG
     if (dbc->flag & FLAG_LOG_QUERY)
         end_query_log(dbc->query_log);
 #endif
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 }
 
 

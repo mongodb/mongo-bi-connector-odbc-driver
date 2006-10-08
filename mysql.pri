@@ -28,7 +28,6 @@
 # WIN32
 # #########################################################
 win32 {
-        DEFINES         += DBUG_OFF _DBUG_OFF NDEBUG _NDEBUG 
         DEFINES         += _WIN32 WIN32 _WINDOWS __WIN__
         INCLUDEPATH     += $(MYSQL_DIR)\include
         LIBS		+= -L$(MYSQL_DIR)\lib\opt mysqlclient.lib zlib.lib

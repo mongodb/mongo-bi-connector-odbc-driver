@@ -46,7 +46,7 @@ static my_bool myodbc_inited=0;
 static sig_handler
 myodbc_pipe_sig_handler(int sig __attribute__((unused)))
 {
-  MYODBCDbgPrint("info",("Hit by signal %d",sig));
+  MYODBCDbgInfo( "Hit by signal %d", sig );
 #ifdef DONT_REMEMBER_SIGNAL
   (void) signal(SIGPIPE,myodbc_pipe_sig_handler);
 #endif

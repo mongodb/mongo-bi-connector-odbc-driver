@@ -28,6 +28,10 @@
 */
 #include "../include/MYODBCDbg.h"
 
+int     MYODBCDbgOn     = 0;
+FILE *  MYODBCDbgFile   = NULL;
+int     MYODBCDbgNest   = 0;
+
 const char *MYODBCDbgConnectAttrString( SQLINTEGER nAttribute )
 {
 

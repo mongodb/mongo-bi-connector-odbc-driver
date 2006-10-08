@@ -187,24 +187,25 @@ SQLRETURN SQL_API SQLNumResultCols(SQLHSTMT  hstmt, SQLSMALLINT FAR *pccol)
 {
     SQLRETURN error;
     STMT FAR *stmt= (STMT FAR*) hstmt;
-    MYODBCDbgEnter("SQLNumResultCols");
+
+    MYODBCDbgEnter;
 
     if ( stmt->param_count > 0 && stmt->dummy_state == ST_DUMMY_UNKNOWN &&
          (stmt->state != ST_PRE_EXECUTED || stmt->state != ST_EXECUTED) )
     {
         if ( do_dummy_parambind(hstmt) != SQL_SUCCESS )
-            MYODBCDbgReturn(SQL_ERROR);
+            MYODBCDbgReturnReturn(SQL_ERROR);
     }
     if ( (error= check_result(stmt)) != SQL_SUCCESS )
-        MYODBCDbgReturn(error);
+        MYODBCDbgReturnReturn(error);
 
     if ( !stmt->result )
         *pccol= 0;      /* Not a select */
     else
         *pccol= stmt->result->field_count;
 
-    MYODBCDbgPrint("info",("columns: %d",*pccol));
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgInfo( "columns: %d", *pccol );
+    MYODBCDbgReturnReturn(SQL_SUCCESS);
 }
 
 /*
@@ -228,16 +229,17 @@ SQLRETURN SQL_API SQLDescribeCol( SQLHSTMT          hstmt,
     STMT FAR *stmt= (STMT FAR*) hstmt;
     ulong transfer_length,precision,display_size;
     int type;
-    MYODBCDbgEnter("SQLDescribeCol");
+
+    MYODBCDbgEnter;
 
     if ( (error= check_result(stmt)) != SQL_SUCCESS )
-        MYODBCDbgReturn(error);
+        MYODBCDbgReturnReturn(error);
     if ( ! stmt->result )
-        MYODBCDbgReturn(set_stmt_error(stmt,"07005","No result set",0));
+        MYODBCDbgReturnReturn(set_stmt_error(stmt,"07005","No result set",0));
 
     mysql_field_seek(stmt->result,icol-1);
     if ( !(field= mysql_fetch_field(stmt->result)) )
-        MYODBCDbgReturn(set_error(stmt,MYERR_S1002,"Invalid column number",0));
+        MYODBCDbgReturnReturn(set_error(stmt,MYERR_S1002,"Invalid column number",0));
 
     type= unireg_to_sql_datatype(stmt,field,0,&transfer_length,&precision,&display_size );
 /*
@@ -254,8 +256,10 @@ printf( "[PAH][%s][%d][%s] type=%d\n", __FILE__, __LINE__, __FUNCTION__, type );
                        NOT_NULL_FLAG) ?
                       SQL_NO_NULLS :
                       SQL_NULLABLE);
-    MYODBCDbgPrint("info",("col: %d type: %d  precision: %ld  decimals: %d",
-                       icol,type,precision,field->decimals));
+    MYODBCDbgInfo( "col: %d", icol );
+    MYODBCDbgInfo( "type: %d", type );
+    MYODBCDbgInfo( "precision: %ld", precision );
+    MYODBCDbgInfo( "decimals: %d", field->decimals );
 
     if ( stmt->dbc->flag & FLAG_FULL_COLUMN_NAMES && field->table )
     {
@@ -264,15 +268,15 @@ printf( "[PAH][%s][%d][%s] type=%d\n", __FILE__, __LINE__, __FUNCTION__, type );
         SQLRETURN error;
         if ( !tmp )
         {
-            MYODBCDbgReturn(set_error(stmt,MYERR_S1001,NULL,4001));
+            MYODBCDbgReturnReturn(set_error(stmt,MYERR_S1001,NULL,4001));
         }
         strxmov(tmp,field->table,".",field->name,NullS);
         error= copy_str_data(SQL_HANDLE_STMT, stmt, szColName,
                              cbColNameMax, pcbColName, tmp);
         my_free((gptr) tmp,MYF(0));
-        MYODBCDbgReturn(error);
+        MYODBCDbgReturnReturn(error);
     }
-    MYODBCDbgReturn(copy_str_data(SQL_HANDLE_STMT, stmt, szColName,
+    MYODBCDbgReturnReturn(copy_str_data(SQL_HANDLE_STMT, stmt, szColName,
                                      cbColNameMax, pcbColName, field->name));
 }
 
@@ -297,17 +301,19 @@ get_col_attr(SQLHSTMT     StatementHandle,
     SQLPOINTER nparam= 0;
     ulong transfer_length,precision,display_size;
     SQLRETURN error;
-    MYODBCDbgEnter("SQLColAttribute");
-    MYODBCDbgPrint("enter",("column: %d  type: %d",ColumnNumber, FieldIdentifier));
+
+    MYODBCDbgEnter;
+    MYODBCDbgInfo( "column: %d", ColumnNumber );
+    MYODBCDbgInfo( "type: %d", FieldIdentifier );
 
     if ( check_result(stmt) != SQL_SUCCESS )
-        MYODBCDbgReturn(SQL_ERROR);
+        MYODBCDbgReturnReturn(SQL_ERROR);
 
     if ( !stmt->result )
-        MYODBCDbgReturn(set_stmt_error(stmt,"07005","No result set",0));
+        MYODBCDbgReturnReturn(set_stmt_error(stmt,"07005","No result set",0));
 #ifdef CHECK_EXTRA_ARGUMENTS
     if ( ColumnNumber > stmt->result->field_count )
-        MYODBCDbgReturn(set_error(StatementHandle, MYERR_07009,NULL,0));
+        MYODBCDbgReturnReturn(set_error(StatementHandle, MYERR_07009,NULL,0));
 #endif
     if ( !StringLengthPtr )
         StringLengthPtr= &str_length;
@@ -319,22 +325,22 @@ get_col_attr(SQLHSTMT     StatementHandle,
         NumericAttributePtr= strparam;
 
     if ( (error= check_result(stmt)) != SQL_SUCCESS )
-        MYODBCDbgReturn(error);
+        MYODBCDbgReturnReturn(error);
 
     if ( FieldIdentifier == SQL_DESC_COUNT ||
          FieldIdentifier == SQL_COLUMN_COUNT )
     {
         *(SQLINTEGER *)NumericAttributePtr= stmt->result->field_count;
-        MYODBCDbgReturn(SQL_SUCCESS);
+        MYODBCDbgReturnReturn(SQL_SUCCESS);
     }
     if ( FieldIdentifier == SQL_DESC_TYPE && ColumnNumber == 0 )
     {
         *(SQLINTEGER *) NumericAttributePtr= SQL_INTEGER;
-        MYODBCDbgReturn(SQL_SUCCESS);
+        MYODBCDbgReturnReturn(SQL_SUCCESS);
     }
     mysql_field_seek(stmt->result,ColumnNumber-1);
     if ( !(field= mysql_fetch_field(stmt->result)) )
-        MYODBCDbgReturn(set_error(stmt,MYERR_S1002,"Invalid column number",0));
+        MYODBCDbgReturnReturn(set_error(stmt,MYERR_S1002,"Invalid column number",0));
 
     switch ( FieldIdentifier )
     {
@@ -349,14 +355,14 @@ get_col_attr(SQLHSTMT     StatementHandle,
         case SQL_DESC_LABEL:
         case SQL_DESC_NAME:
         case SQL_COLUMN_NAME:
-            MYODBCDbgReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
+            MYODBCDbgReturnReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
                                              CharacterAttributePtr,
                                              BufferLength,StringLengthPtr,
                                              field->name));
 
         case SQL_DESC_BASE_TABLE_NAME:
         case SQL_DESC_TABLE_NAME:
-            MYODBCDbgReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
+            MYODBCDbgReturnReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
                                              CharacterAttributePtr,
                                              BufferLength,StringLengthPtr,
                                              field->table ? field->table : ""));
@@ -368,14 +374,14 @@ get_col_attr(SQLHSTMT     StatementHandle,
 
         case SQL_DESC_CATALOG_NAME:
 #if MYSQL_VERSION_ID < 40100
-            MYODBCDbgReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
+            MYODBCDbgReturnReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
                                              CharacterAttributePtr,
                                              BufferLength, StringLengthPtr,
                                              stmt->dbc->database));
 #else
             {
                 char *ldb=  (field->db && field->db[0] != '\0') ? field->db : stmt->dbc->database;      
-                MYODBCDbgReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
+                MYODBCDbgReturnReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
                                                  CharacterAttributePtr,
                                                  BufferLength, StringLengthPtr,
                                                  ldb));
@@ -414,7 +420,7 @@ get_col_attr(SQLHSTMT     StatementHandle,
                 case FIELD_TYPE_TINY_BLOB:
                 case FIELD_TYPE_MEDIUM_BLOB:
                 case FIELD_TYPE_BLOB:
-                    MYODBCDbgReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
+                    MYODBCDbgReturnReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
                                                      CharacterAttributePtr,
                                                      BufferLength,StringLengthPtr,"0x"));
 
@@ -426,12 +432,12 @@ get_col_attr(SQLHSTMT     StatementHandle,
                 case FIELD_TYPE_TIMESTAMP:
                 case FIELD_TYPE_TIME:
                 case FIELD_TYPE_YEAR:
-                    MYODBCDbgReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
+                    MYODBCDbgReturnReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
                                                      CharacterAttributePtr,
                                                      BufferLength,StringLengthPtr,"'"));
 
                 default:
-                    MYODBCDbgReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
+                    MYODBCDbgReturnReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
                                                      CharacterAttributePtr,
                                                      BufferLength,StringLengthPtr,""));
             }
@@ -482,7 +488,7 @@ get_col_attr(SQLHSTMT     StatementHandle,
             break;
 
         case SQL_DESC_SCHEMA_NAME:
-            MYODBCDbgReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
+            MYODBCDbgReturnReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
                                              CharacterAttributePtr,
                                              BufferLength,StringLengthPtr, ""));
 
@@ -502,7 +508,7 @@ get_col_attr(SQLHSTMT     StatementHandle,
                 char buff[40];
                 (void)unireg_to_sql_datatype(stmt,field,(char *)buff,&transfer_length,
                                              &precision, &display_size);
-                MYODBCDbgReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
+                MYODBCDbgReturnReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
                                                  CharacterAttributePtr,
                                                  BufferLength,StringLengthPtr, buff));
             }
@@ -534,10 +540,9 @@ get_col_attr(SQLHSTMT     StatementHandle,
             break;
 
         default:
-            MYODBCDbgPrint("warning",("Type: %d is not supported by the driver",
-                                  FieldIdentifier));
+            MYODBCDbgWarning(  "Type: %d is not supported by the driver", FieldIdentifier );
     }
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn(SQL_SUCCESS);
 }
 
 
@@ -581,8 +586,8 @@ SQLRETURN SQL_API SQLColAttributes( SQLHSTMT hstmt,
                                     SQLSMALLINT FAR *pcbDesc,
                                     SQLLEN *pfDesc )
 {
-    MYODBCDbgEnter("SQLColAttributes");
-    MYODBCDbgReturn(get_col_attr( hstmt, 
+    MYODBCDbgEnter;
+    MYODBCDbgReturnReturn(get_col_attr( hstmt, 
                                      icol, 
                                      fDescType, 
                                      rgbDesc,
@@ -607,11 +612,13 @@ SQLRETURN SQL_API SQLBindCol( SQLHSTMT      hstmt,
     BIND *bind;
     STMT FAR *stmt= (STMT FAR*) hstmt;
     SQLRETURN error;
-    MYODBCDbgEnter("SQLBindCol");
-    MYODBCDbgPrint("enter",
-               ("icol: %d  Type: %d  ValueMax: %ld  Valueptr: 0x%lx  pcbValue: %ld",
-                icol,fCType,(long) cbValueMax, pcbValue,
-                (long) (pcbValue ? *pcbValue : 0L)));
+
+    MYODBCDbgEnter;
+    MYODBCDbgInfo( "icol: %d", icol );
+    MYODBCDbgInfo( "Type: %d", fCType );
+    MYODBCDbgInfo( "ValueMax: %ld", cbValueMax );
+    MYODBCDbgInfo( "Valueptr: 0x%lx", pcbValue );
+    MYODBCDbgInfo( "pcbValue: %ld", (long) (pcbValue ? *pcbValue : 0L) );
 
     icol--;
     /*
@@ -621,13 +628,12 @@ SQLRETURN SQL_API SQLBindCol( SQLHSTMT      hstmt,
 
     if ( stmt->state == ST_UNKNOWN )
     {
-        MYODBCDbgPrint("info",
-                   ("Binding columns without a statement; Hope you know what you are doing"));
+        MYODBCDbgInfo( "%s", "Binding columns without a statement; Hope you know what you are doing" );
         if ( fCType == SQL_C_NUMERIC ) /* We don't support this */
         {
             set_error(stmt,MYERR_07006,
                       "Restricted data type attribute violation(SQL_C_NUMERIC)",0);
-            MYODBCDbgReturn(SQL_ERROR);
+            MYODBCDbgReturnReturn(SQL_ERROR);
         }
         if ( icol >= stmt->bound_columns )
         {
@@ -637,7 +643,7 @@ SQLRETURN SQL_API SQLBindCol( SQLHSTMT      hstmt,
                                                       MY_FREE_ON_ERROR))) )
             {
                 stmt->bound_columns= 0;
-                MYODBCDbgReturn(set_error(stmt,MYERR_S1001,NULL,4001));
+                MYODBCDbgReturnReturn(set_error(stmt,MYERR_S1001,NULL,4001));
             }
             bzero((gptr) (stmt->bind+stmt->bound_columns),
                   (icol+1-stmt->bound_columns)*sizeof(BIND));
@@ -652,28 +658,28 @@ SQLRETURN SQL_API SQLBindCol( SQLHSTMT      hstmt,
              (stmt->state != ST_PRE_EXECUTED || stmt->state != ST_EXECUTED) )
         {
             if ( do_dummy_parambind(hstmt) != SQL_SUCCESS )
-                MYODBCDbgReturn(SQL_ERROR);
+                MYODBCDbgReturnReturn(SQL_ERROR);
         }
         if ( fCType == SQL_C_NUMERIC ) /* We don't support this */
         {
             set_error(stmt,MYERR_07006,
                       "Restricted data type attribute violation(SQL_C_NUMERIC)",0);
-            MYODBCDbgReturn(SQL_ERROR);
+            MYODBCDbgReturnReturn(SQL_ERROR);
         }
         if ( (error= check_result(stmt)) != SQL_SUCCESS )
-            MYODBCDbgReturn(error);
+            MYODBCDbgReturnReturn(error);
 
         if ( !stmt->result || (uint) icol >= stmt->result->field_count )
         {
             set_error(stmt,MYERR_S1002,"Invalid column number",0);
-            MYODBCDbgReturn(error);
+            MYODBCDbgReturnReturn(error);
         }
         if ( !stmt->bind )
         {
             if ( !(stmt->bind= (BIND*) my_malloc(sizeof(BIND)*
                                                  stmt->result->field_count,
                                                  MYF(MY_ZEROFILL))) )
-                MYODBCDbgReturn(set_error(stmt,MYERR_S1001,NULL,4001));
+                MYODBCDbgReturnReturn(set_error(stmt,MYERR_S1001,NULL,4001));
             stmt->bound_columns= stmt->result->field_count;
         }
         mysql_field_seek(stmt->result,icol);
@@ -686,7 +692,7 @@ SQLRETURN SQL_API SQLBindCol( SQLHSTMT      hstmt,
     bind->rgbValue= rgbValue;
     bind->cbValueMax= bind_length(bind->fCType,cbValueMax);
     bind->pcbValue= pcbValue;
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn(SQL_SUCCESS);
 }
 
 
@@ -737,21 +743,25 @@ SQLRETURN SQL_API SQLGetData( SQLHSTMT      hstmt,
 {
     STMT FAR *stmt= (STMT FAR*) hstmt;
     SQLRETURN result;
-    MYODBCDbgEnter("SQLGetData");
 
-    MYODBCDbgPrint("enter",("icol:%d, ctype:%d, rgb:0x%x, len:%d, pcb:0x%x)",
-                        icol,fCType,rgbValue,cbValueMax,pcbValue));
+    MYODBCDbgEnter;
+
+    MYODBCDbgInfo( "icol:%d", icol );
+    MYODBCDbgInfo( "ctype:%d", fCType );
+    MYODBCDbgInfo( "rgb:0x%x", rgbValue );
+    MYODBCDbgInfo( "len:%d", cbValueMax );
+    MYODBCDbgInfo( "pcb:0x%x", pcbValue );
 
     if ( !stmt->result || !stmt->current_values )
     {
         set_stmt_error(stmt,"24000","SQLGetData without a preceding SELECT",0);
-        MYODBCDbgReturn(SQL_ERROR);
+        MYODBCDbgReturnReturn(SQL_ERROR);
     }
     if ( fCType == SQL_C_NUMERIC ) /* We don't support this */
     {
         set_error(stmt,MYERR_07006,
                   "Restricted data type attribute violation(SQL_C_NUMERIC)",0);
-        MYODBCDbgReturn(SQL_ERROR);
+        MYODBCDbgReturnReturn(SQL_ERROR);
     }
     icol--;     /* Easier code if start from 0 */
     if ( icol != stmt->last_getdata_col )
@@ -761,11 +771,10 @@ SQLRETURN SQL_API SQLGetData( SQLHSTMT      hstmt,
     }
 
 #ifdef LOG_ALL
-    MYODBCDbgPrint("QQ",("icol: %d  fCType: %d  default: %d  value: %.10s",
-                     icol+1,fCType,
-                     stmt->odbc_types[icol],
-                     (stmt->current_values[icol] ? stmt->current_values[icol] :
-                      "NULL")));
+    MYODBCDbgInfo( "icol: %d", icol+1 );
+    MYODBCDbgInfo( "fCType: %d", fCType );
+    MYODBCDbgInfo( "default: %d", stmt->odbc_types[icol] );
+    MYODBCDbgInfo( "value: %.10s", (stmt->current_values[icol] ? stmt->current_values[icol] : "NULL") );
 #endif
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
         setlocale(LC_NUMERIC,"English");
@@ -781,9 +790,11 @@ SQLRETURN SQL_API SQLGetData( SQLHSTMT      hstmt,
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
         setlocale(LC_NUMERIC,default_locale);
 
-    MYODBCDbgPrint("exit",("return:%d, rgb:0x%x, pcb:0x%x)",
-                       result,rgbValue,pcbValue));
-    MYODBCDbgReturn(result);
+    MYODBCDbgInfo( "return:%d ", result );
+    MYODBCDbgInfo( "rgb:0x%x", rgbValue );
+    MYODBCDbgInfo( "pcb:0x%x", pcbValue );
+
+    MYODBCDbgReturnReturn(result);
 }
 
 
@@ -1068,7 +1079,7 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
     int         nRetVal;
     SQLRETURN   nReturn = SQL_SUCCESS;
 
-    MYODBCDbgEnter( "SQLMoreResults" );
+    MYODBCDbgEnter;
 
     pthread_mutex_lock( &pStmt->dbc->lock );
 
@@ -1129,21 +1140,22 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
         {
             pStmt->state = ST_EXECUTED;
             pStmt->affected_rows = mysql_affected_rows( &pStmt->dbc->mysql );
-            MYODBCDbgPrint( "info", ("affected rows: %d", pStmt->affected_rows ) );
+            MYODBCDbgInfo( "affected rows: %d", pStmt->affected_rows );
             goto exitSQLMoreResults;
         }
         /* we have fields but no resultset (not even an empty one) - this is bad */
-        MYODBCDbgPrint( "error", ("client failed to return resultset") );
+        MYODBCDbgError( "%s", "client failed to return resultset" );
         nReturn = set_stmt_error( pStmt, "HY000", mysql_error( &pStmt->dbc->mysql ), mysql_errno( &pStmt->dbc->mysql ) );
         goto exitSQLMoreResults;
     }
 
-    MYODBCDbgPrint( "info", ("result set columns: %d, rows: %lld", pStmt->result->field_count, pStmt->result->row_count ) );
+    MYODBCDbgInfo( "result set columns: %d", pStmt->result->field_count );
+    MYODBCDbgInfo( "result set rows: %lld", pStmt->result->row_count );
     fix_result_types( pStmt );
 
 exitSQLMoreResults:
     pthread_mutex_unlock( &pStmt->dbc->lock );
-    MYODBCDbgReturn( nReturn );
+    MYODBCDbgReturnReturn( nReturn );
 }
 
 
@@ -1159,18 +1171,20 @@ SQLRETURN SQL_API SQLRowCount( SQLHSTMT hstmt,
                                SQLLEN * pcrow )
 {
     STMT FAR *stmt= (STMT FAR*) hstmt;
-    MYODBCDbgEnter("SQLRowCount");
+
+    MYODBCDbgEnter;
+
     if ( stmt->result )
     {
         *pcrow= (SQLINTEGER) mysql_affected_rows(&stmt->dbc->mysql);
-        MYODBCDbgPrint("info",("Rows in set: %ld",*pcrow));
+        MYODBCDbgInfo( "Rows in set: %ld", *pcrow );
     }
     else
     {
         *pcrow= (SQLINTEGER) stmt->affected_rows;
-        MYODBCDbgPrint("info",("Affected rows: %ld",*pcrow));
+        MYODBCDbgInfo( "Affected rows: %ld", *pcrow );
     }
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn(SQL_SUCCESS);
 }
 
 
@@ -1195,21 +1209,23 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     MYSQL_ROW values= 0;
     MYSQL_ROW_OFFSET save_position;
     SQLUINTEGER dummy_pcrow;
-    MYODBCDbgEnter("SQLExtendedFetch");
+
+    MYODBCDbgEnter;
 
     LINT_INIT(save_position);
 
     if ( !stmt->result )
-        MYODBCDbgReturn(set_stmt_error(stmt,"24000","Fetch without a SELECT",
+        MYODBCDbgReturnReturn(set_stmt_error(stmt,"24000","Fetch without a SELECT",
                                           0));
-    MYODBCDbgPrint("enter",
-               ("fetchtype: %d  row: %ld  current top-row: %ld  rows_found: %ld",
-                fFetchType,irow,stmt->current_row,stmt->rows_found_in_set));
+    MYODBCDbgInfo( "fetchtype: %d", fFetchType );
+    MYODBCDbgInfo( "row: %ld", irow );
+    MYODBCDbgInfo( "current top-row: %ld", stmt->current_row );
+    MYODBCDbgInfo( "rows_found: %ld", stmt->rows_found_in_set );
 
     if ( stmt->stmt_options.cursor_type == SQL_CURSOR_FORWARD_ONLY )
     {
         if ( fFetchType != SQL_FETCH_NEXT && !(stmt->dbc->flag & FLAG_SAFE) )
-            MYODBCDbgReturn(set_error(stmt,MYERR_S1106,
+            MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1106,
                                          "Wrong fetchtype with FORWARD ONLY cursor",
                                          0));
 
@@ -1218,7 +1234,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     }
 
     if ( if_dynamic_cursor(stmt) && set_dynamic_result(stmt) )
-        MYODBCDbgReturn(set_error(stmt,MYERR_S1000,
+        MYODBCDbgReturnReturn(set_error(stmt,MYERR_S1000,
                                      "Driver Failed to set the internal dynamic result",
                                      0));
 
@@ -1273,7 +1289,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
             break;
 
         default:
-            MYODBCDbgReturn( set_error( stmt, MYERR_S1106, "Fetch type out of range", 0 ) );
+            MYODBCDbgReturnReturn( set_error( stmt, MYERR_S1106, "Fetch type out of range", 0 ) );
     }
 
     if ( cur_row < 0 )
@@ -1281,7 +1297,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
         stmt->current_row= -1;  /* Before first row */
         stmt->rows_found_in_set= 0;
         mysql_data_seek(stmt->result,0L);
-        MYODBCDbgReturn(SQL_NO_DATA_FOUND);
+        MYODBCDbgReturnReturn(SQL_NO_DATA_FOUND);
     }
     if ( cur_row > max_row )
         cur_row= max_row;
@@ -1309,7 +1325,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
         stmt->rows_found_in_set= 0;
         if ( upd_status && stmt->stmt_options.rowsFetchedPtr )
             *stmt->stmt_options.rowsFetchedPtr= 0;
-        MYODBCDbgReturn(SQL_NO_DATA_FOUND);
+        MYODBCDbgReturnReturn(SQL_NO_DATA_FOUND);
     }
 
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
@@ -1419,7 +1435,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
         setlocale(LC_NUMERIC,default_locale);
 
-    MYODBCDbgReturn(res);
+    MYODBCDbgReturnReturn(res);
 }
 
 
@@ -1461,7 +1477,8 @@ SQLRETURN SQL_API SQLFetchScroll( SQLHSTMT      StatementHandle,
 {
     SQLRETURN result;
     STMT_OPTIONS *options= &((STMT FAR *)StatementHandle)->stmt_options;
-    MYODBCDbgEnter("SQLFetchScroll");
+
+    MYODBCDbgEnter;
 
     result= my_SQLExtendedFetch( StatementHandle, 
                                  FetchOrientation,
@@ -1469,7 +1486,7 @@ SQLRETURN SQL_API SQLFetchScroll( SQLHSTMT      StatementHandle,
                                  options->rowsFetchedPtr,
                                  options->rowStatusPtr, 
                                  0 );
-    MYODBCDbgReturn( result );
+    MYODBCDbgReturnReturn( result );
 }
 
 /*
@@ -1482,12 +1499,13 @@ SQLRETURN SQL_API SQLFetch(SQLHSTMT StatementHandle)
 {
     SQLRETURN result;
     STMT_OPTIONS *options= &((STMT FAR *)StatementHandle)->stmt_options;
-    MYODBCDbgEnter("SQLFetch");
+
+    MYODBCDbgEnter;
 
     result= my_SQLExtendedFetch(StatementHandle, SQL_FETCH_NEXT,
                                 0,
                                 options->rowsFetchedPtr,
                                 options->rowStatusPtr, 0);
 
-    MYODBCDbgReturn(result);
+    MYODBCDbgReturnReturn(result);
 }

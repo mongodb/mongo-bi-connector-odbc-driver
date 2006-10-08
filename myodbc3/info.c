@@ -75,7 +75,7 @@ char allowed_chars[]=
       *pcbInfoValue= 0;                                                     \
       strmake((char*)rgbInfoValue,"",cbInfoValueMax);                       \
   }                                                                         \
-  MYODBCDbgReturn(*pcbInfoValue >= cbInfoValueMax ?                      \
+  MYODBCDbgReturnReturn(*pcbInfoValue >= cbInfoValueMax ?                      \
 		     SQL_SUCCESS_WITH_INFO:                                         \
 		     SQL_SUCCESS);                                                  \
 }
@@ -84,7 +84,7 @@ char allowed_chars[]=
 { \
   *pcbInfoValue= len; \
   strmake((char*)rgbInfoValue,val,cbInfoValueMax); \
-  MYODBCDbgReturn(len >= cbInfoValueMax ? \
+  MYODBCDbgReturnReturn(len >= cbInfoValueMax ? \
 		     SQL_SUCCESS_WITH_INFO: \
 		     SQL_SUCCESS); \
 }
@@ -107,10 +107,13 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
     char dummy2[255];
     SQLSMALLINT dummy;
     my_bool using_322;
-    MYODBCDbgEnter("SQLGetInfo");
-    MYODBCDbgPrint("enter",
-               ("fInfoType: %d, rgbInfoValue: 0x%x, cbInfoValueMax :%d, pcbInfoValue: 0x%x",
-                fInfoType, rgbInfoValue, cbInfoValueMax, pcbInfoValue));
+
+    MYODBCDbgEnter;
+
+    MYODBCDbgInfo( "fInfoType: %d", fInfoType );
+    MYODBCDbgInfo( "rgbInfoValue: 0x%x", rgbInfoValue );
+    MYODBCDbgInfo( "cbInfoValueMax :%d", cbInfoValueMax );
+    MYODBCDbgInfo( "pcbInfoValue: 0x%x", pcbInfoValue );
 
     if ( cbInfoValueMax )
         cbInfoValueMax--;
@@ -869,10 +872,10 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
             {
                 char buff[80];
                 sprintf(buff,"Unsupported option: %d to SQLGetInfo",fInfoType);
-                MYODBCDbgReturn(set_conn_error(hdbc,MYERR_S1C00,buff,4000));
+                MYODBCDbgReturnReturn(set_conn_error(hdbc,MYERR_S1C00,buff,4000));
             }
     }/* end of switch */
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn(SQL_SUCCESS);
 }
 
 
@@ -1071,8 +1074,10 @@ SQLRETURN SQL_API SQLGetTypeInfo( SQLHSTMT      hstmt,
 {
     STMT FAR *stmt= (STMT FAR*) hstmt;
     uint i;
-    MYODBCDbgEnter( "SQLGetTypeInfo" );
-    MYODBCDbgPrint( "enter", ("fSqlType: %d",fSqlType) );
+
+    MYODBCDbgEnter;
+
+    MYODBCDbgInfo( "fSqlType: %d",fSqlType );
 
     my_SQLFreeStmt( hstmt, MYSQL_RESET );
 
@@ -1102,7 +1107,7 @@ SQLRETURN SQL_API SQLGetTypeInfo( SQLHSTMT      hstmt,
     }
     mysql_link_fields( stmt, SQL_GET_TYPE_INFO_fields, SQL_GET_TYPE_INFO_FIELDS );
 
-    MYODBCDbgReturn( SQL_SUCCESS );
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 }
 
 
@@ -1315,8 +1320,10 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
 {
     SQLINTEGER index;
     SQLINTEGER myodbc_func_size;
-    MYODBCDbgEnter("SQLGetFunctions");
-    MYODBCDbgPrint("enter",("fFunction: %d",fFunction));
+
+    MYODBCDbgEnter;
+
+    MYODBCDbgInfo( "fFunction: %d",fFunction );
 
     myodbc_func_size= (sizeof(myodbc3_functions)/
                        sizeof(myodbc3_functions[0]));
@@ -1328,7 +1335,7 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
             int id= myodbc3_functions[index];
             pfExists[id >> 4] |= (1 << (id & 0x000F));
         }
-        MYODBCDbgReturn(SQL_SUCCESS);
+        MYODBCDbgReturnReturn(SQL_SUCCESS);
     }
     if ( fFunction == SQL_API_ALL_FUNCTIONS )
     {
@@ -1337,7 +1344,7 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
             if ( myodbc3_functions[index] < 100 )
                 pfExists[myodbc3_functions[index]]= SQL_TRUE;
         }
-        MYODBCDbgReturn(SQL_SUCCESS);
+        MYODBCDbgReturnReturn(SQL_SUCCESS);
     }
     *pfExists= SQL_FALSE;
     for ( index= 0; index < myodbc_func_size; index ++ )
@@ -1348,5 +1355,5 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
             break;
         }
     }
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn(SQL_SUCCESS);
 }

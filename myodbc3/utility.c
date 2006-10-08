@@ -46,8 +46,9 @@
 SQLRETURN odbc_stmt(DBC FAR *dbc, const char *query)
 {
     SQLRETURN result= SQL_SUCCESS;
-    MYODBCDbgEnter("odbc_stmt");
-    MYODBCDbgPrint("enter",("stmt: %s",query));
+
+    MYODBCDbgEnter;
+    MYODBCDbgInfo( "stmt: %s", query );
 
     pthread_mutex_lock(&dbc->lock);
     if ( check_if_server_is_alive(dbc) ||
@@ -57,7 +58,7 @@ SQLRETURN odbc_stmt(DBC FAR *dbc, const char *query)
                                mysql_errno(&dbc->mysql));
     }
     pthread_mutex_unlock(&dbc->lock);
-    MYODBCDbgReturn(result);
+    MYODBCDbgReturnReturn(result);
 }
 
 /*
@@ -87,7 +88,8 @@ void fix_result_types(STMT *stmt)
 {
     uint i;
     MYSQL_RES *result= stmt->result;
-    MYODBCDbgEnter("fix_result_types");
+
+    MYODBCDbgEnter;
 
     stmt->state= ST_EXECUTED;  /* Mark set found */
     if ( (stmt->odbc_types= (SQLSMALLINT*)
@@ -113,7 +115,7 @@ void fix_result_types(STMT *stmt)
             {
                 /* We should in principle give an error here */
                 stmt->bound_columns= 0;
-                MYODBCDbgReturn3;
+                MYODBCDbgReturnVoid;
             }
             bzero((gptr) (stmt->bind+stmt->bound_columns),
                   (result->field_count -stmt->bound_columns)*sizeof(BIND));
@@ -129,7 +131,7 @@ void fix_result_types(STMT *stmt)
             stmt->bind[i].field= mysql_fetch_field(result);
         }
     }
-    MYODBCDbgReturn3;
+    MYODBCDbgReturnVoid;
 }
 
 
@@ -290,8 +292,8 @@ copy_lresult(SQLSMALLINT HandleType, SQLHANDLE Handle,
     }
     if ( arg_length && cbValueMax >= fill_length )
         return SQL_SUCCESS;
-    MYODBCDbgPrint("info",("Returned %ld characters from offset: %lu",
-                       length,*offset - length));
+    MYODBCDbgInfo( "Returned %ld characters from", length );
+    MYODBCDbgInfo( "offset: %lu", *offset - length );
     set_handle_error(HandleType,Handle,MYERR_01004,NULL,0);
     return SQL_SUCCESS_WITH_INFO;
 }
@@ -349,8 +351,8 @@ SQLRETURN copy_binary_result( SQLSMALLINT   HandleType,
     }
     if ( (ulong) cbValueMax > length*2 )
         return SQL_SUCCESS;
-    MYODBCDbgPrint("info",("Returned %ld characters from offset: %ld",
-                       length,*offset - length));
+    MYODBCDbgInfo( "Returned %ld characters from", length );
+    MYODBCDbgInfo( "offset: %ld", *offset - length );
 
     set_handle_error(HandleType,Handle,MYERR_01004,NULL,0);
     return SQL_SUCCESS_WITH_INFO;
@@ -1104,7 +1106,7 @@ int myodbc_casecmp(const char *s, const char *t, uint len)
   @purpose : logs the queries sent to server
 */
 
-#ifndef DBUG_OFF
+#ifdef MYODBC_DBG
 void query_print(FILE *log_file,char *query)
 {
     if ( log_file && query )

@@ -47,7 +47,7 @@
 #define binary_field(fld) ((fld)->flags & BINARY_FLAG)
 #define num_field(fld) ((fld)->flags & NUM_FLAG)
 
-#if !defined(DBUG_OFF)
+#ifdef MYODBC_DBG
 
 #define MYLOG_QUERY(A,B) if ((A)->dbc->flag & FLAG_LOG_QUERY) \
 			   query_print((A)->dbc->query_log,(char*) B)
@@ -162,7 +162,7 @@ int myodbc_casecmp(const char *s, const char *t, uint len);
 my_bool reget_current_catalog(DBC FAR *dbc);
 
 /* Functions used when debugging */
-#ifndef DBUG_OFF
+#ifdef MYODBC_DBG
 void query_print(FILE *log_file,char *query);
 FILE *init_query_log(void);
 void end_query_log(FILE *query_log);

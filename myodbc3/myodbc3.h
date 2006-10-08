@@ -86,27 +86,27 @@ extern "C"
 #if defined(__APPLE__)
 
 #define DRIVER_DLL_NAME   "libmyodbc3.dylib"
-#ifndef DBUG_OFF
+#ifdef MYODBC_DBG
 #define DRIVER_QUERY_LOGFILE "/tmp/myodbc.sql"
 #endif
 
 #elif defined(_UNIX_)
 
 #define DRIVER_DLL_NAME   "libmyodbc3.so"
-#ifndef DBUG_OFF
+#ifdef MYODBC_DBG
 #define DRIVER_QUERY_LOGFILE "/tmp/myodbc.sql"
 #endif
 
 #else
 
 #define DRIVER_DLL_NAME   "myodbc3.dll"
-#ifndef DBUG_OFF
+#ifdef MYODBC_DBG
 #define DRIVER_QUERY_LOGFILE "c:\\myodbc.sql"
 #endif
 
 #endif
 
-#ifndef DBUG_OFF
+#ifdef MYODBC_DBG
 #define CHECK_EXTRA_ARGUMENTS
 #endif
 

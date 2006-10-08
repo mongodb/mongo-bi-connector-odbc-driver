@@ -52,10 +52,11 @@
 SQLRETURN do_query(STMT FAR *stmt,char *query)
 {
     int error= SQL_ERROR;
-    MYODBCDbgEnter("do_query");
+
+    MYODBCDbgEnter;
 
     if ( !query )
-        MYODBCDbgReturn(error);       /* Probably error from insert_param */
+        MYODBCDbgReturnReturn(error);       /* Probably error from insert_param */
 
     if ( stmt->stmt_options.max_rows && stmt->stmt_options.max_rows !=
          (SQLINTEGER) ~0L )
@@ -109,16 +110,16 @@ SQLRETURN do_query(STMT FAR *stmt,char *query)
             error= SQL_SUCCESS;     /* no result set */
             stmt->state= ST_EXECUTED;
             stmt->affected_rows= mysql_affected_rows(&stmt->dbc->mysql);
-            MYODBCDbgPrint("info",("affected rows: %d",stmt->affected_rows));
+            MYODBCDbgInfo( "affected rows: %d", stmt->affected_rows );
             goto exit;
         }
-        MYODBCDbgPrint("error",("client failed to return resultset"));
+        MYODBCDbgInfo( "%s", "client failed to return resultset" );
         set_error(stmt,MYERR_S1000,mysql_error(&stmt->dbc->mysql),
                   mysql_errno(&stmt->dbc->mysql));
         goto exit;
     }
-    MYODBCDbgPrint("info",("result set columns: %d, rows: %lld",
-                           stmt->result->field_count, stmt->result->row_count));
+    MYODBCDbgInfo( "result set columns: %d", stmt->result->field_count );
+    MYODBCDbgInfo( "result set rows: %lld", stmt->result->row_count );
     fix_result_types(stmt);
     error= SQL_SUCCESS;
 
@@ -126,7 +127,8 @@ SQLRETURN do_query(STMT FAR *stmt,char *query)
     pthread_mutex_unlock(&stmt->dbc->lock);
     if ( query != stmt->query )
         my_free((gptr) query,MYF(0));
-    MYODBCDbgReturn(error);
+
+    MYODBCDbgReturnReturn( error );
 }
 
 
@@ -139,23 +141,24 @@ SQLRETURN do_query(STMT FAR *stmt,char *query)
 char *extend_buffer(NET *net, char *to, ulong length)
 {
     ulong need= 0;
-    MYODBCDbgEnter("extend_buffer");
-    MYODBCDbgPrint("enter",("current_length: %ld  length: %ld  buffer_length: %ld",
-                            (ulong) (to - (char *)net->buff),
-                            (ulong) length,
-                            (ulong) net->max_packet));
+
+    MYODBCDbgEnter;
+
+    MYODBCDbgInfo( "current_length: %ld", (ulong)(to - (char *)net->buff) );
+    MYODBCDbgInfo( "length: %ld", (ulong) length );
+    MYODBCDbgInfo( "buffer_length: %ld", (ulong) net->max_packet );
 
     if (!to ||
         (need= (ulong)(to - (char *)net->buff) + length) > net->max_packet - 10)
     {
         if (net_realloc(net, need))
         {
-            MYODBCDbgReturn2(0);
+            MYODBCDbgReturn(0);
         }
 
         to= (char *)net->buff + need - length;
     }
-    MYODBCDbgReturn2(to);
+    MYODBCDbgReturn(to);
 }
 
 
@@ -166,13 +169,16 @@ char *extend_buffer(NET *net, char *to, ulong length)
 
 char *add_to_buffer(NET *net,char *to,char *from,ulong length)
 {
-    MYODBCDbgEnter("add_to_buffer");
-    MYODBCDbgPrint("enter",("from: '%-.32s'  length: %ld",
-                            from ? from: "<null>", (long int) length));
+    MYODBCDbgEnter;
+
+    MYODBCDbgInfo( "from: '%-.32s'", from ? from: "<null>" );
+    MYODBCDbgInfo( "length: %ld", (long int) length );
     if ( !(to= extend_buffer(net,to,length)) )
-        MYODBCDbgReturn2(0);
+        MYODBCDbgReturn(0);
+
     memcpy(to,from,length);
-    MYODBCDbgReturn2(to+length);
+
+    MYODBCDbgReturn( to+length );
 }
 
 
@@ -210,7 +216,8 @@ char *insert_params(STMT FAR *stmt)
     char *query= stmt->query,*to;
     uint i,length;
     NET *net;
-    MYODBCDbgEnter("insert_params");
+
+    MYODBCDbgEnter;
 
     pthread_mutex_lock(&stmt->dbc->lock);
     net= &stmt->dbc->mysql.net;
@@ -228,11 +235,12 @@ char *insert_params(STMT FAR *stmt)
                 setlocale(LC_NUMERIC,default_locale);
             set_error(stmt,MYERR_07001,NULL,0);
             pthread_mutex_unlock(&stmt->dbc->lock);
-            MYODBCDbgReturn2(0);
+            MYODBCDbgReturn(0);
         }
         pos= param->pos_in_query;
         length= (uint) (pos-query);
-        MYODBCDbgPrint("info",("pos_in_query: %p  query: %p", pos, query));
+        MYODBCDbgInfo( "pos_in_query: %p", pos );
+        MYODBCDbgInfo( "query: %p", query );
         if ( !(to= add_to_buffer(net,to,query,length)) )
             goto error;
         query= pos+1;  /* Skipp '?' */
@@ -249,7 +257,7 @@ char *insert_params(STMT FAR *stmt)
             setlocale(LC_NUMERIC,default_locale);
         set_error(stmt,MYERR_S1001,NULL,4001);
         pthread_mutex_unlock(&stmt->dbc->lock);
-        MYODBCDbgReturn2(0);
+        MYODBCDbgReturn(0);
     }
 
     if ( stmt->stmt_options.paramProcessedPtr )
@@ -258,14 +266,14 @@ char *insert_params(STMT FAR *stmt)
     pthread_mutex_unlock(&stmt->dbc->lock);
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
         setlocale(LC_NUMERIC,default_locale);
-    MYODBCDbgReturn2(to);
+    MYODBCDbgReturn(to);
 
     error:      /* Too much data */
     pthread_mutex_unlock(&stmt->dbc->lock);
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
         setlocale(LC_NUMERIC,default_locale);
     set_error(stmt,MYERR_S1001,NULL,4001);
-    MYODBCDbgReturn2(0);
+    MYODBCDbgReturn(0);
 }
 
 
@@ -302,7 +310,7 @@ char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param)
         }
         else
         {
-            MYODBCDbgPrint("warning",("data is a null pointer"));
+            MYODBCDbgWarning( "%s", "data is a null pointer" );
             length= 0;     /* This is actually an error */
         }
     }
@@ -322,11 +330,13 @@ char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param)
         data= param->buffer;
         length= *param->actual_len;
     }
-    MYODBCDbgPrint("info",
-                   ("param: 0x%lx  ctype: %d  SqlType: %d  data: 0x%lx  length: %d  actual_len: %d  pos_in_query: %p",
-                    param,param->CType,param->SqlType,data,length,
-                    param->actual_len ? *param->actual_len : 0,
-                    param->pos_in_query));
+    MYODBCDbgInfo( "param: 0x%lx", param );
+    MYODBCDbgInfo( "ctype: %d", param->CType );
+    MYODBCDbgInfo( "SqlType: %d", param->SqlType );
+    MYODBCDbgInfo( "data: 0x%lx", data );
+    MYODBCDbgInfo( "length: %d", length );
+    MYODBCDbgInfo( "actual_len: %d", param->actual_len ? *param->actual_len : 0 );
+    MYODBCDbgInfo( "pos_in_query: %p", param->pos_in_query );
 
     switch ( param->CType )
     {
@@ -589,20 +599,21 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
     PARAM_BIND *param;
     STMT FAR *  pStmtCursor = pStmt;
 
-    MYODBCDbgEnter( "SQLExecute" );
-    MYODBCDbgPrint( "enter", ("pStmt: 0x%lx", pStmt) );
+    MYODBCDbgEnter;
+
+    MYODBCDbgInfo( "pStmt: 0x%lx", pStmt );
 
     if ( !pStmt )
-        MYODBCDbgReturn( SQL_ERROR );
+        MYODBCDbgReturnReturn( SQL_ERROR );
 
     CLEAR_STMT_ERROR( pStmt );
 
     if ( !pStmt->query )
-        MYODBCDbgReturn( set_error( pStmt, MYERR_S1010, "No previous SQLPrepare done", 0 ) );
+        MYODBCDbgReturnReturn( set_error( pStmt, MYERR_S1010, "No previous SQLPrepare done", 0 ) );
 
     if ( check_if_positioned_cursor_exists( pStmt, &pStmtCursor ) )
     {
-        MYODBCDbgReturn( do_my_pos_cursor( pStmt, pStmtCursor ) );
+        MYODBCDbgReturnReturn( do_my_pos_cursor( pStmt, pStmtCursor ) );
     }
 
     for ( nIndex= 0 ; nIndex < pStmt->param_count ; )
@@ -622,7 +633,7 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
     if ( pStmt->state == ST_PRE_EXECUTED )
     {
         pStmt->state= ST_EXECUTED;
-        MYODBCDbgReturn(SQL_SUCCESS);
+        MYODBCDbgReturnReturn(SQL_SUCCESS);
     }
     my_SQLFreeStmt((SQLHSTMT)pStmt,MYSQL_RESET_BUFFERS);
     query= pStmt->query;
@@ -646,13 +657,13 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
                 pStmt->current_param= i;      /* Fix by Giovanni */
                 param->value= 0;
                 param->alloced= 0;
-                MYODBCDbgReturn(SQL_NEED_DATA);
+                MYODBCDbgReturnReturn(SQL_NEED_DATA);
             }
         }
         query= insert_params(pStmt);     /* Checked in do_query */
     }
 
-    MYODBCDbgReturn(do_query(pStmt, query));
+    MYODBCDbgReturnReturn(do_query(pStmt, query));
 }
 
 
@@ -668,13 +679,14 @@ SQLRETURN SQL_API SQLExecDirect(SQLHSTMT hstmt,
                                 SQLINTEGER cbSqlStr)
 {
     int error;
-    MYODBCDbgEnter("SQLExecDirect");
+
+    MYODBCDbgEnter;
 
     if ( (error= my_SQLPrepare(hstmt,szSqlStr,cbSqlStr)) )
-        MYODBCDbgReturn(error);
+        MYODBCDbgReturnReturn(error);
     error= my_SQLExecute( (STMT FAR*)hstmt );
 
-    MYODBCDbgReturn(error);
+    MYODBCDbgReturnReturn(error);
 }
 
 
@@ -691,8 +703,10 @@ SQLRETURN SQL_API SQLNativeSql(SQLHDBC hdbc,
                                SQLINTEGER *pcbSqlStr)
 {
     ulong offset= 0;
-    MYODBCDbgEnter("SQLNativeSql");
-    MYODBCDbgReturn(copy_lresult(SQL_HANDLE_DBC, hdbc,
+
+    MYODBCDbgEnter;
+
+    MYODBCDbgReturnReturn( copy_lresult(SQL_HANDLE_DBC, hdbc,
                                  szSqlStr,cbSqlStrMax,
                                  (SQLLEN *)pcbSqlStr,
                                  (char*) szSqlStrIn, cbSqlStrIn,0L,0L,
@@ -710,7 +724,9 @@ SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER FAR *prbgValue)
 {
     STMT FAR *stmt= (STMT FAR*) hstmt;
     uint i;
-    MYODBCDbgEnter("SQLParamData");
+
+    MYODBCDbgEnter;
+
     for ( i= stmt->current_param; i < stmt->param_count; i++ )
     {
         PARAM_BIND *param= dynamic_element(&stmt->params,i,PARAM_BIND*);
@@ -723,10 +739,10 @@ SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER FAR *prbgValue)
                 *prbgValue= param->buffer;
             param->value= 0;
             param->alloced= 0;
-            MYODBCDbgReturn(SQL_NEED_DATA);
+            MYODBCDbgReturnReturn(SQL_NEED_DATA);
         }
     }
-    MYODBCDbgReturn(do_query(stmt,insert_params(stmt)));
+    MYODBCDbgReturnReturn(do_query(stmt,insert_params(stmt)));
 }
 
 
@@ -744,10 +760,11 @@ SQLRETURN SQL_API SQLPutData( SQLHSTMT      hstmt,
 {
     STMT FAR *stmt= (STMT FAR*) hstmt;
     PARAM_BIND *param;
-    MYODBCDbgEnter("SQLPutData");
+
+    MYODBCDbgEnter;
 
     if ( !stmt )
-        MYODBCDbgReturn(SQL_ERROR);
+        MYODBCDbgReturnReturn(SQL_ERROR);
 
     if ( cbValue == SQL_NTS )
         cbValue= strlen(rgbValue);
@@ -758,7 +775,7 @@ SQLRETURN SQL_API SQLPutData( SQLHSTMT      hstmt,
             my_free(param->value,MYF(0));
         param->alloced= 0;
         param->value= 0;
-        MYODBCDbgReturn(SQL_SUCCESS);
+        MYODBCDbgReturnReturn(SQL_SUCCESS);
     }
     if ( param->value )
     {
@@ -768,14 +785,14 @@ SQLRETURN SQL_API SQLPutData( SQLHSTMT      hstmt,
             if ( !(param->value= my_realloc(param->value,
                                             param->value_length + cbValue + 1,
                                             MYF(0))) )
-                MYODBCDbgReturn(set_error(stmt,MYERR_S1001,NULL,4001));
+                MYODBCDbgReturnReturn(set_error(stmt,MYERR_S1001,NULL,4001));
         }
         else
         {
             /* This should never happen */
             gptr old_pos= param->value;
             if ( !(param->value= my_malloc(param->value_length+cbValue+1,MYF(0))) )
-                MYODBCDbgReturn(set_error(stmt,MYERR_S1001,NULL,4001));
+                MYODBCDbgReturnReturn(set_error(stmt,MYERR_S1001,NULL,4001));
             memcpy(param->value,old_pos,param->value_length);
         }
         memcpy(param->value+param->value_length,rgbValue,cbValue);
@@ -787,13 +804,13 @@ SQLRETURN SQL_API SQLPutData( SQLHSTMT      hstmt,
     {
         /* New value */
         if ( !(param->value= my_malloc(cbValue+1,MYF(0))) )
-            MYODBCDbgReturn(set_error(stmt,MYERR_S1001,NULL,4001));
+            MYODBCDbgReturnReturn(set_error(stmt,MYERR_S1001,NULL,4001));
         memcpy(param->value,rgbValue,cbValue);
         param->value_length= cbValue;
         param->value[param->value_length]= 0;
         param->alloced= 1;
     }
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn(SQL_SUCCESS);
 }
 
 
@@ -804,6 +821,6 @@ SQLRETURN SQL_API SQLPutData( SQLHSTMT      hstmt,
 
 SQLRETURN SQL_API SQLCancel(SQLHSTMT hstmt)
 {
-    MYODBCDbgEnter("SQLCancel");
-    MYODBCDbgReturn(my_SQLFreeStmt(hstmt,SQL_CLOSE));
+    MYODBCDbgEnter;
+    MYODBCDbgReturnReturn(my_SQLFreeStmt(hstmt,SQL_CLOSE));
 }

@@ -55,10 +55,11 @@ static const char *find_used_table(STMT *stmt)
     MYSQL_FIELD  *field, *end;
     char *table_name;
     MYSQL_RES *result= stmt->result;
-    MYODBCDbgEnter("find_used_table");
+
+    MYODBCDbgEnter;
 
     if ( stmt->table_name && stmt->table_name[0] )
-        MYODBCDbgReturn2(stmt->table_name);    
+        MYODBCDbgReturn( stmt->table_name );
 
     table_name= 0;
     for ( field= result->fields, end= field+ result->field_count;
@@ -74,7 +75,7 @@ static const char *find_used_table(STMT *stmt)
             {
                 set_error(stmt,MYERR_S1000,
                           "Can't modify a row from a statement that uses more than one table",0);
-                MYODBCDbgReturn2(NULL);
+                MYODBCDbgReturn( NULL );
             }
         }
 #else
@@ -86,7 +87,7 @@ static const char *find_used_table(STMT *stmt)
             {
                 set_error(stmt,MYERR_S1000,
                           "Can't modify a row from a statement that uses more than one table",0);
-                MYODBCDbgReturn2(NULL);
+                MYODBCDbgReturn( NULL );
             }
         }
 #endif
@@ -96,7 +97,7 @@ static const char *find_used_table(STMT *stmt)
       while using cursors.
     */
     stmt->table_name= dupp_str(table_name,SQL_NTS);
-    MYODBCDbgReturn2(stmt->table_name);
+    MYODBCDbgReturn( stmt->table_name );
 }
 
 
@@ -872,7 +873,7 @@ SQLRETURN my_pos_delete(STMT FAR *stmt, STMT FAR *stmtParam,
         return nReturn;
 
     /* DELETE the row(s) */
-    MYODBCDbgPrint("SQL_DELETE:",("%s",dynQuery->str));
+    MYODBCDbgInfo( "SQL_DELETE: %s", dynQuery->str );
     nReturn= exec_stmt_query(stmt, dynQuery->str, dynQuery->length);
     if ( nReturn == SQL_SUCCESS || nReturn == SQL_SUCCESS_WITH_INFO )
     {
@@ -977,7 +978,7 @@ static SQLRETURN setpos_delete(STMT FAR *stmt, SQLUSMALLINT irow,
             return nReturn;
 
         /* execute our DELETE statement */
-        MYODBCDbgPrint("SQLPOS_DELETE:",("%s",dynQuery->str));
+        MYODBCDbgInfo( "SQLPOS_DELETE: %s", dynQuery->str );
         if ( !(nReturn= exec_stmt_query(stmt, dynQuery->str, dynQuery->length)) )
             affected_rows+= stmt->dbc->mysql.affected_rows;
 
@@ -1041,7 +1042,7 @@ static SQLRETURN setpos_update(STMT FAR *stmt, SQLUSMALLINT irow,
         if ( !SQL_SUCCEEDED( nReturn ) )
             return nReturn;
 
-        MYODBCDbgPrint("SQLPOS_UPDATE:",("%s",dynQuery->str));
+        MYODBCDbgInfo( "SQLPOS_UPDATE: %s", dynQuery->str );
         if ( !(nReturn= exec_stmt_query(stmt, dynQuery->str, dynQuery->length)) )
             affected_rows+= stmt->dbc->mysql.affected_rows;
 
@@ -1181,7 +1182,7 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
         }  /* END OF while(count < insert_count) */
 
         ext_query->str[--ext_query->length]= '\0';
-        MYODBCDbgPrint("batch_insert:",("%s",ext_query->str));
+        MYODBCDbgInfo( "batch_insert: %s", ext_query->str );
         if ( exec_stmt_query(stmt, ext_query->str, ext_query->length) !=
              SQL_SUCCESS )
             return(SQL_ERROR);
@@ -1227,37 +1228,40 @@ static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLUSMALLINT irow, SQLUSM
     STMT FAR  *stmt= (STMT FAR*) hstmt;
     SQLRETURN sqlRet= SQL_SUCCESS;
     MYSQL_RES *result= stmt->result;
-    MYODBCDbgEnter("SQLSetPos");
-    MYODBCDbgPrint("enter",("irow: %d fOption: %s   Lock: %d",
-                        irow,MYODBCDbgPosTypeString(fOption),fLock));
+
+    MYODBCDbgEnter;
+
+    MYODBCDbgInfo( "irow: %d", irow );
+    MYODBCDbgInfo( "fOption: %s", MYODBCDbgPosTypeString( fOption ) );
+    MYODBCDbgInfo( "Lock: %d", fLock );
 
     CLEAR_STMT_ERROR(stmt);
 
     if ( !result )
-        MYODBCDbgReturn(set_error(stmt,MYERR_S1010,NULL,0));
+        MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1010,NULL,0) );
 
     /* If irow > maximum rows in the resultset */
     if ( fOption != SQL_ADD && irow > result->row_count )
-        MYODBCDbgReturn(set_error(stmt,MYERR_S1107,NULL,0));
+        MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1107,NULL,0) );
 
     /* Not a valid lock type ..*/
     if ( fLock != SQL_LOCK_NO_CHANGE )
-        MYODBCDbgReturn(set_error(stmt,MYERR_S1C00,NULL,0));
+        MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1C00,NULL,0) );
 
     switch ( fOption )
     {
         case SQL_POSITION:
             {
                 if ( irow == 0 )
-                    MYODBCDbgReturn(set_error(stmt,MYERR_S1109,NULL,0));
+                    MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1109,NULL,0) );
 
                 if ( irow > stmt->rows_found_in_set )
-                    MYODBCDbgReturn(set_error(stmt,MYERR_S1107,NULL,0));
+                    MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1107,NULL,0) );
 
                 /* If Dynamic cursor, fetch the latest resultset */
                 if ( if_dynamic_cursor(stmt) && set_dynamic_result(stmt) )
                 {
-                    MYODBCDbgReturn(set_error(stmt,MYERR_S1000, alloc_error, 0));
+                    MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1000, alloc_error, 0) );
                 }
 
                 pthread_mutex_lock(&stmt->dbc->lock);
@@ -1280,19 +1284,17 @@ static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLUSMALLINT irow, SQLUSM
                 DYNAMIC_STRING dynQuery;
 
                 if ( irow > stmt->rows_found_in_set )
-                    MYODBCDbgReturn(set_error(stmt,MYERR_S1107,NULL,0));
+                    MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1107,NULL,0) );
 
                 /* IF dynamic cursor THEN rerun query to refresh resultset */
                 if ( if_dynamic_cursor(stmt) && set_dynamic_result(stmt) )
-                    MYODBCDbgReturn(set_error(stmt,MYERR_S1000, alloc_error, 0));
+                    MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1000, alloc_error, 0) );
 
                 /* start building our DELETE statement */
                 if ( init_dynamic_string(&dynQuery, "DELETE FROM ", 1024, 1024) )
-                    MYODBCDbgReturn(set_error(stmt,MYERR_S1001,NULL,4001));
+                    MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1001,NULL,4001) );
 
-/* printf( "\n[PAH][%s][%d]\n", __FILE__, __LINE__ ); */
                 sqlRet = setpos_delete( stmt, irow, &dynQuery );
-/* printf( "\n[PAH][%s][%d]\n", __FILE__, __LINE__ ); */
                 dynstr_free(&dynQuery);
                 break;
             }
@@ -1302,14 +1304,14 @@ static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLUSMALLINT irow, SQLUSM
                 DYNAMIC_STRING dynQuery;
 
                 if ( irow > stmt->rows_found_in_set )
-                    MYODBCDbgReturn(set_error(stmt,MYERR_S1107,NULL,0));
+                    MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1107,NULL,0) );
 
                 /* IF dynamic cursor THEN rerun query to refresh resultset */
                 if ( if_dynamic_cursor(stmt) && set_dynamic_result(stmt) )
-                    MYODBCDbgReturn(set_error(stmt,MYERR_S1000, alloc_error, 0));
+                    MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1000, alloc_error, 0) );
 
                 if ( init_dynamic_string(&dynQuery, "UPDATE ", 1024, 1024) )
-                    MYODBCDbgReturn(set_error(stmt,MYERR_S1001,NULL,4001));
+                    MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1001,NULL,4001) );
 
                 sqlRet= setpos_update(stmt,irow,&dynQuery);
                 dynstr_free(&dynQuery);
@@ -1323,14 +1325,14 @@ static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLUSMALLINT irow, SQLUSM
                 SQLUSMALLINT    nCol        = 0;
 
                 if ( if_dynamic_cursor(stmt) && set_dynamic_result(stmt) )
-                    MYODBCDbgReturn(set_error(stmt,MYERR_S1000, alloc_error, 0));
+                    MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1000, alloc_error, 0) );
                 result= stmt->result;
 
                 if ( !(table_name= find_used_table(stmt)) )
-                    MYODBCDbgReturn(SQL_ERROR);
+                    MYODBCDbgReturnReturn( SQL_ERROR );
 
                 if ( init_dynamic_string(&dynQuery, "INSERT INTO ", 1024,1024) )
-                    MYODBCDbgReturn(set_stmt_error(stmt,"S1001","Not enough memory",4001));
+                    MYODBCDbgReturnReturn( set_stmt_error(stmt,"S1001","Not enough memory",4001) );
 
                 dynstr_append_quoted_name(&dynQuery,table_name);
                 dynstr_append_mem(&dynQuery,"(",1);
@@ -1373,9 +1375,9 @@ static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLUSMALLINT irow, SQLUSM
             }
 
         default:
-            MYODBCDbgReturn(set_error(stmt,MYERR_S1009,NULL,0));
+            MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1009,NULL,0) );
     }
-    MYODBCDbgReturn(sqlRet);
+    MYODBCDbgReturnReturn( sqlRet );
 }
 
 
@@ -1390,28 +1392,29 @@ SQLRETURN SQL_API SQLSetCursorName(SQLHSTMT hstmt, SQLCHAR *szCursor,
                                    SQLSMALLINT cbCursor)
 {
     STMT FAR *stmt= (STMT FAR*) hstmt;
-    MYODBCDbgEnter("SQLSetCursorName");
+
+    MYODBCDbgEnter;
 
     CLEAR_STMT_ERROR(stmt);
 
     if ( !szCursor )
-        MYODBCDbgReturn(set_error(stmt,MYERR_S1009,NULL,0));
+        MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1009,NULL,0) );
 
     if ( cbCursor == SQL_NTS )
         cbCursor= (SQLSMALLINT) strlen((char*) szCursor);
 
     if ( cbCursor < 0 )
-        MYODBCDbgReturn(set_error(stmt,MYERR_S1090,NULL,0));
+        MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1090,NULL,0) );
 
     if ( (cbCursor == 0) ||
          (cbCursor > MYSQL_MAX_CURSOR_LEN) ||
          (myodbc_casecmp((char*) szCursor, "SQLCUR", 6) == 0)  ||
          (myodbc_casecmp((char*) szCursor, "SQL_CUR", 7) == 0) )
-        MYODBCDbgReturn(set_error(stmt,MYERR_34000,NULL,0));
+        MYODBCDbgReturnReturn( set_error(stmt,MYERR_34000,NULL,0) );
 
     x_free((gptr) stmt->cursor.name);
     stmt->cursor.name= dupp_str((char*) szCursor,cbCursor);
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 }
 
 
@@ -1427,12 +1430,13 @@ SQLRETURN SQL_API SQLGetCursorName(SQLHSTMT hstmt, SQLCHAR FAR *szCursor,
     STMT FAR    *stmt= (STMT FAR*) hstmt;
     SQLINTEGER  nLength;
     SQLSMALLINT nDummyLength;
-    MYODBCDbgEnter("SQLGetCursorName");
+
+    MYODBCDbgEnter;
 
     CLEAR_STMT_ERROR(stmt);
 
     if ( cbCursorMax < 0 )
-        MYODBCDbgReturn(set_error(stmt,MYERR_S1090,NULL,0));
+        MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1090,NULL,0) );
 
     if ( !pcbCursor )
         pcbCursor= &nDummyLength;
@@ -1450,9 +1454,9 @@ SQLRETURN SQL_API SQLGetCursorName(SQLHSTMT hstmt, SQLCHAR FAR *szCursor,
     nLength= min(*pcbCursor , cbCursorMax);
 
     if ( nLength != *pcbCursor )
-        MYODBCDbgReturn(set_error(stmt,MYERR_01004,NULL,0));
+        MYODBCDbgReturnReturn( set_error(stmt,MYERR_01004,NULL,0) );
 
-    MYODBCDbgReturn(SQL_SUCCESS);
+    MYODBCDbgReturnReturn( SQL_SUCCESS );
 }
 
 
@@ -1477,12 +1481,12 @@ SQLRETURN SQL_API SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
 
 SQLRETURN SQL_API SQLBulkOperations(SQLHSTMT  Handle, SQLSMALLINT Operation)
 {
-    MYODBCDbgEnter("SQLBulkOperations");
+    MYODBCDbgEnter;
 
     if ( Operation == SQL_ADD )
-        MYODBCDbgReturn(my_SQLSetPos(Handle, 0, SQL_ADD, SQL_LOCK_NO_CHANGE));
+        MYODBCDbgReturnReturn( my_SQLSetPos(Handle, 0, SQL_ADD, SQL_LOCK_NO_CHANGE) );
 
-    MYODBCDbgReturn(set_error(Handle,MYERR_S1C00,NULL,0));
+    MYODBCDbgReturnReturn( set_error(Handle,MYERR_S1C00,NULL,0) );
 }
 
 
@@ -1494,6 +1498,6 @@ SQLRETURN SQL_API SQLBulkOperations(SQLHSTMT  Handle, SQLSMALLINT Operation)
 
 SQLRETURN SQL_API SQLCloseCursor(SQLHSTMT Handle)
 {
-    MYODBCDbgEnter("SQLCloseCursor");
-    MYODBCDbgReturn(my_SQLFreeStmt(Handle, SQL_CLOSE));
+    MYODBCDbgEnter;
+    MYODBCDbgReturnReturn( my_SQLFreeStmt(Handle, SQL_CLOSE) );
 }

@@ -140,7 +140,6 @@ SOURCES			= \
                         ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgDiagFieldString.c \
                         ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgEnvAttrString.c \
                         ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgFunctionsString.c \
-                        ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgGetFileDefault.c \
                         ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgHandleTypeString.c \
                         ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgInfoTypeString.c \
                         ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgPosTypeString.c \
