@@ -113,7 +113,7 @@ static MYODBC3_ERR_STR myodbc3_errors[]=
 void myodbc_sqlstate2_init(void)
 {
     /*
-      As accessing the SQLSTATE2 is very rear, set this to
+      As accessing the SQLSTATE2 is very rare, set this to
       global when required .. one time ..for quick processing
       in set_error/set_conn_error
     */
@@ -283,9 +283,9 @@ static SQLRETURN copy_error(MYERROR *error, myodbc_errid errid,
              (SQLCHAR *)myodbc3_errors[errid].message);
     code=   errcode ? (myodbc_errid) errcode : errid + MYODBC_ERROR_CODE_START;
 
-    MYODBCDbgError( "code :%d", code );
+    MYODBCDbgError( "code : %d", code );
     MYODBCDbgError( "state: %s", myodbc3_errors[errid].sqlstate );
-    MYODBCDbgError( "err :%s", errtext );
+    MYODBCDbgError( "err  : %s", errtext );
 
     sqlreturn= error->retcode= myodbc3_errors[errid].retcode;  /* RETCODE */
     error->native_error= code;                     /* NATIVE */

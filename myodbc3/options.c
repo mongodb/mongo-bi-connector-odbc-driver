@@ -728,22 +728,22 @@ static SQLRETURN get_stmt_attr(SQLHSTMT   hstmt,
             */
         case SQL_ATTR_APP_ROW_DESC:
             *(SQLPOINTER *)ValuePtr= &stmt->ard;
-            *StringLengthPtr= sizeof(SQL_IS_POINTER);
+            *StringLengthPtr= sizeof(SQLPOINTER);
             break;
 
         case SQL_ATTR_IMP_ROW_DESC:
             *(SQLPOINTER *)ValuePtr= &stmt->ird;
-            *StringLengthPtr= sizeof(SQL_IS_POINTER);
+            *StringLengthPtr= sizeof(SQLPOINTER);
             break;
 
         case SQL_ATTR_APP_PARAM_DESC:
             *(SQLPOINTER *)ValuePtr= &stmt->apd;
-            *StringLengthPtr= sizeof(SQL_IS_POINTER);
+            *StringLengthPtr= sizeof(SQLPOINTER);
             break;
 
         case SQL_ATTR_IMP_PARAM_DESC:
             *(SQLPOINTER *)ValuePtr= &stmt->ipd;
-            *StringLengthPtr= sizeof(SQL_IS_POINTER);
+            *StringLengthPtr= sizeof(SQLPOINTER);
             break;
 
             /*
