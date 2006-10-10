@@ -34,7 +34,7 @@ LDFLAGS=@EXTRA_LDFLAGS@
 build="mysql-connector-odbc-@VERSION@-@SYSTEM_TYPE@-@MACHINE_TYPE@"
 
 SUBDIRS = \
-	MYODBCDbg \
+	@myodbc_dbg_dir@ \
 	myodbc3u \
 	myodbc3 \
 	myodbc3S \
@@ -59,6 +59,14 @@ DIST_SUBDIRS = \
 	scripts \
 	dltest
 
+readmedir = $(pkgdatadir)
+readme_DATA = \
+	ChangeLog \
+	COPYING \
+	EXCEPTIONS \
+	README \
+	README.debug
+
 #
 # Create the binary distribution
 #
@@ -67,8 +75,8 @@ bin-dist: all
 
 bin-tar: all
 	mkdir $(build) 
-	$(MAKE) install prefix=`pwd`/$(build) 
-	cp  EXCEPTIONS COPYING README ChangeLog $(build)/
+	$(MAKE) install prefix=`pwd`/$(build)
+	cp  $(pkgdata_DATA) $(build)/
 	tar cvf $(build).tar $(build) 
 	gzip -9vf $(build).tar 
 	rm -rf $(build)
@@ -96,13 +104,9 @@ snapshot:
 
 # Note that directories will be copied recursively
 EXTRA_DIST = \
-	ChangeLog \
-	COPYING \
+	$(readme_DATA) \
 	LICENSE.gpl \
 	LICENSE.exceptions \
-	EXCEPTIONS \
-	README \
-	README.debug \
 	INSTALL \
 	INSTALL.win \
 	BUILD.unix \

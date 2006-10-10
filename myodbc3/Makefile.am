@@ -29,10 +29,19 @@
 ##########################################################################
 
 AUTOMAKE_OPTIONS=foreign
-if SEPARATE_THREAD_SAFE_DRIVER
-lib_LTLIBRARIES=libmyodbc3.la libmyodbc3_r.la 
-else
+
+# Note that some versions of automake might have problems with adding
+# targets using "+=", please upgrade to a newer version of automake 
+# if you get this problem.
+
 lib_LTLIBRARIES=libmyodbc3.la
+
+if SEPARATE_THREAD_SAFE_DRIVER
+lib_LTLIBRARIES += libmyodbc3_r.la
+endif
+
+if WITH_SEPARATE_DEBUG_DRIVER
+lib_LTLIBRARIES += libmyodbc3_debug.la 
 endif
 
 ###################################################################
@@ -58,22 +67,36 @@ transact.c \
 utility.c \
 myodbc3.h
 
-libmyodbc3_r_la_SOURCES=$(libmyodbc3_la_SOURCES)
+libmyodbc3_r_la_SOURCES     = $(libmyodbc3_la_SOURCES)
+libmyodbc3_debug_la_SOURCES = $(libmyodbc3_la_SOURCES)
 
 ###################################################################
 #                                                                 #
-# Linker options                                                  #
+# Linker and preprocessor options                                 #
 #                                                                 #
 ###################################################################
+if WITH_DEBUG
+libmyodbc3_la_CPPFLAGS       = -DMYODBC_DBG
+libmyodbc3_r_la_CPPFLAGS     = -DMYODBC_DBG
+endif
+libmyodbc3_debug_la_CPPFLAGS = -DMYODBC_DBG
+
 if ENABLE_BUNDLES
-libmyodbc3_la_LDFLAGS   = -release @myodbc_version@ -module 
-libmyodbc3_r_la_LDFLAGS = -release @myodbc_version@ -module 
+libmyodbc3_la_LDFLAGS       = -release @myodbc_version@ -module 
+libmyodbc3_r_la_LDFLAGS     = -release @myodbc_version@ -module 
+libmyodbc3_debug_la_LDFLAGS = -release @myodbc_version@ -module 
 else
-libmyodbc3_la_LDFLAGS   = -release @myodbc_version@
-libmyodbc3_r_la_LDFLAGS = -release @myodbc_version@
+libmyodbc3_la_LDFLAGS       = -release @myodbc_version@
+libmyodbc3_r_la_LDFLAGS     = -release @myodbc_version@
+libmyodbc3_debug_la_LDFLAGS = -release @myodbc_version@
 endif
 
-LTLIBS_DEPS=\
+if WITH_DEBUG
+LTLIBS_DEPS = $(LTLIBS_DEBUG_DEPS)
+else
+LTLIBS_DEPS = ../myodbc3u/libmyodbc3u.la
+endif
+LTLIBS_DEBUG_DEPS = \
 	../myodbc3u/libmyodbc3u.la \
 	../MYODBCDbg/MYODBCDbgLib/libMYODBCDbg.la
 
@@ -82,6 +105,9 @@ libmyodbc3_la_DEPENDENCIES   = $(LTLIBS_DEPS)
 
 libmyodbc3_r_la_LIBADD       = $(LTLIBS_DEPS) @LTDL_LIB@ @MYSQL_THREADSAFE_LIB@
 libmyodbc3_r_la_DEPENDENCIES = $(LTLIBS_DEPS)
+
+libmyodbc3_debug_la_LIBADD       = $(LTLIBS_DEBUG_DEPS) @LTDL_LIB@ @MYSQL_THREADSAFE_LIB@
+libmyodbc3_debug_la_DEPENDENCIES = $(LTLIBS_DEBUG_DEPS)
 
 LDFLAGS=@EXTRA_LDFLAGS@ 
 

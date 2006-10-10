@@ -189,7 +189,6 @@
 			<F N="MYODBCDbgDiagFieldString.c"/>
 			<F N="MYODBCDbgEnvAttrString.c"/>
 			<F N="MYODBCDbgFunctionsString.c"/>
-			<F N="MYODBCDbgGetFileDefault.c"/>
 			<F N="MYODBCDbgHandleTypeString.c"/>
 			<F N="MYODBCDbgInfoTypeString.c"/>
 			<F N="MYODBCDbgPosTypeString.c"/>

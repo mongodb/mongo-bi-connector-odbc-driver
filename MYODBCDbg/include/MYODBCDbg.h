@@ -42,6 +42,14 @@ extern  int     MYODBCDbgNest;
 
 #ifdef MYODBC_DBG
 
+#ifndef USE_GNU_FUNC_MACRO
+#  ifdef USE_C99_FUNC_MACRO
+#    define __FUNCTION__ __func__
+#  else
+#    define __FUNCTION__ ""
+#  endif
+#endif
+
 #define MYODBCDbgInit \
 { \
     char *pszMyODBCLog = getenv( "MYODBC_LOG" ); \

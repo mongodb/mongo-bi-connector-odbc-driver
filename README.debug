@@ -88,8 +88,8 @@ The following settings affect the behaviour of the driver trace;
 DBUG_OFF 
 --------
 
-This compiler definition indicates whether or not we
-want to include trace options in the resulting binaries. This
+This compiler definition indicates whether or not we want to
+include MySQL client trace options in the resulting binaries. This
 feature is turned on by default - passing/defining DBUG_OFF to
 the compiler turns this feature off. Turning it off may make the
 driver perform a little bit faster.

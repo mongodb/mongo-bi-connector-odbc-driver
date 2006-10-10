@@ -125,6 +125,28 @@ esac
 
 ###################################################################
 #
+# Debug support
+#
+###################################################################
+AC_ARG_WITH(separate-debug-driver,
+    [AC_HELP_STRING(
+        [--with-separate-debug-driver],
+        [Build separate driver with debug support [default=no]])],
+    [with_separate_debug_driver=$withval],
+    [with_separate_debug_driver=no])
+
+AM_CONDITIONAL(WITH_SEPARATE_DEBUG_DRIVER,
+	[test "x$with_separate_debug_driver" != xno])
+
+myodbc_dbg_dir=""
+if test "x$with_debug" != xno -o "x$with_separate_debug_driver" != xno
+then
+  myodbc_dbg_dir="MYODBCDbg"
+fi
+AC_SUBST(myodbc_dbg_dir)
+
+###################################################################
+#
 # THREADED
 #
 ###################################################################
@@ -396,19 +418,6 @@ AC_SUBST(LD)
 AC_SUBST(INSTALL_SCRIPT)
 
 export CC CFLAGS LD LDFLAGS
-
-#
-# Some system specific hacks
-#
-MAX_C_OPTIMIZE="-O3"
-case $SYSTEM_TYPE in
-  *darwin*)
-    if test "$ac_cv_prog_gcc" = "yes"
-    then
-      MAX_C_OPTIMIZE="-O"
-    fi
-    ;;
-esac
 
 # To avoid configure to fail when used with gcc 3.x along with
 # iodbc/unixodbc search path in system directories; add -isystem
@@ -733,28 +742,41 @@ echo
 #                                                                 #
 # Build optimized or debug version ?                              #
 #                                                                 #
+#   1. If CFLAGS or DEBUG_CFLAGS set in environment, honor that   #
+#   2. If not set and gcc, set flags                              #
+#   3. If DEBUG_CFLAGS not set and not gcc, set DEBUG_CFLAGS      #
+#      to CFLAGS is set                                           #
+#                                                                 #
 ###################################################################
+
 if test "$ac_cv_prog_gcc" = "yes"
 then
-  DEBUG_CFLAGS="-g"
-  DEBUG_OPTIMIZE_CC="-O"
-  OPTIMIZE_CFLAGS="$MAX_C_OPTIMIZE"
+  DEBUG_CFLAGS="-g -O"
+  OPTIMIZE_CFLAGS="-O3"
 else
   DEBUG_CFLAGS="-g"
-  DEBUG_OPTIMIZE_CC=""
   OPTIMIZE_CFLAGS="-O"
 fi
 
 AC_MSG_CHECKING([if debug mode is enabled])
+AC_ARG_WITH(debug,
+    [AC_HELP_STRING(
+        [--with-debug],
+        [Include debug support in the binaries [default=no]])],
+    [with_debug=$withval],
+    [with_debug=no])
+
 AC_ARG_WITH(debug,
 [  --with-debug            Build the debug version default=no],
     [with_debug=$withval],
     [with_debug=no])
 AC_MSG_RESULT([$with_debug])
 
+AM_CONDITIONAL(WITH_DEBUG, test "x$with_debug" != xno)
+
 if test "$with_debug" = "yes" || test "$with_debug" = "full"
 then
- CFLAGS="$DEBUG_CFLAGS $DEBUG_OPTIMIZE_CC -DDBUG_ON $CFLAGS"
+ CFLAGS="$DEBUG_CFLAGS -DDBUG_ON $CFLAGS"
 else
   # Optimized version. No debug
   CFLAGS="$OPTIMIZE_CFLAGS -DDBUG_OFF $CFLAGS"
@@ -790,7 +812,7 @@ AC_SUBST(myodbc_samples_dir)
 ###################################################################
 
 AC_ARG_WITH(ldflags,
-    [  --with-ldflags=option   Extra arguments for linking. Normally -lmysqlclient],
+    [  --with-ldflags=option   Extra arguments for linking],
     EXTRA_LDFLAGS="$withval",EXTRA_LDFLAGS="")
 AC_SUBST(EXTRA_LDFLAGS)
 LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
