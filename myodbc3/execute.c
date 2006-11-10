@@ -382,17 +382,17 @@ char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param)
         case SQL_C_LONG:
         case SQL_C_SLONG:
 #if MYSQL_VERSION_ID >= 40100
-            length= int2str(*((long int*) data),buff,-10,0) -buff;
+            length= int2str(*((SQLINTEGER*) data),buff,-10,0) -buff;
 #else
-            length= int2str(*((long int*) data),buff,-10) -buff;
+            length= int2str(*((SQLINTEGER*) data),buff,-10) -buff;
 #endif
             data= buff;
             break;
         case SQL_C_ULONG:
 #if MYSQL_VERSION_ID >= 40100
-            length= int2str(*((long int*) data),buff,10,0) -buff;
+            length= int2str(*((SQLUINTEGER*) data),buff,10,0) -buff;
 #else
-            length= int2str(*((long int*) data),buff,10) -buff;
+            length= int2str(*((SQLUINTEGER*) data),buff,10) -buff;
 #endif
             data= buff;
             break;
