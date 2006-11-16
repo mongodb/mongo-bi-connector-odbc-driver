@@ -227,6 +227,7 @@ BOOL                    MYODBCUtilInsertStr( char *pszStr, LPCSTR pszStrIn, SQLS
 #else
 #  define _global_strdup(s) strdup(s)
 #  ifdef HAVE_STRNDUP
+#    define myodbc_strndup(s, n) strndup(s, n)
 #    define _global_strndup(s, n) strndup(s, n)
 #  else
      char *myodbc_strndup( const char *s, size_t n );
