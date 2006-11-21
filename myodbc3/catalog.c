@@ -1508,7 +1508,7 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
     CLEAR_STMT_ERROR(hstmt);
 
     /* Reset the statement in order to avoid memory leaks when working with ADODB */
-    my_SQLFreeStmt(hstmt, SQL_RESET);
+    my_SQLFreeStmt(hstmt, MYSQL_RESET);
 
     stmt->result= mysql_list_dbcolumns(stmt,TableQualifier,TableName,0);
     if ( !(result= stmt->result) )
