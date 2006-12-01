@@ -20,6 +20,7 @@
 		<Project File="MYQTODBCCls/MYQTODBCCls.vpj" />
 		<Project File="MYQTODBCCls/MYQTODBCClsApp/MYQTODBCClsApp.vpj" />
 		<Project File="MYQTODBCCls/MYQTODBCClsLib/MYQTODBCClsLib.vpj" />
+		<Project File="../../mysql-include.vpj" />
 		<Project File="scripts/scripts.vpj" />
 		<Project File="test/test.vpj" />
 	</Projects>

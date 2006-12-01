@@ -6,7 +6,7 @@
     \date     2005          
     \brief    Code to provide debug information.
     
-    \license  Copyright (C) 2000-2005 MySQL AB
+    \license  Copyright (C) 2000-2006 MySQL AB
 
               This program is free software; you can redistribute it and/or modify
               it under the terms of the GNU General Public License as published by
