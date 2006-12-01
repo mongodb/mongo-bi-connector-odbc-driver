@@ -774,7 +774,7 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
         row[1]= "";         /* No owner */
 
         /* TABLE_NAME */
-        row[2]= curField->org_table;
+        row[2]= curField->table;
 
         /* COLUMN_NAME */
         row[3]= curField->name;
