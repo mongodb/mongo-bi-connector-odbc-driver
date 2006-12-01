@@ -550,19 +550,34 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
             return SQL_CHAR;
 
         case FIELD_TYPE_VAR_STRING:
-            *transfer_length= *precision= *display_size= field->length ? 
+            
+            if(field->table && field->org_table && field->table[0] && field->org_table[0])
+            {
+                *transfer_length= *precision= *display_size= field->length ? 
                 (stmt->dbc->mysql.charset ? 
                 field->length/stmt->dbc->mysql.charset->mbmaxlen: field->length): 255;
 
-            /* Binary flag is for handling "VARCHAR() BINARY" but is unreliable (see BUG-4578) - PAH */
-            if (field_is_binary)
-            {
-              if (buff) strmov(buff,"varbinary");
-              return SQL_VARBINARY;
+                /* Binary flag is for handling "VARCHAR() BINARY" but is unreliable (see BUG-4578) - PAH */
+                if (field_is_binary)
+                {
+                    if (buff) strmov(buff,"varbinary");
+                        return SQL_VARBINARY;
+                }
+                if ( buff ) strmov(buff,"varchar");
+                    return SQL_VARCHAR;
             }
+            else
+            {
+                *transfer_length= *precision= *display_size= 16777216L;
+                if (field_is_binary)
+                {
+                    if (buff) strmov(buff,"varbinary");
+                    return SQL_LONGVARBINARY;
+                }
 
-            if ( buff ) strmov(buff,"varchar");
-            return SQL_VARCHAR;
+                if ( buff ) strmov(buff,"varchar");
+                    return SQL_LONGVARCHAR;
+            }
 
         case FIELD_TYPE_TINY_BLOB:
             if ( buff )
