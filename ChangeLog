@@ -32,8 +32,8 @@
 -- fixed memory leak in SQLDriverConnect()
 -- fixed memory leak in SQLSpecialColumns(). It was serious leak
    that took up to 8KB of memory per call
--- fixed handle leak in LibMain (dll.c), used the same code as in
-   the server part
+-- BUG#21385: fixed handle leak in LibMain (dll.c), used the same code as in the server part.
+   Thanks to Mr. Leandro Becker for bringing this to our attention.
 -- fixed fields lengths reported by SQLDescribeCol when using 
    functions such as COMPRESS() in SELECT queries
 -- fixed 64-bit issue related to SQLINTEGER/SQLUINTEGER bound columns 
