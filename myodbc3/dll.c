@@ -145,11 +145,10 @@ int APIENTRY LibMain(HANDLE hInst,DWORD ul_reason_being_called,
     break;
   case DLL_THREAD_DETACH:
 #ifdef THREAD
-    if ( threads )
-    {
-      my_thread_end();	  /* Last will be freed in my_end() */
-      --threads;
-    }
+    /* Main thread will free by my_end() */
+    threads--;
+    if (main_thread != GetCurrentThreadId())
+      my_thread_end();
 #else
     --threads;
 #endif

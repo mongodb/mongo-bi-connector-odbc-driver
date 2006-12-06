@@ -4,16 +4,12 @@
 		***************************************
 
 ---------------------------------------------
-25-AUG-2006 (3.51.14): pharvey@mysql.com
+06-DEC-2006 (3.51.13): pharvey@mysql.com
 ---------------------------------------------
 -- Added support of HENV handlers in SQLEndTran(), updated tran
    test case
 -- Added auto-reconnect option since default auto-reconnecting
    was disabled in mysqlclient library.
-
----------------------------------------------
-22-FEB-2006 (3.51.13): pharvey@mysql.com
----------------------------------------------
 -- result of SQLGetInfo(SQL_MAX_DRIVER_CONNECTIONS) parameter is 
    treated as SQLSMALLINT
 -- fixed problem with memory allocation in Windows for BLOB and long
@@ -34,7 +30,14 @@
 -- added ODBC Browser 
 -- fixed issue with SQLDriverConnect
 -- fixed memory leak in SQLDriverConnect()
-
+-- fixed memory leak in SQLSpecialColumns(). It was serious leak
+   that took up to 8KB of memory per call
+-- fixed handle leak in LibMain (dll.c), used the same code as in
+   the server part
+-- fixed fields lengths reported by SQLDescribeCol when using 
+   functions such as COMPRESS() in SELECT queries
+-- fixed 64-bit issue related to SQLINTEGER/SQLUINTEGER bound columns 
+   defined as int, but casted as long/unsigned long
 ---------------------------------------------
 25-Aug-2005 (3.51.12): pharvey@mysql.com
 ---------------------------------------------
