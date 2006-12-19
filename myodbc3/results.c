@@ -931,20 +931,19 @@ SQLRETURN SQL_API sql_get_data( STMT *          stmt,
                     if ( length >= 10 && value[4] == '-' && value[7] == '-' &&
                          (!value[10] || value[10] == ' ') )
                     {
-                        *((long*) rgbValue)= ((long) atol(value)*10000L+
-                                              (long) atol(value+5)*100L+
-                                              (long) atol(value+8));
+                        *((SQLINTEGER*) rgbValue)= ((SQLINTEGER) atol(value)*10000L+
+                                              (SQLINTEGER) atol(value+5)*100L+
+                                              (SQLINTEGER) atol(value+8));
                     }
                     else
-                        *((long*) rgbValue)= (long) atol(value);
+                        *((SQLINTEGER*) rgbValue)= (SQLINTEGER) atol(value);
                 }
-                *pcbValue= sizeof(long);
+                *pcbValue= sizeof(SQLINTEGER);
                 break;
             case SQL_C_ULONG:
                 if ( rgbValue )
                 {
-                    char *end_ptr;
-                    *((ulong*) rgbValue)= strtoul(value,&end_ptr,10);
+                    *((SQLUINTEGER*) rgbValue)= (SQLUINTEGER)atol(value);
                 }
                 *pcbValue= sizeof(long);
                 break;
