@@ -121,6 +121,7 @@ void myodbc_end()
 
 #ifdef _WIN32
 static int inited=0,threads=0;
+static DWORD main_thread;
 HINSTANCE NEAR s_hModule; /* Saved module handle */
 int APIENTRY LibMain(HANDLE hInst,DWORD ul_reason_being_called,
 		     LPVOID lpReserved)
@@ -131,6 +132,7 @@ int APIENTRY LibMain(HANDLE hInst,DWORD ul_reason_being_called,
   {
     s_hModule=hInst;
     myodbc_init();
+    main_thread=GetCurrentThreadId();
   }
   break;
   case DLL_THREAD_ATTACH:
