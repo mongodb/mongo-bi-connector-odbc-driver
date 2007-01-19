@@ -158,6 +158,16 @@ ulong get_client_flag(MYSQL *mysql, ulong option_flag,uint connect_timeout,
 
     if (option_flag & FLAG_USE_MYCNF)
         mysql_options(mysql,MYSQL_READ_DEFAULT_GROUP,"odbc");
+
+    /*
+    Clear the stupid option of MS Compatibility, which has already been fixed
+    in the MS products
+    NOTE: if MS Access has a connection with SQL_AUTO_IS_NULL=0 opened, 
+          FLAG_AUTO_IS_NULL will not work
+    */
+    if (!(option_flag & FLAG_AUTO_IS_NULL))
+        mysql_options(mysql,MYSQL_INIT_COMMAND,"SET SQL_AUTO_IS_NULL=0;");
+	
     if (init_stmt && init_stmt[0])
         mysql_options(mysql,MYSQL_INIT_COMMAND,init_stmt);
     if (connect_timeout)

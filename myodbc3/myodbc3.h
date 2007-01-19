@@ -155,6 +155,7 @@ extern "C"
 #define FLAG_FORWARD_CURSOR   (FLAG_SAFE << 4)
  /* Force auto-reconnect */
 #define FLAG_AUTO_RECONNECT   (FLAG_SAFE << 5)
+#define FLAG_AUTO_IS_NULL     (FLAG_SAFE << 6) /* 8388608 Enables SQL_AUTO_IS_NULL */
 
 #ifndef DEFAULT_TXN_ISOLATION
 #define DEFAULT_TXN_ISOLATION SQL_TXN_READ_COMMITTED

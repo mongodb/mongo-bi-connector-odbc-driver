@@ -96,6 +96,8 @@ unsigned int MYODBCSetupDataSourceTab3::getFlags()
         nFlags |= 1 << 21;
     if ( ptab3a->pcheckboxEnableReconnect->isChecked() )
         nFlags |= 1 << 22;
+    if ( ptab3a->pcheckboxAutoIncrementIsNull->isChecked() )
+        nFlags |= 1 << 23;
 
     return nFlags;
 }

@@ -29,7 +29,8 @@ MYODBCSetupDataSourceTab3a::MYODBCSetupDataSourceTab3a( QWidget *pwidgetParent )
     QString         stringUseCompressedProtocol( tr("Use the compressed client/server protocol.") );
     QString         stringChangeBIGINTColumnsToInt( tr("Change LONGLONG columns to INT columns (some applications can't handle LONGLONG).") );
     QString         stringSafe( tr("Add some extra safety checks (should not be needed but...).") );
-	QString         stringEnableReconnect( tr("Enables automatic reconnect. Attention: it is strongly not recommended to set this flag for transactional operations!") );
+    QString         stringEnableReconnect( tr("Enables automatic reconnect. Attention: it is strongly not recommended to set this flag for transactional operations!") );
+    QString         stringAutoIncrementIsNull( tr("Turns on/off the handling of searching for the last inserted row with WHERE auto_increment_column IS NULL") );
 #if QT_VERSION >= 0x040000
     QVBoxLayout *   playoutFields = new QVBoxLayout;
     setLayout( playoutFields );
@@ -103,7 +104,16 @@ MYODBCSetupDataSourceTab3a::MYODBCSetupDataSourceTab3a( QWidget *pwidgetParent )
     QToolTip::add( pcheckboxEnableReconnect, stringEnableReconnect );
 #endif
 
-	playoutFields->addStretch( 10 );
+    pcheckboxAutoIncrementIsNull = new MYODBCSetupCheckBox( tr("Enable auto_increment NULL search"), this );
+    pcheckboxAutoIncrementIsNull->setAssistText( stringAutoIncrementIsNull );
+    playoutFields->addWidget( pcheckboxAutoIncrementIsNull );
+#if QT_VERSION >= 0x040000
+    pcheckboxAutoIncrementIsNull->setToolTip( stringAutoIncrementIsNull );
+#else
+    QToolTip::add( pcheckboxAutoIncrementIsNull, stringAutoIncrementIsNull );
+#endif
+
+    playoutFields->addStretch( 10 );
 }
 
 

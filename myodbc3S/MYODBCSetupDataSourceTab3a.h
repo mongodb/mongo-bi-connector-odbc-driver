@@ -49,6 +49,7 @@ protected:
     MYODBCSetupCheckBox *pcheckboxChangeBIGINTColumnsToInt;
     MYODBCSetupCheckBox *pcheckboxSafe;
     MYODBCSetupCheckBox *pcheckboxEnableReconnect;
+    MYODBCSetupCheckBox *pcheckboxAutoIncrementIsNull;
 };
 
 #endif
