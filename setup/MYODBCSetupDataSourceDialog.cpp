@@ -24,7 +24,7 @@
 #include "TopImage.xpm"
 
 #ifdef HAVE_CONFIG_H
-#include "../myodbc3/myconf.h" 
+#include "../driver/myconf.h" 
 #define SETUP_VERSION VERSION
 #endif
 

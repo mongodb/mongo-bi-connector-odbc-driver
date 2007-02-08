@@ -32,7 +32,7 @@ SOURCE=mysql-connector-odbc
 # This script must run from MyODBC top directory
 #
 
-if [ ! -f "./myodbc3/myodbc3.c" ]; 
+if [ ! -f "./driver/myodbc3.c" ]; 
 then
   echo "ERROR : You must run this script from the MyODBC top-level directory"
   exit 1

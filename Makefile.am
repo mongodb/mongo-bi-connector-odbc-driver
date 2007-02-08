@@ -36,7 +36,7 @@ build="mysql-connector-odbc-@VERSION@-@SYSTEM_TYPE@-@MACHINE_TYPE@"
 SUBDIRS = \
 	@myodbc_dbg_dir@ \
 	util \
-	myodbc3 \
+	driver \
 	setup \
 	dsn-editor \
 	installer \
@@ -49,7 +49,7 @@ SUBDIRS = \
 DIST_SUBDIRS = \
 	MYODBCDbg \
 	util \
-	myodbc3 \
+	driver \
 	setup \
 	dsn-editor \
 	installer \

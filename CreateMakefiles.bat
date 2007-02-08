@@ -66,8 +66,8 @@ cd dsn-editor
 qmake
 cd ..
 
-ECHO myodbc3...
-cd myodbc3
+ECHO driver...
+cd driver
 qmake
 cd ..
 

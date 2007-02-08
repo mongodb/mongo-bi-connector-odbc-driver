@@ -82,6 +82,6 @@ SUBDIRS         = \
                 installer \
                 monitor \
 		dsn-editor \
-                myodbc3 \
+                driver \
                 test
 

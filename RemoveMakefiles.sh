@@ -45,8 +45,8 @@ rm -f Makefile.in
 rm -f Makefile
 cd ..
 
-echo "myodbc3..."
-cd myodbc3
+echo "driver..."
+cd driver
 rm -f Makefile.in
 rm -f Makefile
 cd ..

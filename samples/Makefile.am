@@ -29,7 +29,7 @@
 ##########################################################################
 noinst_PROGRAMS=my_basics my_connect my_cursor my_param my_result my_tran
 INCLUDES=-I..
-AM_LDFLAGS=../myodbc3/libmyodbc3.la @MYSQL_THREADSAFE_LIB@
+AM_LDFLAGS=../driver/libmyodbc3.la @MYSQL_THREADSAFE_LIB@
 EXTRA_DIST=my_utility.h run-samples WIN-Makefile
 
 # test samples

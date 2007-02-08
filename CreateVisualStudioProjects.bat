@@ -60,7 +60,7 @@ cd dsn-editor
 qmake -t vcapp
 cd ..
 
-ECHO myodbc3...
-cd myodbc3
+ECHO driver...
+cd driver
 qmake -t vclib
 cd ..

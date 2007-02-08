@@ -21,7 +21,7 @@ SILENT=0
 
 
 # This script must run from MyODBC top directory
-if ! test -f myodbc3/myodbc3.c
+if ! test -f driver/myodbc3.c
 then
   echo "ERROR : You must run this script from the MyODBC top-level directory"
   exit 1
@@ -63,7 +63,7 @@ do
   fi
 done
 
-for i in myodbc3/.libs/*
+for i in driver/.libs/*
 do
   if [ -f $i ]
   then

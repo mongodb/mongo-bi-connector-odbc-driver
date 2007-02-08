@@ -3,7 +3,7 @@
 	<Projects>
 		<Project File="connector-odbc3.vpj" />
 		<Project File="dltest/dltest.vpj" />
-		<Project File="myodbc3/myodbc3.vpj" />
+		<Project File="driver/myodbc3.vpj" />
 		<Project File="dsn-editor/myodbc3c.vpj" />
 		<Project File="installer/myodbc3i.vpj" />
 		<Project File="monitor/myodbc3m.vpj" />

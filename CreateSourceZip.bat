@@ -91,13 +91,13 @@ mkdir mysql-connector-odbc-%1-win-src\dsn-editor
 copy dsn-editor\*.pro mysql-connector-odbc-%1-win-src\dsn-editor
 copy dsn-editor\*.cpp mysql-connector-odbc-%1-win-src\dsn-editor
 
-REM myodbc3
-mkdir mysql-connector-odbc-%1-win-src\myodbc3
-copy myodbc3\*.pro mysql-connector-odbc-%1-win-src\myodbc3
-copy myodbc3\*.c mysql-connector-odbc-%1-win-src\myodbc3
-copy myodbc3\*.h mysql-connector-odbc-%1-win-src\myodbc3
-copy myodbc3\*.rc mysql-connector-odbc-%1-win-src\myodbc3
-copy myodbc3\*.def mysql-connector-odbc-%1-win-src\myodbc3
+REM driver
+mkdir mysql-connector-odbc-%1-win-src\driver
+copy driver\*.pro mysql-connector-odbc-%1-win-src\driver
+copy driver\*.c mysql-connector-odbc-%1-win-src\driver
+copy driver\*.h mysql-connector-odbc-%1-win-src\driver
+copy driver\*.rc mysql-connector-odbc-%1-win-src\driver
+copy driver\*.def mysql-connector-odbc-%1-win-src\driver
 
 REM doc
 mkdir mysql-connector-odbc-%1-win-src\doc

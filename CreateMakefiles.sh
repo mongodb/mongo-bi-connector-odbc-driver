@@ -52,8 +52,8 @@ rm -f Makefile
 qmake
 cd ..
 
-echo "myodbc3..."
-cd myodbc3
+echo "driver..."
+cd driver
 rm -f Makefile
 qmake
 cd ..
