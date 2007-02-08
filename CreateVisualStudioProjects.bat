@@ -45,8 +45,8 @@ cd myodbc3S
 qmake -t vclib
 cd ..
 
-ECHO myodbc3i...
-cd myodbc3i
+ECHO installer...
+cd installer
 qmake -t vcapp
 cd ..
 

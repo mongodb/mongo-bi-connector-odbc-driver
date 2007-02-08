@@ -79,7 +79,7 @@ SUBDIRS         = \
                 dltest \
 		myodbc3u \
 		myodbc3S \
-                myodbc3i \
+                installer \
                 myodbc3m \
 		myodbc3c \
                 myodbc3 \

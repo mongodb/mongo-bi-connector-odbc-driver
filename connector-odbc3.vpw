@@ -5,7 +5,7 @@
 		<Project File="dltest/dltest.vpj" />
 		<Project File="myodbc3/myodbc3.vpj" />
 		<Project File="myodbc3c/myodbc3c.vpj" />
-		<Project File="myodbc3i/myodbc3i.vpj" />
+		<Project File="installer/myodbc3i.vpj" />
 		<Project File="myodbc3m/myodbc3m.vpj" />
 		<Project File="myodbc3S/myodbc3S.vpj" />
 		<Project File="myodbc3u/myodbc3u.vpj" />

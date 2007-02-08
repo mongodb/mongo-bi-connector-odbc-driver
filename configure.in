@@ -1016,7 +1016,7 @@ AC_OUTPUT([
   myodbc3/Makefile
   myodbc3S/Makefile
   myodbc3c/Makefile
-  myodbc3i/Makefile
+  installer/Makefile
   myodbc3m/Makefile
   samples/Makefile
   test/Makefile

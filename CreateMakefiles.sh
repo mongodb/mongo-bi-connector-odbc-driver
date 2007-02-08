@@ -34,8 +34,8 @@ rm -f Makefile
 qmake
 cd ..
 
-echo "myodbc3i..."
-cd myodbc3i
+echo "installer..."
+cd installer
 rm -f Makefile
 qmake
 cd ..

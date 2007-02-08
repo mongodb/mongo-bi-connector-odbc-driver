@@ -51,8 +51,8 @@ cd myodbc3S
 qmake
 cd ..
 
-ECHO myodbc3i...
-cd myodbc3i
+ECHO installer...
+cd installer
 qmake
 cd ..
 

@@ -27,8 +27,8 @@ rm -f Makefile.in
 rm -f Makefile
 cd ..
 
-echo "myodbc3i..."
-cd myodbc3i
+echo "installer..."
+cd installer
 rm -f Makefile.in
 rm -f Makefile
 cd ..

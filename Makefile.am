@@ -39,7 +39,7 @@ SUBDIRS = \
 	myodbc3 \
 	myodbc3S \
 	myodbc3c \
-	myodbc3i \
+	installer \
 	myodbc3m \
 	@myodbc_samples_dir@ \
 	@myodbc_test_dir@ \
@@ -52,7 +52,7 @@ DIST_SUBDIRS = \
 	myodbc3 \
 	myodbc3S \
 	myodbc3c \
-	myodbc3i \
+	installer \
 	myodbc3m \
 	samples \
 	test \

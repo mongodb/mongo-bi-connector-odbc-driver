@@ -76,9 +76,9 @@ copy myodbc3S\*.cpp mysql-connector-odbc-%1-win-src\myodbc3S
 copy myodbc3S\*.h mysql-connector-odbc-%1-win-src\myodbc3S
 
 REM myodbc3i
-mkdir mysql-connector-odbc-%1-win-src\myodbc3i
-copy myodbc3i\*.pro mysql-connector-odbc-%1-win-src\myodbc3i
-copy myodbc3i\*.c mysql-connector-odbc-%1-win-src\myodbc3i
+mkdir mysql-connector-odbc-%1-win-src\installer
+copy installer\*.pro mysql-connector-odbc-%1-win-src\installer
+copy installer\*.c mysql-connector-odbc-%1-win-src\installer
 
 REM myodbc3m
 mkdir mysql-connector-odbc-%1-win-src\myodbc3m 
