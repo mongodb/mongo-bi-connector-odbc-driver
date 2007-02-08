@@ -37,7 +37,7 @@ SUBDIRS = \
 	@myodbc_dbg_dir@ \
 	myodbc3u \
 	myodbc3 \
-	myodbc3S \
+	setup \
 	myodbc3c \
 	installer \
 	myodbc3m \
@@ -50,7 +50,7 @@ DIST_SUBDIRS = \
 	MYODBCDbg \
 	myodbc3u \
 	myodbc3 \
-	myodbc3S \
+	setup \
 	myodbc3c \
 	installer \
 	myodbc3m \

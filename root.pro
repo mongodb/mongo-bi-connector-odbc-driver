@@ -7,7 +7,7 @@
 #
 #	The GUI bits are;
 #
-#	myodbc3S	- Setup library which handles
+#	setup   	- Setup library which handles
 #			requests from the; ODBC Administrator,
 #			driver, or application for GUI 
 #			prompting.
@@ -78,7 +78,7 @@ SUBDIRS         = \
                 MYODBCDbg \
                 dltest \
 		myodbc3u \
-		myodbc3S \
+		setup \
                 installer \
                 myodbc3m \
 		myodbc3c \

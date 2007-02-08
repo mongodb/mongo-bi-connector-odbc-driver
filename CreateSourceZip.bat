@@ -65,17 +65,17 @@ copy myodbc3u\*.pro mysql-connector-odbc-%1-win-src\myodbc3u
 copy myodbc3u\*.h mysql-connector-odbc-%1-win-src\myodbc3u
 copy myodbc3u\*.c mysql-connector-odbc-%1-win-src\myodbc3u
 
-REM myodbc3S
-mkdir mysql-connector-odbc-%1-win-src\myodbc3S
-copy myodbc3S\*.pro mysql-connector-odbc-%1-win-src\myodbc3S
-copy myodbc3S\*.def mysql-connector-odbc-%1-win-src\myodbc3S
-copy myodbc3S\*.xpm mysql-connector-odbc-%1-win-src\myodbc3S
-copy myodbc3S\*.rc mysql-connector-odbc-%1-win-src\myodbc3S
-copy myodbc3S\*.c mysql-connector-odbc-%1-win-src\myodbc3S
-copy myodbc3S\*.cpp mysql-connector-odbc-%1-win-src\myodbc3S
-copy myodbc3S\*.h mysql-connector-odbc-%1-win-src\myodbc3S
+REM setup
+mkdir mysql-connector-odbc-%1-win-src\setup
+copy setup\*.pro mysql-connector-odbc-%1-win-src\setup
+copy setup\*.def mysql-connector-odbc-%1-win-src\setup
+copy setup\*.xpm mysql-connector-odbc-%1-win-src\setup
+copy setup\*.rc mysql-connector-odbc-%1-win-src\setup
+copy setup\*.c mysql-connector-odbc-%1-win-src\setup
+copy setup\*.cpp mysql-connector-odbc-%1-win-src\setup
+copy setup\*.h mysql-connector-odbc-%1-win-src\setup
 
-REM myodbc3i
+REM installer
 mkdir mysql-connector-odbc-%1-win-src\installer
 copy installer\*.pro mysql-connector-odbc-%1-win-src\installer
 copy installer\*.c mysql-connector-odbc-%1-win-src\installer

@@ -1014,7 +1014,7 @@ AC_OUTPUT([
   MYODBCDbg/MYODBCDbgLib/Makefile
   myodbc3u/Makefile
   myodbc3/Makefile
-  myodbc3S/Makefile
+  setup/Makefile
   myodbc3c/Makefile
   installer/Makefile
   myodbc3m/Makefile

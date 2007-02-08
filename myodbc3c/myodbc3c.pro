@@ -20,7 +20,7 @@ CONFIG                  += qt
 include( ../defines.pri )
 include( ../odbc.pri )
 
-INCLUDEPATH             += ../myodbc3u ../myodbc3S
+INCLUDEPATH             += ../myodbc3u ../setup
 
 # #########################################################
 # WIN32
@@ -35,7 +35,7 @@ win32 {
 # #########################################################
 mac {
 } else:unix {
-#        INCLUDEPATH     += ../myodbc3u ../myodbc3S /usr/include
+#        INCLUDEPATH     += ../myodbc3u ../setup /usr/include
         LIBS            += -L../myodbc3u -lmyodbc3u
 }
 
@@ -61,43 +61,43 @@ mac {
 # #########################################################
 HEADERS                 += \
                         ../myodbc3u/MYODBCUtil.h \ 
-                        ../myodbc3S/MYODBCSetup.h \
-                        ../myodbc3S/MYODBCSetupAssistText.h \
-                        ../myodbc3S/MYODBCSetupCheckBox.h \
-                        ../myodbc3S/MYODBCSetupComboBox.h \
-                        ../myodbc3S/MYODBCSetupComboBoxDatabases.h \
-                        ../myodbc3S/MYODBCSetupDataSourceDialog.h \
-                        ../myodbc3S/MYODBCSetupDataSourceTab1.h \
-                        ../myodbc3S/MYODBCSetupDataSourceTab2.h \
-                        ../myodbc3S/MYODBCSetupDataSourceTab3.h \
-                        ../myodbc3S/MYODBCSetupDataSourceTab3a.h \
-                        ../myodbc3S/MYODBCSetupDataSourceTab3b.h \
-                        ../myodbc3S/MYODBCSetupDataSourceTab3c.h \
-                        ../myodbc3S/MYODBCSetupDataSourceTab3d.h \
-                        ../myodbc3S/MYODBCSetupLineEdit.h
+                        ../setup/MYODBCSetup.h \
+                        ../setup/MYODBCSetupAssistText.h \
+                        ../setup/MYODBCSetupCheckBox.h \
+                        ../setup/MYODBCSetupComboBox.h \
+                        ../setup/MYODBCSetupComboBoxDatabases.h \
+                        ../setup/MYODBCSetupDataSourceDialog.h \
+                        ../setup/MYODBCSetupDataSourceTab1.h \
+                        ../setup/MYODBCSetupDataSourceTab2.h \
+                        ../setup/MYODBCSetupDataSourceTab3.h \
+                        ../setup/MYODBCSetupDataSourceTab3a.h \
+                        ../setup/MYODBCSetupDataSourceTab3b.h \
+                        ../setup/MYODBCSetupDataSourceTab3c.h \
+                        ../setup/MYODBCSetupDataSourceTab3d.h \
+                        ../setup/MYODBCSetupLineEdit.h
 
 SOURCES                 += \
                         main.cpp \
-                        ../myodbc3S/MYODBCSetupAssistText.cpp \
-                        ../myodbc3S/MYODBCSetupCheckBox.cpp \
-                        ../myodbc3S/MYODBCSetupComboBox.cpp \
-                        ../myodbc3S/MYODBCSetupComboBoxDatabases.cpp \
-                        ../myodbc3S/MYODBCSetupConfigDSNAdd.c \
-                        ../myodbc3S/MYODBCSetupConfigDSNEdit.c \
-                        ../myodbc3S/MYODBCSetupConfigDSNRemove.c \
-                        ../myodbc3S/MYODBCSetupDataSourceConfig.cpp \
-                        ../myodbc3S/MYODBCSetupDataSourceDialog.cpp \
-                        ../myodbc3S/MYODBCSetupDataSourceTab1.cpp \
-                        ../myodbc3S/MYODBCSetupDataSourceTab2.cpp \
-                        ../myodbc3S/MYODBCSetupDataSourceTab3.cpp \
-                        ../myodbc3S/MYODBCSetupDataSourceTab3a.cpp \
-                        ../myodbc3S/MYODBCSetupDataSourceTab3b.cpp \
-                        ../myodbc3S/MYODBCSetupDataSourceTab3c.cpp \
-                        ../myodbc3S/MYODBCSetupDataSourceTab3d.cpp \
-                        ../myodbc3S/MYODBCSetupDriverConnect.c \
-                        ../myodbc3S/MYODBCSetupDriverConnectPrompt.cpp \
-                        ../myodbc3S/MYODBCSetupHandleInstallerError.c \
-                        ../myodbc3S/MYODBCSetupLineEdit.cpp
+                        ../setup/MYODBCSetupAssistText.cpp \
+                        ../setup/MYODBCSetupCheckBox.cpp \
+                        ../setup/MYODBCSetupComboBox.cpp \
+                        ../setup/MYODBCSetupComboBoxDatabases.cpp \
+                        ../setup/MYODBCSetupConfigDSNAdd.c \
+                        ../setup/MYODBCSetupConfigDSNEdit.c \
+                        ../setup/MYODBCSetupConfigDSNRemove.c \
+                        ../setup/MYODBCSetupDataSourceConfig.cpp \
+                        ../setup/MYODBCSetupDataSourceDialog.cpp \
+                        ../setup/MYODBCSetupDataSourceTab1.cpp \
+                        ../setup/MYODBCSetupDataSourceTab2.cpp \
+                        ../setup/MYODBCSetupDataSourceTab3.cpp \
+                        ../setup/MYODBCSetupDataSourceTab3a.cpp \
+                        ../setup/MYODBCSetupDataSourceTab3b.cpp \
+                        ../setup/MYODBCSetupDataSourceTab3c.cpp \
+                        ../setup/MYODBCSetupDataSourceTab3d.cpp \
+                        ../setup/MYODBCSetupDriverConnect.c \
+                        ../setup/MYODBCSetupDriverConnectPrompt.cpp \
+                        ../setup/MYODBCSetupHandleInstallerError.c \
+                        ../setup/MYODBCSetupLineEdit.cpp
 
 
 

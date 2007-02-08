@@ -46,8 +46,8 @@ cd myodbc3u
 qmake
 cd ..
 
-ECHO myodbc3S...
-cd myodbc3S
+ECHO setup
+cd setup
 qmake
 cd ..
 

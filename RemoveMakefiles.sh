@@ -21,8 +21,8 @@ rm -f Makefile.in
 rm -f Makefile
 cd ..
 
-echo "myodbc3S..."
-cd myodbc3S
+echo "setup..."
+cd setup
 rm -f Makefile.in
 rm -f Makefile
 cd ..

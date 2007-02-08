@@ -28,8 +28,8 @@ rm -f Makefile
 qmake
 cd ..
 
-echo "myodbc3S..."
-cd myodbc3S
+echo "setup..."
+cd setup
 rm -f Makefile
 qmake
 cd ..

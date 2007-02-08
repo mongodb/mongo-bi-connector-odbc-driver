@@ -40,8 +40,8 @@ cd myodbc3u
 qmake -t vclib
 cd ..
 
-ECHO myodbc3S...
-cd myodbc3S
+ECHO setup
+cd setup
 qmake -t vclib
 cd ..
 
