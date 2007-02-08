@@ -557,6 +557,12 @@ AC_ARG_WITH(iODBC,
 ],
 [ use_iODBC="" ])
 
+# Default to /usr if not specified
+if test "x$iodbc" = "x" -o "x$iodbc" = "xyes"
+then
+  iodbc="/usr";
+fi
+
 if test "x$use_iODBC" = "xyes"
 then
 
@@ -631,7 +637,7 @@ AC_ARG_WITH(unixODBC,
 AC_DEFINE([USE_UNIXODBC], [1], [use unixODBC])
 
 # Default to /usr if not specified
-if test "x$unixODBC" = "x"
+if test "x$unixODBC" = "x" -o "x$unixODBC" = "xyes"
 then
   unixODBC="/usr";
 fi
