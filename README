@@ -114,23 +114,6 @@ Data Source Name Editor (myodbc3c.exe)
         is not useful on all platforms but on most platforms it can be a
         great aid during an install process.
 
-ODBC Browser (MYODBCBrw.exe)
-
-        This is a GUI application which extends the concept of the MS
-        Windows ODBC Administrator. In general it provides the ability to
-        browse ODBC system information - right down to the data source 
-        catalog (databases, tables, columns etc etc). It provides the 
-        following additional functionality;
-
-        * register/deregister a driver
-        * create/edit/delete a Data Source Name (User/System/File)
-        * connect/disconnect to a data source
-        * execute SQL and view results
-        * build query filters with no SQL and view results
-        * browse driver features 
-        * see data types supported by driver
-        
-
 Connector/ODBC SDK
 ---------------------------------------------------------------
 
@@ -141,23 +124,6 @@ time/effort and to increase stability of resulting software.
 myodbc3u
         This library provides the ODBC system information abstraction
         and portability used by Connector/ODBC.
-
-MYODBCCls
-
-        This is a portable, C++ class library, which provides a very thin 
-        C++ wrapper to the ODBC API.
-
-MYQTODBCCls
-
-        This is a portable, C++ class library, which utilizes Qt to increase
-        the functionality of MYODBCCls.
-
-MYODBCBrwLib
-
-        This includes GUI widgets which extend functionality found in Qt for
-        ODBC developers. This uses MYODBCCls, MYQTODBCCls, and is used by 
-        the MYODBCBrw application.
-
 
 RESOURCES
 ---------------------------------------------------------------

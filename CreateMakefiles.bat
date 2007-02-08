@@ -71,33 +71,6 @@ cd myodbc3
 qmake
 cd ..
 
-ECHO MYODBCCls...
-cd MYODBCCls\MYODBCClsLib
-qmake
-cd ..\MYODBCClsApp
-qmake
-cd ..
-qmake
-cd ..
-
-ECHO MYQTODBCCls...
-cd MYQTODBCCls\MYQTODBCClsLib
-qmake
-cd ..\MYQTODBCClsApp
-qmake
-cd ..
-qmake
-cd ..
-
-ECHO MYODBCBrw...
-cd MYODBCBrw\MYODBCBrwLib
-qmake
-cd ..\MYODBCBrwApp
-qmake
-cd ..
-qmake
-cd ..
-
 ECHO ****
 ECHO * You should now have fresh makefiles to work with. Any changes to
 ECHO * qmake project files should be reflected in these new makefiles.

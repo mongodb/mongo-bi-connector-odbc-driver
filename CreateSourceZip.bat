@@ -99,59 +99,6 @@ copy myodbc3\*.h mysql-connector-odbc-%1-win-src\myodbc3
 copy myodbc3\*.rc mysql-connector-odbc-%1-win-src\myodbc3
 copy myodbc3\*.def mysql-connector-odbc-%1-win-src\myodbc3
 
-REM MYODBCCls
-mkdir mysql-connector-odbc-%1-win-src\MYODBCCls
-copy MYODBCCls\*.pro mysql-connector-odbc-%1-win-src\MYODBCCls
-
-mkdir mysql-connector-odbc-%1-win-src\MYODBCCls\include
-copy MYODBCCls\include\*.h mysql-connector-odbc-%1-win-src\MYODBCCls\include
-
-mkdir mysql-connector-odbc-%1-win-src\MYODBCCls\MYODBCClsLib
-copy MYODBCCls\MYODBCClsLib\*.pro mysql-connector-odbc-%1-win-src\MYODBCCls\MYODBCClsLib
-copy MYODBCCls\MYODBCClsLib\*.cpp mysql-connector-odbc-%1-win-src\MYODBCCls\MYODBCClsLib
-
-mkdir mysql-connector-odbc-%1-win-src\MYODBCCls\MYODBCClsApp
-copy MYODBCCls\MYODBCClsApp\*.pro mysql-connector-odbc-%1-win-src\MYODBCCls\MYODBCClsApp
-copy MYODBCCls\MYODBCClsApp\*.cpp mysql-connector-odbc-%1-win-src\MYODBCCls\MYODBCClsApp
-copy MYODBCCls\MYODBCClsApp\*.h mysql-connector-odbc-%1-win-src\MYODBCCls\MYODBCClsApp
-
-REM MYQTODBCCls
-mkdir mysql-connector-odbc-%1-win-src\MYQTODBCCls
-copy MYQTODBCCls\*.pro mysql-connector-odbc-%1-win-src\MYQTODBCCls
-
-mkdir mysql-connector-odbc-%1-win-src\MYQTODBCCls\include
-copy MYQTODBCCls\include\*.h mysql-connector-odbc-%1-win-src\MYQTODBCCls\include
-copy MYQTODBCCls\include\*.xpm mysql-connector-odbc-%1-win-src\MYQTODBCCls\include
-
-mkdir mysql-connector-odbc-%1-win-src\MYQTODBCCls\MYQTODBCClsLib
-copy MYQTODBCCls\MYQTODBCClsLib\*.pro mysql-connector-odbc-%1-win-src\MYQTODBCCls\MYQTODBCClsLib
-copy MYQTODBCCls\MYQTODBCClsLib\*.cpp mysql-connector-odbc-%1-win-src\MYQTODBCCls\MYQTODBCClsLib
-
-mkdir mysql-connector-odbc-%1-win-src\MYQTODBCCls\MYQTODBCClsApp
-copy MYQTODBCCls\MYQTODBCClsApp\*.pro mysql-connector-odbc-%1-win-src\MYQTODBCCls\MYQTODBCClsApp
-copy MYQTODBCCls\MYQTODBCClsApp\*.cpp mysql-connector-odbc-%1-win-src\MYQTODBCCls\MYQTODBCClsApp
-copy MYQTODBCCls\MYQTODBCClsApp\*.h mysql-connector-odbc-%1-win-src\MYQTODBCCls\MYQTODBCClsApp
-
-REM MYODBCBrw
-mkdir mysql-connector-odbc-%1-win-src\MYODBCBrw
-copy MYODBCBrw\*.pro mysql-connector-odbc-%1-win-src\MYODBCBrw
-
-mkdir mysql-connector-odbc-%1-win-src\MYODBCBrw\include
-copy MYODBCBrw\include\*.h mysql-connector-odbc-%1-win-src\MYODBCBrw\include
-copy MYODBCBrw\include\*.xpm mysql-connector-odbc-%1-win-src\MYODBCBrw\include
-
-mkdir mysql-connector-odbc-%1-win-src\MYODBCBrw\MYODBCBrwLib
-copy MYODBCBrw\MYODBCBrwLib\*.pro mysql-connector-odbc-%1-win-src\MYODBCBrw\MYODBCBrwLib
-copy MYODBCBrw\MYODBCBrwLib\*.cpp mysql-connector-odbc-%1-win-src\MYODBCBrw\MYODBCBrwLib
-
-mkdir mysql-connector-odbc-%1-win-src\MYODBCBrw\MYODBCBrwApp
-copy MYODBCBrw\MYODBCBrwApp\*.pro mysql-connector-odbc-%1-win-src\MYODBCBrw\MYODBCBrwApp
-copy MYODBCBrw\MYODBCBrwApp\*.cpp mysql-connector-odbc-%1-win-src\MYODBCBrw\MYODBCBrwApp
-copy MYODBCBrw\MYODBCBrwApp\*.h mysql-connector-odbc-%1-win-src\MYODBCBrw\MYODBCBrwApp
-copy MYODBCBrw\MYODBCBrwApp\*.xpm mysql-connector-odbc-%1-win-src\MYODBCBrw\MYODBCBrwApp
-copy MYODBCBrw\MYODBCBrwApp\*.ico mysql-connector-odbc-%1-win-src\MYODBCBrw\MYODBCBrwApp
-copy MYODBCBrw\MYODBCBrwApp\*.rc mysql-connector-odbc-%1-win-src\MYODBCBrw\MYODBCBrwApp
-
 REM doc
 mkdir mysql-connector-odbc-%1-win-src\doc
 copy doc\* mysql-connector-odbc-%1-win-src\doc

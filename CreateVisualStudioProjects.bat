@@ -64,32 +64,3 @@ ECHO myodbc3...
 cd myodbc3
 qmake -t vclib
 cd ..
-
-ECHO MYODBCCls...
-cd MYODBCCls\MYODBCClsLib
-qmake -t vclib
-cd ..\MYODBCClsApp
-qmake -t vcapp
-cd ..
-qmake
-cd ..
-
-ECHO MYQTODBCCls...
-cd MYQTODBCCls\MYQTODBCClsLib
-qmake -t vclib
-cd ..\MYQTODBCClsApp
-qmake -t vcapp
-cd ..
-qmake
-cd ..
-
-ECHO MYODBCBrw...
-cd MYODBCBrw\MYODBCBrwLib
-qmake -t vclib
-cd ..\MYODBCBrwApp
-qmake -t vcapp
-cd ..
-qmake
-cd ..
-
-

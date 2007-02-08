@@ -9,17 +9,8 @@
 		<Project File="myodbc3m/myodbc3m.vpj" />
 		<Project File="myodbc3S/myodbc3S.vpj" />
 		<Project File="myodbc3u/myodbc3u.vpj" />
-		<Project File="MYODBCBrw/MYODBCBrw.vpj" />
-		<Project File="MYODBCBrw/MYODBCBrwApp/MYODBCBrwApp.vpj" />
-		<Project File="MYODBCBrw/MYODBCBrwLib/MYODBCBrwLib.vpj" />
-		<Project File="MYODBCCls/MYODBCCls.vpj" />
-		<Project File="MYODBCCls/MYODBCClsApp/MYODBCClsApp.vpj" />
-		<Project File="MYODBCCls/MYODBCClsLib/MYODBCClsLib.vpj" />
 		<Project File="MYODBCDbg/MYODBCDbg.vpj" />
 		<Project File="MYODBCDbg/MYODBCDbgLib/MYODBCDbgLib.vpj" />
-		<Project File="MYQTODBCCls/MYQTODBCCls.vpj" />
-		<Project File="MYQTODBCCls/MYQTODBCClsApp/MYQTODBCClsApp.vpj" />
-		<Project File="MYQTODBCCls/MYQTODBCClsLib/MYQTODBCClsLib.vpj" />
 		<Project File="../../mysql-include.vpj" />
 		<Project File="scripts/scripts.vpj" />
 		<Project File="test/test.vpj" />

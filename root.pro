@@ -83,8 +83,5 @@ SUBDIRS         = \
                 myodbc3m \
 		myodbc3c \
                 myodbc3 \
-                MYODBCCls \
-                MYQTODBCCls \
-                MYODBCBrw \
                 test
 

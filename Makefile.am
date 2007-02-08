@@ -62,8 +62,6 @@ DIST_SUBDIRS = \
 readmedir = $(pkgdatadir)
 readme_DATA = \
 	ChangeLog \
-	COPYING \
-	EXCEPTIONS \
 	README \
 	README.debug
 
@@ -140,10 +138,7 @@ EXTRA_DIST = \
 	Uninstall.bat \
 	Upgrade.bat \
 	dltest \
-	doc \
-	MYODBCBrw \
-	MYODBCCls \
-	MYQTODBCCls
+	doc
 
 # Remove Subversion ".svn" subdirectories from source distribution
 dist-hook:
