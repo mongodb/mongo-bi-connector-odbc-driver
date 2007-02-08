@@ -15,8 +15,8 @@ rm -f Makefile.in
 rm -f Makefile
 cd ..
 
-echo "myodbc3u..."
-cd myodbc3u
+echo "util..."
+cd util
 rm -f Makefile.in
 rm -f Makefile
 cd ..

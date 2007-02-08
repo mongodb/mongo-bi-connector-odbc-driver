@@ -77,7 +77,7 @@ TEMPLATE        = subdirs
 SUBDIRS         = \
                 MYODBCDbg \
                 dltest \
-		myodbc3u \
+		util \
 		setup \
                 installer \
                 monitor \

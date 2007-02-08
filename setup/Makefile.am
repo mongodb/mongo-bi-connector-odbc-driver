@@ -127,10 +127,10 @@ libmyodbc3S_la_LDFLAGS = \
 	-release @myodbc_version@ \
 	-module
 
-# libmyodbc3S_la_LIBADD = @QT_LDFLAGS@ @LIB_QT@ ../myodbc3u/libmyodbc3u.la
-libmyodbc3S_la_LIBADD = $(QT_LDFLAGS) $(QT_LIBS) ../myodbc3u/libmyodbc3u.la
+# libmyodbc3S_la_LIBADD = @QT_LDFLAGS@ @LIB_QT@ ../util/libmyodbc3u.la
+libmyodbc3S_la_LIBADD = $(QT_LDFLAGS) $(QT_LIBS) ../util/libmyodbc3u.la
 
-libmyodbc3S_la_DEPENDENCIES = ../myodbc3u/libmyodbc3u.la
+libmyodbc3S_la_DEPENDENCIES = ../util/libmyodbc3u.la
 
 # LDFLAGS=@EXTRA_LDFLAGS@ 
 

@@ -8,7 +8,7 @@
 		<Project File="installer/myodbc3i.vpj" />
 		<Project File="monitor/myodbc3m.vpj" />
 		<Project File="setup/myodbc3S.vpj" />
-		<Project File="myodbc3u/myodbc3u.vpj" />
+		<Project File="util/myodbc3u.vpj" />
 		<Project File="MYODBCDbg/MYODBCDbg.vpj" />
 		<Project File="MYODBCDbg/MYODBCDbgLib/MYODBCDbgLib.vpj" />
 		<Project File="../../mysql-include.vpj" />

@@ -94,10 +94,10 @@ endif
 if WITH_DEBUG
 LTLIBS_DEPS = $(LTLIBS_DEBUG_DEPS)
 else
-LTLIBS_DEPS = ../myodbc3u/libmyodbc3u.la
+LTLIBS_DEPS = ../util/libmyodbc3u.la
 endif
 LTLIBS_DEBUG_DEPS = \
-	../myodbc3u/libmyodbc3u.la \
+	../util/libmyodbc3u.la \
 	../MYODBCDbg/MYODBCDbgLib/libMYODBCDbg.la
 
 libmyodbc3_la_LIBADD         = $(LTLIBS_DEPS) @LTDL_LIB@ @MYSQL_LIB@

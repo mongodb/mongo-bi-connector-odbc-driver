@@ -72,7 +72,7 @@ win32 {
 # #########################################################
 unix {
         INCLUDEPATH	        += /usr/include
-        LIBS                    += -L../myodbc3u -lmyodbc3u -lltdl
+        LIBS                    += -L../util -lmyodbc3u -lltdl
         libraries.path	        = /usr/lib
         libraries.files	        = libmyodbc*
 }
@@ -98,7 +98,7 @@ HEADERS			= \
                         myodbc3.h \
                         error.h \
 			myutil.h \
-                        ../myodbc3u/MYODBCUtil.h \
+                        ../util/MYODBCUtil.h \
 		        ../MYODBCDbg/include/MYODBCDbg.h
 SOURCES			= \
 			catalog.c \
@@ -115,26 +115,26 @@ SOURCES			= \
                         results.c \
                         transact.c \
                         utility.c \
-                        ../myodbc3u/MYODBCUtilAllocDataSource.c \
-                        ../myodbc3u/MYODBCUtilAllocDriver.c \          
-                        ../myodbc3u/MYODBCUtilClearDataSource.c \
-                        ../myodbc3u/MYODBCUtilClearDriver.c \          
-                        ../myodbc3u/MYODBCUtilDefaultDataSource.c \          
-                        ../myodbc3u/MYODBCUtilDSNExists.c \
-                        ../myodbc3u/MYODBCUtilFreeDataSource.c \       
-                        ../myodbc3u/MYODBCUtilFreeDriver.c \
-                        ../myodbc3u/MYODBCUtilGetDataSourceNames.c \
-                        ../myodbc3u/MYODBCUtilGetDriverNames.c \
-                        ../myodbc3u/MYODBCUtilGetIniFileName.c \
-                        ../myodbc3u/MYODBCUtilInsertStr.c \            
-                        ../myodbc3u/MYODBCUtilReadConnectStr.c \
-                        ../myodbc3u/MYODBCUtilReadDataSource.c \       
-                        ../myodbc3u/MYODBCUtilReadDataSourceStr.c \
-                        ../myodbc3u/MYODBCUtilReadDriver.c \           
-                        ../myodbc3u/MYODBCUtilWriteConnectStr.c \
-                        ../myodbc3u/MYODBCUtilWriteDataSource.c \      
-                        ../myodbc3u/MYODBCUtilWriteDataSourceStr.c \
-                        ../myodbc3u/MYODBCUtilWriteDriver.c \
+                        ../util/MYODBCUtilAllocDataSource.c \
+                        ../util/MYODBCUtilAllocDriver.c \          
+                        ../util/MYODBCUtilClearDataSource.c \
+                        ../util/MYODBCUtilClearDriver.c \          
+                        ../util/MYODBCUtilDefaultDataSource.c \          
+                        ../util/MYODBCUtilDSNExists.c \
+                        ../util/MYODBCUtilFreeDataSource.c \       
+                        ../util/MYODBCUtilFreeDriver.c \
+                        ../util/MYODBCUtilGetDataSourceNames.c \
+                        ../util/MYODBCUtilGetDriverNames.c \
+                        ../util/MYODBCUtilGetIniFileName.c \
+                        ../util/MYODBCUtilInsertStr.c \            
+                        ../util/MYODBCUtilReadConnectStr.c \
+                        ../util/MYODBCUtilReadDataSource.c \       
+                        ../util/MYODBCUtilReadDataSourceStr.c \
+                        ../util/MYODBCUtilReadDriver.c \           
+                        ../util/MYODBCUtilWriteConnectStr.c \
+                        ../util/MYODBCUtilWriteDataSource.c \      
+                        ../util/MYODBCUtilWriteDataSourceStr.c \
+                        ../util/MYODBCUtilWriteDriver.c \
                         ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgConnectAttrString.c \
                         ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgConnectOptionString.c \
                         ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgDiagFieldString.c \

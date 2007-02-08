@@ -21,7 +21,7 @@
 #ifndef MYODBCSETUP_H
 #define MYODBCSETUP_H
 
-#include "../myodbc3u/MYODBCUtil.h"
+#include "../util/MYODBCUtil.h"
 
 #ifdef __cplusplus
 extern "C" {

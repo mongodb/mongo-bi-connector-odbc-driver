@@ -41,8 +41,8 @@ cd dltest
 qmake
 cd ..
 
-ECHO myodbc3u...
-cd myodbc3u
+ECHO util...
+cd util
 qmake
 cd ..
 

@@ -1012,7 +1012,7 @@ AC_OUTPUT([
   Makefile 
   MYODBCDbg/Makefile
   MYODBCDbg/MYODBCDbgLib/Makefile
-  myodbc3u/Makefile
+  util/Makefile
   myodbc3/Makefile
   setup/Makefile
   dsn-editor/Makefile

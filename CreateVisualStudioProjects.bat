@@ -35,8 +35,8 @@ cd dltest
 qmake -t vcapp
 cd ..
 
-ECHO myodbc3u...
-cd myodbc3u
+ECHO util...
+cd util
 qmake -t vclib
 cd ..
 

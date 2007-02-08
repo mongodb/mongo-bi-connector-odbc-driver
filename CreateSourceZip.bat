@@ -59,11 +59,11 @@ mkdir mysql-connector-odbc-%1-win-src\dltest
 copy dltest\*.pro mysql-connector-odbc-%1-win-src\dltest
 copy dltest\*.c mysql-connector-odbc-%1-win-src\dltest
 
-REM myodbc3u
-mkdir mysql-connector-odbc-%1-win-src\myodbc3u
-copy myodbc3u\*.pro mysql-connector-odbc-%1-win-src\myodbc3u
-copy myodbc3u\*.h mysql-connector-odbc-%1-win-src\myodbc3u
-copy myodbc3u\*.c mysql-connector-odbc-%1-win-src\myodbc3u
+REM util
+mkdir mysql-connector-odbc-%1-win-src\util
+copy util\*.pro mysql-connector-odbc-%1-win-src\util
+copy util\*.h mysql-connector-odbc-%1-win-src\util
+copy util\*.c mysql-connector-odbc-%1-win-src\util
 
 REM setup
 mkdir mysql-connector-odbc-%1-win-src\setup

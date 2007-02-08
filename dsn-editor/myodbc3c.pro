@@ -20,13 +20,13 @@ CONFIG                  += qt
 include( ../defines.pri )
 include( ../odbc.pri )
 
-INCLUDEPATH             += ../myodbc3u ../setup
+INCLUDEPATH             += ../util ../setup
 
 # #########################################################
 # WIN32
 # #########################################################
 win32 {
-        LIBS            += user32.lib ..\myodbc3u\myodbc3u.lib
+        LIBS            += user32.lib ..\util\myodbc3u.lib
 # RC_FILE         += MYODBCConfig.rc
 }
 
@@ -35,8 +35,8 @@ win32 {
 # #########################################################
 mac {
 } else:unix {
-#        INCLUDEPATH     += ../myodbc3u ../setup /usr/include
-        LIBS            += -L../myodbc3u -lmyodbc3u
+#        INCLUDEPATH     += ../util ../setup /usr/include
+        LIBS            += -L../util -lmyodbc3u
 }
 
 # #########################################################
@@ -51,7 +51,7 @@ mac {
 #        DEFINES		-= HAVE_ODBCINST_H
 #        DEFINES		+= HAVE_IODBCINST_H
         LIBS            -= -lmyodbc3S
-        LIBS            += -L../myodbc3u -lmyodbc3u
+        LIBS            += -L../util -lmyodbc3u
         LIBS            += -lltdl -framework Carbon -framework QuickTime -lz -framework OpenGL -framework AGL -lz
         RC_FILE         = MYODBCConfig.icns
 }
@@ -60,7 +60,7 @@ mac {
 # FILES
 # #########################################################
 HEADERS                 += \
-                        ../myodbc3u/MYODBCUtil.h \ 
+                        ../util/MYODBCUtil.h \ 
                         ../setup/MYODBCSetup.h \
                         ../setup/MYODBCSetupAssistText.h \
                         ../setup/MYODBCSetupCheckBox.h \

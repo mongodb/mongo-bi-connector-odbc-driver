@@ -52,7 +52,7 @@
     #include <ltdl.h>
 #endif
 
-#include "../myodbc3u/MYODBCUtil.h"
+#include "../util/MYODBCUtil.h"
 
 #ifdef USE_IODBC
 #include <iodbcinst.h>

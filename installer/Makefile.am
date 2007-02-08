@@ -20,8 +20,8 @@ if MYODBCINST
 
 bin_PROGRAMS = myodbc3i
 myodbc3i_SOURCES = myodbc3i.c
-myodbc3i_LDADD        = ../myodbc3u/libmyodbc3u.la @LTDL_LIB@
-myodbc3i_DEPENDENCIES = ../myodbc3u/libmyodbc3u.la
+myodbc3i_LDADD        = ../util/libmyodbc3u.la @LTDL_LIB@
+myodbc3i_DEPENDENCIES = ../util/libmyodbc3u.la
 
 # LDFLAGS=@EXTRA_LDFLAGS@
 

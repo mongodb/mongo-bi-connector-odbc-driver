@@ -22,8 +22,8 @@ rm -f Makefile
 qmake
 cd ..
 
-echo "myodbc3u..."
-cd myodbc3u
+echo "util..."
+cd util
 rm -f Makefile
 qmake
 cd ..

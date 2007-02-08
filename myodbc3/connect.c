@@ -48,7 +48,7 @@
     #endif
 #endif
 
-#include "../myodbc3u/MYODBCUtil.h"
+#include "../util/MYODBCUtil.h"
 
 #ifndef CLIENT_NO_SCHEMA
     #define CLIENT_NO_SCHEMA      16

@@ -47,7 +47,7 @@ debug {
 # WIN 
 # #########################################################
 win32 {
-        LIBS                    += user32.lib ../myodbc3u/myodbc3u.lib 
+        LIBS                    += user32.lib ../util/myodbc3u.lib 
 #        LIBS                    += /VERBOSE:LIB
         DEF_FILE                = myodbc3S.def
         RC_FILE                 = myodbc3S.rc
@@ -59,7 +59,7 @@ win32 {
 # UNIX
 # #########################################################
 unix {
-        LIBS                    += -L../myodbc3u -lmyodbc3u
+        LIBS                    += -L../util -lmyodbc3u
         libraries.path	        = /usr/lib
         libraries.files	        = libmyodbc*
 }
