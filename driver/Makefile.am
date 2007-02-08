@@ -30,19 +30,19 @@
 
 AUTOMAKE_OPTIONS=foreign
 
-# Note that some versions of automake might have problems with adding
-# targets using "+=", please upgrade to a newer version of automake 
-# if you get this problem.
-
-lib_LTLIBRARIES=libmyodbc3.la
-
 if SEPARATE_THREAD_SAFE_DRIVER
-lib_LTLIBRARIES += libmyodbc3_r.la
+  TS_DRIVER=libmyodbc3_r.la
+else
+  TS_DRIVER=
 endif
 
 if WITH_SEPARATE_DEBUG_DRIVER
-lib_LTLIBRARIES += libmyodbc3_debug.la 
+  DEBUG_DRIVER=libmyodbc3_debug.la 
+else
+  DEBUG_DRIVER=
 endif
+
+lib_LTLIBRARIES=libmyodbc3.la $(TS_DRIVER) $(DEBUG_DRIVER)
 
 ###################################################################
 #                                                                 #
