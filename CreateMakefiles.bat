@@ -61,8 +61,8 @@ cd monitor
 qmake
 cd ..
 
-ECHO myodbc3c...
-cd myodbc3c
+ECHO dsn-editor...
+cd dsn-editor
 qmake
 cd ..
 

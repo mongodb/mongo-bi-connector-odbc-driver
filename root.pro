@@ -11,7 +11,7 @@
 #			requests from the; ODBC Administrator,
 #			driver, or application for GUI 
 #			prompting.
-#	myodbc3c	- Setup application for when
+#	dsn-editor	- Setup application for when
 #			the systems regular ODBC 
 #			Administrator application is not
 #			making one happy (on OSX perhaps).
@@ -81,7 +81,7 @@ SUBDIRS         = \
 		setup \
                 installer \
                 monitor \
-		myodbc3c \
+		dsn-editor \
                 myodbc3 \
                 test
 

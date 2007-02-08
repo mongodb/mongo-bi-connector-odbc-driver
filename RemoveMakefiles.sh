@@ -39,8 +39,8 @@ rm -f Makefile.in
 rm -f Makefile
 cd ..
 
-echo "myodbc3c..."
-cd myodbc3c
+echo "dsn-editor..."
+cd dsn-editor
 rm -f Makefile.in
 rm -f Makefile
 cd ..

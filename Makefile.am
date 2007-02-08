@@ -38,7 +38,7 @@ SUBDIRS = \
 	myodbc3u \
 	myodbc3 \
 	setup \
-	myodbc3c \
+	dsn-editor \
 	installer \
 	monitor \
 	@myodbc_samples_dir@ \
@@ -51,7 +51,7 @@ DIST_SUBDIRS = \
 	myodbc3u \
 	myodbc3 \
 	setup \
-	myodbc3c \
+	dsn-editor \
 	installer \
 	myodbc3m \
 	samples \

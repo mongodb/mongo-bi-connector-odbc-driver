@@ -86,10 +86,10 @@ copy monitor\*.pro mysql-connector-odbc-%1-win-src\monitor
 copy monitor\*.c mysql-connector-odbc-%1-win-src\monitor
 copy monitor\*.h mysql-connector-odbc-%1-win-src\monitor
 
-REM myodbc3c
-mkdir mysql-connector-odbc-%1-win-src\myodbc3c 
-copy myodbc3c\*.pro mysql-connector-odbc-%1-win-src\myodbc3c
-copy myodbc3c\*.cpp mysql-connector-odbc-%1-win-src\myodbc3c
+REM dsn-editor
+mkdir mysql-connector-odbc-%1-win-src\dsn-editor 
+copy dsn-editor\*.pro mysql-connector-odbc-%1-win-src\dsn-editor
+copy dsn-editor\*.cpp mysql-connector-odbc-%1-win-src\dsn-editor
 
 REM myodbc3
 mkdir mysql-connector-odbc-%1-win-src\myodbc3

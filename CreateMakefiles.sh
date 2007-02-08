@@ -46,8 +46,8 @@ rm -f Makefile
 qmake
 cd ..
 
-echo "myodbc3c..."
-cd myodbc3c
+echo "dsn-editor..."
+cd dsn-editor
 rm -f Makefile
 qmake
 cd ..
