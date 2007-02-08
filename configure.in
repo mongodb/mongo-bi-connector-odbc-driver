@@ -1017,7 +1017,7 @@ AC_OUTPUT([
   setup/Makefile
   myodbc3c/Makefile
   installer/Makefile
-  myodbc3m/Makefile
+  monitor/Makefile
   samples/Makefile
   test/Makefile
   scripts/Makefile

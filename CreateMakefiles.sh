@@ -40,8 +40,8 @@ rm -f Makefile
 qmake
 cd ..
 
-echo "myodbc3m..."
-cd myodbc3m
+echo "monitor..."
+cd monitor
 rm -f Makefile
 qmake
 cd ..

@@ -6,7 +6,7 @@
 		<Project File="myodbc3/myodbc3.vpj" />
 		<Project File="myodbc3c/myodbc3c.vpj" />
 		<Project File="installer/myodbc3i.vpj" />
-		<Project File="myodbc3m/myodbc3m.vpj" />
+		<Project File="monitor/myodbc3m.vpj" />
 		<Project File="setup/myodbc3S.vpj" />
 		<Project File="myodbc3u/myodbc3u.vpj" />
 		<Project File="MYODBCDbg/MYODBCDbg.vpj" />

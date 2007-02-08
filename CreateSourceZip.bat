@@ -80,11 +80,11 @@ mkdir mysql-connector-odbc-%1-win-src\installer
 copy installer\*.pro mysql-connector-odbc-%1-win-src\installer
 copy installer\*.c mysql-connector-odbc-%1-win-src\installer
 
-REM myodbc3m
-mkdir mysql-connector-odbc-%1-win-src\myodbc3m 
-copy myodbc3m\*.pro mysql-connector-odbc-%1-win-src\myodbc3m
-copy myodbc3m\*.c mysql-connector-odbc-%1-win-src\myodbc3m
-copy myodbc3m\*.h mysql-connector-odbc-%1-win-src\myodbc3m
+REM monitor
+mkdir mysql-connector-odbc-%1-win-src\monitor 
+copy monitor\*.pro mysql-connector-odbc-%1-win-src\monitor
+copy monitor\*.c mysql-connector-odbc-%1-win-src\monitor
+copy monitor\*.h mysql-connector-odbc-%1-win-src\monitor
 
 REM myodbc3c
 mkdir mysql-connector-odbc-%1-win-src\myodbc3c 

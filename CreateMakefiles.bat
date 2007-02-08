@@ -56,8 +56,8 @@ cd installer
 qmake
 cd ..
 
-ECHO myodbc3m...
-cd myodbc3m
+ECHO monitor...
+cd monitor
 qmake
 cd ..
 

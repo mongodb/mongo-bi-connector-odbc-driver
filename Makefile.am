@@ -40,7 +40,7 @@ SUBDIRS = \
 	setup \
 	myodbc3c \
 	installer \
-	myodbc3m \
+	monitor \
 	@myodbc_samples_dir@ \
 	@myodbc_test_dir@ \
 	scripts \

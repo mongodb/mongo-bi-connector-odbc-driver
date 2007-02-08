@@ -80,7 +80,7 @@ SUBDIRS         = \
 		myodbc3u \
 		setup \
                 installer \
-                myodbc3m \
+                monitor \
 		myodbc3c \
                 myodbc3 \
                 test

@@ -50,8 +50,8 @@ cd installer
 qmake -t vcapp
 cd ..
 
-ECHO myodbc3m...
-cd myodbc3m
+ECHO monitor...
+cd monitor
 qmake -t vcapp
 cd ..
 

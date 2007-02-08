@@ -33,8 +33,8 @@ rm -f Makefile.in
 rm -f Makefile
 cd ..
 
-echo "myodbc3m..."
-cd myodbc3m
+echo "monitor..."
+cd monitor
 rm -f Makefile.in
 rm -f Makefile
 cd ..
