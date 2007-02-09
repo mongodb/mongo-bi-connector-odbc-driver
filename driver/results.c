@@ -1028,10 +1028,36 @@ SQLRETURN SQL_API sql_get_data( STMT *          stmt,
             case SQL_C_TIMESTAMP:
             case SQL_C_TYPE_TIMESTAMP:
                 {
-                    if ( str_to_ts((SQL_TIMESTAMP_STRUCT *)rgbValue, value) )
-                        *pcbValue= SQL_NULL_DATA;
+                    if (field->type == FIELD_TYPE_TIME)
+                    {
+                        SQL_TIME_STRUCT ts;
+
+                        if ( str_to_time_st(&ts,value) )
+                            *pcbValue= SQL_NULL_DATA;
+                        else
+                        {
+                            SQL_TIMESTAMP_STRUCT *timestamp_info= (SQL_TIMESTAMP_STRUCT *)rgbValue;
+                            time_t sec_time= time(NULL);
+                            struct tm cur_tm;
+                            localtime_r(&sec_time, &cur_tm);
+
+                            timestamp_info->year= 1900 + cur_tm.tm_year;
+                            timestamp_info->month= 1 + cur_tm.tm_mon; /* January is 0 in tm */
+                            timestamp_info->day= cur_tm.tm_mday;
+                            timestamp_info->hour= ts.hour;
+                            timestamp_info->minute= ts.minute;
+                            timestamp_info->second= ts.second;
+                            timestamp_info->fraction= 0;
+                            *pcbValue= sizeof(SQL_TIMESTAMP_STRUCT);      
+                        }
+                    } 
                     else
-                        *pcbValue= sizeof(SQL_TIMESTAMP_STRUCT);      
+                    {
+                        if ( str_to_ts((SQL_TIMESTAMP_STRUCT *)rgbValue, value) )
+                            *pcbValue= SQL_NULL_DATA;
+                        else
+                            *pcbValue= sizeof(SQL_TIMESTAMP_STRUCT);      
+                    }
                     break;
 
                 }
