@@ -945,7 +945,7 @@ SQLRETURN SQL_API sql_get_data( STMT *          stmt,
                 {
                     *((SQLUINTEGER*) rgbValue)= (SQLUINTEGER)atol(value);
                 }
-                *pcbValue= sizeof(long);
+                *pcbValue= sizeof(SQLUINTEGER);
                 break;
             case SQL_C_FLOAT:
                 if ( rgbValue )
