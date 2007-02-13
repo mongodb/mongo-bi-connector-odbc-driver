@@ -76,7 +76,7 @@ void t_prep_basic()
     mystmt(hstmt,rc);
 
     printMessage( "\n outdata: %d(%d), %s(%d)",id,length1,name,length2);
-    myassert(id == 100 && length1 == sizeof(long));
+    myassert(id == 100 && length1 == sizeof(SQLINTEGER));
     myassert(strcmp(name,"venu")==0 && length2 == 4);
 
     rc = SQLFetch(hstmt);
