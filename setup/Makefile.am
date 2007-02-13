@@ -161,6 +161,6 @@ EXTRA_DIST = \
 	TopImage.xpm \
 	MySQL-16.xpm \
 	myodbc3S.vpj \
-	myodbc3S.pro \
+	setup.pro \
 	myodbc3S.rc \
 	MYODBCSetupWriteConnectStr.c

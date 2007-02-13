@@ -25,4 +25,4 @@ libmyodbc3u_la_SOURCES = \
 
 EXTRA_DIST = \
 	myodbc3u.vpj \
-	myodbc3u.pro
+	util.pro

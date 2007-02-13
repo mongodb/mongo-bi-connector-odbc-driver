@@ -26,6 +26,6 @@ endif
 EXTRA_DIST = \
 	main.cpp \
 	myodbc3c.icns \
-	myodbc3c.pro \
+	dsn-editor.pro \
 	myodbc3c.vpj
 

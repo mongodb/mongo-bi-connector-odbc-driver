@@ -35,4 +35,4 @@ endif
 
 EXTRA_DIST = \
 	myodbc3i.vpj \
-	myodbc3i.pro
+	installer.pro
