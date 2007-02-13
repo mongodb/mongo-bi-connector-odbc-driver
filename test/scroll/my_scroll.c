@@ -145,8 +145,8 @@ Testing SQL_FETCH_RELATIVE with row_set_size as 10
 void t_array_relative_10(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER nrows;
-    long i,index,iarray[15];
+    SQLINTEGER nrows, iarray[15];
+    long i,index;
     char name[21];
 
     SQLExecDirect(hstmt,"drop table t_array_relative_10",SQL_NTS);
@@ -486,8 +486,8 @@ Testing SQL_FETCH_RELATIVE with row_set_size as 2
 void t_array_relative_2(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER nrows;
-    long i,iarray[15];
+    SQLINTEGER nrows, iarray[15];
+    long i;
     const int max_rows=10;
 
     SQLExecDirect(hstmt,"drop table t_array_relative_2",SQL_NTS);
@@ -971,9 +971,9 @@ Testing SQL_FETCH_ABSOLUTE with row_set_size as 2
 void t_absolute_2(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER nrows;
+    SQLINTEGER nrows, iarray[15];
     const int max_rows=10;
-    long i,iarray[15];
+    long i;
 
     SQLExecDirect(hstmt,"drop table t_absolute_2",SQL_NTS);
 
