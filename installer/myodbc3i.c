@@ -326,10 +326,6 @@ int main( int argc, char *argv[] )
 /*!
     \brief  Show a list of drivers or data source names.
 
-    \note   OSX
-
-            SQLGetPrivateProfileString() is broken but fortunately the
-            old call, GetPrivateProfileString() is available.
 
     \note   XP
 
