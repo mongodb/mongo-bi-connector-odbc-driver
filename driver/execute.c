@@ -69,7 +69,7 @@ SQLRETURN do_query(STMT FAR *stmt,char *query)
             uint length= strlen(pos);
             if ( (tmp_buffer= my_malloc(length+30,MYF(0))) )
             {
-                memcpy(tmp_buffer,query,length);
+                memcpy(tmp_buffer,pos,length);
                 sprintf(tmp_buffer+length, " limit %lu",
                         (unsigned long)stmt->stmt_options.max_rows);
                 if ( query != stmt->query )

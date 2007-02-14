@@ -2530,7 +2530,12 @@ static void t_max_rows(SQLHDBC hdbc,SQLHSTMT hstmt)
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_MAX_ROWS,(SQLPOINTER)5,0);
     mystmt(hstmt,rc);
 
-    rc = tmysql_exec(hstmt,"select * from t_max_rows");
+    /*
+     This query includes leading spaces to act as a regression test
+     for Bug #6609: SQL_ATTR_MAX_ROWS and leading spaces in query result in
+     truncating end of query.
+    */
+    rc = tmysql_exec(hstmt,"  select * from t_max_rows");
     mystmt(hstmt,rc);
     myassert( 5 == myrowcount(hstmt));
 
@@ -4462,7 +4467,7 @@ static void t_pos_datetime_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
   SQLHSTMT  hstmt1;
-  long      int_data;
+  SQLINTEGER int_data;
   SQLLEN    row_count, cur_type;
 
   printMessageHeader();
@@ -5863,8 +5868,8 @@ static void t_time1(SQLHDBC hdbc, SQLHSTMT hstmt)
 void t_row_array_size(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  long      i, iarray[15];
-  SQLUINTEGER nrows;
+  SQLINTEGER i, iarray[15];
+  SQLLEN nrows;
   const int max_rows=9;
 
   printMessageHeader();
@@ -6938,8 +6943,4 @@ int main(int argc, char *argv[])
 
   fprintf(stdout,"\n\n-- test-end --\n");
   return(0);
-} 
-
-
-
-
+}
