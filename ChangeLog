@@ -39,7 +39,8 @@
 -- fixed 64-bit issue related to SQLINTEGER/SQLUINTEGER bound columns 
    defined as int, but casted as long/unsigned long
 -- BUG#25846: fixed getting TIME columns using SQL_TIMESTAMP_STRUCT structure 
-   in Crystal Reports
+   in Crystal Reports (r159/Bogdan)
+-- Added test case for BUG#25846 (r161/Bogdan)
 ---------------------------------------------
 25-Aug-2005 (3.51.12): pharvey@mysql.com
 ---------------------------------------------
