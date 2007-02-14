@@ -113,7 +113,7 @@ void my_param_update(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN   rc;
     SQLLEN nRowCount;
-    long id=9;
+    SQLINTEGER id=9;
     char name[]="update";
 
     /* prepare the insert statement with parameters */
