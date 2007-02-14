@@ -67,18 +67,7 @@ BOOL MYODBCUtilReadDriver( MYODBCUTIL_DRIVER *pDriver, LPCSTR pszName, LPCSTR ps
         pszSectionName = szSectionNames;
         while ( *pszSectionName )
         {
-#if defined(__APPLE__) && 0
-            /*!
-                \note   OSX
-    
-                        SQLGetPrivateProfileString is the proper call and is available - but
-                        at this time it appears utterly broken. So we call an alternative
-                        instead. 
-            */
-            if ( GetPrivateProfileString( pszSectionName, "DRIVER", NULL, szValue, sizeof( szValue ) - 1, "ODBCINST.INI" ) > 0 )
-#else
             if ( SQLGetPrivateProfileString( pszSectionName, "DRIVER", "", szValue, sizeof( szValue ) - 1, "ODBCINST.INI" ) > 0 )
-#endif
             {
                 if ( strcmp( szValue, pszFileName ) == 0 )
                     break;
@@ -95,9 +84,7 @@ BOOL MYODBCUtilReadDriver( MYODBCUTIL_DRIVER *pDriver, LPCSTR pszName, LPCSTR ps
     if ( !pszSectionName )
         return FALSE;
 
-#if defined(__APPLE__) && 0
-    if ( GetPrivateProfileString( pszSectionName, NULL, NULL, szEntryNames, sizeof( szEntryNames ) - 1, "ODBCINST.INI" ) < 1 )
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
     if ( SQLGetPrivateProfileString( pszSectionName, "", "", szEntryNames, sizeof( szEntryNames ) - 1, "ODBCINST.INI" ) < 1 )
 #else
     if ( SQLGetPrivateProfileString( pszSectionName, NULL, NULL, szEntryNames, sizeof( szEntryNames ) - 1, "ODBCINST.INI" ) < 1 )
@@ -111,11 +98,7 @@ BOOL MYODBCUtilReadDriver( MYODBCUTIL_DRIVER *pDriver, LPCSTR pszName, LPCSTR ps
     {
         *szValue = '\0';
 
-#if defined(__APPLE__) && 0
-        if ( GetPrivateProfileString( pszSectionName, pszEntryName, NULL, szValue, sizeof( szValue ) - 1, "ODBCINST.INI" ) > 0 )
-#else
         if ( SQLGetPrivateProfileString( pszSectionName, pszEntryName, "", szValue, sizeof( szValue ) - 1, "ODBCINST.INI" ) > 0 )
-#endif
         {
             if ( strcasecmp( pszEntryName, "DRIVER" ) == 0 )
             {
