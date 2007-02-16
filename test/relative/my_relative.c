@@ -22,7 +22,7 @@ Testing basic scrolling feature
 void t_scroll(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    long      i;
+    SQLINTEGER i;
 
     SQLExecDirect(hstmt,"drop table t_scroll",SQL_NTS);
 
@@ -285,7 +285,7 @@ void t_relative1(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
     SQLRETURN rc;
     SQLINTEGER nrows;
-    long i;
+    SQLUINTEGER i;
     const int max_rows=10;
 
     SQLExecDirect(hstmt,"drop table t_relative1",SQL_NTS);
