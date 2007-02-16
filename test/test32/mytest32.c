@@ -375,7 +375,7 @@ void t_prep_scroll()
 void t_prep_getdata()
 {
     SQLCHAR    name[10];
-    long       data;
+    SQLINTEGER data;
     SQLINTEGER length;
     SQLCHAR    tiny;
 
