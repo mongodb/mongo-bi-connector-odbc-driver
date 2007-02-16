@@ -145,8 +145,8 @@ Testing SQL_FETCH_RELATIVE with row_set_size as 10
 void t_relative(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER nrows, iarray[15];
-    SQLUINTEGER i;
+    SQLUINTEGER i, nrows;
+    SQLINTEGER  iarray[15];
     long      index;
     char      name[21];
 
@@ -201,7 +201,7 @@ void t_relative(SQLHDBC hdbc,SQLHSTMT hstmt)
     {
         printMessage("\n %d",iarray[index-1]);
         myassert(iarray[index-1] == index);
-    }    
+    }
 
     rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);/* 10-20 */
     mystmt(hstmt,rc);

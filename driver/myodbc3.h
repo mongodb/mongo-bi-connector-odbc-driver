@@ -171,7 +171,7 @@ typedef struct stmt_options
 {
   SQLUINTEGER	   bind_type,rows_in_set,cursor_type;
   SQLUINTEGER     *paramProcessedPtr;
-  SQLROWSETSIZE   *rowsFetchedPtr;
+  SQLUINTEGER     *rowsFetchedPtr;
   SQLUINTEGER	   simulateCursor;
   SQLINTEGER	   max_length, max_rows,
                   *bind_offset;
