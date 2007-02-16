@@ -24,7 +24,8 @@ SQLCHAR *mysock= NULL;
 void t_basic(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    long nInData= 1, nOutData, nRowCount= 0;
+    SQLINTEGER nInData= 1, nOutData;
+    SQLROWCOUNT nRowCount= 0;
     char szOutData[31]={0};
 
     /* CREATE TABLE 'myodbc' */
@@ -102,7 +103,8 @@ void t_basic(SQLHDBC hdbc,SQLHSTMT hstmt)
 void tmysql_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    long      nData = 500, nlen;
+    SQLINTEGER nData = 500;
+    SQLROWCOUNT nlen;
     char      szData[255]={0};
     SQLLEN    pcrow;
     SQLUSMALLINT rgfRowStatus;
@@ -266,8 +268,8 @@ void tmysql_setpos_del1(SQLHDBC hdbc, SQLHSTMT hstmt)
 void tmysql_setpos_del_all(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    long nData= 500;
-    SQLLEN nlen;
+    SQLINTEGER nData= 500;
+    SQLROWCOUNT nlen;
     SQLCHAR szData[255]={0};
     SQLROWSETSIZE pcrow;
 

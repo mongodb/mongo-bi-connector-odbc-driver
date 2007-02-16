@@ -146,7 +146,7 @@ int AutoRecNum(SQLHDBC hConn, char *table_name)
         PrintErr(SQL_HANDLE_STMT, hStmtGet);
         return 0;
     }
-    SQLINTEGER rowc;
+    SQLROWCOUNT rowc;
     rc = SQLRowCount(hStmtGet, &rowc);
     if (!SQL_SUCCEEDED(rc))
     {

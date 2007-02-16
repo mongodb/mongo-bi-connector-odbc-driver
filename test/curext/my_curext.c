@@ -23,7 +23,7 @@
 void my_pcbValue(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN   rc;
-    SQLINTEGER  nRowCount;
+    SQLROWCOUNT nRowCount;
     SQLINTEGER  nData = 500, int_pcbValue, pcbValue, pcbValue1, pcbValue2;
     SQLCHAR     szData[255]={0};
 
@@ -149,7 +149,7 @@ void my_pcbValue(SQLHDBC hdbc, SQLHSTMT hstmt)
 void my_pcbValue_add(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN   rc;
-    SQLINTEGER  nRowCount;
+    SQLROWCOUNT nRowCount;
     SQLINTEGER  nData = 500, int_pcbValue, pcbValue, pcbValue1, pcbValue2;
     SQLCHAR     szData[255]={0};
 

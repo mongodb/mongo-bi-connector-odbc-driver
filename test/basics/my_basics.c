@@ -30,7 +30,7 @@
 void my_basics(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN  rc;
-    SQLLEN nRowCount;
+    SQLROWCOUNT nRowCount;
 
     /* drop table 'myodbc3_demo_basic' if it already exists */
     rc = SQLExecDirect(hstmt,"DROP TABLE if exists myodbc3_demo_basic",SQL_NTS);

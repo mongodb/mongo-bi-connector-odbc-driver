@@ -101,7 +101,7 @@ void my_init_table(SQLHDBC hdbc, SQLHSTMT hstmt)
 void my_positioned_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN   rc;
-    SQLLEN      nRowCount;
+    SQLROWCOUNT nRowCount;
     SQLHSTMT    hstmt_pos;
 
     /* create new statement handle */
@@ -184,7 +184,7 @@ void my_positioned_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
 void my_setpos_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN   rc;
-    SQLLEN      nRowCount;
+    SQLROWCOUNT nRowCount;
     long        id;
     char        name[50];
 
