@@ -388,7 +388,7 @@ void t_prep_getdata()
     mystmt(hstmt,rc);
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_LONG,SQL_TINYINT,
-                          0,0,&tiny,0,NULL);
+                          0,0,&data,0,NULL);
 
     rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,SQL_C_LONG,SQL_INTEGER,
                           0,0,&data,0,NULL);
@@ -397,7 +397,7 @@ void t_prep_getdata()
                           10,10,name,6,NULL);
     mystmt(hstmt,rc);
 
-    sprintf(name,"venu"); tiny = data = 10;
+    sprintf(name,"venu"); data = 10;
 
     rc = SQLExecute(hstmt);
     mystmt(hstmt,rc);
@@ -408,7 +408,7 @@ void t_prep_getdata()
     SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    data= tiny= 0;
+    data= 0;
     rc = SQLExecDirect(hstmt,"select * from t_prep_getdata",SQL_NTS);
     mystmt(hstmt,rc);
 
