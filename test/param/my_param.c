@@ -60,7 +60,7 @@ void my_init_table(SQLHDBC hdbc, SQLHSTMT hstmt)
 void my_param_insert(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN   rc;
-    long        id;
+    SQLINTEGER  id;
     char        name[50];
 
     /* prepare the insert statement with parameters */
@@ -112,7 +112,7 @@ void my_param_insert(SQLHDBC hdbc, SQLHSTMT hstmt)
 void my_param_update(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN  rc;
-    SQLINTEGER nRowCount;
+    SQLROWCOUNT nRowCount;
     SQLINTEGER id=9;
     char name[]="update";
 
@@ -165,9 +165,9 @@ void my_param_update(SQLHDBC hdbc, SQLHSTMT hstmt)
 *********************************************************/
 void my_param_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
-    SQLRETURN   rc;
-    SQLLEN nRowCount;
-    long id;
+    SQLRETURN  rc;
+    SQLINTEGER id;
+    SQLROWCOUNT nRowCount;
 
     /* supply data to parameter 1 */    
     rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, 
