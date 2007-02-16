@@ -22,9 +22,8 @@ BLOB SPEED TEST
 void t_blob(SQLHDBC hdbc, SQLHSTMT hstmt, SQLUINTEGER blob_size)
 {
     SQLRETURN rc;
-    SQLULEN cbValue;
     SQLUINTEGER j= 0;
-    long l;
+    SQLINTEGER l, cbValue;
     char *blobbuf;
     SQLUINTEGER blobbuf_size = 1024 * 1 * 6L;
     SQLUINTEGER blob_read;
@@ -134,8 +133,8 @@ void t_blob(SQLHDBC hdbc, SQLHSTMT hstmt, SQLUINTEGER blob_size)
 void t_1piecewrite2(HDBC hdbc, HSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLLEN cbValue,cbValue2;
-    long l;
+    SQLINTEGER cbValue,cbValue2;
+    SQLINTEGER l;
     SQLCHAR* blobbuf;
     size_t i;
 
