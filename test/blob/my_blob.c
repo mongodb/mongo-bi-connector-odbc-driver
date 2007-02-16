@@ -23,7 +23,8 @@ void t_blob(SQLHDBC hdbc, SQLHSTMT hstmt, SQLUINTEGER blob_size)
 {
     SQLRETURN rc;
     SQLUINTEGER j= 0;
-    SQLINTEGER l, cbValue;
+    SQLINTEGER l;
+    SQLLEN cbValue;
     char *blobbuf;
     SQLUINTEGER blobbuf_size = 1024 * 1 * 6L;
     SQLUINTEGER blob_read;
@@ -133,7 +134,7 @@ void t_blob(SQLHDBC hdbc, SQLHSTMT hstmt, SQLUINTEGER blob_size)
 void t_1piecewrite2(HDBC hdbc, HSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLINTEGER cbValue,cbValue2;
+    SQLLEN cbValue,cbValue2;
     SQLINTEGER l;
     SQLCHAR* blobbuf;
     size_t i;
