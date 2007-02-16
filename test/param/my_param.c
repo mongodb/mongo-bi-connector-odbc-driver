@@ -111,8 +111,8 @@ void my_param_insert(SQLHDBC hdbc, SQLHSTMT hstmt)
 *********************************************************/
 void my_param_update(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
-    SQLRETURN   rc;
-    SQLLEN nRowCount;
+    SQLRETURN  rc;
+    SQLINTEGER nRowCount;
     SQLINTEGER id=9;
     char name[]="update";
 
