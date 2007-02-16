@@ -34,8 +34,7 @@ SQLRETURN rc;
 
 void t_prep_basic()
 {
-    SQLLEN     pcrow, length1, length2;
-    long       id;
+    SQLINTEGER id, pcrow, length1, length2;
     char       name[20];
 
     SQLExecDirect(hstmt,"drop table t_prep_basic",SQL_NTS);
@@ -95,7 +94,7 @@ void t_prep_basic()
 
 void t_prep_buffer_length()
 {
-    SQLLEN     length;
+    SQLINTEGER length;
     char       buffer[20];
 
     SQLExecDirect(hstmt,"drop table t_prep_buffer_length",SQL_NTS);
@@ -190,7 +189,7 @@ void t_prep_buffer_length()
 
 void t_prep_truncate()
 {
-    SQLLEN     pcrow, length, length1;
+    SQLINTEGER pcrow, length, length1;
     SQLCHAR    name[20], bin[10];
 
 
@@ -463,7 +462,7 @@ void t_prep_getdata()
 void t_prep_getdata1()
 {
     SQLCHAR     data[11];
-    SQLLEN      length;
+    SQLINTEGER  length;
 
     SQLExecDirect(hstmt,"drop table t_prep_getdata",SQL_NTS);
 
@@ -585,7 +584,7 @@ void t_prep_getdata1()
 void t_prep_catalog()
 {
     SQLCHAR     table[20];
-    SQLLEN      length;
+    SQLINTEGER  length;
 
     SQLExecDirect(hstmt,"drop table t_prep_catalog",SQL_NTS);
 
@@ -748,7 +747,7 @@ void t_catalog()
 
 void t_rows_fetched_ptr()
 {
-    SQLLEN       rowsFetched, rowsSize;
+    SQLINTEGER   rowsFetched, rowsSize;
     long         i;
 
     SQLExecDirect(hstmt,"drop table t_rows_fetched_ptr",SQL_NTS);
@@ -876,8 +875,7 @@ void t_rows_fetched_ptr()
 
 void t_sps()
 {
-    SQLLEN length, length1;
-    long a, a1;
+    SQLINTEGER a, a1, length, length1;
     char b[]= "abcdefghij", b1[10];
 
 /*
