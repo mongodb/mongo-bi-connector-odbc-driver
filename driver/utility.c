@@ -757,7 +757,7 @@ ulong bind_length(int sql_data_type,ulong length)
         case SQL_C_LONG:
         case SQL_C_SLONG:
         case SQL_C_ULONG:
-            return sizeof(long);
+            return sizeof(SQLINTEGER);
         case SQL_C_FLOAT:
             return sizeof(float);
         case SQL_C_DOUBLE:
