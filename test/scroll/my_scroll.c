@@ -973,7 +973,7 @@ void t_absolute_2(SQLHDBC hdbc, SQLHSTMT hstmt)
     SQLRETURN rc;
     SQLINTEGER nrows, iarray[15];
     const int max_rows=10;
-    long i;
+    SQLUINTEGER i;
 
     SQLExecDirect(hstmt,"drop table t_absolute_2",SQL_NTS);
 
