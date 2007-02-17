@@ -30,8 +30,10 @@
 int main(int argc, char *argv[])
 {
     SQLHENV    henv;
-    SQLHDBC    hdbc; 
-    SQLCHAR    server_name[30];  
+    SQLHDBC    hdbc;
+    SQLCHAR    name[1024], desc[1024];
+    SQLSMALLINT name_length, desc_length;
+    SQLCHAR    server_name[30];
     SQLRETURN  rc;
     SQLINTEGER narg;
 
@@ -50,25 +52,41 @@ int main(int argc, char *argv[])
         else if ( narg == 3 )
             mypwd = argv[3];
 
-    }   
+    }
 
-    printMessage( "[%s][%d]\n", __FILE__, __LINE__ );
     rc = SQLAllocHandle(SQL_HANDLE_ENV,SQL_NULL_HANDLE,&henv);
     myenv(henv, rc);
 
-    printMessage( "[%s][%d]\n", __FILE__, __LINE__ );
     rc = SQLSetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)SQL_OV_ODBC3,0);
     myenv(henv, rc);
 
-    printMessage( "[%s][%d]\n", __FILE__, __LINE__ );
-    rc = SQLAllocHandle(SQL_HANDLE_DBC,henv, &hdbc);   
+    rc = SQLAllocHandle(SQL_HANDLE_DBC,henv, &hdbc);
     myenv(henv, rc);
 
-    printMessage( "[%s][%d]\n", __FILE__, __LINE__ );
+    printf("List of SQLDrivers:\n");
+    while ((rc= SQLDrivers(henv, SQL_FETCH_NEXT,
+                           desc, sizeof(desc), &desc_length,
+                           NULL, 0, NULL)) == SQL_SUCCESS ||
+           rc == SQL_SUCCESS_WITH_INFO)
+    {
+      printf("* %*s\n", desc_length, desc);
+    }
+    printf("done.\n");
+
+    printf("List of SQLDataSources:\n");
+    while ((rc= SQLDataSources(henv, SQL_FETCH_NEXT,
+                               name, sizeof(name), &name_length,
+                               desc, sizeof(desc), &desc_length))
+           == SQL_SUCCESS ||
+           rc == SQL_SUCCESS_WITH_INFO)
+    {
+      printf("* %*s: %*s\n", name_length, name, desc_length, desc);
+    }
+    printf("done.\n");
+
     rc = SQLConnect(hdbc, mydsn, SQL_NTS, myuid, SQL_NTS,  mypwd, SQL_NTS);
     mycon(hdbc, rc);
 
-    printMessage( "[%s][%d]\n", __FILE__, __LINE__ );
     rc = SQLGetInfo(hdbc,SQL_DBMS_NAME,&server_name,40,NULL);
     mycon(hdbc, rc);
 
