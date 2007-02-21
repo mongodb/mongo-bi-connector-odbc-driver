@@ -4,21 +4,30 @@
 # mysql-connector-odbc 3.51 RPM spec 
 #
 
+# You can control the license file to include building like
+# "rpmbuild --with commercial" or "rpm --define '_with_commercial 1'"
+# (for RPM 3.x). The default is GPL.
+
+%{?_with_commercial:%define com_lic 1}
+%{!?_with_commercial:%define com_lic 0}
+
 %define myodbc_version @VERSION@
 %define release 1
 
-Name:		   mysql-connector-odbc
-Summary:	   An ODBC 3.51 driver for MySQL
-Group:	   Applications/Databases
+Name:       mysql-connector-odbc
+Summary:    An ODBC 3.51 driver for MySQL
+Group:      Applications/Databases
 Version:    %{myodbc_version}
 Release:    %{release}
-Copyright:	Public Domain, GPL
+%if %{com_lic}
+Copyright:  Commercial
+%else
+Copyright:  GPL
+%endif
 Source0:    %{name}-%{version}.tar.gz
-URL:		   http://www.mysql.com/
-Vendor:		MySQL AB
-Packager:	Peter Harvey <pharvey@mysql.com>
-
-%define prefix /usr
+URL:        http://www.mysql.com/
+Vendor:	    MySQL AB
+Packager:   MySQL Production Engineering Team <build@mysql.com>
 
 # Think about what you use here since the first step is to
 # run a rm -rf
@@ -37,30 +46,28 @@ specification. The driver is commonly referred to as 'MySQL ODBC 3.51 Driver'.
 %setup -n %{name}-%{version}
 
 %define ODBC_DM_PATH @ODBC_DM_PATH@
-%define MYSQL_LIBS  @MYSQL_USED_LIB_PATH@
-%define MYSQL_INCLUDES @MYSQL_USED_INCLUDE_PATH@
+%define MYSQL_PATH_ARG  @MYSQL_PATH_ARG@
 
 %build
 ./configure \
-	--prefix=${RPM_BUILD_ROOT}%{prefix} \
-  --with-mysql-libs=%{MYSQL_LIBS} \
-  --with-mysql-includes=%{MYSQL_INCLUDES} \
-  %{ODBC_DM_PATH} \
-  --without-debug
+    --prefix=%{_prefix} \
+    %{ODBC_DM_PATH} \
+    %{MYSQL_PATH_ARG} \
+    --without-debug
 make
 
 %clean 
 [ -n "$RPM_BUILD_ROOT" -a "$RPM_BUILD_ROOT" != / ] && rm -rf $RPM_BUILD_ROOT
 
 %install
-make PREFIX=$RPM_BUILD_ROOT install
+make DESTDIR=$RPM_BUILD_ROOT install
 
 #
 # REGISTER DRIVER
 #   Hard-coded path here makes this package non-relocatable.
 #
 %post
-myodbc3i -w0 -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=/usr/lib/libmyodbc3.so;SETUP=/usr/lib/libmyodbc3S.so"
+myodbc3i -w0 -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=%{_prefix}/lib/libmyodbc3.so;SETUP=%{_prefix}/lib/libmyodbc3S.so"
 
 #
 # DEREGISTER DRIVER 
@@ -71,9 +78,15 @@ myodbc3i -w0 -r -d -n"MySQL ODBC 3.51 Driver"
 
 %files 
 %defattr(-,root,root)
-%{prefix}/bin/myodbc3i
-%{prefix}/bin/myodbc3m
-%{prefix}/lib/libmyodbc3*
+%attr(755, root, root) %{_bindir}/myodbc3i
+%attr(755, root, root) %{_bindir}/myodbc3m
+%attr(644, root, root) %{_libdir}/libmyodbc3*
 
 %doc ChangeLog
 %doc README
+%if %{com_lic}
+%doc LICENSE.commercial
+%else
+%doc LICENSE.gpl
+%doc LICENSE.exceptions
+%endif

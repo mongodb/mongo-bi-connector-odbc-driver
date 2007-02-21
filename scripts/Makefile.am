@@ -39,8 +39,7 @@ CLEANFILES = make_binary_distribution \
 	-e 's!@''MACHINE_TYPE''@!@MACHINE_TYPE@!' \
 	-e 's!@''SYSTEM_TYPE''@!@SYSTEM_TYPE@!' \
 	-e 's!@''ODBC_DM_PATH''@!@ODBC_DM_PATH@!' \
-	-e 's!@''MYSQL_USED_LIB_PATH''@!@MYSQL_USED_LIB_PATH@!' \
-	-e 's!@''MYSQL_USED_INCLUDE_PATH''@!@MYSQL_USED_INCLUDE_PATH@!' \
+	-e 's!@''MYSQL_PATH_ARG''@!@MYSQL_PATH_ARG@!' \
 	$< > $@-t
 	chmod +x $@-t
 	mv $@-t $@
