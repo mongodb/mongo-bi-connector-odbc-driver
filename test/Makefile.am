@@ -6,7 +6,11 @@
 ##########################################################################
 
 # Set up to be able to run tests
-TEST_ODBCINI   = test.ini
+# 
+# The INI filename has to include "odbc.ini" to work around a bug in the
+# version of iODBC shipped with Mac OS X.
+#
+TEST_ODBCINI   = test-odbc.ini
 TEST_DSN       = myodbc3
 TEST_DRIVER    = MySQL ODBC 3.51 Driver
 TEST_DATABASE  = test
@@ -183,4 +187,4 @@ make-test-ini:
 	  -e 's!@''TEST_UID''@!$(TEST_UID)!g' \
 	  -e 's!@''TEST_PASSWORD''@!$(TEST_PASSWORD)!g' \
 	  -e 's!@''TEST_SOCKET''@!$(TEST_SOCKET)!g' \
-	test.ini.in > test.ini
+	test.ini.in > $(TEST_ODBCINI)
