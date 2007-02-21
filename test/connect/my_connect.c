@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
     printf("List of SQLDrivers:\n");
     while ((rc= SQLDrivers(henv, SQL_FETCH_NEXT,
                            desc, sizeof(desc), &desc_length,
-                           NULL, 0, NULL)) == SQL_SUCCESS ||
+                           name, sizeof(name), &name_length)) == SQL_SUCCESS ||
            rc == SQL_SUCCESS_WITH_INFO)
     {
       printf("* %*s\n", desc_length, desc);
