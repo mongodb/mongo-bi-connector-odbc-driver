@@ -1,3 +1,6 @@
+[ODBC Data Sources]
+data_source_name = myodbc3
+
 [myodbc3]
 Driver          = @TEST_DRIVER@
 DATABASE        = @TEST_DATABASE@
