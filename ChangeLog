@@ -6,6 +6,7 @@
 ---------------------------------------------
 06-DEC-2006 (3.51.13): pharvey@mysql.com
 ---------------------------------------------
+-- Fix improper casting for 64-bit platforms (Bug #25024)
 -- Fix truncation of queries with leading spaces when SQL_ATTR_MAX_ROWS
    is set to a non-zero value. (Bug #6609)
 -- Added support of HENV handlers in SQLEndTran(), updated tran
