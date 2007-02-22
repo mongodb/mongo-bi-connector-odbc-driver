@@ -18,7 +18,7 @@
 
 SQLCHAR *mysock= NULL;
 
-SQLINTEGER my_max_rows = 10000;
+SQLINTEGER my_max_rows = 1000;
 clock_t t_start, t_end;
 SQLDOUBLE my_time;
 
@@ -199,15 +199,15 @@ int main(int argc, char *argv[])
     for (narg = 1; narg < argc; narg++)
     {
         if ( narg == 1 )
-            my_max_rows = atoi(argv[1]);
+            mydsn = argv[1];
         else if ( narg == 2 )
-            mydsn = argv[2];
+            myuid = argv[2];
         else if ( narg == 3 )
-            myuid = argv[3];
+            mypwd = argv[3];
         else if ( narg == 4 )
-            mypwd = argv[4];
+            mysock= argv[4];
         else if ( narg == 5 )
-            mysock= argv[5];
+            my_max_rows = atoi(argv[5]);
     }
 
     t_init_data();

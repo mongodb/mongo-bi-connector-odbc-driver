@@ -38,14 +38,14 @@ my_keys \
 my_tran_ext \
 my_catalog \
 my_error \
-mytest32
+mytest32 \
+my_use_result
 fancy_tests= \
 mytest \
 mytest2 \
 mytest3
 odd_tests= \
-dbtest \
-my_use_result
+dbtest
 
 noinst_PROGRAMS= $(plain_tests) $(fancy_tests) $(odd_tests)
 
@@ -96,7 +96,7 @@ testlib: testall
 # Pass DSN UID PASSWORD as the command line arguments to each sample
 # ----------------------------------------------------------------------
 
-run: make-test-ini $(plain_tests) my_use_result
+run: make-test-ini $(plain_tests)
 	for test in $(plain_tests); do \
 	  echo test: $$test; \
 	  echo ODBCINI=$(TEST_ODBCINI) \
@@ -106,11 +106,6 @@ run: make-test-ini $(plain_tests) my_use_result
 	    test -n "$(FORCE)" || \
 	    exit 1 ; \
 	done
-	echo test: my_use_result
-	ODBCINI=$(TEST_ODBCINI) ./my_use_result 1000 "$(TEST_DSN)" "$(TEST_UID)" \
-	"$(TEST_PASSWORD)" "$(TEST_SOCKET)" || \
-	test -n "$(FORCE)" || \
-	exit 1
 
 trun: make-test-ini $(fancy_tests)
 	for test in $(fancy_tests); do \
