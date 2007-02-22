@@ -1,7 +1,11 @@
 [ODBC Drivers]
 MyODBC = Installed
+@TEST_DRIVER@ = Installed
 
 [MyODBC]
 Driver = @TEST_DRIVER@
 Description = Driver for connecting to MySQL database server
 
+[@TEST_DRIVER@]
+Driver = @TEST_DRIVER@
+Description = Driver for connecting to MySQL database server
