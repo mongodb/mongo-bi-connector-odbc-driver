@@ -10,9 +10,11 @@
 # The INI filename has to include "odbc.ini" to work around a bug in the
 # version of iODBC shipped with Mac OS X.
 #
-TEST_ODBCINI   = test-odbc.ini
+TEST_ODBCINI   = odbc.ini
+TEST_ODBCINSTINI = odbcinst.ini
 TEST_DSN       = myodbc3
-TEST_DRIVER    = MySQL ODBC 3.51 Driver
+# XXX this is not really correct, but works for testing.
+TEST_DRIVER    = ../driver/.libs/libmyodbc3.so
 TEST_DATABASE  = test
 TEST_SERVER    = localhost
 TEST_UID       = root
@@ -99,9 +101,11 @@ testlib: testall
 run: make-test-ini $(plain_tests)
 	for test in $(plain_tests); do \
 	  echo test: $$test; \
-	  echo ODBCINI=$(TEST_ODBCINI) \
+	  echo ODBCSYSINI=. \
+	    ODBCINI=$(TEST_ODBCINI) ODBCINSTINI=$(TEST_ODBCINSTINI) \
 	    ./$$test "$(TEST_DSN)" "$(TEST_UID)" "$(TEST_PASSWORD)" "$(TEST_SOCKET)" ; \
-	  ODBCINI=$(TEST_ODBCINI) \
+	  ODBCSYSINI=. \
+	    ODBCINI=$(TEST_ODBCINI) ODBCINSTINI=$(TEST_ODBCINSTINI) \
 	    ./$$test "$(TEST_DSN)" "$(TEST_UID)" "$(TEST_PASSWORD)" "$(TEST_SOCKET)" || \
 	    test -n "$(FORCE)" || \
 	    exit 1 ; \
@@ -110,9 +114,11 @@ run: make-test-ini $(plain_tests)
 trun: make-test-ini $(fancy_tests)
 	for test in $(fancy_tests); do \
 	  echo test: $$test; \
-	  echo ODBCINI=$(TEST_ODBCINI) \
+	  echo ODBCSYSINI=. \
+	    ODBCINI=$(TEST_ODBCINI) ODBCINSTINI=$(TEST_ODBCINSTINI) \
 	    ./$$test -1 "$(TEST_DSN)" "$(TEST_UID)" "$(TEST_PASSWORD)" "$(TEST_SOCKET)" ; \
-	  ODBCINI=$(TEST_ODBCINI) \
+	  ODBCSYSINI=. \
+	    ODBCINI=$(TEST_ODBCINI) ODBCINSTINI=$(TEST_ODBCINSTINI) \
 	    ./$$test -1 "$(TEST_DSN)" "$(TEST_UID)" "$(TEST_PASSWORD)" "$(TEST_SOCKET)" || \
 	    test -n "$(FORCE)" || \
 	    exit 1 ; \
@@ -185,4 +191,13 @@ make-test-ini:
 	  -e 's!@''TEST_UID''@!$(TEST_UID)!g' \
 	  -e 's!@''TEST_PASSWORD''@!$(TEST_PASSWORD)!g' \
 	  -e 's!@''TEST_SOCKET''@!$(TEST_SOCKET)!g' \
-	test.ini.in > $(TEST_ODBCINI)
+	odbc.ini.in > $(TEST_ODBCINI)
+	sed \
+	  -e 's!@''TEST_DSN''@!$(TEST_DSN)!g' \
+	  -e 's!@''TEST_DRIVER''@!$(TEST_DRIVER)!g' \
+	  -e 's!@''TEST_DATABASE''@!$(TEST_DATABASE)!g' \
+	  -e 's!@''TEST_SERVER''@!$(TEST_SERVER)!g' \
+	  -e 's!@''TEST_UID''@!$(TEST_UID)!g' \
+	  -e 's!@''TEST_PASSWORD''@!$(TEST_PASSWORD)!g' \
+	  -e 's!@''TEST_SOCKET''@!$(TEST_SOCKET)!g' \
+	odbcinst.ini.in > $(TEST_ODBCINSTINI)

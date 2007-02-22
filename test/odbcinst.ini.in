@@ -1,0 +1,7 @@
+[dummy]
+Driver = nosuchdriver.so
+
+[MyODBC]
+Driver = @TEST_DRIVER@
+Description = Driver for connecting to MySQL database server
+
