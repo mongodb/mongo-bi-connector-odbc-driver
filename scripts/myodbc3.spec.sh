@@ -1,5 +1,3 @@
-#!/bin/sh
-
 #
 # mysql-connector-odbc 3.51 RPM spec 
 #
@@ -12,7 +10,7 @@
 %{!?_with_commercial:%define com_lic 0}
 
 %define myodbc_version @VERSION@
-%define release 1
+%define release 0
 
 Name:       mysql-connector-odbc
 Summary:    An ODBC 3.51 driver for MySQL
@@ -51,6 +49,10 @@ specification. The driver is commonly referred to as 'MySQL ODBC 3.51 Driver'.
 %build
 ./configure \
     --prefix=%{_prefix} \
+    --enable-dmlink \
+    --disable-gui \
+    --without-samples \
+    --with-separate-debug-driver \
     %{ODBC_DM_PATH} \
     %{MYSQL_PATH_ARG} \
     --without-debug
@@ -61,6 +63,9 @@ make
 
 %install
 make DESTDIR=$RPM_BUILD_ROOT install
+# The way %doc <file-without-path> works, we can't
+# have these files installed
+rm -v $RPM_BUILD_ROOT%{_datadir}/mysql-connector-odbc/{ChangeLog,README,README.debug}
 
 #
 # REGISTER DRIVER
@@ -84,6 +89,7 @@ myodbc3i -w0 -r -d -n"MySQL ODBC 3.51 Driver"
 
 %doc ChangeLog
 %doc README
+%doc README.debug
 %if %{com_lic}
 %doc LICENSE.commercial
 %else
