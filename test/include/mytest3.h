@@ -72,7 +72,7 @@
 # define Sleep _sleep
 #endif
 
-#if DEBUG_LEVEL > 1
+#if 1
 # define printMessage printf
 #else
 void printMessage(char *fmt, ...) {}
@@ -538,7 +538,7 @@ SQLRETURN tmysql_prepare(SQLHSTMT hstmt, char *sql_stmt)
 */
 SQLINTEGER my_fetch_int(SQLHSTMT hstmt, SQLUSMALLINT irow)
 {
-    long nData;
+    SQLINTEGER nData;
 
     SQLGetData(hstmt,irow,SQL_INTEGER,&nData,0,NULL);
     printMessage(" my_fetch_int: %ld\n", nData);
