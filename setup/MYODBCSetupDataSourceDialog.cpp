@@ -25,12 +25,6 @@
 
 #ifdef HAVE_CONFIG_H
 #include "../driver/myconf.h" 
-#define SETUP_VERSION VERSION
-#endif
-
-// 64bit sparc fails to get this so set it manually
-#ifndef SETUP_VERSION
-#define SETUP_VERSION "v3"
 #endif
 
 MYODBCSetupDataSourceDialog::MYODBCSetupDataSourceDialog( QWidget *pwidgetParent, MYODBCUTIL_DATASOURCE *pDataSource )

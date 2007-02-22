@@ -10,14 +10,6 @@
 #
 # #########################################################
 
-#
-# \note         The 3 escape chars (vs 1) are needed with
-#               "Qt 4.2.2 Commercial"... may not be needed 
-#               with some other vers of Qt. - PAH
-#
-DEFINES += SETUP_VERSION=\\\"3.51.13\\\"
-DEFINES += VERSION=\\\"3.51.13\\\"
-
 win32 {
         DEFINES -= UNICODE
 }

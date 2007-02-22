@@ -18,9 +18,13 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#define MYODBC_VERSION        "3.51.13"  
-#define MYODBC_FILEVER        3,51,13,0
-#define MYODBC_PRODUCTVER     3,51,13,0
-#define MYODBC_STRFILEVER     "3, 51, 13, 0\0"
-#define MYODBC_STRPRODUCTVER  "3, 51, 13, 0\0"
+/* When changing, also change configure.in */
+#define SETUP_VERSION         "3.51.14"
+#define DRIVER_VERSION        "03.51.14"
+
+#define MYODBC_VERSION        "3.51.14"  
+#define MYODBC_FILEVER        3,51,14,0
+#define MYODBC_PRODUCTVER     3,51,14,0
+#define MYODBC_STRFILEVER     "3, 51, 14, 0\0"
+#define MYODBC_STRPRODUCTVER  "3, 51, 14, 0\0"
 

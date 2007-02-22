@@ -78,7 +78,6 @@ extern "C"
 #endif
 
 #define SQL_SPEC_STRING   "03.51"
-#define DRIVER_VERSION	  "03.51.13"
 #define ODBC_DRIVER	  "ODBC 3.51 Driver"
 #define DRIVER_NAME	  "MySQL ODBC 3.51 Driver"
 #define DRIVER_NONDSN_TAG "DRIVER={MySQL ODBC 3.51 Driver}"

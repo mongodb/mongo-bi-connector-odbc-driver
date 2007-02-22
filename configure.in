@@ -38,7 +38,9 @@ AC_INIT(driver/myodbc3.c)
 AC_PREREQ(2.12)dnl    Minimum Autoconf version required.
 #AC_INIT([MySQL ODBC 3.51 Driver],[3.51.12],[myodbc@lists.mysql.com],[libmyodbc3])
 AC_CANONICAL_SYSTEM
-AM_INIT_AUTOMAKE(mysql-connector-odbc,3.51.13)
+
+# When changing, also change VersionInfo.h
+AM_INIT_AUTOMAKE(mysql-connector-odbc,3.51.14)
 
 myodbc_version=$VERSION
 ###################################################################
