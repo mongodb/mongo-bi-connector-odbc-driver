@@ -43,7 +43,7 @@ void test_tran_ext(SQLHDBC hdbc)
     rc = SQLSetConnectAttr(hdbc,SQL_TXN_ISOLATION,(SQLPOINTER)SQL_TXN_REPEATABLE_READ,0);
     mycon(hdbc,rc);    
 
-    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=%d",
+    sprintf(conn,"DSN=%s;UID=%s;PWD=%s;OPTION=%d",
             mydsn,myuid,mypwd,option);
     if (mysock != NULL)
     {
@@ -58,7 +58,7 @@ void test_tran_ext(SQLHDBC hdbc)
     mycon(hdbc,rc);    
 
     option = 1 + 4;
-    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=%d",
+    sprintf(conn,"DSN=%s;UID=%s;PWD=%s;OPTION=%d",
             mydsn,myuid,mypwd,option);
     if (mysock != NULL)
     {

@@ -1052,7 +1052,7 @@ int main(int argc, char *argv[])
             mysock= argv[4];
     }    
 
-    sprintf(conn,"DRIVER=MyODBC;DSN=%s;USER=%s;PASSWORD=%s;OPTION=35",mydsn,myuid,mypwd);
+    sprintf(conn,"DSN=%s;USER=%s;PASSWORD=%s;OPTION=35",mydsn,myuid,mypwd);
     if (mysock != NULL)
     {
       strcat(conn, ";SOCKET=");

@@ -5062,7 +5062,7 @@ static void t_cache_bug()
 
   printMessageHeader();
     
-    sprintf(conn,"DRIVER=MyODBC;DSN=%s;USER=%s;PASSWORD=%s;OPTION=1048579",
+    sprintf(conn,"DSN=%s;USER=%s;PASSWORD=%s;OPTION=1048579",
             mydsn,myuid,mypwd);
     if (mysock != NULL)
     {
@@ -5154,7 +5154,7 @@ static void t_non_cache_bug()
 
   printMessageHeader();
     
-    sprintf(conn,"DRIVER=MyODBC;DSN=%s;USER=%s;PASSWORD=%s;OPTION=3",
+    sprintf(conn,"DSN=%s;USER=%s;PASSWORD=%s;OPTION=3",
             mydsn,myuid,mypwd);
     if (mysock != NULL)
     {

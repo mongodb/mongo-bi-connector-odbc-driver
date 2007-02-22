@@ -148,7 +148,7 @@ void t_use_result()
     SQLCHAR   conn[255];
     SQLINTEGER option = 131072L * 8;
 
-    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=%d",
+    sprintf(conn,"DSN=%s;UID=%s;PWD=%s;OPTION=%d",
             mydsn,myuid,mypwd,option);
     if (mysock != NULL)
     {
@@ -171,7 +171,7 @@ void t_store_result()
     SQLCHAR   conn[255];
     SQLINTEGER option = 3;
 
-    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=%d",
+    sprintf(conn,"DSN=%s;UID=%s;PWD=%s;OPTION=%d",
             mydsn,myuid,mypwd,option);
     if (mysock != NULL)
     {

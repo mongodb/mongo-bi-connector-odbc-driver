@@ -33,7 +33,7 @@ void t_true_length(SQLHENV henv)
     rc = SQLAllocConnect(henv,&hdbc);
     myenv(henv,rc);
 
-    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=0",mydsn,myuid,mypwd); 
+    sprintf(conn,"DSN=%s;UID=%s;PWD=%s;OPTION=0",mydsn,myuid,mypwd); 
     if (mysock != NULL)
     {
       strcat(conn, ";SOCKET=");
@@ -44,8 +44,6 @@ void t_true_length(SQLHENV henv)
 
     rc = SQLAllocStmt(hdbc,&hstmt);
     mycon(hdbc,rc);
-    /* PMG 2004.05.04 Added this in order for the test to pass. */
-    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=0",mydsn,myuid,mypwd); 
     rc = SQLExecDirect(hstmt,"CREATE DATABASE IF NOT EXISTS client_odbc_test",SQL_NTS);
     mystmt(hstmt,rc);
 
@@ -116,7 +114,7 @@ void t_max_length(SQLHENV henv)
     rc = SQLAllocConnect(henv,&hdbc);
     myenv(henv,rc);
 
-    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=1",mydsn,myuid,mypwd); 
+    sprintf(conn,"DSN=%s;UID=%s;PWD=%s;OPTION=1",mydsn,myuid,mypwd); 
     if (mysock != NULL)
     {
       strcat(conn, ";SOCKET=");
@@ -127,7 +125,7 @@ void t_max_length(SQLHENV henv)
 
     rc = SQLAllocStmt(hdbc,&hstmt);
     mycon(hdbc,rc);
-    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PWD=%s;OPTION=0",mydsn,myuid,mypwd); 
+    sprintf(conn,"DSN=%s;UID=%s;PWD=%s;OPTION=0",mydsn,myuid,mypwd); 
 
     rc = SQLExecDirect(hstmt,"CREATE DATABASE IF NOT EXISTS client_odbc_test",SQL_NTS);
     mystmt(hstmt,rc);

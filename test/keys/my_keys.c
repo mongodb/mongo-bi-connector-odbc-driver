@@ -1054,7 +1054,7 @@ static void my_tables(SQLHENV henv,SQLHDBC hdbc,SQLHSTMT hstmt)
     rc = SQLExecDirect(hstmt,"CREATE DATABASE my_tables_test_db",SQL_NTS);
     mystmt(hstmt,rc);
 
-    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PASSWORD=%s;DATABASE=%s",
+    sprintf(conn,"DSN=%s;UID=%s;PASSWORD=%s;DATABASE=%s",
             mydsn,myuid,mypwd,"my_tables_test_db");
     if (mysock != NULL)
     {
