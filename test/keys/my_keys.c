@@ -25,7 +25,7 @@ void my_primary_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
     SQLROWCOUNT rowcount;
-    long nData;
+    SQLINTEGER nData;
 
     SQLExecDirect(hstmt,"drop table my_primary_keys",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table my_primary_keys(col1 int not null,\
@@ -126,7 +126,7 @@ void my_unique_notnull_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
     SQLROWCOUNT rowcount;
-    long nData;
+    SQLINTEGER nData;
 
     SQLExecDirect(hstmt,"drop table my_unique_notnull_keys",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table my_unique_notnull_keys(col1 int not null,\
@@ -227,7 +227,7 @@ void my_unique_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
     SQLROWCOUNT rowcount;
-    long nData;
+    SQLINTEGER nData;
 
     SQLExecDirect(hstmt,"drop table my_unique_keys",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table my_unique_keys(col1 int not null,\
@@ -327,7 +327,7 @@ void my_notnull_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
     SQLROWCOUNT rowcount;
-    long nData;
+    SQLINTEGER nData;
 
     SQLExecDirect(hstmt,"drop table my_unique_keys",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table my_notnull_keys(col1 int,\
@@ -426,8 +426,8 @@ UPDATE with no keys ...
 void my_no_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    long nData;
     SQLROWCOUNT rowcount;
+    SQLINTEGER nData;
 
     /* INIT */
     SQLExecDirect(hstmt,"drop table my_no_keys",SQL_NTS);
@@ -541,7 +541,7 @@ void my_no_keys_all_dups(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     SQLRETURN rc;
     SQLROWCOUNT rowcount;
-    long nData;
+    SQLINTEGER nData;
 
     SQLExecDirect(hstmt,"drop table my_no_keys_all_dups",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table my_no_keys_all_dups (col1 int,\
@@ -1064,7 +1064,7 @@ static void my_tables(SQLHENV henv,SQLHDBC hdbc,SQLHSTMT hstmt)
     rc = SQLAllocConnect(henv,&hdbc1);
     myenv(henv,rc);
 
-    rc = SQLDriverConnect(hdbc1,NULL,conn,255,
+    rc = SQLDriverConnect(hdbc1,NULL,conn,sizeof(conn),
                           NULL,0,NULL,SQL_DRIVER_COMPLETE);
     mycon(hdbc1,rc);
 
