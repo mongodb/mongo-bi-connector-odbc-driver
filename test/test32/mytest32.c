@@ -795,7 +795,7 @@ void t_rows_fetched_ptr()
         printMessage("\n total rows fetched: %ld", rowsFetched);
         myassert(rowsFetched == rowsSize);
         i++; rowsFetched= 0;
-        rc = SQLFetch(hstmt);
+        rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);
     }
     myassert( i == 6);
     SQLFreeStmt(hstmt, SQL_CLOSE);
@@ -817,7 +817,7 @@ void t_rows_fetched_ptr()
         printMessage("\n total rows fetched: %ld", rowsFetched);
         myassert(rowsFetched == rowsSize);
         i++;rowsFetched= 0;
-        rc = SQLFetch(hstmt);
+        rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);
     }
     myassert( i == 3);
     SQLFreeStmt(hstmt, SQL_CLOSE);
@@ -839,7 +839,7 @@ void t_rows_fetched_ptr()
         printMessage("\n total rows fetched: %ld", rowsFetched);
         myassert(rowsFetched == rowsSize);
         i++;rowsFetched= 0;
-        rc = SQLFetch(hstmt);
+        rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);
     }
     myassert( i == 2);
     SQLFreeStmt(hstmt, SQL_CLOSE);
