@@ -27,7 +27,7 @@ void my_dynamic_pos_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
     SQLRETURN   rc;
     SQLLEN      nRowCount;
     SQLHSTMT    hstmt_pos;
-    long        nData = 500;
+    SQLINTEGER  nData = 500;
     SQLCHAR     szData[255]={0};
 
     /* initialize data */
@@ -161,7 +161,7 @@ void my_dynamic_pos_cursor1(SQLHDBC hdbc, SQLHSTMT hstmt)
     SQLRETURN   rc;
     SQLLEN      nRowCount;
     SQLHSTMT    hstmt_pos;
-    long        i,nData[15];
+    SQLINTEGER  i,nData[15];
     char        data[30],szData[15][10]={0};
 
     /* initialize data */
@@ -537,7 +537,7 @@ void my_position(SQLHDBC hdbc, SQLHSTMT hstmt)
     SQLRETURN rc;
     SQLLEN    nlen;
     char      szData[255]={0};
-    long      nData;
+    SQLINTEGER nData;
     SQLLEN    nrow;
 
     SQLExecDirect(hstmt,"drop table my_position",SQL_NTS);
@@ -642,9 +642,9 @@ void my_position1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
 #if BUG_22796_FIXED
     SQLRETURN rc;
-    SQLLEN    nlen[15];
+    SQLLEN    nlen[15], nrow[15];
     char      szData[15][15]={0};
-    long      nData[15], nrow[15];
+    SQLINTEGER nData[15];
 
     SQLExecDirect(hstmt,"drop table my_position",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table my_position(col1 int, col2 varchar(30))",SQL_NTS);
@@ -693,7 +693,7 @@ void my_position1(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLExecDirect(hstmt,"select * from my_position",SQL_NTS);
     mystmt(hstmt,rc);
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,(long *)&nrow);
+    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,&nrow);
     mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,sizeof(szData[0]),(long *)&nlen);
@@ -750,9 +750,9 @@ void my_zero_irow_update(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
 #if BUG_22796_FIXED
     SQLRETURN rc;
-    SQLLEN    nlen[15];
+    SQLLEN    nlen[15], nrow[15];
     char      szData[15][15]={0};
-    long      nData[15], nrow[15];
+    SQLINTEGER nData[15];
 
     SQLExecDirect(hstmt,"drop table my_zero_irow",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table my_zero_irow(col1 int, col2 varchar(30))",SQL_NTS);
@@ -842,9 +842,9 @@ void my_zero_irow_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
 #if BUG_22796_FIXED
     SQLRETURN rc;
-    SQLLEN    nlen[15];
+    SQLLEN    nlen[15], nrow[15];
     char      szData[15][15]={0};
-    long      nData[15], nrow[15];
+    SQLINTEGER nData[15];
 
     SQLExecDirect(hstmt,"drop table my_zero_irow",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table my_zero_irow(col1 int, col2 varchar(30))",SQL_NTS);
@@ -929,7 +929,8 @@ DYNAMIC CURSOR TESTING
 void my_dynamic_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
 {  
     SQLRETURN rc;
-    SQLINTEGER nData = 500, nlen;
+    SQLROWCOUNT nlen;
+    SQLINTEGER nData = 500;
     SQLCHAR szData[255]={0};
 
     /* initialize data */
