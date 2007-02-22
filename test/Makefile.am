@@ -141,7 +141,8 @@ clean-local:
 
 EXTRA_DIST= \
 	README \
-	test.ini.in \
+	odbc.ini.in \
+	odbcinst.ini.in \
 	include/mytest3.h \
 	Makefile.ini \
 	test.vpj \
