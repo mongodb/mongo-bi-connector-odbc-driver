@@ -51,7 +51,7 @@ void test_tran_ext(SQLHDBC hdbc)
       strcat(conn, mysock);
     }
     rc = SQLDriverConnect(hdbc,NULL,conn,255,
-                          NULL,0,NULL,SQL_DRIVER_COMPLETE);
+                          NULL,0,NULL,SQL_DRIVER_NOPROMPT);
     mycon(hdbc,rc);
 
     rc = SQLDisconnect(hdbc);
@@ -66,7 +66,7 @@ void test_tran_ext(SQLHDBC hdbc)
       strcat(conn, mysock);
     }
     rc = SQLDriverConnect(hdbc,NULL,conn,255,
-                          NULL,0,NULL,SQL_DRIVER_COMPLETE);
+                          NULL,0,NULL,SQL_DRIVER_NOPROMPT);
     mycon(hdbc,rc);
 
     rc = SQLDisconnect(hdbc);

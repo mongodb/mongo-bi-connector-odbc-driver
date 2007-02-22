@@ -1065,7 +1065,7 @@ static void my_tables(SQLHENV henv,SQLHDBC hdbc,SQLHSTMT hstmt)
     myenv(henv,rc);
 
     rc = SQLDriverConnect(hdbc1,NULL,conn,sizeof(conn),
-                          NULL,0,NULL,SQL_DRIVER_COMPLETE);
+                          NULL,0,NULL,SQL_DRIVER_NOPROMPT);
     mycon(hdbc1,rc);
 
     rc = SQLAllocStmt(hdbc1,&hstmt1);

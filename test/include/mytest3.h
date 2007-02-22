@@ -273,7 +273,7 @@ void mydrvconnect(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt,SQLCHAR *connIn)
 
     printMessage(" Connecting to '%s' \n",connIn);
     rc = SQLDriverConnect(*hdbc,NULL,connIn,MAX_NAME_LEN,
-                          connOut,MAX_NAME_LEN,NULL,SQL_DRIVER_COMPLETE);
+                          connOut,MAX_NAME_LEN,NULL,SQL_DRIVER_NOPROMPT);
     mycon(*hdbc,rc);
     printMessage( "\n output connection string: %s", connOut);
 
