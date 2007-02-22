@@ -49,6 +49,7 @@ specification. The driver is commonly referred to as 'MySQL ODBC 3.51 Driver'.
 %build
 ./configure \
     --prefix=%{_prefix} \
+    --libdir=%{_libdir} \
     --enable-dmlink \
     --disable-gui \
     --without-samples \
@@ -72,7 +73,7 @@ rm -v $RPM_BUILD_ROOT%{_datadir}/mysql-connector-odbc/{ChangeLog,README,README.d
 #   Hard-coded path here makes this package non-relocatable.
 #
 %post
-myodbc3i -w0 -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=%{_prefix}/lib/libmyodbc3.so;SETUP=%{_prefix}/lib/libmyodbc3S.so"
+myodbc3i -w0 -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=%{_libdir}/libmyodbc3.so;SETUP=%{_libdir}/libmyodbc3S.so"
 
 #
 # DEREGISTER DRIVER 
@@ -87,9 +88,7 @@ myodbc3i -w0 -r -d -n"MySQL ODBC 3.51 Driver"
 %attr(755, root, root) %{_bindir}/myodbc3m
 %attr(644, root, root) %{_libdir}/libmyodbc3*
 
-%doc ChangeLog
-%doc README
-%doc README.debug
+%doc ChangeLog README README.debug
 %if %{com_lic}
 %doc LICENSE.commercial
 %else
