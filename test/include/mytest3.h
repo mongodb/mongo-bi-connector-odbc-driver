@@ -72,7 +72,7 @@
 # define Sleep _sleep
 #endif
 
-#if 1
+#if DEBUG_LEVEL > 1
 # define printMessage printf
 #else
 void printMessage(char *fmt, ...) {}
