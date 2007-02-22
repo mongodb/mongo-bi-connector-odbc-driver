@@ -1196,12 +1196,12 @@ SQLRETURN SQL_API SQLRowCount( SQLHSTMT hstmt,
 
     if ( stmt->result )
     {
-        *pcrow= (SQLINTEGER) mysql_affected_rows(&stmt->dbc->mysql);
+        *pcrow= (SQLLEN) mysql_affected_rows(&stmt->dbc->mysql);
         MYODBCDbgInfo( "Rows in set: %ld", *pcrow );
     }
     else
     {
-        *pcrow= (SQLINTEGER) stmt->affected_rows;
+        *pcrow= (SQLLEN) stmt->affected_rows;
         MYODBCDbgInfo( "Affected rows: %ld", *pcrow );
     }
     MYODBCDbgReturnReturn(SQL_SUCCESS);
