@@ -1,5 +1,5 @@
-[dummy]
-Driver = nosuchdriver.so
+[ODBC Drivers]
+MyODBC = Installed
 
 [MyODBC]
 Driver = @TEST_DRIVER@
