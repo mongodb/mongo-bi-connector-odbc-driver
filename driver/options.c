@@ -320,11 +320,41 @@ set_con_attr(SQLHDBC    hdbc,
                 MYODBCDbgReturnReturn(odbc_stmt(dbc,"SET AUTOCOMMIT=1"));
             break;
 
+        case SQL_ATTR_LOGIN_TIMEOUT:
+            {
+                /* we can't change timeout values in post connect state */
+               if (dbc->server) {
+                  MYODBCDbgReturnReturn(
+                       set_conn_error(dbc, MYERR_S1011, NULL, 0));
+               } 
+               else
+               {
+                  dbc->login_timeout= (SQLUINTEGER) ValuePtr;
+                  MYODBCDbgReturnReturn(SQL_SUCCESS);
+               }
+            }
+            break;
+
         case SQL_ATTR_CONNECTION_TIMEOUT:
             {
-                uint timeout= (SQLUINTEGER)ValuePtr;
-                MYODBCDbgReturnReturn(mysql_options(&dbc->mysql, MYSQL_OPT_CONNECT_TIMEOUT,
-                                              (const char *)&timeout));
+               if (dbc->server) 
+               {
+                  MYODBCDbgReturnReturn(
+                       set_conn_error(dbc, MYERR_S1011, NULL, 0));
+               }
+               else
+               {
+                  SQLUINTEGER timeout= (SQLUINTEGER)ValuePtr;
+                  if (!mysql_options(&dbc->mysql, 
+                      MYSQL_OPT_READ_TIMEOUT, (const char *)&timeout) &&
+                      !mysql_options(&dbc->mysql, 
+                      MYSQL_OPT_WRITE_TIMEOUT, (const char *)&timeout))
+                  {
+                     dbc->connect_timeout= timeout;
+                     MYODBCDbgReturnReturn(SQL_SUCCESS);
+                  }
+                  MYODBCDbgReturnReturn(SQL_ERROR);
+               }  
             }
             break;
 
@@ -357,9 +387,6 @@ set_con_attr(SQLHDBC    hdbc,
             }
             break;
 
-        case SQL_ATTR_LOGIN_TIMEOUT:
-            dbc->login_timeout= (SQLUINTEGER)ValuePtr;
-            break;
 
         case SQL_ATTR_ODBC_CURSORS:
             if ((dbc->flag & FLAG_FORWARD_CURSOR) &&
@@ -479,11 +506,7 @@ static SQLRETURN get_con_attr(SQLHDBC    hdbc,
             break;
 
         case SQL_ATTR_CONNECTION_TIMEOUT:
-#if MYSQL_VERSION_ID < 40003
-            *((SQLUINTEGER *) ValuePtr)= dbc->mysql.net.timeout;
-#else
-            *((SQLUINTEGER *) ValuePtr)= dbc->mysql.net.read_timeout;
-#endif
+            *((SQLUINTEGER *) ValuePtr)= dbc->connect_timeout;
             break;
 
         case SQL_ATTR_CURRENT_CATALOG:
