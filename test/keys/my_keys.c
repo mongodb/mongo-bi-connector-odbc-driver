@@ -24,7 +24,7 @@ UPDATE with primary keys ...
 void my_primary_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLLEN rowcount;
+    SQLROWCOUNT rowcount;
     long nData;
 
     SQLExecDirect(hstmt,"drop table my_primary_keys",SQL_NTS);
@@ -125,7 +125,7 @@ UPDATE with unique and notnull  keys ...
 void my_unique_notnull_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLLEN rowcount;
+    SQLROWCOUNT rowcount;
     long nData;
 
     SQLExecDirect(hstmt,"drop table my_unique_notnull_keys",SQL_NTS);
@@ -226,7 +226,7 @@ UPDATE with unique keys ...
 void my_unique_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLLEN rowcount;
+    SQLROWCOUNT rowcount;
     long nData;
 
     SQLExecDirect(hstmt,"drop table my_unique_keys",SQL_NTS);
@@ -326,7 +326,7 @@ UPDATE with not null keys ...
 void my_notnull_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    SQLLEN rowcount;
+    SQLROWCOUNT rowcount;
     long nData;
 
     SQLExecDirect(hstmt,"drop table my_unique_keys",SQL_NTS);
@@ -427,7 +427,7 @@ void my_no_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN rc;
     long nData;
-    SQLLEN rowcount;
+    SQLROWCOUNT rowcount;
 
     /* INIT */
     SQLExecDirect(hstmt,"drop table my_no_keys",SQL_NTS);
@@ -532,8 +532,15 @@ UPDATE with no keys with all duplicate columns...
 */
 void my_no_keys_all_dups(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
+#if ALLOW_CRAZY_TESTS
+
+  /*
+    This test does not make any sense. You can't update a table based
+    on a cursor against one non-primary-key column.
+  */
+
     SQLRETURN rc;
-    SQLLEN rowcount;
+    SQLROWCOUNT rowcount;
     long nData;
 
     SQLExecDirect(hstmt,"drop table my_no_keys_all_dups",SQL_NTS);
@@ -624,6 +631,7 @@ void my_no_keys_all_dups(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
+#endif
 }
 /*
 Initialize the foreignkey tables (MySQL specific)
@@ -1046,7 +1054,7 @@ static void my_tables(SQLHENV henv,SQLHDBC hdbc,SQLHSTMT hstmt)
     rc = SQLExecDirect(hstmt,"CREATE DATABASE my_tables_test_db",SQL_NTS);
     mystmt(hstmt,rc);
 
-    sprintf(conn,"DRIVER={MySQL ODBC 3.51 Driver};DSN=%s;UID=%s;PASSWORD=%s;DATABASE=%s",
+    sprintf(conn,"DRIVER=MyODBC;DSN=%s;UID=%s;PASSWORD=%s;DATABASE=%s",
             mydsn,myuid,mypwd,"my_tables_test_db");
     if (mysock != NULL)
     {
