@@ -3639,32 +3639,32 @@ static void t_error(SQLHDBC hdbc,SQLHSTMT hstmt)
     rc = SQLExecDirect(hstmt,"drop table NON_EXISTANT_TABLE_t_error",SQL_NTS);
     myassert(rc == SQL_ERROR);
 
-    rc = SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, (SQLCHAR *)&state, 
-                       &native, (SQLCHAR *)&errmsg,255,&pclen);
+    rc = SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, state,
+                       &native, errmsg,255,&pclen);
     mystmt(hstmt,rc);
     fprintf(stdout,"\n state  : %s\n native : %d\n error  : %s\n errlen : %d\n",
               state, native, errmsg, pclen);
-    myassert(strcmp(state,"42S02") == 0);    
+    myassert(strcmp(state,"42S02") == 0);
     myassert(native == 1051);
 
-    rc = SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, (SQLCHAR *)&state, 
-                       &native, (SQLCHAR *)&errmsg,255,&pclen);
+    rc = SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, state,
+                       &native, errmsg,255,&pclen);
     mystmt(hstmt,rc);
     fprintf(stdout,"\n state  : %s\n native : %d\n error  : %s\n errlen : %d\n",
               state, native, errmsg, pclen);
-    myassert(strcmp(state,"42S02") == 0);    
+    myassert(strcmp(state,"42S02") == 0);
     myassert(native == 1051);
 
-    rc = SQLError(NULL,NULL,hstmt,(SQLCHAR *)&state,&native,
-                  (SQLCHAR *)&errmsg,255,&pclen);
+    rc = SQLError(NULL,NULL,hstmt,state,&native,
+                  errmsg,255,&pclen);
     mystmt(hstmt,rc);
     fprintf(stdout,"\n state  : %s\n native : %d\n error  : %s\n errlen : %d\n",
               state, native, errmsg, pclen);
-    myassert(strcmp(state,"42S02") == 0);    
+    myassert(strcmp(state,"42S02") == 0);
     myassert(native == 1051);
 
-    rc = SQLError(NULL,NULL,hstmt,(SQLCHAR *)&state,&native,
-                  (SQLCHAR *)&errmsg,255,&pclen);
+    rc = SQLError(NULL,NULL,hstmt,state,&native,
+                  errmsg,255,&pclen);
     myassert(rc == SQL_NO_DATA_FOUND);
 
     SQLFreeStmt(hstmt, SQL_CLOSE);
@@ -3679,30 +3679,38 @@ static void t_error(SQLHDBC hdbc,SQLHSTMT hstmt)
     rc = SQLSetEnvAttr(henvl,SQL_ATTR_CP_MATCH, (SQLPOINTER)100,0);
     myassert(rc == SQL_ERROR);
 
-    rc = SQLGetDiagRec(SQL_HANDLE_ENV, henvl, 1, (SQLCHAR *)&state, 
-                       &native, (SQLCHAR *)&errmsg,255,&pclen);
+    rc = SQLGetDiagRec(SQL_HANDLE_ENV, henvl, 1, state,
+                       &native, errmsg,255,&pclen);
     myassert(rc == SQL_SUCCESS);
     fprintf(stdout,"\n state  : %s\n native : %d\n error  : %s\n errlen : %d\n",
               state, native, errmsg, pclen);
     myassert(strcmp(state,"HY024") == 0 || strcmp(state,"HYC00")==0);    
 
-    rc = SQLGetDiagRec(SQL_HANDLE_ENV, henvl, 1, (SQLCHAR *)&state, 
-                       &native, (SQLCHAR *)&errmsg,255,&pclen);
+    rc = SQLGetDiagRec(SQL_HANDLE_ENV, henvl, 1, state,
+                       &native, errmsg,255,&pclen);
     myassert(rc == SQL_SUCCESS);
     fprintf(stdout,"\n state  : %s\n native : %d\n error  : %s\n errlen : %d\n",
               state, native, errmsg, pclen);
     myassert(strcmp(state,"HY024") == 0 || strcmp(state,"HYC00")==0);    
 
-    rc = SQLError(henvl,NULL,NULL,(SQLCHAR *)&state,&native,
-                  (SQLCHAR *)&errmsg,255,&pclen);
+    rc = SQLError(henvl,NULL,NULL,state,&native,
+                  errmsg,255,&pclen);
     myassert(rc == SQL_SUCCESS);
     fprintf(stdout,"\n state  : %s\n native : %d\n error  : %s\n errlen : %d\n",
               state, native, errmsg, pclen);
     myassert(strcmp(state,"HY024") == 0 || strcmp(state,"HYC00")==0);    
 
-    rc = SQLError(NULL,NULL,hstmt,(SQLCHAR *)&state,&native,
-                  (SQLCHAR *)&errmsg,255,&pclen);
+#if ALLOW_CRAZY_TESTS
+    /*
+      I'm not exactly sure what this is supposed to test, but it fails for
+      iODBC and not unixODBC, so I strongly suspect it is just testing the
+      driver manager, and not the actual driver.
+    */
+    rc = SQLError(NULL,NULL,hstmt,state,&native,
+                  errmsg,255,&pclen);
     myassert(rc == SQL_NO_DATA_FOUND);
+#endif
+
     SQLFreeEnv(henvl);
 }
 
@@ -5912,14 +5920,14 @@ void t_row_array_size(SQLHDBC hdbc,SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     /* row 1-2 */
-    rc = SQLFetch(hstmt);
+    rc = SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0);
     mystmt(hstmt,rc);
     my_assert(nrows == 2);
     my_assert(iarray[0]==1);
     my_assert(iarray[1]==2);
 
     /* row 3-4 */
-    rc = SQLFetch(hstmt);
+    rc = SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0);
     mystmt(hstmt,rc);
     my_assert(nrows == 2);
     my_assert(iarray[0]==3);
@@ -5933,19 +5941,19 @@ void t_row_array_size(SQLHDBC hdbc,SQLHSTMT hstmt)
     my_assert(iarray[1]==6);
 
     /* row 7-8 */
-    rc = SQLFetch(hstmt);
+    rc = SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0);
     mystmt(hstmt,rc);
     my_assert(nrows == 2);
     my_assert(iarray[0]==7);
     my_assert(iarray[1]==8);
 
     /* row 9 */
-    rc = SQLFetch(hstmt);
+    rc = SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0);
     mystmt(hstmt,rc);
     my_assert(nrows == 1);
     my_assert(iarray[0]==9);
 
-    rc = SQLFetch(hstmt);/* end */    
+    rc = SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0);
     mystmt_err(hstmt,rc==SQL_NO_DATA_FOUND,rc);
 
     SQLFreeStmt(hstmt,SQL_UNBIND);    
@@ -5964,14 +5972,15 @@ void t_row_array_size(SQLHDBC hdbc,SQLHSTMT hstmt)
 static void t_rows_fetched_ptr(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLCHAR     name[255];
-  SQLSMALLINT pccol;
+  SQLLEN      pccol;
+  SQLSMALLINT cols;
   SQLRETURN   rc;
   SQLLEN      rows_fetched, pcb_value[4];
-  long        i, data[4];
+  SQLINTEGER  i, data[4];
   SQLUSMALLINT row_status[4];
 
-  printMessageHeader(); 
-  
+  printMessageHeader();
+
     SQLExecDirect(hstmt,"drop table t_rows_fetched_ptr",SQL_NTS);
 
     rc = SQLExecDirect(hstmt,"create table t_rows_fetched_ptr(id int)",SQL_NTS);
@@ -5994,25 +6003,25 @@ static void t_rows_fetched_ptr(SQLHDBC hdbc, SQLHSTMT hstmt)
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
     rc = SQLEndTran(SQL_HANDLE_DBC,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);   
+    mycon(hdbc,rc);
 
     rc = SQLExecDirect(hstmt,"select * from t_rows_fetched_ptr",SQL_NTS);
     mystmt(hstmt, rc);
 
-    rc = SQLNumResultCols(hstmt, &pccol);                                                                     
+    rc = SQLNumResultCols(hstmt, &cols);
     mystmt(hstmt, rc);
-    fprintf(stdout,"\n total columns: %d", pccol);
-    myassert(pccol == 1);
+    fprintf(stdout,"total columns: %d\n", cols);
+    myassert(cols == 1);
 
     pccol= 0;
-    rc = SQLColAttribute(hstmt, 1, SQL_DESC_COUNT, 0, 0, 0, &pccol);                                          
+    rc = SQLColAttribute(hstmt, 1, SQL_DESC_COUNT, 0, 0, 0, &pccol);
     mystmt(hstmt, rc);
-    fprintf(stdout,"\n desc count: %d", pccol);
+    fprintf(stdout,"desc count: %d\n", pccol);
     myassert(pccol == 1);
 
-    rc = SQLColAttribute(hstmt, 1, SQL_DESC_NAME, &name, 255, 0, &pccol);                                          
+    rc = SQLColAttribute(hstmt, 1, SQL_DESC_NAME, &name, 255, 0, &pccol);
     mystmt(hstmt, rc);
-    fprintf(stdout,"\n desc name: %s", name);
+    fprintf(stdout,"desc name: %s\n", name);
     assert(strcmp(name,"id") ==0 || strcmp(name, "ID") == 0);
 
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, &rows_fetched, SQL_IS_POINTER);
@@ -6024,37 +6033,37 @@ static void t_rows_fetched_ptr(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_STATUS_PTR, &row_status, SQL_IS_POINTER);
     mystmt(hstmt, rc);
 
-    rc = SQLBindCol(hstmt, 1, SQL_C_LONG, (SQLPOINTER)data, 0, (SQLINTEGER *)pcb_value);
+    rc = SQLBindCol(hstmt, 1, SQL_C_LONG, (SQLPOINTER)data, 0, pcb_value);
     mystmt(hstmt, rc);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt, rc);
 
-    fprintf(stdout,"\n fetched ptr: %d", rows_fetched);
+    fprintf(stdout,"fetched ptr: %d\n", rows_fetched);
     myassert(rows_fetched == 2);
-    
+
     for( i = 0; i < rows_fetched; i++ )
-    {   
-      fprintf(stdout,"\n row[%d]:", i);
-      fprintf(stdout,"\n\t value : %d (%d)", data[i], pcb_value[i]);
-      fprintf(stdout,"\n\t status: %d", row_status[i]);      
-      myassert(row_status[i] == SQL_ROW_SUCCESS); 
+    {
+      fprintf(stdout,"row[%d]\n:", i);
+      fprintf(stdout,"\t value : %d (%d)\n", data[i], pcb_value[i]);
+      fprintf(stdout,"\t status: %d\n", row_status[i]);
+      myassert(row_status[i] == SQL_ROW_SUCCESS);
     }
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt, rc);
 
-    fprintf(stdout,"\n fetched ptr: %d", rows_fetched);
+    fprintf(stdout,"fetched ptr: %d\n", rows_fetched);
     myassert(rows_fetched == 1);
-    
+
     for( i = 0; i < rows_fetched; i++ )
-    {   
-      fprintf(stdout,"\n row[%d]:", i);
-      fprintf(stdout,"\n\t value : %d (%d)", data[i], pcb_value[i]);
-      fprintf(stdout,"\n\t status: %d", row_status[0]);    
-      myassert(row_status[i] == SQL_ROW_SUCCESS); 
+    {
+      fprintf(stdout,"row[%d]:\n", i);
+      fprintf(stdout,"\t value : %d (%d)\n", data[i], pcb_value[i]);
+      fprintf(stdout,"\t status: %d\n", row_status[0]);
+      myassert(row_status[i] == SQL_ROW_SUCCESS);
     }
-    myassert(row_status[1] == SQL_ROW_NOROW); 
+    myassert(row_status[1] == SQL_ROW_NOROW);
 
     rc = SQLFetch(hstmt);
     myassert(rc == SQL_NO_DATA);
@@ -6069,7 +6078,7 @@ static void t_rows_fetched_ptr(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_STATUS_PTR,(SQLPOINTER)0,0);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 }
 
 static void t_empty_str_bug(SQLHDBC hdbc, SQLHSTMT hstmt)
@@ -6337,7 +6346,7 @@ static void t_rows_fetched_ptr1(SQLHDBC hdbc, SQLHSTMT hstmt)
       fprintf(stdout,"\n total rows fetched: %ld", rowsFetched);
       myassert(rowsFetched == rowsSize);
       i++; rowsFetched= 0;
-      rc = SQLFetch(hstmt);
+      rc = SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0);
     }
     myassert( i == 6);
     SQLFreeStmt(hstmt, SQL_CLOSE);
@@ -6359,7 +6368,7 @@ static void t_rows_fetched_ptr1(SQLHDBC hdbc, SQLHSTMT hstmt)
       fprintf(stdout,"\n total rows fetched: %ld", rowsFetched);
       myassert(rowsFetched == rowsSize);
       i++;rowsFetched= 0;
-      rc = SQLFetch(hstmt);
+      rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);
     }
     myassert( i == 3);
     SQLFreeStmt(hstmt, SQL_CLOSE);
@@ -6381,7 +6390,7 @@ static void t_rows_fetched_ptr1(SQLHDBC hdbc, SQLHSTMT hstmt)
       printMessage("\n total rows fetched: %ld", rowsFetched);
       myassert(rowsFetched == rowsSize);
       i++;rowsFetched= 0;
-      rc = SQLFetch(hstmt);
+      rc = SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0);
     }
     myassert( i == 2);
     SQLFreeStmt(hstmt, SQL_CLOSE);
