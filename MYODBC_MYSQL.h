@@ -35,6 +35,21 @@ error "MyODBC need a newer version of the MYSQL client library to compile"
 # undef PACKAGE
 #endif
 
+/*
+  It doesn't matter to us what SIZEOF_LONG means to MySQL's headers, but its
+  value matters a great deal to unixODBC, which calculates it differently.
+
+  This causes problems where an application linked against unixODBC thinks
+  SIZEOF_LONG == 4, and the driver was compiled thinking SIZEOF_LONG == 8,
+  such as on Solaris x86_64 using Sun C 5.8.
+
+  This stems from unixODBC's use of silly platform macros to guess
+  SIZEOF_LONG instead of just using sizeof(long).
+*/
+#ifdef SIZEOF_LONG
+# undef SIZEOF_LONG
+#endif
+
 #ifdef __cplusplus
 }
 #endif
