@@ -615,83 +615,108 @@ static SQLRETURN insert_pk_fields(STMT FAR *stmt, DYNAMIC_STRING *dynQuery)
 
 /*
   @type    : myodbc3 internal
-  @purpose : copies all resultset column data to where clause
+  @purpose : generate a WHERE clause based on the fields in the result set
 */
 
-static SQLRETURN insert_fields( STMT FAR *      stmt, 
-                                DYNAMIC_STRING *dynQuery )
+static SQLRETURN append_all_fields(STMT FAR *stmt,
+                                   DYNAMIC_STRING *dynQuery)
 {
-    MYSQL_RES *     result = stmt->result;
-    MYSQL_FIELD *   field;
-    SQLUSMALLINT    ncol;
-    MYSQL_RES *     presultAllColumns;
-    char            select[NAME_LEN+15];
+  MYSQL_RES    *result= stmt->result;
+  MYSQL_RES    *presultAllColumns;
+  char          select[NAME_LEN+30];
+  int           i, j;
 
-    /* get base table name - fails if we have more than one */
-    if ( !( find_used_table( stmt ) ) )
-        return ( SQL_ERROR );
+  MYODBCDbgEnter;
 
-    /* get a list of all table cols using "SELECT & LIMIT 0" method */
-    strxmov( select, "SELECT * FROM `", stmt->table_name, "` LIMIT 0", NullS );
-    MYLOG_QUERY( stmt, select );
-    pthread_mutex_lock( &stmt->dbc->lock );
-    if ( ( mysql_query( &stmt->dbc->mysql, select ) || !( presultAllColumns = mysql_store_result( &stmt->dbc->mysql ) ) ) )
-    {
-        set_error( stmt, MYERR_S1000, mysql_error( &stmt->dbc->mysql ), mysql_errno( &stmt->dbc->mysql ) );
-        pthread_mutex_unlock( &stmt->dbc->lock );
-        return ( SQL_ERROR );
-    }
-    pthread_mutex_unlock( &stmt->dbc->lock );
+  /*
+    Get the base table name. If there was more than one table underlying
+    the result set, this will fail, and we couldn't build a suitable
+    list of fields.
+  */
+  if (!(find_used_table(stmt)))
+    MYODBCDbgReturn(SQL_ERROR);
+
+  /*
+    Get the list of all of the columns of the underlying table by using
+    SELECT * FROM <table> LIMIT 0.
+  */
+  strxmov(select, "SELECT * FROM `", stmt->table_name, "` LIMIT 0", NullS);
+  MYLOG_QUERY(stmt, select);
+  pthread_mutex_lock(&stmt->dbc->lock);
+  if (mysql_query(&stmt->dbc->mysql, select) ||
+      !(presultAllColumns= mysql_store_result(&stmt->dbc->mysql)))
+  {
+    set_error(stmt, MYERR_S1000, mysql_error(&stmt->dbc->mysql),
+              mysql_errno(&stmt->dbc->mysql));
+    pthread_mutex_unlock(&stmt->dbc->lock);
+    MYODBCDbgReturn(SQL_ERROR);
+  }
+  pthread_mutex_unlock(&stmt->dbc->lock);
+
+  /*
+    If the number of fields in the underlying table is not the same as
+    our result set, we bail out -- we need them all!
+  */
+  if (presultAllColumns->field_count != result->field_count)
+  {
+    mysql_free_result(presultAllColumns);
+    MYODBCDbgReturn(SQL_ERROR);
+  }
+
+  /*
+    Now we walk through the list of columns in the underlying table,
+    appending them to the query along with the value from the row at the
+    current cursor position.
+  */
+  for (i= 0; i < presultAllColumns->field_count; i++)
+  {
+    MYSQL_FIELD *table_field= presultAllColumns->fields + i;
 
     /*
-      If current result set field count is not the total
-      count from the actual table, then use the temp result
-      to have a search condition from all table fields ..
-  
-      This can be buggy, if multiple times the same
-      column is used in the select ..rare case ..
+      We also can't handle floating-point fields because their comparison
+      is inexact.
     */
-/* printf( "\n[PAH][%s][%d]\n", __FILE__, __LINE__ ); */
-    if ( presultAllColumns->row_count != result->row_count && !if_dynamic_cursor(stmt) )
+    if (if_float_field(stmt, table_field))
     {
-/* printf( "\n[PAH][%s][%d]\n", __FILE__, __LINE__ ); */
-        mysql_free_result(presultAllColumns);
-        presultAllColumns= 0;
+      MYODBCDbgInfo("field '%s' is a floating-point field",
+                    table_field->name);
+      mysql_free_result(presultAllColumns);
+      MYODBCDbgReturn(SQL_ERROR);
     }
-    else if ( presultAllColumns->field_count != result->field_count ||
-              !result->data_cursor ||
-              (if_dynamic_cursor(stmt) &&
-               presultAllColumns->row_count != result->row_count) )
+
+    for (j= 0; j < result->field_count; j++)
     {
-        for ( ncol= 0; ncol < (SQLUSMALLINT)stmt->current_row; ncol++ )
+      MYSQL_FIELD *cursor_field= result->fields + j;
+      if (cursor_field->org_name &&
+          !strcmp(cursor_field->org_name, table_field->name))
+      {
+        dynstr_append_quoted_name(dynQuery, table_field->name);
+        dynstr_append_mem(dynQuery, "=", 1);
+        if (insert_field(stmt, result, dynQuery, j))
         {
-/* printf( "\n[PAH][%s][%d] Column %d of %d\n", __FILE__, __LINE__, ncol, stmt->current_row ); */
-            presultAllColumns->data_cursor = presultAllColumns->data_cursor->next;
+          MYODBCDbgInfo("failed to append value for '%s'", table_field->name);
+          mysql_free_result(presultAllColumns);
+          MYODBCDbgReturn(SQL_ERROR);
         }
-        result = presultAllColumns;
+        j= -1;
+        break;
+      }
     }
 
-/* printf( "\n[PAH][%s][%d]\n", __FILE__, __LINE__ ); */
-    pthread_mutex_lock( &stmt->dbc->lock );
-    /* Copy all row buffers to query search clause */
-    for ( ncol = 0; ncol < result->field_count; ncol++ )
+    /*
+      If we didn't find the field, we have failed.
+    */
+    if (j > 0)
     {
-        field = result->fields + ncol;
-        dynstr_append_quoted_name( dynQuery, field->name );
-        dynstr_append_mem( dynQuery, "=", 1 );
-
-        if ( if_float_field( stmt, field ) || insert_field( stmt, result, dynQuery, ncol ) )
-        {
-            mysql_free_result( presultAllColumns );
-            pthread_mutex_unlock( &stmt->dbc->lock );
-            return ( SQL_ERROR );
-        }
+      MYODBCDbgInfo("could not find field '%s' in result set",
+                    table_field->name);
+      mysql_free_result(presultAllColumns);
+      MYODBCDbgReturn(SQL_ERROR);
     }
+  }
 
-    mysql_free_result( presultAllColumns );
-    pthread_mutex_unlock( &stmt->dbc->lock );
-
-    return( SQL_SUCCESS );
+  mysql_free_result(presultAllColumns);
+  MYODBCDbgReturn(SQL_SUCCESS);
 }
 
 /*
@@ -717,9 +742,10 @@ static SQLRETURN build_where_clause( STMT FAR *       pStmt,
     }
     else
     {
-        if ( insert_fields( pStmt, dynQuery ) != SQL_SUCCESS )
+        if ( append_all_fields( pStmt, dynQuery ) != SQL_SUCCESS )
             return set_stmt_error( pStmt, "HY000", "Build WHERE -> insert_fields() failed.", 0 );
     }
+    /* Remove the trailing ' AND ' */
     dynQuery->length -= 5;
 
     /* IF irow = 0 THEN delete all rows in the rowset ELSE specific (as in one) row */
@@ -971,9 +997,7 @@ static SQLRETURN setpos_delete(STMT FAR *stmt, SQLUSMALLINT irow,
         dynQuery->length= query_length;
 
         /* append our WHERE clause to our DELETE statement */
-/* printf( "\n[PAH][%s][%d] %d\n", __FILE__, __LINE__, rowset_pos ); */
         nReturn = build_where_clause( stmt, dynQuery, (SQLUSMALLINT)rowset_pos );
-/* printf( "\n[PAH][%s][%d] (%s)\n", __FILE__, __LINE__, dynQuery ); */
         if ( !SQL_SUCCEEDED( nReturn ) )
             return nReturn;
 

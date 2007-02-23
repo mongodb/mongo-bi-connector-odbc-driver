@@ -23,9 +23,8 @@ SQLCHAR *mysock= NULL;
 *********************************************************/
 void my_dynamic_pos_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
-#if BUG_22796_FIXED
     SQLRETURN   rc;
-    SQLLEN      nRowCount;
+    SQLROWCOUNT nRowCount;
     SQLHSTMT    hstmt_pos;
     SQLINTEGER  nData = 500;
     SQLCHAR     szData[255]={0};
@@ -149,7 +148,6 @@ void my_dynamic_pos_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
     SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
-#endif
 }
 
 
@@ -159,7 +157,7 @@ void my_dynamic_pos_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
 void my_dynamic_pos_cursor1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
     SQLRETURN   rc;
-    SQLLEN      nRowCount;
+    SQLROWCOUNT nRowCount;
     SQLHSTMT    hstmt_pos;
     SQLINTEGER  i,nData[15];
     char        data[30],szData[15][10]={0};
@@ -310,7 +308,10 @@ DELETE with IGNORE ..
 */
 void my_setpos_delete_ignore(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
-#if BUG_22796_FIXED
+#if ALLOW_CRAZY_TESTS
+  /*
+    This test does not actually test what it claims to test.
+  */
     SQLRETURN rc;
     SQLLEN    nlen;
     char      szData[255]={0};
@@ -355,11 +356,9 @@ void my_setpos_delete_ignore(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     strcpy(szData,"mysql2");
-printf( "\n[PAH][%s][%d]\n", __FILE__, __LINE__ );
     /* SQL_DELETE all rows by passing row=0 */
     rc = SQLSetPos( hstmt, 0, SQL_DELETE, SQL_LOCK_NO_CHANGE );
     mystmt( hstmt, rc );
-printf( "\n[PAH][%s][%d]\n", __FILE__, __LINE__ );
 
     rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
@@ -387,7 +386,10 @@ UPDATE with duplicate..
 */
 void my_setpos_update_ignore(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
-#if BUG_22796_FIXED
+#if ALLOW_CRAZY_TESTS
+  /*
+    This test does not actually test what it claims to test.
+  */
     SQLRETURN rc;
     SQLLEN     nlen;
     char    szData[255]={0};
@@ -460,7 +462,10 @@ UPDATE with duplicate..
 */
 void my_setpos_update_ignore1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
-#if BUG_22796_FIXED
+#if ALLOW_CRAZY_TESTS
+  /*
+    This test does not actually test what it claims to test.
+  */
     SQLRETURN rc;
     SQLLEN     nlen;
     char    szData[255]={0};
@@ -533,7 +538,6 @@ CURSOR POSITION - rowset size 1
 */
 void my_position(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
-#if BUG_22796_FIXED
     SQLRETURN rc;
     SQLLEN    nlen;
     char      szData[255]={0};
@@ -632,7 +636,6 @@ void my_position(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
-#endif
 }
 
 /*
@@ -640,11 +643,10 @@ CURSOR POSITION - rowset size 3
 */
 void my_position1(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
-#if BUG_22796_FIXED
     SQLRETURN rc;
-    SQLLEN    nlen[15], nrow[15];
-    char      szData[15][15]={0};
     SQLINTEGER nData[15];
+    SQLLEN    nlen[15]= {0}, nrow[15]= {0};
+    char      szData[15][15]={0};
 
     SQLExecDirect(hstmt,"drop table my_position",SQL_NTS);
     rc = SQLExecDirect(hstmt,"create table my_position(col1 int, col2 varchar(30))",SQL_NTS);
@@ -696,15 +698,15 @@ void my_position1(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,&nrow);
     mystmt(hstmt,rc);
 
-    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,sizeof(szData[0]),(long *)&nlen);
+    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,sizeof(szData[0]),nlen);
     mystmt(hstmt,rc);
 
     rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,4);
     mystmt(hstmt,rc);
 
-    nData[0] = 888; 
+    nData[0] = 888;
     nData[1] = 999; nrow[1] = SQL_COLUMN_IGNORE;
-    nData[2] = 1000; 
+    nData[2] = 1000;
 
     strcpy(szData[0],"updatex"); nlen[0] = 15;
     strcpy(szData[1],"updatey"); nlen[1] = 15;
@@ -717,17 +719,17 @@ void my_position1(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLExecDirect(hstmt,"select * from my_position",SQL_NTS);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,4);
     mystmt(hstmt,rc);
 
-    printMessage("\n updated data1:%d,%s",nData[0],szData[0]);
-    printMessage("\n updated data2:%d,%s",nData[1],szData[1]);
-    printMessage("\n updated data3:%d,%s",nData[2],szData[2]);
+    printMessage("updated data1:%d,%s\n",nData[0],szData[0]);
+    printMessage("updated data2:%d,%s\n",nData[1],szData[1]);
+    printMessage("updated data3:%d,%s\n",nData[2],szData[2]);
     myassert(nData[0] == 4);myassert(strcmp(szData[0],"MySQL4")== 0);
     myassert(nData[1] == 5);myassert(strcmp(szData[1],"updatey")== 0);
     myassert(nData[2] == 1000);myassert(strcmp(szData[2],"updatez")== 0);
@@ -740,7 +742,6 @@ void my_position1(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)1 , 0);
     mystmt(hstmt, rc); 
-#endif
 }
 
 /*
@@ -748,9 +749,8 @@ IROW VALUE - 0
 */
 void my_zero_irow_update(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
-#if BUG_22796_FIXED
     SQLRETURN rc;
-    SQLLEN    nlen[15], nrow[15];
+    SQLLEN    nlen[15]= {0}, nrow[15]= {0};
     char      szData[15][15]={0};
     SQLINTEGER nData[15];
 
@@ -789,10 +789,10 @@ void my_zero_irow_update(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLExecDirect(hstmt,"select * from my_zero_irow",SQL_NTS);
     mystmt(hstmt,rc);
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,(long *)&nrow);
+    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,nrow);
     mystmt(hstmt,rc);
 
-    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,sizeof(szData[0]),(long *)&nlen);
+    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,sizeof(szData[0]),nlen);
     mystmt(hstmt,rc);
 
     rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,2);
@@ -833,16 +833,14 @@ void my_zero_irow_update(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)1 , 0);
     mystmt(hstmt, rc); 
-#endif
 }
 /*
 IROW VALUE - 0 - DELETE
 */
 void my_zero_irow_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
-#if BUG_22796_FIXED
     SQLRETURN rc;
-    SQLLEN    nlen[15], nrow[15];
+    SQLLEN    nlen[15]= {0}, nrow[15]= {0};
     char      szData[15][15]={0};
     SQLINTEGER nData[15];
 
@@ -881,10 +879,10 @@ void my_zero_irow_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLExecDirect(hstmt,"select * from my_zero_irow",SQL_NTS);
     mystmt(hstmt,rc);
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,&nrow);
+    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,nrow);
     mystmt(hstmt,rc);
 
-    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,sizeof(szData[0]),(long *)&nlen);
+    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,sizeof(szData[0]),nlen);
     mystmt(hstmt,rc);
 
     rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,2);
@@ -920,7 +918,6 @@ void my_zero_irow_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)1 , 0);
     mystmt(hstmt, rc); 
-#endif
 }
 
 /**
