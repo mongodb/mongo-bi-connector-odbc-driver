@@ -323,6 +323,7 @@ void mydisconnect(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt)
 */
 static void my_print_dashes(SQLHSTMT hstmt, SQLSMALLINT nCol)
 {
+#if DEBUG_LEVEL > 1
     SQLRETURN  rc;
     SQLINTEGER field_count, disp_size, nullable;
     SQLCHAR    ColName[MAX_NAME_LEN+1];
@@ -355,10 +356,12 @@ static void my_print_dashes(SQLHSTMT hstmt, SQLSMALLINT nCol)
         printMessage( "+" );
     }
     printMessage( "\n" );
+#endif
 }
 static void my_print_data(SQLHSTMT hstmt, SQLUSMALLINT index,
                           SQLCHAR *data, SQLINTEGER length)
 {
+#if DEBUG_LEVEL > 1
     SQLRETURN  rc;
     SQLINTEGER disp_size, nullable;
     SQLCHAR    ColName[MAX_NAME_LEN+1];
@@ -385,6 +388,7 @@ static void my_print_data(SQLHSTMT hstmt, SQLUSMALLINT index,
         printMessage( "%-*s  |",disp_size, "NULL");
     else
         printMessage( "%-*s  |",disp_size,data);
+#endif
 }
 /**
 RESULT SET
