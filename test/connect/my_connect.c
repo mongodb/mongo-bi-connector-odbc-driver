@@ -63,6 +63,10 @@ int main(int argc, char *argv[])
     rc = SQLAllocHandle(SQL_HANDLE_DBC,henv, &hdbc);
     myenv(henv, rc);
 
+#ifdef GET_DRIVERS_AND_DSNS
+    /*
+      This only works when you link against a driver manager.
+     */
     printf("List of SQLDrivers:\n");
     while ((rc= SQLDrivers(henv, SQL_FETCH_NEXT,
                            desc, sizeof(desc), &desc_length,
@@ -83,6 +87,7 @@ int main(int argc, char *argv[])
       printf("* %*s: %*s\n", name_length, name, desc_length, desc);
     }
     printf("done.\n");
+#endif
 
     rc = SQLConnect(hdbc, mydsn, SQL_NTS, myuid, SQL_NTS,  mypwd, SQL_NTS);
     mycon(hdbc, rc);
