@@ -17,129 +17,6 @@
 #include "mytest3.h"
 
 /**
-Testing basic scrolling feature
-*/
-void t_scroll(SQLHDBC hdbc,SQLHSTMT hstmt)
-{
-    SQLRETURN rc;
-    SQLINTEGER i;
-
-    SQLExecDirect(hstmt,"drop table t_scroll",SQL_NTS);
-
-    rc = SQLExecDirect(hstmt,"create table t_scroll(col1 int)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLPrepare(hstmt,"insert into t_scroll values(?)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT, SQL_C_ULONG,
-                          SQL_INTEGER,0,0,&i,0,NULL);
-    mystmt(hstmt,rc);
-
-    for ( i = 1; i <= 5; i++ )
-    {
-        rc = SQLExecute(hstmt);
-        mystmt(hstmt,rc);
-    }
-
-    SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-    SQLFreeStmt(hstmt,SQL_CLOSE);
-
-    rc = SQLEndTran(SQL_HANDLE_DBC,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = SQLExecDirect(hstmt,"select * from t_scroll",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&i,0,NULL);
-    mystmt(hstmt,rc);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_LAST,0);/* 5 */
-    mystmt(hstmt,rc);
-    my_assert(i == 5);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_PREV,0);/* 4 */
-    mystmt(hstmt,rc);
-    my_assert(i == 4);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_RELATIVE,-3);/* 1 */
-    mystmt(hstmt,rc);
-    my_assert(i == 1);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_RELATIVE,-1);/* 0 */
-    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_PREV,1); /* 0 */
-    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_FIRST,-1);/* 0 */
-    mystmt(hstmt,rc);
-    my_assert(i == 1);    
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,4);/* 4 */
-    mystmt(hstmt,rc);
-    my_assert(i == 4);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_RELATIVE,2);/* 4 */
-    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_PREV,2);/* last */
-    mystmt(hstmt,rc);
-    my_assert(i == 5);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,2);/* last+1 */
-    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,-7);/* 0 */
-    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);     
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_FIRST,2);/* 1 */
-    mystmt(hstmt,rc);
-    my_assert(i == 1);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_PREV,2);/* 0 */
-    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);/* 1*/
-    mystmt(hstmt,rc);
-    my_assert(i == 1);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_PREV,0);/* 0 */
-    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_RELATIVE,-1); /* 0 */
-    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_RELATIVE,1); /* 1 */
-    mystmt(hstmt,rc);
-    my_assert(i == 1);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_RELATIVE,-1);/* 0 */
-    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_RELATIVE,1);/* 1 */
-    mystmt(hstmt,rc);
-    my_assert(i == 1);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_RELATIVE,1);/* 2 */
-    mystmt(hstmt,rc);
-    my_assert(i == 2);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_RELATIVE,-2);/* 0 */
-    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_RELATIVE,6);/* last+1 */
-    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_PREV,6);/* last+1 */
-    mystmt(hstmt, rc);
-    my_assert(i == 5);
-
-    SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-    SQLFreeStmt(hstmt,SQL_UNBIND);    
-    SQLFreeStmt(hstmt,SQL_CLOSE);
-}
-/**
 Testing SQL_FETCH_RELATIVE with row_set_size as 10
 */
 void t_relative(SQLHDBC hdbc,SQLHSTMT hstmt)
@@ -752,7 +629,6 @@ int main(int argc, char *argv[])
     }   
 
     myconnect(&henv,&hdbc,&hstmt);
-    t_scroll(hdbc,hstmt);
     t_relative(hdbc,hstmt);
     t_relative1(hdbc,hstmt);
     t_relative2(hdbc,hstmt);
