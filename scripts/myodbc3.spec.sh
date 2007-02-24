@@ -12,7 +12,11 @@
 %define myodbc_version @VERSION@
 %define release 0
 
+%if %{com_lic}
+Name:       mysql-connector-odbc-commercial
+%else
 Name:       mysql-connector-odbc
+%endif
 Summary:    An ODBC 3.51 driver for MySQL
 Group:      Applications/Databases
 Version:    %{myodbc_version}
