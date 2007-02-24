@@ -1058,27 +1058,16 @@ int main(int argc, char *argv[])
     mydrvconnect(&henv,&hdbc,&hstmt,conn); 
     if (driver_supports_setpos(hdbc))
     {
-printf( "\n[PAH][%s][%d]\n", __FILE__, __LINE__ );
         my_setpos_delete_ignore(hdbc,hstmt);
-printf( "\n[PAH][%s][%d]\n", __FILE__, __LINE__ );
         my_setpos_update_ignore(hdbc,hstmt);
-printf( "\n[PAH][%s][%d]\n", __FILE__, __LINE__ );
         my_setpos_update_ignore1(hdbc,hstmt);
-printf( "\n[PAH][%s][%d]\n", __FILE__, __LINE__ );
         my_position(hdbc,hstmt);
-printf( "\n[PAH][%s][%d]\n", __FILE__, __LINE__ );
         my_position1(hdbc,hstmt);
-printf( "\n[PAH][%s][%d]\n", __FILE__, __LINE__ );
         my_zero_irow_update(hdbc,hstmt);
-printf( "\n[PAH][%s][%d]\n", __FILE__, __LINE__ );
         my_zero_irow_delete(hdbc,hstmt);    
-printf( "\n[PAH][%s][%d]\n", __FILE__, __LINE__ );
         my_dynamic_pos_cursor1(hdbc,hstmt);
-printf( "\n[PAH][%s][%d]\n", __FILE__, __LINE__ );
         my_dynamic_cursor(hdbc,hstmt);
-printf( "\n[PAH][%s][%d]\n", __FILE__, __LINE__ );
         my_dynamic_pos_cursor(hdbc,hstmt);
-printf( "\n[PAH][%s][%d]\n", __FILE__, __LINE__ );
     }
     mydisconnect(&henv,&hdbc,&hstmt);
 
