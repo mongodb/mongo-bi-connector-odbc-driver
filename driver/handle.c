@@ -77,13 +77,6 @@ SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV FAR *phenv)
     }
 #endif /* _UNIX_ */
 
-/* --- if OS=WIN32, set default env option for SQL_ATTR_ODBC_VERSION */
-#ifdef WIN32
-    ((ENV FAR*) *phenv)->odbc_ver= SQL_OV_ODBC3;
-#else
-    ((ENV FAR*) *phenv)->odbc_ver= SQL_OV_ODBC2;
-#endif /* WIN32 */
-
     MYODBCDbgReturnReturn( SQL_SUCCESS );
 }
 
@@ -95,10 +88,22 @@ SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV FAR *phenv)
 
 SQLRETURN SQL_API SQLAllocEnv(SQLHENV FAR *phenv)
 {
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "phenv: %p", phenv );
+  SQLRETURN rc;
+  MYODBCDbgEnter;
+  MYODBCDbgInfo( "phenv: %p", phenv );
 
-    MYODBCDbgReturnReturn( my_SQLAllocEnv(phenv) );
+  rc= my_SQLAllocEnv(phenv);
+  if (rc == SQL_SUCCESS)
+  {
+/* --- if OS=WIN32, set default env option for SQL_ATTR_ODBC_VERSION */
+#ifdef WIN32
+    ((ENV FAR*) *phenv)->odbc_ver= SQL_OV_ODBC3;
+#else
+    ((ENV FAR*) *phenv)->odbc_ver= SQL_OV_ODBC2;
+#endif /* WIN32 */
+  }
+
+  MYODBCDbgReturnReturn(rc);
 }
 
 
@@ -172,6 +177,13 @@ SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc)
         return(set_env_error(henv, MYERR_S1000, buff, 0));
     }
 #endif
+
+    if (!penv->odbc_ver)
+    {
+        return set_env_error(henv, MYERR_S1010,
+                             "Can't allocate connection "
+                             "until ODBC version specified.", 0);
+    }
 
 #ifndef _UNIX_
     {
@@ -387,7 +399,7 @@ SQLRETURN SQL_API my_SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption)
 
     MYODBCDbgEnter;
 
-    MYODBCDbgInfo( "stmt: 0x%lx", hstmt );
+    MYODBCDbgInfo( "stmt: 0x%lx", (long)hstmt );
     MYODBCDbgInfo( "option: %s", MYODBCDbgStmtTypeString(fOption) );
 
     if (fOption == SQL_UNBIND)
