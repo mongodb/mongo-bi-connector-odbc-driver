@@ -31,7 +31,7 @@
 
 #include "myodbc3.h"
 #include "errmsg.h"
-#include "m_ctype.h"
+#include <ctype.h>
 
 #if MYSQL_VERSION_ID >= 40100
     #undef USE_MB
