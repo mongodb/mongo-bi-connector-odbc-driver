@@ -625,6 +625,7 @@ static SQLRETURN append_all_fields(STMT FAR *stmt,
   MYSQL_RES    *presultAllColumns;
   char          select[NAME_LEN+30];
   unsigned int  i,j;
+  BOOL          found_field;
 
   MYODBCDbgEnter;
 
@@ -657,7 +658,7 @@ static SQLRETURN append_all_fields(STMT FAR *stmt,
     If the number of fields in the underlying table is not the same as
     our result set, we bail out -- we need them all!
   */
-  if (presultAllColumns->field_count != result->field_count)
+  if (mysql_num_fields(presultAllColumns) != mysql_num_fields(result))
   {
     mysql_free_result(presultAllColumns);
     MYODBCDbgReturn(SQL_ERROR);
@@ -684,6 +685,7 @@ static SQLRETURN append_all_fields(STMT FAR *stmt,
       MYODBCDbgReturn(SQL_ERROR);
     }
 
+    found_field= FALSE;
     for (j= 0; j < result->field_count; j++)
     {
       MYSQL_FIELD *cursor_field= result->fields + j;
@@ -698,7 +700,7 @@ static SQLRETURN append_all_fields(STMT FAR *stmt,
           mysql_free_result(presultAllColumns);
           MYODBCDbgReturn(SQL_ERROR);
         }
-        j= -1;
+        found_field= TRUE;
         break;
       }
     }
@@ -706,7 +708,7 @@ static SQLRETURN append_all_fields(STMT FAR *stmt,
     /*
       If we didn't find the field, we have failed.
     */
-    if (j > 0)
+    if (!found_field)
     {
       MYODBCDbgInfo("could not find field '%s' in result set",
                     table_field->name);
