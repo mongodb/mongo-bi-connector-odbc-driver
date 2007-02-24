@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 /* ODBC HEADERS */
 #include <sql.h>
@@ -39,14 +40,6 @@
 
 /* for clock() */
 #include <time.h>
-
-#ifndef NULL
-# define NULL 0
-#endif
-
-#ifndef ushort
-# define ushort unsigned short
-#endif
 
 #ifndef bool
 # define bool unsigned char
@@ -68,14 +61,10 @@
 # define myassert assert
 #endif
 
-#ifndef Sleep
-# define Sleep _sleep
-#endif
-
 #if DEBUG_LEVEL > 1
 # define printMessage printf
 #else
-void printMessage(char *fmt, ...) {}
+void printMessage(const char *fmt, ...) { fmt= fmt; /* stifle warning */}
 #endif
 
 #define MAX_NAME_LEN 255
@@ -83,12 +72,12 @@ void printMessage(char *fmt, ...) {}
 #define MAX_ROW_DATA_LEN 1000
 #define MYSQL_NAME_LEN 64
 
-SQLCHAR *mydsn= "test";
-SQLCHAR *myuid= "root";
-SQLCHAR *mypwd= "";
-SQLCHAR *myserver= "localhost";
-SQLCHAR *mydb= "test";
-SQLCHAR *test_db= "client_odbc_test";
+SQLCHAR *mydsn= (SQLCHAR *)"test";
+SQLCHAR *myuid= (SQLCHAR *)"root";
+SQLCHAR *mypwd= (SQLCHAR *)"";
+SQLCHAR *myserver= (SQLCHAR *)"localhost";
+SQLCHAR *mydb= (SQLCHAR *)"test";
+SQLCHAR *test_db= (SQLCHAR *)"client_odbc_test";
 
 int g_nCursor;
 char g_szHeader[501];
@@ -245,7 +234,7 @@ void myconnect(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt)
     mycon(*hdbc,rc);
 
     {
-        int i;
+        size_t i;
         for (i=0; i< sizeof(init_db)/sizeof(init_db[0]); i++)
             SQLExecDirect(*hstmt, (SQLCHAR *)init_db[i], SQL_NTS);
     }
@@ -284,7 +273,7 @@ void mydrvconnect(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt,SQLCHAR *connIn)
     mycon(*hdbc,rc);
 
     {
-        int i;
+        size_t i;
         for (i=0; i< sizeof(init_db)/sizeof(init_db[0]); i++)
             SQLExecDirect(*hstmt, (SQLCHAR *)init_db[i], SQL_NTS);
     }
@@ -318,12 +307,13 @@ void mydisconnect(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt)
     rc = SQLFreeEnv(*henv);
     myenv(*henv,rc);
 }
+
 /**
   Print resultset dashes
 */
+#if DEBUG_LEVEL > 1
 static void my_print_dashes(SQLHSTMT hstmt, SQLSMALLINT nCol)
 {
-#if DEBUG_LEVEL > 1
     SQLRETURN  rc;
     SQLINTEGER field_count, disp_size, nullable;
     SQLCHAR    ColName[MAX_NAME_LEN+1];
@@ -356,12 +346,16 @@ static void my_print_dashes(SQLHSTMT hstmt, SQLSMALLINT nCol)
         printMessage( "+" );
     }
     printMessage( "\n" );
-#endif
 }
+#else
+# define my_print_dashes(a, b)
+#endif
+
+
+#if DEBUG_LEVEL > 1
 static void my_print_data(SQLHSTMT hstmt, SQLUSMALLINT index,
                           SQLCHAR *data, SQLINTEGER length)
 {
-#if DEBUG_LEVEL > 1
     SQLRETURN  rc;
     SQLINTEGER disp_size, nullable;
     SQLCHAR    ColName[MAX_NAME_LEN+1];
@@ -388,8 +382,12 @@ static void my_print_data(SQLHSTMT hstmt, SQLUSMALLINT index,
         printMessage( "%-*s  |",disp_size, "NULL");
     else
         printMessage( "%-*s  |",disp_size,data);
-#endif
 }
+#else
+# define my_print_data(a, b, c, d)
+#endif
+
+
 /**
 RESULT SET
 */
@@ -621,7 +619,7 @@ bool mysql_min_version(SQLHDBC hdbc, SQLCHAR *min_version, unsigned int length)
     rc = SQLGetInfo(hdbc,SQL_DBMS_VER,server_version,MYSQL_NAME_LEN,NULL);
     mycon(hdbc, rc);
 
-    if (strncmp(server_version, min_version, length) >= 0)
+    if (strncmp((char *)server_version, (char *)min_version, length) >= 0)
         return true;
 
     return false;
@@ -641,7 +639,7 @@ bool driver_min_version(SQLHDBC hdbc, SQLCHAR *min_version, unsigned int length)
     rc = SQLGetInfo(hdbc,SQL_DRIVER_VER,driver_version,MYSQL_NAME_LEN,NULL);
     mycon(hdbc, rc);
 
-    if (strncmp(driver_version, min_version, length) >= 0)
+    if (strncmp((char *)driver_version, (char *)min_version, length) >= 0)
         return true;
 
     return false;
@@ -670,7 +668,9 @@ bool server_supports_grant(SQLHSTMT hstmt)
 {
     SQLRETURN   rc;
 
-    rc = SQLExecDirect(hstmt,"GRANT ALL ON *.* TO 'junk_test_odbc_usr'",SQL_NTS);
+    rc= SQLExecDirect(hstmt,
+                      (SQLCHAR *)"GRANT ALL ON *.* TO 'mysqltest_1'",
+                      SQL_NTS);
     if (rc == SQL_ERROR)
     {
         SQLINTEGER native_err;
@@ -681,9 +681,9 @@ bool server_supports_grant(SQLHSTMT hstmt)
         if (native_err == 1047) /* command not found */
             return false;
     }
-    SQLExecDirect(hstmt,"DELETE FROM mysql.user WHERE User='junk_test_odbc_usr'",SQL_NTS);
+    SQLExecDirect(hstmt,
+                  (SQLCHAR *)"DELETE FROM mysql.user WHERE User='mysqltest_1'",
+                  SQL_NTS);
     return true;
 }
 #endif /* __TMYODBC__TEST__H */
-
-
