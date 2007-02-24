@@ -624,7 +624,7 @@ static SQLRETURN append_all_fields(STMT FAR *stmt,
   MYSQL_RES    *result= stmt->result;
   MYSQL_RES    *presultAllColumns;
   char          select[NAME_LEN+30];
-  int           i, j;
+  unsigned int  i,j;
 
   MYODBCDbgEnter;
 
