@@ -48,7 +48,7 @@
 
 #include "myodbc3.h"
 #include <errmsg.h>
-#include <m_ctype.h>
+#include <ctype.h>
 #include <locale.h>
 
 #define SQL_MY_PRIMARY_KEY 1212
