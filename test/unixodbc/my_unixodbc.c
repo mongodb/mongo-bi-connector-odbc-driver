@@ -30,7 +30,7 @@ void t_odbc3_envattr()
 
     rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)&ov_version,0,0);
     myenv(henv,rc);
-    printMessage("\ndefault odbc version:%d",ov_version);
+    printMessage("default odbc version:%d\n",ov_version);
 
     rc = SQLSetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)SQL_OV_ODBC3,0);
     myenv(henv,rc);
@@ -47,7 +47,7 @@ void t_odbc3_envattr()
 
     rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)&ov_version,0,0);
     myenv(henv,rc);
-    printMessage("\nnew odbc version:%d",ov_version);
+    printMessage("new odbc version:%d\n",ov_version);
     my_assert(ov_version == SQL_OV_ODBC3);
 
     rc = SQLFreeEnv(henv);
@@ -55,7 +55,7 @@ void t_odbc3_envattr()
 }
 void t_odbc3_handle()
 {
-    SQLRETURN rc; 
+    SQLRETURN rc;
     SQLHENV henv;
     SQLHDBC hdbc;
     SQLHSTMT hstmt;
@@ -64,15 +64,12 @@ void t_odbc3_handle()
     rc = SQLAllocHandle(SQL_HANDLE_ENV,SQL_NULL_HANDLE,&henv);
     myenv(henv,rc);
 
-#if 0
+    /*
+      Verify that we get an error trying to allocate a connection handle
+      before we've set SQL_ATTR_ODBC_VERSION.
+    */
     rc = SQLAllocHandle(SQL_HANDLE_DBC,henv,&hdbc);
     myenv_err(henv,rc == SQL_ERROR,rc);
-
-    rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)&ov_version,0,0);
-    myenv(henv,rc);
-    printMessage("\ndefault odbc version:%d",ov_version);
-    my_assert(ov_version == SQL_OV_ODBC2);
-#endif
 
     rc = SQLSetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)SQL_OV_ODBC3,0);
     myenv(henv,rc);
@@ -127,7 +124,7 @@ void t_driver_connect()
     if (rc == SQL_SUCCESS)
     {
         mycon(hdbc,rc);
-        printMessage( "output string: `%s`", conn_out); 
+        printMessage( "output string: `%s`\n", conn_out); 
 
         rc = SQLDisconnect(hdbc);
         mycon(hdbc,rc);
