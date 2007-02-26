@@ -8,7 +8,7 @@ INTRODUCTION
 
 This is the source or binary distribution of ODBC for 
 MySQL. This software is distributed with restrictions - please
-see the LICENSE or COPYING file for details. 
+see the license file for details.
 
 Open Database Connectivity (ODBC) is a widely accepted standard
 for reading/writing data. ODBC is designed in a similar manner
@@ -40,7 +40,7 @@ transaction support) you should use it against MySQL
 LICENSE
 ---------------------------------------------------------------
 
-Please see LICENSE or COPYING for information about licensing
+Please see the license file for information about licensing
 and use restrictions of this software.
  
 BUILDING SOURCE
