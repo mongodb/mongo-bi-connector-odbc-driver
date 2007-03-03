@@ -51,7 +51,8 @@ myodbc_version=$VERSION
 ###################################################################
 
 SHARED_LIB_VERSION=1:0:0
-AM_CONFIG_HEADER(driver/myconf.h)
+# AM_CONFIG_HEADER(driver/myconf.h)
+AC_CONFIG_HEADERS(driver/myconf.h)
 AC_SUBST(myodbc_version)
 
 # Canonicalize the configuration name.
