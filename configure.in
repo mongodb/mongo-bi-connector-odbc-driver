@@ -801,27 +801,6 @@ AC_SUBST(CFLAGS)
 
 ###################################################################
 #                                                                 #
-# Build Samples ?                                                 #
-#                                                                 #
-###################################################################
-
-myodbc_samples_dir="samples"
-AC_MSG_CHECKING([if building of samples is enabled])
-AC_ARG_WITH(samples,
-[  --with-samples          Build the samples default=yes],
-            [with_samples=$withval],
-            [with_samples=yes]
-           )
-AC_MSG_RESULT([$with_samples])
-
-if test "$with_samples" = "no"
-then
-  myodbc_samples_dir=""
-fi
-AC_SUBST(myodbc_samples_dir)
-
-###################################################################
-#                                                                 #
 # Add some extra LDFLAGS to the linking of the shared library     #
 #                                                                 #
 ###################################################################
@@ -1033,7 +1012,6 @@ AC_OUTPUT([
   dsn-editor/Makefile
   installer/Makefile
   monitor/Makefile
-  samples/Makefile
   test/Makefile
   scripts/Makefile
   dltest/Makefile

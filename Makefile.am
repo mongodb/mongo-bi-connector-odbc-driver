@@ -41,7 +41,6 @@ SUBDIRS = \
 	dsn-editor \
 	installer \
 	monitor \
-	@myodbc_samples_dir@ \
 	@myodbc_test_dir@ \
 	scripts \
 	dltest
@@ -54,7 +53,6 @@ DIST_SUBDIRS = \
 	dsn-editor \
 	installer \
 	monitor \
-	samples \
 	test \
 	scripts \
 	dltest
@@ -79,13 +77,7 @@ bin-tar: all
 	gzip -9vf $(build).tar 
 	rm -rf $(build)
 
-test:	samples testlib
-
-#
-# Run the samples
-#
-samples: all
-	(cd samples; $(MAKE) test)
+test:	testlib
 
 #
 # Run the test library

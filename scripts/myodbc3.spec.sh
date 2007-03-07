@@ -56,7 +56,6 @@ specification. The driver is commonly referred to as 'MySQL ODBC 3.51 Driver'.
     --libdir=%{_libdir} \
     --enable-dmlink \
     --disable-gui \
-    --without-samples \
     --with-separate-debug-driver \
     %{ODBC_DM_PATH} \
     %{MYSQL_PATH_ARG} \

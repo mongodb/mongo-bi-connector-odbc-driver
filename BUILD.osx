@@ -205,7 +205,7 @@ the driver and the setup library as bundles by default.
 Do the following to build/install MyODBC;
   
 $ make -f Makefile.cvs macosx
-$ ./configure --prefix=/usr --with-iODBC=/usr --with-iODBC-includes=/usr/include --with-ldflags=-lltdl --without-samples --disable-gui --disable-test
+$ ./configure --prefix=/usr --with-iODBC=/usr --with-iODBC-includes=/usr/include --with-ldflags=-lltdl --disable-gui --disable-test
 $ make
 $ make install
 

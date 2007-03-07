@@ -14,8 +14,7 @@ function configure_driver
     ${ODBC_DM_PATH} \
     --enable-shared=yes \
     --enable-static=yes \
-    --without-debug \
-    --without-samples
+    --without-debug
   make dist;
 }
 
