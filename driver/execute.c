@@ -110,7 +110,7 @@ SQLRETURN do_query(STMT FAR *stmt,char *query)
             error= SQL_SUCCESS;     /* no result set */
             stmt->state= ST_EXECUTED;
             stmt->affected_rows= mysql_affected_rows(&stmt->dbc->mysql);
-            MYODBCDbgInfo( "affected rows: %d", stmt->affected_rows );
+            MYODBCDbgInfo( "affected rows: %lld", stmt->affected_rows );
             goto exit;
         }
         MYODBCDbgInfo( "%s", "client failed to return resultset" );
@@ -330,12 +330,12 @@ char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param)
         data= param->buffer;
         length= *param->actual_len;
     }
-    MYODBCDbgInfo( "param: 0x%lx", param );
+    MYODBCDbgInfo( "param: 0x%lx", (long)param );
     MYODBCDbgInfo( "ctype: %d", param->CType );
     MYODBCDbgInfo( "SqlType: %d", param->SqlType );
-    MYODBCDbgInfo( "data: 0x%lx", data );
+    MYODBCDbgInfo( "data: 0x%lx", (long)data );
     MYODBCDbgInfo( "length: %d", length );
-    MYODBCDbgInfo( "actual_len: %d", param->actual_len ? *param->actual_len : 0 );
+    MYODBCDbgInfo( "actual_len: %ld", param->actual_len ? *param->actual_len : 0 );
     MYODBCDbgInfo( "pos_in_query: %p", param->pos_in_query );
 
     switch ( param->CType )
@@ -602,7 +602,7 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
 
     MYODBCDbgEnter;
 
-    MYODBCDbgInfo( "pStmt: 0x%lx", pStmt );
+    MYODBCDbgInfo( "pStmt: 0x%lx", (long)pStmt );
 
     if ( !pStmt )
         MYODBCDbgReturnReturn( SQL_ERROR );
