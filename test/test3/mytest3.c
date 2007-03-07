@@ -59,8 +59,9 @@ static void verify_col_data(SQLHSTMT hstmt, const char *table,
 static void t_basic(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  long nInData = 1;
-  long nOutData, nRowCount=1;
+  SQLINTEGER nInData= 1;
+  SQLINTEGER nOutData;
+  SQLROWCOUNT nRowCount= 1;
   char szOutData[255];
 
   printMessageHeader();
@@ -616,7 +617,7 @@ static void tmysql_specialcols(SQLHDBC hdbc, SQLHSTMT hstmt)
 static void tmysql_bindcol(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  long    nodata, nidata = 200;
+  SQLINTEGER nodata, nidata = 200;
   SQLLEN  nlen, length;
   char    szodata[20],szidata[20]="MySQL";
 
@@ -2567,7 +2568,7 @@ static void t_max_rows(SQLHDBC hdbc,SQLHSTMT hstmt)
 static void t_prepare(SQLHDBC hdbc, SQLHSTMT hstmt)
 {
   SQLRETURN rc;
-  long      nidata= 200, nodata;
+  SQLINTEGER nidata= 200, nodata;
   SQLLEN    nlen;
   char      szodata[20],szidata[20]="MySQL";
   short     pccol;
@@ -5046,7 +5047,7 @@ static void t_convert_type(SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt)
       mystmt(hstmt,rc);
 
       fprintf(stdout,"\n CAST(MAX(col1) AS CHAR): %d", SqlType);
-      myassert(SqlType == SQL_VARCHAR);
+      myassert(SqlType == SQL_VARCHAR || SqlType == SQL_LONGVARCHAR);
 
       SQLFreeStmt(hstmt,SQL_CLOSE);
     }
@@ -5975,7 +5976,8 @@ static void t_rows_fetched_ptr(SQLHDBC hdbc, SQLHSTMT hstmt)
   SQLLEN      pccol;
   SQLSMALLINT cols;
   SQLRETURN   rc;
-  SQLLEN      rows_fetched, pcb_value[4];
+  SQLUINTEGER rows_fetched;
+  SQLLEN      pcb_value[4];
   SQLINTEGER  i, data[4];
   SQLUSMALLINT row_status[4];
 
