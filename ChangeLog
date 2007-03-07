@@ -16,6 +16,8 @@
   * Added --with-separate-debug-driver ./configure option
 
   Bugs fixed:
+  * Prepared statements using the embedded MySQL server would fail
+    due to an unitialized variable. (Bug #16535)
   * Fix positioned update and delete on statements derived from one
     table with no primary key but including all columns (Bug #22796)
   * Only initialize the ODBC version when the old-style SQLAllocEnv()

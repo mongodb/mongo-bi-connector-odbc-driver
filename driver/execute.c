@@ -148,8 +148,8 @@ char *extend_buffer(NET *net, char *to, ulong length)
     MYODBCDbgInfo( "length: %ld", (ulong) length );
     MYODBCDbgInfo( "buffer_length: %ld", (ulong) net->max_packet );
 
-    if (!to ||
-        (need= (ulong)(to - (char *)net->buff) + length) > net->max_packet - 10)
+    need= (ulong)(to - (char *)net->buff) + length;
+    if (!to || need > net->max_packet - 10)
     {
         if (net_realloc(net, need))
         {
