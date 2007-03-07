@@ -208,7 +208,7 @@ typedef struct tagDBC
 		*user,*password,*server;
   char		st_error_prefix[255];
   ulong		flag;
-  SQLUINTEGER connect_timeout,login_timeout;
+  SQLUINTEGER login_timeout;
   time_t	last_query_time;
   int		txn_isolation;
   uint		port;

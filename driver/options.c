@@ -337,24 +337,9 @@ set_con_attr(SQLHDBC    hdbc,
 
         case SQL_ATTR_CONNECTION_TIMEOUT:
             {
-               if (dbc->server) 
-               {
-                  MYODBCDbgReturnReturn(
-                       set_conn_error(dbc, MYERR_S1011, NULL, 0));
-               }
-               else
-               {
-                  SQLUINTEGER timeout= (SQLUINTEGER)ValuePtr;
-                  if (!mysql_options(&dbc->mysql, 
-                      MYSQL_OPT_READ_TIMEOUT, (const char *)&timeout) &&
-                      !mysql_options(&dbc->mysql, 
-                      MYSQL_OPT_WRITE_TIMEOUT, (const char *)&timeout))
-                  {
-                     dbc->connect_timeout= timeout;
-                     MYODBCDbgReturnReturn(SQL_SUCCESS);
-                  }
-                  MYODBCDbgReturnReturn(SQL_ERROR);
-               }  
+				/* not supported */
+				set_dbc_error(dbc, MYERR_S1C00, NULL, 0);
+    			MYODBCDbgReturnReturn(SQL_SUCCESS_WITH_INFO);
             }
             break;
 
@@ -506,7 +491,9 @@ static SQLRETURN get_con_attr(SQLHDBC    hdbc,
             break;
 
         case SQL_ATTR_CONNECTION_TIMEOUT:
-            *((SQLUINTEGER *) ValuePtr)= dbc->connect_timeout;
+			/* not supported */
+			set_dbc_error(dbc, MYERR_S1C00, NULL, 0);
+			result = SQL_SUCCESS_WITH_INFO;
             break;
 
         case SQL_ATTR_CURRENT_CATALOG:
