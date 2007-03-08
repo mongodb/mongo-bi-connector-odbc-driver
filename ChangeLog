@@ -5,8 +5,6 @@
   * Added auto-reconnect option because automatic reconnect is now
     disabled by default in libmysql
   * Added auto is null option (Bug #10910)
-  * The result of SQLGetInfo(SQL_MAX_DRIVER_CONNECTIONS) parameter is 
-    now treated as a SQLSMALLINT
   * Added support for SQLMoreResults
   * Checking SQL_ATTR_CONNECTION_DEAD now always calls mysql_ping() to
     check for a dead connection.
@@ -66,6 +64,8 @@
     statements under 64-bit Linux. (Bug #22446)
   * The SQLDriverConnect() ODBC method did not work with recent Connector/ODBC
     releases. (Bug #12393)
+  * Some properties returned by SQLGetInfo() were set using the wrong data
+    type, resulting in possible memory overruns. (Bug #20995)
 
 ----
 
