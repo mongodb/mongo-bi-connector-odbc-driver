@@ -577,7 +577,7 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
              */
             else if (field->org_table && !field->org_table[0])
             {
-              *transfer_length= *precision= *display_size= 16777216L;
+              *transfer_length= *precision= *display_size= 16777215L;
               if (field_is_binary)
               {
                 if (buff) 
