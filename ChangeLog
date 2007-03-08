@@ -16,6 +16,8 @@
   * Added --with-separate-debug-driver ./configure option
 
   Bugs fixed:
+  * SQL_ATTR_CONNECTION_TIMEOUT was inappropriately mapped to
+    MYSQL_OPT_CONNECT_TIMEOUT. (Bug #19823)
   * Prepared statements using the embedded MySQL server would fail
     due to an unitialized variable. (Bug #16535)
   * Fix positioned update and delete on statements derived from one
