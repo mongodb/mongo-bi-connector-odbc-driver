@@ -1,7 +1,6 @@
 3.51.14 (07-Mar-2007)
 
   Functionality added or changed:
-  * Added support for HENV handlers in SQLEndTran()
   * Added auto-reconnect option because automatic reconnect is now
     disabled by default in libmysql
   * Added auto is null option (Bug #10910)
@@ -66,6 +65,8 @@
     releases. (Bug #12393)
   * Some properties returned by SQLGetInfo() were set using the wrong data
     type, resulting in possible memory overruns. (Bug #20995)
+  * Ending a transaction using SQLEndTran() on a environment handle was
+    not supported. (Bug #21588)
 
 ----
 
