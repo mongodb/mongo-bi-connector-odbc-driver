@@ -1,48 +1,45 @@
-/* Copyright (C) 1995-2006 MySQL AB
+/*
+  Copyright (C) 1995-2007 MySQL AB
 
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of version 2 of the GNU General Public License as
+  published by the Free Software Foundation.
 
-   There are special exceptions to the terms and conditions of the GPL as it
-   is applied to this software. View the full text of the exception in file
-   EXCEPTIONS in the directory of this software distribution.
+  There are special exceptions to the terms and conditions of the GPL
+  as it is applied to this software. View the full text of the exception
+  in file LICENSE.exceptions in the top-level directory of this software
+  distribution.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
 
-/***************************************************************************
- * UTILITY.C                                   *
- *                                	   *
- * @description: Utility functions                	   *
- *                                	   *
- * @author     : MySQL AB(monty@mysql.com, venu@mysql.com)		   *
- * @date       : 2001-Aug-15                		   *
- * @product    : myodbc3                		   *
- *                                	   *
- ****************************************************************************/
+/**
+  @file  utility.c
+  @brief Utility functions
+*/
 
 #include "myodbc3.h"
 #include "errmsg.h"
 #include <ctype.h>
 
 #if MYSQL_VERSION_ID >= 40100
-    #undef USE_MB
+# undef USE_MB
 #endif
 
 
-/*
-  @type    : myodbc internal
-  @purpose : executes the specified sql statement
-*/
+/**
+  Execute a SQL statement.
 
+  @param[in] dbc   The database connection
+  @param[in] query The query to execute
+*/
 SQLRETURN odbc_stmt(DBC FAR *dbc, const char *query)
 {
     SQLRETURN result= SQL_SUCCESS;
@@ -61,12 +58,17 @@ SQLRETURN odbc_stmt(DBC FAR *dbc, const char *query)
     MYODBCDbgReturnReturn(result);
 }
 
-/*
-  @type    : myodbc internal
-  @purpose : use own fields instead of sql fields
-*/
 
-void mysql_link_fields(STMT *stmt,MYSQL_FIELD *fields,uint field_count)
+/**
+  Link a list of fields to the current statement result.
+
+  @todo This is a terrible idea. We need to purge this.
+
+  @param[in] stmt        The statement to modify
+  @param[in] fields      The fields to attach to the statement
+  @param[in] field_count The number of fields
+*/
+void mysql_link_fields(STMT *stmt, MYSQL_FIELD *fields, uint field_count)
 {
     MYSQL_RES *result;
     pthread_mutex_lock(&stmt->dbc->lock);
@@ -79,11 +81,11 @@ void mysql_link_fields(STMT *stmt,MYSQL_FIELD *fields,uint field_count)
 }
 
 
-/*
-  @type    : myodbc internal
-  @purpose : fixes the result types
-*/
+/**
+  Figure out the ODBC result types for each column in the result set.
 
+  @param[in] stmt The statement with result types to be fixed.
+*/
 void fix_result_types(STMT *stmt)
 {
     uint i;
@@ -101,7 +103,7 @@ void fix_result_types(STMT *stmt)
             stmt->odbc_types[i]= (SQLSMALLINT) unireg_to_c_datatype(field);
         }
     }
-    /*                              
+    /*
       Fix default values for bound columns
       Normally there isn't any bound columns at this stage !
     */
@@ -135,12 +137,18 @@ void fix_result_types(STMT *stmt)
 }
 
 
-/*
-  @type    : myodbc internal
-  @purpose : change a string + length to a zero terminated string
-*/
+/**
+  Change a string with a length to a NUL-terminated string.
 
-char *fix_str(char *to,char *from,int length)
+  @param[in,out] to      A buffer to write the string into, which must be at
+                         at least length + 1 bytes long.
+  @param[in]     from    A pointer to the beginning of the source string.
+  @param[in]     length  The length of the string, or SQL_NTS if it is
+                         already NUL-terminated.
+
+  @return A pointer to a NUL-terminated string.
+*/
+char *fix_str(char *to, const char *from, int length)
 {
     if ( !from )
         return "";
@@ -1207,38 +1215,23 @@ my_bool is_minimum_version(const char *server_version,const char *version,
 *****************************************************************************/
 
 /* _exit is called by safemalloc, mystatic & my_malloc */
-    #ifndef __WIN__
+# ifndef __WIN__
 void exit(int exit)
 {
     abort();
 }
-    #endif /* !__WIN__ */
+# endif /* !__WIN__ */
 
-/* perror is called by dbug.c */
-/*
-void perror(const char *str)
-{
-}
-*/
-/* clock is called by dbug.c when profiling */
-/*
-long clock(void)
-{
-    return 0L;
-}
-*/
-
-    #ifndef THREAD
+# ifndef THREAD
 long getpid()
 {
     return 0;
 }
-    #else
-
+# else
 int pthread_dummy(int return_value)
 {
     return return_value;
 }
-    #endif /* !THREAD */
+# endif /* !THREAD */
 
 #endif /* !_UNIX_ */
