@@ -47,8 +47,8 @@
     such as COMPRESS() in SELECT queries (Bug #20208)
   * Fixed 64-bit issues related to SQLINTEGER columns defined as int,
     but later cast to long.
-  * Fixed getting TIME columns using SQL_TIMESTAMP_STRUCT in Crystal
-    Reports (Bug #25846)
+  * TIME fields were incorrectly converted into date/time values. (Bug #25846,
+    Bug #24867, and Bug #25432)
   * Fixed #Deleted issue in Microsoft Access by changing the default behavior
     of MyODBC driver regarding SQL_AUTO_IS_NULL variable. Added new option to
     the GUI and driver
