@@ -1,4 +1,4 @@
-3.51.14 (not released yet)
+3.51.14
 
   Functionality added or changed:
   * Added support for HENV handlers in SQLEndTran()
@@ -11,7 +11,9 @@
   * Checking SQL_ATTR_CONNECTION_DEAD now always calls mysql_ping() to
     check for a dead connection.
   * Added MYODBCBrowser
-  * Remove statements included within curly brackets ({})
+  * Remove ODBC escape syntax { and } that begin and terminate statements,
+    allowing {CALL (?)} for procedures that don't require OUT or INOUT
+    parameters
   * Improved regression tests
   * Added --with-separate-debug-driver ./configure option
 
