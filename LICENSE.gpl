@@ -1,32 +1,9 @@
-+-------------------------------------------------------------+
-| MySQL Connector/ODBC 3.51                                   |
-| GPL LICENSE                                                 |
-+-------------------------------------------------------------+
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-There are special exceptions to the terms and conditions of the GPL as it
-is applied to this software. View the full text of the exception in file
-EXCEPTIONS in the directory of this software distribution.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-******************************************************************************
-
-                        GNU GENERAL PUBLIC LICENSE
-                        **************************
-
+                      GNU GENERAL PUBLIC LICENSE
                          Version 2, June 1991
 
      Copyright (C) 1989, 1991 Free Software Foundation, Inc.
      59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
-     
+
      Everyone is permitted to copy and distribute verbatim copies
      of this license document, but changing it is not allowed.
 
@@ -81,9 +58,7 @@ The precise terms and conditions for copying, distribution and
 modification follow.
 
                       GNU GENERAL PUBLIC LICENSE
-
     TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
-
   0. This License applies to any program or other work which contains a
      notice placed by the copyright holder saying it may be distributed
      under the terms of this General Public License.  The "Program",
@@ -171,7 +146,7 @@ modification follow.
           software interchange; or,
 
        b. Accompany it with a written offer, valid for at least three
-          years, to give any third party, for a charge no more than your
+          years, to give any third-party, for a charge no more than your
           cost of physically performing source distribution, a complete
           machine-readable copy of the corresponding source code, to be
           distributed under the terms of Sections 1 and 2 above on a
@@ -290,7 +265,6 @@ modification follow.
      and reuse of software generally.
 
                                 NO WARRANTY
-
  11. BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO
      WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE
      LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
@@ -314,7 +288,6 @@ modification follow.
      ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
 
                       END OF TERMS AND CONDITIONS
-
 How to Apply These Terms to Your New Programs
 =============================================
 
@@ -330,17 +303,17 @@ the exclusion of warranty; and each file should have at least the
 
      ONE LINE TO GIVE THE PROGRAM'S NAME AND A BRIEF IDEA OF WHAT IT DOES.
      Copyright (C) YYYY  NAME OF AUTHOR
-     
+
      This program is free software; you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
      the Free Software Foundation; either version 2 of the License, or
      (at your option) any later version.
-     
+
      This program is distributed in the hope that it will be useful,
      but WITHOUT ANY WARRANTY; without even the implied warranty of
      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
      GNU General Public License for more details.
-     
+
      You should have received a copy of the GNU General Public License
      along with this program; if not, write to the Free Software
      Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
@@ -367,7 +340,7 @@ necessary.  Here is a sample; alter the names:
 
      Yoyodyne, Inc., hereby disclaims all copyright interest in the program
      `Gnomovision' (which makes passes at compilers) written by James Hacker.
-     
+
      SIGNATURE OF TY COON, 1 April 1989
      Ty Coon, President of Vice
 
