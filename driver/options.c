@@ -339,9 +339,11 @@ set_con_attr(SQLHDBC    hdbc,
 
         case SQL_ATTR_CONNECTION_TIMEOUT:
             {
-              /* not supported */
-              set_dbc_error(dbc, MYERR_S1C00, NULL, 0);
-              MYODBCDbgReturnReturn(SQL_SUCCESS_WITH_INFO);
+              /*
+                We don't do anything with this, but we pretend that we did
+                to be consistent with Microsoft SQL Server.
+              */
+              MYODBCDbgReturnReturn(SQL_SUCCESS);
             }
             break;
 
@@ -493,9 +495,9 @@ static SQLRETURN get_con_attr(SQLHDBC    hdbc,
             break;
 
         case SQL_ATTR_CONNECTION_TIMEOUT:
-            /* not supported */
-            set_dbc_error(dbc, MYERR_S1C00, NULL, 0);
-            result= SQL_SUCCESS_WITH_INFO;
+            /* We don't support this option, so it is always 0. */
+            *((SQLUINTEGER *) ValuePtr)= 0;
+            result= SQL_SUCCESS;
             break;
 
         case SQL_ATTR_CURRENT_CATALOG:
