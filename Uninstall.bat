@@ -10,12 +10,17 @@ REM \sa     README.win
 REM
 REM #########################################################
 
+SET installdir=none
+IF EXIST %windir%\system\nul   SET installdir=%windir%\system
+IF EXIST %windir%\system32\nul SET installdir=%windir%\system32
+IF %installdir%==none GOTO :doError4
+
 IF "%1"=="0" GOTO doNormal
 IF "%1"=="1" GOTO doDebug
 GOTO doSyntax
 
 :doNormal
-IF NOT EXIST \Windows\System32\myodbc3i.exe GOTO doError2
+IF NOT EXIST %installdir%\myodbc3i.exe GOTO doError2
 REM ****
 REM * Deregistering driver...
 REM ****
@@ -24,19 +29,19 @@ myodbc3i -r -d -n"MySQL ODBC 3.51 Driver"
 REM ****
 REM * Removing files...
 REM ****
-del /Q /F \Windows\System32\myodbc3S.dll
-del /Q /F \Windows\System32\myodbc3S.lib
-del /Q /F \Windows\System32\myodbc3.dll
-del /Q /F \Windows\System32\myodbc3.lib
-del /Q /F \Windows\System32\myodbc3i.exe
-del /Q /F \Windows\System32\myodbc3m.exe
-del /Q /F \Windows\System32\myodbc3c.exe
-del /Q /F \Windows\System32\myodbc3*.hlp
+del /Q /F %installdir%\myodbc3S.dll
+del /Q /F %installdir%\myodbc3S.lib
+del /Q /F %installdir%\myodbc3.dll
+del /Q /F %installdir%\myodbc3.lib
+del /Q /F %installdir%\myodbc3i.exe
+del /Q /F %installdir%\myodbc3m.exe
+del /Q /F %installdir%\myodbc3c.exe
+del /Q /F %installdir%\myodbc3*.hlp
 GOTO doSuccess
 
 :doDebug
-IF NOT EXIST \Windows\System32\myodbc3d.dll GOTO doError3
-IF NOT EXIST \Windows\System32\myodbc3i.exe GOTO doError1
+IF NOT EXIST %installdir%\myodbc3d.dll GOTO doError3
+IF NOT EXIST %installdir%\myodbc3i.exe GOTO doError1
 REM ****
 REM * Deregistering driver...
 REM ****
@@ -45,10 +50,10 @@ myodbc3i -r -d -n"MySQL ODBC 3.51 Driver (debug)"
 REM ****
 REM * Removing files...
 REM ****
-del /Q /F \Windows\System32\myodbc3E.dll
-del /Q /F \Windows\System32\myodbc3E.lib
-del /Q /F \Windows\System32\myodbc3d.dll
-del /Q /F \Windows\System32\myodbc3d.lib
+del /Q /F %installdir%\myodbc3E.dll
+del /Q /F %installdir%\myodbc3E.lib
+del /Q /F %installdir%\myodbc3d.dll
+del /Q /F %installdir%\myodbc3d.lib
 GOTO doSuccess
 
 :doSuccess
@@ -93,6 +98,17 @@ ECHO "+-----------------------------------------------------+"
 ECHO "|                                                     |"
 ECHO "| Connector/ODBC (debug) does not appear to be        |"
 ECHO "| installed.                                          |"
+ECHO "|                                                     |"
+ECHO "+-----------------------------------------------------+"
+PAUSE
+EXIT /B 1
+
+:doError4
+ECHO "+-----------------------------------------------------+"
+ECHO "| ERROR                                               |"
+ECHO "+-----------------------------------------------------+"
+ECHO "|                                                     |"
+ECHO "| Can't find the Windows system directory             |"
 ECHO "|                                                     |"
 ECHO "+-----------------------------------------------------+"
 PAUSE

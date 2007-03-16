@@ -10,26 +10,30 @@ REM \sa     README.win
 REM
 REM #########################################################
 
+SET installdir=none
+IF EXIST %windir%\system\nul   SET installdir=%windir%\system
+IF EXIST %windir%\system32\nul SET installdir=%windir%\system32
+IF %installdir%==none GOTO :doError5
+
 IF "%1"=="1" GOTO :doDebug
 IF "%1"=="0" GOTO :doNormal
 GOTO doSyntax
 
 :doNormal
-IF EXIST \Windows\System32\myodbc3i.exe GOTO :doError4
+IF EXIST %installdir%\myodbc3i.exe GOTO :doError4
 IF NOT EXIST lib\myodbc3.lib GOTO :doError2
 IF NOT EXIST lib\myodbc3S.lib GOTO :doError2
 REM ****
 REM * Copying myodbc libraries and executables to install dir...
 REM ****
-copy lib\qt-mt335.dll \Windows\System32
-copy lib\myodbc3S.dll \Windows\System32
-copy lib\myodbc3S.lib \Windows\System32
-copy lib\myodbc3.dll \Windows\System32
-copy lib\myodbc3.lib \Windows\System32
-copy bin\myodbc3i.exe \Windows\System32
-copy bin\myodbc3m.exe \Windows\System32
-copy bin\myodbc3c.exe \Windows\System32
-copy doc\*.hlp \Windows\System32
+copy lib\myodbc3S.dll %installdir%
+copy lib\myodbc3S.lib %installdir%
+copy lib\myodbc3.dll  %installdir%
+copy lib\myodbc3.lib  %installdir%
+copy bin\myodbc3i.exe %installdir%
+copy bin\myodbc3m.exe %installdir%
+copy bin\myodbc3c.exe %installdir%
+copy doc\*.hlp        %installdir%
 
 REM ****
 REM * Registering driver...
@@ -46,14 +50,14 @@ GOTO doSuccess
 :doDebug
 IF NOT EXIST lib\myodbc3d.lib goto doError3
 IF NOT EXIST lib\myodbc3E.lib goto doError3
-IF NOT EXIST \Windows\System32\myodbc3i.exe goto doError1
+IF NOT EXIST %installdir%\myodbc3i.exe goto doError1
 REM ****
 REM * Copying myodbc debug libraries to install dir...
 REM ****
-copy lib\myodbc3E.dll \Windows\System32
-copy lib\myodbc3E.lib \Windows\System32
-copy lib\myodbc3d.dll \Windows\System32
-copy lib\myodbc3d.lib \Windows\System32
+copy lib\myodbc3E.dll %installdir%
+copy lib\myodbc3E.lib %installdir%
+copy lib\myodbc3d.dll %installdir%
+copy lib\myodbc3d.lib %installdir%
 
 REM ****
 REM * Registering driver...
@@ -125,6 +129,17 @@ ECHO "| ERROR                                               |"
 ECHO "+-----------------------------------------------------+"
 ECHO "|                                                     |"
 ECHO "| Existing Connector/ODBC installed. Request ignored. |"
+ECHO "|                                                     |"
+ECHO "+-----------------------------------------------------+"
+PAUSE
+EXIT /B 1
+
+:doError5
+ECHO "+-----------------------------------------------------+"
+ECHO "| ERROR                                               |"
+ECHO "+-----------------------------------------------------+"
+ECHO "|                                                     |"
+ECHO "| Can't find the Windows system directory             |"
 ECHO "|                                                     |"
 ECHO "+-----------------------------------------------------+"
 PAUSE
