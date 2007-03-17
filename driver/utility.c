@@ -397,7 +397,7 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
 */
     switch ( field->type )
     {
-        case FIELD_TYPE_BIT:
+        case MYSQL_TYPE_BIT:
             if ( buff )
             {
                 pos= strmov(buff,"bit");
@@ -405,8 +405,8 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
             *transfer_length= 1;
             return SQL_BIT;  
 
-        case FIELD_TYPE_DECIMAL:
-        case FIELD_TYPE_NEWDECIMAL:
+        case MYSQL_TYPE_DECIMAL:
+        case MYSQL_TYPE_NEWDECIMAL:
             *display_size= max(field->length,field->max_length) -
                            test(!(field->flags & UNSIGNED_FLAG)) -
                            test(field->decimals);
@@ -414,7 +414,7 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
             if ( buff ) strmov(buff,"decimal");
             return SQL_DECIMAL;
 
-        case FIELD_TYPE_CHAR:
+        case MYSQL_TYPE_TINY:
             if ( num_field(field) )
             {
                 if ( buff )
@@ -435,7 +435,7 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
             *transfer_length= 1;
             return SQL_CHAR;
 
-        case FIELD_TYPE_SHORT:
+        case MYSQL_TYPE_SHORT:
             if ( buff )
             {
                 pos= strmov(buff,"smallint");
@@ -445,7 +445,7 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
             *transfer_length= 2;
             return SQL_SMALLINT;
 
-        case FIELD_TYPE_INT24:
+        case MYSQL_TYPE_INT24:
             if ( buff )
             {
                 pos= strmov(buff,"mediumint");
@@ -455,7 +455,7 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
             *transfer_length= 4;
             return SQL_INTEGER;
 
-        case FIELD_TYPE_LONG:
+        case MYSQL_TYPE_LONG:
             if ( buff )
             {
                 pos= strmov(buff,"integer");
@@ -465,7 +465,7 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
             *transfer_length= 4;
             return SQL_INTEGER;
 
-        case FIELD_TYPE_LONGLONG:
+        case MYSQL_TYPE_LONGLONG:
             if ( buff )
             {
                 pos= strmov(buff,"bigint");
@@ -481,7 +481,7 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
                 *transfer_length= *precision= 19;
             return SQL_BIGINT;
 
-        case FIELD_TYPE_FLOAT:
+        case MYSQL_TYPE_FLOAT:
             if ( buff )
             {
                 pos= strmov(buff,"float");
@@ -490,7 +490,7 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
             }
             *transfer_length= 4;
             return SQL_REAL;
-        case FIELD_TYPE_DOUBLE:
+        case MYSQL_TYPE_DOUBLE:
             if ( buff )
             {
                 pos= strmov(buff,"double");
@@ -500,17 +500,17 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
             *transfer_length= 8;
             return SQL_DOUBLE;
 
-        case FIELD_TYPE_NULL:
+        case MYSQL_TYPE_NULL:
             if ( buff ) strmov(buff,"null");
             return SQL_VARCHAR;
 
-        case FIELD_TYPE_YEAR:
+        case MYSQL_TYPE_YEAR:
             if ( buff )
                 pos= strmov(buff,"year");
             *transfer_length= 2;
             return SQL_SMALLINT;
 
-        case FIELD_TYPE_TIMESTAMP:
+        case MYSQL_TYPE_TIMESTAMP:
             if ( buff ) strmov(buff,"timestamp");
             *transfer_length= 16;      /* size of timestamp_struct */
             *precision= *display_size= 19;
@@ -518,7 +518,7 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
                 return SQL_TYPE_TIMESTAMP;
             return SQL_TIMESTAMP;
 
-        case FIELD_TYPE_DATETIME:
+        case MYSQL_TYPE_DATETIME:
             if ( buff ) strmov(buff,"datetime");
             *transfer_length= 16;      /* size of timestamp_struct */
             *precision= *display_size= 19;
@@ -526,8 +526,8 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
                 return SQL_TYPE_TIMESTAMP;
             return SQL_TIMESTAMP;
 
-        case FIELD_TYPE_NEWDATE:
-        case FIELD_TYPE_DATE:
+        case MYSQL_TYPE_NEWDATE:
+        case MYSQL_TYPE_DATE:
             if ( buff ) strmov(buff,"date");
             *transfer_length= 6;       /* size of date struct */
             *precision= *display_size= 10;
@@ -535,7 +535,7 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
                 return SQL_TYPE_DATE;
             return SQL_DATE;
 
-        case FIELD_TYPE_TIME:
+        case MYSQL_TYPE_TIME:
             if ( buff ) strmov(buff,"time");
             *transfer_length= 6;       /* size of time struct */
             *precision= *display_size= 8;
@@ -543,7 +543,7 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
                 return SQL_TYPE_TIME;
             return SQL_TIME;
 
-        case FIELD_TYPE_STRING:
+        case MYSQL_TYPE_STRING:
             /* Binary flag is for handling "VARCHAR() BINARY" but is unreliable (see BUG-4578) - PAH */
             if (field_is_binary)
             {
@@ -557,7 +557,7 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
             if ( buff ) strmov(buff,"char");
             return SQL_CHAR;
 
-        case FIELD_TYPE_VAR_STRING:
+        case MYSQL_TYPE_VAR_STRING:
             /*
               If we have both the table name and the original table name, we
               can trust the length information in the field. Unless there
@@ -602,7 +602,7 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
 
             return SQL_VARCHAR;
 
-        case FIELD_TYPE_TINY_BLOB:
+        case MYSQL_TYPE_TINY_BLOB:
             if ( buff )
                 strmov(buff,(field_is_binary) ? "tinyblob" : "tinytext");
 /* PAH - SESSION 01
@@ -613,7 +613,7 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
                 field->length/stmt->dbc->mysql.charset->mbmaxlen: field->length): 255;
             return(field_is_binary) ? SQL_LONGVARBINARY : SQL_LONGVARCHAR;
 
-        case FIELD_TYPE_BLOB:
+        case MYSQL_TYPE_BLOB:
             if ( buff )
                 strmov( buff, (field_is_binary) ? "blob" : "text" );
 
@@ -624,7 +624,7 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
 
             return ( field_is_binary ) ? SQL_LONGVARBINARY : SQL_LONGVARCHAR;
 
-        case FIELD_TYPE_MEDIUM_BLOB:
+        case MYSQL_TYPE_MEDIUM_BLOB:
             if ( buff )
                 strmov(buff,((field_is_binary) ? "mediumblob" :
                              "mediumtext"));
@@ -636,7 +636,7 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
                 field->length/stmt->dbc->mysql.charset->mbmaxlen: field->length): (1L << 24)-1L;
             return(field_is_binary) ? SQL_LONGVARBINARY : SQL_LONGVARCHAR;
 
-        case FIELD_TYPE_LONG_BLOB:
+        case MYSQL_TYPE_LONG_BLOB:
             if ( buff )
                 strmov(buff,((field_is_binary) ? "longblob": "longtext"));
 /* PAH - SESSION 01
@@ -647,17 +647,17 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
                 field->length/stmt->dbc->mysql.charset->mbmaxlen: field->length): INT_MAX32;
             return(field_is_binary) ? SQL_LONGVARBINARY : SQL_LONGVARCHAR;
 
-        case FIELD_TYPE_ENUM:
+        case MYSQL_TYPE_ENUM:
             if ( buff )
                 strmov(buff,"enum");
             return SQL_CHAR;
 
-        case FIELD_TYPE_SET:
+        case MYSQL_TYPE_SET:
             if ( buff )
                 strmov(buff,"set");
             return SQL_CHAR;
 
-        case FIELD_TYPE_GEOMETRY:
+        case MYSQL_TYPE_GEOMETRY:
             if ( buff )
                 strmov(buff,"blob");
             return SQL_LONGVARBINARY;
@@ -675,35 +675,35 @@ int unireg_to_c_datatype(MYSQL_FIELD *field)
 {
     switch ( field->type )
     {
-        case FIELD_TYPE_LONGLONG: /* Must be returned as char */
+        case MYSQL_TYPE_LONGLONG: /* Must be returned as char */
         default:
             return SQL_C_CHAR;
-        case FIELD_TYPE_BIT:
+        case MYSQL_TYPE_BIT:
             return SQL_C_BIT;
-        case FIELD_TYPE_CHAR:
+        case MYSQL_TYPE_TINY:
             return SQL_C_TINYINT;
-        case FIELD_TYPE_YEAR:
-        case FIELD_TYPE_SHORT:
+        case MYSQL_TYPE_YEAR:
+        case MYSQL_TYPE_SHORT:
             return SQL_C_SHORT;
-        case FIELD_TYPE_INT24:
-        case FIELD_TYPE_LONG:
+        case MYSQL_TYPE_INT24:
+        case MYSQL_TYPE_LONG:
             return SQL_C_LONG;
-        case FIELD_TYPE_FLOAT:
+        case MYSQL_TYPE_FLOAT:
             return SQL_C_FLOAT;
-        case FIELD_TYPE_DOUBLE:
+        case MYSQL_TYPE_DOUBLE:
             return SQL_C_DOUBLE;
-        case FIELD_TYPE_TIMESTAMP:
-        case FIELD_TYPE_DATETIME:
+        case MYSQL_TYPE_TIMESTAMP:
+        case MYSQL_TYPE_DATETIME:
             return SQL_C_TIMESTAMP;
-        case FIELD_TYPE_NEWDATE:
-        case FIELD_TYPE_DATE:
+        case MYSQL_TYPE_NEWDATE:
+        case MYSQL_TYPE_DATE:
             return SQL_C_DATE;
-        case FIELD_TYPE_TIME:
+        case MYSQL_TYPE_TIME:
             return SQL_C_TIME;
-        case FIELD_TYPE_BLOB:
-        case FIELD_TYPE_TINY_BLOB:
-        case FIELD_TYPE_MEDIUM_BLOB:
-        case FIELD_TYPE_LONG_BLOB:
+        case MYSQL_TYPE_BLOB:
+        case MYSQL_TYPE_TINY_BLOB:
+        case MYSQL_TYPE_MEDIUM_BLOB:
+        case MYSQL_TYPE_LONG_BLOB:
             return SQL_C_BINARY;
     }
 }

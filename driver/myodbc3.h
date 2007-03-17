@@ -374,15 +374,12 @@ extern pthread_mutex_t myodbc_lock;
 #define CONFIGDEFAULT 1002
 #define EDRIVERCONNECT	1003
 
-/*
-  New data type definition. For the compatibility with MySQL 5  
-*/
-#ifndef FIELD_TYPE_NEWDECIMAL
-#define FIELD_TYPE_NEWDECIMAL 246
+/* New data type definitions for compatibility with MySQL 5 */
+#ifndef MYSQL_TYPE_NEWDECIMAL
+# define MYSQL_TYPE_NEWDECIMAL 246
 #endif
-
-#ifndef FIELD_TYPE_BIT
-#define FIELD_TYPE_BIT 16
+#ifndef MYSQL_TYPE_BIT
+# define MYSQL_TYPE_BIT 16
 #endif
 
 #include "myutil.h"

@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * Updated use of FIELD_TYPE_* to MYSQL_TYPE_*, which has been preferred
+    since the 3.23 days. (And FIELD_TYPE_* may finally disappear in 5.2.)
 
 ----
 

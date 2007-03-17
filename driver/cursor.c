@@ -493,8 +493,8 @@ static my_bool insert_field(STMT FAR *stmt, MYSQL_RES *result,
 */
 static my_bool if_float_field(STMT FAR *stmt, MYSQL_FIELD *field)
 {
-    if ( field->type == FIELD_TYPE_FLOAT || field->type == FIELD_TYPE_DOUBLE ||
-         field->type == FIELD_TYPE_DECIMAL )
+    if ( field->type == MYSQL_TYPE_FLOAT || field->type == MYSQL_TYPE_DOUBLE ||
+         field->type == MYSQL_TYPE_DECIMAL )
     {
         set_error(stmt,MYERR_S1000,
                   "Invalid use of floating point comparision in positioned operations",0);

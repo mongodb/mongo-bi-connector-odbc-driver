@@ -248,20 +248,20 @@ char *SQLTABLES_type_values[2][5]=
 #if MYSQL_VERSION_ID >= 40100
 MYSQL_FIELD SQLTABLES_fields[]=
 {
-    {"TABLE_CAT",     NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",   NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_NAME",    NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_TYPE",    NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,5, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"REMARKS",       NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,11, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING}
+    {"TABLE_CAT",     NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_SCHEM",   NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_NAME",    NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_TYPE",    NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,5, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"REMARKS",       NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,11, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING}
 };
 #else
 MYSQL_FIELD SQLTABLES_fields[]=
 {
-    {"TABLE_CAT",     "Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",   "Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_NAME",    "Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_TYPE",    "Catalog",NullS,NullS,NullS,NAME_LEN,5,0,0,FIELD_TYPE_VAR_STRING},
-    {"REMARKS",       "Catalog",NullS,NullS,NullS,NAME_LEN,11,0,0,FIELD_TYPE_VAR_STRING}
+    {"TABLE_CAT",     "Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_SCHEM",   "Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_NAME",    "Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_TYPE",    "Catalog",NullS,NullS,NullS,NAME_LEN,5,0,0,MYSQL_TYPE_VAR_STRING},
+    {"REMARKS",       "Catalog",NullS,NullS,NullS,NAME_LEN,11,0,0,MYSQL_TYPE_VAR_STRING}
 };
 #endif
 
@@ -568,46 +568,46 @@ char *SQLCOLUMNS_values[]= {
 #if MYSQL_VERSION_ID >= 40100
 MYSQL_FIELD SQLCOLUMNS_fields[]=
 {
-    {"TABLE_CAT",         NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_NAME",        NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"COLUMN_NAME",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"DATA_TYPE",         NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,5,5, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_SHORT},
-    {"TYPE_NAME",         NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,20,20, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"COLUMN_SIZE",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_LONG},
-    {"BUFFER_LENGTH",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_LONG},
-    {"DECIMAL_DIGITS",    NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_SHORT},
-    {"NUM_PREC_RADIX",    NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_SHORT},
-    {"NULLABLE",          NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,5,5, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_SHORT},
-    {"REMARKS",           NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"COLUMN_DEF",        NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"SQL_DATA_TYPE",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,5,5, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_SHORT},
-    {"SQL_DATETIME_SUB",  NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_SHORT},
-    {"CHAR_OCTET_LENGTH", NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_LONG},
-    {"ORDINAL_POSITION",  NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_LONG},
-    {"IS_NULLABLE",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,3,3, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING}
+    {"TABLE_CAT",         NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_SCHEM",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_NAME",        NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"COLUMN_NAME",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"DATA_TYPE",         NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,5,5, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
+    {"TYPE_NAME",         NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,20,20, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"COLUMN_SIZE",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
+    {"BUFFER_LENGTH",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
+    {"DECIMAL_DIGITS",    NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
+    {"NUM_PREC_RADIX",    NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
+    {"NULLABLE",          NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,5,5, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
+    {"REMARKS",           NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"COLUMN_DEF",        NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"SQL_DATA_TYPE",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,5,5, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
+    {"SQL_DATETIME_SUB",  NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
+    {"CHAR_OCTET_LENGTH", NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
+    {"ORDINAL_POSITION",  NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_LONG},
+    {"IS_NULLABLE",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,3,3, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING}
 };
 #else
 MYSQL_FIELD SQLCOLUMNS_fields[]=
 {
-    {"TABLE_CAT",         "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",       "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_NAME",        "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG, 0, FIELD_TYPE_VAR_STRING},
-    {"COLUMN_NAME",       "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG, 0, FIELD_TYPE_VAR_STRING},
-    {"DATA_TYPE",         "MySQL_Catalog",NullS,NullS,NullS,5,5,NOT_NULL_FLAG,0,FIELD_TYPE_SHORT},
-    {"TYPE_NAME",         "MySQL_Catalog",NullS,NullS,NullS,20,20,NOT_NULL_FLAG,0,FIELD_TYPE_VAR_STRING},
-    {"COLUMN_SIZE",       "MySQL_Catalog",NullS,NullS,NullS,11,11,0,0,FIELD_TYPE_LONG},
-    {"BUFFER_LENGTH",     "MySQL_Catalog",NullS,NullS,NullS,11,11,0,0,FIELD_TYPE_LONG},
-    {"DECIMAL_DIGITS",    "MySQL_Catalog",NullS,NullS,NullS,2,2,0,0,FIELD_TYPE_SHORT},
-    {"NUM_PREC_RADIX",    "MySQL_Catalog",NullS,NullS,NullS,2,2,0,0,FIELD_TYPE_SHORT},
-    {"NULLABLE",          "MySQL_Catalog",NullS,NullS,NullS,5,5,NOT_NULL_FLAG,0,FIELD_TYPE_SHORT},
-    {"REMARKS",           "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,0,0,FIELD_TYPE_VAR_STRING},
-    {"COLUMN_DEF",        "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,0,0,FIELD_TYPE_VAR_STRING},
-    {"SQL_DATA_TYPE",     "MySQL_Catalog",NullS,NullS,NullS,5,5,NOT_NULL_FLAG,0,FIELD_TYPE_SHORT},
-    {"SQL_DATETIME_SUB",  "MySQL_Catalog",NullS,NullS,NullS,2,2,0,0,FIELD_TYPE_SHORT},
-    {"CHAR_OCTET_LENGTH", "MySQL_Catalog",NullS,NullS,NullS,11,11,0,0,FIELD_TYPE_LONG},
-    {"ORDINAL_POSITION",  "MySQL_Catalog",NullS,NullS,NullS,11,11,NOT_NULL_FLAG,0,FIELD_TYPE_LONG},
-    {"IS_NULLABLE",       "MySQL_Catalog",NullS,NullS,NullS,3,3,0,0,FIELD_TYPE_VAR_STRING}
+    {"TABLE_CAT",         "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_SCHEM",       "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_NAME",        "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG, 0, MYSQL_TYPE_VAR_STRING},
+    {"COLUMN_NAME",       "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG, 0, MYSQL_TYPE_VAR_STRING},
+    {"DATA_TYPE",         "MySQL_Catalog",NullS,NullS,NullS,5,5,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
+    {"TYPE_NAME",         "MySQL_Catalog",NullS,NullS,NullS,20,20,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
+    {"COLUMN_SIZE",       "MySQL_Catalog",NullS,NullS,NullS,11,11,0,0,MYSQL_TYPE_LONG},
+    {"BUFFER_LENGTH",     "MySQL_Catalog",NullS,NullS,NullS,11,11,0,0,MYSQL_TYPE_LONG},
+    {"DECIMAL_DIGITS",    "MySQL_Catalog",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT},
+    {"NUM_PREC_RADIX",    "MySQL_Catalog",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT},
+    {"NULLABLE",          "MySQL_Catalog",NullS,NullS,NullS,5,5,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
+    {"REMARKS",           "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,0,0,MYSQL_TYPE_VAR_STRING},
+    {"COLUMN_DEF",        "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,0,0,MYSQL_TYPE_VAR_STRING},
+    {"SQL_DATA_TYPE",     "MySQL_Catalog",NullS,NullS,NullS,5,5,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
+    {"SQL_DATETIME_SUB",  "MySQL_Catalog",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT},
+    {"CHAR_OCTET_LENGTH", "MySQL_Catalog",NullS,NullS,NullS,11,11,0,0,MYSQL_TYPE_LONG},
+    {"ORDINAL_POSITION",  "MySQL_Catalog",NullS,NullS,NullS,11,11,NOT_NULL_FLAG,0,MYSQL_TYPE_LONG},
+    {"IS_NULLABLE",       "MySQL_Catalog",NullS,NullS,NullS,3,3,0,0,MYSQL_TYPE_VAR_STRING}
 };
 #endif
 
@@ -844,7 +844,7 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
             row[12]= NullS;
         else
         {
-            if ( curField->type == FIELD_TYPE_TIMESTAMP &&
+            if ( curField->type == MYSQL_TYPE_TIMESTAMP &&
                  !strcmp(curField->def,"0000-00-00 00:00:00") )
                 row[12]= NullS;
             else
@@ -888,36 +888,36 @@ char *SQLSTAT_values[]={NullS,NullS,"","",NullS,"",SS_type,"","","","",NullS,Nul
 #if MYSQL_VERSION_ID >= 40100
 MYSQL_FIELD SQLSTAT_fields[]=
 {
-    {"TABLE_CAT",         NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",       NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_NAME",        NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"NON_UNIQUE",        NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,1,1, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_SHORT},
-    {"INDEX_QUALIFIER",   NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"INDEX_NAME",        NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TYPE",              NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,1,1, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_SHORT},
-    {"ORDINAL_POSITION",  NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,1,2, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_SHORT},
-    {"COLUMN_NAME",       NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"ASC_OR_DESC",       NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,1,1, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"CARDINALITY",       NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_LONG},
-    {"PAGES",             NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,9,9, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_LONG},
-    {"FILTER_CONDITION",  NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,10,10, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
+    {"TABLE_CAT",         NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_SCHEM",       NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_NAME",        NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"NON_UNIQUE",        NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,1,1, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
+    {"INDEX_QUALIFIER",   NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"INDEX_NAME",        NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TYPE",              NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,1,1, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
+    {"ORDINAL_POSITION",  NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,1,2, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
+    {"COLUMN_NAME",       NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"ASC_OR_DESC",       NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,1,1, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"CARDINALITY",       NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
+    {"PAGES",             NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,9,9, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
+    {"FILTER_CONDITION",  NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,10,10, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
 };
 #else
 MYSQL_FIELD SQLSTAT_fields[]=
 {
-    {"TABLE_CAT",         "MySQL_Stat",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",       "MySQL_Stat",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_NAME",        "MySQL_Stat",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0, FIELD_TYPE_VAR_STRING},
-    {"NON_UNIQUE",        "MySQL_Stat",NullS,NullS,NullS,1,1,NOT_NULL_FLAG,0,FIELD_TYPE_SHORT},
-    {"INDEX_QUALIFIER",   "MySQL_Stat",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"INDEX_NAME",        "MySQL_Stat",NullS,NullS,NullS,NAME_LEN,NAME_LEN,0,0,FIELD_TYPE_VAR_STRING},
-    {"TYPE",              "MySQL_Stat",NullS,NullS,NullS,1,1,NOT_NULL_FLAG,0,FIELD_TYPE_SHORT},
-    {"ORDINAL_POSITION",  "MySQL_Stat",NullS,NullS,NullS,1,2,NOT_NULL_FLAG,0,FIELD_TYPE_SHORT},
-    {"COLUMN_NAME",       "MySQL_Stat",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,FIELD_TYPE_VAR_STRING},
-    {"ASC_OR_DESC",       "MySQL_Stat",NullS,NullS,NullS,1,1,0,0,FIELD_TYPE_VAR_STRING},
-    {"CARDINALITY",       "MySQL_Stat",NullS,NullS,NullS,11,11,0,0,FIELD_TYPE_LONG},
-    {"PAGES",             "MySQL_Stat",NullS,NullS,NullS,9,9,0,0,FIELD_TYPE_LONG},
-    {"FILTER_CONDITION",  "MySQL_Stat",NullS,NullS,NullS,10,10,0,0,FIELD_TYPE_VAR_STRING},
+    {"TABLE_CAT",         "MySQL_Stat",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_SCHEM",       "MySQL_Stat",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_NAME",        "MySQL_Stat",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0, MYSQL_TYPE_VAR_STRING},
+    {"NON_UNIQUE",        "MySQL_Stat",NullS,NullS,NullS,1,1,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
+    {"INDEX_QUALIFIER",   "MySQL_Stat",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"INDEX_NAME",        "MySQL_Stat",NullS,NullS,NullS,NAME_LEN,NAME_LEN,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TYPE",              "MySQL_Stat",NullS,NullS,NullS,1,1,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
+    {"ORDINAL_POSITION",  "MySQL_Stat",NullS,NullS,NullS,1,2,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
+    {"COLUMN_NAME",       "MySQL_Stat",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
+    {"ASC_OR_DESC",       "MySQL_Stat",NullS,NullS,NullS,1,1,0,0,MYSQL_TYPE_VAR_STRING},
+    {"CARDINALITY",       "MySQL_Stat",NullS,NullS,NullS,11,11,0,0,MYSQL_TYPE_LONG},
+    {"PAGES",             "MySQL_Stat",NullS,NullS,NullS,9,9,0,0,MYSQL_TYPE_LONG},
+    {"FILTER_CONDITION",  "MySQL_Stat",NullS,NullS,NullS,10,10,0,0,MYSQL_TYPE_VAR_STRING},
 };
 #endif
 
@@ -1122,24 +1122,24 @@ char *SQLTABLES_priv_values[]=
 #if MYSQL_VERSION_ID >= 40100
 MYSQL_FIELD SQLTABLES_priv_fields[]=
 {
-    {"TABLE_CAT",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",   NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_NAME",    NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"GRANTOR",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"GRANTEE",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"PRIVILEGE",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"IS_GRANTABLE",  NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
+    {"TABLE_CAT",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_SCHEM",   NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_NAME",    NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"GRANTOR",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"GRANTEE",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"PRIVILEGE",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"IS_GRANTABLE",  NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
 };
 #else
 MYSQL_FIELD SQLTABLES_priv_fields[]=
 {
-    {"TABLE_CAT",     "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",   "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_NAME",    "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,FIELD_TYPE_VAR_STRING},
-    {"GRANTOR",       "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"GRANTEE",       "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,FIELD_TYPE_VAR_STRING},
-    {"PRIVILEGE",     "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,FIELD_TYPE_VAR_STRING},
-    {"IS_GRANTABLE",  "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
+    {"TABLE_CAT",     "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_SCHEM",   "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_NAME",    "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
+    {"GRANTOR",       "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"GRANTEE",       "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
+    {"PRIVILEGE",     "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
+    {"IS_GRANTABLE",  "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
 };
 #endif
 
@@ -1290,26 +1290,26 @@ char *SQLCOLUMNS_priv_values[]=
 #if MYSQL_VERSION_ID >= 40100
 MYSQL_FIELD SQLCOLUMNS_priv_fields[]=
 {
-    {"TABLE_CAT",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",   NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_NAME",    NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"COLUMN_NAME",   NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"GRANTOR",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"GRANTEE",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"PRIVILEGE",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"IS_GRANTABLE",  NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
+    {"TABLE_CAT",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_SCHEM",   NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_NAME",    NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"COLUMN_NAME",   NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"GRANTOR",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"GRANTEE",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"PRIVILEGE",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"IS_GRANTABLE",  NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
 };                                                           
 #else
 MYSQL_FIELD SQLCOLUMNS_priv_fields[]=
 {
-    {"TABLE_CAT",     "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",   "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_NAME",    "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,FIELD_TYPE_VAR_STRING},
-    {"COLUMN_NAME",   "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,FIELD_TYPE_VAR_STRING},
-    {"GRANTOR",       "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"GRANTEE",       "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,FIELD_TYPE_VAR_STRING},
-    {"PRIVILEGE",     "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,FIELD_TYPE_VAR_STRING},
-    {"IS_GRANTABLE",  "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
+    {"TABLE_CAT",     "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_SCHEM",   "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_NAME",    "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
+    {"COLUMN_NAME",   "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
+    {"GRANTOR",       "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"GRANTEE",       "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
+    {"PRIVILEGE",     "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
+    {"IS_GRANTABLE",  "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
 };
 #endif
 
@@ -1428,26 +1428,26 @@ SQLSpecialColumns
 #if MYSQL_VERSION_ID >= 40100
 MYSQL_FIELD SQLSPECIALCOLUMNS_fields[]=
 {
-    {"SCOPE",         NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,5,5, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_SHORT},
-    {"COLUMN_NAME",   NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"DATA_TYPE",     NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,5,5, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_SHORT},
-    {"TYPE_NAME",     NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,20,20, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"COLUMN_SIZE",   NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,7,7, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_LONG},
-    {"BUFFER_LENGTH", NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,7,7, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_LONG},
-    {"DECIMAL_DIGITS",NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,3,3, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_SHORT},
-    {"PSEUDO_COLUMN", NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,3,3, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_SHORT}
+    {"SCOPE",         NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,5,5, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
+    {"COLUMN_NAME",   NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"DATA_TYPE",     NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,5,5, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
+    {"TYPE_NAME",     NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,20,20, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"COLUMN_SIZE",   NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,7,7, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
+    {"BUFFER_LENGTH", NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,7,7, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
+    {"DECIMAL_DIGITS",NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,3,3, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
+    {"PSEUDO_COLUMN", NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,3,3, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT}
 };
 #else
 MYSQL_FIELD SQLSPECIALCOLUMNS_fields[]=
 {
-    {"SCOPE",         "MySQL_SpecialColumns",NullS,NullS,NullS,5,5,NOT_NULL_FLAG,0,FIELD_TYPE_SHORT},
-    {"COLUMN_NAME",   "MySQL_SpecialColumns",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,FIELD_TYPE_VAR_STRING},
-    {"DATA_TYPE",     "MySQL_SpecialColumns",NullS,NullS,NullS,5,5,NOT_NULL_FLAG,0,FIELD_TYPE_SHORT},
-    {"TYPE_NAME",     "MySQL_SpecialColumns",NullS,NullS,NullS,20,20,NOT_NULL_FLAG,0,FIELD_TYPE_VAR_STRING},
-    {"COLUMN_SIZE",   "MySQL_SpecialColumns",NullS,NullS,NullS,7,7,0,0,FIELD_TYPE_LONG},
-    {"BUFFER_LENGTH", "MySQL_SpecialColumns",NullS,NullS,NullS,7,7,0,0,FIELD_TYPE_LONG},
-    {"DECIMAL_DIGITS","MySQL_SpecialColumns",NullS,NullS,NullS,3,3,0,0,FIELD_TYPE_SHORT},
-    {"PSEUDO_COLUMN", "MySQL_SpecialColumns",NullS,NullS,NullS,3,3,0,0,FIELD_TYPE_SHORT}
+    {"SCOPE",         "MySQL_SpecialColumns",NullS,NullS,NullS,5,5,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
+    {"COLUMN_NAME",   "MySQL_SpecialColumns",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
+    {"DATA_TYPE",     "MySQL_SpecialColumns",NullS,NullS,NullS,5,5,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
+    {"TYPE_NAME",     "MySQL_SpecialColumns",NullS,NullS,NullS,20,20,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
+    {"COLUMN_SIZE",   "MySQL_SpecialColumns",NullS,NullS,NullS,7,7,0,0,MYSQL_TYPE_LONG},
+    {"BUFFER_LENGTH", "MySQL_SpecialColumns",NullS,NullS,NullS,7,7,0,0,MYSQL_TYPE_LONG},
+    {"DECIMAL_DIGITS","MySQL_SpecialColumns",NullS,NullS,NullS,3,3,0,0,MYSQL_TYPE_SHORT},
+    {"PSEUDO_COLUMN", "MySQL_SpecialColumns",NullS,NullS,NullS,3,3,0,0,MYSQL_TYPE_SHORT}
 };
 #endif
 
@@ -1538,7 +1538,7 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
             (field = mysql_fetch_field(result)); )
         {
             int type;
-            if ( (field->type != FIELD_TYPE_TIMESTAMP) )
+            if ( (field->type != MYSQL_TYPE_TIMESTAMP) )
                 continue;
             field_count++;
             sprintf(buff,"%d",SQL_SCOPE_SESSION);
@@ -1655,22 +1655,22 @@ SQLPrimaryKeys
 #if MYSQL_VERSION_ID >= 40100
 MYSQL_FIELD SQLPRIM_KEYS_fields[]=
 {
-    {"TABLE_CAT",     NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",   NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_NAME",    NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN,  0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"COLUMN_NAME",   NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN,  0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"KEY_SEQ",       NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_SHORT},
-    {"PK_NAME",       NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,128,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
+    {"TABLE_CAT",     NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_SCHEM",   NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_NAME",    NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN,  0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"COLUMN_NAME",   NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN,  0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"KEY_SEQ",       NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
+    {"PK_NAME",       NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,128,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
 };
 #else
 MYSQL_FIELD SQLPRIM_KEYS_fields[]=
 {
-    {"TABLE_CAT",     "MySQL_Primary_keys",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",   "MySQL_Primary_keys",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"TABLE_NAME",    "MySQL_Primary_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG, 0, FIELD_TYPE_VAR_STRING},
-    {"COLUMN_NAME",   "MySQL_Primary_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN, NOT_NULL_FLAG, 0, FIELD_TYPE_VAR_STRING},
-    {"KEY_SEQ",       "MySQL_Primary_keys",NullS,NullS,NullS,2,2,NOT_NULL_FLAG,0,FIELD_TYPE_SHORT},
-    {"PK_NAME",       "MySQL_Primary_keys",NullS,NullS,NullS,128,0,0,0,FIELD_TYPE_VAR_STRING},
+    {"TABLE_CAT",     "MySQL_Primary_keys",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_SCHEM",   "MySQL_Primary_keys",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"TABLE_NAME",    "MySQL_Primary_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG, 0, MYSQL_TYPE_VAR_STRING},
+    {"COLUMN_NAME",   "MySQL_Primary_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN, NOT_NULL_FLAG, 0, MYSQL_TYPE_VAR_STRING},
+    {"KEY_SEQ",       "MySQL_Primary_keys",NullS,NullS,NullS,2,2,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
+    {"PK_NAME",       "MySQL_Primary_keys",NullS,NullS,NullS,128,0,0,0,MYSQL_TYPE_VAR_STRING},
 };
 #endif
 
@@ -1775,38 +1775,38 @@ SQLForeignJeys
 #if MYSQL_VERSION_ID >= 40100
 MYSQL_FIELD SQLFORE_KEYS_fields[]=
 {
-    {"PKTABLE_CAT",   NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"PKTABLE_SCHEM", NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"PKTABLE_NAME",  NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"PKCOLUMN_NAME", NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"FKTABLE_CAT",   NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"FKTABLE_SCHEM", NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"FKTABLE_NAME",  NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"FKCOLUMN_NAME", NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_VAR_STRING},
-    {"KEY_SEQ",       NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,FIELD_TYPE_SHORT},
-    {"UPDATE_RULE",   NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_SHORT},
-    {"DELETE_RULE",   NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_SHORT},
-    {"FK_NAME",       NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,128,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"PK_NAME",       NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,128,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"DEFERRABILITY", NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_SHORT},
+    {"PKTABLE_CAT",   NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"PKTABLE_SCHEM", NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"PKTABLE_NAME",  NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"PKCOLUMN_NAME", NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"FKTABLE_CAT",   NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"FKTABLE_SCHEM", NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"FKTABLE_NAME",  NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"FKCOLUMN_NAME", NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
+    {"KEY_SEQ",       NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
+    {"UPDATE_RULE",   NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
+    {"DELETE_RULE",   NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
+    {"FK_NAME",       NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,128,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"PK_NAME",       NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,128,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"DEFERRABILITY", NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
 };
 #else
 MYSQL_FIELD SQLFORE_KEYS_fields[]=
 {
-    {"PKTABLE_CAT",   "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"PKTABLE_SCHEM", "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"PKTABLE_NAME",  "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN, NOT_NULL_FLAG, 0, FIELD_TYPE_VAR_STRING},
-    {"PKCOLUMN_NAME", "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN, NOT_NULL_FLAG, 0, FIELD_TYPE_VAR_STRING},
-    {"FKTABLE_CAT",   "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"FKTABLE_SCHEM", "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN, NOT_NULL_FLAG, 0, FIELD_TYPE_VAR_STRING},
-    {"FKTABLE_NAME",  "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN, NOT_NULL_FLAG, 0, FIELD_TYPE_VAR_STRING},
-    {"FKCOLUMN_NAME", "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN, NOT_NULL_FLAG, 0, FIELD_TYPE_VAR_STRING},
-    {"KEY_SEQ",       "MySQL_Foreign_keys",NullS,NullS,NullS,2,2,NOT_NULL_FLAG,0,FIELD_TYPE_SHORT},
-    {"UPDATE_RULE",   "MySQL_Foreign_keys",NullS,NullS,NullS,2,2,0,0,FIELD_TYPE_SHORT},
-    {"DELETE_RULE",   "MySQL_Foreign_keys",NullS,NullS,NullS,2,2,0,0,FIELD_TYPE_SHORT},
-    {"FK_NAME",       "MySQL_Foreign_keys",NullS,NullS,NullS,128,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"PK_NAME",       "MySQL_Foreign_keys",NullS,NullS,NullS,128,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"DEFERRABILITY", "MySQL_Foreign_keys",NullS,NullS,NullS,2,2,0,0,FIELD_TYPE_SHORT},
+    {"PKTABLE_CAT",   "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"PKTABLE_SCHEM", "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"PKTABLE_NAME",  "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN, NOT_NULL_FLAG, 0, MYSQL_TYPE_VAR_STRING},
+    {"PKCOLUMN_NAME", "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN, NOT_NULL_FLAG, 0, MYSQL_TYPE_VAR_STRING},
+    {"FKTABLE_CAT",   "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"FKTABLE_SCHEM", "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN, NOT_NULL_FLAG, 0, MYSQL_TYPE_VAR_STRING},
+    {"FKTABLE_NAME",  "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN, NOT_NULL_FLAG, 0, MYSQL_TYPE_VAR_STRING},
+    {"FKCOLUMN_NAME", "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN, NOT_NULL_FLAG, 0, MYSQL_TYPE_VAR_STRING},
+    {"KEY_SEQ",       "MySQL_Foreign_keys",NullS,NullS,NullS,2,2,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
+    {"UPDATE_RULE",   "MySQL_Foreign_keys",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT},
+    {"DELETE_RULE",   "MySQL_Foreign_keys",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT},
+    {"FK_NAME",       "MySQL_Foreign_keys",NullS,NullS,NullS,128,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"PK_NAME",       "MySQL_Foreign_keys",NullS,NullS,NullS,128,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"DEFERRABILITY", "MySQL_Foreign_keys",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT},
 };
 #endif
 
@@ -2078,26 +2078,26 @@ char *SQLPROCEDURES_values[]= {"","",NULL,0,0,0,"","procedure"};
 #if MYSQL_VERSION_ID >= 40100
 MYSQL_FIELD SQLPROCEDURES_fields[]= 
 {
-    {"PROCEDURE_CAT",    NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"PROCEDURE_SCHEM",  NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"PROCEDURE_NAME",   NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"NUM_INPUT_PARAMS", NullS,"Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_LONG},
-    {"NUM_OUTPUT_PARAMS",NullS,"Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_LONG},
-    {"NUM_RESULT_SETS",  NullS,"Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_LONG},
-    {"REMARKS",          NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,11, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_VAR_STRING},
-    {"PROCEDURE_TYPE",   NullS,"Catalog",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,FIELD_TYPE_SHORT}
+    {"PROCEDURE_CAT",    NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"PROCEDURE_SCHEM",  NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"PROCEDURE_NAME",   NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"NUM_INPUT_PARAMS", NullS,"Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
+    {"NUM_OUTPUT_PARAMS",NullS,"Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
+    {"NUM_RESULT_SETS",  NullS,"Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
+    {"REMARKS",          NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,11, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"PROCEDURE_TYPE",   NullS,"Catalog",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT}
 };
 #else
 MYSQL_FIELD SQLPROCEDURES_fields[]= 
 {
-    {"PROCEDURE_CAT",    "Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"PROCEDURE_SCHEM",  "Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"PROCEDURE_NAME",   "Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,FIELD_TYPE_VAR_STRING},
-    {"NUM_INPUT_PARAMS", "Catalog",NullS,NullS,NullS,11,11,0,0,FIELD_TYPE_LONG},
-    {"NUM_OUTPUT_PARAMS","Catalog",NullS,NullS,NullS,11,11,0,0,FIELD_TYPE_LONG},
-    {"NUM_RESULT_SETS",  "Catalog",NullS,NullS,NullS,11,11,0,0,FIELD_TYPE_LONG},
-    {"REMARKS",          "Catalog",NullS,NullS,NullS,NAME_LEN,11,0,0,FIELD_TYPE_VAR_STRING},
-    {"PROCEDURE_TYPE",   "Catalog",NullS,NullS,NullS,2,2,0,0,FIELD_TYPE_SHORT}
+    {"PROCEDURE_CAT",    "Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"PROCEDURE_SCHEM",  "Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"PROCEDURE_NAME",   "Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
+    {"NUM_INPUT_PARAMS", "Catalog",NullS,NullS,NullS,11,11,0,0,MYSQL_TYPE_LONG},
+    {"NUM_OUTPUT_PARAMS","Catalog",NullS,NullS,NullS,11,11,0,0,MYSQL_TYPE_LONG},
+    {"NUM_RESULT_SETS",  "Catalog",NullS,NullS,NullS,11,11,0,0,MYSQL_TYPE_LONG},
+    {"REMARKS",          "Catalog",NullS,NullS,NullS,NAME_LEN,11,0,0,MYSQL_TYPE_VAR_STRING},
+    {"PROCEDURE_TYPE",   "Catalog",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT}
 };
 #endif
 

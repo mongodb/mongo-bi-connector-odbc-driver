@@ -399,7 +399,7 @@ get_col_attr(SQLHSTMT     StatementHandle,
 
         case SQL_DESC_FIXED_PREC_SCALE: /* need to verify later */
             {
-                if ( field->type == FIELD_TYPE_DECIMAL )
+                if ( field->type == MYSQL_TYPE_DECIMAL )
                     *(SQLINTEGER *)NumericAttributePtr= SQL_TRUE;
                 else
                     *(SQLINTEGER *)NumericAttributePtr= SQL_FALSE;
@@ -418,22 +418,22 @@ get_col_attr(SQLHSTMT     StatementHandle,
         case SQL_DESC_LITERAL_SUFFIX:
             switch ( field->type )
             {
-                case FIELD_TYPE_LONG_BLOB:
-                case FIELD_TYPE_TINY_BLOB:
-                case FIELD_TYPE_MEDIUM_BLOB:
-                case FIELD_TYPE_BLOB:
+                case MYSQL_TYPE_LONG_BLOB:
+                case MYSQL_TYPE_TINY_BLOB:
+                case MYSQL_TYPE_MEDIUM_BLOB:
+                case MYSQL_TYPE_BLOB:
                     MYODBCDbgReturnReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
                                                      CharacterAttributePtr,
                                                      BufferLength,StringLengthPtr,"0x"));
 
-                case FIELD_TYPE_DATE:
-                case FIELD_TYPE_DATETIME:
-                case FIELD_TYPE_NEWDATE:
-                case FIELD_TYPE_VAR_STRING:
-                case FIELD_TYPE_STRING:
-                case FIELD_TYPE_TIMESTAMP:
-                case FIELD_TYPE_TIME:
-                case FIELD_TYPE_YEAR:
+                case MYSQL_TYPE_DATE:
+                case MYSQL_TYPE_DATETIME:
+                case MYSQL_TYPE_NEWDATE:
+                case MYSQL_TYPE_VAR_STRING:
+                case MYSQL_TYPE_STRING:
+                case MYSQL_TYPE_TIMESTAMP:
+                case MYSQL_TYPE_TIME:
+                case MYSQL_TYPE_YEAR:
                     MYODBCDbgReturnReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
                                                      CharacterAttributePtr,
                                                      BufferLength,StringLengthPtr,"'"));
@@ -457,17 +457,17 @@ get_col_attr(SQLHSTMT     StatementHandle,
         case SQL_DESC_NUM_PREC_RADIX:
             switch ( field->type )
             {
-                case FIELD_TYPE_SHORT:
-                case FIELD_TYPE_LONG:
-                case FIELD_TYPE_LONGLONG:
-                case FIELD_TYPE_INT24:
-                case FIELD_TYPE_TINY:
-                case FIELD_TYPE_DECIMAL:
+                case MYSQL_TYPE_SHORT:
+                case MYSQL_TYPE_LONG:
+                case MYSQL_TYPE_LONGLONG:
+                case MYSQL_TYPE_INT24:
+                case MYSQL_TYPE_TINY:
+                case MYSQL_TYPE_DECIMAL:
                     *(SQLINTEGER *)NumericAttributePtr= 10;
                     break;
 
-                case FIELD_TYPE_FLOAT:
-                case FIELD_TYPE_DOUBLE:
+                case MYSQL_TYPE_FLOAT:
+                case MYSQL_TYPE_DOUBLE:
                     *(SQLINTEGER *) NumericAttributePtr= 2;
                     break;
 
@@ -835,7 +835,7 @@ SQLRETURN SQL_API sql_get_data( STMT *          stmt,
             case SQL_C_BINARY:
                 {
                     char buff[21];
-                    if ( field->type == FIELD_TYPE_TIMESTAMP && length != 19 )
+                    if ( field->type == MYSQL_TYPE_TIMESTAMP && length != 19 )
                     {
                         /* MySQL doesn't have '-' in timestamp */
                         /* Convert timestamp to ANSI format */
@@ -891,7 +891,7 @@ SQLRETURN SQL_API sql_get_data( STMT *          stmt,
                     return copy_lresult(SQL_HANDLE_STMT, stmt,
                                         (SQLCHAR FAR *) rgbValue,cbValueMax,pcbValue,value,
                                         length,stmt->stmt_options.max_length,
-                                        (field->type == FIELD_TYPE_STRING ? field->length :
+                                        (field->type == MYSQL_TYPE_STRING ? field->length :
                                          0L),
                                         &stmt->getdata_offset,
                                         (my_bool) (fCType == SQL_C_BINARY));
@@ -976,8 +976,8 @@ SQLRETURN SQL_API sql_get_data( STMT *          stmt,
             case SQL_C_TIME:
             case SQL_C_TYPE_TIME:
                 {
-                    if (field->type == FIELD_TYPE_TIMESTAMP ||
-                        field->type == FIELD_TYPE_DATETIME)
+                    if (field->type == MYSQL_TYPE_TIMESTAMP ||
+                        field->type == MYSQL_TYPE_DATETIME)
                     {
                       SQL_TIMESTAMP_STRUCT ts;
                       if ( str_to_ts(&ts,value) )
@@ -995,7 +995,7 @@ SQLRETURN SQL_API sql_get_data( STMT *          stmt,
                           *pcbValue=sizeof(TIME_STRUCT);
                       }
                     }
-                    else if (field->type == FIELD_TYPE_DATE)
+                    else if (field->type == MYSQL_TYPE_DATE)
                     {
                           SQL_TIME_STRUCT *time_info= (SQL_TIME_STRUCT *)rgbValue;
 
@@ -1030,7 +1030,7 @@ SQLRETURN SQL_API sql_get_data( STMT *          stmt,
             case SQL_C_TIMESTAMP:
             case SQL_C_TYPE_TIMESTAMP:
                 {
-                    if (field->type == FIELD_TYPE_TIME)
+                    if (field->type == MYSQL_TYPE_TIME)
                     {
                         SQL_TIME_STRUCT ts;
 
