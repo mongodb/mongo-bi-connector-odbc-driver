@@ -128,7 +128,8 @@ libmyodbc3S_la_LDFLAGS = \
 	-module
 
 # libmyodbc3S_la_LIBADD = @QT_LDFLAGS@ @LIB_QT@ ../util/libmyodbc3u.la
-libmyodbc3S_la_LIBADD = $(QT_LDFLAGS) $(QT_LIBS) ../util/libmyodbc3u.la
+libmyodbc3S_la_LIBADD = $(QT_LDFLAGS) $(QT_LIBS) $(EXTRA_XLIBS) \
+			../util/libmyodbc3u.la
 
 libmyodbc3S_la_DEPENDENCIES = ../util/libmyodbc3u.la
 

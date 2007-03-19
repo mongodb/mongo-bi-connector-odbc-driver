@@ -348,7 +348,7 @@ AC_DEFUN([FUN_QT_COMPILE],
     CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS -I$qt_includes $X_CFLAGS $all_includes"
   fi
   LDFLAGS="$LDFLAGS -L$qt_libraries $X_LIBS $X_LDFLAGS"
-  LIBS="$LIBS $PTHREAD_LIBS $qt_libs $X_EXTRA_LIBS -lXext -lX11 $X_PRE_LIBS $EXTRA_XLIBS"
+  LIBS="$LIBS $PTHREAD_LIBS $qt_libs $X_EXTRA_LIBS $X_PRE_LIBS $EXTRA_XLIBS"
 
   if expr "$QTVERSION" '>=' "040000" > /dev/null ; then
     AC_TRY_LINK([
