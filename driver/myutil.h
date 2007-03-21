@@ -84,8 +84,7 @@ SQLRETURN my_pos_delete(STMT FAR *stmt,STMT FAR *stmtParam,
 			SQLUSMALLINT irow,DYNAMIC_STRING *dynStr);
 SQLRETURN my_pos_update(STMT FAR *stmt,STMT FAR *stmtParam,
 			SQLUSMALLINT irow,DYNAMIC_STRING *dynStr);
-my_bool check_if_positioned_cursor_exists(STMT FAR *stmt,
-					  STMT FAR **stmtNew);
+char *check_if_positioned_cursor_exists(STMT FAR *stmt, STMT FAR **stmtNew);
 char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param);
 char *add_to_buffer(NET *net,char *to,char *from,ulong length);
 SQLRETURN copy_lresult(SQLSMALLINT HandleType, SQLHANDLE handle,

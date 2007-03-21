@@ -462,7 +462,8 @@ SQLRETURN SQL_API my_SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption)
 
     /* At this point, only MYSQL_RESET and SQL_DROP left out */
     x_free((gptr) stmt->query);
-    stmt->query= 0;
+    x_free((gptr) stmt->orig_query);
+    stmt->query= stmt->orig_query= 0;
     stmt->param_count= 0;
 
     if (fOption == MYSQL_RESET)

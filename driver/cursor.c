@@ -124,74 +124,71 @@ static const char *mystr_get_prev_token( const char **query, const char *start )
 }
 
 
-/*
-  @type    : myodbc3 internal
-  @purpose : checks whether the SQL statement contains WHERE CURRENT OF CURSOR
-*/
+/**
+  Check if a statement involves a positioned cursor using the WHERE CURRENT
+  OF syntax.
 
-my_bool check_if_positioned_cursor_exists( STMT FAR *pStmt, STMT FAR **pStmtCursor )
+  @param[in]   pStmt       Handle of the statement
+  @param[out]  pStmtCursor Pointer to the statement referred to by the cursor
+
+  @return      Pointer to the beginning of 'WHERE CURRENT OF'
+*/
+char *check_if_positioned_cursor_exists(STMT *pStmt, STMT **pStmtCursor)
 {
-    if ( pStmt->query && pStmt->query_end )
+  if (pStmt->query && pStmt->query_end)
+  {
+    const char *pszQueryTokenPos= pStmt->query_end;
+    const char *pszCursor= mystr_get_prev_token((const char**)&pszQueryTokenPos,
+                                                pStmt->query);
+
+    if (!myodbc_casecmp(mystr_get_prev_token(&pszQueryTokenPos,
+                                             pStmt->query),"OF",2) &&
+        !myodbc_casecmp(mystr_get_prev_token(&pszQueryTokenPos,
+                                             pStmt->query),"CURRENT",7) &&
+        !myodbc_casecmp(mystr_get_prev_token(&pszQueryTokenPos,
+                                             pStmt->query),"WHERE",5) )
     {
-        char *      pszQueryTokenPos    = pStmt->query_end;
-        const char *pszCursor           = mystr_get_prev_token( (const char **)&pszQueryTokenPos, pStmt->query );
+      LIST *list_element;
+      DBC  *dbc= (DBC *)pStmt->dbc;
+
+      /*
+        Scan the list of statements for this connection and see if we
+        can find the cursor name this statement is referring to - it
+        must have a result set to count.
+      */
+      for (list_element= dbc->statements;
+           list_element;
+           list_element= list_element->next)
+      {
+        *pStmtCursor= (HSTMT)list_element->data;
 
         /*
-            Return TRUE if this statement is doing a 'WHERE CURRENT OF' - even when
-            we can not find the cursor this statement is referring to.
+          Even if the cursor name matches, the statement must have a
+          result set to count.
         */
-        if ( !myodbc_casecmp(mystr_get_prev_token((const char **)&pszQueryTokenPos,
-                                                  pStmt->query),"OF",2) &&
-             !myodbc_casecmp(mystr_get_prev_token((const char **)&pszQueryTokenPos,
-                                                  pStmt->query),"CURRENT",7) &&
-             !myodbc_casecmp(mystr_get_prev_token((const char **)&pszQueryTokenPos,
-                                                  pStmt->query),"WHERE",5) )
+        if ((*pStmtCursor)->result &&
+            (*pStmtCursor)->cursor.name &&
+            !myodbc_strcasecmp((*pStmtCursor)->cursor.name,
+                               pszCursor))
         {
-            LIST *      list_element;
-            LIST *      next_element;
-            DBC FAR *   dbc = (DBC FAR*)pStmt->dbc;
-
-            /*
-                Scan the list of statements for this connection and see if we can
-                find the cursor name this statement is referring to - it must have
-                a result set to count.
-            */
-            for ( list_element = dbc->statements; list_element; list_element = next_element )
-            {
-                next_element    = list_element->next;
-                *pStmtCursor    = (HSTMT)list_element->data;
-
-                /*
-                  Might have the cursor in the pStmt without any resultset, so
-                  avoid crashes, by keeping check on (*pStmtCursor)->result)
-                */
-                if ( (*pStmtCursor)->cursor.name &&
-                     !myodbc_strcasecmp( (*pStmtCursor)->cursor.name, pszCursor ) &&
-                     (*pStmtCursor)->result )
-                {
-                    /*
-                        \todo
-
-                        Well we have found a match so we truncate the 'WHERE CURRENT OF cursorname'
-                        but the truncation may be a bad way to go as it may make it broken for future
-                        use.
-                    */
-                    *pszQueryTokenPos = '\0';
-                    return ( TRUE );
-                }
-            }
-            /* Did we run out of statements without finding a viable cursor? */ 
-            if ( !list_element )
-            {
-                char buff[200];
-                strxmov( buff,"Cursor '", pszCursor, "' does not exist or does not have a result set.", NullS );
-                set_stmt_error( pStmt, "34000", buff, ER_INVALID_CURSOR_NAME );
-            }
-            return ( TRUE );
+          return (char *)pszQueryTokenPos;
         }
-    }
+      }
 
-    return ( FALSE );
+      /* Did we run out of statements without finding a viable cursor? */
+      if (!list_element)
+      {
+        char buff[200];
+        strxmov(buff,"Cursor '", pszCursor,
+                "' does not exist or does not have a result set.", NullS);
+        set_stmt_error(pStmt, "34000", buff, ER_INVALID_CURSOR_NAME);
+      }
+
+      return pszQueryTokenPos;
+    }
+  }
+
+  return NULL;
 }
 
 
@@ -957,10 +954,20 @@ SQLRETURN my_pos_update( STMT FAR *         pStmtCursor,
         pStmt->affected_rows = mysql_affected_rows( &pStmtTemp->dbc->mysql );
         nReturn = update_status( pStmt, SQL_ROW_UPDATED );
     }
+    else if (nReturn == SQL_NEED_DATA)
+    {
+      /*
+        Re-prepare the statement, which will leave us with a prepared
+        statement that is a non-positioned update.
+      */
+      if (my_SQLPrepare(pStmt, (SQLCHAR *)dynQuery->str, dynQuery->length) !=
+          SQL_SUCCESS)
+        return SQL_ERROR;
+    }
 
     my_SQLFreeStmt( pStmtTemp, SQL_DROP );
 
-    return ( nReturn );
+    return nReturn;
 }
 
 

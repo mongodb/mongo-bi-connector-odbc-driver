@@ -335,6 +335,11 @@ typedef struct tagSTMT
   STMT_OPTIONS	stmt_options;
   const char	*table_name;
   char		*query,*query_end;
+  /*
+    We save a copy of the original query before we modify it for 'WHERE
+    CURRENT OF' cursor handling.
+  */
+  char          *orig_query,*orig_query_end;
   my_ulonglong	affected_rows;
   long		current_row;
   long		cursor_row;

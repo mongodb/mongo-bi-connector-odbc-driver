@@ -45,22 +45,35 @@
 
 #include "myodbc3.h"
 #ifndef _UNIX_
-    #include <dos.h>
+# include <dos.h>
 #endif /* !_UNIX_ */
 #include <my_list.h>
 #include <m_ctype.h>
 
-/*
-  @type    : ODBC 1.0 API
-  @purpose : prepares an SQL string for execution
-*/
+/**
+  Prepare a statement for later execution.
 
-SQLRETURN SQL_API SQLPrepare(SQLHSTMT hstmt,SQLCHAR FAR *szSqlStr,
+  @param[in] hStmt     Handle of the statement
+  @param[in] szSqlStr  The statement to prepare
+  @param[in] cbSqlStr  The length of the statement (or @c SQL_NTS if it is
+                       NUL-terminated)
+*/
+SQLRETURN SQL_API SQLPrepare(SQLHSTMT hStmt, SQLCHAR *szSqlStr,
                              SQLINTEGER cbSqlStr)
 {
-    MYODBCDbgEnter;
-    MYODBCDbgReturnReturn( my_SQLPrepare( hstmt, szSqlStr, cbSqlStr ) );
+  STMT *stmt= (STMT *)hStmt;
+  MYODBCDbgEnter;
+  /*
+    We free orig_query here, instead of my_SQLPrepare, because
+    my_SQLPrepare is used by my_pos_update() when a statement requires
+    additional parameters.
+  */
+  if (stmt->orig_query)
+    my_free(stmt->orig_query,MYF(0));
+
+  MYODBCDbgReturnReturn(my_SQLPrepare(hStmt, szSqlStr, cbSqlStr));
 }
+
 
 /*
   @type    : myodbc3 internal
@@ -185,6 +198,8 @@ SQLRETURN my_SQLPrepare( SQLHSTMT hstmt, SQLCHAR FAR *szSqlStr, SQLINTEGER cbSql
         *pcLastCloseBrace = ' ';
 
     stmt->param_count= param_count;
+    /* Reset current_param so that SQLParamData starts fresh. */
+    stmt->current_param= 0;
     stmt->query_end= pos;
     stmt->state= ST_PREPARED;
     MYODBCDbgInfo( "Parameter count: %ld", stmt->param_count );

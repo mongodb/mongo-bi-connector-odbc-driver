@@ -3,6 +3,9 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * Statements that used "WHERE CURRENT OF" for positioned updates could
+    not be re-executed or used with parameters that were provided using
+    SQLPutData() and SQLParamData(). (Bug #5853)
   * SQLTransact() did not commit or rollback all transactions in the
     environment when no database connection was specified. (Bug #21588)
   * Updated use of FIELD_TYPE_* to MYSQL_TYPE_*, which has been preferred

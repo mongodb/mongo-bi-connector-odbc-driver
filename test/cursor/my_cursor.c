@@ -1,26 +1,24 @@
-/***************************************************************************
-                          my_cursor.c  -  description
-                             ---------------------
-    begin                : Wed Sep 8 2001
-    copyright            : (C) MySQL AB 1995-2002, www.mysql.com
-    author               : venu ( venu@mysql.com )
- ***************************************************************************/
+/*
+  Copyright (C) 1995-2007 MySQL AB
 
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of version 2 of the GNU General Public License as
+  published by the Free Software Foundation.
 
-/***************************************************************************
- *                                                                         *
- *  This is a basic sample to demonstrate how to perform positioned        *
- *  update and deletes using cursors                                       *
- *                                                                         *
- ***************************************************************************/
+  There are special exceptions to the terms and conditions of the GPL
+  as it is applied to this software. View the full text of the exception
+  in file LICENSE.exceptions in the top-level directory of this software
+  distribution.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
 
 #include "mytest3.h" /* MyODBC 3.51 sample utility header */
 
@@ -259,13 +257,108 @@ void my_setpos_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);  
 }
 
+
+/**
+ Bug #5853: Using Update with 'WHERE CURRENT OF' with binary data crashes
+*/
+void t_bug5853(SQLHDBC hdbc, SQLHSTMT hstmt)
+{
+  SQLRETURN rc;
+  SQLHSTMT  hstmt_pos;
+  SQLCHAR   nData[3];
+  SQLLEN    nLen= SQL_DATA_AT_EXEC;
+  int       i= 0;
+
+  rc= SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt_pos);
+  mycon(hdbc, rc);
+
+  rc= SQLExecDirect(hstmt,"DROP TABLE IF EXISTS t_bug5853",SQL_NTS);
+  mystmt(hstmt,rc);
+
+  rc= SQLExecDirect(hstmt,"CREATE TABLE t_bug5853 (id INT AUTO_INCREMENT PRIMARY KEY, a VARCHAR(3))",SQL_NTS);
+  mystmt(hstmt,rc);
+
+  rc= SQLExecDirect(hstmt,"INSERT INTO t_bug5853 (a) VALUES ('abc'),('def')",SQL_NTS);
+  mystmt(hstmt,rc);
+
+  rc= SQLPrepare(hstmt,"INSERT INTO t_bug5853 VALUES(?)",SQL_NTS);
+  mystmt(hstmt,rc);
+
+  rc= SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                     (SQLPOINTER)SQL_CURSOR_DYNAMIC,0);
+  mystmt(hstmt, rc);
+
+  rc= SQLSetCursorName(hstmt, "bug5853", SQL_NTS);
+  mystmt(hstmt, rc);
+
+  rc= SQLExecDirect(hstmt,"SELECT * FROM t_bug5853",SQL_NTS);
+  mystmt(hstmt,rc);
+
+  rc= SQLPrepare(hstmt_pos,
+                 "UPDATE t_bug5853 SET a = ? WHERE CURRENT OF bug5853",
+                 SQL_NTS);
+  mystmt(hstmt_pos, rc);
+
+  rc= SQLBindParameter(hstmt_pos, 1, SQL_PARAM_INPUT, SQL_VARCHAR, SQL_C_CHAR,
+                       0, 0, NULL, 0, &nLen);
+  mystmt(hstmt_pos,rc);
+
+  while ((rc= SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0)) != SQL_NO_DATA_FOUND)
+  {
+    char data[2][3] = { "uvw", "xyz" };
+
+    mystmt(hstmt,rc);
+
+    rc= SQLExecute(hstmt_pos);
+    mystmt_err(hstmt_pos, rc == SQL_NEED_DATA, rc);
+
+    while (rc == SQL_NEED_DATA)
+    {
+      SQLPOINTER token;
+      rc= SQLParamData(hstmt_pos, &token);
+      if (rc == SQL_NEED_DATA)
+      {
+        SQLRETURN rc2;
+        rc2= SQLPutData(hstmt_pos, data[i++ % 2], sizeof(data[0]));
+        mystmt(hstmt_pos,rc2);
+      }
+    }
+    mystmt(hstmt_pos,rc);
+  }
+
+  rc= SQLFreeStmt(hstmt_pos, SQL_CLOSE);
+  mystmt(hstmt,rc);
+
+  rc= SQLExecDirect(hstmt,"SELECT * FROM t_bug5853",SQL_NTS);
+  mystmt(hstmt,rc);
+
+  rc= SQLBindCol(hstmt, 2, SQL_C_CHAR, nData, 3, &nLen);
+  mystmt(hstmt,rc);
+
+  rc= SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0);
+  mystmt(hstmt,rc);
+  my_assert(strncmp((char *)nData, "uvw", 3));
+
+  rc= SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0);
+  mystmt(hstmt,rc);
+  my_assert(strncmp((char *)nData, "xyz", 3));
+
+  rc= SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0);
+  mystmt_err(hstmt, rc == SQL_NO_DATA_FOUND, rc);
+
+  rc= SQLExecDirect(hstmt,"DROP TABLE IF EXISTS t_bug5853",SQL_NTS);
+  mystmt(hstmt,rc);
+
+  //return OK;
+}
+
 /********************************************************
 * main routine                                          *
 *********************************************************/
 int main(int argc, char *argv[])
 {
     SQLHENV    henv;
-    SQLHDBC    hdbc; 
+    SQLHDBC    hdbc;
     SQLHSTMT   hstmt;
     SQLINTEGER narg;
 
@@ -283,41 +376,21 @@ int main(int argc, char *argv[])
             myuid = argv[2];
         else if ( narg == 3 )
             mypwd = argv[3];
-    }   
+    }
 
-    /* 
-     * connect to MySQL server
-    */
-    myconnect(&henv,&hdbc,&hstmt); 
+    myconnect(&henv,&hdbc,&hstmt);
 
     if (driver_supports_positioned_ops(hdbc))
     {
-
-        /* 
-         * initialize table
-        */
         my_init_table(hdbc, hstmt);
-
-        /* 
-         * positioned cursor update and delete
-        */
         my_positioned_cursor(hdbc, hstmt);
-
-        /* 
-         * Update and Delete using SQLSetPos
-        */
         my_setpos_cursor(hdbc, hstmt);
+        t_bug5853(hdbc, hstmt);
     }
 
-    /* 
-     * disconnect from the server, by freeing all resources
-    */
     mydisconnect(&henv,&hdbc,&hstmt);
 
     printMessageFooter( 1 );
 
     return(0);
-} 
-
-
-
+}

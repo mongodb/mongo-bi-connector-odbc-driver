@@ -130,6 +130,18 @@ SQLRETURN do_query(STMT FAR *stmt,char *query)
     if ( query != stmt->query )
         my_free((gptr) query,MYF(0));
 
+    /*
+      If the original query was modified, we reset stmt->query so that the
+      next execution re-starts with the original query.
+    */
+    if (stmt->orig_query)
+    {
+        my_free((gptr) stmt->query,MYF(0));
+        stmt->query= stmt->orig_query;
+        stmt->query_end= stmt->orig_query_end;
+        stmt->orig_query= NULL;
+    }
+
     MYODBCDbgReturnReturn( error );
 }
 
@@ -596,7 +608,7 @@ SQLRETURN SQL_API SQLExecute(SQLHSTMT hstmt)
 
 SQLRETURN my_SQLExecute( STMT FAR *pStmt )
 {
-    char *      query;
+    char       *query, *cursor_pos;
     uint        i;
     uint        nIndex;
     PARAM_BIND *param;
@@ -614,9 +626,21 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
     if ( !pStmt->query )
         MYODBCDbgReturnReturn( set_error( pStmt, MYERR_S1010, "No previous SQLPrepare done", 0 ) );
 
-    if ( check_if_positioned_cursor_exists( pStmt, &pStmtCursor ) )
+    if (cursor_pos= check_if_positioned_cursor_exists(pStmt, &pStmtCursor))
     {
-        MYODBCDbgReturnReturn( do_my_pos_cursor( pStmt, pStmtCursor ) );
+      /* Save a copy of the query, because we're about to modify it. */
+      pStmt->orig_query= my_strdup(pStmt->query, MYF(0));
+      if (!pStmt->orig_query)
+      {
+        MYODBCDbgReturnReturn(set_error(pStmt,MYERR_S1001,NULL,4001));
+      }
+      pStmt->orig_query_end= pStmt->orig_query + (pStmt->query_end -
+                                                  pStmt->query);
+
+      /* Chop off the 'WHERE CURRENT OF ...' */
+      *(char *)cursor_pos= '\0';
+
+      MYODBCDbgReturnReturn(do_my_pos_cursor(pStmt, pStmtCursor));
     }
 
     for ( nIndex= 0 ; nIndex < pStmt->param_count ; )
