@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * SQLTransact() did not commit or rollback all transactions in the
+    environment when no database connection was specified. (Bug #21588)
   * Updated use of FIELD_TYPE_* to MYSQL_TYPE_*, which has been preferred
     since the 3.23 days. (And FIELD_TYPE_* may finally disappear in 5.2.)
 

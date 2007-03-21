@@ -20,33 +20,22 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-/***************************************************************************
- * TRANSACT.C								   *
- *									   *
- * @description: For processing transactions				   *
- *									   *
- * @author     : MySQL AB(monty@mysql.com, venu@mysql.com)		   *
- * @date       : 2001-Aug-15						   *
- * @product    : myodbc3						   *
- *									   *
- ****************************************************************************/
-
-/***************************************************************************
- * The following ODBC APIs are implemented in this file:		   *
- *									   *
- *   SQLEndTran		 (ISO 92)					   *
- *   SQLTransact	 (ODBC, Deprecated)				   *
- *									   *
- ****************************************************************************/
+/**
+  @file  transact.c
+  @brief Transaction processing functions.
+*/
 
 #include "myodbc3.h"
 
-/*
-  @type    : internal
-  @purpose : to do the transaction at the connection level
-*/
+/**
+  Commit or roll back the transactions associated with a particular
+  database connection.
 
-SQLRETURN my_transact(SQLHDBC hdbc,SQLSMALLINT CompletionType)
+  @param[in] hdbc            Handle of database connection
+  @param[in] CompletionType  How to complete the transactions,
+                             @c SQL_COMMIT or @c SQL_ROLLBACK
+*/
+static SQLRETURN my_transact(SQLHDBC hdbc, SQLSMALLINT CompletionType)
 {
   SQLRETURN result= SQL_SUCCESS;
   DBC FAR *dbc= (DBC FAR *)hdbc;
@@ -91,12 +80,19 @@ SQLRETURN my_transact(SQLHDBC hdbc,SQLSMALLINT CompletionType)
 }
 
 
-/*
-  @type    : ODBC 3.0
-  @purpose : requests a commit or rollback operation for all active
-  operations on all statements associated with a connection
-*/
+/**
+  Commit or roll back the transactions associated with a particular
+  database connection, or all connections in an environment.
 
+  @param[in] HandleType      Type of @a Handle, @c SQL_HANDLE_ENV or
+                             @c SQL_HANDLE_DBC
+  @param[in] Handle          Handle to database connection or environment
+  @param[in] CompletionType  How to complete the transactions,
+                             @c SQL_COMMIT or @c SQL_ROLLBACK
+
+  @since ODBC 3.0
+  @since ISO SQL 92
+*/
 SQLRETURN SQL_API
 SQLEndTran(SQLSMALLINT HandleType,
 	   SQLHANDLE   Handle,
@@ -108,18 +104,17 @@ SQLEndTran(SQLSMALLINT HandleType,
 
   MYODBCDbgEnter;
 
-  MYODBCDbgInfo( "type: %s", MYODBCDbgHandleTypeString( HandleType ) );
-  MYODBCDbgInfo( "handle: 0x%x", Handle );
-  MYODBCDbgInfo( "option: %s", MYODBCDbgTransactionTypeString( CompletionType ) );
+  MYODBCDbgInfo("type: %s", MYODBCDbgHandleTypeString(HandleType));
+  MYODBCDbgInfo("handle: 0x%lx", (long)Handle);
+  MYODBCDbgInfo("option: %s", MYODBCDbgTransactionTypeString(CompletionType));
 
   switch (HandleType) {
   case SQL_HANDLE_ENV:
-    henv = (ENV*)Handle;
-    current= henv->connections;
-    do
+    henv= (ENV *)Handle;
+    for (current= henv->connections; current; current= current->next)
     {
-        my_transact( (DBC*)current->data, CompletionType );
-    }while( current = current->next );
+        my_transact((DBC *)current->data, CompletionType);
+    }
     break;
 
   case SQL_HANDLE_DBC:
@@ -135,27 +130,28 @@ SQLEndTran(SQLSMALLINT HandleType,
 }
 
 
-/*
-  @type    : ODBC 1.0
-  @purpose : Requests a commit or rollback operation for all active
-  operations on all statement handles (hstmts) associated
-  with a connection or for all connections associated
-  with the environment handle, henv
-*/
+/**
+  Commit or roll back the transactions associated with a particular
+  database connection, or all connections in an environment.
 
-SQLRETURN SQL_API SQLTransact(SQLHENV henv __attribute__((unused)),
+  @deprecated This function is deprecated, SQLEndTran() should be used instead.
+
+  @param[in] henv            Handle to database environment
+  @param[in] hdbc            Handle to database connection
+  @param[in] fType           How to complete the transactions,
+                             @c SQL_COMMIT or @c SQL_ROLLBACK
+
+  @since ODBC 1.0
+*/
+SQLRETURN SQL_API SQLTransact(SQLHENV henv,
 			      SQLHDBC hdbc,
 			      SQLUSMALLINT fType)
 {
-  SQLRETURN result= SQL_SUCCESS;
-
   MYODBCDbgEnter;
-  MYODBCDbgInfo( "henv: 0x%x", henv );
-  MYODBCDbgInfo( "hdbc: 0x%x", hdbc );
-  MYODBCDbgInfo( "option: %d", fType );
+  MYODBCDbgInfo("henv: 0x%lx", (long)henv );
+  MYODBCDbgInfo("hdbc: 0x%lx", (long)hdbc );
+  MYODBCDbgInfo("option: %s", MYODBCDbgTransactionTypeString(fType));
 
-  if (hdbc)
-    result= my_transact(hdbc,fType);
-
-  MYODBCDbgReturnReturn(result);
+  MYODBCDbgReturnReturn(SQLEndTran(hdbc ? SQL_HANDLE_DBC : SQL_HANDLE_ENV,
+                                   hdbc ? hdbc : henv, fType));
 }

@@ -1,200 +1,120 @@
-/***************************************************************************
-                          my_tran.c  -  description
-                             -------------------
-    begin                : Wed Aug 8 2001
-    copyright            : (C) MySQL AB 1995-2002, www.mysql.com
-    author               : venu ( venu@mysql.com )
- ***************************************************************************/
+/*
+  Copyright (C) 1995-2007 MySQL AB
 
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of version 2 of the GNU General Public License as
+  published by the Free Software Foundation.
 
-/***************************************************************************
- *                                                                         *
- *  This is a basic sample to demonstrate the transaction support in       *
- *  MySQL using  MySQL ODBC 3.51 driver                                    *
- *                                                                         *
- ***************************************************************************/
+  There are special exceptions to the terms and conditions of the GPL
+  as it is applied to this software. View the full text of the exception
+  in file LICENSE.exceptions in the top-level directory of this software
+  distribution.
 
-#include "../include/mytest3.h" /* MyODBC 3.51 sample utility header */
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
 
-/********************************************************
-* Transactional behaviour using BDB/InnoDB table type   *
-*********************************************************/
-void my_transaction(SQLHDBC hdbc, SQLHSTMT hstmt, SQLHENV henv, SQLHDBC hdbc2, SQLHSTMT hstmt2, SQLHENV henv2)
+#include "odbctap.h"
+
+/**
+  Test transaction behavior using InnoDB tables
+*/
+DECLARE_TEST(my_transaction)
 {
-    SQLRETURN rc, rc2;
+  SQLHDBC hdbc2;
+  SQLHSTMT hstmt2;
+  SQLHENV henv2;
 
-    if (!server_supports_trans(hdbc))
-        return;
+  /** @todo need a mechanism for outputting skip results */
+  if (!server_supports_trans(hdbc))
+    return FAIL;
 
-    /* set AUTOCOMMIT to OFF */
-    rc = SQLSetConnectAttr(hdbc,SQL_ATTR_AUTOCOMMIT,(SQLPOINTER)SQL_AUTOCOMMIT_OFF,0);
-    mycon(hdbc,rc);
+  alloc_basic_handles(&henv2, &hdbc2, &hstmt2);
 
-    rc = SQLExecDirect(hstmt,"DROP TABLE IF EXISTS my_demo_transaction",SQL_NTS);    
-    mystmt(hstmt,rc);   
+  /* set AUTOCOMMIT to OFF */
+  ok_con(hdbc, SQLSetConnectAttr(hdbc,SQL_ATTR_AUTOCOMMIT,
+                                 (SQLPOINTER)SQL_AUTOCOMMIT_OFF,0));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t1");
 
-    /* create the table 'mytran_demo' of type BDB' or 'InnoDB' */
-    rc = SQLExecDirect(hstmt,"CREATE TABLE my_demo_transaction(col1 int ,col2 varchar(30)) TYPE = InnoDB",SQL_NTS);
-    mystmt(hstmt,rc);   
+  ok_con(hdbc, SQLTransact(NULL,hdbc,SQL_COMMIT));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  /* create the table 't1' using InnoDB */
+  ok_sql(hstmt, "CREATE TABLE t1 (col1 INT, col2 VARCHAR(30))"
+                " ENGINE = InnoDB");
 
-    /* insert a row and commit the transaction */
-    rc = SQLExecDirect(hstmt,"INSERT INTO my_demo_transaction VALUES(10,'venu')",SQL_NTS);
-    mystmt(hstmt,rc);
+  /* insert a row and commit the transaction */
+  ok_sql(hstmt, "INSERT INTO t1 VALUES(10,'venu')");
+  ok_con(hdbc, SQLTransact(NULL,hdbc,SQL_COMMIT));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  /* now insert the second row, but roll back that transaction */
+  ok_sql(hstmt,"INSERT INTO t1 VALUES(20,'mysql')");
+  ok_con(hdbc, SQLTransact(NULL,hdbc,SQL_ROLLBACK));
 
-    /* now insert the second row, and rollback the transaction */
-    rc = SQLExecDirect(hstmt,"INSERT INTO my_demo_transaction VALUES(20,'mysql')",SQL_NTS);
-    mystmt(hstmt,rc); 
+  /* delete first row, but roll it back */
+  ok_sql(hstmt,"DELETE FROM t1 WHERE col1 = 10");
+  ok_con(hdbc, SQLTransact(NULL,hdbc,SQL_ROLLBACK));
 
-    rc = SQLTransact(NULL,hdbc,SQL_ROLLBACK);
-    mycon(hdbc,rc);
+  /* Bug #21588: Incomplete ODBC API implementaion */
+  /* insert a row, but roll it back using SQLTransact on the environment */
+  ok_sql(hstmt,"INSERT INTO t1 VALUES(30,'mysql')");
+  ok_con(hdbc, SQLTransact(henv,NULL,SQL_ROLLBACK));
 
-    /* delete first row, and rollback it */
-    rc = SQLExecDirect(hstmt,"DELETE FROM my_demo_transaction WHERE col1 = 10",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
 
-    rc = SQLTransact(NULL,hdbc,SQL_ROLLBACK);
-    mycon(hdbc,rc);
+  /* test the results now, only one row should exist */
+  ok_sql(hstmt,"SELECT * FROM t1");
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
-    /* test the results now, only one row should exists */
-    rc = SQLExecDirect(hstmt,"SELECT * FROM my_demo_transaction",SQL_NTS);
-    mystmt(hstmt,rc);  
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
 
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);  
+  /* now insert some more records to check SQLEndTran */
+  ok_sql(hstmt,"INSERT INTO t1 "
+               "VALUES (30,'test'),(40,'transaction')");
+  ok_con(hdbc, SQLTransact(NULL,hdbc,SQL_COMMIT));
 
-    rc = SQLFetch(hstmt);
-    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND,rc);  
+  /* Commit the transaction using DBC handler */
+  ok_sql(hstmt,"DELETE FROM t1 WHERE col1 = 30");
+  ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  /* test the results now, select should not find any data */
+  ok_sql(hstmt2,"SELECT * FROM t1 WHERE col1 = 30");
+  expect_stmt(hstmt2, SQLFetch(hstmt2), SQL_NO_DATA_FOUND);
 
+  ok_stmt(hstmt2, SQLFreeStmt(hstmt2,SQL_CLOSE));
 
-    /* now insert some more records to check SQLEndTran */
-    rc = SQLExecDirect(hstmt,"INSERT INTO my_demo_transaction VALUES(30,'test'),(40,'transaction')",SQL_NTS);
-    mystmt(hstmt,rc); 
+  /* Delete a row to check, and commit the transaction using ENV handler */
+  ok_sql(hstmt,"DELETE FROM t1 WHERE col1 = 40");
+  ok_con(hdbc, SQLEndTran(SQL_HANDLE_ENV, henv, SQL_COMMIT));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  /* test the results now, select should not find any data */
+  ok_sql(hstmt2,"SELECT * FROM t1 WHERE col1 = 40");
+  expect_stmt(hstmt2, SQLFetch(hstmt2), SQL_NO_DATA_FOUND);
 
-	rc = SQLExecDirect(hstmt,"DELETE FROM my_demo_transaction WHERE col1 = 30",SQL_NTS);
-    mystmt(hstmt,rc); 
+  ok_stmt(hstmt2, SQLFreeStmt(hstmt2,SQL_CLOSE));
 
-	/* Commit the transaction using DBC handler */
-	rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
-    mycon(hdbc,rc);
+  /* drop the table */
+  ok_sql(hstmt,"DROP TABLE t1");
 
-    /* test the results now, select should not find any data */
-    rc2 = SQLExecDirect(hstmt2,"SELECT * FROM my_demo_transaction WHERE col1 = 30",SQL_NTS);
-    mystmt(hstmt2,rc2);  
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
 
-    rc2 = SQLFetch(hstmt2);
-    mystmt_err(hstmt2,rc2 == SQL_NO_DATA_FOUND,rc2);  
+  free_basic_handles(&henv2,&hdbc2,&hstmt2);
 
-    rc2 = SQLFreeStmt(hstmt2,SQL_CLOSE);
-    mystmt(hstmt2,rc2);
-
-	/* Delete a row to check  */
-	rc = SQLExecDirect(hstmt,"DELETE FROM my_demo_transaction WHERE col1 = 40",SQL_NTS);
-    mystmt(hstmt,rc); 
-
-	/* Commit the transaction using DBC handler */
-	rc = SQLEndTran(SQL_HANDLE_ENV, henv, SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    /* test the results now, select should not find any data */
-    rc2 = SQLExecDirect(hstmt2,"SELECT * FROM my_demo_transaction WHERE col1 = 40",SQL_NTS);
-    mystmt(hstmt2,rc2);  
-
-    rc2 = SQLFetch(hstmt2);
-    mystmt_err(hstmt2,rc2 == SQL_NO_DATA_FOUND,rc2);  
-
-    rc2 = SQLFreeStmt(hstmt2,SQL_CLOSE);
-    mystmt(hstmt2,rc2);
-
-	/* drop the table */
-    rc = SQLExecDirect(hstmt,"DROP TABLE my_demo_transaction",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLTransact(NULL,hdbc,SQL_ROLLBACK);
-    mycon(hdbc,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
-
+  return OK;
 }
 
-/********************************************************
-* main routine                                          *
-*********************************************************/
-int main(int argc, char *argv[])
-{
-    SQLHENV   henv, henv2;
-    SQLHDBC   hdbc, hdbc2;
-    SQLHSTMT  hstmt, hstmt2;
-    SQLINTEGER narg;      
 
-    printMessageHeader();
-
-    /*
-     * if connection string supplied through arguments, overrite
-     * the default one..
-    */
-    for (narg = 1; narg < argc; narg++)
-    {
-        if ( narg == 1 )
-            mydsn = argv[1];
-        else if ( narg == 2 )
-            myuid = argv[2];
-        else if ( narg == 3 )
-            mypwd = argv[3];
-
-    }
-
-    /* 
-     * connect to MySQL server
-    */
-    myconnect(&henv,&hdbc,&hstmt); 
-
-    /*
-      create another connection to check whether transactions were committed/rolled back
-    */
-    myconnect(&henv2,&hdbc2,&hstmt2); 
-
-    /* 
-     * simple transaction test
-    */
-	my_transaction(hdbc, hstmt, henv, hdbc2, hstmt2, henv2);
-
-    /* 
-     * disconnect from the server, by freeing all resources
-    */
-    mydisconnect(&henv,&hdbc,&hstmt);
-
-    printMessageFooter( 1 );
-
-    return(0);
-} 
+BEGIN_TESTS
+  ADD_TEST(my_transaction)
+END_TESTS
 
 
-
+RUN_TESTS
