@@ -161,12 +161,13 @@ void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
     SQLCHAR     sqlstate[6], message[SQL_MAX_MESSAGE_LENGTH];
     SQLINTEGER  native_error;
     SQLSMALLINT length;
+    SQLRETURN   drc;
 
     /** @todo map rc to SQL_SUCCESS_WITH_INFO, etc */
     printf("# %s = %d\n", text, rc);
 
     /** @todo Handle multiple diagnostic records. */
-    SQLRETURN drc= SQLGetDiagRec(htype, handle, 1, sqlstate, &native_error,
+    drc= SQLGetDiagRec(htype, handle, 1, sqlstate, &native_error,
                                  message, SQL_MAX_MESSAGE_LENGTH - 1, &length);
 
     if (SQL_SUCCEEDED(drc))
