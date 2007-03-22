@@ -1206,32 +1206,3 @@ my_bool is_minimum_version(const char *server_version,const char *version,
         return TRUE;
     return FALSE;
 }
-
-#ifndef _UNIX_
-
-
-/*****************************************************************************
- Define functions that dosen't exist in a dll
-*****************************************************************************/
-
-/* _exit is called by safemalloc, mystatic & my_malloc */
-# ifndef __WIN__
-void exit(int exit)
-{
-    abort();
-}
-# endif /* !__WIN__ */
-
-# ifndef THREAD
-long getpid()
-{
-    return 0;
-}
-# else
-int pthread_dummy(int return_value)
-{
-    return return_value;
-}
-# endif /* !THREAD */
-
-#endif /* !_UNIX_ */
