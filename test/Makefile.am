@@ -40,6 +40,7 @@ my_keys \
 my_tran_ext \
 my_catalog \
 my_error \
+my_ts \
 mytest32 \
 my_use_result
 fancy_tests= \
@@ -76,6 +77,7 @@ my_keys_SOURCES=	keys/my_keys.c
 my_tran_ext_SOURCES=	tran_ext/my_tran_ext.c
 my_catalog_SOURCES=	catalog/my_catalog.c
 my_error_SOURCES=	error/my_error.c
+my_ts_SOURCES=		timestamp/my_ts.c
 my_use_result_SOURCES=	use_result/my_use_result.c
 dbtest_SOURCES=		db_test/db_test.c
 mytest_SOURCES=		test/mytest.c
@@ -144,6 +146,7 @@ EXTRA_DIST= \
 	odbc.ini.in \
 	odbcinst.ini.in \
 	include/mytest3.h \
+	include/odbctap.h \
 	Makefile.ini \
 	test.vpj \
 	test.pro \
@@ -173,8 +176,7 @@ EXTRA_DIST= \
 	imyodbc/myodbc.c \
 	thread/my_thread.c \
 	thread_coredump/thread-coredump.c \
-	thread_test/thread_test.c \
-	timestamp/my_ts.c
+	thread_test/thread_test.c
 
 # ----------------------------------------------------------------------
 # We want to rebuild the "test.ini" file each time, as it might

@@ -1,177 +1,122 @@
-/***************************************************************************
-                          my_ts.c  -  description
-                             ---------------------
-    begin                : Mon Jan 7, 2002
-    copyright            : (C) Copyright © MySQL AB 1995-2002
-    author               : venu ( venu@mysql.com )
- ***************************************************************************/
+/*
+  Copyright (C) 1995-2006 MySQL AB
 
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
-#include "mytest3.h"
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of version 2 of the GNU General Public License as
+  published by the Free Software Foundation.
 
-/********************************************************
-* timestamp demo..
-*********************************************************/
-void my_ts(SQLHDBC hdbc, SQLHSTMT hstmt)
+  There are special exceptions to the terms and conditions of the GPL
+  as it is applied to this software. View the full text of the exception
+  in file LICENSE.exceptions in the top-level directory of this software
+  distribution.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#include "odbctap.h"
+
+
+DECLARE_TEST(my_ts)
 {
-    SQLRETURN        rc;
-    SQLCHAR          szTs[50];
-    TIMESTAMP_STRUCT ts;
-    SQLINTEGER       pclen;
+  SQLCHAR          szTs[50];
+  TIMESTAMP_STRUCT ts;
+  SQLLEN           len;
 
-    /* drop table 'myodbc3_demo_result' if it already exists */
-    SQLExecDirect(hstmt,"DROP TABLE my_ts",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_ts");
+  ok_sql(hstmt, "CREATE TABLE my_ts (ts TIMESTAMP)");
 
-    /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
-    mycon(hdbc,rc);
+  /* insert using SQL_C_CHAR to SQL_TIMESTAMP */
+  strcpy((char *)szTs, "2002-01-07 10:20:49.06");
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT,
+                                  SQL_C_CHAR, SQL_TIMESTAMP,
+                                  0, 0, szTs, sizeof(szTs), NULL));
+  ok_sql(hstmt, "INSERT INTO my_ts (ts) VALUES (?)");
 
-    /* create the table 'myodbc3_demo_result' */
-    rc = SQLExecDirect(hstmt,"CREATE TABLE my_ts(ts timestamp)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_RESET_PARAMS));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
 
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
-    mycon(hdbc,rc);    
+  /* insert using SQL_C_TIMESTAMP to SQL_TIMESTAMP */
+  ts.year= 2002;
+  ts.month= 1;
+  ts.day= 7;
+  ts.hour= 19;
+  ts.minute= 47;
+  ts.second= 59;
+  ts.fraction= 4;
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT,
+                                  SQL_C_TIMESTAMP, SQL_TIMESTAMP,
+                                  0, 0, &ts, sizeof(ts), NULL));
 
-    /* insert using SQL_C_CHAR to SQL_TIMESTAMP */    
-    strcpy(szTs,"2002-01-07 10:20:49.06");
-    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,
-                          SQL_C_CHAR,SQL_TIMESTAMP,
-                          0,0,&szTs,sizeof(szTs),NULL);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "INSERT INTO my_ts (ts) VALUES (?)");
 
-    rc = SQLExecDirect(hstmt,"INSERT INTO my_ts(ts) values(?)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_RESET_PARAMS));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
 
-    SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-    SQLFreeStmt(hstmt,SQL_CLOSE);
+  /* now fetch and verify the results .. */
+  ok_sql(hstmt, "SELECT * FROM my_ts");
 
+  /* now fetch first row */
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 1));
 
-    /* insert using SQL_C_TIMESTAMP to SQL_TIMESTAMP */    
-    ts.year = 2002;
-    ts.month=01;
-    ts.day=07;
-    ts.hour=19;
-    ts.minute=47;
-    ts.second=59;
-    ts.fraction=04;
-    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,
-                          SQL_C_TIMESTAMP,SQL_TIMESTAMP,
-                          0,0,&ts,sizeof(ts),NULL);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, szTs, sizeof(szTs), &len));
+  is_str(szTs, "2002-01-07 10:20:49", len);
+  printf("# row1 using SQL_C_CHAR: %s (%ld)\n", szTs, len);
 
-    rc = SQLExecDirect(hstmt,"INSERT INTO my_ts(ts) values(?)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 1));
 
-    SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-    SQLFreeStmt(hstmt,SQL_CLOSE);
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_TIMESTAMP, &ts, sizeof(ts), &len));
+  is_num(ts.year,  2002);
+  is_num(ts.month, 1);
+  is_num(ts.day,   7);
+  is_num(ts.hour,  10);
+  is_num(ts.minute,20);
+  is_num(ts.second,49);
+  printf("# row1 using SQL_C_TIMESTAMP: %d-%d-%d %d:%d:%d.%d (%ld)\n",
+         ts.year, ts.month,ts.day, ts.hour, ts.minute, ts.second, ts.fraction,
+         len);
 
-    /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 2));
 
-    strcpy(szTs,"");
-    /* now fetch and verify the results .. */        
-    rc = SQLExecDirect(hstmt,"SELECT * from my_ts",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, szTs, sizeof(szTs), &len));
+  is_str(szTs, "2002-01-07 19:47:59", len);
+  printf("# row2 using SQL_C_CHAR: %s(%ld)\n", szTs, len);
 
-    /* now fetch first row */
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,1);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 2));
 
-    rc = SQLGetData(hstmt,1,SQL_C_CHAR,szTs,sizeof(szTs),&pclen);
-    mystmt(hstmt,rc);
-    printMessage("\n row1 using SQL_C_CHAR:%s(%d)\n",szTs,pclen);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,1);
-    mystmt(hstmt,rc);
-    ts.fraction= 0;
-
-    rc = SQLGetData(hstmt,1,SQL_C_TIMESTAMP,&ts,sizeof(ts),&pclen);
-    mystmt(hstmt,rc);
-    printMessage("\n row1 using SQL_C_TIMESTAMP:%d-%d-%d %d:%d:%d.%d(%d)\n",
-           ts.year,ts.month,
-           ts.day,ts.hour,ts.minute,
-           ts.second,ts.fraction,pclen);
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_TIMESTAMP, &ts, sizeof(ts), &len));
+  is_num(ts.year,  2002);
+  is_num(ts.month, 1);
+  is_num(ts.day,   7);
+  is_num(ts.hour,  19);
+  is_num(ts.minute,47);
+  is_num(ts.second,59);
+  printf("# row2 using SQL_C_TIMESTAMP: %d-%d-%d %d:%d:%d.%d (%ld)\n",
+         ts.year, ts.month,ts.day, ts.hour, ts.minute, ts.second, ts.fraction,
+         len);
 
 
-    /* now fetch second row */
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,2);
-    mystmt(hstmt,rc);
+  expect_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 3),
+              SQL_NO_DATA_FOUND);
 
-    rc = SQLGetData(hstmt,1,SQL_C_CHAR,szTs,sizeof(szTs),&pclen);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_UNBIND));
+  ok_stmt(hstmt,  SQLFreeStmt(hstmt,SQL_CLOSE));
 
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,2);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_ts");
 
-    rc = SQLGetData(hstmt,1,SQL_C_TIMESTAMP,&ts,sizeof(ts),&pclen);
-    mystmt(hstmt,rc);
-    printMessage("\n row2 using SQL_C_TIMESTAMP:%d-%d-%d %d:%d:%d.%d(%d)\n",
-           ts.year,ts.month,
-           ts.day,ts.hour,ts.minute,
-           ts.second,ts.fraction,pclen);
-
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,3);
-    mystmt_err(hstmt,rc==SQL_NO_DATA_FOUND,rc);
-
-    SQLFreeStmt(hstmt,SQL_UNBIND);
-    SQLFreeStmt(hstmt,SQL_CLOSE);
+  return OK;
 }
 
-/********************************************************
-* main routine                                          *
-*********************************************************/
-int main(int argc, char *argv[])
-{
-    SQLHENV    henv;
-    SQLHDBC    hdbc; 
-    SQLHSTMT   hstmt;
-    SQLINTEGER narg;
 
-    printMessageHeader();
-
-    /*
-     * if connection string supplied through arguments, overrite
-     * the default one..
-    */
-    for (narg = 1; narg < argc; narg++)
-    {
-        if ( narg == 1 )
-            mydsn = argv[1];
-        else if ( narg == 2 )
-            myuid = argv[2];
-        else if ( narg == 3 )
-            mypwd = argv[3];
-    }   
-
-    /* 
-     * connect to MySQL server
-    */
-    myconnect(&henv,&hdbc,&hstmt); 
-
-    /* 
-     * simple timestamp conversion demo
-    */
-    my_ts(hdbc, hstmt);
-
-    /* 
-     * disconnect from the server, by freeing all resources
-    */
-    mydisconnect(&henv,&hdbc,&hstmt);
-
-    printMessageFooter( 1 );
-
-    return(0);
-} 
+BEGIN_TESTS
+  ADD_TEST(my_ts)
+END_TESTS
 
 
-
+RUN_TESTS

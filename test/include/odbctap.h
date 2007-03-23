@@ -152,6 +152,41 @@ do { \
 
 
 /**
+  Verify that a string (char *) matches an expected value.
+
+  @param a     The string to compare
+  @param b     The string to compare against
+  @param c     The number of characters to compare
+*/
+#define is_str(a, b, c) \
+do { \
+  char *val_a= (char *)(a), *val_b= (char *)(b); \
+  int val_len= (int)(c); \
+  if (strncmp(val_a, val_b, val_len) != 0) { \
+    printf("# %s ('%*s') != '%*s' in %s on line %d\n", \
+           #a, val_len, val_a, val_len, val_b, __FILE__, __LINE__); \
+    return FAIL; \
+  } \
+} while (0);
+
+
+/**
+  Verify that a number (long integer) matches an expected value.
+
+  @param a     The number to compare
+  @param b     The number to compare against
+*/
+#define is_num(a, b) \
+do { \
+  if (a != b) { \
+    printf("# %s (%ld) != %ld in %s on line %d\n", \
+           #a, (long)a, (long)b, __FILE__, __LINE__); \
+    return FAIL; \
+  } \
+} while (0);
+
+
+/**
 */
 void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
                 const char *text, const char *file, int line)
