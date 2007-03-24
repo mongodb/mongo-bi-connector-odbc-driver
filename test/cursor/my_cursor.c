@@ -349,7 +349,7 @@ void t_bug5853(SQLHDBC hdbc, SQLHSTMT hstmt)
   rc= SQLExecDirect(hstmt,"DROP TABLE IF EXISTS t_bug5853",SQL_NTS);
   mystmt(hstmt,rc);
 
-  //return OK;
+  /* return OK; */
 }
 
 /********************************************************
