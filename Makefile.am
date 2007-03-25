@@ -131,7 +131,6 @@ EXTRA_DIST = \
 	PostBuildTest.bat \
 	Uninstall.bat \
 	Upgrade.bat \
-	dltest \
 	doc
 
 # Remove Subversion ".svn" subdirectories from source distribution

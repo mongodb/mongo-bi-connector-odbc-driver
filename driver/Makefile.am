@@ -83,15 +83,9 @@ libmyodbc3_r_la_CPPFLAGS     = -DMYODBC_DBG
 endif
 libmyodbc3_debug_la_CPPFLAGS = -DMYODBC_DBG
 
-if ENABLE_BUNDLES
 libmyodbc3_la_LDFLAGS       = -release @myodbc_version@ -module 
 libmyodbc3_r_la_LDFLAGS     = -release @myodbc_version@ -module 
 libmyodbc3_debug_la_LDFLAGS = -release @myodbc_version@ -module 
-else
-libmyodbc3_la_LDFLAGS       = -release @myodbc_version@
-libmyodbc3_r_la_LDFLAGS     = -release @myodbc_version@
-libmyodbc3_debug_la_LDFLAGS = -release @myodbc_version@
-endif
 
 if WITH_DEBUG
 LTLIBS_DEPS = $(LTLIBS_DEBUG_DEPS)

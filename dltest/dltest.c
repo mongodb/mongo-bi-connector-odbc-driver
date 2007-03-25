@@ -15,6 +15,7 @@ char *szSyntax =
 "* Syntax                                     *\n" \
 "*                                            *\n" \
 "*      dltest libName Symbol                 *\n" \
+"*      dltest lib:libName... sym:Symbol...   *\n" \
 "*                                            *\n" \
 "* libName                                    *\n" \
 "*                                            *\n" \
@@ -43,99 +44,153 @@ char *szSyntax =
 "*                                            *\n" \
 "**********************************************\n\n";
 
+#ifdef WIN32
+typedef HMODULE DLTestModule;
+#else
+typedef void *  DLTestModule;
+#endif
+
+static void dltest_dlinit(void);
+static DLTestModule dltest_dlopen(const char *);
+static void dltest_dlsym(DLTestModule, const char *);
+static void dltest_dlclose(DLTestModule);
+
+
 int main( int argc, char *argv[] )
 {
-#ifdef WIN32
-    HMODULE         hModule     = NULL;
-#else
-    void *          hModule     = NULL;
-#endif
-    void    (*pFunc)();
+  DLTestModule hModule = NULL;
 
-    if ( argc < 2 )
+  if ( argc < 2 )
+  {
+      printf( szSyntax );
+      exit( 1 );
+  }
+
+  /* At least one argument, a library path */
+
+  dltest_dlinit();
+
+  if ( strncmp(argv[1],"lib:",4) == 0 || strncmp(argv[1],"sym:",4) == 0 )
+  {
+    /* Alternative API, can handle multiple libs and symbols, in any mix */
+    int i;
+    for (i = 1; i < argc; i++)
     {
-        printf( szSyntax );
-        exit( 1 );
+      if (strncmp(argv[1],"lib:",4) == 0)
+      {
+        hModule = dltest_dlopen(argv[i]+4);     /* Open a new module */
+      }
+      else if (strncmp(argv[1],"sym:",4) == 0)
+      {
+        dltest_dlsym(hModule,argv[i]+4);
+      }
     }
 
     /*
-     * initialize libtool
-     */
-
-#ifndef WIN32
-    if ( lt_dlinit() )
-    {
-        printf( "[%s][%d] ERROR: Failed to lt_dlinit()\n", __FILE__, __LINE__ );
-        exit( 1 );
-    }
-
-    hModule = lt_dlopen( argv[1] );
-    if ( !hModule )
-    {
-        printf( "[%s][%d] ERROR dlopen(): %s\n", __FILE__, __LINE__, lt_dlerror() );
-        exit( 1 );
-    }
-    printf( "[%s][%d] SUCCESS: Loaded %s\n", __FILE__, __LINE__, argv[1] );
+      Why close at all, and if we load libraries dependent on each
+      other, closing will prevent a later opened lib from accessing
+      symbols from the previous one, at least on AIX 5.2
+    */
+  }
+  else
+  {
+    /* Old API */
+    hModule = dltest_dlopen(argv[1]);
     if ( argc > 2 )
-    {
-        pFunc = (void (*)()) lt_dlsym( hModule, argv[2] );
-/* PAH - lt_dlerror() is not a good indicator of success    */
-/*		if ( (pError = lt_dlerror()) != NULL )              */
-        if ( !pFunc )
-        {
-            const char *pError;
+      dltest_dlsym(hModule,argv[2]);
+    dltest_dlclose(hModule);
+  }
 
-            if ( (pError = lt_dlerror()) != NULL )
-                printf( "[%s][%d] ERROR: %s\n Could not find %s\n", __FILE__, __LINE__, pError, argv[2] );
-            else
-                printf( "[%s][%d] ERROR: Could not find %s\n", __FILE__, __LINE__, argv[2] );
-            exit( 1 );
-        }
-        printf( "[%s][%d] SUCCESS: Found %s\n", __FILE__, __LINE__, argv[2] );
-    }
-    lt_dlclose( hModule );
-#else
-    if ( !(hModule = LoadLibrary( (LPCSTR)argv[1] )) )
-    {
-        LPVOID pszMsg;
-
-        FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                       NULL,
-                       GetLastError(),
-                       MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),
-                       (LPTSTR) &pszMsg,
-                       0, 
-                       NULL );
-        printf( "[%s][%d] ERROR LoadLibrary(): %s\n", __FILE__, __LINE__, pszMsg );
-        LocalFree( pszMsg );
-        exit( 1 );
-    }
-
-    printf( "[%s][%d] SUCCESS: Loaded %s\n", __FILE__, __LINE__, argv[1] );
-    if ( argc > 2 )
-    {
-        pFunc = (void (*)()) GetProcAddress( hModule, argv[2] );
-        if ( !pFunc )
-        {
-            LPVOID pszMsg;
-    
-            FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                           NULL,
-                           GetLastError(),
-                           MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),
-                           (LPTSTR) &pszMsg,
-                           0, 
-                           NULL );
-            printf( "[%s][%d] ERROR: Could not find %s. %s\n", __FILE__, __LINE__, argv[2], pszMsg );
-            LocalFree( pszMsg );
-            FreeLibrary( hModule );
-            exit( 1 );
-        }
-        printf( "[%s][%d] SUCCESS: Found %s\n", __FILE__, __LINE__, argv[2] );
-    }
-    FreeLibrary( hModule );
-#endif
-
-    return( 0 );
+  return(0);
 }
 
+
+static void dltest_dlinit(void)
+{
+#ifndef WIN32
+  if ( lt_dlinit() )
+  {
+    printf( "[%s][%d] ERROR: Failed to lt_dlinit()\n", __FILE__, __LINE__ );
+    exit( 1 );
+  }
+#endif
+}
+
+static DLTestModule dltest_dlopen(const char *path)
+{
+#ifdef WIN32
+  DLTestModule hModule = LoadLibrary((LPCSTR)path)
+  if ( !hModule )
+  {
+    LPVOID pszMsg;
+    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                  NULL,
+                  GetLastError(),
+                  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                  (LPTSTR) &pszMsg,
+                  0, 
+                  NULL);
+    printf("[%s][%d] ERROR LoadLibrary(): %s\n", __FILE__, __LINE__, pszMsg);
+    LocalFree(pszMsg);
+    exit(1);
+  }
+#else
+  DLTestModule hModule = lt_dlopen(path);
+  if ( !hModule )
+  {
+    printf("[%s][%d] ERROR dlopen(): %s\n", __FILE__, __LINE__, lt_dlerror());
+    exit(1);
+  }
+#endif /* WIN32 */
+
+  printf("[%s][%d] SUCCESS: Loaded %s\n", __FILE__, __LINE__, path);
+  return hModule;
+}
+
+
+static void dltest_dlclose(DLTestModule hModule)
+{
+#ifdef WIN32
+  FreeLibrary(hModule);
+#else
+  lt_dlclose(hModule);
+#endif /* WIN32 */
+}
+
+
+static void dltest_dlsym(DLTestModule hModule, const char *sym)
+{
+  void (*pFunc)();
+#ifdef WIN32
+  pFunc = (void (*)())GetProcAddress(hModule,sym);
+  if ( !pFunc )
+  {
+    LPVOID pszMsg;
+    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                  NULL,
+                  GetLastError(),
+                  MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT),
+                  (LPTSTR) &pszMsg,
+                  0, 
+                  NULL);
+    printf("[%s][%d] ERROR: Could not find %s. %s\n",__FILE__,__LINE__,sym,pszMsg);
+    LocalFree(pszMsg);
+    FreeLibrary(hModule);
+    exit(1);
+  }
+#else
+  pFunc = (void (*)())lt_dlsym(hModule,sym);
+/* PAH - lt_dlerror() is not a good indicator of success    */
+/*		if ( (pError = lt_dlerror()) != NULL )              */
+  if ( !pFunc )
+  {
+    const char *pError;
+    if ( (pError = lt_dlerror()) != NULL )
+      printf("[%s][%d] ERROR: %s\n Could not find %s\n",__FILE__,__LINE__,pError,sym);
+    else
+      printf("[%s][%d] ERROR: Could not find %s\n",__FILE__,__LINE__,sym);
+    exit(1);
+  }
+#endif
+  printf("[%s][%d] SUCCESS: Found %s\n",__FILE__,__LINE__,sym);
+}
