@@ -119,7 +119,7 @@ static void dltest_dlinit(void)
 static DLTestModule dltest_dlopen(const char *path)
 {
 #ifdef WIN32
-  DLTestModule hModule = LoadLibrary((LPCSTR)path)
+  DLTestModule hModule = LoadLibrary((LPCSTR)path);
   if ( !hModule )
   {
     LPVOID pszMsg;
