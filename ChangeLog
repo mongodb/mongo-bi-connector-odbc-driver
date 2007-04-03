@@ -3,6 +3,7 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * SQLProcedures returned incomplete and incorrect information. (Bug #23033)
   * Statements that used "WHERE CURRENT OF" for positioned updates could
     not be re-executed or used with parameters that were provided using
     SQLPutData() and SQLParamData(). (Bug #5853)

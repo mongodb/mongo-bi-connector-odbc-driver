@@ -1,19 +1,25 @@
-/***************************************************************************
-                          my_catalog.c  -  description
-                             -------------------
-    begin                : Fri Feb 15 2002
-    copyright            : (C) MySQL AB 1995-2002
-    author               : venu ( venu@mysql.com )
- ***************************************************************************/
+/*
+  Copyright (C) 1995-2007 MySQL AB
 
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of version 2 of the GNU General Public License as
+  published by the Free Software Foundation.
+
+  There are special exceptions to the terms and conditions of the GPL
+  as it is applied to this software. View the full text of the exception
+  in file LICENSE.exceptions in the top-level directory of this software
+  distribution.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
 #include "mytest3.h"
 
 SQLCHAR *mysock= NULL;
@@ -694,6 +700,49 @@ void my_colpriv(SQLHDBC hdbc,SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 }
 
+
+/** Basic test of SQLProcedures(). */
+void t_sqlprocedures(SQLHDBC hdbc, SQLHSTMT hstmt)
+{
+  SQLRETURN rc;
+  /** @todo check server version */
+
+  rc= SQLExecDirect(hstmt, "DROP FUNCTION IF EXISTS t_sqlproc_func", SQL_NTS);
+  mystmt(hstmt,rc);
+
+  rc= SQLExecDirect(hstmt,
+                    "CREATE FUNCTION t_sqlproc_func (a INT) RETURNS INT"
+                    " RETURN SQRT(a)",
+                    SQL_NTS);
+  mystmt(hstmt,rc);
+
+  rc= SQLExecDirect(hstmt, "DROP PROCEDURE IF EXISTS t_sqlproc_proc", SQL_NTS);
+  mystmt(hstmt,rc);
+  rc= SQLExecDirect(hstmt,
+                    "CREATE PROCEDURE t_sqlproc_proc (OUT a INT) BEGIN"
+                    " SELECT COUNT(*) INTO a FROM t_sqlproc;"
+                    "END;",
+                    SQL_NTS);
+  mystmt(hstmt,rc);
+
+  /* Try without specifying a catalog. */
+  rc= SQLProcedures(hstmt, NULL, 0, NULL, 0, "t_sqlproc%", SQL_NTS);
+  mystmt(hstmt,rc);
+
+  assert(2 == my_print_non_format_result(hstmt));
+
+  /* And try with specifying a catalog.  */
+  rc= SQLProcedures(hstmt, test_db, SQL_NTS, NULL, 0, "t_sqlproc%", SQL_NTS);
+  mystmt(hstmt,rc);
+
+  assert(2 == my_print_non_format_result(hstmt));
+
+  rc= SQLExecDirect(hstmt, "DROP PROCEDURE IF EXISTS t_sqlproc_proc", SQL_NTS);
+  mystmt(hstmt,rc);
+  rc= SQLExecDirect(hstmt, "DROP FUNCTION IF EXISTS t_sqlproc_func", SQL_NTS);
+  mystmt(hstmt,rc);
+}
+
 /**
 MAIN ROUTINE...
 */
@@ -743,9 +792,10 @@ int main(int argc, char *argv[])
         my_colpriv_init(hdbc,hstmt);
         my_colpriv(hdbc,hstmt);
     }
+
+    t_sqlprocedures(hdbc, hstmt);
+
     mydisconnect(&henv,&hdbc,&hstmt);
-
-
     printMessageFooter( 1 );
 
     return(0);

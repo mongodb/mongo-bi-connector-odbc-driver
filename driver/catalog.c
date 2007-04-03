@@ -2054,134 +2054,115 @@ SQLProcesures and SQLProcedureColumns
 ****************************************************************************
 */
 
-/*
-  @type    : internal
-  @purpose : returns tables from a perticular database
+/**
+  Get the list of procedures stored in a catalog (database). This is done by
+  generating the appropriate query against INFORMATION_SCHEMA. If no
+  database is specified, the current database is used.
+
+  @param[in] hstmt            Handle of statement
+  @param[in] szCatalogName    Name of catalog (database)
+  @param[in] cbCatalogName    Length of catalog
+  @param[in] szSchemaName     Pattern of schema (unused)
+  @param[in] cbSchemaName     Length of schema name
+  @param[in] szProcName       Pattern of procedure names to fetch
+  @param[in] cbProcName       Length of procedure name
 */
-static MYSQL_RES *mysql_list_sysprocs(DBC FAR *dbc, 
-                                      const char *wild) 
+SQLRETURN SQL_API SQLProcedures(SQLHSTMT     hstmt,
+                                SQLCHAR     *szCatalogName,
+                                SQLSMALLINT  cbCatalogName,
+                                SQLCHAR     *szSchemaName
+                                  __attribute__((unused)),
+                                SQLSMALLINT  cbSchemaName
+                                  __attribute__((unused)),
+                                SQLCHAR     *szProcName,
+                                SQLSMALLINT  cbProcName)
 {
-    MYSQL FAR *mysql= &dbc->mysql;
-    char buff[NAME_LEN+50];  
+  SQLRETURN rc;
+  STMT *stmt= (STMT *)hstmt;
 
-    strxmov(buff,"SELECT name FROM mysql.proc WHERE type='Procedure' and name",NullS);
-    my_append_wild(strmov(buff,buff),buff+sizeof(buff)-1,wild);
+  MYODBCDbgEnter;
 
-    MYLOG_DBC_QUERY(dbc, buff);
-    if ( mysql_query(mysql,buff) )
-        return 0;
-    return mysql_store_result(mysql);
+  CLEAR_STMT_ERROR(hstmt);
+  my_SQLFreeStmt(hstmt,MYSQL_RESET);
+
+  /* If earlier than 5.0, the server doesn't even support stored procs. */
+  if (!is_minimum_version(stmt->dbc->mysql.server_version, "5.0", 3))
+  {
+    /*
+      We use the server to generate a fake result with no rows, but
+      reasonable column information.
+    */
+    MYODBCDbgReturnReturn(SQLExecDirect(hstmt,
+                                        (SQLCHAR *)"SELECT "
+                                        "'' AS PROCEDURE_CAT,"
+                                        "'' AS PROCEDURE_SCHEM,"
+                                        "'' AS PROCEDURE_NAME,"
+                                        "NULL AS NUM_INPUT_PARAMS,"
+                                        "NULL AS NUM_OUTPUT_PARAMS,"
+                                        "NULL AS NUM_RESULT_SETS,"
+                                        "'' AS REMARKS,"
+                                        "0 AS PROCEDURE_TYPE "
+                                        "FROM DUAL WHERE 1=0",
+                                        SQL_NTS));
+  }
+
+  /*
+    If a catalog (database) was specified, we use that, otherwise we
+    look up procedures from the current database. (This is not standard
+    behavior, but seems useful.)
+  */
+  if (szCatalogName)
+    rc= SQLPrepare(hstmt, (SQLCHAR *)
+                   "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT,"
+                   "NULL AS PROCEDURE_SCHEM,"
+                   "ROUTINE_NAME AS PROCEDURE_NAME,"
+                   "NULL AS NUM_INPUT_PARAMS,"
+                   "NULL AS NUM_OUTPUT_PARAMS,"
+                   "NULL AS NUM_RESULT_SETS,"
+                   "ROUTINE_COMMENT AS REMARKS,"
+                   "IF(ROUTINE_TYPE = 'FUNCTION', 2,"
+                      "IF(ROUTINE_TYPE= 'PROCEDURE', 1, 0)) AS PROCEDURE_TYPE"
+                   "  FROM INFORMATION_SCHEMA.ROUTINES"
+                   " WHERE ROUTINE_NAME LIKE ? AND ROUTINE_SCHEMA = ?",
+                   SQL_NTS);
+  else
+    rc= SQLPrepare(hstmt, (SQLCHAR *)
+                   "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT,"
+                   "NULL AS PROCEDURE_SCHEM,"
+                   "ROUTINE_NAME AS PROCEDURE_NAME,"
+                   "NULL AS NUM_INPUT_PARAMS,"
+                   "NULL AS NUM_OUTPUT_PARAMS,"
+                   "NULL AS NUM_RESULT_SETS,"
+                   "ROUTINE_COMMENT AS REMARKS,"
+                   "IF(ROUTINE_TYPE = 'FUNCTION', 2,"
+                      "IF(ROUTINE_TYPE= 'PROCEDURE', 1, 0)) AS PROCEDURE_TYPE"
+                   "  FROM INFORMATION_SCHEMA.ROUTINES"
+                   " WHERE ROUTINE_NAME LIKE ?"
+                   " AND ROUTINE_SCHEMA = DATABASE()",
+                   SQL_NTS);
+  if (!SQL_SUCCEEDED(rc))
+    return rc;
+
+  if (cbProcName == SQL_NTS)
+    cbProcName= strlen((const char *)szProcName);
+  rc= SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_C_CHAR,
+                       0, 0, szProcName, cbProcName, NULL);
+  if (!SQL_SUCCEEDED(rc))
+    return rc;
+
+  if (szCatalogName)
+  {
+    if (cbCatalogName == SQL_NTS)
+      cbCatalogName= strlen((const char *)szCatalogName);
+    rc= SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_C_CHAR,
+                         0, 0, szCatalogName, cbCatalogName, NULL);
+    if (!SQL_SUCCEEDED(rc))
+      return rc;
+  }
+
+  MYODBCDbgReturnReturn(SQLExecute(hstmt));
 }
 
-char *SQLPROCEDURES_values[]= {"","",NULL,0,0,0,"","procedure"};
-
-#if MYSQL_VERSION_ID >= 40100
-MYSQL_FIELD SQLPROCEDURES_fields[]= 
-{
-    {"PROCEDURE_CAT",    NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"PROCEDURE_SCHEM",  NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"PROCEDURE_NAME",   NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"NUM_INPUT_PARAMS", NullS,"Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
-    {"NUM_OUTPUT_PARAMS",NullS,"Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
-    {"NUM_RESULT_SETS",  NullS,"Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
-    {"REMARKS",          NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,11, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"PROCEDURE_TYPE",   NullS,"Catalog",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT}
-};
-#else
-MYSQL_FIELD SQLPROCEDURES_fields[]= 
-{
-    {"PROCEDURE_CAT",    "Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"PROCEDURE_SCHEM",  "Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"PROCEDURE_NAME",   "Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"NUM_INPUT_PARAMS", "Catalog",NullS,NullS,NullS,11,11,0,0,MYSQL_TYPE_LONG},
-    {"NUM_OUTPUT_PARAMS","Catalog",NullS,NullS,NullS,11,11,0,0,MYSQL_TYPE_LONG},
-    {"NUM_RESULT_SETS",  "Catalog",NullS,NullS,NullS,11,11,0,0,MYSQL_TYPE_LONG},
-    {"REMARKS",          "Catalog",NullS,NullS,NullS,NAME_LEN,11,0,0,MYSQL_TYPE_VAR_STRING},
-    {"PROCEDURE_TYPE",   "Catalog",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT}
-};
-#endif
-
-const uint SQLPROCEDURES_FIELDS= array_elements(SQLPROCEDURES_values);
-uint SQLPROCEDURES_order[]= {2};
-
-/*
-  @type    : ODBC 1.0 API
-  @purpose : returns the list of procedure names stored in a specific data
-  source. Procedure is a generic term used to describe an
-  executable object, or a named entity that can be invoked
-  using input and output parameters
-*/
-
-SQLRETURN SQL_API SQLProcedures(SQLHSTMT    hstmt,
-                                SQLCHAR FAR *szProcQualifier,
-                                SQLSMALLINT cbProcQualifier,
-                                SQLCHAR FAR *szProcOwner,
-                                SQLSMALLINT cbProcOwner,
-                                SQLCHAR FAR *szProcName,
-                                SQLSMALLINT cbProcName)
-{
-    char      Qualifier_buff[NAME_LEN+1],
-    Name_buff[NAME_LEN+1], 
-    *ProcQualifier,
-    *ProcName;
-    STMT FAR  *stmt= (STMT FAR*) hstmt; 
-
-    MYODBCDbgEnter;
-
-    MYODBCDbgInfo( "Qualifier: '%s'", szProcQualifier ? (char*) szProcQualifier : "null" );
-    MYODBCDbgInfo( "Qualifier: (%d)", cbProcQualifier );
-    MYODBCDbgInfo( "Owner: '%s'", szProcOwner ? (char*) szProcOwner : "null" );
-    MYODBCDbgInfo( "Owner: (%d)", cbProcOwner );
-    MYODBCDbgInfo( "Procedure: '%s'", szProcName ? (char*) szProcName : "null" );
-    MYODBCDbgInfo( "Procedure: (%d)", cbProcName );
-
-    CLEAR_STMT_ERROR(hstmt);
-    my_SQLFreeStmt(hstmt,MYSQL_RESET);
-
-    if ( !is_minimum_version(stmt->dbc->mysql.server_version,"5.0",3) )
-    {
-        MYODBCDbgError( "%s", "Driver doesn't support for this MySQL server version, upgrade to >= 5.0" );
-        goto empty_set;
-    }
-    my_SQLFreeStmt(hstmt,MYSQL_RESET);
-
-    ProcQualifier= myodbc_get_valid_buffer( Qualifier_buff, szProcQualifier, cbProcQualifier );
-    ProcName= myodbc_get_valid_buffer( Name_buff, szProcName, cbProcName );
-
-    escape_input_parameter(&stmt->dbc->mysql, ProcQualifier);
-    escape_input_parameter(&stmt->dbc->mysql, ProcName); 
-
-    pthread_mutex_lock(&stmt->dbc->lock);
-    stmt->result= mysql_list_sysprocs(stmt->dbc,ProcName);
-    pthread_mutex_unlock(&stmt->dbc->lock);
-
-    if ( !stmt->result )
-    {
-        MYODBCDbgError( "%d", mysql_errno(&stmt->dbc->mysql) );
-        MYODBCDbgError( "%s", mysql_error(&stmt->dbc->mysql) );
-        goto empty_set;
-    }
-    stmt->order      = SQLPROCEDURES_order;
-    stmt->order_count= array_elements(SQLPROCEDURES_order);
-    stmt->fix_fields = fix_fields_copy;
-    stmt->array      = (MYSQL_ROW) my_memdup(
-                                            (gptr)SQLPROCEDURES_values,
-                                            sizeof(SQLPROCEDURES_values),MYF(0));
-
-    mysql_link_fields(stmt,SQLPROCEDURES_fields,SQLPROCEDURES_FIELDS);  
-    MYODBCDbgInfo( "total procedures count: %ld", stmt->result->row_count );
-    MYODBCDbgReturnReturn( SQL_SUCCESS );
-
-    empty_set:
-    MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
-    stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
-    stmt->result->row_count= 0;
-    stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLPROCEDURES_values,
-                                              sizeof(SQLPROCEDURES_values), 
-                                              MYF(0)); 
-    mysql_link_fields(stmt,SQLPROCEDURES_fields,SQLPROCEDURES_FIELDS);
-    MYODBCDbgReturnReturn( SQL_SUCCESS );
-}
 
 /*
   @type    : ODBC 1.0 API
