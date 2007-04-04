@@ -820,6 +820,7 @@ int doConfigDataSource( WORD nRequest )
     HINSTANCE               hLib                = 0;
 #else
     void *                  hLib                = 0;
+    void *                  hLibDrv             = 0;
 #endif
     char                    szDriver[1024];
     char                    szAttributes[1024];
@@ -905,6 +906,13 @@ int doConfigDataSource( WORD nRequest )
 #else
     /* load it */
     lt_dlinit();
+
+    if ( !(hLibDrv = lt_dlopen( pDriver->pszDRIVER )) )
+    {
+        fprintf( stderr, "[%s][%d][ERROR] Could not load driver library (%s). Error is %s\n", __FILE__, __LINE__, pDriver->pszDRIVER, lt_dlerror() );
+        goto doConfigDataSourceExit2;   
+    }
+
     if ( !(hLib = lt_dlopen( pDriver->pszSETUP )) )
     {
         fprintf( stderr, "[%s][%d][ERROR] Could not load driver setup library (%s). Error is %s\n", __FILE__, __LINE__, pDriver->pszSETUP, lt_dlerror() );
@@ -943,6 +951,7 @@ doConfigDataSourceExit1:
 #if defined(WIN32)
     FreeLibrary( hLib );
 #else
+    lt_dlclose( hLibDrv );
     lt_dlclose( hLib );
 #endif
 

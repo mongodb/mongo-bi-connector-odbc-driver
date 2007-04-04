@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * Changed the behavior of myodbc3i utility, so it loads the driver library
+    prior to the setup library when creating a new DSN (Bug #27220)
   * SQLProcedures returned incomplete and incorrect information. (Bug #23033)
   * Statements that used "WHERE CURRENT OF" for positioned updates could
     not be re-executed or used with parameters that were provided using
