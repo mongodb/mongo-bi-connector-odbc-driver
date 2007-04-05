@@ -114,8 +114,122 @@ DECLARE_TEST(my_ts)
 }
 
 
+DECLARE_TEST(t_tstotime)
+{
+    SQLRETURN rc;
+    SQL_TIMESTAMP_STRUCT ts;
+
+    ts.day    = 02;
+    ts.month  = 8;
+    ts.year   = 2001;
+    ts.hour   = 18;
+    ts.minute = 20;
+    ts.second = 45;
+    ts.fraction = 05;   
+
+    tmysql_exec(hstmt,"drop table t_tstotime");
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = tmysql_exec(hstmt,"create table t_tstotime(col1 date ,col2 time, col3 timestamp(14))");
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    /* TIMESTAMP TO DATE, TIME and TS CONVERSION */
+    rc = SQLPrepare(hstmt,"insert into t_tstotime(col1,col2,col3) values(?,?,?)",SQL_NTS);
+    mystmt(hstmt,rc);   
+
+    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
+                          SQL_DATE,0,0,&ts,sizeof(ts),NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
+                          SQL_TIME,0,0,&ts,sizeof(ts),NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,3,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
+                          SQL_TIMESTAMP,0,0,&ts,sizeof(ts),NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecute(hstmt);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
+    mystmt(hstmt,rc);  
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);  
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = tmysql_exec(hstmt,"select * from t_tstotime");
+    mystmt(hstmt,rc);  
+
+    my_assert( 1 == myresult(hstmt));
+
+    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+  return OK;
+}
+
+
+DECLARE_TEST(t_tstotime1)
+{
+  SQLCHAR ts[40]= "2001-08-02 18:20:45.05";
+
+  ok_sql(hstmt,"DROP TABLE IF EXISTS t_tstotime1");
+
+  ok_sql(hstmt,
+         "CREATE TABLE t_tstotime1(col1 DATE, col2 TIME, col3 TIMESTAMP)");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
+
+  /* TIMESTAMP TO DATE, TIME and TS CONVERSION */
+  ok_stmt(hstmt, SQLPrepare(hstmt,
+                            "INSERT INTO t_tstotime1  VALUES (?,?,?)",
+                            SQL_NTS));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_CHAR,
+                                  SQL_DATE,0,0,&ts,sizeof(ts),NULL));
+  ok_stmt(hstmt, SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,SQL_C_CHAR,
+                                  SQL_TIME,0,0,&ts,sizeof(ts),NULL));
+  ok_stmt(hstmt, SQLBindParameter(hstmt,3,SQL_PARAM_INPUT,SQL_C_CHAR,
+                                  SQL_TIMESTAMP,0,0,&ts,sizeof(ts),NULL));
+
+  ok_stmt(hstmt, SQLExecute(hstmt));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_con(hdbc, SQLTransact(NULL,hdbc,SQL_COMMIT));
+
+  ok_sql(hstmt, "SELECT * FROM t_tstotime1");
+
+  my_assert(1 == myresult(hstmt));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_ts)
+  ADD_TEST(t_tstotime)
+  ADD_TEST(t_tstotime1)
 END_TESTS
 
 

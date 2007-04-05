@@ -1,27 +1,33 @@
-/***************************************************************************
-                          mytest.c  -  description
-                             -------------------
-    begin                : Wed Aug 8 2001
-    copyright            : (C) 1995-2001 MySQL AB
-    author               : venu, venu@mysql.com
- ***************************************************************************/
+/*
+  Copyright (C) 1995-2007 MySQL AB
 
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
-#include "mytest3.h"
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of version 2 of the GNU General Public License as
+  published by the Free Software Foundation.
 
-SQLCHAR *mysock= NULL;
+  There are special exceptions to the terms and conditions of the GPL
+  as it is applied to this software. View the full text of the exception
+  in file LICENSE.exceptions in the top-level directory of this software
+  distribution.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#define DEBUG_LEVEL 2
+
+#include "odbctap.h"
 
 /**
  Simple function to do basic ops with MySQL
 */
-void t_basic(SQLHDBC hdbc,SQLHSTMT hstmt)
+DECLARE_TEST(t_basic)
 {
     SQLRETURN rc;
     SQLINTEGER nInData= 1, nOutData;
@@ -98,15 +104,17 @@ void t_basic(SQLHDBC hdbc,SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
 
-void tmysql_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
+DECLARE_TEST(tmysql_setpos_del)
 {
     SQLRETURN rc;
     SQLINTEGER nData = 500;
     SQLROWCOUNT nlen;
     char      szData[255]={0};
-    SQLLEN    pcrow;
+    SQLROWSETSIZE pcrow;
     SQLUSMALLINT rgfRowStatus;
 
     tmysql_exec(hstmt,"drop table tmysql_setpos1");
@@ -194,8 +202,12 @@ void tmysql_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void tmysql_setpos_del1(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmysql_setpos_del1)
 {
     SQLRETURN rc;
     long nData= 500;
@@ -264,8 +276,12 @@ void tmysql_setpos_del1(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void tmysql_setpos_del_all(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmysql_setpos_del_all)
 {
     SQLRETURN rc;
     SQLINTEGER nData= 500;
@@ -273,17 +289,14 @@ void tmysql_setpos_del_all(SQLHDBC hdbc, SQLHSTMT hstmt)
     SQLCHAR szData[255]={0};
     SQLROWSETSIZE pcrow;
 
-    printMessageHeader();
-
-    tmysql_exec(hstmt,"drop table t_sp_del_all");
-    rc = tmysql_exec(hstmt,"create table t_sp_del_all(int1 tinyint,\
+    ok_sql(hstmt,"DROP TABLE IF EXISTS t_sp_del_all");
+    ok_sql(hstmt,"create table t_sp_del_all(int1 tinyint,\
                                                       int2 smallint,\
                                                       int3 mediumint,\
                                                       int4 integer,\
                                                       int5 int,\
                                                       int6 bigint,\
                                                       real1 float)");
-    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into t_sp_del_all values(100,'MySQL1')");
     mystmt(hstmt,rc);
@@ -340,8 +353,12 @@ void tmysql_setpos_del_all(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void tmysql_setpos_upd(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmysql_setpos_upd)
 {
     SQLRETURN rc;
     long nData = 500;
@@ -443,16 +460,18 @@ void tmysql_setpos_upd(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void tmysql_setpos_add(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmysql_setpos_add)
 {
     SQLRETURN rc;
     long nData= 500;
     SQLLEN nlen;
     SQLCHAR szData[255]={0};
     SQLROWSETSIZE pcrow;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_setpos_add");
     rc = tmysql_exec(hstmt,"create table tmysql_setpos_add(col1 int, col2 varchar(30))");
@@ -535,12 +554,14 @@ void tmysql_setpos_add(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void t_sqlspecialcols(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(t_sqlspecialcols)
 {
     SQLRETURN rc;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_specialcols");
     rc = tmysql_exec(hstmt,"create table tmysql_specialcols(col1 int primary key, col2 varchar(30), col3 int)");
@@ -588,12 +609,14 @@ void t_sqlspecialcols(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
+
+  return OK;
 }
-void t_sqltables(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(t_sqltables)
 {
     SQLRETURN r;
-
-    printMessageHeader();
 
     r  = SQLTables(hstmt,NULL,0,NULL,0,NULL,0,NULL,0);        
     mystmt(hstmt,r);
@@ -657,15 +680,17 @@ void t_sqltables(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     r = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,r);
+
+  return OK;
 }
-void tmysql_bindcol(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmysql_bindcol)
 {
     SQLRETURN rc;
     long      nodata;
     long      nlen, nidata = 200;
     char      szodata[20],szidata[20]="MySQL";
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_bindcol");
 
@@ -728,16 +753,18 @@ void tmysql_bindcol(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
+
+  return OK;
 }
-void tmysql_pcbvalue(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmysql_pcbvalue)
 {
     SQLRETURN  rc;
     long       nodata;
     SQLLEN     nlen, slen,tlen;
     char       szdata[20],sztdata[100];
-    SQLUSMALLINT   rgfRowStatus[20];
-
-    printMessageHeader();
+    SQLUSMALLINT rgfRowStatus[20];
 
     tmysql_exec(hstmt,"drop table tmysql_pcbvalue");
 
@@ -774,7 +801,7 @@ void tmysql_pcbvalue(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLBindCol(hstmt,3,SQL_C_CHAR,sztdata,101,&tlen);
     mystmt(hstmt,rc); 
 
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_FIRST,1,0,&rgfRowStatus);
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_FIRST,1,0,rgfRowStatus);
     mystmt(hstmt,rc);      
     printMessage("row1: %d(%d), %s(%d),%s(%d)\n", nodata,nlen,szdata,slen,sztdata,tlen);    
 
@@ -819,16 +846,18 @@ void tmysql_pcbvalue(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
+
+  return OK;
 }
-void tmysql_bindparam(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmysql_bindparam)
 {
     SQLRETURN rc;
     long      nodata, nidata= 200;
     SQLLEN    nlen;
     char      szodata[20],szidata[20]="MySQL";
     short     pccol;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_bindparam");
 
@@ -894,12 +923,14 @@ void tmysql_bindparam(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
+
+  return OK;
 }
-void tmysql_fix(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmysql_fix)
 {
     SQLRETURN rc;  
-
-    printMessageHeader();
 
     /* dump based */
     printMessage("table structure for 'shop'..\n");
@@ -1030,15 +1061,17 @@ void tmysql_fix(SQLHDBC hdbc, SQLHSTMT hstmt)
         rc = SQLExecute(hstmt);
         mystmt(hstmt,rc);
     }
+
+  return OK;
 }
-void tmysql_pos_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmysql_pos_delete)
 {
     SQLRETURN rc;
     SQLHSTMT hstmt1;
     SQLROWSETSIZE pcrow;
     SQLUSMALLINT rgfRowStatus;
-
-    printMessageHeader();
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
     mycon(hdbc,rc);    
@@ -1101,15 +1134,17 @@ void tmysql_pos_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt1,SQL_DROP);
     mystmt(hstmt1,rc);
+
+  return OK;
 }
-void tmysql_pos_update(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmysql_pos_update)
 {
     SQLRETURN rc;
     SQLHSTMT hstmt1;
     SQLROWSETSIZE pcrow;
     SQLUSMALLINT rgfRowStatus;
-
-    printMessageHeader();
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
     mycon(hdbc,rc);
@@ -1178,16 +1213,18 @@ void tmysql_pos_update(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt1,SQL_DROP);
     mystmt(hstmt1,rc);
+
+  return OK;
 }
-void tmysql_pos_update_ex(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmysql_pos_update_ex)
 {
     SQLRETURN rc;
     SQLHSTMT hstmt1;
     SQLROWSETSIZE pcrow;
     SQLUSMALLINT rgfRowStatus;
     SQLCHAR cursor[30],sql[100],data[]="updated";
-
-    printMessageHeader();
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
     mycon(hdbc,rc);
@@ -1256,9 +1293,12 @@ void tmysql_pos_update_ex(SQLHDBC hdbc, SQLHSTMT hstmt)
     SQLFreeStmt(hstmt1,SQL_RESET_PARAMS);
     rc = SQLFreeStmt(hstmt1,SQL_DROP);
     mystmt(hstmt1,rc);
+
+  return OK;
 }
 
-void tmysql_pos_update_ex1(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+DECLARE_TEST(tmysql_pos_update_ex1)
 {
     SQLRETURN rc;
     SQLHSTMT hstmt1;
@@ -1266,8 +1306,6 @@ void tmysql_pos_update_ex1(SQLHDBC hdbc, SQLHSTMT hstmt)
     SQLUSMALLINT rgfRowStatus;
     SQLCHAR cursor[30],sql[100],data[]="updated";
 
-
-    printMessageHeader();
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
     mycon(hdbc,rc);
@@ -1337,18 +1375,18 @@ void tmysql_pos_update_ex1(SQLHDBC hdbc, SQLHSTMT hstmt)
     SQLFreeStmt(hstmt1,SQL_RESET_PARAMS);
     rc = SQLFreeStmt(hstmt1,SQL_DROP);
     mystmt(hstmt1,rc);
+
+  return OK;
 }
 
-void tmysql_pos_update_ex2(SQLHDBC hdbc, SQLHSTMT hstmt)
 
+DECLARE_TEST(tmysql_pos_update_ex2)
 {
     SQLRETURN rc;
     SQLHSTMT hstmt1;
     SQLROWSETSIZE pcrow;
     SQLUSMALLINT rgfRowStatus;
     SQLCHAR cursor[30],sql[100],data[]="updated";
-
-    printMessageHeader();
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
     mycon(hdbc,rc);
@@ -1419,16 +1457,16 @@ void tmysql_pos_update_ex2(SQLHDBC hdbc, SQLHSTMT hstmt)
     SQLFreeStmt(hstmt1,SQL_RESET_PARAMS);
     rc = SQLFreeStmt(hstmt1,SQL_DROP);
     mystmt(hstmt1,rc);
+
+  return OK;
 }
 
-void tmysql_pos_update_ex3(SQLHDBC hdbc, SQLHSTMT hstmt)
+DECLARE_TEST(tmysql_pos_update_ex3)
 {
     SQLRETURN rc;
     SQLHSTMT hstmt1;
     SQLROWSETSIZE pcrow;
     SQLCHAR cursor[30],sql[100];
-
-    printMessageHeader();
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
     mycon(hdbc,rc);
@@ -1474,15 +1512,17 @@ void tmysql_pos_update_ex3(SQLHDBC hdbc, SQLHSTMT hstmt)
     SQLFreeStmt(hstmt1,SQL_RESET_PARAMS);
     rc = SQLFreeStmt(hstmt1,SQL_DROP);
     mystmt(hstmt1,rc);
+
+  return OK;
 }
-void tmysql_pos_update_ex4(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmysql_pos_update_ex4)
 {
     SQLRETURN rc;
     SQLHSTMT hstmt1;
     SQLROWSETSIZE pcrow;
     SQLCHAR cursor[30],sql[100],data[]="venu";
-
-    printMessageHeader();
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
     mycon(hdbc,rc);
@@ -1549,16 +1589,18 @@ void tmysql_pos_update_ex4(SQLHDBC hdbc, SQLHSTMT hstmt)
     SQLFreeStmt(hstmt1,SQL_RESET_PARAMS);
     rc = SQLFreeStmt(hstmt1,SQL_DROP);
     mystmt(hstmt1,rc);
+
+  return OK;
 }
-void tmysql_pos_dyncursor(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmysql_pos_dyncursor)
 {
     SQLRETURN rc;
     SQLHSTMT hstmt1;
     SQLROWSETSIZE pcrow;
     SQLUSMALLINT rgfRowStatus;
     SQLCHAR  szCursor[20],buff[100];
-
-    printMessageHeader();
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
     mycon(hdbc,rc);
@@ -1629,16 +1671,18 @@ void tmysql_pos_dyncursor(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt1,SQL_DROP);
     mystmt(hstmt1,rc);
+
+  return OK;
 }
-void tmysql_mtab_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmysql_mtab_setpos_del)
 {
     SQLRETURN rc;
     long nData= 500;
     SQLLEN nlen;
     SQLCHAR szData[255]={0};
     SQLROWSETSIZE pcrow;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_t1");
     tmysql_exec(hstmt,"drop table tmysql_t2");
@@ -1697,12 +1741,14 @@ void tmysql_mtab_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void tmysql_showkeys(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmysql_showkeys)
 {
     SQLRETURN rc;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_spk");
 
@@ -1722,16 +1768,18 @@ void tmysql_showkeys(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void tmysql_setpos_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmysql_setpos_pkdel)
 {
     SQLRETURN rc;
     long nData= 500;
     SQLLEN nlen;
     SQLCHAR szData[255]={0};
     SQLROWSETSIZE pcrow;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_setpos1");
 
@@ -1799,16 +1847,18 @@ void tmysql_setpos_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void t_alias_setpos_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(t_alias_setpos_pkdel)
 {
     SQLRETURN rc;
     long nData= 500;
     SQLLEN nlen;
     SQLCHAR szData[255]={0};
     SQLROWSETSIZE pcrow;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_alias_setpos_del");
 
@@ -1877,8 +1927,11 @@ void t_alias_setpos_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  return OK;
 }
-void t_alias_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(t_alias_setpos_del)
 {
     SQLRETURN rc;
     long nData= 500;
@@ -1886,8 +1939,6 @@ void t_alias_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
     SQLCHAR szData[255]={0};
     SQLROWSETSIZE pcrow;
     SQLUSMALLINT rgfRowStatus;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_alias_setpos_del");
 
@@ -1955,17 +2006,17 @@ void t_alias_setpos_del(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
 
-void tmysql_setpos_pkdel1(SQLHDBC hdbc, SQLHSTMT hstmt)
+DECLARE_TEST(tmysql_setpos_pkdel1)
 {
     SQLRETURN rc;
     long nData= 500;
     SQLLEN nlen;
     SQLCHAR szData[255]={0};
     SQLROWSETSIZE pcrow;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_setpos1");
 
@@ -2033,16 +2084,18 @@ void tmysql_setpos_pkdel1(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void tmysql_setpos_pkdel2(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmysql_setpos_pkdel2)
 {
     SQLRETURN rc;
     long nData= 500;
     SQLLEN nlen;
     SQLCHAR szData[255]={0};
     SQLROWSETSIZE pcrow;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_setpos1");
 
@@ -2106,17 +2159,19 @@ void tmysql_setpos_pkdel2(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void tmysql_rowstatus(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmysql_rowstatus)
 {
-    SQLRETURN rc;    
+    SQLRETURN rc;
     SQLHSTMT hstmt1;
     SQLROWSETSIZE pcrow[4];
     SQLUSMALLINT rgfRowStatus[6];
     long nData = 555;
     SQLCHAR szData[255] = "setpos-update";
-
-    printMessageHeader();
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
     mycon(hdbc,rc);
@@ -2200,12 +2255,14 @@ void tmysql_rowstatus(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void t_refresh(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(t_refresh)
 {
     SQLRETURN rc;
-
-    printMessageHeader();
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -2246,16 +2303,18 @@ void t_refresh(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLSetConnectOption(hdbc,SQL_AUTOCOMMIT,SQL_AUTOCOMMIT_ON);
     mycon(hdbc,rc);
+
+  return OK;
 }
-void tmysql_setpos_pkdel3(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmysql_setpos_pkdel3)
 {
     SQLRETURN rc;
     long nData= 500;
     SQLLEN nlen;
     SQLCHAR szData[255]={0};
     SQLROWSETSIZE pcrow;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table tmysql_setpos1");
 
@@ -2317,16 +2376,18 @@ void tmysql_setpos_pkdel3(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void t_mul_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(t_mul_pkdel)
 {
     SQLRETURN rc;
     long nData= 500;
     SQLLEN nlen;
     SQLCHAR szData[255]={0};
     SQLROWSETSIZE pcrow;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_mul_pkdel");
 
@@ -2388,16 +2449,18 @@ void t_mul_pkdel(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void t_mul_pkdel1(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(t_mul_pkdel1)
 {
     SQLRETURN rc;
     long nData= 500;
     SQLLEN nlen;
     SQLCHAR szData[255]={0};
     SQLROWSETSIZE pcrow;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_mul_pkdel");
 
@@ -2457,14 +2520,16 @@ void t_mul_pkdel1(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void t_max_select(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(t_max_select)
 {
     SQLRETURN rc;
     SQLCHAR szData[255]={0};
-    long i;
-
-    printMessageHeader();
+    SQLINTEGER i;
 
     tmysql_exec(hstmt,"drop table t_max_select");
 
@@ -2512,15 +2577,17 @@ void t_max_select(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void t_tran(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(t_tran)
 {
     SQLRETURN rc;
 
-    printMessageHeader();
-
     if (!server_supports_trans(hdbc))
-        return;
+        return SKIP;
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -2564,16 +2631,18 @@ void t_tran(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLSetConnectOption(hdbc,SQL_AUTOCOMMIT,SQL_AUTOCOMMIT_ON);
     mycon(hdbc,rc);
+
+  return OK;
 }
-void t_tran_ddl(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(t_tran_ddl)
 {
     SQLRETURN rc;
     SQLSMALLINT rgbValue,len;
 
-    printMessageHeader();
-
     if (!server_supports_trans(hdbc))
-        return;
+        return SKIP;
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -2605,169 +2674,41 @@ void t_tran_ddl(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLSetConnectOption(hdbc,SQL_AUTOCOMMIT,SQL_AUTOCOMMIT_ON);
     mycon(hdbc,rc);
+
+  return OK;
 }
-void t_max_con(HENV henv)
+
+
+DECLARE_TEST(t_max_con)
 {
     SQLRETURN rc;
     long i;
-    SQLHDBC hdbc;
+    SQLHDBC hdbc1;
 
-    printMessageHeader();
-
-    for (i=0; i < 200; i++)
+    for (i= 0; i < 200; i++)
     {
-        rc = SQLAllocConnect(henv, &hdbc);
+        rc = SQLAllocConnect(henv, &hdbc1);
         myenv(henv,rc);
 
-        printMessage("\r%d",i);
-        rc = SQLConnect(hdbc, mydsn, SQL_NTS, myuid, SQL_NTS,  mypwd, SQL_NTS);
-        mycon(hdbc,rc);
+        rc = SQLConnect(hdbc1, mydsn, SQL_NTS, myuid, SQL_NTS,  mypwd, SQL_NTS);
+        mycon(hdbc1,rc);
 
-        rc = SQLDisconnect(hdbc);
-        mycon(hdbc,rc);
+        rc = SQLDisconnect(hdbc1);
+        mycon(hdbc1,rc);
 
-        rc = SQLFreeConnect(hdbc);
-        mycon(hdbc,rc);
+        rc = SQLFreeConnect(hdbc1);
+        mycon(hdbc1,rc);
     }
+
+  return OK;
 }
 
-void t_tstotime(SQLHDBC hdbc, SQLHSTMT hstmt)
-{
-    SQLRETURN rc;
-    SQL_TIMESTAMP_STRUCT ts;
 
-    ts.day    = 02;
-    ts.month  = 8;
-    ts.year   = 2001;
-    ts.hour   = 18;
-    ts.minute = 20;
-    ts.second = 45;
-    ts.fraction = 05;   
-
-    printMessageHeader();
-
-    tmysql_exec(hstmt,"drop table t_tstotime");
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = tmysql_exec(hstmt,"create table t_tstotime(col1 date ,col2 time, col3 timestamp(14))");
-    mystmt(hstmt,rc);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    /* TIMESTAMP TO DATE, TIME and TS CONVERSION */
-    rc = SQLPrepare(hstmt,"insert into t_tstotime(col1,col2,col3) values(?,?,?)",SQL_NTS);
-    mystmt(hstmt,rc);   
-
-    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
-                          SQL_DATE,0,0,&ts,sizeof(ts),NULL);
-    mystmt(hstmt,rc);
-
-    rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
-                          SQL_TIME,0,0,&ts,sizeof(ts),NULL);
-    mystmt(hstmt,rc);
-
-    rc = SQLBindParameter(hstmt,3,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
-                          SQL_TIMESTAMP,0,0,&ts,sizeof(ts),NULL);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecute(hstmt);
-    mystmt(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-    mystmt(hstmt,rc);  
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = tmysql_exec(hstmt,"select * from t_tstotime");
-    mystmt(hstmt,rc);  
-
-    my_assert( 1 == myresult(hstmt));
-
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-}
-void t_tstotime1(SQLHDBC hdbc, SQLHSTMT hstmt)
-{
-    SQLRETURN rc;
-    SQLCHAR ts[40] = "2001-08-02 18:20:45.05";
-
-    printMessageHeader();
-
-    tmysql_exec(hstmt,"drop table t_tstotime1");
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = tmysql_exec(hstmt,"create table t_tstotime1(col1 date ,col2 time, col3 timestamp(14))");
-    mystmt(hstmt,rc);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    /* TIMESTAMP TO DATE, TIME and TS CONVERSION */
-    rc = SQLPrepare(hstmt,"insert into t_tstotime1 values(?,?,?)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_CHAR,
-                          SQL_DATE,0,0,&ts,sizeof(ts),NULL);
-    mystmt(hstmt,rc);
-    rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,SQL_C_CHAR,
-                          SQL_TIME,0,0,&ts,sizeof(ts),NULL);
-    mystmt(hstmt,rc);
-    rc = SQLBindParameter(hstmt,3,SQL_PARAM_INPUT,SQL_C_CHAR,
-                          SQL_TIMESTAMP,0,0,&ts,sizeof(ts),NULL);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecute(hstmt);
-    mystmt(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-    mystmt(hstmt,rc);  
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = tmysql_exec(hstmt,"select * from t_tstotime1");
-    mystmt(hstmt,rc);  
-
-    my_assert( 1 == myresult(hstmt));
-
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-    mystmt(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-}
-
-void t_enumset(SQLHDBC hdbc, SQLHSTMT hstmt)
+DECLARE_TEST(t_enumset)
 {
     SQLRETURN rc;
     SQLCHAR szEnum[40]="MYSQL_E1";
     SQLCHAR szSet[40]="THREE,ONE,TWO";
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_enumset");
 
@@ -2820,15 +2761,17 @@ void t_enumset(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void t_desccol(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(t_desccol)
 {
     SQLRETURN rc;
     SQLCHAR colname[20];
     SQLSMALLINT collen,datatype,decptr,nullable;
-    SQLUINTEGER colsize;
-
-    printMessageHeader();
+    SQLULEN colsize;
 
     tmysql_exec(hstmt,"drop table t_desccol");
 
@@ -2873,16 +2816,20 @@ void t_desccol(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
+
+
 void desccol(SQLHSTMT hstmt, SQLCHAR    *cname,  SQLSMALLINT clen,
              SQLSMALLINT sqltype,SQLUINTEGER size,
              SQLSMALLINT scale,SQLSMALLINT isNull)
-{ 
+{
     SQLRETURN   rc =0;
     SQLCHAR     lcname[254];
     SQLSMALLINT lclen;
     SQLSMALLINT lsqltype;
-    SQLUINTEGER lsize;
+    SQLULEN     lsize;
     SQLSMALLINT lscale;
     SQLSMALLINT lisNull;
     SQLCHAR     select[255];
@@ -2912,12 +2859,11 @@ void desccol(SQLHSTMT hstmt, SQLCHAR    *cname,  SQLSMALLINT clen,
     SQLFreeStmt(hstmt,SQL_CLOSE);
 }
 
-void t_desccolext(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+DECLARE_TEST(t_desccolext)
 {
     SQLRETURN rc;
     SQLCHAR     *sql;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_desccolext");
 
@@ -3023,7 +2969,11 @@ void t_desccolext(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
+
+
 void colattr(SQLHSTMT hstmt, SQLUSMALLINT cno,
              SQLUSMALLINT attribute, SQLCHAR *sptr,
              SQLSMALLINT slen, SQLINTEGER nptr)
@@ -3056,12 +3006,10 @@ void colattr(SQLHSTMT hstmt, SQLUSMALLINT cno,
     SQLFreeStmt(hstmt,SQL_CLOSE);
 }
 
-void t_colattributes(SQLHDBC hdbc, SQLHSTMT hstmt)
+DECLARE_TEST(t_colattributes)
 {
     SQLRETURN rc;
     SQLCHAR     *sql;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_colattr");
 
@@ -3139,14 +3087,16 @@ void t_colattributes(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void t_bigint(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(t_bigint)
 {
     SQLRETURN rc;
     SQLCHAR id[20]="999";
     SQLLEN nlen;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_bigint");
 
@@ -3257,16 +3207,18 @@ void t_bigint(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void t_setpos_upd_bug1(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(t_setpos_upd_bug1)
 {
     SQLRETURN rc;
     long id;
     SQLLEN len,id_len,f_len,l_len,ts_len;
     SQLCHAR fname[21],lname[21],ts[17],szTable[256];
     SQLUSMALLINT pccol;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table if exists t_setpos_upd_bug1");
     rc = tmysql_exec(hstmt,"create table t_setpos_upd_bug1(id int(11) NOT NULL auto_increment,\
@@ -3364,15 +3316,17 @@ void t_setpos_upd_bug1(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void t_acc_update(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(t_acc_update)
 {
     SQLRETURN rc;
     long id,id1;
     SQLLEN pcrow;
     SQLHSTMT hstmt1;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_acc_update");
     rc = tmysql_exec(hstmt,"create table t_acc_update(id int)");
@@ -3443,7 +3397,11 @@ void t_acc_update(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLSetConnectOption(hdbc,SQL_AUTOCOMMIT,1L);
     mycon(hdbc,rc);
+
+  return OK;
 }
+
+
 void tmy_cursor(SQLHSTMT hstmt,SQLCHAR *setCurName,SQLCHAR *getCurName,SQLSMALLINT setLen)
 {
     SQLRETURN rc; 
@@ -3459,11 +3417,9 @@ void tmy_cursor(SQLHSTMT hstmt,SQLCHAR *setCurName,SQLCHAR *getCurName,SQLSMALLI
     printMessage("\ngetcursor:%s(%d)\n",getCurName,strlen(getCurName));
 }
 
-void tmy_cursor1(SQLHSTMT hstmt)
-{ 
+DECLARE_TEST(tmycursor_1)
+{
     SQLCHAR getCurName[20];
-
-    printMessageHeader();
 
     tmy_cursor(hstmt,"MYSQL",getCurName,5);
     myassert(strcmp(getCurName,"MYSQL")==0);
@@ -3473,14 +3429,16 @@ void tmy_cursor1(SQLHSTMT hstmt)
 
     tmy_cursor(hstmt,"MYSQL",getCurName,2);
     myassert(strcmp(getCurName,"MY")==0); 
+
+  return OK;
 }
-void tmy_cursor2(SQLHDBC hdbc,SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmy_cursor2)
 {
     SQLRETURN   rc;
     SQLCHAR     getCursor[50];
     SQLSMALLINT getLen;
-
-    printMessageHeader();
 
     rc = SQLSetCursorName(hstmt,"MYODBC",6);
     mystmt(hstmt,rc);
@@ -3520,16 +3478,17 @@ void tmy_cursor2(SQLHDBC hdbc,SQLHSTMT hstmt)
     myassert(strcmp(getCursor,"MYODBC")==0);
     myassert(getLen == 6);
 
+  return OK;
 }
-void tmy_cursor3(SQLHDBC hdbc,SQLHSTMT hstmt)
+
+
+DECLARE_TEST(tmy_cursor3)
 {
     SQLRETURN   rc;
     SQLCHAR     setCursor[50];
     SQLCHAR     getCursor[50];
     SQLSMALLINT getLen;
     SQLHSTMT    hstmt1;
-
-    printMessageHeader();
 
     memset(getCursor,0,50);
     getLen = -1;
@@ -3554,15 +3513,17 @@ void tmy_cursor3(SQLHDBC hdbc,SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt1,SQL_DROP);
     mystmt(hstmt1,rc);
+
+  return OK;
 }
-void t_nativesql(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(t_nativesql)
 {
     SQLRETURN rc;
     SQLCHAR    Statement_in[3000];
     SQLCHAR    Statement_out[4000]; 
     SQLUINTEGER StmtLen;
-
-    printMessageHeader();
 
     strcpy(Statement_in, "select * from venu");
 
@@ -3572,13 +3533,14 @@ void t_nativesql(SQLHDBC hdbc, SQLHSTMT hstmt)
     mycon(hdbc,rc);
     printMessage("outstr:%s(%d)\n",Statement_out,StmtLen);
     myassert(StmtLen == strlen(Statement_in));
+
+  return OK;
 }
 
-void t_desccol1(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+DECLARE_TEST(t_desccol1)
 {
     SQLRETURN rc;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table if exists t_desccol1");
     rc = SQLExecDirect(hstmt,"create table t_desccol1\
@@ -3634,38 +3596,15 @@ void t_desccol1(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
-}
-void t_contest(SQLHDBC hdbc,SQLHSTMT hstmt)
-{
-    SQLRETURN rc;
-    SQLHSTMT     hstmt1;
 
-    printMessageHeader();
-
-    SQLExecDirect(hstmt,"drop table t_contest",SQL_NTS);
-
-    rc = SQLExecDirect(hstmt,"create table t_contest(id int,name text)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    for (;;)
-    {
-        rc = SQLAllocStmt(hdbc,&hstmt1);
-        mycon_r(hdbc,rc); 
-
-        rc = SQLExecDirect(hstmt1,"select * from t_contest",SQL_NTS);
-        mystmt_r(hstmt1,rc); 
-
-        rc = SQLFreeStmt(hstmt1,SQL_DROP);
-        mystmt_r(hstmt1,rc);
-    }
+  return OK;
 }
 
-void t_exfetch(SQLHDBC hdbc,SQLHSTMT hstmt)
+
+DECLARE_TEST(t_exfetch)
 {
     SQLRETURN rc;
     long i;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table t_exfetch");
 
@@ -3781,16 +3720,18 @@ void t_exfetch(SQLHDBC hdbc,SQLHSTMT hstmt)
     SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt,SQL_UNBIND);    
     SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  return OK;
 }
-void my_setpos_upd_pk_order(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(my_setpos_upd_pk_order)
 {
     SQLRETURN rc;
     long nData= 500;
     SQLLEN nlen;
     SQLCHAR szData[255]={0};
     SQLROWSETSIZE pcrow;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table my_setpos_upd_pk_order");
     rc = tmysql_exec(hstmt,"create table my_setpos_upd_pk_order(col1 int not null, col2 varchar(30) NOT NULL, primary key(col2,col1))");
@@ -3859,15 +3800,17 @@ void my_setpos_upd_pk_order(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-void my_setpos_upd_pk_order1(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+DECLARE_TEST(my_setpos_upd_pk_order1)
 {
     SQLRETURN rc;
     long nData= 500;
     SQLCHAR szData[255]={0};
     SQLROWSETSIZE pcrow;
-
-    printMessageHeader();
 
     tmysql_exec(hstmt,"drop table my_setpos_upd_pk_order");
     rc = tmysql_exec(hstmt,"create table my_setpos_upd_pk_order(col1 int not null, col2 varchar(30) NOT NULL, col3 int not null, primary key(col2,col1,col3))");
@@ -3915,196 +3858,62 @@ void my_setpos_upd_pk_order1(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
-}
-/**
-  mytest rountine to control individual tests
-*/
-void mytest(int tno, SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt)
-{  
-    if ( tno == 1 || tno == -1) /* basic and general */
-    {
-        t_basic(hdbc, hstmt);
-    }
 
-    if ( (tno == 2 || tno == -1) && driver_supports_setpos(hdbc) ) /* sqlsetpos */
-    {
-        my_setpos_upd_pk_order(hdbc,hstmt);
-        my_setpos_upd_pk_order1(hdbc,hstmt);
-        t_setpos_upd_bug1(hdbc,hstmt);
-        t_mul_pkdel(hdbc,hstmt);
-        t_mul_pkdel1(hdbc,hstmt);
-        tmysql_setpos_pkdel(hdbc,hstmt);
-        tmysql_setpos_pkdel1(hdbc,hstmt);
-        tmysql_setpos_pkdel2(hdbc,hstmt);
-        tmysql_setpos_pkdel3(hdbc,hstmt);
-
-        tmysql_setpos_del(hdbc,hstmt);
-        tmysql_setpos_del1(hdbc,hstmt);
-        tmysql_setpos_upd(hdbc,hstmt);
-        tmysql_mtab_setpos_del(hdbc,hstmt); 
-#if 0
-        t_setpos_del_all(hdbc,hstmt);
-        t_alias_setpos_del(hdbc,hstmt);
-        t_refresh(hdbc,hstmt);
-#endif
-        tmysql_rowstatus(hdbc,hstmt);
-        t_alias_setpos_pkdel(hdbc,hstmt);
-        tmy_cursor1(hstmt);
-        /*tmy_cursor2(hdbc,hstmt);
-         tmy_cursor3(hdbc,hstmt); */
-        tmysql_setpos_add(hdbc,hstmt);
-
-    }
-    if ( (tno == 3 || tno == -1) && driver_supports_setpos(hdbc)) /* positioned updates and deletes */
-    {
-        tmysql_pos_update_ex4(hdbc,hstmt);
-        tmysql_pos_update_ex(hdbc,hstmt);
-        tmysql_pos_update_ex1(hdbc,hstmt);
-        tmysql_pos_update_ex2(hdbc,hstmt);
-        tmysql_pos_update_ex3(hdbc,hstmt);
-        tmysql_pos_delete(hdbc,hstmt);
-        tmysql_pos_update(hdbc,hstmt);
-        tmysql_pos_dyncursor(hdbc,hstmt);       
-        tmysql_pcbvalue(hdbc,hstmt);  
-    }
-    if ( tno == 4 || tno == -1)    /* catalogs */
-    {
-        t_sqltables(hdbc,hstmt);
-        t_sqlspecialcols(hdbc, hstmt);
-    }
-    if ( tno == 5 || tno == -1)    /* transaction */
-    {
-        t_tran(hdbc,hstmt); 
-        t_tran_ddl(hdbc,hstmt);
-    }
-    if ( tno == 6 || tno == -1)    /* keys */
-    {
-        tmysql_showkeys(hdbc,hstmt);    
-    }
-    if ( tno == 7 || tno == -1)    /* param binding */
-    {
-        tmysql_bindparam(hdbc,hstmt);
-#if 0
-        tmysql_fix(hdbc,hstmt);
-#endif
-    }
-    if ( tno == 8 || tno == -1)    /* row binding */
-    {
-        tmysql_bindcol(hdbc,hstmt);     
-    }
-    if ( tno == 9 || tno == -1)    /* conversion */
-    {
-        t_tstotime(hdbc,hstmt);
-        t_tstotime1(hdbc,hstmt);
-    }
-    if ( tno == 10 || tno == -1)   /* type checking */
-    {
-        t_bigint(hdbc,hstmt);
-        t_enumset(hdbc,hstmt);
-    }
-    if ( tno == 11 || tno == -1)   /* limit tests */
-    {
-#if 0
-        t_max_select(hdbc,hstmt);
-        t_max_con(henv);
-#endif
-    }
-    if ( tno == 12 || tno == -1)   /* resultset*/
-    {
-        t_acc_update(hdbc,hstmt);
-        t_exfetch(hdbc,hstmt);    
-        t_desccol1(hdbc,hstmt);
-#if 0
-        t_colattributes(hdbc,hstmt);
-#endif
-        t_desccol(hdbc,hstmt);
-        t_desccolext(hdbc,hstmt);
-    }
-    if ( tno == 13 || tno == -1)   /* sql stuff */
-    {
-        t_nativesql(hdbc,hstmt);
-    }
-    if ( tno == 14)   /* misc */
-    {
-        t_contest(hdbc,hstmt);
-    }
+    return OK;
 }
 
-/**
-  main routine to control all tests
-*/
-int main(int argc, char *argv[])
-{
-    SQLHENV   henv;
-    SQLHDBC   hdbc;
-    SQLHSTMT  hstmt;
-    SQLINTEGER narg, tno = -1;
+BEGIN_TESTS
+  ADD_TEST(t_basic)
+  ADD_TEST(tmysql_setpos_del)
+  ADD_TEST(tmysql_setpos_del1)
+  ADD_TODO(tmysql_setpos_del_all)
+  ADD_TEST(tmysql_setpos_upd)
+  ADD_TEST(tmysql_setpos_add)
+  ADD_TEST(t_sqlspecialcols)
+  ADD_TEST(t_sqltables)
+  ADD_TEST(tmysql_bindcol)
+  ADD_TEST(tmysql_pcbvalue)
+  ADD_TEST(tmysql_bindparam)
+  ADD_TEST(tmysql_fix)
+  ADD_TEST(tmysql_pos_delete)
+  ADD_TEST(tmysql_pos_update)
+  ADD_TEST(tmysql_pos_update_ex)
+  ADD_TEST(tmysql_pos_update_ex1)
+  ADD_TEST(tmysql_pos_update_ex2)
+  ADD_TEST(tmysql_pos_update_ex3)
+  ADD_TEST(tmysql_pos_update_ex4)
+  ADD_TEST(tmysql_pos_dyncursor)
+  ADD_TEST(tmysql_mtab_setpos_del)
+  ADD_TEST(tmysql_showkeys)
+  ADD_TEST(tmysql_setpos_pkdel)
+  ADD_TEST(t_alias_setpos_pkdel)
+  ADD_TEST(t_alias_setpos_del)
+  ADD_TEST(tmysql_setpos_pkdel1)
+  ADD_TEST(tmysql_setpos_pkdel2)
+  ADD_TEST(tmysql_rowstatus)
+  ADD_TEST(t_refresh)
+  ADD_TEST(tmysql_setpos_pkdel3)
+  ADD_TEST(t_mul_pkdel)
+  ADD_TEST(t_mul_pkdel1)
+  ADD_TEST(t_max_select)
+  ADD_TEST(t_tran)
+  ADD_TEST(t_tran_ddl)
+  ADD_TEST(t_max_con)
+  ADD_TEST(t_enumset)
+  ADD_TEST(t_desccol)
+  ADD_TEST(t_desccolext)
+  ADD_TEST(t_colattributes)
+  ADD_TEST(t_bigint)
+  ADD_TEST(t_setpos_upd_bug1)
+  ADD_TEST(t_acc_update)
+  ADD_TEST(tmycursor_1)
+  ADD_TEST(tmy_cursor2)
+  ADD_TEST(tmy_cursor3)
+  ADD_TEST(t_nativesql)
+  ADD_TEST(t_desccol1)
+  ADD_TEST(t_exfetch)
+  ADD_TEST(my_setpos_upd_pk_order)
+  ADD_TEST(my_setpos_upd_pk_order1)
+END_TESTS
 
-    /*
-     *  show the usage string when the user asks for this
-    */
-    if (argc < 2 || ( argc == 2 && ((!strcmp (argv[1], "-?")  || 
-                                     !strcmp (argv[1], "--?") || 
-                                     !strcmp (argv[1], "--h") ||
-                                     !strcmp (argv[1], "--help")
-                                    ))
-                    ) || argc > 6
-       )
-    {
-        printMessage("------------------------------------------\n");
-        printMessage("usage: mytest testno [DSN] [UID] [PWD] [SOCK]\n\n");      
-        printMessage("       testno <-- test number\n");
-        printMessage("       DSN    <-- data source name\n");
-        printMessage("       UID    <-- user name\n");
-        printMessage("       PWD    <-- password\n");
-        printMessage("       SOCK   <-- socket path\n");
-
-        printMessage("\ntestno:\n");            
-        printMessage("   -1 : all\n");            
-        printMessage("    1 : basic, general\n");            
-        printMessage("    2 : sqlsetpos\n");            
-        printMessage("    3 : positioned update/delete\n");            
-        printMessage("    4 : catalog\n");            
-        printMessage("    5 : transaction\n");            
-        printMessage("    6 : keys\n");            
-        printMessage("    7 : param binding\n");            
-        printMessage("    8 : row binding\n");            
-        printMessage("    9 : type conversion\n");            
-        printMessage("   10 : data types\n");            
-        printMessage("   11 : limit \n");            
-        printMessage("   12 : resultset \n");    
-        printMessage("   13 : sql stuff \n");    
-        printMessage("------------------------------------------\n");
-        exit(0);
-    }
-
-    /*
-     * if connection string supplied through arguments, overrite
-     * the default one..
-    */
-    for (narg = 1; narg < argc; narg++)
-    {
-        if ( narg == 1 )
-            tno = atoi(argv[1]);
-        else if ( narg == 2 )
-            mydsn = argv[2];
-        else if ( narg == 3 )
-            myuid = argv[3];
-        else if ( narg == 4 )
-            mypwd = argv[4];
-        else if ( narg == 5 )
-            mysock= argv[5];
-    }
-
-    myconnect(&henv,&hdbc,&hstmt);
-    mytest(tno,henv,hdbc,hstmt);
-    mytest(tno,henv,hdbc,hstmt);
-    mydisconnect(&henv,&hdbc,&hstmt);
-
-    printMessage("\n\n-- test-end --\n");
-    return(0);
-}
-
-
-
-
+RUN_TESTS

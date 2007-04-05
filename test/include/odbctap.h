@@ -27,13 +27,27 @@
 */
 
 /** @todo Remove dependency on this crufty old header. */
+#define DEBUG_LEVEL 2
 #include "mytest3.h"
+#include <stdarg.h>
+#undef printMessage
+void printMessage(char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  fprintf(stdout, "# ");
+  vfprintf(stdout, fmt, ap);
+  fprintf(stdout, "\n");
+  va_end(ap);
+}
 
 #ifndef OK
 # define OK 0
 #endif
 #ifndef FAIL
 # define FAIL 1
+#endif
+#ifndef SKIP
+# define SKIP -1
 #endif
 
 typedef int (*test_func)(SQLHDBC, SQLHSTMT, SQLHENV);
@@ -44,10 +58,12 @@ typedef int (*test_func)(SQLHDBC, SQLHSTMT, SQLHENV);
 typedef struct {
   char *name;
   test_func func;
+  int   expect;
 } my_test;
 
 #define BEGIN_TESTS my_test tests[]= {
-#define ADD_TEST(name) { #name, name },
+#define ADD_TEST(name) { #name, name, OK   },
+#define ADD_TODO(name) { #name, name, FAIL },
 #define END_TESTS };
 
 #define RUN_TESTS \
@@ -73,7 +89,9 @@ int main(int argc, char **argv) \
   for (i= 0; i < num_tests; i++ ) \
   { \
     int rc= tests[i].func(hdbc, hstmt, henv); \
-    printf("%d %s - %s\n", i + 1, rc == OK ? "ok" : "not ok", tests[i].name); \
+    printf("%s %d %s %s\n", rc == OK ? "ok" : "not ok", i + 1, \
+           tests[i].expect == FAIL ? "# TODO" : "-", \
+           tests[i].name); \
   } \
 \
   free_basic_handles(&henv,&hdbc,&hstmt); \

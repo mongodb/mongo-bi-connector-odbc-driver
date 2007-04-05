@@ -21,12 +21,16 @@ TEST_UID       = root
 TEST_PASSWORD  = 
 TEST_SOCKET    = /tmp/mysql.sock
 
+tap_tests= \
+my_tran \
+my_ts \
+mytest
+
 plain_tests= \
 my_connect \
 my_basics \
 my_param \
 my_result \
-my_tran \
 my_cursor \
 my_position \
 my_relative \
@@ -40,17 +44,15 @@ my_keys \
 my_tran_ext \
 my_catalog \
 my_error \
-my_ts \
 mytest32 \
 my_use_result
 fancy_tests= \
-mytest \
 mytest2 \
 mytest3
 odd_tests= \
 dbtest
 
-noinst_PROGRAMS= $(plain_tests) $(fancy_tests) $(odd_tests)
+noinst_PROGRAMS= $(plain_tests) $(fancy_tests) $(odd_tests) $(tap_tests)
 
 #	
 # COMPILATION SPECIFICATION
@@ -91,7 +93,7 @@ mytest32_SOURCES=	test32/mytest32.c
 #
 
 buildall: all
-testall  : all run trun
+testall: all run-tap run trun
 runall: testall
 test: testall
 testlib: testall
@@ -125,6 +127,9 @@ trun: make-test-ini $(fancy_tests)
 	    test -n "$(FORCE)" || \
 	    exit 1 ; \
 	done
+
+run-tap: make-test-ini $(tap_tests)
+	perl $(srcdir)/unit.pl run $(tap_tests)
 
 #
 # CLEAN SPECIFICATION
