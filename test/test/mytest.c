@@ -281,83 +281,6 @@ DECLARE_TEST(tmysql_setpos_del1)
 }
 
 
-DECLARE_TEST(tmysql_setpos_del_all)
-{
-    SQLRETURN rc;
-    SQLINTEGER nData= 500;
-    SQLROWCOUNT nlen;
-    SQLCHAR szData[255]={0};
-    SQLROWSETSIZE pcrow;
-
-    ok_sql(hstmt,"DROP TABLE IF EXISTS t_sp_del_all");
-    ok_sql(hstmt,"create table t_sp_del_all(int1 tinyint,\
-                                                      int2 smallint,\
-                                                      int3 mediumint,\
-                                                      int4 integer,\
-                                                      int5 int,\
-                                                      int6 bigint,\
-                                                      real1 float)");
-
-    rc = tmysql_exec(hstmt,"insert into t_sp_del_all values(100,'MySQL1')");
-    mystmt(hstmt,rc);
-    rc = tmysql_exec(hstmt,"insert into t_sp_del_all values(200,'MySQL2')");
-    mystmt(hstmt,rc);  
-    rc = tmysql_exec(hstmt,"insert into t_sp_del_all values(300,'MySQL3')");
-    mystmt(hstmt,rc);  
-    rc = tmysql_exec(hstmt,"insert into t_sp_del_all values(400,'MySQL4')");
-    mystmt(hstmt,rc);  
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);     
-
-    rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);    
-
-    rc = tmysql_exec(hstmt,"select * from t_sp_del_all");
-    mystmt(hstmt,rc);    
-
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
-    mystmt(hstmt,rc);
-
-    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,100,&nlen);
-    mystmt(hstmt,rc);
-
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,&pcrow,NULL);
-    mystmt(hstmt,rc);
-
-    printMessage(" pcrow:%d\n",pcrow);  
-
-    printMessage(" row1:%d,%s\n",nData,szData);    
-
-    rc = SQLSetPos(hstmt,0,SQL_DELETE,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
-
-    rc = SQLRowCount(hstmt,&nlen);
-    mystmt(hstmt,rc);
-
-    printMessage(" rows affected:%d\n",nlen); 
-
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = tmysql_exec(hstmt,"select * from t_sp_del_all");
-    mystmt(hstmt,rc);  
-
-    my_assert(3 == myresult(hstmt));
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-  return OK;
-}
-
-
 DECLARE_TEST(tmysql_setpos_upd)
 {
     SQLRETURN rc;
@@ -3866,7 +3789,6 @@ BEGIN_TESTS
   ADD_TEST(t_basic)
   ADD_TEST(tmysql_setpos_del)
   ADD_TEST(tmysql_setpos_del1)
-  ADD_TODO(tmysql_setpos_del_all)
   ADD_TEST(tmysql_setpos_upd)
   ADD_TEST(tmysql_setpos_add)
   ADD_TEST(t_sqlspecialcols)
