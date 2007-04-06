@@ -44,6 +44,7 @@ my_cursor \
 my_datetime \
 my_dyn_cursor \
 my_error \
+my_keys \
 my_param \
 my_tran \
 mytest \
@@ -56,7 +57,6 @@ my_relative \
 my_scroll \
 my_col_length \
 my_unixodbc \
-my_keys \
 my_tran_ext \
 my_use_result
 fancy_tests= \
@@ -77,7 +77,6 @@ my_relative_SOURCES=	relative/my_relative.c
 my_scroll_SOURCES=	scroll/my_scroll.c
 my_col_length_SOURCES=	col_length/my_col_length.c
 my_unixodbc_SOURCES=	unixodbc/my_unixodbc.c
-my_keys_SOURCES=	keys/my_keys.c
 my_tran_ext_SOURCES=	tran_ext/my_tran_ext.c
 my_use_result_SOURCES=	use_result/my_use_result.c
 mytest3_SOURCES=	test3/mytest3.c

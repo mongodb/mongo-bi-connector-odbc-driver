@@ -1,27 +1,29 @@
-/***************************************************************************
-                          my_keys.c  -  description
-                             -------------------
-    begin                : Sat Dec 29 2001
-    copyright            : (C) MySQL AB 1997-2001
-    author               : venu ( venu@mysql.com )
- ***************************************************************************/
-
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
-#include "mytest3.h"
-
-SQLCHAR *mysock= NULL;
-
 /*
-UPDATE with primary keys ... 
+  Copyright (C) 1997-2007 MySQL AB
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of version 2 of the GNU General Public License as
+  published by the Free Software Foundation.
+
+  There are special exceptions to the terms and conditions of the GPL
+  as it is applied to this software. View the full text of the exception
+  in file LICENSE.exceptions in the top-level directory of this software
+  distribution.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-void my_primary_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+#include "odbctap.h"
+
+/* UPDATE with primary keys ...  */
+DECLARE_TEST(my_primary_keys)
 {
     SQLRETURN rc;
     SQLROWCOUNT rowcount;
@@ -117,12 +119,12 @@ void my_primary_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);   
+
+  return OK;
 }
 
-/*
-UPDATE with unique and notnull  keys ... 
-*/
-void my_unique_notnull_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
+/* UPDATE with unique and notnull  keys ...  */
+DECLARE_TEST(my_unique_notnull_keys)
 {
     SQLRETURN rc;
     SQLROWCOUNT rowcount;
@@ -218,12 +220,12 @@ void my_unique_notnull_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);   
 
+  return OK;
 }
 
-/*
-UPDATE with unique keys ... 
-*/
-void my_unique_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+/* UPDATE with unique keys ...  */
+DECLARE_TEST(my_unique_keys)
 {
     SQLRETURN rc;
     SQLROWCOUNT rowcount;
@@ -318,112 +320,13 @@ void my_unique_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);   
+
+  return OK;
 }
 
-/*
-UPDATE with not null keys ... 
-*/
-void my_notnull_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
-{
-    SQLRETURN rc;
-    SQLROWCOUNT rowcount;
-    SQLINTEGER nData;
 
-    SQLExecDirect(hstmt,"drop table my_unique_keys",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"create table my_notnull_keys(col1 int,\
-                                                           col2 varchar(30),\
-                                                           col3 int not null,\
-                                                           col4 int not null)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into my_notnull_keys values(100,'MySQL1',1,3000)",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_notnull_keys values(200,'MySQL2',2,3000)",SQL_NTS);
-    mystmt(hstmt,rc);  
-    rc = SQLExecDirect(hstmt,"insert into my_notnull_keys values(300,'MySQL3',3,3000)",SQL_NTS);
-    mystmt(hstmt,rc);  
-    rc = SQLExecDirect(hstmt,"insert into my_notnull_keys values(400,'MySQL4',4,3000)",SQL_NTS);
-    mystmt(hstmt,rc);  
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);     
-
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0);
-    mystmt(hstmt, rc);
-
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY ,(SQLPOINTER)SQL_CONCUR_ROWVER , 0);
-    mystmt(hstmt, rc);  
-
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)1 , 0);
-    mystmt(hstmt, rc);  
-
-    rc = SQLExecDirect(hstmt,"select col4 from my_notnull_keys",SQL_NTS);
-    mystmt(hstmt,rc);    
-
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
-    mystmt(hstmt,rc);
-
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,2,NULL,NULL);
-    mystmt(hstmt,rc);
-
-    nData = 999;
-
-    rc = SQLSetPos(hstmt,0,SQL_UPDATE,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
-
-    rc = SQLRowCount(hstmt,&rowcount);
-    mystmt(hstmt,rc);
-
-    printMessage(" rows affected:%d\n",rowcount); 
-    myassert(rowcount == 1);
-
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"select * from my_notnull_keys",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    myassert(4 == myresult(hstmt));
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"select * from my_notnull_keys",SQL_NTS);
-    mystmt(hstmt,rc);    
-
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-    myassert(3000 == my_fetch_int(hstmt,4));
-
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-    myassert(999 == my_fetch_int(hstmt,4));
-
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-    myassert(3000 == my_fetch_int(hstmt,4));
-
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-    myassert(3000 == my_fetch_int(hstmt,4));
-
-    rc = SQLFetch(hstmt);
-    mystmt_err(hstmt,rc==SQL_NO_DATA_FOUND,rc);
-
-    SQLFreeStmt(hstmt,SQL_UNBIND);
-    SQLFreeStmt(hstmt,SQL_CLOSE);   
-
-}
-/*
-UPDATE with no keys ... 
-*/
-void my_no_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
+/* UPDATE with no keys ...  */
+DECLARE_TEST(my_no_keys)
 {
     SQLRETURN rc;
     SQLROWCOUNT rowcount;
@@ -526,116 +429,12 @@ void my_no_keys(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  return OK;
 }
-/*
-UPDATE with no keys with all duplicate columns... 
-*/
-void my_no_keys_all_dups(SQLHDBC hdbc, SQLHSTMT hstmt)
-{
-#if ALLOW_CRAZY_TESTS
 
-  /*
-    This test does not make any sense. You can't update a table based
-    on a cursor against one non-primary-key column.
-  */
 
-    SQLRETURN rc;
-    SQLROWCOUNT rowcount;
-    SQLINTEGER nData;
-
-    SQLExecDirect(hstmt,"drop table my_no_keys_all_dups",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"create table my_no_keys_all_dups (col1 int,\
-                                                      col2 int,\
-                                                      col3 int)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into my_no_keys_all_dups values(100,100,100)",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_no_keys_all_dups values(100,100,100)",SQL_NTS);
-    mystmt(hstmt,rc);  
-    rc = SQLExecDirect(hstmt,"insert into my_no_keys_all_dups values(100,100,100)",SQL_NTS);
-    mystmt(hstmt,rc);  
-    rc = SQLExecDirect(hstmt,"insert into my_no_keys_all_dups values(100,100,100)",SQL_NTS);
-    mystmt(hstmt,rc);  
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);     
-
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0);
-    mystmt(hstmt, rc);
-
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY ,(SQLPOINTER)SQL_CONCUR_ROWVER , 0);
-    mystmt(hstmt, rc);  
-
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)1 , 0);
-    mystmt(hstmt, rc);  
-
-    rc = SQLExecDirect(hstmt,"select col3 from my_no_keys_all_dups",SQL_NTS);
-    mystmt(hstmt,rc);    
-
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
-    mystmt(hstmt,rc);
-
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,2,NULL,NULL);
-    mystmt(hstmt,rc);
-
-    nData = 999;
-
-    rc = SQLSetPos(hstmt,0,SQL_UPDATE,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
-
-    rc = SQLRowCount(hstmt,&rowcount);
-    mystmt(hstmt,rc);
-
-    printMessage(" rows affected:%d\n",rowcount); 
-    myassert(rowcount == 1);
-
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"select * from my_no_keys_all_dups",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    myassert(4 == myresult(hstmt));
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"select * from my_no_keys_all_dups",SQL_NTS);
-    mystmt(hstmt,rc);    
-
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-    myassert(999 == my_fetch_int(hstmt,3));
-
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-    myassert(100 == my_fetch_int(hstmt,3));
-
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-    myassert(100 == my_fetch_int(hstmt,3));
-
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-    myassert(100 == my_fetch_int(hstmt,3));
-
-    rc = SQLFetch(hstmt);
-    mystmt_err(hstmt,rc==SQL_NO_DATA_FOUND,rc);
-
-    SQLFreeStmt(hstmt,SQL_UNBIND);
-    SQLFreeStmt(hstmt,SQL_CLOSE);
-#endif
-}
-/*
-Initialize the foreignkey tables (MySQL specific)
-*/
+/* Initialize the foreignkey tables (MySQL specific) */
 static void my_init_mysql_fkey(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
     SQLRETURN rc;     
@@ -736,9 +535,9 @@ static void my_init_mysql_fkey(SQLHDBC hdbc,SQLHSTMT hstmt)
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
 }
-/*
-Initialize the foreignkey tables (std)
-*/
+
+
+/* Initialize the foreignkey tables (std) */
 static void my_init_fkey(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
     SQLRETURN rc;     
@@ -804,7 +603,9 @@ static void my_init_fkey(SQLHDBC hdbc,SQLHSTMT hstmt)
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
 }
-void my_foreign_keys(SQLHDBC hdbc,SQLHSTMT hstmt)
+
+
+DECLARE_TEST(my_foreign_keys)
 {
     SQLRETURN   rc=0;
     char        dbc[255];
@@ -1023,7 +824,10 @@ void my_foreign_keys(SQLHDBC hdbc,SQLHSTMT hstmt)
         SQLExecDirect(hstmt, buff, SQL_NTS);
         SQLFreeStmt(hstmt, SQL_CLOSE);
     }
+
+  return OK;
 }
+
 
 void t_strstr()
 {
@@ -1040,10 +844,8 @@ void t_strstr()
     }
 }
 
-/*
-Initialize the foreignkey tables
-*/
-static void my_tables(SQLHENV henv,SQLHDBC hdbc,SQLHSTMT hstmt)
+
+DECLARE_TEST(my_tables)
 {
     SQLHDBC   hdbc1;
     SQLHSTMT  hstmt1;
@@ -1184,50 +986,19 @@ static void my_tables(SQLHENV henv,SQLHDBC hdbc,SQLHSTMT hstmt)
     SQLFreeStmt(hstmt1,SQL_CLOSE);
     SQLDisconnect(hdbc1);
     SQLFreeConnect(hdbc1);
+
+  return OK;
 }
 
-/**
-MAIN ROUTINE...
-*/
-int main(int argc, char *argv[])
-{
-    SQLHENV   henv;
-    SQLHDBC   hdbc;
-    SQLHSTMT  hstmt;
-    SQLINTEGER narg;
 
-    printMessageHeader();
+BEGIN_TESTS
+  ADD_TEST(my_primary_keys)
+  ADD_TEST(my_unique_notnull_keys)
+  ADD_TEST(my_unique_keys)
+  ADD_TEST(my_no_keys)
+  ADD_TEST(my_foreign_keys)
+  ADD_TEST(my_tables)
+END_TESTS
 
-    /*
-     * if connection string supplied through arguments, overrite
-     * the default one..
-    */
-    for (narg = 1; narg < argc; narg++)
-    {
-        if ( narg == 1 )
-            mydsn = argv[1];
-        else if ( narg == 2 )
-            myuid = argv[2];
-        else if ( narg == 3 )
-            mypwd = argv[3];
-        else if ( narg == 4 )
-            mysock= argv[4];
-    }    
 
-    myconnect(&henv,&hdbc,&hstmt); 
-    my_tables(henv,hdbc,hstmt);
-    my_foreign_keys(hdbc,hstmt);   
-    if (driver_supports_setpos(hdbc))
-    {
-        my_primary_keys(hdbc,hstmt);
-        my_unique_notnull_keys(hdbc,hstmt);
-        my_unique_keys(hdbc,hstmt);
-        my_no_keys(hdbc,hstmt);
-        my_no_keys_all_dups(hdbc,hstmt);
-    }
-    mydisconnect(&henv,&hdbc,&hstmt);    
-
-    printMessageFooter( 1 );
-
-    return(0);
-}
+RUN_TESTS
