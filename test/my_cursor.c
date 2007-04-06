@@ -20,12 +20,11 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "mytest3.h" /* MyODBC 3.51 sample utility header */
+#include "odbctap.h"
 
-/********************************************************
-* initialize tables                                     *
-*********************************************************/
-void my_init_table(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+/* initialize tables */
+DECLARE_TEST(my_init_table)
 {
     SQLRETURN   rc;
     long        id;
@@ -38,7 +37,7 @@ void my_init_table(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
+    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
     mycon(hdbc,rc);
 
     /* create the table 'my_demo_param' */
@@ -48,19 +47,19 @@ void my_init_table(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     /* commit the transaction*/
     rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
-    mycon(hdbc,rc);    
+    mycon(hdbc,rc);
 
     /* prepare the insert statement with parameters */
     rc = SQLPrepare(hstmt,"INSERT INTO my_demo_cursor VALUES(?,?)",SQL_NTS);
     mystmt(hstmt,rc);
 
     /* now supply data to parameter 1 and 2 */
-    rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, 
+    rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT,
                           SQL_C_LONG, SQL_INTEGER, 0,0,
                           &id, 0, NULL);
     mystmt(hstmt,rc);
 
-    rc = SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, 
+    rc = SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT,
                           SQL_C_CHAR, SQL_CHAR, 0,0,
                           name, sizeof(name), NULL);
     mystmt(hstmt,rc);
@@ -83,7 +82,7 @@ void my_init_table(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
+    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
     mycon(hdbc,rc);
 
     /* Now fetch and verify the data */
@@ -91,12 +90,13 @@ void my_init_table(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     assert(5 == myresult(hstmt));
+
+  return OK;
 }
 
-/********************************************************
-* perform positioned update and delete                  *
-*********************************************************/
-void my_positioned_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+/* perform positioned update and delete */
+DECLARE_TEST(my_positioned_cursor)
 {
     SQLRETURN   rc;
     SQLROWCOUNT nRowCount;
@@ -140,7 +140,7 @@ void my_positioned_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
+    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
     mycon(hdbc,rc);
 
     /* Now delete 2nd row */
@@ -159,7 +159,7 @@ void my_positioned_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt_pos, rc);
 
     printMessage(" total rows deleted:%d\n",nRowCount);
-    assert(nRowCount == 1);    
+    assert(nRowCount == 1);
 
     /* free the statement cursor */
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
@@ -174,12 +174,13 @@ void my_positioned_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     assert(4 == myresult(hstmt));
+
+  return OK;
 }
 
-/********************************************************
-* perform delete and update using SQLSetPos             *
-*********************************************************/
-void my_setpos_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+/* perform delete and update using SQLSetPos */
+DECLARE_TEST(my_setpos_cursor)
 {
     SQLRETURN   rc;
     SQLROWCOUNT nRowCount;
@@ -205,7 +206,7 @@ void my_setpos_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     strcpy(name,"first-row");
 
-    /* now update the name field to 'first-row' using SQLSetPos */    
+    /* now update the name field to 'first-row' using SQLSetPos */
     rc = SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE);
     mystmt(hstmt, rc);
 
@@ -215,7 +216,7 @@ void my_setpos_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
     printMessage(" total rows updated:%d\n",nRowCount);
     assert(nRowCount == 1);
 
-    /* position to second row and delete it ..*/    
+    /* position to second row and delete it ..*/
     rc = SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 2L);
     mystmt(hstmt,rc);
 
@@ -237,7 +238,7 @@ void my_setpos_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
+    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
     mycon(hdbc,rc);
 
     /* Now fetch and verify the data */
@@ -250,18 +251,20 @@ void my_setpos_cursor(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLExecDirect(hstmt,"DROP TABLE my_demo_cursor",SQL_NTS);
     mystmt(hstmt,rc);
 
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
+    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
+
+  return OK;
 }
 
 
 /**
  Bug #5853: Using Update with 'WHERE CURRENT OF' with binary data crashes
 */
-void t_bug5853(SQLHDBC hdbc, SQLHSTMT hstmt)
+DECLARE_TEST(t_bug5853)
 {
   SQLRETURN rc;
   SQLHSTMT  hstmt_pos;
@@ -349,48 +352,16 @@ void t_bug5853(SQLHDBC hdbc, SQLHSTMT hstmt)
   rc= SQLExecDirect(hstmt,"DROP TABLE IF EXISTS t_bug5853",SQL_NTS);
   mystmt(hstmt,rc);
 
-  /* return OK; */
+  return OK;
 }
 
-/********************************************************
-* main routine                                          *
-*********************************************************/
-int main(int argc, char *argv[])
-{
-    SQLHENV    henv;
-    SQLHDBC    hdbc;
-    SQLHSTMT   hstmt;
-    SQLINTEGER narg;
 
-    printMessageHeader();
+BEGIN_TESTS
+  ADD_TEST(my_init_table)
+  ADD_TEST(my_positioned_cursor)
+  ADD_TEST(my_setpos_cursor)
+  ADD_TEST(t_bug5853)
+END_TESTS
 
-    /*
-     * if connection string supplied through arguments, overrite
-     * the default one..
-    */
-    for (narg = 1; narg < argc; narg++)
-    {
-        if ( narg == 1 )
-            mydsn = argv[1];
-        else if ( narg == 2 )
-            myuid = argv[2];
-        else if ( narg == 3 )
-            mypwd = argv[3];
-    }
 
-    myconnect(&henv,&hdbc,&hstmt);
-
-    if (driver_supports_positioned_ops(hdbc))
-    {
-        my_init_table(hdbc, hstmt);
-        my_positioned_cursor(hdbc, hstmt);
-        my_setpos_cursor(hdbc, hstmt);
-        t_bug5853(hdbc, hstmt);
-    }
-
-    mydisconnect(&henv,&hdbc,&hstmt);
-
-    printMessageFooter( 1 );
-
-    return(0);
-}
+RUN_TESTS

@@ -40,6 +40,7 @@ my_blob \
 my_bulk \
 my_catalog \
 my_curext \
+my_cursor \
 my_datetime \
 my_param \
 my_tran \
@@ -47,7 +48,6 @@ mytest
 
 plain_tests= \
 my_result \
-my_cursor \
 my_position \
 my_relative \
 my_scroll \
@@ -75,7 +75,6 @@ INCLUDES= 		-I$(top_srcdir)/test/include
 AM_LDFLAGS= 		@myodbc_test_linklib@
 
 my_result_SOURCES=	result/my_result.c
-my_cursor_SOURCES=	cursor/my_cursor.c
 my_position_SOURCES=	position/my_position.c
 my_relative_SOURCES=	relative/my_relative.c
 my_scroll_SOURCES=	scroll/my_scroll.c
