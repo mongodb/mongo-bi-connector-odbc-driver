@@ -64,9 +64,7 @@ typedef struct {
 #define BEGIN_TESTS my_test tests[]= {
 #define ADD_TEST(name) { #name, name, OK   },
 #define ADD_TODO(name) { #name, name, FAIL },
-#define END_TESTS };
-
-#define RUN_TESTS \
+#define END_TESTS }; \
 int main(int argc, char **argv) \
 { \
   SQLHENV  henv; \
@@ -80,7 +78,13 @@ int main(int argc, char **argv) \
     myuid= (SQLCHAR *)argv[2]; \
   if (argc > 3) \
     mypwd= (SQLCHAR *)argv[3]; \
-\
+  if (argc > 4) \
+    mysock= (SQLCHAR *)argv[4];
+
+#define SET_DSN_OPTION(x) \
+  myoption= (x);
+
+#define RUN_TESTS \
   num_tests= sizeof(tests) / sizeof(tests[0]); \
   printf("1..%d\n", num_tests); \
 \
@@ -236,24 +240,34 @@ void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
 void alloc_basic_handles(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt)
 {
   SQLRETURN rc;
+  SQLCHAR   connIn[MAX_NAME_LEN], connOut[MAX_NAME_LEN];
 
-  rc = SQLAllocHandle(SQL_HANDLE_ENV,SQL_NULL_HANDLE,henv);
+  rc= SQLAllocHandle(SQL_HANDLE_ENV,SQL_NULL_HANDLE,henv);
   myenv(*henv,rc);
 
-  rc = SQLSetEnvAttr(*henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)SQL_OV_ODBC3,0);
+  rc= SQLSetEnvAttr(*henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)SQL_OV_ODBC3,0);
   myenv(*henv,rc);
 
-  rc = SQLAllocHandle(SQL_HANDLE_DBC,*henv, hdbc);
+  rc= SQLAllocHandle(SQL_HANDLE_DBC,*henv, hdbc);
   myenv(*henv,rc);
 
-  rc = SQLConnect(*hdbc, mydsn, SQL_NTS, myuid, SQL_NTS,  mypwd, SQL_NTS);
+  sprintf((char *)connIn, "DSN=%s;USER=%s;PASSWORD=%s;DATABASE=test;OPTION=%d",
+          (char *)mydsn, (char *)myuid, (char *)mypwd, myoption);
+  if (mysock && mysock[0])
+  {
+    strcat((char *)connIn, ";SOCKET=");
+    strcat((char *)connIn, mysock);
+  }
+
+  rc= SQLDriverConnect(*hdbc, NULL, connIn, MAX_NAME_LEN, connOut, MAX_NAME_LEN,
+                       NULL, SQL_DRIVER_NOPROMPT);
   mycon(*hdbc,rc);
 
-  rc = SQLSetConnectAttr(*hdbc,SQL_ATTR_AUTOCOMMIT,
+  rc= SQLSetConnectAttr(*hdbc,SQL_ATTR_AUTOCOMMIT,
                          (SQLPOINTER)SQL_AUTOCOMMIT_ON,0);
   mycon(*hdbc,rc);
 
-  rc = SQLAllocHandle(SQL_HANDLE_STMT,*hdbc,hstmt);
+  rc= SQLAllocHandle(SQL_HANDLE_STMT,*hdbc,hstmt);
   mycon(*hdbc,rc);
 
   SQLSetStmtAttr(*hstmt,SQL_ATTR_CURSOR_TYPE,(SQLPOINTER)SQL_CURSOR_STATIC,0);

@@ -75,6 +75,8 @@ void printMessage(const char *fmt, ...) { fmt= fmt; /* stifle warning */}
 SQLCHAR *mydsn= (SQLCHAR *)"test";
 SQLCHAR *myuid= (SQLCHAR *)"root";
 SQLCHAR *mypwd= (SQLCHAR *)"";
+SQLCHAR *mysock= NULL;
+int      myoption= 0;
 SQLCHAR *myserver= (SQLCHAR *)"localhost";
 SQLCHAR *mydb= (SQLCHAR *)"test";
 SQLCHAR *test_db= (SQLCHAR *)"client_odbc_test";
@@ -543,7 +545,7 @@ SQLINTEGER my_fetch_int(SQLHSTMT hstmt, SQLUSMALLINT irow)
     SQLINTEGER nData;
 
     SQLGetData(hstmt,irow,SQL_INTEGER,&nData,0,NULL);
-    printMessage(" my_fetch_int: %ld\n", nData);
+    printMessage(" my_fetch_int: %ld\n", (long int)nData);
     return(nData);
 }
 /**
