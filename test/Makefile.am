@@ -60,7 +60,6 @@ my_tran_ext \
 mytest32 \
 my_use_result
 fancy_tests= \
-mytest2 \
 mytest3
 odd_tests= \
 dbtest
@@ -84,7 +83,6 @@ my_keys_SOURCES=	keys/my_keys.c
 my_tran_ext_SOURCES=	tran_ext/my_tran_ext.c
 my_use_result_SOURCES=	use_result/my_use_result.c
 dbtest_SOURCES=		db_test/db_test.c
-mytest2_SOURCES=	test2/mytest2.c
 mytest3_SOURCES=	test3/mytest3.c
 mytest32_SOURCES=	test32/mytest32.c
 
