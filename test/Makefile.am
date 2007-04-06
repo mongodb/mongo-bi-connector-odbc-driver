@@ -39,6 +39,7 @@ my_basics \
 my_blob \
 my_bulk \
 my_catalog \
+my_col_length \
 my_curext \
 my_cursor \
 my_datetime \
@@ -56,12 +57,10 @@ my_use_result \
 mytest \
 mytest32
 
-plain_tests= \
-my_col_length
 fancy_tests= \
 mytest3
 
-noinst_PROGRAMS= $(plain_tests) $(fancy_tests) $(tap_tests)
+noinst_PROGRAMS= $(fancy_tests) $(tap_tests)
 
 #	
 # COMPILATION SPECIFICATION
@@ -70,7 +69,6 @@ noinst_PROGRAMS= $(plain_tests) $(fancy_tests) $(tap_tests)
 INCLUDES= 		-I$(top_srcdir)/test/include
 AM_LDFLAGS= 		@myodbc_test_linklib@
 
-my_col_length_SOURCES=	col_length/my_col_length.c
 mytest3_SOURCES=	test3/mytest3.c
 
 
@@ -79,7 +77,7 @@ mytest3_SOURCES=	test3/mytest3.c
 #
 
 buildall: all
-testall: all run-tap run trun
+testall: all run trun
 runall: testall
 test: testall
 testlib: testall
@@ -88,18 +86,10 @@ testlib: testall
 # Pass DSN UID PASSWORD as the command line arguments to each sample
 # ----------------------------------------------------------------------
 
-run: make-test-ini $(plain_tests)
-	for test in $(plain_tests); do \
-	  echo test: $$test; \
-	  echo ODBCSYSINI=. \
-	    ODBCINI=$(TEST_ODBCINI) ODBCINSTINI=$(TEST_ODBCINSTINI) \
-	    ./$$test "$(TEST_DSN)" "$(TEST_UID)" "$(TEST_PASSWORD)" "$(TEST_SOCKET)" ; \
-	  ODBCSYSINI=. \
-	    ODBCINI=$(TEST_ODBCINI) ODBCINSTINI=$(TEST_ODBCINSTINI) \
-	    ./$$test "$(TEST_DSN)" "$(TEST_UID)" "$(TEST_PASSWORD)" "$(TEST_SOCKET)" || \
-	    test -n "$(FORCE)" || \
-	    exit 1 ; \
-	done
+run: make-test-ini $(tap_tests)
+	ODBCSYSINI=. \
+	  ODBCINI=$(TEST_ODBCINI) ODBCINSTINI=$(TEST_ODBCINSTINI) \
+	  perl $(srcdir)/unit.pl run $(tap_tests)
 
 trun: make-test-ini $(fancy_tests)
 	for test in $(fancy_tests); do \
@@ -113,9 +103,6 @@ trun: make-test-ini $(fancy_tests)
 	    test -n "$(FORCE)" || \
 	    exit 1 ; \
 	done
-
-run-tap: make-test-ini $(tap_tests)
-	perl $(srcdir)/unit.pl run $(tap_tests)
 
 #
 # CLEAN SPECIFICATION
