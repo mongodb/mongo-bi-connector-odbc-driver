@@ -107,6 +107,8 @@ DECLARE_TEST(t_odbc3_error)
 
     rc = SQLFreeHandle(SQL_HANDLE_ENV,henv1);
     myenv(henv1,rc);
+
+  return OK;
 }
 
 
@@ -174,6 +176,8 @@ DECLARE_TEST(t_odbc2_error)
 
     rc = SQLFreeHandle(SQL_HANDLE_ENV,henv1);
     myenv(henv1,rc);
+
+  return OK;
 }
 
 BEGIN_TESTS
