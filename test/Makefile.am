@@ -51,13 +51,13 @@ my_relative \
 my_result \
 my_scroll \
 my_tran \
+my_unixodbc \
 my_use_result \
 mytest \
 mytest32
 
 plain_tests= \
-my_col_length \
-my_unixodbc
+my_col_length
 fancy_tests= \
 mytest3
 
@@ -71,7 +71,6 @@ INCLUDES= 		-I$(top_srcdir)/test/include
 AM_LDFLAGS= 		@myodbc_test_linklib@
 
 my_col_length_SOURCES=	col_length/my_col_length.c
-my_unixodbc_SOURCES=	unixodbc/my_unixodbc.c
 mytest3_SOURCES=	test3/mytest3.c
 
 

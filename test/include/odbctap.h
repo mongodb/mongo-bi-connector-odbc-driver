@@ -256,7 +256,7 @@ void alloc_basic_handles(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt)
   if (mysock && mysock[0])
   {
     strcat((char *)connIn, ";SOCKET=");
-    strcat((char *)connIn, mysock);
+    strcat((char *)connIn, (char *)mysock);
   }
 
   rc= SQLDriverConnect(*hdbc, NULL, connIn, MAX_NAME_LEN, connOut, MAX_NAME_LEN,
