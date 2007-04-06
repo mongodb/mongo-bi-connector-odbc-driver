@@ -62,27 +62,20 @@ INCLUDES= 		-I$(top_srcdir)/test/include
 AM_LDFLAGS= 		@myodbc_test_linklib@
 
 my_connect_SOURCES=	connect/my_connect.c
-my_basics_SOURCES=	basics/my_basics.c
 my_param_SOURCES=	param/my_param.c
 my_result_SOURCES=	result/my_result.c
-my_tran_SOURCES=	tran/my_tran.c
 my_cursor_SOURCES=	cursor/my_cursor.c
 my_position_SOURCES=	position/my_position.c
 my_relative_SOURCES=	relative/my_relative.c
 my_scroll_SOURCES=	scroll/my_scroll.c
 my_col_length_SOURCES=	col_length/my_col_length.c
-my_blob_SOURCES=	blob/my_blob.c
-my_bulk_SOURCES=	bulk/my_bulk.c
 my_dyn_cursor_SOURCES=	dyn_cursor/my_dyn_cursor.c
 my_unixodbc_SOURCES=	unixodbc/my_unixodbc.c
 my_keys_SOURCES=	keys/my_keys.c
 my_tran_ext_SOURCES=	tran_ext/my_tran_ext.c
-my_catalog_SOURCES=	catalog/my_catalog.c
 my_error_SOURCES=	error/my_error.c
-my_ts_SOURCES=		timestamp/my_ts.c
 my_use_result_SOURCES=	use_result/my_use_result.c
 dbtest_SOURCES=		db_test/db_test.c
-mytest_SOURCES=		test/mytest.c
 mytest2_SOURCES=	test2/mytest2.c
 mytest3_SOURCES=	test3/mytest3.c
 mytest32_SOURCES=	test32/mytest32.c
@@ -155,7 +148,6 @@ EXTRA_DIST= \
 	Makefile.ini \
 	test.vpj \
 	test.pro \
-	basics/basics.pro \
 	blob/blob.pro \
 	bulk/bulk.pro \
 	catalog/catalog.pro \
