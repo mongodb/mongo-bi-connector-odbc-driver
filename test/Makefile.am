@@ -74,10 +74,7 @@ EXTRA_DIST= \
 	include/mytest3.h \
 	include/odbctap.h \
 	Makefile.ini \
-	test.vpj \
-	thread/my_thread.c \
-	thread_coredump/thread-coredump.c \
-	thread_test/thread_test.c
+	test.vpj
 
 # We want to rebuild the "test.ini" file each time, as it might need an
 # update from overriding variables on the command line
