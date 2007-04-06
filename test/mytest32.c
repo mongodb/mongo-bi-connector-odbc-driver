@@ -1,38 +1,31 @@
-/***************************************************************************
-                          mytest32.c  -  description
-                             -------------------
-    begin                : Thu May 01 2003
-    copyright            : (C) MySQL AB 1997-2003
-    author               : venu ( venu@mysql.com )
- ***************************************************************************/
-
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
-
-/***************************************************************************
- *                                                                         *
- *   Tests for Connector/ODBC 3.52                                         *  
- *                                                                         *
- ***************************************************************************/
-#include "mytest3.h"
-
-
-SQLHENV henv= NULL;
-SQLHDBC hdbc= NULL;
-SQLHSTMT hstmt= NULL;
-SQLRETURN rc;
-
 /*
-  Basic prepared statements - binary protocol test
+  Copyright (C) 1997-2007 MySQL AB
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of version 2 of the GNU General Public License as
+  published by the Free Software Foundation.
+
+  There are special exceptions to the terms and conditions of the GPL
+  as it is applied to this software. View the full text of the exception
+  in file LICENSE.exceptions in the top-level directory of this software
+  distribution.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-void t_prep_basic()
+#include "odbctap.h"
+
+SQLRETURN rc;
+
+/* Basic prepared statements - binary protocol test */
+DECLARE_TEST(t_prep_basic)
 {
     SQLINTEGER id, pcrow;
     SQLLEN length1, length2;
@@ -87,13 +80,13 @@ void t_prep_basic()
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
 
-/*
-  to test buffer length
-*/
 
-void t_prep_buffer_length()
+/* to test buffer length */
+DECLARE_TEST(t_prep_buffer_length)
 {
     SQLLEN length;
     char       buffer[20];
@@ -182,13 +175,13 @@ void t_prep_buffer_length()
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
 
-/*
-  For data truncation
-*/
 
-void t_prep_truncate()
+/* For data truncation */
+DECLARE_TEST(t_prep_truncate)
 {
     SQLINTEGER pcrow;
     SQLLEN length, length1;
@@ -251,13 +244,13 @@ void t_prep_truncate()
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
 
-/*
-  For scrolling
-*/
 
-void t_prep_scroll()
+/* For scrolling */
+DECLARE_TEST(t_prep_scroll)
 {
     SQLINTEGER i, data, max_rows= 5;
 
@@ -366,13 +359,13 @@ void t_prep_scroll()
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
 
-/*
-  For SQLGetData
-*/
 
-void t_prep_getdata()
+/* For SQLGetData */
+DECLARE_TEST(t_prep_getdata)
 {
     SQLCHAR    name[10];
     SQLINTEGER data;
@@ -450,14 +443,13 @@ void t_prep_getdata()
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
 
 
-/*
-  For SQLGetData in truncation
-*/
-
-void t_prep_getdata1()
+/* For SQLGetData in truncation */
+DECLARE_TEST(t_prep_getdata1)
 {
     SQLCHAR     data[11];
     SQLLEN length;
@@ -577,9 +569,12 @@ void t_prep_getdata1()
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
 
-void t_prep_catalog()
+
+DECLARE_TEST(t_prep_catalog)
 {
     SQLCHAR     table[20];
     SQLINTEGER  length;
@@ -644,61 +639,11 @@ void t_prep_catalog()
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-
+  return OK;
 }
 
-void t_sys_catalog()
-{
-#if ALLOW_CRAZY_TESTS
-  /*
-    This test is just broken -- it assumes you can pass a dotted table-name
-    to SQLColumns. And it relies on the wacky behavior of SQLTables()
-    returning such nonsense when you ask for system tables.
-  */
-    SQLHSTMT    hstmt_x;
-    SQLCHAR     sys_table[MAX_NAME_LEN];
-    SQLUINTEGER row_count= 0, columns;
-    bool        grants_ok= server_supports_grant(hstmt);
 
-    rc = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt_x);
-    mycon(hdbc, rc);
-
-    rc = SQLTables(hstmt,NULL,0,NULL,0,NULL,0,"SYSTEM TABLE",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLBindCol(hstmt,3,SQL_C_CHAR,sys_table,MAX_NAME_LEN,NULL);
-    mystmt(hstmt,rc);
-
-    rc = SQLFetchScroll(hstmt, SQL_FETCH_FIRST, 0);
-    while ( rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
-    {
-        printMessage( "\n system table %d: '%s'", ++row_count, sys_table);
-
-        rc = SQLColumns(hstmt_x,NULL,0,NULL,0,sys_table,SQL_NTS,NULL,0);
-        mystmt(hstmt_x,rc);
-
-        columns= 0;
-        while (1)
-        {
-            rc = SQLFetch(hstmt_x);
-            if (rc == SQL_ERROR || rc == SQL_NO_DATA)
-                break;
-            columns++;
-        }
-        printMessage(" columns: '%ld'", columns);
-        SQLFreeStmt(hstmt_x,SQL_CLOSE);
-
-        if (grants_ok)
-            myassert(columns != 0);
-        rc = SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0);
-    }
-    SQLFreeHandle(SQL_HANDLE_STMT, hstmt_x);
-    SQLFreeStmt(hstmt,SQL_UNBIND);
-    SQLFreeStmt(hstmt,SQL_CLOSE);
-#endif
-}
-
-void t_catalog()
+DECLARE_TEST(t_catalog)
 {
     SQLCHAR      name[MYSQL_NAME_LEN+1];
     SQLUSMALLINT i;
@@ -748,9 +693,12 @@ void t_catalog()
         myassert(strcmp(name,colnames[i-1]) == 0 && len == collengths[i-1]);
     }
     SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  return OK;
 }
 
-void t_rows_fetched_ptr()
+
+DECLARE_TEST(t_rows_fetched_ptr)
 {
     SQLINTEGER   rowsFetched, rowsSize;
     long         i;
@@ -876,9 +824,12 @@ void t_rows_fetched_ptr()
 
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, NULL, 0);
     mystmt(hstmt,rc);
+
+  return OK;
 }
 
-void t_sps()
+
+DECLARE_TEST(t_sps)
 {
     SQLINTEGER a, a1;
     SQLLEN length, length1;
@@ -952,51 +903,23 @@ void t_sps()
     rc = SQLExecDirect(hstmt,"drop table t_tabsp",SQL_NTS);
     mystmt(hstmt,rc);
     SQLFreeStmt(hstmt, SQL_CLOSE);
+
+  return OK;
 }
 
-/*
-  Main routine ..
-*/
 
-int main(int argc, char *argv[])
-{
-    SQLINTEGER narg;      
+BEGIN_TESTS
+  ADD_TEST(t_prep_basic)
+  ADD_TEST(t_prep_buffer_length)
+  ADD_TEST(t_prep_truncate)
+  ADD_TEST(t_prep_scroll)
+  ADD_TEST(t_prep_getdata)
+  ADD_TEST(t_prep_getdata1)
+  ADD_TEST(t_prep_catalog)
+  ADD_TEST(t_catalog)
+  ADD_TEST(t_rows_fetched_ptr)
+  ADD_TEST(t_sps)
+END_TESTS
 
-    printMessageHeader();
 
-    /*
-     * if connection string supplied through arguments, overrite
-     * the default one..
-    */
-    for (narg = 1; narg < argc; narg++)
-    {
-        if ( narg == 1 )
-            mydsn = argv[1];
-        else if ( narg == 2 )
-            myuid = argv[2];
-        else if ( narg == 3 )
-            mypwd = argv[3];
-    }  
-
-    myconnect(&henv,&hdbc,&hstmt);
-
-    t_prep_catalog();
-    t_sps();
-    t_prep_buffer_length();
-    t_prep_getdata();
-    t_catalog();
-    t_prep_catalog();
-    t_prep_getdata1();
-    t_prep_scroll();
-    t_prep_basic();
-    t_prep_truncate();
-    t_rows_fetched_ptr();
-    t_sys_catalog();
-
-    mydisconnect(&henv,&hdbc,&hstmt);
-
-    printMessageFooter( 1 );
-
-    return(0);
-}
-
+RUN_TESTS
