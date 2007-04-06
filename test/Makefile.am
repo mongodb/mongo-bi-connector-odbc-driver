@@ -27,12 +27,12 @@ my_blob \
 my_bulk \
 my_catalog \
 my_datetime \
+my_param \
 my_tran \
 mytest
 
 plain_tests= \
 my_connect \
-my_param \
 my_result \
 my_cursor \
 my_position \
@@ -62,7 +62,6 @@ INCLUDES= 		-I$(top_srcdir)/test/include
 AM_LDFLAGS= 		@myodbc_test_linklib@
 
 my_connect_SOURCES=	connect/my_connect.c
-my_param_SOURCES=	param/my_param.c
 my_result_SOURCES=	result/my_result.c
 my_cursor_SOURCES=	cursor/my_cursor.c
 my_position_SOURCES=	position/my_position.c

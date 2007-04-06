@@ -1,33 +1,31 @@
-/***************************************************************************
-                          my_param.c  -  description
-                             ---------------------
-    begin                : Wed Sep 8 2001
-    copyright            : (C) MySQL AB 1995-2002, www.mysql.com
-    author               : venu ( venu@mysql.com )
- ***************************************************************************/
+/*
+  Copyright (C) 1995-2007 MySQL AB
 
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of version 2 of the GNU General Public License as
+  published by the Free Software Foundation.
 
-/***************************************************************************
- *                                                                         *
- *  This is a basic sample to demonstrate how to insert or delete or       *
- *  update data in the table using parameters                              *
- *                                                                         *
- ***************************************************************************/
+  There are special exceptions to the terms and conditions of the GPL
+  as it is applied to this software. View the full text of the exception
+  in file LICENSE.exceptions in the top-level directory of this software
+  distribution.
 
-#include "mytest3.h" /* MyODBC 3.51 sample utility header */
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#include "odbctap.h"
 
 /********************************************************
 * initialize tables                                     *
 *********************************************************/
-void my_init_table(SQLHDBC hdbc, SQLHSTMT hstmt)
+DECLARE_TEST(my_init_table)
 {
     SQLRETURN   rc;
 
@@ -38,7 +36,7 @@ void my_init_table(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
+    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
     mycon(hdbc,rc);
 
     /* create the table 'my_demo_param' */
@@ -51,13 +49,13 @@ void my_init_table(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     /* commit the transaction*/
     rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
-    mycon(hdbc,rc);    
+    mycon(hdbc,rc);
+
+  return OK;
 }
 
-/********************************************************
-* insert data using parameters                          *
-*********************************************************/
-void my_param_insert(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+DECLARE_TEST(my_param_insert)
 {
     SQLRETURN   rc;
     SQLINTEGER  id;
@@ -68,12 +66,12 @@ void my_param_insert(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     /* now supply data to parameter 1 and 2 */
-    rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, 
+    rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT,
                           SQL_C_LONG, SQL_INTEGER, 0,0,
                           &id, 0, NULL);
     mystmt(hstmt,rc);
 
-    rc = SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, 
+    rc = SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT,
                           SQL_C_CHAR, SQL_CHAR, 0,0,
                           name, sizeof(name), NULL);
     mystmt(hstmt,rc);
@@ -96,7 +94,7 @@ void my_param_insert(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
+    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
     mycon(hdbc,rc);
 
     /* Now fetch and verify the data */
@@ -104,12 +102,12 @@ void my_param_insert(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     assert(10 == myresult(hstmt));
+
+  return OK;
 }
 
-/********************************************************
-* update data using parameters                          *
-*********************************************************/
-void my_param_update(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+DECLARE_TEST(my_param_update)
 {
     SQLRETURN  rc;
     SQLROWCOUNT nRowCount;
@@ -150,7 +148,7 @@ void my_param_update(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
+    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
     mycon(hdbc,rc);
 
     /* Now fetch and verify the data */
@@ -158,19 +156,19 @@ void my_param_update(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     assert(10 == myresult(hstmt));
+
+  return OK;
 }
 
-/********************************************************
-* delete data using parameters                          *
-*********************************************************/
-void my_param_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+DECLARE_TEST(my_param_delete)
 {
     SQLRETURN  rc;
     SQLINTEGER id;
     SQLROWCOUNT nRowCount;
 
-    /* supply data to parameter 1 */    
-    rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, 
+    /* supply data to parameter 1 */
+    rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT,
                           SQL_C_LONG, SQL_INTEGER, 0,0,
                           &id, 0, NULL);
     mystmt(hstmt,rc);
@@ -190,7 +188,7 @@ void my_param_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
     SQLFreeStmt(hstmt, SQL_CLOSE);
 
     /* execute the DELETE STATEMENT to delete 8th row  */
-    rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, 
+    rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT,
                           SQL_C_LONG, SQL_INTEGER, 0,0,
                           &id, 0, NULL);
     mystmt(hstmt,rc);
@@ -214,7 +212,7 @@ void my_param_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
+    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
     mycon(hdbc,rc);
 
     /* Now fetch and verify the data */
@@ -227,73 +225,22 @@ void my_param_delete(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLExecDirect(hstmt,"DROP TABLE my_demo_param",SQL_NTS);
     mystmt(hstmt,rc);
 
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
+    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
+
+  return OK;
 }
 
-/********************************************************
-* main routine                                          *
-*********************************************************/
-int main(int argc, char *argv[])
-{
-    SQLHENV    henv;
-    SQLHDBC    hdbc; 
-    SQLHSTMT   hstmt;
-    SQLINTEGER narg;
 
-    printMessageHeader();
-
-    /*
-     * if connection string supplied through arguments, overrite
-     * the default one..
-    */
-    for (narg = 1; narg < argc; narg++)
-    {
-        if ( narg == 1 )
-            mydsn = argv[1];
-        else if ( narg == 2 )
-            myuid = argv[2];
-        else if ( narg == 3 )
-            mypwd = argv[3];
-    }   
-
-    /* 
-     * connect to MySQL server
-    */
-    myconnect(&henv,&hdbc,&hstmt); 
-
-    /* 
-     * initialize table
-    */
-    my_init_table(hdbc, hstmt);
-
-    /* 
-     * insert data using parameters
-    */
-    my_param_insert(hdbc, hstmt);
-
-    /* 
-     * parameter update 
-    */
-    my_param_update(hdbc, hstmt);
-
-    /* 
-     * parameter delete
-    */
-    my_param_delete(hdbc, hstmt);
-
-    /* 
-     * disconnect from the server, by freeing all resources
-    */
-    mydisconnect(&henv,&hdbc,&hstmt);
-
-    printMessageFooter( 1 );
-
-    return(0);
-} 
+BEGIN_TESTS
+  ADD_TEST(my_init_table)
+  ADD_TEST(my_param_insert)
+  ADD_TEST(my_param_update)
+  ADD_TEST(my_param_delete)
+END_TESTS
 
 
-
+RUN_TESTS
