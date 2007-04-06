@@ -26,8 +26,8 @@ my_basics \
 my_blob \
 my_bulk \
 my_catalog \
+my_datetime \
 my_tran \
-my_ts \
 mytest
 
 plain_tests= \
