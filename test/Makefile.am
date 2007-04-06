@@ -75,7 +75,6 @@ EXTRA_DIST= \
 	include/odbctap.h \
 	Makefile.ini \
 	test.vpj \
-	imyodbc/myodbc.c \
 	thread/my_thread.c \
 	thread_coredump/thread-coredump.c \
 	thread_test/thread_test.c
