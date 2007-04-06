@@ -73,8 +73,8 @@ EXTRA_DIST= \
 	odbcinst.ini.in \
 	include/mytest3.h \
 	include/odbctap.h \
-	Makefile.ini \
-	test.vpj
+	test.vpj \
+	unit.pl
 
 # We want to rebuild the "test.ini" file each time, as it might need an
 # update from overriding variables on the command line
