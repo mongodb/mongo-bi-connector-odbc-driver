@@ -43,6 +43,7 @@ my_curext \
 my_cursor \
 my_datetime \
 my_dyn_cursor \
+my_error \
 my_param \
 my_tran \
 mytest
@@ -56,7 +57,6 @@ my_col_length \
 my_unixodbc \
 my_keys \
 my_tran_ext \
-my_error \
 mytest32 \
 my_use_result
 fancy_tests= \
@@ -82,7 +82,6 @@ my_col_length_SOURCES=	col_length/my_col_length.c
 my_unixodbc_SOURCES=	unixodbc/my_unixodbc.c
 my_keys_SOURCES=	keys/my_keys.c
 my_tran_ext_SOURCES=	tran_ext/my_tran_ext.c
-my_error_SOURCES=	error/my_error.c
 my_use_result_SOURCES=	use_result/my_use_result.c
 dbtest_SOURCES=		db_test/db_test.c
 mytest2_SOURCES=	test2/mytest2.c
