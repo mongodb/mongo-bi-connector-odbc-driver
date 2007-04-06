@@ -1,57 +1,49 @@
-/***************************************************************************
-                          my_use_result.c  -  description
-                             -------------------
-    begin                : Fri Sep 29 2001
-    copyright            : (C) MySQL AB 1997-2001
-    author               : venu ( venu@mysql.com )
- ***************************************************************************/
+/*
+  Copyright (C) 1997-2007 MySQL AB
 
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
-#include "mytest3.h"
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of version 2 of the GNU General Public License as
+  published by the Free Software Foundation.
 
-SQLCHAR *mysock= NULL;
+  There are special exceptions to the terms and conditions of the GPL
+  as it is applied to this software. View the full text of the exception
+  in file LICENSE.exceptions in the top-level directory of this software
+  distribution.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#include "odbctap.h"
 
 SQLINTEGER my_max_rows = 1000;
 clock_t t_start, t_end;
 SQLDOUBLE my_time;
 
-/**
-  Clean data
-*/
-void t_clean_data()
+/* Clean data */
+DECLARE_TEST(t_clean_data)
 {
-    SQLHENV   henv;
-    SQLHDBC   hdbc;
-    SQLHSTMT  hstmt;
     SQLRETURN rc;
-
-    myconnect(&henv,&hdbc,&hstmt);
 
     rc = SQLExecDirect(hstmt,"drop database client_odbc_test1",SQL_NTS);
     mystmt(hstmt,rc);
 
-    mydisconnect(&henv,&hdbc,&hstmt);
+  return OK;
 }
-/**
-  Initialize data
-*/
-void t_init_data()
+
+
+/* Initialize data */
+DECLARE_TEST(t_init_data)
 {
-    SQLHENV   henv;
-    SQLHDBC   hdbc;
-    SQLHSTMT  hstmt;
     SQLRETURN rc;
     SQLINTEGER i;
     SQLCHAR    ch[]="MySQL AB";
-
-    myconnect(&henv,&hdbc,&hstmt);
 
     SQLExecDirect(hstmt,"drop database if exists client_odbc_test1",SQL_NTS);
 
@@ -94,12 +86,11 @@ void t_init_data()
     rc = SQLEndTran(SQL_HANDLE_DBC,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    mydisconnect(&henv,&hdbc,&hstmt);
+  return OK;
 }
 
-/**
-  Fetch and count the time
-*/
+
+/* Fetch and count the time */
 SQLINTEGER t_fetch_data(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
     SQLRETURN   rc;
@@ -137,10 +128,9 @@ SQLINTEGER t_fetch_data(SQLHDBC hdbc,SQLHSTMT hstmt)
     return(row_count);
 }
 
-/**
-  making use of mysql_use_result
-*/
-void t_use_result()
+
+/* making use of mysql_use_result */
+DECLARE_TEST(t_use_result)
 {
     SQLHENV   henv1;
     SQLHDBC   hdbc1;
@@ -156,14 +146,14 @@ void t_use_result()
       strcat(conn, mysock);
     }
     mydrvconnect(&henv1,&hdbc1,&hstmt1,conn);
-    my_assert(t_fetch_data(hdbc1,hstmt1) == my_max_rows); 
+    my_assert(t_fetch_data(hdbc1,hstmt1) == my_max_rows);
     mydisconnect(&henv1,&hdbc1,&hstmt1);
+
+  return OK;
 }
 
-/**
-  making use of mysql_store_result
-*/
-void t_store_result()
+/* making use of mysql_store_result */
+DECLARE_TEST(t_store_result)
 {
     SQLHENV   henv1;
     SQLHDBC   hdbc1;
@@ -179,44 +169,19 @@ void t_store_result()
       strcat(conn, mysock);
     }
     mydrvconnect(&henv1,&hdbc1,&hstmt1,conn);
-    my_assert(t_fetch_data(hdbc1,hstmt1) == my_max_rows); 
+    my_assert(t_fetch_data(hdbc1,hstmt1) == my_max_rows);
     mydisconnect(&henv1,&hdbc1,&hstmt1);
+
+  return OK;
 }
 
-/**
-MAIN ROUTINE...
-*/
-int main(int argc, char *argv[])
-{
-    SQLINTEGER narg;      
 
-    printMessageHeader();
+BEGIN_TESTS
+  ADD_TEST(t_init_data)
+  ADD_TEST(t_use_result)
+  ADD_TEST(t_store_result)
+  ADD_TEST(t_clean_data)
+END_TESTS
 
-    /*
-     * if connection string supplied through arguments, overrite
-     * the default one..
-    */
-    for (narg = 1; narg < argc; narg++)
-    {
-        if ( narg == 1 )
-            mydsn = argv[1];
-        else if ( narg == 2 )
-            myuid = argv[2];
-        else if ( narg == 3 )
-            mypwd = argv[3];
-        else if ( narg == 4 )
-            mysock= argv[4];
-        else if ( narg == 5 )
-            my_max_rows = atoi(argv[5]);
-    }
 
-    t_init_data();
-    t_use_result();
-    t_store_result();
-    t_clean_data();
-
-    printMessageFooter( 1 );
-
-    return(0);
-}
-
+RUN_TESTS
