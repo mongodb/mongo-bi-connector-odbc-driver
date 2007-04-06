@@ -46,13 +46,13 @@ my_dyn_cursor \
 my_error \
 my_keys \
 my_param \
+my_position \
 my_tran \
 mytest \
 mytest32
 
 plain_tests= \
 my_result \
-my_position \
 my_relative \
 my_scroll \
 my_col_length \
@@ -72,7 +72,6 @@ INCLUDES= 		-I$(top_srcdir)/test/include
 AM_LDFLAGS= 		@myodbc_test_linklib@
 
 my_result_SOURCES=	result/my_result.c
-my_position_SOURCES=	position/my_position.c
 my_relative_SOURCES=	relative/my_relative.c
 my_scroll_SOURCES=	scroll/my_scroll.c
 my_col_length_SOURCES=	col_length/my_col_length.c
