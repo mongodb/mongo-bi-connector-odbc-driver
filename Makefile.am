@@ -79,13 +79,9 @@ bin-tar: all
 	gzip -9vf $(build).tar 
 	rm -rf $(build)
 
-test:	testlib
-
-#
-# Run the test library
-#
-testlib: all
-	(cd test; $(MAKE) testall)
+.PHONY: test
+test:
+	(cd test; $(MAKE) test)
 
  
 #

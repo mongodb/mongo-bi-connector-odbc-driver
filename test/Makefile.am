@@ -34,6 +34,9 @@ TEST_UID       = root
 TEST_PASSWORD  = 
 TEST_SOCKET    = /tmp/mysql.sock
 
+INCLUDES= 		-I$(top_srcdir)/test/include
+AM_LDFLAGS= 		@myodbc_test_linklib@
+
 tap_tests= \
 my_basics \
 my_blob \
@@ -55,69 +58,15 @@ my_tran \
 my_unixodbc \
 my_use_result \
 mytest \
+mytest3 \
 mytest32
 
-fancy_tests= \
-mytest3
+noinst_PROGRAMS= $(tap_tests)
 
-noinst_PROGRAMS= $(fancy_tests) $(tap_tests)
-
-#	
-# COMPILATION SPECIFICATION
-# 
-
-INCLUDES= 		-I$(top_srcdir)/test/include
-AM_LDFLAGS= 		@myodbc_test_linklib@
-
-mytest3_SOURCES=	test3/mytest3.c
-
-
-#
-# BUILDALL SPECIFICATION, BUILD AND RUN ALL SAMPLES
-#
-
-buildall: all
-testall: all run trun
-runall: testall
-test: testall
-testlib: testall
-
-# ----------------------------------------------------------------------
-# Pass DSN UID PASSWORD as the command line arguments to each sample
-# ----------------------------------------------------------------------
-
-run: make-test-ini $(tap_tests)
+test: make-test-ini $(tap_tests)
 	ODBCSYSINI=. \
 	  ODBCINI=$(TEST_ODBCINI) ODBCINSTINI=$(TEST_ODBCINSTINI) \
 	  perl $(srcdir)/unit.pl run $(tap_tests)
-
-trun: make-test-ini $(fancy_tests)
-	for test in $(fancy_tests); do \
-	  echo test: $$test; \
-	  echo ODBCSYSINI=. \
-	    ODBCINI=$(TEST_ODBCINI) ODBCINSTINI=$(TEST_ODBCINSTINI) \
-	    ./$$test -1 "$(TEST_DSN)" "$(TEST_UID)" "$(TEST_PASSWORD)" "$(TEST_SOCKET)" ; \
-	  ODBCSYSINI=. \
-	    ODBCINI=$(TEST_ODBCINI) ODBCINSTINI=$(TEST_ODBCINSTINI) \
-	    ./$$test -1 "$(TEST_DSN)" "$(TEST_UID)" "$(TEST_PASSWORD)" "$(TEST_SOCKET)" || \
-	    test -n "$(FORCE)" || \
-	    exit 1 ; \
-	done
-
-#
-# CLEAN SPECIFICATION
-#
-
-clean-local:
-	rm -f my*dump
-	rm -f core
-	rm -f *~
-	rm -f *.log
-	rm -f *.da
-	rm -f *.bb
-	rm -f *.bbg
-	rm -f gmon.*
-
 
 EXTRA_DIST= \
 	odbc.ini.in \
@@ -131,11 +80,8 @@ EXTRA_DIST= \
 	thread_coredump/thread-coredump.c \
 	thread_test/thread_test.c
 
-# ----------------------------------------------------------------------
-# We want to rebuild the "test.ini" file each time, as it might
-# need an update from overriding variables on the command line
-# ----------------------------------------------------------------------
-
+# We want to rebuild the "test.ini" file each time, as it might need an
+# update from overriding variables on the command line
 .PHONY: make-test-ini
 
 make-test-ini:

@@ -266,7 +266,7 @@ void mydrvconnect(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt,SQLCHAR *connIn)
     rc = SQLDriverConnect(*hdbc,NULL,connIn,MAX_NAME_LEN,
                           connOut,MAX_NAME_LEN,NULL,SQL_DRIVER_NOPROMPT);
     mycon(*hdbc,rc);
-    printMessage( "\n output connection string: %s", connOut);
+    printMessage( "output connection string: %s\n", connOut);
 
     rc = SQLSetConnectAttr(*hdbc,SQL_ATTR_AUTOCOMMIT,(SQLPOINTER)SQL_AUTOCOMMIT_ON,0);
     mycon(*hdbc,rc);
@@ -436,7 +436,7 @@ int my_print_non_format_result(SQLHSTMT hstmt)
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    printMessage( "\n Total rows fetched: %d\n",nRowCount);
+    printMessage("Total rows fetched: %d\n",nRowCount);
     return(nRowCount);
 }
 
@@ -501,7 +501,7 @@ SQLUINTEGER myresult(SQLHSTMT hstmt)
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    printMessage("\n Total rows fetched: %d\n",nRowCount);
+    printMessage("Total rows fetched: %d\n",nRowCount);
     return nRowCount;
 }
 
@@ -520,7 +520,7 @@ SQLUINTEGER myrowcount(SQLHSTMT hstmt)
         rc = SQLFetch(hstmt);
     }
     SQLFreeStmt(hstmt,SQL_UNBIND);
-    printMessage("\n Total rows fetched: %d",nRowCount);
+    printMessage("Total rows fetched: %d\n",nRowCount);
     return(nRowCount);
 }
 /**
