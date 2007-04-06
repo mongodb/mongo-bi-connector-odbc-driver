@@ -1,33 +1,28 @@
-/***************************************************************************
-                          my_basics.c  -  description
-                             ---------------------
-    begin                : Wed Sep 8 2001
-    copyright            : (C) MySQL AB 1995-2002, www.mysql.com
-    author               : venu ( venu@mysql.com )
- ***************************************************************************/
+/*
+  Copyright (C) 1995-2007 MySQL AB
 
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of version 2 of the GNU General Public License as
+  published by the Free Software Foundation.
 
-/***************************************************************************
- *                                                                         *
- *  This is a basic sample to demonstrate the basic execution of SQL       *
- *  statements using  MySQL ODBC 3.51 driver                               *
- *                                                                         *
- ***************************************************************************/
+  There are special exceptions to the terms and conditions of the GPL
+  as it is applied to this software. View the full text of the exception
+  in file LICENSE.exceptions in the top-level directory of this software
+  distribution.
 
-#include "mytest3.h" /* MyODBC 3.51 sample utility header */
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-/********************************************************
-* Execution of BASIC SQL statements                     *
-*********************************************************/
-void my_basics(SQLHDBC hdbc, SQLHSTMT hstmt)
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#include "odbctap.h"
+
+DECLARE_TEST(my_basics)
 {
     SQLRETURN  rc;
     SQLROWCOUNT nRowCount;
@@ -118,53 +113,14 @@ void my_basics(SQLHDBC hdbc, SQLHSTMT hstmt)
     /* free the statement cursor */
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-/********************************************************
-* main routine                                          *
-*********************************************************/
-int main(int argc, char *argv[])
-{
-    SQLHENV    henv;
-    SQLHDBC    hdbc; 
-    SQLHSTMT   hstmt;
-    SQLINTEGER narg;
 
 
-    printMessageHeader();
-
-    /*
-     * if connection string supplied through arguments, overrite
-     * the default one..
-    */
-    for (narg = 1; narg < argc; narg++)
-    {
-        if ( narg == 1 )
-            mydsn = argv[1];
-        else if ( narg == 2 )
-            myuid = argv[2];
-        else if ( narg == 3 )
-            mypwd = argv[3];
-    }   
-
-    /* 
-     * connect to MySQL server
-    */
-    myconnect(&henv,&hdbc,&hstmt); 
-
-    /* 
-     * simple execution of SQL statements
-    */
-    my_basics(hdbc, hstmt);
-
-    /* 
-     * disconnect from the server, by freeing all resources
-    */
-    mydisconnect(&henv,&hdbc,&hstmt);
-
-    printMessageFooter( 1 );
-
-    return(0);
-} 
+BEGIN_TESTS
+  ADD_TEST(my_basics)
+END_TESTS
 
 
-
+RUN_TESTS

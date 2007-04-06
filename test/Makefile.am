@@ -22,13 +22,16 @@ TEST_PASSWORD  =
 TEST_SOCKET    = /tmp/mysql.sock
 
 tap_tests= \
+my_basics \
+my_blob \
+my_bulk \
+my_catalog \
 my_tran \
 my_ts \
 mytest
 
 plain_tests= \
 my_connect \
-my_basics \
 my_param \
 my_result \
 my_cursor \
@@ -36,13 +39,10 @@ my_position \
 my_relative \
 my_scroll \
 my_col_length \
-my_blob \
-my_bulk \
 my_dyn_cursor \
 my_unixodbc \
 my_keys \
 my_tran_ext \
-my_catalog \
 my_error \
 mytest32 \
 my_use_result

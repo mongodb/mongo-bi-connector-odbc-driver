@@ -1,25 +1,28 @@
-/***************************************************************************
-                          my_blob.c  -  description
-                             -------------------
-    begin                : Tue Oct 16 2001
-    copyright            : (C) MySQL AB 1997-2001
-    author               : venu ( venu@mysql.com )
- ***************************************************************************/
+/*
+  Copyright (C) 1997-2007 MySQL AB
 
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
-#include "mytest3.h"
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of version 2 of the GNU General Public License as
+  published by the Free Software Foundation.
 
-/**
-BLOB SPEED TEST
+  There are special exceptions to the terms and conditions of the GPL
+  as it is applied to this software. View the full text of the exception
+  in file LICENSE.exceptions in the top-level directory of this software
+  distribution.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-void t_blob(SQLHDBC hdbc, SQLHSTMT hstmt, SQLUINTEGER blob_size)
+
+#include "odbctap.h"
+
+DECLARE_TEST(t_blob)
 {
     SQLRETURN rc;
     SQLUINTEGER j= 0;
@@ -31,6 +34,7 @@ void t_blob(SQLHDBC hdbc, SQLHSTMT hstmt, SQLUINTEGER blob_size)
     SQLPOINTER token;
     clock_t start, finish;
     double duration;
+    SQLUINTEGER blob_size = 1 * 1024L * 5L;
 
     rc = SQLSetConnectOption(hdbc, SQL_AUTOCOMMIT, 0L);
     mycon(hdbc,rc);
@@ -129,9 +133,12 @@ void t_blob(SQLHDBC hdbc, SQLHSTMT hstmt, SQLUINTEGER blob_size)
 
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
-    free(blobbuf);    
+    free(blobbuf);
+
+  return OK;
 }
-void t_1piecewrite2(HDBC hdbc, HSTMT hstmt)
+
+DECLARE_TEST(t_1piecewrite2)
 {
     SQLRETURN rc;
     SQLLEN cbValue,cbValue2;
@@ -187,41 +194,16 @@ void t_1piecewrite2(HDBC hdbc, HSTMT hstmt)
     rc = SQLTransact(NULL, hdbc, SQL_COMMIT);
     mycon(hdbc,rc);
     free(blobbuf);
+
+  return OK;
 }
-/**
-MAIN ROUTINE...
-*/
-int main(int argc, char *argv[])
-{
-    SQLHENV    henv;
-    SQLHDBC    hdbc;
-    SQLHSTMT   hstmt;
-    SQLINTEGER narg;
-    SQLUINTEGER blob_size = 1 * 1024L * 5L;  
 
-    printMessageHeader();
 
-    /*
-     * if connection string supplied through arguments, overrite
-     * the default one..
-    */
-    for (narg = 1; narg < argc; narg++)
-    {
-        if ( narg == 1 )
-            mydsn = argv[1];
-        else if ( narg == 2 )
-            myuid = argv[2];
-        else if ( narg == 3 )
-            mypwd = argv[3];
+BEGIN_TESTS
+  ADD_TEST(t_blob)
+  ADD_TEST(t_1piecewrite2)
+END_TESTS
 
-    }    
 
-    myconnect(&henv,&hdbc,&hstmt);
-    t_blob(hdbc,hstmt,blob_size);
-    t_1piecewrite2(hdbc,hstmt);
-    mydisconnect(&henv,&hdbc,&hstmt);
+RUN_TESTS
 
-    printMessageFooter( 1 );
-
-    return(0);
-}

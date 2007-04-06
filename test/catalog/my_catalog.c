@@ -20,14 +20,9 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "mytest3.h"
+#include "odbctap.h"
 
-SQLCHAR *mysock= NULL;
-
-/**
-* to test the pcbValue on cursor ops
-**/
-void my_columns_null(SQLHDBC hdbc, SQLHSTMT hstmt)
+DECLARE_TEST(my_columns_null)
 {
     SQLRETURN   rc;
 
@@ -49,12 +44,12 @@ void my_columns_null(SQLHDBC hdbc, SQLHSTMT hstmt)
     myassert(2 == my_print_non_format_result(hstmt));
 
     SQLFreeStmt(hstmt, SQL_CLOSE);
+
+  return OK;
 }
 
-/**
-* to test the DROP TABLE bug after SQLColumns
-**/
-void my_drop_table(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+DECLARE_TEST(my_drop_table)
 {
     SQLRETURN   rc;
 
@@ -80,12 +75,12 @@ void my_drop_table(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
 
-/**
-* to test SQLTablePrivileges
-**/
-void my_table_priv(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+DECLARE_TEST(my_table_priv)
 {
     SQLRETURN   rc;
 
@@ -97,7 +92,10 @@ void my_table_priv(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt, SQL_CLOSE);
+
+  return OK;
 }
+
 
 void check_sqlstate(SQLHSTMT hstmt,SQLCHAR *sqlstate)
 {
@@ -119,7 +117,8 @@ void check_sqlstate(SQLHSTMT hstmt,SQLCHAR *sqlstate)
 }
 #define TODBC_BIND_CHAR(n,buf) SQLBindCol(hstmt,n,SQL_C_CHAR,&buf,sizeof(buf),NULL);
 
-void my_table_dbs(SQLHDBC hdbc,SQLHSTMT hstmt)
+
+DECLARE_TEST(my_table_dbs)
 {
     SQLCHAR    database[100];
     SQLRETURN  rc;
@@ -243,8 +242,10 @@ void my_table_dbs(SQLHDBC hdbc,SQLHSTMT hstmt)
     rc = SQLExecDirect(hstmt, "DROP DATABASE my_all_db_test4",  SQL_NTS);
     mystmt(hstmt,rc);
 
-
+  return OK;
 }
+
+
 void my_colpriv_init(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
     SQLRETURN rc;
@@ -274,6 +275,8 @@ void my_colpriv_init(SQLHDBC hdbc,SQLHSTMT hstmt)
     SQLExecDirect(  hstmt, "FLUSH PRIVILEGES",  SQL_NTS);
     SQLFreeStmt(hstmt, SQL_CLOSE);  
 }
+
+
 bool my_tablepriv_init(SQLHDBC hdbc,SQLHSTMT hstmt)
 {
     SQLRETURN rc;
@@ -317,9 +320,14 @@ bool my_tablepriv_init(SQLHDBC hdbc,SQLHSTMT hstmt)
     return 0;
 
 }
-void my_tablepriv(SQLHDBC hdbc,SQLHSTMT hstmt)
+
+
+DECLARE_TEST(my_tablepriv)
 {
     SQLRETURN   rc;
+
+    if (my_tablepriv_init(hdbc, hstmt))
+      return SKIP;
 
     printMessage("\n With All Types(CataLog,Schema and TableName)");
 
@@ -403,9 +411,12 @@ void my_tablepriv(SQLHDBC hdbc,SQLHSTMT hstmt)
     my_print_non_format_result(hstmt);
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  return OK;
 }
 
-void my_tablepriv_data(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+DECLARE_TEST(my_tablepriv_data)
 {
     SQLINTEGER i;
     SQLRETURN  rc;
@@ -575,14 +586,16 @@ void my_tablepriv_data(SQLHDBC hdbc, SQLHSTMT hstmt)
     assert(i == 2);
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  return OK;
 }
 
-/**
-* to test SQLColumnPrivileges
-**/
-void my_column_priv(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+DECLARE_TEST(my_column_priv)
 {
     SQLRETURN   rc;
+
+    my_colpriv_init(hdbc, hstmt);
 
     rc = SQLColumnPrivileges(hstmt,NULL,0,
                              NULL,0,NULL,0,
@@ -593,9 +606,12 @@ void my_column_priv(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt, SQL_CLOSE);
+
+  return OK;
 }
 
-void my_colpriv(SQLHDBC hdbc,SQLHSTMT hstmt)
+
+DECLARE_TEST(my_colpriv)
 {
     SQLRETURN   rc;
 
@@ -701,8 +717,7 @@ void my_colpriv(SQLHDBC hdbc,SQLHSTMT hstmt)
 }
 
 
-/** Basic test of SQLProcedures(). */
-void t_sqlprocedures(SQLHDBC hdbc, SQLHSTMT hstmt)
+DECLARE_TEST(t_sqlprocedures)
 {
   SQLRETURN rc;
   /** @todo check server version */
@@ -743,60 +758,18 @@ void t_sqlprocedures(SQLHDBC hdbc, SQLHSTMT hstmt)
   mystmt(hstmt,rc);
 }
 
-/**
-MAIN ROUTINE...
-*/
-int main(int argc, char *argv[])
-{
-    SQLHENV   henv;
-    SQLHDBC   hdbc;
-    SQLHSTMT  hstmt;
-    SQLINTEGER narg;
-    SQLCHAR    conn[255];
 
-    printMessageHeader();
+BEGIN_TESTS
+  ADD_TEST(my_columns_null)
+  ADD_TEST(my_drop_table)
+  ADD_TEST(my_table_priv)
+  ADD_TEST(my_table_dbs)
+  ADD_TEST(my_tablepriv)
+  ADD_TEST(my_tablepriv_data)
+  ADD_TEST(my_column_priv)
+  ADD_TEST(my_colpriv)
+  ADD_TEST(t_sqlprocedures)
+END_TESTS
 
-    /*
-     * if connection string supplied through arguments, overrite
-     * the default one..
-    */
-    for (narg = 1; narg < argc; narg++)
-    {
-        if ( narg == 1 )
-            mydsn = argv[1];
-        else if ( narg == 2 )
-            myuid = argv[2];
-        else if ( narg == 3 )
-            mypwd = argv[3];
-        else if ( narg == 4 )
-            mysock= argv[4];
-    }
 
-    sprintf(conn,"DSN=%s;UID=%s;PWD=%s;OPTION=3",mydsn,myuid,mypwd);
-    if (mysock != NULL)
-    {
-      strcat(conn, ";SOCKET=");
-      strcat(conn, mysock);
-    }
-    mydrvconnect(&henv,&hdbc,&hstmt,conn);
-
-    my_columns_null(hdbc,hstmt);
-    my_drop_table(hdbc,hstmt);
-    my_table_priv(hdbc,hstmt);
-    my_table_dbs(hdbc,hstmt);
-    if (!my_tablepriv_init(hdbc,hstmt))
-    {
-        my_tablepriv(hdbc,hstmt);
-        my_tablepriv_data(hdbc,hstmt);
-        my_column_priv(hdbc,hstmt);
-        my_colpriv_init(hdbc,hstmt);
-        my_colpriv(hdbc,hstmt);
-    }
-
-    t_sqlprocedures(hdbc, hstmt);
-
-    mydisconnect(&henv,&hdbc,&hstmt);
-    printMessageFooter( 1 );
-
-    return(0);
-}
+RUN_TESTS

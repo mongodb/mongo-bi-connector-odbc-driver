@@ -1,28 +1,31 @@
-/***************************************************************************
-                          my_bulk.c  -  description
-                             -------------------
-    begin                : Fri Nov 16 2001
-    copyright            : (C) MySQL AB 1997-2001
-    author               : venu ( venu@mysql.com )
- ***************************************************************************/
+/*
+  Copyright (C) 1997-2007 MySQL AB
 
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
-#include "mytest3.h"
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of version 2 of the GNU General Public License as
+  published by the Free Software Foundation.
+
+  There are special exceptions to the terms and conditions of the GPL
+  as it is applied to this software. View the full text of the exception
+  in file LICENSE.exceptions in the top-level directory of this software
+  distribution.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#include "odbctap.h"
 
 #define MAX_INSERT_COUNT 800
-
-/**
-BULK CHECK
-*/
 #define MAX_TXT_LENGTH 10
-void t_bulk_check(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+DECLARE_TEST(t_bulk_check)
 {
     SQLRETURN  rc;
     SQLCHAR    ltxt[MAX_TXT_LENGTH];
@@ -59,12 +62,12 @@ void t_bulk_check(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     SQLExecDirect(hstmt, "DROP TABLE t_bulk_check", SQL_NTS);
     SQLFreeStmt(hstmt, SQL_CLOSE);
+
+  return OK;
 }
 
-/**
-BULK INSERT
-*/
-void t_bulk_insert(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+DECLARE_TEST(t_bulk_insert)
 {
     SQLRETURN rc;
     SQLINTEGER i,id[MAX_INSERT_COUNT+1];
@@ -156,46 +159,15 @@ void t_bulk_insert(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     SQLExecDirect(hstmt, "DROP TABLE my_bulk", SQL_NTS);
     SQLFreeStmt(hstmt, SQL_CLOSE);
+
+  return OK;
 }
 
-/**
-MAIN ROUTINE...
-*/
-int main(int argc, char *argv[])
-{
-    SQLHENV   henv;
-    SQLHDBC   hdbc;
-    SQLHSTMT  hstmt;
-    SQLINTEGER narg;      
 
-    printMessageHeader();
+BEGIN_TESTS
+  ADD_TEST(t_bulk_check)
+  ADD_TEST(t_bulk_insert)
+END_TESTS
 
-    /*
-     * if connection string supplied through arguments, overrite
-     * the default one..
-    */
-    for (narg = 1; narg < argc; narg++)
-    {
-        if ( narg == 1 )
-            mydsn = argv[1];
-        else if ( narg == 2 )
-            myuid = argv[2];
-        else if ( narg == 3 )
-            mypwd = argv[3];
 
-    }   
-
-    myconnect(&henv,&hdbc,&hstmt);
-    if (driver_supports_setpos(hdbc))
-    {
-        t_bulk_check(hdbc,hstmt);
-        t_bulk_insert(hdbc,hstmt);      /* bulk inserts */
-        t_bulk_insert(hdbc,hstmt);      /* bulk inserts */
-        t_bulk_insert(hdbc,hstmt);      /* bulk inserts */
-    }
-    mydisconnect(&henv,&hdbc,&hstmt);
-
-    printMessageFooter( 1 );
-
-    return(0);
-}
+RUN_TESTS
