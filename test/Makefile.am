@@ -61,10 +61,8 @@ my_tran_ext \
 my_use_result
 fancy_tests= \
 mytest3
-odd_tests= \
-dbtest
 
-noinst_PROGRAMS= $(plain_tests) $(fancy_tests) $(odd_tests) $(tap_tests)
+noinst_PROGRAMS= $(plain_tests) $(fancy_tests) $(tap_tests)
 
 #	
 # COMPILATION SPECIFICATION
@@ -82,7 +80,6 @@ my_unixodbc_SOURCES=	unixodbc/my_unixodbc.c
 my_keys_SOURCES=	keys/my_keys.c
 my_tran_ext_SOURCES=	tran_ext/my_tran_ext.c
 my_use_result_SOURCES=	use_result/my_use_result.c
-dbtest_SOURCES=		db_test/db_test.c
 mytest3_SOURCES=	test3/mytest3.c
 
 
