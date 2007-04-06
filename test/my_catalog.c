@@ -747,7 +747,7 @@ DECLARE_TEST(t_sqlprocedures)
   assert(2 == my_print_non_format_result(hstmt));
 
   /* And try with specifying a catalog.  */
-  rc= SQLProcedures(hstmt, test_db, SQL_NTS, NULL, 0, "t_sqlproc%", SQL_NTS);
+  rc= SQLProcedures(hstmt, "test", SQL_NTS, NULL, 0, "t_sqlproc%", SQL_NTS);
   mystmt(hstmt,rc);
 
   assert(2 == my_print_non_format_result(hstmt));
