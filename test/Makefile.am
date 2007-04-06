@@ -57,7 +57,6 @@ mytest32
 plain_tests= \
 my_col_length \
 my_unixodbc \
-my_tran_ext \
 my_use_result
 fancy_tests= \
 mytest3
@@ -73,7 +72,6 @@ AM_LDFLAGS= 		@myodbc_test_linklib@
 
 my_col_length_SOURCES=	col_length/my_col_length.c
 my_unixodbc_SOURCES=	unixodbc/my_unixodbc.c
-my_tran_ext_SOURCES=	tran_ext/my_tran_ext.c
 my_use_result_SOURCES=	use_result/my_use_result.c
 mytest3_SOURCES=	test3/mytest3.c
 
