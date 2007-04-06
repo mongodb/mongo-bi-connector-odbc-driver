@@ -1,25 +1,29 @@
-/***************************************************************************
-                          my_scroll.c  -  description
-                             -------------------
-    begin                : Fri Sep 29 2001
-    copyright            : (C) MySQL AB 1997-2001
-    author               : venu ( venu@mysql.com )
- ***************************************************************************/
+/*
+  Copyright (C) 1997-2007 MySQL AB
 
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
-#include "mytest3.h"
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of version 2 of the GNU General Public License as
+  published by the Free Software Foundation.
 
-/**
-Testing basic scrolling feature
+  There are special exceptions to the terms and conditions of the GPL
+  as it is applied to this software. View the full text of the exception
+  in file LICENSE.exceptions in the top-level directory of this software
+  distribution.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-void t_scroll(SQLHDBC hdbc,SQLHSTMT hstmt)
+
+#include "odbctap.h"
+
+/* Testing basic scrolling feature */
+DECLARE_TEST(t_scroll)
 {
     SQLRETURN rc;
     SQLUINTEGER i;
@@ -138,11 +142,13 @@ void t_scroll(SQLHDBC hdbc,SQLHSTMT hstmt)
     SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt,SQL_UNBIND);    
     SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  return OK;
 }
-/**
-Testing SQL_FETCH_RELATIVE with row_set_size as 10
-*/
-void t_array_relative_10(SQLHDBC hdbc,SQLHSTMT hstmt)
+
+
+/* Testing SQL_FETCH_RELATIVE with row_set_size as 10 */
+DECLARE_TEST(t_array_relative_10)
 {
     SQLRETURN rc;
     SQLINTEGER nrows, iarray[15];
@@ -275,11 +281,13 @@ void t_array_relative_10(SQLHDBC hdbc,SQLHSTMT hstmt)
 
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)1,0);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-/**
-Testing SQL_FETCH_RELATIVE with row_set_size as 1
-*/
-void t_relative_1(SQLHDBC hdbc,SQLHSTMT hstmt)
+
+
+/* Testing SQL_FETCH_RELATIVE with row_set_size as 1 */
+DECLARE_TEST(t_relative_1)
 {
     SQLRETURN rc;
     SQLINTEGER nrows;
@@ -479,11 +487,13 @@ void t_relative_1(SQLHDBC hdbc,SQLHSTMT hstmt)
 
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)1,0);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-/**
-Testing SQL_FETCH_RELATIVE with row_set_size as 2
-*/
-void t_array_relative_2(SQLHDBC hdbc,SQLHSTMT hstmt)
+
+
+/* Testing SQL_FETCH_RELATIVE with row_set_size as 2 */
+DECLARE_TEST(t_array_relative_2)
 {
     SQLRETURN rc;
     SQLUINTEGER i, nrows;
@@ -785,11 +795,13 @@ void t_array_relative_2(SQLHDBC hdbc,SQLHSTMT hstmt)
 
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)1,0);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-/**
-Testing SQL_FETCH_ABSOLUTE with row_set_size as 1
-*/
-void t_absolute_1(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+/* Testing SQL_FETCH_ABSOLUTE with row_set_size as 1 */
+DECLARE_TEST(t_absolute_1)
 {
     SQLRETURN rc;
     SQLINTEGER nrows;
@@ -964,11 +976,13 @@ void t_absolute_1(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)1,0);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-/**
-Testing SQL_FETCH_ABSOLUTE with row_set_size as 2
-*/
-void t_absolute_2(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+
+/* Testing SQL_FETCH_ABSOLUTE with row_set_size as 2 */
+DECLARE_TEST(t_absolute_2)
 {
     SQLRETURN rc;
     SQLINTEGER nrows, iarray[15];
@@ -1213,44 +1227,19 @@ void t_absolute_2(SQLHDBC hdbc, SQLHSTMT hstmt)
 
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)1,0);
     mystmt(hstmt,rc);
+
+  return OK;
 }
-/**
-MAIN ROUTINE...
-*/
-int main(int argc, char *argv[])
-{
-    SQLHENV   henv;
-    SQLHDBC   hdbc;
-    SQLHSTMT  hstmt;
-    SQLINTEGER narg;      
 
-    printMessageHeader();
 
-    /*
-     * if connection string supplied through arguments, overrite
-     * the default one..
-    */
-    for (narg = 1; narg < argc; narg++)
-    {
-        if ( narg == 1 )
-            mydsn = argv[1];
-        else if ( narg == 2 )
-            myuid = argv[2];
-        else if ( narg == 3 )
-            mypwd = argv[3];
+BEGIN_TESTS
+  ADD_TEST(t_scroll)
+  ADD_TEST(t_array_relative_10)
+  ADD_TEST(t_relative_1)
+  ADD_TEST(t_array_relative_2)
+  ADD_TEST(t_absolute_1)
+  ADD_TEST(t_absolute_2)
+END_TESTS
 
-    }   
 
-    myconnect(&henv,&hdbc,&hstmt);
-    t_scroll(hdbc,hstmt);           /* basic scroll tests */
-    t_array_relative_10(hdbc,hstmt);/* relative with rowset_size 10 */
-    t_relative_1(hdbc,hstmt);       /* relative with rowset_size 1 */ 
-    t_array_relative_2(hdbc,hstmt); /* relative with rowset_size 2 */
-    t_absolute_1(hdbc,hstmt);       /* absolute with rowset_size 1 */ 
-    t_absolute_2(hdbc,hstmt);       /* absolute with rowset_size 2 */     
-    mydisconnect(&henv,&hdbc,&hstmt);
-
-    printMessageFooter( 1 );
-
-    return(0);
-}
+RUN_TESTS

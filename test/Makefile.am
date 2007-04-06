@@ -49,12 +49,12 @@ my_param \
 my_position \
 my_relative \
 my_result \
+my_scroll \
 my_tran \
 mytest \
 mytest32
 
 plain_tests= \
-my_scroll \
 my_col_length \
 my_unixodbc \
 my_tran_ext \
@@ -71,7 +71,6 @@ noinst_PROGRAMS= $(plain_tests) $(fancy_tests) $(tap_tests)
 INCLUDES= 		-I$(top_srcdir)/test/include
 AM_LDFLAGS= 		@myodbc_test_linklib@
 
-my_scroll_SOURCES=	scroll/my_scroll.c
 my_col_length_SOURCES=	col_length/my_col_length.c
 my_unixodbc_SOURCES=	unixodbc/my_unixodbc.c
 my_tran_ext_SOURCES=	tran_ext/my_tran_ext.c
