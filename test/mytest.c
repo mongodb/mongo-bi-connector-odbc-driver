@@ -20,8 +20,6 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#define DEBUG_LEVEL 2
-
 #include "odbctap.h"
 
 /**
@@ -128,29 +126,29 @@ DECLARE_TEST(tmysql_setpos_del)
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(100,'MySQL1')");
     mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(200,'MySQL2')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(300,'MySQL3')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(400,'MySQL4')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(300,'MySQL5')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(300,'MySQL6')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(300,'MySQL7')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_setpos1");
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
     mystmt(hstmt,rc);
@@ -161,9 +159,9 @@ DECLARE_TEST(tmysql_setpos_del)
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,5,&pcrow,NULL);
     mystmt(hstmt,rc);
 
-    printMessage(" pcrow:%d\n",pcrow);  
+    printMessage(" pcrow:%d\n",pcrow);
 
-    printMessage(" row1:%d,%s\n",nData,szData);    
+    printMessage(" row1:%d,%s\n",nData,szData);
 
     rc = SQLSetPos(hstmt,1,SQL_DELETE,SQL_LOCK_NO_CHANGE);
     mystmt(hstmt,rc);
@@ -174,7 +172,7 @@ DECLARE_TEST(tmysql_setpos_del)
     rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
 
-    printMessage(" rows affected:%d\n",nlen);    
+    printMessage(" rows affected:%d\n",nlen);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
@@ -183,7 +181,7 @@ DECLARE_TEST(tmysql_setpos_del)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_setpos1");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     my_assert( 6 == myresult(hstmt));
 
@@ -191,10 +189,10 @@ DECLARE_TEST(tmysql_setpos_del)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_setpos1");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,5,NULL,NULL);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     my_assert(300 == my_fetch_int(hstmt,1));
     my_assert(!strcmp((const char *)"MySQL6",
@@ -222,24 +220,24 @@ DECLARE_TEST(tmysql_setpos_del1)
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos values(100,'MySQL1')");
     mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos values(200,'MySQL2')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos values(300,'MySQL3')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos values(400,'MySQL4')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);     
+    mystmt(hstmt,rc);
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_setpos");
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
     mystmt(hstmt,rc);
@@ -250,9 +248,9 @@ DECLARE_TEST(tmysql_setpos_del1)
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,3,&pcrow,NULL);
     mystmt(hstmt,rc);
 
-    printMessage(" pcrow:%d\n",pcrow);  
+    printMessage(" pcrow:%d\n",pcrow);
 
-    printMessage(" row1:%d,%s\n",nData,szData);    
+    printMessage(" row1:%d,%s\n",nData,szData);
 
     rc = SQLSetPos(hstmt,0,SQL_DELETE,SQL_LOCK_NO_CHANGE);
     mystmt(hstmt,rc);
@@ -260,7 +258,7 @@ DECLARE_TEST(tmysql_setpos_del1)
     rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
 
-    printMessage(" rows affected:%d\n",nlen); 
+    printMessage(" rows affected:%d\n",nlen);
     myassert(nlen == 1);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
@@ -270,7 +268,7 @@ DECLARE_TEST(tmysql_setpos_del1)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_setpos");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     my_assert(3 == myresult(hstmt));
 
@@ -296,27 +294,27 @@ DECLARE_TEST(tmysql_setpos_upd)
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos values(100,'MySQL1')");
     mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos values(300,'MySQL3')");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos values(200,'MySQL2')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos values(300,'MySQL3')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos values(400,'MySQL4')");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos values(300,'MySQL3')");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_setpos");
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
     mystmt(hstmt,rc);
@@ -327,9 +325,9 @@ DECLARE_TEST(tmysql_setpos_upd)
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,3,&pcrow,NULL);
     mystmt(hstmt,rc);
 
-    printMessage(" pcrow:%d\n",pcrow);  
+    printMessage(" pcrow:%d\n",pcrow);
 
-    printMessage(" row1:%d,%s\n",nData,szData);    
+    printMessage(" row1:%d,%s\n",nData,szData);
 
     rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
     mystmt(hstmt,rc);
@@ -346,7 +344,7 @@ DECLARE_TEST(tmysql_setpos_upd)
     rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
 
-    printMessage(" rows affected:%d\n",nlen);    
+    printMessage(" rows affected:%d\n",nlen);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
@@ -355,7 +353,7 @@ DECLARE_TEST(tmysql_setpos_upd)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_setpos");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     myresult(hstmt);
 
@@ -377,7 +375,7 @@ DECLARE_TEST(tmysql_setpos_upd)
     mycon(hdbc,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_setpos");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     my_assert(5 == myresult(hstmt));
 
@@ -409,13 +407,13 @@ DECLARE_TEST(tmysql_setpos_add)
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_setpos_add");
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
     mystmt(hstmt,rc);
@@ -435,7 +433,7 @@ DECLARE_TEST(tmysql_setpos_add)
     rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
 
-    printMessage("rows affected:%d\n",nlen);    
+    printMessage("rows affected:%d\n",nlen);
 
     strcpy((char *)szData , "insert-new2");
     rc = SQLSetPos(hstmt,1,SQL_ADD,SQL_LOCK_NO_CHANGE);
@@ -444,7 +442,7 @@ DECLARE_TEST(tmysql_setpos_add)
     rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
 
-    printMessage("rows affected:%d\n",nlen);    
+    printMessage("rows affected:%d\n",nlen);
 
     strcpy((char *)szData , "insert-new3");
     rc = SQLSetPos(hstmt,0,SQL_ADD,SQL_LOCK_NO_CHANGE);
@@ -453,7 +451,7 @@ DECLARE_TEST(tmysql_setpos_add)
     rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
 
-    printMessage("rows affected:%d\n",nlen);    
+    printMessage("rows affected:%d\n",nlen);
 
     strcpy((char *)szData , "insert-new4");
     rc = SQLSetPos(hstmt,10,SQL_ADD,SQL_LOCK_NO_CHANGE);
@@ -462,7 +460,7 @@ DECLARE_TEST(tmysql_setpos_add)
     rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
 
-    printMessage("rows affected:%d\n",nlen);    
+    printMessage("rows affected:%d\n",nlen);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
@@ -471,7 +469,7 @@ DECLARE_TEST(tmysql_setpos_add)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_setpos_add");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     myassert(6 == myresult(hstmt));
 
@@ -497,16 +495,16 @@ DECLARE_TEST(t_sqlspecialcols)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into tmysql_specialcols values(200,'MySQL',2)");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_specialcols");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     myresult(hstmt);
 
@@ -541,7 +539,7 @@ DECLARE_TEST(t_sqltables)
 {
     SQLRETURN r;
 
-    r  = SQLTables(hstmt,NULL,0,NULL,0,NULL,0,NULL,0);        
+    r  = SQLTables(hstmt,NULL,0,NULL,0,NULL,0,NULL,0);
     mystmt(hstmt,r);
 
     myresult(hstmt);
@@ -549,7 +547,7 @@ DECLARE_TEST(t_sqltables)
     r = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,r);
 
-    r  = SQLTables(hstmt,NULL,0,NULL,0,NULL,0,"'system table'",SQL_NTS);        
+    r  = SQLTables(hstmt,NULL,0,NULL,0,NULL,0,"'system table'",SQL_NTS);
     mystmt(hstmt,r);
 
     if (driver_min_version(hdbc,"03.51.07",8))
@@ -560,7 +558,7 @@ DECLARE_TEST(t_sqltables)
     r = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,r);
 
-    r  = SQLTables(hstmt,NULL,0,NULL,0,NULL,0,"TABLE",SQL_NTS);        
+    r  = SQLTables(hstmt,NULL,0,NULL,0,NULL,0,"TABLE",SQL_NTS);
     mystmt(hstmt,r);
 
     myresult(hstmt);
@@ -568,7 +566,7 @@ DECLARE_TEST(t_sqltables)
     r = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,r);
 
-    r  = SQLTables(hstmt,"TEST",SQL_NTS,"TEST",SQL_NTS,NULL,0,"TABLE",SQL_NTS);        
+    r  = SQLTables(hstmt,"TEST",SQL_NTS,"TEST",SQL_NTS,NULL,0,"TABLE",SQL_NTS);
     mystmt(hstmt,r);
 
     myresult(hstmt);
@@ -576,7 +574,7 @@ DECLARE_TEST(t_sqltables)
     r = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,r);
 
-    r = SQLTables(hstmt,"%",SQL_NTS,NULL,0,NULL,0,NULL,0);  
+    r = SQLTables(hstmt,"%",SQL_NTS,NULL,0,NULL,0,NULL,0);
     mystmt(hstmt,r);
 
     myresult(hstmt);
@@ -624,36 +622,36 @@ DECLARE_TEST(tmysql_bindcol)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into tmysql_bindcol values(200,'MySQL')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = tmysql_prepare(hstmt,"select * from tmysql_bindcol where col2 = ? AND col1 = ?");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nodata,0,&nlen);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szodata,200,&nlen);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT, SQL_C_CHAR,SQL_VARCHAR,
                           0,0,szidata,5,NULL);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT, SQL_C_LONG,SQL_INTEGER,
                           0,0,&nidata,20,NULL);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLExecute(hstmt);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     printMessage(" outdata: %d, %s(%d)\n", nodata,szodata,nlen);
     my_assert(nodata == 200);
@@ -698,13 +696,13 @@ DECLARE_TEST(tmysql_pcbvalue)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into tmysql_pcbvalue values(200,'monty','mysql2')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     /* MS SQL Server to work...*/
 #if 0
@@ -713,20 +711,20 @@ DECLARE_TEST(tmysql_pcbvalue)
 #endif
 
     rc = SQLExecDirect(hstmt,"select * from tmysql_pcbvalue",SQL_NTS);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nodata,0,&nlen);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szdata,20,&slen);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,3,SQL_C_CHAR,sztdata,101,&tlen);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_FIRST,1,0,rgfRowStatus);
-    mystmt(hstmt,rc);      
-    printMessage("row1: %d(%d), %s(%d),%s(%d)\n", nodata,nlen,szdata,slen,sztdata,tlen);    
+    mystmt(hstmt,rc);
+    printMessage("row1: %d(%d), %s(%d),%s(%d)\n", nodata,nlen,szdata,slen,sztdata,tlen);
 
     strcpy(szdata,"updated-one");
 
@@ -734,9 +732,9 @@ DECLARE_TEST(tmysql_pcbvalue)
     mystmt(hstmt,rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,0,0);
-    mystmt(hstmt,rc);      
+    mystmt(hstmt,rc);
 
-    printMessage("row2: %d(%d), %s(%d),%s(%d)\n", nodata,nlen,szdata,slen,sztdata,tlen);    
+    printMessage("row2: %d(%d), %s(%d),%s(%d)\n", nodata,nlen,szdata,slen,sztdata,tlen);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,0,0);
     myassert(rc == SQL_NO_DATA_FOUND);
@@ -751,13 +749,13 @@ DECLARE_TEST(tmysql_pcbvalue)
     mycon(hdbc,rc);
 
     rc = SQLExecDirect(hstmt,"select * from tmysql_pcbvalue",SQL_NTS);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,szdata,20,&slen);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
     printMessage("updated data:%s(%d)",szdata,slen);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
@@ -791,39 +789,39 @@ DECLARE_TEST(tmysql_bindparam)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into tmysql_bindparam values(200,'MySQL')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = tmysql_prepare(hstmt,"select * from tmysql_bindparam where col2 = ? AND col1 = ?");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLNumResultCols(hstmt,&pccol);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nodata,0,&nlen);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szodata,200,&nlen);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT, SQL_C_CHAR,SQL_VARCHAR,
                           0,0,szidata,5,NULL);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT, SQL_C_LONG,SQL_INTEGER,
                           0,0,&nidata,20,NULL);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLExecute(hstmt);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     printMessage(" outdata: %d, %s(%d)\n", nodata,szodata,nlen);
     my_assert(nodata == 200);
@@ -853,7 +851,7 @@ DECLARE_TEST(tmysql_bindparam)
 
 DECLARE_TEST(tmysql_fix)
 {
-    SQLRETURN rc;  
+    SQLRETURN rc;
 
     /* dump based */
     printMessage("table structure for 'shop'..\n");
@@ -962,7 +960,7 @@ DECLARE_TEST(tmysql_fix)
             mystmt(hstmt,rc);
 
             printMessage("descparam[%d]:%d,%d,%d,%d\n",index,pfSqlType,pcbParamDef,pibScale,pfNullable);
-        } 
+        }
 
         rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,11,12,0,0,td,100,0);
         mystmt(hstmt,rc);
@@ -997,7 +995,7 @@ DECLARE_TEST(tmysql_pos_delete)
     SQLUSMALLINT rgfRowStatus;
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
-    mycon(hdbc,rc);    
+    mycon(hdbc,rc);
 
     tmysql_exec(hstmt,"drop table tmysql_pos_delete");
     rc = tmysql_exec(hstmt,"create table tmysql_pos_delete(col1 int , col2 varchar(30))");
@@ -1007,7 +1005,7 @@ DECLARE_TEST(tmysql_pos_delete)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into tmysql_pos_delete values(200,'MySQL')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -1016,10 +1014,10 @@ DECLARE_TEST(tmysql_pos_delete)
     mystmt(hstmt,rc);
 
     rc = SQLSetCursorName(hstmt,"venu_cur",SQL_NTS);
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_pos_delete");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,&pcrow,NULL);
     mystmt(hstmt,rc);
@@ -1028,16 +1026,16 @@ DECLARE_TEST(tmysql_pos_delete)
     mystmt(hstmt,rc);
 
     rc = SQLExecDirect(hstmt1,"   DfffELETE FROM tmysql_pos_delete WHERE CURRENT OF venu_cur",SQL_NTS);
-    mystmt_r(hstmt1,rc);  
+    mystmt_r(hstmt1,rc);
 
     rc = SQLExecDirect(hstmt1,"   DELETE FROM tmysql_pos_delete WHERE CURRENT OF venu_cur curs",SQL_NTS);
-    mystmt_r(hstmt1,rc);  
+    mystmt_r(hstmt1,rc);
 
     rc = SQLExecDirect(hstmt1,"   DELETE FROM tmysql_pos_delete WHERE ONE CURRENT OF venu_cur",SQL_NTS);
-    mystmt_r(hstmt1,rc);  
+    mystmt_r(hstmt1,rc);
 
     rc = SQLExecDirect(hstmt1,"   DELETE FROM tmysql_pos_delete WHERE CURRENT OF venu_cur",SQL_NTS);
-    mystmt(hstmt1,rc);  
+    mystmt(hstmt1,rc);
 
     SQLNumResultCols(hstmt1,&rgfRowStatus);
 
@@ -1048,7 +1046,7 @@ DECLARE_TEST(tmysql_pos_delete)
     mycon(hdbc,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_pos_delete");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     my_assert(1 == myresult(hstmt));
 
@@ -1080,19 +1078,19 @@ DECLARE_TEST(tmysql_pos_update)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into tmysql_pos_delete values(200,'MySQL')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLSetCursorName(hstmt,"venu_cur",SQL_NTS);
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_pos_delete");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,2,&pcrow,NULL);
     mystmt(hstmt,rc);
@@ -1107,7 +1105,7 @@ DECLARE_TEST(tmysql_pos_update)
     mystmt_r(hstmt1,rc);
 
     rc = SQLExecDirect(hstmt1,"  UPDATE tmysql_pos_delete SET col1= 999, col2 = 'update' WHERE CURRENT OF venu_cur",SQL_NTS);
-    mystmt(hstmt1,rc);  
+    mystmt(hstmt1,rc);
 
     SQLNumResultCols(hstmt1,&rgfRowStatus);
 
@@ -1118,13 +1116,13 @@ DECLARE_TEST(tmysql_pos_update)
     mycon(hdbc,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_pos_delete");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     {
         SQLCHAR szData[20];
         my_assert(999 == my_fetch_int(hstmt,1));
@@ -1160,16 +1158,16 @@ DECLARE_TEST(tmysql_pos_update_ex)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into t_pos_updex values(200,'MySQL')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_pos_updex");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,2,&pcrow,NULL);
     mystmt(hstmt,rc);
@@ -1181,12 +1179,12 @@ DECLARE_TEST(tmysql_pos_update_ex)
     mystmt(hstmt1,rc);
 
     rc = SQLGetCursorName(hstmt,cursor,30,NULL);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     sprintf(sql,"UPDATE t_pos_updex SET col1= 999, col2 = ? WHERE CURRENT OF %s",cursor);
 
     rc = SQLExecDirect(hstmt1,sql,SQL_NTS);
-    mystmt(hstmt1,rc);  
+    mystmt(hstmt1,rc);
 
     SQLNumResultCols(hstmt1,&rgfRowStatus);
 
@@ -1197,13 +1195,13 @@ DECLARE_TEST(tmysql_pos_update_ex)
     mycon(hdbc,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_pos_updex");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     {
         SQLCHAR szData[20];
         my_assert(999 == my_fetch_int(hstmt,1));
@@ -1241,16 +1239,16 @@ DECLARE_TEST(tmysql_pos_update_ex1)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into t_pos_updex values(200,'MySQL')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_pos_updex");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,2,&pcrow,NULL);
     mystmt(hstmt,rc);
@@ -1262,12 +1260,12 @@ DECLARE_TEST(tmysql_pos_update_ex1)
     mystmt(hstmt1,rc);
 
     rc = SQLGetCursorName(hstmt,cursor,30,NULL);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     sprintf(sql,"UPDATE t_pos_updex SET col1= 999, col2 = ? WHERE CURRENT OF %s",cursor);
 
     rc = SQLExecDirect(hstmt1,sql,SQL_NTS);
-    mystmt(hstmt1,rc);  
+    mystmt(hstmt1,rc);
 
     SQLNumResultCols(hstmt1,&rgfRowStatus);
 
@@ -1278,13 +1276,13 @@ DECLARE_TEST(tmysql_pos_update_ex1)
     mycon(hdbc,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_pos_updex");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     {
         SQLCHAR szData[20];
         my_assert(999 == my_fetch_int(hstmt,1));
@@ -1323,16 +1321,16 @@ DECLARE_TEST(tmysql_pos_update_ex2)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into t_pos_updex values(200,'MySQL',2)");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select col1,col2 from t_pos_updex");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,2,&pcrow,NULL);
     mystmt(hstmt,rc);
@@ -1344,12 +1342,12 @@ DECLARE_TEST(tmysql_pos_update_ex2)
     mystmt(hstmt1,rc);
 
     rc = SQLGetCursorName(hstmt,cursor,30,NULL);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     sprintf(sql,"UPDATE t_pos_updex SET col1= 999, col2 = ? WHERE CURRENT OF %s",cursor);
 
     rc = SQLExecDirect(hstmt1,sql,SQL_NTS);
-    mystmt(hstmt1,rc);  
+    mystmt(hstmt1,rc);
 
     SQLNumResultCols(hstmt1,&rgfRowStatus);
 
@@ -1360,13 +1358,13 @@ DECLARE_TEST(tmysql_pos_update_ex2)
     mycon(hdbc,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_pos_updex");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     {
         SQLCHAR szData[20];
         my_assert(999 == my_fetch_int(hstmt,1));
@@ -1402,16 +1400,16 @@ DECLARE_TEST(tmysql_pos_update_ex3)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into t_pos_updex values(200,'MySQL')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_pos_updex");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,2,&pcrow,NULL);
@@ -1421,12 +1419,12 @@ DECLARE_TEST(tmysql_pos_update_ex3)
     mystmt(hstmt,rc);
 
     rc = SQLGetCursorName(hstmt,cursor,30,NULL);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     sprintf(sql,"UPDATE t_pos_updex SET col1= 999, col2 = ? WHERE CURRENT OF %s",cursor);
 
     rc = SQLExecDirect(hstmt1,sql,SQL_NTS);
-    mystmt_err(hstmt1,rc == SQL_ERROR,rc);  
+    mystmt_err(hstmt1,rc == SQL_ERROR,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
@@ -1461,10 +1459,10 @@ DECLARE_TEST(tmysql_pos_update_ex4)
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_pos_updex4");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,1,&pcrow,NULL);
     mystmt(hstmt,rc);
@@ -1476,12 +1474,12 @@ DECLARE_TEST(tmysql_pos_update_ex4)
     mystmt(hstmt,rc);
 
     rc = SQLGetCursorName(hstmt,cursor,30,NULL);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     sprintf(sql,"UPDATE t_pos_updex4 SET name = 'venu' WHERE CURRENT OF %s",cursor);
 
     rc = SQLExecDirect(hstmt1,sql,SQL_NTS);
-    mystmt(hstmt1,rc);  
+    mystmt(hstmt1,rc);
 
     /*rc = SQLSetPos(hstmt,1,SQL_UPDATE,SQL_LOCK_NO_CHANGE);
       mystmt(hstmt,rc);*/
@@ -1493,12 +1491,12 @@ DECLARE_TEST(tmysql_pos_update_ex4)
     mycon(hdbc,rc);
 
     rc = tmysql_exec(hstmt,"select name from t_pos_updex4");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     {
-        SQLCHAR szData[20];      
+        SQLCHAR szData[20];
         my_assert(!strcmp("venu",my_fetch_str(hstmt,szData,1)));
     }
 
@@ -1536,19 +1534,19 @@ DECLARE_TEST(tmysql_pos_dyncursor)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into tmysql_pos_dyncursor values(200,'MySQL')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLSetCursorName(hstmt,"venu_cur",SQL_NTS);
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_pos_dyncursor");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,&pcrow,NULL);
     mystmt(hstmt,rc);
@@ -1565,7 +1563,7 @@ DECLARE_TEST(tmysql_pos_dyncursor)
     sprintf(buff,"UPDATE tmysql_pos_dyncursor SET col1= 999, col2 = 'update' WHERE CURRENT OF %s",szCursor);
 
     rc = SQLExecDirect(hstmt1,buff,SQL_NTS);
-    mystmt(hstmt1,rc);  
+    mystmt(hstmt1,rc);
 
     SQLNumResultCols(hstmt1,&rgfRowStatus);
 
@@ -1576,13 +1574,13 @@ DECLARE_TEST(tmysql_pos_dyncursor)
     mycon(hdbc,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_pos_dyncursor");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     {
         SQLCHAR szData[20];
         my_assert(999 == my_fetch_int(hstmt,1));
@@ -1617,30 +1615,30 @@ DECLARE_TEST(tmysql_mtab_setpos_del)
     rc = tmysql_exec(hstmt,"insert into tmysql_t1 values(1,'t1_one')");
     mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_t1 values(2,'t1_two')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_t1 values(3,'t1_three')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into tmysql_t2 values(2,'t2_one')");
     mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_t2 values(3,'t2_two')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_t2 values(4,'t2_three')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     /* FULL JOIN */
     rc = tmysql_exec(hstmt,"select tmysql_t1.*,tmysql_t2.* from tmysql_t1,tmysql_t2");
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
     mystmt(hstmt,rc);
@@ -1651,15 +1649,15 @@ DECLARE_TEST(tmysql_mtab_setpos_del)
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,3,&pcrow,NULL);
     mystmt(hstmt,rc);
 
-    printMessage(" pcrow:%d\n",pcrow);  
+    printMessage(" pcrow:%d\n",pcrow);
 
-    printMessage(" row1:%d,%s\n",nData,szData);    
+    printMessage(" row1:%d,%s\n",nData,szData);
 
     rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
     mystmt(hstmt,rc);
 
     /* not yet supported..*/
-    rc = SQLSetPos(hstmt,2,SQL_DELETE,SQL_LOCK_NO_CHANGE);    
+    rc = SQLSetPos(hstmt,2,SQL_DELETE,SQL_LOCK_NO_CHANGE);
     mystmt_r(hstmt,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
@@ -1682,10 +1680,10 @@ DECLARE_TEST(tmysql_showkeys)
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"SHOW KEYS FROM tmysql_spk");
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     my_assert(1 == myresult(hstmt));
 
@@ -1715,23 +1713,23 @@ DECLARE_TEST(tmysql_setpos_pkdel)
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(100,'MySQL1')");
     mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(200,'MySQL2')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(300,'MySQL3')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(400,'MySQL4')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_setpos1");
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
     mystmt(hstmt,rc);
@@ -1742,9 +1740,9 @@ DECLARE_TEST(tmysql_setpos_pkdel)
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,4,&pcrow,NULL);
     mystmt(hstmt,rc);
 
-    printMessage(" pcrow:%d\n",pcrow);  
+    printMessage(" pcrow:%d\n",pcrow);
 
-    printMessage(" row1:%d,%s\n",nData,szData);    
+    printMessage(" row1:%d,%s\n",nData,szData);
 
     rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
     mystmt(hstmt,rc);
@@ -1755,7 +1753,7 @@ DECLARE_TEST(tmysql_setpos_pkdel)
     rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
 
-    printMessage(" rows affected:%d\n",nlen);    
+    printMessage(" rows affected:%d\n",nlen);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
@@ -1764,7 +1762,7 @@ DECLARE_TEST(tmysql_setpos_pkdel)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_setpos1");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     my_assert( 3 == myresult(hstmt));
 
@@ -1794,23 +1792,23 @@ DECLARE_TEST(t_alias_setpos_pkdel)
     rc = tmysql_exec(hstmt,"insert into t_alias_setpos_del values(100,'MySQL1')");
     mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into t_alias_setpos_del values(200,'MySQL2')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into t_alias_setpos_del values(300,'MySQL3')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into t_alias_setpos_del values(400,'MySQL4')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select col1 as id, col2 as name from t_alias_setpos_del");
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
     mystmt(hstmt,rc);
@@ -1821,9 +1819,9 @@ DECLARE_TEST(t_alias_setpos_pkdel)
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,4,&pcrow,NULL);
     mystmt(hstmt,rc);
 
-    printMessage(" pcrow:%d\n",pcrow);  
+    printMessage(" pcrow:%d\n",pcrow);
 
-    printMessage(" row1:%d,%s\n",nData,szData);    
+    printMessage(" row1:%d,%s\n",nData,szData);
 
     rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
     mystmt(hstmt,rc);
@@ -1834,7 +1832,7 @@ DECLARE_TEST(t_alias_setpos_pkdel)
     rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
 
-    printMessage(" rows affected:%d\n",nlen);    
+    printMessage(" rows affected:%d\n",nlen);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
@@ -1843,7 +1841,7 @@ DECLARE_TEST(t_alias_setpos_pkdel)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_alias_setpos_del");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     my_assert( 3 == myresult(hstmt));
 
@@ -1874,23 +1872,23 @@ DECLARE_TEST(t_alias_setpos_del)
     rc = tmysql_exec(hstmt,"insert into t_alias_setpos_del values(100,'MySQL1')");
     mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into t_alias_setpos_del values(200,'MySQL2')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into t_alias_setpos_del values(300,'MySQL3')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into t_alias_setpos_del values(400,'MySQL4')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select col1 as id, col2 as name from t_alias_setpos_del");
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
     mystmt(hstmt,rc);
@@ -1901,9 +1899,9 @@ DECLARE_TEST(t_alias_setpos_del)
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,1,&pcrow,&rgfRowStatus);
     mystmt(hstmt,rc);
 
-    printMessage(" pcrow:%d,rgfRowStatus:%d\n",pcrow,rgfRowStatus);  
+    printMessage(" pcrow:%d,rgfRowStatus:%d\n",pcrow,rgfRowStatus);
 
-    printMessage(" row1:%d,%s\n",nData,szData);    
+    printMessage(" row1:%d,%s\n",nData,szData);
 
     rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
     mystmt(hstmt,rc);
@@ -1914,7 +1912,7 @@ DECLARE_TEST(t_alias_setpos_del)
     rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
 
-    printMessage(" rows affected:%d\n",nlen);    
+    printMessage(" rows affected:%d\n",nlen);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
@@ -1923,7 +1921,7 @@ DECLARE_TEST(t_alias_setpos_del)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_alias_setpos_del");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     my_assert( 3 == myresult(hstmt));
 
@@ -1952,11 +1950,11 @@ DECLARE_TEST(tmysql_setpos_pkdel1)
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(100,10,'MySQL1')");
     mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(200,20,'MySQL2')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(300,20,'MySQL3')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(400,20,'MySQL4')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -1965,10 +1963,10 @@ DECLARE_TEST(tmysql_setpos_pkdel1)
     mystmt(hstmt,rc);
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select col2,col3 from tmysql_setpos1");
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
     mystmt(hstmt,rc);
@@ -1979,9 +1977,9 @@ DECLARE_TEST(tmysql_setpos_pkdel1)
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,4,&pcrow,NULL);
     mystmt(hstmt,rc);
 
-    printMessage(" pcrow:%d\n",pcrow);  
+    printMessage(" pcrow:%d\n",pcrow);
 
-    printMessage(" row1:%d,%s\n",nData,szData);    
+    printMessage(" row1:%d,%s\n",nData,szData);
 
     rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
     mystmt(hstmt,rc);
@@ -1992,7 +1990,7 @@ DECLARE_TEST(tmysql_setpos_pkdel1)
     rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
 
-    printMessage(" rows affected:%d\n",nlen);    
+    printMessage(" rows affected:%d\n",nlen);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
@@ -2001,7 +1999,7 @@ DECLARE_TEST(tmysql_setpos_pkdel1)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_setpos1");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     my_assert( 3 == myresult(hstmt));
 
@@ -2031,23 +2029,23 @@ DECLARE_TEST(tmysql_setpos_pkdel2)
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(100,10,'MySQL1')");
     mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(200,20,'MySQL2')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(300,20,'MySQL3')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(400,20,'MySQL4')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select col2,col3 from tmysql_setpos1");
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
     mystmt(hstmt,rc);
@@ -2057,9 +2055,9 @@ DECLARE_TEST(tmysql_setpos_pkdel2)
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,4,&pcrow,NULL);
     mystmt(hstmt,rc);
-    printMessage(" pcrow:%d\n",pcrow);  
+    printMessage(" pcrow:%d\n",pcrow);
 
-    printMessage(" row1:%d,%s\n",nData,szData);    
+    printMessage(" row1:%d,%s\n",nData,szData);
 
     rc = SQLSetPos(hstmt,1,SQL_DELETE,SQL_LOCK_NO_CHANGE);
     mystmt(hstmt,rc);
@@ -2067,7 +2065,7 @@ DECLARE_TEST(tmysql_setpos_pkdel2)
     rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
 
-    printMessage(" rows affected:%d\n",nlen);    
+    printMessage(" rows affected:%d\n",nlen);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
@@ -2076,7 +2074,7 @@ DECLARE_TEST(tmysql_setpos_pkdel2)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_setpos1");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     my_assert( 3 == myresult(hstmt));
 
@@ -2100,7 +2098,7 @@ DECLARE_TEST(tmysql_rowstatus)
     mycon(hdbc,rc);
 
     rc = SQLSetCursorName(hstmt,"venu_cur",SQL_NTS);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     tmysql_exec(hstmt,"drop table tmysql_rowstatus");
     rc = tmysql_exec(hstmt,"create table tmysql_rowstatus(col1 int , col2 varchar(30))");
@@ -2110,31 +2108,31 @@ DECLARE_TEST(tmysql_rowstatus)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into tmysql_rowstatus values(200,'MySQL')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into tmysql_rowstatus values(300,'MySQL3')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into tmysql_rowstatus values(400,'MySQL3')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into tmysql_rowstatus values(500,'MySQL3')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into tmysql_rowstatus values(600,'MySQL3')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);      
+    mystmt(hstmt,rc);
 
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)1 , 0);
-    mystmt(hstmt, rc);  
+    mystmt(hstmt, rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_rowstatus");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,NULL);
     mystmt(hstmt,rc);
@@ -2143,19 +2141,19 @@ DECLARE_TEST(tmysql_rowstatus)
     mystmt(hstmt,rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,pcrow,(SQLUSMALLINT *)&rgfRowStatus);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,pcrow,(SQLUSMALLINT *)&rgfRowStatus);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
     mystmt(hstmt,rc);
 
     rc = SQLExecDirect(hstmt1,"UPDATE tmysql_rowstatus SET col1= 999, col2 = 'pos-update' WHERE CURRENT OF venu_cur",SQL_NTS);
-    mystmt(hstmt1,rc);  
+    mystmt(hstmt1,rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_LAST,1,NULL,NULL);
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
 
     rc = SQLSetPos(hstmt,1,SQL_DELETE,SQL_LOCK_NO_CHANGE);
     mystmt(hstmt,rc);
@@ -2165,14 +2163,14 @@ DECLARE_TEST(tmysql_rowstatus)
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
     rc = SQLFreeStmt(hstmt1,SQL_DROP);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
 
     rc = tmysql_exec(hstmt,"select * from tmysql_rowstatus");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     myassert(5 == myresult(hstmt));
 
@@ -2193,13 +2191,13 @@ DECLARE_TEST(t_refresh)
     rc = SQLSetConnectOption(hdbc,SQL_AUTOCOMMIT,SQL_AUTOCOMMIT_OFF);
     mycon(hdbc,rc);
 
-    tmysql_exec(hstmt,"drop table if exists t_refresh");    
+    tmysql_exec(hstmt,"drop table if exists t_refresh");
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = tmysql_exec(hstmt,"create table t_refresh(col1 int ,col2 varchar(30)) TYPE = BDB");
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -2208,16 +2206,16 @@ DECLARE_TEST(t_refresh)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into t_refresh values(20,'mysql')");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_refresh");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     my_assert( 2 == myresult(hstmt));
 
@@ -2250,23 +2248,23 @@ DECLARE_TEST(tmysql_setpos_pkdel3)
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(100,10,'MySQL1')");
     mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(200,20,'MySQL2')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(300,20,'MySQL3')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(400,20,'MySQL4')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select col1 from tmysql_setpos1");
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
     mystmt(hstmt,rc);
@@ -2274,9 +2272,9 @@ DECLARE_TEST(tmysql_setpos_pkdel3)
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,4,&pcrow,NULL);
     mystmt(hstmt,rc);
 
-    printMessage(" pcrow:%d\n",pcrow);  
+    printMessage(" pcrow:%d\n",pcrow);
 
-    printMessage(" row1:%d,%s\n",nData,szData);    
+    printMessage(" row1:%d,%s\n",nData,szData);
 
     rc = SQLSetPos(hstmt,1,SQL_DELETE,SQL_LOCK_NO_CHANGE);
     mystmt(hstmt,rc);
@@ -2284,7 +2282,7 @@ DECLARE_TEST(tmysql_setpos_pkdel3)
     rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
 
-    printMessage(" rows affected:%d\n",nlen);    
+    printMessage(" rows affected:%d\n",nlen);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
@@ -2293,7 +2291,7 @@ DECLARE_TEST(tmysql_setpos_pkdel3)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from tmysql_setpos1");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     my_assert( 3 == myresult(hstmt));
 
@@ -2323,11 +2321,11 @@ DECLARE_TEST(t_mul_pkdel)
     rc = tmysql_exec(hstmt,"insert into t_mul_pkdel values(100,10,'MySQL1')");
     mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into t_mul_pkdel values(200,20,'MySQL2')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into t_mul_pkdel values(300,20,'MySQL3')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into t_mul_pkdel values(400,20,'MySQL4')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -2336,17 +2334,17 @@ DECLARE_TEST(t_mul_pkdel)
     mystmt(hstmt,rc);
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select col1,col2 from t_mul_pkdel");
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
     mystmt(hstmt,rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,&pcrow,NULL);
-    mystmt(hstmt,rc);      
-    printMessage(" row1:%d,%s\n",nData,szData);    
+    mystmt(hstmt,rc);
+    printMessage(" row1:%d,%s\n",nData,szData);
 
     rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
     mystmt(hstmt,rc);
@@ -2357,7 +2355,7 @@ DECLARE_TEST(t_mul_pkdel)
     rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
 
-    printMessage(" rows affected:%d\n",nlen);    
+    printMessage(" rows affected:%d\n",nlen);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
@@ -2366,7 +2364,7 @@ DECLARE_TEST(t_mul_pkdel)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_mul_pkdel");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     my_assert( 3 == myresult(hstmt));
 
@@ -2396,31 +2394,31 @@ DECLARE_TEST(t_mul_pkdel1)
     rc = tmysql_exec(hstmt,"insert into t_mul_pkdel values(100,10,'MySQL1')");
     mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into t_mul_pkdel values(200,20,'MySQL2')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into t_mul_pkdel values(300,20,'MySQL3')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into t_mul_pkdel values(400,20,'MySQL4')");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select col1 from t_mul_pkdel");
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
     mystmt(hstmt,rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,4,&pcrow,NULL);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
-    printMessage(" row1:%d,%s\n",nData,szData);    
+    printMessage(" row1:%d,%s\n",nData,szData);
 
     rc = SQLSetPos(hstmt,1,SQL_DELETE,SQL_LOCK_NO_CHANGE);
     mystmt(hstmt,rc);
@@ -2428,7 +2426,7 @@ DECLARE_TEST(t_mul_pkdel1)
     rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
 
-    printMessage(" rows affected:%d\n",nlen);    
+    printMessage(" rows affected:%d\n",nlen);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
@@ -2437,7 +2435,7 @@ DECLARE_TEST(t_mul_pkdel1)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_mul_pkdel");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     my_assert( 3 == myresult(hstmt));
 
@@ -2482,16 +2480,16 @@ DECLARE_TEST(t_max_select)
     }
 
     rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_max_select");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     my_assert( 1000 == myresult(hstmt));
 
@@ -2518,13 +2516,13 @@ DECLARE_TEST(t_tran)
     rc = SQLSetConnectOption(hdbc,SQL_AUTOCOMMIT,SQL_AUTOCOMMIT_OFF);
     mycon(hdbc,rc);
 
-    tmysql_exec(hstmt,"drop table if exists t_tran");    
+    tmysql_exec(hstmt,"drop table if exists t_tran");
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = tmysql_exec(hstmt,"create table t_tran(col1 int ,col2 varchar(30)) TYPE = InnoDB");
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -2536,16 +2534,16 @@ DECLARE_TEST(t_tran)
     mycon(hdbc,rc);
 
     rc = tmysql_exec(hstmt,"insert into t_tran values(20,'mysql')");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_ROLLBACK);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_tran");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     my_assert( 1 == myresult(hstmt));
 
@@ -2578,22 +2576,22 @@ DECLARE_TEST(t_tran_ddl)
     my_assert(rgbValue == SQL_TC_DDL_COMMIT);
     my_assert(len == 2);
 
-    tmysql_exec(hstmt,"drop table if exists t_tran1");    
+    tmysql_exec(hstmt,"drop table if exists t_tran1");
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = tmysql_exec(hstmt,"create table t_tran1(col1 int ,col2 varchar(30)) TYPE = BDB");
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_ROLLBACK);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
-    rc = tmysql_exec(hstmt,"drop table if exists t_tran1");    
-    mystmt(hstmt,rc);  
+    rc = tmysql_exec(hstmt,"drop table if exists t_tran1");
+    mystmt(hstmt,rc);
 
     rc = SQLSetConnectOption(hdbc,SQL_AUTOCOMMIT,SQL_AUTOCOMMIT_ON);
     mycon(hdbc,rc);
@@ -2648,34 +2646,34 @@ DECLARE_TEST(t_enumset)
     mystmt(hstmt,rc);
 
     rc = SQLExecDirect(hstmt,"insert into t_enumset values('MYSQL_E2','TWO,THREE')",SQL_NTS);
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLPrepare(hstmt,"insert into t_enumset values(?,?)",SQL_NTS);
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_CHAR,SQL_CHAR,0,0,&szEnum,sizeof(szEnum),NULL);
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
 
     rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,SQL_C_CHAR,SQL_CHAR,0,0,&szSet,sizeof(szSet),NULL);
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
 
     rc = SQLExecute(hstmt);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_enumset");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     my_assert( 2 == myresult(hstmt));
 
@@ -2711,27 +2709,27 @@ DECLARE_TEST(t_desccol)
     mystmt(hstmt,rc);
 
     rc = SQLExecDirect(hstmt,"insert into t_desccol values(10,'venu','mysql')",SQL_NTS);
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_desccol");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLDescribeCol(hstmt,1,(char *)colname,20,&collen,&datatype,&colsize,&decptr,&nullable);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     printMessage("1: %s,%d,%d,%d,%d,%d\n",colname,collen,datatype,colsize,decptr,nullable);;
 
     rc = SQLDescribeCol(hstmt,2,(char *)colname,20,&collen,&datatype,&colsize,&decptr,&nullable);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     printMessage("2: %s,%d,%d,%d,%d,%d\n",colname,collen,datatype,colsize,decptr,nullable);;
 
     rc = SQLDescribeCol(hstmt,3,(char *)colname,20,&collen,&datatype,&colsize,&decptr,&nullable);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
     printMessage("3: %s,%d,%d,%d,%d,%d\n",colname,collen,datatype,colsize,decptr,nullable);;
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
@@ -2848,7 +2846,7 @@ DECLARE_TEST(t_desccolext)
         txt3 mediumtext,\
         txt4 longtext,\
         en enum('v1','v2'),\
-        st set('1','2','3'))";          
+        st set('1','2','3'))";
 
     rc = tmysql_exec(hstmt,sql);
     mystmt(hstmt,rc);
@@ -2994,7 +2992,7 @@ DECLARE_TEST(t_colattributes)
         txt3 mediumtext,\
         txt4 longtext,\
         en enum('v1','v2'),\
-        st set('1','2','3'))";          
+        st set('1','2','3'))";
 
     rc = tmysql_exec(hstmt,sql);
     mystmt(hstmt,rc);
@@ -3060,7 +3058,7 @@ DECLARE_TEST(t_bigint)
     mystmt(hstmt,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -3115,13 +3113,13 @@ DECLARE_TEST(t_bigint)
 #endif
 
     rc = tmysql_exec(hstmt,"select * from t_bigint");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLGetData(hstmt,1,SQL_C_DEFAULT,&id,sizeof(id),&nlen);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     printMessage("\n id:%s,nlen:%d,%d\n",id,nlen,sizeof(SQL_BIGINT));
 
@@ -3154,7 +3152,7 @@ DECLARE_TEST(t_setpos_upd_bug1)
     rc = tmysql_exec(hstmt,"insert into t_setpos_upd_bug1(fname,lname) values('joshua','kugler')");
     mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into t_setpos_upd_bug1(fname,lname) values('monty','widenius')");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into t_setpos_upd_bug1(fname,lname) values('mr.','venu')");
     mystmt(hstmt,rc);
 
@@ -3162,15 +3160,15 @@ DECLARE_TEST(t_setpos_upd_bug1)
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_setpos_upd_bug1 order by id asc");
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLNumResultCols(hstmt,(SQLSMALLINT *)&pccol);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
-    printMessage(" total columns:%d\n",pccol);    
+    printMessage(" total columns:%d\n",pccol);
 
     rc = SQLBindCol(hstmt,1,SQL_C_SLONG,&id,4,&id_len);
     mystmt(hstmt,rc);
@@ -3202,7 +3200,7 @@ DECLARE_TEST(t_setpos_upd_bug1)
     rc = SQLRowCount(hstmt,&len);
     mystmt(hstmt,rc);
 
-    printMessage(" rows affected:%d\n",len);    
+    printMessage(" rows affected:%d\n",len);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
@@ -3211,7 +3209,7 @@ DECLARE_TEST(t_setpos_upd_bug1)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_setpos_upd_bug1");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     myresult(hstmt);
 
@@ -3233,7 +3231,7 @@ DECLARE_TEST(t_setpos_upd_bug1)
     mycon(hdbc,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_setpos_upd_bug1");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     my_assert(2 == myresult(hstmt));
 
@@ -3258,36 +3256,36 @@ DECLARE_TEST(t_acc_update)
     rc = tmysql_exec(hstmt,"insert into t_acc_update values(1)");
     mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into t_acc_update values(2)");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
 
     rc = SQLPrepare(hstmt,"select id from t_acc_update where id = ?",SQL_NTS);
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_DEFAULT,SQL_INTEGER,11,0,&id,0,NULL);
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
 
     id = 2;
     rc = SQLExecute(hstmt);
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
 
     rc = SQLGetData(hstmt,1,SQL_C_LONG,&id1,512,NULL);
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
     printMessage("outdata:%d\n",id1);
 
     SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt,SQL_UNBIND);
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
 
 
     rc = SQLSetConnectOption(hdbc,SQL_AUTOCOMMIT,0L);
@@ -3299,21 +3297,21 @@ DECLARE_TEST(t_acc_update)
     id = 2;
     id1=2;
     rc = SQLBindParameter(hstmt1,1,SQL_PARAM_INPUT,SQL_C_LONG,SQL_INTEGER,10,0,&id,0,NULL);
-    mystmt(hstmt1,rc);   
+    mystmt(hstmt1,rc);
 
     rc = SQLBindParameter(hstmt1,2,SQL_PARAM_INPUT,SQL_C_DEFAULT,SQL_INTEGER,11,0,&id1,0,NULL);
-    mystmt(hstmt1,rc);   
+    mystmt(hstmt1,rc);
 
     rc = SQLExecDirect(hstmt1,"UPDATE t_acc_update SET id = ?  WHERE id = ?",SQL_NTS);
-    mystmt(hstmt1,rc);   
+    mystmt(hstmt1,rc);
 
     rc = SQLRowCount(hstmt1,&pcrow);
-    mystmt(hstmt1,rc);   
+    mystmt(hstmt1,rc);
     printMessage("rows affected:%d\n",pcrow);
 
-    SQLFreeStmt(hstmt1,SQL_RESET_PARAMS);        
+    SQLFreeStmt(hstmt1,SQL_RESET_PARAMS);
     rc = SQLFreeStmt(hstmt1,SQL_DROP);
-    mystmt(hstmt1,rc);   
+    mystmt(hstmt1,rc);
 
     rc = SQLTransact(NULL,hdbc,0);
     mycon(hdbc,rc);
@@ -3327,15 +3325,15 @@ DECLARE_TEST(t_acc_update)
 
 void tmy_cursor(SQLHSTMT hstmt,SQLCHAR *setCurName,SQLCHAR *getCurName,SQLSMALLINT setLen)
 {
-    SQLRETURN rc; 
+    SQLRETURN rc;
     SQLSMALLINT getLen;
 
     printMessage("\nsetcursor:%s(%d)",setCurName,setLen);
-    rc = SQLSetCursorName(hstmt,setCurName,setLen); 
-    mystmt(hstmt,rc); 
+    rc = SQLSetCursorName(hstmt,setCurName,setLen);
+    mystmt(hstmt,rc);
 
     rc = SQLGetCursorName(hstmt,getCurName,20,&getLen);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     printMessage("\ngetcursor:%s(%d)\n",getCurName,strlen(getCurName));
 }
@@ -3351,7 +3349,7 @@ DECLARE_TEST(tmycursor_1)
     myassert(strcmp(getCurName,"MYSQL")==0);
 
     tmy_cursor(hstmt,"MYSQL",getCurName,2);
-    myassert(strcmp(getCurName,"MY")==0); 
+    myassert(strcmp(getCurName,"MY")==0);
 
   return OK;
 }
@@ -3378,7 +3376,7 @@ DECLARE_TEST(tmy_cursor2)
     getLen = -1;
 
     rc = SQLGetCursorName(hstmt,getCursor,-1,&getLen);
-    mystmt_err(hstmt,rc == SQL_ERROR,rc);   
+    mystmt_err(hstmt,rc == SQL_ERROR,rc);
 
     memset(getCursor,0,50);
     getLen = -1;
@@ -3445,13 +3443,13 @@ DECLARE_TEST(t_nativesql)
 {
     SQLRETURN rc;
     SQLCHAR    Statement_in[3000];
-    SQLCHAR    Statement_out[4000]; 
+    SQLCHAR    Statement_out[4000];
     SQLUINTEGER StmtLen;
 
     strcpy(Statement_in, "select * from venu");
 
-    rc = SQLNativeSql(hdbc, Statement_in, 
-                      SQL_NTS,Statement_out, 
+    rc = SQLNativeSql(hdbc, Statement_in,
+                      SQL_NTS,Statement_out,
                       sizeof(Statement_out), &StmtLen);
     mycon(hdbc,rc);
     printMessage("outstr:%s(%d)\n",Statement_out,StmtLen);
@@ -3483,10 +3481,10 @@ DECLARE_TEST(t_desccol1)
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from t_desccol1");
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     {
         SQLCHAR      ColumnName[255];
@@ -3498,8 +3496,8 @@ DECLARE_TEST(t_desccol1)
         SQLSMALLINT  index, pccol;
 
         rc = SQLNumResultCols(hstmt,(SQLSMALLINT *)&pccol);
-        mystmt(hstmt,rc);     
-        printMessage("total columns:%d\n",pccol);       
+        mystmt(hstmt,rc);
+        printMessage("total columns:%d\n",pccol);
 
         printMessage("Name   nlen type    size decs null\n");
         for ( index = 1; index <= pccol; index++)
@@ -3509,7 +3507,7 @@ DECLARE_TEST(t_desccol1)
                                 &ColumnNameSize, &ColumnSQLDataType,
                                 &ColumnSize,
                                 &ColumnDecimals, &ColumnNullable);
-            mystmt(hstmt,rc);    
+            mystmt(hstmt,rc);
 
             printMessage("%-6s %4d %4d %7ld %4d %4d\n", ColumnName,
                          ColumnNameSize, ColumnSQLDataType, ColumnSize,
@@ -3579,7 +3577,7 @@ DECLARE_TEST(t_exfetch)
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_FIRST,-1,NULL,NULL);/* 0 */
     mystmt(hstmt,rc);
-    my_assert(i == 1);    
+    my_assert(i == 1);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,4,NULL,NULL);/* 4 */
     mystmt(hstmt,rc);
@@ -3596,7 +3594,7 @@ DECLARE_TEST(t_exfetch)
     mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,-7,NULL,NULL);/* 0 */
-    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);     
+    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_FIRST,2,NULL,NULL);/* 1 */
     mystmt(hstmt,rc);
@@ -3641,7 +3639,7 @@ DECLARE_TEST(t_exfetch)
     my_assert(i == 5);
 
     SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-    SQLFreeStmt(hstmt,SQL_UNBIND);    
+    SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
   return OK;
@@ -3663,19 +3661,19 @@ DECLARE_TEST(my_setpos_upd_pk_order)
     rc = tmysql_exec(hstmt,"insert into my_setpos_upd_pk_order values(100,'MySQL1')");
     mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into my_setpos_upd_pk_order values(200,'MySQL2')");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from my_setpos_upd_pk_order");
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
     mystmt(hstmt,rc);
@@ -3684,9 +3682,9 @@ DECLARE_TEST(my_setpos_upd_pk_order)
     mystmt(hstmt,rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,2,&pcrow,NULL);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
-    printMessage(" row1:%d,%s\n",nData,szData);    
+    printMessage(" row1:%d,%s\n",nData,szData);
 
     nData = 1000;
     strcpy((char *)szData , "updated");
@@ -3697,7 +3695,7 @@ DECLARE_TEST(my_setpos_upd_pk_order)
     rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
 
-    printMessage(" rows affected:%d\n",nlen);    
+    printMessage(" rows affected:%d\n",nlen);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
@@ -3706,7 +3704,7 @@ DECLARE_TEST(my_setpos_upd_pk_order)
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from my_setpos_upd_pk_order");
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     myresult(hstmt);
 
@@ -3742,39 +3740,39 @@ DECLARE_TEST(my_setpos_upd_pk_order1)
     rc = tmysql_exec(hstmt,"insert into my_setpos_upd_pk_order values(100,'MySQL1',1)");
     mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"insert into my_setpos_upd_pk_order values(200,'MySQL2',2)");
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"select * from my_setpos_upd_pk_order");
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
     mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,100,NULL);
-    mystmt(hstmt,rc);  
-
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,&pcrow,NULL);
     mystmt(hstmt,rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,&pcrow,NULL);
     mystmt(hstmt,rc);
 
-    printMessage(" row1:%d,%s\n",nData,szData);    
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,&pcrow,NULL);
+    mystmt(hstmt,rc);
+
+    printMessage(" row1:%d,%s\n",nData,szData);
 
     nData = 1000;
     strcpy((char *)szData , "updated");
 
     rc = SQLSetPos(hstmt,1,SQL_UPDATE,SQL_LOCK_NO_CHANGE);
-    mystmt_err(hstmt,rc == SQL_ERROR, rc);    
+    mystmt_err(hstmt,rc == SQL_ERROR, rc);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
