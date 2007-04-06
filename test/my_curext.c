@@ -1,30 +1,33 @@
-/***************************************************************************
-                          my_curext.c  -  description
-                             -------------------
-    begin                : Tue Feb 05 2002
-    copyright            : (C) MySQL AB 1995-2002
-    author               : venu ( venu@mysql.com )
- ***************************************************************************/
+/*
+  Copyright (C) 1995-2007 MySQL AB
 
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
-#include "mytest3.h"
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of version 2 of the GNU General Public License as
+  published by the Free Software Foundation.
 
+  There are special exceptions to the terms and conditions of the GPL
+  as it is applied to this software. View the full text of the exception
+  in file LICENSE.exceptions in the top-level directory of this software
+  distribution.
 
-/**
-* to test the pcbValue on cursor ops
-**/
-void my_pcbValue(SQLHDBC hdbc, SQLHSTMT hstmt)
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#include "odbctap.h"
+
+DECLARE_TEST(my_pcbvalue)
 {
     SQLRETURN   rc;
     SQLROWCOUNT nRowCount;
-    SQLINTEGER  nData = 500, int_pcbValue, pcbValue, pcbValue1, pcbValue2;
+    SQLINTEGER  nData= 500;
+    SQLLEN      int_pcbValue, pcbValue, pcbValue1, pcbValue2;
     SQLCHAR     szData[255]={0};
 
     /* initialize data */
@@ -45,28 +48,28 @@ void my_pcbValue(SQLHDBC hdbc, SQLHSTMT hstmt)
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,&int_pcbValue);
     mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,15,&pcbValue);
-    mystmt(hstmt,rc);        
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,3,SQL_C_CHAR,szData,3,&pcbValue1);
-    mystmt(hstmt,rc);        
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,4,SQL_C_CHAR,szData,2,&pcbValue2);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0);
     mystmt(hstmt, rc);
 
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY ,(SQLPOINTER)SQL_CONCUR_ROWVER , 0);
-    mystmt(hstmt, rc);  
+    mystmt(hstmt, rc);
 
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)1 , 0);
-    mystmt(hstmt, rc);  
+    mystmt(hstmt, rc);
 
     /* Open the resultset of table 'my_demo_cursor' */
     rc = SQLExecDirect(hstmt,"SELECT * FROM my_pcbValue",SQL_NTS);
@@ -102,7 +105,7 @@ void my_pcbValue(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
+    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
     mycon(hdbc,rc);
 
     /* Now fetch and verify the data */
@@ -123,7 +126,7 @@ void my_pcbValue(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,50,NULL);
     mystmt(hstmt,rc);
     printMessage("\n szData:%s\n",szData);
-    myassert(strcmp(szData,"upd") == 0);    
+    myassert(strcmp(szData,"upd") == 0);
 
     rc = SQLGetData(hstmt,3,SQL_C_CHAR,szData,50,NULL);
     mystmt(hstmt,rc);
@@ -136,21 +139,23 @@ void my_pcbValue(SQLHDBC hdbc, SQLHSTMT hstmt)
     myassert(strcmp(szData,"updated") == 0);
 
     rc = SQLFetch(hstmt);
-    mystmt_err(hstmt,rc==SQL_NO_DATA_FOUND,rc);    
+    mystmt_err(hstmt,rc==SQL_NO_DATA_FOUND,rc);
 
     SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
+
+  return OK;
 }
 
-/**
-* to test the pcbValue on cursor ops
-**/
-void my_pcbValue_add(SQLHDBC hdbc, SQLHSTMT hstmt)
+
+/* to test the pcbValue on cursor ops **/
+DECLARE_TEST(my_pcbvalue_add)
 {
     SQLRETURN   rc;
     SQLROWCOUNT nRowCount;
-    SQLINTEGER  nData = 500, int_pcbValue, pcbValue, pcbValue1, pcbValue2;
+    SQLINTEGER  nData= 500;
+    SQLLEN      int_pcbValue, pcbValue, pcbValue1, pcbValue2;
     SQLCHAR     szData[255]={0};
 
     /* initialize data */
@@ -171,28 +176,28 @@ void my_pcbValue_add(SQLHDBC hdbc, SQLHSTMT hstmt)
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc); 
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,&int_pcbValue);
     mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,15,&pcbValue);
-    mystmt(hstmt,rc);        
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,3,SQL_C_CHAR,szData,3,&pcbValue1);
-    mystmt(hstmt,rc);        
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,4,SQL_C_CHAR,szData,2,&pcbValue2);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0);
     mystmt(hstmt, rc);
 
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY ,(SQLPOINTER)SQL_CONCUR_ROWVER , 0);
-    mystmt(hstmt, rc);  
+    mystmt(hstmt, rc);
 
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)1 , 0);
-    mystmt(hstmt, rc);  
+    mystmt(hstmt, rc);
 
     /* Open the resultset of table 'my_pcbValue_add' */
     rc = SQLExecDirect(hstmt,"SELECT * FROM my_pcbValue_add",SQL_NTS);
@@ -228,7 +233,7 @@ void my_pcbValue_add(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
+    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
     mycon(hdbc,rc);
 
     /* Now fetch and verify the data */
@@ -239,7 +244,7 @@ void my_pcbValue_add(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
@@ -252,7 +257,7 @@ void my_pcbValue_add(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,50,NULL);
     mystmt(hstmt,rc);
     printMessage("\n szData:%s\n",szData);
-    myassert(strcmp(szData,"ins") == 0);    
+    myassert(strcmp(szData,"ins") == 0);
 
     rc = SQLGetData(hstmt,3,SQL_C_CHAR,szData,50,NULL);
     mystmt(hstmt,rc);
@@ -265,24 +270,24 @@ void my_pcbValue_add(SQLHDBC hdbc, SQLHSTMT hstmt)
     myassert(strcmp(szData,"inserted") == 0);
 
     rc = SQLFetch(hstmt);
-    mystmt_err(hstmt,rc==SQL_NO_DATA_FOUND,rc);    
+    mystmt_err(hstmt,rc==SQL_NO_DATA_FOUND,rc);
 
     SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
+
+  return OK;
 }
 
 
-/**
-* spaces in column names
-**/
-void my_columnspace(SQLHDBC hdbc, SQLHSTMT hstmt)
+/* spaces in column names */
+DECLARE_TEST(my_columnspace)
 {
     SQLRETURN   rc;
 
     /* initialize data */
-    rc = SQLExecDirect(hstmt,"DROP TABLE IF EXISTS TestColNames",SQL_NTS);   
-    mystmt(hstmt,rc);   
+    rc = SQLExecDirect(hstmt,"DROP TABLE IF EXISTS TestColNames",SQL_NTS);
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -290,7 +295,7 @@ void my_columnspace(SQLHDBC hdbc, SQLHSTMT hstmt)
     rc = SQLExecDirect(hstmt,"CREATE TABLE `TestColNames`(`Value One` text,\
                                                            `Value Two` text,\
                                                            `Value Three` text)",SQL_NTS);
-    mystmt(hstmt,rc);   
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -299,39 +304,39 @@ void my_columnspace(SQLHDBC hdbc, SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     rc = SQLExecDirect(hstmt,"INSERT INTO TestColNames VALUES ('monty','widenius','mysql ab')",SQL_NTS);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLExecDirect(hstmt,"SELECT * FROM `TestColNames`",SQL_NTS);
     mystmt(hstmt,rc);
 
-    myassert(2 == my_print_non_format_result(hstmt));    
+    myassert(2 == my_print_non_format_result(hstmt));
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
 
     rc = SQLExecDirect(hstmt,"SELECT `Value One`,`Value Two`,`Value Three`  FROM `TestColNames`",SQL_NTS);
     mystmt(hstmt,rc);
 
-    myassert(2 == my_print_non_format_result(hstmt));    
+    myassert(2 == my_print_non_format_result(hstmt));
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);    
+    mystmt(hstmt,rc);
+
+  return OK;
 }
 
 
-/**
-* to test the empty string returning NO_DATA
-**/
-void my_empty_string(SQLHDBC hdbc, SQLHSTMT hstmt)
+/* to test the empty string returning NO_DATA */
+DECLARE_TEST(my_empty_string)
 {
     SQLRETURN   rc;
-    SQLINTEGER  pcbValue;
+    SQLLEN      pcbValue;
     SQLCHAR     szData[255]={0};
 
     /* initialize data */
@@ -361,53 +366,21 @@ void my_empty_string(SQLHDBC hdbc, SQLHSTMT hstmt)
     printMessage("\n szData:%s(%d)\n",szData,pcbValue);
 
     rc = SQLFetch(hstmt);
-    mystmt_err(hstmt,rc==SQL_NO_DATA_FOUND,rc);    
+    mystmt_err(hstmt,rc==SQL_NO_DATA_FOUND,rc);
 
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
+
+  return OK;
 }
 
 
-/**
-MAIN ROUTINE...
-*/
-int main(int argc, char *argv[])
-{
-    SQLHENV   henv;
-    SQLHDBC   hdbc;
-    SQLHSTMT  hstmt;
-    SQLINTEGER narg;
-
-    printMessageHeader();
-
-    /*
-     * if connection string supplied through arguments, overrite
-     * the default one..
-    */
-    for (narg = 1; narg < argc; narg++)
-    {
-        if ( narg == 1 )
-            mydsn = argv[1];
-        else if ( narg == 2 )
-            myuid = argv[2];
-        else if ( narg == 3 )
-            mypwd = argv[3];
-    }    
-
-    myconnect(&henv,&hdbc,&hstmt);  
-
-    if (driver_supports_setpos(hdbc))
-    {
-        my_pcbValue(hdbc,hstmt);
-        my_pcbValue_add(hdbc,hstmt);
-    }
-    my_columnspace(hdbc,hstmt);
-    my_empty_string(hdbc,hstmt);
-
-    mydisconnect(&henv,&hdbc,&hstmt);
+BEGIN_TESTS
+  ADD_TEST(my_pcbvalue)
+  ADD_TEST(my_pcbvalue_add)
+  ADD_TEST(my_columnspace)
+  ADD_TEST(my_empty_string)
+END_TESTS
 
 
-    printMessageFooter( 1 );
-
-    return(0);
-}
+RUN_TESTS

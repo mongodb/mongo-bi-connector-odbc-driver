@@ -39,6 +39,7 @@ my_basics \
 my_blob \
 my_bulk \
 my_catalog \
+my_curext \
 my_datetime \
 my_param \
 my_tran \
@@ -156,7 +157,6 @@ EXTRA_DIST= \
 	include/odbctap.h \
 	Makefile.ini \
 	test.vpj \
-	curext/my_curext.c \
 	imyodbc/myodbc.c \
 	thread/my_thread.c \
 	thread_coredump/thread-coredump.c \
