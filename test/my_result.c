@@ -1063,6 +1063,615 @@ DECLARE_TEST(t_empty_str_bug)
 }
 
 
+DECLARE_TEST(t_desccol)
+{
+    SQLRETURN rc;
+    SQLCHAR colname[20];
+    SQLSMALLINT collen,datatype,decptr,nullable;
+    SQLULEN colsize;
+
+    tmysql_exec(hstmt,"drop table t_desccol");
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = tmysql_exec(hstmt,"create table t_desccol(col1 int, col2 varchar(10), col3 text)");
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecDirect(hstmt,"insert into t_desccol values(10,'venu','mysql')",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = tmysql_exec(hstmt,"select * from t_desccol");
+    mystmt(hstmt,rc);
+
+    rc = SQLDescribeCol(hstmt,1,(char *)colname,20,&collen,&datatype,&colsize,&decptr,&nullable);
+    mystmt(hstmt,rc);
+    printMessage("1: %s,%d,%d,%d,%d,%d\n",colname,collen,datatype,colsize,decptr,nullable);;
+
+    rc = SQLDescribeCol(hstmt,2,(char *)colname,20,&collen,&datatype,&colsize,&decptr,&nullable);
+    mystmt(hstmt,rc);
+    printMessage("2: %s,%d,%d,%d,%d,%d\n",colname,collen,datatype,colsize,decptr,nullable);;
+
+    rc = SQLDescribeCol(hstmt,3,(char *)colname,20,&collen,&datatype,&colsize,&decptr,&nullable);
+    mystmt(hstmt,rc);
+    printMessage("3: %s,%d,%d,%d,%d,%d\n",colname,collen,datatype,colsize,decptr,nullable);;
+
+    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+  return OK;
+}
+
+
+void desccol(SQLHSTMT hstmt, SQLCHAR    *cname,  SQLSMALLINT clen,
+             SQLSMALLINT sqltype,SQLUINTEGER size,
+             SQLSMALLINT scale,SQLSMALLINT isNull)
+{
+    SQLRETURN   rc =0;
+    SQLCHAR     lcname[254];
+    SQLSMALLINT lclen;
+    SQLSMALLINT lsqltype;
+    SQLULEN     lsize;
+    SQLSMALLINT lscale;
+    SQLSMALLINT lisNull;
+    SQLCHAR     select[255];
+
+    SQLFreeStmt(hstmt,SQL_CLOSE);
+
+    sprintf(select,"select %s from t_desccolext",cname);
+    printMessage("\n%s",select);
+
+    rc = SQLExecDirect(hstmt,select,SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLDescribeCol( hstmt,1,lcname,  sizeof(lcname),&lclen,
+                         &lsqltype,&lsize,&lscale,&lisNull);
+    mystmt(hstmt,rc);
+
+    printMessage("\n name	: %s (%d)",lcname,lclen);
+    printMessage("\n sqltype: %d, size: %d, scale: %d, null: %d\n",lsqltype,lsize,lscale,lisNull);
+
+    myassert(strcmp(lcname,cname)==0);
+    myassert(lclen == clen);
+    myassert(lsqltype == sqltype);
+    myassert(lsize == size);
+    myassert(lscale == scale);
+    myassert(lisNull == isNull);
+
+    SQLFreeStmt(hstmt,SQL_CLOSE);
+}
+
+
+DECLARE_TEST(t_desccolext)
+{
+    SQLRETURN rc;
+    SQLCHAR     *sql;
+
+    tmysql_exec(hstmt,"drop table t_desccolext");
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    sql= "create table t_desccolext\
+      ( t1 tinyint,\
+        t2 tinyint(10),\
+        t3 tinyint unsigned,\
+        s1 smallint,\
+        s2 smallint(10),\
+        s3 smallint unsigned,\
+        m1 mediumint,\
+        m2 mediumint(10),\
+        m3 mediumint unsigned,\
+        i1 int,\
+        i2 int(10) not null,\
+        i3 int unsigned,\
+        i4 int zerofill,\
+        b1 bigint,\
+        b2 bigint(10),\
+        b3 bigint unsigned,\
+        f1 float,\
+        f2 float(10),\
+        f3 float(24) zerofill,\
+        f4 float(10,4),\
+        d1 double,\
+        d2 double(30,3),\
+        d3 double precision,\
+        d4 double precision(30,3),\
+        r1 real,\
+        r2 real(30,3),\
+        dc1 decimal,\
+        dc2 decimal(10),\
+        dc3 decimal(10,3),\
+        n1 numeric,\
+        n2 numeric(10,3),\
+        dt date,\
+        dtime datetime,\
+        ts1 timestamp(8),\
+        ts2 timestamp(14),\
+        ti  time,\
+        yr1 year,\
+        yr2 year(2),\
+        yr3 year(4),\
+        c1 char(10),\
+        c2 char(10) binary,\
+        c3 national char(10),\
+        v1 varchar(10),\
+        v2 varchar(10) binary,\
+        v3 national varchar(10),\
+        bl1 tinyblob,\
+        bl2 blob,\
+        bl3 mediumblob,\
+        bl4 longblob,\
+        txt1 tinytext,\
+        txt2 text,\
+        txt3 mediumtext,\
+        txt4 longtext,\
+        en enum('v1','v2'),\
+        st set('1','2','3'))";
+
+    rc = tmysql_exec(hstmt,sql);
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    desccol(hstmt,"t1",2,SQL_TINYINT,4,0,SQL_NULLABLE);
+    desccol(hstmt,"t2",2,SQL_TINYINT,10,0,SQL_NULLABLE);
+    desccol(hstmt,"t3",2,SQL_TINYINT,3,0,SQL_NULLABLE);
+
+    desccol(hstmt,"s1",2,SQL_SMALLINT,6,0,SQL_NULLABLE);
+    desccol(hstmt,"s2",2,SQL_SMALLINT,10,0,SQL_NULLABLE);
+    desccol(hstmt,"s3",2,SQL_SMALLINT,5,0,SQL_NULLABLE);
+
+    desccol(hstmt,"m1",2,SQL_INTEGER,9,0,SQL_NULLABLE);
+    desccol(hstmt,"m2",2,SQL_INTEGER,10,0,SQL_NULLABLE);
+    desccol(hstmt,"m3",2,SQL_INTEGER,8,0,SQL_NULLABLE);
+
+    desccol(hstmt,"i1",2,SQL_INTEGER,11,0,SQL_NULLABLE);
+    desccol(hstmt,"i2",2,SQL_INTEGER,10,0,SQL_NO_NULLS);
+    desccol(hstmt,"i3",2,SQL_INTEGER,10,0,SQL_NULLABLE);
+    desccol(hstmt,"i4",2,SQL_INTEGER,10,0,SQL_NULLABLE);
+
+    desccol(hstmt,"b1",2,SQL_BIGINT,19,0,SQL_NULLABLE);
+    desccol(hstmt,"b2",2,SQL_BIGINT,19,0,SQL_NULLABLE);
+    desccol(hstmt,"b3",2,SQL_BIGINT,20,0,SQL_NULLABLE);
+
+    desccol(hstmt,"f1",2,SQL_REAL,12,31,SQL_NULLABLE);
+    desccol(hstmt,"f2",2,SQL_REAL,12,31,SQL_NULLABLE);
+    desccol(hstmt,"f3",2,SQL_REAL,12,31,SQL_NULLABLE);
+    desccol(hstmt,"f4",2,SQL_REAL,10,4,SQL_NULLABLE);
+
+    desccol(hstmt,"d1",2,SQL_DOUBLE,22,31,SQL_NULLABLE);
+    desccol(hstmt,"d2",2,SQL_DOUBLE,30,3,SQL_NULLABLE);
+    desccol(hstmt,"d3",2,SQL_DOUBLE,22,31,SQL_NULLABLE);
+    desccol(hstmt,"d4",2,SQL_DOUBLE,30,3,SQL_NULLABLE);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+  return OK;
+}
+
+
+DECLARE_TEST(t_desccol1)
+{
+    SQLRETURN rc;
+
+    tmysql_exec(hstmt,"drop table if exists t_desccol1");
+    rc = SQLExecDirect(hstmt,"create table t_desccol1\
+                 ( record decimal(8,0),\
+                   title varchar(250),\
+                   num1 float,\
+                   num2 decimal(7,0),\
+                   num3 decimal(12,3),\
+                   code char(3),\
+                   sdate date,\
+                   stime time,\
+                   numer numeric(7,0),\
+                   muner1 numeric(12,5))",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"select * from t_desccol1");
+    mystmt(hstmt,rc);
+
+    {
+        SQLCHAR      ColumnName[255];
+        SQLSMALLINT  ColumnNameSize;
+        SQLSMALLINT  ColumnSQLDataType;
+        SQLULEN      ColumnSize;
+        SQLSMALLINT  ColumnDecimals;
+        SQLSMALLINT  ColumnNullable;
+        SQLSMALLINT  index, pccol;
+
+        rc = SQLNumResultCols(hstmt,(SQLSMALLINT *)&pccol);
+        mystmt(hstmt,rc);
+        printMessage("total columns:%d\n",pccol);
+
+        printMessage("Name   nlen type    size decs null\n");
+        for ( index = 1; index <= pccol; index++)
+        {
+            rc = SQLDescribeCol(hstmt, index, ColumnName,
+                                sizeof(ColumnName),
+                                &ColumnNameSize, &ColumnSQLDataType,
+                                &ColumnSize,
+                                &ColumnDecimals, &ColumnNullable);
+            mystmt(hstmt,rc);
+
+            printMessage("%-6s %4d %4d %7ld %4d %4d\n", ColumnName,
+                         ColumnNameSize, ColumnSQLDataType, ColumnSize,
+                         ColumnDecimals, ColumnNullable);
+        }
+    }
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+  return OK;
+}
+
+
+void colattr(SQLHSTMT hstmt, SQLUSMALLINT cno,
+             SQLUSMALLINT attribute, SQLCHAR *sptr,
+             SQLSMALLINT slen, SQLINTEGER nptr)
+{
+    SQLRETURN   rc =0;
+    SQLCHAR     lsptr[40];
+    SQLLEN      lnptr;
+    SQLSMALLINT lslen;
+
+    SQLFreeStmt(hstmt,SQL_CLOSE);
+    rc = SQLExecDirect(hstmt,"select * from t_colattr",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    printMessage("col %d, attribute %d\t: ",cno, attribute);
+    rc = SQLColAttributes(hstmt,cno,attribute,lsptr,100,&lslen,&lnptr);
+    mystmt(hstmt,rc);
+
+    if (sptr)
+    {
+        printMessage("%s(%ld)\n",lsptr,lslen);
+        myassert(!strcmp(lsptr,sptr)==0);
+        myassert(lslen == slen);
+    }
+    else
+    {
+        printMessage("%ld(%d)\n",lnptr,lslen);
+        myassert(lnptr == nptr);
+    }
+
+    SQLFreeStmt(hstmt,SQL_CLOSE);
+}
+
+DECLARE_TEST(t_colattributes)
+{
+    SQLRETURN rc;
+    SQLCHAR     *sql;
+
+    tmysql_exec(hstmt,"drop table t_colattr");
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    sql= "create table t_colattr\
+      ( t1 tinyint not null auto_increment primary key,\
+        t2 tinyint(10),\
+        t3 tinyint unsigned,\
+        s1 smallint,\
+        s2 smallint(10),\
+        s3 smallint unsigned,\
+        m1 mediumint,\
+        m2 mediumint(10),\
+        m3 mediumint unsigned,\
+        i1 int,\
+        i2 int(10) not null,\
+        i3 int unsigned,\
+        i4 int zerofill,\
+        b1 bigint,\
+        b2 bigint(10),\
+        b3 bigint unsigned,\
+        f1 float,\
+        f2 float(10),\
+        f3 float(24) zerofill,\
+        f4 float(10,4),\
+        d1 double,\
+        d2 double(30,3),\
+        d3 double precision,\
+        d4 double precision(30,3),\
+        r1 real,\
+        r2 real(30,3),\
+        dc1 decimal,\
+        dc2 decimal(10),\
+        dc3 decimal(10,3),\
+        n1 numeric,\
+        n2 numeric(10,3),\
+        dt date,\
+        dtime datetime,\
+        ts1 timestamp(8),\
+        ts2 timestamp(14),\
+        ti  time,\
+        yr1 year,\
+        yr2 year(2),\
+        yr3 year(4),\
+        c1 char(10),\
+        c2 char(10) binary,\
+        c3 national char(10),\
+        v1 varchar(10),\
+        v2 varchar(10) binary,\
+        v3 national varchar(10),\
+        bl1 tinyblob,\
+        bl2 blob,\
+        bl3 mediumblob,\
+        bl4 longblob,\
+        txt1 tinytext,\
+        txt2 text,\
+        txt3 mediumtext,\
+        txt4 longtext,\
+        en enum('v1','v2'),\
+        st set('1','2','3'))";
+
+    rc = tmysql_exec(hstmt,sql);
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    colattr(hstmt,1,SQL_COLUMN_COUNT,NULL,0,55);
+    colattr(hstmt,1,SQL_COLUMN_AUTO_INCREMENT,NULL,0,SQL_TRUE);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+  return OK;
+}
+
+
+DECLARE_TEST(t_exfetch)
+{
+    SQLRETURN rc;
+    long i;
+
+    tmysql_exec(hstmt,"drop table t_exfetch");
+
+    rc = tmysql_exec(hstmt,"create table t_exfetch(col1 int)");
+    mystmt(hstmt,rc);
+
+    rc = SQLPrepare(hstmt,"insert into t_exfetch values(?)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT, SQL_C_ULONG,
+                          SQL_INTEGER,0,0,&i,0,NULL);
+    mystmt(hstmt,rc);
+
+    for ( i = 1; i <= 5; i++ )
+    {
+        rc = SQLExecute(hstmt);
+        mystmt(hstmt,rc);
+    }
+
+    SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
+    SQLFreeStmt(hstmt,SQL_CLOSE);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLExecDirect(hstmt,"select * from t_exfetch",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&i,0,NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_LAST,0,NULL,NULL);/* 5 */
+    mystmt(hstmt,rc);
+    my_assert(i == 5);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_PREV,0,NULL,NULL);/* 4 */
+    mystmt(hstmt,rc);
+    my_assert(i == 4);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_RELATIVE,-3,NULL,NULL);/* 1 */
+    mystmt(hstmt,rc);
+    my_assert(i == 1);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_RELATIVE,-1,NULL,NULL);/* 0 */
+    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_PREV,1,NULL,NULL); /* 0 */
+    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_FIRST,-1,NULL,NULL);/* 0 */
+    mystmt(hstmt,rc);
+    my_assert(i == 1);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,4,NULL,NULL);/* 4 */
+    mystmt(hstmt,rc);
+    my_assert(i == 4);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_RELATIVE,2,NULL,NULL);/* 4 */
+    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_PREV,2,NULL,NULL);/* last */
+    mystmt(hstmt,rc);
+    my_assert(i == 5);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,2,NULL,NULL);/* last+1 */
+    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,-7,NULL,NULL);/* 0 */
+    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_FIRST,2,NULL,NULL);/* 1 */
+    mystmt(hstmt,rc);
+    my_assert(i == 1);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_PREV,2,NULL,NULL);/* 0 */
+    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,0,NULL,NULL);/* 1*/
+    mystmt(hstmt,rc);
+    my_assert(i == 1);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_PREV,0,NULL,NULL);/* 0 */
+    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_RELATIVE,-1,NULL,NULL); /* 0 */
+    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_RELATIVE,1,NULL,NULL); /* 1 */
+    mystmt(hstmt,rc);
+    my_assert(i == 1); /* MyODBC .39 returns 2 instead of 1 */
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_RELATIVE,-1,NULL,NULL);/* 0 */
+    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_RELATIVE,1,NULL,NULL);/* 1 */
+    mystmt(hstmt,rc);
+    my_assert(i == 1);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_RELATIVE,1,NULL,NULL);/* 2 */
+    mystmt(hstmt,rc);
+    my_assert(i == 2);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_RELATIVE,-2,NULL,NULL);/* 0 */
+    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_RELATIVE,6,NULL,NULL);/* last+1 */
+    mystmt_err(hstmt,rc == SQL_NO_DATA_FOUND, rc);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_PREV,6,NULL,NULL);/* last+1 */
+    mystmt(hstmt, rc);
+    my_assert(i == 5);
+
+    SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
+    SQLFreeStmt(hstmt,SQL_UNBIND);
+    SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  return OK;
+}
+
+
+DECLARE_TEST(tmysql_rowstatus)
+{
+    SQLRETURN rc;
+    SQLHSTMT hstmt1;
+    SQLROWSETSIZE pcrow[4];
+    SQLUSMALLINT rgfRowStatus[6];
+    long nData = 555;
+    SQLCHAR szData[255] = "setpos-update";
+
+    rc = SQLAllocStmt(hdbc,&hstmt1);
+    mycon(hdbc,rc);
+
+    rc = SQLSetCursorName(hstmt,"venu_cur",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    tmysql_exec(hstmt,"drop table tmysql_rowstatus");
+    rc = tmysql_exec(hstmt,"create table tmysql_rowstatus(col1 int , col2 varchar(30))");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into tmysql_rowstatus values(100,'venu')");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into tmysql_rowstatus values(200,'MySQL')");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into tmysql_rowstatus values(300,'MySQL3')");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into tmysql_rowstatus values(400,'MySQL3')");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into tmysql_rowstatus values(500,'MySQL3')");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into tmysql_rowstatus values(600,'MySQL3')");
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)1 , 0);
+    mystmt(hstmt, rc);
+
+    rc = tmysql_exec(hstmt,"select * from tmysql_rowstatus");
+    mystmt(hstmt,rc);
+
+    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,sizeof(szData),NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,pcrow,(SQLUSMALLINT *)&rgfRowStatus);
+    mystmt(hstmt,rc);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,pcrow,(SQLUSMALLINT *)&rgfRowStatus);
+    mystmt(hstmt,rc);
+
+    rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecDirect(hstmt1,"UPDATE tmysql_rowstatus SET col1= 999, col2 = 'pos-update' WHERE CURRENT OF venu_cur",SQL_NTS);
+    mystmt(hstmt1,rc);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_LAST,1,NULL,NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLSetPos(hstmt,1,SQL_DELETE,SQL_LOCK_NO_CHANGE);
+    mystmt(hstmt,rc);
+
+    printMessage("\nrgfRowStatus[0]:%d",rgfRowStatus[0]);
+
+    SQLFreeStmt(hstmt,SQL_CLOSE);
+
+    rc = SQLFreeStmt(hstmt1,SQL_DROP);
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+
+    rc = tmysql_exec(hstmt,"select * from tmysql_rowstatus");
+    mystmt(hstmt,rc);
+
+    myassert(5 == myresult(hstmt));
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -1074,6 +1683,12 @@ BEGIN_TESTS
   ADD_TEST(t_cache_bug)
   ADD_TEST(t_non_cache_bug)
   ADD_TEST(t_empty_str_bug)
+  ADD_TEST(t_desccol)
+  ADD_TEST(t_desccolext)
+  ADD_TEST(t_desccol1)
+  ADD_TEST(t_colattributes)
+  ADD_TEST(t_exfetch)
+  ADD_TEST(tmysql_rowstatus)
 END_TESTS
 
 

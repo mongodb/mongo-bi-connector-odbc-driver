@@ -164,9 +164,155 @@ DECLARE_TEST(t_bulk_insert)
 }
 
 
+DECLARE_TEST(t_mul_pkdel)
+{
+    SQLRETURN rc;
+    long nData= 500;
+    SQLLEN nlen;
+    SQLCHAR szData[255]={0};
+    SQLROWSETSIZE pcrow;
+
+    tmysql_exec(hstmt,"drop table t_mul_pkdel");
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = tmysql_exec(hstmt,"create table t_mul_pkdel(col1 int NOT NULL,col3 int,col2 varchar(30) NOT NULL,primary key(col1,col2))");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into t_mul_pkdel values(100,10,'MySQL1')");
+    mystmt(hstmt,rc);
+    rc = tmysql_exec(hstmt,"insert into t_mul_pkdel values(200,20,'MySQL2')");
+    mystmt(hstmt,rc);
+    rc = tmysql_exec(hstmt,"insert into t_mul_pkdel values(300,20,'MySQL3')");
+    mystmt(hstmt,rc);
+    rc = tmysql_exec(hstmt,"insert into t_mul_pkdel values(400,20,'MySQL4')");
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"select col1,col2 from t_mul_pkdel");
+    mystmt(hstmt,rc);
+
+    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,&pcrow,NULL);
+    mystmt(hstmt,rc);
+    printMessage(" row1:%d,%s\n",nData,szData);
+
+    rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
+    mystmt(hstmt,rc);
+
+    rc = SQLSetPos(hstmt,1,SQL_DELETE,SQL_LOCK_NO_CHANGE);
+    mystmt(hstmt,rc);
+
+    rc = SQLRowCount(hstmt,&nlen);
+    mystmt(hstmt,rc);
+
+    printMessage(" rows affected:%d\n",nlen);
+
+    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"select * from t_mul_pkdel");
+    mystmt(hstmt,rc);
+
+    my_assert( 3 == myresult(hstmt));
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+  return OK;
+}
+
+
+DECLARE_TEST(t_mul_pkdel1)
+{
+    SQLRETURN rc;
+    long nData= 500;
+    SQLLEN nlen;
+    SQLCHAR szData[255]={0};
+    SQLROWSETSIZE pcrow;
+
+    tmysql_exec(hstmt,"drop table t_mul_pkdel");
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = tmysql_exec(hstmt,"create table t_mul_pkdel(col1 int NOT NULL,col3 int,col2 varchar(30) NOT NULL,primary key(col1,col2))");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into t_mul_pkdel values(100,10,'MySQL1')");
+    mystmt(hstmt,rc);
+    rc = tmysql_exec(hstmt,"insert into t_mul_pkdel values(200,20,'MySQL2')");
+    mystmt(hstmt,rc);
+    rc = tmysql_exec(hstmt,"insert into t_mul_pkdel values(300,20,'MySQL3')");
+    mystmt(hstmt,rc);
+    rc = tmysql_exec(hstmt,"insert into t_mul_pkdel values(400,20,'MySQL4')");
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"select col1 from t_mul_pkdel");
+    mystmt(hstmt,rc);
+
+    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,4,&pcrow,NULL);
+    mystmt(hstmt,rc);
+
+    printMessage(" row1:%d,%s\n",nData,szData);
+
+    rc = SQLSetPos(hstmt,1,SQL_DELETE,SQL_LOCK_NO_CHANGE);
+    mystmt(hstmt,rc);
+
+    rc = SQLRowCount(hstmt,&nlen);
+    mystmt(hstmt,rc);
+
+    printMessage(" rows affected:%d\n",nlen);
+
+    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"select * from t_mul_pkdel");
+    mystmt(hstmt,rc);
+
+    my_assert( 3 == myresult(hstmt));
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bulk_check)
   ADD_TEST(t_bulk_insert)
+  ADD_TEST(t_mul_pkdel)
+  ADD_TEST(t_mul_pkdel1)
 END_TESTS
 
 

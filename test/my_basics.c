@@ -177,9 +177,140 @@ DECLARE_TEST(t_max_select)
 }
 
 
+/* Simple function to do basic ops with MySQL */
+DECLARE_TEST(t_basic)
+{
+    SQLRETURN rc;
+    SQLINTEGER nInData= 1, nOutData;
+    SQLROWCOUNT nRowCount= 0;
+    char szOutData[31]={0};
+
+    /* CREATE TABLE 'myodbc' */
+    SQLExecDirect(hstmt,"drop table tmyodbc ",SQL_NTS);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLExecDirect(hstmt,"create table tmyodbc (col1 int, col2 varchar(30))",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    /* DIRECT INSERT */
+    rc = SQLExecDirect(hstmt,"insert into tmyodbc values(10,'direct-insert')",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    /* PREPARE INSERT */
+    rc = SQLPrepare(hstmt,"insert into tmyodbc values(?,'param_insert')",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT, SQL_C_LONG,SQL_INTEGER,
+                          0,0,&nInData,0,NULL);
+    mystmt(hstmt,rc);
+
+    for (nInData=20 ; nInData<100; nInData=nInData+10)
+    {
+        rc = SQLExecute(hstmt);
+        mystmt(hstmt,rc);
+    }
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    /* FREE THE PARAM BUFFERS */
+    rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    /* FETCH RESULT SET */
+    rc = SQLExecDirect(hstmt,"SELECT * FROM tmyodbc",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindCol(hstmt,1, SQL_C_LONG, &nOutData,0,NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindCol(hstmt,2, SQL_C_CHAR, szOutData,sizeof(szOutData),NULL);
+    mystmt(hstmt,rc);
+
+    nInData = 10;
+    while (SQLFetch(hstmt) == SQL_SUCCESS)
+    {
+        nRowCount++;
+        printMessage("\n row %d\t: %d,%s",nRowCount, nOutData, szOutData);
+        my_assert( nInData == nOutData);
+        nInData += 10;
+    }
+    printMessage("\n total rows Found:%d\n",nRowCount);
+    my_assert( nRowCount == (nInData-10)/10);
+
+    /* FREE THE OUTPUT BUFFERS */
+    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+  return OK;
+}
+
+
+DECLARE_TEST(t_nativesql)
+{
+    SQLRETURN rc;
+    SQLCHAR    Statement_in[3000];
+    SQLCHAR    Statement_out[4000];
+    SQLUINTEGER StmtLen;
+
+    strcpy(Statement_in, "select * from venu");
+
+    rc = SQLNativeSql(hdbc, Statement_in,
+                      SQL_NTS,Statement_out,
+                      sizeof(Statement_out), &StmtLen);
+    mycon(hdbc,rc);
+    printMessage("outstr:%s(%d)\n",Statement_out,StmtLen);
+    myassert(StmtLen == strlen(Statement_in));
+
+  return OK;
+}
+
+
+DECLARE_TEST(t_max_con)
+{
+    SQLRETURN rc;
+    long i;
+    SQLHDBC hdbc1;
+
+    for (i= 0; i < 200; i++)
+    {
+        rc = SQLAllocConnect(henv, &hdbc1);
+        myenv(henv,rc);
+
+        rc = SQLConnect(hdbc1, mydsn, SQL_NTS, myuid, SQL_NTS,  mypwd, SQL_NTS);
+        mycon(hdbc1,rc);
+
+        rc = SQLDisconnect(hdbc1);
+        mycon(hdbc1,rc);
+
+        rc = SQLFreeConnect(hdbc1);
+        mycon(hdbc1,rc);
+    }
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
+  ADD_TEST(t_basic)
+  ADD_TEST(t_nativesql)
+  ADD_TEST(t_max_con)
 END_TESTS
 
 

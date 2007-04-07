@@ -728,7 +728,7 @@ DECLARE_TEST(t_prepare)
   SQLINTEGER nidata= 200, nodata;
   SQLLEN    nlen;
   char      szodata[20],szidata[20]="MySQL";
-  short     pccol;
+  SQLROWCOUNT pccol;
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
@@ -842,6 +842,237 @@ DECLARE_TEST(t_prepare1)
 }
 
 
+DECLARE_TEST(tmysql_bindcol)
+{
+    SQLRETURN rc;
+    SQLINTEGER nodata, nidata = 200;
+    SQLLEN     nlen;
+    SQLCHAR   szodata[20],szidata[20]="MySQL";
+
+    tmysql_exec(hstmt,"drop table tmysql_bindcol");
+
+    rc = tmysql_exec(hstmt,"create table tmysql_bindcol(col1 int primary key, col2 varchar(30))");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into tmysql_bindcol values(100,'venu')");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into tmysql_bindcol values(200,'MySQL')");
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = tmysql_prepare(hstmt,"select * from tmysql_bindcol where col2 = ? AND col1 = ?");
+    mystmt(hstmt,rc);
+
+    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nodata,0,&nlen);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szodata,200,&nlen);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT, SQL_C_CHAR,SQL_VARCHAR,
+                          0,0,szidata,5,NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT, SQL_C_LONG,SQL_INTEGER,
+                          0,0,&nidata,20,NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecute(hstmt);
+    mystmt(hstmt,rc);
+
+    rc = SQLFetch(hstmt);
+    mystmt(hstmt,rc);
+
+    printMessage(" outdata: %d, %s(%d)\n", nodata,szodata,nlen);
+    my_assert(nodata == 200);
+
+    rc = SQLFetch(hstmt);
+
+    my_assert(rc == SQL_NO_DATA_FOUND);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"drop table tmysql_bindcol");
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+  return OK;
+}
+
+
+DECLARE_TEST(tmysql_bindparam)
+{
+    SQLRETURN rc;
+    SQLINTEGER nodata, nidata= 200;
+    SQLLEN    nlen;
+    SQLCHAR   szodata[20],szidata[20]="MySQL";
+    short     pccol;
+
+    tmysql_exec(hstmt,"drop table tmysql_bindparam");
+
+    rc = tmysql_exec(hstmt,"create table tmysql_bindparam(col1 int primary key, col2 varchar(30))");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into tmysql_bindparam values(100,'venu')");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into tmysql_bindparam values(200,'MySQL')");
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = tmysql_prepare(hstmt,"select * from tmysql_bindparam where col2 = ? AND col1 = ?");
+    mystmt(hstmt,rc);
+
+    rc = SQLNumResultCols(hstmt,&pccol);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nodata,0,&nlen);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szodata,200,&nlen);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT, SQL_C_CHAR,SQL_VARCHAR,
+                          0,0,szidata,5,NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT, SQL_C_LONG,SQL_INTEGER,
+                          0,0,&nidata,20,NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecute(hstmt);
+    mystmt(hstmt,rc);
+
+    rc = SQLFetch(hstmt);
+    mystmt(hstmt,rc);
+
+    printMessage(" outdata: %d, %s(%d)\n", nodata,szodata,nlen);
+    my_assert(nodata == 200);
+
+    rc = SQLFetch(hstmt);
+
+    my_assert(rc == SQL_NO_DATA_FOUND);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"drop table tmysql_bindparam");
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+  return OK;
+}
+
+
+DECLARE_TEST(t_acc_update)
+{
+    SQLRETURN rc;
+    long id,id1;
+    SQLLEN pcrow;
+    SQLHSTMT hstmt1;
+
+    tmysql_exec(hstmt,"drop table t_acc_update");
+    rc = tmysql_exec(hstmt,"create table t_acc_update(id int)");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into t_acc_update values(1)");
+    mystmt(hstmt,rc);
+    rc = tmysql_exec(hstmt,"insert into t_acc_update values(2)");
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+
+    mystmt(hstmt,rc);
+
+    rc = SQLPrepare(hstmt,"select id from t_acc_update where id = ?",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_DEFAULT,SQL_INTEGER,11,0,&id,0,NULL);
+    mystmt(hstmt,rc);
+
+    id = 2;
+    rc = SQLExecute(hstmt);
+    mystmt(hstmt,rc);
+
+    rc = SQLFetch(hstmt);
+    mystmt(hstmt,rc);
+
+    rc = SQLGetData(hstmt,1,SQL_C_LONG,&id1,512,NULL);
+    mystmt(hstmt,rc);
+    printMessage("outdata:%d\n",id1);
+
+    SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
+    SQLFreeStmt(hstmt,SQL_UNBIND);
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+
+    rc = SQLSetConnectOption(hdbc,SQL_AUTOCOMMIT,0L);
+    mycon(hdbc,rc);
+
+    rc = SQLAllocStmt(hdbc,&hstmt1);
+    mycon(hdbc,rc);
+
+    id = 2;
+    id1=2;
+    rc = SQLBindParameter(hstmt1,1,SQL_PARAM_INPUT,SQL_C_LONG,SQL_INTEGER,10,0,&id,0,NULL);
+    mystmt(hstmt1,rc);
+
+    rc = SQLBindParameter(hstmt1,2,SQL_PARAM_INPUT,SQL_C_DEFAULT,SQL_INTEGER,11,0,&id1,0,NULL);
+    mystmt(hstmt1,rc);
+
+    rc = SQLExecDirect(hstmt1,"UPDATE t_acc_update SET id = ?  WHERE id = ?",SQL_NTS);
+    mystmt(hstmt1,rc);
+
+    rc = SQLRowCount(hstmt1,&pcrow);
+    mystmt(hstmt1,rc);
+    printMessage("rows affected:%d\n",pcrow);
+
+    SQLFreeStmt(hstmt1,SQL_RESET_PARAMS);
+    rc = SQLFreeStmt(hstmt1,SQL_DROP);
+    mystmt(hstmt1,rc);
+
+    rc = SQLTransact(NULL,hdbc,0);
+    mycon(hdbc,rc);
+
+    rc = SQLSetConnectOption(hdbc,SQL_AUTOCOMMIT,1L);
+    mycon(hdbc,rc);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_prep_basic)
   ADD_TEST(t_prep_buffer_length)
@@ -853,6 +1084,9 @@ BEGIN_TESTS
   ADD_TEST(t_sps)
   ADD_TEST(t_prepare)
   ADD_TEST(t_prepare1)
+  ADD_TEST(tmysql_bindcol)
+  ADD_TEST(tmysql_bindparam)
+  ADD_TEST(t_acc_update)
 END_TESTS
 
 

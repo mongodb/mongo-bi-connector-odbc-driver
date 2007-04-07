@@ -233,10 +233,194 @@ DECLARE_TEST(t_decimal)
 }
 
 
+DECLARE_TEST(t_bigint)
+{
+    SQLRETURN rc;
+    SQLCHAR id[20]="999";
+    SQLLEN nlen;
+
+    tmysql_exec(hstmt,"drop table t_bigint");
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = tmysql_exec(hstmt,"create table t_bigint(id int(20) NOT NULL auto_increment,name varchar(20), primary key(id))");
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    /* TIMESTAMP TO DATE, TIME and TS CONVERSION */
+    rc = tmysql_prepare(hstmt,"insert into t_bigint values(?,'venuxyz')");
+    mystmt(hstmt,rc);
+
+    nlen = 4;
+    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_LONG,
+                          SQL_BIGINT,0,0,&id,sizeof(id),&nlen);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecute(hstmt);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into t_bigint values(10,'mysql1')");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into t_bigint values(20,'mysql2')");
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLSpecialColumns(hstmt,SQL_ROWVER,NULL,SQL_NTS,NULL,SQL_NTS,
+                           "t_bigint",SQL_NTS,SQL_SCOPE_TRANSACTION,SQL_NULLABLE);
+
+    mycon(hdbc,rc);
+
+    my_assert( 0 == myresult(hstmt));
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLColumns(hstmt,NULL,SQL_NTS,NULL,SQL_NTS,"t_bigint",SQL_NTS,NULL,SQL_NTS);
+
+    mycon(hdbc,rc);
+
+    my_assert( 2 == myresult(hstmt));
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLStatistics(hstmt,NULL,SQL_NTS,NULL,SQL_NTS,"t_bigint",SQL_NTS,SQL_INDEX_ALL,SQL_QUICK);
+
+    mycon(hdbc,rc);
+
+    my_assert( 1 == myresult(hstmt));
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+#if CATALOG_FUNCTIONS_FIXED
+    rc = SQLGetTypeInfo(hstmt,SQL_BIGINT);
+    mycon(hdbc,rc);
+
+    my_assert( 4 == myresult(hstmt));
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLGetTypeInfo(hstmt,SQL_BIGINT);
+    mycon(hdbc,rc);
+
+    my_assert( 4 == myresult(hstmt));
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+#endif
+
+    rc = tmysql_exec(hstmt,"select * from t_bigint");
+    mystmt(hstmt,rc);
+
+    rc = SQLFetch(hstmt);
+    mystmt(hstmt,rc);
+
+    rc = SQLGetData(hstmt,1,SQL_C_DEFAULT,&id,sizeof(id),&nlen);
+    mystmt(hstmt,rc);
+
+    printMessage("\n id:%s,nlen:%d,%d\n",id,nlen,sizeof(SQL_BIGINT));
+
+    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+  return OK;
+}
+
+
+DECLARE_TEST(t_enumset)
+{
+    SQLRETURN rc;
+    SQLCHAR szEnum[40]="MYSQL_E1";
+    SQLCHAR szSet[40]="THREE,ONE,TWO";
+
+    tmysql_exec(hstmt,"drop table t_enumset");
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = tmysql_exec(hstmt,"create table t_enumset(col1 enum('MYSQL_E1','MYSQL_E2'),col2 set('ONE','TWO','THREE'))");
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecDirect(hstmt,"insert into t_enumset values('MYSQL_E2','TWO,THREE')",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLPrepare(hstmt,"insert into t_enumset values(?,?)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_CHAR,SQL_CHAR,0,0,&szEnum,sizeof(szEnum),NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,SQL_C_CHAR,SQL_CHAR,0,0,&szSet,sizeof(szSet),NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecute(hstmt);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = tmysql_exec(hstmt,"select * from t_enumset");
+    mystmt(hstmt,rc);
+
+    my_assert( 2 == myresult(hstmt));
+
+    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_longlong1)
   ADD_TEST(t_numeric)
   ADD_TEST(t_decimal)
+  ADD_TEST(t_bigint)
+  ADD_TEST(t_enumset)
 END_TESTS
 
 

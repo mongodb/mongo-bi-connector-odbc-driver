@@ -52,8 +52,14 @@ void printMessage(char *fmt, ...) {
 
 typedef int (*test_func)(SQLHDBC, SQLHSTMT, SQLHENV);
 
+/*
+ The parameters may be unused. so we add the attribute to stifle warnings.
+ They may also still be used, and no warning will be generated.
+*/
 #define DECLARE_TEST(name) \
-  int (name)(SQLHDBC hdbc, SQLHSTMT hstmt, SQLHENV henv)
+  int (name)(SQLHDBC hdbc __attribute__((unused)), \
+             SQLHSTMT hstmt __attribute__((unused)), \
+             SQLHENV henv __attribute__((unused)))
 
 typedef struct {
   char *name;

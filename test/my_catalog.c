@@ -1101,11 +1101,109 @@ DECLARE_TEST(t_current_catalog)
     mycon(hdbc,rc);
 
     /* reset for further tests */
-    rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, (char *)test_db, SQL_NTS);
+    rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, (SQLCHAR *)"test", SQL_NTS);
     mycon(hdbc,rc);
 
     rc = SQLExecDirect(hstmt, "DROP DATABASE test_odbc_current", SQL_NTS);
     mycon(hstmt,rc);
+
+  return OK;
+}
+
+
+DECLARE_TEST(tmysql_showkeys)
+{
+    SQLRETURN rc;
+
+    tmysql_exec(hstmt,"drop table tmysql_spk");
+
+    rc = tmysql_exec(hstmt,"create table tmysql_spk(col1 int primary key)");
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"SHOW KEYS FROM tmysql_spk");
+    mystmt(hstmt,rc);
+
+    my_assert(1 == myresult(hstmt));
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+  return OK;
+}
+
+
+DECLARE_TEST(t_sqltables)
+{
+    SQLRETURN r;
+
+    r  = SQLTables(hstmt,NULL,0,NULL,0,NULL,0,NULL,0);
+    mystmt(hstmt,r);
+
+    myresult(hstmt);
+
+    r = SQLFreeStmt(hstmt, SQL_CLOSE);
+    mystmt(hstmt,r);
+
+    r  = SQLTables(hstmt,NULL,0,NULL,0,NULL,0,"'system table'",SQL_NTS);
+    mystmt(hstmt,r);
+
+    if (driver_min_version(hdbc,"03.51.07",8))
+        myassert(myresult(hstmt) != 0);
+    else
+        myassert(0 == myresult(hstmt));
+
+    r = SQLFreeStmt(hstmt, SQL_CLOSE);
+    mystmt(hstmt,r);
+
+    r  = SQLTables(hstmt,NULL,0,NULL,0,NULL,0,"TABLE",SQL_NTS);
+    mystmt(hstmt,r);
+
+    myresult(hstmt);
+
+    r = SQLFreeStmt(hstmt, SQL_CLOSE);
+    mystmt(hstmt,r);
+
+    r  = SQLTables(hstmt,"TEST",SQL_NTS,"TEST",SQL_NTS,NULL,0,"TABLE",SQL_NTS);
+    mystmt(hstmt,r);
+
+    myresult(hstmt);
+
+    r = SQLFreeStmt(hstmt, SQL_CLOSE);
+    mystmt(hstmt,r);
+
+    r = SQLTables(hstmt,"%",SQL_NTS,NULL,0,NULL,0,NULL,0);
+    mystmt(hstmt,r);
+
+    myresult(hstmt);
+
+    r = SQLFreeStmt(hstmt, SQL_CLOSE);
+    mystmt(hstmt,r);
+
+    r = SQLTables(hstmt,NULL,0,"%",SQL_NTS,NULL,0,NULL,0);
+    mystmt(hstmt,r);
+
+    myresult(hstmt);
+
+    r = SQLFreeStmt(hstmt, SQL_CLOSE);
+    mystmt(hstmt,r);
+
+    r = SQLTables(hstmt,NULL,0,NULL,0,NULL,0,"%",SQL_NTS);
+    mystmt(hstmt,r);
+
+    if (driver_min_version(hdbc,"03.51.07",8))
+        myassert( 2 == myresult(hstmt));
+    else
+        myassert( 1 == myresult(hstmt));
+
+
+    r = SQLFreeStmt(hstmt, SQL_CLOSE);
+    mystmt(hstmt,r);
 
   return OK;
 }
@@ -1126,6 +1224,8 @@ BEGIN_TESTS
   ADD_TEST(t_columns)
   ADD_TEST(t_tables_bug)
   ADD_TEST(t_current_catalog)
+  ADD_TEST(tmysql_showkeys)
+  ADD_TEST(t_sqltables)
 END_TESTS
 
 
