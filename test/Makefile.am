@@ -51,6 +51,7 @@ my_error \
 my_keys \
 my_param \
 my_position \
+my_prepare \
 my_relative \
 my_result \
 my_scroll \
@@ -58,8 +59,7 @@ my_tran \
 my_unixodbc \
 my_use_result \
 mytest \
-mytest3 \
-mytest32
+mytest3
 
 noinst_PROGRAMS= $(tap_tests)
 

@@ -49,7 +49,7 @@ DECLARE_TEST(t_prep_basic)
     rc = SQLRowCount(hstmt, &pcrow);
     mystmt(hstmt,rc);
 
-    printMessage( "\n affected rows: %ld", pcrow);
+    printMessage( "affected rows: %ld\n", pcrow);
     myassert(pcrow == 1);
 
     SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
@@ -68,7 +68,7 @@ DECLARE_TEST(t_prep_basic)
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
-    printMessage( "\n outdata: %d(%d), %s(%d)",id,length1,name,length2);
+    printMessage( "outdata: %d(%d), %s(%d)\n",id,length1,name,length2);
     myassert(id == 100 && length1 == sizeof(SQLINTEGER));
     myassert(strcmp(name,"venu")==0 && length2 == 4);
 
@@ -140,31 +140,31 @@ DECLARE_TEST(t_prep_buffer_length)
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
-    printMessage( "\n outdata: %s (%ld)", buffer, length);
+    printMessage( "outdata: %s (%ld)\n", buffer, length);
     myassert(buffer[0] == '\0' && length == 0);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
-    printMessage("\n outdata: %s (%ld)", buffer, length);
+    printMessage("outdata: %s (%ld)\n", buffer, length);
     myassert(strcmp(buffer,"abc") == 0 && length == 3);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
-    printMessage("\n outdata: %s (%ld)", buffer, length);
+    printMessage("outdata: %s (%ld)\n", buffer, length);
     myassert(strcmp(buffer,"abcdefghij") == 0 && length == 10);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
-    printMessage("\n outdata: %s (%ld)", buffer, length);
+    printMessage("outdata: %s (%ld)\n", buffer, length);
     myassert(strcmp(buffer,"abcdefghi") == 0 && length == 9);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
-    printMessage("\n outdata: %s (%ld)", buffer, length);
+    printMessage("outdata: %s (%ld)\n", buffer, length);
     myassert(strcmp(buffer,"abcdefghij") == 0 && length == 10);
 
     rc = SQLFetch(hstmt);
@@ -209,7 +209,7 @@ DECLARE_TEST(t_prep_truncate)
     rc = SQLRowCount(hstmt, &pcrow);
     mystmt(hstmt,rc);
 
-    printMessage( "\n affected rows: %ld", pcrow);
+    printMessage( "affected rows: %ld\n", pcrow);
     myassert(pcrow == 1);
 
     SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
@@ -227,12 +227,12 @@ DECLARE_TEST(t_prep_truncate)
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
-    printMessage("\n str outdata: %s(%d)",name,length);
+    printMessage("str outdata: %s(%d)\n",name,length);
     myassert(strcmp(name,"v")==0);
     myassert(length == 4);
 
     bin[4]='M';
-    printMessage("\n bin outdata: %s(%d)",bin,length1);
+    printMessage("bin outdata: %s(%d)\n",bin,length1);
     myassert(strncmp(bin,"venuM",5)==0);
     myassert(length == 4);
 
@@ -289,69 +289,69 @@ DECLARE_TEST(t_prep_scroll)
             break;
         mystmt(hstmt,rc);
 
-        printMessage("\n row %ld    : %ld", i, data);
+        printMessage("row %ld    : %ld\n", i, data);
         myassert(data == i);
     }
-    printMessage("\n total rows fetched: %ld\n", i-1);
+    printMessage("total rows fetched: %ld\n\n", i-1);
     myassert( i == max_rows+1);
 
-    printMessage("\n scrolling:");
+    printMessage("scrolling:\n");
     rc = SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 3);
     mystmt(hstmt,rc);
 
-    printMessage("\n absolute 3 : %ld", data);
+    printMessage("absolute 3 : %ld\n", data);
     myassert(data == 3);
 
     rc = SQLFetchScroll(hstmt, SQL_FETCH_PREV, 3);
     mystmt(hstmt,rc);
 
-    printMessage("\n previous   : %ld", data);
+    printMessage("previous   : %ld\n", data);
     myassert(data == 2);
 
     rc = SQLFetchScroll(hstmt, SQL_FETCH_FIRST, 3);
     mystmt(hstmt,rc);
 
-    printMessage("\n first      : %ld", data);
+    printMessage("first      : %ld\n", data);
     myassert(data == 1);
 
     rc = SQLFetchScroll(hstmt, SQL_FETCH_PREV, 3);
-    printMessage("\n previous   : %s", (rc == SQL_NO_DATA) ? "SQL_NO_DATA" : "SQL_ERROR;");
+    printMessage("previous   : %s", (rc == SQL_NO_DATA) ? "SQL_NO_DATA" : "SQL_ERROR;\n");
     myassert(rc == SQL_NO_DATA);  
 
     rc = SQLFetchScroll(hstmt, SQL_FETCH_RELATIVE, -2);
-    printMessage("\n relative -2: %s", (rc == SQL_NO_DATA) ? "SQL_NO_DATA" : "SQL_ERROR;");
+    printMessage("relative -2: %s", (rc == SQL_NO_DATA) ? "SQL_NO_DATA" : "SQL_ERROR;\n");
     myassert(rc == SQL_NO_DATA);  
 
     rc = SQLFetchScroll(hstmt, SQL_FETCH_RELATIVE, 2);
     mystmt(hstmt,rc);
 
-    printMessage("\n relative 2 : %ld", data);
+    printMessage("relative 2 : %ld\n", data);
     myassert(data == 2);
 
     rc = SQLFetchScroll(hstmt, SQL_FETCH_LAST, 3);
     mystmt(hstmt,rc);
 
-    printMessage("\n last       : %ld", data);
+    printMessage("last       : %ld\n", data);
     myassert(data == 5);
 
     rc = SQLFetchScroll(hstmt, SQL_FETCH_RELATIVE, -2);
     mystmt(hstmt,rc);
 
-    printMessage("\n relative -2: %ld", data);
+    printMessage("relative -2: %ld\n", data);
     myassert(data == 3);
 
     rc = SQLFetchScroll(hstmt, SQL_FETCH_RELATIVE, 3);
-    printMessage("\n relative -2: %s", (rc == SQL_NO_DATA) ? "SQL_NO_DATA" : "SQL_ERROR;");
+    printMessage("relative -2: %s", (rc == SQL_NO_DATA) ? "SQL_NO_DATA" : "SQL_ERROR;\n");
     myassert(rc == SQL_NO_DATA);
 
     rc = SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 3);
-    printMessage("\n next       : %s", (rc == SQL_NO_DATA) ? "SQL_NO_DATA" : "SQL_ERROR;");
+    printMessage("next       : %s", (rc == SQL_NO_DATA) ? "SQL_NO_DATA" : "SQL_ERROR;\n");
     myassert(rc == SQL_NO_DATA);    
 
     rc = SQLFetchScroll(hstmt, SQL_FETCH_RELATIVE, -2);
     mystmt(hstmt,rc);
 
-    printMessage("\n relative -2: %ld", data);
+    printMessage("relative -2: %ld\n", data);
     myassert(data == 4);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
@@ -414,20 +414,20 @@ DECLARE_TEST(t_prep_getdata)
     rc = SQLFetch(hstmt);
     mystmt(hstmt, rc);
 
-    printMessage("\n record 1 : %d", tiny);
+    printMessage("record 1 : %d\n", tiny);
     myassert( tiny == 10);
 
     rc = SQLGetData(hstmt,2,SQL_C_LONG,&data,0,NULL);
     mystmt(hstmt,rc);
 
-    printMessage("\n record 2 : %ld", data);
+    printMessage("record 2 : %ld\n", data);
     myassert( data == 10);
 
     name[0]= '\0';
     rc = SQLGetData(hstmt,3,SQL_C_CHAR,name,5,&length);
     mystmt(hstmt,rc);
 
-    printMessage("\n record 3 : %s(%ld)", name, (long)length);
+    printMessage("record 3 : %s(%ld)\n", name, (long)length);
 
     myassert(strcmp(name,"venu")== 0 && length == 4);
 
@@ -435,7 +435,7 @@ DECLARE_TEST(t_prep_getdata)
     rc = SQLGetData(hstmt,1,SQL_C_LONG,&data,0,NULL);
     mystmt(hstmt,rc);
 
-    printMessage("\n record 1 : %ld", data);
+    printMessage("record 1 : %ld\n", data);
     myassert( data == 10);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
@@ -474,44 +474,44 @@ DECLARE_TEST(t_prep_getdata1)
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,data,0,&length);
     mystmt(hstmt,rc);
 
-    printMessage("\n data: %s (%ld)", data, length);
+    printMessage("data: %s (%ld)\n", data, length);
     myassert(strcmp(data,"M") == 0 && length == 10);
 
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,data,4,&length);
     mystmt(hstmt,rc);
 
-    printMessage("\n data: %s (%ld)", data, length);
+    printMessage("data: %s (%ld)\n", data, length);
     myassert(strcmp(data,"abc") == 0 && length == 10);
 
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,data,4,&length);
     mystmt(hstmt,rc);
 
-    printMessage("\n data: %s (%ld)", data, length);
+    printMessage("data: %s (%ld)\n", data, length);
     myassert(strcmp(data,"def") == 0 && length == 7);
 
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,data,4,&length);
     mystmt(hstmt,rc);
 
-    printMessage("\n data: %s (%ld)", data, length);
+    printMessage("data: %s (%ld)\n", data, length);
     myassert(strcmp(data,"ghi") == 0 && length == 4);
 
     data[0]= 'M';
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,data,0,&length);
     mystmt(hstmt,rc);
 
-    printMessage("\n data: %s (%ld)", data, length);
+    printMessage("data: %s (%ld)\n", data, length);
     myassert(data[0] == 'M' && length == 1);
 
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,data,1,&length);
     mystmt(hstmt,rc);
 
-    printMessage("\n data: %s (%ld)", data, length);
+    printMessage("data: %s (%ld)\n", data, length);
     myassert(data[0] == '\0' && length == 1);
 
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,data,2,&length);
     mystmt(hstmt,rc);
 
-    printMessage("\n data: %s (%ld)", data, length);
+    printMessage("data: %s (%ld)\n", data, length);
     myassert(strcmp(data,"j") == 0 && length == 1);
 
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,data,2,&length);
@@ -521,44 +521,44 @@ DECLARE_TEST(t_prep_getdata1)
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,data,0,&length);
     mystmt(hstmt,rc);
 
-    printMessage("\n data: %s (%ld)", data, length);
+    printMessage("data: %s (%ld)\n", data, length);
     myassert(strcmp(data,"M") == 0 && length == 5);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,data,3,&length);
     mystmt(hstmt,rc);
 
-    printMessage("\n data: %s (%ld)", data, length);
+    printMessage("data: %s (%ld)\n", data, length);
     myassert(strcmp(data,"12") == 0 && length == 5);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,data,2,&length);
     mystmt(hstmt,rc);
 
-    printMessage("\n data: %s (%ld)", data, length);
+    printMessage("data: %s (%ld)\n", data, length);
     myassert(strcmp(data,"3") == 0 && length == 3);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,data,2,&length);
     mystmt(hstmt,rc);
 
-    printMessage("\n data: %s (%ld)", data, length);
+    printMessage("data: %s (%ld)\n", data, length);
     myassert(strcmp(data,"4") == 0 && length == 2);
 
     data[0]= 'M';
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,data,0,&length);
     mystmt(hstmt,rc);
 
-    printMessage("\n data: %s (%ld)", data, length);
+    printMessage("data: %s (%ld)\n", data, length);
     myassert(data[0] == 'M' && length == 1);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,data,1,&length);
     mystmt(hstmt,rc);
 
-    printMessage("\n data: %s (%ld)", data, length);
+    printMessage("data: %s (%ld)\n", data, length);
     myassert(data[0] == '\0' && length == 1);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,data,2,&length);
     mystmt(hstmt,rc);
 
-    printMessage("\n data: %s (%ld)", data, length);
+    printMessage("data: %s (%ld)\n", data, length);
     myassert(strcmp(data,"5") == 0 && length == 1);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,data,2,&length);
@@ -627,7 +627,7 @@ DECLARE_TEST(t_prep_catalog)
 
     rc = SQLGetData(hstmt,13,SQL_C_CHAR,table,10,&length);
     mystmt(hstmt,rc);
-    printMessage("\n table: %s(%d)", table, length);
+    printMessage("table: %s(%d)\n", table, length);
     myassert(strcmp(table,"100") == 0 && length == 3);
 
     rc = SQLFetch(hstmt);
@@ -643,192 +643,6 @@ DECLARE_TEST(t_prep_catalog)
 }
 
 
-DECLARE_TEST(t_catalog)
-{
-    SQLCHAR      name[MYSQL_NAME_LEN+1];
-    SQLUSMALLINT i;
-    SQLSMALLINT  ncols, len;
-
-    SQLCHAR colnames[19][20]= {
-        "TABLE_CAT","TABLE_SCHEM","TABLE_NAME","COLUMN_NAME",
-        "DATA_TYPE","TYPE_NAME","COLUMN_SIZE","BUFFER_LENGTH",
-        "DECIMAL_DIGITS","NUM_PREC_RADIX","NULLABLE","REMARKS",
-        "COLUMN_DEF","SQL_DATA_TYPE","SQL_DATETIME_SUB",
-        "CHAR_OCTET_LENGTH","ORDINAL_POSITION","IS_NULLABLE"
-    };
-    SQLSMALLINT collengths[18]= {
-        9,11,10,11,9,9,11,13,14,14,8,7,10,13,16,17,16,11
-    };
-
-    SQLExecDirect(hstmt,"drop table t_catalog",SQL_NTS);
-
-    rc = SQLExecDirect(hstmt,"create table t_catalog(a tinyint, b char(4))",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLColumns(hstmt,NULL,0,NULL,0,"t_catalog",9,NULL,0);
-    mystmt(hstmt,rc);
-
-    rc = SQLNumResultCols(hstmt, &ncols);
-    mystmt(hstmt,rc);
-
-    printMessage("\n total columns: %d", ncols);
-    myassert(ncols == 18);
-    myassert(myresult(hstmt) == 2);
-
-    SQLFreeStmt(hstmt, SQL_UNBIND);
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-
-    rc = SQLColumns(hstmt,NULL,0,NULL,0,"t_catalog",9,NULL,0);
-    mystmt(hstmt,rc);
-
-    rc = SQLNumResultCols(hstmt,&ncols);
-    mystmt(hstmt,rc);
-
-    for (i= 1; i <= (SQLUINTEGER) ncols; i++)
-    {
-        rc = SQLDescribeCol(hstmt, i, name, MYSQL_NAME_LEN+1, &len, NULL, NULL, NULL, NULL);
-        mystmt(hstmt,rc);
-
-        printMessage("\n column %d: %s (%d)", i, name, len);
-        myassert(strcmp(name,colnames[i-1]) == 0 && len == collengths[i-1]);
-    }
-    SQLFreeStmt(hstmt,SQL_CLOSE);
-
-  return OK;
-}
-
-
-DECLARE_TEST(t_rows_fetched_ptr)
-{
-    SQLINTEGER   rowsFetched, rowsSize;
-    long         i;
-
-    SQLExecDirect(hstmt,"drop table t_rows_fetched_ptr",SQL_NTS);
-
-    rc = SQLExecDirect(hstmt,"create table t_rows_fetched_ptr(a int)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(0)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(1)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(2)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(3)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(4)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(5)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rowsSize= 1;
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)rowsSize, 0);
-    mystmt(hstmt,rc);
-
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, &rowsFetched, 0);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt, "SELECT * FROM t_rows_fetched_ptr",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    i= 0;
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);
-    while (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
-    {
-        printMessage("\n total rows fetched: %ld", rowsFetched);
-        myassert(rowsFetched == rowsSize);
-        i++; rowsFetched= 0;
-        rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);
-    }
-    myassert( i == 6);
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-
-    rowsSize= 2;
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)rowsSize, 0);
-    mystmt(hstmt,rc);
-
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, &rowsFetched, 0);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt, "SELECT * FROM t_rows_fetched_ptr",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    i= 0;
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);
-    while (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
-    {
-        printMessage("\n total rows fetched: %ld", rowsFetched);
-        myassert(rowsFetched == rowsSize);
-        i++;rowsFetched= 0;
-        rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);
-    }
-    myassert( i == 3);
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-
-    rowsSize= 3;
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)rowsSize, 0);
-    mystmt(hstmt,rc);
-
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, &rowsFetched, 0);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt, "SELECT * FROM t_rows_fetched_ptr",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    i= 0;
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);
-    while (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
-    {
-        printMessage("\n total rows fetched: %ld", rowsFetched);
-        myassert(rowsFetched == rowsSize);
-        i++;rowsFetched= 0;
-        rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);
-    }
-    myassert( i == 2);
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-
-    rowsSize= 4;
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)rowsSize, 0);
-    mystmt(hstmt,rc);
-
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, &rowsFetched, 0);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt, "SELECT * FROM t_rows_fetched_ptr",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-
-    printMessage("\n total rows fetched: %ld", rowsFetched);
-    myassert(rowsFetched == rowsSize);
-
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-
-    printMessage("\n total rows fetched: %ld", rowsFetched);
-    myassert(rowsFetched == 2);
-
-    rc = SQLFetch(hstmt);
-    myassert(rc == SQL_NO_DATA);
-
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)1, 0);/* reset */
-    mystmt(hstmt,rc);
-
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, NULL, 0);
-    mystmt(hstmt,rc);
-
-  return OK;
-}
-
-
 DECLARE_TEST(t_sps)
 {
     SQLINTEGER a, a1;
@@ -838,7 +652,7 @@ DECLARE_TEST(t_sps)
 /*
     if (!mysql_min_version(hdbc, "5.0",3))
     {
-        printMessage("\n server doesn't support stored procedures..skipped");
+        printMessage("server doesn't support stored procedures..skipped\n");
         return;
     }
 */
@@ -889,7 +703,7 @@ DECLARE_TEST(t_sps)
         rc = SQLFetch(hstmt);
         mystmt(hstmt, rc);
 
-        printMessage( "\n data: %d, %s(%d)", a, b1, length);
+        printMessage( "data: %d, %s(%d)\n", a, b1, length);
         myassert( a == a1);
         myassert(strncmp(b1,b,length1) == 0 && length1 == length);
     }
@@ -916,8 +730,6 @@ BEGIN_TESTS
   ADD_TEST(t_prep_getdata)
   ADD_TEST(t_prep_getdata1)
   ADD_TEST(t_prep_catalog)
-  ADD_TEST(t_catalog)
-  ADD_TEST(t_rows_fetched_ptr)
   ADD_TEST(t_sps)
 END_TESTS
 

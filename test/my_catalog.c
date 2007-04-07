@@ -759,6 +759,62 @@ DECLARE_TEST(t_sqlprocedures)
 }
 
 
+DECLARE_TEST(t_catalog)
+{
+    SQLRETURN rc;
+    SQLCHAR      name[MYSQL_NAME_LEN+1];
+    SQLUSMALLINT i;
+    SQLSMALLINT  ncols, len;
+
+    SQLCHAR colnames[19][20]= {
+        "TABLE_CAT","TABLE_SCHEM","TABLE_NAME","COLUMN_NAME",
+        "DATA_TYPE","TYPE_NAME","COLUMN_SIZE","BUFFER_LENGTH",
+        "DECIMAL_DIGITS","NUM_PREC_RADIX","NULLABLE","REMARKS",
+        "COLUMN_DEF","SQL_DATA_TYPE","SQL_DATETIME_SUB",
+        "CHAR_OCTET_LENGTH","ORDINAL_POSITION","IS_NULLABLE"
+    };
+    SQLSMALLINT collengths[18]= {
+        9,11,10,11,9,9,11,13,14,14,8,7,10,13,16,17,16,11
+    };
+
+    SQLExecDirect(hstmt,"drop table t_catalog",SQL_NTS);
+
+    rc = SQLExecDirect(hstmt,"create table t_catalog(a tinyint, b char(4))",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLColumns(hstmt,NULL,0,NULL,0,"t_catalog",9,NULL,0);
+    mystmt(hstmt,rc);
+
+    rc = SQLNumResultCols(hstmt, &ncols);
+    mystmt(hstmt,rc);
+
+    printMessage("\n total columns: %d", ncols);
+    myassert(ncols == 18);
+    myassert(myresult(hstmt) == 2);
+
+    SQLFreeStmt(hstmt, SQL_UNBIND);
+    SQLFreeStmt(hstmt, SQL_CLOSE);
+
+    rc = SQLColumns(hstmt,NULL,0,NULL,0,"t_catalog",9,NULL,0);
+    mystmt(hstmt,rc);
+
+    rc = SQLNumResultCols(hstmt,&ncols);
+    mystmt(hstmt,rc);
+
+    for (i= 1; i <= (SQLUINTEGER) ncols; i++)
+    {
+        rc = SQLDescribeCol(hstmt, i, name, MYSQL_NAME_LEN+1, &len, NULL, NULL, NULL, NULL);
+        mystmt(hstmt,rc);
+
+        printMessage("\n column %d: %s (%d)", i, name, len);
+        myassert(strcmp(name,colnames[i-1]) == 0 && len == collengths[i-1]);
+    }
+    SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -769,6 +825,7 @@ BEGIN_TESTS
   ADD_TEST(my_column_priv)
   ADD_TEST(my_colpriv)
   ADD_TEST(t_sqlprocedures)
+  ADD_TEST(t_catalog)
 END_TESTS
 
 
