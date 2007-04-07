@@ -815,6 +815,302 @@ DECLARE_TEST(t_catalog)
 }
 
 
+DECLARE_TEST(tmysql_specialcols)
+{
+  SQLRETURN rc;
+
+    tmysql_exec(hstmt,"drop table tmysql_specialcols");
+    rc = tmysql_exec(hstmt,"create table tmysql_specialcols(col1 int primary key, col2 varchar(30), col3 int)");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"create index tmysql_ind1 on tmysql_specialcols(col1)");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into tmysql_specialcols values(100,'venu',1)");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into tmysql_specialcols values(200,'MySQL',2)");
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"select * from tmysql_specialcols");
+    mystmt(hstmt,rc);
+
+    myresult(hstmt);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLSpecialColumns(hstmt,
+                          SQL_BEST_ROWID,
+                          NULL,0,
+                          NULL,0,
+                          "tmysql_specialcols",SQL_NTS,
+                          SQL_SCOPE_SESSION,
+                          SQL_NULLABLE);
+    mystmt(hstmt,rc);
+
+    myresult(hstmt);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"drop table tmysql_specialcols");
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+  return OK;
+}
+
+
+/* To test SQLColumns misc case */
+DECLARE_TEST(t_columns)
+{
+  SQLSMALLINT   NumPrecRadix, DataType, Nullable, DecimalDigits;
+  SQLLEN        cbColumnSize, cbDecimalDigits, cbNumPrecRadix,
+                cbDatabaseName, cbDataType, cbNullable;
+  SQLRETURN     rc;
+  SQLUINTEGER   ColumnSize, i;
+  SQLUINTEGER   ColumnCount= 7;
+  SQLCHAR       ColumnName[MAX_NAME_LEN], DatabaseName[MAX_NAME_LEN];
+  SQLINTEGER    Values[7][5][2]=
+  {
+    { {5,2},  {6,4}, {0,2},  {10,2},  {1,2}},
+    { {1,2},  {5,4},  {0,-1}, {10,-1}, {1,2}},
+    { {12,2}, {20,4}, {0,-1}, {10,-1}, {0,2}},
+    { {3,2},  {10,4}, {2,2},  {10,2},  {1,2}},
+    { {-6,2},  {4,4}, {0,2},  {10,2},  {0,2}},
+    { {4,2}, {11,4}, {0,2},  {10,2},  {0,2}},
+    { {-6,2}, {4,4}, {0,2},  {10,2},  {0,2}}
+  };
+
+    SQLFreeStmt(hstmt, SQL_CLOSE);
+    SQLExecDirect(hstmt,"DROP TABLE test_column",SQL_NTS);
+
+    rc = SQLExecDirect(hstmt,"CREATE TABLE test_column(col0 smallint, \
+                                                       col1 char(5),\
+                                                       col2 varchar(20) not null,\
+                                                       col3 decimal(10,2),\
+                                                       col4 tinyint not null,\
+                                                       col5 integer primary key,\
+                                                       col6 tinyint not null unique auto_increment)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    mystmt(hstmt,rc);
+
+    rc= SQLSetStmtAttr(hstmt, SQL_ATTR_METADATA_ID,
+                      (SQLPOINTER)SQL_FALSE, SQL_IS_UINTEGER);
+    mystmt(hstmt,rc);
+
+    SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER) SQL_CURSOR_STATIC, 0);
+
+    rc= SQLGetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG,(SQLCHAR *)DatabaseName,
+                          MAX_NAME_LEN, &cbDatabaseName);/* Current Catalog */
+    mycon(hdbc,rc);
+
+    for (i=0; i< ColumnCount; i++)
+    {
+      sprintf(ColumnName,"col%d",i);
+
+      rc= SQLColumns(hstmt,
+                     (SQLCHAR *)DatabaseName, (SQLUSMALLINT)cbDatabaseName,
+                     SQL_NULL_HANDLE, 0,
+                     (SQLCHAR *)"test_column", SQL_NTS,
+                     (SQLCHAR *)ColumnName, SQL_NTS);
+      mystmt(hstmt,rc);
+
+      /* 5 -- Data type */
+      rc=  SQLBindCol(hstmt, 5, SQL_C_SSHORT, &DataType, 0, &cbDataType);
+      mystmt(hstmt,rc);
+
+      /* 7 -- Column Size */
+      rc=  SQLBindCol(hstmt, 7, SQL_C_ULONG, &ColumnSize, 0, &cbColumnSize);
+      mystmt(hstmt,rc);
+
+      /* 9 -- Decimal Digits */
+      rc= SQLBindCol(hstmt, 9, SQL_C_SSHORT, &DecimalDigits, 0, &cbDecimalDigits);
+      mystmt(hstmt,rc);
+
+      /* 10 -- Num Prec Radix */
+      rc= SQLBindCol(hstmt, 10, SQL_C_SSHORT, &NumPrecRadix, 0, &cbNumPrecRadix);
+      mystmt(hstmt,rc);
+
+      /* 11 -- Nullable */
+      rc= SQLBindCol(hstmt, 11, SQL_C_SSHORT, &Nullable, 0, &cbNullable);
+      mystmt(hstmt,rc);
+
+      rc= SQLFetch(hstmt);
+      mystmt(hstmt,rc);
+
+      fprintf(stdout,"Column %s:\n", ColumnName);
+      fprintf(stdout,"\t DataType     = %d(%d)\n", DataType, cbDataType);
+      fprintf(stdout,"\t ColumnSize   = %d(%d)\n", ColumnSize, cbColumnSize);
+      fprintf(stdout,"\t DecimalDigits= %d(%d)\n", DecimalDigits, cbDecimalDigits);
+      fprintf(stdout,"\t NumPrecRadix = %d(%d)\n", NumPrecRadix, cbNumPrecRadix);
+      fprintf(stdout,"\t Nullable     = %s(%d)\n\n",
+                      Nullable == SQL_NO_NULLS ? "NO": "YES", cbNullable);
+
+      myassert(DataType == Values[i][0][0]);
+      myassert(cbDataType == Values[i][0][1]);
+
+      myassert(ColumnSize == Values[i][1][0]);
+      myassert(cbColumnSize == Values[i][1][1]);
+
+      myassert(DecimalDigits == Values[i][2][0]);
+      myassert(cbDecimalDigits == Values[i][2][1]);
+
+      myassert(NumPrecRadix == Values[i][3][0]);
+      myassert(cbNumPrecRadix == Values[i][3][1]);
+
+      myassert(Nullable == Values[i][4][0]);
+      myassert(cbNullable == Values[i][4][1]);
+
+      rc= SQLFetch(hstmt);
+      myassert(rc == SQL_NO_DATA);
+
+      SQLFreeStmt(hstmt,SQL_UNBIND);
+      SQLFreeStmt(hstmt,SQL_CLOSE);
+    }
+
+    SQLFreeStmt(hstmt,SQL_UNBIND);
+    SQLFreeStmt(hstmt,SQL_CLOSE);
+
+    rc = SQLExecDirect(hstmt,"DROP TABLE test_column",SQL_NTS);
+    mystmt(hstmt,rc);
+    SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  return OK;
+}
+
+
+/* Test the bug SQLTables */
+typedef struct t_table_bug
+{
+  SQLCHAR     szColName[MAX_NAME_LEN];
+  SQLSMALLINT pcbColName;
+  SQLSMALLINT pfSqlType;
+  SQLUINTEGER pcbColDef;
+  SQLSMALLINT pibScale;
+  SQLSMALLINT pfNullable;
+} t_describe_col;
+
+
+t_describe_col t_tables_bug_data[5] =
+{
+  {"TABLE_CAT",   9, SQL_VARCHAR, MYSQL_NAME_LEN, 0, SQL_NULLABLE},
+  {"TABLE_SCHEM",11, SQL_VARCHAR, MYSQL_NAME_LEN, 0, SQL_NULLABLE},
+  {"TABLE_NAME", 10, SQL_VARCHAR, MYSQL_NAME_LEN, 0, SQL_NULLABLE},
+  {"TABLE_TYPE", 10, SQL_VARCHAR, MYSQL_NAME_LEN, 0, SQL_NULLABLE},
+  {"REMARKS",     7, SQL_VARCHAR, MYSQL_NAME_LEN, 0, SQL_NULLABLE},
+};
+
+
+DECLARE_TEST(t_tables_bug)
+{
+  SQLRETURN   rc;
+  SQLSMALLINT i, ColumnCount, pcbColName, pfSqlType, pibScale, pfNullable;
+  SQLUINTEGER pcbColDef;
+  SQLCHAR     szColName[MAX_NAME_LEN];
+
+   SQLFreeStmt(hstmt, SQL_CLOSE);
+
+   rc = SQLTables(hstmt,NULL,0,NULL,0,NULL,0,"'TABLE'",SQL_NTS);
+   mystmt(hstmt,rc);
+
+   rc = SQLNumResultCols(hstmt,&ColumnCount);
+   mystmt(hstmt,rc);
+
+   fprintf(stdout, "total columns in SQLTables: %d\n", ColumnCount);
+   myassert(ColumnCount == 5);
+
+   for (i= 1; i <= ColumnCount; i++)
+   {
+     rc = SQLDescribeCol(hstmt, (SQLUSMALLINT)i,
+                         szColName,MAX_NAME_LEN,&pcbColName,
+                         &pfSqlType,&pcbColDef,&pibScale,&pfNullable);
+     mystmt(hstmt,rc);
+
+     fprintf(stdout, "Column Number'%d':\n", i);
+     fprintf(stdout, "\t Column Name    : %s\n", szColName);
+     fprintf(stdout, "\t NameLengh      : %d\n", pcbColName);
+     fprintf(stdout, "\t DataType       : %d\n", pfSqlType);
+     fprintf(stdout, "\t ColumnSize     : %d\n", pcbColDef);
+     fprintf(stdout, "\t DecimalDigits  : %d\n", pibScale);
+     fprintf(stdout, "\t Nullable       : %d\n", pfNullable);
+
+     myassert(strcmp(t_tables_bug_data[i-1].szColName,szColName) == 0);
+     myassert(t_tables_bug_data[i-1].pcbColName == pcbColName);
+     myassert(t_tables_bug_data[i-1].pfSqlType == pfSqlType);
+     myassert(t_tables_bug_data[i-1].pcbColDef == pcbColDef);
+     myassert(t_tables_bug_data[i-1].pibScale == pibScale);
+     myassert(t_tables_bug_data[i-1].pfNullable == pfNullable);
+   }
+   SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  return OK;
+}
+
+
+DECLARE_TEST(t_current_catalog)
+{
+  SQLCHAR     cur_db[255], db[255];
+  SQLRETURN   rc;
+  SQLUINTEGER len;
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLGetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, (char *)db, 255, &len);
+    mycon(hdbc,rc);
+    fprintf(stdout,"current_catalog: %s (%ld)\n", db, len);
+    myassert(strcmp(db, "test") == 0 || strlen("test") == len);
+
+    rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, (char *)db, SQL_NTS);
+    mycon(hdbc,rc);
+
+    SQLExecDirect(hstmt, "DROP DATABASE IF EXISTS test_odbc_current", SQL_NTS);
+
+    strcpy(cur_db, "test_odbc_current");
+    rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, (char *)cur_db, SQL_NTS);
+    mycon_r(hdbc,rc);
+
+    rc = SQLExecDirect(hstmt, "CREATE DATABASE test_odbc_current", SQL_NTS);
+    mystmt(hstmt,rc);
+
+    strcpy(cur_db, "test_odbc_current");
+    rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, (char *)cur_db, SQL_NTS);
+    mycon(hdbc,rc);
+
+    rc = SQLGetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, (char *)db, 255, &len);
+    mycon(hdbc,rc);
+    fprintf(stdout,"current_catalog: %s (%ld)\n", db, len);
+    myassert(strcmp(cur_db, db) == 0 || strlen(cur_db) == len);
+
+    strcpy(cur_db, "test_odbc_current_12455");
+    rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, (char *)cur_db, SQL_NTS);
+    mycon_r(hdbc,rc);
+
+    rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, (char *)cur_db, len);
+    mycon(hdbc,rc);
+
+    /* reset for further tests */
+    rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, (char *)test_db, SQL_NTS);
+    mycon(hdbc,rc);
+
+    rc = SQLExecDirect(hstmt, "DROP DATABASE test_odbc_current", SQL_NTS);
+    mycon(hstmt,rc);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -826,6 +1122,10 @@ BEGIN_TESTS
   ADD_TEST(my_colpriv)
   ADD_TEST(t_sqlprocedures)
   ADD_TEST(t_catalog)
+  ADD_TEST(tmysql_specialcols)
+  ADD_TEST(t_columns)
+  ADD_TEST(t_tables_bug)
+  ADD_TEST(t_current_catalog)
 END_TESTS
 
 

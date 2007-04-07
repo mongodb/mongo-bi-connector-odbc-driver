@@ -118,8 +118,68 @@ DECLARE_TEST(my_basics)
 }
 
 
+DECLARE_TEST(t_max_select)
+{
+  SQLRETURN rc;
+  SQLCHAR szData[255];
+  SQLINTEGER i;
+
+    tmysql_exec(hstmt,"drop table t_max_select");
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = tmysql_exec(hstmt,"create table t_max_select(col1 int ,col2 varchar(30))");
+    mystmt(hstmt,rc);
+
+    rc = SQLPrepare(hstmt,"insert into t_max_select values(?,?)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_LONG,
+                            SQL_INTEGER,0,0,&i,0,NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,SQL_C_CHAR,
+                            SQL_CHAR,0,0,szData,sizeof(szData),NULL);
+    mystmt(hstmt,rc);
+
+    fprintf(stdout," inserting 1000 rows, it will take some time\n");
+    for(i = 1; i <= 1000; i++)
+    {
+      fprintf(stdout," \r %d", i);
+      sprintf((char *)szData,"MySQL%d",i);
+      rc = SQLExecute(hstmt);
+      mystmt(hstmt,rc);
+    }
+    fprintf(stdout,"\n");
+
+    rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = tmysql_exec(hstmt,"select * from t_max_select");
+    mystmt(hstmt,rc);
+
+    my_assert( 1000 == myrowcount(hstmt));
+
+    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
+  ADD_TEST(t_max_select)
 END_TESTS
 
 

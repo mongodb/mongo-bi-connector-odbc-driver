@@ -745,11 +745,144 @@ DECLARE_TEST(t_rows_fetched_ptr)
 }
 
 
+DECLARE_TEST(t_rows_fetched_ptr1)
+{
+  SQLRETURN   rc;
+  SQLLEN      rowsFetched, rowsSize;
+  SQLINTEGER  i;
+
+    SQLExecDirect(hstmt,"drop table t_rows_fetched_ptr",SQL_NTS);
+
+    rc = SQLExecDirect(hstmt,"create table t_rows_fetched_ptr(a int)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(0)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(1)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(2)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(3)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(4)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(5)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rowsSize= 1;
+    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)rowsSize, 0);
+    mystmt(hstmt,rc);
+
+    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, &rowsFetched, 0);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecDirect(hstmt, "SELECT * FROM t_rows_fetched_ptr",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    i= 0;
+    rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);
+    while (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
+    {
+      fprintf(stdout,"total rows fetched: %ld\n", rowsFetched);
+      myassert(rowsFetched == rowsSize);
+      i++; rowsFetched= 0;
+      rc = SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0);
+    }
+    myassert( i == 6);
+    SQLFreeStmt(hstmt, SQL_CLOSE);
+
+    rowsSize= 2;
+    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)rowsSize, 0);
+    mystmt(hstmt,rc);
+
+    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, &rowsFetched, 0);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecDirect(hstmt, "SELECT * FROM t_rows_fetched_ptr",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    i= 0;
+    rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);
+    while (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
+    {
+      fprintf(stdout,"total rows fetched: %ld\n", rowsFetched);
+      myassert(rowsFetched == rowsSize);
+      i++;rowsFetched= 0;
+      rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);
+    }
+    myassert( i == 3);
+    SQLFreeStmt(hstmt, SQL_CLOSE);
+
+    rowsSize= 3;
+    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)rowsSize, 0);
+    mystmt(hstmt,rc);
+
+    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, &rowsFetched, 0);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecDirect(hstmt, "SELECT * FROM t_rows_fetched_ptr",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    i= 0;
+    rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);
+    while (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
+    {
+      printMessage("total rows fetched: %ld\n", rowsFetched);
+      myassert(rowsFetched == rowsSize);
+      i++;rowsFetched= 0;
+      rc = SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0);
+    }
+    myassert( i == 2);
+    SQLFreeStmt(hstmt, SQL_CLOSE);
+
+    rowsSize= 4;
+    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)rowsSize, 0);
+    mystmt(hstmt,rc);
+
+    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, &rowsFetched, 0);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecDirect(hstmt, "SELECT * FROM t_rows_fetched_ptr",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLFetch(hstmt);
+    mystmt(hstmt,rc);
+
+    printMessage("total rows fetched: %ld\n", rowsFetched);
+    myassert(rowsFetched == rowsSize);
+
+    rc = SQLFetch(hstmt);
+    mystmt(hstmt,rc);
+
+    printMessage("total rows fetched: %ld\n", rowsFetched);
+    myassert(rowsFetched == 2);
+
+    rc = SQLFetch(hstmt);
+    myassert(rc == SQL_NO_DATA);
+
+    SQLFreeStmt(hstmt, SQL_CLOSE);
+
+    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)1, 0);/* reset */
+    mystmt(hstmt,rc);
+
+    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, NULL, 0);
+    mystmt(hstmt,rc);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_relative)
   ADD_TEST(t_relative1)
   ADD_TEST(t_relative2)
   ADD_TEST(t_rows_fetched_ptr)
+  ADD_TEST(t_rows_fetched_ptr1)
 END_TESTS
 
 

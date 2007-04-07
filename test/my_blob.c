@@ -199,9 +199,527 @@ DECLARE_TEST(t_1piecewrite2)
 }
 
 
+/* Test for a simple SQLPutData and SQLParamData handling for longtext */
+DECLARE_TEST(t_putdata)
+{
+  SQLRETURN  rc;
+  SQLLEN     pcbLength;
+  SQLINTEGER c1;
+  SQLCHAR    data[255];
+  SQLPOINTER token;
+
+    SQLExecDirect(hstmt,"drop table t_putdata",SQL_NTS);
+    rc = SQLExecDirect(hstmt,"create table t_putdata(c1 int, c2 long varchar)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLPrepare(hstmt,"insert into t_putdata values(?,?)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_LONG,
+                          SQL_INTEGER,0,0,&c1,0,NULL);
+
+    rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,SQL_C_CHAR,
+                          SQL_LONGVARCHAR,0,0,
+                          (SQLPOINTER)1,0,&pcbLength);
+
+    pcbLength =  SQL_LEN_DATA_AT_EXEC(0);
+
+    c1 = 10;
+    rc = SQLExecute(hstmt);
+    myassert(rc == SQL_NEED_DATA);
+
+    rc = SQLParamData(hstmt, &token);
+    myassert(rc == SQL_NEED_DATA);
+
+    strcpy(data,"mysql ab");
+    rc = SQLPutData(hstmt,data,6);
+    mystmt(hstmt,rc);
+
+    strcpy(data,"- the open source database company");
+    rc = SQLPutData(hstmt,data,strlen(data));
+    mystmt(hstmt,rc);
+
+    rc = SQLParamData(hstmt, &token);
+    mystmt(hstmt,rc);
+
+    SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
+    SQLFreeStmt(hstmt, SQL_CLOSE);
+
+    rc = SQLExecDirect(hstmt,"select c2 from t_putdata where c1= 10",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLFetch(hstmt);
+    mystmt(hstmt,rc);
+
+    pcbLength= 0;
+    rc = SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &pcbLength);
+    mystmt(hstmt,rc);
+    fprintf(stdout,"data: %s(%d)\n", data, pcbLength);
+    myassert(strcmp(data,"mysql - the open source database company")==0);
+    myassert(pcbLength == 40);
+
+    SQLFreeStmt(hstmt, SQL_UNBIND);
+    SQLFreeStmt(hstmt, SQL_CLOSE);
+
+  return OK;
+}
+
+/* Test for a simple SQLPutData and SQLParamData handling for longtext */
+DECLARE_TEST(t_putdata1)
+{
+  SQLRETURN  rc;
+  SQLLEN     pcbLength;
+  SQLINTEGER c1;
+  SQLCHAR    data[255];
+  SQLPOINTER token;
+
+    SQLExecDirect(hstmt,"drop table t_putdata",SQL_NTS);
+    rc = SQLExecDirect(hstmt,"create table t_putdata(c1 int, c2 long varchar)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecDirect(hstmt,"insert into t_putdata values(10,'venu')",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLPrepare(hstmt,"update t_putdata set c2= ? where c1 = ?",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_CHAR,
+                          SQL_LONGVARCHAR,0,0,
+                          (SQLPOINTER)1,0,&pcbLength);
+
+    rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,SQL_C_LONG,
+                          SQL_INTEGER,0,0,&c1,0,NULL);
+
+    pcbLength =  SQL_LEN_DATA_AT_EXEC(0);
+
+    c1 = 10;
+    rc = SQLExecute(hstmt);
+    myassert(rc == SQL_NEED_DATA);
+
+    rc = SQLParamData(hstmt, &token);
+    myassert(rc == SQL_NEED_DATA);
+
+    strcpy(data,"mysql ab");
+    rc = SQLPutData(hstmt,data,6);
+    mystmt(hstmt,rc);
+
+    strcpy(data,"- the open source database company");
+    rc = SQLPutData(hstmt,data,strlen(data));
+    mystmt(hstmt,rc);
+
+    rc = SQLParamData(hstmt, &token);
+    mystmt(hstmt,rc);
+
+    SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
+    SQLFreeStmt(hstmt, SQL_CLOSE);
+
+    rc = SQLExecDirect(hstmt,"select c2 from t_putdata where c1= 10",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLFetch(hstmt);
+    mystmt(hstmt,rc);
+
+    pcbLength= 0;
+    rc = SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &pcbLength);
+    mystmt(hstmt,rc);
+    fprintf(stdout,"data: %s(%d)\n", data, pcbLength);
+    myassert(strcmp(data,"mysql - the open source database company")==0);
+    myassert(pcbLength == 40);
+
+    SQLFreeStmt(hstmt, SQL_UNBIND);
+    SQLFreeStmt(hstmt, SQL_CLOSE);
+
+  return OK;
+}
+
+
+/* Test for a simple SQLPutData and SQLParamData handling for longtext */
+DECLARE_TEST(t_putdata2)
+{
+  SQLRETURN  rc;
+  SQLLEN     pcbLength;
+  SQLINTEGER c1;
+  SQLCHAR    data[255];
+  SQLPOINTER token;
+
+    SQLExecDirect(hstmt,"drop table t_putdata",SQL_NTS);
+    rc = SQLExecDirect(hstmt,"create table t_putdata(c1 int, c2 long varchar, c3 long varchar)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLPrepare(hstmt,"insert into t_putdata values(?,?,?)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_LONG,
+                          SQL_INTEGER,0,0,&c1,0,NULL);
+
+    rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,SQL_C_CHAR,
+                          SQL_LONGVARCHAR,0,0,
+                          (SQLPOINTER)1,0,&pcbLength);
+
+    rc = SQLBindParameter(hstmt,3,SQL_PARAM_INPUT,SQL_C_CHAR,
+                          SQL_LONGVARCHAR,0,0,
+                          (SQLPOINTER)1,0,&pcbLength);
+
+    pcbLength =  SQL_LEN_DATA_AT_EXEC(0);
+
+    c1 = 10;
+    rc = SQLExecute(hstmt);
+    myassert(rc == SQL_NEED_DATA);
+
+    rc = SQLParamData(hstmt, &token);
+    myassert(rc == SQL_NEED_DATA);
+
+    strcpy(data,"mysql ab");
+    rc = SQLPutData(hstmt,data,6);
+    mystmt(hstmt,rc);
+
+    strcpy(data,"- the open source database company");
+    rc = SQLPutData(hstmt,data,strlen(data));
+    mystmt(hstmt,rc);
+
+    rc = SQLParamData(hstmt, &token);
+    myassert(rc == SQL_NEED_DATA);
+
+    strcpy(data,"MySQL AB");
+    rc = SQLPutData(hstmt,data, 8);
+    mystmt(hstmt,rc);
+
+    rc = SQLParamData(hstmt, &token);
+    mystmt(hstmt,rc);
+
+    SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
+    SQLFreeStmt(hstmt, SQL_CLOSE);
+
+    rc = SQLExecDirect(hstmt,"select c2,c3 from t_putdata where c1= 10",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLFetch(hstmt);
+    mystmt(hstmt,rc);
+
+    pcbLength= 0;
+    rc = SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &pcbLength);
+    mystmt(hstmt,rc);
+    fprintf(stdout,"data: %s(%d)\n", data, pcbLength);
+    myassert(strcmp(data,"mysql - the open source database company")==0);
+    myassert(pcbLength == 40);
+
+    pcbLength= 0;
+    rc = SQLGetData(hstmt, 2, SQL_C_CHAR, data, sizeof(data), &pcbLength);
+    mystmt(hstmt,rc);
+    fprintf(stdout,"data: %s(%d)\n", data, pcbLength);
+    myassert(strcmp(data,"MySQL AB")==0);
+    myassert(pcbLength == 8);
+
+    SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
+    SQLFreeStmt(hstmt, SQL_UNBIND);
+    SQLFreeStmt(hstmt, SQL_CLOSE);
+
+  return OK;
+}
+
+
+/* Test for a simple SQLPutData and SQLParamData handling bug #1316 */
+DECLARE_TEST(t_putdata3)
+{
+  char buffer[]= "MySQL - The worlds's most popular open source database";
+  SQLRETURN  rc;
+  const int MAX_PART_SIZE = 5;
+
+  char *pdata= 0, data[50];
+  int dynData;
+  int commonLen= 20;
+
+  SQLINTEGER  id, id1, id2, id3, resId;
+  SQLINTEGER  resUTimeSec;
+  SQLINTEGER  resUTimeMSec;
+  SQLINTEGER  resDataLen;
+  SQLLEN      resData;
+
+    SQLExecDirect(hstmt,"drop table t_putdata3",SQL_NTS);
+    rc = SQLExecDirect(hstmt,"CREATE TABLE t_putdata3 ( id INT, id1  INT, \
+                     id2 INT, id3  INT, pdata blob);",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    dynData = 1;
+
+    rc = SQLPrepare(hstmt, "INSERT INTO t_putdata3 VALUES ( ?, ?, ?, ?, ? )", SQL_NTS);
+    mystmt(hstmt,rc);
+
+    id= 1, id1= 2, id2= 3, id3= 4;
+    resId = 0;
+    resUTimeSec = 0;
+    resUTimeMSec = 0;
+    resDataLen = 0;
+    resData = SQL_LEN_DATA_AT_EXEC(0);
+
+    rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_SLONG,
+                          SQL_INTEGER, 0, 0, &id, 0, &resId);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_SLONG,
+                          SQL_INTEGER, 0, 0, &id1, 0, &resUTimeSec);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt, 3, SQL_PARAM_INPUT, SQL_C_SLONG,
+                          SQL_INTEGER, 0, 0, &id2, 0, &resUTimeMSec);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt, 4, SQL_PARAM_INPUT, SQL_C_SLONG,
+                          SQL_INTEGER, 0, 0, &id3, 0,
+                          &resDataLen);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt, 5, SQL_PARAM_INPUT,
+                          SQL_C_BINARY, SQL_LONGVARBINARY, 10, 10,
+                          dynData ? (SQLPOINTER)5 :
+                          pdata, 0, &resData);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecute(hstmt);
+    if (rc == SQL_NEED_DATA)
+    {
+      int parameter;
+      if (SQLParamData(hstmt,(void**)&parameter) == SQL_NEED_DATA && parameter == 5)
+      {
+        int len = 0;
+        int partsize;
+
+        /* storing long data by parts */
+        while (len < commonLen)
+        {
+          partsize = commonLen - len;
+          if (partsize > MAX_PART_SIZE)
+            partsize = MAX_PART_SIZE;
+
+          rc = SQLPutData(hstmt, buffer+len, partsize);
+          mystmt(hstmt,rc);
+          len += partsize;
+        }
+        if (SQLParamData(hstmt,(void**)&parameter) == SQL_ERROR)
+        {
+
+        }
+      }
+    } /* end if (rc == SQL_NEED_DATA) */
+
+    SQLFreeStmt(hstmt, SQL_UNBIND);
+    SQLFreeStmt(hstmt, SQL_CLOSE);
+
+    if (mysql_min_version(hdbc, "4.0", 3))
+    {
+      rc = tmysql_exec(hstmt,"select id, id1, id2, id3,  convert(pdata,char) from t_putdata3");
+      mystmt(hstmt,rc);
+
+      rc = SQLFetch(hstmt);
+
+      my_assert(1 == my_fetch_int(hstmt,1));
+      my_assert(2 == my_fetch_int(hstmt,2));
+      my_assert(3 == my_fetch_int(hstmt,3));
+      my_assert(4 == my_fetch_int(hstmt,4));
+
+      my_assert(strncmp(buffer, my_fetch_str(hstmt,data,5), commonLen) == 0);
+    }
+    else
+    {
+      rc = tmysql_exec(hstmt,"select id, id1, id2, id3,  pdata from t_putdata3");
+      mystmt(hstmt,rc);
+
+      rc = SQLFetch(hstmt);
+
+      my_assert(1 == my_fetch_int(hstmt,1));
+      my_assert(2 == my_fetch_int(hstmt,2));
+      my_assert(3 == my_fetch_int(hstmt,3));
+      my_assert(4 == my_fetch_int(hstmt,4));
+      my_assert(strncmp("4D7953514C202D2054686520776F726C64732773",
+                my_fetch_str(hstmt,data,5), commonLen) == 0);
+    }
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    /*
+     output:
+
+      ######################################
+      t_putdata3
+      ######################################
+       my_fetch_int: 1
+       my_fetch_int: 2
+       my_fetch_int: 3
+       my_fetch_int: 4
+       my_fetch_str: MySQL - The worlds's(20)
+    */
+
+  return OK;
+}
+
+
+/* Test the bug when blob size > 8k */
+DECLARE_TEST(t_blob_bug)
+{
+  SQLRETURN  rc;
+  SQLCHAR    *data;
+  SQLINTEGER i;
+  SQLLEN     length;
+  const SQLINTEGER max_blob_size=1024*100;
+
+    SQLExecDirect(hstmt,"drop table t_blob",SQL_NTS);
+    rc = SQLExecDirect(hstmt,"create table t_blob(blb long varbinary)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLPrepare(hstmt,"insert into t_blob values(?)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    if (!(data = (SQLCHAR *)calloc(max_blob_size,sizeof(SQLCHAR))))
+    {
+      SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
+      SQLFreeStmt(hstmt,SQL_CLOSE);
+      return;
+    }
+
+    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_CHAR,SQL_VARBINARY,
+                          0,0,data,0,&length);
+    mystmt(hstmt,rc);
+
+    memset(data,'X',max_blob_size);
+
+    fprintf(stdout,"inserting %d rows\n\n", max_blob_size / 1024);
+    for (length=1024; length <= max_blob_size; length+= 1024)
+    {
+      fprintf(stdout,"\r %d", length/1024);
+      rc = SQLExecute(hstmt);
+      mystmt(hstmt,rc);
+    }
+
+    SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
+    SQLFreeStmt(hstmt,SQL_CLOSE);
+
+    rc = SQLExecDirect(hstmt,"SELECT length(blb) FROM t_blob",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&length,0,NULL);
+    mystmt(hstmt,rc);
+
+    for (i= 1; i <= max_blob_size/1024; i++)
+    {
+      rc = SQLFetch(hstmt);
+      mystmt(hstmt,rc);
+
+      fprintf(stdout,"row %d length: %d\n", i, length);
+      myassert(length == i * 1024);
+    }
+    rc = SQLFetch(hstmt);
+    myassert(rc == SQL_NO_DATA);
+
+    free(data);
+
+    SQLFreeStmt(hstmt,SQL_UNBIND);
+    SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  return OK;
+}
+
+
+#define TEST_ODBC_TEXT_LEN 3000
+DECLARE_TEST(t_text_fetch)
+{
+  SQLRETURN  rc;
+  SQLINTEGER i;
+  SQLLEN     row_count, length;
+  SQLCHAR    data[TEST_ODBC_TEXT_LEN+1];
+
+    SQLExecDirect(hstmt,"drop table t_text_fetch",SQL_NTS);
+    rc = SQLExecDirect(hstmt,"create table t_text_fetch(t1 tinytext, \
+                                                      t2 text, \
+                                                      t3 mediumtext, \
+                                                      t4 longtext)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLPrepare(hstmt,"insert into t_text_fetch values(?,?,?,?)",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR,
+                          0,0,(char *)data, TEST_ODBC_TEXT_LEN/3, NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR,
+                          0,0,(char *)data, TEST_ODBC_TEXT_LEN/2, NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt, 3, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR,
+                          0,0,(char *)data,
+                          (SQLINTEGER)(TEST_ODBC_TEXT_LEN/1.5), NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt, 4, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR,
+                          0,0,(char *)data, TEST_ODBC_TEXT_LEN-1, NULL);
+    mystmt(hstmt,rc);
+
+    memset(data,'A',TEST_ODBC_TEXT_LEN);
+    data[TEST_ODBC_TEXT_LEN]='\0';
+
+    for (i=0; i < 10; i++)
+    {
+      rc = SQLExecute(hstmt);
+      mystmt(hstmt,rc);
+    }
+
+    SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
+    SQLFreeStmt(hstmt, SQL_CLOSE);
+
+    rc = SQLExecDirect(hstmt,"SELECT * FROM t_text_fetch",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    row_count= 0;
+    rc = SQLFetch(hstmt);
+    while (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
+    {
+       fprintf(stdout,"row '%d' (lengths: \n", row_count);
+       rc = SQLGetData(hstmt,1,SQL_C_CHAR,(char *)data,TEST_ODBC_TEXT_LEN,&length);
+       mystmt(hstmt,rc);
+       fprintf(stdout,"%d", length);
+       myassert(length == 255);
+
+       rc = SQLGetData(hstmt,2,SQL_C_CHAR,(char *)data,TEST_ODBC_TEXT_LEN,&length);
+       mystmt(hstmt,rc);
+       fprintf(stdout,",%d", length);
+       myassert(length == TEST_ODBC_TEXT_LEN/2);
+
+       rc = SQLGetData(hstmt,3,SQL_C_CHAR,(char *)data,TEST_ODBC_TEXT_LEN,&length);
+       mystmt(hstmt,rc);
+       fprintf(stdout,",%d", length);
+       myassert(length == (SQLINTEGER)(TEST_ODBC_TEXT_LEN/1.5));
+
+       rc = SQLGetData(hstmt,4,SQL_C_CHAR,(char *)data,TEST_ODBC_TEXT_LEN,&length);
+       mystmt(hstmt,rc);
+       fprintf(stdout,",%d)", length);
+       myassert(length == TEST_ODBC_TEXT_LEN-1);
+       row_count++;
+
+       rc = SQLFetch(hstmt);
+    }
+    fprintf(stdout,"total rows: %d\n", row_count);
+    myassert(row_count == i);
+
+    SQLFreeStmt(hstmt, SQL_UNBIND);
+    SQLFreeStmt(hstmt, SQL_CLOSE);
+
+    rc = SQLExecDirect(hstmt,"DROP TABLE t_text_fetch",SQL_NTS);
+    mystmt(hstmt,rc);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_blob)
   ADD_TEST(t_1piecewrite2)
+  ADD_TEST(t_putdata)
+  ADD_TEST(t_putdata1)
+  ADD_TEST(t_putdata2)
+  ADD_TEST(t_putdata3)
+  ADD_TEST(t_blob_bug)
+  ADD_TEST(t_text_fetch)
 END_TESTS
 
 

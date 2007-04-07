@@ -48,6 +48,7 @@ my_cursor \
 my_datetime \
 my_dyn_cursor \
 my_error \
+my_info \
 my_keys \
 my_param \
 my_position \
@@ -56,10 +57,10 @@ my_relative \
 my_result \
 my_scroll \
 my_tran \
+my_types \
 my_unixodbc \
 my_use_result \
-mytest \
-mytest3
+mytest
 
 noinst_PROGRAMS= $(tap_tests)
 

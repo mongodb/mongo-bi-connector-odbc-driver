@@ -180,11 +180,106 @@ DECLARE_TEST(t_odbc2_error)
   return OK;
 }
 
+static void test_diagrec(SQLSMALLINT HandleType,SQLHANDLE Handle,
+                         SQLSMALLINT RecNumber, SQLSMALLINT BufferLength,
+                         SQLRETURN return_value_expected)
+{
+  SQLRETURN rc;
+  SQLCHAR   sqlstate[6]={0};
+  SQLCHAR   message[255]={0};
+  SQLINTEGER native_err=0;
+  SQLSMALLINT msglen=0;
+
+  rc = SQLGetDiagRec(HandleType,Handle,RecNumber,
+		     (char *)&sqlstate,&native_err,
+		     (char *)&message,BufferLength,&msglen);
+
+  fprintf(stdout,"%d@%s(%d)\n",rc,message,msglen);
+  myassert(return_value_expected == rc);
+}
+
+
+DECLARE_TEST(t_diagrec)
+{
+  SQLRETURN rc;
+
+  fprintf(stdout," ** SQL_HANDLE_STMT ** \n");
+
+  rc = SQLExecDirect(hstmt,"DROP TABLE ODBC3_NON_EXISTANTi_TAB",SQL_NTS);
+  myassert(rc == SQL_ERROR);
+
+  test_diagrec(SQL_HANDLE_STMT,hstmt,2,0,SQL_NO_DATA_FOUND);
+  test_diagrec(SQL_HANDLE_STMT,hstmt,1,255,SQL_SUCCESS);
+  test_diagrec(SQL_HANDLE_STMT,hstmt,1,0,SQL_SUCCESS_WITH_INFO);
+  test_diagrec(SQL_HANDLE_STMT,hstmt,1,10,SQL_SUCCESS_WITH_INFO);
+  test_diagrec(SQL_HANDLE_STMT,hstmt,1,-1,SQL_ERROR);
+
+  return OK;
+}
+
+
+DECLARE_TEST(t_warning)
+{
+  SQLRETURN rc;
+  SQLCHAR szData[20];
+  SQLINTEGER pcbValue;
+
+    tmysql_exec(hstmt,"drop table t_warning");
+    rc = tmysql_exec(hstmt,"create table t_warning(col2 char(20))");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into t_warning values('venu anuganti')");
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY, (SQLPOINTER) SQL_CONCUR_ROWVER, 0);
+    SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER) SQL_CURSOR_KEYSET_DRIVEN, 0);
+
+    /* ignore all columns */
+    rc = tmysql_exec(hstmt,"select * from t_warning");
+    mystmt(hstmt,rc);
+
+    rc = SQLFetch(hstmt);
+    mystmt(hstmt, rc);
+
+    rc = SQLGetData(hstmt,1,SQL_C_CHAR,szData,4,&pcbValue);
+    mystmt_err(hstmt, rc == SQL_SUCCESS_WITH_INFO, rc);
+    fprintf(stdout,"data: %s(%d)\n",szData,pcbValue);
+
+    rc = SQLGetData(hstmt,1,SQL_C_CHAR,szData,4,&pcbValue);
+    mystmt_err(hstmt, rc == SQL_SUCCESS_WITH_INFO, rc);
+    fprintf(stdout,"data: %s(%d)\n",szData,pcbValue);
+
+    rc = SQLGetData(hstmt,1,SQL_C_CHAR,szData,4,&pcbValue);
+    mystmt_err(hstmt, rc == SQL_SUCCESS_WITH_INFO, rc);
+    fprintf(stdout,"data: %s(%d)\n",szData,pcbValue);
+
+    rc = SQLGetData(hstmt,1,SQL_C_CHAR,szData,4,&pcbValue);
+    mystmt(hstmt,rc);
+    fprintf(stdout,"data: %s(%d)\n",szData,pcbValue);
+
+    rc = SQLFetch(hstmt);
+    mystmt_err(hstmt, rc == SQL_NO_DATA_FOUND, rc);
+
+    SQLFreeStmt(hstmt,SQL_UNBIND);
+    SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_odbc2_error)
   ADD_TEST(t_odbc3_error)
   /* Run twice to test the driver's handling of switching  */
   ADD_TEST(t_odbc2_error)
+  ADD_TEST(t_diagrec)
+  ADD_TEST(t_warning)
 END_TESTS
 
 RUN_TESTS

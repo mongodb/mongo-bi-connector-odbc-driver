@@ -722,6 +722,126 @@ DECLARE_TEST(t_sps)
 }
 
 
+DECLARE_TEST(t_prepare)
+{
+  SQLRETURN rc;
+  SQLINTEGER nidata= 200, nodata;
+  SQLLEN    nlen;
+  char      szodata[20],szidata[20]="MySQL";
+  short     pccol;
+
+    SQLFreeStmt(hstmt,SQL_CLOSE);
+
+    tmysql_exec(hstmt,"drop table t_prepare");
+
+    rc = tmysql_exec(hstmt,"create table t_prepare(col1 int primary key, col2 varchar(30), col3 set(\"one\", \"two\"))");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into t_prepare values(100,'venu','one')");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into t_prepare values(200,'MySQL','two')");
+    mystmt(hstmt,rc);
+
+    rc = SQLPrepare(hstmt,"select * from t_prepare where col2 = ? AND col1 = ?",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    rc = SQLNumResultCols(hstmt,&pccol);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nodata,0,&nlen);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szodata,200,&nlen);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT, SQL_C_CHAR,SQL_VARCHAR,
+                          0,0,szidata,20,&nlen);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT, SQL_C_LONG,SQL_INTEGER,
+                          0,0,&nidata,20,NULL);
+    mystmt(hstmt,rc);
+
+    nlen= strlen(szidata);
+    rc = SQLExecute(hstmt);
+    mystmt(hstmt,rc);
+
+    rc = SQLFetch(hstmt);
+    mystmt(hstmt,rc);
+
+    fprintf(stdout," outdata: %d, %s(%d)\n", nodata,szodata,nlen);
+    my_assert(nodata == 200);
+
+    rc = SQLFetch(hstmt);
+    my_assert(rc == SQL_NO_DATA_FOUND);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
+    mystmt(hstmt,rc);
+
+  return OK;
+}
+
+
+DECLARE_TEST(t_prepare1)
+{
+  SQLRETURN rc;
+  SQLINTEGER nidata= 1000;
+
+    tmysql_exec(hstmt,"drop table t_prepare1");
+
+    rc = tmysql_exec(hstmt,"create table t_prepare1(col1 int primary key, col2 varchar(30))");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into t_prepare1 values(100,'venu')");
+    mystmt(hstmt,rc);
+
+    rc = tmysql_exec(hstmt,"insert into t_prepare1 values(200,'MySQL')");
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = tmysql_prepare(hstmt,"insert into t_prepare1(col1) values(?)");
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT, SQL_C_LONG,SQL_INTEGER,
+                          0,0,&nidata,0,NULL);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecute(hstmt);
+    mystmt(hstmt,rc);
+
+    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecDirect(hstmt,"SELECT * FROM t_prepare1",SQL_NTS);
+    mystmt(hstmt,rc);
+
+    myassert(3 == myresult(hstmt));/* unless prepare is supported..*/
+
+    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_prep_basic)
   ADD_TEST(t_prep_buffer_length)
@@ -731,6 +851,8 @@ BEGIN_TESTS
   ADD_TEST(t_prep_getdata1)
   ADD_TEST(t_prep_catalog)
   ADD_TEST(t_sps)
+  ADD_TEST(t_prepare)
+  ADD_TEST(t_prepare1)
 END_TESTS
 
 
