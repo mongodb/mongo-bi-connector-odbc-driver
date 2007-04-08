@@ -42,7 +42,7 @@ extern  int     MYODBCDbgNest;
 
 #ifdef MYODBC_DBG
 
-#ifndef USE_GNU_FUNC_MACRO
+#if !defined(USE_GNU_FUNC_MACRO) && !defined(_WIN32)
 #  ifdef USE_C99_FUNC_MACRO
 #    define __FUNCTION__ __func__
 #  else
