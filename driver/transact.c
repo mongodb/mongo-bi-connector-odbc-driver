@@ -21,8 +21,7 @@
 */
 
 /**
-  @file  transact.c
-  @brief Transaction processing functions.
+  Transaction processing functions.
 */
 
 #include "myodbc3.h"
