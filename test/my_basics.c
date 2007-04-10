@@ -24,95 +24,55 @@
 
 DECLARE_TEST(my_basics)
 {
-    SQLRETURN  rc;
-    SQLROWCOUNT nRowCount;
+  SQLLEN nRowCount;
 
-    /* drop table 'myodbc3_demo_basic' if it already exists */
-    rc = SQLExecDirect(hstmt,"DROP TABLE if exists myodbc3_demo_basic",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_basic");
+  ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
 
-    /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
-    mycon(hdbc,rc);
+  /* create the table 'myodbc3_demo_result' */
+  ok_sql(hstmt,
+         "CREATE TABLE t_basic (id INT PRIMARY KEY, name VARCHAR(20))");
+  ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
 
-    /* create the table 'myodbc3_demo_result' */
-    rc = SQLExecDirect(hstmt,"CREATE TABLE myodbc3_demo_basic(\
-                              id int primary key auto_increment,\
-                              name varchar(20))",SQL_NTS);
-    mystmt(hstmt,rc);
+  /* insert 3 rows of data */
+  ok_sql(hstmt, "INSERT INTO t_basic VALUES (1,'foo'),(2,'bar'),(3,'baz')");
+  ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
 
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
-    mycon(hdbc,rc);    
+  /* update second row */
+  ok_sql(hstmt, "UPDATE t_basic SET name = 'bop' WHERE id = 2");
 
-    /* insert 3 rows of data */    
-    rc = SQLExecDirect(hstmt,"INSERT INTO myodbc3_demo_basic values(\
-                              1,'MySQL')",SQL_NTS);
-    mystmt(hstmt,rc);
+  /* get the rows affected by update statement */
+  ok_stmt(hstmt, SQLRowCount(hstmt,&nRowCount));
+  is_num(nRowCount, 1);
 
-    rc = SQLExecDirect(hstmt,"INSERT INTO myodbc3_demo_basic values(\
-                              2,'MyODBC')",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
 
-    rc = SQLExecDirect(hstmt,"INSERT INTO myodbc3_demo_basic values(\
-                              3,'monty')",SQL_NTS);
-    mystmt(hstmt,rc);
+  /* delete third row */
+  ok_stmt(hstmt, "DELETE FROM t_basic WHERE id = 3");
 
-    /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
-    mycon(hdbc,rc);
+  /* get the rows affected by delete statement */
+  ok_stmt(hstmt, SQLRowCount(hstmt,&nRowCount));
+  is_num(nRowCount, 1);
 
-    /* update second row */    
-    rc = SQLExecDirect(hstmt,"UPDATE myodbc3_demo_basic set name=\
-                              'MyODBC 3.51' where id=2",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
 
-    /* get the rows affected by update statement */
-    rc = SQLRowCount(hstmt,&nRowCount);
-    mystmt(hstmt,rc);
-    printMessage( " total rows updated:%d", nRowCount );
+  /* alter the table 't_basic' to 't_basic_2' */
+  ok_sql(hstmt,"ALTER TABLE t_basic RENAME t_basic_2");
+  ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
 
-    /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
-    mycon(hdbc,rc);
+  /*
+    drop the table with the original table name, and it should
+    return error saying 'table not found'
+  */
+  expect_sql(hstmt, "DROP TABLE t_basic", SQL_ERROR);
 
-    /* delete third column */
-    rc = SQLExecDirect(hstmt,"DELETE FROM myodbc3_demo_basic where id = 3",SQL_NTS);
-    mystmt(hstmt,rc);
+ /* now drop the table, which is altered..*/
+  ok_sql(hstmt, "DROP TABLE t_basic_2");
 
-    /* get the rows affected by delete statement */
-    rc = SQLRowCount(hstmt,&nRowCount);
-    mystmt(hstmt,rc);
-    printMessage(" total rows deleted:%d",nRowCount);
+  ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
 
-    /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
-    mycon(hdbc,rc);
-
-    /* alter the table 'myodbc3_demo_basic' to 'myodbc3_new_name' */
-    rc = SQLExecDirect(hstmt,"ALTER TABLE myodbc3_demo_basic RENAME myodbc3_new_name",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
-    mycon(hdbc,rc);
-
-    /* drop the table with the original table name, and it should
-       return error saying 'table not found'
-    */
-    rc = SQLExecDirect(hstmt,"DROP TABLE myodbc3_demo_basic",SQL_NTS);
-    /* mystmt_err(hstmt, rc == SQL_ERROR, rc); */
-
-    /* now drop the table, which is altered..*/   
-    rc = SQLExecDirect(hstmt,"DROP TABLE myodbc3_new_name",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
-    mycon(hdbc,rc);
-
-    /* free the statement cursor */
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
+  /* free the statement cursor */
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   return OK;
 }

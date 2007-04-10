@@ -126,6 +126,30 @@ do { \
     return FAIL; \
 } while (0)
 
+
+/**
+  Verify that the result of an SQL statement call matches an expected
+  result, such as SQL_ERROR.
+
+  @param hstmt  Handle for statement object
+  @param query  The query to execute
+  @param expect The expected result
+*/
+#define expect_sql(hstmt, query, expect) \
+do { \
+  SQLRETURN rc= SQLExecDirect(hstmt, (SQLCHAR *)query, SQL_NTS); \
+  if (rc != expect) \
+  { \
+    print_diag(rc, SQL_HANDLE_STMT, hstmt, \
+               "SQLExecDirect(hstmt, \"" query "\", SQL_NTS)",\
+               __FILE__, __LINE__); \
+    printf("# Expected %d, but got %d in %s on line %d\n", expect, rc, \
+           __FILE__, __LINE__); \
+    return FAIL; \
+  } \
+} while (0)
+
+
 /**
   Verify that the results of an ODBC function call on a statement handle was
   SQL_SUCCESS or SQL_SUCCESS_WITH_INFO.
