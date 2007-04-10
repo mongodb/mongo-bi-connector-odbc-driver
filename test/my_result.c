@@ -1348,7 +1348,7 @@ void colattr(SQLHSTMT hstmt, SQLUSMALLINT cno,
     mystmt(hstmt,rc);
 
     printMessage("col %d, attribute %d\t: ",cno, attribute);
-    rc = SQLColAttributes(hstmt,cno,attribute,lsptr,100,&lslen,&lnptr);
+    rc= SQLColAttributes(hstmt,cno,attribute,lsptr,sizeof(lsptr),&lslen,&lnptr);
     mystmt(hstmt,rc);
 
     if (sptr)
@@ -1359,7 +1359,7 @@ void colattr(SQLHSTMT hstmt, SQLUSMALLINT cno,
     }
     else
     {
-        printMessage("%ld(%d)\n",lnptr,lslen);
+        printMessage("%ld(%d) == %ld?\n",lnptr,lslen,nptr);
         myassert(lnptr == nptr);
     }
 

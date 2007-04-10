@@ -549,48 +549,96 @@ get_col_attr(SQLHSTMT     StatementHandle,
 
 
 /*
-  @type    : ODBC 3.0 API
-  @purpose : rerunrs column atribute values
-*/
+  Retrieve an attribute of a column in a result set.
 
-SQLRETURN SQL_API SQLColAttribute( SQLHSTMT  StatementHandle,
-                                   SQLUSMALLINT ColumnNumber,
-                                   SQLUSMALLINT FieldIdentifier,
-                                   SQLPOINTER  CharacterAttributePtr,
-                                   SQLSMALLINT BufferLength,
-                                   SQLSMALLINT *StringLengthPtr,
+  @param[in]  hstmt      Handle to statement
+  @param[in]  icol       The column to retrieve data for, indexed from 1
+  @param[in]  fDescType  The attribute to be retrieved
+  @param[out] rgbDesc    Pointer to buffer in which to return data
+  @param[in]  cbDescMax  Length of @a rgbDesc in bytes
+  @param[out] pcbDesc    Pointer to integer to return the total number of bytes
+                         available to be returned in @a rgbDesc
+  @param[out] pfDesc     Pointer to an integer to return the value if the
+                         @a fDescType corresponds to a numeric type
+
+  @since ODBC 1.0
+*/
+SQLRETURN SQL_API SQLColAttribute(SQLHSTMT     hstmt,
+                                  SQLUSMALLINT icol,
+                                  SQLUSMALLINT fDescType,
+                                  SQLPOINTER   rgbDesc,
+                                  SQLSMALLINT  cbDescMax,
+                                  SQLSMALLINT *pcbDesc,
 #ifdef USE_SQLCOLATTRIBUTE_SQLLEN_PTR
-                                   SQLLEN *  NumericAttributePtr )
+                                  SQLLEN      *pfDesc
 #else
-                                   SQLPOINTER  NumericAttributePtr )
+                                  SQLPOINTER   pfDesc
 #endif
+                                 )
 {
-    MYODBCDbgEnter;
-    MYODBCDbgReturnReturn( get_col_attr( StatementHandle, ColumnNumber, FieldIdentifier, CharacterAttributePtr, BufferLength, StringLengthPtr, NumericAttributePtr ) );
+  SQLRETURN  rc;
+  SQLINTEGER num;
+
+  MYODBCDbgEnter;
+
+  /*
+   get_col_attr() expects an SQLINTEGER * for its last argument, but sometimes
+   this function can use SQLLEN *.
+  */
+  rc= get_col_attr(hstmt, icol, fDescType, rgbDesc, cbDescMax, pcbDesc, &num);
+  if (pfDesc)
+  {
+#ifdef USE_SQLCOLATTRIBUTE_SQLLEN_PTR
+    *pfDesc= num;
+#else
+    *(SQLINTEGER *)pfDesc= num;
+#endif
+  }
+
+  MYODBCDbgReturnReturn(rc);
 }
 
 
 /*
-  @type    : ODBC 1.0 API
-  @purpose : rerunrs column atribute values
-*/
+  Retrieve an attribute of a column in a result set.
 
-SQLRETURN SQL_API SQLColAttributes( SQLHSTMT hstmt,
-                                    SQLUSMALLINT icol,
-                                    SQLUSMALLINT fDescType,
-                                    SQLPOINTER rgbDesc, 
-                                    SQLSMALLINT cbDescMax,
-                                    SQLSMALLINT FAR *pcbDesc,
-                                    SQLLEN *pfDesc )
+  @deprecated This function is deprecated. SQLColAttribute() should be used
+  instead.
+
+  @param[in]  hstmt      Handle to statement
+  @param[in]  icol       The column to retrieve data for, indexed from 1
+  @param[in]  fDescType  The attribute to be retrieved
+  @param[out] rgbDesc    Pointer to buffer in which to return data
+  @param[in]  cbDescMax  Length of @a rgbDesc in bytes
+  @param[out] pcbDesc    Pointer to integer to return the total number of bytes
+                         available to be returned in @a rgbDesc
+  @param[out] pfDesc     Pointer to an integer to return the value if the
+                         @a fDescType corresponds to a numeric type
+
+  @since ODBC 1.0
+*/
+SQLRETURN SQL_API SQLColAttributes(SQLHSTMT     hstmt,
+                                   SQLUSMALLINT icol,
+                                   SQLUSMALLINT fDescType,
+                                   SQLPOINTER   rgbDesc,
+                                   SQLSMALLINT  cbDescMax,
+                                   SQLSMALLINT *pcbDesc,
+                                   SQLLEN      *pfDesc)
 {
-    MYODBCDbgEnter;
-    MYODBCDbgReturnReturn(get_col_attr( hstmt, 
-                                     icol, 
-                                     fDescType, 
-                                     rgbDesc,
-                                     cbDescMax, 
-                                     pcbDesc, 
-                                     pfDesc ) );
+  SQLRETURN  rc;
+  SQLINTEGER num;
+
+  MYODBCDbgEnter;
+
+  /*
+   get_col_attr() is built for SQLColAttribute(), which uses an SQLINTEGER *
+   for its last argument, but this legacy function uses SQLLEN *.
+  */
+  rc= get_col_attr(hstmt, icol, fDescType, rgbDesc, cbDescMax, pcbDesc, &num);
+  if (pfDesc)
+    *pfDesc= num;
+
+  MYODBCDbgReturnReturn(rc);
 }
 
 

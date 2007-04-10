@@ -3,6 +3,9 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * The last argument of SQLColAttribute() and SQLColAttributes() was
+    always being treated as a pointer to an SQLINTEGER even though it is
+    sometimes a pointer to an SQLLEN.
   * SQLForeignKeys would return keys from the wrong tables due to improper
     handling of table names. (Bug #4518)
   * Changed the behavior of myodbc3i utility, so it loads the driver library
