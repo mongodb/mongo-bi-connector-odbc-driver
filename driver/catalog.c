@@ -20,16 +20,9 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-/***************************************************************************
- * CATALOG.C								   *
- *									   *
- * @description: Handling ODBC catalog APIs				   *
- *									   *
- * @author     : MySQL AB (monty@mysql.com, venu@mysql.com)		   *
- * @date       : 2001-Aug-15						   *
- * @product    : myodbc3						   *
- *									   *
- ****************************************************************************/
+/**
+  Catalog functions.
+*/
 
 /***************************************************************************
  * The following ODBC APIs are implemented in this file:		   *
@@ -1818,65 +1811,119 @@ char *SQLFORE_KEYS_values[]= {
     0,0,0,NULL,NULL,0
 };
 
-/*
-  @type    : internal
-  @purpose : returns table status in the form of resultset
+
+/**
+  Get the table status for a specific table.
+
+  @param[in] stmt           Handle to statement
+  @param[in] catalog        Catalog (database) of table, @c NULL for current
+  @param[in] catalog_length Length of catalog name, or @c SQL_NTS
+  @param[in] table          Name of table
+  @param[in] table_length   Length of table name, or @c SQL_NTS
+
+  @return Result of SHOW TABLE STATUS
 */
-static MYSQL_RES *mysql_table_status(STMT *stmt, 
-                                     const char *qualifier, 
-                                     const char *table)
+static MYSQL_RES *mysql_table_status(STMT        *stmt,
+                                     SQLCHAR     *catalog,
+                                     SQLSMALLINT  catalog_length,
+                                     SQLCHAR     *table,
+                                     SQLSMALLINT  table_length)
 {
-    MYSQL *mysql= &stmt->dbc->mysql;
-    char  buff[255];  
+  MYSQL *mysql= &stmt->dbc->mysql;
+  /** @todo determine real size for buffer */
+  char buff[255], *to;
 
-    strxmov(buff,"show table status from `",qualifier,"`", NullS);
-    my_append_wild(strmov(buff,buff),buff+sizeof(buff),table);
+  if (table_length == SQL_NTS && table)
+    table_length= strlen((char *)table);
+  if (catalog_length == SQL_NTS && catalog)
+    catalog_length= strlen((char *)catalog);
 
-    MYLOG_QUERY(stmt, buff);
-    if ( mysql_query(mysql,buff) )
-        return 0;
-    return mysql_store_result(mysql);
+  to= strmov(buff, "SHOW TABLE STATUS ");
+  if (catalog && *catalog)
+  {
+    to= strmov(to, "FROM `");
+    to+= mysql_real_escape_string(mysql, to, (char *)catalog, catalog_length);
+    to= strmov(to, "` ");
+  }
+  if (table && *table)
+  {
+    to= strmov(to, "LIKE '");
+    /** @todo this is *wrong* -- we need to escape % and _ */
+    to+= mysql_real_escape_string(mysql, to, (char  *)table, table_length);
+    to= strmov(to, "'");
+  }
+
+  MYLOG_QUERY(stmt, buff);
+  if (mysql_query(mysql,buff))
+    return 0;
+
+  return mysql_store_result(mysql);
 }
 
-/*
-  @type    : ODBC 1.0 API
-  @purpose : returns
-       - A list of foreign keys in the specified table (columns
-         in the specified table that refer to primary keys in
-         other tables).
-       - A list of foreign keys in other tables that refer to the primary
-         key in the specified table
-*/
 
+/**
+  Retrieve either a list of foreign keys in a specified table, or the list
+  of foreign keys in other tables that refer to the primary key in the
+  specified table. (We currently only support the former, not the latter.)
+
+  @param[in] hstmt           Handle of statement
+  @param[in] szPkCatalogName Catalog (database) of table with primary key that
+                             we want to see foreign keys for
+  @param[in] cbPkCatalogName Length of @a szPkCatalogName
+  @param[in] szPkSchemaName  Schema of table with primary key that we want to
+                             see foreign keys for (unused)
+  @param[in] cbPkSchemaName  Length of @a szPkSchemaName
+  @param[in] szPkTableName   Table with primary key that we want to see foreign
+                             keys for
+  @param[in] cbPkTableName   Length of @a szPkTableName
+  @param[in] szFkCatalogName Catalog (database) of table with foreign keys we
+                             are interested in
+  @param[in] cbFkCatalogName Length of @a szFkCatalogName
+  @param[in] szFkSchemaName  Schema of table with foreign keys we are
+                             interested in
+  @param[in] cbFkSchemaName  Length of szFkSchemaName
+  @param[in] szFkTableName   Table with foreign keys we are interested in
+  @param[in] cbFkTableName   Length of @a szFkTableName
+
+  @return SQL_SUCCESS
+
+  @since ODBC 1.0
+*/
 SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT hstmt,
-                                 SQLCHAR FAR *szPkTableQualifier,
-                                 SQLSMALLINT cbPkTableQualifier,
-                                 SQLCHAR FAR *szPkTableOwner,
-                                 SQLSMALLINT cbPkTableOwner,
+                                 SQLCHAR FAR *szPkCatalogName
+                                   __attribute__((unused)),
+                                 SQLSMALLINT cbPkCatalogName
+                                   __attribute__((unused)),
+                                 SQLCHAR FAR *szPkSchemaName
+                                   __attribute__((unused)),
+                                 SQLSMALLINT cbPkSchemaName
+                                   __attribute__((unused)),
                                  SQLCHAR FAR *szPkTableName,
-                                 SQLSMALLINT cbPkTableName,
-                                 SQLCHAR FAR *szFkTableQualifier,
-                                 SQLSMALLINT cbFkTableQualifier,
-                                 SQLCHAR FAR *szFkTableOwner,
-                                 SQLSMALLINT cbFkTableOwner,
+                                 SQLSMALLINT  cbPkTableName,
+                                 SQLCHAR FAR *szFkCatalogName,
+                                 SQLSMALLINT  cbFkCatalogName,
+                                 SQLCHAR FAR *szFkSchemaName
+                                   __attribute__((unused)),
+                                 SQLSMALLINT  cbFkSchemaName
+                                   __attribute__((unused)),
                                  SQLCHAR FAR *szFkTableName,
-                                 SQLSMALLINT cbFkTableName)
+                                 SQLSMALLINT  cbFkTableName)
 {
     STMT FAR *stmt=(STMT FAR*) hstmt;
     uint row_count= 0;
 
     MYODBCDbgEnter;
 
-    MYODBCDbgInfo( "PKQualifier: '%s'", szPkTableQualifier ? (char*) szPkTableQualifier : "null" );
-    MYODBCDbgInfo( "PKQualifier: (%d)", cbPkTableQualifier );
-    MYODBCDbgInfo( "PKOwner: '%s'", szPkTableOwner ? (char*) szPkTableOwner : "null" );
-    MYODBCDbgInfo( "PKOwner: (%d)", cbPkTableOwner );
+    MYODBCDbgInfo( "PKCatalog: '%s'", szPkCatalogName ? (char*) szPkCatalogName : "null" );
+    MYODBCDbgInfo( "PKCatalog: (%d)", cbPkCatalogName );
+    MYODBCDbgInfo( "PKSchema: '%s'", szPkSchemaName ? (char*) szPkSchemaName : "null" );
+    MYODBCDbgInfo( "PKSchema: (%d)", cbPkSchemaName );
     MYODBCDbgInfo( "PKTable: '%s'", szPkTableName ? (char*) szPkTableName : "null" );
     MYODBCDbgInfo( "PKTable: (%d)", cbPkTableName );
-    MYODBCDbgInfo( "FKQualifier: '%s'", szFkTableQualifier ? (char*) szFkTableQualifier : "null" );
-    MYODBCDbgInfo( "FKQualifier: (%d)", cbFkTableQualifier );
-    MYODBCDbgInfo( "FKOwner: '%s'", szFkTableOwner ? (char*) szFkTableOwner : "null" );
-    MYODBCDbgInfo( "FKOwner: (%d)", cbFkTableOwner );
+    MYODBCDbgInfo( "FKCatalog: '%s'", szFkCatalogName ? (char*) szFkCatalogName : "null" );
+    MYODBCDbgInfo( "FKCatalog: (%d)", cbFkCatalogName);
+    MYODBCDbgInfo( "FKSchema: '%s'", szFkSchemaName ? (char*) szFkSchemaName : "null" );
+    MYODBCDbgInfo( "FKSchema: (%d)", cbFkSchemaName);
     MYODBCDbgInfo( "FKTable: '%s'", szFkTableName ? (char*) szFkTableName : "null" );
     MYODBCDbgInfo( "FKTable: (%d)", cbFkTableName );
 
@@ -1890,27 +1937,20 @@ SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT hstmt,
         MYSQL_ROW row;
         char      **data;
         char      **tempdata; /* We need this array for the cases if key count is greater than 18 */
-        char      PkQualifier_buff[NAME_LEN+1],PkName_buff[NAME_LEN+1],
-        *PkTableQualifier,*PkTableName;
-        char      FkQualifier_buff[NAME_LEN+1],FkName_buff[NAME_LEN+1],
-        *FkTableQualifier,*FkTableName;  
         uint       comment_id;
-
-        PkTableQualifier= myodbc_get_valid_buffer( PkQualifier_buff, szPkTableQualifier, cbPkTableQualifier );
-        PkTableName= myodbc_get_valid_buffer( PkName_buff, szPkTableName, cbPkTableName );
-        FkTableQualifier= myodbc_get_valid_buffer( FkQualifier_buff, szFkTableQualifier, cbFkTableQualifier );
-        FkTableName= myodbc_get_valid_buffer( FkName_buff, szFkTableName, cbFkTableName );
-
-        if ( FkTableQualifier && !FkTableQualifier[0] )
-            FkTableQualifier= stmt->dbc->database;
 
         CLEAR_STMT_ERROR(hstmt);
 
+        if (cbPkTableName == SQL_NTS && szPkTableName)
+          cbPkTableName= strlen((char *)szPkTableName);
+
         pthread_mutex_lock(&stmt->dbc->lock);
-        if ( !(stmt->result= mysql_table_status(stmt,FkTableQualifier,FkTableName)) )
+        if (!(stmt->result= mysql_table_status(stmt,
+                                               szFkCatalogName, cbFkCatalogName,
+                                               szFkTableName, cbFkTableName)))
         {
-            MYODBCDbgError( "%d", mysql_errno(&stmt->dbc->mysql) )
-            MYODBCDbgError( "%s", mysql_error(&stmt->dbc->mysql) );
+            MYODBCDbgError("%d", mysql_errno(&stmt->dbc->mysql))
+            MYODBCDbgError("%s", mysql_error(&stmt->dbc->mysql));
             pthread_mutex_unlock(&stmt->dbc->lock);
             goto empty_set;
         }
@@ -1946,33 +1986,47 @@ SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT hstmt,
 
                     if ( !(token= my_next_token(NULL,&comment_token,NULL,'(')) )
                         break;
-                    fk_cols_start = token;
+                    fk_cols_start = token + 1;
 
                     if ( !(token= my_next_token(token,&comment_token,ref_token,')')) )
                         continue;
-                    fk_length= (uint)((token-1)-fk_cols_start);
+                    fk_length= (uint)((token-2)-fk_cols_start);
 
                     if ( !(token= my_next_token(token+8,&comment_token,ref_token,'/')) )
                         continue;
  
                     data[0]= strdup_root(alloc,ref_token); /* PKTABLE_CAT */
 
-                    if ( !(token= my_next_token(token,&comment_token,ref_token,'(')) ||
-                         myodbc_casecmp(PkTableName,ref_token,strlen(PkTableName)) )
+                    if (!(token= my_next_token(token, &comment_token,
+                                               ref_token, '(')) ||
+                         (szPkTableName &&
+                          myodbc_casecmp((char *)szPkTableName, ref_token,
+                                         cbPkTableName)))
                         continue;
 
                     ref_token[strlen(ref_token)- 1] = 0;   /* Remove last quot character */
-                    data[2]= strdup_root(alloc,ref_token); /* PKTABLE_TABLE */        
-                    pk_cols_start = token;
+                    data[2]= strdup_root(alloc,ref_token); /* PKTABLE_TABLE */
+                    pk_cols_start = token + 1;
 
                     if ( !(token= my_next_token(token,&comment_token,ref_token,')')) )
                         continue;
-                    pk_length= (uint)((token-1)-pk_cols_start);
+                    pk_length= (uint)((token-2)-pk_cols_start);
 
                     data[1]= "";                           /* PKTABLE_SCHEM */
-                    data[4]= strdup_root(alloc,FkTableQualifier); /* FKTABLE_CAT */
+
+                    /**
+                      @todo clean this up when current database tracking is
+                      better
+                    */
+                    if (!szFkCatalogName && !stmt->dbc->database)
+                      reget_current_catalog(stmt->dbc);
+
+                    /* FKTABLE_CAT */
+                    data[4]= (szFkCatalogName ?
+                              strdup_root(alloc, (char *)szFkCatalogName) :
+                              strdup_root(alloc, stmt->dbc->database));
                     data[5]= "";                           /* FKTABLE_SCHEM */
-                    data[6]= row[0];                       /* FKTABLE_TABLE */   
+                    data[6]= row[0];                       /* FKTABLE_TABLE */
 
                     /* 
                        TODO : FIX both UPDATE_RULE and DELETE_RULE after 
