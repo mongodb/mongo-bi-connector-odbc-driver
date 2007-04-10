@@ -177,12 +177,12 @@ do { \
  
   @param call  The function call 
 */ 
-#define nok_pass_on(call) \ 
-do { \ 
-  int rc= call; \ 
-  if (rc != OK) \ 
-    return rc; \ 
-} while (0) 
+#define nok_pass_on(call) \
+do { \
+  int rc= call; \
+  if (rc != OK) \
+    return rc; \
+} while (0)
 
 
 /**
