@@ -48,7 +48,7 @@ DECLARE_TEST(my_basics)
   ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
 
   /* delete third row */
-  ok_stmt(hstmt, "DELETE FROM t_basic WHERE id = 3");
+  ok_sql(hstmt, "DELETE FROM t_basic WHERE id = 3");
 
   /* get the rows affected by delete statement */
   ok_stmt(hstmt, SQLRowCount(hstmt,&nRowCount));
