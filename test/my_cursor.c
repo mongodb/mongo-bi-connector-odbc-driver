@@ -2952,8 +2952,8 @@ DECLARE_TEST(my_setpos_upd_pk_order1)
 }
 
 
-void tmy_cursor(SQLHSTMT hstmt,SQLCHAR *setCurName, SQLCHAR *getCurName,
-                SQLSMALLINT setLen)
+static int tmy_cursor(SQLHSTMT hstmt, SQLCHAR *setCurName,
+                      SQLCHAR *getCurName, SQLSMALLINT setLen)
 {
   SQLSMALLINT getLen;
 
@@ -2962,6 +2962,8 @@ void tmy_cursor(SQLHSTMT hstmt,SQLCHAR *setCurName, SQLCHAR *getCurName,
 
   ok_stmt(hstmt, SQLGetCursorName(hstmt, getCurName, 20, &getLen));
   printMessage("getcursor:%s(%d)\n", getCurName, getLen);
+
+  return OK;
 }
 
 
@@ -2969,13 +2971,13 @@ DECLARE_TEST(tmy_cursor1)
 {
     SQLCHAR getCurName[20];
 
-    tmy_cursor(hstmt,"MYSQL",getCurName,5);
+    nok_pass_on(tmy_cursor(hstmt,"MYSQL",getCurName,5));
     myassert(strcmp(getCurName,"MYSQL")==0);
 
-    tmy_cursor(hstmt,"MYSQL",getCurName,10);
+    nok_pass_on(tmy_cursor(hstmt,"MYSQL",getCurName,10));
     myassert(strcmp(getCurName,"MYSQL")==0);
 
-    tmy_cursor(hstmt,"MYSQL",getCurName,2);
+    nok_pass_on(tmy_cursor(hstmt,"MYSQL",getCurName,2));
     myassert(strcmp(getCurName,"MY")==0);
 
   return OK;
