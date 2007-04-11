@@ -52,10 +52,10 @@ void printMessage(char *fmt, ...) {
 
 typedef int (*test_func)(SQLHDBC, SQLHSTMT, SQLHENV);
 
-/* Disable _attribute__ on non-gcc compilers. */ 
-#if !defined(__attribute__) && !defined(__GNUC__) 
-# define __attribute__(arg) 
-#endif 
+/* Disable _attribute__ on non-gcc compilers. */
+#if !defined(__attribute__) && !defined(__GNUC__)
+# define __attribute__(arg)
+#endif
 
 /*
  The parameters may be unused. so we add the attribute to stifle warnings.
@@ -171,12 +171,12 @@ do { \
 } while (0)
 
 
-/** 
-  If calling a help function that doesn't return OK, 
+/**
+  If calling a help function that doesn't return OK,
   terminate as we would have using ok_stmt()
- 
-  @param call  The function call 
-*/ 
+
+  @param call  The function call
+*/
 #define nok_pass_on(call) \
 do { \
   int rc= call; \
