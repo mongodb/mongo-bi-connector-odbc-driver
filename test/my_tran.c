@@ -114,96 +114,31 @@ DECLARE_TEST(my_transaction)
 
 DECLARE_TEST(t_tran)
 {
-    SQLRETURN rc;
+  if (!server_supports_trans(hdbc))
+      return SKIP;
 
-    if (!server_supports_trans(hdbc))
-        return SKIP;
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_tran");
+  ok_sql(hstmt, "CREATE TABLE t_tran (a INT, b VARCHAR(30)) ENGINE=InnoDB");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_con(hdbc, SQLSetConnectOption(hdbc, SQL_AUTOCOMMIT, SQL_AUTOCOMMIT_OFF));
 
-    rc = SQLSetConnectOption(hdbc,SQL_AUTOCOMMIT,SQL_AUTOCOMMIT_OFF);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "INSERT INTO t_tran VALUES (10, 'venu')");
+  ok_stmt(hstmt, SQLTransact(NULL, hdbc, SQL_COMMIT));
 
-    tmysql_exec(hstmt,"drop table if exists t_tran");
+  ok_sql(hstmt, "INSERT INTO t_tran VALUES (20, 'mysql')");
+  ok_stmt(hstmt, SQLTransact(NULL, hdbc, SQL_ROLLBACK));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = tmysql_exec(hstmt,"create table t_tran(col1 int ,col2 varchar(30)) TYPE = InnoDB");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM t_tran");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  is_num(myrowcount(hstmt), 1);
 
-    rc = tmysql_exec(hstmt,"insert into t_tran values(10,'venu')");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_con(hdbc, SQLSetConnectOption(hdbc, SQL_AUTOCOMMIT, SQL_AUTOCOMMIT_ON));
 
-    rc = tmysql_exec(hstmt,"insert into t_tran values(20,'mysql')");
-    mystmt(hstmt,rc);
-
-    rc = SQLTransact(NULL,hdbc,SQL_ROLLBACK);
-    mycon(hdbc,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = tmysql_exec(hstmt,"select * from t_tran");
-    mystmt(hstmt,rc);
-
-    my_assert( 1 == myresult(hstmt));
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = SQLSetConnectOption(hdbc,SQL_AUTOCOMMIT,SQL_AUTOCOMMIT_ON);
-    mycon(hdbc,rc);
-
-  return OK;
-}
-
-
-DECLARE_TEST(t_tran_ddl)
-{
-    SQLRETURN rc;
-    SQLSMALLINT rgbValue,len;
-
-    if (!server_supports_trans(hdbc))
-        return SKIP;
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = SQLSetConnectOption(hdbc,SQL_AUTOCOMMIT,SQL_AUTOCOMMIT_OFF);
-    mycon(hdbc,rc);
-
-    rc = SQLGetInfo(hdbc,SQL_TXN_CAPABLE,&rgbValue,0,&len);
-    mycon(hdbc,rc);
-    my_assert(rgbValue == SQL_TC_DDL_COMMIT);
-    my_assert(len == 2);
-
-    tmysql_exec(hstmt,"drop table if exists t_tran1");
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = tmysql_exec(hstmt,"create table t_tran1(col1 int ,col2 varchar(30)) TYPE = BDB");
-    mystmt(hstmt,rc);
-
-    rc = SQLTransact(NULL,hdbc,SQL_ROLLBACK);
-    mycon(hdbc,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = tmysql_exec(hstmt,"drop table if exists t_tran1");
-    mystmt(hstmt,rc);
-
-    rc = SQLSetConnectOption(hdbc,SQL_AUTOCOMMIT,SQL_AUTOCOMMIT_ON);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_tran");
 
   return OK;
 }
@@ -212,7 +147,6 @@ DECLARE_TEST(t_tran_ddl)
 BEGIN_TESTS
   ADD_TEST(my_transaction)
   ADD_TEST(t_tran)
-  ADD_TEST(t_tran_ddl)
 END_TESTS
 
 
