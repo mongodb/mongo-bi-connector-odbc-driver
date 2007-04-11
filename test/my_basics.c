@@ -27,16 +27,13 @@ DECLARE_TEST(my_basics)
   SQLLEN nRowCount;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_basic");
-  ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
 
   /* create the table 'myodbc3_demo_result' */
   ok_sql(hstmt,
          "CREATE TABLE t_basic (id INT PRIMARY KEY, name VARCHAR(20))");
-  ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
 
   /* insert 3 rows of data */
   ok_sql(hstmt, "INSERT INTO t_basic VALUES (1,'foo'),(2,'bar'),(3,'baz')");
-  ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
 
   /* update second row */
   ok_sql(hstmt, "UPDATE t_basic SET name = 'bop' WHERE id = 2");
@@ -45,8 +42,6 @@ DECLARE_TEST(my_basics)
   ok_stmt(hstmt, SQLRowCount(hstmt,&nRowCount));
   is_num(nRowCount, 1);
 
-  ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
-
   /* delete third row */
   ok_sql(hstmt, "DELETE FROM t_basic WHERE id = 3");
 
@@ -54,11 +49,8 @@ DECLARE_TEST(my_basics)
   ok_stmt(hstmt, SQLRowCount(hstmt,&nRowCount));
   is_num(nRowCount, 1);
 
-  ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
-
   /* alter the table 't_basic' to 't_basic_2' */
   ok_sql(hstmt,"ALTER TABLE t_basic RENAME t_basic_2");
-  ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
 
   /*
     drop the table with the original table name, and it should
@@ -69,8 +61,6 @@ DECLARE_TEST(my_basics)
  /* now drop the table, which is altered..*/
   ok_sql(hstmt, "DROP TABLE t_basic_2");
 
-  ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
-
   /* free the statement cursor */
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
@@ -80,58 +70,40 @@ DECLARE_TEST(my_basics)
 
 DECLARE_TEST(t_max_select)
 {
-  SQLRETURN rc;
-  SQLCHAR szData[255];
-  SQLINTEGER i;
+  SQLINTEGER num;
+  SQLCHAR    szData[20];
 
-    tmysql_exec(hstmt,"drop table t_max_select");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_max_select");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "CREATE TABLE t_max_select (a INT, b VARCHAR(30))");
 
-    rc = tmysql_exec(hstmt,"create table t_max_select(col1 int ,col2 varchar(30))");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLPrepare(hstmt,
+                            (SQLCHAR *)"INSERT INTO t_max_select VALUES (?,?)",
+                            SQL_NTS));
 
-    rc = SQLPrepare(hstmt,"insert into t_max_select values(?,?)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_LONG,
+                                  SQL_INTEGER, 0, 0, &num, 0, NULL));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                  SQL_CHAR, 0, 0, szData, sizeof(szData),
+                                  NULL));
 
-    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_LONG,
-                            SQL_INTEGER,0,0,&i,0,NULL);
-    mystmt(hstmt,rc);
+  for (num= 1; num <= 1000; num++)
+  {
+    sprintf((char *)szData, "MySQL%d", num);
+    ok_stmt(hstmt, SQLExecute(hstmt));
+  }
 
-    rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,SQL_C_CHAR,
-                            SQL_CHAR,0,0,szData,sizeof(szData),NULL);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    fprintf(stdout," inserting 1000 rows, it will take some time\n");
-    for(i = 1; i <= 1000; i++)
-    {
-      fprintf(stdout," \r %d", i);
-      sprintf((char *)szData,"MySQL%d",i);
-      rc = SQLExecute(hstmt);
-      mystmt(hstmt,rc);
-    }
-    fprintf(stdout,"\n");
+  ok_sql(hstmt, "SELECT * FROM t_max_select");
 
-    rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-    mystmt(hstmt,rc);
+  is_num(myrowcount(hstmt), 1000);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = tmysql_exec(hstmt,"select * from t_max_select");
-    mystmt(hstmt,rc);
-
-    my_assert( 1000 == myrowcount(hstmt));
-
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_max_select");
 
   return OK;
 }
@@ -140,81 +112,58 @@ DECLARE_TEST(t_max_select)
 /* Simple function to do basic ops with MySQL */
 DECLARE_TEST(t_basic)
 {
-    SQLRETURN rc;
-    SQLINTEGER nInData= 1, nOutData;
-    SQLROWCOUNT nRowCount= 0;
-    char szOutData[31]={0};
+  SQLINTEGER nRowCount=0, nInData= 1, nOutData;
+  char szOutData[31];
 
-    /* CREATE TABLE 'myodbc' */
-    SQLExecDirect(hstmt,"drop table tmyodbc ",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_myodbc");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "CREATE TABLE t_myodbc (a INT, b VARCHAR(30))");
 
-    rc = SQLExecDirect(hstmt,"create table tmyodbc (col1 int, col2 varchar(30))",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  /* DIRECT INSERT */
+  ok_sql(hstmt, "INSERT INTO t_myodbc VALUES (10, 'direct')");
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  /* PREPARE INSERT */
+  ok_stmt(hstmt, SQLPrepare(hstmt,
+                            (SQLCHAR *)
+                            "INSERT INTO t_myodbc VALUES (?, 'param')",
+                            SQL_NTS));
 
-    /* DIRECT INSERT */
-    rc = SQLExecDirect(hstmt,"insert into tmyodbc values(10,'direct-insert')",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_LONG,
+                                  SQL_INTEGER, 0, 0, &nInData, 0, NULL));
 
-    /* PREPARE INSERT */
-    rc = SQLPrepare(hstmt,"insert into tmyodbc values(?,'param_insert')",SQL_NTS);
-    mystmt(hstmt,rc);
+  for (nInData= 20; nInData < 100; nInData= nInData+10)
+  {
+    ok_stmt(hstmt, SQLExecute(hstmt));
+  }
 
-    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT, SQL_C_LONG,SQL_INTEGER,
-                          0,0,&nInData,0,NULL);
-    mystmt(hstmt,rc);
+  /* FREE THE PARAM BUFFERS */
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    for (nInData=20 ; nInData<100; nInData=nInData+10)
-    {
-        rc = SQLExecute(hstmt);
-        mystmt(hstmt,rc);
-    }
+  /* FETCH RESULT SET */
+  ok_sql(hstmt, "SELECT * FROM t_myodbc");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &nOutData, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, &szOutData, sizeof(szOutData),
+                            NULL));
 
-    /* FREE THE PARAM BUFFERS */
-    rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-    mystmt(hstmt,rc);
+  nInData= 10;
+  while (SQLFetch(hstmt) == SQL_SUCCESS)
+  {
+    nRowCount++;
+    is_num(nOutData, nInData);
+    nInData += 10;
+  }
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  is_num(nRowCount, (nInData - 10) / 10);
 
-    /* FETCH RESULT SET */
-    rc = SQLExecDirect(hstmt,"SELECT * FROM tmyodbc",SQL_NTS);
-    mystmt(hstmt,rc);
+  /* FREE THE OUTPUT BUFFERS */
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLBindCol(hstmt,1, SQL_C_LONG, &nOutData,0,NULL);
-    mystmt(hstmt,rc);
-
-    rc = SQLBindCol(hstmt,2, SQL_C_CHAR, szOutData,sizeof(szOutData),NULL);
-    mystmt(hstmt,rc);
-
-    nInData = 10;
-    while (SQLFetch(hstmt) == SQL_SUCCESS)
-    {
-        nRowCount++;
-        printMessage("\n row %d\t: %d,%s",nRowCount, nOutData, szOutData);
-        my_assert( nInData == nOutData);
-        nInData += 10;
-    }
-    printMessage("\n total rows Found:%d\n",nRowCount);
-    my_assert( nRowCount == (nInData-10)/10);
-
-    /* FREE THE OUTPUT BUFFERS */
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_myodbc");
 
   return OK;
 }
@@ -222,19 +171,11 @@ DECLARE_TEST(t_basic)
 
 DECLARE_TEST(t_nativesql)
 {
-    SQLRETURN rc;
-    SQLCHAR    Statement_in[3000];
-    SQLCHAR    Statement_out[4000];
-    SQLUINTEGER StmtLen;
+  SQLCHAR    out[128], in[]= "SELECT * FROM venu";
+  SQLINTEGER len;
 
-    strcpy(Statement_in, "select * from venu");
-
-    rc = SQLNativeSql(hdbc, Statement_in,
-                      SQL_NTS,Statement_out,
-                      sizeof(Statement_out), &StmtLen);
-    mycon(hdbc,rc);
-    printMessage("outstr:%s(%d)\n",Statement_out,StmtLen);
-    myassert(StmtLen == strlen(Statement_in));
+  ok_con(hdbc, SQLNativeSql(hdbc, in, SQL_NTS, out, sizeof(out), &len));
+  is_num(len, (SQLINTEGER) sizeof(in) - 1);
 
   return OK;
 }
@@ -242,24 +183,17 @@ DECLARE_TEST(t_nativesql)
 
 DECLARE_TEST(t_max_con)
 {
-    SQLRETURN rc;
-    long i;
-    SQLHDBC hdbc1;
+  SQLHDBC hdbc1;
+  long i;
 
-    for (i= 0; i < 200; i++)
-    {
-        rc = SQLAllocConnect(henv, &hdbc1);
-        myenv(henv,rc);
-
-        rc = SQLConnect(hdbc1, mydsn, SQL_NTS, myuid, SQL_NTS,  mypwd, SQL_NTS);
-        mycon(hdbc1,rc);
-
-        rc = SQLDisconnect(hdbc1);
-        mycon(hdbc1,rc);
-
-        rc = SQLFreeConnect(hdbc1);
-        mycon(hdbc1,rc);
-    }
+  for (i= 0; i < 200; i++)
+  {
+    ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+    ok_con(hdbc1, SQLConnect(hdbc1, mydsn, SQL_NTS, myuid, SQL_NTS,
+                             mypwd, SQL_NTS));
+    ok_con(hdbc1, SQLDisconnect(hdbc1));
+    ok_con(hdbc1, SQLFreeConnect(hdbc1));
+  }
 
   return OK;
 }

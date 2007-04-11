@@ -207,10 +207,26 @@ do { \
 
 
 /**
+  Verify that the results of an ODBC function call on an environment handle
+  was SQL_SUCCESS or SQL_SUCCESS_WITH_INFO.
+
+  @param henv  Handle for environment
+  @param call  The function call
+*/
+#define ok_env(henv, call) \
+do { \
+  SQLRETURN rc= call; \
+  print_diag(rc, SQL_HANDLE_ENV, henv, #call, __FILE__, __LINE__); \
+  if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) \
+    return FAIL; \
+} while (0)
+
+
+/**
   Verify that the results of an ODBC function call on a connection handle
   was SQL_SUCCESS or SQL_SUCCESS_WITH_INFO.
 
-  @param hstmt Handle for statement object
+  @param hdbc  Handle for database connection
   @param call  The function call
 */
 #define ok_con(hdbc, call) \
