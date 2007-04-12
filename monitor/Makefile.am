@@ -25,5 +25,4 @@ endif
 
 EXTRA_DIST = \
 	myodbc3m.h \
-	myodbc3m.vpj \
 	monitor.pro

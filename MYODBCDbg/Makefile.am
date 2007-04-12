@@ -1,6 +1,5 @@
 SUBDIRS = MYODBCDbgLib
 
 EXTRA_DIST = \
-	MYODBCDbg.vpj \
 	MYODBCDbg.pro
 

@@ -120,8 +120,6 @@ EXTRA_DIST = \
 	CreateMakefiles.bat \
 	CreateSourceZip.bat \
 	CreateVisualStudioProjects.bat \
-	connector-odbc3.vpj \
-	connector-odbc3.vpw \
 	RemoveMakefiles.sh \
 	Install.bat \
 	PostBuildTest.bat \

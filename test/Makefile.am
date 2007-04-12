@@ -72,7 +72,6 @@ EXTRA_DIST= \
 	odbcinst.ini.in \
 	include/mytest3.h \
 	include/odbctap.h \
-	test.vpj \
 	unit.pl
 
 # We want to rebuild the "test.ini" file each time, as it might need an

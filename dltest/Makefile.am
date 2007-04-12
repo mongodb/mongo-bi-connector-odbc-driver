@@ -21,5 +21,4 @@ dltest_LDADD   = @LTDL_LIB@
 ###################################################################
 
 EXTRA_DIST = \
-	dltest.vpj \
 	dltest.pro

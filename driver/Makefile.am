@@ -109,7 +109,6 @@ LDFLAGS=@EXTRA_LDFLAGS@
 
 EXTRA_DIST =	error.h \
 		myutil.h \
-                myodbc3.vpj \
                 driver.pro \
                 myodbc3.def \
                 myodbc3.rc

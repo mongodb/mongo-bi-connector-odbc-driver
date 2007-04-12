@@ -24,5 +24,4 @@ libmyodbc3u_la_SOURCES = \
 	MYODBCUtilWriteDriver.c
 
 EXTRA_DIST = \
-	myodbc3u.vpj \
 	util.pro

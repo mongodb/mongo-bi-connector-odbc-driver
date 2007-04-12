@@ -17,5 +17,4 @@ libMYODBCDbg_la_SOURCES = \
 	MYODBCDbgTransactionTypeString.c
 
 EXTRA_DIST = \
-	MYODBCDbgLib.vpj \
 	MYODBCDbgLib.pro
