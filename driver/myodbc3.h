@@ -158,8 +158,9 @@ extern "C"
 #define FLAG_AUTO_RECONNECT   (FLAG_SAFE << 5)
 #define FLAG_AUTO_IS_NULL     (FLAG_SAFE << 6) /* 8388608 Enables SQL_AUTO_IS_NULL */
 
+/* We don't make any assumption about what the default may be. */
 #ifndef DEFAULT_TXN_ISOLATION
-#define DEFAULT_TXN_ISOLATION SQL_TXN_READ_COMMITTED
+# define DEFAULT_TXN_ISOLATION 0
 #endif
 
 /* Connection flags to validate after the connection*/

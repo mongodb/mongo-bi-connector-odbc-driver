@@ -98,7 +98,7 @@ SQL_AUTOCOMMIT_ON",
             MYODBCDbgReturnReturn( SQL_ERROR );
     }
 
-    if (!(dbc->txn_isolation & DEFAULT_TXN_ISOLATION))/* TXN_ISOLATION */
+    if (dbc->txn_isolation != DEFAULT_TXN_ISOLATION)/* TXN_ISOLATION */
     {
         char buff[80];
         const char *level;

@@ -144,9 +144,43 @@ DECLARE_TEST(t_tran)
 }
 
 
+/**
+  Test retrieval and setting of transaction isolation level.
+*/
+DECLARE_TEST(t_isolation)
+{
+  SQLINTEGER isolation;
+  SQLCHAR    tx_isolation[20];
+
+  /* Check that the default is REPEATABLE READ. */
+  ok_con(hdbc, SQLGetConnectAttr(hdbc, SQL_ATTR_TXN_ISOLATION, &isolation,
+                                 SQL_IS_POINTER, NULL));
+  is_num(isolation, SQL_TXN_REPEATABLE_READ);
+
+  /* Change it to READ UNCOMMITTED. */
+  ok_con(hdbc, SQLSetConnectAttr(hdbc, SQL_ATTR_TXN_ISOLATION,
+                                 (SQLPOINTER)SQL_TXN_READ_UNCOMMITTED, 0));
+
+  /* Check that the driver has rmeembered the new value. */
+  ok_con(hdbc, SQLGetConnectAttr(hdbc, SQL_ATTR_TXN_ISOLATION, &isolation,
+                                 SQL_IS_POINTER, NULL));
+  is_num(isolation, SQL_TXN_READ_UNCOMMITTED);
+
+  /* Check that it was actually changed on the server. */
+  ok_sql(hstmt, "SELECT @@tx_isolation");
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, tx_isolation,
+                            sizeof(tx_isolation), NULL));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(tx_isolation, "READ-UNCOMMITTED", 16);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_transaction)
   ADD_TEST(t_tran)
+  ADD_TEST(t_isolation)
 END_TESTS
 
 

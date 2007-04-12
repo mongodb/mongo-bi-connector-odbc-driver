@@ -451,7 +451,7 @@ static SQLRETURN get_con_attr(SQLHDBC    hdbc,
 {
     DBC FAR *dbc= (DBC FAR*) hdbc;
     SQLRETURN result= SQL_SUCCESS;
-    SQLINTEGER strlen;
+    SQLINTEGER len;
     SQLPOINTER vparam= 0;
 
     MYODBCDbgEnter;
@@ -465,7 +465,7 @@ static SQLRETURN get_con_attr(SQLHDBC    hdbc,
         ValuePtr= vparam;
 
     if (!StringLengthPtr)
-        StringLengthPtr= &strlen;
+        StringLengthPtr= &len;
 
     switch (Attribute)
     {
@@ -544,6 +544,54 @@ static SQLRETURN get_con_attr(SQLHDBC    hdbc,
             break;
 
         case SQL_ATTR_TXN_ISOLATION:
+            /*
+              If we don't know the isolation level already, we need
+              to ask the server.
+            */
+            if (!dbc->txn_isolation)
+            {
+              /*
+                Unless we're not connected yet, then we just assume it will
+                be REPEATABLE READ, which is the server default.
+              */
+              if (!dbc->server)
+              {
+                *((SQLINTEGER *) ValuePtr)= SQL_TRANSACTION_REPEATABLE_READ;
+                break;
+              }
+
+              if (odbc_stmt(dbc, "SELECT @@tx_isolation"))
+              {
+                MYODBCDbgReturnReturn(set_handle_error(SQL_HANDLE_DBC,hdbc,
+                                                       MYERR_S1000,
+                                                       "Failed to get "
+                                                       "isolation level", 0));
+              }
+              else
+              {
+                  MYSQL_RES *res;
+                  MYSQL_ROW  row;
+
+                  if ((res= mysql_store_result(&dbc->mysql)) &&
+                      (row= mysql_fetch_row(res)))
+                  {
+                    if (strncmp(row[0], "READ-UNCOMMITTED", 16) == 0) {
+                      dbc->txn_isolation= SQL_TRANSACTION_READ_UNCOMMITTED;
+                    }
+                    else if (strncmp(row[0], "READ-COMMITTED", 14) == 0) {
+                      dbc->txn_isolation= SQL_TRANSACTION_READ_COMMITTED;
+                    }
+                    else if (strncmp(row[0], "REPEATABLE-READ", 15) == 0) {
+                      dbc->txn_isolation= SQL_TRANSACTION_REPEATABLE_READ;
+                    }
+                    else if (strncmp(row[0], "SERIALIZABLE", 12) == 0) {
+                      dbc->txn_isolation= SQL_TRANSACTION_SERIALIZABLE;
+                    }
+                  }
+                  mysql_free_result(res);
+              }
+            }
+
             *((SQLINTEGER *) ValuePtr)= dbc->txn_isolation;
             break;
 
@@ -670,7 +718,7 @@ static SQLRETURN get_stmt_attr(SQLHSTMT   hstmt,
     STMT FAR *stmt= (STMT FAR*) hstmt;
     STMT_OPTIONS *options= &stmt->stmt_options;
     SQLPOINTER vparam;
-    SQLINTEGER strlen;
+    SQLINTEGER len;
 
     MYODBCDbgEnter;
     MYODBCDbgInfo( "Atrr: %d", Attribute );
@@ -682,7 +730,7 @@ static SQLRETURN get_stmt_attr(SQLHSTMT   hstmt,
         ValuePtr= &vparam;
 
     if (!StringLengthPtr)
-        StringLengthPtr= &strlen;
+        StringLengthPtr= &len;
 
     switch (Attribute)
     {

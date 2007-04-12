@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * SQLGetConnectAttr() would report an incorrect isolation level if it
+    was not explicitly set using SQLSetConnectAttr(). (Bug #27589)
   * The last argument of SQLColAttribute() and SQLColAttributes() was
     always being treated as a pointer to an SQLINTEGER even though it is
     sometimes a pointer to an SQLLEN.
