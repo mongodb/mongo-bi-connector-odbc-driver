@@ -125,10 +125,7 @@ char *szSyntax =
 "  Register a driver;\n" \
 "    $ myodbc3i -a -d -t\"MySQL ODBC 3.51 Driver;DRIVER=/usr/lib/libmyodbc3.so;SETUP=/usr/lib/libmyodbc3S.so\"\n" \
 "  Create a user data source name;\n" \
-"    $ myodbc3i -a -su -t\"DSN=MyDSN;DRIVER=MySQL ODBC 3.51 Driver;SERVER=localhost;UID=pharvey\"\n" \
-"\n" \
-"Enjoy\n" \
-"Peter Harvey\n";
+"    $ myodbc3i -a -su -t\"DSN=MyDSN;DRIVER=MySQL ODBC 3.51 Driver;SERVER=localhost;UID=pharvey\"\n";
 
 /*
     Register Driver for Various Platforms

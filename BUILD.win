@@ -90,8 +90,3 @@ NOTE: The Uninstall script does not, currently, honour the
       value of the usage counter.
 
 See the INSTALL file for more details.
-
-+-------------------------------------------------------------+
-| Peter Harvey <pharvey@mysql.com                             |
-+-------------------------------------------------------------+
-

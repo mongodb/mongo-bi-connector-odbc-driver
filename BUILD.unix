@@ -1,0 +1,121 @@
++-------------------------------------------------------------+
+| Connector/ODBC                                              |
+| UNIX Platforms                                              |
++-------------------------------------------------------------+
+
+INTRODUCTION
+---------------------------------------------------------------
+
+In this document we provide a general explaination of how to 
+build the MyODBC driver on UNIX platforms. We will be as brief 
+as possible.
+
+NOTE:	This information is fairly generic. You may find other
+	README files with more detailed information for 
+	building for specific flavours of UNIX.
+	
+WHAT YOU NEED
+---------------------------------------------------------------
+
+UNIX
+----
+
+UNIX or some UNIX-like operating system such as;
+
+- Solaris
+- Linux
+- HP-UX
+- AIX
+- OSX
+
+ODBC
+----
+
+You need an ODBC SDK and you probably want an ODBC Driver 
+Manager. 
+
+ODBC has not, traditionally, been a standard part of any UNIX 
+or UNIX-like platform. This caused a number of vendors to 
+provide ODBC solutions which can be added to UNIX. In theory 
+this should not be a problem but in practice this can cause 
+compatability and portability issues.
+
+Recently; Linux distributions have been including unixODBC as a
+standard option and Apple OSX now has an ODBC by default.
+
+We recommend, and use, unixODBC on all UNIX-like platforms
+except OSX where we use the default ODBC.
+
+see;
+	http://www.unixodbc.org
+
+Compiler Tools
+--------------
+
+We try to build using the native compiler tool set for the 
+target platform. This is SunStudio for Solaris and aCC for
+HP-UX for example. But a common compiler across all platforms
+is the GNU tool-chain.
+
+Source Code
+-----------
+
+The source code is the main thing. You can get it from the bk
+source repository if you want the 'bleeding edge' code but most
+people will simply download the zip or tar-ball of the source.
+
+Qt Class Library
+----------------
+
+The graphical bits of MyODBC are optional. If you plan to build
+them you will need the Qt class library.
+
+see;
+	http://www.trolltech.com
+
+
+BUILD
+---------------------------------------------------------------
+
+GNU AutoTools
+-------------
+
+cd to the MyODBC source directory and do the following.
+
+Execute 'configure --help' to see a list of configure options then
+execute configure again with the desired options.
+
+Then do;
+
+$ make
+
+
+Qt
+--
+
+If you want to build with Qt project files (instead of the gnu 
+auto-tools) then;
+
+1. review the *pro and *qmake files in the root dir
+2. $ qmake; make
+
+NOTE: You will find the executables in the bin sub-dir and the
+      libraries in the lib sub-dir of MyODBC.
+
+
+INSTALL
+---------------------------------------------------------------
+
+You probably want to be root user to do install as extra 
+privileges will likely be required. Now do the following to 
+install the MyODBC libraries and tools.
+
+# make install
+
+At this point all of the MyODBC files should be in place but you
+probably want to register the driver with the ODBC on your system.
+
+See your ODBC documentation for more on how to do this. For
+unixODBC one could run ODBCConfig from GUI as root or use the 
+odbcinst command line tool. You may also want to look at the 
+myodbc3i command-line tool for this.

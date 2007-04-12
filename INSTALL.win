@@ -90,9 +90,3 @@ Create A Data Source Name
 
         Save the DSN and exit the ODBC Administrator. You are now
         ready to use MySQL Connector/ODBC.
-
-
-+-------------------------------------------------------------+
-| Peter Harvey <pharvey@mysql.com                             |
-+-------------------------------------------------------------+
-

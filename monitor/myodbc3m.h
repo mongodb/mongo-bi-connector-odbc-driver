@@ -62,7 +62,6 @@ char *szSyntax =
 "* Please visit;                              *\n" \
 "*                                            *\n" \
 "*      http://www.mysql.com                  *\n" \
-"*      pharvey@mysql.com                     *\n" \
 "**********************************************\n\n";
 
 #else
