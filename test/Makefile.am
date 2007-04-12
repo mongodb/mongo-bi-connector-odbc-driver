@@ -42,7 +42,6 @@ my_basics \
 my_blob \
 my_bulk \
 my_catalog \
-my_col_length \
 my_curext \
 my_cursor \
 my_datetime \

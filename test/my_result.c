@@ -1672,6 +1672,52 @@ DECLARE_TEST(tmysql_rowstatus)
 }
 
 
+/* TESTING FOR TRUE LENGTH */
+DECLARE_TEST(t_true_length)
+{
+  SQLCHAR data1[25],data2[25];
+  SQLLEN len1,len2;
+  SQLULEN desc_len;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_true_length");
+  ok_sql(hstmt, "CREATE TABLE t_true_length (a CHAR(20), b VARCHAR(15))");
+  ok_sql(hstmt, "INSERT INTO t_true_length VALUES ('venu','mysql')");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "SELECT * FROM t_true_length");
+
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 1, NULL, 0, NULL, NULL,
+                                &desc_len, NULL, NULL));
+  is_num(desc_len, 20);
+
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 2, NULL, 0, NULL, NULL,
+                                &desc_len, NULL, NULL));
+  is_num(desc_len, 15);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, data1, sizeof(data1),
+                            &len1));
+  is_str(data1, "venu", 4);
+  is_num(len1, 4);
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_CHAR, data2, sizeof(data2),
+                            &len2));
+  is_str(data2, "mysql", 5);
+  is_num(len2, 5);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_true_length");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -1689,6 +1735,7 @@ BEGIN_TESTS
   ADD_TEST(t_colattributes)
   ADD_TEST(t_exfetch)
   ADD_TEST(tmysql_rowstatus)
+  ADD_TEST(t_true_length)
 END_TESTS
 
 
