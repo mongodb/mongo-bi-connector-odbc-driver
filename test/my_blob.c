@@ -711,6 +711,32 @@ DECLARE_TEST(t_text_fetch)
 }
 
 
+/*
+  Test retrieving the length of a field with a non-null zero-length buffer.
+  This is how ADO does it for long-type fields.
+*/
+DECLARE_TEST(getdata_lenonly)
+{
+  SQLLEN     len;
+  SQLCHAR    buf[1];
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_getdata_lenonly");
+  ok_sql(hstmt, "CREATE TABLE t_getdata_lenonly (a CHAR(4))");
+  ok_sql(hstmt, "INSERT INTO t_getdata_lenonly VALUES ('venu')");
+
+  ok_sql(hstmt, "SELECT a FROM t_getdata_lenonly");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, buf, 0, &len),
+              SQL_SUCCESS_WITH_INFO);
+  is_num(len, 4);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_getdata_lenonly");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_blob)
   ADD_TEST(t_1piecewrite2)
@@ -720,6 +746,7 @@ BEGIN_TESTS
   ADD_TEST(t_putdata3)
   ADD_TEST(t_blob_bug)
   ADD_TEST(t_text_fetch)
+  ADD_TEST(getdata_lenonly)
 END_TESTS
 
 
