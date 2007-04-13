@@ -83,6 +83,12 @@ int main(int argc, char **argv) \
   SQLHSTMT hstmt; \
   int      i, num_tests; \
 \
+  /* Set from environment, possibly overrided by command line */ \
+  mydsn=  (SQLCHAR *)getenv("TEST_DSN"); \
+  myuid=  (SQLCHAR *)getenv("TEST_UID"); \
+  mypwd=  (SQLCHAR *)getenv("TEST_PASSWORD"); \
+  mysock= (SQLCHAR *)getenv("TEST_SOCKET"); \
+\
   if (argc > 1) \
     mydsn= (SQLCHAR *)argv[1]; \
   if (argc > 2) \
