@@ -103,7 +103,7 @@ int main(int argc, char **argv) \
 
 #define RUN_TESTS \
   num_tests= sizeof(tests) / sizeof(tests[0]); \
-  printf("1..%d\n", num_tests); \
+  printf("\n1..%d\n", num_tests); \
 \
   alloc_basic_handles(&henv,&hdbc,&hstmt); \
 \
