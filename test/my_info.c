@@ -25,26 +25,14 @@
 
 DECLARE_TEST(t_gettypeinfo)
 {
-  SQLRETURN rc;
   SQLSMALLINT pccol;
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLGetTypeInfo(hstmt, SQL_ALL_TYPES));
 
-    rc = SQLGetTypeInfo(hstmt,SQL_ALL_TYPES);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLNumResultCols(hstmt, &pccol));
+  is_num(pccol, 19);
 
-    rc = SQLNumResultCols(hstmt,&pccol);
-    mystmt(hstmt,rc);
-    fprintf(stdout,"total columns: %d\n",pccol);
-    myassert(pccol == 19);
-    myresult(hstmt);
-
-    rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-    mystmt(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   return OK;
 }
@@ -52,13 +40,13 @@ DECLARE_TEST(t_gettypeinfo)
 
 DECLARE_TEST(t_getinfo)
 {
-  SQLRETURN rc;
   SQLCHAR   rgbValue[100];
   SQLSMALLINT pcbInfo;
 
-    rc = SQLGetInfo(hdbc,SQL_DRIVER_ODBC_VER,rgbValue,100,&pcbInfo);
-    mycon(hdbc,rc);
-    fprintf(stdout,"SQL_DRIVER_ODBC_VER: %s(%d)\n",rgbValue,pcbInfo);
+  ok_con(hdbc, SQLGetInfo(hdbc, SQL_DRIVER_ODBC_VER, rgbValue,
+                          sizeof(rgbValue), &pcbInfo));
+
+  printMessage("SQL_DRIVER_ODBC_VER: %s (%d)\n",  rgbValue, pcbInfo);
 
   return OK;
 }
@@ -66,74 +54,45 @@ DECLARE_TEST(t_getinfo)
 
 DECLARE_TEST(t_stmt_attr_status)
 {
-  SQLRETURN rc;
   SQLUSMALLINT rowStatusPtr[3];
   SQLUINTEGER rowsFetchedPtr;
 
-    tmysql_exec(hstmt,"drop table t_stmtstatus");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_stmtstatus");
+  ok_sql(hstmt, "CREATE TABLE t_stmtstatus (id INT, name CHAR(20))");
+  ok_sql(hstmt, "INSERT INTO t_stmtstatus VALUES (10,'data1'),(20,'data2')");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = tmysql_exec(hstmt,"create table t_stmtstatus(id int, name char(20))");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_SCROLLABLE,
+                                (SQLPOINTER)SQL_NONSCROLLABLE, 0));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "SELECT * FROM t_stmtstatus");
 
-    rc = tmysql_exec(hstmt,"insert into t_stmtstatus values(10,'data1')");
-    mystmt(hstmt,rc);
-    rc = tmysql_exec(hstmt,"insert into t_stmtstatus values(20,'data2')");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR,
+                                &rowsFetchedPtr, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_STATUS_PTR,
+                                rowStatusPtr, 0));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  expect_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 2), SQL_ERROR);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLSetStmtAttr(hstmt,SQL_ATTR_CURSOR_SCROLLABLE,(SQLPOINTER)SQL_NONSCROLLABLE,0);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_SCROLLABLE,
+                                (SQLPOINTER)SQL_SCROLLABLE, 0));
 
-    rc = tmysql_exec(hstmt,"select * from t_stmtstatus");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM t_stmtstatus");
 
-    rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROWS_FETCHED_PTR,&rowsFetchedPtr,0);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 2));
 
-    rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_STATUS_PTR,&rowStatusPtr,0);
-    mystmt(hstmt,rc);
+  is_num(rowsFetchedPtr, 1);
+  is_num(rowStatusPtr[0], 0);
 
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,2);
-    mystmt_err(hstmt,rc == SQL_ERROR,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, NULL, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_STATUS_PTR, NULL, 0));
 
-    rc = SQLSetStmtAttr(hstmt,SQL_ATTR_CURSOR_SCROLLABLE,(SQLPOINTER)SQL_SCROLLABLE,0);
-    mystmt(hstmt,rc);
-
-    rc = tmysql_exec(hstmt,"select * from t_stmtstatus");
-    mystmt(hstmt,rc);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,2);
-    mystmt(hstmt,rc);
-
-    printMessage("total rows fetched: %d\n",rowsFetchedPtr);
-    printMessage("row 0 status      : %d\n",rowStatusPtr[0]);
-    printMessage("row 1 status      : %d\n",rowStatusPtr[1]);
-    printMessage("row 2 status      : %d\n",rowStatusPtr[2]);
-    myassert(rowsFetchedPtr == 1);
-    myassert(rowStatusPtr[0] == 0);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROWS_FETCHED_PTR,(SQLPOINTER)0,0);
-    mystmt(hstmt,rc);
-
-    rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_STATUS_PTR,(SQLPOINTER)0,0);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_stmtstatus");
 
   return OK;
 }
@@ -141,17 +100,15 @@ DECLARE_TEST(t_stmt_attr_status)
 
 DECLARE_TEST(t_msdev_bug)
 {
-  SQLRETURN  rc;
   SQLCHAR    catalog[30];
-  SQLLEN     len;
+  SQLINTEGER len;
 
-  rc = SQLGetConnectOption(hdbc,SQL_CURRENT_QUALIFIER,&catalog);
-  mycon(hdbc,rc);
-  fprintf(stdout," SQL_CURRENT_QUALIFIER:%s\n",catalog);
+  ok_con(hdbc, SQLGetConnectOption(hdbc, SQL_CURRENT_QUALIFIER, catalog));
+  printMessage("SQL_CURRENT_QUALIFIER: %s\n", catalog);
 
-  rc = SQLGetConnectAttr(hdbc,SQL_ATTR_CURRENT_CATALOG,&catalog,30,&len);
-  mycon(hdbc,rc);
-  fprintf(stdout," SQL_ATTR_CURRENT_CATRALOG:%s(%d)\n",catalog,len);
+  ok_con(hdbc, SQLGetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, catalog,
+                                 sizeof(catalog), &len));
+  printMessage("SQL_ATTR_CURRENT_CATALOG: %s (%d)\n", catalog, len);
 
   return OK;
 }
