@@ -84,10 +84,14 @@ int main(int argc, char **argv) \
   int      i, num_tests; \
 \
   /* Set from environment, possibly overrided by command line */ \
-  mydsn=  (SQLCHAR *)getenv("TEST_DSN"); \
-  myuid=  (SQLCHAR *)getenv("TEST_UID"); \
-  mypwd=  (SQLCHAR *)getenv("TEST_PASSWORD"); \
-  mysock= (SQLCHAR *)getenv("TEST_SOCKET"); \
+  if (getenv("TEST_DSN")) \
+    mydsn=  (SQLCHAR *)getenv("TEST_DSN"); \
+  if (getenv("TEST_UID")) \
+    myuid=  (SQLCHAR *)getenv("TEST_UID"); \
+  if (getenv("TEST_PASSWORD")) \
+    mypwd=  (SQLCHAR *)getenv("TEST_PASSWORD"); \
+  if (getenv("TEST_SOCKET")) \
+    mysock= (SQLCHAR *)getenv("TEST_SOCKET"); \
 \
   if (argc > 1) \
     mydsn= (SQLCHAR *)argv[1]; \
@@ -103,7 +107,7 @@ int main(int argc, char **argv) \
 
 #define RUN_TESTS \
   num_tests= sizeof(tests) / sizeof(tests[0]); \
-  printf("\n1..%d\n", num_tests); \
+  printf("1..%d\n", num_tests); \
 \
   alloc_basic_handles(&henv,&hdbc,&hstmt); \
 \
