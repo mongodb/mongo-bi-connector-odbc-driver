@@ -228,99 +228,45 @@ DECLARE_TEST(t_tstotime1)
 
 DECLARE_TEST(t_bug25846)
 {
-    SQLRETURN   rc;
-    SQLINTEGER  narg;
+  SQLINTEGER  narg;
 
-    SQLSMALLINT          column_count;
-    SQLINTEGER           my_time_cb;
-    SQLINTEGER           my_date_cb;
-    SQL_TIMESTAMP_STRUCT my_time_ts;
-    SQL_TIMESTAMP_STRUCT my_date_ts;
+  SQLSMALLINT          column_count;
+  SQLINTEGER           my_time_cb;
+  SQLINTEGER           my_date_cb;
+  SQL_TIMESTAMP_STRUCT my_time_ts;
+  SQL_TIMESTAMP_STRUCT my_date_ts;
 
-    struct tm *current_ts;
-    time_t    sec_time;
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug25846");
+  ok_sql(hstmt, "CREATE TABLE t_bug25846 (a TIME, b DATE)");
+  ok_sql(hstmt, "INSERT INTO t_bug25846 VALUES ('02:56:30', '1969-07-21')");
 
-    /* initialize data */
-    SQLExecDirect(hstmt, "DROP TABLE my_time_tab", SQL_NTS);
+  ok_sql(hstmt, "SELECT * FROM t_bug25846");
 
-    rc= SQLExecDirect(hstmt, "CREATE TABLE my_time_tab (ID INT PRIMARY KEY, \
-                                                        my_time TIME, \
-                                                        my_date DATE)",
-                                                        SQL_NTS);
-    mystmt(hstmt, rc);
+  ok_stmt(hstmt, SQLNumResultCols(hstmt, &column_count));
+  is_num(column_count, 2);
 
-    /* Insert 15:45:30 into TIME column */
-    rc= SQLExecDirect(hstmt, "INSERT INTO my_time_tab (ID, my_time, my_date) \
-                             VALUES (0, '15:45:30', CURDATE())",
-                             SQL_NTS);
-    mystmt(hstmt, rc);
+  /* Bind the TIMESTAMP buffer for TIME column */
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_TIMESTAMP, &my_time_ts,
+                            sizeof(my_time_ts), &my_time_cb));
 
-    rc= SQLExecDirect(hstmt, "SELECT ID, my_time, my_date FROM my_time_tab",
-                             SQL_NTS);
-    mystmt(hstmt, rc);
+  /* Bind the TIMESTAMP buffer for DATE column */
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_TIMESTAMP, &my_date_ts,
+                            sizeof(my_date_ts), &my_date_cb));
 
-    rc= SQLNumResultCols(hstmt, &column_count);
-    mystmt(hstmt, rc);
+  ok_stmt(hstmt, SQLFetch(hstmt));
 
-    printMessage("Columns count: %d \n\n", column_count);
+  is_num(my_time_ts.hour,   2);
+  is_num(my_time_ts.minute, 56);
+  is_num(my_time_ts.second, 30);
 
-    /* Bind the TIMESTAMP buffer for TIME column */
-    rc= SQLBindCol(hstmt, 2, SQL_C_TIMESTAMP, &my_time_ts, sizeof(my_time_ts),
-                   &my_time_cb);
-    mystmt(hstmt, rc);
+  is_num(my_date_ts.year,   1969);
+  is_num(my_date_ts.month,  7);
+  is_num(my_date_ts.day,    21);
 
-    /* Bind the TIMESTAMP buffer for DATE column */
-    rc= SQLBindCol(hstmt, 3, SQL_C_TIMESTAMP, &my_date_ts, sizeof(my_date_ts),
-                   &my_date_cb);
-    mystmt(hstmt, rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc= SQLFetch(hstmt);
-    mystmt(hstmt, rc);
-
-    sec_time= time(NULL);
-    current_ts= localtime(&sec_time);
-
-    printMessage("CURRENT  DATE\n  YEAR: %d\n  MON: %d\n  DAY: %d \n\n",
-                 current_ts->tm_year + 1900,   /* year starts from 1900 */
-                 current_ts->tm_mon + 1,       /* month starts from 0 */
-                 current_ts->tm_mday);         /* days are ok */
-
-    printMessage("TIME Column\n");
-    printMessage("RETURNED DATE\n  YEAR: %d\n  MON: %d\n  DAY: %d \n",
-                 my_time_ts.year, my_time_ts.month, my_time_ts.day);
-
-    printMessage("RETURNED TIME\n  HOUR: %d\n  MIN: %d\n  SEC: %d \n\n",
-                 my_time_ts.hour, my_time_ts.minute, my_time_ts.hour);
-
-    printMessage("DATE Column\n");
-    printMessage("RETURNED DATE\n  YEAR: %d\n  MON: %d\n  DAY: %d \n",
-                 my_date_ts.year, my_date_ts.month, my_date_ts.day);
-
-    myassert(my_time_ts.hour   == 15 &&
-             my_time_ts.minute == 45 &&
-             my_time_ts.second == 30);
-
-    /* Most cases when we are not testin at 12:00 AM */
-    if (my_time_ts.day == current_ts->tm_mday)
-        myassert((current_ts->tm_year + 1900) == my_time_ts.year &&
-                  my_time_ts.year             == my_date_ts.year &&
-                  (current_ts->tm_mon + 1)    == my_time_ts.month &&
-                  my_time_ts.month            == my_date_ts.month &&
-                  current_ts->tm_mday         == my_time_ts.day &&
-                  my_time_ts.day              == my_date_ts.day);
-    else
-        myassert((current_ts->tm_year + 1900) >= my_time_ts.year &&
-                  my_time_ts.year             >= my_date_ts.year &&
-                  (current_ts->tm_mon + 1)    >= my_time_ts.month &&
-                  my_time_ts.month            >= my_date_ts.month &&
-                  current_ts->tm_mday         >= my_time_ts.day &&
-                  my_time_ts.day              >= my_date_ts.day);
-
-    SQLFreeStmt(hstmt, SQL_UNBIND);
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-
-    SQLExecDirect(hstmt, "DROP TABLE my_time_tab", SQL_NTS);
-    SQLFreeStmt(hstmt, SQL_CLOSE);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug25846");
 
   return OK;
 }
