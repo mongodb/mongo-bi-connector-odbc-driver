@@ -613,107 +613,69 @@ DECLARE_TEST(my_column_priv)
 
 DECLARE_TEST(my_colpriv)
 {
-    SQLRETURN   rc;
+  ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
+                                     "mysql", SQL_NTS, NULL, SQL_NTS,
+                                     NULL, SQL_NTS, NULL, SQL_NTS));
 
-    printMessage("\n With All Types(CataLog,Schema and TableName)");
+  assert(0 == my_print_non_format_result(hstmt));
 
-    rc  = SQLColumnPrivileges(hstmt,
-                              "mysql", SQL_NTS,/* CataLog	 */
-                              NULL,SQL_NTS,        /* SchemaName */
-                              NULL,SQL_NTS,        /* TableName  */
-                              NULL,SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    assert( 0 == my_print_non_format_result(hstmt));
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
+                                     NULL, SQL_NTS, NULL, SQL_NTS,
+                                     "test_colprev1", SQL_NTS, NULL, SQL_NTS));
 
-    printMessage("\n With All Types(CataLog,Schema and TableName)");
+  assert(4 == my_print_non_format_result(hstmt));
 
-    rc  = SQLColumnPrivileges(hstmt,
-                              NULL, 0,                 /* CataLog	 */
-                              NULL,SQL_NTS,        /* SchemaName */
-                              "test_colprev1",SQL_NTS,  /* TableName  */
-                              NULL,SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    assert( 4 == my_print_non_format_result(hstmt));
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
+                                     NULL, SQL_NTS, NULL, SQL_NTS,
+                                     "test_colprev1", SQL_NTS, "a", SQL_NTS));
 
-    printMessage("\n With All Types(CataLog,Schema and TableName)");
+  assert(1 == my_print_non_format_result(hstmt));
 
-    rc  = SQLColumnPrivileges(hstmt,
-                              NULL, 0,                 /* CataLog	 */
-                              NULL,SQL_NTS,        /* SchemaName */
-                              "test_colprev1",SQL_NTS,  /* TableName  */
-                              "a",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    assert( 1 == my_print_non_format_result(hstmt));
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
+                                     NULL, SQL_NTS, NULL, SQL_NTS,
+                                     "test_colprev2", SQL_NTS, NULL, SQL_NTS));
+  assert(0 == my_print_non_format_result(hstmt));
 
-    printMessage("\n With All Types(CataLog,Schema and TableName)");
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc  = SQLColumnPrivileges(hstmt,
-                              NULL, 0,                 /* CataLog	 */
-                              NULL,SQL_NTS,        /* SchemaName */
-                              "test_colprev2",SQL_NTS,  /* TableName  */
-                              NULL,SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
+                                     NULL, SQL_NTS, NULL, SQL_NTS,
+                                     "test_colprev3", SQL_NTS, NULL, SQL_NTS));
 
-    assert( 0 == my_print_non_format_result(hstmt));
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
+  assert(4 == my_print_non_format_result(hstmt));
 
-    printMessage("\n With All Types(CataLog,Schema and TableName)");
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc  = SQLColumnPrivileges(hstmt,
-                              NULL, 0,                 /* CataLog	 */
-                              NULL,SQL_NTS,        /* SchemaName */
-                              "test_colprev3",SQL_NTS,  /* TableName  */
-                              NULL,SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
+                                     NULL, SQL_NTS, NULL, SQL_NTS,
+                                     "test_%", SQL_NTS, NULL, SQL_NTS));
 
-    assert( 4 == my_print_non_format_result(hstmt));
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
+  my_print_non_format_result(hstmt);
 
-    printMessage("\n With All Types(CataLog,Schema and TableName)");
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc  = SQLColumnPrivileges(hstmt,
-                              NULL, 0,                 /* CataLog	 */
-                              NULL,SQL_NTS,        /* SchemaName */
-                              "test_%",SQL_NTS,  /* TableName  */
-                              NULL,SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
+                                     NULL, SQL_NTS, NULL, SQL_NTS,
+                                     "test_colprev%", SQL_NTS, NULL, SQL_NTS));
 
-    my_print_non_format_result(hstmt);
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
+  assert(8 == my_print_non_format_result(hstmt));
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    printMessage("\n With All Types(CataLog,Schema and TableName)");
+  ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
+                                     "mysql", SQL_NTS, NULL, SQL_NTS,
+                                     "columns_priv", SQL_NTS, NULL, SQL_NTS));
 
-    rc  = SQLColumnPrivileges(hstmt,
-                              NULL, 0,                 /* CataLog	 */
-                              NULL,SQL_NTS,        /* SchemaName */
-                              "test_colprev%",SQL_NTS,  /* TableName  */
-                              NULL,SQL_NTS);
-    mystmt(hstmt,rc);
+  my_print_non_format_result(hstmt);
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    assert( 8  == my_print_non_format_result(hstmt));
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = SQLColumnPrivileges(hstmt,"mysql",SQL_NTS,NULL,SQL_NTS,"columns_priv",SQL_NTS,NULL,SQL_NTS) ;
-    mystmt(hstmt,rc);
-
-    my_print_non_format_result(hstmt);
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
 }
 
 
