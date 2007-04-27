@@ -29,7 +29,10 @@
 /** @todo Remove dependency on this crufty old header. */
 #define DEBUG_LEVEL 2
 #include "mytest3.h"
+
 #include <stdarg.h>
+#include <signal.h>
+
 #undef printMessage
 void printMessage(char *fmt, ...) {
   va_list ap;
@@ -76,6 +79,13 @@ typedef struct {
 #define ADD_TEST(name) { #name, name, OK   },
 #define ADD_TODO(name) { #name, name, FAIL },
 #define END_TESTS }; \
+void test_timeout(int signum) \
+{ \
+  printf("Bail out! Timeout."); \
+  exit(1); \
+} \
+\
+\
 int main(int argc, char **argv) \
 { \
   SQLHENV  henv; \
@@ -109,11 +119,15 @@ int main(int argc, char **argv) \
   num_tests= sizeof(tests) / sizeof(tests[0]); \
   printf("1..%d\n", num_tests); \
 \
+  (void)signal(SIGALRM, test_timeout); \
+\
   alloc_basic_handles(&henv,&hdbc,&hstmt); \
 \
   for (i= 0; i < num_tests; i++ ) \
   { \
-    int rc= tests[i].func(hdbc, hstmt, henv); \
+    int rc; \
+    alarm(30); \
+    rc= tests[i].func(hdbc, hstmt, henv); \
     printf("%s %d %s %s\n", rc == OK ? "ok" : "not ok", i + 1, \
            tests[i].expect == FAIL ? "# TODO" : "-", \
            tests[i].name); \
