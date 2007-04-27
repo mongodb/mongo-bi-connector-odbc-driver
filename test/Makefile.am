@@ -69,6 +69,21 @@ test: make-test-ini $(tap_tests)
 	TEST_PASSWORD=$(TEST_PASSWORD) TEST_SOCKET=$(TEST_SOCKET) \
 	perl $(srcdir)/unit.pl run $(tap_tests)
 
+test-bt: make-test-ini $(tap_tests)
+	for f in $(tap_tests) ; \
+	do \
+	  echo "******************************************************************************" ; \
+	  echo "Starting test $$f" ; \
+	  ODBCSYSINI=. \
+	  ODBCINI=$(TEST_ODBCINI) ODBCINSTINI=$(TEST_ODBCINSTINI) \
+	  TEST_DSN=$(TEST_DSN) TEST_UID=$(TEST_UID) \
+	  TEST_PASSWORD=$(TEST_PASSWORD) TEST_SOCKET=$(TEST_SOCKET) \
+	  ./$$f ; \
+	  echo "Ending test $$f" ; \
+	done ; \
+	echo "" ; \
+	echo "******************************************************************************"
+
 EXTRA_DIST= \
 	odbc.ini.in \
 	odbcinst.ini.in \
