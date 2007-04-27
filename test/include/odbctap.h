@@ -79,7 +79,7 @@ typedef struct {
 #define ADD_TEST(name) { #name, name, OK   },
 #define ADD_TODO(name) { #name, name, FAIL },
 #define END_TESTS }; \
-void test_timeout(int signum) \
+void test_timeout(int signum __attribute__((unused))) \
 { \
   printf("Bail out! Timeout."); \
   exit(1); \
