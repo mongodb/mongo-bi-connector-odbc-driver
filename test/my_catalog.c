@@ -684,40 +684,29 @@ DECLARE_TEST(t_sqlprocedures)
   SQLRETURN rc;
   /** @todo check server version */
 
-  rc= SQLExecDirect(hstmt, "DROP FUNCTION IF EXISTS t_sqlproc_func", SQL_NTS);
-  mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP FUNCTION IF EXISTS t_sqlproc_func");
+  ok_sql(hstmt,
+         "CREATE FUNCTION t_sqlproc_func (a INT) RETURNS INT RETURN SQRT(a)");
 
-  rc= SQLExecDirect(hstmt,
-                    "CREATE FUNCTION t_sqlproc_func (a INT) RETURNS INT"
-                    " RETURN SQRT(a)",
-                    SQL_NTS);
-  mystmt(hstmt,rc);
-
-  rc= SQLExecDirect(hstmt, "DROP PROCEDURE IF EXISTS t_sqlproc_proc", SQL_NTS);
-  mystmt(hstmt,rc);
-  rc= SQLExecDirect(hstmt,
-                    "CREATE PROCEDURE t_sqlproc_proc (OUT a INT) BEGIN"
-                    " SELECT COUNT(*) INTO a FROM t_sqlproc;"
-                    "END;",
-                    SQL_NTS);
-  mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS t_sqlproc_proc");
+  ok_sql(hstmt,
+         "CREATE PROCEDURE t_sqlproc_proc (OUT a INT) BEGIN"
+         " SELECT COUNT(*) INTO a FROM t_sqlproc;"
+         "END;");
 
   /* Try without specifying a catalog. */
-  rc= SQLProcedures(hstmt, NULL, 0, NULL, 0, "t_sqlproc%", SQL_NTS);
-  mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLProcedures(hstmt, NULL, 0, NULL, 0, "t_sqlproc%", SQL_NTS));
 
-  assert(2 == my_print_non_format_result(hstmt));
+  is_num(my_print_non_format_result(hstmt), 2);
 
   /* And try with specifying a catalog.  */
-  rc= SQLProcedures(hstmt, "test", SQL_NTS, NULL, 0, "t_sqlproc%", SQL_NTS);
-  mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLProcedures(hstmt, "test", SQL_NTS, NULL, 0,
+                               "t_sqlproc%", SQL_NTS));
 
-  assert(2 == my_print_non_format_result(hstmt));
+  is_num(my_print_non_format_result(hstmt), 2);
 
-  rc= SQLExecDirect(hstmt, "DROP PROCEDURE IF EXISTS t_sqlproc_proc", SQL_NTS);
-  mystmt(hstmt,rc);
-  rc= SQLExecDirect(hstmt, "DROP FUNCTION IF EXISTS t_sqlproc_func", SQL_NTS);
-  mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP PROCEDURE t_sqlproc_proc");
+  ok_sql(hstmt, "DROP FUNCTION t_sqlproc_func");
 }
 
 
