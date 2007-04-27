@@ -558,37 +558,14 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
             return SQL_CHAR;
 
         case MYSQL_TYPE_VAR_STRING:
-            /*
-              If we have both the table name and the original table name, we
-              can trust the length information in the field. Unless there
-              isn't any, then we assume a length of 255 characters.
-             */
-            if (field->table && field->org_table &&
-                field->table[0] && field->org_table[0])
-            {
+              /* 
+              TODO: field->length should be replaced by max(length, maxlength)
+                    in order to restore FLAG_FIELD_LENGTH option
+              */
               *transfer_length= *precision= *display_size= field->length ?
                 (stmt->dbc->mysql.charset ?
                  field->length / stmt->dbc->mysql.charset->mbmaxlen :
                  field->length) : 255;
-            }
-            /*
-              Otherwise, if it is not already set, we set it to
-              the size of a MEDIUMTEXT/BLOB.
-             */
-            else if (field->org_table && !field->org_table[0])
-            {
-              *transfer_length= *precision= *display_size= 16777215L;
-              if (field_is_binary)
-              {
-                if (buff) 
-                  strmov(buff,"blob");
-                return SQL_LONGVARBINARY;
-              }
-
-              if (buff) 
-                strmov(buff,"text");
-              return SQL_LONGVARCHAR;
-            }
 
             if (field_is_binary)
             {
