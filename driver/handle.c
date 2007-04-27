@@ -20,16 +20,10 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-/***************************************************************************
- * HANDLE.C								   *
- *									   *
- * @description: Allocation and freeing of handles			   *
- *									   *
- * @author     : MySQL AB(monty@mysql.com, venu@mysql.com)		   *
- * @date       : 2001-Nov-07						   *
- * @product    : myodbc3						   *
- *									   *
-****************************************************************************/
+/**
+  @file  handle.c
+  @brief Allocation and freeing of handles.
+*/
 
 /***************************************************************************
  * The following ODBC APIs are implemented in this file:		   *

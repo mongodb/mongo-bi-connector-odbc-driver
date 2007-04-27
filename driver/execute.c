@@ -20,16 +20,10 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-/***************************************************************************
- * EXECUTE.C								   *
- *									   *
- * @description: Driver code for executing SQL Commands			   *
- *									   *
- * @author     : MySQL AB(monty@mysql.com, venu@mysql.com)		   *
- * @date       : 2001-Aug-15						   *
- * @product    : myodbc3						   *
- *									   *
- ****************************************************************************/
+/**
+  @file  execute.c
+  @brief Statement execution functions.
+*/
 
 /***************************************************************************
  * The following ODBC APIs are implemented in this file:		   *

@@ -21,7 +21,8 @@
 */
 
 /**
-  Catalog functions.
+  @file  catalog.c
+  @brief Catalog functions.
 */
 
 /***************************************************************************

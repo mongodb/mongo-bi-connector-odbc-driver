@@ -20,16 +20,10 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-/***************************************************************************
- * CONNECT.C								   *
- *									   *
- * @description: This is the MyODBC 3.51 sample driver code for connection *
- *									   *
- * @author     : MySQL AB (monty@mysql.com, venu@mysql.com)		   *
- * @date       : 2001-Aug-15						   *
- * @product    : myodbc3						   *
- *									   *
- ****************************************************************************/
+/**
+  @file  connect.c
+  @brief Connection functions.
+*/
 
 /***************************************************************************
  * The following ODBC APIs are implemented in this file:		   *

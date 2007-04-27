@@ -20,15 +20,9 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-/***************************************************************************
- * MYODBC3.C								   *
- *									   *
- * @description: Code for generating precompiled headers		   *
- *									   *
- * @author     : MySQL AB(monty@mysql.com, venu@mysql.com)		   *
- * @date       : 2001-Aug-15						   *
- * @product    : myodbc3						   *
- *									   *
-****************************************************************************/
+/**
+  @file  myodbc3.c
+  @brief Stub for forcing creation of precompiled headers.
+*/
 
 #include "myodbc3.h"
