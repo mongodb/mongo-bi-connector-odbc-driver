@@ -25,116 +25,98 @@
 
 DECLARE_TEST(t_longlong1)
 {
-  SQLRETURN   rc;
   SQLINTEGER  session_id, ctn;
 
-    tmysql_exec(hstmt,"drop table t_longlong");
-    rc = tmysql_exec(hstmt,"create table t_longlong (\
-                          session_id  bigint not null,\
-                          ctn         bigint not null)");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_longlong");
+  ok_sql(hstmt, "CREATE TABLE t_longlong (a BIGINT, b BIGINT)");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY,
+                                (SQLPOINTER)SQL_CONCUR_ROWVER, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY, (SQLPOINTER) SQL_CONCUR_ROWVER, 0);
-    SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER) SQL_CURSOR_STATIC, 0);
+  ok_stmt(hstmt, SQLPrepare(hstmt,
+                            (SQLCHAR *)"INSERT INTO t_longlong VALUES (?,?)",
+                            SQL_NTS));
 
-    rc = SQLPrepare(hstmt,"insert into t_longlong values (?,?)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_UBIGINT,
+                                  SQL_BIGINT, 20, 0, &session_id, 20, NULL));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_UBIGINT,
+                                  SQL_BIGINT, 20, 0, &ctn, 20, NULL));
 
-    rc = SQLBindParameter( hstmt, 1, SQL_PARAM_INPUT, SQL_C_UBIGINT,
-                           SQL_BIGINT, 20, 0, &session_id, 20, NULL );
+  for (session_id= 50, ctn= 0; session_id < 100; session_id++)
+  {
+    ctn+= session_id;
+    ok_stmt(hstmt, SQLExecute(hstmt));
+  }
 
-    rc = SQLBindParameter( hstmt, 2, SQL_PARAM_INPUT, SQL_C_UBIGINT,
-                           SQL_BIGINT, 20, 0, &ctn, 20, NULL );
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    for (session_id=50; session_id < 100; session_id++)
-    {
-      ctn += session_id;
-      rc = SQLExecute(hstmt);
-      mystmt(hstmt,rc);
-    }
+  ok_sql(hstmt, "SELECT * FROM t_longlong");
 
-    rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-    mystmt(hstmt,rc);
+  my_assert(50 == myresult(hstmt));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = tmysql_exec(hstmt,"select * from t_longlong");
-    mystmt(hstmt,rc);
-
-    my_assert( 50 == myresult(hstmt));
-
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_longlong");
 
   return OK;
 }
 
 
+/* This just proves we don't support SQL_C_NUMERIC. */
 DECLARE_TEST(t_numeric)
 {
-  SQLRETURN       rc;
   SQL_NUMERIC_STRUCT num;
+  SQLINTEGER dummy;
 
-    tmysql_exec(hstmt,"drop table t_decimal");
-    rc = tmysql_exec(hstmt,"create table t_decimal(d1 decimal(10,6))");
-    mystmt(hstmt,rc);
-    rc = tmysql_exec(hstmt,"insert into t_decimal values(10.2)");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_decimal");
+  ok_sql(hstmt, "CREATE TABLE t_decimal (d1 DECIMAL(10,6))");
+  ok_sql(hstmt, "INSERT INTO t_decimal VALUES (10.2)");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLPrepare(hstmt,
+                            (SQLCHAR *)"INSERT INTO t_decimal VALUES (?)",
+                            SQL_NTS));
 
-    rc = SQLPrepare(hstmt,"insert into t_decimal values (?)",SQL_NTS);
-    mystmt(hstmt,rc);
+  expect_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_NUMERIC,
+                                      SQL_DECIMAL, 10, 4, &num, 0, NULL),
+              SQL_ERROR);
 
-    rc = SQLBindParameter( hstmt, 1, SQL_PARAM_INPUT, SQL_C_NUMERIC,
-                           SQL_DECIMAL, 10, 4, &num, 0, NULL );
-    mystmt_r(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    SQLFreeStmt(hstmt, SQL_CLOSE);
+  ok_stmt(hstmt, SQLPrepare(hstmt,
+                            (SQLCHAR *)"INSERT INTO t_decimal VALUES (?),(?)",
+                            SQL_NTS));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_LONG,
+                                  SQL_DECIMAL, 10, 4, &dummy, 0, NULL));
 
-    rc = SQLPrepare(hstmt,"insert into t_decimal values (?),(?)",SQL_NTS);
-    mystmt(hstmt,rc);
+  expect_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_NUMERIC,
+                                      SQL_DECIMAL, 10, 4, &num, 0, NULL),
+              SQL_ERROR);
 
-    rc = SQLBindParameter( hstmt, 1, SQL_PARAM_INPUT, SQL_C_LONG,
-                           SQL_DECIMAL, 10, 4, &rc, 0, NULL );
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
 
-    rc = SQLBindParameter( hstmt, 2, SQL_PARAM_INPUT, SQL_C_NUMERIC,
-                           SQL_DECIMAL, 10, 4, &num, 0, NULL );
-    mystmt_r(hstmt,rc);
+  expect_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_NUMERIC, &num, 0, NULL),
+              SQL_ERROR);
 
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-    SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
 
-    rc = SQLBindCol( hstmt, 1, SQL_C_NUMERIC, &num, 0, NULL );
-    mystmt_r(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM t_decimal");
 
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-    SQLFreeStmt(hstmt, SQL_UNBIND);
+  ok_stmt(hstmt, SQLFetch(hstmt));
 
-    rc = SQLExecDirect(hstmt, "select * from t_decimal",SQL_NTS);
-    mystmt(hstmt,rc);
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_NUMERIC, &num, 0, NULL),
+              SQL_ERROR);
 
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLGetData( hstmt, 1, SQL_C_NUMERIC, &num, 0, NULL );
-    mystmt_r(hstmt,rc);
-
-    SQLFreeStmt(hstmt, SQL_UNBIND);
-    SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
-    SQLFreeStmt(hstmt, SQL_CLOSE);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_decimal");
 
   return OK;
 }
