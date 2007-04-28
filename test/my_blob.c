@@ -421,134 +421,110 @@ DECLARE_TEST(t_putdata2)
 /* Test for a simple SQLPutData and SQLParamData handling bug #1316 */
 DECLARE_TEST(t_putdata3)
 {
-  char buffer[]= "MySQL - The worlds's most popular open source database";
-  SQLRETURN  rc;
-  const int MAX_PART_SIZE = 5;
-
-  char *pdata= 0, data[50];
-  int dynData;
-  int commonLen= 20;
-
+  SQLRETURN   rc;
   SQLINTEGER  id, id1, id2, id3, resId;
   SQLINTEGER  resUTimeSec;
   SQLINTEGER  resUTimeMSec;
   SQLINTEGER  resDataLen;
   SQLLEN      resData;
 
-    SQLExecDirect(hstmt,"drop table t_putdata3",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"CREATE TABLE t_putdata3 ( id INT, id1  INT, \
-                     id2 INT, id3  INT, pdata blob);",SQL_NTS);
-    mystmt(hstmt,rc);
+  char buffer[]= "MySQL - The worlds's most popular open source database";
+  const int MAX_PART_SIZE = 5;
 
-    dynData = 1;
+  char *pdata= 0, data[50];
+  int commonLen= 20;
 
-    rc = SQLPrepare(hstmt, "INSERT INTO t_putdata3 VALUES ( ?, ?, ?, ?, ? )", SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_putdata3");
+  ok_sql(hstmt,
+         "CREATE TABLE t_putdata3 (id INT, id1 INT, id2 INT, id3 INT, b BLOB)");
 
-    id= 1, id1= 2, id2= 3, id3= 4;
-    resId = 0;
-    resUTimeSec = 0;
-    resUTimeMSec = 0;
-    resDataLen = 0;
-    resData = SQL_LEN_DATA_AT_EXEC(0);
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)
+                            "INSERT INTO t_putdata3 VALUES (?, ?, ?, ?, ?)",
+                            SQL_NTS));
 
-    rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_SLONG,
-                          SQL_INTEGER, 0, 0, &id, 0, &resId);
-    mystmt(hstmt,rc);
+  id= 1, id1= 2, id2= 3, id3= 4;
+  resId= 0;
+  resUTimeSec= resUTimeMSec= 0;
+  resDataLen= 0;
+  resData= SQL_LEN_DATA_AT_EXEC(0);
 
-    rc = SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_SLONG,
-                          SQL_INTEGER, 0, 0, &id1, 0, &resUTimeSec);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_SLONG,
+                                  SQL_INTEGER, 0, 0, &id, 0, &resId));
 
-    rc = SQLBindParameter(hstmt, 3, SQL_PARAM_INPUT, SQL_C_SLONG,
-                          SQL_INTEGER, 0, 0, &id2, 0, &resUTimeMSec);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_SLONG,
+                                  SQL_INTEGER, 0, 0, &id1, 0, &resUTimeSec));
 
-    rc = SQLBindParameter(hstmt, 4, SQL_PARAM_INPUT, SQL_C_SLONG,
-                          SQL_INTEGER, 0, 0, &id3, 0,
-                          &resDataLen);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 3, SQL_PARAM_INPUT, SQL_C_SLONG,
+                                  SQL_INTEGER, 0, 0, &id2, 0, &resUTimeMSec));
 
-    rc = SQLBindParameter(hstmt, 5, SQL_PARAM_INPUT,
-                          SQL_C_BINARY, SQL_LONGVARBINARY, 10, 10,
-                          dynData ? (SQLPOINTER)5 :
-                          pdata, 0, &resData);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 4, SQL_PARAM_INPUT, SQL_C_SLONG,
+                                  SQL_INTEGER, 0, 0, &id3, 0, &resDataLen));
 
-    rc = SQLExecute(hstmt);
-    if (rc == SQL_NEED_DATA)
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 5, SQL_PARAM_INPUT, SQL_C_BINARY,
+                                  SQL_LONGVARBINARY, 10, 10, (SQLPOINTER)5,
+                                  0, &resData));
+
+  rc= SQLExecute(hstmt);
+  if (rc == SQL_NEED_DATA)
+  {
+    SQLPOINTER parameter;
+
+    if (SQLParamData(hstmt, &parameter) == SQL_NEED_DATA &&
+        parameter == (SQLPOINTER)5)
     {
-      int parameter;
-      if (SQLParamData(hstmt,(void**)&parameter) == SQL_NEED_DATA && parameter == 5)
+      int len= 0, partsize;
+
+      /* storing long data by parts */
+      while (len < commonLen)
       {
-        int len = 0;
-        int partsize;
+        partsize= commonLen - len;
+        if (partsize > MAX_PART_SIZE)
+          partsize= MAX_PART_SIZE;
 
-        /* storing long data by parts */
-        while (len < commonLen)
-        {
-          partsize = commonLen - len;
-          if (partsize > MAX_PART_SIZE)
-            partsize = MAX_PART_SIZE;
-
-          rc = SQLPutData(hstmt, buffer+len, partsize);
-          mystmt(hstmt,rc);
-          len += partsize;
-        }
-        if (SQLParamData(hstmt,(void**)&parameter) == SQL_ERROR)
-        {
-
-        }
+        ok_stmt(hstmt, SQLPutData(hstmt, buffer + len, partsize));
+        len+= partsize;
       }
-    } /* end if (rc == SQL_NEED_DATA) */
 
-    SQLFreeStmt(hstmt, SQL_UNBIND);
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-
-    if (mysql_min_version(hdbc, "4.0", 3))
-    {
-      rc = tmysql_exec(hstmt,"select id, id1, id2, id3,  convert(pdata,char) from t_putdata3");
-      mystmt(hstmt,rc);
-
-      rc = SQLFetch(hstmt);
-
-      my_assert(1 == my_fetch_int(hstmt,1));
-      my_assert(2 == my_fetch_int(hstmt,2));
-      my_assert(3 == my_fetch_int(hstmt,3));
-      my_assert(4 == my_fetch_int(hstmt,4));
-
-      my_assert(strncmp(buffer, my_fetch_str(hstmt,data,5), commonLen) == 0);
+      if (SQLParamData(hstmt, &parameter) == SQL_ERROR)
+      {
+      }
     }
-    else
-    {
-      rc = tmysql_exec(hstmt,"select id, id1, id2, id3,  pdata from t_putdata3");
-      mystmt(hstmt,rc);
+  } /* end if (rc == SQL_NEED_DATA) */
 
-      rc = SQLFetch(hstmt);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-      my_assert(1 == my_fetch_int(hstmt,1));
-      my_assert(2 == my_fetch_int(hstmt,2));
-      my_assert(3 == my_fetch_int(hstmt,3));
-      my_assert(4 == my_fetch_int(hstmt,4));
-      my_assert(strncmp("4D7953514C202D2054686520776F726C64732773",
-                my_fetch_str(hstmt,data,5), commonLen) == 0);
-    }
+  if (mysql_min_version(hdbc, "4.0", 3))
+  {
+    ok_sql(hstmt, "SELECT id, id1, id2, id3, CONVERT(b, CHAR) FROM t_putdata3");
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLFetch(hstmt));
 
-    /*
-     output:
+    is_num(my_fetch_int(hstmt, 1), 1);
+    is_num(my_fetch_int(hstmt, 2), 2);
+    is_num(my_fetch_int(hstmt, 3), 3);
+    is_num(my_fetch_int(hstmt, 4), 4);
 
-      ######################################
-      t_putdata3
-      ######################################
-       my_fetch_int: 1
-       my_fetch_int: 2
-       my_fetch_int: 3
-       my_fetch_int: 4
-       my_fetch_str: MySQL - The worlds's(20)
-    */
+    is_str(my_fetch_str(hstmt, data, 5), buffer, commonLen);
+  }
+  else
+  {
+    ok_sql(hstmt, "SELECT id, id1, id2, id3, b FROM t_putdata3");
+
+    ok_stmt(hstmt, SQLFetch(hstmt));
+
+    is_num(my_fetch_int(hstmt, 1), 1);
+    is_num(my_fetch_int(hstmt, 2), 2);
+    is_num(my_fetch_int(hstmt, 3), 3);
+    is_num(my_fetch_int(hstmt, 4), 4);
+
+    is_str(my_fetch_str(hstmt, data, 5),
+           "4D7953514C202D2054686520776F726C64732773", commonLen);
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_putdata3");
 
   return OK;
 }
