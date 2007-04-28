@@ -182,78 +182,45 @@ DECLARE_TEST(my_positioned_cursor)
 /* perform delete and update using SQLSetPos */
 DECLARE_TEST(my_setpos_cursor)
 {
-    SQLRETURN   rc;
-    SQLSMALLINT nRowCount;
-    SQLINTEGER  id;
-    char        name[50];
+  SQLLEN      nRowCount;
+  SQLINTEGER  id;
+  SQLCHAR     name[50];
 
-    /* Open the resultset of table 'my_demo_cursor' */
-    rc = SQLExecDirect(hstmt,"SELECT * FROM my_demo_cursor",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM my_demo_cursor");
 
-    /* bind row data buffers */
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&id,0,NULL);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &id, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, name, sizeof(name),NULL));
 
-    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,name,sizeof(name),NULL);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_FIRST, 1L));
 
-    /* goto the first row */
-    rc = SQLFetchScroll(hstmt, SQL_FETCH_FIRST, 1L);
-    mystmt(hstmt,rc);
+  strcpy((char *)name, "first-row");
 
-    strcpy(name,"first-row");
+  /* now update the name field to 'first-row' using SQLSetPos */
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
 
-    /* now update the name field to 'first-row' using SQLSetPos */
-    rc = SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt, rc);
+  ok_stmt(hstmt, SQLRowCount(hstmt, &nRowCount));
+  is_num(nRowCount, 1);
 
-    rc = SQLRowCount(hstmt, &nRowCount);
-    mystmt(hstmt, rc);
+  /* position to second row and delete it ..*/
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 2L));
 
-    printMessage(" total rows updated:%d\n",nRowCount);
-    assert(nRowCount == 1);
+  /* now delete the current, second row */
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_DELETE, SQL_LOCK_NO_CHANGE));
 
-    /* position to second row and delete it ..*/
-    rc = SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 2L);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLRowCount(hstmt, &nRowCount));
+  is_num(nRowCount, 1);
 
-    /* now delete the current, second row */
-    rc = SQLSetPos(hstmt, 1, SQL_DELETE, SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt, rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLRowCount(hstmt, &nRowCount);
-    mystmt(hstmt, rc);
+  /* Now fetch and verify the data */
+  ok_sql(hstmt, "SELECT * FROM my_demo_cursor");
 
-    printMessage(" total rows deleted:%d\n",nRowCount);
-    assert(nRowCount == 1);
+  is_num(myresult(hstmt), 3);
 
-    /* Free statement cursor resorces */
-    rc = SQLFreeStmt(hstmt, SQL_UNBIND);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    /* Now fetch and verify the data */
-    rc = SQLExecDirect(hstmt, "SELECT * FROM my_demo_cursor",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    assert(3 == myresult(hstmt));
-
-    /* drop the table */
-    rc = SQLExecDirect(hstmt,"DROP TABLE my_demo_cursor",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE my_demo_cursor");
 
   return OK;
 }
