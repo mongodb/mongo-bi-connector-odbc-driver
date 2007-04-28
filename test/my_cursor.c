@@ -249,12 +249,12 @@ DECLARE_TEST(t_bug5853)
   rc= SQLExecDirect(hstmt,"INSERT INTO t_bug5853 (a) VALUES ('abc'),('def')",SQL_NTS);
   mystmt(hstmt,rc);
 
-  rc= SQLPrepare(hstmt,"INSERT INTO t_bug5853 VALUES(?)",SQL_NTS);
-  mystmt(hstmt,rc);
-
   rc= SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                      (SQLPOINTER)SQL_CURSOR_DYNAMIC,0);
   mystmt(hstmt, rc);
+
+  rc= SQLPrepare(hstmt,"INSERT INTO t_bug5853 VALUES(?)",SQL_NTS);
+  mystmt(hstmt,rc);
 
   rc= SQLSetCursorName(hstmt, "bug5853", SQL_NTS);
   mystmt(hstmt, rc);
