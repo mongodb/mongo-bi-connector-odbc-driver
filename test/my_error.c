@@ -23,90 +23,74 @@
 #include "odbctap.h"
 
 
-void check_sqlstate(SQLHDBC hdbc, SQLHSTMT hstmt,SQLCHAR *sqlstate)
+int check_sqlstate(SQLHDBC hdbc, SQLHSTMT hstmt, char *sqlstate)
 {
-    SQLCHAR     sql_state[6];
-    SQLINTEGER  err_code=0;
-    SQLCHAR     err_msg[SQL_MAX_MESSAGE_LENGTH]={0};
-    SQLSMALLINT err_len=0;
+  SQLCHAR     sql_state[6];
+  SQLINTEGER  err_code= 0;
+  SQLCHAR     err_msg[SQL_MAX_MESSAGE_LENGTH]= {0};
+  SQLSMALLINT err_len= 0;
 
-    memset(err_msg,'C',SQL_MAX_MESSAGE_LENGTH);
-    SQLGetDiagRec(SQL_HANDLE_STMT,hstmt,1,
-                  (SQLCHAR *)&sql_state,(SQLINTEGER *)&err_code,
-                  (SQLCHAR*)&err_msg, SQL_MAX_MESSAGE_LENGTH-1,
-                  (SQLSMALLINT *)&err_len);
+  memset(err_msg, 'C', SQL_MAX_MESSAGE_LENGTH);
+  SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sql_state, &err_code, err_msg,
+                SQL_MAX_MESSAGE_LENGTH - 1, &err_len);
 
-    printMessage("\n");
-    printMessage("\n SQLSTATE (expected:%s, obtained:%s)",sqlstate,sql_state);
-    printMessage("\n ERROR: %s",err_msg);
-    if (!driver_min_version(hdbc,"03.52",5))
-        myassert(strcmp(sql_state,sqlstate)==0);
+  if (!driver_min_version(hdbc, (SQLCHAR *)"03.52",5))
+    is_str(sql_state, (SQLCHAR *)sqlstate, 5);
+
+  return OK;
 }
 
 
 DECLARE_TEST(t_odbc3_error)
 {
-    SQLRETURN rc; 
-    SQLHENV henv1;
-    SQLHDBC hdbc1;
-    SQLHSTMT hstmt1;
-    SQLINTEGER ov_version;
+  SQLHENV henv1;
+  SQLHDBC hdbc1;
+  SQLHSTMT hstmt1;
+  SQLINTEGER ov_version;
 
-    rc = SQLAllocHandle(SQL_HANDLE_ENV,SQL_NULL_HANDLE,&henv1);
-    myenv(henv1,rc);
+  ok_env(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
+  ok_env(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
+                              (SQLPOINTER)SQL_OV_ODBC3, 0));
 
-    rc = SQLSetEnvAttr(henv1,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)SQL_OV_ODBC3,0);
-    myenv(henv1,rc);
+  ok_env(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &hdbc1));
 
-    rc = SQLAllocHandle(SQL_HANDLE_DBC,henv1,&hdbc1);
-    myenv(henv1,rc);
+  ok_env(henv1, SQLGetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
+                              (SQLPOINTER)&ov_version, 0, 0));
+  is_num(ov_version, SQL_OV_ODBC3);
 
-    rc = SQLGetEnvAttr(henv1,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)&ov_version,0,0);
-    myenv(henv1,rc);
-    printMessage("\n default odbc version:%d",ov_version);
-    my_assert(ov_version == SQL_OV_ODBC3);
+  ok_con(hdbc1, SQLConnect(hdbc1, mydsn, SQL_NTS, myuid, SQL_NTS,
+                           mypwd, SQL_NTS));
 
-    rc = SQLConnect(hdbc1, mydsn, SQL_NTS, myuid, SQL_NTS,  mypwd, SQL_NTS);
-    mycon(hdbc1,rc);
+  ok_con(hdbc1, SQLAllocHandle(SQL_HANDLE_STMT, hdbc1, &hstmt1));
 
-    rc = SQLAllocHandle(SQL_HANDLE_STMT,hdbc1,&hstmt1);
-    mycon(hdbc1, rc);
+  expect_sql(hstmt1, "SELECT * FROM non_existing_table", SQL_ERROR);
+  if (check_sqlstate(hdbc1, hstmt1, "42S02") != OK)
+    return FAIL;
 
-    rc = SQLExecDirect(hstmt1,"CREATE DATABASE IF NOT EXISTS client_odbc_test",SQL_NTS);
-    mystmt(hstmt1,rc);
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_error");
+  ok_sql(hstmt1, "CREATE TABLE t_error (id INT)");
 
-    rc = SQLExecDirect(hstmt1,"use client_odbc_test",SQL_NTS);
-    mystmt(hstmt1,rc);
+  expect_sql(hstmt1, "CREATE TABLE t_error (id INT)", SQL_ERROR);
+  if (check_sqlstate(hdbc1, hstmt1, "42S01") != OK)
+    return FAIL;
 
-    rc = SQLExecDirect(hstmt1,"select * from iNON_EXITING_TABLE",SQL_NTS);
-    myassert(rc == SQL_ERROR);
-    check_sqlstate(hdbc1, hstmt1,"42S02");
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
-    SQLExecDirect(hstmt1,"DROP TABLE test_error",SQL_NTS);
-    rc = SQLExecDirect(hstmt1,"CREATE TABLE test_error(id int)",SQL_NTS);
-    mystmt(hstmt1,rc);
+  expect_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_FETCH_BOOKMARK_PTR,
+                                     (SQLPOINTER)NULL, 0),
+              SQL_ERROR);
+  if (check_sqlstate(hdbc1, hstmt1, "HYC00") != OK)
+    return FAIL;
 
-    rc = SQLExecDirect(hstmt1,"CREATE TABLE test_error(id int)",SQL_NTS);
-    myassert(rc == SQL_ERROR);
-    check_sqlstate(hdbc1, hstmt1,"42S01");
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
-    SQLFreeStmt(hstmt1,SQL_CLOSE);
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_error");
 
-    rc = SQLSetStmtAttr(hstmt1,SQL_ATTR_FETCH_BOOKMARK_PTR,(SQLPOINTER)NULL,0);
-    myassert(rc == SQL_ERROR);
-    check_sqlstate(hdbc1, hstmt1,"HYC00");
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
 
-    rc = SQLFreeStmt(hstmt1,SQL_DROP);
-    mystmt(hstmt1,rc);
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
 
-    rc = SQLDisconnect(hdbc1);
-    mycon(hdbc1, rc);
-
-    rc = SQLFreeHandle(SQL_HANDLE_DBC,hdbc1);
-    mycon(hdbc1,rc);
-
-    rc = SQLFreeHandle(SQL_HANDLE_ENV,henv1);
-    myenv(henv1,rc);
+  ok_env(henv1, SQLFreeHandle(SQL_HANDLE_ENV, henv1));
 
   return OK;
 }
@@ -114,105 +98,91 @@ DECLARE_TEST(t_odbc3_error)
 
 DECLARE_TEST(t_odbc2_error)
 {
-    SQLRETURN rc;
-    SQLHENV henv1;
-    SQLHDBC hdbc1;
-    SQLHSTMT hstmt1;
-    SQLINTEGER ov_version;
+  SQLHENV henv1;
+  SQLHDBC hdbc1;
+  SQLHSTMT hstmt1;
+  SQLINTEGER ov_version;
 
-    rc = SQLAllocHandle(SQL_HANDLE_ENV,SQL_NULL_HANDLE,&henv1);
-    myenv(henv1,rc);
+  ok_env(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
+  ok_env(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
+                              (SQLPOINTER)SQL_OV_ODBC2, 0));
 
-    rc = SQLSetEnvAttr(henv1,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)SQL_OV_ODBC2,0);
-    myenv(henv1,rc);
+  ok_env(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &hdbc1));
 
-    rc = SQLAllocHandle(SQL_HANDLE_DBC,henv1,&hdbc1);
-    myenv(henv1,rc);
+  ok_env(henv1, SQLGetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
+                              (SQLPOINTER)&ov_version, 0, 0));
+  is_num(ov_version, SQL_OV_ODBC2);
 
-    rc = SQLGetEnvAttr(henv1,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)&ov_version,0,0);
-    myenv(henv1,rc);
-    printMessage("\ndefault odbc version:%d",ov_version);
-    my_assert(ov_version == SQL_OV_ODBC2);
+  ok_con(hdbc1, SQLConnect(hdbc1, mydsn, SQL_NTS, myuid, SQL_NTS,
+                           mypwd, SQL_NTS));
 
-    rc = SQLConnect(hdbc1, mydsn, SQL_NTS, myuid, SQL_NTS,  mypwd, SQL_NTS);
-    mycon(hdbc1,rc);
+  ok_con(hdbc1, SQLAllocHandle(SQL_HANDLE_STMT, hdbc1, &hstmt1));
 
-    rc = SQLAllocHandle(SQL_HANDLE_STMT,hdbc1,&hstmt1);
-    mycon(hdbc1, rc);
+  expect_sql(hstmt1, "SELECT * FROM non_existing_table", SQL_ERROR);
+  if (check_sqlstate(hdbc1, hstmt1, "S0002") != OK)
+    return FAIL;
 
-    rc = SQLExecDirect(hstmt1,"CREATE DATABASE IF NOT EXISTS client_odbc_test",SQL_NTS);
-    mystmt(hstmt1,rc);
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_error");
+  ok_sql(hstmt1, "CREATE TABLE t_error (id INT)");
 
-    rc = SQLExecDirect(hstmt1,"use client_odbc_test",SQL_NTS);
-    mystmt(hstmt1,rc);
+  expect_sql(hstmt1, "CREATE TABLE t_error (id INT)", SQL_ERROR);
+  if (check_sqlstate(hdbc1, hstmt1, "S0001") != OK)
+    return FAIL;
 
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
-    rc = SQLExecDirect(hstmt1,"select * from iNON_EXITING_TABLE",SQL_NTS);
-    myassert(rc == SQL_ERROR);
-    check_sqlstate(hdbc1, hstmt1,"S0002");
+  expect_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_FETCH_BOOKMARK_PTR,
+                                     (SQLPOINTER)NULL, 0),
+              SQL_ERROR);
+  if (check_sqlstate(hdbc1, hstmt1, "S1C00") != OK)
+    return FAIL;
 
-    SQLExecDirect(hstmt1,"DROP TABLE test_error",SQL_NTS);
-    rc = SQLExecDirect(hstmt1,"CREATE TABLE test_error(id int)",SQL_NTS);
-    mystmt(hstmt1,rc);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
-    rc = SQLExecDirect(hstmt1,"CREATE TABLE test_error(id int)",SQL_NTS);
-    myassert(rc == SQL_ERROR);
-    check_sqlstate(hdbc1, hstmt1,"S0001");
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_error");
 
-    SQLFreeStmt(hstmt1,SQL_CLOSE);
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
 
-    rc = SQLSetStmtAttr(hstmt1,SQL_ATTR_FETCH_BOOKMARK_PTR,(SQLPOINTER)NULL,0);
-    myassert(rc == SQL_ERROR);
-    check_sqlstate(hdbc1, hstmt1,"S1C00");
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
 
-    rc = SQLFreeStmt(hstmt1,SQL_DROP);
-    mystmt(hstmt1,rc);
-
-    rc = SQLDisconnect(hdbc1);
-    mycon(hdbc1, rc);
-
-    rc = SQLFreeHandle(SQL_HANDLE_DBC,hdbc1);
-    mycon(hdbc1,rc);
-
-    rc = SQLFreeHandle(SQL_HANDLE_ENV,henv1);
-    myenv(henv1,rc);
+  ok_env(henv1, SQLFreeHandle(SQL_HANDLE_ENV, henv1));
 
   return OK;
 }
 
-static void test_diagrec(SQLSMALLINT HandleType,SQLHANDLE Handle,
-                         SQLSMALLINT RecNumber, SQLSMALLINT BufferLength,
-                         SQLRETURN return_value_expected)
+static int test_diagrec(SQLSMALLINT HandleType,SQLHANDLE Handle,
+                        SQLSMALLINT RecNumber, SQLSMALLINT BufferLength,
+                        SQLRETURN return_value_expected)
 {
   SQLRETURN rc;
-  SQLCHAR   sqlstate[6]={0};
-  SQLCHAR   message[255]={0};
-  SQLINTEGER native_err=0;
-  SQLSMALLINT msglen=0;
+  SQLCHAR   sqlstate[6]= {0};
+  SQLCHAR   message[255]= {0};
+  SQLINTEGER native_err= 0;
+  SQLSMALLINT msglen= 0;
 
-  rc = SQLGetDiagRec(HandleType,Handle,RecNumber,
-		     (char *)&sqlstate,&native_err,
-		     (char *)&message,BufferLength,&msglen);
+  rc= SQLGetDiagRec(HandleType, Handle, RecNumber, sqlstate, &native_err,
+                    message, BufferLength, &msglen);
 
-  fprintf(stdout,"%d@%s(%d)\n",rc,message,msglen);
-  myassert(return_value_expected == rc);
+  is_num(rc, return_value_expected);
+
+  return OK;
 }
 
 
 DECLARE_TEST(t_diagrec)
 {
-  SQLRETURN rc;
+  expect_sql(hstmt, "DROP TABLE t_odbc3_non_existent_table", SQL_ERROR);
 
-  fprintf(stdout," ** SQL_HANDLE_STMT ** \n");
-
-  rc = SQLExecDirect(hstmt,"DROP TABLE ODBC3_NON_EXISTANTi_TAB",SQL_NTS);
-  myassert(rc == SQL_ERROR);
-
-  test_diagrec(SQL_HANDLE_STMT,hstmt,2,0,SQL_NO_DATA_FOUND);
-  test_diagrec(SQL_HANDLE_STMT,hstmt,1,255,SQL_SUCCESS);
-  test_diagrec(SQL_HANDLE_STMT,hstmt,1,0,SQL_SUCCESS_WITH_INFO);
-  test_diagrec(SQL_HANDLE_STMT,hstmt,1,10,SQL_SUCCESS_WITH_INFO);
-  test_diagrec(SQL_HANDLE_STMT,hstmt,1,-1,SQL_ERROR);
+  if (test_diagrec(SQL_HANDLE_STMT, hstmt, 2, 0,   SQL_NO_DATA_FOUND) != OK)
+    return FAIL;
+  if (test_diagrec(SQL_HANDLE_STMT, hstmt, 1, 255, SQL_SUCCESS) != OK)
+    return FAIL;
+  if (test_diagrec(SQL_HANDLE_STMT, hstmt, 1, 0,   SQL_SUCCESS_WITH_INFO) != OK)
+    return FAIL;
+  if (test_diagrec(SQL_HANDLE_STMT, hstmt, 1, 10,  SQL_SUCCESS_WITH_INFO) != OK)
+    return FAIL;
+  if (test_diagrec(SQL_HANDLE_STMT, hstmt, 1, -1,  SQL_ERROR) != OK)
+    return FAIL;
 
   return OK;
 }
@@ -220,54 +190,54 @@ DECLARE_TEST(t_diagrec)
 
 DECLARE_TEST(t_warning)
 {
-  SQLRETURN rc;
-  SQLCHAR szData[20];
-  SQLINTEGER pcbValue;
+  SQLCHAR    szData[20];
+  SQLLEN     pcbValue;
 
-    tmysql_exec(hstmt,"drop table t_warning");
-    rc = tmysql_exec(hstmt,"create table t_warning(col2 char(20))");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_warning");
+  ok_sql(hstmt, "CREATE TABLE t_warning (col2 CHAR(20))");
+  ok_sql(hstmt, "INSERT INTO t_warning VALUES ('Venu Anuganti')");
 
-    rc = tmysql_exec(hstmt,"insert into t_warning values('venu anuganti')");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY,
+                                (SQLPOINTER)SQL_CONCUR_ROWVER, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_KEYSET_DRIVEN, 0));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  /* ignore all columns */
+  ok_sql(hstmt, "SELECT * FROM t_warning");
 
-    SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY, (SQLPOINTER) SQL_CONCUR_ROWVER, 0);
-    SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER) SQL_CURSOR_KEYSET_DRIVEN, 0);
+  ok_stmt(hstmt, SQLFetch(hstmt));
 
-    /* ignore all columns */
-    rc = tmysql_exec(hstmt,"select * from t_warning");
-    mystmt(hstmt,rc);
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, szData, 4, &pcbValue),
+              SQL_SUCCESS_WITH_INFO);
+  is_str(szData, "Ven", 3);
+  is_num(pcbValue, 13);
 
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt, rc);
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, szData, 4, &pcbValue),
+              SQL_SUCCESS_WITH_INFO);
+  is_str(szData, "u A", 3);
+  is_num(pcbValue, 10);
 
-    rc = SQLGetData(hstmt,1,SQL_C_CHAR,szData,4,&pcbValue);
-    mystmt_err(hstmt, rc == SQL_SUCCESS_WITH_INFO, rc);
-    fprintf(stdout,"data: %s(%d)\n",szData,pcbValue);
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, szData, 4, &pcbValue),
+              SQL_SUCCESS_WITH_INFO);
+  is_str(szData, "nug", 3);
+  is_num(pcbValue, 7);
 
-    rc = SQLGetData(hstmt,1,SQL_C_CHAR,szData,4,&pcbValue);
-    mystmt_err(hstmt, rc == SQL_SUCCESS_WITH_INFO, rc);
-    fprintf(stdout,"data: %s(%d)\n",szData,pcbValue);
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, szData, 4, &pcbValue),
+              SQL_SUCCESS_WITH_INFO);
+  is_str(szData, "ant", 3);
+  is_num(pcbValue, 4);
 
-    rc = SQLGetData(hstmt,1,SQL_C_CHAR,szData,4,&pcbValue);
-    mystmt_err(hstmt, rc == SQL_SUCCESS_WITH_INFO, rc);
-    fprintf(stdout,"data: %s(%d)\n",szData,pcbValue);
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, szData, 4, &pcbValue),
+              SQL_SUCCESS);
+  is_str(szData, "i", 1);
+  is_num(pcbValue, 1);
 
-    rc = SQLGetData(hstmt,1,SQL_C_CHAR,szData,4,&pcbValue);
-    mystmt(hstmt,rc);
-    fprintf(stdout,"data: %s(%d)\n",szData,pcbValue);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
-    rc = SQLFetch(hstmt);
-    mystmt_err(hstmt, rc == SQL_NO_DATA_FOUND, rc);
-
-    SQLFreeStmt(hstmt,SQL_UNBIND);
-    SQLFreeStmt(hstmt,SQL_CLOSE);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   return OK;
 }
