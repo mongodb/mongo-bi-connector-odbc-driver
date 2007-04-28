@@ -326,6 +326,18 @@ char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param)
     {
         return add_to_buffer(net,to,"NULL",4);
     }
+    /*
+      We may see SQL_COLUMN_IGNORE from bulk INSERT operations, where we
+      may have been told to ignore a column in one particular row. So we
+      try to insert DEFAULT, or NULL for really old servers.
+    */
+    else if ( *(param->actual_len) == SQL_COLUMN_IGNORE )
+    {
+      if (is_minimum_version(mysql->server_version, "4.0.3", 5))
+        return add_to_buffer(net,to,"DEFAULT",7);
+      else
+        return add_to_buffer(net,to,"NULL",4);
+    }
     else if ( *param->actual_len == SQL_DATA_AT_EXEC ||
               *param->actual_len <= SQL_LEN_DATA_AT_EXEC_OFFSET )
     {

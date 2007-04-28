@@ -308,11 +308,172 @@ DECLARE_TEST(t_mul_pkdel1)
 }
 
 
+/**
+  Bug #24306: SQLBulkOperations always uses indicator varables' values from
+  the first record
+*/
+DECLARE_TEST(t_bulk_insert_indicator)
+{
+  SQLINTEGER id[4], nData;
+  SQLLEN     indicator[4], nLen;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_bulk");
+  ok_sql(hstmt, "CREATE TABLE my_bulk (id int default 5)");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
+  ok_stmt(hstmt,
+          SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)3, 0));
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, id, 0, indicator));
+
+  ok_sql(hstmt, "SELECT id FROM my_bulk");
+
+  expect_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0),
+              SQL_NO_DATA_FOUND);
+
+  id[0]= 1; indicator[0]= SQL_COLUMN_IGNORE;
+  id[1]= 2; indicator[1]= SQL_NULL_DATA;
+  id[2]= 3; indicator[2]= 0;
+
+  ok_stmt(hstmt, SQLBulkOperations(hstmt, SQL_ADD));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE,
+                                (SQLPOINTER)1, 0));
+
+  ok_sql(hstmt, "SELECT id FROM my_bulk");
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &nData, 0, &nLen));
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0));
+  is_num(nData, 5);
+  my_assert(nLen != SQL_NULL_DATA);
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0));
+  is_num(nLen, SQL_NULL_DATA);
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0));
+  is_num(nData, 3);
+  my_assert(nLen != SQL_NULL_DATA);
+
+  expect_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0),
+              SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_bulk");
+
+  return OK;
+}
+
+
+/**
+  Simple structure for a row (just one element) plus an indicator column.
+*/
+typedef struct {
+  SQLINTEGER val;
+  SQLLEN     ind;
+} row;
+
+
+/**
+  This is related to the fix for Bug #24306 -- handling of row-wise binding,
+  plus handling of SQL_ATTR_ROW_BIND_OFFSET_PTR, within the context of
+  SQLBulkOperations(hstmt, SQL_ADD).
+*/
+DECLARE_TEST(t_bulk_insert_rows)
+{
+  row        rows[3];
+  SQLINTEGER nData, offset;
+  SQLLEN     nLen;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_bulk");
+  ok_sql(hstmt, "CREATE TABLE my_bulk (id int default 5)");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE,
+                                (SQLPOINTER)3, 0));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_BIND_TYPE,
+                                (SQLPOINTER)sizeof(row), 0));
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &rows[0].val, 0,
+                            &rows[0].ind));
+
+  ok_sql(hstmt, "SELECT id FROM my_bulk");
+
+  expect_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0),
+              SQL_NO_DATA_FOUND);
+
+  rows[0].val= 1; rows[0].ind= SQL_COLUMN_IGNORE;
+  rows[1].val= 2; rows[1].ind= SQL_NULL_DATA;
+  rows[2].val= 3; rows[2].ind= 0;
+
+  ok_stmt(hstmt, SQLBulkOperations(hstmt, SQL_ADD));
+
+  /* Now re-insert the last row using SQL_ATTR_ROW_BIND_OFFSET_PTR */
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE,
+                                (SQLPOINTER)1, 0));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_BIND_OFFSET_PTR,
+                                (SQLPOINTER)&offset, 0));
+
+  offset= 2 * sizeof(row);
+
+  ok_stmt(hstmt, SQLBulkOperations(hstmt, SQL_ADD));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "SELECT id FROM my_bulk");
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &nData, 0, &nLen));
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0));
+  is_num(nData, 5);
+  my_assert(nLen != SQL_NULL_DATA);
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0));
+  is_num(nLen, SQL_NULL_DATA);
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0));
+  is_num(nData, 3);
+  my_assert(nLen != SQL_NULL_DATA);
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0));
+  is_num(nData, 3);
+  my_assert(nLen != SQL_NULL_DATA);
+
+  expect_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0),
+              SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_bulk");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bulk_check)
   ADD_TEST(t_bulk_insert)
   ADD_TEST(t_mul_pkdel)
   ADD_TEST(t_mul_pkdel1)
+  ADD_TEST(t_bulk_insert_indicator)
+  ADD_TEST(t_bulk_insert_rows)
 END_TESTS
 
 

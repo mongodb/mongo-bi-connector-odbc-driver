@@ -348,7 +348,8 @@ static SQLRETURN copy_rowdata(STMT FAR *stmt, PARAM_BIND  param,
 {
     SQLCHAR *orig_to= *to;
     MYSQL mysql= stmt->dbc->mysql;
-    SQLUINTEGER length= *(param.actual_len)+1;
+    /* Negative length means either NULL or DEFAULT, so we need 7 chars. */
+    SQLUINTEGER length= (*param.actual_len > 0 ? *param.actual_len + 1 : 7);
 
     if ( !(*to= (SQLCHAR *) extend_buffer(*net,(char*) *to,length)) )
         return set_error(stmt,MYERR_S1001,NULL,4001);
@@ -1111,13 +1112,13 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
     SQLUINTEGER  insert_count= 1;           /* num rows to insert - will be real value when row is 0 (all)  */
     SQLUINTEGER  count= 0;                  /* current row                                                  */
     SQLLEN       length;
-    NET          *net;
+    MYSQL        mysql= stmt->dbc->mysql;
+    NET         *net= &mysql.net;
     SQLUSMALLINT ncol;
     SQLCHAR      *to;
     ulong        query_length= 0;           /* our original query len so we can reset pos if break_insert   */
     my_bool      break_insert= FALSE;       /* true if we are to exceed max data size for transmission      
                                                but this seems to be misused                                 */
-    MYSQL        mysql= stmt->dbc->mysql ;
     PARAM_BIND   param;
 
     /* determine the number of rows to insert when irow = 0 */
@@ -1137,23 +1138,36 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
             /* "break_insert=FALSE" here? */
         }
 
-        /* 
-            for each row build and execute INSERT statement 
-        */
-        while ( count < insert_count )
+        /* For each row, build the value list from its columns */
+        while (count < insert_count)
         {
-            net= &mysql.net;
-            to = net->buff;
+            to= net->buff;
 
-            /* 
-                for each *relevant* column append to INSERT statement 
-            */
+            /* Append values for each column. */
             dynstr_append_mem(ext_query,"(", 1);
             for ( ncol= 0; ncol < result->field_count; ncol++ )
             {
-                ulong       transfer_length,precision,display_size;
+                ulong        transfer_length,precision,display_size;
                 MYSQL_FIELD *field= mysql_fetch_field_direct(result,ncol);
                 BIND        *bind= stmt->bind+ncol;
+                SQLINTEGER   binding_offset= 0, element_size= 0;
+                SQLLEN       ind_or_len;
+
+                if (stmt->stmt_options.bind_type != SQL_BIND_BY_COLUMN &&
+                    stmt->stmt_options.bind_offset)
+                  binding_offset= *(stmt->stmt_options.bind_offset);
+
+                if (stmt->stmt_options.bind_type != SQL_BIND_BY_COLUMN)
+                  element_size= stmt->stmt_options.bind_type;
+
+                if (bind->pcbValue)
+                  ind_or_len= *(SQLLEN *)((gptr)bind->pcbValue +
+                                          binding_offset +
+                                          count * (element_size ?
+                                                   element_size :
+                                                   sizeof(SQLLEN)));
+                else
+                  ind_or_len= bind->cbValueMax;
 
                 param.SqlType= unireg_to_sql_datatype(stmt,
                                                       field,
@@ -1162,35 +1176,33 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
                                                       &precision,
                                                       &display_size);
                 param.CType = bind->fCType;
-                param.buffer= (gptr) bind->rgbValue+count*(stmt->stmt_options.bind_type);
+                param.buffer= ((gptr)bind->rgbValue +
+                               binding_offset +
+                               count * (element_size ?
+                                        element_size :
+                                        bind_length(bind->fCType,
+                                                    bind->cbValueMax)));
 
-                if ( !( bind->pcbValue && ( *bind->pcbValue == SQL_COLUMN_IGNORE ) ) )
-                {
-                    if ( param.buffer )
-                    {
-                        if ( bind->pcbValue )
-                        {
-                            if ( *bind->pcbValue == SQL_NTS )
-                                length= strlen(param.buffer);
-                            else if ( *bind->pcbValue == SQL_COLUMN_IGNORE )
-                            {
-                                /* should not happen see CSC-3985 */
-                                length= SQL_NULL_DATA;
-                            }
-                            else
-                                length= *bind->pcbValue;
-                        }
-                        else
-                            length= bind->cbValueMax;
-                    }
-                    else
-                        length= SQL_NULL_DATA;
-
-                    param.actual_len= &length;
-
-                    if ( copy_rowdata(stmt,param,&net,&to) != SQL_SUCCESS )
-                        return(SQL_ERROR);
+                switch (ind_or_len) {
+                case SQL_NTS:
+                  if (param.buffer)
+                    length= strlen(param.buffer);
+                  break;
+                /*
+                  We pass through SQL_COLUMN_IGNORE and SQL_NULL_DATA,
+                  because the insert_data() that is eventually called knows
+                  how to deal with them.
+                */
+                case SQL_COLUMN_IGNORE:
+                case SQL_NULL_DATA:
+                default:
+                  length= ind_or_len;
                 }
+
+                param.actual_len= &length;
+
+                if (copy_rowdata(stmt, param, &net, &to) != SQL_SUCCESS)
+                  return SQL_ERROR;
 
             } /* END OF for (ncol= 0; ncol < result->field_count; ncol++) */
 
@@ -1199,9 +1211,11 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
             dynstr_append_mem(ext_query, "),", 2);
             count++;
 
-            /* We have a limited capacity to shove data across the wire. 
-               but we handle this by sending in multiple calls to exec_stmt_query(). */
-            if ( ext_query->length + length >= (SQLLEN) net_buffer_length )
+            /*
+              We have a limited capacity to shove data across the wire, but
+              we handle this by sending in multiple calls to exec_stmt_query()
+            */
+            if (ext_query->length + length >= (SQLLEN) net_buffer_length)
             {
                 break_insert= TRUE;
                 break;
@@ -1227,7 +1241,7 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
             stmt->stmt_options.rowStatusPtr[count]= SQL_ROW_ADDED;
     }
 
-    return(SQL_SUCCESS);
+    return SQL_SUCCESS;
 }
 
 
@@ -1365,24 +1379,17 @@ static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLUSMALLINT irow, SQLUSM
                 dynstr_append_quoted_name(&dynQuery,table_name);
                 dynstr_append_mem(&dynQuery,"(",1);
 
-                /*
-                    for each *relevant* column append name to INSERT statement
-                */    
-                for ( nCol= 0; nCol < result->field_count; nCol++ )
+                /* build list of column names */
+                for (nCol= 0; nCol < result->field_count; nCol++)
                 {
-                    MYSQL_FIELD *   field   = mysql_fetch_field_direct( result, nCol );
-                    BIND *          bind    = stmt->bind + nCol;
-
-                    if ( !( bind->pcbValue && ( *bind->pcbValue == SQL_COLUMN_IGNORE ) ) )
-                    {
-                        dynstr_append_quoted_name( &dynQuery, field->name );
-                        dynstr_append_mem( &dynQuery, ",", 1 );
-                    }
+                    MYSQL_FIELD *field= mysql_fetch_field_direct(result, nCol);
+                    dynstr_append_quoted_name(&dynQuery, field->name);
+                    dynstr_append_mem(&dynQuery, ",", 1);
                 }
                 dynQuery.length--;        /* Remove last ',' */
                 dynstr_append_mem(&dynQuery,") VALUES ",9);
 
-                /* process row(s) using our INSERT as base */ 
+                /* process row(s) using our INSERT as base */
                 sqlRet= batch_insert(stmt, irow, &dynQuery);
 
                 dynstr_free(&dynQuery);
