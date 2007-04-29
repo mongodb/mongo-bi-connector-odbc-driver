@@ -676,6 +676,7 @@ DECLARE_TEST(my_colpriv)
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
+  return OK;
 }
 
 
@@ -707,6 +708,8 @@ DECLARE_TEST(t_sqlprocedures)
 
   ok_sql(hstmt, "DROP PROCEDURE t_sqlproc_proc");
   ok_sql(hstmt, "DROP FUNCTION t_sqlproc_func");
+
+  return OK;
 }
 
 

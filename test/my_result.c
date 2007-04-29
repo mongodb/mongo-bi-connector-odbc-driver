@@ -358,6 +358,8 @@ DECLARE_TEST(t_desc_col)
     desc_col_check(hstmt, 23, "c23", SQL_LONGVARBINARY, 255, 5, 0,  SQL_NULLABLE);
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  return OK;
 }
 
 
@@ -606,6 +608,8 @@ DECLARE_TEST(t_multistep)
 
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  return OK;
 }
 
 
