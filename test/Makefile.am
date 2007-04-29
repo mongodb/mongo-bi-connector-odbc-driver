@@ -70,7 +70,7 @@ test: make-test-ini $(tap_tests)
 	perl $(srcdir)/unit.pl run $(tap_tests)
 
 test-bt: make-test-ini $(tap_tests)
-	for f in $(tap_tests) ; \
+	-for f in $(tap_tests) ; \
 	do \
 	  echo "******************************************************************************" ; \
 	  echo "Starting test $$f" ; \
