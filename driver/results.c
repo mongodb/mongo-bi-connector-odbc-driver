@@ -656,7 +656,7 @@ SQLRETURN SQL_API SQLBindCol( SQLHSTMT      hstmt,
     MYODBCDbgInfo( "icol: %d", icol );
     MYODBCDbgInfo( "Type: %d", fCType );
     MYODBCDbgInfo( "ValueMax: %ld", cbValueMax );
-    MYODBCDbgInfo( "Valueptr: 0x%lx", pcbValue );
+    MYODBCDbgInfo( "Valueptr: 0x%lx", (ulong)pcbValue );
     MYODBCDbgInfo( "pcbValue: %ld", (long) (pcbValue ? *pcbValue : 0L) );
 
     icol--;
@@ -787,9 +787,9 @@ SQLRETURN SQL_API SQLGetData( SQLHSTMT      hstmt,
 
     MYODBCDbgInfo( "icol:%d", icol );
     MYODBCDbgInfo( "ctype:%d", fCType );
-    MYODBCDbgInfo( "rgb:0x%x", rgbValue );
-    MYODBCDbgInfo( "len:%d", cbValueMax );
-    MYODBCDbgInfo( "pcb:0x%x", pcbValue );
+    MYODBCDbgInfo( "rgb:0x%x", (uint)rgbValue );
+    MYODBCDbgInfo( "len:%d", (int)cbValueMax );
+    MYODBCDbgInfo( "pcb:0x%x", (uint)pcbValue );
 
     if ( !stmt->result || !stmt->current_values )
     {
@@ -830,8 +830,8 @@ SQLRETURN SQL_API SQLGetData( SQLHSTMT      hstmt,
         setlocale(LC_NUMERIC,default_locale);
 
     MYODBCDbgInfo( "return:%d ", result );
-    MYODBCDbgInfo( "rgb:0x%x", rgbValue );
-    MYODBCDbgInfo( "pcb:0x%x", pcbValue );
+    MYODBCDbgInfo( "rgb:0x%x", (uint)rgbValue );
+    MYODBCDbgInfo( "pcb:0x%x", (uint)pcbValue );
 
     MYODBCDbgReturnReturn(result);
 }
@@ -1204,7 +1204,7 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
         {
             pStmt->state = ST_EXECUTED;
             pStmt->affected_rows = mysql_affected_rows( &pStmt->dbc->mysql );
-            MYODBCDbgInfo( "affected rows: %d", pStmt->affected_rows );
+            MYODBCDbgInfo( "affected rows: %d", (int)pStmt->affected_rows );
             goto exitSQLMoreResults;
         }
         /* we have fields but no resultset (not even an empty one) - this is bad */

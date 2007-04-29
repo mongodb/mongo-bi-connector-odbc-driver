@@ -150,7 +150,7 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
         case SQL_ATTR_CONCURRENCY:
         case SQL_ATTR_NOSCAN:
         case SQL_ATTR_ROW_OPERATION_PTR: /* need to support this ....*/
-            MYODBCDbgInfo( "Attribute, %d is ignored", Attribute );
+            MYODBCDbgInfo( "Attribute, %d is ignored", (int)Attribute );
             break;
 
         case SQL_ATTR_FETCH_BOOKMARK_PTR:
@@ -159,7 +159,7 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
             break;
 
         default:
-            MYODBCDbgInfo( "Attribute, %d is ignored", Attribute );
+            MYODBCDbgInfo( "Attribute, %d is ignored", (int)Attribute );
             break;
     }
     MYODBCDbgReturnReturn(SQL_SUCCESS);
@@ -247,7 +247,7 @@ get_constmt_attr(SQLSMALLINT  HandleType,
             break;
 
         case SQL_ATTR_ROW_OPERATION_PTR: /* need to support this ....*/
-            MYODBCDbgInfo( "Attribute, %d is ignored", Attribute );
+            MYODBCDbgInfo( "Attribute, %d is ignored", (int)Attribute );
             MYODBCDbgReturnReturn(SQL_SUCCESS_WITH_INFO);
 
         case SQL_ATTR_FETCH_BOOKMARK_PTR:
@@ -260,7 +260,7 @@ get_constmt_attr(SQLSMALLINT  HandleType,
             break;
 
         default:
-            MYODBCDbgError( "Invalid attribute/option identifier:%d", Attribute );
+          MYODBCDbgError( "Invalid attribute/option identifier:%d", (int)Attribute );
     }
     MYODBCDbgReturnReturn(SQL_SUCCESS);
 }
@@ -281,9 +281,9 @@ set_con_attr(SQLHDBC    hdbc,
 
     MYODBCDbgEnter;
 
-    MYODBCDbgInfo( "Atrr: %d", Attribute );
-    MYODBCDbgInfo( "ValuePtr: 0x%lx", ValuePtr );
-    MYODBCDbgInfo( "StrLenPtr: %d", StringLengthPtr );
+    MYODBCDbgInfo( "Atrr: %d", (int)Attribute );
+    MYODBCDbgInfo( "ValuePtr: 0x%lx", (ulong)ValuePtr );
+    MYODBCDbgInfo( "StrLenPtr: %d", (int)StringLengthPtr );
 
     switch (Attribute)
     {
@@ -450,10 +450,10 @@ static SQLRETURN get_con_attr(SQLHDBC    hdbc,
 
     MYODBCDbgEnter;
 
-    MYODBCDbgInfo( "Atrr: %d", Attribute );
-    MYODBCDbgInfo( "ValuePtr: 0x%lx", ValuePtr );
-    MYODBCDbgInfo( "BufLen: %d", BufferLength );
-    MYODBCDbgInfo( "StrLenPtr: 0x%lx", StringLengthPtr );
+    MYODBCDbgInfo( "Atrr: %d", (int)Attribute );
+    MYODBCDbgInfo( "ValuePtr: 0x%lx", (ulong)ValuePtr );
+    MYODBCDbgInfo( "BufLen: %d", (int)BufferLength );
+    MYODBCDbgInfo( "StrLenPtr: 0x%lx", (ulong)StringLengthPtr );
 
     if (!ValuePtr)
         ValuePtr= vparam;
@@ -620,9 +620,9 @@ set_stmt_attr(SQLHSTMT   hstmt,
 
     MYODBCDbgEnter;
 
-    MYODBCDbgInfo( "Atrr: %d", Attribute );
-    MYODBCDbgInfo( "ValuePtr: 0x%lx", ValuePtr );
-    MYODBCDbgInfo( "StrLenPtr: %d", StringLengthPtr );
+    MYODBCDbgInfo( "Atrr: %d", (int)Attribute );
+    MYODBCDbgInfo( "ValuePtr: 0x%lx", (ulong)ValuePtr );
+    MYODBCDbgInfo( "StrLenPtr: %d", (int)StringLengthPtr );
 
     switch (Attribute)
     {
@@ -715,10 +715,10 @@ static SQLRETURN get_stmt_attr(SQLHSTMT   hstmt,
     SQLINTEGER len;
 
     MYODBCDbgEnter;
-    MYODBCDbgInfo( "Atrr: %d", Attribute );
-    MYODBCDbgInfo( "ValuePtr: 0x%lx", ValuePtr );
-    MYODBCDbgInfo( "BufLen: %d", BufferLength );
-    MYODBCDbgInfo( "StrLenPtr: 0x%lx", StringLengthPtr );
+    MYODBCDbgInfo( "Atrr: %d", (int)Attribute );
+    MYODBCDbgInfo( "ValuePtr: 0x%lx", (ulong)ValuePtr );
+    MYODBCDbgInfo( "BufLen: %d", (int)BufferLength );
+    MYODBCDbgInfo( "StrLenPtr: 0x%lx", (ulong)StringLengthPtr );
 
     if (!ValuePtr)
         ValuePtr= &vparam;
@@ -917,8 +917,8 @@ SQLSetEnvAttr(SQLHENV    henv,
     MYODBCDbgEnter;
     MYODBCDbgInfo( "henv: %p", henv );
     MYODBCDbgInfo( "Atrr: %s", MYODBCDbgEnvAttrString( Attribute ) );
-    MYODBCDbgInfo( "Atrr: %d", Attribute );
-    MYODBCDbgInfo( "ValuePtr: 0x%lx", ValuePtr );
+    MYODBCDbgInfo( "Atrr: %d", (int)Attribute );
+    MYODBCDbgInfo( "ValuePtr: 0x%lx", (ulong)ValuePtr );
 
     if (((ENV FAR *)henv)->connections)
         MYODBCDbgReturnReturn( set_env_error(henv,MYERR_S1010,NULL,0) );
@@ -956,7 +956,7 @@ SQLGetEnvAttr(SQLHENV    henv,
     MYODBCDbgEnter;
     MYODBCDbgInfo( "henv: %p", henv );
     MYODBCDbgInfo( "Atrr: %s", MYODBCDbgEnvAttrString( Attribute ) );
-    MYODBCDbgInfo( "Atrr: %d", Attribute );
+    MYODBCDbgInfo( "Atrr: %d", (int)Attribute );
 
     switch ( Attribute )
     {
@@ -992,7 +992,7 @@ SQLRETURN SQL_API SQLSetConnectAttr(SQLHDBC hdbc,
     MYODBCDbgEnter;
     MYODBCDbgInfo( "hdbc: %p", hdbc );
     MYODBCDbgInfo( "Attribute: %s", MYODBCDbgConnectAttrString( Attribute ) );
-    MYODBCDbgInfo( "Attribute: %d", Attribute );
+    MYODBCDbgInfo( "Attribute: %d", (int)Attribute );
     MYODBCDbgReturnReturn( set_con_attr(hdbc,Attribute, ValuePtr,StringLength) );
 }
 
@@ -1010,7 +1010,7 @@ SQLRETURN SQL_API SQLGetConnectAttr(SQLHDBC hdbc,
     MYODBCDbgEnter;
     MYODBCDbgInfo( "hdbc: %p", hdbc );
     MYODBCDbgInfo( "Attribute: %s", MYODBCDbgConnectAttrString( Attribute ) );
-    MYODBCDbgInfo( "Attribute: %d", Attribute );
+    MYODBCDbgInfo( "Attribute: %d", (int)Attribute );
     MYODBCDbgReturnReturn( get_con_attr( hdbc,Attribute, ValuePtr,BufferLength, StringLengthPtr ) );
 }
 
@@ -1027,7 +1027,7 @@ SQLRETURN SQL_API SQLSetStmtAttr(SQLHSTMT   hstmt,
     MYODBCDbgEnter;
     MYODBCDbgInfo( "hstmt: %p", hstmt );
     MYODBCDbgInfo( "Attribute: %s", MYODBCDbgStmtAttrString( Attribute ) );
-    MYODBCDbgInfo( "Attribute: %d", Attribute );
+    MYODBCDbgInfo( "Attribute: %d", (int)Attribute );
     MYODBCDbgReturnReturn( set_stmt_attr( hstmt, Attribute, ValuePtr, StringLength ) );
 }
 
@@ -1044,6 +1044,6 @@ SQLRETURN SQL_API SQLGetStmtAttr(SQLHSTMT   hstmt,
     MYODBCDbgEnter;
     MYODBCDbgInfo( "hstmt: %p", hstmt );
     MYODBCDbgInfo( "Attribute: %s", MYODBCDbgStmtAttrString( Attribute ) );
-    MYODBCDbgInfo( "Attribute: %d", Attribute );
+    MYODBCDbgInfo( "Attribute: %d", (int)Attribute );
     MYODBCDbgReturnReturn( get_stmt_attr( hstmt,Attribute, ValuePtr,BufferLength, StringLengthPtr ) );
 }

@@ -58,7 +58,7 @@ static const char *my_next_token(const char *prev_token,
 {
     const char *cur_token;
 
-    if ( cur_token= strchr(*token, chr) )
+    if ( (cur_token= strchr(*token, chr)) )
     {
         if ( prev_token )
         {
@@ -313,7 +313,7 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
         if ( !stmt->result )
         {
             MYODBCDbgError( "%d", mysql_errno(&stmt->dbc->mysql) );
-            MYODBCDbgError( "%s", mysql_errno(&stmt->dbc->mysql) );
+            MYODBCDbgError( "%s", mysql_error(&stmt->dbc->mysql) );
             goto empty_set;
         }
 
@@ -378,9 +378,9 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
     }
 
     if ( (TableType[0] && !user_tables && !sys_tables) ||
-         TableQualifier[0] && strcmp(TableQualifier,"%") &&
-         TableOwner[0] && strcmp(TableOwner,"%") &&
-         strcmp(TableOwner,stmt->dbc->database) )
+         (TableQualifier[0] && strcmp(TableQualifier,"%") &&
+          TableOwner[0] && strcmp(TableOwner,"%") &&
+          strcmp(TableOwner,stmt->dbc->database)) )
     {
         /* 
           Return empty set if unknown TableType or if 
@@ -527,7 +527,7 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
         stmt->result->row_count= row_count;
     }
     mysql_link_fields(stmt,SQLTABLES_fields,SQLTABLES_FIELDS);
-    MYODBCDbgInfo( "total tables: %ld", stmt->result->row_count );
+    MYODBCDbgInfo( "total tables: %ld", (long)stmt->result->row_count );
     MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     empty_set:
@@ -655,7 +655,7 @@ static MYSQL_RES* mysql_list_dbcolumns(STMT FAR   *stmt,
             return 0;
         }
         to= strxmov(select,"SELECT ",NullS);
-        while ( row= mysql_fetch_row(result) )
+        while ( (row= mysql_fetch_row(result)) )
             to= strxmov(to, to, "`", row[0], "`,",NullS);
         *(to-1)= '\0';
 
@@ -855,7 +855,7 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
     }
     result->row_count= result->field_count;
     mysql_link_fields(stmt,SQLCOLUMNS_fields,SQLCOLUMNS_FIELDS);
-    MYODBCDbgInfo( "total columns: %ld", result->row_count );
+    MYODBCDbgInfo( "total columns: %ld", (long)result->row_count );
     MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     empty_set:
@@ -1033,7 +1033,7 @@ SQLRETURN SQL_API SQLStatistics(SQLHSTMT hstmt,
         mysql_data_seek(stmt->result,0);  /* Restore pointer */
     }
     mysql_link_fields(stmt,SQLSTAT_fields,SQLSTAT_FIELDS);
-    MYODBCDbgInfo( "total stats count: %ld", stmt->result->row_count );
+    MYODBCDbgInfo( "total stats count: %ld", (long)stmt->result->row_count );
     MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     empty_set:
@@ -1225,7 +1225,7 @@ SQLRETURN SQL_API SQLTablePrivileges(SQLHSTMT hstmt,
     }  
     stmt->result->row_count= row_count;
     mysql_link_fields(stmt,SQLTABLES_priv_fields,SQLTABLES_PRIV_FIELDS);
-    MYODBCDbgInfo( "total table priv count: %ld", row_count );
+    MYODBCDbgInfo( "total table priv count: %ld", (long)row_count );
     MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     empty_set:
@@ -1399,7 +1399,7 @@ SQLRETURN SQL_API SQLColumnPrivileges(SQLHSTMT hstmt,
     }
     stmt->result->row_count= row_count;  
     mysql_link_fields(stmt,SQLCOLUMNS_priv_fields,SQLCOLUMNS_PRIV_FIELDS);
-    MYODBCDbgInfo( "total columns priv count: %ld", row_count );
+    MYODBCDbgInfo( "total columns priv count: %ld", (long)row_count );
     MYODBCDbgReturnReturn( SQL_SUCCESS ); 
 
     empty_set:
@@ -1555,7 +1555,7 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
         }
         result->row_count= field_count;
         mysql_link_fields(stmt,SQLSPECIALCOLUMNS_fields,SQLSPECIALCOLUMNS_FIELDS);
-        MYODBCDbgInfo( "total columns count: %ld", field_count );
+        MYODBCDbgInfo( "total columns count: %ld", (long)field_count );
         MYODBCDbgReturnReturn( SQL_SUCCESS );
     }
 
@@ -1626,7 +1626,7 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
     }
     result->row_count= field_count;
     mysql_link_fields(stmt,SQLSPECIALCOLUMNS_fields,SQLSPECIALCOLUMNS_FIELDS);
-    MYODBCDbgInfo( "total columns count: %ld", field_count );
+    MYODBCDbgInfo( "total columns count: %ld", (long)field_count );
     MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     empty_set:
@@ -1747,7 +1747,7 @@ SQLRETURN SQL_API SQLPrimaryKeys(SQLHSTMT hstmt,
     stmt->result->row_count= row_count;
 
     mysql_link_fields(stmt,SQLPRIM_KEYS_fields,SQLPRIM_KEYS_FIELDS);
-    MYODBCDbgInfo( "total keys count: %ld", row_count );
+    MYODBCDbgInfo( "total keys count: %ld", (long)row_count );
     MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     empty_set:
@@ -2050,7 +2050,7 @@ SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT hstmt,
                     fkcomment[fk_length]= '\0';
                     pkcomment[pk_length]= '\0';
 
-                    while ( token= my_next_token(token,&fkcomment,ref_token,' ') )
+                    while ( (token= my_next_token(token,&fkcomment,ref_token,' ')) )
                     {
                         /* Multiple columns exists .. parse them to individual rows */
                         char **prev_data= data;
@@ -2072,7 +2072,7 @@ SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT hstmt,
                     data+= SQLFORE_KEYS_FIELDS;
                     row_count++;
 
-                } while ( comment_token = strchr(comment_token,';') );/* multi table ref */
+                } while ( (comment_token = strchr(comment_token,';')) );/* multi table ref */
             }
         } 
         
@@ -2089,7 +2089,7 @@ SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT hstmt,
     }  
     stmt->result->row_count= row_count;
     mysql_link_fields(stmt,SQLFORE_KEYS_fields,SQLFORE_KEYS_FIELDS);
-    MYODBCDbgInfo( "total keys count: %ld", row_count );
+    MYODBCDbgInfo( "total keys count: %ld", (long)row_count );
     MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     empty_set:

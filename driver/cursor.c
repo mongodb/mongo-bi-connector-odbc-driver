@@ -177,7 +177,7 @@ char *check_if_positioned_cursor_exists(STMT *pStmt, STMT **pStmtCursor)
         set_stmt_error(pStmt, "34000", buff, ER_INVALID_CURSOR_NAME);
       }
 
-      return pszQueryTokenPos;
+      return (char *)pszQueryTokenPos;
     }
   }
 

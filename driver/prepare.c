@@ -79,7 +79,7 @@ SQLRETURN my_SQLPrepare( SQLHSTMT hstmt, SQLCHAR FAR *szSqlStr, SQLINTEGER cbSql
     STMT FAR *stmt= (STMT FAR*) hstmt;
     char in_string,*pos;
     uint param_count;
-#ifdef	USE_MB
+#ifdef USE_MB
     char *end;
 #endif
     CHARSET_INFO *charset_info= stmt->dbc->mysql.charset;
@@ -89,7 +89,9 @@ SQLRETURN my_SQLPrepare( SQLHSTMT hstmt, SQLCHAR FAR *szSqlStr, SQLINTEGER cbSql
 
     MYODBCDbgEnter;
 
+#ifdef USE_MB
     LINT_INIT(end);
+#endif
 
     CLEAR_STMT_ERROR(stmt);
     if (stmt->query)
@@ -106,14 +108,14 @@ SQLRETURN my_SQLPrepare( SQLHSTMT hstmt, SQLCHAR FAR *szSqlStr, SQLINTEGER cbSql
     in_string= 0;
     param_count= 0;
 
-#ifdef	USE_MB
+#ifdef USE_MB
     if (use_mb(charset_info))
         end= strend(stmt->query);
 #endif
 
     for (pos= stmt->query; *pos ; pos++)
     {
-#ifdef	USE_MB
+#ifdef USE_MB
         if (use_mb(charset_info))
         {
             int l;
@@ -196,7 +198,7 @@ SQLRETURN my_SQLPrepare( SQLHSTMT hstmt, SQLCHAR FAR *szSqlStr, SQLINTEGER cbSql
     stmt->current_param= 0;
     stmt->query_end= pos;
     stmt->state= ST_PREPARED;
-    MYODBCDbgInfo( "Parameter count: %ld", stmt->param_count );
+    MYODBCDbgInfo( "Parameter count: %ld", (long)stmt->param_count );
     MYODBCDbgReturnReturn(SQL_SUCCESS);
 }
 
@@ -224,9 +226,9 @@ SQLRETURN SQL_API my_SQLBindParameter( SQLHSTMT     hstmt,
     MYODBCDbgInfo( "ipar: %d", ipar );
     MYODBCDbgInfo( "Ctype: %d", fCType );
     MYODBCDbgInfo( "SQLtype: %d", fSqlType );
-    MYODBCDbgInfo( "rgbValue: 0x%lx", rgbValue );
+    MYODBCDbgInfo( "rgbValue: 0x%lx", (ulong)rgbValue );
     MYODBCDbgInfo( "ValueMax: %ld", cbValueMax );
-    MYODBCDbgInfo( "Valueptr: 0x%lx", pcbValue );
+    MYODBCDbgInfo( "Valueptr: 0x%lx", (ulong)pcbValue );
     MYODBCDbgInfo( "Value: %ld", pcbValue ? *pcbValue : 0L );
 
     CLEAR_STMT_ERROR(stmt);

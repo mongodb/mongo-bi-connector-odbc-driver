@@ -750,7 +750,7 @@ void WriteHeaderNormal( SQLHSTMT hStmt, SQLCHAR *szSepLine )
         strcat((char*) szSepLine,(char*) szColumn );
 
         /* HDR */
-        sprintf( (char*)szColumn, "| %-*.*s", nOptimalDisplayWidth, nOptimalDisplayWidth, szColumnName );
+        sprintf( (char*)szColumn, "| %-*.*s", (int)nOptimalDisplayWidth, (int)nOptimalDisplayWidth, szColumnName );
         strcat( (char*)szHdrLine,(char*) szColumn );
     }
     strcat((char*) szSepLine, "+\n" );
@@ -790,7 +790,7 @@ SQLINTEGER WriteBodyNormal( SQLHSTMT hStmt )
 
             if ( nReturn == SQL_SUCCESS && nIndicator != SQL_NULL_DATA )
             {
-                sprintf( (char*)szColumn, "| %-*.*s", nOptimalDisplayWidth, nOptimalDisplayWidth, szColumnValue );
+              sprintf( (char*)szColumn, "| %-*.*s", (int)nOptimalDisplayWidth, (int)nOptimalDisplayWidth, szColumnValue );
             }
             else if ( nReturn == SQL_ERROR )
             {
@@ -798,7 +798,7 @@ SQLINTEGER WriteBodyNormal( SQLHSTMT hStmt )
             }
             else
             {
-                sprintf( (char*)szColumn, "| %-*s", nOptimalDisplayWidth, "" );
+              sprintf( (char*)szColumn, "| %-*s", (int)nOptimalDisplayWidth, "" );
             }
             fputs( (char*)szColumn, stdout );
         } /* for columns */
@@ -827,7 +827,7 @@ void WriteFooterNormal( SQLHSTMT hStmt, SQLCHAR *szSepLine, SQLINTEGER nRows )
 
     if ( nRows )
     {
-        printf( "%d rows fetched\n", nRows );
+        printf( "%d rows fetched\n", (int)nRows );
     }
 }
 

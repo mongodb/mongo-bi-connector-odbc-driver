@@ -381,9 +381,9 @@ static void my_print_data(SQLHSTMT hstmt, SQLUSMALLINT index,
     if (disp_size < 4 && nullable)
         disp_size = 4;
     if (length == SQL_NULL_DATA)
-        printMessage( "%-*s  |",disp_size, "NULL");
+        printMessage( "%-*s  |",(int)disp_size, "NULL");
     else
-        printMessage( "%-*s  |",disp_size,data);
+        printMessage( "%-*s  |",(int)disp_size,data);
 }
 #else
 # define my_print_data(a, b, c, d)
@@ -399,7 +399,7 @@ int my_print_non_format_result(SQLHSTMT hstmt)
     SQLUINTEGER nRowCount=0;
     SQLULEN     pcColDef;
     SQLCHAR     szColName[MAX_NAME_LEN];
-    SQLCHAR     szData[MAX_COLUMNS][MAX_ROW_DATA_LEN]={0};
+    SQLCHAR     szData[MAX_COLUMNS][MAX_ROW_DATA_LEN]={{0}};
     SQLSMALLINT nIndex,ncol,pfSqlType, pcbScale, pfNullable;
 
     rc = SQLNumResultCols(hstmt,&ncol);
@@ -436,7 +436,7 @@ int my_print_non_format_result(SQLHSTMT hstmt)
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    printMessage("Total rows fetched: %d\n",nRowCount);
+    printMessage("Total rows fetched: %d\n",(int)nRowCount);
     return(nRowCount);
 }
 
@@ -501,7 +501,7 @@ SQLUINTEGER myresult(SQLHSTMT hstmt)
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    printMessage("Total rows fetched: %d\n",nRowCount);
+    printMessage("Total rows fetched: %d\n",(int)nRowCount);
     return nRowCount;
 }
 
@@ -520,7 +520,7 @@ SQLUINTEGER myrowcount(SQLHSTMT hstmt)
         rc = SQLFetch(hstmt);
     }
     SQLFreeStmt(hstmt,SQL_UNBIND);
-    printMessage("Total rows fetched: %d\n",nRowCount);
+    printMessage("Total rows fetched: %d\n",(int)nRowCount);
     return(nRowCount);
 }
 /**

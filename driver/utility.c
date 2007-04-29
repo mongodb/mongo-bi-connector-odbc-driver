@@ -1133,7 +1133,7 @@ FILE *init_query_log(void)
 {
     FILE *query_log;
 
-    if ( query_log= fopen(DRIVER_QUERY_LOGFILE, "w") )
+    if ( (query_log= fopen(DRIVER_QUERY_LOGFILE, "w")) )
     {
         fprintf(query_log,"-- Query logging\n");
         fprintf(query_log,"--\n");

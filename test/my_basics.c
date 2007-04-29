@@ -89,7 +89,7 @@ DECLARE_TEST(t_max_select)
 
   for (num= 1; num <= 1000; num++)
   {
-    sprintf((char *)szData, "MySQL%d", num);
+    sprintf((char *)szData, "MySQL%d", (int)num);
     ok_stmt(hstmt, SQLExecute(hstmt));
   }
 

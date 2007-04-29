@@ -114,7 +114,7 @@ SQL_AUTOCOMMIT_ON",
         }
         else
         {
-            MYODBCDbgInfo( "SQL_ATTR_TXN_ISOLATION %ld ignored", dbc->txn_isolation );
+            MYODBCDbgInfo( "SQL_ATTR_TXN_ISOLATION %d ignored", dbc->txn_isolation );
         }
     }
     MYODBCDbgReturnReturn( error );
@@ -207,7 +207,6 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
 {
     char host[64],user[64],passwd[64],dsn[NAME_LEN+1],database[NAME_LEN+1];
     char port[10],flag[10],init_stmt[256],*dsn_ptr;
-    char szTRACE[FILENAME_MAX+1]= "";
     char socket[256]= "";
     ulong flag_nr,client_flag;
     uint port_nr= 0;
@@ -241,16 +240,20 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
     SQLGetPrivateProfileString(dsn_ptr,"stmt", "", init_stmt, sizeof(init_stmt), MYODBCUtilGetIniFileName( TRUE ) );
 
 #ifdef MYODBC_DBG
-    if ( flag_nr & FLAG_DEBUG && !MYODBCDbgOn )
     {
-        SQLGetPrivateProfileString(dsn_ptr, "TRACE", "", szTRACE, sizeof(szTRACE),  MYODBCUtilGetIniFileName( TRUE ) );
-        if ( strcasecmp( szTRACE, "ON" ) == 1 || strcasecmp( szTRACE, "YES" ) == 1 || strcasecmp( szTRACE, "Y" ) == 1 || *szTRACE == '1' )
+        char szTRACE[FILENAME_MAX+1]= "";
+
+        if ( flag_nr & FLAG_DEBUG && !MYODBCDbgOn )
         {
-            char  szTRACEFILE[FILENAME_MAX+1]= "";
-            SQLGetPrivateProfileString(dsn_ptr, "TRACEFILE", "", szTRACEFILE, sizeof(szTRACEFILE), MYODBCUtilGetIniFileName( TRUE ) );
-            if ( *szTRACEFILE )
-                MYODBCDbgSetFile( szTRACEFILE );
-            MYODBCDbgSetOn( 1 );
+            SQLGetPrivateProfileString(dsn_ptr, "TRACE", "", szTRACE, sizeof(szTRACE),  MYODBCUtilGetIniFileName( TRUE ) );
+            if ( strcasecmp( szTRACE, "ON" ) == 1 || strcasecmp( szTRACE, "YES" ) == 1 || strcasecmp( szTRACE, "Y" ) == 1 || *szTRACE == '1' )
+            {
+                char  szTRACEFILE[FILENAME_MAX+1]= "";
+                SQLGetPrivateProfileString(dsn_ptr, "TRACEFILE", "", szTRACEFILE, sizeof(szTRACEFILE), MYODBCUtilGetIniFileName( TRUE ) );
+                if ( *szTRACEFILE )
+                    MYODBCDbgSetFile( szTRACEFILE );
+                MYODBCDbgSetOn;
+            }
         }
     }
 #endif

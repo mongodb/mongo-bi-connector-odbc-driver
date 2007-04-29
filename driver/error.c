@@ -279,7 +279,7 @@ static SQLRETURN copy_error(MYERROR *error, myodbc_errid errid,
              (SQLCHAR *)myodbc3_errors[errid].message);
     code=   errcode ? (myodbc_errid) errcode : errid + MYODBC_ERROR_CODE_START;
 
-    MYODBCDbgError( "code : %d", code );
+    MYODBCDbgError( "code : %d", (int)code );
     MYODBCDbgError( "state: %s", myodbc3_errors[errid].sqlstate );
     MYODBCDbgError( "err  : %s", errtext );
 
@@ -469,9 +469,9 @@ SQLRETURN SQL_API SQLGetDiagField(SQLSMALLINT HandleType,
     MYODBCDbgInfo( "RecNumber      : %d", RecNumber );
     MYODBCDbgInfo( "DiagIdentifier : %s", MYODBCDbgDiagFieldString( DiagIdentifier ) );
     MYODBCDbgInfo( "DiagIdentifier : %d", DiagIdentifier );
-    MYODBCDbgInfo( "DiagInfoPtr    : 0x%x", DiagInfoPtr );
+    MYODBCDbgInfo( "DiagInfoPtr    : 0x%x", (uint)DiagInfoPtr );
     MYODBCDbgInfo( "BufferLength   : %d", BufferLength );
-    MYODBCDbgInfo( "StringLengthPtr: 0x%x", StringLengthPtr );
+    MYODBCDbgInfo( "StringLengthPtr: 0x%x", (uint)StringLengthPtr );
 
     if ( !StringLengthPtr )
         StringLengthPtr= &tmp_size;

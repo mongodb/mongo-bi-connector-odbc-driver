@@ -632,7 +632,7 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
     if ( !pStmt->query )
         MYODBCDbgReturnReturn( set_error( pStmt, MYERR_S1010, "No previous SQLPrepare done", 0 ) );
 
-    if (cursor_pos= check_if_positioned_cursor_exists(pStmt, &pStmtCursor))
+    if ( (cursor_pos= check_if_positioned_cursor_exists(pStmt, &pStmtCursor)) )
     {
       /* Save a copy of the query, because we're about to modify it. */
       pStmt->orig_query= my_strdup(pStmt->query, MYF(0));

@@ -4,6 +4,7 @@
 #define ODBCVER 0x0351
 
 #ifdef _UNIX_
+# include <ctype.h>
 # include <ltdl.h>
 # include <sql.h>
 # include <sqlext.h>
