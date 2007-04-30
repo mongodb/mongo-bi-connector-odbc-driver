@@ -21,8 +21,7 @@
 */
 
 /**
-  @file  transact.c
-  @brief Transaction processing functions.
+  Transaction processing functions.
 */
 
 #include "myodbc3.h"
@@ -89,12 +88,9 @@ static SQLRETURN my_transact(SQLHDBC hdbc, SQLSMALLINT CompletionType)
   @param[in] Handle          Handle to database connection or environment
   @param[in] CompletionType  How to complete the transactions,
                              @c SQL_COMMIT or @c SQL_ROLLBACK
-
-  @since ODBC 3.0
-  @since ISO SQL 92
 */
-SQLRETURN SQL_API
-SQLEndTran(SQLSMALLINT HandleType,
+static SQLRETURN SQL_API
+end_transaction(SQLSMALLINT HandleType,
 	   SQLHANDLE   Handle,
 	   SQLSMALLINT CompletionType)
 {
@@ -134,6 +130,31 @@ SQLEndTran(SQLSMALLINT HandleType,
   Commit or roll back the transactions associated with a particular
   database connection, or all connections in an environment.
 
+  @param[in] HandleType      Type of @a Handle, @c SQL_HANDLE_ENV or
+                             @c SQL_HANDLE_DBC
+  @param[in] Handle          Handle to database connection or environment
+  @param[in] CompletionType  How to complete the transactions,
+                             @c SQL_COMMIT or @c SQL_ROLLBACK
+
+  @since ODBC 3.0
+  @since ISO SQL 92
+*/
+SQLRETURN SQL_API
+SQLEndTran(SQLSMALLINT HandleType,
+           SQLHANDLE   Handle,
+           SQLSMALLINT CompletionType)
+{
+  MYODBCDbgEnter;
+  MYODBCDbgReturnReturn(end_transaction(HandleType,
+                                        Handle,
+                                        CompletionType));
+}
+
+
+/**
+  Commit or roll back the transactions associated with a particular
+  database connection, or all connections in an environment.
+
   @deprecated This function is deprecated, SQLEndTran() should be used instead.
 
   @param[in] henv            Handle to database environment
@@ -152,6 +173,6 @@ SQLRETURN SQL_API SQLTransact(SQLHENV henv,
   MYODBCDbgInfo("hdbc: 0x%lx", (long)hdbc );
   MYODBCDbgInfo("option: %s", MYODBCDbgTransactionTypeString(fType));
 
-  MYODBCDbgReturnReturn(SQLEndTran(hdbc ? SQL_HANDLE_DBC : SQL_HANDLE_ENV,
-                                   hdbc ? hdbc : henv, fType));
+  MYODBCDbgReturnReturn(end_transaction(hdbc ? SQL_HANDLE_DBC : SQL_HANDLE_ENV,
+                                        hdbc ? hdbc : henv, fType));
 }
