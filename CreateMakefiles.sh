@@ -1,61 +1,28 @@
 # #########################################################
 # 
 # \brief  Create Makefiles from qmake project files.
-#
 # 
 # #########################################################
 
 echo "+-----------------------"
 echo "| Recreating Makefiles..."
 echo "+-----------------------"
-qmake
 
-echo "MYODBCDbg..."
-cd MYODBCDbg/MYODBCDbgLib
-rm -f Makefile
-qmake
-cd ..
+dirs="\
+.
+MYODBCDbg/MYODBCDbgLib \
+dltest \
+util \
+setup \
+installer \
+monitor \
+dsn-editor \
+driver \
+test \
+"
 
-echo "dltest..."
-cd dltest
-rm -f Makefile
-qmake
-cd ..
-
-echo "util..."
-cd util
-rm -f Makefile
-qmake
-cd ..
-
-echo "setup..."
-cd setup
-rm -f Makefile
-qmake
-cd ..
-
-echo "installer..."
-cd installer
-rm -f Makefile
-qmake
-cd ..
-
-echo "monitor..."
-cd monitor
-rm -f Makefile
-qmake
-cd ..
-
-echo "dsn-editor..."
-cd dsn-editor
-rm -f Makefile
-qmake
-cd ..
-
-echo "driver..."
-cd driver
-rm -f Makefile
-qmake
-cd ..
-
-
+for d in $dirs
+do
+  echo "$d..."
+  (cd $d; rm -f Makefile; qmake "$@")
+done

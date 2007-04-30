@@ -82,6 +82,5 @@ SUBDIRS         = \
                 installer \
                 monitor \
 		dsn-editor \
-                driver
-
-
+                driver \
+                test

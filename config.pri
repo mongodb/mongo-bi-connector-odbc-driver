@@ -19,9 +19,13 @@
 #       warn_on
 #       debug | release
 #
+# 'release' is included by default, to switch from command
+# line to a debug build, you do
+#
+#   qmake CONFIG-=release CONFIG+=debug
+#
 # #########################################################
-CONFIG		+= thread warn_on release
-CONFIG          -= debug
+CONFIG		+= thread warn_on
 
 mac {
 #	CONFIG		-= thread	
