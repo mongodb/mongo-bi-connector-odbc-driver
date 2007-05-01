@@ -2901,16 +2901,13 @@ DECLARE_TEST(my_setpos_upd_pk_order1)
 }
 
 
-static int tmy_cursor(SQLHSTMT hstmt, SQLCHAR *setCurName,
+static int tmy_cursor(SQLHSTMT hstmt, char *setCurName,
                       SQLCHAR *getCurName, SQLSMALLINT setLen)
 {
   SQLSMALLINT getLen;
 
-  printMessage("setcursor:%s(%d)", setCurName, setLen);
-  ok_stmt(hstmt, SQLSetCursorName(hstmt, setCurName, setLen));
-
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)setCurName, setLen));
   ok_stmt(hstmt, SQLGetCursorName(hstmt, getCurName, 20, &getLen));
-  printMessage("getcursor:%s(%d)\n", getCurName, getLen);
 
   return OK;
 }
@@ -2918,16 +2915,16 @@ static int tmy_cursor(SQLHSTMT hstmt, SQLCHAR *setCurName,
 
 DECLARE_TEST(tmy_cursor1)
 {
-    SQLCHAR getCurName[20];
+  SQLCHAR getCurName[20];
 
-    nok_pass_on(tmy_cursor(hstmt,"MYSQL",getCurName,5));
-    myassert(strcmp(getCurName,"MYSQL")==0);
+  nok_pass_on(tmy_cursor(hstmt,"MYSQL", getCurName, 5));
+  is_str(getCurName, "MYSQL", 5);
 
-    nok_pass_on(tmy_cursor(hstmt,"MYSQL",getCurName,10));
-    myassert(strcmp(getCurName,"MYSQL")==0);
+  nok_pass_on(tmy_cursor(hstmt,"MYSQL", getCurName, 10));
+  is_str(getCurName, "MYSQL", 5);
 
-    nok_pass_on(tmy_cursor(hstmt,"MYSQL",getCurName,2));
-    myassert(strcmp(getCurName,"MY")==0);
+  nok_pass_on(tmy_cursor(hstmt,"MYSQL", getCurName, 2));
+  is_str(getCurName, "MY", 2);
 
   return OK;
 }
@@ -2935,47 +2932,32 @@ DECLARE_TEST(tmy_cursor1)
 
 DECLARE_TEST(tmy_cursor2)
 {
-    SQLRETURN   rc;
-    SQLCHAR     getCursor[50];
-    SQLSMALLINT getLen;
+  SQLCHAR     getCursor[50]= {0};
+  SQLSMALLINT getLen;
 
-    rc = SQLSetCursorName(hstmt,"MYODBC",6);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"MYODBC", 6));
 
-    memset(getCursor,0,50);
-    getLen = -1;
+  expect_stmt(hstmt, SQLGetCursorName(hstmt, getCursor, 0, &getLen),
+              SQL_SUCCESS_WITH_INFO);
+  is_str(getCursor, "", 1);
+  is_num(getLen, 6);
 
-    rc = SQLGetCursorName(hstmt,getCursor,0,&getLen);
-    mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
-    myassert(strcmp(getCursor,"")==0);
-    myassert(getLen == 6);
+  expect_stmt(hstmt, SQLGetCursorName(hstmt, getCursor, -1, &getLen),
+              SQL_ERROR);
 
-    memset(getCursor,0,50);
-    getLen = -1;
+  expect_stmt(hstmt, SQLGetCursorName(hstmt, getCursor, 4, &getLen),
+              SQL_SUCCESS_WITH_INFO);
+  is_str(getCursor, "MYO", 4);
+  is_num(getLen, 6);
 
-    rc = SQLGetCursorName(hstmt,getCursor,-1,&getLen);
-    mystmt_err(hstmt,rc == SQL_ERROR,rc);
+  expect_stmt(hstmt, SQLGetCursorName(hstmt, getCursor, 6, &getLen),
+              SQL_SUCCESS_WITH_INFO);
+  is_str(getCursor, "MYODB", 6);
+  is_num(getLen, 6);
 
-    memset(getCursor,0,50);
-    getLen = -1;
-
-    rc = SQLGetCursorName(hstmt,getCursor,4,&getLen);
-    mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
-    printMessage("\ntmy_cursor2:%s(%d)",getCursor,getLen);
-    myassert(strcmp(getCursor,"MYO")==0);
-    myassert(getLen == 6);
-
-    rc = SQLGetCursorName(hstmt,getCursor,6,&getLen);
-    mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
-    printMessage("\ntmy_cursor2:%s(%d)",getCursor,getLen);
-    myassert(strcmp(getCursor,"MYODB")==0);
-    myassert(getLen == 6);
-
-    rc = SQLGetCursorName(hstmt,getCursor,7,&getLen);
-    mystmt(hstmt,rc);
-    printMessage("\ntmy_cursor2:%s(%d)",getCursor,getLen);
-    myassert(strcmp(getCursor,"MYODBC")==0);
-    myassert(getLen == 6);
+  ok_stmt(hstmt, SQLGetCursorName(hstmt, getCursor, 7, &getLen));
+  is_str(getCursor, "MYODBC", 7);
+  is_num(getLen, 6);
 
   return OK;
 }
@@ -2983,35 +2965,20 @@ DECLARE_TEST(tmy_cursor2)
 
 DECLARE_TEST(tmy_cursor3)
 {
-    SQLRETURN   rc;
-    SQLCHAR     setCursor[50];
-    SQLCHAR     getCursor[50];
-    SQLSMALLINT getLen;
-    SQLHSTMT    hstmt1;
+  SQLCHAR     getCursor[50];
+  SQLSMALLINT getLen= -1;
+  SQLHSTMT    hstmt1;
 
-    memset(getCursor,0,50);
-    getLen = -1;
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    SQLFreeStmt(hstmt,SQL_CLOSE);
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"MYSQLODBC", 9));
 
-    rc = SQLGetCursorName(hstmt,getCursor,20,&getLen);
-    mystmt(hstmt,rc);
+  /* New statement should get its own (generated) cursor name. */
+  ok_con(hdbc, SQLAllocStmt(hdbc, &hstmt1));
+  ok_stmt(hstmt1, SQLGetCursorName(hstmt1, getCursor, 20, &getLen));
+  is_str(getCursor, "SQL_CUR", 7);
 
-    strcpy(setCursor,"MYSQLODBC");
-    rc = SQLSetCursorName(hstmt,setCursor,9);
-    mystmt(hstmt,rc);
-
-    memset(getCursor,0,50);
-    getLen = -1;
-
-    rc = SQLAllocStmt(hdbc,&hstmt1);
-    mycon(hdbc,rc);
-
-    rc = SQLGetCursorName(hstmt1,getCursor,20,&getLen);
-    mystmt(hstmt1,rc);
-
-    rc = SQLFreeStmt(hstmt1,SQL_DROP);
-    mystmt(hstmt1,rc);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
 
   return OK;
 }
