@@ -105,6 +105,8 @@ DECLARE_TEST(t_scroll)
   ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_PREV, 6));/* 1 */
   is_num(i, 5);
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_scroll");
 
   return OK;
