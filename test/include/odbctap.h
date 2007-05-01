@@ -31,7 +31,9 @@
 #include "mytest3.h"
 
 #include <stdarg.h>
+#ifndef WIN32
 #include <signal.h>
+#endif
 
 #undef printMessage
 void printMessage(char *fmt, ...) {
@@ -115,18 +117,26 @@ int main(int argc, char **argv) \
 #define SET_DSN_OPTION(x) \
   myoption= (x);
 
+#ifdef WIN32
+#define RUN_TESTS_SIGNAL
+#define RUN_TESTS_ALARM
+#else
+#define RUN_TESTS_SIGNAL (void)signal(SIGALRM, test_timeout);
+#define RUN_TESTS_ALARM  alarm(30);
+#endif
+
 #define RUN_TESTS \
   num_tests= sizeof(tests) / sizeof(tests[0]); \
   printf("1..%d\n", num_tests); \
 \
-  (void)signal(SIGALRM, test_timeout); \
+  RUN_TESTS_SIGNAL \
 \
   alloc_basic_handles(&henv,&hdbc,&hstmt); \
 \
   for (i= 0; i < num_tests; i++ ) \
   { \
     int rc; \
-    alarm(30); \
+    RUN_TESTS_ALARM \
     rc= tests[i].func(hdbc, hstmt, henv); \
     printf("%s %d %s %s\n", rc == OK ? "ok" : "not ok", i + 1, \
            tests[i].expect == FAIL ? "# TODO" : "-", \
