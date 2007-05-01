@@ -845,100 +845,78 @@ DECLARE_TEST(t_columns)
     { {-6,2}, {4,4}, {0,2},  {10,2},  {0,2}}
   };
 
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-    SQLExecDirect(hstmt,"DROP TABLE test_column",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_columns");
 
-    rc = SQLExecDirect(hstmt,"CREATE TABLE test_column(col0 smallint, \
-                                                       col1 char(5),\
-                                                       col2 varchar(20) not null,\
-                                                       col3 decimal(10,2),\
-                                                       col4 tinyint not null,\
-                                                       col5 integer primary key,\
-                                                       col6 tinyint not null unique auto_increment)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt,
+         "CREATE TABLE t_columns (col0 SMALLINT,"
+         "col1 CHAR(5), col2 VARCHAR(20) NOT NULL, col3 DECIMAL(10,2),"
+         "col4 TINYINT NOT NULL, col5 INTEGER PRIMARY KEY,"
+         "col6 TINYINT NOT NULL UNIQUE AUTO_INCREMENT)");
 
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_METADATA_ID,
+                                (SQLPOINTER)SQL_FALSE, SQL_IS_UINTEGER));
 
-    rc= SQLSetStmtAttr(hstmt, SQL_ATTR_METADATA_ID,
-                      (SQLPOINTER)SQL_FALSE, SQL_IS_UINTEGER);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER) SQL_CURSOR_STATIC, 0);
+  ok_con(hdbc, SQLGetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG,
+                                 DatabaseName, MAX_NAME_LEN,
+                                 &cbDatabaseName)); /* Current Catalog */
 
-    rc= SQLGetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG,(SQLCHAR *)DatabaseName,
-                          MAX_NAME_LEN, &cbDatabaseName);/* Current Catalog */
-    mycon(hdbc,rc);
+  for (i= 0; i < ColumnCount; i++)
+  {
+    sprintf((char *)ColumnName, "col%d", (int)i);
 
-    for (i=0; i< ColumnCount; i++)
-    {
-      sprintf(ColumnName,"col%d",i);
+    ok_stmt(hstmt, SQLColumns(hstmt,
+                              DatabaseName, cbDatabaseName,
+                              SQL_NULL_HANDLE, 0,
+                              (SQLCHAR *)"t_columns", SQL_NTS,
+                              ColumnName, SQL_NTS));
 
-      rc= SQLColumns(hstmt,
-                     (SQLCHAR *)DatabaseName, (SQLUSMALLINT)cbDatabaseName,
-                     SQL_NULL_HANDLE, 0,
-                     (SQLCHAR *)"test_column", SQL_NTS,
-                     (SQLCHAR *)ColumnName, SQL_NTS);
-      mystmt(hstmt,rc);
+    /* 5 -- Data type */
+    ok_stmt(hstmt, SQLBindCol(hstmt, 5, SQL_C_SSHORT, &DataType, 0,
+                              &cbDataType));
 
-      /* 5 -- Data type */
-      rc=  SQLBindCol(hstmt, 5, SQL_C_SSHORT, &DataType, 0, &cbDataType);
-      mystmt(hstmt,rc);
+    /* 7 -- Column Size */
+    ok_stmt(hstmt, SQLBindCol(hstmt, 7, SQL_C_ULONG, &ColumnSize, 0,
+                              &cbColumnSize));
 
-      /* 7 -- Column Size */
-      rc=  SQLBindCol(hstmt, 7, SQL_C_ULONG, &ColumnSize, 0, &cbColumnSize);
-      mystmt(hstmt,rc);
+    /* 9 -- Decimal Digits */
+    ok_stmt(hstmt, SQLBindCol(hstmt, 9, SQL_C_SSHORT, &DecimalDigits, 0,
+                              &cbDecimalDigits));
 
-      /* 9 -- Decimal Digits */
-      rc= SQLBindCol(hstmt, 9, SQL_C_SSHORT, &DecimalDigits, 0, &cbDecimalDigits);
-      mystmt(hstmt,rc);
+    /* 10 -- Num Prec Radix */
+    ok_stmt(hstmt, SQLBindCol(hstmt, 10, SQL_C_SSHORT, &NumPrecRadix, 0,
+                              &cbNumPrecRadix));
 
-      /* 10 -- Num Prec Radix */
-      rc= SQLBindCol(hstmt, 10, SQL_C_SSHORT, &NumPrecRadix, 0, &cbNumPrecRadix);
-      mystmt(hstmt,rc);
+    /* 11 -- Nullable */
+    ok_stmt(hstmt, SQLBindCol(hstmt, 11, SQL_C_SSHORT, &Nullable, 0,
+                              &cbNullable));
 
-      /* 11 -- Nullable */
-      rc= SQLBindCol(hstmt, 11, SQL_C_SSHORT, &Nullable, 0, &cbNullable);
-      mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLFetch(hstmt));
 
-      rc= SQLFetch(hstmt);
-      mystmt(hstmt,rc);
+    is_num(DataType,   Values[i][0][0]);
+    is_num(cbDataType, Values[i][0][1]);
 
-      fprintf(stdout,"Column %s:\n", ColumnName);
-      fprintf(stdout,"\t DataType     = %d(%d)\n", DataType, cbDataType);
-      fprintf(stdout,"\t ColumnSize   = %d(%d)\n", ColumnSize, cbColumnSize);
-      fprintf(stdout,"\t DecimalDigits= %d(%d)\n", DecimalDigits, cbDecimalDigits);
-      fprintf(stdout,"\t NumPrecRadix = %d(%d)\n", NumPrecRadix, cbNumPrecRadix);
-      fprintf(stdout,"\t Nullable     = %s(%d)\n\n",
-                      Nullable == SQL_NO_NULLS ? "NO": "YES", cbNullable);
+    is_num(ColumnSize,   Values[i][1][0]);
+    is_num(cbColumnSize, Values[i][1][1]);
 
-      myassert(DataType == Values[i][0][0]);
-      myassert(cbDataType == Values[i][0][1]);
+    is_num(DecimalDigits,   Values[i][2][0]);
+    is_num(cbDecimalDigits, Values[i][2][1]);
 
-      myassert(ColumnSize == Values[i][1][0]);
-      myassert(cbColumnSize == Values[i][1][1]);
+    is_num(NumPrecRadix,   Values[i][3][0]);
+    is_num(cbNumPrecRadix, Values[i][3][1]);
 
-      myassert(DecimalDigits == Values[i][2][0]);
-      myassert(cbDecimalDigits == Values[i][2][1]);
+    is_num(Nullable,   Values[i][4][0]);
+    is_num(cbNullable, Values[i][4][1]);
 
-      myassert(NumPrecRadix == Values[i][3][0]);
-      myassert(cbNumPrecRadix == Values[i][3][1]);
+    expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
 
-      myassert(Nullable == Values[i][4][0]);
-      myassert(cbNullable == Values[i][4][1]);
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  }
 
-      rc= SQLFetch(hstmt);
-      myassert(rc == SQL_NO_DATA);
-
-      SQLFreeStmt(hstmt,SQL_UNBIND);
-      SQLFreeStmt(hstmt,SQL_CLOSE);
-    }
-
-    SQLFreeStmt(hstmt,SQL_UNBIND);
-    SQLFreeStmt(hstmt,SQL_CLOSE);
-
-    rc = SQLExecDirect(hstmt,"DROP TABLE test_column",SQL_NTS);
-    mystmt(hstmt,rc);
-    SQLFreeStmt(hstmt,SQL_CLOSE);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_columns");
 
   return OK;
 }
