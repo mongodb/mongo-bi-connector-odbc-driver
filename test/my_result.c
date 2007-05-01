@@ -1442,7 +1442,7 @@ DECLARE_TEST(t_colattributes)
 DECLARE_TEST(t_exfetch)
 {
     SQLRETURN rc;
-    long i;
+    SQLUINTEGER i;
 
     tmysql_exec(hstmt,"drop table t_exfetch");
 
@@ -1569,7 +1569,7 @@ DECLARE_TEST(tmysql_rowstatus)
     SQLHSTMT hstmt1;
     SQLROWSETSIZE pcrow[4];
     SQLUSMALLINT rgfRowStatus[6];
-    long nData = 555;
+    SQLINTEGER nData= 555;
     SQLCHAR szData[255] = "setpos-update";
 
     rc = SQLAllocStmt(hdbc,&hstmt1);
