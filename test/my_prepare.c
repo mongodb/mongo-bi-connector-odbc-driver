@@ -995,7 +995,7 @@ DECLARE_TEST(tmysql_bindparam)
 DECLARE_TEST(t_acc_update)
 {
     SQLRETURN rc;
-    long id,id1;
+    SQLINTEGER id,id1;
     SQLLEN pcrow;
     SQLHSTMT hstmt1;
 
