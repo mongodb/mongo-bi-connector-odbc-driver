@@ -216,7 +216,19 @@ DECLARE_TEST(my_setpos_cursor)
   /* Now fetch and verify the data */
   ok_sql(hstmt, "SELECT * FROM my_demo_cursor");
 
-  is_num(myresult(hstmt), 3);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 0);
+  is_str(my_fetch_str(hstmt, name, 2), "first-row", 9);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 3);
+  is_str(my_fetch_str(hstmt, name, 2), "MySQL3", 6);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 4);
+  is_str(my_fetch_str(hstmt, name, 2), "updated", 7);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
