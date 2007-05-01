@@ -1623,80 +1623,61 @@ DECLARE_TEST(tmysql_pos_delete)
 }
 
 
-DECLARE_TEST(tmysql_pos_update)
+DECLARE_TEST(t_pos_update)
 {
-    SQLRETURN rc;
-    SQLHSTMT hstmt1;
-    SQLUINTEGER pcrow;
-    SQLUSMALLINT rgfRowStatus;
+  SQLHSTMT hstmt1;
+  SQLCHAR  szData[10];
 
-    rc = SQLAllocStmt(hdbc,&hstmt1);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_update");
+  ok_sql(hstmt, "CREATE TABLE t_pos_update (col1 INT, col2 VARCHAR(30))");
+  ok_sql(hstmt, "INSERT INTO t_pos_update VALUES (100,'venu'),(200,'MySQL')");
 
-    tmysql_exec(hstmt,"drop table tmysql_pos_delete");
-    rc = tmysql_exec(hstmt,"create table tmysql_pos_delete(col1 int , col2 varchar(30))");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = tmysql_exec(hstmt,"insert into tmysql_pos_delete values(100,'venu')");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"venu_cur", SQL_NTS));
 
-    rc = tmysql_exec(hstmt,"insert into tmysql_pos_delete values(200,'MySQL')");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM t_pos_update");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_ABSOLUTE, 2, NULL, NULL));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
 
-    rc = SQLSetCursorName(hstmt,"venu_cur",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_con(hdbc, SQLAllocStmt(hdbc, &hstmt1));
 
-    rc = tmysql_exec(hstmt,"select * from tmysql_pos_delete");
-    mystmt(hstmt,rc);
+  expect_sql(hstmt1,
+             "  UPerrDATE t_pos_update SET col1 = 999, col2 = 'update' "
+             "WHERE CURRENT OF venu_cur",
+             SQL_ERROR);
 
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,2,&pcrow,&rgfRowStatus);
-    mystmt(hstmt,rc);
+  expect_sql(hstmt1,
+             "  UPDATE t_pos_update SET col1 = 999, col2 = 'update' "
+             "WHERE CURRENT OF",
+             SQL_ERROR);
 
-    rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt1,
+         "  UPDATE t_pos_update SET col1 = 999, col2 = 'update' "
+         "WHERE CURRENT OF venu_cur");
 
-    rc = SQLExecDirect(hstmt1,"  UPerrDATE tmysql_pos_delete SET col1= 999, col2 = 'update' WHERE CURRENT OF venu_cur",SQL_NTS);
-    mystmt_r(hstmt1,rc);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+  ok_stmt(hstmt1, SQLFreeHandle(SQL_HANDLE_STMT, hstmt1));
 
-    rc = SQLExecDirect(hstmt1,"  UPerrDATE tmysql_pos_delete SET col1= 999, col2 = 'update' WHERE CURRENT OF",SQL_NTS);
-    mystmt_r(hstmt1,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLExecDirect(hstmt1,"  UPDATE tmysql_pos_delete SET col1= 999, col2 = 'update' WHERE CURRENT OF venu_cur",SQL_NTS);
-    mystmt(hstmt1,rc);
+  ok_sql(hstmt, "SELECT * FROM t_pos_update");
 
-    SQLNumResultCols(hstmt1,&rgfRowStatus);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 100);
+  is_str(my_fetch_str(hstmt, szData, 2), "venu", 4);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    rc = SQLFreeStmt(hstmt1,SQL_CLOSE);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 999);
+  is_str(my_fetch_str(hstmt, szData, 2), "update", 5);
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
-    rc = tmysql_exec(hstmt,"select * from tmysql_pos_delete");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-    {
-        SQLCHAR szData[20];
-        my_assert(999 == my_fetch_int(hstmt,1));
-        my_assert(!strcmp("update",my_fetch_str(hstmt,szData,2)));
-    }
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt1,SQL_DROP);
-    mystmt(hstmt1,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_update");
 
   return OK;
 }
@@ -3094,7 +3075,7 @@ BEGIN_TESTS
   ADD_TEST(tmysql_setpos_upd)
   ADD_TEST(tmysql_setpos_add)
   ADD_TEST(tmysql_pos_delete)
-  ADD_TEST(tmysql_pos_update)
+  ADD_TEST(t_pos_update)
   ADD_TEST(tmysql_pos_update_ex)
   ADD_TEST(tmysql_pos_update_ex1)
   ADD_TEST(tmysql_pos_update_ex2)
