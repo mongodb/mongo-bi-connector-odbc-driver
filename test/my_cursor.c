@@ -233,52 +233,42 @@ DECLARE_TEST(t_bug5853)
 {
   SQLRETURN rc;
   SQLHSTMT  hstmt_pos;
-  SQLCHAR   nData[3];
+  SQLCHAR   nData[4];
   SQLLEN    nLen= SQL_DATA_AT_EXEC;
   int       i= 0;
 
-  rc= SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt_pos);
-  mycon(hdbc, rc);
+  ok_con(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt_pos));
 
-  rc= SQLExecDirect(hstmt,"DROP TABLE IF EXISTS t_bug5853",SQL_NTS);
-  mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug5853");
 
-  rc= SQLExecDirect(hstmt,"CREATE TABLE t_bug5853 (id INT AUTO_INCREMENT PRIMARY KEY, a VARCHAR(3))",SQL_NTS);
-  mystmt(hstmt,rc);
+  ok_sql(hstmt,"CREATE TABLE t_bug5853 (id INT AUTO_INCREMENT PRIMARY KEY, a VARCHAR(3))");
 
-  rc= SQLExecDirect(hstmt,"INSERT INTO t_bug5853 (a) VALUES ('abc'),('def')",SQL_NTS);
-  mystmt(hstmt,rc);
+  ok_sql(hstmt,"INSERT INTO t_bug5853 (a) VALUES ('abc'),('def')");
 
-  rc= SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
-                     (SQLPOINTER)SQL_CURSOR_DYNAMIC,0);
-  mystmt(hstmt, rc);
+  ok_stmt(hstmt_pos,
+          SQLPrepare(hstmt_pos, (SQLCHAR *)
+                     "UPDATE t_bug5853 SET a = ? WHERE CURRENT OF bug5853",
+                     SQL_NTS));
 
-  rc= SQLPrepare(hstmt,"INSERT INTO t_bug5853 VALUES(?)",SQL_NTS);
-  mystmt(hstmt,rc);
+  ok_stmt(hstmt_pos, SQLBindParameter(hstmt_pos, 1, SQL_PARAM_INPUT,
+                                      SQL_VARCHAR, SQL_C_CHAR, 0, 0, NULL,
+                                      0, &nLen));
 
-  rc= SQLSetCursorName(hstmt, "bug5853", SQL_NTS);
-  mystmt(hstmt, rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-  rc= SQLExecDirect(hstmt,"SELECT * FROM t_bug5853",SQL_NTS);
-  mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_DYNAMIC,0));
 
-  rc= SQLPrepare(hstmt_pos,
-                 "UPDATE t_bug5853 SET a = ? WHERE CURRENT OF bug5853",
-                 SQL_NTS);
-  mystmt(hstmt_pos, rc);
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"bug5853", SQL_NTS));
 
-  rc= SQLBindParameter(hstmt_pos, 1, SQL_PARAM_INPUT, SQL_VARCHAR, SQL_C_CHAR,
-                       0, 0, NULL, 0, &nLen);
-  mystmt(hstmt_pos,rc);
+  ok_sql(hstmt, "SELECT * FROM t_bug5853");
 
   while ((rc= SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0)) != SQL_NO_DATA_FOUND)
   {
     char data[2][3] = { "uvw", "xyz" };
 
-    mystmt(hstmt,rc);
-
-    rc= SQLExecute(hstmt_pos);
-    mystmt_err(hstmt_pos, rc == SQL_NEED_DATA, rc);
+    expect_stmt(hstmt_pos, SQLExecute(hstmt_pos), SQL_NEED_DATA);
+    rc= SQL_NEED_DATA;
 
     while (rc == SQL_NEED_DATA)
     {
@@ -286,36 +276,28 @@ DECLARE_TEST(t_bug5853)
       rc= SQLParamData(hstmt_pos, &token);
       if (rc == SQL_NEED_DATA)
       {
-        SQLRETURN rc2;
-        rc2= SQLPutData(hstmt_pos, data[i++ % 2], sizeof(data[0]));
-        mystmt(hstmt_pos,rc2);
+        ok_stmt(hstmt_pos, SQLPutData(hstmt_pos, data[i++ % 2],
+                                      sizeof(data[0])));
       }
     }
-    mystmt(hstmt_pos,rc);
   }
 
-  rc= SQLFreeStmt(hstmt_pos, SQL_CLOSE);
-  mystmt(hstmt,rc);
+  ok_stmt(hstmt_pos, SQLFreeStmt(hstmt_pos, SQL_CLOSE));
 
-  rc= SQLExecDirect(hstmt,"SELECT * FROM t_bug5853",SQL_NTS);
-  mystmt(hstmt,rc);
+  ok_sql(hstmt,"SELECT * FROM t_bug5853");
 
-  rc= SQLBindCol(hstmt, 2, SQL_C_CHAR, nData, 3, &nLen);
-  mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, nData, sizeof(nData), &nLen));
 
-  rc= SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0);
-  mystmt(hstmt,rc);
-  my_assert(strncmp((char *)nData, "uvw", 3));
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0));
+  is_str(nData, "uvw", 3);
 
-  rc= SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0);
-  mystmt(hstmt,rc);
-  my_assert(strncmp((char *)nData, "xyz", 3));
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0));
+  is_str(nData, "xyz", 3);
 
-  rc= SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0);
-  mystmt_err(hstmt, rc == SQL_NO_DATA_FOUND, rc);
+  expect_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0),
+              SQL_NO_DATA_FOUND);
 
-  rc= SQLExecDirect(hstmt,"DROP TABLE IF EXISTS t_bug5853",SQL_NTS);
-  mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug5853");
 
   return OK;
 }
