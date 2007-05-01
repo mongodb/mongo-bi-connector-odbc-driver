@@ -1338,119 +1338,102 @@ DECLARE_TEST(t_desccol1)
 }
 
 
-void colattr(SQLHSTMT hstmt, SQLUSMALLINT cno,
-             SQLUSMALLINT attribute, SQLCHAR *sptr,
-             SQLSMALLINT slen, SQLINTEGER nptr)
+static int colattr(SQLHSTMT hstmt, SQLUSMALLINT cno, SQLUSMALLINT attribute,
+                   SQLCHAR *sptr, SQLSMALLINT slen, SQLINTEGER nptr)
 {
-    SQLRETURN   rc =0;
-    SQLCHAR     lsptr[40];
-    SQLLEN      lnptr;
-    SQLSMALLINT lslen;
+  SQLCHAR     lsptr[40];
+  SQLSMALLINT lslen;
+  SQLLEN      lnptr;
 
-    SQLFreeStmt(hstmt,SQL_CLOSE);
-    rc = SQLExecDirect(hstmt,"select * from t_colattr",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
+  ok_sql(hstmt, "SELECT * FROM t_colattr");
 
-    printMessage("col %d, attribute %d\t: ",cno, attribute);
-    rc= SQLColAttributes(hstmt,cno,attribute,lsptr,sizeof(lsptr),&lslen,&lnptr);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLColAttributes(hstmt, cno, attribute, lsptr, sizeof(lsptr),
+                                  &lslen, &lnptr));
+  if (sptr)
+  {
+    is_num(lslen, slen);
+    is_str(lsptr, sptr, lslen);
+  }
+  else
+  {
+    is_num(lnptr, nptr);
+  }
 
-    if (sptr)
-    {
-        printMessage("%s(%ld)\n",lsptr,lslen);
-        myassert(!strcmp(lsptr,sptr)==0);
-        myassert(lslen == slen);
-    }
-    else
-    {
-        printMessage("%ld(%d) == %ld?\n",lnptr,lslen,nptr);
-        myassert(lnptr == nptr);
-    }
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    SQLFreeStmt(hstmt,SQL_CLOSE);
+  return OK;
 }
+
 
 DECLARE_TEST(t_colattributes)
 {
-    SQLRETURN rc;
-    SQLCHAR     *sql;
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_colattr");
 
-    tmysql_exec(hstmt,"drop table t_colattr");
+  ok_sql(hstmt,
+         "CREATE TABLE t_colattr ("
+         "t1 TINYINT NOT NULL AUTO_INCREMENT PRIMARY KEY,"
+         "t2 TINYINT(10),"
+         "t3 TINYINT UNSIGNED,"
+         "s1 SMALLINT,"
+         "s2 SMALLINT(10),"
+         "s3 SMALLINT UNSIGNED,"
+         "m1 MEDIUMINT,"
+         "m2 MEDIUMINT(10),"
+         "m3 MEDIUMINT UNSIGNED,"
+         "i1 INT,"
+         "i2 INT(10) NOT NULL,"
+         "i3 INT UNSIGNED,"
+         "i4 INT ZEROFILL,"
+         "b1 BIGINT,"
+         "b2 BIGINT(10),"
+         "b3 BIGINT UNSIGNED,"
+         "f1 FLOAT,"
+         "f2 FLOAT(10),"
+         "f3 FLOAT(24) ZEROFILL,"
+         "f4 FLOAT(10,4),"
+         "d1 DOUBLE,"
+         "d2 DOUBLE(30,3),"
+         "d3 DOUBLE PRECISION,"
+         "d4 DOUBLE PRECISION(30,3),"
+         "r1 REAL,"
+         "r2 REAL(30,3),"
+         "dc1 DECIMAL,"
+         "dc2 DECIMAL(10),"
+         "dc3 DECIMAL(10,3),"
+         "n1 NUMERIC,"
+         "n2 NUMERIC(10,3),"
+         "dt DATE,"
+         "dtime DATETIME,"
+         "ts1 TIMESTAMP(8),"
+         "ts2 TIMESTAMP(14),"
+         "ti  TIME,"
+         "yr1 YEAR,"
+         "yr2 YEAR(2),"
+         "yr3 YEAR(4),"
+         "c1 CHAR(10),"
+         "c2 CHAR(10) BINARY,"
+         "c3 NATIONAL CHAR(10),"
+         "v1 VARCHAR(10),"
+         "v2 VARCHAR(10) BINARY,"
+         "v3 NATIONAL VARCHAR(10),"
+         "bl1 TINYBLOB,"
+         "bl2 BLOB,"
+         "bl3 MEDIUMBLOB,"
+         "bl4 LONGBLOB,"
+         "txt1 TINYTEXT,"
+         "txt2 TEXT,"
+         "txt3 MEDIUMTEXT,"
+         "txt4 LONGTEXT,"
+         "en ENUM('v1','v2'),"
+         "st SET('1','2','3'))");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  if (colattr(hstmt, 1, SQL_COLUMN_COUNT, NULL, 0, 55) != OK)
+    return FAIL;
+  if (colattr(hstmt, 1, SQL_COLUMN_AUTO_INCREMENT, NULL, 0, SQL_TRUE) != OK)
+    return FAIL;
 
-    sql= "create table t_colattr\
-      ( t1 tinyint not null auto_increment primary key,\
-        t2 tinyint(10),\
-        t3 tinyint unsigned,\
-        s1 smallint,\
-        s2 smallint(10),\
-        s3 smallint unsigned,\
-        m1 mediumint,\
-        m2 mediumint(10),\
-        m3 mediumint unsigned,\
-        i1 int,\
-        i2 int(10) not null,\
-        i3 int unsigned,\
-        i4 int zerofill,\
-        b1 bigint,\
-        b2 bigint(10),\
-        b3 bigint unsigned,\
-        f1 float,\
-        f2 float(10),\
-        f3 float(24) zerofill,\
-        f4 float(10,4),\
-        d1 double,\
-        d2 double(30,3),\
-        d3 double precision,\
-        d4 double precision(30,3),\
-        r1 real,\
-        r2 real(30,3),\
-        dc1 decimal,\
-        dc2 decimal(10),\
-        dc3 decimal(10,3),\
-        n1 numeric,\
-        n2 numeric(10,3),\
-        dt date,\
-        dtime datetime,\
-        ts1 timestamp(8),\
-        ts2 timestamp(14),\
-        ti  time,\
-        yr1 year,\
-        yr2 year(2),\
-        yr3 year(4),\
-        c1 char(10),\
-        c2 char(10) binary,\
-        c3 national char(10),\
-        v1 varchar(10),\
-        v2 varchar(10) binary,\
-        v3 national varchar(10),\
-        bl1 tinyblob,\
-        bl2 blob,\
-        bl3 mediumblob,\
-        bl4 longblob,\
-        txt1 tinytext,\
-        txt2 text,\
-        txt3 mediumtext,\
-        txt4 longtext,\
-        en enum('v1','v2'),\
-        st set('1','2','3'))";
-
-    rc = tmysql_exec(hstmt,sql);
-    mystmt(hstmt,rc);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    colattr(hstmt,1,SQL_COLUMN_COUNT,NULL,0,55);
-    colattr(hstmt,1,SQL_COLUMN_AUTO_INCREMENT,NULL,0,SQL_TRUE);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_colattr");
 
   return OK;
 }
