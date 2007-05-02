@@ -160,9 +160,15 @@ DECLARE_TEST(t_diagrec)
 
   expect_sql(hstmt, "DROP TABLE t_odbc3_non_existent_table", SQL_ERROR);
 
+#if UNIXODBC_BUG_FIXED
+  /*
+   This should report no data found, but unixODBC doesn't even pass this
+   down to the driver.
+  */
   expect_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 2, sqlstate,
                                    &native_err, message, 0, &msglen),
               SQL_NO_DATA_FOUND);
+#endif
 
   ok_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate,
                                &native_err, message, 255, &msglen));
