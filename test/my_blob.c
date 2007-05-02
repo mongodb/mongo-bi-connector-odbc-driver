@@ -707,6 +707,8 @@ DECLARE_TEST(getdata_lenonly)
               SQL_SUCCESS_WITH_INFO);
   is_num(len, 4);
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_getdata_lenonly");
 
   return OK;
