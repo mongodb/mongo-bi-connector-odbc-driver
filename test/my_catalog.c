@@ -695,6 +695,8 @@ DECLARE_TEST(t_sqlprocedures)
          " SELECT COUNT(*) INTO a FROM t_sqlproc;"
          "END;");
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
   /* Try without specifying a catalog. */
   ok_stmt(hstmt, SQLProcedures(hstmt, NULL, 0, NULL, 0, "t_sqlproc%", SQL_NTS));
 
@@ -852,6 +854,8 @@ DECLARE_TEST(t_columns)
          "col1 CHAR(5), col2 VARCHAR(20) NOT NULL, col3 DECIMAL(10,2),"
          "col4 TINYINT NOT NULL, col5 INTEGER PRIMARY KEY,"
          "col6 TINYINT NOT NULL UNIQUE AUTO_INCREMENT)");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_METADATA_ID,
                                 (SQLPOINTER)SQL_FALSE, SQL_IS_UINTEGER));
