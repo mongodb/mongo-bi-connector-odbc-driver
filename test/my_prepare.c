@@ -252,113 +252,63 @@ DECLARE_TEST(t_prep_truncate)
 /* For scrolling */
 DECLARE_TEST(t_prep_scroll)
 {
-    SQLINTEGER i, data, max_rows= 5;
+  SQLINTEGER i, data, max_rows= 5;
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_scroll");
+  ok_sql(hstmt, "CREATE TABLE t_prep_scroll (a TINYINT)");
+  ok_sql(hstmt, "INSERT INTO t_prep_scroll VALUES (1),(2),(3),(4),(5)");
 
-    SQLExecDirect(hstmt,"drop table t_prep_scroll",SQL_NTS);
+  ok_sql(hstmt, "SELECT * FROM t_prep_scroll");
 
-    rc = SQLExecDirect(hstmt,"create table t_prep_scroll(a tinyint)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &data, 0, NULL));
 
-    rc = SQLPrepare(hstmt,"insert into t_prep_scroll values(?)",SQL_NTS);
-    mystmt(hstmt,rc);
+  for (i= 1; ; i++)
+  {
+    SQLRETURN rc= SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0);
+    if (rc == SQL_NO_DATA)
+        break;
 
-    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_LONG,SQL_TINYINT,
-                          0,0,&i,0,NULL);
-    mystmt(hstmt,rc);
+    is_num(i, data);
+  }
 
-    for (i= 1; i <= max_rows; i++)
-    {
-        rc = SQLExecute(hstmt);
-        mystmt(hstmt,rc);
-    }
+  is_num(i, max_rows + 1);
 
-    SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-    SQLFreeStmt(hstmt,SQL_CLOSE);
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 3));
+  is_num(data, 3);
 
-    rc = SQLExecDirect(hstmt,"select * from t_prep_scroll",SQL_NTS);
-    mystmt(hstmt,rc);  
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_PREV, 3));
+  is_num(data, 2);
 
-    rc = SQLBindCol(hstmt, 1, SQL_C_LONG, &data, 0, NULL);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_FIRST, 3));
+  is_num(data, 1);
 
-    for (i=1; ;i++)
-    {
-        rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);
-        if (rc == SQL_NO_DATA)
-            break;
-        mystmt(hstmt,rc);
+  expect_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_PREV, 3), SQL_NO_DATA);
 
-        printMessage("row %ld    : %ld\n", i, data);
-        myassert(data == i);
-    }
-    printMessage("total rows fetched: %ld\n\n", i-1);
-    myassert( i == max_rows+1);
+  expect_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_RELATIVE, -2),
+              SQL_NO_DATA);
 
-    printMessage("scrolling:\n");
-    rc = SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 3);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt,  SQLFetchScroll(hstmt, SQL_FETCH_RELATIVE, 2));
+  is_num(data, 2);
 
-    printMessage("absolute 3 : %ld\n", data);
-    myassert(data == 3);
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_LAST, 3));
+  is_num(data, 5);
 
-    rc = SQLFetchScroll(hstmt, SQL_FETCH_PREV, 3);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_RELATIVE, -2));
+  is_num(data, 3);
 
-    printMessage("previous   : %ld\n", data);
-    myassert(data == 2);
+  expect_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_RELATIVE, 3),
+              SQL_NO_DATA);
 
-    rc = SQLFetchScroll(hstmt, SQL_FETCH_FIRST, 3);
-    mystmt(hstmt,rc);
+  expect_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 3),
+              SQL_NO_DATA);
 
-    printMessage("first      : %ld\n", data);
-    myassert(data == 1);
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_RELATIVE, -2));
+  is_num(data, 4);
 
-    rc = SQLFetchScroll(hstmt, SQL_FETCH_PREV, 3);
-    printMessage("previous   : %s", (rc == SQL_NO_DATA) ? "SQL_NO_DATA" : "SQL_ERROR;\n");
-    myassert(rc == SQL_NO_DATA);  
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLFetchScroll(hstmt, SQL_FETCH_RELATIVE, -2);
-    printMessage("relative -2: %s", (rc == SQL_NO_DATA) ? "SQL_NO_DATA" : "SQL_ERROR;\n");
-    myassert(rc == SQL_NO_DATA);  
-
-    rc = SQLFetchScroll(hstmt, SQL_FETCH_RELATIVE, 2);
-    mystmt(hstmt,rc);
-
-    printMessage("relative 2 : %ld\n", data);
-    myassert(data == 2);
-
-    rc = SQLFetchScroll(hstmt, SQL_FETCH_LAST, 3);
-    mystmt(hstmt,rc);
-
-    printMessage("last       : %ld\n", data);
-    myassert(data == 5);
-
-    rc = SQLFetchScroll(hstmt, SQL_FETCH_RELATIVE, -2);
-    mystmt(hstmt,rc);
-
-    printMessage("relative -2: %ld\n", data);
-    myassert(data == 3);
-
-    rc = SQLFetchScroll(hstmt, SQL_FETCH_RELATIVE, 3);
-    printMessage("relative -2: %s", (rc == SQL_NO_DATA) ? "SQL_NO_DATA" : "SQL_ERROR;\n");
-    myassert(rc == SQL_NO_DATA);
-
-    rc = SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 3);
-    printMessage("next       : %s", (rc == SQL_NO_DATA) ? "SQL_NO_DATA" : "SQL_ERROR;\n");
-    myassert(rc == SQL_NO_DATA);    
-
-    rc = SQLFetchScroll(hstmt, SQL_FETCH_RELATIVE, -2);
-    mystmt(hstmt,rc);
-
-    printMessage("relative -2: %ld\n", data);
-    myassert(data == 4);
-
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_scroll");
 
   return OK;
 }
