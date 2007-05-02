@@ -264,7 +264,7 @@ DECLARE_TEST(t_bug5853)
 
   ok_stmt(hstmt_pos, SQLBindParameter(hstmt_pos, 1, SQL_PARAM_INPUT,
                                       SQL_VARCHAR, SQL_C_CHAR, 0, 0, NULL,
-                                      SQL_DATA_AT_EXEC, &nLen));
+                                      0, &nLen));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
