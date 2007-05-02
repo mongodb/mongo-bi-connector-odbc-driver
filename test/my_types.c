@@ -25,7 +25,7 @@
 
 DECLARE_TEST(t_longlong1)
 {
-  unsigned long long session_id, ctn;
+  SQLBIGINT session_id, ctn;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_longlong");
   ok_sql(hstmt, "CREATE TABLE t_longlong (a BIGINT, b BIGINT)");
