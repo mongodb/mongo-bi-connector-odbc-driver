@@ -401,60 +401,34 @@ DECLARE_TEST(t_setpos_del_all)
 
 DECLARE_TEST(t_setpos_upd_decimal)
 {
-  SQLRETURN  rc;
-  SQLINTEGER rec;
-  SQLUSMALLINT rgfRowStatus;
+  SQLINTEGER   rec;
+  SQLUSMALLINT status;
 
-    tmysql_exec(hstmt,"drop table t_setpos_upd_decimal");
-    rc = tmysql_exec(hstmt,"create table t_setpos_upd_decimal(record decimal(3,0),\
-                                num1 float, num2 decimal(6,0),num3 decimal(10,3))");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_setpos_upd_decimal");
+  ok_sql(hstmt,
+         "CREATE TABLE t_setpos_upd_decimal (record DECIMAL(3,0),"
+         "num1 FLOAT, num2 DECIMAL(6,0), num3 DECIMAL(10,3))");
+  ok_sql(hstmt, "INSERT INTO t_setpos_upd_decimal VALUES (1,12.3,134,0.100)");
 
-    rc = tmysql_exec(hstmt,"insert into t_setpos_upd_decimal values(001,12.3,134,0.100)");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "SELECT record FROM t_setpos_upd_decimal");
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &rec, 0, NULL));
 
-    /* MS SQL Server to work...*/
-    SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY, (SQLPOINTER) SQL_CONCUR_ROWVER, 0);
-    SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER) SQL_CURSOR_DYNAMIC, 0);
-    SQLSetStmtOption(hstmt,SQL_SIMULATE_CURSOR,SQL_SC_NON_UNIQUE);
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, NULL, &status));
 
-    rc = tmysql_exec(hstmt,"select record from t_setpos_upd_decimal");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&rec,100,NULL);
-    mystmt(hstmt,rc);
+  rec= 100;
 
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,NULL,&rgfRowStatus);
-    mystmt(hstmt,rc);
-    fprintf(stdout," row1: %d",rec);
+  expect_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE),
+              SQL_ERROR);
 
-    rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rec = 100;
-
-    rc = SQLSetPos(hstmt,1,SQL_UPDATE,SQL_LOCK_NO_CHANGE);
-    mystmt_r(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = tmysql_exec(hstmt,"select * from t_setpos_upd_decimal");
-    mystmt(hstmt,rc);
-
-    myresult(hstmt);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_setpos_upd_decimal");
 
   return OK;
 }
