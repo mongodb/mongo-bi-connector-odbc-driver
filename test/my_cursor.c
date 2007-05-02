@@ -2834,6 +2834,11 @@ DECLARE_TEST(tmy_cursor2)
 
 DECLARE_TEST(tmy_cursor3)
 {
+#if IODBC_BUG_FIXED
+  /*
+    iODBC has a bug that forces the ODBCv2 behavior of throwing an error
+    when SQLSetCursorName() has not bee called and there is no open cursor.
+  */
   SQLCHAR     getCursor[50];
   SQLSMALLINT getLen= -1;
   SQLHSTMT    hstmt1;
@@ -2848,6 +2853,7 @@ DECLARE_TEST(tmy_cursor3)
   is_str(getCursor, "SQL_CUR", 7);
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+#endif
 
   return OK;
 }
