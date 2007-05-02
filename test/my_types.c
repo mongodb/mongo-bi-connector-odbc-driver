@@ -30,6 +30,8 @@ DECLARE_TEST(t_longlong1)
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_longlong");
   ok_sql(hstmt, "CREATE TABLE t_longlong (a BIGINT, b BIGINT)");
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
   ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY,
                                 (SQLPOINTER)SQL_CONCUR_ROWVER, 0));
   ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY,
