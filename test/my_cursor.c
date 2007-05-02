@@ -1583,79 +1583,57 @@ DECLARE_TEST(t_pos_update)
 
 DECLARE_TEST(tmysql_pos_update_ex)
 {
-    SQLRETURN rc;
-    SQLHSTMT hstmt1;
-    SQLUINTEGER pcrow;
-    SQLUSMALLINT rgfRowStatus;
-    SQLCHAR cursor[30],sql[100],data[]="updated";
+  SQLHSTMT hstmt1;
+  SQLUINTEGER pcrow;
+  SQLUSMALLINT rgfRowStatus;
+  SQLCHAR cursor[30], sql[255], data[]= "tmysql_pos_update_ex";
 
-    rc = SQLAllocStmt(hdbc,&hstmt1);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_updex");
+  ok_sql(hstmt, "CREATE TABLE t_pos_updex (a INT PRIMARY KEY, b VARCHAR(30))");
+  ok_sql(hstmt, "INSERT INTO t_pos_updex VALUES (100,'venu'),(200,'MySQL')");
 
-    tmysql_exec(hstmt,"drop table t_pos_updex");
-    rc = tmysql_exec(hstmt,"create table t_pos_updex(col1 int NOT NULL primary key, col2 varchar(30))");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = tmysql_exec(hstmt,"insert into t_pos_updex values(100,'venu')");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM t_pos_updex");
 
-    rc = tmysql_exec(hstmt,"insert into t_pos_updex values(200,'MySQL')");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_ABSOLUTE, 2,
+                                  &pcrow, &rgfRowStatus));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLGetCursorName(hstmt, cursor, sizeof(cursor), NULL));
 
-    rc = tmysql_exec(hstmt,"select * from t_pos_updex");
-    mystmt(hstmt,rc);
+  ok_con(hdbc, SQLAllocStmt(hdbc, &hstmt1));
 
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,2,&pcrow,&rgfRowStatus);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                   SQL_CHAR, 0, 0, data, sizeof(data), NULL));
 
-    rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
+  sprintf((char *)sql,
+          "UPDATE t_pos_updex SET a = 999, b = ? WHERE CURRENT OF %s",
+          cursor);
 
-    rc = SQLBindParameter(hstmt1,1,SQL_PARAM_INPUT,SQL_C_CHAR,SQL_CHAR,0,0,data,20,NULL);
-    mystmt(hstmt1,rc);
+  ok_stmt(hstmt1, SQLExecDirect(hstmt1, sql, SQL_NTS));
 
-    rc = SQLGetCursorName(hstmt,cursor,30,NULL);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt1, SQLRowCount(hstmt1, &pcrow));
+  is_num(pcrow, 1);
 
-    sprintf(sql,"UPDATE t_pos_updex SET col1= 999, col2 = ? WHERE CURRENT OF %s",cursor);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
 
-    rc = SQLExecDirect(hstmt1,sql,SQL_NTS);
-    mystmt(hstmt1,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    SQLNumResultCols(hstmt1,&rgfRowStatus);
+  ok_sql(hstmt, "SELECT * FROM t_pos_updex");
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    rc = SQLFreeStmt(hstmt1,SQL_CLOSE);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 100);
+  is_str(my_fetch_str(hstmt, sql, 2), "venu", 4);
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 999);
+  is_str(my_fetch_str(hstmt, sql, 2), "tmysql_pos_update_ex", 20);
 
-    rc = tmysql_exec(hstmt,"select * from t_pos_updex");
-    mystmt(hstmt,rc);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-    {
-        SQLCHAR szData[20];
-        my_assert(999 == my_fetch_int(hstmt,1));
-        my_assert(!strcmp("updated",my_fetch_str(hstmt,szData,2)));
-    }
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    SQLFreeStmt(hstmt1,SQL_RESET_PARAMS);
-    rc = SQLFreeStmt(hstmt1,SQL_DROP);
-    mystmt(hstmt1,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_updex");
 
   return OK;
 }

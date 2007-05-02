@@ -155,13 +155,13 @@ int main(int argc, char **argv) \
   Execute an SQL statement and bail out if the execution does not return
   SQL_SUCCESS or SQL_SUCCESS_WITH_INFO.
 
-  @param hstmt Handle for statement object
-  @param query The query to execute
+  @param statement Handle for statement object
+  @param query     The query to execute
 */
-#define ok_sql(hstmt, query) \
+#define ok_sql(statement, query) \
 do { \
-  SQLRETURN rc= SQLExecDirect(hstmt, (SQLCHAR *)query, SQL_NTS); \
-  print_diag(rc, SQL_HANDLE_STMT, hstmt, \
+  SQLRETURN rc= SQLExecDirect((statement), (SQLCHAR *)(query), SQL_NTS); \
+  print_diag(rc, SQL_HANDLE_STMT, (statement), \
              "SQLExecDirect(hstmt, \"" query "\", SQL_NTS)",\
              __FILE__, __LINE__); \
   if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) \
@@ -173,17 +173,17 @@ do { \
   Verify that the result of an SQL statement call matches an expected
   result, such as SQL_ERROR.
 
-  @param hstmt  Handle for statement object
-  @param query  The query to execute
-  @param expect The expected result
+  @param statement Handle for statement object
+  @param query     The query to execute
+  @param expect    The expected result
 */
-#define expect_sql(hstmt, query, expect) \
+#define expect_sql(statement, query, expect) \
 do { \
-  SQLRETURN rc= SQLExecDirect(hstmt, (SQLCHAR *)query, SQL_NTS); \
-  if (rc != expect) \
+  SQLRETURN rc= SQLExecDirect((statement), (SQLCHAR *)(query), SQL_NTS); \
+  if (rc != (expect)) \
   { \
-    print_diag(rc, SQL_HANDLE_STMT, hstmt, \
-               "SQLExecDirect(hstmt, \"" query "\", SQL_NTS)",\
+    print_diag(rc, SQL_HANDLE_STMT, (statement), \
+               "SQLExecDirect(" #statement ", \"" query "\", SQL_NTS)",\
                __FILE__, __LINE__); \
     printf("# Expected %d, but got %d in %s on line %d\n", expect, rc, \
            __FILE__, __LINE__); \
@@ -196,13 +196,13 @@ do { \
   Verify that the results of an ODBC function call on a statement handle was
   SQL_SUCCESS or SQL_SUCCESS_WITH_INFO.
 
-  @param hstmt Handle for statement object
-  @param call  The function call
+  @param statement Handle for statement object
+  @param call      The function call
 */
-#define ok_stmt(hstmt, call) \
+#define ok_stmt(statement, call) \
 do { \
-  SQLRETURN rc= call; \
-  print_diag(rc, SQL_HANDLE_STMT, hstmt, #call, __FILE__, __LINE__); \
+  SQLRETURN rc= (call); \
+  print_diag(rc, SQL_HANDLE_STMT, (statement), #call, __FILE__, __LINE__); \
   if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) \
     return FAIL; \
 } while (0)
@@ -216,7 +216,7 @@ do { \
 */
 #define nok_pass_on(call) \
 do { \
-  int rc= call; \
+  int rc= (call); \
   if (rc != OK) \
     return rc; \
 } while (0)
@@ -226,17 +226,17 @@ do { \
   Verify that the result of an ODBC function call matches an expected
   result, such as SQL_NO_DATA_FOUND.
 
-  @param hstmt  Handle for statement object
-  @param call   The function call
-  @param expect The expected result
+  @param statement Handle for statement object
+  @param call      The function call
+  @param expect    The expected result
 */
-#define expect_stmt(hstmt, call, expect) \
+#define expect_stmt(statement, call, expect) \
 do { \
-  SQLRETURN rc= call; \
-  if (rc != expect) \
+  SQLRETURN rc= (call); \
+  if (rc != (expect)) \
   { \
-    print_diag(rc, SQL_HANDLE_STMT, hstmt, #call, __FILE__, __LINE__); \
-    printf("# Expected %d, but got %d in %s on line %d\n", expect, rc, \
+    print_diag(rc, SQL_HANDLE_STMT, (statement), #call, __FILE__, __LINE__); \
+    printf("# Expected %d, but got %d in %s on line %d\n", (expect), rc, \
            __FILE__, __LINE__); \
     return FAIL; \
   } \
@@ -247,13 +247,13 @@ do { \
   Verify that the results of an ODBC function call on an environment handle
   was SQL_SUCCESS or SQL_SUCCESS_WITH_INFO.
 
-  @param henv  Handle for environment
-  @param call  The function call
+  @param environ Handle for environment
+  @param call    The function call
 */
-#define ok_env(henv, call) \
+#define ok_env(environ, call) \
 do { \
-  SQLRETURN rc= call; \
-  print_diag(rc, SQL_HANDLE_ENV, henv, #call, __FILE__, __LINE__); \
+  SQLRETURN rc= (call); \
+  print_diag(rc, SQL_HANDLE_ENV, (environ), #call, __FILE__, __LINE__); \
   if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) \
     return FAIL; \
 } while (0)
@@ -263,13 +263,13 @@ do { \
   Verify that the results of an ODBC function call on a connection handle
   was SQL_SUCCESS or SQL_SUCCESS_WITH_INFO.
 
-  @param hdbc  Handle for database connection
+  @param con   Handle for database connection
   @param call  The function call
 */
-#define ok_con(hdbc, call) \
+#define ok_con(con, call) \
 do { \
-  SQLRETURN rc= call; \
-  print_diag(rc, SQL_HANDLE_DBC, hdbc, #call, __FILE__, __LINE__); \
+  SQLRETURN rc= (call); \
+  print_diag(rc, SQL_HANDLE_DBC, (con), #call, __FILE__, __LINE__); \
   if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) \
     return FAIL; \
 } while (0)
@@ -327,7 +327,7 @@ void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
 
     /** @todo Handle multiple diagnostic records. */
     drc= SQLGetDiagRec(htype, handle, 1, sqlstate, &native_error,
-                                 message, SQL_MAX_MESSAGE_LENGTH - 1, &length);
+                       message, SQL_MAX_MESSAGE_LENGTH - 1, &length);
 
     if (SQL_SUCCEEDED(drc))
       printf("# [%6s] %*s in %s on line %d\n",
