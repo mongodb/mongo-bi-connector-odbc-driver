@@ -1041,82 +1041,53 @@ DECLARE_TEST(t_getcursor1)
 
 DECLARE_TEST(t_acc_crash)
 {
-  SQLRETURN   rc;
   SQLINTEGER  id;
   SQLCHAR     name[20], data[30];
   SQL_TIMESTAMP_STRUCT ts;
 
-    tmysql_exec(hstmt,"drop table if exists t_acc_crash");
-    rc = tmysql_exec(hstmt,"create table t_acc_crash(id int(11) not null auto_increment,\
-                                                     name char(20),\
-                                                     ts date,\
-                                                     primary key(id))");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_acc_crash");
+  ok_sql(hstmt,
+         "CREATE TABLE t_acc_crash (a INT NOT NULL AUTO_INCREMENT,"
+         "b CHAR(20), c DATE, PRIMARY KEY (a))");
+  ok_sql(hstmt,
+         "INSERT INTO t_acc_crash (b) VALUES ('venu'),('monty'),('mysql')");
 
-    rc = tmysql_exec(hstmt,"insert into t_acc_crash(id,name) values(1,'venu')");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = tmysql_exec(hstmt,"insert into t_acc_crash(name) values('monty')");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 1));
 
-    rc = tmysql_exec(hstmt,"insert into t_acc_crash(name) values('mysql')");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM t_acc_crash ORDER BY a ASC");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &id, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, name, sizeof(name), NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 3, SQL_C_DATE, &ts, 0, NULL));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_FIRST, 1));
 
-    rc = SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 1);
-    mystmt(hstmt,rc);
+  id= 9;
+  strcpy((char *)name, "updated");
+  ts.year= 2010;
+  ts.month= 9;
+  ts.day= 25;
 
-    rc = tmysql_exec(hstmt,"select * from t_acc_crash order by id asc");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&id,0,NULL);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,name,20,NULL);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM t_acc_crash ORDER BY a DESC");
 
-    rc = SQLBindCol(hstmt,3,SQL_C_DATE,&ts,30,NULL);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetch(hstmt));
 
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_FIRST,1);
-    mystmt(hstmt,rc);
+  is_num(my_fetch_int(hstmt, 1), 9);
+  is_str(my_fetch_str(hstmt, data, 2), "updated", 7);
+  is_str(my_fetch_str(hstmt, data, 3), "2010-09-25", 10);
 
-    id = 9;
-    strcpy(name,"updated");
-    ts.year=2010;ts.month=9;ts.day=25;
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
-
-    rc = SQLSetPos(hstmt,1,SQL_UPDATE,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
-
-    SQLFreeStmt(hstmt,SQL_UNBIND);
-    SQLFreeStmt(hstmt,SQL_CLOSE);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = tmysql_exec(hstmt,"select * from t_acc_crash order by id desc");
-    mystmt(hstmt,rc);
-
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-
-    my_assert(9 == my_fetch_int(hstmt,1));
-    my_assert(!strcmp("updated", my_fetch_str(hstmt,data,2)));
-    my_assert(!strcmp("2010-09-25", my_fetch_str(hstmt,data,3)));
-
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_acc_crash");
 
   return OK;
 }
