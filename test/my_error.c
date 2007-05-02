@@ -150,39 +150,34 @@ DECLARE_TEST(t_odbc2_error)
   return OK;
 }
 
-static int test_diagrec(SQLSMALLINT HandleType,SQLHANDLE Handle,
-                        SQLSMALLINT RecNumber, SQLSMALLINT BufferLength,
-                        SQLRETURN return_value_expected)
+
+DECLARE_TEST(t_diagrec)
 {
-  SQLRETURN rc;
   SQLCHAR   sqlstate[6]= {0};
   SQLCHAR   message[255]= {0};
   SQLINTEGER native_err= 0;
   SQLSMALLINT msglen= 0;
 
-  rc= SQLGetDiagRec(HandleType, Handle, RecNumber, sqlstate, &native_err,
-                    message, BufferLength, &msglen);
-
-  is_num(rc, return_value_expected);
-
-  return OK;
-}
-
-
-DECLARE_TEST(t_diagrec)
-{
   expect_sql(hstmt, "DROP TABLE t_odbc3_non_existent_table", SQL_ERROR);
 
-  if (test_diagrec(SQL_HANDLE_STMT, hstmt, 2, 0,   SQL_NO_DATA_FOUND) != OK)
-    return FAIL;
-  if (test_diagrec(SQL_HANDLE_STMT, hstmt, 1, 255, SQL_SUCCESS) != OK)
-    return FAIL;
-  if (test_diagrec(SQL_HANDLE_STMT, hstmt, 1, 0,   SQL_SUCCESS_WITH_INFO) != OK)
-    return FAIL;
-  if (test_diagrec(SQL_HANDLE_STMT, hstmt, 1, 10,  SQL_SUCCESS_WITH_INFO) != OK)
-    return FAIL;
-  if (test_diagrec(SQL_HANDLE_STMT, hstmt, 1, -1,  SQL_ERROR) != OK)
-    return FAIL;
+  expect_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 2, sqlstate,
+                                   &native_err, message, 0, &msglen),
+              SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate,
+                               &native_err, message, 255, &msglen));
+
+  expect_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate,
+                                   &native_err, message, 0, &msglen),
+              SQL_SUCCESS_WITH_INFO);
+
+  expect_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate,
+                                   &native_err, message, 10, &msglen),
+              SQL_SUCCESS_WITH_INFO);
+
+  expect_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate,
+                                   &native_err, message, -1, &msglen),
+              SQL_ERROR);
 
   return OK;
 }
