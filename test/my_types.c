@@ -25,6 +25,7 @@
 
 DECLARE_TEST(t_longlong1)
 {
+#if SQLBIGINT_MADE_PORTABLE
   SQLBIGINT session_id, ctn;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_longlong");
@@ -63,6 +64,7 @@ DECLARE_TEST(t_longlong1)
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_longlong");
+#endif
 
   return OK;
 }
