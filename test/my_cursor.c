@@ -573,141 +573,90 @@ DECLARE_TEST(t_setpos_position)
 
 DECLARE_TEST(t_pos_column_ignore)
 {
-  SQLRETURN rc;
-  SQLHSTMT hstmt1;
-  SQLCHAR szData[]="updated";
+  SQLCHAR szData[20];
   SQLINTEGER nData;
   SQLLEN  pcbValue, nlen, pcrow;
   SQLUSMALLINT rgfRowStatus;
 
-    rc = SQLAllocStmt(hdbc,&hstmt1);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_column_ignore");
+  ok_sql(hstmt,
+         "CREATE TABLE t_pos_column_ignore "
+         "(col1 INT NOT NULL PRIMARY KEY, col2 VARCHAR(30))");
+  ok_sql(hstmt,
+         "INSERT INTO t_pos_column_ignore VALUES (10,'venu'),(100,'MySQL')");
 
-    tmysql_exec(hstmt,"drop table t_pos_column_ignore");
-    rc = tmysql_exec(hstmt,"create table t_pos_column_ignore(col1 int NOT NULL primary key, col2 varchar(30))");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = tmysql_exec(hstmt,"insert into t_pos_column_ignore values(10,'venu')");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY,
+                                (SQLPOINTER)SQL_CONCUR_ROWVER, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_KEYSET_DRIVEN, 0));
 
-    rc = tmysql_exec(hstmt,"insert into t_pos_column_ignore values(100,'MySQL')");
-    mystmt(hstmt,rc);
+  /* ignore all columns */
+  ok_sql(hstmt, "SELECT * FROM t_pos_column_ignore ORDER BY col1 ASC");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &nData, 0, &pcbValue));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szData, sizeof(szData),
+                            &pcbValue));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, &pcrow,
+                                  &rgfRowStatus));
 
-    SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY, (SQLPOINTER) SQL_CONCUR_ROWVER, 0);
-    SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER) SQL_CURSOR_KEYSET_DRIVEN, 0);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
 
-    /* ignore all columns */
-    rc = tmysql_exec(hstmt,"select * from t_pos_column_ignore order by col1 asc");
-    mystmt(hstmt,rc);
+  nData= 99;
+  strcpy((char *)szData , "updated");
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,&pcbValue);
-    mystmt(hstmt,rc);
+  pcbValue= SQL_COLUMN_IGNORE;
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
 
-    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,100,&pcbValue);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLRowCount(hstmt, &nlen));
+  is_num(nlen, 0);
 
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,&pcrow,&rgfRowStatus);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM t_pos_column_ignore ORDER BY col1 ASC");
 
-    nData = 99;
-    strcpy((char *)szData , "updated");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 10);
+  is_str(my_fetch_str(hstmt, szData, 2), "venu", 4);
 
-    pcbValue = SQL_COLUMN_IGNORE;
-    rc = SQLSetPos(hstmt,1,SQL_UPDATE,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLRowCount(hstmt,&nlen);
-    mystmt(hstmt,rc);
+  /* ignore only one column */
+  ok_sql(hstmt, "SELECT * FROM t_pos_column_ignore ORDER BY col1 ASC");
 
-    fprintf(stdout," rows affected:%d\n",nlen);
-    myassert(nlen == 0);
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &nData, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szData, sizeof(szData),
+                            &pcbValue));
 
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, &pcrow,
+                                  &rgfRowStatus));
 
-    SQLFreeStmt(hstmt1,SQL_CLOSE);
-    SQLFreeStmt(hstmt,SQL_CLOSE);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  nData= 99;
+  strcpy((char *)szData , "updated");
 
-    rc = tmysql_exec(hstmt,"select * from t_pos_column_ignore order by col1 asc");
-    mystmt(hstmt,rc);
+  pcbValue= SQL_COLUMN_IGNORE;
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
 
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-    {
-      SQLCHAR szData[20];
-      my_assert(10 == my_fetch_int(hstmt,1));
-      my_assert(!strcmp("venu",my_fetch_str(hstmt,szData,2)));
-    }
+  ok_stmt(hstmt, SQLRowCount(hstmt, &nlen));
+  is_num(nlen, 1);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    /* ignore only one column */
+  ok_sql(hstmt, "SELECT * FROM t_pos_column_ignore ORDER BY col1 ASC");
 
-    rc = tmysql_exec(hstmt,"select * from t_pos_column_ignore order by col1 asc");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 99);
+  is_str(my_fetch_str(hstmt, szData, 2), "venu", 4);
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,100,&pcbValue);
-    mystmt(hstmt,rc);
-
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,&pcrow,&rgfRowStatus);
-    mystmt(hstmt,rc);
-
-    rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
-
-    nData = 99;
-    strcpy((char *)szData , "updated");
-
-    pcbValue = SQL_COLUMN_IGNORE;
-    rc = SQLSetPos(hstmt,1,SQL_UPDATE,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
-
-    rc = SQLRowCount(hstmt,&nlen);
-    mystmt(hstmt,rc);
-
-    fprintf(stdout," rows affected:%d\n",nlen);
-
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
-
-    SQLFreeStmt(hstmt1,SQL_CLOSE);
-    SQLFreeStmt(hstmt,SQL_CLOSE);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = tmysql_exec(hstmt,"select * from t_pos_column_ignore order by col1 asc");
-    mystmt(hstmt,rc);
-
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-    {
-      SQLCHAR szData[20];
-      my_assert(99 == my_fetch_int(hstmt,1));
-      my_assert(!strcmp("venu",my_fetch_str(hstmt,szData,2)));
-    }
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt1,SQL_DROP);
-    mystmt(hstmt1,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_column_ignore");
 
   return OK;
 }
