@@ -296,6 +296,8 @@ DECLARE_TEST(t_bug5853)
 
   ok_stmt(hstmt_pos, SQLFreeStmt(hstmt_pos, SQL_CLOSE));
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
   ok_sql(hstmt,"SELECT * FROM t_bug5853");
 
   ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, nData, sizeof(nData), &nLen));
@@ -308,6 +310,8 @@ DECLARE_TEST(t_bug5853)
 
   expect_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0),
               SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug5853");
 

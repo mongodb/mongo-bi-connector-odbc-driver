@@ -138,6 +138,9 @@ int main(int argc, char **argv) \
     int rc; \
     RUN_TESTS_ALARM \
     rc= tests[i].func(hdbc, hstmt, henv); \
+    (void)SQLFreeStmt(hstmt, SQL_UNBIND); \
+    (void)SQLFreeStmt(hstmt, SQL_RESET_PARAMS); \
+    (void)SQLFreeStmt(hstmt, SQL_CLOSE); \
     printf("%s %d %s %s\n", rc == OK ? "ok" : "not ok", i + 1, \
            tests[i].expect == FAIL ? "# TODO" : "-", \
            tests[i].name); \
