@@ -77,6 +77,15 @@ typedef struct {
   int   expect;
 } my_test;
 
+#ifdef WIN32
+#define RUN_TESTS_SIGNAL
+#define RUN_TESTS_ALARM
+#else
+#define ENABLE_ALARMS    int do_alarms= !getenv("DISABLE_TIMEOUT")
+#define RUN_TESTS_SIGNAL (void)signal(SIGALRM, test_timeout)
+#define RUN_TESTS_ALARM  if (do_alarms) alarm(30)
+#endif
+
 #define BEGIN_TESTS my_test tests[]= {
 #define ADD_TEST(name) { #name, name, OK   },
 #define ADD_TODO(name) { #name, name, FAIL },
@@ -94,6 +103,7 @@ int main(int argc, char **argv) \
   SQLHDBC  hdbc; \
   SQLHSTMT hstmt; \
   int      i, num_tests; \
+  ENABLE_ALARMS; \
 \
   /* Set from environment, possibly overrided by command line */ \
   if (getenv("TEST_DSN")) \
@@ -117,27 +127,19 @@ int main(int argc, char **argv) \
 #define SET_DSN_OPTION(x) \
   myoption= (x);
 
-#ifdef WIN32
-#define RUN_TESTS_SIGNAL
-#define RUN_TESTS_ALARM
-#else
-#define RUN_TESTS_SIGNAL (void)signal(SIGALRM, test_timeout);
-#define RUN_TESTS_ALARM  alarm(30);
-#endif
-
 #define RUN_TESTS \
   setbuf(stdout, NULL); \
   num_tests= sizeof(tests) / sizeof(tests[0]); \
   printf("1..%d\n", num_tests); \
 \
-  RUN_TESTS_SIGNAL \
+  RUN_TESTS_SIGNAL; \
 \
   alloc_basic_handles(&henv,&hdbc,&hstmt); \
 \
   for (i= 0; i < num_tests; i++ ) \
   { \
     int rc; \
-    RUN_TESTS_ALARM \
+    RUN_TESTS_ALARM; \
     rc= tests[i].func(hdbc, hstmt, henv); \
     (void)SQLFreeStmt(hstmt, SQL_UNBIND); \
     (void)SQLFreeStmt(hstmt, SQL_RESET_PARAMS); \
@@ -163,7 +165,7 @@ int main(int argc, char **argv) \
 do { \
   SQLRETURN rc= SQLExecDirect((statement), (SQLCHAR *)(query), SQL_NTS); \
   print_diag(rc, SQL_HANDLE_STMT, (statement), \
-             "SQLExecDirect(hstmt, \"" query "\", SQL_NTS)",\
+             "SQLExecDirect(" #statement ", \"" query "\", SQL_NTS)",\
              __FILE__, __LINE__); \
   if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) \
     return FAIL; \
