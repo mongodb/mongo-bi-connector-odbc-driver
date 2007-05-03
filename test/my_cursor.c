@@ -1521,7 +1521,7 @@ DECLARE_TEST(tmysql_pos_update_ex2)
   ok_con(hdbc, SQLAllocStmt(hdbc, &hstmt1));
 
   ok_stmt(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
-                                   SQL_CHAR, 0, 0, data, sizeof(data), &nlen));
+                                   SQL_CHAR, 0, 0, data, sizeof(data), NULL));
 
   sprintf((char *)sql,
           "UPDATE t_pos_updex2 SET a = 999, b = ? WHERE CURRENT OF %s", cursor);
