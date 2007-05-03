@@ -1754,81 +1754,54 @@ DECLARE_TEST(tmysql_pos_update_ex4)
 
 DECLARE_TEST(tmysql_pos_dyncursor)
 {
-    SQLRETURN rc;
-    SQLHSTMT hstmt1;
-    SQLUINTEGER pcrow;
-    SQLUSMALLINT rgfRowStatus;
-    SQLCHAR  szCursor[20],buff[100];
+  SQLHSTMT hstmt1;
+  SQLUINTEGER pcrow;
+  SQLUSMALLINT rgfRowStatus;
+  SQLCHAR buff[100];
+  SQLLEN rows;
 
-    rc = SQLAllocStmt(hdbc,&hstmt1);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_pos_dyncursor");
+  ok_sql(hstmt, "CREATE TABLE tmysql_pos_dyncursor (a INT, b VARCHAR(30))");
+  ok_sql(hstmt, "INSERT INTO tmysql_pos_dyncursor VALUES (1,'foo'),(2,'bar')");
 
-    tmysql_exec(hstmt,"drop table tmysql_pos_dyncursor");
-    rc = tmysql_exec(hstmt,"create table tmysql_pos_dyncursor(col1 int , col2 varchar(30))");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = tmysql_exec(hstmt,"insert into tmysql_pos_dyncursor values(100,'venu')");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"venu_cur", SQL_NTS));
 
-    rc = tmysql_exec(hstmt,"insert into tmysql_pos_dyncursor values(200,'MySQL')");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM tmysql_pos_dyncursor");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_ABSOLUTE, 2, &pcrow,
+                                  &rgfRowStatus));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
 
-    rc = SQLSetCursorName(hstmt,"venu_cur",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_con(hdbc, SQLAllocStmt(hdbc, &hstmt1));
 
-    rc = tmysql_exec(hstmt,"select * from tmysql_pos_dyncursor");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt1, "UPDATE tmysql_pos_dyncursor SET a = 9, b = 'update' "
+         "WHERE CURRENT OF venu_cur");
 
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,&pcrow,&rgfRowStatus);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt1, SQLRowCount(hstmt1, &rows));
+  is_num(rows, 1);
 
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,&pcrow,&rgfRowStatus);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
 
-    rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLGetCursorName(hstmt,szCursor,20,NULL);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM tmysql_pos_dyncursor");
 
-    sprintf(buff,"UPDATE tmysql_pos_dyncursor SET col1= 999, col2 = 'update' WHERE CURRENT OF %s",szCursor);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 1);
+  is_str(my_fetch_str(hstmt, buff, 2), "foo", 3);
 
-    rc = SQLExecDirect(hstmt1,buff,SQL_NTS);
-    mystmt(hstmt1,rc);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 9);
+  is_str(my_fetch_str(hstmt, buff, 2), "update", 6);
 
-    SQLNumResultCols(hstmt1,&rgfRowStatus);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    rc = SQLFreeStmt(hstmt1,SQL_CLOSE);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = tmysql_exec(hstmt,"select * from tmysql_pos_dyncursor");
-    mystmt(hstmt,rc);
-
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-    {
-        SQLCHAR szData[20];
-        my_assert(999 == my_fetch_int(hstmt,1));
-        my_assert(!strcmp("update",my_fetch_str(hstmt,szData,2)));
-    }
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt1,SQL_DROP);
-    mystmt(hstmt1,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_pos_dyncursor");
 
   return OK;
 }
