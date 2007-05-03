@@ -662,124 +662,78 @@ static void verify_col_data(SQLHSTMT hstmt, const char *table,
 
 DECLARE_TEST(t_pos_datetime_delete)
 {
-  SQLRETURN rc;
-  SQLHSTMT  hstmt1;
-  SQLINTEGER int_data;
-  SQLLEN    row_count, cur_type;
+  SQLHSTMT     hstmt1;
+  SQLINTEGER   int_data;
+  SQLLEN       row_count, cur_type;
   SQLUSMALLINT rgfRowStatus;
 
-    rc = SQLAllocStmt(hdbc,&hstmt1);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_datetime_delete");
+  ok_sql(hstmt, "CREATE TABLE t_pos_datetime_delete (a INT NOT NULL,"
+         "b VARCHAR(20) NOT NULL, c DATETIME NOT NULL DEFAULT '2000-01-01')");
+  ok_sql(hstmt, "INSERT INTO t_pos_datetime_delete VALUES"
+         "(1,'venu','2003-02-10 14:45:39')");
+  ok_sql(hstmt, "INSERT INTO t_pos_datetime_delete (b) VALUES ('')");
+  ok_sql(hstmt, "INSERT INTO t_pos_datetime_delete (a) VALUES (2)");
 
-    tmysql_exec(hstmt,"drop table t_pos_delete");
-    rc = tmysql_exec(hstmt,"create table t_pos_delete(id int not null default '0',\
-                                                      name varchar(20) NOT NULL default '',\
-                                                      created datetime NOT NULL default '2000-01-01')");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = tmysql_exec(hstmt,"insert into t_pos_delete values(1,'venu','2003-02-10 14:45:39')");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY,
+                                (SQLPOINTER)SQL_CONCUR_ROWVER, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
 
-    rc = tmysql_exec(hstmt,"insert into t_pos_delete(name) values('')");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"venu_cur", 8));
 
-    rc = tmysql_exec(hstmt,"insert into t_pos_delete(id) values(2)");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM t_pos_datetime_delete");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &int_data, 0, NULL));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, NULL,
+                                  &rgfRowStatus));
+  is_num(int_data, 1);
 
-    rc = tmysql_exec(hstmt,"select * from t_pos_delete");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
 
-    my_assert(3 == myresult(hstmt));
+  ok_con(hdbc, SQLAllocStmt(hdbc, &hstmt1));
+  ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CONCURRENCY,
+                                 (SQLPOINTER)SQL_CONCUR_ROWVER, 0));
+  ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
+                                 (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
 
-    SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY, (SQLPOINTER) SQL_CONCUR_ROWVER, 0);
-    SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER) SQL_CURSOR_DYNAMIC, 0);
-    SQLSetStmtOption(hstmt,SQL_SIMULATE_CURSOR,SQL_SC_TRY_UNIQUE);
+  ok_sql(hstmt1, "DELETE FROM t_pos_datetime_delete WHERE CURRENT OF venu_cur");
 
-    SQLSetStmtAttr(hstmt1, SQL_ATTR_CONCURRENCY, (SQLPOINTER) SQL_CONCUR_ROWVER, 0);
-    SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER) SQL_CURSOR_DYNAMIC, 0);
-    SQLSetStmtOption(hstmt1,SQL_SIMULATE_CURSOR,SQL_SC_TRY_UNIQUE);
+  ok_stmt(hstmt1, SQLRowCount(hstmt1, &row_count));
+  is_num(row_count, 1);
 
-    rc = SQLSetCursorName(hstmt,"venu_cur",8);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, NULL,
+                                  &rgfRowStatus));
+  is_num(int_data, 0);
 
-    rc = SQLGetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, &cur_type, 0, NULL);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, NULL, NULL));
 
-    rc = tmysql_exec(hstmt,"select * from t_pos_delete");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&int_data,0,NULL);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt1, "DELETE FROM t_pos_datetime_delete WHERE CURRENT OF venu_cur");
 
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,NULL,&rgfRowStatus);
-    mystmt(hstmt,rc);
-    fprintf(stdout,"current_row: %d\n", int_data);
-    myassert(int_data == 1);
+  ok_stmt(hstmt1, SQLRowCount(hstmt1, &row_count));
+  is_num(row_count, 1);
 
-    rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
 
-    rc = SQLExecDirect(hstmt1,"DELETE FROM t_pos_delete WHERE CURRENT OF venu_cur",SQL_NTS);
-    mystmt(hstmt1,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLRowCount(hstmt1,&row_count);
-    mystmt(hstmt1,rc);
-    fprintf(stdout, "rows affected: %d\n", row_count);
-    myassert(row_count == 1);
+  ok_sql(hstmt, "SELECT * FROM t_pos_datetime_delete");
 
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,NULL,&rgfRowStatus);
-    mystmt(hstmt,rc);
-    fprintf(stdout,"current_row: %d\n", int_data);
-    if (cur_type == SQL_CURSOR_DYNAMIC)
-      myassert(int_data == 2);
-    else
-      myassert(int_data == 0);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 0);
 
-    /*rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,NULL,NULL);
-    mystmt(hstmt,rc);*/
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
-    rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLExecDirect(hstmt1,"DELETE FROM t_pos_delete WHERE CURRENT OF venu_cur",SQL_NTS);
-    mystmt(hstmt1,rc);
-
-    rc = SQLRowCount(hstmt1,&row_count);
-    mystmt(hstmt1,rc);
-    fprintf(stdout, "rows affected: %d\n", row_count);
-    myassert(row_count == 1);
-
-    SQLFreeStmt(hstmt,SQL_UNBIND);
-    SQLFreeStmt(hstmt,SQL_CLOSE);
-    SQLFreeStmt(hstmt1,SQL_CLOSE);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = tmysql_exec(hstmt,"select * from t_pos_delete");
-    mystmt(hstmt,rc);
-
-    my_assert(1 == myresult(hstmt));
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    if (cur_type == SQL_CURSOR_DYNAMIC)
-      verify_col_data(hstmt,"t_pos_delete","id","0");
-    else
-      verify_col_data(hstmt,"t_pos_delete","id","2");
-
-    rc = SQLFreeStmt(hstmt1,SQL_DROP);
-    mystmt(hstmt1,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_datetime_delete");
 
   return OK;
 }
