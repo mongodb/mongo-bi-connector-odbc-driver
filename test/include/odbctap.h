@@ -83,7 +83,7 @@ typedef struct {
 #define END_TESTS }; \
 void test_timeout(int signum __attribute__((unused))) \
 { \
-  printf("Bail out! Timeout."); \
+  printf("Bail out! Timeout.\n"); \
   exit(1); \
 } \
 \
