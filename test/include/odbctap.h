@@ -78,6 +78,7 @@ typedef struct {
 } my_test;
 
 #ifdef WIN32
+#define ENABLE_ALARMS
 #define RUN_TESTS_SIGNAL
 #define RUN_TESTS_ALARM
 #else
