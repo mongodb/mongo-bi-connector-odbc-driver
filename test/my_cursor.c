@@ -540,7 +540,8 @@ DECLARE_TEST(t_pos_column_ignore)
 {
   SQLCHAR szData[20];
   SQLINTEGER nData;
-  SQLLEN  pcbValue, nlen, pcrow;
+  SQLLEN  pcbValue, nlen;
+  SQLROWSETSIZE pcrow;
   SQLUSMALLINT rgfRowStatus;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_column_ignore");
@@ -629,7 +630,7 @@ DECLARE_TEST(t_pos_datetime_delete)
 {
   SQLHSTMT     hstmt1;
   SQLINTEGER   int_data;
-  SQLLEN       row_count, cur_type;
+  SQLLEN       row_count;
   SQLUSMALLINT rgfRowStatus;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_datetime_delete");
@@ -664,7 +665,6 @@ DECLARE_TEST(t_pos_datetime_delete)
                                  (SQLPOINTER)SQL_CONCUR_ROWVER, 0));
   ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
                                  (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
-
 
   ok_sql(hstmt1, "DELETE FROM t_pos_datetime_delete WHERE CURRENT OF venu_cur");
 
@@ -983,7 +983,7 @@ DECLARE_TEST(tmysql_setpos_del)
     SQLINTEGER nData = 500;
     SQLUINTEGER nlen;
     SQLCHAR szData[255]={0};
-    SQLUINTEGER pcrow;
+    SQLROWSETSIZE pcrow;
     SQLUSMALLINT rgfRowStatus;
 
     tmysql_exec(hstmt,"drop table tmysql_setpos1");
@@ -1609,7 +1609,7 @@ DECLARE_TEST(tmysql_pos_update_ex2)
 {
   SQLHSTMT hstmt1;
   SQLUINTEGER pcrow;
-  SQLLEN rows;
+  SQLLEN nlen= SQL_NTS;
   SQLUSMALLINT rgfRowStatus;
   SQLCHAR cursor[30], sql[255], data[]= "updated";
 
@@ -1631,15 +1631,15 @@ DECLARE_TEST(tmysql_pos_update_ex2)
   ok_con(hdbc, SQLAllocStmt(hdbc, &hstmt1));
 
   ok_stmt(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
-                                   SQL_CHAR, 0, 0, data, sizeof(data), NULL));
+                                   SQL_CHAR, 0, 0, data, sizeof(data), &nlen));
 
   sprintf((char *)sql,
           "UPDATE t_pos_updex2 SET a = 999, b = ? WHERE CURRENT OF %s", cursor);
 
   ok_stmt(hstmt1, SQLExecDirect(hstmt1, sql, SQL_NTS));
 
-  ok_stmt(hstmt1, SQLRowCount(hstmt1, &rows));
-  is_num(rows, 1);
+  ok_stmt(hstmt1, SQLRowCount(hstmt1, &nlen));
+  is_num(nlen, 1);
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
 
@@ -1709,7 +1709,7 @@ DECLARE_TEST(tmysql_pos_update_ex3)
 DECLARE_TEST(tmysql_pos_update_ex4)
 {
   SQLUINTEGER pcrow;
-  SQLLEN rows;
+  SQLLEN nlen= SQL_NTS;
   SQLCHAR data[]= "venu", szData[20];
   SQLUSMALLINT rgfRowStatus;
 
@@ -1727,12 +1727,12 @@ DECLARE_TEST(tmysql_pos_update_ex4)
 
   ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
 
-  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, data, sizeof(data), NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &nlen));
 
   ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
 
-  ok_stmt(hstmt, SQLRowCount(hstmt, &rows));
-  is_num(rows, 1);
+  ok_stmt(hstmt, SQLRowCount(hstmt, &nlen));
+  is_num(nlen, 1);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
