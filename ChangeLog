@@ -3,6 +3,9 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * SQLSetPos() would not update a row unless all columns were bound,
+    but it should only require that at least one column is bound and
+    not set to be ignored.
   * SQLBulkOperations() and SQLSetPos() used the wrong indicator variable
     values when batch-inserting rows. (Bug #24306)
   * SQLGetConnectAttr() would report an incorrect isolation level if it

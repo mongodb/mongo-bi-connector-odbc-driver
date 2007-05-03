@@ -813,9 +813,8 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
 
         if ( bind && !bind->field )
         {
-            set_stmt_error(stmt,"21S02",
-                           "Degree of derived table does not match column list",0);
-            return(SQL_ERROR);
+          ignore_count++;
+          continue;
         }
         pcbValue= bind->pcbValue ? bind->pcbValue + irow : 0;
         if ( pcbValue )
@@ -857,10 +856,10 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
         /*
             Check when SQL_LEN_DATA_AT_EXEC() macro was used instead of data length
         */
-        if ( length == SQL_NTS )
+        if (length == SQL_NTS)
             length= strlen(param.buffer);
-                else if ( length <= SQL_LEN_DATA_AT_EXEC_OFFSET )
-                    length= -( length - SQL_LEN_DATA_AT_EXEC_OFFSET );
+        else if (length <= SQL_LEN_DATA_AT_EXEC_OFFSET)
+            length= -(length - SQL_LEN_DATA_AT_EXEC_OFFSET);
 
         param.actual_len= &length;
 
@@ -870,8 +869,9 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
         length= (uint) ((char *)to - (char*) net->buff);
         dynstr_append_mem(dynQuery, (char*) net->buff, length);
     }
-    if ( ignore_count == result->field_count )
-        return(ER_ALL_COLUMNS_IGNORED);
+
+    if (ignore_count == result->field_count)
+      return ER_ALL_COLUMNS_IGNORED;
 
     dynQuery->str[--dynQuery->length]='\0';
     return(SQL_SUCCESS);
@@ -1055,21 +1055,31 @@ static SQLRETURN setpos_update(STMT FAR *stmt, SQLUSMALLINT irow,
     {
         dynQuery->length= query_length;
         nReturn= build_set_clause(stmt,rowset_pos,dynQuery);
-        if ( nReturn == ER_ALL_COLUMNS_IGNORED )
+        if (nReturn == ER_ALL_COLUMNS_IGNORED)
         {
-            /*
-          All columns ignored in the update list, continue
-          to the next statement ..
-            */
+          /*
+            If we're updating more than one row, having all columns ignored
+            is fine. If it's just one row, that's an error.
+          */
+          if (!irow)
+          {
             nReturn= SQL_SUCCESS;
             continue;
-        }
-        else if ( nReturn == SQL_ERROR )
+          }
+          else
+          {
+            set_stmt_error(stmt, "21S02",
+                           "Degree of derived table does not match column list",
+                           0);
             return SQL_ERROR;
+          }
+        }
+        else if (nReturn == SQL_ERROR)
+          return SQL_ERROR;
 
-        nReturn = build_where_clause( stmt, dynQuery, (SQLUSMALLINT)rowset_pos );
-        if ( !SQL_SUCCEEDED( nReturn ) )
-            return nReturn;
+        nReturn= build_where_clause(stmt, dynQuery, (SQLUSMALLINT)rowset_pos);
+        if (!SQL_SUCCEEDED(nReturn))
+          return nReturn;
 
         MYODBCDbgInfo( "SQLPOS_UPDATE: %s", dynQuery->str );
         if ( !(nReturn= exec_stmt_query(stmt, dynQuery->str, dynQuery->length)) )

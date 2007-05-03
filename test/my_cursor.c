@@ -573,10 +573,8 @@ DECLARE_TEST(t_pos_column_ignore)
   strcpy((char *)szData , "updated");
 
   pcbValue= SQL_COLUMN_IGNORE;
-  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
-
-  ok_stmt(hstmt, SQLRowCount(hstmt, &nlen));
-  is_num(nlen, 0);
+  expect_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE),
+              SQL_ERROR);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
@@ -624,39 +622,6 @@ DECLARE_TEST(t_pos_column_ignore)
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_column_ignore");
 
   return OK;
-}
-
-
-static void verify_col_data(SQLHSTMT hstmt, const char *table,
-                            const char *col, const char *exp_data)
-{
-  SQLCHAR data[255], query[255];
-  SQLRETURN rc;
-
-  if (table && col)
-  {
-    sprintf(query,"SELECT %s FROM %s",col,table);
-    fprintf(stdout,"\n %s", query);
-
-    rc = SQLExecDirect(hstmt, query, SQL_NTS);
-    mystmt(hstmt,rc);
-  }
-
-  rc = SQLFetch(hstmt);
-  if (rc == SQL_NO_DATA)
-    myassert(strcmp(exp_data,"SQL_NO_DATA") ==0 );
-
-  rc = SQLGetData(hstmt, 1, SQL_C_CHAR, &data, 255, NULL);
-  if (rc == SQL_ERROR)
-  {
-    fprintf(stdout,"\n *** ERROR: FAILED TO GET THE RESULT ***");
-    exit(1);
-  }
-  fprintf(stdout,"\n obtained: `%s` (expected: `%s`)\n", data, exp_data);
-  myassert(strcmp(data,exp_data) == 0);
-
-  SQLFreeStmt(hstmt, SQL_UNBIND);
-  SQLFreeStmt(hstmt, SQL_CLOSE);
 }
 
 
@@ -1527,6 +1492,7 @@ DECLARE_TEST(tmysql_pos_update_ex)
   SQLHSTMT hstmt1;
   SQLUINTEGER pcrow;
   SQLUSMALLINT rgfRowStatus;
+  SQLLEN rows;
   SQLCHAR cursor[30], sql[255], data[]= "tmysql_pos_update_ex";
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_updex");
@@ -1555,8 +1521,8 @@ DECLARE_TEST(tmysql_pos_update_ex)
 
   ok_stmt(hstmt1, SQLExecDirect(hstmt1, sql, SQL_NTS));
 
-  ok_stmt(hstmt1, SQLRowCount(hstmt1, &pcrow));
-  is_num(pcrow, 1);
+  ok_stmt(hstmt1, SQLRowCount(hstmt1, &rows));
+  is_num(rows, 1);
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
 
@@ -1586,6 +1552,7 @@ DECLARE_TEST(tmysql_pos_update_ex1)
 {
   SQLHSTMT hstmt1;
   SQLUINTEGER pcrow;
+  SQLLEN      rows;
   SQLSMALLINT rgfRowStatus;
   SQLCHAR cursor[30], sql[100], data[]= "tmysql_pos_update_ex1";
 
@@ -1611,8 +1578,8 @@ DECLARE_TEST(tmysql_pos_update_ex1)
 
   ok_stmt(hstmt1, SQLExecDirect(hstmt1, sql, SQL_NTS));
 
-  ok_stmt(hstmt1, SQLRowCount(hstmt1, &pcrow));
-  is_num(pcrow, 1);
+  ok_stmt(hstmt1, SQLRowCount(hstmt1, &rows));
+  is_num(rows, 1);
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
 
@@ -1642,11 +1609,12 @@ DECLARE_TEST(tmysql_pos_update_ex2)
 {
   SQLHSTMT hstmt1;
   SQLUINTEGER pcrow;
+  SQLLEN rows;
   SQLUSMALLINT rgfRowStatus;
   SQLCHAR cursor[30], sql[255], data[]= "updated";
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_updex2");
-  ok_sql(hstmt, "CREATE TABLE t_pos_updex2 (a INT NOT NULL, b VARCHAR(3),"
+  ok_sql(hstmt, "CREATE TABLE t_pos_updex2 (a INT NOT NULL, b VARCHAR(30),"
          "c INT NOT NULL, PRIMARY KEY(a,c))");
   ok_sql(hstmt, "INSERT INTO t_pos_updex2 VALUES (10,'venu',1),(20,'MySQL',2)");
 
@@ -1670,8 +1638,8 @@ DECLARE_TEST(tmysql_pos_update_ex2)
 
   ok_stmt(hstmt1, SQLExecDirect(hstmt1, sql, SQL_NTS));
 
-  ok_stmt(hstmt1, SQLRowCount(hstmt1, &pcrow));
-  is_num(pcrow, 1);
+  ok_stmt(hstmt1, SQLRowCount(hstmt1, &rows));
+  is_num(rows, 1);
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
 
@@ -1687,7 +1655,7 @@ DECLARE_TEST(tmysql_pos_update_ex2)
   ok_stmt(hstmt, SQLFetch(hstmt));
   is_num(my_fetch_int(hstmt, 1), 999);
   is_str(my_fetch_str(hstmt, sql, 2), "updated", 7);
-  is_num(my_fetch_int(hstmt, 3), 1);
+  is_num(my_fetch_int(hstmt, 3), 2);
 
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
@@ -1704,11 +1672,11 @@ DECLARE_TEST(tmysql_pos_update_ex3)
   SQLHSTMT hstmt1;
   SQLUINTEGER pcrow;
   SQLUSMALLINT rgfRowStatus;
-  SQLCHAR cursor[30], sql[255], data[]= "updated";
+  SQLCHAR cursor[30], sql[255];
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_updex3");
   ok_sql(hstmt, "CREATE TABLE t_pos_updex3 (a INT NOT NULL PRIMARY KEY,"
-        " b VARCHAR(3))");
+        " b VARCHAR(30))");
   ok_sql(hstmt, "INSERT INTO t_pos_updex3 VALUES (100,'venu'),(200,'MySQL')");
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
@@ -1722,9 +1690,6 @@ DECLARE_TEST(tmysql_pos_update_ex3)
   ok_stmt(hstmt, SQLGetCursorName(hstmt, cursor, sizeof(cursor), NULL));
 
   ok_con(hdbc, SQLAllocStmt(hdbc, &hstmt1));
-
-  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
-                                   SQL_CHAR, 0, 0, data, sizeof(data), NULL));
 
   sprintf((char *)sql,
           "UPDATE t_pos_updex3 SET a = 999, b = ? WHERE CURRENT OF %s", cursor);
@@ -1744,6 +1709,7 @@ DECLARE_TEST(tmysql_pos_update_ex3)
 DECLARE_TEST(tmysql_pos_update_ex4)
 {
   SQLUINTEGER pcrow;
+  SQLLEN rows;
   SQLCHAR data[]= "venu", szData[20];
   SQLUSMALLINT rgfRowStatus;
 
@@ -1765,13 +1731,13 @@ DECLARE_TEST(tmysql_pos_update_ex4)
 
   ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
 
-  ok_stmt(hstmt, SQLRowCount(hstmt, &pcrow));
-  is_num(pcrow, 1);
+  ok_stmt(hstmt, SQLRowCount(hstmt, &rows));
+  is_num(rows, 1);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-  ok_sql(hstmt, "SELECT name FROM t_pos_updex4");
+  ok_sql(hstmt, "SELECT a FROM t_pos_updex4");
 
   ok_stmt(hstmt, SQLFetch(hstmt));
   is_str(my_fetch_str(hstmt, szData, 1), "venu", 4);
@@ -2560,62 +2526,69 @@ DECLARE_TEST(my_setpos_upd_pk_order)
 }
 
 
+/**
+  In this test, we prove that we can update a row in a table with a
+  multi-part primary key even though we're only updating two parts of
+  the key.
+ */
 DECLARE_TEST(my_setpos_upd_pk_order1)
 {
-    SQLRETURN rc;
-    SQLINTEGER nData= 500;
-    SQLCHAR szData[255]={0};
-    SQLUINTEGER pcrow;
-    SQLUSMALLINT rgfRowStatus;
+  SQLINTEGER nData;
+  SQLCHAR szData[255];
+  SQLUINTEGER pcrow;
+  SQLUSMALLINT rgfRowStatus;
+  SQLLEN rows;
 
-    tmysql_exec(hstmt,"drop table my_setpos_upd_pk_order");
-    rc = tmysql_exec(hstmt,"create table my_setpos_upd_pk_order(col1 int not null, col2 varchar(30) NOT NULL, col3 int not null, primary key(col2,col1,col3))");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_setpos_upd_pk_order1");
+  ok_sql(hstmt, "CREATE TABLE my_setpos_upd_pk_order1 (a INT NOT NULL,"
+         "b VARCHAR(30) NOT NULL, c INT NOT NULL, PRIMARY KEY (a,b,c))");
+  ok_sql(hstmt, "INSERT INTO my_setpos_upd_pk_order1 VALUES (100,'MySQL1',1),"
+         "(200,'MySQL2',2)");
 
-    rc = tmysql_exec(hstmt,"insert into my_setpos_upd_pk_order values(100,'MySQL1',1)");
-    mystmt(hstmt,rc);
-    rc = tmysql_exec(hstmt,"insert into my_setpos_upd_pk_order values(200,'MySQL2',2)");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"venu", SQL_NTS));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM my_setpos_upd_pk_order1");
 
-    rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &nData, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szData, sizeof(szData),
+                            NULL));
 
-    rc = tmysql_exec(hstmt,"select * from my_setpos_upd_pk_order");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, &pcrow,
+                                  &rgfRowStatus));
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, &pcrow,
+                                  &rgfRowStatus));
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
-    mystmt(hstmt,rc);
+  nData= 1000;
+  strcpy((char *)szData, "updated");
 
-    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,100,NULL);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
+  ok_stmt(hstmt, SQLRowCount(hstmt, &rows));
+  is_num(rows, 1);
 
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,&pcrow,&rgfRowStatus);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,&pcrow,&rgfRowStatus);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM my_setpos_upd_pk_order1");
 
-    printMessage(" row1:%d,%s\n",nData,szData);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 100);
+  is_str(my_fetch_str(hstmt, szData, 2), "MySQL1", 6);
+  is_num(my_fetch_int(hstmt, 3), 1);
 
-    nData = 1000;
-    strcpy((char *)szData , "updated");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 1000);
+  is_str(my_fetch_str(hstmt, szData, 2), "updated", 7);
+  is_num(my_fetch_int(hstmt, 3), 2);
 
-    rc = SQLSetPos(hstmt,1,SQL_UPDATE,SQL_LOCK_NO_CHANGE);
-    mystmt_err(hstmt,rc == SQL_ERROR, rc);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_setpos_upd_pk_order1");
 
-    return OK;
+  return OK;
 }
 
 
