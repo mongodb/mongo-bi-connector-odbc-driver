@@ -23,157 +23,85 @@
 #include "odbctap.h"
 
 
-/* initialize tables */
-DECLARE_TEST(my_init_table)
-{
-    SQLRETURN   rc;
-    SQLINTEGER  id;
-    SQLCHAR     name[50];
-
-    /* drop table 'my_demo_param' if it already exists */
-    printMessage(" creating table 'my_demo_cursor'\n");
-
-    rc = SQLExecDirect(hstmt,"DROP TABLE if exists my_demo_cursor",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    /* create the table 'my_demo_param' */
-    rc = SQLExecDirect(hstmt,"CREATE TABLE my_demo_cursor(\
-                              id int, name varchar(20))",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    /* commit the transaction*/
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    /* prepare the insert statement with parameters */
-    rc = SQLPrepare(hstmt,"INSERT INTO my_demo_cursor VALUES(?,?)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    /* now supply data to parameter 1 and 2 */
-    rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT,
-                          SQL_C_LONG, SQL_INTEGER, 0,0,
-                          &id, 0, NULL);
-    mystmt(hstmt,rc);
-
-    rc = SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT,
-                          SQL_C_CHAR, SQL_CHAR, 0,0,
-                          name, sizeof(name), NULL);
-    mystmt(hstmt,rc);
-
-    /* now insert 5 rows of data */
-    for (id = 0; id < 5; id++)
-    {
-        sprintf(name,"MySQL%d",id);
-
-        rc = SQLExecute(hstmt);
-        mystmt(hstmt,rc);
-    }
-
-    /* Free statement param resorces */
-    rc = SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
-    mystmt(hstmt,rc);
-
-    /* Free statement cursor resorces */
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    /* Now fetch and verify the data */
-    rc = SQLExecDirect(hstmt, "SELECT * FROM my_demo_cursor",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    assert(5 == myresult(hstmt));
-
-  return OK;
-}
-
-
 /* perform positioned update and delete */
 DECLARE_TEST(my_positioned_cursor)
 {
-    SQLRETURN   rc;
-    SQLROWCOUNT nRowCount;
-    SQLHSTMT    hstmt_pos;
+  SQLLEN      nRowCount;
+  SQLHSTMT    hstmt_pos;
+  SQLCHAR     data[10];
 
-    /* create new statement handle */
-    rc = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt_pos);
-    mycon(hdbc, rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_demo_cursor");
+  ok_sql(hstmt, "CREATE TABLE my_demo_cursor (id INT, name VARCHAR(20))");
+  ok_sql(hstmt, "INSERT INTO my_demo_cursor VALUES (0,'MySQL0'),(1,'MySQL1'),"
+         "(2,'MySQL2'),(3,'MySQL3'),(4,'MySQL4')");
 
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
-                        (SQLPOINTER)SQL_CURSOR_DYNAMIC,0);
-    mystmt(hstmt, rc);
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_DYNAMIC,0));
 
-    /* set the cursor name as 'mysqlcur' on hstmt */
-    rc = SQLSetCursorName(hstmt, "mysqlcur", SQL_NTS);
-    mystmt(hstmt, rc);
+  /* set the cursor name as 'mysqlcur' on hstmt */
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"mysqlcur", SQL_NTS));
 
-    /* Open the resultset of table 'my_demo_cursor' */
-    rc = SQLExecDirect(hstmt,"SELECT * FROM my_demo_cursor",SQL_NTS);
-    mystmt(hstmt,rc);
+  /* Open the resultset of table 'my_demo_cursor' */
+  ok_sql(hstmt,"SELECT * FROM my_demo_cursor");
 
-    /* goto the last row */
-    rc = SQLFetchScroll(hstmt, SQL_FETCH_LAST, 1L);
-    mystmt(hstmt,rc);
+  /* goto the last row */
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_LAST, 1L));
 
-    /* now update the name field to 'update' using positioned cursor */
-    rc = SQLExecDirect(hstmt_pos, "UPDATE my_demo_cursor SET name='updated' WHERE CURRENT OF mysqlcur", SQL_NTS);
-    mystmt(hstmt_pos, rc);
+  /* create new statement handle */
+  ok_con(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt_pos));
 
-    rc = SQLRowCount(hstmt_pos, &nRowCount);
-    mystmt(hstmt_pos, rc);
+  /* now update the name field to 'updated' using positioned cursor */
+  ok_sql(hstmt_pos, "UPDATE my_demo_cursor SET name='updated' "
+         "WHERE CURRENT OF mysqlcur");
 
-    printMessage(" total rows updated:%d\n",nRowCount);
-    assert(nRowCount == 1);
+  ok_stmt(hstmt, SQLRowCount(hstmt_pos, &nRowCount));
+  is_num(nRowCount, 1);
 
-    /* Free statement cursor resorces */
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt_pos, SQLFreeStmt(hstmt_pos, SQL_CLOSE));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLFreeStmt(hstmt_pos, SQL_CLOSE);
-    mystmt(hstmt,rc);
+  /* Now delete 2nd row */
+  ok_sql(hstmt, "SELECT * FROM my_demo_cursor");
 
-    /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
-    mycon(hdbc,rc);
+  /* goto the second row */
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 2L));
 
-    /* Now delete 2nd row */
-    rc = SQLExecDirect(hstmt,"SELECT * FROM my_demo_cursor",SQL_NTS);
-    mystmt(hstmt,rc);
+  /* now delete the current row */
+  ok_sql(hstmt_pos, "DELETE FROM my_demo_cursor WHERE CURRENT OF mysqlcur");
 
-    /* goto the second row row */
-    rc = SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 2L);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLRowCount(hstmt_pos, &nRowCount));
+  is_num(nRowCount, 1);
 
-    /* now delete the current row */
-    rc = SQLExecDirect(hstmt_pos, "DELETE FROM my_demo_cursor WHERE CURRENT OF mysqlcur", SQL_NTS);
-    mystmt(hstmt_pos, rc);
+  /* free the statement cursor */
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLRowCount(hstmt_pos, &nRowCount);
-    mystmt(hstmt_pos, rc);
+  /* Free the statement 'hstmt_pos' */
+  ok_stmt(hstmt_pos, SQLFreeHandle(SQL_HANDLE_STMT, hstmt_pos));
 
-    printMessage(" total rows deleted:%d\n",nRowCount);
-    assert(nRowCount == 1);
+  /* Now fetch and verify the data */
+  ok_sql(hstmt, "SELECT * FROM my_demo_cursor");
 
-    /* free the statement cursor */
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 0);
+  is_str(my_fetch_str(hstmt, data, 2), "MySQL0", 6);
 
-    /* Free the statement 'hstmt_pos' */
-    rc = SQLFreeHandle(SQL_HANDLE_STMT, hstmt_pos);
-    mystmt(hstmt_pos,rc);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 2);
+  is_str(my_fetch_str(hstmt, data, 2), "MySQL2", 6);
 
-    /* Now fetch and verify the data */
-    rc = SQLExecDirect(hstmt, "SELECT * FROM my_demo_cursor",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 3);
+  is_str(my_fetch_str(hstmt, data, 2), "MySQL3", 6);
 
-    assert(4 == myresult(hstmt));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 4);
+  is_str(my_fetch_str(hstmt, data, 2), "updated", 7);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_demo_cursor");
 
   return OK;
 }
@@ -185,6 +113,11 @@ DECLARE_TEST(my_setpos_cursor)
   SQLLEN      nRowCount;
   SQLINTEGER  id;
   SQLCHAR     name[50];
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_demo_cursor");
+  ok_sql(hstmt, "CREATE TABLE my_demo_cursor (id INT, name VARCHAR(20))");
+  ok_sql(hstmt, "INSERT INTO my_demo_cursor VALUES (0,'MySQL0'),(1,'MySQL1'),"
+         "(2,'MySQL2'),(3,'MySQL3'),(4,'MySQL4')");
 
   ok_sql(hstmt, "SELECT * FROM my_demo_cursor");
 
@@ -221,12 +154,16 @@ DECLARE_TEST(my_setpos_cursor)
   is_str(my_fetch_str(hstmt, name, 2), "first-row", 9);
 
   ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 2);
+  is_str(my_fetch_str(hstmt, name, 2), "MySQL2", 6);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
   is_num(my_fetch_int(hstmt, 1), 3);
   is_str(my_fetch_str(hstmt, name, 2), "MySQL3", 6);
 
   ok_stmt(hstmt, SQLFetch(hstmt));
   is_num(my_fetch_int(hstmt, 1), 4);
-  is_str(my_fetch_str(hstmt, name, 2), "updated", 7);
+  is_str(my_fetch_str(hstmt, name, 2), "MySQL4", 6);
 
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
@@ -2734,7 +2671,6 @@ DECLARE_TEST(tmysql_pcbvalue)
 
 
 BEGIN_TESTS
-  ADD_TEST(my_init_table)
   ADD_TEST(my_positioned_cursor)
   ADD_TEST(my_setpos_cursor)
   ADD_TEST(t_bug5853)
