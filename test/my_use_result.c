@@ -22,7 +22,7 @@
 
 #include "odbctap.h"
 
-SQLINTEGER my_max_rows= 10000;
+SQLINTEGER my_max_rows= 100;
 
 /* Clean data */
 DECLARE_TEST(t_clean_data)
