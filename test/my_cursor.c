@@ -1000,7 +1000,11 @@ DECLARE_TEST(tmysql_setpos_del1)
   ok_sql(hstmt, "INSERT INTO tmysql_setpos_del1 VALUES (100,'MySQL1'),"
          "(200,'MySQL2'),(300,'MySQL3'),(400,'MySQL4')");
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
   ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"venu", SQL_NTS));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_sql(hstmt, "SELECT * FROM tmysql_setpos_del1");
 
