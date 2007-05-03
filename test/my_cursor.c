@@ -1608,7 +1608,7 @@ DECLARE_TEST(tmysql_pos_update_ex1)
 DECLARE_TEST(tmysql_pos_update_ex2)
 {
   SQLHSTMT hstmt1;
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
   SQLLEN nlen= SQL_NTS;
   SQLUSMALLINT rgfRowStatus;
   SQLCHAR cursor[30], sql[255], data[]= "updated";
