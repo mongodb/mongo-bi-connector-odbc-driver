@@ -126,6 +126,7 @@ int main(int argc, char **argv) \
 #endif
 
 #define RUN_TESTS \
+  setbuf(stdout, NULL); \
   num_tests= sizeof(tests) / sizeof(tests[0]); \
   printf("1..%d\n", num_tests); \
 \
