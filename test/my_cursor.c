@@ -440,110 +440,99 @@ DECLARE_TEST(t_setpos_upd_decimal)
 
 DECLARE_TEST(t_setpos_position)
 {
-  SQLRETURN rc;
-  SQLINTEGER nData= 500;
+  SQLINTEGER nData;
   SQLLEN nlen;
-  SQLCHAR szData[255]={0};
+  SQLCHAR szData[255];
   SQLUINTEGER pcrow;
   SQLUSMALLINT rgfRowStatus;
 
-    tmysql_exec(hstmt,"drop table t_setpos_position");
-    rc = tmysql_exec(hstmt,"create table t_setpos_position(col1 int, col2 varchar(30))");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_setpos_position");
+  ok_sql(hstmt, "CREATE TABLE t_setpos_position (a INT, b VARCHAR(30))");
+  ok_sql(hstmt, "INSERT INTO t_setpos_position VALUES (100,'MySQL1'),"
+         "(200,'MySQL2'),(300,'MySQL3')");
 
-    rc = tmysql_exec(hstmt,"insert into t_setpos_position values(100,'MySQL1')");
-    mystmt(hstmt,rc);
-    rc = tmysql_exec(hstmt,"insert into t_setpos_position values(200,'MySQL2')");
-    mystmt(hstmt,rc);
-    rc = tmysql_exec(hstmt,"insert into t_setpos_position values(300,'MySQL3')");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"venu", SQL_NTS));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY,
+                                (SQLPOINTER)SQL_CONCUR_ROWVER, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
+  ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_SIMULATE_CURSOR,
+                                  SQL_SC_NON_UNIQUE));
 
-    rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM t_setpos_position");
 
-    SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY, (SQLPOINTER) SQL_CONCUR_ROWVER, 0);
-    SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER) SQL_CURSOR_DYNAMIC, 0);
-    SQLSetStmtOption(hstmt,SQL_SIMULATE_CURSOR,SQL_SC_NON_UNIQUE);
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &nData, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szData, sizeof(szData),
+                            NULL));
 
-    rc = tmysql_exec(hstmt,"select * from t_setpos_position");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, &pcrow,
+                                  &rgfRowStatus));
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
-    mystmt(hstmt,rc);
+  is_num(nData, 100);
+  is_str(szData, "MySQL1", 6);
 
-    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,100,NULL);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
 
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,&pcrow,&rgfRowStatus);
-    mystmt(hstmt,rc);
+  nData= 1000;
+  strcpy((char *)szData, "updated");
 
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,&pcrow,&rgfRowStatus);
-    mystmt(hstmt,rc);
+  expect_stmt(hstmt, SQLSetPos(hstmt, 3, SQL_UPDATE, SQL_LOCK_NO_CHANGE),
+              SQL_ERROR);
 
-    fprintf(stdout," pcrow:%d\n",pcrow);
-    fprintf(stdout," row1:%d,%s\n",nData,szData);
+  expect_stmt(hstmt, SQLSetPos(hstmt, 2, SQL_UPDATE, SQL_LOCK_NO_CHANGE),
+              SQL_ERROR);
 
-    rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
 
-    nData = 1000;
-    strcpy((char *)szData , "updated");
+  ok_stmt(hstmt, SQLRowCount(hstmt, &nlen));
+  is_num(nlen, 1);
 
-    rc = SQLSetPos(hstmt,3,SQL_UPDATE,SQL_LOCK_NO_CHANGE);
-    mystmt_err(hstmt,rc == SQL_ERROR,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLSetPos(hstmt,2,SQL_UPDATE,SQL_LOCK_NO_CHANGE);
-    mystmt_err(hstmt,rc == SQL_ERROR,rc);
+  ok_sql(hstmt, "SELECT * FROM t_setpos_position");
 
-    rc = SQLSetPos(hstmt,1,SQL_UPDATE,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 1000);
+  is_str(my_fetch_str(hstmt, szData, 2), "updated", 7);
 
-    rc = SQLRowCount(hstmt,&nlen);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 200);
+  is_str(my_fetch_str(hstmt, szData, 2), "MySQL2", 6);
 
-    fprintf(stdout," rows affected:%d\n",nlen);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 300);
+  is_str(my_fetch_str(hstmt, szData, 2), "MySQL3", 6);
 
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = tmysql_exec(hstmt,"select * from t_setpos_position");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DELETE FROM t_setpos_position WHERE b = 'updated'");
 
-    myresult(hstmt);
+  ok_stmt(hstmt, SQLRowCount(hstmt, &nlen));
+  is_num(nlen, 1);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLExecDirect(hstmt,"DELETE FROM t_setpos_position WHERE col2 = 'updated'",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM t_setpos_position");
 
-    rc = SQLRowCount(hstmt,&nlen);
-    mystmt(hstmt,rc);
-    fprintf(stdout,"total rows affceted:%d\n",nlen);
-    my_assert(nlen == 1);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 200);
+  is_str(my_fetch_str(hstmt, szData, 2), "MySQL2", 6);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 300);
+  is_str(my_fetch_str(hstmt, szData, 2), "MySQL3", 6);
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
-    rc = tmysql_exec(hstmt,"select * from t_setpos_position");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    my_assert(2 == myresult(hstmt));
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_setpos_position");
 
   return OK;
 }
