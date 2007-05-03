@@ -336,8 +336,8 @@ void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
       printf("# [%6s] %*s in %s on line %d\n",
              sqlstate, length, message, file, line);
     else
-      printf("# Did not get expected diagnostics from SQLGetDiagRec()"
-             " in file %s on line %d\n", file, line);
+      printf("# Did not get expected diagnostics from SQLGetDiagRec() = %d"
+             " in file %s on line %d\n", drc, file, line);
   }
 }
 
