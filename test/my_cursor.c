@@ -35,6 +35,8 @@ DECLARE_TEST(my_positioned_cursor)
   ok_sql(hstmt, "INSERT INTO my_demo_cursor VALUES (0,'MySQL0'),(1,'MySQL1'),"
          "(2,'MySQL2'),(3,'MySQL3'),(4,'MySQL4')");
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
   ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                 (SQLPOINTER)SQL_CURSOR_DYNAMIC,0));
 
