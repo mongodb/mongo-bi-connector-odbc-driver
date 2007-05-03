@@ -1686,137 +1686,102 @@ DECLARE_TEST(tmysql_pos_update_ex1)
 
 DECLARE_TEST(tmysql_pos_update_ex2)
 {
-    SQLRETURN rc;
-    SQLHSTMT hstmt1;
-    SQLUINTEGER pcrow;
-    SQLUSMALLINT rgfRowStatus;
-    SQLCHAR cursor[30],sql[100],data[]="updated";
+  SQLHSTMT hstmt1;
+  SQLUINTEGER pcrow;
+  SQLUSMALLINT rgfRowStatus;
+  SQLCHAR cursor[30], sql[255], data[]= "updated";
 
-    rc = SQLAllocStmt(hdbc,&hstmt1);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_updex2");
+  ok_sql(hstmt, "CREATE TABLE t_pos_updex2 (a INT NOT NULL, b VARCHAR(3),"
+         "c INT NOT NULL, PRIMARY KEY(a,c))");
+  ok_sql(hstmt, "INSERT INTO t_pos_updex2 VALUES (10,'venu',1),(20,'MySQL',2)");
 
-    tmysql_exec(hstmt,"drop table t_pos_updex");
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = tmysql_exec(hstmt,"create table t_pos_updex(col1 int NOT NULL, col2 varchar(30), col3 int NOT NULL,primary key(col1,col3))");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt,  "SELECT a, b FROM t_pos_updex2");
 
-    rc = tmysql_exec(hstmt,"insert into t_pos_updex values(100,'venu',1)");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_ABSOLUTE, 2, &pcrow,
+                                  &rgfRowStatus));
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
 
-    rc = tmysql_exec(hstmt,"insert into t_pos_updex values(200,'MySQL',2)");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLGetCursorName(hstmt, cursor, sizeof(cursor), NULL));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_con(hdbc, SQLAllocStmt(hdbc, &hstmt1));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                   SQL_CHAR, 0, 0, data, sizeof(data), NULL));
 
-    rc = tmysql_exec(hstmt,"select col1,col2 from t_pos_updex");
-    mystmt(hstmt,rc);
+  sprintf((char *)sql,
+          "UPDATE t_pos_updex2 SET a = 999, b = ? WHERE CURRENT OF %s", cursor);
 
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,2,&pcrow,&rgfRowStatus);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt1, SQLExecDirect(hstmt1, sql, SQL_NTS));
 
-    rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt1, SQLRowCount(hstmt1, &pcrow));
+  is_num(pcrow, 1);
 
-    rc = SQLBindParameter(hstmt1,1,SQL_PARAM_INPUT,SQL_C_CHAR,SQL_CHAR,0,0,data,20,NULL);
-    mystmt(hstmt1,rc);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
 
-    rc = SQLGetCursorName(hstmt,cursor,30,NULL);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    sprintf(sql,"UPDATE t_pos_updex SET col1= 999, col2 = ? WHERE CURRENT OF %s",cursor);
+  ok_sql(hstmt, "SELECT * FROM t_pos_updex2");
 
-    rc = SQLExecDirect(hstmt1,sql,SQL_NTS);
-    mystmt(hstmt1,rc);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 10);
+  is_str(my_fetch_str(hstmt, sql, 2), "venu", 4);
+  is_num(my_fetch_int(hstmt, 3), 1);
 
-    SQLNumResultCols(hstmt1,&rgfRowStatus);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 999);
+  is_str(my_fetch_str(hstmt, sql, 2), "updated", 7);
+  is_num(my_fetch_int(hstmt, 3), 1);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    rc = SQLFreeStmt(hstmt1,SQL_CLOSE);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = tmysql_exec(hstmt,"select * from t_pos_updex");
-    mystmt(hstmt,rc);
-
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-    {
-        SQLCHAR szData[20];
-        my_assert(999 == my_fetch_int(hstmt,1));
-        my_assert(!strcmp("updated",my_fetch_str(hstmt,szData,2)));
-    }
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    SQLFreeStmt(hstmt1,SQL_UNBIND);
-    SQLFreeStmt(hstmt1,SQL_RESET_PARAMS);
-    rc = SQLFreeStmt(hstmt1,SQL_DROP);
-    mystmt(hstmt1,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_updex2");
 
   return OK;
 }
 
+
 DECLARE_TEST(tmysql_pos_update_ex3)
 {
-    SQLRETURN rc;
-    SQLHSTMT hstmt1;
-    SQLUINTEGER pcrow;
-    SQLCHAR cursor[30],sql[100];
-    SQLUSMALLINT rgfRowStatus;
+  SQLHSTMT hstmt1;
+  SQLUINTEGER pcrow;
+  SQLUSMALLINT rgfRowStatus;
+  SQLCHAR cursor[30], sql[255], data[]= "updated";
 
-    rc = SQLAllocStmt(hdbc,&hstmt1);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_updex3");
+  ok_sql(hstmt, "CREATE TABLE t_pos_updex3 (a INT NOT NULL PRIMARY KEY,"
+        " b VARCHAR(3))");
+  ok_sql(hstmt, "INSERT INTO t_pos_updex3 VALUES (100,'venu'),(200,'MySQL')");
 
-    tmysql_exec(hstmt,"drop table t_pos_updex");
-    rc = tmysql_exec(hstmt,"create table t_pos_updex(col1 int NOT NULL primary key, col2 varchar(30))");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = tmysql_exec(hstmt,"insert into t_pos_updex values(100,'venu')");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt,  "SELECT a, b FROM t_pos_updex3");
 
-    rc = tmysql_exec(hstmt,"insert into t_pos_updex values(200,'MySQL')");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_ABSOLUTE, 2, &pcrow,
+                                  &rgfRowStatus));
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLGetCursorName(hstmt, cursor, sizeof(cursor), NULL));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_con(hdbc, SQLAllocStmt(hdbc, &hstmt1));
 
-    rc = tmysql_exec(hstmt,"select * from t_pos_updex");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                   SQL_CHAR, 0, 0, data, sizeof(data), NULL));
 
+  sprintf((char *)sql,
+          "UPDATE t_pos_updex3 SET a = 999, b = ? WHERE CURRENT OF %s", cursor);
 
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,2,&pcrow,&rgfRowStatus);
-    mystmt(hstmt,rc);
+  expect_stmt(hstmt1, SQLExecDirect(hstmt1, sql, SQL_NTS), SQL_ERROR);
 
-    rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
 
-    rc = SQLGetCursorName(hstmt,cursor,30,NULL);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    sprintf(sql,"UPDATE t_pos_updex SET col1= 999, col2 = ? WHERE CURRENT OF %s",cursor);
-
-    rc = SQLExecDirect(hstmt1,sql,SQL_NTS);
-    mystmt_err(hstmt1,rc == SQL_ERROR,rc);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    SQLFreeStmt(hstmt1,SQL_UNBIND);
-    SQLFreeStmt(hstmt1,SQL_RESET_PARAMS);
-    rc = SQLFreeStmt(hstmt1,SQL_DROP);
-    mystmt(hstmt1,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_updex3");
 
   return OK;
 }
@@ -1824,77 +1789,44 @@ DECLARE_TEST(tmysql_pos_update_ex3)
 
 DECLARE_TEST(tmysql_pos_update_ex4)
 {
-    SQLRETURN rc;
-    SQLHSTMT hstmt1;
-    SQLUINTEGER pcrow;
-    SQLCHAR cursor[30],sql[100],data[]="venu";
-    SQLUSMALLINT rgfRowStatus;
+  SQLUINTEGER pcrow;
+  SQLCHAR data[]= "venu", szData[20];
+  SQLUSMALLINT rgfRowStatus;
 
-    rc = SQLAllocStmt(hdbc,&hstmt1);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_updex4");
+  ok_sql(hstmt, "CREATE TABLE t_pos_updex4 (a VARCHAR(20) NOT NULL,"
+         "b VARCHAR(20) NOT NULL, c VARCHAR(5), PRIMARY KEY (b))");
+  ok_sql(hstmt, "INSERT INTO t_pos_updex4 (a,b) VALUES ('Monty','Widenius')");
 
-    tmysql_exec(hstmt,"drop table t_pos_updex4");
-    rc = tmysql_exec(hstmt,"create table t_pos_updex4( name varchar(20) not null, surname varchar(20) not null,  addresss varchar(50), primary key(surname ))");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = tmysql_exec(hstmt,"insert into t_pos_updex4(name, surname) values('Bill', 'Gates')");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM t_pos_updex4");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_ABSOLUTE, 1, &pcrow,
+                                  &rgfRowStatus));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
 
-    rc = tmysql_exec(hstmt,"select * from t_pos_updex4");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, data, sizeof(data), NULL));
 
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,1,&pcrow,&rgfRowStatus);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
 
-    rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLRowCount(hstmt, &pcrow));
+  is_num(pcrow, 1);
 
-    rc = SQLBindCol(hstmt,1,SQL_C_CHAR,data,20,NULL);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLGetCursorName(hstmt,cursor,30,NULL);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT name FROM t_pos_updex4");
 
-    sprintf(sql,"UPDATE t_pos_updex4 SET name = 'venu' WHERE CURRENT OF %s",cursor);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, szData, 1), "venu", 4);
 
-    rc = SQLExecDirect(hstmt1,sql,SQL_NTS);
-    mystmt(hstmt1,rc);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
-    /*rc = SQLSetPos(hstmt,1,SQL_UPDATE,SQL_LOCK_NO_CHANGE);
-      mystmt(hstmt,rc);*/
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    rc = SQLFreeStmt(hstmt1,SQL_CLOSE);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = tmysql_exec(hstmt,"select name from t_pos_updex4");
-    mystmt(hstmt,rc);
-
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-    {
-        SQLCHAR szData[20];
-        my_assert(!strcmp("venu",my_fetch_str(hstmt,szData,1)));
-    }
-
-    SQLFreeStmt(hstmt,SQL_UNBIND);
-    SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    SQLFreeStmt(hstmt1,SQL_UNBIND);
-    SQLFreeStmt(hstmt1,SQL_RESET_PARAMS);
-    rc = SQLFreeStmt(hstmt1,SQL_DROP);
-    mystmt(hstmt1,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_updex4");
 
   return OK;
 }
