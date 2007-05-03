@@ -181,12 +181,16 @@ DECLARE_TEST(t_nativesql)
 }
 
 
-DECLARE_TEST(t_max_con)
+/**
+  This just tests that we can connect, disconnect and connect a few times
+  without anything blowing up.
+*/
+DECLARE_TEST(t_reconnect)
 {
   SQLHDBC hdbc1;
   long i;
 
-  for (i= 0; i < 200; i++)
+  for (i= 0; i < 10; i++)
   {
     ok_env(henv, SQLAllocConnect(henv, &hdbc1));
     ok_con(hdbc1, SQLConnect(hdbc1, mydsn, SQL_NTS, myuid, SQL_NTS,
@@ -204,7 +208,7 @@ BEGIN_TESTS
   ADD_TEST(t_max_select)
   ADD_TEST(t_basic)
   ADD_TEST(t_nativesql)
-  ADD_TEST(t_max_con)
+  ADD_TEST(t_reconnect)
 END_TESTS
 
 
