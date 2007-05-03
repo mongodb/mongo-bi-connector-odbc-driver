@@ -459,8 +459,6 @@ DECLARE_TEST(t_setpos_position)
                                 (SQLPOINTER)SQL_CONCUR_ROWVER, 0));
   ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                 (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
-  ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_SIMULATE_CURSOR,
-                                  SQL_SC_NON_UNIQUE));
 
   ok_sql(hstmt, "SELECT * FROM t_setpos_position");
 
