@@ -1,7 +1,5 @@
 3.51.15
 
-  Functionality added or changed:
-
   Bugs fixed:
   * SQLGetFunctions() reported that the driver supported SQLProcedureColumns(),
     even though it does not. (Bug #27591)
