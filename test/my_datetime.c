@@ -635,7 +635,11 @@ DECLARE_TEST(t_bug12520)
   is_str(datetime, "0000-00-00 00:00:00", 19);
   is_num(my_time_cb, SQL_NULL_DATA);
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug12520");
+
   return OK;
 }
 
