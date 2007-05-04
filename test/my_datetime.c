@@ -605,6 +605,41 @@ DECLARE_TEST(t_time1)
 }
 
 
+/**
+ Bug #12520: DATETIME Default Value 0000-00-00 00:00:00 not returning
+ correct thru ODBC
+*/
+DECLARE_TEST(t_bug12520)
+{
+  SQLINTEGER my_time_cb;
+  SQL_TIMESTAMP_STRUCT my_time_ts;
+  SQLLEN len;
+  SQLCHAR datetime[50];
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug12520");
+  ok_sql(hstmt,
+         "CREATE TABLE t_bug12520 (a DATETIME DEFAULT '0000-00-00 00:00',"
+         "b DATETIME DEFAULT '0000-00-00 00:00', c INT)");
+
+  ok_sql(hstmt, "INSERT INTO t_bug12520 (c) VALUES (1)");
+
+  ok_sql(hstmt, "SELECT a, b FROM t_bug12520");
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, datetime, sizeof(datetime),
+                            &len));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_TIMESTAMP, &my_time_ts, NULL,
+                            &my_time_cb));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_str(datetime, "0000-00-00 00:00:00", 19);
+  is_num(my_time_cb, SQL_NULL_DATA);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug12520");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_ts)
   ADD_TEST(t_tstotime)
@@ -612,6 +647,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug25846)
   ADD_TEST(t_time)
   ADD_TEST(t_time1)
+  ADD_TEST(t_bug12520)
 END_TESTS
 
 
