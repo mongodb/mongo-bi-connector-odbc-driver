@@ -687,7 +687,7 @@ DECLARE_TEST(t_text_fetch)
 }
 
 
-/*
+/**
   Test retrieving the length of a field with a non-null zero-length buffer.
   This is how ADO does it for long-type fields.
 */
@@ -715,6 +715,32 @@ DECLARE_TEST(getdata_lenonly)
 }
 
 
+/**
+  Bug #9781: returned SQL_Type on WKB query
+*/
+DECLARE_TEST(t_bug9781)
+{
+  SQLSMALLINT name_length, data_type, decimal_digits, nullable;
+  SQLCHAR column_name[SQL_MAX_COLUMN_NAME_LEN];
+  SQLULEN column_size;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug9781");
+  ok_sql(hstmt, "CREATE TABLE t_bug9781 (g GEOMETRY)");
+  ok_sql(hstmt, "INSERT INTO t_bug9781 VALUES (GeomFromText('POINT(0 0)'))");
+
+  ok_sql(hstmt, "SELECT AsBinary(g) FROM t_bug9781");
+
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 1, column_name, sizeof(column_name),
+                                &name_length, &data_type, &column_size,
+                                &decimal_digits, &nullable));
+
+  is_num(data_type, SQL_LONGVARBINARY);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug9781");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_blob)
   ADD_TEST(t_1piecewrite2)
@@ -725,6 +751,7 @@ BEGIN_TESTS
   ADD_TEST(t_blob_bug)
   ADD_TEST(t_text_fetch)
   ADD_TEST(getdata_lenonly)
+  ADD_TEST(t_bug9781)
 END_TESTS
 
 
