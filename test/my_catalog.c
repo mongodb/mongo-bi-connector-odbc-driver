@@ -591,26 +591,6 @@ DECLARE_TEST(my_tablepriv_data)
 }
 
 
-DECLARE_TEST(my_column_priv)
-{
-    SQLRETURN   rc;
-
-    my_colpriv_init(hdbc, hstmt);
-
-    rc = SQLColumnPrivileges(hstmt,NULL,0,
-                             NULL,0,NULL,0,
-                             NULL,0);
-    mystmt(hstmt,rc);
-
-    my_print_non_format_result(hstmt);
-
-    SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-
-  return OK;
-}
-
-
 DECLARE_TEST(my_colpriv)
 {
   ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
@@ -1187,7 +1167,6 @@ BEGIN_TESTS
   ADD_TEST(my_table_dbs)
   ADD_TEST(my_tablepriv)
   ADD_TEST(my_tablepriv_data)
-  ADD_TEST(my_column_priv)
   ADD_TEST(my_colpriv)
   ADD_TEST(t_sqlprocedures)
   ADD_TEST(t_catalog)
