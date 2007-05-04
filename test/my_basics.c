@@ -208,6 +208,7 @@ DECLARE_TEST(t_sqlgetfunctions)
   SQLUSMALLINT supported= SQL_TRUE;
   ok_con(hdbc, SQLGetFunctions(hdbc, SQL_API_SQLPROCEDURECOLUMNS, &supported));
   is_num(supported, SQL_FALSE);
+  return OK;
 }
 
 
