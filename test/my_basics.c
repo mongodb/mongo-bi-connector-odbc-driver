@@ -39,14 +39,14 @@ DECLARE_TEST(my_basics)
   ok_sql(hstmt, "UPDATE t_basic SET name = 'bop' WHERE id = 2");
 
   /* get the rows affected by update statement */
-  ok_stmt(hstmt, SQLRowCount(hstmt,&nRowCount));
+  ok_stmt(hstmt, SQLRowCount(hstmt, &nRowCount));
   is_num(nRowCount, 1);
 
   /* delete third row */
   ok_sql(hstmt, "DELETE FROM t_basic WHERE id = 3");
 
   /* get the rows affected by delete statement */
-  ok_stmt(hstmt, SQLRowCount(hstmt,&nRowCount));
+  ok_stmt(hstmt, SQLRowCount(hstmt, &nRowCount));
   is_num(nRowCount, 1);
 
   /* alter the table 't_basic' to 't_basic_2' */
@@ -112,8 +112,8 @@ DECLARE_TEST(t_max_select)
 /* Simple function to do basic ops with MySQL */
 DECLARE_TEST(t_basic)
 {
-  SQLINTEGER nRowCount=0, nInData= 1, nOutData;
-  char szOutData[31];
+  SQLINTEGER nRowCount= 0, nInData= 1, nOutData;
+  SQLCHAR szOutData[31];
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_myodbc");
 
@@ -146,14 +146,14 @@ DECLARE_TEST(t_basic)
   ok_sql(hstmt, "SELECT * FROM t_myodbc");
 
   ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &nOutData, 0, NULL));
-  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, &szOutData, sizeof(szOutData),
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szOutData, sizeof(szOutData),
                             NULL));
 
   nInData= 10;
   while (SQLFetch(hstmt) == SQL_SUCCESS)
   {
-    nRowCount++;
     is_num(nOutData, nInData);
+    is_str(szOutData, nRowCount++ ? "param" : "direct", 5);
     nInData += 10;
   }
 
