@@ -298,7 +298,7 @@ static SQLRETURN update_status(STMT FAR *stmt, SQLUSMALLINT status)
         return set_error(stmt,MYERR_01S04,NULL,0);
 
     /*
-      This conly comes from SQLExecute(), not SQLSetPos() or
+      This only comes from SQLExecute(), not SQLSetPos() or
       SQLBulkOperations(), so we don't have to worry about the row status
       set by SQLExtendedFetch().
     */
