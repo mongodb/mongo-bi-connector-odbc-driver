@@ -297,6 +297,11 @@ static SQLRETURN update_status(STMT FAR *stmt, SQLUSMALLINT status)
     else if ( stmt->affected_rows > 1 )
         return set_error(stmt,MYERR_01S04,NULL,0);
 
+    /*
+      This conly comes from SQLExecute(), not SQLSetPos() or
+      SQLBulkOperations(), so we don't have to worry about the row status
+      set by SQLExtendedFetch().
+    */
     else if ( stmt->stmt_options.rowStatusPtr )
     {
         SQLUSMALLINT *ptr= stmt->stmt_options.rowStatusPtr+stmt->current_row;
@@ -317,24 +322,34 @@ static SQLRETURN update_status(STMT FAR *stmt, SQLUSMALLINT status)
 static SQLRETURN update_setpos_status(STMT FAR *stmt, SQLINTEGER irow,
                                       my_ulonglong rows, SQLUSMALLINT status)
 {
-    stmt->affected_rows= stmt->dbc->mysql.affected_rows= rows;
+  stmt->affected_rows= stmt->dbc->mysql.affected_rows= rows;
 
-    if ( irow && rows > 1 )
-        return set_error(stmt,MYERR_01S04,NULL,0);
+  if (irow && rows > 1)
+      return set_error(stmt,MYERR_01S04,NULL,0);
 
-    /*
-      If all rows successful, then only update status..else
-      don't update...just for the sake of performance..
-    */
-    else if ( stmt->stmt_options.rowStatusPtr )
-    {
-        SQLUSMALLINT *ptr= stmt->stmt_options.rowStatusPtr;
-        SQLUSMALLINT *end= ptr+rows;
+  /*
+    If all rows successful, then only update status..else
+    don't update...just for the sake of performance..
+  */
+  if (stmt->stmt_options.rowStatusPtr)
+  {
+    SQLUSMALLINT *ptr= stmt->stmt_options.rowStatusPtr;
+    SQLUSMALLINT *end= ptr+rows;
 
-        for ( ; ptr != end ; ptr++ )
-            *ptr= status;
-    }
-    return SQL_SUCCESS;
+    for ( ; ptr != end; ptr++)
+        *ptr= status;
+  }
+
+  if (stmt->stmt_options.rowStatusPtr_ex)
+  {
+    SQLUSMALLINT *ptr= stmt->stmt_options.rowStatusPtr_ex;
+    SQLUSMALLINT *end= ptr+rows;
+
+    for ( ; ptr != end; ptr++)
+        *ptr= status;
+  }
+
+  return SQL_SUCCESS;
 }
 
 
@@ -1245,10 +1260,15 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
     stmt->affected_rows= stmt->dbc->mysql.affected_rows= insert_count;
 
     /* update row status pointer(s) */
-    if ( stmt->stmt_options.rowStatusPtr )
+    if (stmt->stmt_options.rowStatusPtr)
     {
-        for ( count= insert_count; count--; )
-            stmt->stmt_options.rowStatusPtr[count]= SQL_ROW_ADDED;
+      for (count= insert_count; count--; )
+        stmt->stmt_options.rowStatusPtr[count]= SQL_ROW_ADDED;
+    }
+    if (stmt->stmt_options.rowStatusPtr_ex)
+    {
+      for (count= insert_count; count--; )
+        stmt->stmt_options.rowStatusPtr_ex[count]= SQL_ROW_ADDED;
     }
 
     return SQL_SUCCESS;
@@ -1415,6 +1435,8 @@ static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLUSMALLINT irow, SQLUSM
                 */
                 sqlRet= my_SQLExtendedFetch(hstmt, SQL_FETCH_ABSOLUTE, irow,
                                             stmt->stmt_options.rowsFetchedPtr,
+                                            stmt->stmt_options.rowStatusPtr_ex ?
+                                            stmt->stmt_options.rowStatusPtr_ex :
                                             stmt->stmt_options.rowStatusPtr, 0);
                 break;
             }

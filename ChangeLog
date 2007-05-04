@@ -3,6 +3,9 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * The row status array given to SQLExtendedFetch() was being stored
+    as SQL_ATTR_ROW_STATUS_PTR, which could cause it to be used when it
+    should not.
   * SQLSetPos() would not update a row unless all columns were bound,
     but it should only require that at least one column is bound and
     not set to be ignored.

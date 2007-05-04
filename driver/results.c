@@ -1419,13 +1419,16 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                 stmt->result_lengths= mysql_fetch_lengths(stmt->result);
             stmt->current_values= values;
         }
-        if ( rgfRowStatus )
-            rgfRowStatus[i]= SQL_ROW_SUCCESS;
 
-        if ( upd_status && stmt->stmt_options.rowStatusPtr )
-            stmt->stmt_options.rowStatusPtr[i]= SQL_ROW_SUCCESS;
+        if (rgfRowStatus)
+          rgfRowStatus[i]= SQL_ROW_SUCCESS;
+        /*
+          No need to update rowStatusPtr_ex, it's the same as rgfRowStatus.
+        */
+        if (upd_status && stmt->stmt_options.rowStatusPtr)
+          stmt->stmt_options.rowStatusPtr[i]= SQL_ROW_SUCCESS;
 
-        if ( stmt->bind )             /* Should always be true */
+        if (stmt->bind)             /* Should always be true */
         {
             ulong *lengths= stmt->result_lengths;
             BIND *bind,*end;
@@ -1479,6 +1482,9 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
         for ( ; i < stmt->stmt_options.rows_in_set ; i++ )
             rgfRowStatus[i]= SQL_ROW_NOROW;
 
+    /*
+      No need to update rowStatusPtr_ex, it's the same as rgfRowStatus.
+    */
     if ( upd_status && stmt->stmt_options.rowStatusPtr )
         for ( ; i < stmt->stmt_options.rows_in_set ; i++ )
             stmt->stmt_options.rowStatusPtr[i]= SQL_ROW_NOROW;
@@ -1520,8 +1526,7 @@ SQLRETURN SQL_API SQLExtendedFetch( SQLHSTMT        hstmt,
 
     MYODBCDbgEnter;
 
-    if (!options->rowStatusPtr && rgfRowStatus)
-      options->rowStatusPtr= rgfRowStatus;
+    options->rowStatusPtr_ex= rgfRowStatus;
 
     MYODBCDbgReturnReturn( my_SQLExtendedFetch( hstmt,
                                 fFetchType,
@@ -1548,6 +1553,8 @@ SQLRETURN SQL_API SQLFetchScroll( SQLHSTMT      StatementHandle,
 
     MYODBCDbgEnter;
 
+    options->rowStatusPtr_ex= NULL;
+
     result= my_SQLExtendedFetch( StatementHandle, 
                                  FetchOrientation,
                                  FetchOffset,
@@ -1569,6 +1576,8 @@ SQLRETURN SQL_API SQLFetch(SQLHSTMT StatementHandle)
     STMT_OPTIONS *options= &((STMT FAR *)StatementHandle)->stmt_options;
 
     MYODBCDbgEnter;
+
+    options->rowStatusPtr_ex= NULL;
 
     result= my_SQLExtendedFetch(StatementHandle, SQL_FETCH_NEXT,
                                 0,

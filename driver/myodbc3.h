@@ -179,6 +179,7 @@ typedef struct stmt_options
                   *bind_offset;
   SQLUSMALLINT	  *paramStatusPtr;
   SQLUSMALLINT	  *rowStatusPtr;
+  SQLUSMALLINT	  *rowStatusPtr_ex; /* set by SQLExtendedFetch */
   SQLUSMALLINT	  *rowOperationPtr;
   my_bool	   retrieve_data;
 } STMT_OPTIONS;

@@ -378,6 +378,7 @@ void odbc_reset_stmt_options(STMT_OPTIONS *options)
     reset_ptr(options->rowOperationPtr);
     reset_ptr(options->rowsFetchedPtr);
     reset_ptr(options->rowStatusPtr);
+    reset_ptr(options->rowStatusPtr_ex);
 }
 
 /*
