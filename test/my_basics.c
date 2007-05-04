@@ -203,15 +203,6 @@ DECLARE_TEST(t_reconnect)
 }
 
 
-DECLARE_TEST(t_sqlgetfunctions)
-{
-  SQLUSMALLINT supported= SQL_TRUE;
-  ok_con(hdbc, SQLGetFunctions(hdbc, SQL_API_SQLPROCEDURECOLUMNS, &supported));
-  is_num(supported, SQL_FALSE);
-  return OK;
-}
-
-
 /**
   Bug #19823: SQLGetConnectAttr with SQL_ATTR_CONNECTION_TIMEOUT works
   incorrectly
@@ -256,7 +247,6 @@ BEGIN_TESTS
   ADD_TEST(t_basic)
   ADD_TEST(t_nativesql)
   ADD_TEST(t_reconnect)
-  ADD_TEST(t_sqlgetfunctions)
   ADD_TEST(t_bug19823)
 END_TESTS
 

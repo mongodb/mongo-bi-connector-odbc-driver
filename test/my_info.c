@@ -114,11 +114,24 @@ DECLARE_TEST(t_msdev_bug)
 }
 
 
+/**
+  Bug #27591: SQLProcedureColumns ]Driver doesn't support this yet
+*/
+DECLARE_TEST(t_bug27591)
+{
+  SQLUSMALLINT supported= SQL_TRUE;
+  ok_con(hdbc, SQLGetFunctions(hdbc, SQL_API_SQLPROCEDURECOLUMNS, &supported));
+  is_num(supported, SQL_FALSE);
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_gettypeinfo)
   ADD_TEST(t_getinfo)
   ADD_TEST(t_stmt_attr_status)
   ADD_TEST(t_msdev_bug)
+  ADD_TEST(t_bug27591)
 END_TESTS
 
 
