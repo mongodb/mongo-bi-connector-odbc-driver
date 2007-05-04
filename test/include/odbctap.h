@@ -145,6 +145,7 @@ int main(int argc, char **argv) \
     (void)SQLFreeStmt(hstmt, SQL_UNBIND); \
     (void)SQLFreeStmt(hstmt, SQL_RESET_PARAMS); \
     (void)SQLFreeStmt(hstmt, SQL_CLOSE); \
+    (void)SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 1); \
     printf("%s %d %s %s\n", rc == OK ? "ok" : "not ok", i + 1, \
            tests[i].expect == FAIL ? "# TODO" : "-", \
            tests[i].name); \

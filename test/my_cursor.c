@@ -260,83 +260,60 @@ DECLARE_TEST(t_bug5853)
 
 DECLARE_TEST(t_setpos_del_all)
 {
-  SQLRETURN rc;
   SQLINTEGER nData[4];
-  SQLLEN nlen;
   SQLCHAR szData[4][10];
-  SQLUSMALLINT rgfRowStatus;
+  SQLUSMALLINT rgfRowStatus[4];
+  SQLLEN nlen;
 
-    tmysql_exec(hstmt,"drop table t_sp_del_all");
-    rc = tmysql_exec(hstmt,"create table t_sp_del_all(col1 int not null primary key,\
-                                                      col2 varchar(20))");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_setpos_del_all");
+  ok_sql(hstmt, "CREATE TABLE t_setpos_del_all (a INT NOT NULL PRIMARY KEY,"
+         "b VARCHAR(20))");
+  ok_sql(hstmt, "INSERT INTO t_setpos_del_all VALUES (100,'MySQL1'),"
+         "(200,'MySQL2'),(300,'MySQL3'),(400,'MySQL4')");
 
-    rc = tmysql_exec(hstmt,"insert into t_sp_del_all values(100,'MySQL1')");
-    mystmt(hstmt,rc);
-    rc = tmysql_exec(hstmt,"insert into t_sp_del_all values(200,'MySQL2')");
-    mystmt(hstmt,rc);
-    rc = tmysql_exec(hstmt,"insert into t_sp_del_all values(300,'MySQL3')");
-    mystmt(hstmt,rc);
-    rc = tmysql_exec(hstmt,"insert into t_sp_del_all values(400,'MySQL4')");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"venu", SQL_NTS));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 4));
 
-    rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM t_setpos_del_all ORDER BY a ASC");
 
-    rc = SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 4);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, nData, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szData, sizeof(szData[0]),
+                            NULL));
 
-    rc = tmysql_exec(hstmt,"select * from t_sp_del_all order by col1 asc");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_FIRST, 1, NULL,
+                                  rgfRowStatus));
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
-    mystmt(hstmt,rc);
+  is_num(nData[0], 100);
+  is_str(szData[0], "MySQL1", 6);
+  is_num(nData[1], 200);
+  is_str(szData[1], "MySQL2", 6);
+  is_num(nData[2], 300);
+  is_str(szData[2], "MySQL3", 6);
+  is_num(nData[3], 400);
+  is_str(szData[3], "MySQL4", 6);
 
-    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,0,NULL);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
 
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_FIRST,1,NULL,&rgfRowStatus);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 0, SQL_DELETE, SQL_LOCK_NO_CHANGE));
 
-    fprintf(stdout," row1 : %d, %s\n",nData[0],szData[0]);
-    fprintf(stdout," row2 : %d, %s\n",nData[1],szData[1]);
-    fprintf(stdout," row3 : %d, %s\n",nData[2],szData[2]);
-    fprintf(stdout," row4 : %d, %s\n",nData[3],szData[3]);
+  ok_stmt(hstmt, SQLRowCount(hstmt, &nlen));
+  is_num(nlen, 4);
 
-    rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLSetPos(hstmt,0,SQL_DELETE,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM t_setpos_del_all");
 
-    rc = SQLRowCount(hstmt,&nlen);
-    mystmt(hstmt,rc);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
-    fprintf(stdout," total rows deleted: %d\n",nlen);
-    myassert(nlen == 4);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 1));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = tmysql_exec(hstmt,"select * from t_sp_del_all");
-    mystmt(hstmt,rc);
-
-    my_assert(0 == myresult(hstmt));
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 1);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_setpos_del_all");
 
   return OK;
 }
