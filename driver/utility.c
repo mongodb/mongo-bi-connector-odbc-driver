@@ -557,6 +557,11 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
             if ( buff ) strmov(buff,"char");
             return SQL_CHAR;
 
+        /*
+          MYSQL_TYPE_VARCHAR is never actually sent, this just silences
+          a compiler warning.
+        */
+        case MYSQL_TYPE_VARCHAR:
         case MYSQL_TYPE_VAR_STRING:
               /* 
               TODO: field->length should be replaced by max(length, maxlength)
