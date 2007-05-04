@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * SQLGetFunctions() reported that the driver supported SQLProcedureColumns(),
+    even though it does not. (Bug #27591)
   * The row status array given to SQLExtendedFetch() was being stored
     as SQL_ATTR_ROW_STATUS_PTR, which could cause it to be used when it
     should not.

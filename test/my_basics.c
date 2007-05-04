@@ -203,12 +203,21 @@ DECLARE_TEST(t_reconnect)
 }
 
 
+DECLARE_TEST(t_sqlgetfunctions)
+{
+  SQLUSMALLINT supported= SQL_TRUE;
+  ok_con(hdbc, SQLGetFunctions(hdbc, SQL_API_SQLPROCEDURECOLUMNS, &supported));
+  is_num(supported, SQL_FALSE);
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
   ADD_TEST(t_basic)
   ADD_TEST(t_nativesql)
   ADD_TEST(t_reconnect)
+  ADD_TEST(t_sqlgetfunctions)
 END_TESTS
 
 
