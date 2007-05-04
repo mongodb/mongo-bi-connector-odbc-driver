@@ -212,6 +212,44 @@ DECLARE_TEST(t_sqlgetfunctions)
 }
 
 
+/**
+  Bug #19823: SQLGetConnectAttr with SQL_ATTR_CONNECTION_TIMEOUT works
+  incorrectly
+*/
+DECLARE_TEST(t_bug19823)
+{
+  SQLHDBC hdbc1;
+  SQLINTEGER timeout;
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+
+  ok_con(hdbc1, SQLSetConnectAttr(hdbc1, SQL_ATTR_LOGIN_TIMEOUT,
+                                  (SQLPOINTER)17, 0));
+  ok_con(hdbc1, SQLSetConnectAttr(hdbc1, SQL_ATTR_CONNECTION_TIMEOUT,
+                                  (SQLPOINTER)12, 0));
+
+  ok_con(hdbc1, SQLConnect(hdbc1, mydsn, SQL_NTS, myuid, SQL_NTS,
+                           mypwd, SQL_NTS));
+
+  ok_con(hdbc1, SQLGetConnectAttr(hdbc1, SQL_ATTR_LOGIN_TIMEOUT,
+                                  &timeout, 0, NULL));
+  is_num(timeout, 17);
+
+  /*
+    SQL_ATTR_CONNECTION_TIMEOUT is always 0, because the driver does not
+    support it and the driver just silently swallows any value given for it.
+  */
+  ok_con(hdbc1, SQLGetConnectAttr(hdbc1, SQL_ATTR_CONNECTION_TIMEOUT,
+                                  &timeout, 0, NULL));
+  is_num(timeout, 0);
+
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -219,6 +257,7 @@ BEGIN_TESTS
   ADD_TEST(t_nativesql)
   ADD_TEST(t_reconnect)
   ADD_TEST(t_sqlgetfunctions)
+  ADD_TEST(t_bug19823)
 END_TESTS
 
 
