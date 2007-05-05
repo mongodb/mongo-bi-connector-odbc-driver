@@ -228,8 +228,6 @@ DECLARE_TEST(t_tstotime1)
 
 DECLARE_TEST(t_bug25846)
 {
-  SQLINTEGER  narg;
-
   SQLSMALLINT          column_count;
   SQLINTEGER           my_time_cb;
   SQLINTEGER           my_date_cb;
@@ -611,9 +609,8 @@ DECLARE_TEST(t_time1)
 */
 DECLARE_TEST(t_bug12520)
 {
-  SQLINTEGER my_time_cb;
   SQL_TIMESTAMP_STRUCT my_time_ts;
-  SQLLEN len;
+  SQLLEN len, my_time_cb;
   SQLCHAR datetime[50];
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug12520");
@@ -627,7 +624,7 @@ DECLARE_TEST(t_bug12520)
 
   ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, datetime, sizeof(datetime),
                             &len));
-  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_TIMESTAMP, &my_time_ts, NULL,
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_TIMESTAMP, &my_time_ts, 0,
                             &my_time_cb));
 
   ok_stmt(hstmt, SQLFetch(hstmt));
