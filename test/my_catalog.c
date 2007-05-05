@@ -593,13 +593,7 @@ DECLARE_TEST(my_tablepriv_data)
 
 DECLARE_TEST(my_colpriv)
 {
-  ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
-                                     "mysql", SQL_NTS, NULL, SQL_NTS,
-                                     NULL, SQL_NTS, NULL, SQL_NTS));
-
-  assert(0 == my_print_non_format_result(hstmt));
-
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  my_colpriv_init(hdbc, hstmt);
 
   ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
                                      NULL, SQL_NTS, NULL, SQL_NTS,
