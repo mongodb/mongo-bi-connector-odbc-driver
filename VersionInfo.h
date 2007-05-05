@@ -20,12 +20,12 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-/* When changing, also change configure.in */
-#define SETUP_VERSION         "3.51.15"
+/* When changing, also change configure.in and driver/myodbc3.def */
+#define SETUP_VERSION         "3.51.16"
 #define DRIVER_VERSION        "0" SETUP_VERSION
 
 #define MYODBC_VERSION        SETUP_VERSION
-#define MYODBC_FILEVER        3,51,15,0
+#define MYODBC_FILEVER        3,51,16,0
 #define MYODBC_PRODUCTVER     MYODBC_FILEVER
-#define MYODBC_STRFILEVER     "3, 51, 15, 0\0"
+#define MYODBC_STRFILEVER     "3, 51, 16, 0\0"
 #define MYODBC_STRPRODUCTVER  MYODBC_STRFILEVER

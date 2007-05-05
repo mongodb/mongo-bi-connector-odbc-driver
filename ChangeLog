@@ -1,4 +1,12 @@
-3.51.15
+3.51.16
+
+  Functionality added or changed:
+
+  Bugs fixed:
+
+----
+
+3.51.15 (04-May-2007)
 
   Bugs fixed:
   * SQLGetFunctions() reported that the driver supported SQLProcedureColumns(),
