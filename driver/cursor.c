@@ -1341,12 +1341,18 @@ static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLUSMALLINT irow, SQLUSM
                 sqlRet= SQL_SUCCESS;
                 stmt->cursor_row= (long)(stmt->current_row+irow);
                 mysql_data_seek(stmt->result,(my_ulonglong)stmt->cursor_row);
-                stmt->current_values= stmt->result->data_cursor->data;
+                stmt->current_values= mysql_fetch_row(stmt->result);
                 stmt->last_getdata_col= (uint)  ~0;; /* reset */
                 if ( stmt->fix_fields )
                     stmt->current_values= (*stmt->fix_fields)(stmt,stmt->current_values);
                 else
                     stmt->result_lengths= mysql_fetch_lengths(stmt->result);
+                /*
+                 The call to mysql_fetch_row() moved stmt->result's internal
+                 cursor, but we don't want that. We seek back to this row
+                 so the MYSQL_RES is in the state we expect.
+                */
+                mysql_data_seek(stmt->result,(my_ulonglong)stmt->cursor_row);
                 pthread_mutex_unlock(&stmt->dbc->lock);
                 break;
             }

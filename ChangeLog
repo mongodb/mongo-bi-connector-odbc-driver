@@ -1,6 +1,8 @@
 3.51.16
 
   Functionality added or changed:
+  * Calls to SQLSetPos() could cause the driver to incorrectly calculate the
+    length of some fields. (Bug #16917)
 
   Bugs fixed:
 

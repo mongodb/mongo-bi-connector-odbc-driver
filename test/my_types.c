@@ -401,12 +401,52 @@ DECLARE_TEST(t_enumset)
 }
 
 
+/**
+ Bug #16917: MyODBC doesn't return ASCII 0 characters for TEXT columns
+*/
+DECLARE_TEST(t_bug16917)
+{
+  SQLCHAR buff[255];
+  SQLLEN  len;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug16917");
+  ok_sql(hstmt, "CREATE TABLE t_bug16917 (a TEXT)");
+  ok_sql(hstmt, "INSERT INTO t_bug16917 VALUES ('a\\0b')");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "SELECT a FROM t_bug16917");
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  /* This SQLSetPos() causes the field lengths to get lost. */
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, buff, 0, &len));
+  is_num(len, 3);
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, buff, sizeof(buff), &len));
+  is_num(buff[0], 'a');
+  is_num(buff[1], 0);
+  is_num(buff[2], 'b');
+  is_num(len, 3);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug16917");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_longlong1)
   ADD_TEST(t_numeric)
   ADD_TEST(t_decimal)
   ADD_TEST(t_bigint)
   ADD_TEST(t_enumset)
+  ADD_TEST(t_bug16917)
 END_TESTS
 
 
