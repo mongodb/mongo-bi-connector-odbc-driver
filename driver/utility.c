@@ -1188,3 +1188,111 @@ my_bool is_minimum_version(const char *server_version,const char *version,
         return TRUE;
     return FALSE;
 }
+
+
+/**
+ Escapes a string that may contain wildcard characters (%, _) and other
+ problematic characters (", ', \n, etc). Like mysql_real_escape_string() but
+ also including % and _.
+
+ @param[in]   mysql         Pointer to MYSQL structure
+ @param[out]  to            Buffer for escaped string
+ @param[in]   to_length     Length of destination buffer, or 0 for "big enough"
+ @param[in]   from          The string to escape
+ @param[in]   length        The length of the string to escape
+
+*/
+ulong myodbc_escape_wildcard(MYSQL *mysql, char *to, ulong to_length,
+                             const char *from, ulong length)
+{
+  CHARSET_INFO *charset_info= mysql->charset;
+  const char *to_start= to;
+  const char *end, *to_end=to_start + (to_length ? to_length-1 : 2*length);
+  my_bool overflow= FALSE;
+#ifdef USE_MB
+  my_bool use_mb_flag= use_mb(charset_info);
+#endif
+  for (end= from + length; from < end; from++)
+  {
+    char escape= 0;
+#ifdef USE_MB
+    int tmp_length;
+    if (use_mb_flag && (tmp_length= my_ismbchar(charset_info, from, end)))
+    {
+      if (to + tmp_length > to_end)
+      {
+        overflow= TRUE;
+        break;
+      }
+      while (tmp_length--)
+	*to++= *from++;
+      from--;
+      continue;
+    }
+    /*
+     If the next character appears to begin a multi-byte character, we
+     escape that first byte of that apparent multi-byte character. (The
+     character just looks like a multi-byte character -- if it were actually
+     a multi-byte character, it would have been passed through in the test
+     above.)
+
+     Without this check, we can create a problem by converting an invalid
+     multi-byte character into a valid one. For example, 0xbf27 is not
+     a valid GBK character, but 0xbf5c is. (0x27 = ', 0x5c = \)
+    */
+    if (use_mb_flag && (tmp_length= my_mbcharlen(charset_info, *from)) > 1)
+      escape= *from;
+    else
+#endif
+    switch (*from) {
+    case 0:				/* Must be escaped for 'mysql' */
+      escape= '0';
+      break;
+    case '\n':				/* Must be escaped for logs */
+      escape= 'n';
+      break;
+    case '\r':
+      escape= 'r';
+      break;
+    case '\\':
+      escape= '\\';
+      break;
+    case '\'':
+      escape= '\'';
+      break;
+    case '"':				/* Better safe than sorry */
+      escape= '"';
+      break;
+    case '_':
+      escape= '_';
+      break;
+    case '%':
+      escape= '%';
+      break;
+    case '\032':			/* This gives problems on Win32 */
+      escape= 'Z';
+      break;
+    }
+    if (escape)
+    {
+      if (to + 2 > to_end)
+      {
+        overflow= TRUE;
+        break;
+      }
+      *to++= '\\';
+      *to++= escape;
+    }
+    else
+    {
+      if (to + 1 > to_end)
+      {
+        overflow= TRUE;
+        break;
+      }
+      *to++= *from;
+    }
+  }
+  *to= 0;
+  return overflow ? (ulong)~0 : (ulong) (to - to_start);
+}

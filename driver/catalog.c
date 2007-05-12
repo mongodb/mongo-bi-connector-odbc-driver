@@ -1849,8 +1849,8 @@ static MYSQL_RES *mysql_table_status(STMT        *stmt,
   if (table && *table)
   {
     to= strmov(to, "LIKE '");
-    /** @todo this is *wrong* -- we need to escape % and _ */
-    to+= mysql_real_escape_string(mysql, to, (char  *)table, table_length);
+    to+= myodbc_escape_wildcard(mysql, to, sizeof(buff) - (to - buff),
+                                (char *)table, table_length);
     to= strmov(to, "'");
   }
 

@@ -1121,11 +1121,16 @@ DECLARE_TEST(t_sqltables)
 
 /**
  Bug #4518: SQLForeignKeys returns too many foreign key
+ Bug #27723: SQLForeignKeys does not escape _ and % in the table name arguments
+
+ The original test case was extended to have a table that would inadvertantly
+ get included because of the poor escaping.
 */
 DECLARE_TEST(t_bug4518)
 {
+  SQLCHAR buff[255];
 
-  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug4518_c, t_bug4518_c2, "
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug4518_c, t_bug4518_c2, t_bug4518ac, "
                 "                     t_bug4518_p");
   ok_sql(hstmt, "CREATE TABLE t_bug4518_p (id INT PRIMARY KEY) ENGINE=InnoDB");
   ok_sql(hstmt, "CREATE TABLE t_bug4518_c (id INT, parent_id INT,"
@@ -1140,15 +1145,28 @@ DECLARE_TEST(t_bug4518)
                 "                              t_bug4518_p(id)"
                 "                            ON DELETE SET NULL)"
                 " ENGINE=InnoDB");
+  ok_sql(hstmt, "CREATE TABLE t_bug4518ac (id INT, parent_id INT,"
+                "                          FOREIGN KEY (parent_id)"
+                "                           REFERENCES"
+                "                             t_bug4518_p(id)"
+                "                           ON DELETE SET NULL)"
+                " ENGINE=InnoDB");
 
   ok_stmt(hstmt, SQLForeignKeys(hstmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
                                 NULL, 0, (SQLCHAR *)"t_bug4518_c", SQL_NTS));
 
-  my_assert(1 == my_print_non_format_result(hstmt));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buff, 3), "t_bug4518_p", 11);
+  is_str(my_fetch_str(hstmt, buff, 4), "id", 2);
+  is_str(my_fetch_str(hstmt, buff, 7), "t_bug4518_c", 11);
+  is_str(my_fetch_str(hstmt, buff, 8), "parent_id", 9);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
 
-  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug4518_c, t_bug4518_c2, t_bug4518_p");
+  ok_sql(hstmt,
+         "DROP TABLE t_bug4518_c, t_bug4518_c2, t_bug4518ac, t_bug4518_p");
 
   return OK;
 }

@@ -162,6 +162,9 @@ int myodbc_strcasecmp(const char *s, const char *t);
 int myodbc_casecmp(const char *s, const char *t, uint len);
 my_bool reget_current_catalog(DBC FAR *dbc);
 
+ulong myodbc_escape_wildcard(MYSQL *mysql, char *to, ulong to_length,
+                             const char *from, ulong length);
+
 /* Functions used when debugging */
 #ifdef MYODBC_DBG
 void query_print(FILE *log_file,char *query);
