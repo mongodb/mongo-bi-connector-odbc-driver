@@ -24,20 +24,13 @@
 
 SQLINTEGER my_max_rows= 100;
 
-/* Clean data */
-DECLARE_TEST(t_clean_data)
+
+/* making use of mysql_use_result */
+DECLARE_TEST(t_use_result)
 {
-  ok_sql(hstmt, "DROP TABLE IF EXISTS t_use_result");
-
-  return OK;
-}
-
-
-/* Initialize data */
-DECLARE_TEST(t_init_data)
-{
-  SQLINTEGER  i;
-  SQLCHAR     ch[]= "MySQL AB";
+  SQLINTEGER i, row_count= 0;
+  SQLCHAR    ch[]= "MySQL AB";
+  SQLRETURN  rc;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_use_result");
   ok_sql(hstmt, "CREATE TABLE t_use_result (id INT, name CHAR(10))");
@@ -57,16 +50,6 @@ DECLARE_TEST(t_init_data)
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-  return OK;
-}
-
-
-/* Fetch and count the time */
-int t_fetch_data(SQLHSTMT hstmt)
-{
-  SQLRETURN rc;
-  SQLINTEGER row_count= 0;
-
   ok_sql(hstmt, "SELECT * FROM t_use_result");
 
   rc= SQLFetch(hstmt);
@@ -81,52 +64,18 @@ int t_fetch_data(SQLHSTMT hstmt)
 
   is_num(row_count, my_max_rows);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_use_result");
+
   return OK;
 }
 
 
-/* making use of mysql_use_result */
-DECLARE_TEST(t_use_result)
-{
-  SQLHENV   henv1;
-  SQLHDBC   hdbc1;
-  SQLHSTMT  hstmt1;
-  int ret;
-
-  SET_DSN_OPTION(131072L * 8);
-
-  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
-  ret= t_fetch_data(hstmt1);
-  free_basic_handles(&henv1, &hdbc1, &hstmt1);
-
-  return ret;
-}
-
-/* making use of mysql_store_result */
-DECLARE_TEST(t_store_result)
-{
-  SQLHENV   henv1;
-  SQLHDBC   hdbc1;
-  SQLHSTMT  hstmt1;
-  int ret;
-
-  SET_DSN_OPTION(3);
-
-  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
-  /* we re-use option here */
-  ret= t_fetch_data(hstmt1);
-  free_basic_handles(&henv1, &hdbc1, &hstmt1);
-
-  return ret;
-}
-
-
 BEGIN_TESTS
-  ADD_TEST(t_init_data)
   ADD_TEST(t_use_result)
-  ADD_TEST(t_store_result)
-  ADD_TEST(t_clean_data)
 END_TESTS
+
+
+SET_DSN_OPTION(1048576);
 
 
 RUN_TESTS
