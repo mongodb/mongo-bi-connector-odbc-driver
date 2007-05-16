@@ -563,14 +563,17 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
         */
         case MYSQL_TYPE_VARCHAR:
         case MYSQL_TYPE_VAR_STRING:
-              /* 
-              TODO: field->length should be replaced by max(length, maxlength)
-                    in order to restore FLAG_FIELD_LENGTH option
-              */
-              *transfer_length= *precision= *display_size= field->length ?
-                (stmt->dbc->mysql.charset ?
-                 field->length / stmt->dbc->mysql.charset->mbmaxlen :
-                 field->length) : 255;
+            /* 
+            TODO: field->length should be replaced by max(length, maxlength)
+                  in order to restore FLAG_FIELD_LENGTH option
+            */
+            *transfer_length= *precision= *display_size= field->length ?
+              (stmt->dbc->mysql.charset ?
+               field->length / stmt->dbc->mysql.charset->mbmaxlen :
+               field->length) : 255;
+
+            /*
+            TODO: Uncomment this code when MySQL Server returns the metadata correctly
 
             if (field_is_binary)
             {
@@ -578,6 +581,7 @@ printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LIN
                   strmov(buff,"varbinary");
                 return SQL_VARBINARY;
             }
+            */
 
             if (buff)
               strmov(buff,"varchar");
