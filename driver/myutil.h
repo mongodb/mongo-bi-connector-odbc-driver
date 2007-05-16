@@ -79,7 +79,6 @@ void mysql_link_fields(STMT *stmt,MYSQL_FIELD *fields,uint field_count);
 void fix_result_types(STMT *stmt);
 char *fix_str(char *to,const char *from,int length);
 char *dupp_str(char *from,int length);
-bool empty_str(char *from,int length);
 SQLRETURN my_pos_delete(STMT FAR *stmt,STMT FAR *stmtParam,
 			SQLUSMALLINT irow,DYNAMIC_STRING *dynStr);
 SQLRETURN my_pos_update(STMT FAR *stmt,STMT FAR *stmtParam,

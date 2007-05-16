@@ -182,21 +182,6 @@ char *dupp_str(char *from,int length)
 
 /*
   @type    : myodbc internal
-  @purpose : returns 1 if from is a null pointer or a empty string
-*/
-
-bool empty_str(char *from,int length)
-{
-    if ( !from )
-        return 1;
-    if ( length == SQL_NTS )
-        return from[0] == 0;
-    return !length;
-}
-
-
-/*
-  @type    : myodbc internal
   @purpose : copies the string data to rgbValue buffer. If rgbValue
   is NULL, then returns warning with full length, else
   copies the cbValueMax length from 'src' and returns it.
