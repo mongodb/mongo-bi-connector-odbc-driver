@@ -2646,6 +2646,46 @@ DECLARE_TEST(t_bug28255)
 }
 
 
+DECLARE_TEST(t_bug19566)
+{
+  SQLLEN nlen;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug19566");
+  ok_sql(hstmt, "CREATE TABLE t_bug19566 (a INT, b INT, PRIMARY KEY (a,b), UNIQUE (b))");
+  ok_sql(hstmt, "INSERT INTO t_bug19566 VALUES (1,3),(1,4)");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"bug", SQL_NTS));
+
+  ok_sql(hstmt, "SELECT a FROM t_bug19566 WHERE b > 3");
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 1);
+
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_DELETE, SQL_LOCK_NO_CHANGE));
+
+  ok_stmt(hstmt, SQLRowCount(hstmt, &nlen));
+  is_num(nlen, 1);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "SELECT * FROM t_bug19566");
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 1);
+  is_num(my_fetch_int(hstmt, 2), 3);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug19566");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_positioned_cursor)
   ADD_TEST(my_setpos_cursor)
@@ -2686,6 +2726,7 @@ BEGIN_TESTS
   ADD_TEST(tmy_cursor3)
   ADD_TEST(tmysql_pcbvalue)
   ADD_TODO(t_bug28255)
+  ADD_TODO(t_bug19566)
 END_TESTS
 
 
