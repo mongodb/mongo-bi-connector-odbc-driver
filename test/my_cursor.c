@@ -2651,21 +2651,21 @@ DECLARE_TEST(t_bug28255)
 
 
 /**
- Bug #19566: Cannot update or delete using SQLSetPos
+ Bug #10563: Update using multicolumn primary key with duplicate indexes fails
 */
-DECLARE_TEST(t_bug19566)
+DECLARE_TEST(t_bug10563)
 {
   SQLLEN nlen;
 
-  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug19566");
-  ok_sql(hstmt, "CREATE TABLE t_bug19566 (a INT, b INT, PRIMARY KEY (a,b), UNIQUE (b))");
-  ok_sql(hstmt, "INSERT INTO t_bug19566 VALUES (1,3),(1,4)");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug10563");
+  ok_sql(hstmt, "CREATE TABLE t_bug10563 (a INT, b INT, PRIMARY KEY (a,b), UNIQUE (b))");
+  ok_sql(hstmt, "INSERT INTO t_bug10563 VALUES (1,3),(1,4)");
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"bug", SQL_NTS));
 
-  ok_sql(hstmt, "SELECT a FROM t_bug19566 WHERE b > 3");
+  ok_sql(hstmt, "SELECT a FROM t_bug10563 WHERE b > 3");
 
   ok_stmt(hstmt, SQLFetch(hstmt));
   is_num(my_fetch_int(hstmt, 1), 1);
@@ -2679,7 +2679,7 @@ DECLARE_TEST(t_bug19566)
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-  ok_sql(hstmt, "SELECT * FROM t_bug19566");
+  ok_sql(hstmt, "SELECT * FROM t_bug10563");
 
   ok_stmt(hstmt, SQLFetch(hstmt));
   is_num(my_fetch_int(hstmt, 1), 1);
@@ -2687,7 +2687,7 @@ DECLARE_TEST(t_bug19566)
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug19566");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug10563");
 
   return OK;
 }
@@ -2733,7 +2733,7 @@ BEGIN_TESTS
   ADD_TEST(tmy_cursor3)
   ADD_TEST(tmysql_pcbvalue)
   ADD_TODO(t_bug28255)
-  ADD_TODO(t_bug19566)
+  ADD_TODO(t_bug10563)
 END_TESTS
 
 
