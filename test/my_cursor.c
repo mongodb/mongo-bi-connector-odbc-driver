@@ -2606,6 +2606,10 @@ DECLARE_TEST(tmysql_pcbvalue)
 }
 
 
+/**
+ Bug #28255: Cursor operations on result sets containing only part of a key
+ are incorrect
+*/
 DECLARE_TEST(t_bug28255)
 {
   SQLLEN nlen;
@@ -2646,6 +2650,9 @@ DECLARE_TEST(t_bug28255)
 }
 
 
+/**
+ Bug #19566: Cannot update or delete using SQLSetPos
+*/
 DECLARE_TEST(t_bug19566)
 {
   SQLLEN nlen;
