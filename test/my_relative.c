@@ -66,6 +66,10 @@ DECLARE_TEST(t_relative)
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROWS_FETCHED_PTR,&nrows,0);
     mystmt(hstmt,rc);
 
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
     rc = SQLExecDirect(hstmt,"select * from t_relative",SQL_NTS);
     mystmt(hstmt,rc);
 
@@ -194,6 +198,10 @@ DECLARE_TEST(t_relative1)
 
     rc = SQLEndTran(SQL_HANDLE_DBC,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
+
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
     /* set row_size as 1 */
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)1,0);
@@ -400,6 +408,10 @@ DECLARE_TEST(t_relative2)
 
     rc = SQLEndTran(SQL_HANDLE_DBC,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
+
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
     /* set row_size as 2 */
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)2,0);

@@ -121,6 +121,10 @@ DECLARE_TEST(my_setpos_cursor)
   ok_sql(hstmt, "INSERT INTO my_demo_cursor VALUES (0,'MySQL0'),(1,'MySQL1'),"
          "(2,'MySQL2'),(3,'MySQL3'),(4,'MySQL4')");
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
   ok_sql(hstmt, "SELECT * FROM my_demo_cursor");
 
   ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &id, 0, NULL));
@@ -272,6 +276,8 @@ DECLARE_TEST(t_setpos_del_all)
          "(200,'MySQL2'),(300,'MySQL3'),(400,'MySQL4')");
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"venu", SQL_NTS));
 
@@ -853,7 +859,8 @@ DECLARE_TEST(t_acc_crash)
          "INSERT INTO t_acc_crash (b) VALUES ('venu'),('monty'),('mysql')");
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
   ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 1));
 
   ok_sql(hstmt, "SELECT * FROM t_acc_crash ORDER BY a ASC");
@@ -908,6 +915,8 @@ DECLARE_TEST(tmysql_setpos_del)
          "(300,'MySQL6'),(300,'MySQL7')");
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"venu", SQL_NTS));
 
@@ -978,10 +987,9 @@ DECLARE_TEST(tmysql_setpos_del1)
          "(200,'MySQL2'),(300,'MySQL3'),(400,'MySQL4')");
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
   ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"venu", SQL_NTS));
-
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_sql(hstmt, "SELECT * FROM tmysql_setpos_del1");
 
@@ -1053,8 +1061,9 @@ DECLARE_TEST(tmysql_setpos_upd)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
     mystmt(hstmt,rc);
@@ -1310,6 +1319,8 @@ DECLARE_TEST(t_pos_update)
   ok_sql(hstmt, "INSERT INTO t_pos_update VALUES (100,'venu'),(200,'MySQL')");
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"venu_cur", SQL_NTS));
 
@@ -1373,6 +1384,8 @@ DECLARE_TEST(tmysql_pos_update_ex)
   ok_sql(hstmt, "INSERT INTO t_pos_updex VALUES (100,'venu'),(200,'MySQL')");
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   ok_sql(hstmt, "SELECT * FROM t_pos_updex");
 
@@ -1433,6 +1446,10 @@ DECLARE_TEST(tmysql_pos_update_ex1)
   ok_sql(hstmt, "CREATE TABLE t_pos_updex1  (a INT, b VARCHAR(30))");
   ok_sql(hstmt, "INSERT INTO t_pos_updex1 VALUES (100,'venu'),(200,'MySQL')");
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
   ok_sql(hstmt, "SELECT * FROM t_pos_updex1");
 
   ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_ABSOLUTE, 2, &pcrow,
@@ -1492,6 +1509,8 @@ DECLARE_TEST(tmysql_pos_update_ex2)
   ok_sql(hstmt, "INSERT INTO t_pos_updex2 VALUES (10,'venu',1),(20,'MySQL',2)");
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   ok_sql(hstmt,  "SELECT a, b FROM t_pos_updex2");
 
@@ -1553,6 +1572,8 @@ DECLARE_TEST(tmysql_pos_update_ex3)
   ok_sql(hstmt, "INSERT INTO t_pos_updex3 VALUES (100,'venu'),(200,'MySQL')");
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   ok_sql(hstmt,  "SELECT a, b FROM t_pos_updex3");
 
@@ -1592,6 +1613,8 @@ DECLARE_TEST(tmysql_pos_update_ex4)
   ok_sql(hstmt, "INSERT INTO t_pos_updex4 (a,b) VALUES ('Monty','Widenius')");
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   ok_sql(hstmt, "SELECT * FROM t_pos_updex4");
 
@@ -1638,6 +1661,8 @@ DECLARE_TEST(tmysql_pos_dyncursor)
   ok_sql(hstmt, "INSERT INTO tmysql_pos_dyncursor VALUES (1,'foo'),(2,'bar')");
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"venu_cur", SQL_NTS));
 
@@ -1714,8 +1739,9 @@ DECLARE_TEST(tmysql_mtab_setpos_del)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
     mystmt(hstmt,rc);
@@ -1780,8 +1806,9 @@ DECLARE_TEST(tmysql_setpos_pkdel)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
     mystmt(hstmt,rc);
@@ -1855,6 +1882,8 @@ DECLARE_TEST(t_alias_setpos_pkdel)
   ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   ok_stmt(hstmt, SQLSetCursorName(hstmt, "venu", SQL_NTS));
 
@@ -1914,6 +1943,8 @@ DECLARE_TEST(t_alias_setpos_del)
   ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   ok_stmt(hstmt, SQLSetCursorName(hstmt, "venu", SQL_NTS));
 
@@ -1980,8 +2011,9 @@ DECLARE_TEST(tmysql_setpos_pkdel1)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
     mystmt(hstmt,rc);
@@ -2060,8 +2092,9 @@ DECLARE_TEST(tmysql_setpos_pkdel2)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
     mystmt(hstmt,rc);
@@ -2136,8 +2169,9 @@ DECLARE_TEST(tmysql_setpos_pkdel3)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
     mystmt(hstmt,rc);
@@ -2208,8 +2242,9 @@ DECLARE_TEST(t_setpos_upd_bug1)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
     rc = tmysql_exec(hstmt,"select * from t_setpos_upd_bug1 order by id asc");
     mystmt(hstmt,rc);
@@ -2312,8 +2347,9 @@ DECLARE_TEST(my_setpos_upd_pk_order)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
     rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
     mystmt(hstmt,rc);
@@ -2544,15 +2580,9 @@ DECLARE_TEST(tmysql_pcbvalue)
 
   ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
 
-  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
-
-#if 0
-  /* MS SQL Server to work...*/
-  SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY,
-                 (SQLPOINTER)SQL_CONCUR_ROWVER, 0);
-  SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
-                 (SQLPOINTER)SQL_CURSOR_KEYSET_DRIVEN, 0);
-#endif
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
   ok_sql(hstmt,"SELECT * FROM tmysql_pcbvalue");
 

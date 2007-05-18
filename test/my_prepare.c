@@ -258,6 +258,10 @@ DECLARE_TEST(t_prep_scroll)
   ok_sql(hstmt, "CREATE TABLE t_prep_scroll (a TINYINT)");
   ok_sql(hstmt, "INSERT INTO t_prep_scroll VALUES (1),(2),(3),(4),(5)");
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
   ok_sql(hstmt, "SELECT * FROM t_prep_scroll");
 
   ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &data, 0, NULL));

@@ -142,13 +142,12 @@ int main(int argc, char **argv) \
     int rc; \
     RUN_TESTS_ALARM; \
     rc= tests[i].func(hdbc, hstmt, henv); \
-    (void)SQLFreeStmt(hstmt, SQL_UNBIND); \
-    (void)SQLFreeStmt(hstmt, SQL_RESET_PARAMS); \
-    (void)SQLFreeStmt(hstmt, SQL_CLOSE); \
-    (void)SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 1); \
     printf("%s %d %s %s\n", rc == OK ? "ok" : "not ok", i + 1, \
            tests[i].expect == FAIL ? "# TODO" : "-", \
            tests[i].name); \
+    /* Re-allocate statement to reset all its properties. */ \
+    SQLFreeStmt(hstmt, SQL_DROP); \
+    SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt); \
   } \
 \
   free_basic_handles(&henv,&hdbc,&hstmt); \
@@ -376,10 +375,6 @@ void alloc_basic_handles(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt)
 
   rc= SQLAllocHandle(SQL_HANDLE_STMT,*hdbc,hstmt);
   mycon(*hdbc,rc);
-
-  SQLSetStmtAttr(*hstmt,SQL_ATTR_CURSOR_TYPE,(SQLPOINTER)SQL_CURSOR_STATIC,0);
-  SQLSetStmtOption(*hstmt,SQL_SIMULATE_CURSOR,SQL_SC_NON_UNIQUE);
-  SQLSetStmtOption(*hstmt, SQL_CURSOR_TYPE, SQL_CURSOR_KEYSET_DRIVEN);
 }
 
 

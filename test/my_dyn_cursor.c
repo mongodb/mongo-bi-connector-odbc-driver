@@ -200,6 +200,10 @@ DECLARE_TEST(my_dynamic_pos_cursor1)
     rc = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt_pos);
     mycon(hdbc, rc);
 
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
     /* set the cursor name as 'mysqlcur' on hstmt */
     rc = SQLSetCursorName(hstmt, "mysqlcur", SQL_NTS);
     mystmt(hstmt, rc);

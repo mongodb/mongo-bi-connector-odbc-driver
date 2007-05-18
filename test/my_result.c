@@ -1053,8 +1053,9 @@ DECLARE_TEST(t_empty_str_bug)
 
     my_assert( 1 == myresult(hstmt));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
     rc = tmysql_exec(hstmt,"select * from t_empty_str_bug");
     mystmt(hstmt,rc);
@@ -1475,6 +1476,10 @@ DECLARE_TEST(t_exfetch)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
     rc = SQLExecDirect(hstmt,"select * from t_exfetch",SQL_NTS);
     mystmt(hstmt,rc);
 
@@ -1610,8 +1615,9 @@ DECLARE_TEST(tmysql_rowstatus)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)1 , 0);
     mystmt(hstmt, rc);

@@ -42,6 +42,9 @@ DECLARE_TEST(my_ts)
   ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_RESET_PARAMS));
   ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
 
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_KEYSET_DRIVEN, 0));
+
   /* insert using SQL_C_TIMESTAMP to SQL_TIMESTAMP */
   ts.year= 2002;
   ts.month= 1;
