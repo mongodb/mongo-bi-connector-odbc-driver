@@ -1452,6 +1452,9 @@ DECLARE_TEST(t_exfetch)
     SQLRETURN rc;
     SQLUINTEGER i;
 
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
     tmysql_exec(hstmt,"drop table t_exfetch");
 
     rc = tmysql_exec(hstmt,"create table t_exfetch(col1 int)");
@@ -1475,10 +1478,6 @@ DECLARE_TEST(t_exfetch)
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
-
-    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
-                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
     rc = SQLExecDirect(hstmt,"select * from t_exfetch",SQL_NTS);
     mystmt(hstmt,rc);

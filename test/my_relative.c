@@ -31,6 +31,9 @@ DECLARE_TEST(t_relative)
     long      index;
     char      name[21];
 
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
     SQLExecDirect(hstmt,"drop table t_relative",SQL_NTS);
 
     rc = SQLExecDirect(hstmt,"create table t_relative(id int,name char(20))",SQL_NTS);
@@ -65,10 +68,6 @@ DECLARE_TEST(t_relative)
 
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROWS_FETCHED_PTR,&nrows,0);
     mystmt(hstmt,rc);
-
-    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
-                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
     rc = SQLExecDirect(hstmt,"select * from t_relative",SQL_NTS);
     mystmt(hstmt,rc);
@@ -175,6 +174,9 @@ DECLARE_TEST(t_relative1)
     SQLUINTEGER i;
     const int max_rows=10;
 
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
     SQLExecDirect(hstmt,"drop table t_relative1",SQL_NTS);
 
     rc = SQLExecDirect(hstmt,"create table t_relative1(id int)",SQL_NTS);
@@ -198,10 +200,6 @@ DECLARE_TEST(t_relative1)
 
     rc = SQLEndTran(SQL_HANDLE_DBC,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
-
-    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
-                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
     /* set row_size as 1 */
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)1,0);
@@ -385,6 +383,9 @@ DECLARE_TEST(t_relative2)
     SQLUINTEGER i;
     const int max_rows=10;
 
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
     SQLExecDirect(hstmt,"drop table t_relative2",SQL_NTS);
 
     rc = SQLExecDirect(hstmt,"create table t_relative2(id int)",SQL_NTS);
@@ -408,10 +409,6 @@ DECLARE_TEST(t_relative2)
 
     rc = SQLEndTran(SQL_HANDLE_DBC,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
-
-    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
-                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
     /* set row_size as 2 */
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)2,0);
@@ -760,8 +757,9 @@ DECLARE_TEST(t_rows_fetched_ptr)
 DECLARE_TEST(t_rows_fetched_ptr1)
 {
   SQLRETURN   rc;
-  SQLLEN      rowsFetched, rowsSize;
+  SQLLEN      rowsSize;
   SQLINTEGER  i;
+  SQLUINTEGER rowsFetched;
 
     SQLExecDirect(hstmt,"drop table t_rows_fetched_ptr",SQL_NTS);
 
