@@ -70,6 +70,21 @@ BOOL MYODBCUtilWriteDataSource( MYODBCUTIL_DATASOURCE *pDataSource )
     if ( pDataSource->pszUSER &&
          !SQLWritePrivateProfileString( pDataSource->pszDSN, "UID", pDataSource->pszUSER, "odbc.ini" ) )
         return FALSE;
+    if ( pDataSource->pszSSLCA &&
+         !SQLWritePrivateProfileString( pDataSource->pszDSN, "SSLCA", pDataSource->pszSSLCA, "odbc.ini" ) )
+        return FALSE;
+    if ( pDataSource->pszSSLCAPATH &&
+         !SQLWritePrivateProfileString( pDataSource->pszDSN, "SSLCAPATH", pDataSource->pszSSLCAPATH, "odbc.ini" ) )
+        return FALSE;
+    if ( pDataSource->pszSSLCERT &&
+         !SQLWritePrivateProfileString( pDataSource->pszDSN, "SSLCERT", pDataSource->pszSSLCERT, "odbc.ini" ) )
+        return FALSE;
+    if ( pDataSource->pszSSLCIPHER &&
+         !SQLWritePrivateProfileString( pDataSource->pszDSN, "SSLCIPHER", pDataSource->pszSSLCIPHER, "odbc.ini" ) )
+        return FALSE;
+    if ( pDataSource->pszSSLKEY &&
+         !SQLWritePrivateProfileString( pDataSource->pszDSN, "SSLKEY", pDataSource->pszSSLKEY, "odbc.ini" ) )
+        return FALSE;
 
     return TRUE;
 }

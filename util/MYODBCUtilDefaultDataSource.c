@@ -65,6 +65,32 @@ BOOL MYODBCUtilDefaultDataSource( MYODBCUTIL_DATASOURCE *pDataSource )
     if ( !pDataSource->pszOPTION )
         pDataSource->pszOPTION = _global_strdup( "0" );
 
+	if( pDataSource->pszSSLCA && !pDataSource->pszSSLCA[0] )
+	{
+		_global_free (pDataSource->pszSSLCA);
+		pDataSource->pszSSLCA = NULL;
+	}
+	if( pDataSource->pszSSLCAPATH && !pDataSource->pszSSLCAPATH[0] )
+	{
+		_global_free (pDataSource->pszSSLCAPATH);
+		pDataSource->pszSSLCAPATH = NULL;
+	}
+	if( pDataSource->pszSSLCERT && !pDataSource->pszSSLCERT[0] )
+	{
+		_global_free (pDataSource->pszSSLCERT);
+		pDataSource->pszSSLCERT = NULL;
+	}
+	if( pDataSource->pszSSLCIPHER && !pDataSource->pszSSLCIPHER[0] )
+	{
+		_global_free (pDataSource->pszSSLCIPHER);
+		pDataSource->pszSSLCIPHER = NULL;
+	}
+	if( pDataSource->pszSSLKEY && !pDataSource->pszSSLKEY[0] )
+	{
+		_global_free (pDataSource->pszSSLKEY);
+		pDataSource->pszSSLKEY = NULL;
+	}
+
 #ifndef _UNIX_
     /* Here we actually unset socket for non-UNIX as it does not apply. */
     if ( pDataSource->pszSOCKET && !pDataSource->pszSOCKET[0] )

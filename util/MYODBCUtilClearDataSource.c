@@ -83,6 +83,31 @@ void MYODBCUtilClearDataSource( MYODBCUTIL_DATASOURCE *pDataSource )
         _global_free( pDataSource->pszUSER );
         pDataSource->pszUSER = NULL;
     }
+
+	if( pDataSource->pszSSLCA)
+	{
+		_global_free (pDataSource->pszSSLCA);
+		pDataSource->pszSSLCA = NULL;
+	}
+	if( pDataSource->pszSSLCAPATH)
+	{
+		_global_free (pDataSource->pszSSLCAPATH);
+		pDataSource->pszSSLCAPATH = NULL;
+	}
+	if( pDataSource->pszSSLCERT)
+	{
+		_global_free (pDataSource->pszSSLCERT);
+		pDataSource->pszSSLCERT = NULL;
+	}
+	if( pDataSource->pszSSLCIPHER)
+	{
+		_global_free (pDataSource->pszSSLCIPHER);
+		pDataSource->pszSSLCIPHER = NULL;
+	}
+	if( pDataSource->pszSSLKEY)
+	{
+		_global_free (pDataSource->pszSSLKEY);
+		pDataSource->pszSSLKEY = NULL;
+	}
+
 }
-
-

@@ -172,6 +172,31 @@ BOOL MYODBCUtilReadConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszStr
                             if ( !pDataSource->pszUSER )
                                 pDataSource->pszUSER = (char *)_global_strndup( pAnchorChar, pScanChar - pAnchorChar );
                         }
+                        else if ( strcasecmp( pszName, "SSLCA" ) == 0 )
+                        {    
+                            if ( !pDataSource->pszSSLCA )
+                                pDataSource->pszSSLCA = (char *)_global_strndup( pAnchorChar, pScanChar - pAnchorChar );
+                        }
+                        else if ( strcasecmp( pszName, "SSLCAPATH" ) == 0 )
+                        {    
+                            if ( !pDataSource->pszSSLCAPATH )
+                                pDataSource->pszSSLCAPATH = (char *)_global_strndup( pAnchorChar, pScanChar - pAnchorChar );
+                        }
+                        else if ( strcasecmp( pszName, "SSLCERT" ) == 0 )
+                        {    
+                            if ( !pDataSource->pszSSLCERT )
+                                pDataSource->pszSSLCERT = (char *)_global_strndup( pAnchorChar, pScanChar - pAnchorChar );
+                        }
+                        else if ( strcasecmp( pszName, "SSLCIPHER" ) == 0 )
+                        {    
+                            if ( !pDataSource->pszSSLCIPHER )
+                                pDataSource->pszSSLCIPHER = (char *)_global_strndup( pAnchorChar, pScanChar - pAnchorChar );
+                        }
+                        else if ( strcasecmp( pszName, "SSLKEY" ) == 0 )
+                        {    
+                            if ( !pDataSource->pszSSLKEY )
+                                pDataSource->pszSSLKEY = (char *)_global_strndup( pAnchorChar, pScanChar - pAnchorChar );
+                        }
                         else if ( strcasecmp( pszName, "SAVEFILE" ) == 0 )
                         {
                           pDataSource->bSaveFileDSN = TRUE;

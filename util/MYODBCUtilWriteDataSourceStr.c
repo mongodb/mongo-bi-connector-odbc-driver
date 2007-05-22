@@ -162,6 +162,56 @@ BOOL MYODBCUtilWriteDataSourceStr( MYODBCUTIL_DATASOURCE *pDataSource, MYODBCUTI
             return FALSE;
     }
 
+    if ( pDataSource->pszSSLCA )
+    {
+        MYODBCUTILWRITEDATASOURCESTR_DELIM;
+
+        if ( !MYODBCUtilInsertStr( pszStr, "SSLCA=", nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSSLCA, nMaxLen, &nIndex ) )
+            return FALSE;
+    }
+
+    if ( pDataSource->pszSSLCAPATH )
+    {
+        MYODBCUTILWRITEDATASOURCESTR_DELIM;
+
+        if ( !MYODBCUtilInsertStr( pszStr, "SSLCAPATH=", nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSSLCAPATH, nMaxLen, &nIndex ) )
+            return FALSE;
+    }
+
+    if ( pDataSource->pszSSLCERT )
+    {
+        MYODBCUTILWRITEDATASOURCESTR_DELIM;
+
+        if ( !MYODBCUtilInsertStr( pszStr, "SSLCERT=", nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSSLCERT, nMaxLen, &nIndex ) )
+            return FALSE;
+    }
+
+    if ( pDataSource->pszSSLCIPHER )
+    {
+        MYODBCUTILWRITEDATASOURCESTR_DELIM;
+
+        if ( !MYODBCUtilInsertStr( pszStr, "SSLCIPHER=", nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSSLCIPHER, nMaxLen, &nIndex ) )
+            return FALSE;
+    }
+
+    if ( pDataSource->pszSSLKEY )
+    {
+        MYODBCUTILWRITEDATASOURCESTR_DELIM;
+
+        if ( !MYODBCUtilInsertStr( pszStr, "SSLKEY=", nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSSLKEY, nMaxLen, &nIndex ) )
+            return FALSE;
+    }
+
     if ( nDelim == MYODBCUTIL_DELIM_NULL )
     {
         MYODBCUTILWRITEDATASOURCESTR_DELIM;

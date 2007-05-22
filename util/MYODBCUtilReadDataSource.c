@@ -204,6 +204,31 @@ BOOL MYODBCUtilReadDataSource( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszDSN
                 if ( !pDataSource->pszUSER )
                     pDataSource->pszUSER = _global_strdup( szValue );
             }
+            else if ( strcasecmp( pszEntryName, "SSLCA" ) == 0 )
+            {    
+                if ( !pDataSource->pszSSLCA )
+                    pDataSource->pszSSLCA = _global_strdup( szValue );
+            }
+            else if ( strcasecmp( pszEntryName, "SSLCAPATH" ) == 0 )
+            {    
+                if ( !pDataSource->pszSSLCAPATH )
+                    pDataSource->pszSSLCAPATH = _global_strdup( szValue );
+            }
+            else if ( strcasecmp( pszEntryName, "SSLCERT" ) == 0 )
+            {    
+                if ( !pDataSource->pszSSLCERT )
+                    pDataSource->pszSSLCERT = _global_strdup( szValue );
+            }
+            else if ( strcasecmp( pszEntryName, "SSLCIPHER" ) == 0 )
+            {    
+                if ( !pDataSource->pszSSLCIPHER )
+                    pDataSource->pszSSLCIPHER = _global_strdup( szValue );
+            }
+            else if ( strcasecmp( pszEntryName, "SSLKEY" ) == 0 )
+            {    
+                if ( !pDataSource->pszSSLKEY )
+                    pDataSource->pszSSLKEY = _global_strdup( szValue );
+            }
             else
             {
                 /* What the ? */

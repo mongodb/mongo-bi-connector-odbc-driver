@@ -139,6 +139,56 @@ BOOL MYODBCUtilWriteConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, char *pszStr
             return FALSE;
     }
 
+    if ( pDataSource->pszSSLCA )
+    {
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( !MYODBCUtilInsertStr( pszStr, "SSLCA=", nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSSLCA, nMaxLen, &nIndex ) )
+            return FALSE;
+    }
+
+    if ( pDataSource->pszSSLCAPATH )
+    {
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( !MYODBCUtilInsertStr( pszStr, "SSLCAPATH=", nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSSLCAPATH, nMaxLen, &nIndex ) )
+            return FALSE;
+    }
+
+    if ( pDataSource->pszSSLCERT )
+    {
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( !MYODBCUtilInsertStr( pszStr, "SSLCERT=", nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSSLCERT, nMaxLen, &nIndex ) )
+            return FALSE;
+    }
+
+    if ( pDataSource->pszSSLCIPHER )
+    {
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( !MYODBCUtilInsertStr( pszStr, "SSLCIPHER=", nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSSLCIPHER, nMaxLen, &nIndex ) )
+            return FALSE;
+    }
+
+    if ( pDataSource->pszSSLKEY )
+    {
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( !MYODBCUtilInsertStr( pszStr, "SSLKEY=", nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSSLKEY, nMaxLen, &nIndex ) )
+            return FALSE;
+    }
+
     return TRUE;
 }
 

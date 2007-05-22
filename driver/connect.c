@@ -208,6 +208,8 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
     char host[64],user[64],passwd[64],dsn[NAME_LEN+1],database[NAME_LEN+1];
     char port[10],flag[10],init_stmt[256],*dsn_ptr;
     char socket[256]= "";
+    char opt_ssl_verify_server_cert;    /* Not used, but needed as parameter */
+    char sslca[256], sslcapath[256], sslcert[256], sslcipher[256], sslkey[256];
     ulong flag_nr,client_flag;
     uint port_nr= 0;
     DBC FAR *dbc= (DBC FAR*) hdbc;
@@ -224,13 +226,31 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
     if (dsn_ptr && !dsn_ptr[0])
         MYODBCDbgReturnReturn( set_conn_error(hdbc, MYERR_S1000, "Invalid Connection Parameters",0) );
 
-    SQLGetPrivateProfileString(dsn_ptr,"user","", user, sizeof(user), MYODBCUtilGetIniFileName( TRUE ) );
-    SQLGetPrivateProfileString(dsn_ptr,"password","", passwd, sizeof(passwd), MYODBCUtilGetIniFileName( TRUE ) );
+    SQLGetPrivateProfileString(dsn_ptr,"uid","", user, sizeof(user), MYODBCUtilGetIniFileName( TRUE ) );
+    
+    if(!user[0])
+      /* Try to use alternate key - user */
+      SQLGetPrivateProfileString(dsn_ptr,"user","", user, sizeof(user), MYODBCUtilGetIniFileName( TRUE ) );
+
+    SQLGetPrivateProfileString(dsn_ptr,"pwd","", passwd, sizeof(passwd), MYODBCUtilGetIniFileName( TRUE ) );
+    if(!passwd[0])
+      /* Try to use alternate key - password */
+      SQLGetPrivateProfileString(dsn_ptr,"password","", passwd, sizeof(passwd), MYODBCUtilGetIniFileName( TRUE ) );
+
     SQLGetPrivateProfileString(dsn_ptr,"server","localhost", host, sizeof(host), MYODBCUtilGetIniFileName( TRUE ) );
     SQLGetPrivateProfileString(dsn_ptr,"database",dsn_ptr, database, sizeof(database), MYODBCUtilGetIniFileName( TRUE ) );
     SQLGetPrivateProfileString(dsn_ptr,"port","0", port, sizeof(port), MYODBCUtilGetIniFileName( TRUE ) );
     port_nr= (uint) atoi(port);
     SQLGetPrivateProfileString(dsn_ptr,"option","0", flag, sizeof(flag), MYODBCUtilGetIniFileName( TRUE ) );
+
+#ifdef HAVE_OPENSSL
+    SQLGetPrivateProfileString(dsn_ptr,"sslca","", sslca, sizeof(sslca), MYODBCUtilGetIniFileName( TRUE ) );
+    SQLGetPrivateProfileString(dsn_ptr,"sslcapath","", sslcapath, sizeof(sslcapath), MYODBCUtilGetIniFileName( TRUE ) );
+    SQLGetPrivateProfileString(dsn_ptr,"sslcert","", sslcert, sizeof(sslcert), MYODBCUtilGetIniFileName( TRUE ) );
+    SQLGetPrivateProfileString(dsn_ptr,"sslkey","", sslkey, sizeof(sslkey), MYODBCUtilGetIniFileName( TRUE ) );
+    SQLGetPrivateProfileString(dsn_ptr,"sslcipher","", sslcipher, sizeof(sslcipher), MYODBCUtilGetIniFileName( TRUE ) );
+#endif
+
     flag_nr= (ulong) atol(flag);
 
 #ifdef _UNIX_
@@ -263,6 +283,21 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
     copy_if_not_empty(passwd,sizeof(passwd), (char FAR*) szAuthStr,cbAuthStr);
     copy_if_not_empty(user, sizeof(user), (char FAR *) szUID, cbUID);
 
+#ifdef HAVE_OPENSSL
+    /* set SSL parameters */
+    mysql_ssl_set(&dbc->mysql, 
+                  sslkey[0]   ? sslkey   : 0, 
+                  sslcert[0]  ? sslcert  : 0,
+                  sslca[0]    ? sslca    : 0, 
+                  sslcapath[0]? sslcapath: 0,
+                  sslcipher[0]? sslcipher: 0
+    );
+    /* As sslcipher is not in mysql options, we have to use
+       MYSQL_OPT_SSL_VERIFY_SERVER_CERT option
+       TODO: check if we can pass NULL instead of opt_ssl_verify_server_cert */
+    mysql_options(&dbc->mysql,MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &opt_ssl_verify_server_cert);
+#endif
+    dbc->mysql.options.connect_timeout = 3600;
     /* socket[0] is always 0 if you are not under UNIX */
     if (!mysql_real_connect(&dbc->mysql,
                             host,
@@ -297,12 +332,25 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
 SQLRETURN my_SQLDriverConnectTry( DBC *dbc, MYODBCUTIL_DATASOURCE *pDataSource )
 {
     ulong nFlag = 0;
+    char opt_ssl_verify_server_cert;    /* Not used, but needed as parameter */
 
     nFlag = get_client_flag( &dbc->mysql, 
                              pDataSource->pszOPTION ? atoi(pDataSource->pszOPTION) : 0, 
                              (uint)dbc->login_timeout, 
                              pDataSource->pszSTMT ? pDataSource->pszSTMT : "" );
 
+#ifdef HAVE_OPENSSL
+    /* set SSL parameters */
+	  mysql_ssl_set(&dbc->mysql, 
+                   pDataSource->pszSSLKEY, 
+                   pDataSource->pszSSLCERT, 
+                   pDataSource->pszSSLCA, 
+                   pDataSource->pszSSLCAPATH, 
+                   pDataSource->pszSSLCIPHER);
+
+    /* TODO: check if we can pass NULL instead of opt_ssl_verify_server_cert */
+    mysql_options(&dbc->mysql,MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &opt_ssl_verify_server_cert);
+#endif
     if ( !mysql_real_connect( &dbc->mysql,
                               pDataSource->pszSERVER, 
                               pDataSource->pszUSER,
