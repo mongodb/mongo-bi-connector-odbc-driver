@@ -1,6 +1,8 @@
 3.51.16
 
   Functionality added or changed:
+  * Added support for using SSL. This is not yet exposed in the setup GUI,
+    but must be enabled through configuration files or the DSN. (Bug #12918)
 
   Bugs fixed:
   * Accessing the results of catalog functions could cause a crash when the
