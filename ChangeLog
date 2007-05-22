@@ -3,6 +3,9 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * Accessing the results of catalog functions could cause a crash when the
+    "Don't cache results" option was set and a forward-only cursor was
+    being used. (Bug #4657)
   * SQL_WVARCHAR and SQL_WLONGVARCHAR parameters were not properly quoted
     and escaped. (Bug #16235)
   * SQLForeignKeys() did not properly escape wildcard characters in its

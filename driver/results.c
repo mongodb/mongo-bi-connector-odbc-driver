@@ -1293,8 +1293,13 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                                          "Wrong fetchtype with FORWARD ONLY cursor",
                                          0));
 
-        if ( (stmt->dbc->flag & FLAG_NO_CACHE) )
+        if ((stmt->dbc->flag & FLAG_NO_CACHE))
+        {
+          if (stmt->result_array)
+            values= stmt->result_array + (cur_row * stmt->result->field_count);
+          else
             values= mysql_fetch_row(stmt->result);
+        }
     }
 
     if ( if_dynamic_cursor(stmt) && set_dynamic_result(stmt) )

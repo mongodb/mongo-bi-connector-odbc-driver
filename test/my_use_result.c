@@ -70,8 +70,45 @@ DECLARE_TEST(t_use_result)
 }
 
 
+/**
+ Bug #4657: "Don't Cache Results" crashes when using catalog functions
+*/
+DECLARE_TEST(t_bug4657)
+{
+  SQLCHAR     name[10];
+  SQLSMALLINT column_count;
+  SQLLEN      name_length;
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY, 0));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug4657");
+  ok_sql(hstmt, "CREATE TABLE t_bug4657 (a INT)");
+
+  ok_stmt(hstmt, SQLTables(hstmt, (SQLCHAR *)"", SQL_NTS,
+                           (SQLCHAR *)"", SQL_NTS,
+                           (SQLCHAR *)"", SQL_NTS,
+                           (SQLCHAR *)"TABLE,VIEW", SQL_NTS));
+
+  ok_stmt(hstmt, SQLNumResultCols(hstmt, &column_count));
+  is_num(column_count, 5);
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 3, SQL_C_CHAR, name, sizeof(name),
+                            &name_length));
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug4657");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_use_result)
+  ADD_TEST(t_bug4657)
 END_TESTS
 
 
