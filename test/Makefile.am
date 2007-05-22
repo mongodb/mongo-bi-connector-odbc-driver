@@ -23,6 +23,7 @@
 # The INI filename has to include "odbc.ini" to work around a bug in the
 # version of iODBC shipped with Mac OS X.
 #
+TEST_PREFIX    = 
 TEST_ODBCINI   = odbc.ini
 TEST_ODBCINSTINI = odbcinst.ini
 TEST_DSN       = myodbc3
@@ -73,13 +74,13 @@ test-bt: make-test-ini $(tap_tests)
 	-for f in $(tap_tests) ; \
 	do \
 	  echo "******************************************************************************" ; \
-	  echo "Starting test $$f" ; \
+	  echo "Starting test $(TEST_PREFIX)$$f" ; \
 	  ODBCSYSINI=. \
 	  ODBCINI=$(TEST_ODBCINI) ODBCINSTINI=$(TEST_ODBCINSTINI) \
 	  TEST_DSN=$(TEST_DSN) TEST_UID=$(TEST_UID) \
 	  TEST_PASSWORD=$(TEST_PASSWORD) TEST_SOCKET=$(TEST_SOCKET) \
 	  ./$$f ; \
-	  echo "Ending test $$f" ; \
+	  echo "Ending test $(TEST_PREFIX)$$f" ; \
 	done ; \
 	echo "" ; \
 	echo "******************************************************************************"
