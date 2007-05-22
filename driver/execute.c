@@ -485,6 +485,8 @@ char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param)
         case SQL_VARBINARY:
         case SQL_LONGVARBINARY:
         case SQL_WCHAR:
+        case SQL_WVARCHAR:
+        case SQL_WLONGVARCHAR:
             {
                 to= add_to_buffer(net,to,"'",1);
                 to= mysql_odbc_escape_string(mysql,

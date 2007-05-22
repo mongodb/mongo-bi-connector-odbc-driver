@@ -440,6 +440,49 @@ DECLARE_TEST(t_bug16917)
 }
 
 
+/**
+ Bug #16235: ODBC driver doesn't format parameters correctly
+*/
+DECLARE_TEST(t_bug16235)
+{
+  SQLCHAR varchar[]= "a'b", text[]= "c'd", buff[10];
+  SQLLEN varchar_len= SQL_NTS, text_len= SQL_NTS;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug16235");
+  ok_sql(hstmt, "CREATE TABLE t_bug16235 (a NVARCHAR(20), b TEXT)");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)
+                            "INSERT INTO t_bug16235 VALUES (?,?)", SQL_NTS));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                  SQL_WVARCHAR, 0, 0, varchar, sizeof(varchar),
+                                  &varchar_len));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                  SQL_WLONGVARCHAR, 0, 0, text, sizeof(text),
+                                  &text_len));
+
+  ok_stmt(hstmt, SQLExecute(hstmt));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "SELECT * FROM t_bug16235");
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buff, 1), "a'b", 3);
+  is_str(my_fetch_str(hstmt, buff, 2), "c'd", 3);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug16235");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_longlong1)
   ADD_TEST(t_numeric)
@@ -447,6 +490,7 @@ BEGIN_TESTS
   ADD_TEST(t_bigint)
   ADD_TEST(t_enumset)
   ADD_TEST(t_bug16917)
+  ADD_TEST(t_bug16235)
 END_TESTS
 
 

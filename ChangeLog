@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * SQL_WVARCHAR and SQL_WLONGVARCHAR parameters were not properly quoted
+    and escaped. (Bug #16235)
   * SQLForeignKeys() did not properly escape wildcard characters in its
     table name parameters when retrieving information. (Bug #27723)
   * Calls to SQLSetPos() could cause the driver to incorrectly calculate the
