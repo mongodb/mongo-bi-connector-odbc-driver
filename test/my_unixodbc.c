@@ -114,6 +114,7 @@ DECLARE_TEST(t_driver_connect)
     SQLHENV henv1;
     SQLHDBC hdbc1;
     SQLCHAR conn_in[255], conn_out[255];
+    SQLSMALLINT conn_out_len;
 
     rc = SQLAllocEnv(&henv1);
     myenv(henv1,rc);
@@ -129,8 +130,8 @@ DECLARE_TEST(t_driver_connect)
       strcat(conn_in, ";SOCKET=");
       strcat(conn_in, mysock);
     }
-    rc = SQLDriverConnect(hdbc1, (SQLHWND)0, (SQLCHAR *)conn_in, sizeof(conn_in),
-                          (SQLCHAR *)conn_out, sizeof(conn_out), 0,
+    rc = SQLDriverConnect(hdbc1, (SQLHWND)0, conn_in, sizeof(conn_in),
+                          conn_out, sizeof(conn_out), &conn_out_len,
                           SQL_DRIVER_NOPROMPT);
 
     if (rc == SQL_SUCCESS)

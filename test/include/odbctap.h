@@ -347,6 +347,7 @@ void alloc_basic_handles(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt)
 {
   SQLRETURN rc;
   SQLCHAR   connIn[MAX_NAME_LEN], connOut[MAX_NAME_LEN];
+  SQLSMALLINT connOutLen;
 
   rc= SQLAllocHandle(SQL_HANDLE_ENV,SQL_NULL_HANDLE,henv);
   myenv(*henv,rc);
@@ -366,7 +367,7 @@ void alloc_basic_handles(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt)
   }
 
   rc= SQLDriverConnect(*hdbc, NULL, connIn, MAX_NAME_LEN, connOut, MAX_NAME_LEN,
-                       NULL, SQL_DRIVER_NOPROMPT);
+                       &connOutLen, SQL_DRIVER_NOPROMPT);
   mycon(*hdbc,rc);
 
   rc= SQLSetConnectAttr(*hdbc,SQL_ATTR_AUTOCOMMIT,

@@ -850,7 +850,8 @@ DECLARE_TEST(my_tables)
     SQLHDBC   hdbc1;
     SQLHSTMT  hstmt1;
     SQLRETURN rc;
-    char      conn[256];
+    SQLCHAR   conn[256], conn_out[256];
+    SQLSMALLINT conn_out_len;
 
     SQLExecDirect(hstmt,"DROP DATABASE my_tables_test_db",SQL_NTS);
     rc = SQLExecDirect(hstmt,"CREATE DATABASE my_tables_test_db",SQL_NTS);
@@ -867,7 +868,8 @@ DECLARE_TEST(my_tables)
     myenv(henv,rc);
 
     rc = SQLDriverConnect(hdbc1,NULL,conn,sizeof(conn),
-                          NULL,0,NULL,SQL_DRIVER_NOPROMPT);
+                          conn_out,sizeof(conn_out),&conn_out_len,
+                          SQL_DRIVER_NOPROMPT);
     mycon(hdbc1,rc);
 
     rc = SQLAllocStmt(hdbc1,&hstmt1);
