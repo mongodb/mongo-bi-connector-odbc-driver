@@ -34,8 +34,7 @@ int check_sqlstate(SQLHDBC hdbc, SQLHSTMT hstmt, char *sqlstate)
   SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sql_state, &err_code, err_msg,
                 SQL_MAX_MESSAGE_LENGTH - 1, &err_len);
 
-  if (!driver_min_version(hdbc, (SQLCHAR *)"03.52",5))
-    is_str(sql_state, (SQLCHAR *)sqlstate, 5);
+  is_str(sql_state, (SQLCHAR *)sqlstate, 5);
 
   return OK;
 }
