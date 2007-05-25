@@ -252,6 +252,7 @@ void mydrvconnect(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt,SQLCHAR *connIn)
 {
     SQLRETURN rc;
     SQLCHAR   connOut[MAX_NAME_LEN];
+    SQLSMALLINT StringLength;
 
     rc = SQLAllocHandle(SQL_HANDLE_ENV,SQL_NULL_HANDLE,henv);
     myenv(*henv,rc);   
@@ -264,7 +265,7 @@ void mydrvconnect(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt,SQLCHAR *connIn)
 
     printMessage(" Connecting to '%s' \n",connIn);
     rc = SQLDriverConnect(*hdbc,NULL,connIn,MAX_NAME_LEN,
-                          connOut,MAX_NAME_LEN,NULL,SQL_DRIVER_NOPROMPT);
+                          connOut,MAX_NAME_LEN,&StringLength,SQL_DRIVER_NOPROMPT);
     mycon(*hdbc,rc);
     printMessage( "output connection string: %s\n", connOut);
 
