@@ -208,7 +208,8 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
     char host[64],user[64],passwd[64],dsn[NAME_LEN+1],database[NAME_LEN+1];
     char port[10],flag[10],init_stmt[256],*dsn_ptr;
     char socket[256]= "";
-    char opt_ssl_verify_server_cert;    /* Not used, but needed as parameter */
+    int opt_ssl_verify_server_cert = ~0; /* Not used, but needed as parameter */
+                  /* Use 'int' and fill all bits to avoid alignment Bug#25920 */
     char sslca[256], sslcapath[256], sslcert[256], sslcipher[256], sslkey[256];
     ulong flag_nr,client_flag;
     uint port_nr= 0;
@@ -293,8 +294,7 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
                   sslcipher[0]? sslcipher: 0
     );
     /* As sslcipher is not in mysql options, we have to use
-       MYSQL_OPT_SSL_VERIFY_SERVER_CERT option
-       TODO: check if we can pass NULL instead of opt_ssl_verify_server_cert */
+       MYSQL_OPT_SSL_VERIFY_SERVER_CERT option */
     mysql_options(&dbc->mysql,MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &opt_ssl_verify_server_cert);
 #endif
     dbc->mysql.options.connect_timeout = 3600;
@@ -332,7 +332,8 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
 SQLRETURN my_SQLDriverConnectTry( DBC *dbc, MYODBCUTIL_DATASOURCE *pDataSource )
 {
     ulong nFlag = 0;
-    char opt_ssl_verify_server_cert;    /* Not used, but needed as parameter */
+    int opt_ssl_verify_server_cert = ~0; /* Not used, but needed as parameter */
+                  /* Use 'int' and fill all bits to avoid alignment Bug#25920 */
 
     nFlag = get_client_flag( &dbc->mysql, 
                              pDataSource->pszOPTION ? atoi(pDataSource->pszOPTION) : 0, 
@@ -348,7 +349,6 @@ SQLRETURN my_SQLDriverConnectTry( DBC *dbc, MYODBCUTIL_DATASOURCE *pDataSource )
                    pDataSource->pszSSLCAPATH, 
                    pDataSource->pszSSLCIPHER);
 
-    /* TODO: check if we can pass NULL instead of opt_ssl_verify_server_cert */
     mysql_options(&dbc->mysql,MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &opt_ssl_verify_server_cert);
 #endif
     if ( !mysql_real_connect( &dbc->mysql,
