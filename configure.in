@@ -365,29 +365,6 @@ AC_SUBST(INSTALL_SCRIPT)
 
 export CC CFLAGS LD LDFLAGS
 
-# To avoid configure to fail when used with gcc 3.x along with
-# iodbc/unixodbc search path in system directories; add -isystem
-# to CFLAGS
-
-using_gcc_3x=no
-if test "$CC" = "gcc" 
-then
-  AC_MSG_CHECKING([if we are using gcc >= 3.x])
-  gcc_version=`${CC} --version | head -n 1`
-  case "$gcc_version" in
-      "gcc (GCC) 3."*)
-    using_gcc_3x=yes;
-  esac  
-
-  if test "$using_gcc_3x" = "yes" 
-  then
-    AC_MSG_RESULT([yes (${gcc_version})])
-  else 
-    AC_MSG_RESULT([no (${gcc_version})])
-  fi
-fi
-
-
 ###################################################################
 #                                                                 #
 # Check if localtime_r exists in libc or not                      #
@@ -530,22 +507,6 @@ AC_ARG_WITH(iodbc-libs,
 [  --with-iodbc-libs=DIR   Find iODBC libraries in DIR],
 iodbc_libs="$withval",iodbc_libs="$iodbc/lib")
 
-
-# if gcc 3.x used, and system search paths specified for 
-# unixodbc / iodbc, then overcome the gcc error by specifying
-# -isystem
-
-if test "$using_gcc_3x" = "yes"
-then
-  if test "x$iodbc" = "x/usr" ||
-     test "x$iodbc" = "x/usr/" ||
-     test "x$iodbc" = "x/usr/local" ||
-     test "x$iodbc" = "x/usr/local/"
-   then
-     ODBC_FLAGS="-isystem"
-  fi
-fi
-
 # add iodbc version
 AC_PATH_PROG(iodbc_conf,iodbc-config,no)
 if test "$iodbc_conf" != "no"
@@ -605,21 +566,6 @@ else
 fi
 AC_MSG_CHECKING([for unixODBC version])
 AC_MSG_RESULT([$unixodbc_version])
-
-# if gcc 3.x used, and system search paths specified for 
-# unixodbc / iodbc, then overcome the gcc error by specifying
-# -isystem
-
-if test "$using_gcc_3x" = "yes"
-then
-  if test "x$unixODBC" = "x/usr" ||
-     test "x$unixODBC" = "x/usr/" ||
-     test "x$unixODBC" = "x/usr/local" ||
-     test "x$unixODBC" = "x/usr/local/"
-   then
-     ODBC_FLAGS="-isystem"
-  fi
-fi
 
 AC_ARG_WITH(unixODBC-includes,
 [  --with-unixODBC-includes=DIR Find unixODBC headers in DIR],

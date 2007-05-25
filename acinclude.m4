@@ -91,7 +91,7 @@ AC_DEFUN([AC_CHECK_IODBC],
 [
 check_iobc_inc_path="$1"
 check_iobc_lib_path="$2"
-CPPFLAGS="$CPPFLAGS $ODBC_FLAGS -I$check_iobc_inc_path"
+CPPFLAGS="$CPPFLAGS -I$check_iobc_inc_path"
 AC_CHECK_HEADERS([isql.h isqlext.h isqltypes.h],
 [iodbc_ok=yes;odbc_headers="$odbc_headers $ac_hdr"],[iodbc_ok=no; break])
 
@@ -148,7 +148,7 @@ AC_DEFUN([AC_CHECK_UNIXODBC],
 [
 check_iobc_inc_path="$1"
 check_iobc_lib_path="$2"
-CPPFLAGS="$CPPFLAGS $ODBC_FLAGS -I$check_iobc_inc_path"
+CPPFLAGS="$CPPFLAGS -I$check_iobc_inc_path"
 AC_CHECK_HEADERS([sql.h sqlext.h sqltypes.h],
 [unixODBC_ok=yes;odbc_headers="$odbc_headers $ac_hdr"],[unixODBC_ok=no; break])
 
