@@ -365,7 +365,7 @@ DECLARE_TEST(t_setpos_position)
   SQLINTEGER nData;
   SQLLEN nlen;
   SQLCHAR szData[255];
-  SQLUINTEGER pcrow;
+  SQLULEN pcrow;
   SQLUSMALLINT rgfRowStatus;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_setpos_position");
@@ -386,18 +386,20 @@ DECLARE_TEST(t_setpos_position)
 
   ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &nData, 0, NULL));
   ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szData, sizeof(szData),
-                            NULL));
+                            &nlen));
 
   ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, &pcrow,
                                   &rgfRowStatus));
 
   is_num(nData, 100);
+  is_num(nlen, 6);
   is_str(szData, "MySQL1", 6);
 
   ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
 
   nData= 1000;
   strcpy((char *)szData, "updated");
+  nlen= 7;
 
   expect_stmt(hstmt, SQLSetPos(hstmt, 3, SQL_UPDATE, SQL_LOCK_NO_CHANGE),
               SQL_ERROR);
@@ -1238,72 +1240,58 @@ DECLARE_TEST(tmysql_setpos_add)
 
 DECLARE_TEST(tmysql_pos_delete)
 {
-    SQLRETURN rc;
-    SQLHSTMT hstmt1;
-    SQLUINTEGER pcrow;
-    SQLUSMALLINT rgfRowStatus;
+  SQLHSTMT hstmt1;
+  SQLLEN rows;
+  SQLCHAR buff[10];
 
-    rc = SQLAllocStmt(hdbc,&hstmt1);
-    mycon(hdbc,rc);
+  ok_con(hdbc, SQLAllocStmt(hdbc, &hstmt1));
 
-    tmysql_exec(hstmt,"drop table tmysql_pos_delete");
-    rc = tmysql_exec(hstmt,"create table tmysql_pos_delete(col1 int , col2 varchar(30))");
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_pos_delete");
+  ok_sql(hstmt, "CREATE TABLE tmysql_pos_delete (a INT, b VARCHAR(30))");
+  ok_sql(hstmt, "INSERT INTO tmysql_pos_delete VALUES (1,'venu'),(2,'MySQL')");
 
-    rc = tmysql_exec(hstmt,"insert into tmysql_pos_delete values(100,'venu')");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = tmysql_exec(hstmt,"insert into tmysql_pos_delete values(200,'MySQL')");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"venu_cur", SQL_NTS));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "SELECT * FROM tmysql_pos_delete");
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, NULL, NULL));
 
-    rc = SQLSetCursorName(hstmt,"venu_cur",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
 
-    rc = tmysql_exec(hstmt,"select * from tmysql_pos_delete");
-    mystmt(hstmt,rc);
+  expect_sql(hstmt1,
+             "   DfffELETE FROM tmysql_pos_delete WHERE CURRENT OF venu_cur",
+             SQL_ERROR);
 
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_NEXT,1,&pcrow,&rgfRowStatus);
-    mystmt(hstmt,rc);
+  expect_sql(hstmt1,
+             "   DELETE FROM tmysql_pos_delete WHERE CURRENT OF venu_cur curs",
+             SQL_ERROR);
 
-    rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
+  expect_sql(hstmt1,
+             "   DELETE FROM tmysql_pos_delete WHERE ONE CURRENT OF venu_cur",
+             SQL_ERROR);
 
-    rc = SQLExecDirect(hstmt1,"   DfffELETE FROM tmysql_pos_delete WHERE CURRENT OF venu_cur",SQL_NTS);
-    mystmt_r(hstmt1,rc);
+  ok_sql(hstmt1, "   DELETE FROM tmysql_pos_delete WHERE CURRENT OF venu_cur");
 
-    rc = SQLExecDirect(hstmt1,"   DELETE FROM tmysql_pos_delete WHERE CURRENT OF venu_cur curs",SQL_NTS);
-    mystmt_r(hstmt1,rc);
+  ok_stmt(hstmt1, SQLRowCount(hstmt1, &rows));
+  is_num(rows, 1);
 
-    rc = SQLExecDirect(hstmt1,"   DELETE FROM tmysql_pos_delete WHERE ONE CURRENT OF venu_cur",SQL_NTS);
-    mystmt_r(hstmt1,rc);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
 
-    rc = SQLExecDirect(hstmt1,"   DELETE FROM tmysql_pos_delete WHERE CURRENT OF venu_cur",SQL_NTS);
-    mystmt(hstmt1,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    SQLNumResultCols(hstmt1,&rgfRowStatus);
+  ok_sql(hstmt, "SELECT * FROM tmysql_pos_delete");
+  ok_stmt(hstmt, SQLFetch(hstmt));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    rc = SQLFreeStmt(hstmt1,SQL_CLOSE);
+  is_num(my_fetch_int(hstmt, 1), 2);
+  is_str(my_fetch_str(hstmt, buff, 2), "MySQL", 5);
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
-    rc = tmysql_exec(hstmt,"select * from tmysql_pos_delete");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    my_assert(1 == myresult(hstmt));
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = SQLFreeStmt(hstmt1,SQL_DROP);
-    mystmt(hstmt1,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_pos_delete");
 
   return OK;
 }
