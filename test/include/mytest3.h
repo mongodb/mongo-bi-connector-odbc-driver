@@ -210,42 +210,6 @@ void myerror( SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle, const char *szF
 }
 
 /**
-  CONNECTION
-*/
-void myconnect(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt)
-{
-    SQLRETURN rc;
-
-    rc = SQLAllocHandle(SQL_HANDLE_ENV,SQL_NULL_HANDLE,henv);
-    myenv(*henv,rc);   
-
-    rc = SQLSetEnvAttr(*henv,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)SQL_OV_ODBC3,0);
-    myenv(*henv,rc);   
-
-    rc = SQLAllocHandle(SQL_HANDLE_DBC,*henv, hdbc);
-    myenv(*henv,rc);    
-
-    printMessage(" Connecting to '%s' with user name '%s'...\n",mydsn,myuid);
-    rc = SQLConnect(*hdbc, mydsn, SQL_NTS, myuid, SQL_NTS,  mypwd, SQL_NTS);
-    mycon(*hdbc,rc);
-
-    rc = SQLSetConnectAttr(*hdbc,SQL_ATTR_AUTOCOMMIT,(SQLPOINTER)SQL_AUTOCOMMIT_ON,0);
-    mycon(*hdbc,rc);
-
-    rc = SQLAllocHandle(SQL_HANDLE_STMT,*hdbc,hstmt);
-    mycon(*hdbc,rc);
-
-    {
-        size_t i;
-        for (i=0; i< sizeof(init_db)/sizeof(init_db[0]); i++)
-            SQLExecDirect(*hstmt, (SQLCHAR *)init_db[i], SQL_NTS);
-    }
-    SQLFreeStmt(*hstmt, SQL_CLOSE);
-    SQLSetStmtAttr(*hstmt,SQL_ATTR_CURSOR_TYPE,(SQLPOINTER)SQL_CURSOR_STATIC,0);
-    SQLSetStmtOption(*hstmt,SQL_SIMULATE_CURSOR,SQL_SC_NON_UNIQUE);
-    SQLSetStmtOption(*hstmt, SQL_CURSOR_TYPE, SQL_CURSOR_KEYSET_DRIVEN);
-}
-/**
   DRV CONNECTION
 */
 void mydrvconnect(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt,SQLCHAR *connIn)
@@ -284,31 +248,6 @@ void mydrvconnect(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt,SQLCHAR *connIn)
     SQLSetStmtAttr(*hstmt,SQL_ATTR_CURSOR_TYPE,(SQLPOINTER)SQL_CURSOR_STATIC,0);
     SQLSetStmtOption(*hstmt,SQL_SIMULATE_CURSOR,SQL_SC_NON_UNIQUE);
     SQLSetStmtOption(*hstmt, SQL_CURSOR_TYPE, SQL_CURSOR_KEYSET_DRIVEN);
-}
-/**
-  DISCONNECT
-*/
-void mydisconnect(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt)
-{
-    SQLRETURN rc;
-
-    SQLExecDirect(*hstmt, (SQLCHAR *)init_db[0], SQL_NTS);
-    SQLFreeStmt(*hstmt, SQL_CLOSE);
-
-    rc = SQLEndTran(SQL_HANDLE_DBC, *hdbc, SQL_COMMIT);
-    mycon(*hdbc, rc);
-
-    rc = SQLFreeStmt(*hstmt, SQL_DROP);
-    mystmt(*hstmt,rc);
-
-    rc = SQLDisconnect(*hdbc);
-    mycon(*hdbc,rc);
-
-    rc = SQLFreeConnect(*hdbc);
-    mycon(*hdbc,rc);
-
-    rc = SQLFreeEnv(*henv);
-    myenv(*henv,rc);
 }
 
 /**
@@ -593,22 +532,6 @@ bool driver_supports_setpos(SQLHDBC hdbc)
 }
 
 /*
-  Check if driver supports SQLSetPos
-*/
-bool driver_supports_positioned_ops(SQLHDBC hdbc)
-{
-    SQLRETURN    rc;
-    SQLINTEGER status;
-
-    rc = SQLGetInfo(hdbc, SQL_POS_OPERATIONS, &status, 0, NULL);
-    mycon(hdbc,rc);
-
-    if ((status & SQL_POS_UPDATE) || (status & SQL_POS_DELETE))
-        return true;
-    return false;
-}
-
-/*
   Check for minimal MySQL version
 */
 bool mysql_min_version(SQLHDBC hdbc, SQLCHAR *min_version, unsigned int length)
@@ -664,29 +587,4 @@ bool server_supports_trans(SQLHDBC hdbc)
     return false;
 }
 
-/*
-  Check if server supports GRANT
-*/
-bool server_supports_grant(SQLHSTMT hstmt)
-{
-    SQLRETURN   rc;
-
-    rc= SQLExecDirect(hstmt,
-                      (SQLCHAR *)"GRANT ALL ON *.* TO 'mysqltest_1'",
-                      SQL_NTS);
-    if (rc == SQL_ERROR)
-    {
-        SQLINTEGER native_err;
-
-        rc = SQLGetDiagField(SQL_HANDLE_STMT,hstmt,1,SQL_DIAG_NATIVE,&native_err,0,NULL);
-        mystmt(hstmt,rc);
-
-        if (native_err == 1047) /* command not found */
-            return false;
-    }
-    SQLExecDirect(hstmt,
-                  (SQLCHAR *)"DELETE FROM mysql.user WHERE User='mysqltest_1'",
-                  SQL_NTS);
-    return true;
-}
 #endif /* __TMYODBC__TEST__H */
