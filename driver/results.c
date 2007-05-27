@@ -1272,7 +1272,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     STMT FAR *stmt= (STMT FAR*) hstmt;
     MYSQL_ROW values= 0;
     MYSQL_ROW_OFFSET save_position;
-    SQLUINTEGER dummy_pcrow;
+    SQLROWSETSIZE dummy_pcrow;
 
     MYODBCDbgEnter;
 
