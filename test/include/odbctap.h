@@ -56,6 +56,8 @@ void printMessage(char *fmt, ...) {
 #endif
 
 typedef int (*test_func)(SQLHDBC, SQLHSTMT, SQLHENV);
+static void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
+		       const char *text, const char *file, int line);
 
 /* Disable _attribute__ on non-gcc compilers. */
 #if !defined(__attribute__) && !defined(__GNUC__)
@@ -154,6 +156,64 @@ int main(int argc, char **argv) \
 \
   exit(0); \
 }
+
+/**
+  Execute an SQL statement and bail out if the execution does not return
+  SQL_SUCCESS or SQL_SUCCESS_WITH_INFO.
+
+  @param statement Handle for statement object
+  @param format string
+  @param format string arguments
+*/
+#define ok_sql_fmt0(handle, format) \
+        do {return ok_sql_fmt_impl((handle), #handle, __FILE__, __LINE__, \
+            format);} while (0)
+#define ok_sql_fmt1(handle, format, arg1) \
+        do {return ok_sql_fmt_impl((handle), #handle, __FILE__, __LINE__, \
+            format, arg1);} while (0)
+#define ok_sql_fmt2(handle, format, arg1, arg2) \
+        do {return ok_sql_fmt_impl((handle), #handle, __FILE__, __LINE__, \
+            format, arg1, arg2);} while (0)
+#define ok_sql_fmt3(handle, format, arg1, arg2, arg3) \
+        do {return ok_sql_fmt_impl((handle), #handle, __FILE__, __LINE__, \
+            format, arg1, arg2, arg3);} while (0)
+#define ok_sql_fmt4(handle, format, arg1, arg2, arg3, arg4) \
+        do {return ok_sql_fmt_impl((handle), #handle, __FILE__, __LINE__, \
+            format, arg1, arg2, arg3, arg4);} while (0)
+#define ok_sql_fmt5(handle, format, arg1, arg2, arg3, arg4, arg5) \
+        do {return ok_sql_fmt_impl((handle), #handle, __FILE__, __LINE__, \
+            format, arg1, arg2, arg3, arg4, arg5);} while (0)
+
+#define SQLTMPBUF 512	  /* Assume not that large queries */
+
+/* You never call this function directly, use macros above */
+
+static int ok_sql_fmt_impl(SQLHANDLE handle, const char * hstring,
+                           const char * file, int line,
+                           const char * format, ...)
+{
+  va_list ap;
+  va_start(ap, format);
+  char query[SQLTMPBUF];
+  char error[SQLTMPBUF];
+
+  if ( vsnprintf(query, SQLTMPBUF-1, format, ap) <= 0 ) {
+    printMessage("ERROR: failed to format SQL query\n");
+    return FAIL;
+  }
+
+  SQLRETURN rc= SQLExecDirect(handle, (SQLCHAR *)query, SQL_NTS);
+
+  if ( snprintf(error, SQLTMPBUF-1, "SQLExecDirect(%s, \"%s\", SQL_NTS)",
+		 hstring, query) <= 0 ) {
+    printMessage("ERROR: failed to format SQL error string\n");
+    return FAIL;
+  }
+  print_diag(rc, SQL_HANDLE_STMT, handle, error, file, line);
+  va_end(ap);
+  return (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) ? OK : FAIL;
+}
+
 
 /**
   Execute an SQL statement and bail out if the execution does not return
@@ -316,8 +376,8 @@ do { \
 
 /**
 */
-void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
-                const char *text, const char *file, int line)
+static void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
+		       const char *text, const char *file, int line)
 {
   if (!SQL_SUCCEEDED(rc))
   {

@@ -682,7 +682,7 @@ DECLARE_TEST(t_prepare)
   SQLINTEGER nidata= 200, nodata;
   SQLLEN    nlen;
   char      szodata[20],szidata[20]="MySQL";
-  SQLROWCOUNT pccol;
+  SQLSMALLINT pccol;
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
@@ -875,7 +875,7 @@ DECLARE_TEST(tmysql_bindparam)
     SQLINTEGER nodata, nidata= 200;
     SQLLEN    nlen;
     SQLCHAR   szodata[20],szidata[20]="MySQL";
-    short     pccol;
+    SQLSMALLINT pccol;
 
     tmysql_exec(hstmt,"drop table tmysql_bindparam");
 

@@ -474,7 +474,7 @@ DECLARE_TEST(my_position1)
     rc = SQLExecDirect(hstmt,"select * from my_position",SQL_NTS);
     mystmt(hstmt,rc);
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,&nrow);
+    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,nrow);
     mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,sizeof(szData[0]),nlen);
