@@ -243,7 +243,7 @@ DECLARE_TEST(t_warning)
 }
 
 
-DECLARE_TEST(t_bug3456)
+DECLARE_TODO(t_bug3456)
 {
   SQLINTEGER connection_id;
   char buf[100];
@@ -260,14 +260,12 @@ DECLARE_TEST(t_bug3456)
 
   /* From another connection, kill the connection created above */
   sprintf(buf, "KILL %d", connection_id);
-  ok_sql_fmt1(hstmt, "%s", buf);
+  ok_stmt(hstmt, SQLExecDirect((statement), (SQLCHAR *)buf SQL_NTS));
 
   /* Now check that the connection killed returns the right SQLSTATE */
   expect_sql(hstmt2, "SELECT connection_id()", SQL_ERROR);
-  if (check_sqlstate(hdbc2, hstmt2, "HYT01") != OK)
-    return FAIL;
 
-  return OK;
+  return check_sqlstate(hdbc2, hstmt2, "08S01");
 }
 
 
