@@ -423,12 +423,16 @@ SQLRETURN SQL_API my_SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption)
     if (fOption == SQL_RESET_PARAMS)
         MYODBCDbgReturnReturn( SQL_SUCCESS );
 
-    mysql_free_result(stmt->result);
+    if (!stmt->fake_result)
+      mysql_free_result(stmt->result);
+    else
+      x_free((gptr)stmt->result);
     x_free((gptr) stmt->fields);
     x_free((gptr) stmt->array);
     x_free((gptr) stmt->result_array);
     x_free((gptr) stmt->odbc_types);
     stmt->result= 0;
+    stmt->fake_result= 0;
     stmt->result_lengths= 0;
     stmt->fields= 0;
     stmt->array= 0;

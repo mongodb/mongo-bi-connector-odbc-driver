@@ -5,6 +5,8 @@
     but must be enabled through configuration files or the DSN. (Bug #12918)
 
   Bugs fixed:
+  * The wrong function was used for freeing the artificial result sets that
+    are created by some catalog functions. (Bug #22797)
   * Accessing the results of catalog functions could cause a crash when the
     "Don't cache results" option was set and a forward-only cursor was
     being used. (Bug #4657)

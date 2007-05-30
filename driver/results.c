@@ -747,8 +747,12 @@ my_bool set_dynamic_result(STMT FAR *stmt)
 
     pthread_mutex_lock(&stmt->dbc->lock);
     x_free((gptr) stmt->odbc_types);
-    mysql_free_result(stmt->result);
+    if (!stmt->fake_result)
+      mysql_free_result(stmt->result);
+    else
+      x_free((gptr)stmt->result);
     stmt->result= 0;
+    stmt->fake_result= 0;
     stmt->odbc_types= 0;
     stmt->cursor_row= 0;
     stmt->result= mysql_store_result(&stmt->dbc->mysql);

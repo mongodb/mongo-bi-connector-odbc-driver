@@ -1172,6 +1172,51 @@ DECLARE_TEST(t_bug4518)
 }
 
 
+/**
+ Tests the non-error code paths in catalog.c that return an empty set to
+ make sure the resulting empty result sets at least indicate the right
+ number of columns.
+*/
+DECLARE_TEST(empty_set)
+{
+  SQLSMALLINT columns;
+
+  /* SQLTables(): no known table types. */
+  ok_stmt(hstmt, SQLTables(hstmt, NULL, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS,
+                           (SQLCHAR *)"UNKNOWN", SQL_NTS));
+  ok_stmt(hstmt, SQLNumResultCols(hstmt, &columns));
+  is_num(columns, 5);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* SQLTables(): no tables found. */
+  ok_stmt(hstmt, SQLTables(hstmt, NULL, SQL_NTS, NULL, SQL_NTS,
+                           (SQLCHAR *)"no_such_table", SQL_NTS, NULL, SQL_NTS));
+  ok_stmt(hstmt, SQLNumResultCols(hstmt, &columns));
+  is_num(columns, 5);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* SQLColumns(): no table specified. */
+  ok_stmt(hstmt, SQLColumns(hstmt, NULL, SQL_NTS, NULL, SQL_NTS,
+                            NULL, SQL_NTS, NULL, SQL_NTS));
+  ok_stmt(hstmt, SQLNumResultCols(hstmt, &columns));
+  is_num(columns, 18);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* SQLStatistics(): no table specified. */
+  ok_stmt(hstmt, SQLStatistics(hstmt, NULL, SQL_NTS, NULL, SQL_NTS,
+                               NULL, SQL_NTS, 0, 0));
+  ok_stmt(hstmt, SQLNumResultCols(hstmt, &columns));
+  is_num(columns, 13);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -1189,6 +1234,7 @@ BEGIN_TESTS
   ADD_TEST(tmysql_showkeys)
   ADD_TEST(t_sqltables)
   ADD_TEST(t_bug4518)
+  ADD_TEST(empty_set)
 END_TESTS
 
 

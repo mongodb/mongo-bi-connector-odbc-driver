@@ -334,6 +334,7 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
         /* Return set of allowed Table owners */
         MYODBCDbgInfo( "%s", "Return set of table owners / Schema names" );
         stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
+        stmt->fake_result= 1;
         stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLTABLES_owner_values,
                                                   sizeof(SQLTABLES_owner_values),
                                                   MYF(0));
@@ -351,6 +352,7 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
         /* Return set of TableType qualifiers */
         MYODBCDbgInfo( "%s", "Return set of table types" );
         stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
+        stmt->fake_result= 1;
         stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLTABLES_type_values,
                                                   sizeof(SQLTABLES_type_values),
                                                   MYF(0));
@@ -533,6 +535,7 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
     empty_set:
     MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
     stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
+    stmt->fake_result= 1;
     stmt->result->row_count= 0;
     stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLTABLES_values,
                                               sizeof(SQLTABLES_values), 
@@ -861,6 +864,7 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
     empty_set:
     MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
     stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
+    stmt->fake_result= 1;
     stmt->result->row_count= 0;
     stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLCOLUMNS_values,
                                               sizeof(SQLCOLUMNS_values), 
@@ -1039,6 +1043,7 @@ SQLRETURN SQL_API SQLStatistics(SQLHSTMT hstmt,
     empty_set:
     MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
     stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
+    stmt->fake_result= 1;
     stmt->result->row_count= 0;
     stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLSTAT_values,
                                               sizeof(SQLSTAT_values), 
@@ -1231,6 +1236,7 @@ SQLRETURN SQL_API SQLTablePrivileges(SQLHSTMT hstmt,
     empty_set:
     MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
     stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
+    stmt->fake_result= 1;
     stmt->result->row_count= 0;
     stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLTABLES_priv_values,
                                               sizeof(SQLTABLES_priv_values), 
@@ -1405,6 +1411,7 @@ SQLRETURN SQL_API SQLColumnPrivileges(SQLHSTMT hstmt,
     empty_set:
     MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
     stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
+    stmt->fake_result= 1;
     stmt->result->row_count= 0;
     stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLCOLUMNS_priv_values,
                                               sizeof(SQLCOLUMNS_priv_values), 
@@ -1632,6 +1639,7 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
     empty_set:
     MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
     stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
+    stmt->fake_result= 1;
     stmt->result->row_count= 0;
     stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLSPECIALCOLUMNS_values,
                                               sizeof(SQLSPECIALCOLUMNS_values), 
@@ -1753,6 +1761,7 @@ SQLRETURN SQL_API SQLPrimaryKeys(SQLHSTMT hstmt,
     empty_set:
     MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
     stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
+    stmt->fake_result= 1;
     stmt->result->row_count= 0;
     stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLPRIM_KEYS_values,
                                               sizeof(SQLPRIM_KEYS_values), 
@@ -2084,7 +2093,9 @@ SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT hstmt,
     }
     else /* NO FOREIGN KEY support from SERVER */
     {
+      /** @todo this should just goto empty_set */
         stmt->result=(MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
+        stmt->fake_result= 1;
         stmt->result->eof=1;
     }  
     stmt->result->row_count= row_count;
@@ -2095,6 +2106,7 @@ SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT hstmt,
     empty_set:
     MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
     stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
+    stmt->fake_result= 1;
     stmt->result->row_count= 0;
     stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLFORE_KEYS_values,
                                               sizeof(SQLFORE_KEYS_values), 

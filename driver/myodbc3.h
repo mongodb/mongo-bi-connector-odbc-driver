@@ -325,6 +325,7 @@ typedef struct tagSTMT
 {
   DBC FAR	*dbc;
   MYSQL_RES	*result;
+  my_bool       fake_result;
   MYSQL_ROW	array,result_array,current_values;
   MYSQL_ROW	(*fix_fields)(struct tagSTMT FAR* stmt,MYSQL_ROW row);
   MYSQL_FIELD	*fields;
