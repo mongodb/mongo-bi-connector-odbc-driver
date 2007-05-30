@@ -243,7 +243,7 @@ DECLARE_TEST(t_warning)
 }
 
 
-DECLARE_TODO(t_bug3456)
+DECLARE_TEST(t_bug3456)
 {
   SQLINTEGER connection_id;
   char buf[100];
@@ -260,7 +260,7 @@ DECLARE_TODO(t_bug3456)
 
   /* From another connection, kill the connection created above */
   sprintf(buf, "KILL %d", connection_id);
-  ok_stmt(hstmt, SQLExecDirect((statement), (SQLCHAR *)buf SQL_NTS));
+  ok_stmt(hstmt, SQLExecDirect(hstmt, (SQLCHAR *)buf, SQL_NTS));
 
   /* Now check that the connection killed returns the right SQLSTATE */
   expect_sql(hstmt2, "SELECT connection_id()", SQL_ERROR);
@@ -276,7 +276,7 @@ BEGIN_TESTS
   ADD_TEST(t_odbc2_error)
   ADD_TEST(t_diagrec)
   ADD_TEST(t_warning)
-  ADD_TEST(t_bug3456)
+  ADD_TODO(t_bug3456)
 END_TESTS
 
 RUN_TESTS
