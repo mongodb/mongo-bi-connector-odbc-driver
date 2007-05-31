@@ -257,12 +257,16 @@ void mydrvconnect(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt,SQLCHAR *connIn)
 static void my_print_dashes(SQLHSTMT hstmt, SQLSMALLINT nCol)
 {
     SQLRETURN  rc;
-    SQLINTEGER field_count, disp_size, nullable;
+#ifdef USE_SQLCOLATTRIBUTE_SQLLEN_PTR
+    SQLLEN     disp_size, nullable;
+#else
+    SQLINTEGER disp_size, nullable;
+#endif
     SQLCHAR    ColName[MAX_NAME_LEN+1];
-    SQLUSMALLINT i, j;
+    SQLUSMALLINT field_count, i, j;
     SQLSMALLINT  col_len;
 
-    field_count= (SQLINTEGER)nCol;
+    field_count= (SQLUSMALLINT)nCol;
     printMessage( "\t" );
     printMessage( "+" );
 
