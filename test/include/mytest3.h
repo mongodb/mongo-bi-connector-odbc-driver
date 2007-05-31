@@ -299,7 +299,7 @@ static void my_print_data(SQLHSTMT hstmt, SQLUSMALLINT index,
                           SQLCHAR *data, SQLINTEGER length)
 {
     SQLRETURN  rc;
-    SQLINTEGER disp_size, nullable;
+    SQLLEN     disp_size, nullable;
     SQLCHAR    ColName[MAX_NAME_LEN+1];
     SQLSMALLINT col_len;
 
