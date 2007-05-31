@@ -130,52 +130,6 @@ DECLARE_TEST(t_mul_pkdel)
 
 
 /**
- @todo This test demonstrates an egregious bug. There is logic in
- insert_pk_fields() that is just wrong.
-*/
-DECLARE_TEST(t_mul_pkdel1)
-{
-  SQLINTEGER nData;
-  SQLLEN nlen;
-  SQLROWSETSIZE pcrow;
-
-  ok_sql(hstmt, "DROP TABLE IF EXISTS t_mul_pkdel1");
-  ok_sql(hstmt, "CREATE TABLE t_mul_pkdel1 (a INT NOT NULL, b INT,"
-         "c VARCHAR(30) NOT NULL, PRIMARY KEY(a, c))");
-  ok_sql(hstmt, "INSERT INTO t_mul_pkdel1 VALUES (100,10,'MySQL1'),"
-         "(200,20,'MySQL2'),(300,20,'MySQL3'),(400,20,'MySQL4')");
-
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-
-  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"venu", SQL_NTS));
-
-  ok_sql(hstmt, "SELECT a FROM t_mul_pkdel1");
-
-  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &nData, 0, NULL));
-
-  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, &pcrow, NULL));
-  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
-
-  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_DELETE, SQL_LOCK_NO_CHANGE));
-  ok_stmt(hstmt, SQLRowCount(hstmt, &nlen));
-  is_num(nlen, 1);
-
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-
-  ok_sql(hstmt, "SELECT * FROM t_mul_pkdel1");
-
-  is_num(myrowcount(hstmt), 3);
-
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-
-  ok_sql(hstmt, "DROP TABLE IF EXISTS t_mul_pkdel1");
-
-  return OK;
-}
-
-
-/**
   Bug #24306: SQLBulkOperations always uses indicator varables' values from
   the first record
 */
@@ -337,7 +291,6 @@ DECLARE_TEST(t_bulk_insert_rows)
 BEGIN_TESTS
   ADD_TEST(t_bulk_insert)
   ADD_TEST(t_mul_pkdel)
-  ADD_TEST(t_mul_pkdel1)
   ADD_TEST(t_bulk_insert_indicator)
   ADD_TEST(t_bulk_insert_rows)
 END_TESTS

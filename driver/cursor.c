@@ -513,8 +513,7 @@ static my_bool if_float_field(STMT FAR *stmt, MYSQL_FIELD *field)
 /*
   @type    : myodbc3 internal
   @purpose : checks for the existance of pk columns in the resultset,
-  if it is, copy that data to query, else get the data by
-  building a temporary resultset
+  if it is, copy that data to query, else we can't find the right row
 */
 
 static SQLRETURN insert_pk_fields(STMT FAR *stmt, DYNAMIC_STRING *dynQuery)
@@ -526,98 +525,36 @@ static SQLRETURN insert_pk_fields(STMT FAR *stmt, DYNAMIC_STRING *dynQuery)
     MYCURSOR     *cursor= &stmt->cursor;
     SQLUINTEGER  pk_count= 0;
 
+    /* Look for primary key columns in the current result set, */
+    for (ncol= 0; ncol < result->field_count; ncol++)
+    {
+      field= result->fields+ncol;
+      for (index= 0; index < cursor->pk_count; index++)
+      {
+        if (!myodbc_strcasecmp(cursor->pkcol[index].name, field->org_name))
+        {
+          /* PK data exists...*/
+          dynstr_append_quoted_name(dynQuery, field->org_name);
+          dynstr_append_mem(dynQuery, "=", 1);
+          if (insert_field(stmt, result, dynQuery, ncol))
+            return SQL_ERROR;
+          cursor->pkcol[index].bind_done= TRUE;
+          pk_count++;
+          break;
+        }
+      }
+    }
+
     /*
-      Look for primary key columns in the current result set,
-      if it exists, take that data else query new resultset
+     If we didn't have data for all the components of the primary key,
+     we can't build a correct WHERE clause.
     */
-    for ( ncol= 0; ncol < result->field_count; ncol++ )
-    {
-        field= result->fields+ncol;
-        for ( index= 0; index < cursor->pk_count; index++ )
-        {
-            if ( !myodbc_strcasecmp(cursor->pkcol[index].name,field->name) )
-            {
-                /* PK data exists...*/
-                dynstr_append_quoted_name(dynQuery,field->name);
-                dynstr_append_mem(dynQuery,"=",1);
-                if ( insert_field(stmt,result,dynQuery,ncol) )
-                    return(SQL_ERROR);
-                cursor->pkcol[index].bind_done= TRUE;
-                pk_count++;
-                break;
-            }
-        }
-    }
-    if ( pk_count != cursor->pk_count )
-    {
-        /*
-          Primary key column doesn't exists in the opened rs, so
-          get the data by executing a query
-        */
-        DYNAMIC_STRING query;
-        MYSQL_RES *presult;
-        SQLUSMALLINT field_count= 0;
+    if (pk_count != cursor->pk_count)
+      return set_stmt_error(stmt, "HY000",
+                            "Not all components of primary key are available, "
+                            "so row to modify cannot be identified", 0);
 
-        if ( init_dynamic_string(&query, "SELECT ", 1024,1024) )
-            return set_error(stmt,MYERR_S1001,NULL,4001);
-
-        for ( index= 0; index < cursor->pk_count; index++ )
-        {
-            if ( !cursor->pkcol[index].bind_done )
-            {
-                dynstr_append_quoted_name(&query,stmt->cursor.pkcol[index].name);
-                dynstr_append_mem(&query,",",1);
-            }
-        }
-        query.length-= 1;
-        dynstr_append_mem(&query," FROM ",6);
-
-        if ( !find_used_table(stmt) )
-        {
-            dynstr_free(&query);
-            return(SQL_ERROR);
-        }
-
-        dynstr_append_quoted_name(&query,stmt->table_name);
-        MYLOG_QUERY(stmt, query.str);
-        pthread_mutex_lock(&stmt->dbc->lock);
-        if ( mysql_query(&stmt->dbc->mysql,query.str) ||
-             !(presult= mysql_store_result(&stmt->dbc->mysql)) )
-        {
-            set_error(stmt,MYERR_S1000,mysql_error(&stmt->dbc->mysql),
-                      mysql_errno(&stmt->dbc->mysql));
-            pthread_mutex_unlock(&stmt->dbc->lock);
-            dynstr_free(&query);
-            return(SQL_ERROR);
-        }
-        pthread_mutex_unlock(&stmt->dbc->lock);
-
-        for ( index= 0;index< (uint) stmt->current_row;index++ )
-            presult->data_cursor= presult->data_cursor->next;
-
-        for ( index= 0; index < cursor->pk_count; index++ )
-        {
-            if ( !cursor->pkcol[index].bind_done )
-            {
-                dynstr_append_quoted_name(dynQuery,cursor->pkcol[index].name);
-                dynstr_append_mem(dynQuery,"=",1);
-
-                /*
-                  Might have multiple pk fields in the missing list ..
-                  so avoid the wrong query by having internal field_count..
-                */
-                if ( insert_field(stmt,presult,dynQuery,field_count++) )
-                {
-                    mysql_free_result(presult);
-                    dynstr_free(&query);
-                    return(SQL_ERROR);
-                }
-            }
-        }
-        mysql_free_result(presult);
-        dynstr_free(&query);
-    }
-    return(SQL_SUCCESS);
+    return SQL_SUCCESS;
 }
 
 
@@ -745,15 +682,17 @@ static SQLRETURN build_where_clause( STMT FAR *       pStmt,
     dynstr_append_mem( dynQuery, " WHERE ", 7 );
 
     /* IF pk exists THEN use pk cols for where ELSE use all cols */
-    if ( check_if_pk_exists( pStmt ) )
+    if (check_if_pk_exists(pStmt))
     {
-        if ( insert_pk_fields( pStmt, dynQuery ) != SQL_SUCCESS )
-            return set_stmt_error( pStmt, "HY000", "Build WHERE -> insert_pk_fields() failed.", 0 );
+      if (insert_pk_fields(pStmt, dynQuery) != SQL_SUCCESS)
+        return SQL_ERROR;
     }
     else
     {
-        if ( append_all_fields( pStmt, dynQuery ) != SQL_SUCCESS )
-            return set_stmt_error( pStmt, "HY000", "Build WHERE -> insert_fields() failed.", 0 );
+      if (append_all_fields(pStmt, dynQuery) != SQL_SUCCESS)
+        return set_stmt_error(pStmt, "HY000",
+                              "Build WHERE -> insert_fields() failed.",
+                              0);
     }
     /* Remove the trailing ' AND ' */
     dynQuery->length -= 5;
