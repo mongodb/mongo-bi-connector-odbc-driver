@@ -423,9 +423,9 @@ DECLARE_TEST(t_putdata3)
 {
   SQLRETURN   rc;
   SQLINTEGER  id, id1, id2, id3, resId;
-  SQLINTEGER  resUTimeSec;
-  SQLINTEGER  resUTimeMSec;
-  SQLINTEGER  resDataLen;
+  SQLLEN      resUTimeSec;
+  SQLLEN      resUTimeMSec;
+  SQLLEN      resDataLen;
   SQLLEN      resData;
 
   char buffer[]= "MySQL - The worlds's most popular open source database";

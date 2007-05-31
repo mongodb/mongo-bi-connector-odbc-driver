@@ -493,7 +493,7 @@ SQLINTEGER my_fetch_int(SQLHSTMT hstmt, SQLUSMALLINT irow)
 */
 const char *my_fetch_str(SQLHSTMT hstmt, SQLCHAR *szData,SQLUSMALLINT irow)
 {
-    SQLLEN nLen= 0;
+    SQLLEN nLen;
 
     SQLGetData(hstmt,irow,SQL_CHAR,szData,MAX_ROW_DATA_LEN+1,&nLen);
     printMessage( " my_fetch_str: %s(%ld)\n",szData,nLen);

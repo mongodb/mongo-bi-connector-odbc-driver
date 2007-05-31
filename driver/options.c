@@ -677,7 +677,7 @@ set_stmt_attr(SQLHSTMT   hstmt,
             break;
 
         case SQL_ATTR_ROWS_FETCHED_PTR:
-            options->rowsFetchedPtr= (SQLUINTEGER *)ValuePtr;
+            options->rowsFetchedPtr= (SQLULEN *)ValuePtr;
             break;
 
         case SQL_ATTR_SIMULATE_CURSOR:

@@ -284,7 +284,7 @@ int iniElement( char *pszData, char cSeperator, char cTerminator, int nElement, 
 SQLUINTEGER OptimalDisplayWidth( SQLHSTMT hStmt, SQLUSMALLINT nCol, SQLUINTEGER nUserWidth )
 {
     SQLUINTEGER nLabelWidth                     = 10;
-    SQLUINTEGER nDataWidth                      = 10;
+    SQLLEN      nDataWidth                      = 10;
     SQLUINTEGER nOptimalDisplayWidth            = 10;
     SQLCHAR     szColumnName[MAX_DATA_WIDTH+1]  = "";   
 

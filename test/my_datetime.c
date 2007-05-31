@@ -232,8 +232,8 @@ DECLARE_TEST(t_tstotime1)
 DECLARE_TEST(t_bug25846)
 {
   SQLSMALLINT          column_count;
-  SQLINTEGER           my_time_cb;
-  SQLINTEGER           my_date_cb;
+  SQLLEN               my_time_cb;
+  SQLLEN               my_date_cb;
   SQL_TIMESTAMP_STRUCT my_time_ts;
   SQL_TIMESTAMP_STRUCT my_date_ts;
 

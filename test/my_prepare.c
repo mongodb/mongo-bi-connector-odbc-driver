@@ -27,8 +27,8 @@ SQLRETURN rc;
 /* Basic prepared statements - binary protocol test */
 DECLARE_TEST(t_prep_basic)
 {
-    SQLINTEGER id, pcrow;
-    SQLLEN length1, length2;
+    SQLINTEGER id;
+    SQLLEN length1, length2, pcrow;
     char       name[20];
 
     SQLExecDirect(hstmt,"drop table t_prep_basic",SQL_NTS);
@@ -183,8 +183,7 @@ DECLARE_TEST(t_prep_buffer_length)
 /* For data truncation */
 DECLARE_TEST(t_prep_truncate)
 {
-    SQLINTEGER pcrow;
-    SQLLEN length, length1;
+    SQLLEN length, length1, pcrow;
     SQLCHAR    name[20], bin[10];
 
 
@@ -531,7 +530,7 @@ DECLARE_TEST(t_prep_getdata1)
 DECLARE_TEST(t_prep_catalog)
 {
     SQLCHAR     table[20];
-    SQLINTEGER  length;
+    SQLLEN      length;
 
     SQLExecDirect(hstmt,"drop table t_prep_catalog",SQL_NTS);
 

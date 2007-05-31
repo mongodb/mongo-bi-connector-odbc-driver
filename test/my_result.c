@@ -26,7 +26,8 @@
 DECLARE_TEST(my_resultset)
 {
     SQLRETURN   rc;
-    SQLUINTEGER nRowCount=0, pcColDef;
+    SQLUINTEGER nRowCount=0;
+    SQLULEN     pcColDef;
     SQLCHAR     szColName[MAX_NAME_LEN];
     SQLCHAR     szData[MAX_ROW_DATA_LEN+1];
     SQLSMALLINT nIndex,ncol,pfSqlType, pcbScale, pfNullable;
@@ -264,7 +265,7 @@ static void desc_col_check(SQLHSTMT hstmt,
 {
   SQLRETURN   rc;
   SQLSMALLINT pcbColName, pfSqlType, pibScale, pfNullable;
-  SQLUINTEGER pcbColDef;
+  SQLULEN     pcbColDef;
   SQLCHAR     szColName[MAX_NAME_LEN];
 
   rc = SQLDescribeCol(hstmt, icol,

@@ -980,7 +980,7 @@ DECLARE_TEST(tmysql_setpos_del1)
   SQLINTEGER nData;
   SQLLEN nlen;
   SQLCHAR szData[255];
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
   SQLUSMALLINT rgfRowStatus;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_setpos_del1");
@@ -1040,7 +1040,7 @@ DECLARE_TEST(tmysql_setpos_upd)
     SQLINTEGER nData = 500;
     SQLLEN nlen;
     SQLCHAR szData[255]={0};
-    SQLUINTEGER pcrow;
+    SQLROWSETSIZE pcrow;
     SQLUSMALLINT rgfRowStatus;
 
     tmysql_exec(hstmt,"drop table tmysql_setpos");
@@ -1149,7 +1149,7 @@ DECLARE_TEST(tmysql_setpos_add)
     SQLINTEGER nData= 500;
     SQLLEN nlen;
     SQLCHAR szData[255]={0};
-    SQLUINTEGER pcrow;
+    SQLROWSETSIZE pcrow;
     SQLUSMALLINT rgfRowStatus;
 
     tmysql_exec(hstmt,"drop table tmysql_setpos_add");
@@ -1362,7 +1362,7 @@ DECLARE_TEST(t_pos_update)
 DECLARE_TEST(tmysql_pos_update_ex)
 {
   SQLHSTMT hstmt1;
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
   SQLUSMALLINT rgfRowStatus;
   SQLLEN rows;
   SQLCHAR cursor[30], sql[255], data[]= "tmysql_pos_update_ex";
@@ -1425,7 +1425,7 @@ DECLARE_TEST(tmysql_pos_update_ex)
 DECLARE_TEST(tmysql_pos_update_ex1)
 {
   SQLHSTMT hstmt1;
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
   SQLLEN      rows;
   SQLSMALLINT rgfRowStatus;
   SQLCHAR cursor[30], sql[100], data[]= "tmysql_pos_update_ex1";
@@ -1486,7 +1486,7 @@ DECLARE_TEST(tmysql_pos_update_ex1)
 DECLARE_TEST(tmysql_pos_update_ex3)
 {
   SQLHSTMT hstmt1;
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
   SQLUSMALLINT rgfRowStatus;
   SQLCHAR cursor[30], sql[255];
 
@@ -1526,7 +1526,7 @@ DECLARE_TEST(tmysql_pos_update_ex3)
 
 DECLARE_TEST(tmysql_pos_update_ex4)
 {
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
   SQLLEN nlen= SQL_NTS;
   SQLCHAR data[]= "venu", szData[20];
   SQLUSMALLINT rgfRowStatus;
@@ -1575,7 +1575,7 @@ DECLARE_TEST(tmysql_pos_update_ex4)
 DECLARE_TEST(tmysql_pos_dyncursor)
 {
   SQLHSTMT hstmt1;
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
   SQLUSMALLINT rgfRowStatus;
   SQLCHAR buff[100];
   SQLLEN rows;
@@ -1635,7 +1635,7 @@ DECLARE_TEST(tmysql_mtab_setpos_del)
     SQLINTEGER nData= 500;
     SQLLEN nlen;
     SQLCHAR szData[255]={0};
-    SQLUINTEGER pcrow;
+    SQLROWSETSIZE pcrow;
     SQLUSMALLINT rgfRowStatus;
 
     tmysql_exec(hstmt,"drop table tmysql_t1");
@@ -1707,7 +1707,7 @@ DECLARE_TEST(tmysql_setpos_pkdel)
     SQLINTEGER nData= 500;
     SQLLEN nlen;
     SQLCHAR szData[255]={0};
-    SQLUINTEGER pcrow;
+    SQLROWSETSIZE pcrow;
     SQLUSMALLINT rgfRowStatus;
 
     tmysql_exec(hstmt,"drop table tmysql_setpos1");
@@ -1787,7 +1787,7 @@ DECLARE_TEST(t_alias_setpos_pkdel)
   SQLINTEGER nData= 500;
   SQLLEN nlen;
   SQLCHAR szData[255]= {0};
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
   SQLUSMALLINT rgfRowStatus;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_alias_setpos_pkdel");
@@ -1850,7 +1850,7 @@ DECLARE_TEST(t_alias_setpos_del)
   SQLINTEGER nData= 500;
   SQLLEN nlen;
   SQLCHAR szData[255]= {0};
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
   SQLUSMALLINT rgfRowStatus;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_alias_setpos_del");
@@ -1912,7 +1912,7 @@ DECLARE_TEST(tmysql_setpos_pkdel2)
     SQLINTEGER nData= 500;
     SQLLEN nlen;
     SQLCHAR szData[255]={0};
-    SQLUINTEGER pcrow;
+    SQLROWSETSIZE pcrow;
     SQLUSMALLINT rgfRowStatus;
 
     tmysql_exec(hstmt,"drop table tmysql_setpos1");
@@ -2100,7 +2100,7 @@ DECLARE_TEST(my_setpos_upd_pk_order)
     SQLINTEGER nData= 500;
     SQLLEN nlen;
     SQLCHAR szData[255]={0};
-    SQLUINTEGER pcrow;
+    SQLROWSETSIZE pcrow;
     SQLUSMALLINT rgfRowStatus;
 
     tmysql_exec(hstmt,"drop table my_setpos_upd_pk_order");
@@ -2185,7 +2185,7 @@ DECLARE_TEST(my_setpos_upd_pk_order1)
 {
   SQLINTEGER nData;
   SQLCHAR szData[255];
-  SQLUINTEGER pcrow;
+  SQLROWSETSIZE pcrow;
   SQLUSMALLINT rgfRowStatus;
   SQLLEN rows;
 

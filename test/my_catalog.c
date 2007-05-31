@@ -926,7 +926,7 @@ DECLARE_TEST(t_tables_bug)
 {
   SQLRETURN   rc;
   SQLSMALLINT i, ColumnCount, pcbColName, pfSqlType, pibScale, pfNullable;
-  SQLUINTEGER pcbColDef;
+  SQLULEN     pcbColDef;
   SQLCHAR     szColName[MAX_NAME_LEN];
 
    SQLFreeStmt(hstmt, SQL_CLOSE);
