@@ -5,6 +5,7 @@
     but must be enabled through configuration files or the DSN. (Bug #12918)
 
   Bugs fixed:
+  * SQLTables() did not distinguish tables from views. (Bug #23031)
   * The wrong function was used for freeing the artificial result sets that
     are created by some catalog functions. (Bug #22797)
   * Accessing the results of catalog functions could cause a crash when the

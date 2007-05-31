@@ -1106,11 +1106,7 @@ DECLARE_TEST(t_sqltables)
     r = SQLTables(hstmt,NULL,0,NULL,0,NULL,0,"%",SQL_NTS);
     mystmt(hstmt,r);
 
-    if (driver_min_version(hdbc,"03.51.07",8))
-        myassert( 2 == myresult(hstmt));
-    else
-        myassert( 1 == myresult(hstmt));
-
+    is_num(myresult(hstmt), 3);
 
     r = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,r);
@@ -1217,6 +1213,69 @@ DECLARE_TEST(empty_set)
 }
 
 
+/**
+ Bug #23031: SQLTables returns inaccurate catalog information on views
+*/
+DECLARE_TEST(t_bug23031)
+{
+  SQLCHAR buff[255];
+
+  ok_sql(hstmt, "DROP VIEW IF EXISTS t_bug23031_v");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug23031_t");
+  ok_sql(hstmt, "CREATE TABLE t_bug23031_t (a INT) COMMENT 'Whee!'");
+  ok_sql(hstmt, "CREATE VIEW t_bug23031_v AS SELECT * FROM t_bug23031_t");
+
+  /* Get both the table and view. */
+  ok_stmt(hstmt, SQLTables(hstmt, NULL, SQL_NTS, NULL, SQL_NTS,
+                           (SQLCHAR *)"t_bug23031%", SQL_NTS, NULL, SQL_NTS));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buff, 3), "t_bug23031_t", 12);
+  is_str(my_fetch_str(hstmt, buff, 4), "TABLE", 5);
+  is_str(my_fetch_str(hstmt, buff, 5), "Whee!", 5);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buff, 3), "t_bug23031_v", 12);
+  is_str(my_fetch_str(hstmt, buff, 4), "VIEW", 4);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* Get just the table. */
+  ok_stmt(hstmt, SQLTables(hstmt, NULL, SQL_NTS, NULL, SQL_NTS,
+                           (SQLCHAR *)"t_bug23031%", SQL_NTS,
+                           (SQLCHAR *)"TABLE", SQL_NTS));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buff, 3), "t_bug23031_t", 12);
+  is_str(my_fetch_str(hstmt, buff, 4), "TABLE", 5);
+  is_str(my_fetch_str(hstmt, buff, 5), "Whee!", 5);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* Get just the view. */
+  ok_stmt(hstmt, SQLTables(hstmt, NULL, SQL_NTS, NULL, SQL_NTS,
+                           (SQLCHAR *)"t_bug23031%", SQL_NTS,
+                           (SQLCHAR *)"'VIEW'", SQL_NTS));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buff, 3), "t_bug23031_v", 12);
+  is_str(my_fetch_str(hstmt, buff, 4), "VIEW", 4);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP VIEW IF EXISTS t_bug23031_v");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug23031_t");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -1235,6 +1294,7 @@ BEGIN_TESTS
   ADD_TEST(t_sqltables)
   ADD_TEST(t_bug4518)
   ADD_TEST(empty_set)
+  ADD_TEST(t_bug23031)
 END_TESTS
 
 

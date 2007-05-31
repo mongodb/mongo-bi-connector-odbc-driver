@@ -88,7 +88,7 @@ DECLARE_TEST(t_bug4657)
   ok_stmt(hstmt, SQLTables(hstmt, (SQLCHAR *)"", SQL_NTS,
                            (SQLCHAR *)"", SQL_NTS,
                            (SQLCHAR *)"", SQL_NTS,
-                           (SQLCHAR *)"TABLE,VIEW", SQL_NTS));
+                           (SQLCHAR *)"UNKNOWN", SQL_NTS));
 
   ok_stmt(hstmt, SQLNumResultCols(hstmt, &column_count));
   is_num(column_count, 5);

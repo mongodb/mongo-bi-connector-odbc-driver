@@ -114,26 +114,6 @@ static void my_append_wild(char *to,
     to[1]= 0;
 }
 
-/*
-  @type    : internal
-  @purpose : returns tables from a perticular database
-*/
-static MYSQL_RES *mysql_list_dbtables( DBC FAR    *dbc, 
-                                       const char *db,
-                                       const char *table) 
-{
-    MYSQL FAR *mysql= &dbc->mysql;
-    char      buff[255];  
-
-    strxmov( buff, "SHOW TABLES FROM `", db, "`", NullS );
-    my_append_wild(strmov(buff,buff),buff+sizeof(buff)-1,table);
-
-    MYLOG_DBC_QUERY(dbc, buff);
-    if ( mysql_query(mysql,buff) )
-        return 0;
-    return mysql_store_result(mysql);  
-}
-
 
 /*
   @type    : internal
@@ -221,22 +201,76 @@ static MYSQL_ROW fix_fields_copy(STMT FAR *stmt,MYSQL_ROW row)
     return stmt->array;
 }
 
+
+/**
+  Get the table status for a table or tables.
+
+  @param[in] stmt           Handle to statement
+  @param[in] catalog        Catalog (database) of table, @c NULL for current
+  @param[in] catalog_length Length of catalog name, or @c SQL_NTS
+  @param[in] table          Name of table
+  @param[in] table_length   Length of table name, or @c SQL_NTS
+  @param[in] wildcard       Whether the table name is a wildcard
+
+  @return Result of SHOW TABLE STATUS
+*/
+static MYSQL_RES *mysql_table_status(STMT        *stmt,
+                                     SQLCHAR     *catalog,
+                                     SQLSMALLINT  catalog_length,
+                                     SQLCHAR     *table,
+                                     SQLSMALLINT  table_length,
+                                     my_bool      wildcard)
+{
+  MYSQL *mysql= &stmt->dbc->mysql;
+  /** @todo determine real size for buffer */
+  char buff[255], *to;
+
+  if (table_length == SQL_NTS && table)
+    table_length= strlen((char *)table);
+  if (catalog_length == SQL_NTS && catalog)
+    catalog_length= strlen((char *)catalog);
+
+  to= strmov(buff, "SHOW TABLE STATUS ");
+  if (catalog && *catalog)
+  {
+    to= strmov(to, "FROM `");
+    to+= mysql_real_escape_string(mysql, to, (char *)catalog, catalog_length);
+    to= strmov(to, "` ");
+  }
+  if (table && *table)
+  {
+    to= strmov(to, "LIKE '");
+    if (wildcard)
+      to+= mysql_real_escape_string(mysql, to, (char *)table, table_length);
+    else
+      to+= myodbc_escape_wildcard(mysql, to, sizeof(buff) - (to - buff),
+                                  (char *)table, table_length);
+    to= strmov(to, "'");
+  }
+
+  MYLOG_QUERY(stmt, buff);
+  if (mysql_query(mysql,buff))
+    return 0;
+
+  return mysql_store_result(mysql);
+}
+
+
 /*
 ****************************************************************************
 SQLTables
 ****************************************************************************
 */
 
-uint SQLTABLES_order[]= {2};
 uint SQLTABLES_qualifier_order[]= {0};
-char *SQLTABLES_sysvalues[]= {"mysql","",NULL,"SYSTEM TABLE","MySQL System Table"};
 char *SQLTABLES_values[]= {"","",NULL,"TABLE","MySQL table"};
 char *SQLTABLES_qualifier_values[]= {"",NULL,NULL,NULL,NULL};
 char *SQLTABLES_owner_values[]= {NULL,"",NULL,NULL,NULL};
-char *SQLTABLES_type_values[2][5]= 
+char *SQLTABLES_type_values[3][5]=
 {
     {NULL,NULL,NULL,"TABLE",NULL},
-    {NULL,NULL,NULL,"SYSTEM TABLE",NULL}, /* TODO: add temp tables here */
+    {NULL,NULL,NULL,"SYSTEM TABLE",NULL},
+    {NULL,NULL,NULL,"VIEW",NULL},
 };
 
 #if MYSQL_VERSION_ID >= 40100
@@ -281,7 +315,7 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
          *TableType;
     STMT FAR  *stmt= (STMT FAR*) hstmt;
     MYSQL_RES *result, *sys_result;
-    my_bool   all_dbs= 1, sys_tables, user_tables;
+    my_bool   all_dbs= 1, sys_tables, user_tables, views;
 
     MYODBCDbgEnter;
 
@@ -356,181 +390,171 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
         stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLTABLES_type_values,
                                                   sizeof(SQLTABLES_type_values),
                                                   MYF(0));
-        /* TODO : Fix this to return temporary table types  */
         stmt->result->row_count= sizeof(SQLTABLES_type_values)/
                                  sizeof(SQLTABLES_type_values[0]);
         mysql_link_fields(stmt,SQLTABLES_fields,SQLTABLES_FIELDS);
         MYODBCDbgReturnReturn( SQL_SUCCESS );
     }
-    sys_tables= 0;
-    sys_result= result= 0;
+
+    sys_result= result= NULL;
 
     escape_input_parameter(&stmt->dbc->mysql, TableType);
-    user_tables = check_table_type( TableType, "TABLE", 5 );
 
-    if ( check_table_type(TableType,"SYSTEM TABLE",12) || 
-         check_table_type(TableType,"SYSTEM",6) )
-        sys_tables= 1;
+    user_tables= check_table_type(TableType, "TABLE", 5);
+    views= check_table_type(TableType, "VIEW", 4);
+    sys_tables= (check_table_type(TableType, "SYSTEM TABLE", 12) ||
+                 check_table_type(TableType, "SYSTEM", 6));
 
-    if ( !user_tables && !sys_tables )
+    /* If no types specified, we want tables and views. */
+    if (!user_tables && !sys_tables && !views)
     {
-        /* Return current db tables if no table type specified (hack for MS VC) */
-        if ( !szTableType || !cbTableType )
-            user_tables= 1;
+      if (!szTableType || !cbTableType)
+        user_tables= views= 1;
     }
 
-    if ( (TableType[0] && !user_tables && !sys_tables) ||
-         (TableQualifier[0] && strcmp(TableQualifier,"%") &&
-          TableOwner[0] && strcmp(TableOwner,"%") &&
-          strcmp(TableOwner,stmt->dbc->database)) )
+    if ((TableType[0] && !views && !user_tables && !sys_tables) ||
+        (TableQualifier[0] && strcmp(TableQualifier,"%") &&
+         TableOwner[0] && strcmp(TableOwner,"%") &&
+         strcmp(TableOwner, stmt->dbc->database)))
     {
-        /* 
-          Return empty set if unknown TableType or if 
-          Owner is used 
-        */
-        goto empty_set;
+      /* Return empty set if unknown TableType or if Owner is used  */
+      goto empty_set;
     }
 
     /* User Tables with type as 'TABLE' or 'VIEW' */
-    if ( user_tables )
+    if (user_tables || views)
     {
-        if ( szTableQualifier && (!stmt->dbc->mysql.db || cmp_database(stmt->dbc->mysql.db, TableQualifier)) )
-        {
-            /* Return tables from a perticular database */
-            MYODBCDbgInfo( "Return set of tables '%s'", TableName );
-            MYODBCDbgInfo( " from '%s'", TableQualifier );
-            pthread_mutex_lock(&stmt->dbc->lock);                         
-            result= mysql_list_dbtables(stmt->dbc,TableQualifier,TableName);
-            pthread_mutex_unlock(&stmt->dbc->lock);
-        }
-        else
-        {
-            /* Return tables from default/current database */    
-            MYODBCDbgInfo( "Returning set of current database tables '%s'", TableName );
-            pthread_mutex_lock(&stmt->dbc->lock);
-            result= mysql_list_tables(&stmt->dbc->mysql,TableName);
-            pthread_mutex_unlock(&stmt->dbc->lock);
-        }
-        if ( !result )
-        {
-            MYODBCDbgError( "%d", mysql_errno(&stmt->dbc->mysql) );
-            MYODBCDbgError( "%s", mysql_error(&stmt->dbc->mysql) );
-        }
-    }
-    /* System tables with type as 'SYSTEM' or 'SYSTEM TABLE' */
-    if ( sys_tables )
-    {
-        MYODBCDbgInfo( "%s", "Return set of system tables" );
-        pthread_mutex_lock(&stmt->dbc->lock);                         
-        stmt->result= mysql_list_dbtables(stmt->dbc,"mysql",TableName);
-        pthread_mutex_unlock(&stmt->dbc->lock);
+      pthread_mutex_lock(&stmt->dbc->lock);
+      result= mysql_table_status(stmt, szTableQualifier, cbTableQualifier,
+                                 szTableName, cbTableName, TRUE);
+      pthread_mutex_unlock(&stmt->dbc->lock);
 
-        if ( !(sys_result= stmt->result) )
-        {
-            MYODBCDbgError( "%d", mysql_errno(&stmt->dbc->mysql) );
-            MYODBCDbgError( "%s", mysql_error(&stmt->dbc->mysql) );
-        }
+      if (!result)
+      {
+        MYODBCDbgError("%d", mysql_errno(&stmt->dbc->mysql));
+        MYODBCDbgError("%s", mysql_error(&stmt->dbc->mysql));
+      }
     }
+
+    /* System tables with type as 'SYSTEM' or 'SYSTEM TABLE' */
+    if (sys_tables)
     {
-        MYSQL_ROW    data= 0, row;
-        MEM_ROOT     *alloc= 0;
-        char         *db, *owner= "";
-        my_ulonglong row_count;
+      pthread_mutex_lock(&stmt->dbc->lock);
+      sys_result= mysql_table_status(stmt, (SQLCHAR *)"mysql", 5,
+                                     szTableName, cbTableName, TRUE);
+      pthread_mutex_unlock(&stmt->dbc->lock);
+
+      if (!sys_result)
+      {
+        MYODBCDbgError("%d", mysql_errno(&stmt->dbc->mysql));
+        MYODBCDbgError("%s", mysql_error(&stmt->dbc->mysql));
+      }
+    }
+
+    if (!result && !sys_result)
+      goto empty_set;
+
+    {
+      MYSQL_ROW    data= 0, row;
+      char         *db;
+      my_ulonglong row_count= 0;
+
+      if (sys_result)
+      {
+        stmt->result= sys_result;
+        row_count= sys_result->row_count;
+      }
+
+      if (result)
+      {
+        row_count+= result->row_count;
+        if (!sys_result)
+        {
+          stmt->result= result;
+        }
+      }
+
+      if (!row_count)
+        goto empty_set;
+
+      if (!(stmt->result_array=
+            (char **)my_malloc((uint)(sizeof(char *) * SQLTABLES_FIELDS *
+                                      row_count),
+                               MYF(MY_FAE | MY_ZEROFILL))))
+        MYODBCDbgReturnReturn(set_error(stmt, MYERR_S1001, NULL, 4001));
+
+      data= stmt->result_array;
+
+      if (sys_result)
+      {
+        char buff[NAME_LEN+7];
+
+        if (option_flag(stmt, FLAG_NO_CATALOG))
+          db= "";
+        else
+          db= "mysql";
 
         /*
-          Append tables together if system and user tables
-          are used
+          Prefix all system tables with 'mysql.', so that they can
+          be used directly in describing columns related information
+
+          Must needed like this inorder to make system tables editable
+          by ODBC tools
         */
-        if ( !sys_result )
-            row_count= 0;
+        while ((row= mysql_fetch_row(sys_result)))
+        {
+          data[0]= db;
+          data[1]= "";
+          sprintf(buff, "mysql.%s", row[0]);
+          data[2]= strdup_root(&stmt->result->field_alloc, buff);
+          data[3]= "SYSTEM TABLE";
+          if (sys_result->field_count == 18)
+            data[4]= strdup_root(&stmt->result->field_alloc, row[17]);
+          else
+            data[4]= strdup_root(&stmt->result->field_alloc, row[15]);
+
+          data+= SQLTABLES_FIELDS;
+        }
+      }
+
+      if (result)
+      {
+        if (option_flag(stmt, FLAG_NO_CATALOG))
+          db= "";
         else
+          db= (is_default_db(stmt->dbc->mysql.db, TableQualifier) ?
+               stmt->dbc->mysql.db : strdup_root(&stmt->result->field_alloc,
+                                                 TableQualifier));
+
+        while ((row= mysql_fetch_row(result)))
         {
-            row_count= sys_result->row_count;
-            alloc= &sys_result->field_alloc;
+          int comment_index= (result->field_count == 18) ? 17 : 15;
+          my_bool view= (!row[1] &&
+                         myodbc_casecmp(row[comment_index], "view", 4) == 0);
+
+          if ((view && !views) || (!view && !user_tables))
+          {
+            row_count--;
+            continue;
+          }
+
+          data[0]= db;
+          data[1]= "";
+          data[2]= strdup_root(&stmt->result->field_alloc, row[0]);
+          data[3]= view ? "VIEW" : "TABLE";
+          data[4]= strdup_root(&stmt->result->field_alloc, row[comment_index]);
+          data+= SQLTABLES_FIELDS;
         }
-        if ( result )
-        {
-            row_count+= result->row_count;
-            if ( !sys_result )
-                alloc= &result->field_alloc;
-        }
-        if ( !row_count )
-            goto empty_set;
+        if (sys_result)
+          mysql_free_result(result);
+      }
 
-        if ( sys_result )
-        {
-            char buff[NAME_LEN+7];
-
-            if ( option_flag(stmt, FLAG_NO_CATALOG) )
-                db= owner= "";
-            else
-                db= "mysql";      
-
-            if ( !(stmt->result_array= (char**) my_malloc(
-                                                         (uint)(sizeof(char *)*SQLTABLES_FIELDS*row_count), 
-                                                         MYF(MY_FAE | MY_ZEROFILL))) )
-                MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1001,NULL,4001) );
-
-            data= stmt->result_array;
-
-            /* 
-              Prefix all system tables with 'mysql.', so that they can 
-              be used directly in describing columns related information
-      
-              Must needed like this inorder to make system tables editable 
-              by ODBC tools
-            */
-            while ( (row = mysql_fetch_row(sys_result)) )
-            {
-                data[0]= db;
-                data[1]= owner;      
-                sprintf(buff,"mysql.%s",row[0]);
-                data[2]= strdup_root(alloc,buff);
-                data[3]= "SYSTEM TABLE";      
-                data[4]= "MySQL System Table";
-                data+= SQLTABLES_FIELDS;
-            }
-        }
-        if ( result )
-        {
-            if ( option_flag(stmt, FLAG_NO_CATALOG) )
-                db= owner= "";
-            else
-                db= is_default_db(stmt->dbc->mysql.db,TableQualifier) ?
-                    stmt->dbc->mysql.db : 
-                    strdup_root(alloc,TableQualifier);
-
-            if ( sys_result )
-            {
-                while ( (row = mysql_fetch_row(result)) )
-                {
-                    data[0]= db;
-                    data[1]= owner;      
-                    data[2]= strdup_root(alloc,row[0]);
-                    data[3]= "TABLE";      
-                    data[4]= "MySQL Table";
-                    data  += SQLTABLES_FIELDS;
-                }
-                mysql_free_result(result);
-            }
-            else
-            {
-                stmt->result     = result;
-                stmt->order      =  SQLTABLES_order;
-                stmt->order_count= array_elements(SQLTABLES_order);
-                stmt->fix_fields = fix_fields_copy;
-                stmt->array      = (MYSQL_ROW) my_memdup(
-                                                        (gptr)SQLTABLES_values,
-                                                        sizeof(SQLTABLES_values),MYF(0));
-                stmt->array[0]   = db;
-                stmt->array[1]   = owner;
-            }
-        }
-        stmt->result->row_count= row_count;
+      stmt->result->row_count= row_count;
     }
-    mysql_link_fields(stmt,SQLTABLES_fields,SQLTABLES_FIELDS);
-    MYODBCDbgInfo( "total tables: %ld", (long)stmt->result->row_count );
-    MYODBCDbgReturnReturn( SQL_SUCCESS );
+
+    mysql_link_fields(stmt, SQLTABLES_fields, SQLTABLES_FIELDS);
+    MYODBCDbgInfo("total tables: %ld", (long)stmt->result->row_count);
+    MYODBCDbgReturnReturn(SQL_SUCCESS);
 
     empty_set:
     MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
@@ -538,10 +562,10 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
     stmt->fake_result= 1;
     stmt->result->row_count= 0;
     stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLTABLES_values,
-                                              sizeof(SQLTABLES_values), 
+                                              sizeof(SQLTABLES_values),
                                               MYF(0));
-    mysql_link_fields(stmt,SQLTABLES_fields, SQLTABLES_FIELDS);
-    MYODBCDbgReturnReturn( SQL_SUCCESS );
+    mysql_link_fields(stmt, SQLTABLES_fields, SQLTABLES_FIELDS);
+    MYODBCDbgReturnReturn(SQL_SUCCESS);
 }
 
 
@@ -1823,55 +1847,6 @@ char *SQLFORE_KEYS_values[]= {
 
 
 /**
-  Get the table status for a specific table.
-
-  @param[in] stmt           Handle to statement
-  @param[in] catalog        Catalog (database) of table, @c NULL for current
-  @param[in] catalog_length Length of catalog name, or @c SQL_NTS
-  @param[in] table          Name of table
-  @param[in] table_length   Length of table name, or @c SQL_NTS
-
-  @return Result of SHOW TABLE STATUS
-*/
-static MYSQL_RES *mysql_table_status(STMT        *stmt,
-                                     SQLCHAR     *catalog,
-                                     SQLSMALLINT  catalog_length,
-                                     SQLCHAR     *table,
-                                     SQLSMALLINT  table_length)
-{
-  MYSQL *mysql= &stmt->dbc->mysql;
-  /** @todo determine real size for buffer */
-  char buff[255], *to;
-
-  if (table_length == SQL_NTS && table)
-    table_length= strlen((char *)table);
-  if (catalog_length == SQL_NTS && catalog)
-    catalog_length= strlen((char *)catalog);
-
-  to= strmov(buff, "SHOW TABLE STATUS ");
-  if (catalog && *catalog)
-  {
-    to= strmov(to, "FROM `");
-    to+= mysql_real_escape_string(mysql, to, (char *)catalog, catalog_length);
-    to= strmov(to, "` ");
-  }
-  if (table && *table)
-  {
-    to= strmov(to, "LIKE '");
-    to+= myodbc_escape_wildcard(mysql, to, sizeof(buff) - (to - buff),
-                                (char *)table, table_length);
-    to= strmov(to, "'");
-  }
-
-  MYLOG_QUERY(stmt, buff);
-  if (mysql_query(mysql,buff))
-    return 0;
-
-  return mysql_store_result(mysql);
-}
-
-
-/**
   Retrieve either a list of foreign keys in a specified table, or the list
   of foreign keys in other tables that refer to the primary key in the
   specified table. (We currently only support the former, not the latter.)
@@ -1957,7 +1932,8 @@ SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT hstmt,
         pthread_mutex_lock(&stmt->dbc->lock);
         if (!(stmt->result= mysql_table_status(stmt,
                                                szFkCatalogName, cbFkCatalogName,
-                                               szFkTableName, cbFkTableName)))
+                                               szFkTableName, cbFkTableName,
+                                               FALSE)))
         {
             MYODBCDbgError("%d", mysql_errno(&stmt->dbc->mysql))
             MYODBCDbgError("%s", mysql_error(&stmt->dbc->mysql));
