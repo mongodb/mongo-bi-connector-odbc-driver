@@ -2034,7 +2034,7 @@ DECLARE_TEST(t_setpos_upd_bug1)
     rc = SQLBindCol(hstmt,4,SQL_C_TIMESTAMP,ts,21,&ts_len);
     mystmt(hstmt,rc);
 
-    rc = SQLColAttributes(hstmt,1,SQL_COLUMN_TABLE_NAME,szTable,sizeof(szTable),NULL,NULL);
+    rc = SQLColAttribute(hstmt,1,SQL_COLUMN_TABLE_NAME,szTable,sizeof(szTable),NULL,NULL);
     mystmt(hstmt,rc);
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_FIRST,0,NULL,&rgfRowStatus);

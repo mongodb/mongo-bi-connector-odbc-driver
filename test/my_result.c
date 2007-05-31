@@ -1351,11 +1351,7 @@ static int colattr(SQLHSTMT hstmt, SQLUSMALLINT cno, SQLUSMALLINT attribute,
 {
   SQLCHAR     lsptr[40];
   SQLSMALLINT lslen;
-#ifdef USE_SQLCOLATTRIBUTE_SQLLEN_PTR
   SQLLEN      lnptr;
-#else
-  SQLINTEGER  lnptr;
-#endif
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
   ok_sql(hstmt, "SELECT * FROM t_colattr");
