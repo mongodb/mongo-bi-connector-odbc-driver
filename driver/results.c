@@ -49,14 +49,300 @@
 
 #define SQL_MY_PRIMARY_KEY 1212
 
-SQLRETURN SQL_API sql_get_data( STMT *          stm,
-                                SQLSMALLINT     fCType,
-                                MYSQL_FIELD *   field,
-                                SQLPOINTER      rgbValue,
-                                SQLINTEGER      cbValueMax,
-                                SQLLEN *        pcbValue,
-                                char *          value,
-                                uint            length );
+
+/**
+  Retrieve the data from a field as a specified ODBC C type.
+
+  @param[in]  stmt        Handle of statement
+  @param[in]  fCType      ODBC C type to return data as
+  @param[in]  field       Field describing the type of the data
+  @param[out] rgbValue    Pointer to buffer for returning data
+  @param[in]  cbValueMax  Length of buffer
+  @param[out] pcbValue    Bytes used in the buffer, or SQL_NULL_DATA
+  @param[out] value       The field data to be converted and returned
+  @param[in]  length      Length of value
+*/
+static SQLRETURN SQL_API
+sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
+             SQLPOINTER rgbValue, SQLINTEGER cbValueMax, SQLLEN *pcbValue,
+             char *value, uint length)
+{
+  SQLLEN tmp;
+
+  if (!pcbValue)
+    pcbValue= &tmp; /* Easier code */
+
+  if (!value)
+    *pcbValue= SQL_NULL_DATA;
+  else
+  {
+    switch (fCType) {
+    case SQL_C_CHAR:
+      /* Handle BLOB -> CHAR conversion */
+      if ((field->flags & (BLOB_FLAG|BINARY_FLAG)) == (BLOB_FLAG|BINARY_FLAG))
+        return copy_binary_result(SQL_HANDLE_STMT, stmt,
+                                  (SQLCHAR *)rgbValue, cbValueMax, pcbValue,
+                                  value, length, stmt->stmt_options.max_length,
+                                  &stmt->getdata_offset);
+      /* fall through */
+
+    case SQL_C_BINARY:
+      {
+        char buff[21];
+        if (field->type == MYSQL_TYPE_TIMESTAMP && length != 19)
+        {
+          /* Convert MySQL timestamp to full ANSI timestamp format. */
+          char *pos;
+          uint i;
+          if (length == 6 || length == 10 || length == 12)
+          {
+            /* For two-digit year, < 60 is considered after Y2K */
+            if (value[0] <= '6')
+            {
+              buff[0]= '2';
+              buff[1]= '0';
+            }
+            else
+            {
+              buff[0]= '1';
+              buff[1]= '9';
+            }
+          }
+          else
+          {
+            buff[0]= value[0];
+            buff[1]= value[1];
+            value+= 2;
+            length-= 2;
+          }
+          buff[2]= *value++;
+          buff[3]= *value++;
+          buff[4]= '-';
+          if (value[0] == '0' && value[1] == '0')
+          {
+            /* Month was 0, which ODBC can't handle. */
+            *pcbValue= SQL_NULL_DATA;
+            break;
+          }
+          pos= buff+5;
+          length&= 30;  /* Ensure that length is ok */
+          for (i= 1, length-= 2; (int)length > 0; length-= 2, i++)
+          {
+            *pos++= *value++;
+            *pos++= *value++;
+            *pos++= i < 2 ? '-' : (i == 2) ? ' ' : ':';
+          }
+          for ( ; pos != buff + 20; i++)
+          {
+            *pos++= '0';
+            *pos++= '0';
+            *pos++= i < 2 ? '-' : (i == 2) ? ' ' : ':';
+          }
+          value= buff;
+          length= 19;
+        }
+
+        return copy_lresult(SQL_HANDLE_STMT, stmt,
+                            (SQLCHAR *)rgbValue, cbValueMax, pcbValue,
+                            value, length, stmt->stmt_options.max_length,
+                            (field->type == MYSQL_TYPE_STRING ? field->length :
+                             0L), &stmt->getdata_offset,
+                            (fCType == SQL_C_BINARY));
+      }
+
+    case SQL_C_BIT:
+      if (rgbValue)
+        *((char *)rgbValue)= (value[0] == 1 ? 1 : (atoi(value) == 0) ? 0 : 1);
+      *pcbValue= 1;
+      break;
+
+    case SQL_C_TINYINT:
+    case SQL_C_STINYINT:
+      if (rgbValue)
+        *((SQLSCHAR *)rgbValue)= (SQLSCHAR)atoi(value);
+      *pcbValue= 1;
+      break;
+
+    case SQL_C_UTINYINT:
+      if (rgbValue)
+        *((SQLCHAR *)rgbValue)= (SQLCHAR)(unsigned int)atoi(value);
+      *pcbValue= 1;
+      break;
+
+    case SQL_C_SHORT:
+    case SQL_C_SSHORT:
+      if (rgbValue)
+        *((SQLSMALLINT *)rgbValue)= (SQLSMALLINT)atoi(value);
+      *pcbValue= sizeof(SQLSMALLINT);
+      break;
+
+    case SQL_C_USHORT:
+      if (rgbValue)
+        *((SQLUSMALLINT *)rgbValue)= (SQLUSMALLINT)(uint)atol(value);
+      *pcbValue= sizeof(SQLUSMALLINT);
+      break;
+
+    case SQL_C_LONG:
+    case SQL_C_SLONG:
+      if (rgbValue)
+      {
+        /* Check if it could be a date...... :) */
+        if (length >= 10 && value[4] == '-' && value[7] == '-' &&
+             (!value[10] || value[10] == ' '))
+        {
+          *((SQLINTEGER *)rgbValue)= ((SQLINTEGER) atol(value) * 10000L +
+                                      (SQLINTEGER) atol(value + 5) * 100L +
+                                      (SQLINTEGER) atol(value + 8));
+        }
+        else
+          *((SQLINTEGER *)rgbValue)= (SQLINTEGER) atol(value);
+      }
+      *pcbValue= sizeof(SQLINTEGER);
+      break;
+
+    case SQL_C_ULONG:
+      if (rgbValue)
+        *((SQLUINTEGER *)rgbValue)= (SQLUINTEGER)atol(value);
+      *pcbValue= sizeof(SQLUINTEGER);
+      break;
+
+    case SQL_C_FLOAT:
+      if (rgbValue)
+        *((float *)rgbValue)= (float)atof(value);
+      *pcbValue= sizeof(float);
+      break;
+
+    case SQL_C_DOUBLE:
+      if (rgbValue)
+        *((double *)rgbValue)= (double)atof(value);
+      *pcbValue= sizeof(double);
+      break;
+
+    case SQL_C_DATE:
+    case SQL_C_TYPE_DATE:
+      {
+        SQL_DATE_STRUCT tmp_date;
+        if (!rgbValue)
+          rgbValue= (char *)&tmp_date;
+        if (!str_to_date((SQL_DATE_STRUCT *)rgbValue, value, length))
+          *pcbValue= sizeof(SQL_DATE_STRUCT);
+        else
+          *pcbValue= SQL_NULL_DATA;  /* ODBC can't handle 0000-00-00 dates */
+        break;
+      }
+
+    case SQL_C_TIME:
+    case SQL_C_TYPE_TIME:
+      if (field->type == MYSQL_TYPE_TIMESTAMP ||
+          field->type == MYSQL_TYPE_DATETIME)
+      {
+        SQL_TIMESTAMP_STRUCT ts;
+        if (str_to_ts(&ts, value))
+          *pcbValue= SQL_NULL_DATA;
+        else
+        {
+          SQL_TIME_STRUCT *time_info= (SQL_TIME_STRUCT *)rgbValue;
+
+          if (time_info)
+          {
+            time_info->hour=   ts.hour;
+            time_info->minute= ts.minute;
+            time_info->second= ts.second;
+          }
+          *pcbValue= sizeof(TIME_STRUCT);
+        }
+      }
+      else if (field->type == MYSQL_TYPE_DATE)
+      {
+        SQL_TIME_STRUCT *time_info= (SQL_TIME_STRUCT *)rgbValue;
+
+        if (time_info)
+        {
+          time_info->hour=   0;
+          time_info->minute= 0;
+          time_info->second= 0;
+        }
+        *pcbValue= sizeof(TIME_STRUCT);
+      }
+      else
+      {
+        SQL_TIME_STRUCT ts;
+        if (str_to_time_st(&ts, value))
+          *pcbValue= SQL_NULL_DATA;
+        else
+        {
+          SQL_TIME_STRUCT *time_info= (SQL_TIME_STRUCT *)rgbValue;
+
+          if (time_info)
+          {
+            time_info->hour=   ts.hour;
+            time_info->minute= ts.minute;
+            time_info->second= ts.second;
+          }
+          *pcbValue= sizeof(TIME_STRUCT);
+        }
+      }
+      break;
+
+    case SQL_C_TIMESTAMP:
+    case SQL_C_TYPE_TIMESTAMP:
+      if (field->type == MYSQL_TYPE_TIME)
+      {
+        SQL_TIME_STRUCT ts;
+
+        if (str_to_time_st(&ts, value))
+          *pcbValue= SQL_NULL_DATA;
+        else
+        {
+          SQL_TIMESTAMP_STRUCT *timestamp_info=
+            (SQL_TIMESTAMP_STRUCT *)rgbValue;
+          time_t sec_time= time(NULL);
+          struct tm cur_tm;
+          localtime_r(&sec_time, &cur_tm);
+
+          timestamp_info->year=   1900 + cur_tm.tm_year;
+          timestamp_info->month=  1 + cur_tm.tm_mon; /* January is 0 in tm */
+          timestamp_info->day=    cur_tm.tm_mday;
+          timestamp_info->hour=   ts.hour;
+          timestamp_info->minute= ts.minute;
+          timestamp_info->second= ts.second;
+          timestamp_info->fraction= 0;
+          *pcbValue= sizeof(SQL_TIMESTAMP_STRUCT);
+        }
+      }
+      else
+      {
+        if (str_to_ts((SQL_TIMESTAMP_STRUCT *)rgbValue, value))
+          *pcbValue= SQL_NULL_DATA;
+        else
+          *pcbValue= sizeof(SQL_TIMESTAMP_STRUCT);
+      }
+      break;
+
+    case SQL_C_SBIGINT:
+      /** @todo This is not right. SQLBIGINT is not always longlong. */
+      if (rgbValue)
+        *((longlong *)rgbValue)= (longlong)strtoll(value, NULL, 10);
+      *pcbValue= sizeof(longlong);
+      break;
+
+    case SQL_C_UBIGINT:
+      /** @todo This is not right. SQLUBIGINT is not always ulonglong.  */
+      if (rgbValue)
+          *((ulonglong *)rgbValue)= (ulonglong)strtoull(value, NULL, 10);
+      *pcbValue= sizeof(ulonglong);
+      break;
+    }
+  }
+
+  if (stmt->getdata_offset != (ulong) ~0L)  /* Second call to getdata */
+    return SQL_NO_DATA_FOUND;
+
+  stmt->getdata_offset= 0L;         /* All data is retrevied */
+
+  return SQL_SUCCESS;
+}
+
 
 /*!
     \brief  Returns true if we are dealing with a statement which
@@ -838,299 +1124,6 @@ SQLRETURN SQL_API SQLGetData( SQLHSTMT      hstmt,
     MYODBCDbgInfo( "pcb:0x%x", (uint)pcbValue );
 
     MYODBCDbgReturnReturn(result);
-}
-
-
-/*
-  @type    : myodbc3 internal
-  @purpose : returns the column data
-*/
-
-SQLRETURN SQL_API sql_get_data( STMT *          stmt,
-                                SQLSMALLINT     fCType,
-                                MYSQL_FIELD *   field,
-                                SQLPOINTER      rgbValue,
-                                SQLINTEGER      cbValueMax,
-                                SQLLEN *        pcbValue,
-                                char *          value,
-                                uint            length )
-{
-    SQLLEN tmp;
-    if ( !pcbValue )
-        pcbValue= &tmp; /* Easier code */
-
-    if ( !value )
-        *pcbValue= SQL_NULL_DATA;
-    else
-    {
-        switch ( fCType )
-        {
-            case SQL_C_CHAR:
-                /* Handle BLOB -> CHAR conversion */
-                if ( (field->flags & (BLOB_FLAG+BINARY_FLAG)) == (BLOB_FLAG+BINARY_FLAG) )
-                    return copy_binary_result( SQL_HANDLE_STMT, 
-                                               stmt,
-                                               (SQLCHAR FAR*) rgbValue,
-                                               cbValueMax,
-                                               pcbValue,
-                                               value, 
-                                               length, 
-                                               stmt->stmt_options.max_length,
-                                               &stmt->getdata_offset );
-                /* fall through */
-            case SQL_C_BINARY:
-                {
-                    char buff[21];
-                    if ( field->type == MYSQL_TYPE_TIMESTAMP && length != 19 )
-                    {
-                        /* MySQL doesn't have '-' in timestamp */
-                        /* Convert timestamp to ANSI format */
-
-                        char *pos;
-                        uint i;
-                        if ( length == 6 || length == 10 || length == 12 )
-                        {
-                            /* YYMMDD or YYMMDDHHMMSS timestamp */
-                            if ( value[0] <= '6' )
-                            {
-                                buff[0]='2';
-                                buff[1]='0';
-                            }
-                            else
-                            {
-                                buff[0]='1';
-                                buff[1]='9';
-                            }
-                        }
-                        else
-                        {
-                            buff[0]= value[0];
-                            buff[1]= value[1];
-                            value+= 2;
-                            length-= 2;
-                        }
-                        buff[2]= *value++;
-                        buff[3]= *value++;
-                        buff[4]='-';
-                        if ( value[0] == '0' && value[1] == '0' )
-                        {
-                            *pcbValue= SQL_NULL_DATA;  /* ODBC can't handle 0000-00-00 dates */
-                            break;
-                        }
-                        pos= buff+5;
-                        length&= 30;  /* Ensure that length is ok */
-                        for ( i= 1, length-= 2 ; (int) length > 0 ; length-= 2,i++ )
-                        {
-                            *pos++= *value++;
-                            *pos++= *value++;
-                            *pos++= i < 2 ? '-' : (i == 2) ? ' ' : ':';
-                        }
-                        for ( ; pos != buff+20 ; i++ )
-                        {
-                            *pos++= '0';
-                            *pos++= '0';
-                            *pos++= i < 2 ? '-' : (i == 2) ? ' ' : ':';
-                        }
-                        value= buff;
-                        length= 19;
-                    }
-                    return copy_lresult(SQL_HANDLE_STMT, stmt,
-                                        (SQLCHAR FAR *) rgbValue,cbValueMax,pcbValue,value,
-                                        length,stmt->stmt_options.max_length,
-                                        (field->type == MYSQL_TYPE_STRING ? field->length :
-                                         0L),
-                                        &stmt->getdata_offset,
-                                        (my_bool) (fCType == SQL_C_BINARY));
-                }
-            case SQL_C_BIT:
-                if ( rgbValue )
-                    *((char*) rgbValue)= (value[0] == 1 ? 1 : (atoi(value) == 0) ? 0 : 1);
-                *pcbValue= 1;
-                break;
-            case SQL_C_TINYINT:
-            case SQL_C_STINYINT:
-                if ( rgbValue )
-                    *((char*) rgbValue)= ((char) atoi(value));
-                *pcbValue= 1;
-                break;
-            case SQL_C_UTINYINT:
-                if ( rgbValue )
-                    *((uchar*) rgbValue)= ((uchar) (uint) atoi(value));
-                *pcbValue= 1;
-                break;
-            case SQL_C_SHORT:
-            case SQL_C_SSHORT:
-                if ( rgbValue )
-                    *((short*) rgbValue)= (short) atoi(value);
-                *pcbValue= sizeof(short);
-                break;
-            case SQL_C_USHORT:
-                if ( rgbValue )
-                    *((ushort*) rgbValue)= (ushort) (uint) atol(value);
-                *pcbValue= sizeof(short);
-                break;
-            case SQL_C_LONG:
-            case SQL_C_SLONG:
-                if ( rgbValue )
-                {
-                    /*
-                      Check if it could be a date...... :)
-                    */
-                    if ( length >= 10 && value[4] == '-' && value[7] == '-' &&
-                         (!value[10] || value[10] == ' ') )
-                    {
-                        *((SQLINTEGER*) rgbValue)= ((SQLINTEGER) atol(value)*10000L+
-                                              (SQLINTEGER) atol(value+5)*100L+
-                                              (SQLINTEGER) atol(value+8));
-                    }
-                    else
-                        *((SQLINTEGER*) rgbValue)= (SQLINTEGER) atol(value);
-                }
-                *pcbValue= sizeof(SQLINTEGER);
-                break;
-            case SQL_C_ULONG:
-                if ( rgbValue )
-                {
-                    *((SQLUINTEGER*) rgbValue)= (SQLUINTEGER)atol(value);
-                }
-                *pcbValue= sizeof(SQLUINTEGER);
-                break;
-            case SQL_C_FLOAT:
-                if ( rgbValue )
-                    *((float*) rgbValue)= (float) atof(value);
-                *pcbValue= sizeof(float);
-                break;
-            case SQL_C_DOUBLE:
-                if ( rgbValue )
-                    *((double*) rgbValue)= (double) atof(value);
-                *pcbValue= sizeof(double);
-                break;
-            case SQL_C_DATE:
-            case SQL_C_TYPE_DATE:
-                {
-                    SQL_DATE_STRUCT tmp_date;
-                    if ( !rgbValue )
-                        rgbValue=(char*) &tmp_date;
-                    if ( !str_to_date((SQL_DATE_STRUCT *) rgbValue,value,length) )
-                        *pcbValue=sizeof(SQL_DATE_STRUCT);
-                    else
-                    {
-                        *pcbValue=SQL_NULL_DATA;  /* ODBC can't handle 0000-00-00 dates */
-                    }
-                    break;
-                }
-            case SQL_C_TIME:
-            case SQL_C_TYPE_TIME:
-                {
-                    if (field->type == MYSQL_TYPE_TIMESTAMP ||
-                        field->type == MYSQL_TYPE_DATETIME)
-                    {
-                      SQL_TIMESTAMP_STRUCT ts;
-                      if ( str_to_ts(&ts,value) )
-                          *pcbValue= SQL_NULL_DATA;
-                      else
-                      {
-                          SQL_TIME_STRUCT *time_info= (SQL_TIME_STRUCT *)rgbValue;
-
-                          if ( time_info )
-                          {
-                              time_info->hour= ts.hour;
-                              time_info->minute= ts.minute;
-                              time_info->second= ts.second;
-                          }
-                          *pcbValue=sizeof(TIME_STRUCT);
-                      }
-                    }
-                    else if (field->type == MYSQL_TYPE_DATE)
-                    {
-                          SQL_TIME_STRUCT *time_info= (SQL_TIME_STRUCT *)rgbValue;
-
-                          if ( time_info )
-                          {
-                              time_info->hour= 0;
-                              time_info->minute= 0;
-                              time_info->second= 0;
-                          }
-                          *pcbValue=sizeof(TIME_STRUCT);
-                    }
-                    else
-                    {
-                      SQL_TIME_STRUCT ts;
-                      if ( str_to_time_st(&ts,value) )
-                          *pcbValue= SQL_NULL_DATA;
-                      else
-                      {
-                          SQL_TIME_STRUCT *time_info= (SQL_TIME_STRUCT *)rgbValue;
-
-                          if ( time_info )
-                          {
-                              time_info->hour= ts.hour;
-                              time_info->minute= ts.minute;
-                              time_info->second= ts.second;          
-                          }
-                          *pcbValue=sizeof(TIME_STRUCT);
-                      }
-                    }
-                    break;
-                }
-            case SQL_C_TIMESTAMP:
-            case SQL_C_TYPE_TIMESTAMP:
-                {
-                    if (field->type == MYSQL_TYPE_TIME)
-                    {
-                        SQL_TIME_STRUCT ts;
-
-                        if ( str_to_time_st(&ts,value) )
-                            *pcbValue= SQL_NULL_DATA;
-                        else
-                        {
-                            SQL_TIMESTAMP_STRUCT *timestamp_info= (SQL_TIMESTAMP_STRUCT *)rgbValue;
-                            time_t sec_time= time(NULL);
-                            struct tm cur_tm;
-                            localtime_r(&sec_time, &cur_tm);
-
-                            timestamp_info->year= 1900 + cur_tm.tm_year;
-                            timestamp_info->month= 1 + cur_tm.tm_mon; /* January is 0 in tm */
-                            timestamp_info->day= cur_tm.tm_mday;
-                            timestamp_info->hour= ts.hour;
-                            timestamp_info->minute= ts.minute;
-                            timestamp_info->second= ts.second;
-                            timestamp_info->fraction= 0;
-                            *pcbValue= sizeof(SQL_TIMESTAMP_STRUCT);      
-                        }
-                    } 
-                    else
-                    {
-                        if ( str_to_ts((SQL_TIMESTAMP_STRUCT *)rgbValue, value) )
-                            *pcbValue= SQL_NULL_DATA;
-                        else
-                            *pcbValue= sizeof(SQL_TIMESTAMP_STRUCT);      
-                    }
-                    break;
-
-                }
-
-            case SQL_C_SBIGINT:
-                {
-                    if ( rgbValue )
-                        *((longlong*) rgbValue)= (longlong) strtoll(value,NULL,10);
-                    *pcbValue= sizeof(longlong);
-                    break;
-                }
-            case SQL_C_UBIGINT:
-                {
-                    if ( rgbValue )
-                        *((ulonglong*) rgbValue)= (ulonglong)strtoull(value,NULL,10);
-                    *pcbValue= sizeof(ulonglong);
-                    break;
-                }
-        }
-    }
-
-    if ( stmt->getdata_offset != (ulong) ~0L )  /* Second call to getdata */
-        return SQL_NO_DATA_FOUND;
-    stmt->getdata_offset= 0L;         /* All data is retrevied */
-    return SQL_SUCCESS;
 }
 
 
