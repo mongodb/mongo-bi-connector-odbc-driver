@@ -295,7 +295,10 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
     );
     /* As sslcipher is not in mysql options, we have to use
        MYSQL_OPT_SSL_VERIFY_SERVER_CERT option */
-    mysql_options(&dbc->mysql,MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &opt_ssl_verify_server_cert);
+    /* Last argument is declared (const char *), but is different
+       depending on second argument, cast to stop warnings */
+    mysql_options(&dbc->mysql,MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
+                  (const char *)&opt_ssl_verify_server_cert);
 #endif
     dbc->mysql.options.connect_timeout = 3600;
     /* socket[0] is always 0 if you are not under UNIX */
@@ -349,7 +352,8 @@ SQLRETURN my_SQLDriverConnectTry( DBC *dbc, MYODBCUTIL_DATASOURCE *pDataSource )
                    pDataSource->pszSSLCAPATH, 
                    pDataSource->pszSSLCIPHER);
 
-    mysql_options(&dbc->mysql,MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &opt_ssl_verify_server_cert);
+    mysql_options(&dbc->mysql,MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
+                  (const char *)&opt_ssl_verify_server_cert);
 #endif
     if ( !mysql_real_connect( &dbc->mysql,
                               pDataSource->pszSERVER, 

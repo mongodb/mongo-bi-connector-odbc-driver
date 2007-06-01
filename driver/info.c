@@ -182,7 +182,7 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
   case SQL_OUTER_JOINS:
   case SQL_ORDER_BY_COLUMNS_IN_SELECT:
     MYINFO_SET_STR_L(rgbInfoValue,cbInfoValueMax,pcbInfoValue,"Y",1);
-    break;
+    /* break; will never reach */
 
   case SQL_CATALOG_NAME_SEPARATOR:
     if (dbc->flag & FLAG_NO_CATALOG)
@@ -193,7 +193,7 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
     {
       MYINFO_SET_STR_L(rgbInfoValue,cbInfoValueMax,pcbInfoValue,".",1);
     }
-    break;
+    /* break; will never reach */
 
   case SQL_CATALOG_TERM:
     if (dbc->flag & FLAG_NO_CATALOG)
@@ -204,7 +204,7 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
     {
       MYINFO_SET_STR_L(rgbInfoValue,cbInfoValueMax,pcbInfoValue,"database",8);
     }
-    break;
+    /* break; will never reach */
 
   case SQL_CATALOG_USAGE:
     *((SQLUINTEGER *)rgbInfoValue)= (SQL_CU_DML_STATEMENTS |
@@ -222,7 +222,7 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
       collation sequences / user.
     */
     MYINFO_SET_STR_L(rgbInfoValue,cbInfoValueMax,pcbInfoValue,"",0);
-    break;
+    /* break; will never reach */
 
   case SQL_CONCAT_NULL_BEHAVIOR:
     *((SQLUSMALLINT *)rgbInfoValue)= SQL_CB_NULL;
@@ -358,7 +358,7 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
 
   case SQL_DATA_SOURCE_NAME:
     MYINFO_SET_STR(rgbInfoValue,cbInfoValueMax,pcbInfoValue,dbc->dsn);
-    break;
+    /* break; will never reach */
 
   case SQL_ACCESSIBLE_PROCEDURES:
   case SQL_DATA_SOURCE_READ_ONLY:
@@ -368,11 +368,11 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
   case SQL_PROCEDURES:
   case SQL_ROW_UPDATES:
     MYINFO_SET_STR_L(rgbInfoValue,cbInfoValueMax,pcbInfoValue,"N",1);
-    break;
+    /* break; will never reach */
 
   case SQL_DATABASE_NAME:
     MYINFO_SET_STR(rgbInfoValue, cbInfoValueMax, pcbInfoValue, dbc->database);
-    break;
+    /* break; will never reach */
 
   case SQL_DATETIME_LITERALS:
     *((SQLUINTEGER *)rgbInfoValue)= SQL_DL_SQL92_DATE |
@@ -383,12 +383,12 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
 
   case SQL_DBMS_NAME:
     MYINFO_SET_STR(rgbInfoValue,cbInfoValueMax,pcbInfoValue,"MySQL");
-    break;
+    /* break; will never reach */
 
   case SQL_DBMS_VER:
     MYINFO_SET_STR(rgbInfoValue,cbInfoValueMax,pcbInfoValue,
                    dbc->mysql.server_version);
-    break;
+    /* break; will never reach */
 
   case SQL_DDL_INDEX:
     *((SQLUINTEGER *)rgbInfoValue)= SQL_DI_CREATE_INDEX | SQL_DI_DROP_INDEX;
@@ -402,15 +402,15 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
 
   case SQL_DRIVER_NAME:
     MYINFO_SET_STR(rgbInfoValue,cbInfoValueMax,pcbInfoValue,DRIVER_DLL_NAME);
-    break;
+    /* break; will never reach */
 
   case SQL_DRIVER_ODBC_VER:
     MYINFO_SET_STR(rgbInfoValue,cbInfoValueMax,pcbInfoValue,SQL_SPEC_STRING);
-    break;
+    /* break; will never reach */
 
   case SQL_DRIVER_VER:
     MYINFO_SET_STR(rgbInfoValue,cbInfoValueMax,pcbInfoValue,DRIVER_VERSION);
-    break;
+    /* break; will never reach */
 
   case SQL_DROP_TABLE:
     *((SQLUINTEGER *)rgbInfoValue)= (SQL_DT_DROP_TABLE |
@@ -531,7 +531,7 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
     using_322= is_prefix(mysql_get_server_info(&dbc->mysql),"3.22");
     MYINFO_SET_STR(rgbInfoValue,cbInfoValueMax,pcbInfoValue,
                    !using_322 ? "`" : " ");
-    break;
+    /* break; will never reach */
 
   case SQL_INDEX_KEYWORDS:
     *((SQLUINTEGER *)rgbInfoValue)= SQL_IK_NONE;
@@ -548,7 +548,7 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
   case SQL_KEYWORDS:
     /* @todo Need to return all keywords..*/
     MYINFO_SET_STR(rgbInfoValue,cbInfoValueMax,pcbInfoValue,mysql_keywords);
-    break;
+    /* break; will never reach */
 
   case SQL_MAX_CATALOG_NAME_LEN:
   case SQL_MAX_COLUMN_NAME_LEN:
@@ -652,7 +652,7 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
 
   case SQL_PROCEDURE_TERM:
     MYINFO_SET_STR_L(rgbInfoValue,cbInfoValueMax,pcbInfoValue,"",0);
-    break;
+    /* break; will never reach */
 
   case SQL_POS_OPERATIONS:
     *((SQLINTEGER *)rgbInfoValue)= (SQL_POS_POSITION |
@@ -680,7 +680,7 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
 
   case SQL_SCHEMA_TERM:
     MYINFO_SET_STR_L(rgbInfoValue,cbInfoValueMax,pcbInfoValue,"",0);
-    break;
+    /* break; will never reach */
 
   case SQL_SCROLL_OPTIONS:
     *((SQLUINTEGER *)rgbInfoValue)= (SQL_SO_FORWARD_ONLY | SQL_SO_STATIC);
@@ -700,16 +700,16 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
 
   case SQL_SEARCH_PATTERN_ESCAPE:
     MYINFO_SET_STR_L(rgbInfoValue,cbInfoValueMax,pcbInfoValue,"\\",1);
-    break;
+    /* break; will never reach */
 
   case SQL_SERVER_NAME:
     MYINFO_SET_STR(rgbInfoValue,cbInfoValueMax,pcbInfoValue,
                    dbc->mysql.host_info);
-    break;
+    /* break; will never reach */
 
   case SQL_SPECIAL_CHARACTERS:
     MYINFO_SET_STR(rgbInfoValue,cbInfoValueMax,pcbInfoValue, allowed_chars);
-    break;
+    /* break; will never reach */
 
   case SQL_SQL_CONFORMANCE:
     *((SQLUINTEGER *)rgbInfoValue)= SQL_SC_SQL92_INTERMEDIATE;
@@ -822,7 +822,7 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
 
   case SQL_TABLE_TERM:
     MYINFO_SET_STR_L(rgbInfoValue,cbInfoValueMax,pcbInfoValue,"table",5);
-    break;
+    /* break; will never reach */
 
   case SQL_TXN_CAPABLE:
     if (trans_supported(dbc) && !(dbc->flag & FLAG_NO_TRANSACTIONS))
@@ -845,11 +845,11 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
 
   case SQL_USER_NAME:
     MYINFO_SET_STR(rgbInfoValue,cbInfoValueMax,pcbInfoValue,dbc->user);
-    break;
+    /* break; will never reach */
 
   case SQL_XOPEN_CLI_YEAR:
     MYINFO_SET_STR_L(rgbInfoValue,cbInfoValueMax,pcbInfoValue,"1992",4);
-    break;
+    /* break; will never reach */
 
   case SQL_FETCH_DIRECTION:
     *((SQLINTEGER *)rgbInfoValue)= (SQL_FD_FETCH_NEXT | SQL_FD_FETCH_FIRST |

@@ -37,6 +37,9 @@ static my_bool myodbc_inited=0;
 */
 
 #if !defined(__WIN__) && defined(SIGPIPE)
+
+#include <signal.h>
+
 static sig_handler
 myodbc_pipe_sig_handler(int sig __attribute__((unused)))
 {

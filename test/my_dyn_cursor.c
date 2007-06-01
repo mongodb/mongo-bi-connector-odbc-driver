@@ -26,7 +26,7 @@
 DECLARE_TEST(my_dynamic_pos_cursor)
 {
     SQLRETURN   rc;
-    SQLROWCOUNT nRowCount;
+    SQLLEN      nRowCount;
     SQLHSTMT    hstmt_pos;
     SQLINTEGER  nData = 500;
     SQLCHAR     szData[255]={0};
@@ -159,7 +159,7 @@ DECLARE_TEST(my_dynamic_pos_cursor)
 DECLARE_TEST(my_dynamic_pos_cursor1)
 {
     SQLRETURN   rc;
-    SQLROWCOUNT nRowCount;
+    SQLLEN      nRowCount;
     SQLHSTMT    hstmt_pos;
     SQLINTEGER  i,nData[15];
     char        data[30],szData[15][10]={0};

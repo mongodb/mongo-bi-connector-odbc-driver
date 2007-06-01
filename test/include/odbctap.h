@@ -32,6 +32,7 @@
 
 #include <stdarg.h>
 #ifndef WIN32
+#include <unistd.h>
 #include <signal.h>
 #endif
 

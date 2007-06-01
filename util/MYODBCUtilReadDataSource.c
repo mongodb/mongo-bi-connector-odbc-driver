@@ -45,7 +45,7 @@ BOOL MYODBCUtilReadDataSource( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszDSN
     char    szEntryNames[SQL_MAX_DSN_LENGTH * MYODBCUTIL_MAX_DSN_NAMES];
     char *  pszEntryName;
     char    szValue[4096];
-    int     nChars  = 0;
+    int     nChars;
 #if defined(WIN32)
     UWORD   nMode   = ODBC_BOTH_DSN;
 

@@ -153,7 +153,7 @@ char *fix_str(char *to, const char *from, int length)
     if ( !from )
         return "";
     if ( length == SQL_NTS )
-        return from;
+        return (char *)from;
     strmake(to,from,length);
     return to;
 }
