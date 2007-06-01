@@ -177,6 +177,14 @@ DECLARE_TEST(t_nativesql)
   ok_con(hdbc, SQLNativeSql(hdbc, in, SQL_NTS, out, sizeof(out), &len));
   is_num(len, (SQLINTEGER) sizeof(in) - 1);
 
+  /*
+   The second call is to make sure the first didn't screw up the stack.
+   (Bug #28758)
+  */
+
+  ok_con(hdbc, SQLNativeSql(hdbc, in, SQL_NTS, out, sizeof(out), &len));
+  is_num(len, (SQLINTEGER) sizeof(in) - 1);
+
   return OK;
 }
 

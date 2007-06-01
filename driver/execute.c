@@ -737,15 +737,19 @@ SQLRETURN SQL_API SQLNativeSql(SQLHDBC hdbc,
                                SQLINTEGER cbSqlStrMax,
                                SQLINTEGER *pcbSqlStr)
 {
-    ulong offset= 0;
+  SQLRETURN rc;
+  SQLLEN    len= (pcbSqlStr ? *pcbSqlStr : 0);
+  ulong     offset= 0;
 
-    MYODBCDbgEnter;
+  MYODBCDbgEnter;
 
-    MYODBCDbgReturnReturn( copy_lresult(SQL_HANDLE_DBC, hdbc,
-                                 szSqlStr,cbSqlStrMax,
-                                 (SQLLEN *)pcbSqlStr,
-                                 (char*) szSqlStrIn, cbSqlStrIn,0L,0L,
-                                 &offset,0));
+  rc= copy_lresult(SQL_HANDLE_DBC, hdbc, szSqlStr, cbSqlStrMax, &len,
+                   (char *)szSqlStrIn, cbSqlStrIn, 0L, 0L, &offset, 0);
+
+  if (pcbSqlStr)
+    *pcbSqlStr= (SQLINTEGER)len;
+
+  MYODBCDbgReturnReturn(rc);
 }
 
 

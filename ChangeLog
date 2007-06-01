@@ -5,6 +5,8 @@
     but must be enabled through configuration files or the DSN. (Bug #12918)
 
   Bugs fixed:
+  * Calls to SQLNativeSql could cause stack corruption due to an incorrect
+    pointer cast. (Bug #28758)
   * SQLSetPos could update or delete the wrong rows when the original result
     set did not contain all columns of a multi-part primary key. (Bug #28255)
   * SQLTables() did not distinguish tables from views. (Bug #23031)
