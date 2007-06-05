@@ -1908,76 +1908,67 @@ DECLARE_TEST(t_alias_setpos_del)
 
 DECLARE_TEST(tmysql_setpos_pkdel2)
 {
-    SQLRETURN rc;
-    SQLINTEGER nData= 500;
-    SQLLEN nlen;
-    SQLCHAR szData[255]={0};
-    SQLROWSETSIZE pcrow;
-    SQLUSMALLINT rgfRowStatus;
+  SQLINTEGER nData= 500;
+  SQLLEN nlen;
+  SQLCHAR szData[255]= {0};
+  SQLROWSETSIZE pcrow;
+  SQLUSMALLINT rgfRowStatus;
 
-    tmysql_exec(hstmt,"drop table tmysql_setpos1");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_setpos_pkdel2");
+  ok_sql(hstmt, "CREATE TABLE tmysql_setpos_pkdel2 (a INT, b INT,"
+         "c VARCHAR(30) PRIMARY KEY)");
+  ok_sql(hstmt, "INSERT INTO tmysql_setpos_pkdel2 VALUES (100,10,'MySQL1'),"
+         "(200,20,'MySQL2'),(300,30,'MySQL3'),(400,40,'MySQL4')");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = tmysql_exec(hstmt,"create table tmysql_setpos1(col1 int, col3 int,col2 varchar(30) primary key)");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(100,10,'MySQL1')");
-    mystmt(hstmt,rc);
-    rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(200,20,'MySQL2')");
-    mystmt(hstmt,rc);
-    rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(300,20,'MySQL3')");
-    mystmt(hstmt,rc);
-    rc = tmysql_exec(hstmt,"insert into tmysql_setpos1 values(400,20,'MySQL4')");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"venu", SQL_NTS));
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "SELECT b,c FROM tmysql_setpos_pkdel2");
 
-    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
-                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &nData, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szData, sizeof(szData),
+                            &nlen));
 
-    rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_ABSOLUTE, 4,
+                                  &pcrow, &rgfRowStatus));
+  is_num(pcrow, 1);
+  is_num(nData, 40);
+  is_str(szData, "MySQL4", 6);
 
-    rc = tmysql_exec(hstmt,"select col2,col3 from tmysql_setpos1");
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_DELETE, SQL_LOCK_NO_CHANGE));
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLRowCount(hstmt, &nlen));
+  is_num(nlen, 1);
 
-    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,100,&nlen);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLExtendedFetch(hstmt,SQL_FETCH_ABSOLUTE,4,&pcrow,&rgfRowStatus);
-    mystmt(hstmt,rc);
-    printMessage(" pcrow:%d\n",pcrow);
+  ok_sql(hstmt, "SELECT * FROM tmysql_setpos_pkdel2");
 
-    printMessage(" row1:%d,%s\n",nData,szData);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 100);
+  is_num(my_fetch_int(hstmt, 2), 10);
+  is_str(my_fetch_str(hstmt, szData, 3), "MySQL1", 6);
 
-    rc = SQLSetPos(hstmt,1,SQL_DELETE,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 200);
+  is_num(my_fetch_int(hstmt, 2), 20);
+  is_str(my_fetch_str(hstmt, szData, 3), "MySQL2", 6);
 
-    rc = SQLRowCount(hstmt,&nlen);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 300);
+  is_num(my_fetch_int(hstmt, 2), 30);
+  is_str(my_fetch_str(hstmt, szData, 3), "MySQL3", 6);
 
-    printMessage(" rows affected:%d\n",nlen);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = tmysql_exec(hstmt,"select * from tmysql_setpos1");
-    mystmt(hstmt,rc);
-
-    my_assert( 3 == myresult(hstmt));
-
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_setpos_pkdel2");
 
   return OK;
 }
