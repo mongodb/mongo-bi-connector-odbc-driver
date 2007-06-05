@@ -1444,7 +1444,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                     if ( stmt->stmt_options.bind_type == SQL_BIND_BY_COLUMN )
                     {
                         offset= bind->cbValueMax*i;
-                        pcb_offset= sizeof(SQLINTEGER)*i;
+                        pcb_offset= sizeof(SQLLEN)*i;
                     }
                     else
                         pcb_offset= offset= stmt->stmt_options.bind_type*i;
