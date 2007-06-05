@@ -121,7 +121,8 @@ DECLARE_TEST(t_scroll)
 DECLARE_TEST(t_array_relative_10)
 {
     SQLRETURN rc;
-    SQLINTEGER nrows, iarray[15];
+    SQLINTEGER iarray[15];
+    SQLLEN   nrows;
     SQLUINTEGER i,index;
     char name[21];
 
@@ -160,19 +161,21 @@ DECLARE_TEST(t_array_relative_10)
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)10,0);
     mystmt(hstmt,rc);
 
+    /* According to http://support.microsoft.com/kb/298678, the storage
+       pointed to if SQL_ATTR_ROWS_FETCHED_PTR should be SQLLEN */
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROWS_FETCHED_PTR,&nrows,0);
     mystmt(hstmt,rc);
 
     rc = SQLExecDirect(hstmt,"select * from t_array_relative_10",SQL_NTS);
     mystmt(hstmt,rc);
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&iarray,0,NULL);
+    rc = SQLBindCol(hstmt,1,SQL_C_LONG,iarray,0,NULL);
     mystmt(hstmt,rc);
 
     rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);/* 1-10 */
     mystmt(hstmt,rc);
 
-    printMessage("1-10, total rows:%d\n",nrows);
+    printMessage("1-10, total rows:%ld\n",(long)nrows);
 
     for (index=1; index<=nrows; index++)
     {
@@ -183,7 +186,7 @@ DECLARE_TEST(t_array_relative_10)
     rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);/* 10-20 */
     mystmt(hstmt,rc);
 
-    printMessage("\n10-20, total rows:%d\n",nrows);
+    printMessage("\n10-20, total rows:%ld\n",(long)nrows);
 
     for (index=1; index<=nrows; index++)
     {
@@ -194,7 +197,7 @@ DECLARE_TEST(t_array_relative_10)
     rc = SQLFetchScroll(hstmt,SQL_FETCH_PREV,0);/* 1-10 */
     mystmt(hstmt,rc);
 
-    printMessage("\n1-10, total rows:%d\n",nrows);
+    printMessage("\n1-10, total rows:%ld\n",(long)nrows);
 
     for (index=1; index<=nrows; index++)
     {
@@ -205,7 +208,7 @@ DECLARE_TEST(t_array_relative_10)
     rc = SQLFetchScroll(hstmt,SQL_FETCH_RELATIVE,1);/* 2-11 */
     mystmt(hstmt,rc);
 
-    printMessage("\n2-12, total rows:%d\n",nrows);
+    printMessage("\n2-12, total rows:%ld\n",(long)nrows);
 
     for (index=1; index<=nrows; index++)
     {
@@ -216,7 +219,7 @@ DECLARE_TEST(t_array_relative_10)
     rc = SQLFetchScroll(hstmt,SQL_FETCH_RELATIVE,-1);/* 1-10 */
     mystmt(hstmt,rc);
 
-    printMessage("\n1-10, total rows:%d\n",nrows);
+    printMessage("\n1-10, total rows:%ld\n",(long)nrows);
 
     for (index=1; index<=nrows; index++)
     {
@@ -227,7 +230,7 @@ DECLARE_TEST(t_array_relative_10)
     rc = SQLFetchScroll(hstmt,SQL_FETCH_FIRST,0);/* 1-10 */
     mystmt(hstmt,rc);
 
-    printMessage("\n1-10, total rows:%d\n",nrows);
+    printMessage("\n1-10, total rows:%ld\n",(long)nrows);
 
     for (index=1; index<=nrows; index++)
     {
@@ -241,7 +244,7 @@ DECLARE_TEST(t_array_relative_10)
     rc = SQLFetchScroll(hstmt,SQL_FETCH_RELATIVE,1);/* 1-10 */
     mystmt(hstmt,rc);
 
-    printMessage("\n1-10, total rows:%d\n",nrows);
+    printMessage("\n1-10, total rows:%ld\n",(long)nrows);
 
     for (index=1; index<=nrows; index++)
     {
@@ -263,7 +266,7 @@ DECLARE_TEST(t_array_relative_10)
 DECLARE_TEST(t_relative_1)
 {
     SQLRETURN rc;
-    SQLINTEGER nrows;
+    SQLLEN nrows;
     SQLUINTEGER i;
     const int max_rows=10;
 
@@ -472,7 +475,8 @@ DECLARE_TEST(t_relative_1)
 DECLARE_TEST(t_array_relative_2)
 {
     SQLRETURN rc;
-    SQLUINTEGER i, nrows;
+    SQLUINTEGER i;
+    SQLLEN nrows;
     SQLINTEGER iarray[15];
     const int max_rows=10;
 
@@ -513,7 +517,7 @@ DECLARE_TEST(t_array_relative_2)
     rc = SQLExecDirect(hstmt,"select * from t_array_relative_2",SQL_NTS);
     mystmt(hstmt,rc);
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&iarray,0,NULL);
+    rc = SQLBindCol(hstmt,1,SQL_C_LONG,iarray,0,NULL);
     mystmt(hstmt,rc);
 
     /* row 1 */
@@ -720,7 +724,7 @@ DECLARE_TEST(t_array_relative_2)
     rc = SQLExecDirect(hstmt,"select * from t_array_relative_2",SQL_NTS);
     mystmt(hstmt,rc);
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&iarray,0,NULL);
+    rc = SQLBindCol(hstmt,1,SQL_C_LONG,iarray,0,NULL);
     mystmt(hstmt,rc);
 
     rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,2);/* 2 */    
@@ -783,7 +787,7 @@ DECLARE_TEST(t_array_relative_2)
 DECLARE_TEST(t_absolute_1)
 {
     SQLRETURN rc;
-    SQLINTEGER nrows;
+    SQLLEN nrows;
     SQLUINTEGER i;
     const int max_rows=10;
 
@@ -967,7 +971,8 @@ DECLARE_TEST(t_absolute_1)
 DECLARE_TEST(t_absolute_2)
 {
     SQLRETURN rc;
-    SQLINTEGER nrows, iarray[15];
+    SQLLEN nrows;
+    SQLINTEGER iarray[15];
     const int max_rows=10;
     SQLUINTEGER i;
 
@@ -1008,7 +1013,7 @@ DECLARE_TEST(t_absolute_2)
     rc = SQLExecDirect(hstmt,"select * from t_absolute_2",SQL_NTS);
     mystmt(hstmt,rc);
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&iarray,0,NULL);
+    rc = SQLBindCol(hstmt,1,SQL_C_LONG,iarray,0,NULL);
     mystmt(hstmt,rc);
 
     /* row 1 */
@@ -1175,7 +1180,7 @@ DECLARE_TEST(t_absolute_2)
     rc = SQLExecDirect(hstmt,"select * from t_absolute_2",SQL_NTS);
     mystmt(hstmt,rc);
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&iarray,0,NULL);
+    rc = SQLBindCol(hstmt,1,SQL_C_LONG,iarray,0,NULL);
     mystmt(hstmt,rc);
 
     rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,2);/* 2 */    
