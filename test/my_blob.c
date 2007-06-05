@@ -422,11 +422,8 @@ DECLARE_TEST(t_putdata2)
 DECLARE_TEST(t_putdata3)
 {
   SQLRETURN   rc;
-  SQLINTEGER  id, id1, id2, id3, resId;
-  SQLLEN      resUTimeSec;
-  SQLLEN      resUTimeMSec;
-  SQLLEN      resDataLen;
-  SQLLEN      resData;
+  SQLINTEGER  id, id1, id2, id3;
+  SQLLEN      resId, resUTimeSec, resUTimeMSec, resDataLen, resData;
 
   char buffer[]= "MySQL - The worlds's most popular open source database";
   const int MAX_PART_SIZE = 5;
@@ -535,7 +532,7 @@ DECLARE_TEST(t_blob_bug)
 {
   SQLRETURN  rc;
   SQLCHAR    *data;
-  SQLINTEGER i;
+  SQLINTEGER i, val;
   SQLLEN     length;
   const SQLINTEGER max_blob_size=1024*100;
 
@@ -573,7 +570,7 @@ DECLARE_TEST(t_blob_bug)
     rc = SQLExecDirect(hstmt,"SELECT length(blb) FROM t_blob",SQL_NTS);
     mystmt(hstmt,rc);
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&length,0,NULL);
+    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&val,0,NULL);
     mystmt(hstmt,rc);
 
     for (i= 1; i <= max_blob_size/1024; i++)
@@ -581,8 +578,8 @@ DECLARE_TEST(t_blob_bug)
       rc = SQLFetch(hstmt);
       mystmt(hstmt,rc);
 
-      fprintf(stdout,"row %d length: %d\n", i, length);
-      myassert(length == i * 1024);
+      fprintf(stdout,"row %d length: %d\n", i, val);
+      myassert(val == i * 1024);
     }
     rc = SQLFetch(hstmt);
     myassert(rc == SQL_NO_DATA);
