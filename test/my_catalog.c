@@ -847,7 +847,7 @@ DECLARE_TEST(t_columns)
 
     ok_stmt(hstmt, SQLColumns(hstmt,
                               DatabaseName, cbDatabaseName,
-                              SQL_NULL_HANDLE, 0,
+                              (SQLCHAR *)"", SQL_NTS,
                               (SQLCHAR *)"t_columns", SQL_NTS,
                               ColumnName, SQL_NTS));
 
