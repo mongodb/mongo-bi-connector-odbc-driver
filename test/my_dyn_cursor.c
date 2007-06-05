@@ -422,105 +422,74 @@ DECLARE_TEST(my_position)
 /* CURSOR POSITION - rowset size 3 */
 DECLARE_TEST(my_position1)
 {
-    SQLRETURN rc;
-    SQLINTEGER nData[15];
-    SQLLEN    nlen[15]= {0}, nrow[15]= {0};
-    char      szData[15][15]={0};
+  SQLINTEGER nData[15];
+  SQLLEN    nlen[15]= {0}, nrow[15]= {0};
+  SQLCHAR   szData[15][15]= {0};
 
-    SQLExecDirect(hstmt,"drop table my_position",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"create table my_position(col1 int, col2 varchar(30))",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_position");
+  ok_sql(hstmt, "CREATE TABLE my_position (col1 INT, col2 VARCHAR(30))");
 
-    rc = SQLExecDirect(hstmt,"insert into my_position values(1,'MySQL1')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_position values(2,'MySQL2')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_position values(3,'MySQL3')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_position values(4,'MySQL4')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_position values(5,'MySQL5')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_position values(6,'MySQL6')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_position values(7,'MySQL7')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_position values(8,'MySQL8')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_position values(9,'MySQL9')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_position values(10,'MySQL10')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_position values(11,'MySQL11')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_position values(12,'MySQL12')",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "INSERT INTO my_position VALUES (1,'MySQL1'), (2,'MySQL2'),"
+         "(3,'MySQL3'), (4,'MySQL4'), (5,'MySQL5'), (6,'MySQL6'), (7,'MySQL7'),"
+         "(8,'MySQL8'), (9,'MySQL9'), (10,'MySQL10'), (11,'MySQL11'),"
+         "(12,'MySQL12')");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
 
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0);
-    mystmt(hstmt, rc);
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY,
+                                (SQLPOINTER)SQL_CONCUR_ROWVER, 0));
 
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY ,(SQLPOINTER)SQL_CONCUR_ROWVER , 0);
-    mystmt(hstmt, rc);
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE,
+                                (SQLPOINTER)3, 0));
 
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)3 , 0);
-    mystmt(hstmt, rc);
+  ok_sql(hstmt, "SELECT * FROM my_position");
 
-    rc = SQLExecDirect(hstmt,"select * from my_position",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &nData, 0, nrow));
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,nrow);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szData, sizeof(szData[0]),
+                            nlen));
 
-    rc = SQLBindCol(hstmt,2,SQL_C_CHAR,szData,sizeof(szData[0]),nlen);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 4));
 
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,4);
-    mystmt(hstmt,rc);
+  nData[0]= 888;
+  nData[1]= 999;
+  nrow[1]= SQL_COLUMN_IGNORE;
+  nData[2]= 1000;
 
-    nData[0] = 888;
-    nData[1] = 999; nrow[1] = SQL_COLUMN_IGNORE;
-    nData[2] = 1000;
+  strcpy((char *)szData[0], "updatex");
+  nlen[0]= 15;
+  strcpy((char *)szData[1], "updatey");
+  nlen[1]= 15;
+  strcpy((char *)szData[2], "updatez");
+  nlen[2]= 15;
 
-    strcpy(szData[0],"updatex"); nlen[0] = 15;
-    strcpy(szData[1],"updatey"); nlen[1] = 15;
-    strcpy(szData[2],"updatez"); nlen[2] = 15;
+  ok_stmt(hstmt, SQLSetPos(hstmt, 2, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
 
-    rc = SQLSetPos(hstmt,2,SQL_UPDATE,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 3, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
 
-    rc = SQLSetPos(hstmt,3,SQL_UPDATE,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM my_position");
 
-    rc = SQLExecDirect(hstmt,"select * from my_position",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 4));
 
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,4);
-    mystmt(hstmt,rc);
+  is_num(nData[0], 4);
+  is_str(szData[0], "MySQL4", 6);
+  is_num(nData[1], 5);
+  is_str(szData[1], "updatey", 7);
+  is_num(nData[2], 1000);
+  is_str(szData[2], "updatez", 7);
 
-    printMessage("updated data1:%d,%s\n",nData[0],szData[0]);
-    printMessage("updated data2:%d,%s\n",nData[1],szData[1]);
-    printMessage("updated data3:%d,%s\n",nData[2],szData[2]);
-    myassert(nData[0] == 4);myassert(strcmp(szData[0],"MySQL4")== 0);
-    myassert(nData[1] == 5);myassert(strcmp(szData[1],"updatey")== 0);
-    myassert(nData[2] == 1000);myassert(strcmp(szData[2],"updatez")== 0);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE,
+                                (SQLPOINTER)1, 0));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)1 , 0);
-    mystmt(hstmt, rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_position");
 
   return OK;
 }
