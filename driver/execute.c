@@ -444,28 +444,31 @@ char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param)
         case SQL_C_TYPE_DATE:
             {
                 DATE_STRUCT *date= (DATE_STRUCT*) data;
-                sprintf(buff,"%04d%02d%02d",date->year,date->month,date->day);
+                sprintf(buff, "%04d-%02d-%02d",
+                        date->year, date->month, date->day);
                 data= buff;
-                length= 8;
+                length= 10;
                 break;
             }
         case SQL_C_TIME:
         case SQL_C_TYPE_TIME:
             {
                 TIME_STRUCT *time= (TIME_STRUCT*) data;
-                sprintf(buff,"%02d%02d%02d",time->hour,time->minute,time->second);
+                sprintf(buff, "%02d:%02d:%02d",
+                        time->hour, time->minute, time->second);
                 data= buff;
-                length= 6;
+                length= 8;
                 break;
             }
         case SQL_C_TIMESTAMP:
         case SQL_C_TYPE_TIMESTAMP:
             {
                 TIMESTAMP_STRUCT *time= (TIMESTAMP_STRUCT*) data;
-                sprintf(buff,"%04d%02d%02d%02d%02d%02d",time->year,time->month,time->day,
-                        time->hour,time->minute,time->second);
+                sprintf(buff, "%04d-%02d-%02d %02d:%02d:%02d",
+                        time->year, time->month, time->day,
+                        time->hour, time->minute, time->second);
                 data= buff;
-                length= 14;
+                length= 19;
                 break;
             }
     }

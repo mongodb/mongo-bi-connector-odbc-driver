@@ -694,7 +694,7 @@ BEGIN_TESTS
   ADD_TEST(t_time)
   ADD_TEST(t_time1)
   ADD_TEST(t_bug12520)
-  ADD_TODO(t_bug15773)
+  ADD_TEST(t_bug15773)
 END_TESTS
 
 
