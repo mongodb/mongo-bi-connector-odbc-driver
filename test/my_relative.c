@@ -25,142 +25,99 @@
 /* Testing SQL_FETCH_RELATIVE with row_set_size as 10 */
 DECLARE_TEST(t_relative)
 {
+  SQLUINTEGER i;
+  SQLULEN nrows, index;
+  SQLINTEGER  iarray[15];
+  SQLCHAR name[21];
     SQLRETURN rc;
-    SQLUINTEGER i, nrows;
-    SQLINTEGER  iarray[15];
-    long      index;
-    char      name[21];
 
-    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
-                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    SQLExecDirect(hstmt,"drop table t_relative",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_relative");
+  ok_sql(hstmt, "CREATE TABLE t_relative (id INT, name CHAR(20))");
 
-    rc = SQLExecDirect(hstmt,"create table t_relative(id int,name char(20))",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLPrepare(hstmt,
+                            (SQLCHAR *)"INSERT INTO t_relative VALUES (?,?)",
+                            SQL_NTS));
 
-    rc = SQLPrepare(hstmt,"insert into t_relative values(?,?)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_ULONG,
+                                  SQL_INTEGER, 0, 0, &i, 0, NULL));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                  SQL_CHAR, 20, 0, name, 20, NULL));
 
-    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT, SQL_C_ULONG,
-                          SQL_INTEGER,0,0,&i,0,NULL);
-    mystmt(hstmt,rc);
-    rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT, SQL_C_CHAR,
-                          SQL_CHAR,20,0,name,20,NULL);
-    mystmt(hstmt,rc);
+  for (i= 1; i <= 50; i++)
+  {
+    sprintf((char *)name, "my%d", i);
+    ok_stmt(hstmt, SQLExecute(hstmt));
+  }
 
-    for ( i = 1; i <= 50; i++ )
-    {
-        sprintf(name,"my%d",i);
-        rc = SQLExecute(hstmt);
-        mystmt(hstmt,rc);
-    }
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-    SQLFreeStmt(hstmt,SQL_CLOSE);
+  /* set row size as 10 */
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE,
+                                (SQLPOINTER)10, 0));
 
-    rc = SQLEndTran(SQL_HANDLE_DBC,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, &nrows, 0));
 
-    /* set row size as 10 */
-    rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)10,0);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM t_relative");
 
-    rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROWS_FETCHED_PTR,&nrows,0);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &iarray, 0, NULL));
 
-    rc = SQLExecDirect(hstmt,"select * from t_relative",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0)); /* 1-10 */
+  is_num(nrows, 10);
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&iarray,0,NULL);
-    mystmt(hstmt,rc);
+  for (index= 1; index <= nrows; index++)
+    is_num(iarray[index - 1], index);
 
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);/* 1-10 */
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0)); /* 10-20 */
+  is_num(nrows, 10);
 
-    printMessage("1-10, total rows:%ld\n",nrows);
-    myassert(nrows == 10);
+  for (index= 1; index <= nrows; index++)
+    is_num(iarray[index - 1], index + 10);
 
-    for (index=1; index<=nrows; index++)
-    {
-        printMessage("\n %d",iarray[index-1]);
-        myassert(iarray[index-1] == index);
-    }
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_PREV, 0)); /* 1-10 */
+  is_num(nrows, 10);
 
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);/* 10-20 */
-    mystmt(hstmt,rc);
+  for (index= 1; index <= nrows; index++)
+    is_num(iarray[index - 1], index);
 
-    printMessage("\n10-20, total rows:%d\n",nrows);
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_RELATIVE, 1)); /* 2-11 */
+  is_num(nrows, 10);
 
-    for (index=1; index<=nrows; index++)
-    {
-        printMessage(" %d ",iarray[index-1]);
-        myassert(iarray[index-1] == index+10);
-    }
+  for (index= 1; index <= nrows; index++)
+    is_num(iarray[index - 1], index + 1);
 
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_PREV,0);/* 1-10 */
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_RELATIVE, -1)); /* 1-10 */
+  is_num(nrows, 10);
 
-    printMessage("\n1-10, total rows:%d\n",nrows);
+  for (index= 1; index <= nrows; index++)
+    is_num(iarray[index - 1], index);
 
-    for (index=1; index<=nrows; index++)
-    {
-        printMessage(" %d ",iarray[index-1]);
-        myassert(iarray[index-1] == index);
-    }
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_FIRST, 0)); /* 1-10 */
+  is_num(nrows, 10);
 
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_RELATIVE,1);/* 2-11 */
-    mystmt(hstmt,rc);
+  for (index= 1; index <= nrows; index++)
+    is_num(iarray[index - 1], index);
 
-    printMessage("\n2-12, total rows:%d\n",nrows);
+  expect_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_RELATIVE, -1),
+              SQL_NO_DATA_FOUND); /* BOF */
 
-    for (index=1; index<=nrows; index++)
-    {
-        printMessage(" %d ",iarray[index-1]);
-        myassert(iarray[index-1] == index+1);
-    }
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_RELATIVE, 1)); /* 1-10 */
+  is_num(nrows, 10);
 
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_RELATIVE,-1);/* 1-10 */
-    mystmt(hstmt,rc);
+  for (index= 1; index <= nrows; index++)
+    is_num(iarray[index - 1], index);
 
-    printMessage("\n1-10, total rows:%d\n",nrows);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    for (index=1; index<=nrows; index++)
-    {
-        printMessage(" %d",iarray[index-1]);
-        myassert(iarray[index-1] == index);
-    }
+  /* reset row size */
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE,
+                                (SQLPOINTER)1, 0));
 
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_FIRST,0);/* 1-10 */
-    mystmt(hstmt,rc);
-
-    printMessage("\n1-10, total rows:%d\n",nrows);
-
-    for (index=1; index<=nrows; index++)
-    {
-        printMessage(" %d",iarray[index-1]);
-        myassert(iarray[index-1] == index);
-    }
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_RELATIVE,-1);/* BOF */
-    mystmt_err(hstmt,rc==SQL_NO_DATA_FOUND,rc);
-
-    rc = SQLFetchScroll(hstmt,SQL_FETCH_RELATIVE,1);/* 1-10 */
-    mystmt(hstmt,rc);
-
-    printMessage("\n1-10, total rows:%d\n",nrows);
-
-    for (index=1; index<=nrows; index++)
-    {
-        printMessage(" %d",iarray[index-1]);
-        myassert(iarray[index-1] == index);
-    }
-
-    SQLFreeStmt(hstmt,SQL_UNBIND);
-    SQLFreeStmt(hstmt,SQL_CLOSE);
-
-    rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)1,0);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_relative");
 
   return OK;
 }
