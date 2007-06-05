@@ -46,7 +46,8 @@ DECLARE_TEST(t_getinfo)
   ok_con(hdbc, SQLGetInfo(hdbc, SQL_DRIVER_ODBC_VER, rgbValue,
                           sizeof(rgbValue), &pcbInfo));
 
-  printMessage("SQL_DRIVER_ODBC_VER: %s (%d)\n",  rgbValue, pcbInfo);
+  is_num(pcbInfo, 5);
+  is_str(rgbValue, "03.51", 5);
 
   return OK;
 }
@@ -55,7 +56,7 @@ DECLARE_TEST(t_getinfo)
 DECLARE_TEST(t_stmt_attr_status)
 {
   SQLUSMALLINT rowStatusPtr[3];
-  SQLUINTEGER rowsFetchedPtr;
+  SQLULEN      rowsFetchedPtr;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_stmtstatus");
   ok_sql(hstmt, "CREATE TABLE t_stmtstatus (id INT, name CHAR(20))");
