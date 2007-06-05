@@ -301,8 +301,8 @@ DECLARE_TEST(t_relative1)
 /* Testing SQL_FETCH_RELATIVE with row_set_size as 2 */
 DECLARE_TEST(t_relative2)
 {
-    SQLRETURN rc;
-  SQULEN nrows;
+  SQLRETURN rc;
+  SQLULEN nrows;
   SQLUINTEGER i, iarray[15];
   const SQLUINTEGER max_rows=10;
 
