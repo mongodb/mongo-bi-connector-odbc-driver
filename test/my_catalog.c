@@ -805,7 +805,8 @@ DECLARE_TEST(t_columns)
 {
   SQLSMALLINT   NumPrecRadix, DataType, Nullable, DecimalDigits;
   SQLLEN        cbColumnSize, cbDecimalDigits, cbNumPrecRadix,
-                cbDatabaseName, cbDataType, cbNullable;
+                cbDataType, cbNullable;
+  SQLINTEGER    cbDatabaseName;
   SQLRETURN     rc;
   SQLUINTEGER   ColumnSize, i;
   SQLUINTEGER   ColumnCount= 7;
