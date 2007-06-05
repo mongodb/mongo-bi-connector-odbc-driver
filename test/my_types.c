@@ -222,8 +222,11 @@ DECLARE_TEST(t_decimal)
 DECLARE_TEST(t_bigint)
 {
     SQLRETURN rc;
-    SQLCHAR id[20]="999";
-    SQLLEN nlen;
+    SQLLEN nlen = 4;
+    union {                    /* An union to get 4 byte alignment */
+      SQLCHAR buf[20];
+      SQLINTEGER dummy;
+    } id = {"99998888"};       /* Just to get a binary pattern for some 64 bit big int */
 
     tmysql_exec(hstmt,"drop table t_bigint");
 
@@ -243,9 +246,8 @@ DECLARE_TEST(t_bigint)
     rc = tmysql_prepare(hstmt,"insert into t_bigint values(?,'venuxyz')");
     mystmt(hstmt,rc);
 
-    nlen = 4;
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_LONG,
-                          SQL_BIGINT,0,0,&id,sizeof(id),&nlen);
+                          SQL_BIGINT,0,0,&id.buf,sizeof(id.buf),&nlen);
     mystmt(hstmt,rc);
 
     rc = SQLExecute(hstmt);
@@ -324,7 +326,7 @@ DECLARE_TEST(t_bigint)
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
-    rc = SQLGetData(hstmt,1,SQL_C_DEFAULT,&id,sizeof(id),&nlen);
+    rc = SQLGetData(hstmt,1,SQL_C_DEFAULT,&id.buf,sizeof(id.buf),&nlen);
     mystmt(hstmt,rc);
 
     printMessage("\n id:%s,nlen:%d,%d\n",id,nlen,sizeof(SQL_BIGINT));
