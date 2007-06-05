@@ -221,6 +221,7 @@ DECLARE_TEST(t_decimal)
 
 DECLARE_TEST(t_bigint)
 {
+#if SQLBIGINT_MADE_PORTABLE
     SQLRETURN rc;
     SQLLEN nlen = 4;
     union {                    /* An union to get 4 byte alignment */
@@ -329,14 +330,13 @@ DECLARE_TEST(t_bigint)
     rc = SQLGetData(hstmt,1,SQL_C_DEFAULT,&id.buf,sizeof(id.buf),&nlen);
     mystmt(hstmt,rc);
 
-    printMessage("\n id:%s,nlen:%d,%d\n",id,nlen,sizeof(SQL_BIGINT));
-
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+#endif
   return OK;
 }
 
