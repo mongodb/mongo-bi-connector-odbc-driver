@@ -650,49 +650,39 @@ DECLARE_TEST(t_bug15773)
 {
   SQL_DATE_STRUCT a,b,c,d;
   SQLLEN len1;
-  SQLLEN len, my_time_cb;
-  SQLRETURN rc;
-  SQLCHAR datetime[50];
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug15773");
   ok_sql(hstmt, "CREATE TABLE t_bug15773("
-				"`a` varchar(255) NOT NULL default '',"
-				"`b` datetime NOT NULL default '0000-00-00 00:00:00',"
-				"`c` datetime NOT NULL default '0000-00-00 00:00:00'"
-				") ENGINE=InnoDB DEFAULT CHARSET=latin1");
+         "`a` varchar(255) NOT NULL default '',"
+         "`b` datetime NOT NULL default '0000-00-00 00:00:00',"
+         "`c` datetime NOT NULL default '0000-00-00 00:00:00'"
+         ") ENGINE=InnoDB DEFAULT CHARSET=latin1");
   ok_sql(hstmt, "INSERT INTO t_bug15773 VALUES ('a', '2005-12-24 00:00:00', '2008-05-12 00:00:00')");
   ok_sql(hstmt, "INSERT INTO t_bug15773 VALUES ('b', '2004-01-01 00:00:00', '2005-01-01 00:00:00')");
   ok_sql(hstmt, "INSERT INTO t_bug15773 VALUES ('c', '2004-12-12 00:00:00', '2005-12-12 00:00:00')");
 
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)"SELECT * FROM t_bug15773"
+                           " WHERE (?) BETWEEN b AND c", SQL_NTS));
 
-  rc = SQLPrepare(hstmt, "SELECT * FROM t_bug15773 WHERE (?) BETWEEN b AND c" ,SQL_NTS);
-  mystmt(hstmt, rc);
-
-  d.day = 15;
-  d.month = 12;
+  d.day= 15;
+  d.month= 12;
   d.year = 2005;
 
-  rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_TYPE_DATE, SQL_TYPE_DATE, 0, 0, &d, 0, NULL); 
-  mystmt(hstmt, rc);
-  rc = SQLBindCol(hstmt, 1, SQL_C_CHAR, &a, 255, &len1);
-  mystmt(hstmt, rc);
-  rc = SQLBindCol(hstmt, 2, SQL_C_TYPE_DATE, &b, 0, &len1);
-  mystmt(hstmt, rc);
-  rc = SQLBindCol(hstmt, 3, SQL_C_TYPE_DATE, &c, 0, &len1); 
-  mystmt(hstmt, rc);
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_TYPE_DATE,
+                                  SQL_TYPE_DATE, 0, 0, &d, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, &a, 255, &len1));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_TYPE_DATE, &b, 0, &len1));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 3, SQL_C_TYPE_DATE, &c, 0, &len1));
 
-  rc = SQLExecute(hstmt);
-  mystmt(hstmt, rc);
+  ok_stmt(hstmt, SQLExecute(hstmt));
 
-  rc = SQLFetch(hstmt);
-  myassert(rc != SQL_SUCCESS);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug15773");
   return OK;
-
 }
 
 
