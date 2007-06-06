@@ -105,11 +105,12 @@ DECLARE_TEST(t_msdev_bug)
   SQLINTEGER len;
 
   ok_con(hdbc, SQLGetConnectOption(hdbc, SQL_CURRENT_QUALIFIER, catalog));
-  printMessage("SQL_CURRENT_QUALIFIER: %s\n", catalog);
+  is_str(catalog, "test", 4);
 
   ok_con(hdbc, SQLGetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, catalog,
                                  sizeof(catalog), &len));
-  printMessage("SQL_ATTR_CURRENT_CATALOG: %s (%d)\n", catalog, len);
+  is_num(len, 4);
+  is_str(catalog, "test", 4);
 
   return OK;
 }
@@ -128,8 +129,8 @@ DECLARE_TEST(t_bug27591)
 
 
 BEGIN_TESTS
-  ADD_TEST(t_gettypeinfo)
   ADD_TEST(t_getinfo)
+  ADD_TEST(t_gettypeinfo)
   ADD_TEST(t_stmt_attr_status)
   ADD_TEST(t_msdev_bug)
   ADD_TEST(t_bug27591)
