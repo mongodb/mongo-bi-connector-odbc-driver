@@ -38,7 +38,7 @@ DECLARE_TEST(t_gettypeinfo)
 }
 
 
-DECLARE_TEST(t_getinfo)
+DECLARE_TEST(sqlgetinfo)
 {
   SQLCHAR   rgbValue[100];
   SQLSMALLINT pcbInfo;
@@ -129,7 +129,7 @@ DECLARE_TEST(t_bug27591)
 
 
 BEGIN_TESTS
-  ADD_TEST(t_getinfo)
+  ADD_TEST(sqlgetinfo)
   ADD_TEST(t_gettypeinfo)
   ADD_TEST(t_stmt_attr_status)
   ADD_TEST(t_msdev_bug)
