@@ -57,14 +57,3 @@ SUFFIXES = .sh
 EXTRA_DIST = make_binary_distribution.sh \
              myodbc3.spec.sh \
              makerpm.sh
-
-# Don't update the files from bitkeeper
-%::SCCS/s.%
-
-
-
-
-
-
-
-
