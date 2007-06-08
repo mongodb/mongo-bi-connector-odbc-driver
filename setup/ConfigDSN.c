@@ -20,33 +20,6 @@
 
 #include "MYODBCSetup.h"
 
-/*
-int strcasecmp( const char *psz1, const char *psz2 )
-{
-    int nChar = 0;
-
-    while ( 1 )
-    {
-        if ( psz1[nChar] == '\0' || psz2[nChar] == '\0' )
-        {
-            if ( psz1[nChar] != '\0' )
-                return (-1);
-            else if ( psz2[nChar] != '\0' )
-                return 1;
-            return 0;
-        }
-        if ( toupper( psz1[nChar] ) != toupper( psz2[nChar] ) )
-        {
-            if ( toupper( psz1[nChar] ) < toupper( psz2[nChar] ) )
-                 return (-1);
-            return 1;
-        }
-        nChar++;
-    }
-    return 0;
-}
-*/
-
 /*!
     \brief  Add, edit, or remove a Data Source Name (DSN).
 
@@ -131,6 +104,3 @@ exitConfigDSN:
     MYODBCUtilFreeDataSource( pDataSource );
     return bReturn;
 }     
-
-
-
