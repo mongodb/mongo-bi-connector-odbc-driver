@@ -25,9 +25,17 @@
     \brief      Adds a new DSN.
 
     \note       This function uses the current SQLSetConfigMode().
-*/    
+*/
 BOOL MYODBCSetupConfigDSNAdd( HWND hWnd, MYODBCUTIL_DATASOURCE *pDataSource )
 {
+    /*
+      Hang on to the configuration mode, our setup dialog (or maybe just iODBC)
+      sometimes does things that cause it to be changed.
+    */
+    UWORD configMode;
+    if (!SQLGetConfigMode(&configMode))
+      return FALSE;
+
     pDataSource->nMode = MYODBCUTIL_DATASOURCE_MODE_DSN_ADD;
 
     /*!
@@ -123,15 +131,24 @@ BOOL MYODBCSetupConfigDSNAdd( HWND hWnd, MYODBCUTIL_DATASOURCE *pDataSource )
         return FALSE;
     }
 
+    /* Restore the configuration mode before we write the DSN. */
+    if (!SQLSetConfigMode(configMode))
+      return FALSE;
+
     /*!
         ODBC RULE
 
-        If the data source name matches an existing data source name and hwndParent is null, 
-        ConfigDSN overwrites the existing name. If it matches an existing name and hwndParent 
-        is not null, ConfigDSN prompts the user to overwrite the existing name.        
+        If the data source name matches an existing data source name and
+        hwndParent is null, ConfigDSN overwrites the existing name. If it
+        matches an existing name and hwndParent is not null, ConfigDSN
+        prompts the user to overwrite the existing name.
     */
-    return MYODBCUtilWriteDataSource( pDataSource );
+    if (!MYODBCUtilWriteDataSource(pDataSource))
+    {
+      SQLPostInstallerError(ODBC_ERROR_REQUEST_FAILED,
+                            "Writing the DSN failed." );
+      return FALSE;
+    }
+
+    return TRUE;
 }
-
-
-

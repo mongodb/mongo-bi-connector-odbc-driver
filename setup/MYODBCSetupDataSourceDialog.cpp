@@ -589,6 +589,84 @@ void MYODBCSetupDataSourceDialog::doApplyMode()
     }
 }
 
+
+QString MYODBCSetupDataSourceDialog::buildConnectString()
+{
+  QString     stringConnectIn;
+
+#ifdef Q_WS_MACX
+  /*
+   The iODBC that ships with Mac OS X (10.4) must be given a filename for
+   the driver library in SQLDriverConnect(), not just the driver name.  So
+   we have to look it up using SQLGetPrivateProfileString() if we haven't
+   already.
+  */
+  {
+    if (!pDataSource->pszDriverFileName)
+    {
+      /*
+        SQLGetPrivateProfileString has bugs on iODBC, so we have to check
+        both the SYSTEM and USER space explicitly.
+       */
+      UWORD configMode;
+      if (!SQLGetConfigMode(&configMode))
+        return FALSE;
+      if (!SQLSetConfigMode(ODBC_SYSTEM_DSN))
+        return FALSE;
+
+      char driver[PATH_MAX];
+      if (!SQLGetPrivateProfileString(pDataSource->pszDRIVER,
+                                      "DRIVER", pDataSource->pszDRIVER,
+                                      driver, sizeof(driver),
+                                      "ODBCINST.INI"))
+        return FALSE;
+
+      /* If we're creating a user DSN, make sure we really got a driver.  */
+      if (configMode != ODBC_SYSTEM_DSN &&
+          strcmp(driver, pDataSource->pszDRIVER) == 0)
+      {
+        if (configMode != ODBC_SYSTEM_DSN)
+        {
+          if (!SQLSetConfigMode(ODBC_USER_DSN))
+            return FALSE;
+          if (!SQLGetPrivateProfileString(pDataSource->pszDRIVER,
+                                          "DRIVER", pDataSource->pszDRIVER,
+                                          driver, sizeof(driver),
+                                          "ODBCINST.INI"))
+            return FALSE;
+        }
+      }
+
+      pDataSource->pszDriverFileName= _global_strdup(driver);
+
+      if (!SQLSetConfigMode(configMode))
+        return FALSE;
+    }
+
+    stringConnectIn= "DRIVER=" + QString(pDataSource->pszDriverFileName);
+  }
+#else
+  stringConnectIn= "DRIVER=" + QString(pDataSource->pszDRIVER);
+#endif
+
+  stringConnectIn+= ";UID=" + ptab1->getUser();
+  stringConnectIn+= ";PWD=" + ptab1->getPassword();
+  stringConnectIn+= ";SERVER=" + ptab1->getServer();
+  if (!ptab1->getDatabase().isEmpty())
+    stringConnectIn+= ";DATABASE=" + ptab1->getDatabase();
+  if (!ptab2->getPort().isEmpty())
+    stringConnectIn+= ";PORT=" + ptab2->getPort();
+  if (!ptab2->getSocket().isEmpty())
+    stringConnectIn+= ";SOCKET=" + ptab2->getSocket();
+//    if ( !ptab1->getOptions().isEmpty() )
+//        stringConnectIn += ";OPTION=" + ptab1->getOptions();
+  if (!ptab2->getInitialStatement().isEmpty())
+    stringConnectIn+= ";STMT=" + ptab2->getInitialStatement();
+
+  return stringConnectIn;
+}
+
+
 /*!
     \brief  Try connect/disconnect.
 
@@ -608,39 +686,7 @@ BOOL MYODBCSetupDataSourceDialog::doTestUsingDriverManager()
     SQLHENV     hEnv        = SQL_NULL_HENV;
     SQLHDBC     hDbc        = SQL_NULL_HDBC;
     SQLRETURN   nReturn;
-    QString     stringConnectIn;
-
-    /* build connect string in */
-#ifdef Q_WS_MACX
-    /*!
-        \note OSX
-
-              Yet another place where iODBC fails to act like the ODBC
-              specification. SQLDriverConnect() should accept the 
-              driver *description* and should allow for the curly
-              braces but fails on both accounts deciding instead to
-              interpret the whole value as a driver file name.
-
-              Its possible to do the xref here, for SQLDriverConnect,
-              but due to time constraints the file is hard-coded.
-    */ 
-    stringConnectIn  = "Driver=/usr/lib/libmyodbc3.dylib";
-#else
-    stringConnectIn  = "DRIVER=" + QString( pDataSource->pszDRIVER );
-#endif
-    stringConnectIn += ";UID=" + ptab1->getUser();
-    stringConnectIn += ";PWD=" + ptab1->getPassword();
-    stringConnectIn += ";SERVER=" + ptab1->getServer();
-    if ( !ptab1->getDatabase().isEmpty() )
-        stringConnectIn += ";DATABASE=" + ptab1->getDatabase();
-    if ( !ptab2->getPort().isEmpty() )
-        stringConnectIn += ";PORT=" + ptab2->getPort();
-    if ( !ptab2->getSocket().isEmpty() )
-        stringConnectIn += ";SOCKET=" + ptab2->getSocket();
-//    if ( !ptab1->getOptions().isEmpty() )
-//        stringConnectIn += ";OPTION=" + ptab1->getOptions();
-    if ( !ptab2->getInitialStatement().isEmpty() )
-        stringConnectIn += ";STMT=" + ptab2->getInitialStatement();
+    QString     stringConnectIn= buildConnectString();
 
     nReturn = SQLAllocHandle( SQL_HANDLE_ENV, NULL, &hEnv );
     if ( nReturn != SQL_SUCCESS )
@@ -705,40 +751,12 @@ BOOL MYODBCSetupDataSourceDialog::doLoadDatabaseNamesUsingDriverManager()
     SQLHDBC     hDbc        = hDBC;
     SQLHSTMT    hStmt;
     SQLRETURN   nReturn;
-    QString     stringConnectIn;
     QStringList stringlistDatabases;
     SQLCHAR     szCatalog[MYODBC_DB_NAME_MAX]; 
     SQLLEN      nCatalog;
+    QString     stringConnectIn= buildConnectString();
 
     stringlistDatabases += " ";
-
-    /* build connect string in */
-#ifdef Q_WS_MACX
-    /*!
-        \note OSX
-
-              Yet another place where iODBC fails to act like the ODBC
-              specification. SQLDriverConnect() should accept the 
-              driver *description* and should allow for the curly
-              braces but fails on both accounts deciding instead to
-              interpret the whole value as a driver file name.
-
-              Its possible to do the xref here, for SQLDriverConnect,
-              but due to time constraints the file is hard-coded.
-    */ 
-    stringConnectIn  = "Driver=/usr/lib/libmyodbc3.dylib";
-#else
-    stringConnectIn  = "DRIVER=" + QString( pDataSource->pszDRIVER );
-#endif
-    stringConnectIn += ";UID=" + ptab1->getUser();
-    stringConnectIn += ";PWD=" + ptab1->getPassword();
-    stringConnectIn += ";SERVER=" + ptab1->getServer();
-    if ( !ptab2->getPort().isEmpty() )
-        stringConnectIn += ";PORT=" + ptab2->getPort();
-    if ( !ptab2->getSocket().isEmpty() )
-        stringConnectIn += ";SOCKET=" + ptab2->getSocket();
-//    if ( !plineeditOptions->text().isEmpty() )
-//        stringConnectIn += ";OPTION=" + plineeditOptions->text();
 
     if ( hDBC == SQL_NULL_HDBC )
     {
