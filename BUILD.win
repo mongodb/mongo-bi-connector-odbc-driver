@@ -57,6 +57,28 @@ MySQL
 BUILD
 ---------------------------------------------------------------
 
+You need to have the environment variables set for the Visual Studio
+toolchain. Visual Studio includes a batch file to set these for you,
+and installs a shortcut into the Start menu to open a command prompt
+with these variables set.
+
+You need to set MYSQL_DIR to point to where the MySQL server is installed,
+using the short-style filenames:
+
+  set MYSQL_DIR=C:\PROGRA~1\MySQL\MYSQLS~1.0
+
+And you will also need to set QTDIR:
+
+  set QTDIR=C:\path\to\qt
+
+and QMAKESPEC:
+
+  set QMAKESPEC=%QTDIR%\mkspecs\win32-msvc2005
+
+and you will need to have the binaries for Qt in your path, such as:
+
+  set PATH=%PATH%;%QTDIR%\bin
+
 Build Connector/ODBC using the Qt qmake command-line tool by doing 
 the following from the source root directory (in a command prompt
 window);
@@ -70,10 +92,6 @@ and the libraries in the lib sub-dir.
 NOTE: At some point in the future we may create a configure.bat which 
       will automagically create qmake pri files.
  
-NOTE: You will need the env vars for your tool-chain to be set
-      before you try to build. Microsoft provides a batch file
-      for Visual Studio folks.
-
 INSTALL
 ---------------------------------------------------------------
 
