@@ -1277,6 +1277,54 @@ DECLARE_TEST(t_bug23031)
 }
 
 
+/**
+ Bug #15713: null pointer when use the table qualifier in SQLColumns()
+*/
+DECLARE_TEST(bug15713)
+{
+  HDBC hdbc1;
+  HSTMT hstmt1;
+  SQLCHAR   conn[256], conn_out[256];
+  SQLSMALLINT conn_out_len;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug15713");
+  ok_sql(hstmt, "CREATE TABLE t_bug15713 (a INT)");
+
+  /* The connection strings must not include DATABASE. */
+  sprintf((char *)conn, "DSN=%s;UID=%s;PASSWORD=%s", mydsn, myuid, mypwd);
+  if (mysock != NULL)
+  {
+    strcat((char *)conn, ";SOCKET=");
+    strcat((char *)conn, (char *)mysock);
+  }
+
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), conn_out,
+                                 sizeof(conn_out), &conn_out_len,
+                                 SQL_DRIVER_NOPROMPT));
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_stmt(hstmt1, SQLColumns(hstmt1, (SQLCHAR *)"test", SQL_NTS,
+                             NULL, 0, (SQLCHAR *)"t_bug15713", SQL_NTS,
+                             NULL, 0));
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  is_str(my_fetch_str(hstmt1, conn, 1), "test", 4);
+  is_str(my_fetch_str(hstmt1, conn, 3), "t_bug15713", 10);
+  is_str(my_fetch_str(hstmt1, conn, 4), "a", 1);
+
+  expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug15713");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -1296,6 +1344,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug4518)
   ADD_TEST(empty_set)
   ADD_TEST(t_bug23031)
+  ADD_TEST(bug15713)
 END_TESTS
 
 
