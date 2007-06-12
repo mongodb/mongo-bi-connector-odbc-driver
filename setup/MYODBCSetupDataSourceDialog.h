@@ -98,7 +98,7 @@ protected:
     BOOL doLoadDatabaseNamesUsingDriverManager();
     BOOL doLoadDatabaseNamesUsingDriver();
 
-    QString MYODBCSetupDataSourceDialog::buildConnectString();
+    QString buildConnectString();
 
 protected slots:
     void slotShowDiagnostics( SQLRETURN nReturn, SQLSMALLINT nHandleType, SQLHANDLE h );
