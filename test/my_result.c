@@ -1718,6 +1718,32 @@ DECLARE_TEST(t_true_length)
 }
 
 
+/**
+ Bug #27544: Calling stored procedure causes "Out of sync" and "Lost
+connection" errors
+*/
+DECLARE_TEST(t_bug27544)
+{
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t1");
+  ok_sql(hstmt, "CREATE TABLE t1(a int)");
+  ok_sql(hstmt, "INSERT INTO t1 VALUES (1)");
+
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS p1");
+  ok_sql(hstmt, "CREATE PROCEDURE p1() BEGIN"
+                "   SELECT a FROM t1; "
+                "END;");
+
+  ok_sql(hstmt,"CALL p1()");
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP PROCEDURE p1");
+  ok_sql(hstmt, "DROP TABLE t1");
+
+  return OK;
+}
+
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -1736,6 +1762,7 @@ BEGIN_TESTS
   ADD_TEST(t_exfetch)
   ADD_TEST(tmysql_rowstatus)
   ADD_TEST(t_true_length)
+  ADD_TEST(t_bug27544)
 END_TESTS
 
 

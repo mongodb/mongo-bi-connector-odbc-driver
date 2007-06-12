@@ -5,6 +5,8 @@
     but must be enabled through configuration files or the DSN. (Bug #12918)
 
   Bugs fixed:
+  * "Out of sync error" or "MySQL Server has gone away" after executing a 
+     stored procedure (Bug #27544)
   * SQL_C_TYPE_DATE, SQL_C_TYPE_TIME, and SQL_C_TYPE_TIMESTAMP were formatted
     without seperators, which could cause them to get interpreted incorrectly
     in some cases due to server bugs. (Bug #15773)

@@ -424,7 +424,18 @@ SQLRETURN SQL_API my_SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption)
         MYODBCDbgReturnReturn( SQL_SUCCESS );
 
     if (!stmt->fake_result)
+    {
       mysql_free_result(stmt->result);
+      /* check if there are more resultsets */
+      while (mysql_more_results(&stmt->dbc->mysql))
+      {
+        if (mysql_next_result(&stmt->dbc->mysql) == -1)
+        {
+          stmt->result= mysql_store_result(&stmt->dbc->mysql);
+          mysql_free_result(stmt->result);
+        }
+      }
+    }
     else
       x_free((gptr)stmt->result);
     x_free((gptr) stmt->fields);
