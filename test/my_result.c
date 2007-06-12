@@ -1743,6 +1743,44 @@ DECLARE_TEST(t_bug27544)
 }
 
 
+/**
+ Bug #6157: BUG in the alias use with ADO's Object
+*/
+DECLARE_TEST(bug6157)
+{
+  SQLCHAR name[30];
+  SQLSMALLINT len;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug6157");
+  ok_sql(hstmt, "CREATE TABLE t_bug6157 (a INT)");
+  ok_sql(hstmt, "INSERT INTO t_bug6157 VALUES (1)");
+
+  ok_sql(hstmt, "SELECT a AS b FROM t_bug6157 AS c");
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_NAME,
+                                 name, sizeof(name), &len, NULL));
+  is_str(name, "b", 1);
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_BASE_COLUMN_NAME,
+                                 name, sizeof(name), &len, NULL));
+  is_str(name, "a", 1);
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_TABLE_NAME,
+                                 name, sizeof(name), &len, NULL));
+  is_str(name, "c", 1);
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_BASE_TABLE_NAME,
+                                 name, sizeof(name), &len, NULL));
+  is_str(name, "t_bug6157", 9);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug6157");
+  return OK;
+}
+
 
 BEGIN_TESTS
   ADD_TEST(my_resultset)
@@ -1763,6 +1801,7 @@ BEGIN_TESTS
   ADD_TEST(tmysql_rowstatus)
   ADD_TEST(t_true_length)
   ADD_TEST(t_bug27544)
+  ADD_TODO(bug6157)
 END_TESTS
 
 
