@@ -5,14 +5,14 @@
     but must be enabled through configuration files or the DSN. (Bug #12918)
 
   Bugs fixed:
-  * "Out of sync error" or "MySQL Server has gone away" after executing a 
-     stored procedure (Bug #27544)
+  * Statements that return multiple result sets (such as calls to stored
+    procedures) would not free all results when closed. (Bug #27544)
   * SQL_C_TYPE_DATE, SQL_C_TYPE_TIME, and SQL_C_TYPE_TIMESTAMP were formatted
     without seperators, which could cause them to get interpreted incorrectly
     in some cases due to server bugs. (Bug #15773)
-  * Calls to SQLNativeSql could cause stack corruption due to an incorrect
+  * Calls to SQLNativeSql() could cause stack corruption due to an incorrect
     pointer cast. (Bug #28758)
-  * SQLSetPos could update or delete the wrong rows when the original result
+  * SQLSetPos() could update or delete the wrong rows when the original result
     set did not contain all columns of a multi-part primary key. (Bug #28255)
   * SQLTables() did not distinguish tables from views. (Bug #23031)
   * The wrong function was used for freeing the artificial result sets that
