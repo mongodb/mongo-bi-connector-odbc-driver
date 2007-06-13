@@ -15,7 +15,7 @@ all:
 	 else \
 	  libtoolize --automake --force; \
 	 fi
-	@automake --add-missing --force
+	@automake --add-missing --force-missing
 	@autoconf
 	@echo "Done!"
 	@echo "Now run ./configure --help"
