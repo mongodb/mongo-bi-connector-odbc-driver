@@ -653,11 +653,13 @@ DECLARE_TEST(my_colpriv)
   return OK;
 }
 
-
 DECLARE_TEST(t_sqlprocedures)
 {
   SQLRETURN rc;
   /** @todo check server version */
+
+  /* avoid errors in case binary log is activated */
+  ok_sql(hstmt, "SET GLOBAL log_bin_trust_function_creators = 1");
 
   ok_sql(hstmt, "DROP FUNCTION IF EXISTS t_sqlproc_func");
   ok_sql(hstmt,
@@ -1332,7 +1334,7 @@ BEGIN_TESTS
   ADD_TEST(my_table_dbs)
   ADD_TEST(my_tablepriv)
   ADD_TEST(my_tablepriv_data)
-  ADD_TEST(my_colpriv)
+  ADD_TEST(my_colpriv) 
   ADD_TEST(t_sqlprocedures)
   ADD_TEST(t_catalog)
   ADD_TEST(tmysql_specialcols)
