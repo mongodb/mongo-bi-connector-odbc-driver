@@ -123,7 +123,7 @@ BOOL MYODBCUtilReadDriver( MYODBCUTIL_DRIVER *pDriver, LPCSTR pszName, LPCSTR ps
      *
      */
     if ( !pDriver->pszName )
-        pDriver->pszName = strdup( pszSectionName );
+        pDriver->pszName = _global_strdup( pszSectionName );
 
     return TRUE;
 }
