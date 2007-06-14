@@ -1803,7 +1803,7 @@ BEGIN_TESTS
   ADD_TEST(tmysql_rowstatus)
   ADD_TEST(t_true_length)
   ADD_TEST(t_bug27544)
-  ADD_TODO(bug6157)
+  ADD_TEST(bug6157)
 END_TESTS
 
 

@@ -634,6 +634,10 @@ get_col_attr(SQLHSTMT     StatementHandle,
 
             /* We need support from server, when aliasing is there */
         case SQL_DESC_BASE_COLUMN_NAME:
+            MYODBCDbgReturnReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
+                                             CharacterAttributePtr,
+                                             BufferLength,StringLengthPtr,
+                                             field->org_name ? field->org_name : ""));
         case SQL_DESC_LABEL:
         case SQL_DESC_NAME:
         case SQL_COLUMN_NAME:
@@ -643,6 +647,10 @@ get_col_attr(SQLHSTMT     StatementHandle,
                                              field->name));
 
         case SQL_DESC_BASE_TABLE_NAME:
+            MYODBCDbgReturnReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
+                                             CharacterAttributePtr,
+                                             BufferLength,StringLengthPtr,
+                                             field->org_table ? field->org_table : ""));
         case SQL_DESC_TABLE_NAME:
             MYODBCDbgReturnReturn(copy_str_data(SQL_HANDLE_STMT, stmt,
                                              CharacterAttributePtr,
