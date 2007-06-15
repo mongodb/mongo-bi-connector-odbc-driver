@@ -56,6 +56,8 @@ void printMessage(char *fmt, ...) {
 # define SKIP -1
 #endif
 
+char *SKIP_REASON= NULL;
+
 typedef int (*test_func)(SQLHDBC, SQLHSTMT, SQLHENV);
 static void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
 		       const char *text, const char *file, int line);
@@ -99,7 +101,6 @@ void test_timeout(int signum __attribute__((unused))) \
   printf("Bail out! Timeout.\n"); \
   exit(1); \
 } \
-\
 \
 int main(int argc, char **argv) \
 { \
@@ -145,9 +146,14 @@ int main(int argc, char **argv) \
     int rc; \
     RUN_TESTS_ALARM; \
     rc= tests[i].func(hdbc, hstmt, henv); \
-    printf("%s %d %s %s\n", rc == OK ? "ok" : "not ok", i + 1, \
-           tests[i].expect == FAIL ? "# TODO" : "-", \
-           tests[i].name); \
+    printf("%s %d - %s %s%s\n", \
+           (rc == OK || rc == SKIP) ? "ok" : "not ok", \
+           i + 1, \
+           tests[i].name, \
+           (tests[i].expect == FAIL ? "# TODO" : \
+            rc == SKIP ? "# SKIP " : ""), \
+           SKIP_REASON ? SKIP_REASON : ""); \
+    SKIP_REASON= NULL; /* Reset SKIP_REASON */ \
     /* Re-allocate statement to reset all its properties. */ \
     SQLFreeStmt(hstmt, SQL_DROP); \
     SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt); \
@@ -157,6 +163,16 @@ int main(int argc, char **argv) \
 \
   exit(0); \
 }
+
+
+/**
+ Skip a test, giving a reason.
+*/
+#define skip(reason) \
+  do { \
+    SKIP_REASON= reason; \
+    return SKIP; \
+  } while (0)
 
 
 /**
@@ -281,6 +297,21 @@ do { \
   if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) \
     return FAIL; \
 } while (0)
+
+
+/**
+  Verify that a Boolean expression is true.
+
+  @param a     The expression to check
+*/
+#define is(a) \
+do { \
+  if (!(a)) { \
+    printf("# !(%s) in %s on line %d\n", \
+           #a, __FILE__, __LINE__); \
+    return FAIL; \
+  } \
+} while (0);
 
 
 /**

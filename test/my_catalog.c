@@ -80,23 +80,6 @@ DECLARE_TEST(my_drop_table)
 }
 
 
-DECLARE_TEST(my_table_priv)
-{
-    SQLRETURN   rc;
-
-    rc = SQLTablePrivileges(hstmt,"te%",SQL_NTS,
-                            NULL,0,"my_%",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    my_print_non_format_result(hstmt);
-
-    SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-
-  return OK;
-}
-
-
 void check_sqlstate(SQLHSTMT hstmt,SQLCHAR *sqlstate)
 {
     SQLCHAR     sql_state[6];
@@ -276,319 +259,6 @@ void my_colpriv_init(SQLHDBC hdbc,SQLHSTMT hstmt)
     SQLFreeStmt(hstmt, SQL_CLOSE);  
 }
 
-
-bool my_tablepriv_init(SQLHDBC hdbc,SQLHSTMT hstmt)
-{
-    SQLRETURN rc;
-
-    SQLExecDirect( hstmt, "DROP TABLE test_tabprev1",SQL_NTS);
-    SQLExecDirect( hstmt, "DROP TABLE test_tabprev2",SQL_NTS);
-    SQLExecDirect( hstmt, "DROP TABLE test_tabprev3",SQL_NTS);
-
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-
-    rc = SQLExecDirect(hstmt, "CREATE TABLE test_tabprev1(f1 INT)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt, "CREATE TABLE test_tabprev2(f1 INT)", SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt, "CREATE TABLE test_tabprev3(f1 INT)", SQL_NTS);
-    mystmt(hstmt,rc);
-
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-
-    SQLExecDirect(hstmt, "DELETE FROM mysql.tables_priv where USER='my_tabpriv'",SQL_NTS);
-
-    SQLExecDirect(hstmt, "GRANT CONNECT TO my_tabpriv IDENTIFIED BY my_tabpriv",SQL_NTS);/* sybase */
-
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-
-    rc = SQLExecDirect(hstmt, "GRANT SELECT,INSERT ON test_tabprev1 TO my_tabpriv",SQL_NTS);
-    if (rc == SQL_ERROR)
-    {
-        /* probably GRANT is disabled or not enough privs */
-        return 1;
-    }
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect( hstmt, "GRANT ALL ON test_tabprev3 TO my_tabpriv",  SQL_NTS);
-    mystmt(hstmt,rc);
-
-    SQLExecDirect(  hstmt, "FLUSH PRIVILEGES",  SQL_NTS);
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-    return 0;
-
-}
-
-
-DECLARE_TEST(my_tablepriv)
-{
-    SQLRETURN   rc;
-
-    if (my_tablepriv_init(hdbc, hstmt))
-      return SKIP;
-
-    printMessage("\n With All Types(CataLog,Schema and TableName)");
-
-    rc  = SQLTablePrivileges(hstmt,
-                             "mysql", SQL_NTS,/* CataLog	 */
-                             NULL,SQL_NTS,        /* SchemaName */
-                             NULL,SQL_NTS);       /* TableName  */
-    mystmt(hstmt,rc);
-
-    assert( 0 == my_print_non_format_result(hstmt));
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    printMessage("\n With All Types(CataLog,Schema and TableName)");
-
-    rc  = SQLTablePrivileges(hstmt,
-                             NULL, 0,                 /* CataLog	 */
-                             NULL,SQL_NTS,        /* SchemaName */
-                             "test_tabprev1",SQL_NTS);  /* TableName  */
-    mystmt(hstmt,rc);
-
-    assert( 2 == my_print_non_format_result(hstmt));
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    printMessage("\n With All Types(CataLog,Schema and TableName)");
-
-    rc  = SQLTablePrivileges(hstmt,
-                             NULL, 0,                 /* CataLog	 */
-                             NULL,SQL_NTS,        /* SchemaName */
-                             "test_tabprev2",SQL_NTS);  /* TableName  */
-    mystmt(hstmt,rc);
-
-    assert( 0 == my_print_non_format_result(hstmt));
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    printMessage("\n With All Types(CataLog,Schema and TableName)");
-
-    rc  = SQLTablePrivileges(hstmt,
-                             NULL, 0,                 /* CataLog	 */
-                             NULL,SQL_NTS,        /* SchemaName */
-                             "test_tabprev3",SQL_NTS);  /* TableName  */
-    mystmt(hstmt,rc);
-
-    /* value changed due to two additional rows in the result related to VIEWs */
-    assert( 11 == my_print_non_format_result(hstmt));
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    printMessage("\n With All Types(CataLog,Schema and TableName)");
-
-    rc  = SQLTablePrivileges(hstmt,
-                             NULL, 0,                 /* CataLog	 */
-                             NULL,SQL_NTS,        /* SchemaName */
-                             "test_%",SQL_NTS);  /* TableName  */
-    mystmt(hstmt,rc);
-
-    my_print_non_format_result(hstmt);
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-
-    printMessage("\n With All Types(CataLog,Schema and TableName)");
-
-    rc  = SQLTablePrivileges(hstmt,
-                             NULL, 0,                 /* CataLog	 */
-                             NULL,SQL_NTS,        /* SchemaName */
-                             "test_tabprev%",SQL_NTS);  /* TableName  */
-    mystmt(hstmt,rc);
-
-
-    /* value changed due to two additional rows in the result related to VIEWs */
-    assert( 13  == my_print_non_format_result(hstmt));
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = SQLTablePrivileges(hstmt,"mysql",SQL_NTS,NULL,SQL_NTS,"tables_priv",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    my_print_non_format_result(hstmt);
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-  return OK;
-}
-
-
-DECLARE_TEST(my_tablepriv_data)
-{
-    SQLINTEGER i;
-    SQLRETURN  rc;
-    SQLCHAR       TableQualifier_buf[129];
-    SQLCHAR       TableOwner_buf[129];
-    SQLCHAR       TableName_buf[129];
-    SQLCHAR       Grantor_buf[129];
-    SQLCHAR       Grantee_buf[129];
-    SQLCHAR       Privilege_buf[129];
-    SQLCHAR       IsGrantable_buf[4];
-
-    SQLExecDirect(hstmt, "DROP USER todbc1_test",SQL_NTS);
-    SQLExecDirect(hstmt, "DROP TABLE todbc1_tpriv1",SQL_NTS);
-    SQLExecDirect(hstmt, "DROP TABLE todbc1_tpriv2",SQL_NTS);
-    SQLExecDirect(hstmt, "DELETE FROM mysql.tables_priv where Table_name='todbc1_tpriv1'",SQL_NTS);
-    SQLExecDirect(hstmt, "DELETE FROM mysql.tables_priv where User='todbc1_test'",SQL_NTS);
-    SQLTransact(NULL, hdbc, SQL_COMMIT); 
-    rc = SQLExecDirect(hstmt, "CREATE TABLE todbc1_tpriv1(a INTEGER)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt, "CREATE TABLE todbc1_tpriv2 (a INTEGER)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    SQLTransact(NULL, hdbc, SQL_COMMIT);
-
-    /*--- Test 1: DBA should have at least CREATE, DELETE, INSERT,
-          REFERENCES, SELECT and UPDATE privileges to the tables
-          (and in this order)
-      ---*/
-
-    rc = SQLTablePrivileges(hstmt, NULL, SQL_NTS, NULL, SQL_NTS,
-                            "todbc1_tpriv1", SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLFetch(hstmt);
-    assert (rc == SQL_NO_DATA_FOUND);
-
-    /*--- Test 2: Grant SELECT to todbc1_test with GRANT option,
-          and INSERT and UPDATE without.
-      ---*/
-
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-
-    rc = SQLExecDirect(hstmt, "GRANT SELECT ON todbc1_tpriv1\
-               TO todbc1_test WITH GRANT OPTION",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt, "GRANT INSERT, UPDATE ON todbc1_tpriv1\
-               TO todbc1_test", SQL_NTS);mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt, "GRANT USAGE ON todbc1_tpriv2\
-               TO todbc1_test", SQL_NTS);mystmt(hstmt,rc);
-    SQLTransact(NULL, hdbc, SQL_COMMIT);
-    rc = SQLTablePrivileges(hstmt, NULL, SQL_NTS, NULL, SQL_NTS,
-                            "todbc1_tpriv1", SQL_NTS);
-    mystmt(hstmt,rc);  
-
-    assert( 4  == my_print_non_format_result(hstmt));
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = SQLTablePrivileges(hstmt, NULL, SQL_NTS, NULL, SQL_NTS,
-                            "todbc1_tpriv1", SQL_NTS);
-    mystmt(hstmt,rc);
-
-    TODBC_BIND_CHAR(1, TableQualifier_buf);
-    TODBC_BIND_CHAR(2, TableOwner_buf);
-    TODBC_BIND_CHAR(3, TableName_buf);
-    TODBC_BIND_CHAR(4, Grantor_buf);
-    TODBC_BIND_CHAR(5, Grantee_buf);
-    TODBC_BIND_CHAR(6, Privilege_buf);
-    TODBC_BIND_CHAR(7, IsGrantable_buf);  
-
-    i = 0;
-    while (1)
-    {
-        rc = SQLFetch(hstmt);
-        if ((rc == SQL_SUCCESS) || (rc == SQL_SUCCESS_WITH_INFO))
-        {
-            char *p[] = { "Select", "Insert", "Update","Grant"};
-            printMessage ("\n row '%d'",i);
-            if (i < 4 && strcmp(Privilege_buf, p[i]) == 0)
-            {
-                if (strcmp(Privilege_buf, "Select") == 0 ||
-                    strcmp(Privilege_buf, "Delete") == 0 ||
-                    strcmp(Privilege_buf, "References") == 0)
-                {
-                    assert(strcmp(Grantee_buf, "todbc1_test") == 0);
-                    assert(strcmp(IsGrantable_buf, "YES") == 0);
-                }
-                else
-                {
-                    if (strcmp(Grantee_buf, "todbc1_test") == 0)
-                    {
-                        /*assert(strcmp(Grantor_buf, "venu@localhost") == 0);*/
-                    }
-                    else
-                    {
-                        assert(strcmp(Grantee_buf, "todbc1_test") == 0);
-                        assert(strcmp(IsGrantable_buf, "YES") == 0);
-                    }
-                }
-                i++;
-            }
-            else
-            {
-                assert(strcmp(Grantee_buf, "todbc1_test") != 0);
-            }
-            assert(strcmp(TableName_buf, "todbc1_tpriv1") == 0);
-        }
-        else break;
-    }
-    assert(i == 4);
-
-    /*--- test 3: Test 'LIKE' match patterns ---*/
-
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-
-    rc = SQLExecDirect(hstmt, "REVOKE INSERT, UPDATE, SELECT\
-               ON todbc1_tpriv1 FROM todbc1_test",SQL_NTS);
-    mystmt(hstmt,rc);
-    SQLTransact(NULL, hdbc, SQL_COMMIT);
-    rc = SQLTablePrivileges(hstmt, NULL, SQL_NTS, NULL, SQL_NTS,
-                            "todbc1\\_tpriv_", SQL_NTS);
-    mystmt(hstmt,rc);
-
-    assert( 2  == my_print_non_format_result(hstmt));
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
-
-    rc = SQLTablePrivileges(hstmt, NULL, SQL_NTS, NULL, SQL_NTS,
-                            "todbc1\\_tpriv_", SQL_NTS);
-    mystmt(hstmt,rc);
-
-    TODBC_BIND_CHAR(1, TableQualifier_buf);
-    TODBC_BIND_CHAR(2, TableOwner_buf);
-    TODBC_BIND_CHAR(3, TableName_buf);
-    TODBC_BIND_CHAR(4, Grantor_buf);
-    TODBC_BIND_CHAR(5, Grantee_buf);
-    TODBC_BIND_CHAR(6, Privilege_buf);
-    TODBC_BIND_CHAR(7, IsGrantable_buf);  
-
-    i = 0;
-
-    while (1)
-    {
-        memset( TableName_buf, 0, sizeof(TableName_buf));
-        rc = SQLFetch(hstmt);
-        if ((rc == SQL_SUCCESS) || (rc == SQL_SUCCESS_WITH_INFO))
-        {
-            i++;
-            printMessage("\n Name:%s",TableName_buf);
-            assert(strncmp(TableName_buf, "todbc1_tpriv", 12) == 0);
-            if (strcmp(TableName_buf, "todbc1_tpriv1") == 0)
-            {
-                assert(strcmp(Grantee_buf, "todbc1_test") == 0);
-                assert(strcmp(IsGrantable_buf, "YES") == 0);
-
-            }
-            else if (strcmp(TableName_buf, "todbc1_tpriv2") == 0)
-            {
-                assert(strcmp(Grantee_buf, "todbc1_test") == 0);
-                assert(strcmp(IsGrantable_buf, "NO") == 0);
-            }
-        }
-        else break;
-    }
-    printMessage("\n i:%d",i);
-    assert(i == 2);
-
-    SQLFreeStmt(hstmt,SQL_CLOSE);
-
-  return OK;
-}
 
 
 DECLARE_TEST(my_colpriv)
@@ -931,6 +601,7 @@ DECLARE_TEST(t_tables_bug)
   SQLSMALLINT i, ColumnCount, pcbColName, pfSqlType, pibScale, pfNullable;
   SQLULEN     pcbColDef;
   SQLCHAR     szColName[MAX_NAME_LEN];
+  bool is51= mysql_min_version(hdbc, "5.1", 3);
 
    SQLFreeStmt(hstmt, SQL_CLOSE);
 
@@ -961,7 +632,7 @@ DECLARE_TEST(t_tables_bug)
      myassert(strcmp(t_tables_bug_data[i-1].szColName,szColName) == 0);
      myassert(t_tables_bug_data[i-1].pcbColName == pcbColName);
      myassert(t_tables_bug_data[i-1].pfSqlType == pfSqlType);
-     myassert(t_tables_bug_data[i-1].pcbColDef == pcbColDef);
+     is_num(t_tables_bug_data[i-1].pcbColDef, pcbColDef / (is51 ? 3 : 1));
      myassert(t_tables_bug_data[i-1].pibScale == pibScale);
      myassert(t_tables_bug_data[i-1].pfNullable == pfNullable);
    }
@@ -1128,6 +799,10 @@ DECLARE_TEST(t_sqltables)
 DECLARE_TEST(t_bug4518)
 {
   SQLCHAR buff[255];
+
+  /** @todo re-enable this test when I_S based SQLForeignKeys is done. */
+  if (mysql_min_version(hdbc, "5.1", 3))
+    skip("can't test foreign keys with 5.1 or later yet");
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug4518_c, t_bug4518_c2, t_bug4518ac, "
                 "                     t_bug4518_p");
@@ -1330,10 +1005,7 @@ DECLARE_TEST(bug15713)
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
-  ADD_TEST(my_table_priv)
   ADD_TEST(my_table_dbs)
-  ADD_TEST(my_tablepriv)
-  ADD_TEST(my_tablepriv_data)
   ADD_TEST(my_colpriv) 
   ADD_TEST(t_sqlprocedures)
   ADD_TEST(t_catalog)

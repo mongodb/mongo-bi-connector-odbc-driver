@@ -115,7 +115,7 @@ DECLARE_TEST(my_transaction)
 DECLARE_TEST(t_tran)
 {
   if (!server_supports_trans(hdbc))
-      return SKIP;
+    skip("Server does not support transactions.");
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_tran");
   ok_sql(hstmt, "CREATE TABLE t_tran (a INT, b VARCHAR(30)) ENGINE=InnoDB");
