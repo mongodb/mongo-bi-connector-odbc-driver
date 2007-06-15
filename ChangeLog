@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * SQLColAttribute() returned the wrong value for SQL_DESC_BASE_COLUMN_NAME
+    and SQL_DESC_BASE_TABLE_NAME for aliased fields. (Bug #6197)
 
 ----
 
