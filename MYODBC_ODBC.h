@@ -30,7 +30,6 @@
 #  pragma pack(1)
 # endif
 
-# include <sqltypes.h>
 # include <sql.h>
 # include <sqlext.h>
 # include <odbcinst.h>
