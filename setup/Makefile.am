@@ -59,58 +59,58 @@ libmyodbc3S_la_SOURCES = \
 	MYODBCSetupLineEdit.cpp
 
 nodist_libmyodbc3S_la_SOURCES = \
-	mMYODBCSetupAssistText.cpp \
-	mMYODBCSetupCheckBox.cpp \
-	mMYODBCSetupComboBox.cpp \
-	mMYODBCSetupComboBoxDatabases.cpp \
-	mMYODBCSetupDataSourceDialog.cpp \
-	mMYODBCSetupDataSourceTab1.cpp \
-	mMYODBCSetupDataSourceTab2.cpp \
-	mMYODBCSetupDataSourceTab3.cpp \
-	mMYODBCSetupDataSourceTab3a.cpp \
-	mMYODBCSetupDataSourceTab3b.cpp \
-	mMYODBCSetupDataSourceTab3c.cpp \
-	mMYODBCSetupDataSourceTab3d.cpp \
-	mMYODBCSetupLineEdit.cpp
+	.mMYODBCSetupAssistText.cpp \
+	.mMYODBCSetupCheckBox.cpp \
+	.mMYODBCSetupComboBox.cpp \
+	.mMYODBCSetupComboBoxDatabases.cpp \
+	.mMYODBCSetupDataSourceDialog.cpp \
+	.mMYODBCSetupDataSourceTab1.cpp \
+	.mMYODBCSetupDataSourceTab2.cpp \
+	.mMYODBCSetupDataSourceTab3.cpp \
+	.mMYODBCSetupDataSourceTab3a.cpp \
+	.mMYODBCSetupDataSourceTab3b.cpp \
+	.mMYODBCSetupDataSourceTab3c.cpp \
+	.mMYODBCSetupDataSourceTab3d.cpp \
+	.mMYODBCSetupLineEdit.cpp
 
-mMYODBCSetupAssistText.cpp: @srcdir@/MYODBCSetupAssistText.h
-	@MOC@ @srcdir@/MYODBCSetupAssistText.h -o mMYODBCSetupAssistText.cpp
+.mMYODBCSetupAssistText.cpp: @srcdir@/MYODBCSetupAssistText.h
+	@MOC@ @srcdir@/MYODBCSetupAssistText.h -o .mMYODBCSetupAssistText.cpp
 
-mMYODBCSetupCheckBox.cpp: @srcdir@/MYODBCSetupCheckBox.h
-	@MOC@ @srcdir@/MYODBCSetupCheckBox.h -o mMYODBCSetupCheckBox.cpp
+.mMYODBCSetupCheckBox.cpp: @srcdir@/MYODBCSetupCheckBox.h
+	@MOC@ @srcdir@/MYODBCSetupCheckBox.h -o .mMYODBCSetupCheckBox.cpp
 
-mMYODBCSetupComboBox.cpp: @srcdir@/MYODBCSetupComboBox.h
-	@MOC@ @srcdir@/MYODBCSetupComboBox.h -o mMYODBCSetupComboBox.cpp
+.mMYODBCSetupComboBox.cpp: @srcdir@/MYODBCSetupComboBox.h
+	@MOC@ @srcdir@/MYODBCSetupComboBox.h -o .mMYODBCSetupComboBox.cpp
 
-mMYODBCSetupComboBoxDatabases.cpp: @srcdir@/MYODBCSetupComboBoxDatabases.h
-	@MOC@ @srcdir@/MYODBCSetupComboBoxDatabases.h -o mMYODBCSetupComboBoxDatabases.cpp
+.mMYODBCSetupComboBoxDatabases.cpp: @srcdir@/MYODBCSetupComboBoxDatabases.h
+	@MOC@ @srcdir@/MYODBCSetupComboBoxDatabases.h -o .mMYODBCSetupComboBoxDatabases.cpp
 
-mMYODBCSetupDataSourceDialog.cpp: @srcdir@/MYODBCSetupDataSourceDialog.h
-	@MOC@ @srcdir@/MYODBCSetupDataSourceDialog.h -o mMYODBCSetupDataSourceDialog.cpp
+.mMYODBCSetupDataSourceDialog.cpp: @srcdir@/MYODBCSetupDataSourceDialog.h
+	@MOC@ @srcdir@/MYODBCSetupDataSourceDialog.h -o .mMYODBCSetupDataSourceDialog.cpp
 
-mMYODBCSetupDataSourceTab1.cpp: @srcdir@/MYODBCSetupDataSourceTab1.h
-	@MOC@ @srcdir@/MYODBCSetupDataSourceTab1.h -o mMYODBCSetupDataSourceTab1.cpp
+.mMYODBCSetupDataSourceTab1.cpp: @srcdir@/MYODBCSetupDataSourceTab1.h
+	@MOC@ @srcdir@/MYODBCSetupDataSourceTab1.h -o .mMYODBCSetupDataSourceTab1.cpp
 
-mMYODBCSetupDataSourceTab2.cpp: @srcdir@/MYODBCSetupDataSourceTab2.h
-	@MOC@ @srcdir@/MYODBCSetupDataSourceTab2.h -o mMYODBCSetupDataSourceTab2.cpp
+.mMYODBCSetupDataSourceTab2.cpp: @srcdir@/MYODBCSetupDataSourceTab2.h
+	@MOC@ @srcdir@/MYODBCSetupDataSourceTab2.h -o .mMYODBCSetupDataSourceTab2.cpp
 
-mMYODBCSetupDataSourceTab3.cpp: @srcdir@/MYODBCSetupDataSourceTab3.h
-	@MOC@ @srcdir@/MYODBCSetupDataSourceTab3.h -o mMYODBCSetupDataSourceTab3.cpp
+.mMYODBCSetupDataSourceTab3.cpp: @srcdir@/MYODBCSetupDataSourceTab3.h
+	@MOC@ @srcdir@/MYODBCSetupDataSourceTab3.h -o .mMYODBCSetupDataSourceTab3.cpp
 
-mMYODBCSetupDataSourceTab3a.cpp: @srcdir@/MYODBCSetupDataSourceTab3a.h
-	@MOC@ @srcdir@/MYODBCSetupDataSourceTab3a.h -o mMYODBCSetupDataSourceTab3a.cpp
+.mMYODBCSetupDataSourceTab3a.cpp: @srcdir@/MYODBCSetupDataSourceTab3a.h
+	@MOC@ @srcdir@/MYODBCSetupDataSourceTab3a.h -o .mMYODBCSetupDataSourceTab3a.cpp
 
-mMYODBCSetupDataSourceTab3b.cpp: @srcdir@/MYODBCSetupDataSourceTab3b.h
-	@MOC@ @srcdir@/MYODBCSetupDataSourceTab3b.h -o mMYODBCSetupDataSourceTab3b.cpp
+.mMYODBCSetupDataSourceTab3b.cpp: @srcdir@/MYODBCSetupDataSourceTab3b.h
+	@MOC@ @srcdir@/MYODBCSetupDataSourceTab3b.h -o .mMYODBCSetupDataSourceTab3b.cpp
 
-mMYODBCSetupDataSourceTab3c.cpp: @srcdir@/MYODBCSetupDataSourceTab3c.h
-	@MOC@ @srcdir@/MYODBCSetupDataSourceTab3c.h -o mMYODBCSetupDataSourceTab3c.cpp
+.mMYODBCSetupDataSourceTab3c.cpp: @srcdir@/MYODBCSetupDataSourceTab3c.h
+	@MOC@ @srcdir@/MYODBCSetupDataSourceTab3c.h -o .mMYODBCSetupDataSourceTab3c.cpp
 
-mMYODBCSetupDataSourceTab3d.cpp: @srcdir@/MYODBCSetupDataSourceTab3d.h
-	@MOC@ @srcdir@/MYODBCSetupDataSourceTab3d.h -o mMYODBCSetupDataSourceTab3d.cpp
+.mMYODBCSetupDataSourceTab3d.cpp: @srcdir@/MYODBCSetupDataSourceTab3d.h
+	@MOC@ @srcdir@/MYODBCSetupDataSourceTab3d.h -o .mMYODBCSetupDataSourceTab3d.cpp
 
-mMYODBCSetupLineEdit.cpp: @srcdir@/MYODBCSetupLineEdit.h
-	@MOC@ @srcdir@/MYODBCSetupLineEdit.h -o mMYODBCSetupLineEdit.cpp
+.mMYODBCSetupLineEdit.cpp: @srcdir@/MYODBCSetupLineEdit.h
+	@MOC@ @srcdir@/MYODBCSetupLineEdit.h -o .mMYODBCSetupLineEdit.cpp
 
 ###################################################################
 #                                                                 #
