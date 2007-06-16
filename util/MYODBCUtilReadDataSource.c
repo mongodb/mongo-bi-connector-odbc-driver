@@ -81,21 +81,27 @@ BOOL MYODBCUtilReadDataSource( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszDSN
 
 #if defined(WIN32)
     {
+        /*
+          There is a bug in SQLGetPrivateProfileString when mode is
+          ODBC_BOTH_DSN and we are looking for a system DSN. In this case
+          SQLGetPrivateProfileString will find the system DSN but return
+          a corrupt list of attributes.
+
+          A corrupt list of attributes can be identified because the first
+          attribute (if any) will be followed by more than one '\0'.
+
+          The solution is to detect this condition and set mode to
+          ODBC_SYSTEM_DSN and try again. We also ensure we reset the mode
+          when done - regardless of outcome.
+
+          This may be the issue explained here:
+            http://support.microsoft.com/kb/909122/
+
+          And this work-around may not be correct:
+            http://bugs.mysql.com/27599
+        */
         int     nLen    = strlen( szEntryNames );
 
-        /*!
-            \note   XP
-
-                    Bug in SQLGetPrivateProfileString when mode is ODBC_BOTH_DSN and we are looking for a system
-                    DSN. In this case SQLGetPrivateProfileString will find the system dsn but return a corrupt
-                    list of attributes. 
-
-                    A corrupt list of attributes can be identified because the first attribute (if any) will be
-                    followed by more than one '\0'.
-
-                    The solution is to detect this condition and set mode to ODBC_SYSTEM_DSN and try again. We 
-                    also ensure we reset the mode when done - regardless of outcome.
-        */                
         if ( nMode == ODBC_BOTH_DSN && nLen < nChars && szEntryNames[nLen + 1 ] == '\0' )
         {
             *szEntryNames = '\0';
