@@ -135,6 +135,8 @@ DECLARE_TEST(t_blob)
     mystmt(hstmt,rc);
     free(blobbuf);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS TBLOB");
+
   return OK;
 }
 
@@ -194,6 +196,8 @@ DECLARE_TEST(t_1piecewrite2)
     rc = SQLTransact(NULL, hdbc, SQL_COMMIT);
     mycon(hdbc,rc);
     free(blobbuf);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS TBLOB");
 
   return OK;
 }
@@ -261,8 +265,11 @@ DECLARE_TEST(t_putdata)
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_putdata");
+
   return OK;
 }
+
 
 /* Test for a simple SQLPutData and SQLParamData handling for longtext */
 DECLARE_TEST(t_putdata1)
@@ -328,6 +335,8 @@ DECLARE_TEST(t_putdata1)
 
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_putdata");
 
   return OK;
 }
@@ -413,6 +422,8 @@ DECLARE_TEST(t_putdata2)
     SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_putdata");
 
   return OK;
 }
@@ -588,6 +599,8 @@ DECLARE_TEST(t_blob_bug)
 
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_blob");
 
   return OK;
 }

@@ -3,6 +3,10 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * SQLColumns() did not handle many of its parameters correctly, which
+    could lead to incorrect results. The table name argument was not handled
+    as a pattern value, and most arguments were not escaped correctly when
+    they contained non-alphanumeric characters. (Bug #8860)
   * If there was more than one unique key on a table, the correct fields
     were not used in handling SQLSetPos(). (Bug #10563)
   * SQLColAttribute() returned the wrong value for SQL_DESC_BASE_COLUMN_NAME

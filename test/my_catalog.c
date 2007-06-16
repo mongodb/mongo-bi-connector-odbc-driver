@@ -45,6 +45,8 @@ DECLARE_TEST(my_columns_null)
 
     SQLFreeStmt(hstmt, SQL_CLOSE);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_column_null");
+
   return OK;
 }
 
@@ -260,7 +262,6 @@ void my_colpriv_init(SQLHDBC hdbc,SQLHSTMT hstmt)
 }
 
 
-
 DECLARE_TEST(my_colpriv)
 {
   my_colpriv_init(hdbc, hstmt);
@@ -320,6 +321,7 @@ DECLARE_TEST(my_colpriv)
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
+  ok_sql(hstmt, "DROP TABLE test_colprev1, test_colprev2, test_colprev3");
   return OK;
 }
 
@@ -412,6 +414,8 @@ DECLARE_TEST(t_catalog)
         myassert(strcmp(name,colnames[i-1]) == 0 && len == collengths[i-1]);
     }
     SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_catalog");
 
   return OK;
 }
@@ -718,6 +722,8 @@ DECLARE_TEST(tmysql_showkeys)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_spk");
+
   return OK;
 }
 
@@ -871,14 +877,6 @@ DECLARE_TEST(empty_set)
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-  /* SQLColumns(): no table specified. */
-  ok_stmt(hstmt, SQLColumns(hstmt, NULL, SQL_NTS, NULL, SQL_NTS,
-                            NULL, SQL_NTS, NULL, SQL_NTS));
-  ok_stmt(hstmt, SQLNumResultCols(hstmt, &columns));
-  is_num(columns, 18);
-  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-
   /* SQLStatistics(): no table specified. */
   ok_stmt(hstmt, SQLStatistics(hstmt, NULL, SQL_NTS, NULL, SQL_NTS,
                                NULL, SQL_NTS, 0, 0));
@@ -1002,11 +1000,71 @@ DECLARE_TEST(bug15713)
 }
 
 
+/**
+ Bug #8860: Generic SQLColumns not supported?
+*/
+DECLARE_TEST(bug8860)
+{
+  SQLCHAR buff[512];
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug8860, `t_bug8860_a'b`");
+  ok_sql(hstmt, "CREATE TABLE t_bug8860 (a INT)");
+  ok_sql(hstmt, "CREATE TABLE `t_bug8860_a'b` (b INT)");
+
+  /*
+   Specifying nothing gets us columns from all of the tables in the
+   current database.
+  */
+  ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0));
+
+  /* We should have at least two rows. There may be more. */
+  is(myrowcount(hstmt) > 2);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* Specifying "" as the table name gets us nothing. */
+  ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0, (SQLCHAR *)"", SQL_NTS,
+                            NULL, 0));
+
+  is_num(myrowcount(hstmt), 0);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* Get the info from just one table.  */
+  ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0, "t_bug8860", SQL_NTS,
+                            NULL, 0));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_str(my_fetch_str(hstmt, buff, 3), "t_bug8860", 9);
+  is_str(my_fetch_str(hstmt, buff, 4), "a", 1);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* Get the info from just one table with a funny name.  */
+  ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0, "t_bug8860_a'b", SQL_NTS,
+                            NULL, 0));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_str(my_fetch_str(hstmt, buff, 3), "t_bug8860_a'b", 13);
+  is_str(my_fetch_str(hstmt, buff, 4), "b", 1);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "DROP TABLE t_bug8860, `t_bug8860_a'b`");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
   ADD_TEST(my_table_dbs)
-  ADD_TEST(my_colpriv) 
+  ADD_TEST(my_colpriv)
   ADD_TEST(t_sqlprocedures)
   ADD_TEST(t_catalog)
   ADD_TEST(tmysql_specialcols)
@@ -1019,6 +1077,7 @@ BEGIN_TESTS
   ADD_TEST(empty_set)
   ADD_TEST(t_bug23031)
   ADD_TEST(bug15713)
+  ADD_TEST(bug8860)
 END_TESTS
 
 

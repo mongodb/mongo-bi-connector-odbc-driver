@@ -130,16 +130,6 @@ my_bool is_default_db(char *def_db, char *user_db)
     return TRUE;
 }
 
-/*
-  @type    : internal
-  @purpose : returns true if supplied table name associated with database name
-*/
-static my_bool table_has_database_name(const char *db, const char *table_name)
-{
-    if ( valid_input_parameter(db) || strchr(table_name,'.') )
-        return TRUE;
-    return FALSE;
-}
 
 /*
   @type    : internal
@@ -237,6 +227,15 @@ static MYSQL_RES *mysql_table_status(STMT        *stmt,
     to+= mysql_real_escape_string(mysql, to, (char *)catalog, catalog_length);
     to= strmov(to, "` ");
   }
+
+  /*
+    As a pattern-value argument, an empty string needs to be treated
+    literally. (It's not the same as NULL, which is the same as '%'.)
+    But it will never match anything, so bail out now.
+  */
+  if (table && wildcard && !*table)
+    return 0;
+
   if (table && *table)
   {
     to= strmov(to, "LIKE '");
@@ -635,267 +634,314 @@ MYSQL_FIELD SQLCOLUMNS_fields[]=
 const uint SQLCOLUMNS_FIELDS= array_elements(SQLCOLUMNS_values);
 
 
-/*
-  @type    : internal
-  @purpose : returns columns from a perticular table from a 
-             specified database
+/**
+  Get the list of columns in a table matching a wildcard.
+
+  @param[in] stmt             Statement
+  @param[in] szCatalog        Name of catalog (database)
+  @param[in] cbCatalog        Length of catalog
+  @param[in] szTable          Name of table
+  @param[in] cbTable          Length of table
+  @param[in] szColumn         Pattern of column names to match
+  @param[in] cbColumn         Length of column pattern
 */
-
-static MYSQL_RES* mysql_list_dbcolumns(STMT FAR   *stmt, 
-                                       const char *TableQualifier,
-                                       const char *TableName,
-                                       const char *ColumnName)
+static
+MYSQL_RES *mysql_list_dbcolumns(STMT *stmt,
+                                SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
+                                SQLCHAR *szTable, SQLSMALLINT cbTable,
+                                SQLCHAR *szColumn, SQLSMALLINT cbColumn)
 {
-    DBC FAR   *dbc= stmt->dbc;
-    MYSQL FAR *mysql= &dbc->mysql;
-    MYSQL_RES *result;
-    MYSQL_ROW row;
+  DBC *dbc= stmt->dbc;
+  MYSQL *mysql= &dbc->mysql;
+  MYSQL_RES *result;
+  MYSQL_ROW row;
 
-    if ( table_has_database_name(TableQualifier,TableName) )
+  /* If a catalog was specified, we have to do it the hard way. */
+  if (cbCatalog)
+  {
+    char buff[255];
+    char *select, *to;
+    unsigned long *lengths;
+
+    /* Get a list of column names that match our criteria. */
+    to= strmov(buff, "SHOW COLUMNS FROM `");
+    if (cbCatalog)
     {
-        char buff[255], tab_buff[NAME_LEN*2+7];
-        char *select, *to;
-
-        if ( valid_input_parameter(TableQualifier) )
-            strxmov(tab_buff,TableQualifier,".`",TableName,"`",NullS);
-        else
-            strxmov(tab_buff,TableName,NullS);
-
-        strxmov(buff,"SHOW FIELDS FROM ",tab_buff,NullS);
-        my_append_wild(strmov(buff,buff),buff+sizeof(buff)-1,ColumnName);
-
-        MYLOG_QUERY(stmt, buff);
-
-        pthread_mutex_lock(&dbc->lock);
-        if ( mysql_query(mysql,buff) || 
-             !(result= mysql_store_result(mysql)) )
-        {
-            pthread_mutex_lock(&dbc->lock);
-            return 0;
-        }
-        pthread_mutex_unlock(&dbc->lock);
-
-        if ( !(select= (char *) my_malloc(sizeof(char *)*(ulong)result->row_count*
-                                          (NAME_LEN+1)+NAME_LEN *2, MYF(MY_FAE))) )
-        {
-            MYODBCDbgError( "%s", "Memory allocation failed" );
-            return 0;
-        }
-        to= strxmov(select,"SELECT ",NullS);
-        while ( (row= mysql_fetch_row(result)) )
-            to= strxmov(to, to, "`", row[0], "`,",NullS);
-        *(to-1)= '\0';
-
-        if ( valid_input_parameter(TableQualifier) )
-            strxmov(select,select," FROM ",TableQualifier,".`",TableName,"`",NullS);
-        else
-            strxmov(select,select," FROM ",TableName,NullS);  
-        strxmov(select,select," LIMIT 0",NullS);
-        mysql_free_result(result);
-
-        MYLOG_QUERY(stmt, select);
-
-        pthread_mutex_lock(&dbc->lock);
-        if ( mysql_query(mysql,select) )
-        {
-            pthread_mutex_unlock(&dbc->lock);
-            return 0;
-        }
-        result= mysql_store_result(&dbc->mysql);
-        pthread_mutex_unlock(&dbc->lock);
-        return result;
+      to+= mysql_real_escape_string(mysql, to, (char *)szCatalog, cbCatalog);
+      to= strmov(to, "`.`");
     }
+
+    to+= mysql_real_escape_string(mysql, to, (char *)szTable, cbTable);
+    to= strmov(to, "`");
+
+    if (cbColumn)
+    {
+      to= strmov(to, " LIKE '");
+      to+= myodbc_escape_wildcard(mysql, to, sizeof(buff) - (to - buff),
+                                  (char *)szColumn, cbColumn);
+      to= strmov(to, "'");
+    }
+
+    MYLOG_QUERY(stmt, buff);
+
     pthread_mutex_lock(&dbc->lock);
-    result= mysql_list_fields(mysql,TableName,ColumnName);
+    if (mysql_query(mysql,buff) ||
+        !(result= mysql_store_result(mysql)))
+    {
+      pthread_mutex_lock(&dbc->lock);
+      return 0;
+    }
     pthread_mutex_unlock(&dbc->lock);
+
+    /* Build a SELECT ... LIMIT 0 to get the field metadata. */
+    if (!(select= (char *)my_malloc(sizeof(char) * (ulong)result->row_count *
+                                    (NAME_LEN + 1) + NAME_LEN * 2,
+                                    MYF(MY_FAE))))
+    {
+      MYODBCDbgError( "%s", "Memory allocation failed" );
+      return 0;
+    }
+
+    to= strxmov(select, "SELECT `", NullS);
+    while ((row= mysql_fetch_row(result)))
+    {
+      lengths= mysql_fetch_lengths(result);
+      to+= mysql_real_escape_string(mysql, to, row[0], lengths[0]);
+      to= strmov(to, "`,");
+    }
+    *(--to)= '\0';
+
+    to= strmov(to, " FROM `");
+    if (cbCatalog)
+    {
+      to+= mysql_real_escape_string(mysql, to, (char *)szCatalog, cbCatalog);
+      to= strmov(to, "`.`");
+    }
+
+    to+= mysql_real_escape_string(mysql, to, (char *)szTable, cbTable);
+    to= strmov(to, "` LIMIT 0");
+
+    mysql_free_result(result);
+
+    MYLOG_QUERY(stmt, select);
+
+    pthread_mutex_lock(&dbc->lock);
+    if (mysql_query(mysql, select))
+    {
+      my_free(select, MYF(MY_FAE));
+      pthread_mutex_unlock(&dbc->lock);
+      return 0;
+    }
+    result= mysql_store_result(&dbc->mysql);
+    pthread_mutex_unlock(&dbc->lock);
+    my_free(select, MYF(MY_FAE));
+
     return result;
+  }
+
+  pthread_mutex_lock(&dbc->lock);
+  result= mysql_list_fields(mysql, (char *)szTable, (char *)szColumn);
+  pthread_mutex_unlock(&dbc->lock);
+
+  return result;
 }
 
-/*
-  @type    : ODBC 1.0 API
-  @purpose : returns the list of column names in specified tables.
-       The driver returns this information as a result set on the
-       specified StatementHandle
+
+/**
+  Get information about the columns in one or more tables.
+
+  @param[in] hstmt            Handle of statement
+  @param[in] szCatalog        Name of catalog (database)
+  @param[in] cbCatalog        Length of catalog
+  @param[in] szSchema         Name of schema (unused)
+  @param[in] cbSchema         Length of schema name
+  @param[in] szTable          Pattern of table names to match
+  @param[in] cbTable          Length of table pattern
+  @param[in] szColumn         Pattern of column names to match
+  @param[in] cbColumn         Length of column pattern
 */
-
 SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
-                             SQLCHAR FAR *szTableQualifier,
-                             SQLSMALLINT cbTableQualifier,
-                             SQLCHAR FAR *szTableOwner,
-                             SQLSMALLINT cbTableOwner,
-                             SQLCHAR FAR *szTableName, 
-                             SQLSMALLINT cbTableName,
-                             SQLCHAR FAR *szColumnName,
-                             SQLSMALLINT cbColumnName)
+                             SQLCHAR FAR *szCatalog, SQLSMALLINT cbCatalog,
+                             SQLCHAR FAR *szSchema __attribute__((unused)),
+                             SQLSMALLINT cbSchema __attribute__((unused)),
+                             SQLCHAR FAR *szTable, SQLSMALLINT cbTable,
+                             SQLCHAR FAR *szColumn, SQLSMALLINT cbColumn)
 {
-    STMT FAR    *stmt= (STMT FAR*) hstmt;
-    char        buff[80];
-    char        Qualifier_buff[NAME_LEN+1],
-                Table_buff[NAME_LEN+1],
-                Column_buff[NAME_LEN+1],
-                *TableQualifier,
-                *TableName,
-                *ColumnName;
-    char        *db= "";
-    MYSQL_RES   *result;
-    MYSQL_FIELD *curField;
-    char        **row;
-    MEM_ROOT    *alloc;
-    ulong       transfer_length,precision,display_size;
+  STMT *stmt= (STMT *)hstmt;
+  MYSQL_RES *res;
+  MEM_ROOT *alloc;
+  MYSQL_ROW table_row;
+  unsigned long rows= 0, next_row= 0, *lengths;
+  char *db= NULL;
 
-    MYODBCDbgEnter;
+  MYODBCDbgEnter;
 
-    MYODBCDbgInfo( "Qualifier: '%s'", szTableQualifier ? (char*) szTableQualifier : "null" );
-    MYODBCDbgInfo( "Qualifier: (%d)", cbTableQualifier );
-    MYODBCDbgInfo( "Owner: '%s'", szTableOwner ? (char*) szTableOwner : "null" );
-    MYODBCDbgInfo( "Owner: (%d)", cbTableOwner );
-    MYODBCDbgInfo( "Table: '%s'", szTableName ? (char*) szTableName : "null" );
-    MYODBCDbgInfo( "Table: (%d)", cbTableName );
-    MYODBCDbgInfo( "Column: '%s'", szColumnName ? (char*) szColumnName : "null" );
-    MYODBCDbgInfo( "Column: (%d)", cbColumnName );
+  CLEAR_STMT_ERROR(hstmt);
+  my_SQLFreeStmt(hstmt, MYSQL_RESET);
 
-    TableQualifier= myodbc_get_valid_buffer( Qualifier_buff, szTableQualifier, cbTableQualifier );
-    TableName=      myodbc_get_valid_buffer( Table_buff, szTableName, cbTableName );
-    ColumnName=     myodbc_get_valid_buffer( Column_buff, szColumnName, cbColumnName );
+  /* Get the list of tables that match szCatalog and szTable */
+  pthread_mutex_lock(&stmt->dbc->lock);
+  res= mysql_table_status(stmt, szCatalog, cbCatalog, szTable, cbTable, TRUE);
+  pthread_mutex_unlock(&stmt->dbc->lock);
 
-    CLEAR_STMT_ERROR(hstmt);
-    my_SQLFreeStmt(hstmt,MYSQL_RESET);
+  /** @todo handle errors correctly, see bug #26934 */
+  if (!res)
+    goto empty_set;
 
-    if ( !valid_input_parameter(TableName) )
-        goto empty_set;
+  stmt->result= res;
+  alloc= &res->field_alloc;
 
-    escape_input_parameter(&stmt->dbc->mysql, TableQualifier);
-    escape_input_parameter(&stmt->dbc->mysql, TableName);
-    escape_input_parameter(&stmt->dbc->mysql, ColumnName);
+  if (!option_flag(stmt, FLAG_NO_CATALOG))
+    db= (is_default_db(stmt->dbc->mysql.db, (char *)szCatalog) ?
+         stmt->dbc->mysql.db : strdup_root(alloc, (char *)szCatalog));
 
-    stmt->result= mysql_list_dbcolumns(stmt,TableQualifier,TableName,ColumnName);
-    if ( !(result= stmt->result) )
+  if (cbCatalog == SQL_NTS)
+    cbCatalog= szCatalog ? strlen((char *)szCatalog) : 0;
+  if (cbColumn == SQL_NTS)
+    cbColumn= szColumn ? strlen((char *)szColumn) : 0;
+
+  while ((table_row= mysql_fetch_row(res)))
+  {
+    MYSQL_FIELD *field;
+    MYSQL_RES *table_res;
+    int count= 0;
+
+    /* Get list of columns matching szColumn for each table. */
+    lengths= mysql_fetch_lengths(res);
+    table_res= mysql_list_dbcolumns(stmt, szCatalog, cbCatalog,
+                                    (SQLCHAR *)table_row[0], lengths[0],
+                                    szColumn, cbColumn);
+
+    /** @todo handle errors correctly, see bug #26934 */
+    if (!table_res)
+      goto error;
+
+    rows+= mysql_num_fields(table_res);
+
+    stmt->result_array= (char **)my_realloc((gptr)stmt->result_array,
+                                            sizeof(char *) *
+                                            SQLCOLUMNS_FIELDS * rows,
+                                            MYF(MY_FAE|MY_ALLOW_ZERO_PTR));
+
+    while ((field= mysql_fetch_field(table_res)))
     {
-        MYODBCDbgError( "%d", mysql_errno(&stmt->dbc->mysql) );
-        MYODBCDbgError( "%s", mysql_error(&stmt->dbc->mysql) );
-        goto empty_set;
+      ulong transfer_length, precision, display_size;
+      char buff[255]; /* @todo justify the size of this buffer */
+      int type;
+      MYSQL_ROW row= stmt->result_array + (SQLCOLUMNS_FIELDS * next_row++);
+
+      row[0]= db;                     /* TABLE_CAT */
+      row[1]= NULL;                   /* TABLE_SCHEM */
+      row[2]= strdup_root(alloc, field->table); /* TABLE_NAME */
+      row[3]= strdup_root(alloc, field->name);  /* COLUMN_NAME */
+
+      field->max_length= field->length;
+      type= unireg_to_sql_datatype(stmt, field, buff, &transfer_length,
+                                   &precision, &display_size);
+
+      /* DATA_TYPE and SQL_DATA_TYPE */
+      sprintf(buff, "%d", type);
+      row[4]= row[13]= strdup_root(alloc, buff);
+
+      row[5]= strdup_root(alloc, buff); /* TYPE_NAME */
+
+      /* COLUMN_SIZE */
+      sprintf(buff, "%ld", precision);
+      row[6]= strdup_root(alloc, buff);
+
+      /* BUFFER_LENGTH */
+      sprintf(buff, "%ld", transfer_length);
+      row[7]= strdup_root(alloc, buff);
+
+      if (IS_NUM(field->type))
+      {
+        sprintf(buff, "%d", field->decimals);
+        row[8]= strdup_root(alloc,buff);  /* DECIMAL_DIGITS */
+        row[9]= "10";                     /* NUM_PREC_RADIX */
+        row[15]= NULL;                    /* CHAR_OCTET_LENGTH */
+      }
+      else
+      {
+        row[8]= row[9]= NullS;             /* DECIMAL_DIGITS, NUM_PREC_RADIX */
+        row[15]= strdup_root(alloc, buff); /* CHAR_OCTET_LENGTH */
+      }
+
+      if ((field->flags & NOT_NULL_FLAG) == NOT_NULL_FLAG)
+      {
+        sprintf(buff, "%d", SQL_NO_NULLS);
+        row[10]= strdup_root(alloc, buff); /* NULLABLE */
+        row[17]= strdup_root(alloc, "NO"); /* IS_NULLABLE */
+      }
+      else
+      {
+        sprintf(buff, "%d", SQL_NULLABLE);
+        row[10]= strdup_root(alloc, buff); /* NULLABLE */
+        row[17]= strdup_root(alloc, "YES");/* IS_NULLABLE */
+      }
+
+      row[11]= ""; /* REMARKS */
+
+      /*
+         The default value of the column. The value in this column should be
+         interpreted as a string if it is enclosed in quotation marks.
+
+         if NULL was specified as the default value, then this column is the
+         word NULL, not enclosed in quotation marks. If the default value
+         cannot be represented without truncation, then this column contains
+         TRUNCATED, with no enclosing single quotation marks. If no default
+         value was specified, then this column is NULL.
+
+         The value of COLUMN_DEF can be used in generating a new column
+         definition, except when it contains the value TRUNCATED
+      */
+      if (!field->def)
+        row[12]= NullS; /* COLUMN_DEF */
+      else
+      {
+        if (field->type == MYSQL_TYPE_TIMESTAMP &&
+            !strcmp(field->def,"0000-00-00 00:00:00"))
+          row[12]= NullS; /* COLUMN_DEF */
+        else
+        {
+          char *def= alloc_root(alloc, strlen(field->def) + 3);
+          if (IS_NUM(field->type))
+            sprintf(def, "%s", field->def);
+          else
+            sprintf(def, "'%s'", field->def);
+          row[12]= def; /* COLUMN_DEF */
+        }
+      }
+
+      /** @todo this is not correct. */
+      row[14]= NULL;    /* SQL_DATETIME_SUB */
+
+      sprintf(buff, "%d", ++count);
+      row[16]= strdup_root(alloc, buff); /* ORDINAL_POSITION */
     }
-    stmt->result_array= (char**) my_malloc(sizeof(char*)*SQLCOLUMNS_FIELDS*
-                                           result->field_count,
-                                           MYF(MY_FAE | MY_ZEROFILL));
-    alloc= &result->field_alloc;
 
-    if ( !option_flag(stmt, FLAG_NO_CATALOG) )
-        db= is_default_db(stmt->dbc->mysql.db,TableQualifier) ?
-            stmt->dbc->mysql.db : 
-            strdup_root(alloc,TableQualifier);
+    mysql_free_result(table_res);
+  }
 
-    for ( row= stmt->result_array;
-        (curField= mysql_fetch_field(result)) ; )
-    {
-        int type;
+  stmt->result->row_count= rows;
+  mysql_link_fields(stmt, SQLCOLUMNS_fields, SQLCOLUMNS_FIELDS);
+  MYODBCDbgReturnReturn(SQL_SUCCESS);
 
-        /* TABLE_CAT */
-        row[0]= db;
+error:
+  if (res)
+    mysql_free_result(res);
 
-        /* TABLE_SCHEM */
-        row[1]= "";         /* No owner */
-
-        /* TABLE_NAME */
-        row[2]= curField->table;
-
-        /* COLUMN_NAME */
-        row[3]= curField->name;
-
-        /* TYPE_NAME */
-        curField->max_length= curField->length;
-        type= unireg_to_sql_datatype(stmt,curField,buff,&transfer_length,&precision,&display_size);
-        row[5]= strdup_root(alloc,buff);
-
-        sprintf(buff,"%d",type);
-        row[13]= row[4]= strdup_root(alloc,buff);
-
-        /* COLUMN_SIZE */
-        sprintf(buff,"%ld",precision);
-        row[6]= strdup_root(alloc,buff);
-
-        /* BUFFER_LENGTH */
-        sprintf(buff,"%ld",transfer_length);
-        row[7]= strdup_root(alloc,buff);
-
-        if ( IS_NUM(curField->type) )
-        {
-            sprintf(buff,"%d",curField->decimals);
-            row[8]= strdup_root(alloc,buff);  /* Scale */
-            row[9]= "10";   
-        }
-        else
-        {
-            row[8]= row[9]= NullS;
-            row[15]= strdup_root(alloc,buff);
-        }
-
-        if ( (curField->flags & NOT_NULL_FLAG) == NOT_NULL_FLAG )
-        {
-            sprintf(buff,"%d",SQL_NO_NULLS);
-            row[10]= strdup_root(alloc,buff);
-            row[17]= strdup_root(alloc,"NO");
-        }
-        else
-        {
-            sprintf(buff,"%d",SQL_NULLABLE);
-            row[10]= strdup_root(alloc,buff);
-            row[17]= strdup_root(alloc,"YES");
-        }
-        row[11]= ""; 
-
-        /* 
-           TODO: When 4.1 supports correct DEFAULT valued fix this
-           Default value: 
-    
-           The default value of the column. The value in this column should be 
-           interpreted as a string if it is enclosed in quotation marks. 
-    
-           if NULL was specified as the default value, then this column is the 
-           word NULL, not enclosed in quotation marks. If the default value 
-           cannot be represented without truncation, then this column contains 
-           TRUNCATED, with no enclosing single quotation marks. If no default 
-           value was specified, then this column is NULL.
-           
-           The value of COLUMN_DEF can be used in generating a new column 
-           definition, except when it contains the value TRUNCATED
-    
-        */
-        if ( !curField->def )
-            row[12]= NullS;
-        else
-        {
-            if ( curField->type == MYSQL_TYPE_TIMESTAMP &&
-                 !strcmp(curField->def,"0000-00-00 00:00:00") )
-                row[12]= NullS;
-            else
-            {
-                char *def= alloc_root(alloc, strlen(curField->def)+3);       
-                if ( IS_NUM(curField->type) )
-                    sprintf(def,"%s",curField->def);
-                else
-                    sprintf(def,"'%s'",curField->def);
-                row[12]= def;      
-            }
-        }
-        row+= SQLCOLUMNS_FIELDS;
-    }
-    result->row_count= result->field_count;
-    mysql_link_fields(stmt,SQLCOLUMNS_fields,SQLCOLUMNS_FIELDS);
-    MYODBCDbgInfo( "total columns: %ld", (long)result->row_count );
-    MYODBCDbgReturnReturn( SQL_SUCCESS );
-
-    empty_set:
-    MYODBCDbgInfo( "%s", "Can't match anything; Returning empty set" );
-    stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES),MYF(MY_ZEROFILL));
-    stmt->fake_result= 1;
-    stmt->result->row_count= 0;
-    stmt->result_array= (MYSQL_ROW) my_memdup((gptr) SQLCOLUMNS_values,
-                                              sizeof(SQLCOLUMNS_values), 
-                                              MYF(0));
-    mysql_link_fields(stmt,SQLCOLUMNS_fields, SQLCOLUMNS_FIELDS);
-    MYODBCDbgReturnReturn( SQL_SUCCESS );
+empty_set:
+  MYODBCDbgInfo("%s", "Can't match anything; Returning empty set");
+  stmt->result= (MYSQL_RES *)my_malloc(sizeof(MYSQL_RES), MYF(MY_ZEROFILL));
+  stmt->fake_result= 1;
+  stmt->result->row_count= 0;
+  stmt->result_array= (MYSQL_ROW)my_memdup((gptr) SQLCOLUMNS_values,
+                                           sizeof(SQLCOLUMNS_values),
+                                           MYF(0));
+  mysql_link_fields(stmt, SQLCOLUMNS_fields, SQLCOLUMNS_FIELDS);
+  MYODBCDbgReturnReturn(SQL_SUCCESS);
 }
+
 
 /*
 ****************************************************************************
@@ -1178,7 +1224,8 @@ const uint SQLTABLES_PRIV_FIELDS= array_elements(SQLTABLES_priv_values);
 SQLRETURN SQL_API SQLTablePrivileges(SQLHSTMT hstmt,
                                      SQLCHAR FAR *szTableQualifier,
                                      SQLSMALLINT cbTableQualifier,
-                                     SQLCHAR FAR *szTableOwner,
+                                     SQLCHAR FAR *szTableOwner
+                                       __attribute__((unused)),
                                      SQLSMALLINT cbTableOwner
                                        __attribute__((unused)),
                                      SQLCHAR FAR *szTableName,
@@ -1194,8 +1241,6 @@ SQLRETURN SQL_API SQLTablePrivileges(SQLHSTMT hstmt,
     MYODBCDbgEnter;
 
     MYODBCDbgInfo( "Qualifier: '%s'", szTableQualifier ? (char*) szTableQualifier : "null" );
-    MYODBCDbgInfo( "Owner: '%s'", szTableOwner ? (char*) szTableOwner : "null" );
-    MYODBCDbgInfo( "Table: '%s'", szTableName ? (char*) szTableName : "null" );
 
     TableQualifier= myodbc_get_valid_buffer( Qualifier_buff, szTableQualifier, cbTableQualifier );
     TableName= myodbc_get_valid_buffer( Name_buff, szTableName, cbTableName );
@@ -1511,8 +1556,6 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
     MYSQL_RES   *result;
     MYSQL_FIELD *field;
     MEM_ROOT    *alloc;
-    char        Qualifier_buff[NAME_LEN+1],Table_buff[NAME_LEN+1],
-    *TableQualifier,*TableName;
     ulong       transfer_length,precision,display_size;
     uint        field_count;
     my_bool     primary_key;
@@ -1526,18 +1569,18 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
     MYODBCDbgInfo( "Scope: '%d'", fScope );
     MYODBCDbgInfo( "Nullable: %d", fNullable );
 
-    TableQualifier=myodbc_get_valid_buffer( Qualifier_buff, szTableQualifier, cbTableQualifier );
-    TableName=   myodbc_get_valid_buffer( Table_buff, szTableName, cbTableName );
-
-    escape_input_parameter(&stmt->dbc->mysql, TableQualifier);
-    escape_input_parameter(&stmt->dbc->mysql, TableName);
-
     CLEAR_STMT_ERROR(hstmt);
+
+    if (cbTableQualifier == SQL_NTS)
+      cbTableQualifier= szTableQualifier ? strlen((char *)szTableQualifier) : 0;
+    if (cbTableName == SQL_NTS)
+      cbTableName= szTableName ? strlen((char *)szTableName) : 0;
 
     /* Reset the statement in order to avoid memory leaks when working with ADODB */
     my_SQLFreeStmt(hstmt, MYSQL_RESET);
 
-    stmt->result= mysql_list_dbcolumns(stmt,TableQualifier,TableName,0);
+    stmt->result= mysql_list_dbcolumns(stmt, szTableQualifier, cbTableQualifier,
+                                       szTableName, cbTableName, NULL, 0);
     if ( !(result= stmt->result) )
     {
         MYODBCDbgError( "%d", mysql_errno(&stmt->dbc->mysql) );

@@ -328,6 +328,8 @@ DECLARE_TEST(my_columnspace)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS TestColNames");
+
   return OK;
 }
 

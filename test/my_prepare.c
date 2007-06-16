@@ -568,7 +568,8 @@ DECLARE_TEST(t_prep_catalog)
 
     rc = SQLGetData(hstmt,3,SQL_C_CHAR,table,15,&length);
     mystmt(hstmt,rc);
-    myassert(strcmp(table,"t_prep_catalog") == 0 && length == 14);
+    is_num(length, 14);
+    is_str(table, "t_prep_catalog", 14);
 
     rc = SQLGetData(hstmt,4,SQL_C_CHAR,table,0,&length);
     mystmt(hstmt,rc);

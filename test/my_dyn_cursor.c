@@ -151,6 +151,8 @@ DECLARE_TEST(my_dynamic_pos_cursor)
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_dynamic_cursor");
+
   return OK;
 }
 
@@ -309,6 +311,8 @@ DECLARE_TEST(my_dynamic_pos_cursor1)
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_dynamic_cursor");
+
   return OK;
 }
 
@@ -414,6 +418,8 @@ DECLARE_TEST(my_position)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_position");
 
   return OK;
 }
@@ -583,6 +589,8 @@ DECLARE_TEST(my_zero_irow_update)
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)1 , 0);
     mystmt(hstmt, rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_zero_irow");
+
   return OK;
 }
 
@@ -670,8 +678,11 @@ DECLARE_TEST(my_zero_irow_delete)
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)1 , 0);
     mystmt(hstmt, rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_zero_irow");
+
   return OK;
 }
+
 
 /* DYNAMIC CURSOR TESTING */
 DECLARE_TEST(my_dynamic_cursor)
@@ -768,6 +779,8 @@ DECLARE_TEST(my_dynamic_cursor)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_dynamic_cursor");
 
   return OK;
 }
