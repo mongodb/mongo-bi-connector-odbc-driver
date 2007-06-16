@@ -993,6 +993,17 @@ DECLARE_TEST(bug15713)
 
 
 /**
+ Bug #28316: Fatal crash with Crystal Reports and MySQL Server
+*/
+DECLARE_TEST(t_bug28316)
+{
+  ok_stmt(hstmt, SQLProcedures(hstmt, NULL, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS));
+
+  return OK;
+}
+
+
+/**
  Bug #8860: Generic SQLColumns not supported?
 */
 DECLARE_TEST(bug8860)
@@ -1051,7 +1062,6 @@ DECLARE_TEST(bug8860)
   return OK;
 }
 
-
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -1069,6 +1079,7 @@ BEGIN_TESTS
   ADD_TEST(empty_set)
   ADD_TEST(t_bug23031)
   ADD_TEST(bug15713)
+  ADD_TEST(t_bug28316)
   ADD_TEST(bug8860)
 END_TESTS
 

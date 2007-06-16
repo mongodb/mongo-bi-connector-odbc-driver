@@ -2198,7 +2198,7 @@ SQLRETURN SQL_API SQLProcedures(SQLHSTMT     hstmt,
     look up procedures from the current database. (This is not standard
     behavior, but seems useful.)
   */
-  if (szCatalogName)
+  if (szCatalogName && szProcName)
     rc= my_SQLPrepare(hstmt, (SQLCHAR *)
                       "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT,"
                       "NULL AS PROCEDURE_SCHEM,"
@@ -2212,7 +2212,7 @@ SQLRETURN SQL_API SQLProcedures(SQLHSTMT     hstmt,
                       "  FROM INFORMATION_SCHEMA.ROUTINES"
                       " WHERE ROUTINE_NAME LIKE ? AND ROUTINE_SCHEMA = ?",
                       SQL_NTS);
-  else
+  else if (szProcName)
     rc= my_SQLPrepare(hstmt, (SQLCHAR *)
                       "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT,"
                       "NULL AS PROCEDURE_SCHEM,"
@@ -2227,15 +2227,32 @@ SQLRETURN SQL_API SQLProcedures(SQLHSTMT     hstmt,
                       " WHERE ROUTINE_NAME LIKE ?"
                       " AND ROUTINE_SCHEMA = DATABASE()",
                       SQL_NTS);
+  else
+    rc= my_SQLPrepare(hstmt, (SQLCHAR *)
+                      "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT,"
+                      "NULL AS PROCEDURE_SCHEM,"
+                      "ROUTINE_NAME AS PROCEDURE_NAME,"
+                      "NULL AS NUM_INPUT_PARAMS,"
+                      "NULL AS NUM_OUTPUT_PARAMS,"
+                      "NULL AS NUM_RESULT_SETS,"
+                      "ROUTINE_COMMENT AS REMARKS,"
+                      "IF(ROUTINE_TYPE = 'FUNCTION', 2,"
+                        "IF(ROUTINE_TYPE= 'PROCEDURE', 1, 0)) AS PROCEDURE_TYPE"
+                      " FROM INFORMATION_SCHEMA.ROUTINES"
+                      " WHERE ROUTINE_SCHEMA = DATABASE()",
+                      SQL_NTS);
   if (!SQL_SUCCEEDED(rc))
     return rc;
 
-  if (cbProcName == SQL_NTS)
-    cbProcName= strlen((const char *)szProcName);
-  rc= my_SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_C_CHAR,
-                          0, 0, szProcName, cbProcName, NULL);
-  if (!SQL_SUCCEEDED(rc))
-    return rc;
+  if (szProcName)
+  {
+    if (cbProcName == SQL_NTS)
+      cbProcName= strlen((const char *)szProcName);
+    rc= my_SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_C_CHAR,
+                            0, 0, szProcName, cbProcName, NULL);
+    if (!SQL_SUCCEEDED(rc))
+      return rc;
+  }
 
   if (szCatalogName)
   {
