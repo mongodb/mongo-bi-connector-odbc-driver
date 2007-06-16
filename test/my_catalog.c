@@ -877,14 +877,6 @@ DECLARE_TEST(empty_set)
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-  /* SQLStatistics(): no table specified. */
-  ok_stmt(hstmt, SQLStatistics(hstmt, NULL, SQL_NTS, NULL, SQL_NTS,
-                               NULL, SQL_NTS, 0, 0));
-  ok_stmt(hstmt, SQLNumResultCols(hstmt, &columns));
-  is_num(columns, 13);
-  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-
   return OK;
 }
 
