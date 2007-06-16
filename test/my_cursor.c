@@ -2401,8 +2401,6 @@ DECLARE_TEST(tmysql_pcbvalue)
 */
 DECLARE_TEST(t_bug28255)
 {
-  SQLLEN nlen;
-
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug28255");
   ok_sql(hstmt, "CREATE TABLE t_bug28255 (a INT, b INT, PRIMARY KEY (a,b))");
   ok_sql(hstmt, "INSERT INTO t_bug28255 VALUES (1,3),(1,4),(1,5)");
@@ -2448,7 +2446,7 @@ DECLARE_TEST(t_bug28255)
 /**
  Bug #10563: Update using multicolumn primary key with duplicate indexes fails
 */
-DECLARE_TEST(t_bug10563)
+DECLARE_TEST(bug10563)
 {
   SQLLEN nlen;
 
@@ -2460,10 +2458,10 @@ DECLARE_TEST(t_bug10563)
 
   ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"bug", SQL_NTS));
 
-  ok_sql(hstmt, "SELECT a FROM t_bug10563 WHERE b > 3");
+  ok_sql(hstmt, "SELECT b FROM t_bug10563 WHERE b > 3");
 
   ok_stmt(hstmt, SQLFetch(hstmt));
-  is_num(my_fetch_int(hstmt, 1), 1);
+  is_num(my_fetch_int(hstmt, 1), 4);
 
   ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
   ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_DELETE, SQL_LOCK_NO_CHANGE));
@@ -2525,7 +2523,7 @@ BEGIN_TESTS
   ADD_TEST(tmy_cursor3)
   ADD_TEST(tmysql_pcbvalue)
   ADD_TEST(t_bug28255)
-  ADD_TODO(t_bug10563)
+  ADD_TEST(bug10563)
 END_TESTS
 
 

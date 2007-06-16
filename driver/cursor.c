@@ -185,61 +185,113 @@ char *check_if_positioned_cursor_exists(STMT *pStmt, STMT **pStmtCursor)
 }
 
 
-/*
-  @type    : myodbc3 internal
-  @purpose : checks whether the Primary Key column exists in the table
-  if it exists, returns the PK column name
+/**
+  Check if a field exists in a result set.
+
+  @param[in]  name    Name of the field
+  @param[in]  result  Result set to check
 */
-
-static SQLRETURN check_if_pk_exists(STMT FAR *stmt)
+static my_bool have_field_in_result(const char *name, MYSQL_RES *result)
 {
-    char buff[NAME_LEN+18];
-    MYSQL_ROW row;
-    MYSQL_RES *presult;
+  MYSQL_FIELD  *field;
+  unsigned int ncol;
 
-    if ( stmt->cursor.pk_validated )
-        return(stmt->cursor.pk_count);
-
-    /*
-      Check for the existence of keys in the table
-      We quote the table name to allow weird table names.
-      TODO: Write a table-name-quote function and use this instead.
-    */
+  for (ncol= 0; ncol < result->field_count; ncol++)
+  {
+    field= result->fields + ncol;
+    if (myodbc_strcasecmp(name,
 #if MYSQL_VERSION_ID >= 40100
-    strxmov(buff,"show keys from `",stmt->result->fields->org_table,"`",NullS);
+                          field->org_name
 #else
-    strxmov(buff,"show keys from `",stmt->result->fields->table,"`",NullS);
+                          field->name
 #endif
-    MYLOG_QUERY(stmt, buff);
-    pthread_mutex_lock(&stmt->dbc->lock);
-    if ( mysql_query(&stmt->dbc->mysql,buff) ||
-         !(presult= mysql_store_result(&stmt->dbc->mysql)) )
-    {
-        set_error(stmt,MYERR_S1000,mysql_error(&stmt->dbc->mysql),
-                  mysql_errno(&stmt->dbc->mysql));
-        pthread_mutex_unlock(&stmt->dbc->lock);
-        return(0);
-    }
+                          ) == 0)
+      return TRUE;
+  }
 
-    /*
-      TODO: Fix this loop to only return columns that are part of the
-      primary key.
-    */
-    while ( (row= mysql_fetch_row(presult)) &&
-            (stmt->cursor.pk_count < MY_MAX_PK_PARTS) )
-    {
-        /*
-          Collect all keys, it may be
-          - PRIMARY or
-          - UNIQUE NOT NULL
-          TODO: Fix this seperately and use the priority..
-        */
-        strmov(stmt->cursor.pkcol[stmt->cursor.pk_count++].name,row[4]);
-    }
-    mysql_free_result(presult);
+  return FALSE;
+}
+
+
+/**
+  Check if a primary or unique key exists in the table referred to by
+  the statement for which all of the component fields are in the result
+  set. If such a key exists, the field names are stored in the cursor.
+
+  @param[in]  stmt  Statement
+
+  @return  Whether a usable unique keys exists
+*/
+static my_bool check_if_usable_unique_key_exists(STMT *stmt)
+{
+  char buff[NAME_LEN * 2 + 18], /* Possibly escaped name, plus text for query */
+       *pos, *table;
+  MYSQL_RES *res;
+  MYSQL_ROW row;
+  int seq_in_index= 0;
+
+  if (stmt->cursor.pk_validated)
+    return stmt->cursor.pk_count;
+
+#if MYSQL_VERSION_ID >= 40100
+  if (stmt->result->fields->org_table)
+    table= stmt->result->fields->org_table;
+  else
+#endif
+    table= stmt->result->fields->table;
+
+  /* Use SHOW KEYS FROM table to check for keys. */
+  pos= strmov(buff, "SHOW KEYS FROM `");
+  pos+= mysql_real_escape_string(&stmt->dbc->mysql, pos, table, strlen(table));
+  pos= strmov(pos, "`");
+
+  MYLOG_QUERY(stmt, buff);
+
+  pthread_mutex_lock(&stmt->dbc->lock);
+  if (mysql_query(&stmt->dbc->mysql, buff) ||
+      !(res= mysql_store_result(&stmt->dbc->mysql)))
+  {
+    set_error(stmt, MYERR_S1000, mysql_error(&stmt->dbc->mysql),
+              mysql_errno(&stmt->dbc->mysql));
     pthread_mutex_unlock(&stmt->dbc->lock);
-    stmt->cursor.pk_validated= 1;
-    return(stmt->cursor.pk_count);
+    return FALSE;
+  }
+
+  while ((row= mysql_fetch_row(res)) &&
+         stmt->cursor.pk_count < MY_MAX_PK_PARTS)
+  {
+    int seq= atoi(row[3]);
+
+    /* If this is a new key, we're done! */
+    if (seq <= seq_in_index)
+      break;
+
+    /* Unless it is non_unique, it does us no good. */
+    if (row[1][0] == '1')
+      continue;
+
+    /* If this isn't the next part, this key is no good. */
+    if (seq != seq_in_index + 1)
+      continue;
+
+    /* Check that we have the key field in our result set. */
+    if (have_field_in_result(row[4], stmt->result))
+    {
+      /* We have a unique key field -- copy it, and increment our count. */
+      strmov(stmt->cursor.pkcol[stmt->cursor.pk_count++].name, row[4]);
+      seq_in_index= seq;
+    }
+    else
+      /* Forget about any key we had in progress, we didn't have it all. */
+      stmt->cursor.pk_count= seq_in_index= 0;
+  }
+  mysql_free_result(res);
+  pthread_mutex_unlock(&stmt->dbc->lock);
+
+  /* Remember that we've figured this out already. */
+  stmt->cursor.pk_validated= 1;
+
+  return stmt->cursor.pk_count > 0;
 }
 
 
@@ -681,8 +733,11 @@ static SQLRETURN build_where_clause( STMT FAR *       pStmt,
     /* simply append WHERE to our statement */
     dynstr_append_mem( dynQuery, " WHERE ", 7 );
 
-    /* IF pk exists THEN use pk cols for where ELSE use all cols */
-    if (check_if_pk_exists(pStmt))
+    /*
+      If a suitable key exists, then we'll use those columns, otherwise
+      we'll try to use all of the columns.
+    */
+    if (check_if_usable_unique_key_exists(pStmt))
     {
       if (insert_pk_fields(pStmt, dynQuery) != SQL_SUCCESS)
         return SQL_ERROR;
