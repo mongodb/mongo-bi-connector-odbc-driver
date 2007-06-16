@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * SQLProcedures() did not handle NULL parameters, which could lead to 
+    crashes (Bug #28316) 
   * SQLColumns() did not handle many of its parameters correctly, which
     could lead to incorrect results. The table name argument was not handled
     as a pattern value, and most arguments were not escaped correctly when
