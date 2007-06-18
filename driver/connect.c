@@ -146,7 +146,7 @@ ulong get_client_flag(MYSQL *mysql, ulong option_flag,uint connect_timeout,
     if (option_flag & FLAG_IGNORE_SPACE)
         client_flag |=  CLIENT_IGNORE_SPACE;
 
-    client_flag |= CLIENT_MULTI_RESULTS;
+    client_flag |= CLIENT_MULTI_STATEMENTS;
 #ifdef __WIN__
     if (option_flag & FLAG_NAMED_PIPE)
         mysql_options(mysql,MYSQL_OPT_NAMED_PIPE,NullS);
