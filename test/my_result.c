@@ -1784,6 +1784,38 @@ DECLARE_TEST(bug6157)
 }
 
 
+/**
+Bug #16817: ODBC doesn't return multiple resultsets
+*/
+DECLARE_TEST(t_bug16817)
+{
+  SQLCHAR name[30];
+  SQLSMALLINT len;
+  SQLSMALLINT ncol;
+
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS p_bug16817");
+  ok_sql(hstmt, "CREATE PROCEDURE p_bug16817 () "
+                "BEGIN "
+                "  SELECT 'Marten' FROM DUAL; "
+                "  SELECT 'Zack' FROM DUAL; "
+               "END");
+
+  ok_sql(hstmt, "CALL p_bug16817()");
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  my_assert(!strcmp((const char *)"Marten", my_fetch_str(hstmt,name,1)));
+  ok_stmt(hstmt, SQLMoreResults(hstmt));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  my_assert(!strcmp((const char *)"Zack", my_fetch_str(hstmt,name,1)));
+  ok_stmt(hstmt, SQLMoreResults(hstmt));
+
+  ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
+  my_assert(ncol==0);
+  ok_sql(hstmt, "DROP PROCEDURE p_bug16817");
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -1803,6 +1835,7 @@ BEGIN_TESTS
   ADD_TEST(tmysql_rowstatus)
   ADD_TEST(t_true_length)
   ADD_TEST(t_bug27544)
+  ADD_TEST(t_bug16817)
   ADD_TEST(bug6157)
 END_TESTS
 

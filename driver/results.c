@@ -1160,6 +1160,12 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
 
     CLEAR_STMT_ERROR( pStmt );
 
+    if (!mysql_more_results(&pStmt->dbc->mysql))
+    {
+      nReturn= SQL_NO_DATA;
+      goto exitSQLMoreResults;
+    }
+
     /* SQLExecute or SQLExecDirect need to be called first */
     if ( pStmt->state != ST_EXECUTED )
     {
@@ -1198,7 +1204,7 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
     }
 
     /* cleanup existing resultset */
-    nReturn = my_SQLFreeStmt( (SQLHSTMT)pStmt, SQL_CLOSE );
+    nReturn = my_SQLFreeStmtExtended((SQLHSTMT)pStmt,SQL_CLOSE,0);
     if ( !SQL_SUCCEEDED( nReturn ) )
         goto exitSQLMoreResults;
 
@@ -1223,7 +1229,6 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
         nReturn = set_stmt_error( pStmt, "HY000", mysql_error( &pStmt->dbc->mysql ), mysql_errno( &pStmt->dbc->mysql ) );
         goto exitSQLMoreResults;
     }
-
     MYODBCDbgInfo( "result set columns: %d", pStmt->result->field_count );
     MYODBCDbgInfo( "result set rows: %lld", pStmt->result->row_count );
     fix_result_types( pStmt );

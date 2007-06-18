@@ -391,6 +391,20 @@ void odbc_reset_stmt_options(STMT_OPTIONS *options)
 
 SQLRETURN SQL_API my_SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption)
 {
+  MYODBCDbgReturnReturn(my_SQLFreeStmtExtended(hstmt,fOption,1));
+}
+
+/*
+  @type    : myodbc3 internal
+  @purpose : stops processing associated with a specific statement,
+       closes any open cursors associated with the statement,
+       discards pending results, or, optionally, frees all
+       resources associated with the statement handle
+*/
+
+SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
+                                         uint clearAllResults)
+{
     STMT FAR *stmt= (STMT FAR*) hstmt;
     uint i;
 
@@ -427,12 +441,15 @@ SQLRETURN SQL_API my_SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption)
     {
       mysql_free_result(stmt->result);
       /* check if there are more resultsets */
-      while (mysql_more_results(&stmt->dbc->mysql))
+      if (clearAllResults)
       {
-        if (mysql_next_result(&stmt->dbc->mysql) == -1)
+        while (mysql_more_results(&stmt->dbc->mysql))
         {
-          stmt->result= mysql_store_result(&stmt->dbc->mysql);
-          mysql_free_result(stmt->result);
+          if (!mysql_next_result(&stmt->dbc->mysql))
+          {
+            stmt->result= mysql_store_result(&stmt->dbc->mysql);
+            mysql_free_result(stmt->result);
+          }
         }
       }
     }

@@ -71,6 +71,8 @@ SQLRETURN my_SQLExecute(STMT FAR* stmt);
 SQLRETURN my_SQLPrepare(SQLHSTMT hstmt,SQLCHAR FAR *szSqlStr,
 			SQLINTEGER cbSqlStr);
 SQLRETURN SQL_API my_SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption);
+SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,
+                    SQLUSMALLINT fOption, uint clearAllResults);
 SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt);
 SQLRETURN do_query(STMT FAR *stmt,char *query);
 char *insert_params(STMT FAR *stmt);
