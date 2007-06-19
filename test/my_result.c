@@ -1803,15 +1803,18 @@ DECLARE_TEST(t_bug16817)
   ok_sql(hstmt, "CALL p_bug16817()");
 
   ok_stmt(hstmt, SQLFetch(hstmt));
-  my_assert(!strcmp((const char *)"Marten", my_fetch_str(hstmt,name,1)));
+  is_str(my_fetch_str(hstmt, name, 1), "Marten", 6);
   ok_stmt(hstmt, SQLMoreResults(hstmt));
 
   ok_stmt(hstmt, SQLFetch(hstmt));
-  my_assert(!strcmp((const char *)"Zack", my_fetch_str(hstmt,name,1)));
+  is_str(my_fetch_str(hstmt, name, 1), "Zack", 4);
   ok_stmt(hstmt, SQLMoreResults(hstmt));
 
   ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
-  my_assert(ncol==0);
+  is_num(ncol, 0);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
   ok_sql(hstmt, "DROP PROCEDURE p_bug16817");
 }
 
