@@ -270,10 +270,12 @@ DECLARE_TEST(t_bug3456)
 
 
 BEGIN_TESTS
+#ifndef NO_DRIVERMANAGER
   ADD_TEST(t_odbc2_error)
   ADD_TEST(t_odbc3_error)
   /* Run twice to test the driver's handling of switching  */
   ADD_TEST(t_odbc2_error)
+#endif
   ADD_TEST(t_diagrec)
   ADD_TEST(t_warning)
   ADD_TODO(t_bug3456)

@@ -254,8 +254,10 @@ BEGIN_TESTS
   ADD_TEST(t_max_select)
   ADD_TEST(t_basic)
   ADD_TEST(t_nativesql)
+#ifndef NO_DRIVERMANAGER
   ADD_TEST(t_reconnect)
   ADD_TEST(t_bug19823)
+#endif
 END_TESTS
 
 

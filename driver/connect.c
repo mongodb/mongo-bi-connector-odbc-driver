@@ -193,7 +193,7 @@ void copy_if_not_empty(char *to,uint max_length, char *from,int length)
 
 
 /*
-  @type    : ODBC 1.o API
+  @type    : ODBC 1.0 API
   @purpose : to connect to mysql server
 */
 
@@ -217,6 +217,10 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
 
     MYODBCDbgEnter;
 
+#ifdef NO_DRIVERMANAGER
+    MYODBCDbgReturnReturn(set_dbc_error(dbc, "HY000",
+			"SQLConnect requires DSN and driver manager", 0));
+#else
     if (dbc->mysql.net.vio != 0)
         MYODBCDbgReturnReturn( set_conn_error(hdbc,MYERR_08002,NULL,0) );
 
@@ -324,6 +328,7 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
     dbc->password= my_strdup(passwd,MYF(MY_WME));
     dbc->port= port_nr;
     dbc->flag= flag_nr;
+#endif
 
     MYODBCDbgReturnReturn( set_connect_defaults(dbc) );
 }
@@ -412,6 +417,7 @@ SQLRETURN SQL_API my_SQLDriverConnect( SQLHDBC             hdbc,
         goto exitDriverConnect;
     }
 
+#ifndef NO_DRIVERMANAGER
     /*!
         ODBC RULE
 
@@ -437,6 +443,7 @@ SQLRETURN SQL_API my_SQLDriverConnect( SQLHDBC             hdbc,
             */    
         }
     }
+#endif
 
     /* 
         Make pDataSource good for mysql_real_connect(). Mostly
@@ -507,6 +514,7 @@ SQLRETURN SQL_API my_SQLDriverConnect( SQLHDBC             hdbc,
 
         case SQL_DRIVER_NOPROMPT:
             pDataSource->nPrompt = MYODBCUTIL_DATASOURCE_PROMPT_NOPROMPT;
+#ifndef NO_DRIVERMANAGER
             /*!
                ODBC RULE
 
@@ -518,6 +526,7 @@ SQLRETURN SQL_API my_SQLDriverConnect( SQLHDBC             hdbc,
                 nReturn = SQL_ERROR;
                 goto exitDriverConnect;
             }
+#endif
             break;
         default:
             {
@@ -540,6 +549,7 @@ SQLRETURN SQL_API my_SQLDriverConnect( SQLHDBC             hdbc,
     {
         BOOL (*pFunc)( SQLHDBC, SQLHWND, MYODBCUTIL_DATASOURCE * );
 
+#ifndef NO_DRIVERMANAGER
         /*!
            ODBC RULE
     
@@ -571,6 +581,7 @@ SQLRETURN SQL_API my_SQLDriverConnect( SQLHDBC             hdbc,
         }
 
         if ( !pDriver->pszSETUP )
+#endif
         {
             set_dbc_error( hdbc, "HY000", "Could not determine the file name of setup library.", 0 );
             nReturn = SQL_ERROR;

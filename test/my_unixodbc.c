@@ -155,7 +155,9 @@ DECLARE_TEST(t_driver_connect)
 
 BEGIN_TESTS
   ADD_TEST(t_odbc3_envattr)
+#ifndef NO_DRIVERMANAGER
   ADD_TEST(t_odbc3_handle)
+#endif
   ADD_TEST(t_driver_connect)
 END_TESTS
 

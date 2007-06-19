@@ -841,6 +841,28 @@ AC_SUBST(myodbc_test_linklib)
 
 ###################################################################
 #                                                                 #
+# Link driver against odbcinst library?                           #
+#   If no, this builds the "dmless" driver.                       #
+#                                                                 #
+###################################################################
+
+AC_MSG_CHECKING([if driver should be linked against odbcinst library])
+AC_ARG_ENABLE(odbcinstlink,
+  [AC_HELP_STRING([--enable-odbcinstlink],[Enable linking of driver against odbcinst library [default=yes]])],
+    [ case "${enableval}" in
+        yes) enable_odbcinstlink=yes
+        ;;
+        no)  enable_odbcinstlink=no
+             CFLAGS="$CFLAGS -DNO_DRIVERMANAGER"
+        ;;
+        *)   AC_MSG_ERROR(bad value '${enableval}' for --enable-odbcinstlink);;
+      esac
+    ], [enable_odbcinstlink=yes])
+AC_MSG_RESULT([$enable_odbcinstlink])
+AM_CONDITIONAL(ODBCINSTLINK, [test "x$enable_odbcinstlink" = "xyes"])
+
+###################################################################
+#                                                                 #
 # Find out if compiler defines __func__ or __FUNCTION__ macro     #
 #                                                                 #
 ###################################################################
