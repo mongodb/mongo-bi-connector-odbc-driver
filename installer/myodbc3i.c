@@ -123,20 +123,20 @@ char *szSyntax =
 "  List data source attributes for MyODBC;\n" \
 "    $ myodbc3i -q -s -n\"MySQL ODBC 3.51 Driver\"\n" \
 "  Register a driver;\n" \
-"    $ myodbc3i -a -d -t\"MySQL ODBC 3.51 Driver;DRIVER=/usr/lib/libmyodbc3.so;SETUP=/usr/lib/libmyodbc3S.so\"\n" \
+"    $ myodbc3i -a -d -t\"MySQL ODBC 3.51 Driver;Driver=/usr/lib/libmyodbc3.so;Setup=/usr/lib/libmyodbc3S.so\"\n" \
 "  Create a user data source name;\n" \
-"    $ myodbc3i -a -su -t\"DSN=MyDSN;DRIVER=MySQL ODBC 3.51 Driver;SERVER=localhost;UID=pharvey\"\n";
+"    $ myodbc3i -a -su -t\"DSN=MyDSN;Driver=MySQL ODBC 3.51 Driver;Server=localhost;UID=pharvey\"\n";
 
 /*
     Register Driver for Various Platforms
     
     XP
     
-        $ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=myodbc3.dll;SETUP=myodbc3S.dll"
+        $ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;Driver=myodbc3.dll;Setup=myodbc3S.dll"
         
         OR for old GUI...
         
-        $ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=myodbc3.dll;SETUP=myodbc3.dll"
+        $ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;Driver=myodbc3.dll;Setup=myodbc3.dll"
         
     OSX
 
