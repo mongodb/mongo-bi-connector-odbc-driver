@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * Multiple result sets were not correctly flushed when a statement
+    handle was closed. (Bug #16817)
   * SQLProcedures() did not handle NULL parameters, which could lead to 
     crashes (Bug #28316) 
   * SQLColumns() did not handle many of its parameters correctly, which
