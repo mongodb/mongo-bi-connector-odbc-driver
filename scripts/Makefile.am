@@ -38,8 +38,9 @@ CLEANFILES = make_binary_distribution \
 	-e 's!@''VERSION''@!@VERSION@!' \
 	-e 's!@''MACHINE_TYPE''@!@MACHINE_TYPE@!' \
 	-e 's!@''SYSTEM_TYPE''@!@SYSTEM_TYPE@!' \
-	-e 's!@''ODBC_DM_PATH''@!@ODBC_DM_PATH@!' \
+	-e 's!@''ODBC_DM_PATH_ARG''@!@ODBC_DM_PATH_ARG@!' \
 	-e 's!@''MYSQL_PATH_ARG''@!@MYSQL_PATH_ARG@!' \
+	-e 's!@''QT_PATH_ARG''@!@QT_PATH_ARG@!' \
 	$< > $@-t
 	chmod +x $@-t
 	mv $@-t $@

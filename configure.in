@@ -531,8 +531,8 @@ then
                        [Define path to system ODBC.INI file])
   fi
 
-  ODBC_DM_PATH="--with-iodbc=$iodbc"
-  AC_SUBST(ODBC_DM_PATH)
+  ODBC_DM_PATH_ARG="--with-iodbc=$iodbc"
+  AC_SUBST(ODBC_DM_PATH_ARG)
 
 else
 # unixODBC
@@ -580,8 +580,8 @@ else
                        [Define path to system ODBC.INI file])
   fi
 
-  ODBC_DM_PATH="--with-unixODBC=$unixODBC"
-  AC_SUBST(ODBC_DM_PATH)
+  ODBC_DM_PATH_ARG="--with-unixODBC=$unixODBC"
+  AC_SUBST(ODBC_DM_PATH_ARG)
 
   ODBC_DM_LIB="-lodbc"
   AC_SUBST(ODBC_DM_LIB)

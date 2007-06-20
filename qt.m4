@@ -65,7 +65,9 @@ AC_DEFUN([FUN_CHECK_QT],
       qt_includes="$withval"/include
       qt_libraries="$withval"/lib
       qt_programs="$withval"/bin
+      QT_PATH_ARG="--with-qt-dir=$qt_dir"
     ])
+  AC_SUBST(QT_PATH_ARG)
   AC_ARG_WITH([qt_includes], AC_HELP_STRING([--with-qt-includes=DIR],
                              [where the Qt includes are installed]),
     [qt_includes="$withval"])

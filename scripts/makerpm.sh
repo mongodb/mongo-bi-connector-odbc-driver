@@ -11,7 +11,7 @@ function configure_driver
     --prefix=${RPM_BUILD_ROOT}%{prefix} \
     --with-mysql-libs=%{MYSQL_LIBS} \
     --with-mysql-includes=%{MYSQL_INCLUDES} \
-    ${ODBC_DM_PATH} \
+    ${ODBC_DM_PATH_ARG} \
     --enable-shared=yes \
     --enable-static=yes \
     --without-debug
@@ -37,7 +37,7 @@ then
   exit 1
 fi
 
-ODBC_DM_PATH="@ODBC_DM_PATH@"
+ODBC_DM_PATH_ARG="@ODBC_DM_PATH_ARG@"
 MYSQL_LIBS="@MYSQL_USED_LIB_PATH@"
 MYSQL_INCLUDES="@MYSQL_USED_INCLUDE_PATH@"
 MyODBC_ROOT=`pwd`
