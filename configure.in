@@ -65,6 +65,10 @@ AC_SUBST(SYSTEM_TYPE)
 AC_SUBST(MACHINE_TYPE)
 # AC_DEFINE_UNQUOTED(MACHINE_TYPE, "$MACHINE_TYPE", [Define MACHINE_TYPE])
 
+# ------------------------------------------------------------------------------
+# FIXME nothing in this section is used....
+# ------------------------------------------------------------------------------
+
 # Save some variables and the command line options for mysqlbug
 SAVE_CFLAGS="$CFLAGS"
 SAVE_LDFLAGS="$LDFLAGS"
@@ -88,8 +92,11 @@ else
   ldflags_is_set=yes
 fi
 
+# ------------------------------------------------------------------------------
+# End of section of unused
+# ------------------------------------------------------------------------------
+
 dnl Checks for programs.
-AC_PROG_AWK
 AC_PROG_CC
 AC_PROG_CPP
 
@@ -99,34 +106,15 @@ then
   ac_cv_prog_gcc="no"
 fi
 
-if test "$ac_cv_prog_gcc" = "yes"
-then
-  AS="$CC -c"
-  AC_SUBST(AS)
-else
-  AC_PATH_PROG(AS, as, as)
-fi
-
+# Only build shared libraries by default
 AM_ENABLE_SHARED
 AM_DISABLE_STATIC
 
-# define _UNIX_
-AC_DEFINE(_UNIX_,1,[Define if we are using unix build environment (always true)])
+# define _UNIX_, always true if running this configure script
+AC_DEFINE(_UNIX_,1,[Define if we are using unix build environment])
 
 AM_PROG_LIBTOOL
 AC_CHECK_LIB(z,compress)
-
-###################################################################
-#
-# IS_DARWIN
-#
-###################################################################
-IS_DARWIN=
-case $SYSTEM_TYPE in
-  *darwin*)
-    AC_SUBST([IS_DARWIN])
-    ;;
-esac
 
 ###################################################################
 #
@@ -206,15 +194,16 @@ AC_ARG_ENABLE( bundles,
         AC_MSG_ERROR(bad value ${enableval} for --enable-bundles) ;;
 esac], [bundles=false])
 
-#
-# bundles always false on non-darwin. Would be better to
-# never even show the option on other platforms but making
-# AM_CONDITIONAL conditional confuses automake.
-#
-if test "x$IS_DARWIN" = "xtrue"; then
-  bundles="false";
-fi
+case $SYSTEM_TYPE in
+  *darwin*)
+    is_darwin=true
+    ;;
+  *)
+    bundles=false;		# always false if not darwin/osx
+    ;;
+esac
 
+AM_CONDITIONAL(IS_DARWIN, test x$is_darwin = xtrue)
 AM_CONDITIONAL(ENABLE_BUNDLES, test x$bundles = xtrue)
 
 ###################################################################
