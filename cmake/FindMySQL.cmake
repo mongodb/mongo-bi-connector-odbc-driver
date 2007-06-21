@@ -37,12 +37,23 @@ find_path(MYSQL_INCLUDE_DIR mysql.h
 
 #----------------- FIND MYSQL_LIB_DIR -------------------
 IF (ODBC_WINDOWS)
+	# Set lib path suffixes
+	# dist = for mysql binary distributions
+	# build = for custom built tree
+	IF (CMAKE_BUILD_TYPE STREQUAL Debug)
+		SET(libsuffixDist debug)
+		SET(libsuffixBuild Debug)
+	ELSE (CMAKE_BUILD_TYPE STREQUAL Debug)
+		SET(libsuffixDist opt)
+		SET(libsuffixBuild Release)
+	ENDIF (CMAKE_BUILD_TYPE STREQUAL Debug)
+
 	find_library(MYSQL_LIB NAMES mysqlclient
 				 PATHS
-				 $ENV{MYSQL_DIR}/lib/opt
-				 $ENV{MYSQL_DIR}/client/release
-				 $ENV{ProgramFiles}/MySQL/*/lib/opt
-				 $ENV{SystemDrive}/MySQL/*/lib/opt)
+				 $ENV{MYSQL_DIR}/lib/${libsuffixDist}
+				 $ENV{MYSQL_DIR}/client/${libsuffixBuild}
+				 $ENV{ProgramFiles}/MySQL/*/lib/${libsuffixDist}
+				 $ENV{SystemDrive}/MySQL/*/lib/${libsuffixDist})
 ELSE (ODBC_WINDOWS)
 	find_library(MYSQL_LIB NAMES mysqlclient_r
 				 PATHS

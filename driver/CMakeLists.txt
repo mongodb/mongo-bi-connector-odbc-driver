@@ -72,10 +72,21 @@ ENDIF(ODBC_UNIX)
 
 IF (ODBC_WINDOWS)
 	TARGET_LINK_LIBRARIES(myodbc3 user32 advapi32 wsock32 odbc32 odbccp32 ws2_32 myodbc3u
-						  mysqlclient
-						  zlib
-						  yassl
-						  taocrypt)
+						  mysqlclient)
+
+	FIND_LIBRARY(MYSQL_ZLIB zlib)
+	FIND_LIBRARY(MYSQL_YASSL yassl)
+	FIND_LIBRARY(MYSQL_TAOCRYPT taocrypt)
+	IF (MYSQL_ZLIB)
+		TARGET_LINK_LIBRARIES(myodbc3 zlib)
+	ENDIF (MYSQL_ZLIB)
+	IF (MYSQL_YASSL)
+		TARGET_LINK_LIBRARIES(myodbc3 yassl)
+	ENDIF (MYSQL_YASSL)
+	IF (MYSQL_TAOCRYPT)
+		TARGET_LINK_LIBRARIES(myodbc3 taocrypt)
+	ENDIF (MYSQL_TAOCRYPT)
+
 ENDIF (ODBC_WINDOWS)
 
 
