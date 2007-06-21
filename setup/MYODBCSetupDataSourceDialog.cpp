@@ -239,6 +239,8 @@ void MYODBCSetupDataSourceDialog::slotOk()
             pDataSource->pszSOCKET = _global_strdup( ptab2->getSocket().toAscii() );
         if ( !ptab2->getInitialStatement().isEmpty() )
             pDataSource->pszSTMT = _global_strdup( ptab2->getInitialStatement().toAscii() );
+        if ( !ptab2->getCharset().isEmpty() )
+            pDataSource->pszCHARSET = _global_strdup( ptab2->getCharset().toAscii() );
 #else
         if ( !ptab1->getDataSourceName().isEmpty() )
             pDataSource->pszDSN = _global_strdup( ptab1->getDataSourceName().ascii() );
@@ -259,6 +261,8 @@ void MYODBCSetupDataSourceDialog::slotOk()
             pDataSource->pszSOCKET = _global_strdup( ptab2->getSocket().ascii() );
         if ( !ptab2->getInitialStatement().isEmpty() )
             pDataSource->pszSTMT = _global_strdup( ptab2->getInitialStatement().ascii() );
+        if ( !ptab2->getCharset().isEmpty() )
+            pDataSource->pszCHARSET = _global_strdup( ptab2->getCharset().ascii() );
 #endif
 
         unsigned int nFlags = ptab3->getFlags();
@@ -388,6 +392,7 @@ void MYODBCSetupDataSourceDialog::doInit()
     ptab1->setServer( pDataSource->pszSERVER );
     ptab2->setSocket( pDataSource->pszSOCKET );
     ptab2->setInitialStatement( pDataSource->pszSTMT );
+    ptab2->setCharset( pDataSource->pszCHARSET );
     ptab1->setUser( pDataSource->pszUSER );
 
     if ( pDataSource->pszOPTION )
@@ -427,6 +432,7 @@ void MYODBCSetupDataSourceDialog::doInit()
 
 #ifndef __sparc
     connect( ptab1, SIGNAL(signalRequestDatabaseNames()), SLOT(slotLoadDatabaseNames()) );
+    connect( ptab2, SIGNAL(signalRequestCharsetNames()), SLOT(slotLoadCharsetNames()) );
 #endif
 
     connect( ptab1->plineeditDataSourceName, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
@@ -438,6 +444,7 @@ void MYODBCSetupDataSourceDialog::doInit()
     connect( ptab2->plineeditPort, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab2->plineeditSocket, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab2->plineeditInitialStatement, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
+    connect( ptab2->pcomboboxCharset, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3a->pcheckboxDontOptimizeColumnWidth, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3a->pcheckboxReturnMatchingRows, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3a->pcheckboxAllowBigResults, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
@@ -662,6 +669,8 @@ QString MYODBCSetupDataSourceDialog::buildConnectString()
 //        stringConnectIn += ";OPTION=" + ptab1->getOptions();
   if (!ptab2->getInitialStatement().isEmpty())
     stringConnectIn+= ";STMT=" + ptab2->getInitialStatement();
+  if (!ptab2->getCharset().isEmpty())
+    stringConnectIn+= ";CHARSET=" + ptab2->getCharset();
 
   return stringConnectIn;
 }
@@ -742,6 +751,102 @@ slotTestExit1:
 BOOL MYODBCSetupDataSourceDialog::doTestUsingDriver()
 {
     QMessageBox::warning( this, "Connector/ODBC", "Testing not implemented for SQLDriverConnect()", QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton );
+    return TRUE;
+}
+
+BOOL MYODBCSetupDataSourceDialog::doLoadCharsetNamesUsingDriverManager()
+{
+    SQLHENV     hEnv        = SQL_NULL_HENV;
+    SQLHDBC     hDbc        = hDBC;
+    SQLHSTMT    hStmt;
+    SQLRETURN   nReturn;
+    QStringList stringlistDatabases;
+    SQLCHAR     szCatalog[MYODBC_DB_NAME_MAX]; 
+    SQLLEN      nCatalog;
+    QString     stringConnectIn= buildConnectString();
+
+    stringlistDatabases += " ";
+
+    if ( hDBC == SQL_NULL_HDBC )
+    {
+        nReturn = SQLAllocHandle( SQL_HANDLE_ENV, NULL, &hEnv );
+        if ( nReturn != SQL_SUCCESS )
+            slotShowDiagnostics( nReturn, SQL_HANDLE_ENV, NULL );
+        if ( !SQL_SUCCEEDED(nReturn) )
+            return FALSE;
+    
+        nReturn = SQLSetEnvAttr( hEnv, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC3, 0 );
+        if ( nReturn != SQL_SUCCESS )
+            slotShowDiagnostics( nReturn, SQL_HANDLE_ENV, NULL );
+        if ( !SQL_SUCCEEDED(nReturn) )
+            goto slotLoadDatabaseNamesExit1;
+    
+        nReturn = SQLAllocHandle( SQL_HANDLE_DBC, hEnv, &hDbc );
+        if ( nReturn != SQL_SUCCESS )
+            slotShowDiagnostics( nReturn, SQL_HANDLE_ENV, hEnv );
+        if ( !SQL_SUCCEEDED(nReturn) )
+            goto slotLoadDatabaseNamesExit1;
+    }
+
+#if QT_VERSION >= 0x040000
+    nReturn = SQLDriverConnect( hDbc, NULL, (SQLCHAR*)stringConnectIn.toAscii().data(), SQL_NTS, NULL, 0, NULL, SQL_DRIVER_NOPROMPT );
+#else
+    nReturn = SQLDriverConnect( hDbc, NULL, (SQLCHAR*)stringConnectIn.latin1(), SQL_NTS, NULL, 0, NULL, SQL_DRIVER_NOPROMPT );
+#endif
+    if ( nReturn != SQL_SUCCESS )
+        slotShowDiagnostics( nReturn, SQL_HANDLE_DBC, hDbc );
+    if ( !SQL_SUCCEEDED(nReturn) )
+        goto slotLoadDatabaseNamesExit2;
+
+    nReturn = SQLAllocHandle( SQL_HANDLE_STMT, hDbc, &hStmt );
+    if ( nReturn != SQL_SUCCESS )
+        slotShowDiagnostics( nReturn, SQL_HANDLE_DBC, hDbc );
+    if ( !SQL_SUCCEEDED(nReturn) )
+        goto slotLoadDatabaseNamesExit2;
+
+    nReturn = SQLExecDirect( hStmt, (SQLCHAR *)"SHOW CHARACTER SET", SQL_NTS);
+    if ( nReturn != SQL_SUCCESS )
+        slotShowDiagnostics( nReturn, SQL_HANDLE_STMT, hStmt );
+    if ( !SQL_SUCCEEDED(nReturn) )
+        goto slotLoadDatabaseNamesExit3;
+
+    nReturn = SQLBindCol( hStmt, 1, SQL_C_CHAR, szCatalog, MYODBC_DB_NAME_MAX, &nCatalog );
+    while ( TRUE )
+    {
+        nReturn = SQLFetch( hStmt );
+        if ( nReturn == SQL_NO_DATA )
+            break;
+        else if ( nReturn != SQL_SUCCESS )
+            slotShowDiagnostics( nReturn, SQL_HANDLE_STMT, hStmt );
+        if ( SQL_SUCCEEDED(nReturn) )
+            stringlistDatabases += (const char*)szCatalog;
+        else
+            break;
+    }
+
+slotLoadDatabaseNamesExit3:
+    nReturn = SQLFreeHandle( SQL_HANDLE_STMT, hStmt );
+slotLoadDatabaseNamesExit2:
+    nReturn = SQLDisconnect( hDbc );
+    if ( hDBC == SQL_NULL_HDBC )
+        nReturn = SQLFreeHandle( SQL_HANDLE_DBC, hDbc );
+slotLoadDatabaseNamesExit1:
+    if ( hDBC == SQL_NULL_HDBC )
+        nReturn = SQLFreeHandle( SQL_HANDLE_ENV, hEnv );
+
+    ptab2->pcomboboxCharset->clear();
+#if QT_VERSION >= 0x040000
+    ptab2->pcomboboxCharset->addItems( stringlistDatabases );
+#else
+    ptab2->pcomboboxCharset->insertStringList( stringlistDatabases );
+#endif
+
+    return TRUE;
+}
+
+BOOL MYODBCSetupDataSourceDialog::doLoadCharsetNamesUsingDriver()
+{
+    QMessageBox::warning( this, "Connector/ODBC", "Loading character set list not implemented for SQLDriverConnect()", QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton );
     return TRUE;
 }
 
@@ -930,6 +1035,15 @@ void MYODBCSetupDataSourceDialog::slotLoadDatabaseNames()
         doLoadDatabaseNamesUsingDriver();
     else
         doLoadDatabaseNamesUsingDriverManager();
+}
+
+
+void MYODBCSetupDataSourceDialog::slotLoadCharsetNames()
+{
+  if (hDBC)
+    doLoadCharsetNamesUsingDriver();
+  else
+    doLoadCharsetNamesUsingDriverManager();
 }
 
 

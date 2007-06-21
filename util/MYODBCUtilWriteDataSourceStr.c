@@ -212,6 +212,17 @@ BOOL MYODBCUtilWriteDataSourceStr( MYODBCUTIL_DATASOURCE *pDataSource, MYODBCUTI
             return FALSE;
     }
 
+    if (pDataSource->pszCHARSET)
+    {
+      MYODBCUTILWRITEDATASOURCESTR_DELIM;
+
+      if (!MYODBCUtilInsertStr(pszStr, "CHARSET=", nMaxLen, &nIndex))
+        return FALSE;
+      if (!MYODBCUtilInsertStr(pszStr, pDataSource->pszCHARSET, nMaxLen,
+                               &nIndex))
+        return FALSE;
+    }
+
     if ( nDelim == MYODBCUTIL_DELIM_NULL )
     {
         MYODBCUTILWRITEDATASOURCESTR_DELIM;

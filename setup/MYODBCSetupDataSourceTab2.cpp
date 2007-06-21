@@ -23,13 +23,15 @@
 MYODBCSetupDataSourceTab2::MYODBCSetupDataSourceTab2( QWidget *pwidgetParent,
                                                       QString stringPort,
                                                       QString stringSocket,
-                                                      QString stringInitialStatement )
+                                                      QString stringInitialStatement,
+                                                      QString stringCharset )
     : QWidget( pwidgetParent )
 {
     doInit();
     plineeditPort->setText( stringPort );
     plineeditSocket->setText( stringSocket );
     plineeditInitialStatement->setText( stringInitialStatement );
+    pcomboboxCharset->setEditText( stringCharset );
 }
 
 MYODBCSetupDataSourceTab2::MYODBCSetupDataSourceTab2( QWidget *pwidgetParent )
@@ -53,6 +55,11 @@ void MYODBCSetupDataSourceTab2::setInitialStatement( const QString &stringInitia
     plineeditInitialStatement->setText( stringInitialStatement );
 }
 
+void MYODBCSetupDataSourceTab2::setCharset( const QString &stringCharset )
+{
+    pcomboboxCharset->setEditText( stringCharset );
+}
+
 QString MYODBCSetupDataSourceTab2::getPort()
 {
     return plineeditPort->text();
@@ -68,11 +75,17 @@ QString MYODBCSetupDataSourceTab2::getInitialStatement()
     return plineeditInitialStatement->text();
 }
 
+QString MYODBCSetupDataSourceTab2::getCharset()
+{
+    return pcomboboxCharset->currentText();
+}
+
 void MYODBCSetupDataSourceTab2::doInit()
 {
     QString         stringPort( tr("The TCP/IP port to use if server is not localhost.\nOptional: Yes (silently uses default)\nDefault: 3306") );
     QString         stringSocket( tr("The socket or Windows pipe to connect to.\nOptional: Yes\nDefault: <empty>") );
     QString         stringInitialStatement( tr("A statement that will be executed when connection to MySQL.\nOptional: Yes\nDefault: <empty>") );
+    QString         stringCharset( tr("Default character set to use.\nOptional: Yes\nDefault: <empty>") );
 #if QT_VERSION >= 0x040000
     QGridLayout *   playoutFields = new QGridLayout();
     setLayout( playoutFields );
@@ -120,6 +133,21 @@ void MYODBCSetupDataSourceTab2::doInit()
     plineeditInitialStatement->setToolTip( stringInitialStatement );
 #else
     QToolTip::add( plineeditInitialStatement, stringInitialStatement );
+#endif
+    nRow++;
+
+    plabel = new QLabel(tr("Character Set"), this);
+    pcomboboxCharset = new MYODBCSetupComboBoxDatabases(this);
+    pcomboboxCharset->setAssistText(stringCharset);
+    playoutFields->addWidget(plabel, nRow, nColLabel);
+    playoutFields->addWidget(pcomboboxCharset, nRow, nColField);
+    pcomboboxCharset->setEditable(TRUE);
+    connect(pcomboboxCharset, SIGNAL(signalLoadRequest()),
+            SIGNAL(signalRequestCharsetNames()));
+#if QT_VERSION >= 0x040000
+    pcomboboxCharset->setToolTip(stringCharset);
+#else
+    QToolTip::add(pcomboboxCharset, stringCharset);
 #endif
     nRow++;
 }

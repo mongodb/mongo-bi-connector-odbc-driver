@@ -90,6 +90,11 @@ BOOL MYODBCUtilDefaultDataSource( MYODBCUTIL_DATASOURCE *pDataSource )
 		_global_free (pDataSource->pszSSLKEY);
 		pDataSource->pszSSLKEY = NULL;
 	}
+	if (pDataSource->pszCHARSET && !pDataSource->pszCHARSET[0] )
+	{
+          _global_free(pDataSource->pszCHARSET);
+          pDataSource->pszCHARSET= NULL;
+	}
 
 #ifndef _UNIX_
     /* Here we actually unset socket for non-UNIX as it does not apply. */

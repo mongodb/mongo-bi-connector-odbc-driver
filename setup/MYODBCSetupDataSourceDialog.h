@@ -95,6 +95,8 @@ protected:
 
     BOOL doTestUsingDriverManager();
     BOOL doTestUsingDriver();
+    BOOL doLoadCharsetNamesUsingDriverManager();
+    BOOL doLoadCharsetNamesUsingDriver();
     BOOL doLoadDatabaseNamesUsingDriverManager();
     BOOL doLoadDatabaseNamesUsingDriver();
 
@@ -105,6 +107,7 @@ protected slots:
     void slotShowInstallerError();
     void slotToggleGuru( bool b );
     void slotLoadDatabaseNames();
+    void slotLoadCharsetNames();
 
 };
 

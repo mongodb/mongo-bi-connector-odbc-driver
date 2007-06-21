@@ -249,6 +249,102 @@ DECLARE_TEST(t_bug19823)
 }
 
 
+/**
+ Test that we can connect with UTF8 as our charset, and things work right.
+*/
+DECLARE_TEST(charset_utf8)
+{
+  HDBC hdbc1;
+  HSTMT hstmt1;
+  SQLCHAR   conn[256], conn_out[256];
+  SQLSMALLINT conn_out_len;
+
+  sprintf((char *)conn, "DSN=%s;UID=%s;PASSWORD=%s;CHARSET=utf8",
+          mydsn, myuid, mypwd);
+  if (mysock != NULL)
+  {
+    strcat((char *)conn, ";SOCKET=");
+    strcat((char *)conn, (char *)mysock);
+  }
+
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), conn_out,
+                                 sizeof(conn_out), &conn_out_len,
+                                 SQL_DRIVER_NOPROMPT));
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_sql(hstmt1, "SELECT _latin1 0x73E36F207061756C6F");
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+
+  is_str(my_fetch_str(hstmt1, conn_out, 1), "s\xC3\xA3o paulo", 10);
+
+  expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+
+  return OK;
+}
+
+
+/**
+ GBK is a fun character set -- it contains multibyte characters that can
+ contain 0x5c ('\'). This causes escaping problems if the driver doesn't
+ realize that we're using GBK. (Big5 is another character set with a similar
+ issue.)
+*/
+DECLARE_TEST(charset_gbk)
+{
+  HDBC hdbc1;
+  HSTMT hstmt1;
+  SQLCHAR conn[256], conn_out[256];
+  /*
+    The fun here is that 0xbf5c is a valid GBK character, and we have 0x27
+    as the second byte of an invalid GBK character. mysql_real_escape_string()
+    handles this, as long as it knows the character set is GBK.
+  */
+  SQLCHAR str[]= "\xef\xbb\xbf\x27\xbf\x10";
+  SQLSMALLINT conn_out_len;
+
+  sprintf((char *)conn, "DSN=%s;UID=%s;PASSWORD=%s;CHARSET=gbk",
+          mydsn, myuid, mypwd);
+  if (mysock != NULL)
+  {
+    strcat((char *)conn, ";SOCKET=");
+    strcat((char *)conn, (char *)mysock);
+  }
+
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), conn_out,
+                                 sizeof(conn_out), &conn_out_len,
+                                 SQL_DRIVER_NOPROMPT));
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_stmt(hstmt1, SQLPrepare(hstmt1, (SQLCHAR *)"SELECT ?", SQL_NTS));
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                   SQL_CHAR, 0, 0, str, sizeof(str),
+                                   NULL));
+
+  ok_stmt(hstmt1, SQLExecute(hstmt1));
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+
+  is_str(my_fetch_str(hstmt1, conn_out, 1), str, sizeof(str));
+
+  expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -258,6 +354,8 @@ BEGIN_TESTS
   ADD_TEST(t_reconnect)
   ADD_TEST(t_bug19823)
 #endif
+  ADD_TEST(charset_utf8)
+  ADD_TEST(charset_gbk)
 END_TESTS
 
 

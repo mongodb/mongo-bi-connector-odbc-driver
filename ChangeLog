@@ -1,6 +1,10 @@
 3.51.17
 
   Functionality added or changed:
+  * Added an option (CHARSET) for specifying the default character
+    set for a connection. This must be used instead of a "SET NAMES"
+    statement. Also available from the GUI setup dialog. (Related
+    to Bug #6667 and Bug #9498.)
 
   Bugs fixed:
   * Multiple result sets were not correctly flushed when a statement

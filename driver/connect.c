@@ -206,7 +206,7 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
                               SQLSMALLINT    cbAuthStr )
 {
     char host[64],user[64],passwd[64],dsn[NAME_LEN+1],database[NAME_LEN+1];
-    char port[10],flag[10],init_stmt[256],*dsn_ptr;
+    char port[10],flag[10],init_stmt[256],charset[64],*dsn_ptr;
     char socket[256]= "";
     int opt_ssl_verify_server_cert = ~0; /* Not used, but needed as parameter */
                   /* Use 'int' and fill all bits to avoid alignment Bug#25920 */
@@ -263,6 +263,8 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
 #endif
 
     SQLGetPrivateProfileString(dsn_ptr,"stmt", "", init_stmt, sizeof(init_stmt), MYODBCUtilGetIniFileName( TRUE ) );
+    SQLGetPrivateProfileString(dsn_ptr, "charset", "", charset, sizeof(charset),
+                               MYODBCUtilGetIniFileName(TRUE));
 
 #ifdef MYODBC_DBG
     {
@@ -321,6 +323,21 @@ SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc,
                         MYERR_S1000,mysql_errno(&dbc->mysql));
         MYODBCDbgReturnReturn( SQL_ERROR );
     }
+
+#if ((MYSQL_VERSION_ID >= 40113 && MYSQL_VERSION_ID < 50000) || \
+     MYSQL_VERSION_ID >= 50006)
+    if (charset && charset[0])
+    {
+      if (mysql_set_character_set(&dbc->mysql, charset))
+      {
+        set_dbc_error(dbc, "HY000", mysql_error(&dbc->mysql),
+                      mysql_errno(&dbc->mysql));
+        mysql_close(&dbc->mysql);
+        MYODBCDbgReturnReturn(SQL_ERROR);
+      }
+    }
+#endif
+
     dbc->dsn= my_strdup(dsn_ptr ? dsn_ptr : database ,MYF(MY_WME));
     dbc->database= my_strdup(database,MYF(MY_WME));
     dbc->server= my_strdup(host,MYF(MY_WME));
@@ -373,6 +390,22 @@ SQLRETURN my_SQLDriverConnectTry( DBC *dbc, MYODBCUTIL_DATASOURCE *pDataSource )
         translate_error( dbc->error.sqlstate, MYERR_S1000, mysql_errno( &dbc->mysql ) );
         return SQL_ERROR;
     }
+
+
+#if ((MYSQL_VERSION_ID >= 40113 && MYSQL_VERSION_ID < 50000) || \
+     MYSQL_VERSION_ID >= 50006)
+    if (pDataSource->pszCHARSET)
+    {
+      if (mysql_set_character_set(&dbc->mysql, pDataSource->pszCHARSET))
+      {
+        set_dbc_error(dbc, "HY000", mysql_error(&dbc->mysql),
+                      mysql_errno(&dbc->mysql));
+        mysql_close(&dbc->mysql);
+        return SQL_ERROR;
+      }
+    }
+#endif
+
     return SQL_SUCCESS;
 }
 

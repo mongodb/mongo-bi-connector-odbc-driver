@@ -491,17 +491,13 @@ char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param)
         case SQL_WVARCHAR:
         case SQL_WLONGVARCHAR:
             {
-                to= add_to_buffer(net,to,"'",1);
-                to= mysql_odbc_escape_string(mysql,
-                                             to, (net->max_packet -
-                                                  (ulong) (to - (char*) net->buff)),
-                                             data, length,
-                                             (void*) net, extend_escape_buffer);
-                if ( to ) /* escape was ok */
-                {
-                    to= add_to_buffer(net,to,"'",1);
-                }
-                return to;
+              to= add_to_buffer(net,to,"'",1);
+              /* Make sure we have room for a fully-escaped string. */
+              if (!(to= extend_buffer(net, to, length * 2)))
+                return 0;
+              to+= mysql_real_escape_string(mysql, to, data, length);
+              to= add_to_buffer(net, to, "'", 1);
+              return to;
             }
         case SQL_TIME:
         case SQL_TYPE_TIME:

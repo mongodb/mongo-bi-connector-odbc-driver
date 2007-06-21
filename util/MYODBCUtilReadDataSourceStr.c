@@ -282,6 +282,14 @@ BOOL MYODBCUtilReadDataSourceStr( MYODBCUTIL_DATASOURCE *pDataSource, MYODBCUTIL
                             if ( !pDataSource->pszSSLKEY )
                                 pDataSource->pszSSLKEY = (char *)_global_strndup( pAnchorChar, pScanChar - pAnchorChar );
                         }
+                        else if (strcasecmp(pszName, "CHARSET") == 0)
+                        {
+                          if (!pDataSource->pszCHARSET)
+                              pDataSource->pszCHARSET=
+                                (char *)_global_strndup(pAnchorChar,
+                                                        pScanChar -
+                                                        pAnchorChar);
+                        }
                         else
                         {
                             fprintf( stderr, "[%s][%d][ERROR] Unhandled attribute (%s).\n", __FILE__, __LINE__, pszName );

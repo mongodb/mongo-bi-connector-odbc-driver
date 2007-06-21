@@ -109,5 +109,10 @@ void MYODBCUtilClearDataSource( MYODBCUTIL_DATASOURCE *pDataSource )
 		_global_free (pDataSource->pszSSLKEY);
 		pDataSource->pszSSLKEY = NULL;
 	}
+	if (pDataSource->pszCHARSET)
+	{
+          _global_free(pDataSource->pszCHARSET);
+          pDataSource->pszCHARSET= NULL;
+	}
 
 }

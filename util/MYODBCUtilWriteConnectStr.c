@@ -189,6 +189,17 @@ BOOL MYODBCUtilWriteConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, char *pszStr
             return FALSE;
     }
 
+    if (pDataSource->pszCHARSET)
+    {
+      if (nIndex && !MYODBCUtilInsertStr(pszStr, ";", nMaxLen, &nIndex))
+        return FALSE;
+      if (!MYODBCUtilInsertStr(pszStr, "CHARSET=", nMaxLen, &nIndex))
+        return FALSE;
+      if (!MYODBCUtilInsertStr(pszStr, pDataSource->pszCHARSET, nMaxLen,
+                               &nIndex))
+        return FALSE;
+    }
+
     return TRUE;
 }
 

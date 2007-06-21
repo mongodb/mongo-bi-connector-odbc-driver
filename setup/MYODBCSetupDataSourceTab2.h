@@ -30,6 +30,7 @@
 
 #include "MYODBCSetup.h"
 #include "MYODBCSetupLineEdit.h"
+#include "MYODBCSetupComboBoxDatabases.h"
 
 class MYODBCSetupDataSourceDialog;
 
@@ -42,22 +43,29 @@ public:
     MYODBCSetupDataSourceTab2( QWidget *pwidgetParent,
                                QString stringPort,
                                QString stringSocket,
-                               QString stringInitialStatement );
+                               QString stringInitialStatement,
+                               QString stringCharset );
 
     MYODBCSetupDataSourceTab2( QWidget *pwidgetParent );
 
     void setPort( const QString &stringPort );
     void setSocket( const QString &stringSocket );
     void setInitialStatement( const QString &stringInitialStatement );
+    void setCharset( const QString &stringCharset );
 
     QString getPort();
     QString getSocket();
     QString getInitialStatement();
+    QString getCharset();
+
+signals:
+    void signalRequestCharsetNames();
 
 protected:
     MYODBCSetupLineEdit *            plineeditPort;
     MYODBCSetupLineEdit *            plineeditSocket;
     MYODBCSetupLineEdit *            plineeditInitialStatement;
+    MYODBCSetupComboBoxDatabases *   pcomboboxCharset;
 
     void doInit();
 };
