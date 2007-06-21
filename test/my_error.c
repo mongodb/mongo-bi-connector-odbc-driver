@@ -269,6 +269,25 @@ DECLARE_TEST(t_bug3456)
 }
 
 
+/*
+ * Bug #16224: Calling SQLGetDiagField with RecNumber 0,DiagIdentifier
+ *             NOT 0 returns SQL_ERROR
+ */
+DECLARE_TEST(t_bug16224)
+{
+  SQLINTEGER diagcnt;
+
+  expect_sql(hstmt, "This is an invalid Query! (odbc test)", SQL_ERROR);
+
+  ok_stmt(hstmt, SQLGetDiagField(SQL_HANDLE_STMT, hstmt, 0,
+                                 SQL_DIAG_NUMBER, &diagcnt,
+                                 SQL_IS_INTEGER, NULL));
+  is_num(diagcnt, 1);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
 #ifndef NO_DRIVERMANAGER
   ADD_TEST(t_odbc2_error)
@@ -279,6 +298,7 @@ BEGIN_TESTS
   ADD_TEST(t_diagrec)
   ADD_TEST(t_warning)
   ADD_TODO(t_bug3456)
+  ADD_TEST(t_bug16224)
 END_TESTS
 
 RUN_TESTS

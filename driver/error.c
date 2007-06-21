@@ -488,13 +488,6 @@ SQLRETURN SQL_API SQLGetDiagField(SQLSMALLINT HandleType,
     if ( RecNumber > 1 )
         MYODBCDbgReturnReturn( SQL_NO_DATA_FOUND );
 
-    /*
-      If record number is 0 and if it is not a
-      diag header field request, return error
-    */
-    if ( RecNumber == 0 && DiagIdentifier > 0 )
-        MYODBCDbgReturnReturn( SQL_ERROR );
-
     switch ( DiagIdentifier )
     {
 
