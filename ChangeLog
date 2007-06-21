@@ -15,6 +15,8 @@
     were not used in handling SQLSetPos(). (Bug #10563)
   * SQLColAttribute() returned the wrong value for SQL_DESC_BASE_COLUMN_NAME
     and SQL_DESC_BASE_TABLE_NAME for aliased fields. (Bug #6197)
+  * Calling SQLGetDiagField with RecNumber 0,DiagIdentifier
+    NOT 0 returns SQL_ERROR (Bug #16224)
 
 ----
 
