@@ -117,9 +117,6 @@ then
   save_LDFLAGS="$LDFLAGS"
   LDFLAGS="-L$check_iobc_lib_path $LDFLAGS"
 
-  AC_CHECK_LIB(iodbcadm,_iodbcdm_admin_dialbox,
-  [LIBS="$LIBS -L$check_iobc_lib_path -liodbcadm"  ; have_iodbcadm=yes],  [])
-
   AC_CHECK_LIB(iodbcinst,SQLGetPrivateProfileString,
   [AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING,1,[Define if SQLGetPrivateProfileString is defined])
    LIBS="$LIBS -L$check_iobc_lib_path -liodbcinst" ; have_iodbcinst=yes], [])
