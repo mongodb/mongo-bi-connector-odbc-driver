@@ -636,7 +636,9 @@ DECLARE_TEST(t_tables_bug)
      myassert(strcmp(t_tables_bug_data[i-1].szColName,szColName) == 0);
      myassert(t_tables_bug_data[i-1].pcbColName == pcbColName);
      myassert(t_tables_bug_data[i-1].pfSqlType == pfSqlType);
-     is_num(t_tables_bug_data[i-1].pcbColDef, pcbColDef / (is51 ? 3 : 1));
+     /* This depends on NAME_LEN in mysql_com.h */
+     is(t_tables_bug_data[i-1].pcbColDef == pcbColDef ||
+        t_tables_bug_data[i-1].pcbColDef == pcbColDef / 3);
      myassert(t_tables_bug_data[i-1].pibScale == pibScale);
      myassert(t_tables_bug_data[i-1].pfNullable == pfNullable);
    }
