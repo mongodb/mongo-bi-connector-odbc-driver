@@ -29,3 +29,5 @@ libmyodbc3u_la_SOURCES += \
 	MYODBCUtilWriteDriver.c
 endif
 
+EXTRA_DIST = \
+	util.pro
