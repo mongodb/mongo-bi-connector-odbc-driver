@@ -345,6 +345,21 @@ DECLARE_TEST(charset_gbk)
 }
 
 
+/**
+  Bug #7684: more than two UNION SELECT statement problem
+*/
+DECLARE_TEST(t_bug7684)
+{
+  SQLINTEGER rc;
+  ok_sql(hstmt, "SELECT REPEAT('a',1) UNION SELECT REPEAT('b',10) "
+                "UNION SELECT REPEAT('c',4) UNION SELECT REPEAT('d',3)");
+
+  assert(myresult(hstmt)==4);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -356,6 +371,7 @@ BEGIN_TESTS
 #endif
   ADD_TEST(charset_utf8)
   ADD_TEST(charset_gbk)
+  ADD_TEST(t_bug7684)
 END_TESTS
 
 
