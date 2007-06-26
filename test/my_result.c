@@ -1816,6 +1816,7 @@ DECLARE_TEST(t_bug16817)
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_sql(hstmt, "DROP PROCEDURE p_bug16817");
+  return OK;
 }
 
 
