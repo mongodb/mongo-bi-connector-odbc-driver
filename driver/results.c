@@ -1010,7 +1010,7 @@ SQLRETURN SQL_API SQLBindCol( SQLHSTMT      hstmt,
 
         if ( !stmt->result || (uint) icol >= stmt->result->field_count )
         {
-            set_error(stmt,MYERR_S1002,"Invalid column number",0);
+            error= set_error(stmt,MYERR_S1002,"Invalid column number",0);
             MYODBCDbgReturnReturn(error);
         }
         if ( !stmt->bind )

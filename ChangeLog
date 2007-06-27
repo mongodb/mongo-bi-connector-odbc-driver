@@ -21,6 +21,7 @@
     and SQL_DESC_BASE_TABLE_NAME for aliased fields. (Bug #6197)
   * Calling SQLGetDiagField with RecNumber 0,DiagIdentifier
     NOT 0 returns SQL_ERROR (Bug #16224)
+  * Correctly return error if SQLBindCol is called with an invalid column
 
 ----
 

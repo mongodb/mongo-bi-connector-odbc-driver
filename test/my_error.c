@@ -288,6 +288,25 @@ DECLARE_TEST(t_bug16224)
 }
 
 
+/*
+ * Test that binding invalid column returns the appropriate error
+ */
+DECLARE_TEST(bind_invalidcol)
+{
+  ok_sql(hstmt, "select 1,2,3,4");
+
+  /* test out of range column number */
+  expect_stmt(hstmt, SQLBindCol(hstmt, 10, SQL_C_CHAR, "", 4, NULL), SQL_ERROR);
+  is(check_sqlstate(hdbc, hstmt, "HY002") == OK);
+
+  /* test (unsupported) bookmark column number */
+  expect_stmt(hstmt, SQLBindCol(hstmt, 0, SQL_C_CHAR, "", 4, NULL), SQL_ERROR);
+  is(check_sqlstate(hdbc, hstmt, "HY002") == OK);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
 #ifndef NO_DRIVERMANAGER
   ADD_TEST(t_odbc2_error)
@@ -299,6 +318,7 @@ BEGIN_TESTS
   ADD_TEST(t_warning)
   ADD_TODO(t_bug3456)
   ADD_TEST(t_bug16224)
+  ADD_TEST(bind_invalidcol)
 END_TESTS
 
 RUN_TESTS
