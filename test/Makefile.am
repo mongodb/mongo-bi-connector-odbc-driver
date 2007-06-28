@@ -58,6 +58,7 @@ my_result \
 my_scroll \
 my_tran \
 my_types \
+my_unicode \
 my_unixodbc \
 my_use_result
 

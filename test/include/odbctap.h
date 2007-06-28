@@ -26,6 +26,14 @@
   A basic interface for writing tests that produces TAP-compliant output.
 */
 
+#define ODBCTAP
+
+typedef unsigned int UTF32;
+typedef unsigned short UTF16;
+typedef unsigned char UTF8;
+
+#include "../driver/unicode_transcode.c"
+
 /** @todo Remove dependency on this crufty old header. */
 #define DEBUG_LEVEL 2
 #include "mytest3.h"
@@ -334,6 +342,24 @@ do { \
 
 
 /**
+  Verify that a wide string (wchar_t *) matches an expected value.
+
+  @param a     The string to compare
+  @param b     The string to compare against
+  @param c     The number of characters to compare
+*/
+#define is_wstr(a, b, c) \
+do { \
+  wchar_t *val_a= (a), *val_b= (b); \
+  int val_len= (int)(c); \
+  if (memcmp(val_a, val_b, val_len * sizeof(wchar_t)) != 0) { \
+    printf("# %s ('%*ls') != '%*ls' in %s on line %d\n", \
+           #a, val_len, val_a, val_len, val_b, __FILE__, __LINE__); \
+    return FAIL; \
+  } \
+} while (0);
+
+/**
   Verify that a number (long integer) matches an expected value.
 
   @param a     The number to compare
@@ -433,3 +459,36 @@ void free_basic_handles(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt)
   rc= SQLFreeEnv(*henv);
   myenv(*henv,rc);
 }
+
+
+/**
+ Helper for possibly converting a (wchar_t *) to a (SQLWCHAR *)
+*/
+#define W(string) dup_wchar_t_as_sqlwchar((string), sizeof(string))
+
+
+/**
+  Convert a wchar_t * to a SQLWCHAR * if a wchar_t is not hte same as
+  SQLWCHAR. New space is allocated and never freed. Because this is used in
+  short-lived test programs, this is okay, if not ideal.
+*/
+SQLWCHAR *dup_wchar_t_as_sqlwchar(wchar_t *from, size_t len)
+{
+  if (sizeof(wchar_t) == sizeof(SQLWCHAR))
+  {
+    SQLWCHAR *to= malloc(len * sizeof(SQLWCHAR));
+    memcpy(to, from, len * sizeof(wchar_t));
+    return to;
+  }
+  else
+  {
+    size_t i;
+    SQLWCHAR *to= malloc(2 * len * sizeof(SQLWCHAR));
+    SQLWCHAR *out= to;
+    for (i= 0; i < len; i++)
+      to+= utf32toutf16((UTF32)from[i], (UTF16 *)to);
+    *to= 0;
+    return out;
+  }
+}
+

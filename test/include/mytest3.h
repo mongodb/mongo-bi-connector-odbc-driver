@@ -500,6 +500,30 @@ const char *my_fetch_str(SQLHSTMT hstmt, SQLCHAR *szData,SQLUSMALLINT irow)
     return((const char *)szData);
 }
 
+
+/**
+  return wide string data, by fetching it and possibly converting it to wchar_t
+*/
+wchar_t *my_fetch_wstr(SQLHSTMT hstmt, SQLWCHAR *buffer, SQLUSMALLINT irow)
+{
+  SQLRETURN rc;
+  SQLLEN nLen;
+  static wchar_t buff[2048], *to= buff;
+
+  rc= SQLGetData(hstmt, irow, SQL_WCHAR, buffer, MAX_ROW_DATA_LEN + 1, &nLen);
+  if (!SQL_SUCCEEDED(rc))
+    return L"";
+
+  if (sizeof(wchar_t) == sizeof(SQLWCHAR))
+    return (wchar_t *)buffer;
+
+  for ( ; *buffer && to < buff + sizeof(buff) - 2; buffer++)
+    to+= utf16toutf32((UTF16 *)buffer, (UTF32 *)to);
+
+  return buff;
+}
+
+
 /*
   Check if server running is MySQL
 */
