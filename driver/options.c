@@ -769,7 +769,7 @@ static SQLRETURN get_stmt_attr(SQLHSTMT   hstmt,
             break;
 
         case SQL_ATTR_ROWS_FETCHED_PTR:
-            ValuePtr= (SQLUINTEGER *)options->rowsFetchedPtr;
+            ValuePtr= (SQLULEN *)options->rowsFetchedPtr;
             break;
 
         case SQL_ATTR_SIMULATE_CURSOR:

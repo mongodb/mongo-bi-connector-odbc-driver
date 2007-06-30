@@ -574,12 +574,12 @@ get_col_attr(SQLHSTMT     StatementHandle,
              SQLPOINTER   CharacterAttributePtr,
              SQLSMALLINT  BufferLength,
              SQLSMALLINT  *StringLengthPtr,
-             SQLPOINTER   NumericAttributePtr)
+             SQLLEN       *NumericAttributePtr)
 {
     MYSQL_FIELD *field;
     STMT FAR *stmt= (STMT FAR*) StatementHandle;
     SQLSMALLINT str_length;
-    SQLPOINTER strparam= 0;
+    SQLLEN strparam= 0;
     SQLPOINTER nparam= 0;
     ulong transfer_length,precision,display_size;
     SQLRETURN error;
@@ -612,7 +612,7 @@ get_col_attr(SQLHSTMT     StatementHandle,
     if ( FieldIdentifier == SQL_DESC_COUNT ||
          FieldIdentifier == SQL_COLUMN_COUNT )
     {
-        *(SQLINTEGER *)NumericAttributePtr= stmt->result->field_count;
+        *NumericAttributePtr= (SQLLEN)stmt->result->field_count;
         MYODBCDbgReturnReturn(SQL_SUCCESS);
     }
     if ( FieldIdentifier == SQL_DESC_TYPE && ColumnNumber == 0 )
@@ -688,7 +688,7 @@ get_col_attr(SQLHSTMT     StatementHandle,
         case SQL_DESC_DISPLAY_SIZE:
             (void) unireg_to_sql_datatype(stmt,field,0,&transfer_length,&precision,
                                           &display_size);
-            *(SQLINTEGER *)NumericAttributePtr= display_size;
+            *NumericAttributePtr= display_size;
             break;
 
         case SQL_DESC_FIXED_PREC_SCALE: /* need to verify later */
@@ -705,7 +705,7 @@ get_col_attr(SQLHSTMT     StatementHandle,
         case SQL_DESC_OCTET_LENGTH: /* need to validate again for octet length..*/
             (void) unireg_to_sql_datatype(stmt,field,0,&transfer_length,&precision,
                                           &display_size);
-            *(SQLINTEGER *)NumericAttributePtr= transfer_length;
+            *NumericAttributePtr= transfer_length;
             break;
 
         case SQL_DESC_LITERAL_PREFIX:
@@ -870,26 +870,10 @@ SQLRETURN SQL_API SQLColAttribute(SQLHSTMT     hstmt,
 #endif
                                  )
 {
-  SQLRETURN  rc;
-  SQLINTEGER num;
-
   MYODBCDbgEnter;
 
-  /*
-   get_col_attr() expects an SQLINTEGER * for its last argument, but sometimes
-   this function can use SQLLEN *.
-  */
-  rc= get_col_attr(hstmt, icol, fDescType, rgbDesc, cbDescMax, pcbDesc, &num);
-  if (pfDesc)
-  {
-#ifdef USE_SQLCOLATTRIBUTE_SQLLEN_PTR
-    *pfDesc= num;
-#else
-    *(SQLINTEGER *)pfDesc= num;
-#endif
-  }
-
-  MYODBCDbgReturnReturn(rc);
+  MYODBCDbgReturnReturn(get_col_attr(hstmt, icol, fDescType, rgbDesc,
+                                     cbDescMax, pcbDesc, pfDesc));
 }
 
 
@@ -919,20 +903,10 @@ SQLRETURN SQL_API SQLColAttributes(SQLHSTMT     hstmt,
                                    SQLSMALLINT *pcbDesc,
                                    SQLLEN      *pfDesc)
 {
-  SQLRETURN  rc;
-  SQLINTEGER num;
-
   MYODBCDbgEnter;
 
-  /*
-   get_col_attr() is built for SQLColAttribute(), which uses an SQLINTEGER *
-   for its last argument, but this legacy function uses SQLLEN *.
-  */
-  rc= get_col_attr(hstmt, icol, fDescType, rgbDesc, cbDescMax, pcbDesc, &num);
-  if (pfDesc)
-    *pfDesc= num;
-
-  MYODBCDbgReturnReturn(rc);
+  MYODBCDbgReturnReturn(get_col_attr(hstmt, icol, fDescType, rgbDesc,
+                                     cbDescMax, pcbDesc, pfDesc));
 }
 
 
@@ -1277,7 +1251,7 @@ SQLRETURN SQL_API SQLRowCount( SQLHSTMT hstmt,
 SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                                        SQLUSMALLINT         fFetchType,
                                        SQLROWOFFSET         irow,
-                                       SQLROWSETSIZE       *pcrow,
+                                       SQLULEN             *pcrow,
                                        SQLUSMALLINT FAR    *rgfRowStatus,
                                        bool                 upd_status )
 {
@@ -1288,7 +1262,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     STMT FAR *stmt= (STMT FAR*) hstmt;
     MYSQL_ROW values= 0;
     MYSQL_ROW_OFFSET save_position;
-    SQLROWSETSIZE dummy_pcrow;
+    SQLULEN dummy_pcrow;
 
     MYODBCDbgEnter;
 
@@ -1543,18 +1517,17 @@ SQLRETURN SQL_API SQLExtendedFetch( SQLHSTMT        hstmt,
                                     SQLROWSETSIZE  *pcrow,
                                     SQLUSMALLINT FAR *rgfRowStatus )
 {
+    SQLRETURN rc;
+    SQLULEN rows;
     STMT_OPTIONS *options= &((STMT FAR *)hstmt)->stmt_options;
-
-    MYODBCDbgEnter;
 
     options->rowStatusPtr_ex= rgfRowStatus;
 
-    MYODBCDbgReturnReturn( my_SQLExtendedFetch( hstmt,
-                                fFetchType,
-                                irow,
-                                pcrow,
-                                rgfRowStatus,
-                                1 ) );
+    rc= my_SQLExtendedFetch(hstmt, fFetchType, irow, &rows, rgfRowStatus, 1);
+    if (pcrow)
+      *pcrow= (SQLROWSETSIZE)rows;
+
+    return rc;
 }
 
 
