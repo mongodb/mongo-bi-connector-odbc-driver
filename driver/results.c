@@ -150,6 +150,14 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
                             (fCType == SQL_C_BINARY));
       }
 
+    case SQL_C_WCHAR:
+      return copy_wchar_result(SQL_HANDLE_STMT, stmt, (SQLWCHAR *)rgbValue,
+                               cbValueMax, pcbValue, value, length,
+                               stmt->stmt_options.max_length,
+                               (field->type == MYSQL_TYPE_STRING ?
+                                field->length : 0L),
+                               &stmt->getdata_offset);
+
     case SQL_C_BIT:
       if (rgbValue)
         *((char *)rgbValue)= (value[0] == 1 ? 1 : (atoi(value) == 0) ? 0 : 1);

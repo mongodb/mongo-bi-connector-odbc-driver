@@ -66,6 +66,7 @@ options.c \
 prepare.c \
 results.c \
 transact.c \
+unicode_transcode.c \
 utility.c \
 myodbc3.h
 

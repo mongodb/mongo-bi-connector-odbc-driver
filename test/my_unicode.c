@@ -91,7 +91,7 @@ DECLARE_TEST(basic)
 
 
 BEGIN_TESTS
-  ADD_TODO(basic)
+  ADD_TEST(basic)
 END_TESTS
 
 

@@ -1,8 +1,6 @@
 Guffert TODO
 
   Functionality to add or change:
-  * Add support for Unicode data (SQL_C_WCHAR):
-    http://msdn2.microsoft.com/en-us/library/ms714102.aspx
   * Add support for Unicode functions:
     http://msdn2.microsoft.com/en-us/library/ms716246.aspx
   * Add support for SQL_NUMERIC_STRUCT:
@@ -20,6 +18,13 @@ Guffert TODO
     http://msdn2.microsoft.com/en-us/library/ms711021.aspx
   * Add support for SQL_ATTR_METADATA_ID:
     http://msdn2.microsoft.com/en-us/library/ms716447.aspx
+
+----
+
+x.x
+
+  Functionality added or changed:
+  * Added support for SQL_C_WCHAR.
 
 ----
 

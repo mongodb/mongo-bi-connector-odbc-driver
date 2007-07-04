@@ -292,6 +292,198 @@ copy_lresult(SQLSMALLINT HandleType, SQLHANDLE Handle,
 }
 
 
+/**
+  Copy a string from one character set to another. Taken from sql_string.cc
+  in the MySQL Server source code, since we don't export this functionality
+  in libmysql yet.
+
+  @c to must be at least as big as @c from_length * @c to_cs->mbmaxlen
+
+  @param[in,out] to           Store result here
+  @param[in]     to_cs        Character set of result string
+  @param[in]     from         Copy from here
+  @param[in]     from_length  Length of from string
+  @param[in]     from_cs      From character set
+  @param[in,out] errors       Number of errors encountered during conversion
+
+  @retval Length of bytes copied to @c to
+*/
+uint32
+copy_and_convert(char *to, uint32 to_length, CHARSET_INFO *to_cs,
+                 const char *from, uint32 from_length, CHARSET_INFO *from_cs,
+                 uint *errors)
+{
+  int         cnvres;
+  my_wc_t     wc;
+  const uchar *from_end= (const uchar*) from+from_length;
+  char *to_start= to;
+  uchar *to_end= (uchar*) to+to_length;
+  int (*mb_wc)(struct charset_info_st *, my_wc_t *, const uchar *,
+               const uchar *) = from_cs->cset->mb_wc;
+  int (*wc_mb)(struct charset_info_st *, my_wc_t, uchar *s, uchar *e)=
+    to_cs->cset->wc_mb;
+  uint error_count= 0;
+
+  while (1)
+  {
+    if ((cnvres= (*mb_wc)(from_cs, &wc, (uchar*) from, from_end)) > 0)
+      from+= cnvres;
+    else if (cnvres == MY_CS_ILSEQ)
+    {
+      error_count++;
+      from++;
+      wc= '?';
+    }
+    else if (cnvres > MY_CS_TOOSMALL)
+    {
+      /*
+        A correct multibyte sequence detected
+        But it doesn't have Unicode mapping.
+      */
+      error_count++;
+      from+= (-cnvres);
+      wc= '?';
+    }
+    else
+      break;  // Not enough characters
+
+outp:
+    if ((cnvres= (*wc_mb)(to_cs, wc, (uchar*) to, to_end)) > 0)
+      to+= cnvres;
+    else if (cnvres == MY_CS_ILUNI && wc != '?')
+    {
+      error_count++;
+      wc= '?';
+      goto outp;
+    }
+    else
+      break;
+  }
+  *errors= error_count;
+  return (uint32) (to - to_start);
+}
+
+
+/**
+  Copy a result from the server into a buffer as a SQL_C_WCHAR.
+
+  @param[in]     HandleType  Type of handle (@c SQL_HANDLE_DBC or
+                             @c SQL_HANDLE_STMT)
+  @param[in]     Handle      Handle
+  @param[out]    result      Buffer for result
+  @param[in]     result_len  Size of result buffer
+  @param[out]    used_len    Pointer to buffer for storing amount of buffer used
+  @param[in]     src         Source data for result
+  @param[in]     src_len     Length of source data (in bytes)
+  @param[in]     max_len     Maximum length (SQL_ATTR_MAX_LENGTH)
+  @param[in]     fill_len    The display length, in bytes, of the source data
+  @param[in,out] offset      Offset into source to copy from (will be updated)
+
+  @return Standard ODBC result code
+*/
+SQLRETURN
+copy_wchar_result(SQLSMALLINT HandleType, SQLHANDLE Handle,
+                  SQLWCHAR *result, SQLINTEGER result_len, SQLLEN *used_len,
+                  char *src, long src_len, long max_len, long fill_len,
+                  ulong *offset)
+{
+  CHARSET_INFO *charset;
+  SQLWCHAR *dst= result;
+  SQLINTEGER orig_result_len= result_len;
+  ulong length;
+  my_bool pad_space= FALSE;
+
+  /* Calculate actual source length if we got SQL_NTS */
+  if (src_len == SQL_NTS)
+    src_len= src ? strlen(src) : 0;
+
+  if (result_len)
+    result_len--; /* Need room for end nul */
+  else
+    dst= 0; /* Don't copy anything! */
+
+  /* Apply max length, if one was specified. */
+  if (max_len && max_len < result_len)
+    result_len= max_len;
+
+  /* Get the character set and whether FLAG_PAD_SPACE is set.  */
+  if (HandleType == SQL_HANDLE_DBC)
+  {
+    charset= ((DBC *)Handle)->mysql.charset;
+    pad_space= ((DBC *)Handle)->flag & FLAG_PAD_SPACE;
+  }
+  else
+  {
+    charset= ((STMT *)Handle)->dbc->mysql.charset;
+    pad_space= ((STMT *)Handle)->dbc->flag & FLAG_PAD_SPACE;
+  }
+
+  if (fill_len < src_len || !pad_space)
+    fill_len= src_len;
+
+  if (*offset == (ulong) ~0L)
+    *offset= 0;         /* First call */
+  else if (orig_result_len && *offset >= (ulong) fill_len)
+    return SQL_NO_DATA_FOUND;
+
+  /* Skip already-retrieved data. */
+  src+= *offset;
+  src_len-= (long) *offset;
+  fill_len-= *offset;
+
+  /* Figure out how many characters we actually have left to copy into.  */
+  length= min(fill_len, result_len);
+
+  if (dst)
+  {
+    ulong i, bytes, copy_len= (src_len >= (long)length ? length :
+                               (src_len > 0 ? src_len : 0L));
+    UTF8 *temp= (UTF8 *)my_malloc(copy_len * 4, MYF(0));
+    uint errors;
+
+    bytes= copy_and_convert((char *)temp, copy_len * 4, utf8_charset_info,
+                             src, copy_len, charset, &errors);
+
+    /* Update offset for the next call. */
+    (*offset)+= bytes;
+
+    if (sizeof(SQLWCHAR) == 4)
+    {
+      for (i= 0; i < bytes; )
+        i+= utf8toutf32(temp + i, (UTF32 *)dst++);
+    }
+    else
+    {
+      for (i= 0; i < bytes; )
+      {
+        UTF32 u32;
+        i+= utf8toutf32(temp + i, &u32);
+        dst+= utf32toutf16(u32, (UTF16 *)dst);
+      }
+    }
+
+    while (dst < result + length)
+      *dst++= ' ';
+
+    if (length != (ulong) result_len)
+      dst= 0;
+  }
+
+  if (used_len)
+    *used_len= fill_len;
+
+  if (orig_result_len && result_len >= fill_len)
+    return SQL_SUCCESS;
+
+  MYODBCDbgInfo("Returned %ld characters from", length);
+  MYODBCDbgInfo("offset: %lu", *offset - length);
+
+  set_handle_error(HandleType, Handle, MYERR_01004, NULL, 0);
+
+  return SQL_SUCCESS_WITH_INFO;
+}
+
+
 /*
   @type    : myodbc internal
   @purpose : is used when converting a binary string to a SQL_C_CHAR
@@ -1198,13 +1390,10 @@ ulong myodbc_escape_wildcard(MYSQL *mysql, char *to, ulong to_length,
   const char *to_start= to;
   const char *end, *to_end=to_start + (to_length ? to_length-1 : 2*length);
   my_bool overflow= FALSE;
-#ifdef USE_MB
   my_bool use_mb_flag= use_mb(charset_info);
-#endif
   for (end= from + length; from < end; from++)
   {
     char escape= 0;
-#ifdef USE_MB
     int tmp_length;
     if (use_mb_flag && (tmp_length= my_ismbchar(charset_info, from, end)))
     {
@@ -1232,7 +1421,6 @@ ulong myodbc_escape_wildcard(MYSQL *mysql, char *to, ulong to_length,
     if (use_mb_flag && (tmp_length= my_mbcharlen(charset_info, *from)) > 1)
       escape= *from;
     else
-#endif
     switch (*from) {
     case 0:				/* Must be escaped for 'mysql' */
       escape= '0';

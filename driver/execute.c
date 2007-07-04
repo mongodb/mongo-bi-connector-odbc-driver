@@ -285,42 +285,53 @@ char *insert_params(STMT FAR *stmt)
 }
 
 
-/*
-  @type    : myodbc3 internal
-  @purpose : insert sql param the specified parameter position
-*/
+/**
+ Return the length of a SQLWCHAR string.
 
-char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param)
+ @param[in]  str     The string
+
+ @return The number of characters in the string
+*/
+size_t sqlwchar_strlen(const SQLWCHAR *str)
+{
+  size_t len= 0;
+  while (str && *str++)
+    len++;
+  return len;
+}
+
+
+/*
+  Add the value of parameter to a string buffer.
+
+  @param[in]      mysql
+  @param[in,out]  to
+  @param[in]      param
+*/
+char *insert_param(MYSQL *mysql, char *to, PARAM_BIND *param)
 {
     int length;
-    char buff[128],*data;
-    my_bool convert= 0;
+    char buff[128], *data;
+    my_bool convert= FALSE, free_data= FALSE;
     NET *net= &mysql->net;
 
-    if ( !param->actual_len || *(param->actual_len) == SQL_NTS )
+    if (!param->actual_len || *(param->actual_len) == SQL_NTS)
     {
-        if ( (data= param->buffer) )
-        {
-            if ( param->actual_len &&  *(param->actual_len) == SQL_NTS )
-                length= strlen(data);
-            else if ( param->ValueMax )
-            {
-#ifndef strnlen
-                length=strlen(data);
-                if ( length > param->ValueMax )
-                    length = param->ValueMax;
-#else
-                length=strnlen(data,param->ValueMax);
-#endif
-            }
-            else
-                length=strlen(data);
-        }
+      data= param->buffer;
+      if (data)
+      {
+        if (param->CType == SQL_C_WCHAR)
+          length= sqlwchar_strlen((SQLWCHAR *)data);
         else
-        {
-            MYODBCDbgWarning( "%s", "data is a null pointer" );
-            length= 0;     /* This is actually an error */
-        }
+          length= strlen(data);
+
+        if (!param->actual_len && param->ValueMax)
+          length= min(length, param->ValueMax);
+      }
+      else
+      {
+        length= 0;     /* This is actually an error */
+      }
     }
     else if ( *(param->actual_len) == SQL_NULL_DATA )
     {
@@ -350,13 +361,6 @@ char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param)
         data= param->buffer;
         length= *param->actual_len;
     }
-    MYODBCDbgInfo( "param: 0x%lx", (long)param );
-    MYODBCDbgInfo( "ctype: %d", param->CType );
-    MYODBCDbgInfo( "SqlType: %d", param->SqlType );
-    MYODBCDbgInfo( "data: 0x%lx", (long)data );
-    MYODBCDbgInfo( "length: %d", length );
-    MYODBCDbgInfo( "actual_len: %ld", param->actual_len ? *param->actual_len : 0 );
-    MYODBCDbgInfo( "pos_in_query: %p", param->pos_in_query );
 
     switch ( param->CType )
     {
@@ -364,6 +368,47 @@ char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param)
         case SQL_C_CHAR:
             convert= 1;
             break;
+
+        case SQL_C_WCHAR:
+          {
+            /* Convert SQL_C_WCHAR (utf-16 or utf-32) to utf-8. */
+            char *to;
+            int i= 0;
+
+            /* Use buff if it is big enough, otherwise alloc some space. */
+            if (sizeof(buff) >= (size_t)length * 4)
+              to= buff;
+            else
+            {
+              if (!(to= (char *)my_malloc(length * 4, MYF(0))))
+                return 0;
+              free_data= TRUE;
+            }
+
+            if (sizeof(SQLWCHAR) == 4)
+            {
+              UTF32 *in= (UTF32 *)data;
+              data= to;
+              while (i < length)
+                to+= utf32toutf8(in[i++], (UTF8 *)to);
+            }
+            else
+            {
+              UTF16 *in= (UTF16 *)data;
+              data= to;
+              while (i < length)
+              {
+                UTF32 c;
+                i+= utf16toutf32(in + i, &c);
+                to+= utf32toutf8(c, (UTF8 *)to);
+              }
+            }
+
+            length= to - data;
+
+            break;
+          }
+
         case SQL_C_BIT:
         case SQL_C_TINYINT:
         case SQL_C_STINYINT:
@@ -478,8 +523,11 @@ char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param)
         case SQL_TYPE_DATE:
         case SQL_TYPE_TIMESTAMP:
         case SQL_TIMESTAMP:
-            if ( data[0] == '{' )       /* Of type {d date } */
-                return add_to_buffer(net,to,data,length);
+            if (data[0] == '{')       /* Of type {d date } */
+            {
+              to= add_to_buffer(net, to, data, length);
+              break;
+            }
             /* else threat as a string */
         case SQL_CHAR:
         case SQL_VARCHAR:
@@ -491,13 +539,15 @@ char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param)
         case SQL_WVARCHAR:
         case SQL_WLONGVARCHAR:
             {
+              if (param->CType == SQL_C_WCHAR)
+                to= add_to_buffer(net, to, "_utf8", 5);
               to= add_to_buffer(net,to,"'",1);
               /* Make sure we have room for a fully-escaped string. */
               if (!(to= extend_buffer(net, to, length * 2)))
                 return 0;
               to+= mysql_real_escape_string(mysql, to, data, length);
               to= add_to_buffer(net, to, "'", 1);
-              return to;
+              break;
             }
         case SQL_TIME:
         case SQL_TYPE_TIME:
@@ -506,7 +556,7 @@ char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param)
             {
                 TIMESTAMP_STRUCT *time= (TIMESTAMP_STRUCT*) param->buffer;
                 sprintf(buff,"'%02d:%02d:%02d'",time->hour,time->minute,time->second);
-                return add_to_buffer(net,to,buff,10);
+                to= add_to_buffer(net, to, buff, 10);
             }
             else
             {
@@ -515,8 +565,9 @@ char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param)
                         (int) time/10000,
                         (int) time/100%100,
                         (int) time%100);
-                return add_to_buffer(net,to,buff,10);
+                to= add_to_buffer(net, to, buff, 10);
             }
+            break;
         case SQL_FLOAT:
         case SQL_REAL:
         case SQL_DOUBLE:
@@ -543,8 +594,13 @@ char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param)
             }
             /* Fall through */
         default:
-            return add_to_buffer(net,to,data,length);
+            to= add_to_buffer(net, to, data, length);
     }
+
+    if (free_data)
+      my_free(data, MYF(0));
+
+    return to;
 }
 
 

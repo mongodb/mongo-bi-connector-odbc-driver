@@ -98,6 +98,11 @@ SQLRETURN copy_binary_result(SQLSMALLINT HandleType, SQLHANDLE handle,
 			     SQLLEN *pcbValue, char *src,
 			     ulong src_length, ulong max_length,
 			     ulong *offset);
+SQLRETURN copy_wchar_result(SQLSMALLINT HandleType, SQLHANDLE handle,
+                            SQLWCHAR *rgbValue, SQLINTEGER cbValueMax,
+                            SQLLEN *pcbValue, char *src,
+                            long src_length, long max_length,
+                            long fill_length, ulong *offset);
 SQLRETURN set_dbc_error(DBC FAR *dbc, char *state,const char *message,uint errcode);
 SQLRETURN set_stmt_error(STMT *stmt, char *state,const char *message,uint errcode);
 void translate_error(char *save_state,myodbc_errid errid,uint mysql_err);
@@ -178,5 +183,17 @@ void end_query_log(FILE *query_log);
 #else
 #define cmp_database(A,B) strcmp((A),(B))
 #endif
+
+/* Unicode transcoding */
+typedef unsigned int UTF32;
+typedef unsigned short UTF16;
+typedef unsigned char UTF8;
+
+extern CHARSET_INFO *utf8_charset_info;
+
+int utf16toutf32(UTF16 *i, UTF32 *u);
+int utf32toutf16(UTF32 i, UTF16 *u);
+int utf8toutf32(UTF8 *i, UTF32 *u);
+int utf32toutf8(UTF32 i, UTF8 *c);
 
 #endif /* __MYUTIL_H__ */
