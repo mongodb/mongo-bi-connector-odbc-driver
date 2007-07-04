@@ -35,10 +35,14 @@ DECLARE_TEST(t_odbc3_envattr)
     rc = SQLGetEnvAttr(henv1,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)&ov_version,0,0);
     myenv(henv1,rc);
     printMessage("default odbc version:%d\n",ov_version);
+#ifdef _WIN32
+    my_assert(ov_version == SQL_OV_ODBC3);
+#else
+    my_assert(ov_version == SQL_OV_ODBC2);
+#endif
 
     rc = SQLSetEnvAttr(henv1,SQL_ATTR_ODBC_VERSION,(SQLPOINTER)SQL_OV_ODBC3,0);
     myenv(henv1,rc);
-    my_assert(ov_version == SQL_OV_ODBC2);
 
     rc = SQLAllocConnect(henv1,&hdbc1);
     myenv(henv1,rc);

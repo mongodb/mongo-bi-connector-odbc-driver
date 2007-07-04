@@ -1276,6 +1276,8 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     MYODBCDbgInfo( "current top-row: %ld", stmt->current_row );
     MYODBCDbgInfo( "rows_found: %ld", stmt->rows_found_in_set );
 
+    cur_row = stmt->current_row;
+
     if ( stmt->stmt_options.cursor_type == SQL_CURSOR_FORWARD_ONLY )
     {
         if ( fFetchType != SQL_FETCH_NEXT && !(stmt->dbc->flag & FLAG_SAFE) )
