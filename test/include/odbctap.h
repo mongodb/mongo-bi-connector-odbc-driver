@@ -31,9 +31,12 @@
 #include "mytest3.h"
 
 #include <stdarg.h>
-#ifndef WIN32
-#include <unistd.h>
-#include <signal.h>
+#ifdef WIN32
+#  include <windows.h>
+#  define sleep(x) Sleep(x*1000)
+#else
+#  include <unistd.h>
+#  include <signal.h>
 #endif
 
 #undef printMessage
