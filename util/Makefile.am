@@ -30,4 +30,5 @@ libmyodbc3u_la_SOURCES += \
 endif
 
 EXTRA_DIST = \
-	util.pro
+	util.pro \
+	CMakeLists.txt

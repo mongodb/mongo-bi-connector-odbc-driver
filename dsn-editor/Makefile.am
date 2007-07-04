@@ -26,4 +26,5 @@ endif
 EXTRA_DIST = \
 	main.cpp \
 	myodbc3c.icns \
-	dsn-editor.pro
+	dsn-editor.pro \
+	CMakeLists.txt

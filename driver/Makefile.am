@@ -111,4 +111,5 @@ EXTRA_DIST =	error.h \
 		myutil.h \
                 driver.pro \
                 myodbc3.def \
-                myodbc3.rc
+                myodbc3.rc \
+		CMakeLists.txt
