@@ -82,24 +82,6 @@ DECLARE_TEST(my_drop_table)
 }
 
 
-void check_sqlstate(SQLHSTMT hstmt,SQLCHAR *sqlstate)
-{
-    SQLCHAR     sql_state[6];
-    SQLINTEGER    err_code=0;
-    SQLCHAR         err_msg[SQL_MAX_MESSAGE_LENGTH]={0};
-    SQLSMALLINT   err_len=0;
-
-    memset(err_msg,'C',SQL_MAX_MESSAGE_LENGTH);
-    SQLGetDiagRec(SQL_HANDLE_STMT,hstmt,1,
-                  (SQLCHAR *)&sql_state,(SQLINTEGER *)&err_code,
-                  (SQLCHAR*)&err_msg, SQL_MAX_MESSAGE_LENGTH-1,
-                  (SQLSMALLINT *)&err_len);
-
-    printMessage("\n\t ERROR: %s\n",err_msg);
-    printMessage("\n SQLSTATE (expected:%s, obtained:%s)\n",sqlstate,sql_state);
-    myassert(strcmp(sql_state,sqlstate)==0);
-
-}
 #define TODBC_BIND_CHAR(n,buf) SQLBindCol(hstmt,n,SQL_C_CHAR,&buf,sizeof(buf),NULL);
 
 
@@ -212,6 +194,14 @@ DECLARE_TEST(my_table_dbs)
     mystmt(hstmt,rc);
 
     rc = SQLTables(hstmt,"my_all_db_test%",SQL_NTS,NULL,0,NULL,0,NULL,0);
+    mystmt(hstmt,rc);
+
+    assert(0 == my_print_non_format_result(hstmt));
+    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
+    mystmt(hstmt,rc);
+
+    /* unknown table should be empty */
+    rc = SQLTables(hstmt,"my_all_db_test%",SQL_NTS,NULL,0,"xyz",SQL_NTS,NULL,0);
     mystmt(hstmt,rc);
 
     assert(0 == my_print_non_format_result(hstmt));
@@ -1064,6 +1054,30 @@ DECLARE_TEST(bug8860)
   return OK;
 }
 
+/**
+ Bug #26934: SQLTables behavior has changed
+*/
+DECLARE_TEST(t_bug26934)
+{
+  HENV henv1;
+  HDBC hdbc1;
+  HSTMT hstmt1;
+
+  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  ok_sql(hstmt1, "SET @@wait_timeout = 1");
+  sleep(2);
+  expect_stmt(hstmt1, SQLTables(hstmt1, "%", 1, NULL, SQL_NTS, NULL, SQL_NTS,
+                                NULL, SQL_NTS), SQL_ERROR);
+  if (check_sqlstate(hstmt1, "08S01") != OK)
+    return FAIL;
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -1083,6 +1097,7 @@ BEGIN_TESTS
   ADD_TEST(bug15713)
   ADD_TEST(t_bug28316)
   ADD_TEST(bug8860)
+  ADD_TEST(t_bug26934)
 END_TESTS
 
 

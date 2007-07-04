@@ -8,11 +8,13 @@ extern "C"
 {
 #endif
 
+#define DONT_DEFINE_VOID
 #include <my_global.h>
 #include <my_sys.h>
 #include <mysql.h>
 #include <my_list.h>
 #include <m_string.h>
+#include <mysqld_error.h>
 
 #if MYSQL_VERSION_ID < MIN_MYSQL_VERSION
 error "MyODBC need a newer version of the MYSQL client library to compile"

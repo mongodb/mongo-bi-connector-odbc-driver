@@ -349,6 +349,23 @@ do { \
 } while (0);
 
 
+int check_sqlstate(SQLHSTMT hstmt, char *sqlstate)
+{
+  SQLCHAR     sql_state[6];
+  SQLINTEGER  err_code= 0;
+  SQLCHAR     err_msg[SQL_MAX_MESSAGE_LENGTH]= {0};
+  SQLSMALLINT err_len= 0;
+
+  memset(err_msg, 'C', SQL_MAX_MESSAGE_LENGTH);
+  SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sql_state, &err_code, err_msg,
+                SQL_MAX_MESSAGE_LENGTH - 1, &err_len);
+
+  is_str(sql_state, (SQLCHAR *)sqlstate, 5);
+
+  return OK;
+}
+
+
 /**
 */
 static void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
@@ -418,8 +435,8 @@ void free_basic_handles(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt)
 {
   SQLRETURN rc;
 
-  rc= SQLEndTran(SQL_HANDLE_DBC, *hdbc, SQL_COMMIT);
-  mycon(*hdbc, rc);
+  /* We don't care if this succeeds, the connection may have gone away. */
+  (void)SQLEndTran(SQL_HANDLE_DBC, *hdbc, SQL_COMMIT);
 
   rc= SQLFreeStmt(*hstmt, SQL_DROP);
   mystmt(*hstmt,rc);

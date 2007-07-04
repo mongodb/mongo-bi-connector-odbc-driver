@@ -100,6 +100,8 @@ SQLRETURN copy_binary_result(SQLSMALLINT HandleType, SQLHANDLE handle,
 			     ulong *offset);
 SQLRETURN set_dbc_error(DBC FAR *dbc, char *state,const char *message,uint errcode);
 SQLRETURN set_stmt_error(STMT *stmt, char *state,const char *message,uint errcode);
+SQLRETURN handle_connection_error(STMT *stmt);
+void set_mem_error(MYSQL *mysql);
 void translate_error(char *save_state,myodbc_errid errid,uint mysql_err);
 int unireg_to_sql_datatype(STMT FAR *stmt, MYSQL_FIELD *field, char *buff,
 			   ulong *transfer_length,ulong *precision,

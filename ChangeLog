@@ -22,6 +22,9 @@
   * Calling SQLGetDiagField with RecNumber 0,DiagIdentifier
     NOT 0 returns SQL_ERROR (Bug #16224)
   * Correctly return error if SQLBindCol is called with an invalid column
+  * Fixed error handling of OOM and bad connections in catalog functions.
+    This might raise errors in code paths that had ignored them in the past.
+    Gathered the logic for internal result sets into one place. (Bug #26934)
 
 ----
 
