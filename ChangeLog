@@ -1,3 +1,28 @@
+Guffert TODO
+
+  Functionality to add or change:
+  * Add support for Unicode data (SQL_C_WCHAR):
+    http://msdn2.microsoft.com/en-us/library/ms714102.aspx
+  * Add support for Unicode functions:
+    http://msdn2.microsoft.com/en-us/library/ms716246.aspx
+  * Add support for SQL_NUMERIC_STRUCT:
+    http://msdn2.microsoft.com/en-us/library/ms714556.aspx
+  * Replace installer library with new implementation (from v5 tree)
+  * Implement native Windows setup library
+  * Implement native Mac OS X setup library
+  * Replace OPTIONS flags with individual DSN settings (but support OPTIONS
+    for backwards-compatibility)
+  * Fix support for SQLBIGINT:
+    http://msdn2.microsoft.com/en-us/library/ms714121.aspx
+  * Add descriptor support:
+    http://msdn2.microsoft.com/en-us/library/ms716339.aspx
+  * Make diagnostics support standards-compliant:
+    http://msdn2.microsoft.com/en-us/library/ms711021.aspx
+  * Add support for SQL_ATTR_METADATA_ID:
+    http://msdn2.microsoft.com/en-us/library/ms716447.aspx
+
+----
+
 3.51.17
 
   Functionality added or changed:
