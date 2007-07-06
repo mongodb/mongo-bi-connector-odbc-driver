@@ -604,7 +604,7 @@ get_col_attr(SQLHSTMT     StatementHandle,
         CharacterAttributePtr= nparam;
 
     if ( !NumericAttributePtr )
-        NumericAttributePtr= strparam;
+        NumericAttributePtr= &strparam;
 
     if ( (error= check_result(stmt)) != SQL_SUCCESS )
         MYODBCDbgReturnReturn(error);
