@@ -110,7 +110,7 @@ int main(int argc, char **argv) \
   SQLHENV  henv; \
   SQLHDBC  hdbc; \
   SQLHSTMT hstmt; \
-  int      i, num_tests; \
+  int      i, num_tests, failcnt= 0; \
   ENABLE_ALARMS; \
 \
   /* Set from environment, possibly overrided by command line */ \
@@ -156,6 +156,8 @@ int main(int argc, char **argv) \
            (tests[i].expect == FAIL ? "# TODO" : \
             rc == SKIP ? "# SKIP " : ""), \
            SKIP_REASON ? SKIP_REASON : ""); \
+    if (rc == FAIL != tests[i].expect) \
+      failcnt++; \
     SKIP_REASON= NULL; /* Reset SKIP_REASON */ \
     /* Re-allocate statement to reset all its properties. */ \
     SQLFreeStmt(hstmt, SQL_DROP); \
@@ -164,7 +166,7 @@ int main(int argc, char **argv) \
 \
   free_basic_handles(&henv,&hdbc,&hstmt); \
 \
-  exit(0); \
+  exit(failcnt); \
 }
 
 
