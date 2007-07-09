@@ -290,6 +290,26 @@ DECLARE_TEST(bind_invalidcol)
 }
 
 
+/*
+ * Test that calling SQLGetData() without a nullind ptr
+ * when the data is null returns an error.
+ */
+DECLARE_TEST(getdata_need_nullind)
+{
+  SQLINTEGER i;
+  ok_sql(hstmt, "select 1 as i , null as j ");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  
+  /* that that nullind ptr is ok when data isn't null */
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_LONG, &i, 0, NULL));
+
+  /* now that it's an error */
+  expect_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_LONG, &i, 0, NULL),
+              SQL_ERROR);
+  return check_sqlstate(hstmt, "22002");
+}
+
+
 BEGIN_TESTS
 #ifndef NO_DRIVERMANAGER
   ADD_TEST(t_odbc2_error)
@@ -302,6 +322,7 @@ BEGIN_TESTS
   ADD_TODO(t_bug3456)
   ADD_TEST(t_bug16224)
   ADD_TEST(bind_invalidcol)
+  ADD_TEST(getdata_need_nullind)
 END_TESTS
 
 RUN_TESTS

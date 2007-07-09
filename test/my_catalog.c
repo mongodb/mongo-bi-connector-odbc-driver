@@ -90,6 +90,7 @@ DECLARE_TEST(my_table_dbs)
     SQLCHAR    database[100];
     SQLRETURN  rc;
     SQLINTEGER nrows;
+    SQLLEN lenOrNull;
 
     SQLExecDirect(hstmt, "DROP DATABASE my_all_db_test1",   SQL_NTS);
     SQLExecDirect(hstmt, "DROP DATABASE my_all_db_test2",   SQL_NTS);
@@ -133,31 +134,31 @@ DECLARE_TEST(my_table_dbs)
     memset(database,0,100);
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,(SQLCHAR *)&database,100,NULL);
     mystmt(hstmt,rc);
-    printMessage("\n database: %s", database);
+    printMessage("\n catalog: %s", database);
 
     memset(database,0,100);
-    rc = SQLGetData(hstmt,2,SQL_C_CHAR,(SQLCHAR *)&database,100,NULL);
+    rc = SQLGetData(hstmt,2,SQL_C_CHAR,(SQLCHAR *)&database,100,&lenOrNull);
+    mystmt(hstmt,rc);
+    printMessage("\n schema: %s", database); 
+    myassert(lenOrNull == SQL_NULL_DATA);
+
+    memset(database,0,100);
+    rc = SQLGetData(hstmt,3,SQL_C_CHAR,(SQLCHAR *)&database,100,&lenOrNull);
     mystmt(hstmt,rc);
     printMessage("\n table: %s", database); 
-    myassert(strcmp(database,"")==0);
+    myassert(lenOrNull == SQL_NULL_DATA);
 
     memset(database,0,100);
-    rc = SQLGetData(hstmt,3,SQL_C_CHAR,(SQLCHAR *)&database,100,NULL);
+    rc = SQLGetData(hstmt,4,SQL_C_CHAR,(SQLCHAR *)&database,100,&lenOrNull);
     mystmt(hstmt,rc);
-    printMessage("\n table: %s", database); 
-    myassert(strcmp(database,"")==0);
+    printMessage("\n type: %s", database); 
+    myassert(lenOrNull == SQL_NULL_DATA);
 
     memset(database,0,100);
-    rc = SQLGetData(hstmt,4,SQL_C_CHAR,(SQLCHAR *)&database,100,NULL);
-    mystmt(hstmt,rc);
-    printMessage("\n table: %s", database); 
-    myassert(strcmp(database,"")==0);
-
-    memset(database,0,100);
-    rc = SQLGetData(hstmt,5,SQL_C_CHAR, (SQLCHAR*)&database,100,NULL);
+    rc = SQLGetData(hstmt,5,SQL_C_CHAR, (SQLCHAR*)&database,100,&lenOrNull);
     mystmt(hstmt,rc);
     printMessage("\n database remark: %s", database);
-    myassert(strcmp(database,"")==0);
+    myassert(lenOrNull == SQL_NULL_DATA);
 
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);

@@ -5,6 +5,8 @@
     set for a connection. This must be used instead of a "SET NAMES"
     statement. Also available from the GUI setup dialog. (Related
     to Bug #6667 and Bug #9498.)
+  * Dis-allow NULL ptr for null indicator when calling SQLGetData()
+    if value is null. Now returns SQL_ERROR w/state 22002.
 
   Bugs fixed:
   * Multiple result sets were not correctly flushed when a statement

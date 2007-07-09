@@ -69,13 +69,19 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
 {
   SQLLEN tmp;
 
-  if (!pcbValue)
-    pcbValue= &tmp; /* Easier code */
-
   if (!value)
+  {
+    /* pcbValue must be available if its NULL */
+    if (!pcbValue)
+      return set_stmt_error(stmt,"22002","Null indicator must be present",0);
+
     *pcbValue= SQL_NULL_DATA;
+  }
   else
   {
+    if (!pcbValue)
+      pcbValue= &tmp; /* Easier code */
+
     switch (fCType) {
     case SQL_C_CHAR:
       /* Handle BLOB -> CHAR conversion */
@@ -1436,6 +1442,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                 if ( bind->rgbValue || bind->pcbValue )
                 {
                     ulong offset,pcb_offset;
+                    SQLLEN pcbValue;
                     if ( stmt->stmt_options.bind_type == SQL_BIND_BY_COLUMN )
                     {
                         offset= bind->cbValueMax*i;
@@ -1449,7 +1456,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                                                  bind->field,
                                                  (bind->rgbValue ? (char*) bind->rgbValue + offset : 0),
                                                  bind->cbValueMax,
-                                                 (bind->pcbValue ? (SQLLEN*) ((char*) bind->pcbValue + pcb_offset) : 0),
+                                                 &pcbValue,
                                                  *values,
                                                  (lengths ? *lengths : *values ? strlen(*values) : 0) ) )
                          != SQL_SUCCESS )
@@ -1462,6 +1469,8 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                         else
                             res= SQL_ERROR;
                     }
+                    if (bind->pcbValue)
+                      *(bind->pcbValue + pcb_offset) = pcbValue;
                 }
                 if ( lengths )
                     lengths++;
