@@ -1014,7 +1014,7 @@ DECLARE_TEST(bug8860)
   ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0));
 
   /* We should have at least two rows. There may be more. */
-  is(myrowcount(hstmt) > 2);
+  is(myrowcount(hstmt) >= 2);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
