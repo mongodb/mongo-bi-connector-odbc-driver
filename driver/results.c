@@ -73,7 +73,8 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
   {
     /* pcbValue must be available if its NULL */
     if (!pcbValue)
-      return set_stmt_error(stmt,"22002","Null indicator must be present",0);
+      return set_stmt_error(stmt,"22002",
+                            "Indicator variable required but not supplied",0);
 
     *pcbValue= SQL_NULL_DATA;
   }
