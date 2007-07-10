@@ -302,7 +302,7 @@ BOOL MYODBCUtilReadDataSource( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszDSN
         Some people have reported that the friendly driver name is never found so...
     */
     if ( !pDataSource->pszDRIVER )
-        pDataSource->pszDRIVER = MYODBCINST_DRIVER_NAME;
+        pDataSource->pszDRIVER = _global_strdup(MYODBCINST_DRIVER_NAME);
 #endif
 
 #if defined(WIN32)

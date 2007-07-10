@@ -27,6 +27,7 @@
   * Fixed error handling of OOM and bad connections in catalog functions.
     This might raise errors in code paths that had ignored them in the past.
     Gathered the logic for internal result sets into one place. (Bug #26934)
+  * Fixed bad use of memory related to setup/util/GUI. (Bug #27315)
 
 ----
 

@@ -83,7 +83,7 @@ BOOL INSTAPI ConfigDSN( HWND hWnd, WORD nRequest, LPCSTR pszDriver, LPCSTR pszAt
         goto exitConfigDSN;
     }
 
-    pDataSource->pszDRIVER = (char *)strdup( pszDriver );
+    pDataSource->pszDRIVER = (char *)_global_strdup( pszDriver );
 
     switch ( nRequest )
     {

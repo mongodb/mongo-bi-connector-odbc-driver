@@ -67,7 +67,7 @@ BOOL MYODBCSetupDriverConnectPrompt( SQLHDBC hDBC, HWND hWnd, MYODBCUTIL_DATASOU
 // METHOD 2 (tested to work on XP)
         int     argc    = 1;
         char *  argv[]  = { pszAppName, NULL };
-        static QApplication app( argc, argv );
+        QApplication app( argc, argv );
 
         // We are most likely to come in this route as caller is unlikely to have a qApp */ 
         MYODBCSetupDataSourceDialog dialogDataSource( NULL, hDBC, pDataSource );

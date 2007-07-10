@@ -269,7 +269,7 @@ void MYODBCSetupDataSourceDialog::slotOk()
 
         if ( nFlags > 0 )
         {
-            pDataSource->pszOPTION = (char*)malloc( 50 );
+            pDataSource->pszOPTION = (char*)_global_alloc(50);
             sprintf( pDataSource->pszOPTION, "%d", nFlags );
         }
     }
