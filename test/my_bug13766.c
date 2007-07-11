@@ -87,10 +87,10 @@ DECLARE_TEST(bug13766_result)
     /* 0000-10-00 */
     is_num(xdate[i].year, 0);
     is_num(xdate[i].month, 10);
-    is_num(xdate[i].day, 0);
+    is_num(xdate[i].day, 1);
     is_num(xts[i].year, 0);
     is_num(xts[i].month, 10);
-    is_num(xts[i].day, 0);
+    is_num(xts[i].day, 1);
     i++;
     /* 0000-00-10 */
     is_num(xdate[i].year, 0);
