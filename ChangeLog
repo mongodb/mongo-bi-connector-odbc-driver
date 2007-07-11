@@ -9,8 +9,8 @@
     if value is null. Now returns SQL_ERROR w/state 22002.
 
   Bugs fixed:
-  * myodbc3i did not correctly format DSN when installing driver,
-    which could cause the installation to fail. (Bug #29709)
+  * myodbc3i did not correctly format driver info, which could cause the
+    installation to fail. (Bug #29709)
   * Multiple result sets were not correctly flushed when a statement
     handle was closed. (Bug #16817)
   * SQLProcedures() did not handle NULL parameters, which could lead to 
