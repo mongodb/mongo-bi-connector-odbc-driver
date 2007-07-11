@@ -778,6 +778,8 @@ DECLARE_TEST(t_bug10562)
   ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_BINARY, blobcheck, bsize, NULL));
   is(!memcmp(blob, blobcheck, bsize));
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
   ok_sql(hstmt, "drop table if exists t_bug10562");
   free(blob);
   free(blobcheck);
