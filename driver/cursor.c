@@ -818,7 +818,7 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
         field= mysql_fetch_field_direct(result,ncol);
         bind= stmt->bind+ncol;
 
-        if ( bind && !bind->field )
+        if (!stmt->bind || (bind && !bind->field))
         {
           ignore_count++;
           continue;
@@ -1129,8 +1129,7 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
     SQLUINTEGER  insert_count= 1;           /* num rows to insert - will be real value when row is 0 (all)  */
     SQLUINTEGER  count= 0;                  /* current row                                                  */
     SQLLEN       length;
-    MYSQL        mysql= stmt->dbc->mysql;
-    NET         *net= &mysql.net;
+    NET         *net= &stmt->dbc->mysql.net;
     SQLUSMALLINT ncol;
     SQLCHAR      *to;
     ulong        query_length= 0;           /* our original query len so we can reset pos if break_insert   */

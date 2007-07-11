@@ -751,6 +751,40 @@ DECLARE_TEST(t_bug9781)
 }
 
 
+/*
+ * Bug #10562 - Large blobs fail in a cursor
+ */
+DECLARE_TEST(t_bug10562)
+{
+  SQLLEN bsize = 12 * 1024;
+  /* Test to just insert 12k blob */
+  SQLCHAR *blob = malloc(bsize);
+  SQLCHAR *blobcheck = malloc(bsize);
+  memset(blob, 'X', bsize);
+
+  ok_sql(hstmt, "drop table if exists t_bug10562");
+  ok_sql(hstmt, "create table t_bug10562 ( id int not null primary key, mb longblob )");
+  ok_sql(hstmt, "insert into t_bug10562 (mb) values ('zzzzzzzzzz')");
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "select id, mb from t_bug10562", SQL_NTS));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_BINARY, blob, bsize, &bsize));
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* Get the data back out to verify */
+  ok_sql(hstmt, "select mb from t_bug10562");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_BINARY, blobcheck, bsize, NULL));
+  is(!memcmp(blob, blobcheck, bsize));
+
+  ok_sql(hstmt, "drop table if exists t_bug10562");
+  free(blob);
+  free(blobcheck);
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_blob)
   ADD_TEST(t_1piecewrite2)
@@ -762,6 +796,7 @@ BEGIN_TESTS
   ADD_TEST(t_text_fetch)
   ADD_TEST(getdata_lenonly)
   ADD_TEST(t_bug9781)
+  ADD_TEST(t_bug10562)
 END_TESTS
 
 

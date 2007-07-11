@@ -32,6 +32,9 @@
     dates as the minimum allowed ODBC date (XXXX-01-01). Added another
     option (FLAG_MIN_DATE_TO_ZERO) to mirror this but for bound parameters.
     FLAG_MIN_DATE_TO_ZERO only changes 0000-01-01 to 0000-00-00. (Bug #13766)
+  * Fixed possible crash if SQLBindCol() was not called before SQLSetPos().
+    Fixed use of MYSQL structure pertaining to updating large blobs in
+    cursors. (Bug #10562)
 
 ----
 
