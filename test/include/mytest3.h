@@ -534,7 +534,7 @@ bool driver_supports_setpos(SQLHDBC hdbc)
 /*
   Check for minimal MySQL version
 */
-bool mysql_min_version(SQLHDBC hdbc, SQLCHAR *min_version, unsigned int length)
+bool mysql_min_version(SQLHDBC hdbc, char *min_version, unsigned int length)
 {
     SQLCHAR server_version[MYSQL_NAME_LEN];
     SQLRETURN rc;
@@ -545,7 +545,7 @@ bool mysql_min_version(SQLHDBC hdbc, SQLCHAR *min_version, unsigned int length)
     rc = SQLGetInfo(hdbc,SQL_DBMS_VER,server_version,MYSQL_NAME_LEN,NULL);
     mycon(hdbc, rc);
 
-    if (strncmp((char *)server_version, (char *)min_version, length) >= 0)
+    if (strncmp((char *)server_version, min_version, length) >= 0)
         return true;
 
     return false;
@@ -554,7 +554,7 @@ bool mysql_min_version(SQLHDBC hdbc, SQLCHAR *min_version, unsigned int length)
 /*
   Check for minimal Connector/ODBC version
 */
-bool driver_min_version(SQLHDBC hdbc, SQLCHAR *min_version, unsigned int length)
+bool driver_min_version(SQLHDBC hdbc, char *min_version, unsigned int length)
 {
     SQLCHAR driver_version[MYSQL_NAME_LEN];
     SQLRETURN rc;
@@ -565,7 +565,7 @@ bool driver_min_version(SQLHDBC hdbc, SQLCHAR *min_version, unsigned int length)
     rc = SQLGetInfo(hdbc,SQL_DRIVER_VER,driver_version,MYSQL_NAME_LEN,NULL);
     mycon(hdbc, rc);
 
-    if (strncmp((char *)driver_version, (char *)min_version, length) >= 0)
+    if (strncmp((char *)driver_version, min_version, length) >= 0)
         return true;
 
     return false;
