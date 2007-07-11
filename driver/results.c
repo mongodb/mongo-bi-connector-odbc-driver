@@ -231,7 +231,8 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
         SQL_DATE_STRUCT tmp_date;
         if (!rgbValue)
           rgbValue= (char *)&tmp_date;
-        if (!str_to_date((SQL_DATE_STRUCT *)rgbValue, value, length))
+        if (!str_to_date((SQL_DATE_STRUCT *)rgbValue, value,
+                         length, stmt->dbc->flag & FLAG_ZERO_DATE_TO_MIN))
           *pcbValue= sizeof(SQL_DATE_STRUCT);
         else
           *pcbValue= SQL_NULL_DATA;  /* ODBC can't handle 0000-00-00 dates */
@@ -244,7 +245,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
           field->type == MYSQL_TYPE_DATETIME)
       {
         SQL_TIMESTAMP_STRUCT ts;
-        if (str_to_ts(&ts, value))
+        if (str_to_ts(&ts, value, stmt->dbc->flag & FLAG_ZERO_DATE_TO_MIN))
           *pcbValue= SQL_NULL_DATA;
         else
         {
@@ -319,7 +320,8 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
       }
       else
       {
-        if (str_to_ts((SQL_TIMESTAMP_STRUCT *)rgbValue, value))
+        if (str_to_ts((SQL_TIMESTAMP_STRUCT *)rgbValue, value,
+                      stmt->dbc->flag & FLAG_ZERO_DATE_TO_MIN))
           *pcbValue= SQL_NULL_DATA;
         else
           *pcbValue= sizeof(SQL_TIMESTAMP_STRUCT);

@@ -157,6 +157,8 @@ extern "C"
  /* Force auto-reconnect */
 #define FLAG_AUTO_RECONNECT   (FLAG_SAFE << 5)
 #define FLAG_AUTO_IS_NULL     (FLAG_SAFE << 6) /* 8388608 Enables SQL_AUTO_IS_NULL */
+#define FLAG_ZERO_DATE_TO_MIN (1 << 24) /* Convert XXXX-00-00 date to ODBC min date on results */
+#define FLAG_MIN_DATE_TO_ZERO (1 << 25) /* Convert ODBC min date to 0000-00-00 on query */
 
 /* We don't make any assumption about what the default may be. */
 #ifndef DEFAULT_TXN_ISOLATION

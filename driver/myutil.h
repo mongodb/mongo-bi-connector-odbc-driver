@@ -86,7 +86,7 @@ SQLRETURN my_pos_delete(STMT FAR *stmt,STMT FAR *stmtParam,
 SQLRETURN my_pos_update(STMT FAR *stmt,STMT FAR *stmtParam,
 			SQLUSMALLINT irow,DYNAMIC_STRING *dynStr);
 char *check_if_positioned_cursor_exists(STMT FAR *stmt, STMT FAR **stmtNew);
-char *insert_param(MYSQL *mysql, char *to,PARAM_BIND *param);
+char *insert_param(DBC *dbc, char *to,PARAM_BIND *param);
 char *add_to_buffer(NET *net,char *to,char *from,ulong length);
 SQLRETURN copy_lresult(SQLSMALLINT HandleType, SQLHANDLE handle,
 		       SQLCHAR FAR *rgbValue, SQLINTEGER cbValueMax,
@@ -121,8 +121,9 @@ SQLRETURN copy_stmt_error(STMT FAR *src, STMT FAR *dst);
 int unireg_to_c_datatype(MYSQL_FIELD *field);
 int default_c_type(int sql_data_type);
 ulong bind_length(int sql_data_type,ulong length);
-my_bool str_to_date(SQL_DATE_STRUCT *rgbValue, const char *str,uint length);
-my_bool str_to_ts(SQL_TIMESTAMP_STRUCT *ts, const char *str);
+my_bool str_to_date(SQL_DATE_STRUCT *rgbValue, const char *str,
+                    uint length, int zeroToMin);
+my_bool str_to_ts(SQL_TIMESTAMP_STRUCT *ts, const char *str, int zeroToMin);
 my_bool str_to_time_st(SQL_TIME_STRUCT *ts, const char *str);
 ulong str_to_time_as_long(const char *str,uint length);
 void init_getfunctions(void);

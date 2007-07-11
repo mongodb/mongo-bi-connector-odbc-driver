@@ -59,7 +59,8 @@ my_scroll \
 my_tran \
 my_types \
 my_unixodbc \
-my_use_result
+my_use_result \
+my_bug13766
 
 noinst_PROGRAMS= $(tap_tests)
 

@@ -776,7 +776,7 @@ ulong bind_length(int sql_data_type,ulong length)
   @purpose : convert a possible string to a timestamp value
 */
 
-my_bool str_to_ts(SQL_TIMESTAMP_STRUCT *ts, const char *str)
+my_bool str_to_ts(SQL_TIMESTAMP_STRUCT *ts, const char *str, int zeroToMin)
 { 
     uint year, length;
     char buff[15],*to;
@@ -817,8 +817,17 @@ my_bool str_to_ts(SQL_TIMESTAMP_STRUCT *ts, const char *str)
 
     year= (digit(buff[0])*1000+digit(buff[1])*100+digit(buff[2])*10+digit(buff[3]));
 
-    if ( buff[4] == '0' && buff[5] == '0' )
+    if (!strncmp(&buff[4], "00", 2) || !strncmp(&buff[6], "00", 2))
+    {
+      if (!zeroToMin) /* Don't convert invalid */
         return 1;
+
+      /* convert invalid to min allowed */
+      if (!strncmp(&buff[4], "00", 2))
+        buff[5]= '1';
+      if (!strncmp(&buff[6], "00", 2))
+        buff[7]= '1';
+    }
 
     ts->year=   year;
     ts->month=  digit(buff[4])*10+digit(buff[5]);
@@ -857,10 +866,13 @@ my_bool str_to_time_st(SQL_TIME_STRUCT *ts, const char *str)
 
 /*
   @type    : myodbc internal
-  @purpose : convert a possible string to a data value
+  @purpose : convert a possible string to a data value. if
+             zeroToMin is specified, YEAR-00-00 dates will be
+             converted to the min valid ODBC date
 */
 
-my_bool str_to_date(SQL_DATE_STRUCT *rgbValue, const char *str,uint length)
+my_bool str_to_date(SQL_DATE_STRUCT *rgbValue, const char *str,
+                    uint length, int zeroToMin)
 {
     uint field_length,year_length,digits,i,date[3];
     const char *pos;
@@ -889,14 +901,24 @@ my_bool str_to_date(SQL_DATE_STRUCT *rgbValue, const char *str,uint length)
             str++;
         field_length= 1;   /* Rest fields can only be 2 */
     }
-    if ( i <= 1 || date[1] == 0 )   /* Wrong date */
+    if (i <= 1 || (i > 1 && !date[1]) || (i > 2 && !date[2]))
+    {
+      if (!zeroToMin) /* Convert? */
         return 1;
-    while ( i < 3 )
+
+      rgbValue->year=  date[0];
+      rgbValue->month= (i > 1 && date[1]) ? date[1] : 1;
+      rgbValue->day=   (i > 2 && date[2]) ? date[2] : 1;
+    }
+    else
+    {
+      while ( i < 3 )
         date[i++]= 1;
 
-    rgbValue->year=  date[0];
-    rgbValue->month= date[1];
-    rgbValue->day=   date[2];
+      rgbValue->year=  date[0];
+      rgbValue->month= date[1];
+      rgbValue->day=   date[2];
+    }
     return 0;
 }
 
@@ -905,7 +927,7 @@ my_bool str_to_date(SQL_DATE_STRUCT *rgbValue, const char *str,uint length)
   @type    : myodbc internal
   @purpose : convert a time string to a (ulong) value.
   At least following formats are recogniced
-  HHMMSS HHMM HH HH.MM.SS	 {t HH:MM:SS }
+  HHMMSS HHMM HH HH.MM.SS  {t HH:MM:SS }
   @return  : HHMMSS
 */
 

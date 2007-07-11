@@ -28,6 +28,10 @@
     This might raise errors in code paths that had ignored them in the past.
     Gathered the logic for internal result sets into one place. (Bug #26934)
   * Fixed bad use of memory related to setup/util/GUI. (Bug #27315)
+  * Added a new DSN "OPTION" (FLAG_ZERO_DATE_TO_MIN) to retrieve XXXX-00-00
+    dates as the minimum allowed ODBC date (XXXX-01-01). Added another
+    option (FLAG_MIN_DATE_TO_ZERO) to mirror this but for bound parameters.
+    FLAG_MIN_DATE_TO_ZERO only changes 0000-01-01 to 0000-00-00. (Bug #13766)
 
 ----
 
