@@ -63,7 +63,10 @@ readmedir = $(pkgdatadir)
 readme_DATA = \
 	ChangeLog \
 	README \
-	README.debug
+	README.debug \
+	INSTALL \
+	LICENSE.gpl \
+	LICENSE.exceptions
 
 #
 # Create the binary distribution
@@ -93,9 +96,6 @@ snapshot:
 # Note that directories will be copied recursively
 EXTRA_DIST = \
 	$(readme_DATA) \
-	LICENSE.gpl \
-	LICENSE.exceptions \
-	INSTALL \
 	INSTALL.win \
 	BUILD.unix \
 	BUILD.osx \
