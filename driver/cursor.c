@@ -414,14 +414,13 @@ static SQLRETURN copy_rowdata(STMT FAR *stmt, PARAM_BIND  param,
                               NET **net, SQLCHAR **to)
 {
     SQLCHAR *orig_to= *to;
-    MYSQL mysql= stmt->dbc->mysql;
     /* Negative length means either NULL or DEFAULT, so we need 7 chars. */
     SQLUINTEGER length= (*param.actual_len > 0 ? *param.actual_len + 1 : 7);
 
     if ( !(*to= (SQLCHAR *) extend_buffer(*net,(char*) *to,length)) )
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
-    if ( !(*to= (SQLCHAR*) insert_param(&mysql, (char*) *to, &param)) )
+    if ( !(*to= (SQLCHAR*) insert_param(stmt->dbc, (char*) *to, &param)) )
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
     /* We have to remove zero bytes or we have problems! */
@@ -433,7 +432,7 @@ static SQLRETURN copy_rowdata(STMT FAR *stmt, PARAM_BIND  param,
     param.buffer= (gptr) ",";
     *param.actual_len= 1;
 
-    if ( !(*to= (SQLCHAR*) insert_param(&mysql,(char*) *to, &param)) )
+    if ( !(*to= (SQLCHAR*) insert_param(stmt->dbc,(char*) *to, &param)) )
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
     return(SQL_SUCCESS);
@@ -474,13 +473,12 @@ static SQLRETURN copy_field_data(STMT FAR *stmt, PARAM_BIND *param,
 {
     PARAM_BIND dummy;
     SQLLEN     dummy_len= 5; /* sizeof(" AND ") */
-    MYSQL mysql= stmt->dbc->mysql;
     SQLUINTEGER length= *(param->actual_len)+5;
 
     if ( !(*to= (SQLCHAR*) extend_buffer(*net, (char*) *to,length)) )
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
-    if ( !(*to= (SQLCHAR*) insert_param(&mysql, (char*) *to, param)) )
+    if ( !(*to= (SQLCHAR*) insert_param(stmt->dbc, (char*) *to, param)) )
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
     /* Insert " AND ", where clause with multiple search */
@@ -489,7 +487,7 @@ static SQLRETURN copy_field_data(STMT FAR *stmt, PARAM_BIND *param,
     dummy.buffer= (gptr) " AND ";
     dummy.actual_len= &dummy_len;
 
-    if ( !(*to= (SQLCHAR*) insert_param(&mysql, (char*) *to, &dummy)) )
+    if ( !(*to= (SQLCHAR*) insert_param(stmt->dbc, (char*) *to, &dummy)) )
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
     return SQL_SUCCESS;
@@ -820,7 +818,7 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
         field= mysql_fetch_field_direct(result,ncol);
         bind= stmt->bind+ncol;
 
-        if ( bind && !bind->field )
+        if (!stmt->bind || (bind && !bind->field))
         {
           ignore_count++;
           continue;
@@ -1131,8 +1129,7 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
     SQLUINTEGER  insert_count= 1;           /* num rows to insert - will be real value when row is 0 (all)  */
     SQLUINTEGER  count= 0;                  /* current row                                                  */
     SQLLEN       length;
-    MYSQL        mysql= stmt->dbc->mysql;
-    NET         *net= &mysql.net;
+    NET         *net= &stmt->dbc->mysql.net;
     SQLUSMALLINT ncol;
     SQLCHAR      *to;
     ulong        query_length= 0;           /* our original query len so we can reset pos if break_insert   */

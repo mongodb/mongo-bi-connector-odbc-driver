@@ -69,13 +69,20 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
 {
   SQLLEN tmp;
 
-  if (!pcbValue)
-    pcbValue= &tmp; /* Easier code */
-
   if (!value)
+  {
+    /* pcbValue must be available if its NULL */
+    if (!pcbValue)
+      return set_stmt_error(stmt,"22002",
+                            "Indicator variable required but not supplied",0);
+
     *pcbValue= SQL_NULL_DATA;
+  }
   else
   {
+    if (!pcbValue)
+      pcbValue= &tmp; /* Easier code */
+
     switch (fCType) {
     case SQL_C_CHAR:
       /* Handle BLOB -> CHAR conversion */
@@ -232,7 +239,8 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
         SQL_DATE_STRUCT tmp_date;
         if (!rgbValue)
           rgbValue= (char *)&tmp_date;
-        if (!str_to_date((SQL_DATE_STRUCT *)rgbValue, value, length))
+        if (!str_to_date((SQL_DATE_STRUCT *)rgbValue, value,
+                         length, stmt->dbc->flag & FLAG_ZERO_DATE_TO_MIN))
           *pcbValue= sizeof(SQL_DATE_STRUCT);
         else
           *pcbValue= SQL_NULL_DATA;  /* ODBC can't handle 0000-00-00 dates */
@@ -245,7 +253,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
           field->type == MYSQL_TYPE_DATETIME)
       {
         SQL_TIMESTAMP_STRUCT ts;
-        if (str_to_ts(&ts, value))
+        if (str_to_ts(&ts, value, stmt->dbc->flag & FLAG_ZERO_DATE_TO_MIN))
           *pcbValue= SQL_NULL_DATA;
         else
         {
@@ -320,7 +328,8 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
       }
       else
       {
-        if (str_to_ts((SQL_TIMESTAMP_STRUCT *)rgbValue, value))
+        if (str_to_ts((SQL_TIMESTAMP_STRUCT *)rgbValue, value,
+                      stmt->dbc->flag & FLAG_ZERO_DATE_TO_MIN))
           *pcbValue= SQL_NULL_DATA;
         else
           *pcbValue= sizeof(SQL_TIMESTAMP_STRUCT);
@@ -612,7 +621,7 @@ get_col_attr(SQLHSTMT     StatementHandle,
         CharacterAttributePtr= nparam;
 
     if ( !NumericAttributePtr )
-        NumericAttributePtr= strparam;
+        NumericAttributePtr= &strparam;
 
     if ( (error= check_result(stmt)) != SQL_SUCCESS )
         MYODBCDbgReturnReturn(error);
@@ -1284,6 +1293,8 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     MYODBCDbgInfo( "current top-row: %ld", stmt->current_row );
     MYODBCDbgInfo( "rows_found: %ld", stmt->rows_found_in_set );
 
+    cur_row = stmt->current_row;
+
     if ( stmt->stmt_options.cursor_type == SQL_CURSOR_FORWARD_ONLY )
     {
         if ( fFetchType != SQL_FETCH_NEXT && !(stmt->dbc->flag & FLAG_SAFE) )
@@ -1442,6 +1453,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                 if ( bind->rgbValue || bind->pcbValue )
                 {
                     ulong offset,pcb_offset;
+                    SQLLEN pcbValue;
                     if ( stmt->stmt_options.bind_type == SQL_BIND_BY_COLUMN )
                     {
                         offset= bind->cbValueMax*i;
@@ -1455,7 +1467,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                                                  bind->field,
                                                  (bind->rgbValue ? (char*) bind->rgbValue + offset : 0),
                                                  bind->cbValueMax,
-                                                 (bind->pcbValue ? (SQLLEN*) ((char*) bind->pcbValue + pcb_offset) : 0),
+                                                 &pcbValue,
                                                  *values,
                                                  (lengths ? *lengths : *values ? strlen(*values) : 0) ) )
                          != SQL_SUCCESS )
@@ -1468,6 +1480,8 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                         else
                             res= SQL_ERROR;
                     }
+                    if (bind->pcbValue)
+                      *(bind->pcbValue + pcb_offset) = pcbValue;
                 }
                 if ( lengths )
                     lengths++;

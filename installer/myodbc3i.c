@@ -578,8 +578,8 @@ int doAddDriver()
             pszDriverInfo[nChar] = pszAttributes[nChar];
     }
 
-    pszDriverInfo[nChar]    = '\0';
     pszDriverInfo[nChar++]  = '\0';
+    pszDriverInfo[nChar]    = '\0';
 
     /*
         Call ODBC installer to do the work.

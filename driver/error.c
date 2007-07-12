@@ -331,6 +331,40 @@ SQLRETURN set_error(STMT *stmt, myodbc_errid errid, const char *errtext,
 
 /*
   @type    : myodbc3 internal
+  @purpose : sets a my_malloc() failure on a MYSQL* connection
+*/
+void set_mem_error(MYSQL *mysql)
+{
+  mysql->net.last_errno= CR_OUT_OF_MEMORY;
+  strmov(mysql->net.last_error, "Memory allocation failed");
+  strmov(mysql->net.sqlstate, "HY001");
+}
+
+
+/**
+  Handle a connection-related error.
+
+  @param[in]  stmt  Statement
+*/
+SQLRETURN handle_connection_error(STMT *stmt)
+{
+  unsigned int err= mysql_errno(&stmt->dbc->mysql);
+  switch (err) {
+  case CR_SERVER_GONE_ERROR:
+  case CR_SERVER_LOST:
+    return set_stmt_error(stmt, "08S01", mysql_error(&stmt->dbc->mysql), err);
+  case CR_OUT_OF_MEMORY:
+    return set_stmt_error(stmt, "HY001", mysql_error(&stmt->dbc->mysql), err);
+  case CR_COMMANDS_OUT_OF_SYNC:
+  case CR_UNKNOWN_ERROR:
+  default:
+    return set_stmt_error(stmt, "HY000", mysql_error(&stmt->dbc->mysql), err);
+  }
+}
+
+
+/*
+  @type    : myodbc3 internal
   @purpose : sets the error information to appropriate handle.
   it also sets the SQLSTATE based on the ODBC VERSION
 */

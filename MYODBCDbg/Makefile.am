@@ -1,5 +1,5 @@
 SUBDIRS = MYODBCDbgLib
 
 EXTRA_DIST = \
-	MYODBCDbg.pro
-
+	MYODBCDbg.pro \
+	CMakeLists.txt

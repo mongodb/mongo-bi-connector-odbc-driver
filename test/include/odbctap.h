@@ -39,9 +39,12 @@ typedef unsigned char UTF8;
 #include "mytest3.h"
 
 #include <stdarg.h>
-#ifndef WIN32
-#include <unistd.h>
-#include <signal.h>
+#ifdef WIN32
+#  include <windows.h>
+#  define sleep(x) Sleep(x*1000)
+#else
+#  include <unistd.h>
+#  include <signal.h>
 #endif
 
 #undef printMessage
@@ -115,7 +118,7 @@ int main(int argc, char **argv) \
   SQLHENV  henv; \
   SQLHDBC  hdbc; \
   SQLHSTMT hstmt; \
-  int      i, num_tests; \
+  int      i, num_tests, failcnt= 0; \
   ENABLE_ALARMS; \
 \
   /* Set from environment, possibly overrided by command line */ \
@@ -161,6 +164,8 @@ int main(int argc, char **argv) \
            (tests[i].expect == FAIL ? "# TODO" : \
             rc == SKIP ? "# SKIP " : ""), \
            SKIP_REASON ? SKIP_REASON : ""); \
+    if (rc == FAIL != tests[i].expect) \
+      failcnt++; \
     SKIP_REASON= NULL; /* Reset SKIP_REASON */ \
     /* Re-allocate statement to reset all its properties. */ \
     SQLFreeStmt(hstmt, SQL_DROP); \
@@ -169,7 +174,7 @@ int main(int argc, char **argv) \
 \
   free_basic_handles(&henv,&hdbc,&hstmt); \
 \
-  exit(0); \
+  exit(failcnt); \
 }
 
 
@@ -375,6 +380,23 @@ do { \
 } while (0);
 
 
+int check_sqlstate(SQLHSTMT hstmt, char *sqlstate)
+{
+  SQLCHAR     sql_state[6];
+  SQLINTEGER  err_code= 0;
+  SQLCHAR     err_msg[SQL_MAX_MESSAGE_LENGTH]= {0};
+  SQLSMALLINT err_len= 0;
+
+  memset(err_msg, 'C', SQL_MAX_MESSAGE_LENGTH);
+  SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sql_state, &err_code, err_msg,
+                SQL_MAX_MESSAGE_LENGTH - 1, &err_len);
+
+  is_str(sql_state, (SQLCHAR *)sqlstate, 5);
+
+  return OK;
+}
+
+
 /**
 */
 static void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
@@ -444,8 +466,8 @@ void free_basic_handles(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt)
 {
   SQLRETURN rc;
 
-  rc= SQLEndTran(SQL_HANDLE_DBC, *hdbc, SQL_COMMIT);
-  mycon(*hdbc, rc);
+  /* We don't care if this succeeds, the connection may have gone away. */
+  (void)SQLEndTran(SQL_HANDLE_DBC, *hdbc, SQL_COMMIT);
 
   rc= SQLFreeStmt(*hstmt, SQL_DROP);
   mystmt(*hstmt,rc);

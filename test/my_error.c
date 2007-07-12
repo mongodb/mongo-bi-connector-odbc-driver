@@ -23,23 +23,6 @@
 #include "odbctap.h"
 
 
-int check_sqlstate(SQLHDBC hdbc, SQLHSTMT hstmt, char *sqlstate)
-{
-  SQLCHAR     sql_state[6];
-  SQLINTEGER  err_code= 0;
-  SQLCHAR     err_msg[SQL_MAX_MESSAGE_LENGTH]= {0};
-  SQLSMALLINT err_len= 0;
-
-  memset(err_msg, 'C', SQL_MAX_MESSAGE_LENGTH);
-  SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sql_state, &err_code, err_msg,
-                SQL_MAX_MESSAGE_LENGTH - 1, &err_len);
-
-  is_str(sql_state, (SQLCHAR *)sqlstate, 5);
-
-  return OK;
-}
-
-
 DECLARE_TEST(t_odbc3_error)
 {
   SQLHENV henv1;
@@ -63,14 +46,14 @@ DECLARE_TEST(t_odbc3_error)
   ok_con(hdbc1, SQLAllocHandle(SQL_HANDLE_STMT, hdbc1, &hstmt1));
 
   expect_sql(hstmt1, "SELECT * FROM non_existing_table", SQL_ERROR);
-  if (check_sqlstate(hdbc1, hstmt1, "42S02") != OK)
+  if (check_sqlstate(hstmt1, "42S02") != OK)
     return FAIL;
 
   ok_sql(hstmt1, "DROP TABLE IF EXISTS t_error");
   ok_sql(hstmt1, "CREATE TABLE t_error (id INT)");
 
   expect_sql(hstmt1, "CREATE TABLE t_error (id INT)", SQL_ERROR);
-  if (check_sqlstate(hdbc1, hstmt1, "42S01") != OK)
+  if (check_sqlstate(hstmt1, "42S01") != OK)
     return FAIL;
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
@@ -78,7 +61,7 @@ DECLARE_TEST(t_odbc3_error)
   expect_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_FETCH_BOOKMARK_PTR,
                                      (SQLPOINTER)NULL, 0),
               SQL_ERROR);
-  if (check_sqlstate(hdbc1, hstmt1, "HYC00") != OK)
+  if (check_sqlstate(hstmt1, "HYC00") != OK)
     return FAIL;
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
@@ -118,14 +101,14 @@ DECLARE_TEST(t_odbc2_error)
   ok_con(hdbc1, SQLAllocHandle(SQL_HANDLE_STMT, hdbc1, &hstmt1));
 
   expect_sql(hstmt1, "SELECT * FROM non_existing_table", SQL_ERROR);
-  if (check_sqlstate(hdbc1, hstmt1, "S0002") != OK)
+  if (check_sqlstate(hstmt1, "S0002") != OK)
     return FAIL;
 
   ok_sql(hstmt1, "DROP TABLE IF EXISTS t_error");
   ok_sql(hstmt1, "CREATE TABLE t_error (id INT)");
 
   expect_sql(hstmt1, "CREATE TABLE t_error (id INT)", SQL_ERROR);
-  if (check_sqlstate(hdbc1, hstmt1, "S0001") != OK)
+  if (check_sqlstate(hstmt1, "S0001") != OK)
     return FAIL;
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
@@ -133,7 +116,7 @@ DECLARE_TEST(t_odbc2_error)
   expect_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_FETCH_BOOKMARK_PTR,
                                      (SQLPOINTER)NULL, 0),
               SQL_ERROR);
-  if (check_sqlstate(hdbc1, hstmt1, "S1C00") != OK)
+  if (check_sqlstate(hstmt1, "S1C00") != OK)
     return FAIL;
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
@@ -265,7 +248,7 @@ DECLARE_TEST(t_bug3456)
   /* Now check that the connection killed returns the right SQLSTATE */
   expect_sql(hstmt2, "SELECT connection_id()", SQL_ERROR);
 
-  return check_sqlstate(hdbc2, hstmt2, "08S01");
+  return check_sqlstate(hstmt2, "08S01");
 }
 
 
@@ -297,13 +280,33 @@ DECLARE_TEST(bind_invalidcol)
 
   /* test out of range column number */
   expect_stmt(hstmt, SQLBindCol(hstmt, 10, SQL_C_CHAR, "", 4, NULL), SQL_ERROR);
-  is(check_sqlstate(hdbc, hstmt, "HY002") == OK);
+  is(check_sqlstate(hstmt, "HY002") == OK);
 
   /* test (unsupported) bookmark column number */
   expect_stmt(hstmt, SQLBindCol(hstmt, 0, SQL_C_CHAR, "", 4, NULL), SQL_ERROR);
-  is(check_sqlstate(hdbc, hstmt, "HY002") == OK);
+  is(check_sqlstate(hstmt, "HY002") == OK);
 
   return OK;
+}
+
+
+/*
+ * Test that calling SQLGetData() without a nullind ptr
+ * when the data is null returns an error.
+ */
+DECLARE_TEST(getdata_need_nullind)
+{
+  SQLINTEGER i;
+  ok_sql(hstmt, "select 1 as i , null as j ");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  
+  /* that that nullind ptr is ok when data isn't null */
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_LONG, &i, 0, NULL));
+
+  /* now that it's an error */
+  expect_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_LONG, &i, 0, NULL),
+              SQL_ERROR);
+  return check_sqlstate(hstmt, "22002");
 }
 
 
@@ -319,6 +322,7 @@ BEGIN_TESTS
   ADD_TODO(t_bug3456)
   ADD_TEST(t_bug16224)
   ADD_TEST(bind_invalidcol)
+  ADD_TEST(getdata_need_nullind)
 END_TESTS
 
 RUN_TESTS

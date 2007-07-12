@@ -21,4 +21,5 @@ dltest_LDADD   = @LTDL_LIB@
 ###################################################################
 
 EXTRA_DIST = \
-	dltest.pro
+	dltest.pro \
+	CMakeLists.txt

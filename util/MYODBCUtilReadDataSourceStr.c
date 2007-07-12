@@ -296,7 +296,7 @@ BOOL MYODBCUtilReadDataSourceStr( MYODBCUTIL_DATASOURCE *pDataSource, MYODBCUTIL
                         }
 
                         if ( pszName )
-                            free( pszName );
+                            _global_free( pszName );
                         pszName = 0;
                     }
                 }
@@ -319,7 +319,7 @@ BOOL MYODBCUtilReadDataSourceStr( MYODBCUTIL_DATASOURCE *pDataSource, MYODBCUTIL
     } /* while scan */
 
     if ( pszName )
-        free( pszName );
+        _global_free( pszName );
 
     return TRUE;
 }

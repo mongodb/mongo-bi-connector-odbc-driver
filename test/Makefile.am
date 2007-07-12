@@ -60,7 +60,8 @@ my_tran \
 my_types \
 my_unicode \
 my_unixodbc \
-my_use_result
+my_use_result \
+my_bug13766
 
 noinst_PROGRAMS= $(tap_tests)
 
@@ -113,7 +114,8 @@ EXTRA_DIST= \
 	my_types.pro \
 	my_unixodbc.pro \
 	my_use_result.pro \
-	test.pro
+	test.pro \
+	CMakeLists.txt
 
 # We want to rebuild the "test.ini" file each time, as it might need an
 # update from overriding variables on the command line

@@ -230,6 +230,7 @@ BOOL                    MYODBCUtilInsertStr( char *pszStr, LPCSTR pszStrIn, SQLS
    char *strnglobaldup( const char *s, size_t n);
 #  define _global_strdup(s) strglobaldup(s)
 #  define _global_strndup(s, n) strnglobaldup(s, n)
+#  define _global_alloc(n) GlobalAlloc(GMEM_FIXED, (n))
 #  define _global_free(p) GlobalFree(p)
 #else
 #  define _global_strdup(s) strdup(s)
@@ -240,6 +241,7 @@ BOOL                    MYODBCUtilInsertStr( char *pszStr, LPCSTR pszStrIn, SQLS
      char *myodbc_strndup( const char *s, size_t n );
 #    define _global_strndup(s, n) myodbc_strndup(s, n)
 #  endif
+#  define _global_alloc malloc
 #  define _global_free(p) free(p)
 #endif
 

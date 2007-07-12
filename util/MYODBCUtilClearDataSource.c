@@ -51,7 +51,7 @@ void MYODBCUtilClearDataSource( MYODBCUTIL_DATASOURCE *pDataSource )
     if ( pDataSource->pszOPTION )
     {
         _global_free( pDataSource->pszOPTION );
-        pDataSource->pszDSN = NULL;
+        pDataSource->pszOPTION = NULL;
     }
     if ( pDataSource->pszPASSWORD )
     {

@@ -63,7 +63,7 @@ BOOL MYODBCSetupDataSourceConfig( HWND hWnd, MYODBCUTIL_DATASOURCE *pDataSource 
     {
         int     argc    = 1;
         char *  argv[]  = { pszAppName, NULL };
-        static  QApplication app( argc, argv );
+        QApplication app( argc, argv );
 
 //        MYODBCSetupDataSourceDialog *pdialogDataSource = new MYODBCSetupDataSourceDialog( 0, pDataSource );
 //

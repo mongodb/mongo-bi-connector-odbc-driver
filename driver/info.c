@@ -1205,7 +1205,7 @@ void myodbc_ov_init(SQLINTEGER odbc_version)
 /**
   List of functions supported in the driver.
 */
-SQLINTEGER myodbc3_functions[]=
+SQLUSMALLINT myodbc3_functions[]=
 {
     SQL_API_SQLALLOCCONNECT,
     SQL_API_SQLALLOCENV,
@@ -1304,7 +1304,7 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
                                   SQLUSMALLINT fFunction,
                                   SQLUSMALLINT *pfExists)
 {
-  SQLINTEGER index, myodbc_func_size;
+  SQLUSMALLINT index, myodbc_func_size;
 
   MYODBCDbgEnter;
   MYODBCDbgInfo("fFunction: %d",fFunction);
@@ -1315,7 +1315,7 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
   {
     for (index= 0; index < myodbc_func_size; index++)
     {
-      int id= myodbc3_functions[index];
+      SQLUSMALLINT id= myodbc3_functions[index];
       pfExists[id >> 4]|= (1 << (id & 0x000F));
     }
     MYODBCDbgReturnReturn(SQL_SUCCESS);

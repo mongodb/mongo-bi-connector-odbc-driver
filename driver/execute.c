@@ -252,7 +252,7 @@ char *insert_params(STMT FAR *stmt)
         if ( !(to= add_to_buffer(net,to,query,length)) )
             goto error;
         query= pos+1;  /* Skipp '?' */
-        if ( !(to= insert_param(&stmt->dbc->mysql,to,param)) )
+        if ( !(to= insert_param(stmt->dbc,to,param)) )
             goto error;
     }
     length= (uint) (stmt->query_end - query);
@@ -308,12 +308,12 @@ size_t sqlwchar_strlen(const SQLWCHAR *str)
   @param[in,out]  to
   @param[in]      param
 */
-char *insert_param(MYSQL *mysql, char *to, PARAM_BIND *param)
+char *insert_param(DBC *dbc, char *to, PARAM_BIND *param)
 {
     int length;
     char buff[128], *data;
     my_bool convert= FALSE, free_data= FALSE;
-    NET *net= &mysql->net;
+    NET *net= &dbc->mysql.net;
 
     if (!param->actual_len || *(param->actual_len) == SQL_NTS)
     {
@@ -344,7 +344,7 @@ char *insert_param(MYSQL *mysql, char *to, PARAM_BIND *param)
     */
     else if ( *(param->actual_len) == SQL_COLUMN_IGNORE )
     {
-      if (is_minimum_version(mysql->server_version, "4.0.3", 5))
+      if (is_minimum_version(dbc->mysql.server_version, "4.0.3", 5))
         return add_to_buffer(net,to,"DEFAULT",7);
       else
         return add_to_buffer(net,to,"NULL",4);
@@ -489,8 +489,12 @@ char *insert_param(MYSQL *mysql, char *to, PARAM_BIND *param)
         case SQL_C_TYPE_DATE:
             {
                 DATE_STRUCT *date= (DATE_STRUCT*) data;
-                sprintf(buff, "%04d-%02d-%02d",
-                        date->year, date->month, date->day);
+                if ((dbc->flag & FLAG_MIN_DATE_TO_ZERO) &&
+                    !date->year && (date->month == date->day == 1))
+                  sprintf(buff, "0000-00-00");
+                else
+                  sprintf(buff, "%04d-%02d-%02d",
+                          date->year, date->month, date->day);
                 data= buff;
                 length= 10;
                 break;
@@ -509,9 +513,14 @@ char *insert_param(MYSQL *mysql, char *to, PARAM_BIND *param)
         case SQL_C_TYPE_TIMESTAMP:
             {
                 TIMESTAMP_STRUCT *time= (TIMESTAMP_STRUCT*) data;
-                sprintf(buff, "%04d-%02d-%02d %02d:%02d:%02d",
-                        time->year, time->month, time->day,
-                        time->hour, time->minute, time->second);
+                if ((dbc->flag & FLAG_MIN_DATE_TO_ZERO) &&
+                    !time->year && (time->month == time->day == 1))
+                  sprintf(buff, "0000-00-00 %02d:%02d:%02d",
+                          time->hour, time->minute, time->second);
+                else
+                  sprintf(buff, "%04d-%02d-%02d %02d:%02d:%02d",
+                          time->year, time->month, time->day,
+                          time->hour, time->minute, time->second);
                 data= buff;
                 length= 19;
                 break;
@@ -545,7 +554,7 @@ char *insert_param(MYSQL *mysql, char *to, PARAM_BIND *param)
               /* Make sure we have room for a fully-escaped string. */
               if (!(to= extend_buffer(net, to, length * 2)))
                 return 0;
-              to+= mysql_real_escape_string(mysql, to, data, length);
+              to+= mysql_real_escape_string(&dbc->mysql, to, data, length);
               to= add_to_buffer(net, to, "'", 1);
               break;
             }

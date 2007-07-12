@@ -17,4 +17,5 @@ libMYODBCDbg_la_SOURCES = \
 	MYODBCDbgTransactionTypeString.c
 
 EXTRA_DIST = \
-	MYODBCDbgLib.pro
+	MYODBCDbgLib.pro \
+	CMakeLists.txt

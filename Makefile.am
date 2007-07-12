@@ -125,6 +125,8 @@ EXTRA_DIST = \
 	PostBuildTest.bat \
 	Uninstall.bat \
 	Upgrade.bat \
+	CMakeLists.txt \
+	cmake \
 	doc
 
 # Remove Subversion ".svn" subdirectories from source distribution
