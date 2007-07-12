@@ -36,7 +36,6 @@ DECLARE_TEST(bug13766_result)
   SQL_DATE_STRUCT xdate[6];
   SQL_TIMESTAMP_STRUCT xts[6];
   SQLLEN isNull[12];
-  bool is51= mysql_min_version(hdbc, "5.1", 3);
 
   ok_sql(hstmt, "select cast('0000-00-00' as date), "
       "cast('0000-10-00' as date), "
@@ -72,8 +71,11 @@ DECLARE_TEST(bug13766_result)
   is_num(xts[i].day, 1);
   i++;
 
-  if (is51) /* 5.1 seems to have changed some date-handling,
-               even w/no set sql_mode */
+  /*
+    the server is not consistent in how it handles 0000-xx-xx, it changed
+    within the 5.0 and 5.1 series
+  */
+  if (isNull[i] == SQL_NULL_DATA)
   {
     is_num(isNull[i], SQL_NULL_DATA);
     is_num(isNull[6+i], SQL_NULL_DATA);
@@ -140,7 +142,7 @@ DECLARE_TEST(bug13766_query)
   SQL_TIMESTAMP_STRUCT xts;
   char result[50];
 
-  ok_stmt(hstmt, SQLPrepare(hstmt, "select ?", SQL_NTS));
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)"select ?", SQL_NTS));
   ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_TYPE_DATE,
                                   SQL_TYPE_DATE, 0, 0, &xdate, 0, NULL));
 
