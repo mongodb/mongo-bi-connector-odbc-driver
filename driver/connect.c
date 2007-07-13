@@ -50,8 +50,6 @@
     #define CLIENT_NO_SCHEMA      16
 #endif
 
-CHARSET_INFO *utf8_charset_info= NULL;
-
 static SQLRETURN set_connect_defaults(DBC *dbc)
 {
     SQLRETURN error= 0;
@@ -136,9 +134,6 @@ ulong get_client_flag(MYSQL *mysql, ulong option_flag,uint connect_timeout,
     MYODBCDbgEnter;
 
     mysql_init(mysql);
-
-    utf8_charset_info= get_charset_by_name("utf8_general_ci", MYF(0));
-    /** @todo handle errors */
 
     if (option_flag & (FLAG_FOUND_ROWS | FLAG_SAFE))
         client_flag|=   CLIENT_FOUND_ROWS;

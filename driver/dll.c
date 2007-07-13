@@ -31,6 +31,8 @@
 char *default_locale, *decimal_point, *thousands_sep;
 uint decimal_point_length,thousands_sep_length;
 static my_bool myodbc_inited=0;
+CHARSET_INFO *utf8_charset_info= NULL;
+
 
 /*
   Sigpipe handler
@@ -73,6 +75,9 @@ void myodbc_init(void)
     thousands_sep=my_strdup(tmp->thousands_sep,MYF(0));
     thousands_sep_length=strlen(thousands_sep);
     setlocale(LC_NUMERIC,default_locale);
+
+    utf8_charset_info= get_charset_by_csname("utf8", MYF(MY_CS_PRIMARY),
+                                             MYF(0));
   }
   /*
     If we are not using threads, we may get an SIGPIPE signal when a client
