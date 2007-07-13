@@ -160,7 +160,7 @@ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER={_libdir}/libmyodbc3.so"
 %{_libdir}/libmyodbc3.*
 %{_libdir}/libmyodbc3-*
 %{_libdir}/libmyodbc3_*
-%doc ChangeLog README README.debug
+%doc ChangeLog README README.debug INSTALL
 %if %{com_lic}
 %doc LICENSE.commercial
 %else
