@@ -20,7 +20,7 @@
 
 ##########################################################################
 
-ADD_LIBRARY(MYODBCDbg MYODBCDbgConnectAttrString.c 
+ADD_LIBRARY(MYODBCDbg STATIC MYODBCDbgConnectAttrString.c 
                 MYODBCDbgConnectOptionString.c 
                 MYODBCDbgDiagFieldString.c 
                 MYODBCDbgEnvAttrString.c 

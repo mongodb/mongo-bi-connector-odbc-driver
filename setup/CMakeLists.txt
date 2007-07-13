@@ -21,7 +21,6 @@
 ##########################################################################
 INCLUDE_DIRECTORIES(${QT_INCLUDE_DIR})
 
-
 SET(setup_SRCS 
 			ConfigDSN.c
 			MYODBCSetupAssistText.cpp
@@ -46,9 +45,9 @@ SET(setup_SRCS
 			MYODBCSetupLineEdit.cpp
       myodbc3S.rc)
 
-IF(ODBC_WINDOWS)
+IF(WIN32)
 	SET(setup_SRCS ${setup_SRCS} myodbc3S.def)
-ENDIF(ODBC_WINDOWS)
+ENDIF(WIN32)
 
 SET(MOC_SRCS
     MYODBCSetupAssistText.h
@@ -71,9 +70,8 @@ ENDIF(QT_WRAP_CPP)
 
 ADD_LIBRARY(myodbc3S SHARED ${setup_SRCS})
 
-IF(ODBC_WINDOWS)
-	TARGET_LINK_LIBRARIES(myodbc3S odbc32 odbccp32)
-ELSE(ODBC_WINDOWS)
-	TARGET_LINK_LIBRARIES(myodbc3S ${ODBCLIB} ${ODBCINSTLIB})
-ENDIF(ODBC_WINDOWS)
+TARGET_LINK_LIBRARIES(myodbc3S
+		myodbc3u ${ODBCLIB} ${ODBCINSTLIB} ${QT_LIBRARIES})
+
+INSTALL(TARGETS myodbc3S DESTINATION lib)
 

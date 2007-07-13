@@ -19,32 +19,27 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 ##########################################################################
-IF(ODBC_WINDOWS)
-  SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -MT")
-ENDIF(ODBC_WINDOWS)
 
-ADD_LIBRARY(myodbc3u STATIC MYODBCUtilAllocDataSource.c 
-                        MYODBCUtilAllocDriver.c           
+ADD_LIBRARY(myodbc3u STATIC MYODBCUtilAllocDataSource.c
+                        MYODBCUtilAllocDriver.c
                         MYODBCUtilClearDataSource.c
-                        MYODBCUtilClearDriver.c         
-                        MYODBCUtilDefaultDataSource.c          
+                        MYODBCUtilClearDriver.c
+                        MYODBCUtilDefaultDataSource.c
                         MYODBCUtilDSNExists.c
-                        MYODBCUtilFreeDataSource.c       
+                        MYODBCUtilFreeDataSource.c
                         MYODBCUtilFreeDriver.c
                         MYODBCUtilGetDataSourceNames.c
                         MYODBCUtilGetDriverNames.c
-                        MYODBCUtilInsertStr.c            
+                        MYODBCUtilGetIniFileName.c
+                        MYODBCUtilInsertStr.c
                         MYODBCUtilReadConnectStr.c
-                        MYODBCUtilReadDataSource.c       
+                        MYODBCUtilReadDataSource.c
                         MYODBCUtilReadDataSourceStr.c
-                        MYODBCUtilReadDriver.c           
+                        MYODBCUtilReadDriver.c
                         MYODBCUtilWriteConnectStr.c
-                        MYODBCUtilWriteDataSource.c      
+                        MYODBCUtilWriteDataSource.c
                         MYODBCUtilWriteDataSourceStr.c
                         MYODBCUtilWriteDriver.c)
-IF(ODBC_WINDOWS)
-	TARGET_LINK_LIBRARIES(myodbc3u odbc32.lib odbccp32.lib)
-ELSE(ODBC_WINDOWS)
-	TARGET_LINK_LIBRARIES(myodbc3u ${ODBC_LINK_FLAGS})
-ENDIF(ODBC_WINDOWS)
+
+TARGET_LINK_LIBRARIES(myodbc3u ${ODBCINSTLIB})
 

@@ -23,7 +23,7 @@
 
 
 #-------------- FIND MYSQL_INCLUDE_DIR ------------------
-find_path(MYSQL_INCLUDE_DIR mysql.h
+FIND_PATH(MYSQL_INCLUDE_DIR mysql.h
 		$ENV{MYSQL_INCLUDE_DIR}
 		$ENV{MYSQL_DIR}/include
 		/usr/include/mysql
@@ -36,7 +36,7 @@ find_path(MYSQL_INCLUDE_DIR mysql.h
 		$ENV{SystemDrive}/MySQL/*/include)
 
 #----------------- FIND MYSQL_LIB_DIR -------------------
-IF (ODBC_WINDOWS)
+IF (WIN32)
 	# Set lib path suffixes
 	# dist = for mysql binary distributions
 	# build = for custom built tree
@@ -48,14 +48,14 @@ IF (ODBC_WINDOWS)
 		SET(libsuffixBuild Release)
 	ENDIF (CMAKE_BUILD_TYPE STREQUAL Debug)
 
-	find_library(MYSQL_LIB NAMES mysqlclient
+	FIND_LIBRARY(MYSQL_LIB NAMES mysqlclient
 				 PATHS
 				 $ENV{MYSQL_DIR}/lib/${libsuffixDist}
 				 $ENV{MYSQL_DIR}/client/${libsuffixBuild}
 				 $ENV{ProgramFiles}/MySQL/*/lib/${libsuffixDist}
 				 $ENV{SystemDrive}/MySQL/*/lib/${libsuffixDist})
-ELSE (ODBC_WINDOWS)
-	find_library(MYSQL_LIB NAMES mysqlclient_r
+ELSE (WIN32)
+	FIND_LIBRARY(MYSQL_LIB NAMES mysqlclient_r
 				 PATHS
 				 $ENV{MYSQL_DIR}/libmysql_r/.libs
 				 $ENV{MYSQL_DIR}/lib
@@ -66,7 +66,7 @@ ELSE (ODBC_WINDOWS)
 				 /usr/local/mysql/lib/mysql
 				 /opt/mysql/mysql/lib
 				 /opt/mysql/mysql/lib/mysql)
-ENDIF (ODBC_WINDOWS)
+ENDIF (WIN32)
 
 IF(MYSQL_LIB)
 	GET_FILENAME_COMPONENT(MYSQL_LIB_DIR ${MYSQL_LIB} PATH)
@@ -78,7 +78,8 @@ IF (MYSQL_INCLUDE_DIR AND MYSQL_LIB_DIR)
 	MESSAGE(STATUS "MySQL Include dir: ${MYSQL_INCLUDE_DIR}  library dir: ${MYSQL_LIB_DIR}")
 
 	INCLUDE_DIRECTORIES(${MYSQL_INCLUDE_DIR})
-    LINK_DIRECTORIES(${MYSQL_LIB_DIR})
+	LINK_DIRECTORIES(${MYSQL_LIB_DIR})
+ELSE (MYSQL_INCLUDE_DIR AND MYSQL_LIB_DIR)
+	MESSAGE(FATAL_ERROR "Cannot find MySQL. Include dir: ${MYSQL_INCLUDE_DIR}  library dir: ${MYSQL_LIB_DIR}")
 ENDIF (MYSQL_INCLUDE_DIR AND MYSQL_LIB_DIR)
-
 
