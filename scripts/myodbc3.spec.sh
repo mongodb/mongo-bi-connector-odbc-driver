@@ -123,7 +123,7 @@ make
 
 %install
 make DESTDIR=$RPM_BUILD_ROOT install
-rm -v $RPM_BUILD_ROOT%{_datadir}/%{name}/{ChangeLog,README,README.debug,LICENSE.*,INSTALL}
+rm -v $RPM_BUILD_ROOT%{_datadir}/mysql-connector-odbc/{ChangeLog,README,README.debug,LICENSE.*,INSTALL}
 
 # ----------------------------------------------------------------------
 # REGISTER DRIVER
