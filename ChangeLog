@@ -7,6 +7,8 @@
     to Bug #6667 and Bug #9498.)
   * Dis-allow NULL ptr for null indicator when calling SQLGetData()
     if value is null. Now returns SQL_ERROR w/state 22002.
+  * Fixed calling convention ptr and wrong free in myodbc3i, and fixed
+    the null terminating (was only one, not two) when writing DSN to string.
 
   Bugs fixed:
   * myodbc3i did not correctly format driver info, which could cause the
