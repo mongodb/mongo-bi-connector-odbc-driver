@@ -739,25 +739,24 @@ SQLRETURN SQL_API SQLExecDirect(SQLHSTMT hstmt,
 */
 
 SQLRETURN SQL_API SQLNativeSql(SQLHDBC hdbc,
-                               SQLCHAR FAR *szSqlStrIn,
+                               SQLCHAR *szSqlStrIn,
                                SQLINTEGER cbSqlStrIn,
-                               SQLCHAR FAR *szSqlStr,
+                               SQLCHAR *szSqlStr,
                                SQLINTEGER cbSqlStrMax,
                                SQLINTEGER *pcbSqlStr)
 {
-  SQLRETURN rc;
-  SQLLEN    len= (pcbSqlStr ? *pcbSqlStr : 0);
-  ulong     offset= 0;
-
-  MYODBCDbgEnter;
-
-  rc= copy_lresult(SQL_HANDLE_DBC, hdbc, szSqlStr, cbSqlStrMax, &len,
-                   (char *)szSqlStrIn, cbSqlStrIn, 0L, 0L, &offset, 0);
+  if (cbSqlStrIn == SQL_NTS)
+    cbSqlStrIn= strlen((char *)szSqlStrIn);
 
   if (pcbSqlStr)
-    *pcbSqlStr= (SQLINTEGER)len;
+    *pcbSqlStr= cbSqlStrIn;
 
-  MYODBCDbgReturnReturn(rc);
+  (void)strncpy((char *)szSqlStr, (const char *)szSqlStrIn, cbSqlStrMax);
+
+  if (cbSqlStrIn > cbSqlStrMax)
+    return set_conn_error((DBC *)hdbc, MYERR_01004, NULL, 0);
+
+  return SQL_SUCCESS;
 }
 
 
