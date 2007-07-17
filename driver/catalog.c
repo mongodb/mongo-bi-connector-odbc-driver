@@ -242,7 +242,6 @@ static SQLRETURN
 create_empty_fake_resultset(STMT *stmt, gptr rowval, size_t rowsize,
                             MYSQL_FIELD *fields, uint fldcnt)
 {
-  MYODBCDbgInfo("%s", "Can't match anything; Returning empty set");
   return create_fake_resultset(stmt, rowval, rowsize, 0 /* rowcnt */,
                                fields, fldcnt);
 }
@@ -373,8 +372,6 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
     MYSQL_RES *result, *sys_result;
     my_bool   all_dbs= 1, sys_tables, user_tables, views;
 
-    MYODBCDbgEnter;
-
     CLEAR_STMT_ERROR(hstmt);
     my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
@@ -391,8 +388,6 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
          !TableOwner[0] && !TableName[0] )
     {
         /* Return set of allowed qualifiers */
-        MYODBCDbgInfo( "%s", "Return set of table qualifiers / Catalog names" );
-
         if ( !all_dbs )
             TableQualifier= "%";
 
@@ -402,7 +397,7 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
 
         if (!stmt->result)
         {
-          MYODBCDbgReturnReturn(handle_connection_error(stmt));
+          return handle_connection_error(stmt);
         }
 
         stmt->order         = SQLTABLES_qualifier_order;
@@ -414,10 +409,10 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
         if (!stmt->array)
         {
           set_mem_error(&stmt->dbc->mysql);
-          MYODBCDbgReturnReturn(handle_connection_error(stmt));
+          return handle_connection_error(stmt);
         }
         mysql_link_fields(stmt,SQLTABLES_fields,SQLTABLES_FIELDS);
-        MYODBCDbgReturnReturn( SQL_SUCCESS );
+        return SQL_SUCCESS;
     }
 
     if ( !TableQualifier[0] && (!strcmp(TableOwner,"%") ||
@@ -425,10 +420,9 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
          !TableName[0] )
     {
         /* Return set of allowed Table owners */
-        MYODBCDbgInfo( "%s", "Return set of table owners / Schema names" );
-        MYODBCDbgReturnReturn(create_fake_resultset(stmt, (gptr) SQLTABLES_owner_values,
-                                                    sizeof(SQLTABLES_owner_values),
-                                                    1, SQLTABLES_fields, SQLTABLES_FIELDS));
+        return create_fake_resultset(stmt, (gptr) SQLTABLES_owner_values,
+                                     sizeof(SQLTABLES_owner_values),
+                                     1, SQLTABLES_fields, SQLTABLES_FIELDS);
     }
 
     TableType=   myodbc_get_valid_buffer( Type_buff, szTableType, cbTableType );
@@ -438,11 +432,11 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
           !myodbc_casecmp(TableType,"SQL_ALL_TABLE_TYPES",19)) )
     {
         /* Return set of TableType qualifiers */
-        MYODBCDbgInfo( "%s", "Return set of table types" );
-        MYODBCDbgReturnReturn(create_fake_resultset(stmt, (gptr) SQLTABLES_type_values,
-                                                    sizeof(SQLTABLES_type_values),
-                                                    sizeof(SQLTABLES_type_values) / sizeof(SQLTABLES_type_values[0]),
-                                                    SQLTABLES_fields, SQLTABLES_FIELDS));
+        return create_fake_resultset(stmt, (gptr) SQLTABLES_type_values,
+                                     sizeof(SQLTABLES_type_values),
+                                     sizeof(SQLTABLES_type_values) /
+                                     sizeof(SQLTABLES_type_values[0]),
+                                     SQLTABLES_fields, SQLTABLES_FIELDS);
     }
 
     sys_result= result= NULL;
@@ -489,7 +483,7 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
         default:
           rc= handle_connection_error(stmt);
           pthread_mutex_unlock(&stmt->dbc->lock);
-          MYODBCDbgReturnReturn(rc);
+          return rc;
         }
       }
       pthread_mutex_unlock(&stmt->dbc->lock);
@@ -506,7 +500,7 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
       {
         SQLRETURN rc= handle_connection_error(stmt);
         pthread_mutex_unlock(&stmt->dbc->lock);
-        MYODBCDbgReturnReturn(rc);
+        return rc;
       }
       pthread_mutex_unlock(&stmt->dbc->lock);
     }
@@ -544,7 +538,7 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
                                MYF(MY_ZEROFILL))))
       {
         set_mem_error(&stmt->dbc->mysql);
-        MYODBCDbgReturnReturn(handle_connection_error(stmt));
+        return handle_connection_error(stmt);
       }
 
       data= stmt->result_array;
@@ -617,14 +611,13 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
     }
 
     mysql_link_fields(stmt, SQLTABLES_fields, SQLTABLES_FIELDS);
-    MYODBCDbgInfo("total tables: %ld", (long)stmt->result->row_count);
-    MYODBCDbgReturnReturn(SQL_SUCCESS);
+    return SQL_SUCCESS;
 
 empty_set:
-  MYODBCDbgReturnReturn(create_empty_fake_resultset(stmt, (gptr) SQLTABLES_values,
-                                                    sizeof(SQLTABLES_values),
-                                                    SQLTABLES_fields,
-                                                    SQLTABLES_FIELDS));
+  return create_empty_fake_resultset(stmt, (gptr) SQLTABLES_values,
+                                     sizeof(SQLTABLES_values),
+                                     SQLTABLES_fields,
+                                     SQLTABLES_FIELDS);
 }
 
 
@@ -836,8 +829,6 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
   unsigned long rows= 0, next_row= 0, *lengths;
   char *db= NULL;
 
-  MYODBCDbgEnter;
-
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt, MYSQL_RESET);
 
@@ -849,7 +840,7 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
   {
     SQLRETURN rc= handle_connection_error(stmt);
     pthread_mutex_unlock(&stmt->dbc->lock);
-    MYODBCDbgReturnReturn(rc);
+    return rc;
   }
   else if (!res)
   {
@@ -884,7 +875,7 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
 
     if (!table_res)
     {
-      MYODBCDbgReturnReturn(handle_connection_error(stmt));
+      return handle_connection_error(stmt);
     }
 
     rows+= mysql_num_fields(table_res);
@@ -896,7 +887,7 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
     if (!stmt->result_array)
     {
       set_mem_error(&stmt->dbc->mysql);
-      MYODBCDbgReturnReturn(handle_connection_error(stmt));
+      return handle_connection_error(stmt);
     }
 
     while ((field= mysql_fetch_field(table_res)))
@@ -1000,13 +991,13 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
 
   stmt->result->row_count= rows;
   mysql_link_fields(stmt, SQLCOLUMNS_fields, SQLCOLUMNS_FIELDS);
-  MYODBCDbgReturnReturn(SQL_SUCCESS);
+  return SQL_SUCCESS;
 
 empty_set:
-  MYODBCDbgReturnReturn(create_empty_fake_resultset(stmt, (gptr) SQLCOLUMNS_values,
-                                                    sizeof(SQLCOLUMNS_values),
-                                                    SQLCOLUMNS_fields,
-                                                    SQLCOLUMNS_FIELDS));
+  return create_empty_fake_resultset(stmt, (gptr) SQLCOLUMNS_values,
+                                     sizeof(SQLCOLUMNS_values),
+                                     SQLCOLUMNS_fields,
+                                     SQLCOLUMNS_FIELDS);
 }
 
 
@@ -1105,17 +1096,6 @@ SQLRETURN SQL_API SQLStatistics(SQLHSTMT hstmt,
     Table_buff[NAME_LEN+1], 
     *TableQualifier, *TableName;
 
-    MYODBCDbgEnter;
-
-    MYODBCDbgInfo( "Qualifier: '%s'", szTableQualifier ? (char*) szTableQualifier : "null" );
-    MYODBCDbgInfo( "Qualifier: (%d)", cbTableQualifier );
-    MYODBCDbgInfo( "Owner: '%s'", szTableOwner ? (char*) szTableOwner : "null" );
-    MYODBCDbgInfo( "Owner: (%d)", cbTableOwner );
-    MYODBCDbgInfo( "Table: '%s'", szTableName ? (char*) szTableName : "null" );
-    MYODBCDbgInfo( "Table: (%d)", cbTableName );
-    MYODBCDbgInfo( "fUnique: %d", fUnique );
-    MYODBCDbgInfo( "fAccuracy: %d)", fAccuracy );
-
     TableQualifier= myodbc_get_valid_buffer( Qualifier_buff, szTableQualifier, cbTableQualifier );
     TableName=      myodbc_get_valid_buffer( Table_buff, szTableName, cbTableName );
 
@@ -1134,7 +1114,7 @@ SQLRETURN SQL_API SQLStatistics(SQLHSTMT hstmt,
     {
       SQLRETURN rc= handle_connection_error(stmt);
       pthread_mutex_unlock(&dbc->lock);
-      MYODBCDbgReturnReturn(rc);
+      return rc;
     }
     pthread_mutex_unlock(&dbc->lock);
 #if MYSQL_VERSION_ID >= 40100
@@ -1150,7 +1130,7 @@ SQLRETURN SQL_API SQLStatistics(SQLHSTMT hstmt,
     if (!stmt->array)
     {
       set_mem_error(&stmt->dbc->mysql);
-      MYODBCDbgReturnReturn(handle_connection_error(stmt));
+      return handle_connection_error(stmt);
     }
 
     if ( option_flag(stmt, FLAG_NO_CATALOG) )
@@ -1179,14 +1159,12 @@ SQLRETURN SQL_API SQLStatistics(SQLHSTMT hstmt,
         mysql_data_seek(stmt->result,0);  /* Restore pointer */
     }
     mysql_link_fields(stmt,SQLSTAT_fields,SQLSTAT_FIELDS);
-    MYODBCDbgInfo( "total stats count: %ld", (long)stmt->result->row_count );
-    MYODBCDbgReturnReturn( SQL_SUCCESS );
+    return SQL_SUCCESS;
 
 empty_set:
-  MYODBCDbgReturnReturn(create_empty_fake_resultset(stmt, (gptr) SQLSTAT_values,
-                                                    sizeof(SQLSTAT_values),
-                                                    SQLSTAT_fields,
-                                                    SQLSTAT_FIELDS));
+  return create_empty_fake_resultset(stmt, (gptr) SQLSTAT_values,
+                                     sizeof(SQLSTAT_values),
+                                     SQLSTAT_fields, SQLSTAT_FIELDS);
 }
 
 /*
@@ -1305,10 +1283,6 @@ SQLRETURN SQL_API SQLTablePrivileges(SQLHSTMT hstmt,
     STMT FAR *stmt= (STMT FAR*) hstmt;
     uint     row_count;
 
-    MYODBCDbgEnter;
-
-    MYODBCDbgInfo( "Qualifier: '%s'", szTableQualifier ? (char*) szTableQualifier : "null" );
-
     TableQualifier= myodbc_get_valid_buffer( Qualifier_buff, szTableQualifier, cbTableQualifier );
     TableName= myodbc_get_valid_buffer( Name_buff, szTableName, cbTableName );
 
@@ -1324,7 +1298,7 @@ SQLRETURN SQL_API SQLTablePrivileges(SQLHSTMT hstmt,
     {
       SQLRETURN rc= handle_connection_error(stmt);
       pthread_mutex_unlock(&stmt->dbc->lock);
-      MYODBCDbgReturnReturn(rc);
+      return rc;
     }
     pthread_mutex_unlock(&stmt->dbc->lock);
 
@@ -1336,7 +1310,7 @@ SQLRETURN SQL_API SQLTablePrivileges(SQLHSTMT hstmt,
     if (!stmt->result_array)
     {
       set_mem_error(&stmt->dbc->mysql);
-      MYODBCDbgReturnReturn(handle_connection_error(stmt));
+      return handle_connection_error(stmt);
     }
     alloc= &stmt->result->field_alloc;
     data= stmt->result_array;
@@ -1370,14 +1344,13 @@ SQLRETURN SQL_API SQLTablePrivileges(SQLHSTMT hstmt,
     }  
     stmt->result->row_count= row_count;
     mysql_link_fields(stmt,SQLTABLES_priv_fields,SQLTABLES_PRIV_FIELDS);
-    MYODBCDbgInfo( "total table priv count: %ld", (long)row_count );
-    MYODBCDbgReturnReturn( SQL_SUCCESS );
+    return SQL_SUCCESS;
 
 empty_set:
-  MYODBCDbgReturnReturn(create_empty_fake_resultset(stmt, (gptr) SQLTABLES_priv_values,
-                                                    sizeof(SQLTABLES_priv_values),
-                                                    SQLTABLES_priv_fields,
-                                                    SQLTABLES_PRIV_FIELDS));
+  return create_empty_fake_resultset(stmt, (gptr) SQLTABLES_priv_values,
+                                     sizeof(SQLTABLES_priv_values),
+                                     SQLTABLES_priv_fields,
+                                     SQLTABLES_PRIV_FIELDS);
 }
 
 
@@ -1475,13 +1448,6 @@ SQLRETURN SQL_API SQLColumnPrivileges(SQLHSTMT hstmt,
     MEM_ROOT *alloc;
     uint     row_count;
 
-    MYODBCDbgEnter;
-
-    MYODBCDbgInfo( "Qualifier: '%s'", szTableQualifier ? (char*) szTableQualifier : "null" );
-    MYODBCDbgInfo( "Owner: '%s'", szTableOwner ? (char*) szTableOwner : "null" );
-    MYODBCDbgInfo( "Table: '%s'", szTableName ? (char*) szTableName : "null" );
-    MYODBCDbgInfo( "Column: '%s'", szColumnName ? (char*) szColumnName : "null" );
-
     TableQualifier=myodbc_get_valid_buffer( Qualifier_buff, szTableQualifier, cbTableQualifier );
     TableName=   myodbc_get_valid_buffer( Table_buff, szTableName, cbTableName );
     ColumnName=  myodbc_get_valid_buffer( Column_buff, szColumnName, cbColumnName );
@@ -1500,7 +1466,7 @@ SQLRETURN SQL_API SQLColumnPrivileges(SQLHSTMT hstmt,
     {
       SQLRETURN rc= handle_connection_error(stmt);
       pthread_mutex_unlock(&stmt->dbc->lock);
-      MYODBCDbgReturnReturn(rc);
+      return rc;
     }
     pthread_mutex_unlock(&stmt->dbc->lock);
     stmt->result_array= (char**) my_malloc(sizeof(char*)*SQLCOLUMNS_PRIV_FIELDS*
@@ -1508,7 +1474,7 @@ SQLRETURN SQL_API SQLColumnPrivileges(SQLHSTMT hstmt,
     if (!stmt->result_array)
     {
       set_mem_error(&stmt->dbc->mysql);
-      MYODBCDbgReturnReturn(handle_connection_error(stmt));
+      return handle_connection_error(stmt);
     }
     alloc= &stmt->result->field_alloc;
     data= stmt->result_array;
@@ -1543,14 +1509,13 @@ SQLRETURN SQL_API SQLColumnPrivileges(SQLHSTMT hstmt,
     }
     stmt->result->row_count= row_count;  
     mysql_link_fields(stmt,SQLCOLUMNS_priv_fields,SQLCOLUMNS_PRIV_FIELDS);
-    MYODBCDbgInfo( "total columns priv count: %ld", (long)row_count );
-    MYODBCDbgReturnReturn( SQL_SUCCESS ); 
+    return SQL_SUCCESS;
 
 empty_set:
-  MYODBCDbgReturnReturn(create_empty_fake_resultset(stmt, (gptr) SQLCOLUMNS_priv_values,
-                                                    sizeof(SQLCOLUMNS_priv_values),
-                                                    SQLCOLUMNS_priv_fields,
-                                                    SQLCOLUMNS_PRIV_FIELDS));
+  return create_empty_fake_resultset(stmt, (gptr) SQLCOLUMNS_priv_values,
+                                     sizeof(SQLCOLUMNS_priv_values),
+                                     SQLCOLUMNS_priv_fields,
+                                     SQLCOLUMNS_PRIV_FIELDS);
 }
 
 /*
@@ -1624,15 +1589,6 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
     uint        field_count;
     my_bool     primary_key;
 
-    MYODBCDbgEnter;
-
-    MYODBCDbgInfo( "ColType: %d", fColType );
-    MYODBCDbgInfo( "Qualifier: '%s'", szTableQualifier ? (char*) szTableQualifier : "null" );
-    MYODBCDbgInfo( "Owner: '%s'", szTableOwner ? (char*) szTableOwner : "null" );
-    MYODBCDbgInfo( "Table: '%s'", szTableName ? (char*) szTableName : "null" );
-    MYODBCDbgInfo( "Scope: '%d'", fScope );
-    MYODBCDbgInfo( "Nullable: %d", fNullable );
-
     CLEAR_STMT_ERROR(hstmt);
 
     if (cbTableQualifier == SQL_NTS)
@@ -1647,7 +1603,7 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
                                        szTableName, cbTableName, NULL, 0);
     if (!(result= stmt->result))
     {
-      MYODBCDbgReturnReturn(handle_connection_error(stmt));
+      return handle_connection_error(stmt);
     }
 
     if ( fColType == SQL_ROWVER )
@@ -1657,7 +1613,7 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
                                                       result->field_count, MYF(MY_ZEROFILL))) )
         {
           set_mem_error(&stmt->dbc->mysql);
-          MYODBCDbgReturnReturn(handle_connection_error(stmt));
+          return handle_connection_error(stmt);
         }
 
         /* Convert mysql fields to data that odbc wants */
@@ -1691,15 +1647,13 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
         }
         result->row_count= field_count;
         mysql_link_fields(stmt,SQLSPECIALCOLUMNS_fields,SQLSPECIALCOLUMNS_FIELDS);
-        MYODBCDbgInfo( "total columns count: %ld", (long)field_count );
-        MYODBCDbgReturnReturn( SQL_SUCCESS );
+        return SQL_SUCCESS;
     }
 
     if ( fColType != SQL_BEST_ROWID )
     {
-        MYODBCDbgReturnReturn( set_error(stmt,MYERR_S1000,
-                              "Unsupported argument to SQLSpecialColumns",
-                              4000) );
+        return set_error(stmt, MYERR_S1000,
+                         "Unsupported argument to SQLSpecialColumns", 4000);
     }
 
     /*
@@ -1722,7 +1676,7 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
                                                   result->field_count, MYF(MY_ZEROFILL))) )
     {
       set_mem_error(&stmt->dbc->mysql);
-      MYODBCDbgReturnReturn(handle_connection_error(stmt));
+      return handle_connection_error(stmt);
     }
 
     /* Convert MySQL fields to data that odbc wants */
@@ -1762,14 +1716,13 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
     }
     result->row_count= field_count;
     mysql_link_fields(stmt,SQLSPECIALCOLUMNS_fields,SQLSPECIALCOLUMNS_FIELDS);
-    MYODBCDbgInfo( "total columns count: %ld", (long)field_count );
-    MYODBCDbgReturnReturn( SQL_SUCCESS );
+    return SQL_SUCCESS;
 
 empty_set:
-  MYODBCDbgReturnReturn(create_empty_fake_resultset(stmt, (gptr) SQLSPECIALCOLUMNS_values,
-                                                    sizeof(SQLSPECIALCOLUMNS_values),
-                                                    SQLSPECIALCOLUMNS_fields,
-                                                    SQLSPECIALCOLUMNS_FIELDS));
+  return create_empty_fake_resultset(stmt, (gptr) SQLSPECIALCOLUMNS_values,
+                                     sizeof(SQLSPECIALCOLUMNS_values),
+                                     SQLSPECIALCOLUMNS_fields,
+                                     SQLSPECIALCOLUMNS_FIELDS);
 }
 
 /*
@@ -1829,15 +1782,6 @@ SQLRETURN SQL_API SQLPrimaryKeys(SQLHSTMT hstmt,
     char      **data;  
     uint      row_count;
 
-    MYODBCDbgEnter;
-
-    MYODBCDbgInfo( "Qualifier: '%s'", szTableQualifier ? (char*) szTableQualifier : "null" );
-    MYODBCDbgInfo( "Qualifier: (%d)", cbTableQualifier );
-    MYODBCDbgInfo( "Owner: '%s'", szTableOwner ? (char*) szTableOwner : "null" );
-    MYODBCDbgInfo( "Owner: (%d)", cbTableOwner );
-    MYODBCDbgInfo( "Table: '%s'", szTableName ? (char*) szTableName : "null" );
-    MYODBCDbgInfo( "Table: (%d)", cbTableName );
-
     TableQualifier= myodbc_get_valid_buffer( Qualifier_buff, szTableQualifier, cbTableQualifier );
     TableName=      myodbc_get_valid_buffer( Table_buff, szTableName, cbTableName );
 
@@ -1852,7 +1796,7 @@ SQLRETURN SQL_API SQLPrimaryKeys(SQLHSTMT hstmt,
     {
       SQLRETURN rc= handle_connection_error(stmt);
       pthread_mutex_unlock(&stmt->dbc->lock);
-      MYODBCDbgReturnReturn(rc);
+      return rc;
     }
     pthread_mutex_unlock(&stmt->dbc->lock);
     stmt->result_array= (char**) my_malloc(sizeof(char*)*SQLPRIM_KEYS_FIELDS*
@@ -1861,7 +1805,7 @@ SQLRETURN SQL_API SQLPrimaryKeys(SQLHSTMT hstmt,
     if (!stmt->result_array)
     {
       set_mem_error(&stmt->dbc->mysql);
-      MYODBCDbgReturnReturn(handle_connection_error(stmt));
+      return handle_connection_error(stmt);
     }
     row_count= 0;
     data= stmt->result_array;
@@ -1883,14 +1827,12 @@ SQLRETURN SQL_API SQLPrimaryKeys(SQLHSTMT hstmt,
     stmt->result->row_count= row_count;
 
     mysql_link_fields(stmt,SQLPRIM_KEYS_fields,SQLPRIM_KEYS_FIELDS);
-    MYODBCDbgInfo( "total keys count: %ld", (long)row_count );
-    MYODBCDbgReturnReturn( SQL_SUCCESS );
+    return SQL_SUCCESS;
 
 empty_set:
-  MYODBCDbgReturnReturn(create_empty_fake_resultset(stmt, (gptr) SQLPRIM_KEYS_values,
-                                                    sizeof(SQLPRIM_KEYS_values),
-                                                    SQLPRIM_KEYS_fields,
-                                                    SQLPRIM_KEYS_FIELDS));
+  return create_empty_fake_resultset(stmt, (gptr) SQLPRIM_KEYS_values,
+                                     sizeof(SQLPRIM_KEYS_values),
+                                     SQLPRIM_KEYS_fields, SQLPRIM_KEYS_FIELDS);
 }
 
 /*
@@ -1996,21 +1938,6 @@ SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT hstmt,
     STMT FAR *stmt=(STMT FAR*) hstmt;
     uint row_count= 0;
 
-    MYODBCDbgEnter;
-
-    MYODBCDbgInfo( "PKCatalog: '%s'", szPkCatalogName ? (char*) szPkCatalogName : "null" );
-    MYODBCDbgInfo( "PKCatalog: (%d)", cbPkCatalogName );
-    MYODBCDbgInfo( "PKSchema: '%s'", szPkSchemaName ? (char*) szPkSchemaName : "null" );
-    MYODBCDbgInfo( "PKSchema: (%d)", cbPkSchemaName );
-    MYODBCDbgInfo( "PKTable: '%s'", szPkTableName ? (char*) szPkTableName : "null" );
-    MYODBCDbgInfo( "PKTable: (%d)", cbPkTableName );
-    MYODBCDbgInfo( "FKCatalog: '%s'", szFkCatalogName ? (char*) szFkCatalogName : "null" );
-    MYODBCDbgInfo( "FKCatalog: (%d)", cbFkCatalogName);
-    MYODBCDbgInfo( "FKSchema: '%s'", szFkSchemaName ? (char*) szFkSchemaName : "null" );
-    MYODBCDbgInfo( "FKSchema: (%d)", cbFkSchemaName);
-    MYODBCDbgInfo( "FKTable: '%s'", szFkTableName ? (char*) szFkTableName : "null" );
-    MYODBCDbgInfo( "FKTable: (%d)", cbFkTableName );
-
     CLEAR_STMT_ERROR(hstmt);
     my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
@@ -2038,7 +1965,7 @@ SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT hstmt,
           {
             SQLRETURN rc= handle_connection_error(stmt);
             pthread_mutex_unlock(&stmt->dbc->lock);
-            MYODBCDbgReturnReturn(rc);
+            return rc;
           }
           else
           {
@@ -2054,7 +1981,7 @@ SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT hstmt,
         if (!tempdata)
         {
           set_mem_error(&stmt->dbc->mysql);
-          MYODBCDbgReturnReturn(handle_connection_error(stmt));
+          return handle_connection_error(stmt);
         }
 
         /* Convert mysql fields to data that odbc wants */
@@ -2181,7 +2108,7 @@ SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT hstmt,
         if (!stmt->result_array)
         {
           set_mem_error(&stmt->dbc->mysql);
-          MYODBCDbgReturnReturn(handle_connection_error(stmt));
+          return handle_connection_error(stmt);
         }
     }
     else /* NO FOREIGN KEY support from SERVER */
@@ -2190,14 +2117,13 @@ SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT hstmt,
     }  
     stmt->result->row_count= row_count;
     mysql_link_fields(stmt,SQLFORE_KEYS_fields,SQLFORE_KEYS_FIELDS);
-    MYODBCDbgInfo( "total keys count: %ld", (long)row_count );
-    MYODBCDbgReturnReturn( SQL_SUCCESS );
+    return SQL_SUCCESS;
 
 empty_set:
-  MYODBCDbgReturnReturn(create_empty_fake_resultset(stmt, (gptr) SQLFORE_KEYS_values,
-                                                    sizeof(SQLFORE_KEYS_values),
-                                                    SQLFORE_KEYS_fields,
-                                                    SQLFORE_KEYS_FIELDS));
+  return create_empty_fake_resultset(stmt, (gptr) SQLFORE_KEYS_values,
+                                     sizeof(SQLFORE_KEYS_values),
+                                     SQLFORE_KEYS_fields,
+                                     SQLFORE_KEYS_FIELDS);
 }
 
 /*
@@ -2232,8 +2158,6 @@ SQLRETURN SQL_API SQLProcedures(SQLHSTMT     hstmt,
   SQLRETURN rc;
   STMT *stmt= (STMT *)hstmt;
 
-  MYODBCDbgEnter;
-
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
@@ -2254,9 +2178,9 @@ SQLRETURN SQL_API SQLProcedures(SQLHSTMT     hstmt,
                            "'' AS REMARKS,"
                            "0 AS PROCEDURE_TYPE "
                            "FROM DUAL WHERE 1=0", SQL_NTS)))
-      MYODBCDbgReturnReturn(rc);
+      return rc;
 
-    MYODBCDbgReturnReturn(my_SQLExecute(hstmt));
+    return my_SQLExecute(hstmt);
   }
 
   /*
@@ -2331,7 +2255,7 @@ SQLRETURN SQL_API SQLProcedures(SQLHSTMT     hstmt,
       return rc;
   }
 
-  MYODBCDbgReturnReturn(my_SQLExecute(hstmt));
+  return my_SQLExecute(hstmt);
 }
 
 
@@ -2354,6 +2278,6 @@ SQLProcedureColumns(SQLHSTMT hstmt,
                     SQLCHAR FAR *szColumnName __attribute__((unused)),
                     SQLSMALLINT cbColumnName __attribute__((unused)))
 {
-    MYODBCDbgEnter;
-    MYODBCDbgReturnReturn( set_error( hstmt,MYERR_S1000, "Driver doesn't support this yet",4000 ) );
+    return set_error(hstmt, MYERR_S1000,
+                     "Driver doesn't support this yet", 4000);
 }

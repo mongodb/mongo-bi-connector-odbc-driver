@@ -55,21 +55,19 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
                                   SQLINTEGER   Attribute,
                                   SQLPOINTER   ValuePtr)
 {
-    MYODBCDbgEnter;
-
     switch (Attribute)
     {
         case SQL_ATTR_ASYNC_ENABLE:
             if (ValuePtr == (SQLPOINTER) SQL_ASYNC_ENABLE_ON)
-                MYODBCDbgReturnReturn(set_handle_error(HandleType,Handle,MYERR_01S02,
-                                                 "Doesn't support asynchronous, changed to default",0));
+                return set_handle_error(HandleType,Handle,MYERR_01S02,
+                                        "Doesn't support asynchronous, changed to default",0);
             break;
 
         case SQL_ATTR_CURSOR_SENSITIVITY:
             if (ValuePtr != (SQLPOINTER) SQL_UNSPECIFIED)
             {
-                MYODBCDbgReturnReturn(set_handle_error(HandleType,Handle,MYERR_01S02,
-                                                 "Option value changed to default cursor sensitivity(unspecified)",0));
+                return set_handle_error(HandleType,Handle,MYERR_01S02,
+                                        "Option value changed to default cursor sensitivity(unspecified)",0);
             }
             break;
 
@@ -78,8 +76,8 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
             {
                 options->cursor_type= SQL_CURSOR_FORWARD_ONLY;
                 if (ValuePtr != (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY)
-                    MYODBCDbgReturnReturn(set_handle_error(HandleType,Handle,MYERR_01S02,
-                                                     "Forcing the use of forward-only cursor)",0));
+                    return set_handle_error(HandleType,Handle,MYERR_01S02,
+                                            "Forcing the use of forward-only cursor)",0);
             }
             else if (((STMT FAR*)Handle)->dbc->flag & FLAG_DYNAMIC_CURSOR)
             {
@@ -89,8 +87,8 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
                 else
                 {
                     options->cursor_type= SQL_CURSOR_STATIC;
-                    MYODBCDbgReturnReturn(set_handle_error(HandleType,Handle,MYERR_01S02,
-                                                     "Option value changed to default static cursor",0));
+                    return set_handle_error(HandleType,Handle,MYERR_01S02,
+                                            "Option value changed to default static cursor",0);
                 }
             }
             else
@@ -102,8 +100,8 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
                 else
                 {
                     options->cursor_type= SQL_CURSOR_STATIC;
-                    MYODBCDbgReturnReturn(set_handle_error(HandleType,Handle,MYERR_01S02,
-                                                     "Option value changed to default static cursor",0));
+                    return set_handle_error(HandleType,Handle,MYERR_01S02,
+                                            "Option value changed to default static cursor",0);
                 }
             }
             break;
@@ -118,12 +116,11 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
 
         case SQL_ATTR_METADATA_ID:
             if (ValuePtr == (SQLPOINTER) SQL_TRUE)
-                MYODBCDbgReturnReturn(set_handle_error(HandleType,Handle,MYERR_01S02,
-                                                 "Doesn't support SQL_ATTR_METADATA_ID to true, changed to default",0));
+                return set_handle_error(HandleType,Handle,MYERR_01S02,
+                                        "Doesn't support SQL_ATTR_METADATA_ID to true, changed to default",0);
             break;
 
         case SQL_ATTR_RETRIEVE_DATA:
-            MYODBCDbgInfo( "%s", "SQL_ATTR_RETRIEVE_DATA value is ignored" );
             break;
 
         case SQL_ATTR_ROW_BIND_TYPE:
@@ -132,8 +129,8 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
 
         case SQL_ATTR_SIMULATE_CURSOR:
             if (ValuePtr != (SQLPOINTER) SQL_SC_TRY_UNIQUE)
-                MYODBCDbgReturnReturn(set_handle_error(HandleType,Handle,MYERR_01S02,
-                                                 "Option value changed to default cursor simulation",0));
+                return set_handle_error(HandleType,Handle,MYERR_01S02,
+                                        "Option value changed to default cursor simulation",0);
             break;
 
         case SQL_ATTR_ROW_BIND_OFFSET_PTR:
@@ -150,19 +147,17 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
         case SQL_ATTR_CONCURRENCY:
         case SQL_ATTR_NOSCAN:
         case SQL_ATTR_ROW_OPERATION_PTR: /* need to support this ....*/
-            MYODBCDbgInfo( "Attribute, %d is ignored", (int)Attribute );
             break;
 
         case SQL_ATTR_FETCH_BOOKMARK_PTR:
         case SQL_ATTR_USE_BOOKMARKS:
-            MYODBCDbgReturnReturn(set_handle_error(HandleType,Handle,MYERR_S1C00,NULL,0));
+            return set_handle_error(HandleType,Handle,MYERR_S1C00,NULL,0);
             break;
 
         default:
-            MYODBCDbgInfo( "Attribute, %d is ignored", (int)Attribute );
             break;
     }
-    MYODBCDbgReturnReturn(SQL_SUCCESS);
+    return SQL_SUCCESS;
 }
 
 
@@ -179,11 +174,8 @@ get_constmt_attr(SQLSMALLINT  HandleType,
                  SQLPOINTER   ValuePtr,
                  SQLINTEGER   *StringLengthPtr __attribute__((unused)))
 {
-    MYODBCDbgEnter;
-
     switch (Attribute)
     {
-        
         case SQL_ATTR_ASYNC_ENABLE:
             *((SQLUINTEGER *) ValuePtr)= SQL_ASYNC_ENABLE_OFF;
             break;
@@ -247,12 +239,11 @@ get_constmt_attr(SQLSMALLINT  HandleType,
             break;
 
         case SQL_ATTR_ROW_OPERATION_PTR: /* need to support this ....*/
-            MYODBCDbgInfo( "Attribute, %d is ignored", (int)Attribute );
-            MYODBCDbgReturnReturn(SQL_SUCCESS_WITH_INFO);
+            return SQL_SUCCESS_WITH_INFO;
 
         case SQL_ATTR_FETCH_BOOKMARK_PTR:
         case SQL_ATTR_USE_BOOKMARKS:
-            MYODBCDbgReturnReturn(set_handle_error(HandleType,Handle,MYERR_S1C00,NULL,0));
+            return set_handle_error(HandleType,Handle,MYERR_S1C00,NULL,0);
 
         case 1226:/* MS SQL Server Extension */
         case 1227:
@@ -260,9 +251,9 @@ get_constmt_attr(SQLSMALLINT  HandleType,
             break;
 
         default:
-          MYODBCDbgError( "Invalid attribute/option identifier:%d", (int)Attribute );
+            break;
     }
-    MYODBCDbgReturnReturn(SQL_SUCCESS);
+    return SQL_SUCCESS;
 }
 
 
@@ -279,17 +270,9 @@ set_con_attr(SQLHDBC    hdbc,
 {
     DBC FAR *dbc= (DBC FAR*) hdbc;
 
-    MYODBCDbgEnter;
-
-    MYODBCDbgInfo( "Atrr: %d", (int)Attribute );
-    MYODBCDbgInfo( "ValuePtr: 0x%lx", (ulong)ValuePtr );
-    MYODBCDbgInfo( "StrLenPtr: %d", (int)StringLengthPtr );
-
     switch (Attribute)
     {
-        
         case SQL_ATTR_ACCESS_MODE:
-            MYODBCDbgInfo( "SQL_ATTR_ACCESS_MODE %ld ignored", (SQLUINTEGER)ValuePtr );
             break;
 
         case SQL_ATTR_AUTOCOMMIT:
@@ -298,35 +281,34 @@ set_con_attr(SQLHDBC    hdbc,
                 if (!dbc->server) /* no connection yet */
                 {
                     dbc->commit_flag= CHECK_AUTOCOMMIT_OFF;
-                    MYODBCDbgReturnReturn(SQL_SUCCESS);
+                    return SQL_SUCCESS;
                 }
                 if (!(trans_supported(dbc)) || (dbc->flag & FLAG_NO_TRANSACTIONS))
-                    MYODBCDbgReturnReturn(set_conn_error(dbc,MYERR_S1C00,
-                                                   "Transactions are not enabled", 4000));
+                    return set_conn_error(dbc,MYERR_S1C00,
+                                          "Transactions are not enabled", 4000);
 
                 if (autocommit_on(dbc))
-                    MYODBCDbgReturnReturn(odbc_stmt(dbc,"SET AUTOCOMMIT=0"));
+                    return odbc_stmt(dbc,"SET AUTOCOMMIT=0");
             }
             else if (!dbc->server) /* no connection yet */
             {
                 dbc->commit_flag= CHECK_AUTOCOMMIT_ON;
-                MYODBCDbgReturnReturn(SQL_SUCCESS);
+                return SQL_SUCCESS;
             }
             else if (trans_supported(dbc) && !(autocommit_on(dbc)))
-                MYODBCDbgReturnReturn(odbc_stmt(dbc,"SET AUTOCOMMIT=1"));
+                return odbc_stmt(dbc,"SET AUTOCOMMIT=1");
             break;
 
         case SQL_ATTR_LOGIN_TIMEOUT:
             {
                 /* we can't change timeout values in post connect state */
                if (dbc->server) {
-                  MYODBCDbgReturnReturn(
-                       set_conn_error(dbc, MYERR_S1011, NULL, 0));
-               } 
+                  return set_conn_error(dbc, MYERR_S1011, NULL, 0);
+               }
                else
                {
                   dbc->login_timeout= (SQLUINTEGER) ValuePtr;
-                  MYODBCDbgReturnReturn(SQL_SUCCESS);
+                  return SQL_SUCCESS;
                }
             }
             break;
@@ -337,7 +319,7 @@ set_con_attr(SQLHDBC    hdbc,
                 We don't do anything with this, but we pretend that we did
                 to be consistent with Microsoft SQL Server.
               */
-              MYODBCDbgReturnReturn(SQL_SUCCESS);
+              return SQL_SUCCESS;
             }
             break;
 
@@ -352,7 +334,7 @@ set_con_attr(SQLHDBC    hdbc,
                 char ldb[NAME_LEN+1], *db;
 
                 if (!(db= fix_str((char *)ldb, (char *)ValuePtr, StringLengthPtr)))
-                    MYODBCDbgReturnReturn(set_conn_error(hdbc,MYERR_S1009,NULL, 0));
+                    return set_conn_error(hdbc,MYERR_S1009,NULL, 0);
 
                 pthread_mutex_lock(&dbc->lock);
                 if ( dbc->mysql.net.vio )
@@ -361,7 +343,7 @@ set_con_attr(SQLHDBC    hdbc,
                     {
                         set_conn_error(dbc,MYERR_S1000,mysql_error(&dbc->mysql),mysql_errno(&dbc->mysql));
                         pthread_mutex_unlock(&dbc->lock);
-                        MYODBCDbgReturnReturn(SQL_ERROR);
+                        return SQL_ERROR;
                     }
                 }
                 my_free((gptr) dbc->database,MYF(0));
@@ -374,8 +356,8 @@ set_con_attr(SQLHDBC    hdbc,
         case SQL_ATTR_ODBC_CURSORS:
             if ((dbc->flag & FLAG_FORWARD_CURSOR) &&
                 ValuePtr != (SQLPOINTER) SQL_CUR_USE_ODBC)
-                MYODBCDbgReturnReturn(set_conn_error(hdbc,MYERR_01S02,
-                                               "Forcing the Driver Manager to use ODBC cursor library",0));
+                return set_conn_error(hdbc,MYERR_01S02,
+                                      "Forcing the Driver Manager to use ODBC cursor library",0);
             break;
 
         case SQL_OPT_TRACE:
@@ -386,18 +368,17 @@ set_con_attr(SQLHDBC    hdbc,
             {
                 char buff[100];
                 sprintf(buff,"Suppose to set this attribute '%d' through driver manager, not by the driver",(int) Attribute);
-                MYODBCDbgReturnReturn(set_conn_error(hdbc,MYERR_01S02,buff,0));
+                return set_conn_error(hdbc,MYERR_01S02,buff,0);
             }
 
         case SQL_ATTR_PACKET_SIZE:
-            MYODBCDbgInfo( "SQL_ATTR_PACKET_SIZE %ld ignored", (SQLUINTEGER)ValuePtr );
             break;
 
         case SQL_ATTR_TXN_ISOLATION:
             if (!dbc->server)  /* no connection yet */
             {
                 dbc->txn_isolation= (SQLINTEGER)ValuePtr;
-                MYODBCDbgReturnReturn(SQL_SUCCESS);
+                return SQL_SUCCESS;
             }
             if (trans_supported(dbc))
             {
@@ -416,8 +397,6 @@ set_con_attr(SQLHDBC    hdbc,
                 if (odbc_stmt(dbc,buff) == SQL_SUCCESS)
                     dbc->txn_isolation= (SQLINTEGER)ValuePtr;
             }
-            else
-                MYODBCDbgInfo( "SQL_ATTR_TXN_ISOLATION %ld ignored", (SQLINTEGER)ValuePtr );
             break;
 
             /*
@@ -426,9 +405,10 @@ set_con_attr(SQLHDBC    hdbc,
               works fine...lets support it..nothing to loose..
             */
         default:
-            MYODBCDbgReturnReturn(set_constmt_attr(2,dbc,&dbc->stmt_options,Attribute,ValuePtr));
+            return set_constmt_attr(2, dbc, &dbc->stmt_options, Attribute,
+                                    ValuePtr);
     }
-    MYODBCDbgReturnReturn(SQL_SUCCESS);
+    return SQL_SUCCESS;
 }
 
 
@@ -448,13 +428,6 @@ static SQLRETURN get_con_attr(SQLHDBC    hdbc,
     SQLINTEGER len;
     SQLPOINTER vparam= 0;
 
-    MYODBCDbgEnter;
-
-    MYODBCDbgInfo( "Atrr: %d", (int)Attribute );
-    MYODBCDbgInfo( "ValuePtr: 0x%lx", (ulong)ValuePtr );
-    MYODBCDbgInfo( "BufLen: %d", (int)BufferLength );
-    MYODBCDbgInfo( "StrLenPtr: 0x%lx", (ulong)StringLengthPtr );
-
     if (!ValuePtr)
         ValuePtr= vparam;
 
@@ -463,7 +436,6 @@ static SQLRETURN get_con_attr(SQLHDBC    hdbc,
 
     switch (Attribute)
     {
-        
         case SQL_ATTR_ACCESS_MODE:
             *((SQLUINTEGER *) ValuePtr)= SQL_MODE_READ_WRITE;
             break;
@@ -556,10 +528,9 @@ static SQLRETURN get_con_attr(SQLHDBC    hdbc,
 
               if (odbc_stmt(dbc, "SELECT @@tx_isolation"))
               {
-                MYODBCDbgReturnReturn(set_handle_error(SQL_HANDLE_DBC,hdbc,
-                                                       MYERR_S1000,
-                                                       "Failed to get "
-                                                       "isolation level", 0));
+                return set_handle_error(SQL_HANDLE_DBC,hdbc,
+                                        MYERR_S1000,
+                                        "Failed to get isolation level", 0);
               }
               else
               {
@@ -599,7 +570,7 @@ static SQLRETURN get_con_attr(SQLHDBC    hdbc,
                                      Attribute,ValuePtr,
                                      StringLengthPtr);
     }
-    MYODBCDbgReturnReturn(result);
+    return result;
 }
 
 
@@ -618,15 +589,8 @@ set_stmt_attr(SQLHSTMT   hstmt,
     SQLRETURN result= SQL_SUCCESS;
     STMT_OPTIONS *options= &stmt->stmt_options;
 
-    MYODBCDbgEnter;
-
-    MYODBCDbgInfo( "Atrr: %d", (int)Attribute );
-    MYODBCDbgInfo( "ValuePtr: 0x%lx", (ulong)ValuePtr );
-    MYODBCDbgInfo( "StrLenPtr: %d", (int)StringLengthPtr );
-
     switch (Attribute)
     {
-        
         case SQL_ATTR_CURSOR_SCROLLABLE:
             if (ValuePtr == (SQLPOINTER)SQL_NONSCROLLABLE &&
                 options->cursor_type != SQL_CURSOR_FORWARD_ONLY)
@@ -639,8 +603,8 @@ set_stmt_attr(SQLHSTMT   hstmt,
 
         case SQL_ATTR_AUTO_IPD:
             if (ValuePtr != (SQLPOINTER)SQL_FALSE)
-                MYODBCDbgReturnReturn(set_error(hstmt,MYERR_01S02,
-                                          "Option value changed to default auto ipd",0));
+                return set_error(hstmt,MYERR_01S02,
+                                 "Option value changed to default auto ipd",0);
             break;
 
         case SQL_ATTR_PARAM_STATUS_PTR: /* need to support this ....*/
@@ -653,9 +617,9 @@ set_stmt_attr(SQLHSTMT   hstmt,
 
         case SQL_ATTR_PARAMSET_SIZE:
             if (ValuePtr != (SQLPOINTER)1)
-                MYODBCDbgReturnReturn(set_error(hstmt,MYERR_01S02,
-                                          "Option value changed to default parameter size",
-                                          0));
+                return set_error(hstmt,MYERR_01S02,
+                                 "Option value changed to default parameter size",
+                                 0);
             break;
 
         case SQL_ATTR_ROW_ARRAY_SIZE:
@@ -664,8 +628,8 @@ set_stmt_attr(SQLHSTMT   hstmt,
             break;
 
         case SQL_ATTR_ROW_NUMBER:
-            MYODBCDbgReturnReturn(set_error(hstmt,MYERR_S1000,
-                                      "Trying to set read-only attribute",0));
+            return set_error(hstmt,MYERR_S1000,
+                             "Trying to set read-only attribute",0);
             break;
 
         case SQL_ATTR_ROW_OPERATION_PTR:
@@ -693,7 +657,7 @@ set_stmt_attr(SQLHSTMT   hstmt,
             result= set_constmt_attr(3,hstmt,options,
                                      Attribute,ValuePtr);
     }
-    MYODBCDbgReturnReturn(result);
+    return result;
 }
 
 
@@ -714,12 +678,6 @@ static SQLRETURN get_stmt_attr(SQLHSTMT   hstmt,
     SQLPOINTER vparam;
     SQLINTEGER len;
 
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "Atrr: %d", (int)Attribute );
-    MYODBCDbgInfo( "ValuePtr: 0x%lx", (ulong)ValuePtr );
-    MYODBCDbgInfo( "BufLen: %d", (int)BufferLength );
-    MYODBCDbgInfo( "StrLenPtr: 0x%lx", (ulong)StringLengthPtr );
-
     if (!ValuePtr)
         ValuePtr= &vparam;
 
@@ -728,7 +686,6 @@ static SQLRETURN get_stmt_attr(SQLHSTMT   hstmt,
 
     switch (Attribute)
     {
-        
         case SQL_ATTR_CURSOR_SCROLLABLE:
             if (options->cursor_type == SQL_CURSOR_FORWARD_ONLY)
                 *(SQLUINTEGER*)ValuePtr= SQL_NONSCROLLABLE;
@@ -813,7 +770,7 @@ static SQLRETURN get_stmt_attr(SQLHSTMT   hstmt,
                                      StringLengthPtr);
     }
 
-    MYODBCDbgReturnReturn(result);
+    return result;
 }
 
 
@@ -826,16 +783,7 @@ SQLRETURN SQL_API SQLSetConnectOption( SQLHDBC      hdbc,
                                        SQLUSMALLINT fOption,
                                        SQLULEN      vParam )
 {
-    SQLRETURN result= SQL_SUCCESS;
-
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "hdbc: %p", hdbc );
-    MYODBCDbgInfo( "fOption: %s", MYODBCDbgConnectOptionString( fOption ) );
-    MYODBCDbgInfo( "fOption: %d", fOption );
-
-    result= set_con_attr(hdbc,fOption,(SQLPOINTER)vParam,SQL_NTS);
-
-    MYODBCDbgReturnReturn(result);
+  return set_con_attr(hdbc, fOption, (SQLPOINTER)vParam, SQL_NTS);
 }
 
 
@@ -847,16 +795,7 @@ SQLRETURN SQL_API SQLSetConnectOption( SQLHDBC      hdbc,
 SQLRETURN SQL_API SQLGetConnectOption(SQLHDBC hdbc,SQLUSMALLINT fOption,
                                       SQLPOINTER vParam)
 {
-    SQLRETURN result= SQL_SUCCESS;
-
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "hdbc: %p", hdbc );
-    MYODBCDbgInfo( "fOption: %s", MYODBCDbgConnectOptionString( fOption ) );
-    MYODBCDbgInfo( "fOption: %d", fOption );
-
-    result= get_con_attr(hdbc,fOption,vParam,SQL_NTS,(SQLINTEGER *)NULL);
-
-    MYODBCDbgReturnReturn(result);
+  return get_con_attr(hdbc, fOption, vParam, SQL_NTS, (SQLINTEGER *)NULL);
 }
 
 
@@ -869,16 +808,7 @@ SQLRETURN SQL_API SQLSetStmtOption( SQLHSTMT        hstmt,
                                     SQLUSMALLINT    fOption,
                                     SQLULEN         vParam )
 {
-    SQLRETURN result= SQL_SUCCESS;
-
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "hstmt: %p", hstmt );
-    MYODBCDbgInfo( "fOption: %s", MYODBCDbgStmtOptionString( fOption ) );
-    MYODBCDbgInfo( "fOption: %d", fOption );
-
-    result= set_stmt_attr(hstmt,fOption,(SQLPOINTER)vParam,SQL_NTS);
-
-    MYODBCDbgReturnReturn(result);
+  return set_stmt_attr(hstmt,fOption,(SQLPOINTER)vParam,SQL_NTS);
 }
 
 
@@ -890,16 +820,7 @@ SQLRETURN SQL_API SQLSetStmtOption( SQLHSTMT        hstmt,
 SQLRETURN SQL_API SQLGetStmtOption(SQLHSTMT hstmt,SQLUSMALLINT fOption,
                                    SQLPOINTER vParam)
 {
-    SQLRETURN result= SQL_SUCCESS;
-
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "hstmt: %p", hstmt );
-    MYODBCDbgInfo( "fOption: %s", MYODBCDbgStmtOptionString( fOption ) );
-    MYODBCDbgInfo( "fOption: %d", fOption );
-
-    result= get_stmt_attr(hstmt,fOption,vParam,SQL_NTS,(SQLINTEGER *)NULL);
-
-    MYODBCDbgReturnReturn(result);
+  return get_stmt_attr(hstmt, fOption, vParam, SQL_NTS, (SQLINTEGER *)NULL);
 }
 
 
@@ -914,18 +835,12 @@ SQLSetEnvAttr(SQLHENV    henv,
               SQLPOINTER ValuePtr,
               SQLINTEGER StringLength __attribute__((unused)))
 {
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "henv: %p", henv );
-    MYODBCDbgInfo( "Atrr: %s", MYODBCDbgEnvAttrString( Attribute ) );
-    MYODBCDbgInfo( "Atrr: %d", (int)Attribute );
-    MYODBCDbgInfo( "ValuePtr: 0x%lx", (ulong)ValuePtr );
 
     if (((ENV FAR *)henv)->connections)
-        MYODBCDbgReturnReturn( set_env_error(henv,MYERR_S1010,NULL,0) );
+        return set_env_error(henv, MYERR_S1010, NULL, 0);
 
     switch (Attribute)
     {
-        
         case SQL_ATTR_ODBC_VERSION:
             ((ENV FAR *)henv)->odbc_ver= (SQLINTEGER)ValuePtr;
             break;
@@ -935,9 +850,9 @@ SQLSetEnvAttr(SQLHENV    henv,
                 break;
 
         default:
-            MYODBCDbgReturnReturn(set_env_error(henv,MYERR_S1C00,NULL,0));
+            return set_env_error(henv,MYERR_S1C00,NULL,0);
     }
-    MYODBCDbgReturnReturn(SQL_SUCCESS);
+    return SQL_SUCCESS;
 }
 
 
@@ -953,11 +868,6 @@ SQLGetEnvAttr(SQLHENV    henv,
               SQLINTEGER BufferLength __attribute__((unused)),
               SQLINTEGER *StringLengthPtr __attribute__((unused)))
 {
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "henv: %p", henv );
-    MYODBCDbgInfo( "Atrr: %s", MYODBCDbgEnvAttrString( Attribute ) );
-    MYODBCDbgInfo( "Atrr: %d", (int)Attribute );
-
     switch ( Attribute )
     {
         case SQL_ATTR_CONNECTION_POOLING:
@@ -973,9 +883,9 @@ SQLGetEnvAttr(SQLHENV    henv,
             break;
 
         default:
-            MYODBCDbgReturnReturn(set_env_error(henv,MYERR_S1C00,NULL,0));
+            return set_env_error(henv,MYERR_S1C00,NULL,0);
     }
-    MYODBCDbgReturnReturn(SQL_SUCCESS);
+    return SQL_SUCCESS;
 }
 
 
@@ -989,11 +899,7 @@ SQLRETURN SQL_API SQLSetConnectAttr(SQLHDBC hdbc,
                                     SQLPOINTER ValuePtr,
                                     SQLINTEGER StringLength)
 {
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "hdbc: %p", hdbc );
-    MYODBCDbgInfo( "Attribute: %s", MYODBCDbgConnectAttrString( Attribute ) );
-    MYODBCDbgInfo( "Attribute: %d", (int)Attribute );
-    MYODBCDbgReturnReturn( set_con_attr(hdbc,Attribute, ValuePtr,StringLength) );
+  return set_con_attr(hdbc, Attribute, ValuePtr, StringLength);
 }
 
 /*
@@ -1007,11 +913,7 @@ SQLRETURN SQL_API SQLGetConnectAttr(SQLHDBC hdbc,
                                     SQLINTEGER BufferLength,
                                     SQLINTEGER *StringLengthPtr)
 {
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "hdbc: %p", hdbc );
-    MYODBCDbgInfo( "Attribute: %s", MYODBCDbgConnectAttrString( Attribute ) );
-    MYODBCDbgInfo( "Attribute: %d", (int)Attribute );
-    MYODBCDbgReturnReturn( get_con_attr( hdbc,Attribute, ValuePtr,BufferLength, StringLengthPtr ) );
+  return get_con_attr(hdbc, Attribute, ValuePtr, BufferLength, StringLengthPtr);
 }
 
 /*
@@ -1024,11 +926,7 @@ SQLRETURN SQL_API SQLSetStmtAttr(SQLHSTMT   hstmt,
                                  SQLPOINTER ValuePtr,
                                  SQLINTEGER StringLength)
 {
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "hstmt: %p", hstmt );
-    MYODBCDbgInfo( "Attribute: %s", MYODBCDbgStmtAttrString( Attribute ) );
-    MYODBCDbgInfo( "Attribute: %d", (int)Attribute );
-    MYODBCDbgReturnReturn( set_stmt_attr( hstmt, Attribute, ValuePtr, StringLength ) );
+  return set_stmt_attr(hstmt, Attribute, ValuePtr, StringLength );
 }
 
 /*
@@ -1041,9 +939,6 @@ SQLRETURN SQL_API SQLGetStmtAttr(SQLHSTMT   hstmt,
                                  SQLINTEGER BufferLength,
                                  SQLINTEGER *StringLengthPtr)
 {
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "hstmt: %p", hstmt );
-    MYODBCDbgInfo( "Attribute: %s", MYODBCDbgStmtAttrString( Attribute ) );
-    MYODBCDbgInfo( "Attribute: %d", (int)Attribute );
-    MYODBCDbgReturnReturn( get_stmt_attr( hstmt,Attribute, ValuePtr,BufferLength, StringLengthPtr ) );
+  return get_stmt_attr(hstmt ,Attribute, ValuePtr, BufferLength,
+                       StringLengthPtr);
 }

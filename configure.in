@@ -131,13 +131,6 @@ AC_ARG_WITH(separate-debug-driver,
 AM_CONDITIONAL(WITH_SEPARATE_DEBUG_DRIVER,
 	[test "x$with_separate_debug_driver" != xno])
 
-myodbc_dbg_dir=""
-if test "x$with_debug" != xno -o "x$with_separate_debug_driver" != xno
-then
-  myodbc_dbg_dir="MYODBCDbg"
-fi
-AC_SUBST(myodbc_dbg_dir)
-
 ###################################################################
 #
 # THREADED
@@ -993,8 +986,6 @@ AC_COMPILE_IFELSE(
 
 AC_OUTPUT([
   Makefile 
-  MYODBCDbg/Makefile
-  MYODBCDbg/MYODBCDbgLib/Makefile
   util/Makefile
   driver/Makefile
   setup/Makefile

@@ -44,9 +44,6 @@ SQLRETURN odbc_stmt(DBC FAR *dbc, const char *query)
 {
     SQLRETURN result= SQL_SUCCESS;
 
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "stmt: %s", query );
-
     pthread_mutex_lock(&dbc->lock);
     if ( check_if_server_is_alive(dbc) ||
          mysql_real_query(&dbc->mysql,query,strlen(query)) )
@@ -55,7 +52,7 @@ SQLRETURN odbc_stmt(DBC FAR *dbc, const char *query)
                                mysql_errno(&dbc->mysql));
     }
     pthread_mutex_unlock(&dbc->lock);
-    MYODBCDbgReturnReturn(result);
+    return result;
 }
 
 
@@ -91,8 +88,6 @@ void fix_result_types(STMT *stmt)
     uint i;
     MYSQL_RES *result= stmt->result;
 
-    MYODBCDbgEnter;
-
     stmt->state= ST_EXECUTED;  /* Mark set found */
     if ( (stmt->odbc_types= (SQLSMALLINT*)
           my_malloc(sizeof(SQLSMALLINT)*result->field_count, MYF(0))) )
@@ -117,7 +112,7 @@ void fix_result_types(STMT *stmt)
             {
                 /* We should in principle give an error here */
                 stmt->bound_columns= 0;
-                MYODBCDbgReturnVoid;
+                return;
             }
             bzero((gptr) (stmt->bind+stmt->bound_columns),
                   (result->field_count -stmt->bound_columns)*sizeof(BIND));
@@ -133,7 +128,6 @@ void fix_result_types(STMT *stmt)
             stmt->bind[i].field= mysql_fetch_field(result);
         }
     }
-    MYODBCDbgReturnVoid;
 }
 
 
@@ -285,8 +279,6 @@ copy_lresult(SQLSMALLINT HandleType, SQLHANDLE Handle,
     }
     if ( arg_length && cbValueMax >= fill_length )
         return SQL_SUCCESS;
-    MYODBCDbgInfo( "Returned %ld characters from", length );
-    MYODBCDbgInfo( "offset: %lu", *offset - length );
     set_handle_error(HandleType,Handle,MYERR_01004,NULL,0);
     return SQL_SUCCESS_WITH_INFO;
 }
@@ -344,8 +336,6 @@ SQLRETURN copy_binary_result( SQLSMALLINT   HandleType,
     }
     if ( (ulong) cbValueMax > length*2 )
         return SQL_SUCCESS;
-    MYODBCDbgInfo( "Returned %ld characters from", length );
-    MYODBCDbgInfo( "offset: %ld", *offset - length );
 
     set_handle_error(HandleType,Handle,MYERR_01004,NULL,0);
     return SQL_SUCCESS_WITH_INFO;

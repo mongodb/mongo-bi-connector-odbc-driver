@@ -56,7 +56,6 @@ SQLRETURN SQL_API SQLPrepare(SQLHSTMT hStmt, SQLCHAR *szSqlStr,
                              SQLINTEGER cbSqlStr)
 {
   STMT *stmt= (STMT *)hStmt;
-  MYODBCDbgEnter;
   /*
     We free orig_query here, instead of my_SQLPrepare, because
     my_SQLPrepare is used by my_pos_update() when a statement requires
@@ -65,7 +64,7 @@ SQLRETURN SQL_API SQLPrepare(SQLHSTMT hStmt, SQLCHAR *szSqlStr,
   if (stmt->orig_query)
     my_free(stmt->orig_query,MYF(0));
 
-  MYODBCDbgReturnReturn(my_SQLPrepare(hStmt, szSqlStr, cbSqlStr));
+  return my_SQLPrepare(hStmt, szSqlStr, cbSqlStr);
 }
 
 
@@ -87,8 +86,6 @@ SQLRETURN my_SQLPrepare( SQLHSTMT hstmt, SQLCHAR FAR *szSqlStr, SQLINTEGER cbSql
     int bEmbraced = 0;
     char *pcLastCloseBrace = 0;
 
-    MYODBCDbgEnter;
-
 #ifdef USE_MB
     LINT_INIT(end);
 #endif
@@ -101,8 +98,7 @@ SQLRETURN my_SQLPrepare( SQLHSTMT hstmt, SQLCHAR FAR *szSqlStr, SQLINTEGER cbSql
 #endif
 
     if (!(stmt->query= dupp_str((char*) szSqlStr, cbSqlStr)))
-        MYODBCDbgReturnReturn(set_error(stmt,MYERR_S1001,NULL,4001));
-    MYODBCDbgInfo( "%s", stmt->query );
+        return set_error(stmt, MYERR_S1001, NULL, 4001);
 
     /* Count number of parameters and save position for each parameter */
     in_string= 0;
@@ -179,7 +175,7 @@ SQLRETURN my_SQLPrepare( SQLHSTMT hstmt, SQLCHAR FAR *szSqlStr, SQLINTEGER cbSql
                     bzero((gptr) &tmp_param,sizeof(tmp_param));
                     if (push_dynamic(&stmt->params,(gptr) &tmp_param))
                     {
-                        MYODBCDbgReturnReturn(set_error(stmt,MYERR_S1001,NULL,4001));
+                        return set_error(stmt, MYERR_S1001, NULL, 4001);
                     }
                 }
                 param= dynamic_element(&stmt->params,param_count,PARAM_BIND*);
@@ -198,8 +194,7 @@ SQLRETURN my_SQLPrepare( SQLHSTMT hstmt, SQLCHAR FAR *szSqlStr, SQLINTEGER cbSql
     stmt->current_param= 0;
     stmt->query_end= pos;
     stmt->state= ST_PREPARED;
-    MYODBCDbgInfo( "Parameter count: %ld", (long)stmt->param_count );
-    MYODBCDbgReturnReturn(SQL_SUCCESS);
+    return SQL_SUCCESS;
 }
 
 
@@ -222,27 +217,18 @@ SQLRETURN SQL_API my_SQLBindParameter( SQLHSTMT     hstmt,
     STMT FAR *stmt= (STMT FAR*) hstmt;
     PARAM_BIND param;
 
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "ipar: %d", ipar );
-    MYODBCDbgInfo( "Ctype: %d", fCType );
-    MYODBCDbgInfo( "SQLtype: %d", fSqlType );
-    MYODBCDbgInfo( "rgbValue: 0x%lx", (ulong)rgbValue );
-    MYODBCDbgInfo( "ValueMax: %ld", cbValueMax );
-    MYODBCDbgInfo( "Valueptr: 0x%lx", (ulong)pcbValue );
-    MYODBCDbgInfo( "Value: %ld", pcbValue ? *pcbValue : 0L );
-
     CLEAR_STMT_ERROR(stmt);
 
     if (ipar-- < 1)
     {
         set_error(stmt,MYERR_S1093,NULL,0);
-        MYODBCDbgReturnReturn(SQL_ERROR);
+        return SQL_ERROR;
     }
     if (fCType == SQL_C_NUMERIC) /* We don't support this now */
     {
         set_error(stmt,MYERR_07006,
                   "Restricted data type attribute violation(SQL_C_NUMERIC)",0);
-        MYODBCDbgReturnReturn(SQL_ERROR);
+        return SQL_ERROR;
     }
     if (stmt->params.elements > ipar)
     {
@@ -269,9 +255,9 @@ SQLRETURN SQL_API my_SQLBindParameter( SQLHSTMT     hstmt,
     if (set_dynamic(&stmt->params,(gptr) &param,ipar))
     {
         set_error(stmt,MYERR_S1001,NULL,4001);
-        MYODBCDbgReturnReturn(SQL_ERROR);
+        return SQL_ERROR;
     }
-    MYODBCDbgReturnReturn(SQL_SUCCESS);
+    return SQL_SUCCESS;
 }
 
 
@@ -291,17 +277,8 @@ SQLRETURN SQL_API SQLBindParameter( SQLHSTMT        hstmt,
                                     SQLLEN          cbValueMax,
                                     SQLLEN *        pcbValue )
 {
-    MYODBCDbgEnter;
-    MYODBCDbgReturnReturn( my_SQLBindParameter( hstmt, 
-                                ipar, 
-                                fParamType, 
-                                fCType, 
-                                fSqlType,
-                                cbColDef, 
-                                ibScale, 
-                                rgbValue, 
-                                cbValueMax,
-                                pcbValue ) );
+  return my_SQLBindParameter(hstmt, ipar, fParamType, fCType, fSqlType,
+                             cbColDef, ibScale, rgbValue, cbValueMax, pcbValue);
 }
 
 
@@ -320,8 +297,6 @@ SQLRETURN SQL_API SQLDescribeParam( SQLHSTMT        hstmt,
 {
     STMT FAR *stmt= (STMT FAR*) hstmt;
 
-    MYODBCDbgEnter;
-
     if (pfSqlType)
         *pfSqlType= SQL_VARCHAR;
     if (pcbColDef)
@@ -329,7 +304,7 @@ SQLRETURN SQL_API SQLDescribeParam( SQLHSTMT        hstmt,
     if (pfNullable)
         *pfNullable= SQL_NULLABLE_UNKNOWN;
 
-    MYODBCDbgReturnReturn(SQL_SUCCESS);
+    return SQL_SUCCESS;
 }
 
 
@@ -348,17 +323,16 @@ SQLRETURN SQL_API SQLParamOptions( SQLHSTMT     hstmt,
                                    SQLUINTEGER *pirow __attribute__((unused)) )
 #endif
 {
-    MYODBCDbgEnter;
-
     if (crow != 1)
     {
         /*
           Currently return warning for batch processing request,
           but need to handle in the future..
         */
-        MYODBCDbgReturnReturn( set_error( hstmt, MYERR_01S02, "Option value changed to default parameter size", 0 ) );
+        return set_error(hstmt, MYERR_01S02,
+                         "Option value changed to default parameter size", 0);
     }
-    MYODBCDbgReturnReturn( SQL_SUCCESS );
+    return SQL_SUCCESS;
 }
 
 
@@ -367,16 +341,14 @@ SQLRETURN SQL_API SQLParamOptions( SQLHSTMT     hstmt,
   @purpose : returns the number of parameter markers.
 */
 
-SQLRETURN SQL_API SQLNumParams(SQLHSTMT hstmt, SQLSMALLINT FAR *pcpar)
+SQLRETURN SQL_API SQLNumParams(SQLHSTMT hstmt, SQLSMALLINT *pcpar)
 {
-    STMT FAR *stmt= (STMT FAR*) hstmt;
+  STMT *stmt= (STMT *)hstmt;
 
-    MYODBCDbgEnter;
+  if (pcpar)
+    *pcpar= stmt->param_count;
 
-    if (pcpar)
-        *pcpar= stmt->param_count;
-
-    MYODBCDbgReturnReturn(SQL_SUCCESS);
+  return SQL_SUCCESS;
 }
 
 
@@ -392,9 +364,7 @@ SQLRETURN SQL_API SQLSetScrollOptions(  SQLHSTMT        hstmt,
 {
     STMT FAR *stmt= (STMT FAR*) hstmt;
 
-    MYODBCDbgEnter;
-
     stmt->stmt_options.rows_in_set= crowRowset;
 
-    MYODBCDbgReturnReturn( SQL_SUCCESS );
+    return SQL_SUCCESS;
 }

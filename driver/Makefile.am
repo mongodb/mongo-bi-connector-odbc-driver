@@ -93,8 +93,7 @@ else
 LTLIBS_DEPS = ../util/libmyodbc3u.la
 endif
 LTLIBS_DEBUG_DEPS = \
-	../util/libmyodbc3u.la \
-	../MYODBCDbg/MYODBCDbgLib/libMYODBCDbg.la
+	../util/libmyodbc3u.la
 
 libmyodbc3_la_LIBADD         = $(LTLIBS_DEPS) @LTDL_LIB@ @MYSQL_LIB@
 libmyodbc3_la_DEPENDENCIES   = $(LTLIBS_DEPS)

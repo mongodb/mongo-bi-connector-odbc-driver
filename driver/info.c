@@ -61,18 +61,18 @@ char allowed_chars[]=
       *pcbInfoValue= 0;                                                     \
       strmake((char*)rgbInfoValue,"",cbInfoValueMax);                       \
   }                                                                         \
-  MYODBCDbgReturnReturn(*pcbInfoValue >= cbInfoValueMax ?                      \
-		     SQL_SUCCESS_WITH_INFO:                                         \
-		     SQL_SUCCESS);                                                  \
+  return (*pcbInfoValue >= cbInfoValueMax ?                                 \
+          SQL_SUCCESS_WITH_INFO:                                            \
+          SQL_SUCCESS);                                                      \
 }
 
 #define MYINFO_SET_STR_L(rgbInfoValue,cbInfoValueMax,pcbInfoValue,val,len) \
 { \
   *pcbInfoValue= len; \
   strmake((char*)rgbInfoValue,val,cbInfoValueMax); \
-  MYODBCDbgReturnReturn(len >= cbInfoValueMax ? \
-		     SQL_SUCCESS_WITH_INFO: \
-		     SQL_SUCCESS); \
+  return (len >= cbInfoValueMax ? \
+          SQL_SUCCESS_WITH_INFO: \
+          SQL_SUCCESS); \
 }
 
 static my_bool myodbc_ov2_inited= 0;
@@ -101,14 +101,6 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
   char dummy2[255];
   SQLSMALLINT dummy;
   my_bool using_322;
-
-  MYODBCDbgEnter;
-
-  MYODBCDbgInfo("fInfoType: %s", MYODBCDbgInfoTypeString(fInfoType));
-  MYODBCDbgInfo("fInfoType: %d", fInfoType);
-  MYODBCDbgInfo("rgbInfoValue: 0x%lx", (long)rgbInfoValue);
-  MYODBCDbgInfo("cbInfoValueMax :%d", cbInfoValueMax);
-  MYODBCDbgInfo("pcbInfoValue: 0x%lx", (long)pcbInfoValue);
 
   if (cbInfoValueMax)
     cbInfoValueMax--;
@@ -872,10 +864,10 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
     {
       char buff[80];
       sprintf(buff, "Unsupported option: %d to SQLGetInfo", fInfoType);
-      MYODBCDbgReturnReturn(set_conn_error(hdbc, MYERR_S1C00, buff, 4000));
+      return set_conn_error(hdbc, MYERR_S1C00, buff, 4000);
     }
   }
-  MYODBCDbgReturnReturn( SQL_SUCCESS );
+  return SQL_SUCCESS;
 }
 
 
@@ -1060,9 +1052,6 @@ SQLRETURN SQL_API SQLGetTypeInfo(SQLHSTMT hstmt, SQLSMALLINT fSqlType)
   STMT *stmt= (STMT *)hstmt;
   uint i;
 
-  MYODBCDbgEnter;
-  MYODBCDbgInfo("fSqlType: %d", fSqlType);
-
   my_SQLFreeStmt(hstmt, MYSQL_RESET);
 
   /* Set up result Data dictionary. */
@@ -1093,7 +1082,7 @@ SQLRETURN SQL_API SQLGetTypeInfo(SQLHSTMT hstmt, SQLSMALLINT fSqlType)
   }
   mysql_link_fields(stmt, SQL_GET_TYPE_INFO_fields, SQL_GET_TYPE_INFO_FIELDS);
 
-  MYODBCDbgReturnReturn(SQL_SUCCESS);
+  return SQL_SUCCESS;
 }
 
 
@@ -1306,9 +1295,6 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
 {
   SQLUSMALLINT index, myodbc_func_size;
 
-  MYODBCDbgEnter;
-  MYODBCDbgInfo("fFunction: %d",fFunction);
-
   myodbc_func_size= sizeof(myodbc3_functions) / sizeof(myodbc3_functions[0]);
 
   if (fFunction == SQL_API_ODBC3_ALL_FUNCTIONS)
@@ -1318,7 +1304,7 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
       SQLUSMALLINT id= myodbc3_functions[index];
       pfExists[id >> 4]|= (1 << (id & 0x000F));
     }
-    MYODBCDbgReturnReturn(SQL_SUCCESS);
+    return SQL_SUCCESS;
   }
 
   if (fFunction == SQL_API_ALL_FUNCTIONS)
@@ -1328,7 +1314,7 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
       if (myodbc3_functions[index] < 100)
         pfExists[myodbc3_functions[index]]= SQL_TRUE;
     }
-    MYODBCDbgReturnReturn(SQL_SUCCESS);
+    return SQL_SUCCESS;
   }
 
   *pfExists= SQL_FALSE;
@@ -1341,5 +1327,5 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
     }
   }
 
-  MYODBCDbgReturnReturn(SQL_SUCCESS);
+  return SQL_SUCCESS;
 }

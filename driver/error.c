@@ -195,15 +195,11 @@ SQLRETURN set_stmt_error( STMT FAR *    stmt,
                           const char *  message,
                           uint          errcode )
 {
-    MYODBCDbgEnter;
-
-    MYODBCDbgError( "message: %s", message );
-
     strmov( stmt->error.sqlstate, state );
     strxmov( stmt->error.message, stmt->dbc->st_error_prefix, message, NullS );
     stmt->error.native_error = errcode;
 
-    MYODBCDbgReturnReturn( SQL_ERROR );
+    return SQL_ERROR;
 }
 
 
@@ -273,22 +269,16 @@ static SQLRETURN copy_error(MYERROR *error, myodbc_errid errid,
     SQLCHAR     *errmsg;
     SQLINTEGER  code;
 
-    MYODBCDbgEnter;
-
     errmsg= (errtext ? (SQLCHAR *)errtext :
              (SQLCHAR *)myodbc3_errors[errid].message);
     code=   errcode ? (myodbc_errid) errcode : errid + MYODBC_ERROR_CODE_START;
-
-    MYODBCDbgError( "code : %d", (int)code );
-    MYODBCDbgError( "state: %s", myodbc3_errors[errid].sqlstate );
-    MYODBCDbgError( "err  : %s", errtext );
 
     sqlreturn= error->retcode= myodbc3_errors[errid].retcode;  /* RETCODE */
     error->native_error= code;                     /* NATIVE */
     strmov(error->sqlstate, myodbc3_errors[errid].sqlstate);   /* SQLSTATE */
     strxmov(error->message,prefix,errmsg,NullS);           /* MESSAGE */
 
-    MYODBCDbgReturnReturn( sqlreturn );
+    return sqlreturn;
 }
 
 
@@ -414,8 +404,6 @@ SQLRETURN my_SQLGetDiagRec(SQLSMALLINT HandleType,
     SQLSMALLINT tmp_size;
     SQLINTEGER  tmp_error;
 
-    MYODBCDbgEnter;
-
     if ( !TextLengthPtr )
         TextLengthPtr= &tmp_size;
 
@@ -426,7 +414,7 @@ SQLRETURN my_SQLGetDiagRec(SQLSMALLINT HandleType,
         NativeErrorPtr= &tmp_error;
 
     if ( RecNumber <= 0 || BufferLength < 0 || !Handle )
-        MYODBCDbgReturnReturn( SQL_ERROR );
+        return SQL_ERROR;
 
     /*
       Currently we are not supporting error list, so
@@ -434,7 +422,7 @@ SQLRETURN my_SQLGetDiagRec(SQLSMALLINT HandleType,
     */
 
     if ( RecNumber > 1 )
-        MYODBCDbgReturnReturn( SQL_NO_DATA_FOUND );
+        return SQL_NO_DATA_FOUND;
 
     switch ( HandleType )
     {
@@ -458,22 +446,17 @@ SQLRETURN my_SQLGetDiagRec(SQLSMALLINT HandleType,
             break;
 
         default:
-            MYODBCDbgReturnReturn( SQL_INVALID_HANDLE );
+            return SQL_INVALID_HANDLE;
     }
     if ( !errmsg || !errmsg[0] )
     {
         *TextLengthPtr= 0;
         strmov((char*) Sqlstate, "00000");
-        MYODBCDbgReturnReturn( SQL_NO_DATA_FOUND );
+        return SQL_NO_DATA_FOUND;
     }
 
-    MYODBCDbgInfo( "Sqlstate: %s", Sqlstate );
-    MYODBCDbgReturnReturn( copy_str_data( HandleType,
-                                       Handle,
-                                       MessageText,
-                                       BufferLength, 
-                                       TextLengthPtr,
-                                       (char FAR*)errmsg ) );
+    return copy_str_data(HandleType, Handle, MessageText, BufferLength,
+                         TextLengthPtr, (char *)errmsg);
 }
 
 
@@ -496,17 +479,6 @@ SQLRETURN SQL_API SQLGetDiagField(SQLSMALLINT HandleType,
     SQLPOINTER  szDiagInfo= NULL;
     SQLSMALLINT tmp_size;
 
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "HandleType     : %s", MYODBCDbgHandleTypeString( HandleType ) );
-    MYODBCDbgInfo( "HandleType     : %d", HandleType );
-    MYODBCDbgInfo( "Handle         : %p", Handle );
-    MYODBCDbgInfo( "RecNumber      : %d", RecNumber );
-    MYODBCDbgInfo( "DiagIdentifier : %s", MYODBCDbgDiagFieldString( DiagIdentifier ) );
-    MYODBCDbgInfo( "DiagIdentifier : %d", DiagIdentifier );
-    MYODBCDbgInfo( "DiagInfoPtr    : 0x%x", (uint)DiagInfoPtr );
-    MYODBCDbgInfo( "BufferLength   : %d", BufferLength );
-    MYODBCDbgInfo( "StringLengthPtr: 0x%x", (uint)StringLengthPtr );
-
     if ( !StringLengthPtr )
         StringLengthPtr= &tmp_size;
 
@@ -517,10 +489,10 @@ SQLRETURN SQL_API SQLGetDiagField(SQLSMALLINT HandleType,
          !(HandleType == SQL_HANDLE_STMT ||
            HandleType == SQL_HANDLE_DBC ||
            HandleType == SQL_HANDLE_ENV) )
-        MYODBCDbgReturnReturn( SQL_ERROR );
+        return SQL_ERROR;
 
     if ( RecNumber > 1 )
-        MYODBCDbgReturnReturn( SQL_NO_DATA_FOUND );
+        return SQL_NO_DATA_FOUND;
 
     switch ( DiagIdentifier )
     {
@@ -528,7 +500,7 @@ SQLRETURN SQL_API SQLGetDiagField(SQLSMALLINT HandleType,
         /* DIAG HEADER FIELDS SECTION */
         case SQL_DIAG_DYNAMIC_FUNCTION:
             if ( HandleType != SQL_HANDLE_STMT )
-                MYODBCDbgReturnReturn( SQL_ERROR );
+                return SQL_ERROR;
 
             error= copy_str_data(HandleType, Handle, DiagInfoPtr, BufferLength,
                                  StringLengthPtr, "");
@@ -559,7 +531,7 @@ SQLRETURN SQL_API SQLGetDiagField(SQLSMALLINT HandleType,
 
         case SQL_DIAG_CURSOR_ROW_COUNT:/* at present, return total rows in rs */
             if ( HandleType != SQL_HANDLE_STMT )
-                MYODBCDbgReturnReturn( SQL_ERROR );
+                return SQL_ERROR;
 
             if ( !((STMT FAR*) Handle)->result )
                 *(SQLINTEGER *) DiagInfoPtr= 0;
@@ -571,7 +543,7 @@ SQLRETURN SQL_API SQLGetDiagField(SQLSMALLINT HandleType,
 
         case SQL_DIAG_ROW_COUNT:
             if ( HandleType != SQL_HANDLE_STMT )
-                MYODBCDbgReturnReturn( SQL_ERROR );
+                return SQL_ERROR;
 
             *(SQLINTEGER *) DiagInfoPtr= (SQLINTEGER)
                                          ((STMT FAR*)  Handle)->affected_rows;
@@ -673,9 +645,9 @@ SQLRETURN SQL_API SQLGetDiagField(SQLSMALLINT HandleType,
             break;
 
         default:
-            MYODBCDbgReturnReturn( SQL_ERROR );
+            return SQL_ERROR;
     }
-    MYODBCDbgReturnReturn( error );
+    return error;
 }
 
 
@@ -693,12 +665,9 @@ SQLRETURN SQL_API SQLGetDiagRec(SQLSMALLINT HandleType,
                                 SQLSMALLINT BufferLength,
                                 SQLSMALLINT *TextLengthPtr)
 {
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "HandleType: %s", MYODBCDbgHandleTypeString( HandleType ) );
-    MYODBCDbgInfo( "HandleType: %d", HandleType );
-    MYODBCDbgInfo( "Handle    : %p", Handle );
-    MYODBCDbgInfo( "RecNumber : %d", RecNumber );
-    MYODBCDbgReturnReturn( my_SQLGetDiagRec( HandleType, Handle, RecNumber, Sqlstate, NativeErrorPtr, MessageText, BufferLength, TextLengthPtr ) );
+    return my_SQLGetDiagRec(HandleType, Handle, RecNumber, Sqlstate,
+                            NativeErrorPtr, MessageText, BufferLength,
+                            TextLengthPtr);
 }
 
 
@@ -715,11 +684,6 @@ SQLRETURN SQL_API SQLError(SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt,
                            SQLSMALLINT FAR *pcbErrorMsg)
 {
     SQLRETURN error= SQL_INVALID_HANDLE;
-
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "henv : %p", henv );
-    MYODBCDbgInfo( "hdb  : %p", hdbc );
-    MYODBCDbgInfo( "hstmt: %p", hstmt );
 
     if ( hstmt )
     {
@@ -745,5 +709,5 @@ SQLRETURN SQL_API SQLError(SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt,
         if ( error == SQL_SUCCESS )
             CLEAR_ENV_ERROR(henv);
     }
-    MYODBCDbgReturnReturn( error );
+    return error;
 }

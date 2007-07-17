@@ -36,7 +36,6 @@ LDFLAGS=@EXTRA_LDFLAGS@
 build="mysql-connector-odbc-@VERSION@-@SYSTEM_TYPE@-@MACHINE_TYPE@"
 
 SUBDIRS = \
-	@myodbc_dbg_dir@ \
 	util \
 	driver \
 	setup \
@@ -48,7 +47,6 @@ SUBDIRS = \
 	dltest
 
 DIST_SUBDIRS = \
-	MYODBCDbg \
 	util \
 	driver \
 	setup \
