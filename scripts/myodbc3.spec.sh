@@ -27,7 +27,7 @@ Name:       mysql-connector-odbc
 Summary:    An ODBC 3.51 driver for MySQL - driver package
 Group:      Applications/Databases
 Version:    @VERSION@
-Release:    0
+Release:    1
 Provides:   mysqlodbcrpmpack
 %if %{com_lic}
 Copyright:  Commercial
@@ -130,10 +130,10 @@ rm -v $RPM_BUILD_ROOT%{_datadir}/mysql-connector-odbc/{ChangeLog,README,README.d
 # ----------------------------------------------------------------------
 
 %post 
-myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER={_libdir}/libmyodbc3.so"
+myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=%{_libdir}/libmyodbc3.so"
 
 %post setup
-myodbc3i -a -e -t"MySQL ODBC 3.51 Driver;DRIVER={_libdir}/libmyodbc3.so;SETUP={_libdir}/libmyodbc3S.so"
+myodbc3i -a -e -t"MySQL ODBC 3.51 Driver;DRIVER=%{_libdir}/libmyodbc3.so;SETUP=%{_libdir}/libmyodbc3S.so"
 
 # ----------------------------------------------------------------------
 # DEREGISTER DRIVER 
@@ -145,7 +145,7 @@ myodbc3i -r -d -n"MySQL ODBC 3.51 Driver"
 
 # Removing the setup RPM, downgrade the registration
 %preun setup
-myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER={_libdir}/libmyodbc3.so"
+myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=%{_libdir}/libmyodbc3.so"
 
 ##############################################################################
 #
