@@ -1082,12 +1082,15 @@ static MYSQL_RES *mysql_list_dbkeys(DBC FAR    *dbc,
 SQLRETURN SQL_API SQLStatistics(SQLHSTMT hstmt,
                                 SQLCHAR FAR *szTableQualifier,
                                 SQLSMALLINT cbTableQualifier,
-                                SQLCHAR FAR *szTableOwner,
-                                SQLSMALLINT cbTableOwner,
+                                SQLCHAR FAR *szTableOwner
+                                  __attribute__((unused)),
+                                SQLSMALLINT cbTableOwner
+                                  __attribute__((unused)),
                                 SQLCHAR FAR *szTableName,
                                 SQLSMALLINT cbTableName,
                                 SQLUSMALLINT fUnique,
-                                SQLUSMALLINT fAccuracy)
+                                SQLUSMALLINT fAccuracy
+                                  __attribute__((unused)))
 {
     STMT FAR  *stmt= (STMT FAR*) hstmt;
     MYSQL FAR *mysql= &stmt->dbc->mysql;
@@ -1341,12 +1344,6 @@ SQLRETURN SQL_API SQLTablePrivileges(SQLHSTMT hstmt,
     stmt->result->row_count= row_count;
     mysql_link_fields(stmt,SQLTABLES_priv_fields,SQLTABLES_PRIV_FIELDS);
     return SQL_SUCCESS;
-
-empty_set:
-  return create_empty_fake_resultset(stmt, (gptr) SQLTABLES_priv_values,
-                                     sizeof(SQLTABLES_priv_values),
-                                     SQLTABLES_priv_fields,
-                                     SQLTABLES_PRIV_FIELDS);
 }
 
 
@@ -1428,7 +1425,8 @@ const uint SQLCOLUMNS_PRIV_FIELDS= array_elements(SQLCOLUMNS_priv_values);
 SQLRETURN SQL_API SQLColumnPrivileges(SQLHSTMT hstmt,
                                       SQLCHAR FAR *szTableQualifier,
                                       SQLSMALLINT cbTableQualifier,
-                                      SQLCHAR FAR *szTableOwner,
+                                      SQLCHAR FAR *szTableOwner
+                                       __attribute__((unused)),
                                       SQLSMALLINT cbTableOwner
                                        __attribute__((unused)),
                                       SQLCHAR FAR *szTableName,
@@ -1506,12 +1504,6 @@ SQLRETURN SQL_API SQLColumnPrivileges(SQLHSTMT hstmt,
     stmt->result->row_count= row_count;  
     mysql_link_fields(stmt,SQLCOLUMNS_priv_fields,SQLCOLUMNS_PRIV_FIELDS);
     return SQL_SUCCESS;
-
-empty_set:
-  return create_empty_fake_resultset(stmt, (gptr) SQLCOLUMNS_priv_values,
-                                     sizeof(SQLCOLUMNS_priv_values),
-                                     SQLCOLUMNS_priv_fields,
-                                     SQLCOLUMNS_PRIV_FIELDS);
 }
 
 /*
@@ -1567,13 +1559,16 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
                                     SQLUSMALLINT fColType,
                                     SQLCHAR FAR *szTableQualifier,
                                     SQLSMALLINT cbTableQualifier,
-                                    SQLCHAR FAR *szTableOwner,
+                                    SQLCHAR FAR *szTableOwner
+                                      __attribute__((unused)),
                                     SQLSMALLINT cbTableOwner
                                       __attribute__((unused)),
                                     SQLCHAR FAR *szTableName,
                                     SQLSMALLINT cbTableName,
-                                    SQLUSMALLINT fScope,
-                                    SQLUSMALLINT fNullable)
+                                    SQLUSMALLINT fScope
+                                      __attribute__((unused)),
+                                    SQLUSMALLINT fNullable
+                                      __attribute__((unused)))
 {  
     STMT FAR    *stmt=(STMT FAR*) hstmt;
     char        buff[80];
@@ -1713,12 +1708,6 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
     result->row_count= field_count;
     mysql_link_fields(stmt,SQLSPECIALCOLUMNS_fields,SQLSPECIALCOLUMNS_FIELDS);
     return SQL_SUCCESS;
-
-empty_set:
-  return create_empty_fake_resultset(stmt, (gptr) SQLSPECIALCOLUMNS_values,
-                                     sizeof(SQLSPECIALCOLUMNS_values),
-                                     SQLSPECIALCOLUMNS_fields,
-                                     SQLSPECIALCOLUMNS_FIELDS);
 }
 
 /*
@@ -1766,8 +1755,10 @@ char *SQLPRIM_KEYS_values[]= {
 SQLRETURN SQL_API SQLPrimaryKeys(SQLHSTMT hstmt,
                                  SQLCHAR FAR *szTableQualifier,
                                  SQLSMALLINT cbTableQualifier,
-                                 SQLCHAR FAR *szTableOwner,
-                                 SQLSMALLINT cbTableOwner,
+                                 SQLCHAR FAR *szTableOwner
+                                  __attribute__((unused)),
+                                 SQLSMALLINT cbTableOwner
+                                  __attribute__((unused)),
                                  SQLCHAR FAR *szTableName,
                                  SQLSMALLINT cbTableName)
 {
@@ -1824,11 +1815,6 @@ SQLRETURN SQL_API SQLPrimaryKeys(SQLHSTMT hstmt,
 
     mysql_link_fields(stmt,SQLPRIM_KEYS_fields,SQLPRIM_KEYS_FIELDS);
     return SQL_SUCCESS;
-
-empty_set:
-  return create_empty_fake_resultset(stmt, (gptr) SQLPRIM_KEYS_values,
-                                     sizeof(SQLPRIM_KEYS_values),
-                                     SQLPRIM_KEYS_fields, SQLPRIM_KEYS_FIELDS);
 }
 
 /*

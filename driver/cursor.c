@@ -1154,7 +1154,8 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
                 ulong        transfer_length,precision,display_size;
                 MYSQL_FIELD *field= mysql_fetch_field_direct(result,ncol);
                 BIND        *bind= stmt->bind+ncol;
-                SQLINTEGER   binding_offset= 0, element_size= 0;
+                SQLINTEGER   binding_offset= 0;
+                SQLUINTEGER  element_size= 0;
                 SQLLEN       ind_or_len;
 
                 if (stmt->stmt_options.bind_type != SQL_BIND_BY_COLUMN &&

@@ -176,30 +176,6 @@ char *add_to_buffer(NET *net,char *to,char *from,ulong length)
 
 /*
   @type    : myodbc3 internal
-  @purpose : help function to extend the buffer
-*/
-
-static char *extend_escape_buffer(void *net, char *to, ulong *length)
-{
-    if ( (to= extend_buffer((NET*) net, to, *length)) )
-    {
-        /*
-          Buffer has been extended;  We now need to return in length the
-          ammount of space available in the buffer.
-          'max_packet' is total length of buffer,
-          'to' is next available spot within 'buff' to place data,
-          'buff' is start of buffer
-          so.... return "total space" less the "amount already used".
-        */
-        *length= (((NET*) net)->max_packet -
-                  (ulong) (to - (char*) ((NET*) net)->buff));
-    }
-    return to;
-}
-
-
-/*
-  @type    : myodbc3 internal
   @purpose : insert sql params at parameter positions
 */
 

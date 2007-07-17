@@ -1206,11 +1206,11 @@ my_bool is_minimum_version(const char *server_version,const char *version,
 ulong myodbc_escape_wildcard(MYSQL *mysql, char *to, ulong to_length,
                              const char *from, ulong length)
 {
-  CHARSET_INFO *charset_info= mysql->charset;
   const char *to_start= to;
   const char *end, *to_end=to_start + (to_length ? to_length-1 : 2*length);
   my_bool overflow= FALSE;
 #ifdef USE_MB
+  CHARSET_INFO *charset_info= mysql->charset;
   my_bool use_mb_flag= use_mb(charset_info);
 #endif
   for (end= from + length; from < end; from++)
