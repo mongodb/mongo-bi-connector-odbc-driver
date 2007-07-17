@@ -62,4 +62,5 @@ EXTRA_DIST = \
 	macosx/License.html.in \
 	macosx/ReadMe.html.in \
 	macosx/Welcome.html.in \
-	macosx/myodbc.png
+	macosx/myodbc.png \
+	macosx/postflight
