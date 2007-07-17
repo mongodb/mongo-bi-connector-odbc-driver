@@ -339,53 +339,29 @@ char *insert_param(DBC *dbc, char *to,PARAM_BIND *param)
         case SQL_C_BIT:
         case SQL_C_TINYINT:
         case SQL_C_STINYINT:
-#if MYSQL_VERSION_ID >= 40100
-            length= int2str((long) *((signed char*) data),buff,-10,0) -buff;
-#else
-            length= int2str((long) *((signed char*) data),buff,-10) -buff;
-#endif
+            length= my_int2str((long)*((signed char *)data),buff,-10,0) -buff;
             data= buff;
             break;
         case SQL_C_UTINYINT:
-#if MYSQL_VERSION_ID >= 40100
-            length= int2str((long) *((unsigned char*) data),buff,-10,0) -buff;
-#else
-            length= int2str((long) *((unsigned char*) data),buff,-10) -buff;
-#endif
+            length= my_int2str((long)*((unsigned char *)data),buff,-10,0) -buff;
             data= buff;
             break;
         case SQL_C_SHORT:
         case SQL_C_SSHORT:
-#if MYSQL_VERSION_ID >= 40100
-            length= int2str((long) *((short int*) data),buff,-10,0) -buff;
-#else
-            length= int2str((long) *((short int*) data),buff,-10) -buff;
-#endif
+            length= my_int2str((long)*((short int *)data),buff,-10,0) -buff;
             data= buff;
             break;
         case SQL_C_USHORT:
-#if MYSQL_VERSION_ID >= 40100
-            length= int2str((long) *((unsigned short int*) data),buff,-10,0) -buff;
-#else
-            length= int2str((long) *((unsigned short int*) data),buff,-10) -buff;
-#endif
+            length= my_int2str((long)*((unsigned short int *)data),buff,-10,0) -buff;
             data= buff;
             break;
         case SQL_C_LONG:
         case SQL_C_SLONG:
-#if MYSQL_VERSION_ID >= 40100
-            length= int2str(*((SQLINTEGER*) data),buff,-10,0) -buff;
-#else
-            length= int2str(*((SQLINTEGER*) data),buff,-10) -buff;
-#endif
+            length= my_int2str(*((SQLINTEGER*) data),buff,-10,0) -buff;
             data= buff;
             break;
         case SQL_C_ULONG:
-#if MYSQL_VERSION_ID >= 40100
-            length= int2str(*((SQLUINTEGER*) data),buff,10,0) -buff;
-#else
-            length= int2str(*((SQLUINTEGER*) data),buff,10) -buff;
-#endif
+            length= my_int2str(*((SQLUINTEGER*) data),buff,10,0) -buff;
             data= buff;
             break;
         case SQL_C_SBIGINT:

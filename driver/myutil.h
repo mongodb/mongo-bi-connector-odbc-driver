@@ -62,6 +62,14 @@
 #define MYLOG_DBC_QUERY(A,B)
 #endif
 
+/* Wrappers to hide differences in client library versions. */
+#if MYSQL_VERSION_ID >= 40100
+# define my_int2str(val, dst, radix, upcase) \
+    int2str((val), (dst), (radix), (upcase))
+#else
+# define my_int2str(val, dst, radix, upcase) \
+    int2str((val), (dst), (radix))
+#endif
 
 /*
   Utility function prototypes that share among files

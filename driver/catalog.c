@@ -1117,11 +1117,7 @@ SQLRETURN SQL_API SQLStatistics(SQLHSTMT hstmt,
       return rc;
     }
     pthread_mutex_unlock(&dbc->lock);
-#if MYSQL_VERSION_ID >= 40100
-    int2str(SQL_INDEX_OTHER,SS_type,10,0);
-#else
-    int2str(SQL_INDEX_OTHER,SS_type,10);
-#endif
+    my_int2str(SQL_INDEX_OTHER,SS_type,10,0);
     stmt->order=       SQLSTAT_order;
     stmt->order_count= array_elements(SQLSTAT_order);
     stmt->fix_fields=  fix_fields_copy;
