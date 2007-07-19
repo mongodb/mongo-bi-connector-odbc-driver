@@ -1179,7 +1179,7 @@ void end_query_log(FILE *query_log)
 void query_print(char *query __attribute__((unused)))
 {
 }
-#endif /* !DBUG_OFF */
+#endif /* !MYODBC_DBG */
 
 
 my_bool is_minimum_version(const char *server_version,const char *version,

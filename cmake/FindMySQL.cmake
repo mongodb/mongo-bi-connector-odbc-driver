@@ -43,9 +43,13 @@ IF (WIN32)
 	IF (CMAKE_BUILD_TYPE STREQUAL Debug)
 		SET(libsuffixDist debug)
 		SET(libsuffixBuild Debug)
+		SET(DRIVER_NAME myodbc3d)
+		ADD_DEFINITIONS(-DMYODBC_DBG)
 	ELSE (CMAKE_BUILD_TYPE STREQUAL Debug)
 		SET(libsuffixDist opt)
 		SET(libsuffixBuild Release)
+		SET(DRIVER_NAME myodbc3)
+		ADD_DEFINITIONS(-DDBUG_OFF)
 	ENDIF (CMAKE_BUILD_TYPE STREQUAL Debug)
 
 	FIND_LIBRARY(MYSQL_LIB NAMES mysqlclient
@@ -55,6 +59,7 @@ IF (WIN32)
 				 $ENV{ProgramFiles}/MySQL/*/lib/${libsuffixDist}
 				 $ENV{SystemDrive}/MySQL/*/lib/${libsuffixDist})
 ELSE (WIN32)
+	SET(DRIVER_NAME myodbc3)
 	FIND_LIBRARY(MYSQL_LIB NAMES mysqlclient_r
 				 PATHS
 				 $ENV{MYSQL_DIR}/libmysql_r/.libs

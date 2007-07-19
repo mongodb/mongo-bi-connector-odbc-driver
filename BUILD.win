@@ -23,6 +23,10 @@ Compiler Tools
         We regularly build using either MS Visual C/C++ v6 or MS
         Visual C/C++ v7 (.NET). Other compilers may work as well.
 
+	You also need CMake 2.4,
+
+		http://www.cmake.org
+
 Source Code
 
         The source code is the main thing. You can get it from the 
@@ -62,8 +66,8 @@ toolchain. Visual Studio includes a batch file to set these for you,
 and installs a shortcut into the Start menu to open a command prompt
 with these variables set.
 
-You need to set MYSQL_DIR to point to where the MySQL server is installed,
-using the short-style filenames:
+You need to set MYSQL_DIR to point to where the MySQL server is
+installed, using the short-style filenames:
 
   set MYSQL_DIR=C:\PROGRA~1\MySQL\MYSQLS~1.0
 
@@ -71,27 +75,34 @@ And you will also need to set QTDIR:
 
   set QTDIR=C:\path\to\qt
 
-and QMAKESPEC:
+and QMAKESPEC (pick the one that fits your build environment):
 
-  set QMAKESPEC=%QTDIR%\mkspecs\win32-msvc2005
+  set QMAKESPEC=win32-msvc2005
 
 and you will need to have the binaries for Qt in your path, such as:
 
   set PATH=%PATH%;%QTDIR%\bin
 
-Build Connector/ODBC using the Qt qmake command-line tool by doing 
-the following from the source root directory (in a command prompt
-window);
+Build Connector/ODBC using the CMake "cmake" command-line tool by
+doing the following from the source root directory (in a command
+prompt window);
 
-1. review the *pro and *pri files in the root dir
-2. execute Build.bat from the source root dir
+  cmake -G 'Visual Studio 7 .NET 2003'
 
-Upon completion; you will find the executables in the bin sub-dir 
-and the libraries in the lib sub-dir.
+or for a debug enabled "myodbc3d.dll"
 
-NOTE: At some point in the future we may create a configure.bat which 
-      will automagically create qmake pri files.
- 
+  cmake -G 'Visual Studio 7 .NET 2003' -DCMAKE_BUILD_TYPE=Debug
+
+This produces Visual Studio project, you can use the Visual Studio
+IDE or from the command line one of
+
+  devenv.com MySQL_Connector_ODBC.sln /build Release
+  devenv.com MySQL_Connector_ODBC.sln /build DebWithDbgInfo
+  devenv.com MySQL_Connector_ODBC.sln /build Debug
+
+Upon completion; you will find the executables in the target sub
+directories under the "bin" and "lib" directories.
+
 INSTALL
 ---------------------------------------------------------------
 

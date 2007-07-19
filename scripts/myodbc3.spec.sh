@@ -127,13 +127,16 @@ rm -v $RPM_BUILD_ROOT%{_datadir}/mysql-connector-odbc/{ChangeLog,README,README.d
 
 # ----------------------------------------------------------------------
 # REGISTER DRIVER
+# Note that "-e" is not working for drivers currently, so we have to
+# deinstall before reinstall to change anything
 # ----------------------------------------------------------------------
 
 %post 
 myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=%{_libdir}/libmyodbc3.so"
 
 %post setup
-myodbc3i -a -e -t"MySQL ODBC 3.51 Driver;DRIVER=%{_libdir}/libmyodbc3.so;SETUP=%{_libdir}/libmyodbc3S.so"
+myodbc3i -r -d -n"MySQL ODBC 3.51 Driver"
+myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=%{_libdir}/libmyodbc3.so;SETUP=%{_libdir}/libmyodbc3S.so"
 
 # ----------------------------------------------------------------------
 # DEREGISTER DRIVER 
@@ -145,6 +148,7 @@ myodbc3i -r -d -n"MySQL ODBC 3.51 Driver"
 
 # Removing the setup RPM, downgrade the registration
 %preun setup
+myodbc3i -r -d -n"MySQL ODBC 3.51 Driver"
 myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=%{_libdir}/libmyodbc3.so"
 
 ##############################################################################
