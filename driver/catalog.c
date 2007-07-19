@@ -369,8 +369,7 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
          *TableName,
          *TableType;
     STMT FAR  *stmt= (STMT FAR*) hstmt;
-    MYSQL_RES *result, *sys_result;
-    my_bool   all_dbs= 1, sys_tables, user_tables, views;
+    my_bool   all_dbs= 1, user_tables, views;
 
     CLEAR_STMT_ERROR(hstmt);
     my_SQLFreeStmt(hstmt,MYSQL_RESET);
@@ -439,23 +438,19 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
                                      SQLTABLES_fields, SQLTABLES_FIELDS);
     }
 
-    sys_result= result= NULL;
-
     escape_input_parameter(&stmt->dbc->mysql, TableType);
 
     user_tables= check_table_type(TableType, "TABLE", 5);
     views= check_table_type(TableType, "VIEW", 4);
-    sys_tables= (check_table_type(TableType, "SYSTEM TABLE", 12) ||
-                 check_table_type(TableType, "SYSTEM", 6));
 
     /* If no types specified, we want tables and views. */
-    if (!user_tables && !sys_tables && !views)
+    if (!user_tables && !views)
     {
       if (!szTableType || !cbTableType)
         user_tables= views= 1;
     }
 
-    if ((TableType[0] && !views && !user_tables && !sys_tables) ||
+    if ((TableType[0] && !views && !user_tables) ||
         (TableQualifier[0] && strcmp(TableQualifier,"%") &&
          TableOwner[0] && strcmp(TableOwner,"%") &&
          strcmp(TableOwner, stmt->dbc->database)))
@@ -468,10 +463,10 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
     if (user_tables || views)
     {
       pthread_mutex_lock(&stmt->dbc->lock);
-      result= mysql_table_status(stmt, szTableQualifier, cbTableQualifier,
-                                 szTableName, cbTableName, TRUE);
+      stmt->result= mysql_table_status(stmt, szTableQualifier, cbTableQualifier,
+                                       szTableName, cbTableName, TRUE);
 
-      if (!result && mysql_errno(&stmt->dbc->mysql))
+      if (!stmt->result && mysql_errno(&stmt->dbc->mysql))
       {
         SQLRETURN rc;
         /* unknown DB will return empty set from SQLTables */
@@ -489,48 +484,20 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
       pthread_mutex_unlock(&stmt->dbc->lock);
     }
 
-    /* System tables with type as 'SYSTEM' or 'SYSTEM TABLE' */
-    if (sys_tables)
-    {
-      pthread_mutex_lock(&stmt->dbc->lock);
-      sys_result= mysql_table_status(stmt, (SQLCHAR *)"mysql", 5,
-                                     szTableName, cbTableName, TRUE);
-
-      if (!sys_result && mysql_errno(&stmt->dbc->mysql))
-      {
-        SQLRETURN rc= handle_connection_error(stmt);
-        pthread_mutex_unlock(&stmt->dbc->lock);
-        return rc;
-      }
-      pthread_mutex_unlock(&stmt->dbc->lock);
-    }
-
-    if (!result && !sys_result)
+    if (!stmt->result)
       goto empty_set;
 
     /* assemble final result set */
     {
       MYSQL_ROW    data= 0, row;
       char         *db;
-      my_ulonglong row_count= 0;
-
-      if (sys_result)
-      {
-        stmt->result= sys_result;
-        row_count= sys_result->row_count;
-      }
-
-      if (result)
-      {
-        row_count+= result->row_count;
-        if (!sys_result)
-        {
-          stmt->result= result;
-        }
-      }
+      my_ulonglong row_count= stmt->result->row_count;
 
       if (!row_count)
+      {
+        mysql_free_result(stmt->result);
         goto empty_set;
+      }
 
       if (!(stmt->result_array=
             (char **)my_malloc((uint)(sizeof(char *) * SQLTABLES_FIELDS *
@@ -543,68 +510,31 @@ SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
 
       data= stmt->result_array;
 
-      if (sys_result)
+      if (option_flag(stmt, FLAG_NO_CATALOG))
+        db= "";
+      else
+        db= (is_default_db(stmt->dbc->mysql.db, TableQualifier) ?
+             stmt->dbc->mysql.db : strdup_root(&stmt->result->field_alloc,
+                                               TableQualifier));
+
+      while ((row= mysql_fetch_row(stmt->result)))
       {
-        char buff[NAME_LEN+7];
+        int comment_index= (stmt->result->field_count == 18) ? 17 : 15;
+        my_bool view= (!row[1] &&
+                       myodbc_casecmp(row[comment_index], "view", 4) == 0);
 
-        if (option_flag(stmt, FLAG_NO_CATALOG))
-          db= "";
-        else
-          db= "mysql";
-
-        /*
-          Prefix all system tables with 'mysql.', so that they can
-          be used directly in describing columns related information
-
-          Must needed like this inorder to make system tables editable
-          by ODBC tools
-        */
-        while ((row= mysql_fetch_row(sys_result)))
+        if ((view && !views) || (!view && !user_tables))
         {
-          data[0]= db;
-          data[1]= "";
-          sprintf(buff, "mysql.%s", row[0]);
-          data[2]= strdup_root(&stmt->result->field_alloc, buff);
-          data[3]= "SYSTEM TABLE";
-          if (sys_result->field_count == 18)
-            data[4]= strdup_root(&stmt->result->field_alloc, row[17]);
-          else
-            data[4]= strdup_root(&stmt->result->field_alloc, row[15]);
-
-          data+= SQLTABLES_FIELDS;
+          row_count--;
+          continue;
         }
-      }
 
-      if (result)
-      {
-        if (option_flag(stmt, FLAG_NO_CATALOG))
-          db= "";
-        else
-          db= (is_default_db(stmt->dbc->mysql.db, TableQualifier) ?
-               stmt->dbc->mysql.db : strdup_root(&stmt->result->field_alloc,
-                                                 TableQualifier));
-
-        while ((row= mysql_fetch_row(result)))
-        {
-          int comment_index= (result->field_count == 18) ? 17 : 15;
-          my_bool view= (!row[1] &&
-                         myodbc_casecmp(row[comment_index], "view", 4) == 0);
-
-          if ((view && !views) || (!view && !user_tables))
-          {
-            row_count--;
-            continue;
-          }
-
-          data[0]= db;
-          data[1]= "";
-          data[2]= strdup_root(&stmt->result->field_alloc, row[0]);
-          data[3]= view ? "VIEW" : "TABLE";
-          data[4]= strdup_root(&stmt->result->field_alloc, row[comment_index]);
-          data+= SQLTABLES_FIELDS;
-        }
-        if (sys_result)
-          mysql_free_result(result);
+        data[0]= db;
+        data[1]= "";
+        data[2]= strdup_root(&stmt->result->field_alloc, row[0]);
+        data[3]= view ? "VIEW" : "TABLE";
+        data[4]= strdup_root(&stmt->result->field_alloc, row[comment_index]);
+        data+= SQLTABLES_FIELDS;
       }
 
       stmt->result->row_count= row_count;

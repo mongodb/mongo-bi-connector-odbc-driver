@@ -736,10 +736,7 @@ DECLARE_TEST(t_sqltables)
     r  = SQLTables(hstmt,NULL,0,NULL,0,NULL,0,"'system table'",SQL_NTS);
     mystmt(hstmt,r);
 
-    if (driver_min_version(hdbc,"03.51.07",8))
-        myassert(myresult(hstmt) != 0);
-    else
-        myassert(0 == myresult(hstmt));
+    is_num(myresult(hstmt), 0);
 
     r = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,r);
