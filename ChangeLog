@@ -14,6 +14,8 @@
 3.51.17 (13-Jul-2007)
 
   Functionality added or changed:
+  * The setup library has been split into its own RPM package, to allow
+    installing the driver itself with no GUI dependencies.
   * Added an option (CHARSET) for specifying the default character
     set for a connection. This must be used instead of a "SET NAMES"
     statement. Also available from the GUI setup dialog. (Related
@@ -42,7 +44,7 @@
     NOT 0 returns SQL_ERROR (Bug #16224)
   * Correctly return error if SQLBindCol is called with an invalid column
   * Fixed error handling of OOM and bad connections in catalog functions.
-    This might raise errors in code paths that had ignored them in the past.
+    This might raise errors in code paths that had not seen them in the past.
     Gathered the logic for internal result sets into one place. (Bug #26934)
   * Fixed bad use of memory related to setup/util/GUI. (Bug #27315)
   * Added a new DSN "OPTION" (FLAG_ZERO_DATE_TO_MIN) to retrieve XXXX-00-00
