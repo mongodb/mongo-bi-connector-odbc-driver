@@ -102,8 +102,7 @@ HEADERS			= \
                         myodbc3.h \
                         error.h \
 			myutil.h \
-                        ../util/MYODBCUtil.h \
-		        ../MYODBCDbg/include/MYODBCDbg.h
+                        ../util/MYODBCUtil.h
 SOURCES			= \
 			catalog.c \
                         connect.c \
@@ -138,20 +137,7 @@ SOURCES			= \
                         ../util/MYODBCUtilWriteConnectStr.c \
                         ../util/MYODBCUtilWriteDataSource.c \      
                         ../util/MYODBCUtilWriteDataSourceStr.c \
-                        ../util/MYODBCUtilWriteDriver.c \
-                        ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgConnectAttrString.c \
-                        ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgConnectOptionString.c \
-                        ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgDiagFieldString.c \
-                        ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgEnvAttrString.c \
-                        ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgFunctionsString.c \
-                        ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgHandleTypeString.c \
-                        ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgInfoTypeString.c \
-                        ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgPosTypeString.c \
-                        ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgReturnString.c \
-                        ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgStmtAttrString.c \
-                        ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgStmtOptionString.c \
-                        ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgStmtTypeString.c \
-                        ../MYODBCDbg/MYODBCDbgLib/MYODBCDbgTransactionTypeString.c
+                        ../util/MYODBCUtilWriteDriver.c
 
 win32 {
 HEADERS			+= \

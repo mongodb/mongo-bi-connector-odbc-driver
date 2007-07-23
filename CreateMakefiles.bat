@@ -24,13 +24,6 @@ ECHO * Recreating Makefiles...
 ECHO ****
 qmake
 
-ECHO MYODBCDbg...
-cd MYODBCDbg\MYODBCDbgLib
-qmake
-cd ..
-qmake
-cd ..
-
 ECHO dltest...
 cd dltest
 qmake

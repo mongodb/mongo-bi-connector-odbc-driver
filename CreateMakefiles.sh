@@ -10,7 +10,6 @@ echo "+-----------------------"
 
 dirs="\
 .
-MYODBCDbg/MYODBCDbgLib \
 dltest \
 util \
 setup \
