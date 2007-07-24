@@ -23,44 +23,46 @@
 # ODBC Admin. GUI application.
 # ----------------------------------------------------------------------
 
-admdir=~/Library/ODBC
 libdir=/usr/local/lib
 bindir=/usr/local/bin
 
-echo "Ensuring ~/Library/ODBC, odbcinst.ini and odbc.ini exists..."
-if [ ! -d $admdir ] ; then
-    mkdir $admdir
-    chmod 775 $admdir
-    chown root:admin $admdir
-fi
+for f in ~/Library/ODBC /Library/ODBC
+do
+  echo "Ensuring ~/Library/ODBC, odbcinst.ini and odbc.ini exists..."
+  if [ ! -d $admdir ] ; then
+      mkdir $admdir
+      chmod 775 $admdir
+      chown root:admin $admdir
+  fi
 
-if [ ! -f $admdir/odbc.ini ] ; then
-    echo "[ODBC Data Sources]"        > $admdir/odbc.ini
-    echo ""                          >> $admdir/odbc.ini
-    echo "[ODBC]"                    >> $admdir/odbc.ini
-    echo "Trace         = 0"         >> $admdir/odbc.ini
-    echo "TraceAutoStop = 0"         >> $admdir/odbc.ini
-    echo "TraceFile     ="           >> $admdir/odbc.ini
-    echo "TraceLibrary  ="           >> $admdir/odbc.ini
-    chmod 664 $admdir/odbc.ini
-    chown root:admin $admdir/odbc.ini
-fi
+  if [ ! -f $admdir/odbc.ini ] ; then
+      echo "[ODBC Data Sources]"        > $admdir/odbc.ini
+      echo ""                          >> $admdir/odbc.ini
+      echo "[ODBC]"                    >> $admdir/odbc.ini
+      echo "Trace         = 0"         >> $admdir/odbc.ini
+      echo "TraceAutoStop = 0"         >> $admdir/odbc.ini
+      echo "TraceFile     ="           >> $admdir/odbc.ini
+      echo "TraceLibrary  ="           >> $admdir/odbc.ini
+      chmod 664 $admdir/odbc.ini
+      chown root:admin $admdir/odbc.ini
+  fi
 
-if [ ! -f $admdir/odbcinst.ini ] ; then
-    echo "[ODBC Drivers]"             > $admdir/odbcinst.ini
-    echo ""                          >> $admdir/odbcinst.ini
-    echo "[ODBC Connection Pooling]" >> $admdir/odbcinst.ini
-    echo "PerfMon    = 0"            >> $admdir/odbcinst.ini
-    echo "Retry Wait = "             >> $admdir/odbcinst.ini
-    chmod 664 $admdir/odbcinst.ini
-    chown root:admin $admdir/odbcinst.ini
-fi
+  if [ ! -f $admdir/odbcinst.ini ] ; then
+      echo "[ODBC Drivers]"             > $admdir/odbcinst.ini
+      echo ""                          >> $admdir/odbcinst.ini
+      echo "[ODBC Connection Pooling]" >> $admdir/odbcinst.ini
+      echo "PerfMon    = 0"            >> $admdir/odbcinst.ini
+      echo "Retry Wait = "             >> $admdir/odbcinst.ini
+      chmod 664 $admdir/odbcinst.ini
+      chown root:admin $admdir/odbcinst.ini
+  fi
+done
 
 # ----------------------------------------------------------------------
 # REGISTER THE DRIVER
 # ----------------------------------------------------------------------
 echo "Registring driver..."
-$bindir/myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;Driver=$libdir/libmyodbc3.so;Setup=$libdir/libmyodbc3S.so;"
+$bindir/myodbc3i -a -ds -t"MySQL ODBC 3.51 Driver;Driver=$libdir/libmyodbc3.so;Setup=$libdir/libmyodbc3S.so;"
 
 # ----------------------------------------------------------------------
 # CREATE A SAMPLE DSN
