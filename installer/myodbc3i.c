@@ -446,20 +446,8 @@ int doQueryDataSourceName( UWORD nScope )
     MYODBCUTIL_DATASOURCE *pDataSource = MYODBCUtilAllocDataSource( MYODBCUTIL_DATASOURCE_MODE_DSN_VIEW );
 
     /* set scope */
-    switch ( nScope )
-    {
-        case ODBC_BOTH_DSN:
-            if ( !SQLSetConfigMode( nScope ) )
-                return FALSE;
-            break;
-        case ODBC_USER_DSN:
-        case ODBC_SYSTEM_DSN:
-            if ( !SQLSetConfigMode( nScope ) )
-                return FALSE;
-            break;
-        default:
-            return FALSE;
-    }
+    if ( !SQLSetConfigMode( nScope ) )
+        return FALSE;
 
     if ( !MYODBCUtilReadDataSource( pDataSource, pszName ) )
     {
@@ -563,6 +551,15 @@ int doAddDriver()
     {
         fprintf( stderr, "[%s][%d][ERROR] Please provide driver attributes.\n", __FILE__, __LINE__ );
         return 0;
+    }
+
+    switch (cObjectSub) {
+    case 'u':
+      if (!SQLSetConfigMode(ODBC_USER_DSN))
+        return FALSE;
+    case 's':
+      if (!SQLSetConfigMode(ODBC_SYSTEM_DSN))
+        return FALSE;
     }
 
     /*

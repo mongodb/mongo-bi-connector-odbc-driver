@@ -5,6 +5,8 @@
     ODBC logging should be used.
 
   Bugs fixed:
+  * myodbc3i did not honor the 's' and 'u' modifier to the -d option for
+    installing the driver as a system or user driver. (Bug #29964)
   * Tables from the mysql database (catalog) were listed as SYSTEM TABLES
     by SQLTables() even when a different catalog was being queried. This
     also introduced errors due to the fix for Bug #26934.  (Bug #28662)
