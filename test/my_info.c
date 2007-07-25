@@ -128,12 +128,30 @@ DECLARE_TEST(t_bug27591)
 }
 
 
+/**
+  Bug #28657: ODBC Connector returns FALSE on SQLGetTypeInfo with DATETIME (wxWindows latest)
+*/
+DECLARE_TEST(t_bug28657)
+{
+  SQLSMALLINT pccol;
+
+  ok_stmt(hstmt, SQLGetTypeInfo(hstmt, SQL_DATETIME));
+
+  is(myrowcount(hstmt) > 1);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlgetinfo)
   ADD_TEST(t_gettypeinfo)
   ADD_TEST(t_stmt_attr_status)
   ADD_TEST(t_msdev_bug)
   ADD_TEST(t_bug27591)
+  ADD_TEST(t_bug28657)
 END_TESTS
 
 

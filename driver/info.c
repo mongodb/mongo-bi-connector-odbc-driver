@@ -931,7 +931,7 @@ char sql_searchable[6], sql_unsearchable[6], sql_nullable[6], sql_no_nulls[6],
      sql_float[6], sql_real[6], sql_double[6], sql_char[6], sql_varchar[6],
      sql_longvarchar[6], sql_timestamp[6], sql_decimal[6], sql_numeric[6],
      sql_varbinary[6], sql_time[6], sql_date[6], sql_binary[6],
-     sql_longvarbinary[6];
+     sql_longvarbinary[6], sql_datetime[6];
 
 char *SQL_GET_TYPE_INFO_values[MYSQL_DATA_TYPES][19]=
 {
@@ -1014,17 +1014,17 @@ char *SQL_GET_TYPE_INFO_values[MYSQL_DATA_TYPES][19]=
   {"double auto_increment",sql_double,"15",NULL,NULL,NULL,sql_no_nulls,"0",sql_searchable,"0","0","1","double auto_increment","0","4",sql_double,NULL,"10",NULL},
 
   /* SQL_TYPE_DATE= 91 */
-  {"date",sql_date,"10","'","'",NULL,sql_nullable,"0",sql_searchable,"0","0","0","date",NULL,NULL,sql_date,NULL,NULL,NULL},
+  {"date",sql_date,"10","'","'",NULL,sql_nullable,"0",sql_searchable,"0","0","0","date",NULL,NULL,sql_datetime,sql_date,NULL,NULL},
 
   /* SQL_TYPE_TIME= 92 */
-  {"time",sql_time,"6","'","'",NULL,sql_nullable,"0",sql_searchable,"0","0","0","time",NULL,NULL,sql_time,NULL,NULL,NULL},
+  {"time",sql_time,"6","'","'",NULL,sql_nullable,"0",sql_searchable,"0","0","0","time",NULL,NULL,sql_datetime,sql_time,NULL,NULL},
 
   /* YEAR - SQL_SMALLINT */
   {"year",sql_smallint,"4",NULL,NULL,NULL,sql_nullable,"0",sql_searchable,"0","0","0","year",NULL,NULL,sql_smallint,NULL,"10",NULL},
 
   /* SQL_TYPE_TIMESTAMP= 93 */
-  {"datetime",sql_timestamp,"21","'","'",NULL,sql_nullable,"0",sql_searchable,"0","0","0","datetime","0","0",sql_timestamp,NULL,NULL,NULL},
-  {"timestamp",sql_timestamp,"14","'","'",NULL,sql_no_nulls,"0",sql_searchable,"0","0","0","timestamp","0","0",sql_timestamp,NULL,NULL,NULL},
+  {"datetime",sql_timestamp,"21","'","'",NULL,sql_nullable,"0",sql_searchable,"0","0","0","datetime","0","0",sql_datetime,sql_timestamp,NULL,NULL},
+  {"timestamp",sql_timestamp,"14","'","'",NULL,sql_no_nulls,"0",sql_searchable,"0","0","0","timestamp","0","0",sql_datetime,sql_timestamp,NULL,NULL},
 
   /* SQL_VARCHAR= 12 */
 #if TO_BE_DELETED /* NO NEED OF THIS, causes problems for DM */
@@ -1071,7 +1071,8 @@ SQLRETURN SQL_API SQLGetTypeInfo(SQLHSTMT hstmt, SQLSMALLINT fSqlType)
   {
     for (i= 0 ; i < MYSQL_DATA_TYPES ; i++)
     {
-      if (atoi(SQL_GET_TYPE_INFO_values[i][1]) == fSqlType)
+      if (atoi(SQL_GET_TYPE_INFO_values[i][1]) == fSqlType ||
+          atoi(SQL_GET_TYPE_INFO_values[i][15]) == fSqlType)
       {
         memcpy((gptr)&stmt->result_array[stmt->result->row_count++ *
                                          SQL_GET_TYPE_INFO_FIELDS],
@@ -1113,6 +1114,7 @@ void init_getfunctions(void)
   my_int2str(SQL_LONGVARBINARY,sql_longvarbinary,-10,0);
   my_int2str(SQL_VARBINARY,sql_varbinary,-10,0);
   my_int2str(SQL_BINARY,sql_binary,-10,0);
+  my_int2str(SQL_DATETIME,sql_datetime,-10,0);
   my_int2str(SQL_TYPE_TIMESTAMP,sql_timestamp,-10,0);
   my_int2str(SQL_TYPE_DATE,sql_date,-10,0);
   my_int2str(SQL_TYPE_TIME,sql_time,-10,0);

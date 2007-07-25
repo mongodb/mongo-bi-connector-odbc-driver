@@ -5,6 +5,9 @@
     ODBC logging should be used.
 
   Bugs fixed:
+  * SQLGetTypeInfo() returned incorrect information for date and time
+    fields, and would not return results when queried for the SQL_DATETIME
+    type. (Bug #28657)
   * myodbc3i did not honor the 's' and 'u' modifier to the -d option for
     installing the driver as a system or user driver. (Bug #29964)
   * Tables from the mysql database (catalog) were listed as SYSTEM TABLES
