@@ -30,7 +30,7 @@ DECLARE_TEST(t_chunk)
     SQLLEN    len;
 
     if (!driver_supports_setpos(hdbc))
-        return;
+      skip("driver doesn't support setpos");
 
     SQLExecDirect(hstmt,"drop table t_chunk",SQL_NTS);
 
