@@ -216,7 +216,7 @@ create_fake_resultset(STMT *stmt, gptr rowval, size_t rowsize, my_ulonglong rowc
     if (stmt->result)
       my_free((gptr) stmt->result, MYF(0));
     if (stmt->result_array)
-      my_free((gptr) stmt->result, MYF(0));
+      my_free((gptr) stmt->result_array, MYF(0));
     set_mem_error(&stmt->dbc->mysql);
     return handle_connection_error(stmt);
   }
