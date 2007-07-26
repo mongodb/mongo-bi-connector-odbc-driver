@@ -155,7 +155,7 @@ SQLRETURN myodbc_do_connect(DBC *dbc, MYODBCUTIL_DATASOURCE *ds)
   /*
     The MySQL server has a workaround for old versions of Microsoft Access
     (and possibly other products) that is no longer necessary, but is
-    unfortunateoly enabled by default. We have to turn it off, or it causes
+    unfortunately enabled by default. We have to turn it off, or it causes
     other problems.
   */
   if (!(options & FLAG_AUTO_IS_NULL) &&
@@ -514,7 +514,7 @@ SQLRETURN SQL_API SQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
 
     /*
      We dynamically load the setup library so the driver itself does not
-     depeend on GUI lbiraries.
+     depend on GUI libraries.
     */
 #ifndef WIN32
     lt_dlinit();
@@ -618,7 +618,7 @@ error:
   Discover and enumerate the attributes and attribute values required to
   connect.
 
-  @return Always returns @c SQL_ERROR, because the driver does not spport this.
+  @return Always returns @c SQL_ERROR, because the driver does not support this.
 
   @since ODBC 1.0
 */
