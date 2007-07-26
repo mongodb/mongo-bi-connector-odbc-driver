@@ -156,14 +156,6 @@ SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV FAR * phenv);
 SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc);
 SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc);
 SQLRETURN SQL_API my_SQLFreeEnv(SQLHENV henv);
-SQLRETURN SQL_API my_SQLDisconnect(SQLHDBC hdbc);
-SQLRETURN SQL_API my_SQLDriverConnect(SQLHDBC hdbc,SQLHWND hwnd,
-				      SQLCHAR FAR *szConnStrIn,
-				      SQLSMALLINT cbConnStrIn,
-				      SQLCHAR FAR *szConnStrOut,
-				      SQLSMALLINT cbConnStrOutMax,
-				      SQLSMALLINT FAR *pcbConnStrOut,
-				      SQLUSMALLINT fDriverCompletion);
 char *extend_buffer(NET *net,char *to,ulong length);
 void myodbc_end();
 my_bool set_dynamic_result(STMT FAR *stmt);

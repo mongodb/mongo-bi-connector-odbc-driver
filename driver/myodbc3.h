@@ -65,14 +65,19 @@ extern "C"
 #include "error.h"
 
 #if defined(_WIN32) || defined(WIN32)
-#define INTFUNC  __stdcall
-#define EXPFUNC  __stdcall
-#if !defined(HAVE_LOCALTIME_R)
-#define HAVE_LOCALTIME_R 1
-#endif
+# define INTFUNC  __stdcall
+# define EXPFUNC  __stdcall
+# if !defined(HAVE_LOCALTIME_R)
+#  define HAVE_LOCALTIME_R 1
+# endif
 #else
-#define INTFUNC PASCAL
-#define EXPFUNC __export CALLBACK
+# define INTFUNC PASCAL
+# define EXPFUNC __export CALLBACK
+/* Simple macros to make ltdl look like the Windows library funcs. */
+# define HMODULE lt_dlhandle
+# define LoadLibrary(library) lt_dlopen((library))
+# define GetProcAddress(module, proc) lt_dlsym((module), (proc))
+# define FreeLibrary(module) lt_dlclose((module))
 #endif
 
 #ifdef SQL_SPEC_STRING
@@ -248,7 +253,7 @@ typedef struct st_bind
 typedef struct st_param_bind
 {
   SQLSMALLINT   SqlType,CType;
-  gptr	        buffer;
+  gptr          buffer;
   char *        pos_in_query,*value;
   SQLINTEGER    ValueMax;
   SQLLEN *      actual_len;

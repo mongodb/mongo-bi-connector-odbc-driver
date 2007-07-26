@@ -5,6 +5,10 @@
     ODBC logging should be used.
 
   Bugs fixed:
+  * SQLConnect() and SQLDriverConnect() were rewritten to eliminate duplicate
+    code and ensure all options were supported using both connection methods.
+    SQLDriverConnect() now only requires the setup library to be present when
+    it the call requires it.
   * SQLColumns() failed when a catalog was specified due to an
     incorrectly-generated query. (Bug #29888)
   * SQLGetTypeInfo() returned incorrect information for date and time

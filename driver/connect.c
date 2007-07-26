@@ -25,736 +25,603 @@
   @brief Connection functions.
 */
 
-/***************************************************************************
- * The following ODBC APIs are implemented in this file:		   *
- *									   *
- *   SQLConnect		(ISO 92)					   *
- *   SQLDriverConnect	(ODBC)						   *
- *   SQLDisconnect	(ISO 92)					   *
- *									   *
- ****************************************************************************/
-
 #include "myodbc3.h"
 
 #ifndef _UNIX_
-    #ifdef USE_IODBC
-        #include <iodbcinst.h>
-    #else
-        #include <odbcinst.h>
-    #endif
+# ifdef USE_IODBC
+#  include <iodbcinst.h>
+# else
+#  include <odbcinst.h>
+# endif
 #endif
 
 #include "../util/MYODBCUtil.h"
 
 #ifndef CLIENT_NO_SCHEMA
-    #define CLIENT_NO_SCHEMA      16
+# define CLIENT_NO_SCHEMA      16
 #endif
 
-static SQLRETURN set_connect_defaults(DBC *dbc)
+
+/**
+  Get the connection flags based on the driver options.
+
+  @param[in]  options  Options flags
+
+  @return Client flags suitable for @c mysql_real_connect().
+*/
+unsigned long get_client_flags(unsigned long options)
 {
-    SQLRETURN error= 0;
-    my_bool reconnect = 1;
+  unsigned long flags= CLIENT_MULTI_RESULTS;
+
+  if (options & (FLAG_FOUND_ROWS | FLAG_SAFE))
+    flags|= CLIENT_FOUND_ROWS;
+  if (options & FLAG_NO_SCHEMA)
+    flags|= CLIENT_NO_SCHEMA;
+  if (options & FLAG_COMPRESSED_PROTO)
+    flags|= CLIENT_COMPRESS;
+  if (options & FLAG_IGNORE_SPACE)
+    flags|= CLIENT_IGNORE_SPACE;
+
+  return flags;
+}
+
+
+/**
+ If it was specified, set the character set for the connection.
+
+ @param[in]  dbc      Database connection
+ @param[in]  charset  Character set name
+*/
+SQLRETURN myodbc_set_initial_character_set(DBC *dbc, const char *charset)
+{
+#if ((MYSQL_VERSION_ID >= 40113 && MYSQL_VERSION_ID < 50000) || \
+     MYSQL_VERSION_ID >= 50006)
+  if (charset && charset[0] && mysql_set_character_set(&dbc->mysql, charset))
+    return set_dbc_error(dbc, "HY000", mysql_error(&dbc->mysql),
+                         mysql_errno(&dbc->mysql));
+#endif
+  return SQL_SUCCESS;
+}
+
+
+/**
+  Try to establish a connection to a MySQL server based on the data source
+  configuration.
+
+  @param[in]  dbc  Database connection
+  @param[in]  ds   Data source information
+
+  @return Standard SQLRETURN code. If it is @c SQL_SUCCESS or @c
+  SQL_SUCCESS_WITH_INFO, a connection has been established.
+*/
+SQLRETURN myodbc_do_connect(DBC *dbc, MYODBCUTIL_DATASOURCE *ds)
+{
+  SQLRETURN rc= SQL_SUCCESS;
+  MYSQL *mysql= &dbc->mysql;
+  unsigned long options, flags;
+  unsigned int port;
+  /* Use 'int' and fill all bits to avoid alignment Bug#25920 */
+  unsigned int opt_ssl_verify_server_cert = ~0;
+
+  /* Make sure default values are set on data source. */
+  MYODBCUtilDefaultDataSource(ds);
+
+  options= strtoul(ds->pszOPTION, NULL, 10);
+  port= (unsigned int)atoi(ds->pszPORT);
+
+  mysql_init(mysql);
+
+  flags= get_client_flags(options);
+
+  /* Set other connection options */
+
+  if (options & (FLAG_BIG_PACKETS | FLAG_SAFE))
+    /* max_allowed_packet is a magical mysql macro. */
+    max_allowed_packet= ~0L;
+
+  if (options & FLAG_NAMED_PIPE)
+    mysql_options(mysql, MYSQL_OPT_NAMED_PIPE, NullS);
+
+  if (options & FLAG_USE_MYCNF)
+    mysql_options(mysql, MYSQL_READ_DEFAULT_GROUP, "odbc");
+
+  if (ds->pszSTMT && ds->pszSTMT[0])
+    mysql_options(mysql, MYSQL_INIT_COMMAND, ds->pszSTMT);
+
+  if (dbc->login_timeout)
+    mysql_options(mysql, MYSQL_OPT_CONNECT_TIMEOUT,
+                  (char *)&dbc->login_timeout);
+
+  /* set SSL parameters */
+  mysql_ssl_set(mysql, ds->pszSSLKEY, ds->pszSSLCERT, ds->pszSSLCA,
+                ds->pszSSLCAPATH, ds->pszSSLCIPHER);
+  mysql_options(mysql, MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
+                (const char *)&opt_ssl_verify_server_cert);
+
+  if (!mysql_real_connect(mysql, ds->pszSERVER, ds->pszUSER, ds->pszPASSWORD,
+                          ds->pszDATABASE, port, ds->pszSOCKET, flags))
+  {
+    set_dbc_error(dbc, "HY000", mysql_error(mysql), mysql_errno(mysql));
+    translate_error(dbc->error.sqlstate, MYERR_S1000, mysql_errno(mysql));
+    return SQL_ERROR;
+  }
+
+  if (!SQL_SUCCEEDED(myodbc_set_initial_character_set(dbc, ds->pszCHARSET)))
+  {
+    /** @todo set failure reason */
+    goto error;
+  }
+
+  /*
+    The MySQL server has a workaround for old versions of Micorosft Access
+    (and possibly other products) that is no longer necessary, but is
+    unfortunateoly enabled by default. We have to turn it off, or it causes
+    other problems.
+  */
+  if (!(options & FLAG_AUTO_IS_NULL) &&
+      odbc_stmt(dbc, "SET SQL_AUTO_IS_NULL = 0") != SQL_SUCCESS)
+  {
+    /** @todo set error reason */
+    goto error;
+  }
+
+  if (ds->pszDSN)
+    dbc->dsn= my_strdup(ds->pszDSN, MYF(MY_WME));
+  if (ds->pszSERVER)
+    dbc->server= my_strdup(ds->pszSERVER, MYF(MY_WME));
+  if (ds->pszUSER)
+    dbc->user= my_strdup(ds->pszUSER, MYF(MY_WME));
+  if (ds->pszPASSWORD)
+    dbc->password= my_strdup(ds->pszPASSWORD, MYF(MY_WME));
+  if (ds->pszDATABASE)
+    dbc->database= my_strdup(ds->pszDATABASE, MYF(MY_WME));
+
+  dbc->port= port;
+  dbc->flag= options;
 
 #ifdef MYODBC_DBG
-    if (dbc->flag & FLAG_LOG_QUERY && !dbc->query_log)
-        dbc->query_log= init_query_log();
-#endif
-    /* Set STMT error prefix, one time */
-    strxmov(dbc->st_error_prefix,MYODBC3_ERROR_PREFIX,"[mysqld-",
-            dbc->mysql.server_version,"]",NullS);
-
-    if (dbc->flag & FLAG_AUTO_RECONNECT)
-        mysql_options(&dbc->mysql, MYSQL_OPT_RECONNECT, (char*) &reconnect);
-    /*
-      Validate pre-connection options like AUTOCOMMIT
-      and TXN_ISOLATIONS from SQLSetConnectAttr
-    */
-
-    /* AUTOCOMMIT */
-    if ((dbc->commit_flag == CHECK_AUTOCOMMIT_OFF))
-    {
-        if (!(trans_supported(dbc)) || (dbc->flag & FLAG_NO_TRANSACTIONS))
-            error= set_conn_error(dbc,MYERR_01S02,
-                                  "\
-Transactions are not enabled, Option value SQL_AUTOCOMMIT_OFF changed to \
-SQL_AUTOCOMMIT_ON",
-                                  0);
-        else if (autocommit_on(dbc) &&
-                 (odbc_stmt(dbc,"SET AUTOCOMMIT=0") != SQL_SUCCESS))
-            return SQL_ERROR;
-    }
-    else if ((dbc->commit_flag == CHECK_AUTOCOMMIT_ON) &&
-             trans_supported(dbc) && !autocommit_on(dbc))
-    {
-        if (odbc_stmt(dbc,"SET AUTOCOMMIT=1") != SQL_SUCCESS)
-            return SQL_ERROR;
-    }
-
-    if (dbc->txn_isolation != DEFAULT_TXN_ISOLATION)/* TXN_ISOLATION */
-    {
-        char buff[80];
-        const char *level;
-
-        if (dbc->txn_isolation & SQL_TXN_SERIALIZABLE)
-            level="SERIALIZABLE";
-        else if (dbc->txn_isolation & SQL_TXN_REPEATABLE_READ)
-            level="REPEATABLE READ";
-        else if (dbc->txn_isolation & SQL_TXN_READ_COMMITTED)
-            level="READ COMMITTED";
-        else
-            level="READ UNCOMMITTED";
-        if (trans_supported(dbc))
-        {
-            sprintf(buff,"SET SESSION TRANSACTION ISOLATION LEVEL %s",level);
-            if (odbc_stmt(dbc,buff) != SQL_SUCCESS)
-                error= SQL_ERROR;
-        }
-        else
-        {
-        }
-    }
-    return error;
-}
-
-
-/*
-  @type    : myodbc3 internal
-  @purpose : check the option flag and generate a connect flag
-*/
-
-ulong get_client_flag(MYSQL *mysql, ulong option_flag,uint connect_timeout,
-                      char *init_stmt)
-{
-    ulong client_flag= CLIENT_ODBC;
-
-    mysql_init(mysql);
-
-    if (option_flag & (FLAG_FOUND_ROWS | FLAG_SAFE))
-        client_flag|=   CLIENT_FOUND_ROWS;
-    if (option_flag & FLAG_NO_SCHEMA)
-        client_flag|=   CLIENT_NO_SCHEMA;
-    if (option_flag & (FLAG_BIG_PACKETS | FLAG_SAFE))
-        max_allowed_packet=~0L;
-    if (option_flag & FLAG_COMPRESSED_PROTO)
-        client_flag |=  CLIENT_COMPRESS;
-    if (option_flag & FLAG_IGNORE_SPACE)
-        client_flag |=  CLIENT_IGNORE_SPACE;
-
-    client_flag|= CLIENT_MULTI_RESULTS;
-#ifdef __WIN__
-    if (option_flag & FLAG_NAMED_PIPE)
-        mysql_options(mysql,MYSQL_OPT_NAMED_PIPE,NullS);
+  if (options & FLAG_LOG_QUERY && !dbc->query_log)
+    dbc->query_log= init_query_log();
 #endif
 
-    if (option_flag & FLAG_USE_MYCNF)
-        mysql_options(mysql,MYSQL_READ_DEFAULT_GROUP,"odbc");
+  /* Set the statement error prefix based on the server version. */
+  strxmov(dbc->st_error_prefix, MYODBC3_ERROR_PREFIX, "[mysqld-",
+          mysql->server_version, "]", NullS);
 
-    /*
-    Clear the stupid option of MS Compatibility, which has already been fixed
-    in the MS products
-    NOTE: if MS Access has a connection with SQL_AUTO_IS_NULL=0 opened, 
-          FLAG_AUTO_IS_NULL will not work
-    */
-    if (!(option_flag & FLAG_AUTO_IS_NULL))
-        mysql_options(mysql,MYSQL_INIT_COMMAND,"SET SQL_AUTO_IS_NULL=0;");
-	
-    if (init_stmt && init_stmt[0])
-        mysql_options(mysql,MYSQL_INIT_COMMAND,init_stmt);
-    if (connect_timeout)
-        mysql_options(mysql, MYSQL_OPT_CONNECT_TIMEOUT,(char*) &connect_timeout);
+  /* This needs to be set after connection, or it doesn't stick.  */
+  if (options & FLAG_AUTO_RECONNECT)
+  {
+    my_bool reconnect= 1;
+    mysql_options(mysql, MYSQL_OPT_RECONNECT, (char *)&reconnect);
+  }
 
-    return client_flag;
-}
-
-
-/*
-  @type    : myodbc3 internal
-  @purpose : simple help functions to copy arguments if given
-*/
-
-void copy_if_not_empty(char *to,uint max_length, char *from,int length)
-{
-    if (from)
+  /* Make sure autocommit is set as configured. */
+  if (dbc->commit_flag == CHECK_AUTOCOMMIT_OFF)
+  {
+    if (!trans_supported(dbc) || (options & FLAG_NO_TRANSACTIONS))
     {
-        if (length == SQL_NTS)
-            length= max_length-1;
-        strmake(to,from,length);
+      rc= SQL_SUCCESS_WITH_INFO;
+      dbc->commit_flag= CHECK_AUTOCOMMIT_ON;
+      set_conn_error(dbc, MYERR_01S02,
+                     "Transactions are not enabled, option value "
+                     "SQL_AUTOCOMMIT_OFF changed to SQL_AUTOCOMMIT_ON", 0);
     }
+    else if (autocommit_on(dbc) && mysql_autocommit(mysql, FALSE))
+    {
+      /** @todo set error */
+      goto error;
+    }
+  }
+  else if ((dbc->commit_flag == CHECK_AUTOCOMMIT_ON) &&
+           trans_supported(dbc) && !autocommit_on(dbc))
+  {
+    if (mysql_autocommit(mysql, TRUE))
+    {
+      /** @todo set error */
+      goto error;
+    }
+  }
+
+  /* Set transaction isolation as configured. */
+  if (dbc->txn_isolation != DEFAULT_TXN_ISOLATION)
+  {
+    char buff[80];
+    const char *level;
+
+    if (dbc->txn_isolation & SQL_TXN_SERIALIZABLE)
+      level= "SERIALIZABLE";
+    else if (dbc->txn_isolation & SQL_TXN_REPEATABLE_READ)
+      level= "REPEATABLE READ";
+    else if (dbc->txn_isolation & SQL_TXN_READ_COMMITTED)
+      level= "READ COMMITTED";
+    else
+      level= "READ UNCOMMITTED";
+
+    if (trans_supported(dbc))
+    {
+      sprintf(buff, "SET SESSION TRANSACTION ISOLATION LEVEL %s", level);
+      if (odbc_stmt(dbc, buff) != SQL_SUCCESS)
+      {
+        /** @todo set error reason */
+        goto error;
+      }
+    }
+    else
+    {
+      dbc->txn_isolation= SQL_TXN_READ_UNCOMMITTED;
+      rc= SQL_SUCCESS_WITH_INFO;
+      set_conn_error(dbc, MYERR_01S02,
+                     "Transactions are not enabled, so transaction isolation "
+                     "was ignored.", 0);
+    }
+  }
+
+  return rc;
+
+error:
+  mysql_close(mysql);
+  return SQL_ERROR;
 }
 
 
-/*
-  @type    : ODBC 1.0 API
-  @purpose : to connect to mysql server
-*/
+/**
+  Establish a connection to a data source.
 
-SQLRETURN SQL_API SQLConnect( SQLHDBC        hdbc, 
-                              SQLCHAR FAR *  szDSN,
-                              SQLSMALLINT    cbDSN,
-                              SQLCHAR FAR *  szUID, 
-                              SQLSMALLINT    cbUID,
-                              SQLCHAR FAR *  szAuthStr, 
-                              SQLSMALLINT    cbAuthStr )
+  @param[in]  hdbc    Connection handle
+  @param[in]  szDSN   Data source name
+  @param[in]  cbDSN   Length of data source name or @c SQL_NTS
+  @param[in]  szUID   User identifier
+  @param[in]  cbUID   Length of user identifier or @c SQL_NTS
+  @param[in]  szAuth  Authentication string (password)
+  @param[in]  cbAuth  Length of authentication string or @c SQL_NTS
+
+  @return  Standard ODBC success codes
+
+  @since ODBC 1.0
+  @since ISO SQL 92
+*/
+SQLRETURN SQL_API SQLConnect(SQLHDBC  hdbc,
+                             SQLCHAR *szDSN,  SQLSMALLINT cbDSN,
+                             SQLCHAR *szUID,
+                             SQLSMALLINT cbUID __attribute__((unused)),
+                             SQLCHAR *szAuth,
+                             SQLSMALLINT cbAuth __attribute__((unused)))
 {
-    char host[64],user[64],passwd[64],dsn[NAME_LEN+1],database[NAME_LEN+1];
-    char port[10],flag[10],init_stmt[256],charset[64],*dsn_ptr;
-    char socket[256]= "";
-    int opt_ssl_verify_server_cert = ~0; /* Not used, but needed as parameter */
-                  /* Use 'int' and fill all bits to avoid alignment Bug#25920 */
-    char sslca[256], sslcapath[256], sslcert[256], sslcipher[256], sslkey[256];
-    ulong flag_nr,client_flag;
-    uint port_nr= 0;
-    DBC FAR *dbc= (DBC FAR*) hdbc;
+  SQLRETURN rc;
+  DBC *dbc= (DBC *)hdbc;
+  MYSQL *mysql= &dbc->mysql;
+  char dsn[SQL_MAX_DSN_LENGTH], *dsn_ptr;
+  MYODBCUTIL_DATASOURCE *ds;
 
 #ifdef NO_DRIVERMANAGER
-    return set_dbc_error(dbc, "HY000",
-                         "SQLConnect requires DSN and driver manager", 0);
+  return set_dbc_error(dbc, "HY000",
+                       "SQLConnect requires DSN and driver manager", 0);
 #else
-    if (dbc->mysql.net.vio != 0)
-        return  set_conn_error(hdbc,MYERR_08002,NULL,0);
 
-    /* Reset error state */
-    CLEAR_DBC_ERROR(dbc);
+  /* Can't connect if we're already connected. */
+  if (mysql->net.vio != 0)
+    return set_conn_error(hdbc, MYERR_08002, NULL, 0);
 
-    dsn_ptr= fix_str(dsn, (char*) szDSN, cbDSN);
-    if (dsn_ptr && !dsn_ptr[0])
-        return set_conn_error(hdbc, MYERR_S1000,
-                              "Invalid Connection Parameters",0);
+  /* Reset error state */
+  CLEAR_DBC_ERROR(dbc);
 
-    SQLGetPrivateProfileString(dsn_ptr,"uid","", user, sizeof(user), MYODBCUtilGetIniFileName( TRUE ) );
-    
-    if(!user[0])
-      /* Try to use alternate key - user */
-      SQLGetPrivateProfileString(dsn_ptr,"user","", user, sizeof(user), MYODBCUtilGetIniFileName( TRUE ) );
+  dsn_ptr= fix_str(dsn, (char *)szDSN, cbDSN);
 
-    SQLGetPrivateProfileString(dsn_ptr,"pwd","", passwd, sizeof(passwd), MYODBCUtilGetIniFileName( TRUE ) );
-    if(!passwd[0])
-      /* Try to use alternate key - password */
-      SQLGetPrivateProfileString(dsn_ptr,"password","", passwd, sizeof(passwd), MYODBCUtilGetIniFileName( TRUE ) );
+  if (dsn_ptr && !dsn_ptr[0])
+    return set_conn_error(hdbc, MYERR_S1000,
+                          "Invalid connection parameters", 0);
 
-    SQLGetPrivateProfileString(dsn_ptr,"server","localhost", host, sizeof(host), MYODBCUtilGetIniFileName( TRUE ) );
-    SQLGetPrivateProfileString(dsn_ptr,"database",dsn_ptr, database, sizeof(database), MYODBCUtilGetIniFileName( TRUE ) );
-    SQLGetPrivateProfileString(dsn_ptr,"port","0", port, sizeof(port), MYODBCUtilGetIniFileName( TRUE ) );
-    port_nr= (uint) atoi(port);
-    SQLGetPrivateProfileString(dsn_ptr,"option","0", flag, sizeof(flag), MYODBCUtilGetIniFileName( TRUE ) );
+  ds= MYODBCUtilAllocDataSource(MYODBCUTIL_DATASOURCE_MODE_DRIVER_CONNECT);
 
-#ifdef HAVE_OPENSSL
-    SQLGetPrivateProfileString(dsn_ptr,"sslca","", sslca, sizeof(sslca), MYODBCUtilGetIniFileName( TRUE ) );
-    SQLGetPrivateProfileString(dsn_ptr,"sslcapath","", sslcapath, sizeof(sslcapath), MYODBCUtilGetIniFileName( TRUE ) );
-    SQLGetPrivateProfileString(dsn_ptr,"sslcert","", sslcert, sizeof(sslcert), MYODBCUtilGetIniFileName( TRUE ) );
-    SQLGetPrivateProfileString(dsn_ptr,"sslkey","", sslkey, sizeof(sslkey), MYODBCUtilGetIniFileName( TRUE ) );
-    SQLGetPrivateProfileString(dsn_ptr,"sslcipher","", sslcipher, sizeof(sslcipher), MYODBCUtilGetIniFileName( TRUE ) );
+  /* Set username and password if they were provided. */
+  if (szUID && szUID[0])
+    ds->pszUSER= _global_strdup((char *)szUID);
+  if (szAuth && szAuth[0])
+    ds->pszPASSWORD= _global_strdup((char *)szAuth);
+
+  /*
+    We don't care if this fails, because we might be able to get away
+    with the defaults. We probably should warn about this, though.
+  */
+  (void)MYODBCUtilReadDataSource(ds, dsn_ptr);
+
+  rc= myodbc_do_connect(dbc, ds);
+
+  MYODBCUtilFreeDataSource(ds);
+  return rc;
 #endif
-
-    flag_nr= (ulong) atol(flag);
-
-#ifdef _UNIX_
-    SQLGetPrivateProfileString(dsn_ptr,"socket", "", socket, sizeof(socket), MYODBCUtilGetIniFileName( TRUE ) );
-#endif
-
-    SQLGetPrivateProfileString(dsn_ptr,"stmt", "", init_stmt, sizeof(init_stmt), MYODBCUtilGetIniFileName( TRUE ) );
-    SQLGetPrivateProfileString(dsn_ptr, "charset", "", charset, sizeof(charset),
-                               MYODBCUtilGetIniFileName(TRUE));
-
-    client_flag= get_client_flag(&dbc->mysql,flag_nr,(uint) dbc->login_timeout,
-                                 init_stmt);
-
-    copy_if_not_empty(passwd,sizeof(passwd), (char FAR*) szAuthStr,cbAuthStr);
-    copy_if_not_empty(user, sizeof(user), (char FAR *) szUID, cbUID);
-
-#ifdef HAVE_OPENSSL
-    /* set SSL parameters */
-    mysql_ssl_set(&dbc->mysql, 
-                  sslkey[0]   ? sslkey   : 0, 
-                  sslcert[0]  ? sslcert  : 0,
-                  sslca[0]    ? sslca    : 0, 
-                  sslcapath[0]? sslcapath: 0,
-                  sslcipher[0]? sslcipher: 0
-    );
-    /* As sslcipher is not in mysql options, we have to use
-       MYSQL_OPT_SSL_VERIFY_SERVER_CERT option */
-    /* Last argument is declared (const char *), but is different
-       depending on second argument, cast to stop warnings */
-    mysql_options(&dbc->mysql,MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
-                  (const char *)&opt_ssl_verify_server_cert);
-#endif
-    dbc->mysql.options.connect_timeout = 3600;
-    /* socket[0] is always 0 if you are not under UNIX */
-    if (!mysql_real_connect(&dbc->mysql,
-                            host,
-                            user,
-                            passwd[0] ? passwd : 0,
-                            database, 
-                            port_nr,
-                            socket[0] ? socket: NullS,
-                            (uint)client_flag))
-    {
-        set_dbc_error(dbc, "HY000", mysql_error(&dbc->mysql),
-                      mysql_errno(&dbc->mysql));
-        translate_error(dbc->error.sqlstate,
-                        MYERR_S1000,mysql_errno(&dbc->mysql));
-        return SQL_ERROR;
-    }
-
-#if ((MYSQL_VERSION_ID >= 40113 && MYSQL_VERSION_ID < 50000) || \
-     MYSQL_VERSION_ID >= 50006)
-    if (charset && charset[0])
-    {
-      if (mysql_set_character_set(&dbc->mysql, charset))
-      {
-        set_dbc_error(dbc, "HY000", mysql_error(&dbc->mysql),
-                      mysql_errno(&dbc->mysql));
-        mysql_close(&dbc->mysql);
-        return SQL_ERROR;
-      }
-    }
-#endif
-
-    dbc->dsn= my_strdup(dsn_ptr ? dsn_ptr : database ,MYF(MY_WME));
-    dbc->database= my_strdup(database,MYF(MY_WME));
-    dbc->server= my_strdup(host,MYF(MY_WME));
-    dbc->user= my_strdup(user,MYF(MY_WME));
-    dbc->password= my_strdup(passwd,MYF(MY_WME));
-    dbc->port= port_nr;
-    dbc->flag= flag_nr;
-#endif
-
-    return set_connect_defaults(dbc);
 }
 
 
-/*
+/**
+  An alternative to SQLDriverConnect that allows specifying more of the
+  connection parameters, and whether or not to prompt the user for more
+  information using the setup library.
 
+  @param[in]  hdbc  Handle of database connection
+  @param[in]  hwnd  Window handle. May be @c NULL if no prompting will be done.
+  @param[in]  szConnStrIn  The connection string
+  @param[in]  cbConnStrIn  The length of the connection string in characters
+  @param[out] szConnStrOut Pointer to a buffer for the completed connection
+                           string. Must be at least 1024 characters.
+  @param[in]  cbConnStrOutMax Length of @c szConnStrOut buffer in characters
+  @param[out] pcbConnStrOut Pointer to buffer for returning length of
+                            completed connection string, in characters
+  @param[in]  fDriverCompletion Complete mode, one of @cSQL_DRIVER_PROMPT,
+              @c SQL_DRIVER_COMPLETE, @c SQL_DRIVER_COMPLETE_REQUIRED, or
+              @cSQL_DRIVER_NOPROMPT
+
+  @return Standard ODBC return codes
+
+  @since ODBC 1.0
+  @since ISO SQL 92
 */
-SQLRETURN my_SQLDriverConnectTry( DBC *dbc, MYODBCUTIL_DATASOURCE *pDataSource )
+SQLRETURN SQL_API SQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
+                                   SQLCHAR *szConnStrIn,
+                                   SQLSMALLINT cbConnStrIn
+                                     __attribute__((unused)),
+                                   SQLCHAR * szConnStrOut,
+                                   SQLSMALLINT cbConnStrOutMax,
+                                   SQLSMALLINT *pcbConnStrOut,
+                                   SQLUSMALLINT fDriverCompletion)
 {
-    ulong nFlag = 0;
-    int opt_ssl_verify_server_cert = ~0; /* Not used, but needed as parameter */
-                  /* Use 'int' and fill all bits to avoid alignment Bug#25920 */
+  SQLRETURN rc= SQL_SUCCESS;
+  DBC *dbc= (DBC *)hdbc;
+  MYODBCUTIL_DATASOURCE *ds=
+    MYODBCUtilAllocDataSource(MYODBCUTIL_DATASOURCE_MODE_DRIVER_CONNECT);
+  /* We may have to read driver info to find the setup library. */
+  MYODBCUTIL_DRIVER *pDriver= MYODBCUtilAllocDriver();
+  BOOL bPrompt= FALSE;
+  HMODULE hModule= NULL;
 
-    nFlag = get_client_flag( &dbc->mysql, 
-                             pDataSource->pszOPTION ? atoi(pDataSource->pszOPTION) : 0, 
-                             (uint)dbc->login_timeout, 
-                             pDataSource->pszSTMT ? pDataSource->pszSTMT : "" );
-
-#ifdef HAVE_OPENSSL
-    /* set SSL parameters */
-	  mysql_ssl_set(&dbc->mysql, 
-                   pDataSource->pszSSLKEY, 
-                   pDataSource->pszSSLCERT, 
-                   pDataSource->pszSSLCA, 
-                   pDataSource->pszSSLCAPATH, 
-                   pDataSource->pszSSLCIPHER);
-
-    mysql_options(&dbc->mysql,MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
-                  (const char *)&opt_ssl_verify_server_cert);
-#endif
-    if ( !mysql_real_connect( &dbc->mysql,
-                              pDataSource->pszSERVER, 
-                              pDataSource->pszUSER,
-                              pDataSource->pszPASSWORD,
-                              pDataSource->pszDATABASE,
-                              atoi( pDataSource ->pszPORT ),
-                              pDataSource->pszSOCKET,
-                              nFlag ) )
-    {
-        set_dbc_error( dbc, "HY000", mysql_error( &dbc->mysql ), mysql_errno( &dbc->mysql ) );
-        translate_error( dbc->error.sqlstate, MYERR_S1000, mysql_errno( &dbc->mysql ) );
-        return SQL_ERROR;
-    }
-
-
-#if ((MYSQL_VERSION_ID >= 40113 && MYSQL_VERSION_ID < 50000) || \
-     MYSQL_VERSION_ID >= 50006)
-    if (pDataSource->pszCHARSET)
-    {
-      if (mysql_set_character_set(&dbc->mysql, pDataSource->pszCHARSET))
-      {
-        set_dbc_error(dbc, "HY000", mysql_error(&dbc->mysql),
-                      mysql_errno(&dbc->mysql));
-        mysql_close(&dbc->mysql);
-        return SQL_ERROR;
-      }
-    }
-#endif
-
-    return SQL_SUCCESS;
-}
-
-/*
-  @type    : ODBC 1.0 API
-  @purpose : An alternative to SQLConnect. It supports data sources that
-  require more connection information than the three arguments in
-  SQLConnect, dialog boxes to prompt the user for all connection
-  information, and data sources that are not defined in the system
-  information.
-*/
-
-SQLRETURN SQL_API my_SQLDriverConnect( SQLHDBC             hdbc,
-                                       SQLHWND             hwnd,
-                                       SQLCHAR FAR *       szConnStrIn,
-                                       SQLSMALLINT         cbConnStrIn
-                                         __attribute__((unused)),
-                                       SQLCHAR FAR *       szConnStrOut,
-                                       SQLSMALLINT         cbConnStrOutMax,
-                                       SQLSMALLINT FAR *   pcbConnStrOut,
-                                       SQLUSMALLINT        fDriverCompletion )
-{
-    MYODBCUTIL_DATASOURCE * pDataSource = MYODBCUtilAllocDataSource( MYODBCUTIL_DATASOURCE_MODE_DRIVER_CONNECT );
-    MYODBCUTIL_DRIVER *     pDriver     = MYODBCUtilAllocDriver();      /* we have to read in driver info to get setup lib */
-    SQLRETURN               nReturn     = SQL_SUCCESS;
-    BOOL                    bPrompt     = FALSE;
-    DBC FAR *               dbc         = (DBC FAR*)hdbc;
-    char                    szError[1024];
-#ifdef WIN32
-    HMODULE                 hModule     = NULL;
-#else
-    void *                  hModule     = NULL;
-#endif
-
-    /* parse incoming string */
-    if ( !MYODBCUtilReadConnectStr( pDataSource, (LPCSTR)szConnStrIn ) )
-    {
-        set_dbc_error( dbc, "HY000", "Failed to parse the incoming connect string.", 0 );
-        nReturn = SQL_ERROR;
-        goto exitDriverConnect;
-    }
+  /* Parse the incoming string */
+  if (!MYODBCUtilReadConnectStr(ds, (LPCSTR)szConnStrIn))
+  {
+    rc= set_dbc_error(dbc, "HY000",
+                      "Failed to parse the incoming connect string.", 0);
+    goto error;
+  }
 
 #ifndef NO_DRIVERMANAGER
-    /*!
-        ODBC RULE
+  /*
+   If the connection string contains the DSN keyword, the driver retrieves
+   the information for the specified data source (and merges it into the
+   connection info with the provided connection info having precedence).
 
-        If the connection string contains the DSN keyword, the driver 
-        retrieves the information for the specified data source (and
-        merges it into given connection info with given connection info
-        having precedence).
-
-        \note
-                This also allows us to get pszDRIVER (if not already given).
-    */
-    if ( pDataSource->pszDSN )
-    {
-        if ( !MYODBCUtilReadDataSource( pDataSource, pDataSource->pszDSN ) )
-        {
-            /*!
-
-                ODBC RULE
-
-                Establish a connection to a data source that is not defined in the system 
-                information. If the application supplies a partial connection string, the 
-                driver can prompt the user for connection information.
-            */    
-        }
-    }
+   This also allows us to get pszDRIVER (if not already given).
+  */
+  if (ds->pszDSN)
+    (void)MYODBCUtilReadDataSource(ds, ds->pszDSN);
 #endif
 
-    /* 
-        Make pDataSource good for mysql_real_connect(). Mostly
-        means making some "" values NULL.
-    */
-    MYODBCUtilDefaultDataSource( pDataSource );
+  /*
+    We only prompt if we need to.
 
-    /*!
-       MYODBC RULE
+    A not-so-obvious gray area is when SQL_DRIVER_COMPLETE or
+    SQL_DRIVER_COMPLETE_REQUIRED was specified along without a server or
+    password - particularly password. These can work with defaults/blank but
+    many callers expect prompting when these are blank. So we compromise; we
+    try to connect and if it works we say its ok otherwise we go to
+    a prompt.
+  */
+  switch (fDriverCompletion)
+  {
+  case SQL_DRIVER_PROMPT:
+    ds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_PROMPT;
+    bPrompt= TRUE;
+    break;
 
-       We can not present a prompt unless we can lookup the name of the 
-       setup library file name. This means we need a DRIVER. We try to xref
-       using a DSN (above) or, hopefully, get one in connection string.
+  case SQL_DRIVER_COMPLETE:
+    ds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_COMPLETE;
+    if (myodbc_do_connect(dbc, ds) == SQL_SUCCESS)
+      goto connected;
+    bPrompt= TRUE;
+    break;
 
-       \note 
+  case SQL_DRIVER_COMPLETE_REQUIRED:
+    ds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_REQUIRED;
+    if (myodbc_do_connect(dbc, ds) == SQL_SUCCESS)
+      goto connected;
+    bPrompt= TRUE;
+    break;
 
-       This will, when we need to prompt, trump the ODBC rule where we can 
-       connect with a DSN which does not exist. A possible solution is to
-       hard-code some fall-back value for pDataSource->pszDRIVER but lets 
-       not do it until we see if this is a problem in practice. After all;
-       if the DSN does not exist the app can at least provide the driver
-       name for us in the connection string.
-    */
-    if ( !pDataSource->pszDRIVER && !pDataSource->pszDriverFileName && fDriverCompletion != SQL_DRIVER_NOPROMPT )
-    {
-        sprintf( szError, "Could not determine the driver name; could not lookup setup library. DSN=(%s)\n", pDataSource->pszDSN );
-        set_dbc_error( hdbc, "HY000", szError, 0 );
-        nReturn = SQL_ERROR;
-        goto exitDriverConnect;
-    }
+  case SQL_DRIVER_NOPROMPT:
+    ds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_NOPROMPT;
+    bPrompt= FALSE;
+    break;
 
-    /*!
-        ODBC RULE
-
-        We only prompt if we need to. 
-
-        Not so obvious gray area is with (SQL_DRIVER_COMPLETE/SQL_DRIVER_COMPLETE_REQUIRED)
-        server and password - particularly password. These can work with defaults/blank but 
-        many callers expect prompting when these are blank. So we compromise; we try to 
-        connect and if it works we say its ok otherwise we go to a prompt.
-    */
-    switch ( fDriverCompletion )
-    {
-        case SQL_DRIVER_PROMPT:
-            pDataSource->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_PROMPT;
-            bPrompt             = TRUE;
-            break;
-
-        case SQL_DRIVER_COMPLETE:
-            pDataSource->nPrompt = MYODBCUTIL_DATASOURCE_PROMPT_COMPLETE;
-            if ( my_SQLDriverConnectTry( dbc, pDataSource ) == SQL_SUCCESS )
-                goto exitDriverConnect1;
-            bPrompt = TRUE;
-            break;
-
-        case SQL_DRIVER_COMPLETE_REQUIRED:
-            pDataSource->nPrompt = MYODBCUTIL_DATASOURCE_PROMPT_REQUIRED;
-            if ( my_SQLDriverConnectTry( dbc, pDataSource ) == SQL_SUCCESS )
-                goto exitDriverConnect1;
-            bPrompt = TRUE;
-            break;
-
-        case SQL_DRIVER_NOPROMPT:
-            pDataSource->nPrompt = MYODBCUTIL_DATASOURCE_PROMPT_NOPROMPT;
-#ifndef NO_DRIVERMANAGER
-            /*!
-               ODBC RULE
-
-               We need a DSN or DRIVER in order to work without prompting.
-            */    
-            if ( !pDataSource->pszDSN && !pDataSource->pszDRIVER )
-            {
-                set_dbc_error( hdbc, "IM007", "Missing DSN and/or DRIVER and SQL_DRIVER_NOPROMPT.", 0 );
-                nReturn = SQL_ERROR;
-                goto exitDriverConnect;
-            }
-#endif
-            break;
-        default:
-            {
-                set_dbc_error( hdbc, "HY110", "Invalid driver completion.", 0 );
-                nReturn = SQL_ERROR;
-                goto exitDriverConnect;
-            }
-    }
+  default:
+    rc= set_dbc_error(hdbc, "HY110", "Invalid driver completion.", 0);
+    goto error;
+  }
 
 #ifdef __APPLE__
-    if ( bPrompt )
-    {
-        set_dbc_error( hdbc, "HY000", "Prompting not supported on this platform. Please provide all required connect information.", 0 );
-        nReturn = SQL_ERROR;
-        goto exitDriverConnect;
-    }
+  /*
+    We don't support prompting on Mac OS X, because Qt requires that
+    the calling application be a GUI application, and we don't currently
+    have a way to guarantee that.
+  */
+  if (bPrompt)
+  {
+    rc= set_dbc_error(hdbc, "HY000",
+                           "Prompting is not supported on this platform. "
+                           "Please provide all required connect information.",
+                           0);
+    goto error;
+  }
 #endif
 
-    if ( bPrompt )
-    {
-        BOOL (*pFunc)( SQLHDBC, SQLHWND, MYODBCUTIL_DATASOURCE * );
-
-#ifndef NO_DRIVERMANAGER
-        /*!
-           ODBC RULE
-    
-           We can not present a prompt if we have a null window handle.
-        */
-        if ( !hwnd && fDriverCompletion != SQL_DRIVER_NOPROMPT )
-        {
-            set_dbc_error( hdbc, "IM008", "Invalid window handle for connection completion argument.", 0 );
-            nReturn = SQL_ERROR;
-            goto exitDriverConnect;
-        }
-
-        /* 
-           At this point we should have a driver name (friendly name) either loaded
-           from DSN or provided in connection string. So lets determine the setup
-           library file name (better to not assume name). We read from ODBC system 
-           info. This allows someone configure for a custom setup interface.
-        */
-        if ( !MYODBCUtilReadDriver( pDriver, pDataSource->pszDRIVER, pDataSource->pszDriverFileName ) )
-        {
-            char sz[1024];
-            if ( pDataSource->pszDRIVER && *(pDataSource->pszDRIVER) )
-                sprintf( sz, "Could not find driver %s in system information.", pDataSource->pszDRIVER );
-            else
-                sprintf( sz, "Could not find driver %s in system information.", pDataSource->pszDriverFileName );
-            set_dbc_error( hdbc, "HY000", sz, 0 );
-            nReturn = SQL_ERROR;
-            goto exitDriverConnect;
-        }
-
-        if ( !pDriver->pszSETUP )
-#endif
-        {
-            set_dbc_error( hdbc, "HY000", "Could not determine the file name of setup library.", 0 );
-            nReturn = SQL_ERROR;
-            goto exitDriverConnect;
-        }
-
-        /*
-           We dynamically load setup lib to avoid introducing gui link dependencies 
-           into driver and also allowing the setup library to be pluggable. So 
-           a ncurses ver or a gtk ver etc could be created/used and this code is ok.
-        */
-#ifdef WIN32
-        if ( !(hModule = LoadLibrary( pDriver->pszSETUP )) )
-#else
-        lt_dlinit();
-        if ( !(hModule = (void *)lt_dlopen( pDriver->pszSETUP ))  )
-#endif
-        {
-            char sz[1024];
-            sprintf( sz, "Could not load the setup library (%s).", pDriver->pszSETUP );
-            set_dbc_error( hdbc, "HY000", sz, 0 );
-            nReturn = SQL_ERROR;
-            goto exitDriverConnect;
-        }
-        /*
-           The setup library should expose a MYODBCSetupDriverConnect() C entry point
-           for us to call.
-        */
-#ifdef WIN32
-        pFunc = (BOOL (*)( SQLHDBC, SQLHWND, MYODBCUTIL_DATASOURCE * )) GetProcAddress( hModule, "MYODBCSetupDriverConnect" );
-#else
-        pFunc = (BOOL (*)( SQLHDBC, SQLHWND, MYODBCUTIL_DATASOURCE * )) lt_dlsym( hModule, "MYODBCSetupDriverConnect" );
-#endif
-        if ( pFunc == NULL )
-        {
-#ifdef WIN32
-            LPVOID pszMsg;
-
-            FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                          NULL,
-                          GetLastError(),
-                          MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                          (LPTSTR) &pszMsg,
-                          0, 
-                          NULL );
-            fprintf( stderr, pszMsg );
-            set_dbc_error( hdbc, "HY000", pszMsg, 0 );
-            LocalFree( pszMsg );
-#else
-            set_dbc_error( hdbc, "HY000", "Could not find MYODBCSetupDriverConnect in setup library.", 0 );
-#endif
-            nReturn = SQL_ERROR;
-            goto exitDriverConnect0;
-        }
-
-        /*
-           Prompt. Function returns false if user cancels.
-        */
-        if ( !pFunc( hdbc, hwnd, pDataSource ) )
-        {
-            set_dbc_error( hdbc, "HY000", "User cancelled.", 0 );
-            nReturn = pDataSource->bSaveFileDSN ? SQL_NO_DATA : SQL_ERROR;
-            goto exitDriverConnect0;
-        }
-    }
-
-    if ( my_SQLDriverConnectTry( dbc, pDataSource ) != SQL_SUCCESS )
-    {
-        if (!pDataSource->bSaveFileDSN)
-        {
-            nReturn = SQL_ERROR;
-            goto exitDriverConnect0;
-        }
-        else
-        {
-            set_dbc_error( hdbc, "08001", "Client unable to establish connection.", 0 );
-            nReturn = SQL_SUCCESS_WITH_INFO;
-        }
-    }
-
-    exitDriverConnect1:
-    /*! todo: handle error from this without losing memory */
+  if (bPrompt)
+  {
+    BOOL (*pFunc)(SQLHDBC, SQLHWND, MYODBCUTIL_DATASOURCE *);
 
     /*
-        save the settings we used to connect
-    */   
-    my_free( (gptr)dbc->database, MYF(0) ); /* in case SQL_ATTR_CURRENT_CATALOG set */
-    dbc->dsn        = my_strdup( pDataSource->pszDSN ? pDataSource->pszDSN : "null", MYF(MY_WME) );
-    dbc->database   = my_strdup( pDataSource->pszDATABASE ? pDataSource->pszDATABASE : "null", MYF(MY_WME) );
-    dbc->server     = my_strdup( pDataSource->pszSERVER ? pDataSource->pszSERVER : "localhost", MYF(MY_WME) );
-    dbc->user       = my_strdup( pDataSource->pszUSER ? pDataSource->pszUSER : "", MYF(MY_WME) );
-    dbc->password   = my_strdup( pDataSource->pszPASSWORD ? pDataSource->pszPASSWORD : "", MYF(MY_WME) );
-    dbc->port       = atoi( pDataSource ->pszPORT );
-    dbc->flag       = atol( pDataSource->pszOPTION );
+     We can not present a prompt unless we can lookup the name of the setup
+     library file name. This means we need a DRIVER. We try to look it up
+     using a DSN (above) or, hopefully, get one in the connection string.
 
-    set_connect_defaults( dbc );
-    /*! 
-        ODBC RULE
-
-        Create a return connection string only if we connect. szConnStrOut 'should' 
-        have at least 1024 bytes allocated or be null.
+     This will, when we need to prompt, trump the ODBC rule where we can
+     connect with a DSN which does not exist. A possible solution would be to
+     hard-code some fall-back value for ds->pszDRIVER.
     */
-    if ( szConnStrOut )
+    if (!ds->pszDRIVER && !ds->pszDriverFileName)
     {
-#ifdef WIN32
-        /*
-            MYODBC RULE
-
-            Do nothing special if in-str and out-str are same address. This is because
-            ADO/VB will do this while at the same time *not* provide the space
-            recommended by the ODBC specification (1024 bytes min) resulting in a
-            "Catastrophic error" - the driver going bye bye.
-        */        
-        if ( szConnStrOut != szConnStrIn )
-#endif
-        {
-            *szConnStrOut = '\0';
-            if ( !MYODBCUtilWriteConnectStr( pDataSource, (char *)szConnStrOut, cbConnStrOutMax ) )
-            {
-                set_dbc_error( dbc, "01000", "Something went wrong while building the outgoing connect string.", 0 );
-                nReturn = SQL_SUCCESS_WITH_INFO;
-            }
-        }
-
-        if ( pcbConnStrOut )
-            *pcbConnStrOut = strlen( (char *)szConnStrOut );
+      char szError[1024];
+      sprintf(szError,
+              "Could not determine the driver name; "
+              "could not lookup setup library. DSN=(%s)\n", ds->pszDSN);
+      rc= set_dbc_error(hdbc, "HY000", szError, 0);
+      goto error;
     }
 
-    exitDriverConnect0:
-#ifdef WIN32
-    if ( hModule )
-        FreeLibrary( hModule );
-#else
-    if ( hModule )
-        lt_dlclose( hModule );
+#ifndef NO_DRIVERMANAGER
+    /* We can not present a prompt if we have a null window handle. */
+    if (!hwnd)
+    {
+      rc= set_dbc_error(hdbc, "IM008", "Invalid window handle", 0);
+      goto error;
+    }
+
+    /*
+     At this point we should have a driver name (friendly name) either
+     loaded from DSN or provided in connection string. So lets determine
+     the setup library file name (better to not assume name). We read from
+     ODBC system info. This allows someone configure for a custom setup
+     interface.
+    */
+    if (!MYODBCUtilReadDriver(pDriver, ds->pszDRIVER, ds->pszDriverFileName))
+    {
+      char sz[1024];
+      if (ds->pszDRIVER && ds->pszDRIVER[0])
+        sprintf(sz, "Could not find driver '%s' in system information.",
+                ds->pszDRIVER);
+      else
+        sprintf(sz, "Could not find driver '%s' in system information.",
+                ds->pszDriverFileName);
+
+      rc= set_dbc_error(hdbc, "IM003", sz, 0);
+      goto error;
+    }
+
+    if (!pDriver->pszSETUP )
+#endif
+    {
+      rc= set_dbc_error(hdbc, "HY000",
+                        "Could not determine the file name of setup library.",
+                        0);
+      goto error;
+    }
+
+    /*
+     We dynamically load the setup library so the driver itself does not
+     depeend on GUI lbiraries.
+    */
+#ifndef WIN32
+    lt_dlinit();
 #endif
 
-    exitDriverConnect:
-    MYODBCUtilFreeDriver( pDriver );
-    MYODBCUtilFreeDataSource( pDataSource );
+    if (!(hModule= LoadLibrary(pDriver->pszSETUP)))
+    {
+      char sz[1024];
+      sprintf(sz, "Could not load the setup library '%s'.", pDriver->pszSETUP);
+      rc= set_dbc_error(hdbc, "HY000", sz, 0);
+      goto error;
+    }
 
-    return  nReturn;
+    /*
+       The setup library should expose a MYODBCSetupDriverConnect() C entry point
+       for us to call.
+    */
+    pFunc= (BOOL (*)(SQLHDBC, SQLHWND, MYODBCUTIL_DATASOURCE *))
+      GetProcAddress(hModule, "MYODBCSetupDriverConnect");
+
+    if (pFunc == NULL)
+    {
+#ifdef WIN32
+      LPVOID pszMsg;
+
+      FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                    NULL, GetLastError(),
+                    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                    (LPTSTR)&pszMsg, 0, NULL);
+      rc= set_dbc_error(hdbc, "HY000", (char *)pszMsg, 0);
+      LocalFree(pszMsg);
+#else
+      rc= set_dbc_error(hdbc, "HY000", lt_dlerror(), 0);
+#endif
+      goto error;
+    }
+
+    /* Prompt. Function returns false if user cancels.  */
+    if (!pFunc(hdbc, hwnd, ds))
+    {
+      set_dbc_error(hdbc, "HY000", "User cancelled.", 0);
+      rc= ds->bSaveFileDSN ? SQL_NO_DATA : SQL_ERROR;
+      goto error;
+    }
+  }
+
+  if (myodbc_do_connect(dbc, ds) != SQL_SUCCESS)
+  {
+    if (!ds->bSaveFileDSN)
+    {
+      /** @todo error message? */
+      rc= SQL_ERROR;
+      goto error;
+    }
+    else
+    {
+      set_dbc_error(hdbc, "08001", "Client unable to establish connection.", 0);
+      rc= SQL_SUCCESS_WITH_INFO;
+    }
+  }
+
+connected:
+
+  if (szConnStrOut)
+  {
+#ifdef WIN32
+    /*
+      Work around a bug in ADO/VB -- the intput and output strings are
+      set tot he same address, but the output string is not guaranteed
+      to have the recommended amount of space (1024 bytes).
+    */
+    if (szConnStrOut != szConnStrIn)
+#endif
+    {
+      *szConnStrOut= '\0';
+      if (!MYODBCUtilWriteConnectStr(ds, (char *)szConnStrOut, cbConnStrOutMax))
+      {
+        set_dbc_error(dbc, "01000",
+                      "Something went wrong while building the "
+                      "outgoing connect string.", 0);
+        rc= SQL_SUCCESS_WITH_INFO;
+      }
+    }
+
+    if (pcbConnStrOut)
+      *pcbConnStrOut= strlen((char *)szConnStrOut);
+  }
+
+error:
+  if (hModule)
+    FreeLibrary(hModule);
+
+  MYODBCUtilFreeDriver(pDriver);
+  MYODBCUtilFreeDataSource(ds);
+
+  return rc;
 }
 
 
-/*
-  @type    : ODBC 1.0 API
-  @purpose : is an alternative to SQLConnect. It supports data sources that
-  require more connection information than the three arguments in
-  SQLConnect, dialog boxes to prompt the user for all connection
-  information, and data sources that are not defined in the
-  system information.
+/**
+  Discover and enumerate the attributes and attribute values required to
+  connect.
+
+  @return Always returns @c SQL_ERROR, because the driver does not spport this.
+
+  @since ODBC 1.0
 */
-
-SQLRETURN SQL_API
-SQLDriverConnect(SQLHDBC hdbc,SQLHWND hwnd,
-                 SQLCHAR FAR *szConnStrIn,
-                 SQLSMALLINT cbConnStrIn,
-                 SQLCHAR FAR *szConnStrOut,
-                 SQLSMALLINT cbConnStrOutMax,
-                 SQLSMALLINT FAR *pcbConnStrOut,
-                 SQLUSMALLINT fDriverCompletion)
-{
-    return my_SQLDriverConnect(hdbc, hwnd, szConnStrIn, cbConnStrIn,
-                               szConnStrOut, cbConnStrOutMax, pcbConnStrOut,
-                               fDriverCompletion);
-}
-
-
-/*
-  @type    : ODBC 1.0 API
-  @purpose : supports an iterative method of discovering and enumerating
-  the attributes and attribute values required to connect to a
-  data source
-*/
-
 SQLRETURN SQL_API
 SQLBrowseConnect(SQLHDBC hdbc,
                  SQLCHAR FAR *szConnStrIn __attribute__((unused)),
@@ -763,48 +630,44 @@ SQLBrowseConnect(SQLHDBC hdbc,
                  SQLSMALLINT cbConnStrOutMax __attribute__((unused)),
                  SQLSMALLINT FAR *pcbConnStrOut __attribute__((unused)))
 {
-    return set_conn_error(hdbc,MYERR_S1000,
-                          "Driver Does not support this API",0 );
+  return set_conn_error(hdbc,MYERR_S1000,
+                        "Driver does not support this API", 0);
 }
 
 
-/*
-  @type    : myodbc3 internal
-  @purpose : closes the connection associated with a specific connection handle
+/**
+  Disconnect a connection.
+
+  @param[in]  hdbc   Connection handle
+
+  @return  Standard ODBC return codes
+
+  @since ODBC 1.0
+  @since ISO SQL 92
 */
-
-SQLRETURN SQL_API my_SQLDisconnect(SQLHDBC hdbc)
-{
-    LIST *list_element,*next_element;
-    DBC FAR *dbc= (DBC FAR*) hdbc;
-
-    for (list_element= dbc->statements ; list_element ;
-        list_element= next_element)
-    {
-        next_element= list_element->next;
-        my_SQLFreeStmt((SQLHSTMT) list_element->data, SQL_DROP);
-    }
-    mysql_close(&dbc->mysql);
-    my_free(dbc->dsn,MYF(0));
-    my_free(dbc->database,MYF(0));
-    my_free(dbc->server,MYF(0));
-    my_free(dbc->user,MYF(0));
-    my_free(dbc->password,MYF(0));
-    dbc->dsn= dbc->database= dbc->server= dbc->user= dbc->password= 0;
-#ifdef MYODBC_DBG
-    if (dbc->flag & FLAG_LOG_QUERY)
-        end_query_log(dbc->query_log);
-#endif
-    return SQL_SUCCESS;
-}
-
-
-/*
-  @type    : ODBC 1.0 API
-  @purpose : closes the connection associated with a specific connection handle
-*/
-
 SQLRETURN SQL_API SQLDisconnect(SQLHDBC hdbc)
 {
-    return my_SQLDisconnect(hdbc);
+  LIST *list_element, *next_element;
+  DBC FAR *dbc= (DBC FAR*) hdbc;
+
+  for (list_element= dbc->statements; list_element; list_element= next_element)
+  {
+     next_element= list_element->next;
+     my_SQLFreeStmt((SQLHSTMT)list_element->data, SQL_DROP);
+  }
+  mysql_close(&dbc->mysql);
+  my_free(dbc->dsn, MYF(0));
+  my_free(dbc->database, MYF(0));
+  my_free(dbc->server, MYF(0));
+  my_free(dbc->user, MYF(0));
+  my_free(dbc->password, MYF(0));
+  dbc->dsn= dbc->database= dbc->server= dbc->user= dbc->password= 0;
+
+#ifdef MYODBC_DBG
+  if (dbc->flag & FLAG_LOG_QUERY)
+    end_query_log(dbc->query_log);
+#endif
+
+  return SQL_SUCCESS;
 }
+
