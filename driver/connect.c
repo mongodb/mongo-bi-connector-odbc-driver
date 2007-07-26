@@ -153,7 +153,7 @@ SQLRETURN myodbc_do_connect(DBC *dbc, MYODBCUTIL_DATASOURCE *ds)
   }
 
   /*
-    The MySQL server has a workaround for old versions of Micorosft Access
+    The MySQL server has a workaround for old versions of Microsoft Access
     (and possibly other products) that is no longer necessary, but is
     unfortunateoly enabled by default. We have to turn it off, or it causes
     other problems.
