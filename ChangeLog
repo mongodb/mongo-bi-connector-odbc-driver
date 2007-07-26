@@ -5,6 +5,8 @@
     ODBC logging should be used.
 
   Bugs fixed:
+  * SQLColumns() failed when a catalog was specified due to an
+    incorrectly-generated query. (Bug #29888)
   * SQLGetTypeInfo() returned incorrect information for date and time
     fields, and would not return results when queried for the SQL_DATETIME
     type. (Bug #28657)

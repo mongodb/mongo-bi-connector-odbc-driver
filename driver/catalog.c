@@ -662,8 +662,7 @@ MYSQL_RES *mysql_list_dbcolumns(STMT *stmt,
     if (cbColumn)
     {
       to= strmov(to, " LIKE '");
-      to+= myodbc_escape_wildcard(mysql, to, sizeof(buff) - (to - buff),
-                                  (char *)szColumn, cbColumn);
+      to+= mysql_real_escape_string(mysql, to, (char *)szColumn, cbColumn);
       to= strmov(to, "'");
     }
 
@@ -687,9 +686,10 @@ MYSQL_RES *mysql_list_dbcolumns(STMT *stmt,
       return NULL;
     }
 
-    to= strxmov(select, "SELECT `", NullS);
+    to= strxmov(select, "SELECT ", NullS);
     while ((row= mysql_fetch_row(result)))
     {
+      to= strmov(to, "`");
       lengths= mysql_fetch_lengths(result);
       to+= mysql_real_escape_string(mysql, to, row[0], lengths[0]);
       to= strmov(to, "`,");

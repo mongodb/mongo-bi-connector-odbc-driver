@@ -1076,6 +1076,28 @@ DECLARE_TEST(t_bug26934)
 }
 
 
+/**
+ Bug #29888: Crystal wizard throws error on including tables
+*/
+DECLARE_TEST(t_bug29888)
+{
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug29888");
+  ok_sql(hstmt, "CREATE TABLE t_bug29888 (a INT, b INT)");
+
+  ok_stmt(hstmt, SQLColumns(hstmt, mydb, SQL_NTS, NULL, SQL_NTS,
+                            (SQLCHAR *)"t_bug29888", SQL_NTS,
+                            (SQLCHAR *)"%", SQL_NTS));
+
+  is_num(myrowcount(hstmt), 2);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug29888");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -1096,6 +1118,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug28316)
   ADD_TEST(bug8860)
   ADD_TEST(t_bug26934)
+  ADD_TEST(t_bug29888)
 END_TESTS
 
 
