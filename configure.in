@@ -118,21 +118,6 @@ AC_CHECK_LIB(z,compress)
 
 ###################################################################
 #
-# Debug support
-#
-###################################################################
-AC_ARG_WITH(separate-debug-driver,
-    [AC_HELP_STRING(
-        [--with-separate-debug-driver],
-        [Build separate driver with debug support [default=no]])],
-    [with_separate_debug_driver=$withval],
-    [with_separate_debug_driver=no])
-
-AM_CONDITIONAL(WITH_SEPARATE_DEBUG_DRIVER,
-	[test "x$with_separate_debug_driver" != xno])
-
-###################################################################
-#
 # THREADED
 #
 ###################################################################
