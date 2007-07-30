@@ -1,6 +1,8 @@
 3.51.18
 
   Functionality added or changed:
+  * Added FLAG_MULTI_STATEMENTS to allow issuing queries that contain
+    multiple statements. Also added to the setup GUI. (Bug #7445)
   * Removed support for the TRACE and TRACEFILE DSN options. The standard
     ODBC logging should be used.
 

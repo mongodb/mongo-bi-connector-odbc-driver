@@ -61,6 +61,8 @@ unsigned long get_client_flags(unsigned long options)
     flags|= CLIENT_COMPRESS;
   if (options & FLAG_IGNORE_SPACE)
     flags|= CLIENT_IGNORE_SPACE;
+  if (options & FLAG_MULTI_STATEMENTS)
+    flags|= CLIENT_MULTI_STATEMENTS;
 
   return flags;
 }

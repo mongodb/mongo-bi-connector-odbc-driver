@@ -345,6 +345,50 @@ DECLARE_TEST(charset_gbk)
 }
 
 
+/**
+  Bug #7445: MyODBC still doesn't support batch statements
+*/
+DECLARE_TEST(t_bug7445)
+{
+  SQLLEN nRowCount;
+  SQLHENV    henv1;
+  SQLHDBC    hdbc1;
+  SQLHSTMT   hstmt1;
+
+  SET_DSN_OPTION(1 << 26);
+
+  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_bug7445");
+
+  /* create the table 'myodbc3_demo_result' */
+  ok_sql(hstmt1,
+         "CREATE TABLE t_bug7445(name VARCHAR(20))");
+
+  /* multi statement insert */
+  ok_sql(hstmt1, "INSERT INTO t_bug7445 VALUES ('bogdan');"
+                 "INSERT INTO t_bug7445 VALUES ('georg');"
+                 "INSERT INTO t_bug7445 VALUES ('tonci');"
+                 "INSERT INTO t_bug7445 VALUES ('jim')");
+
+  ok_sql(hstmt1, "SELECT COUNT(*) FROM t_bug7445");
+
+  /* get the rows affected by update statement */
+  ok_stmt(hstmt1, SQLRowCount(hstmt1, &nRowCount));
+  is_num(nRowCount, 1);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_sql(hstmt1, "DROP TABLE t_bug7445");
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  SET_DSN_OPTION(0);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -356,6 +400,7 @@ BEGIN_TESTS
 #endif
   ADD_TEST(charset_utf8)
   ADD_TEST(charset_gbk)
+  ADD_TEST(t_bug7445)
 END_TESTS
 
 

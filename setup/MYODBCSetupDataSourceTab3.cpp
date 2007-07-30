@@ -98,6 +98,8 @@ unsigned int MYODBCSetupDataSourceTab3::getFlags()
         nFlags |= 1 << 22;
     if ( ptab3a->pcheckboxAutoIncrementIsNull->isChecked() )
         nFlags |= 1 << 23;
+    if ( ptab3c->pcheckboxMultiStatements->isChecked() )
+        nFlags |= 1 << 26;
 
     return nFlags;
 }

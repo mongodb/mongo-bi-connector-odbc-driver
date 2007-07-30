@@ -30,6 +30,7 @@ MYODBCSetupDataSourceTab3c::MYODBCSetupDataSourceTab3c( QWidget *pwidgetParent )
     QString         stringReadOptionsFromMyCnf( tr("Read parameters from the [client] and [odbc] groups from `my.cnf'.") );
     QString         stringDisableTransactions( tr("Disable transactions.") );
     QString         stringForceUseOfForwardOnlyCursors( tr("Force the use of Forward-only cursor type. In case of applications setting the default static/dynamic cursor type, and one wants driver to use non-cache result sets, then this option will ensure the forward-only cursor behavior.") );
+    QString         stringMultiStatements( tr("Allow multiple statements in a single query.") );
 
 #if QT_VERSION >= 0x040000
     QVBoxLayout *playoutFields = new QVBoxLayout;
@@ -103,6 +104,15 @@ MYODBCSetupDataSourceTab3c::MYODBCSetupDataSourceTab3c( QWidget *pwidgetParent )
     pcheckboxForceUseOfForwardOnlyCursors->setToolTip( stringForceUseOfForwardOnlyCursors );
 #else
     QToolTip::add( pcheckboxForceUseOfForwardOnlyCursors, stringForceUseOfForwardOnlyCursors );
+#endif
+
+    pcheckboxMultiStatements = new MYODBCSetupCheckBox( tr("Allow multiple statements"), this );
+    pcheckboxMultiStatements->setAssistText( stringMultiStatements );
+    playoutFields->addWidget( pcheckboxMultiStatements );
+#if QT_VERSION >= 0x040000
+    pcheckboxMultiStatements->setToolTip( stringMultiStatements );
+#else
+    QToolTip::add( pcheckboxMultiStatements, stringMultiStatements );
 #endif
 
     playoutFields->addStretch( 10 );
