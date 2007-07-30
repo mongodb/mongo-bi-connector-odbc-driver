@@ -1545,8 +1545,15 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
             (field = mysql_fetch_field(result)); )
         {
             int type;
-            if ( (field->type != MYSQL_TYPE_TIMESTAMP) )
-                continue;
+            if ((field->type != MYSQL_TYPE_TIMESTAMP))
+              continue;
+            /*
+              TIMESTAMP_FLAG is only set on fields that are auto-set or
+              auto-updated. We really only want auto-updated, but we can't
+              tell the difference because of Bug #30081.
+            */
+            if (!(field->flags & TIMESTAMP_FLAG))
+              continue;
             field_count++;
             sprintf(buff,"%d",SQL_SCOPE_SESSION);
             row[0]= strdup_root(alloc,buff);

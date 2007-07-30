@@ -7,6 +7,9 @@
     ODBC logging should be used.
 
   Bugs fixed:
+  * SQLSpecialColumns() returned all TIMESTAMP fields when queried for
+    SQL_ROWVER, not just an auto-updating TIMESTAMP field. (Bug #9927, still
+    limited by Bug #30081 in the server.)
   * SQLConnect() and SQLDriverConnect() were rewritten to eliminate duplicate
     code and ensure all options were supported using both connection methods.
     SQLDriverConnect() now only requires the setup library to be present when
