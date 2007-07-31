@@ -254,6 +254,10 @@ DECLARE_TEST(t_bulk_insert_rows)
 
   ok_stmt(hstmt, SQLBulkOperations(hstmt, SQL_ADD));
 
+  /* Remove SQL_ATTR_ROW_BIND_OFFSET_PTR */
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_BIND_OFFSET_PTR,
+                                NULL, 0));
+
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
