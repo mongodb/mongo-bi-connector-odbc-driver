@@ -10,7 +10,7 @@ Guffert TODO
   * Implement native Mac OS X setup library
   * Replace OPTIONS flags with individual DSN settings (but support OPTIONS
     for backwards-compatibility)
-  * Fix support for SQLBIGINT:
+  * Fix support for SQLBIGINT (Bug #28887):
     http://msdn2.microsoft.com/en-us/library/ms714121.aspx
   * Add descriptor support:
     http://msdn2.microsoft.com/en-us/library/ms716339.aspx
@@ -21,7 +21,7 @@ Guffert TODO
   * Implement SQLBrowseConnect():
     http://msdn2.microsoft.com/en-us/library/ms714565.aspx
     http://msdn2.microsoft.com/en-us/library/ms712446.aspx
-  * Implement SQLCancel():
+  * Implement SQLCancel() (Bug #15601):
     http://msdn2.microsoft.com/en-us/library/ms714112.aspx
 
 ----
