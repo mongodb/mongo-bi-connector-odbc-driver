@@ -2486,6 +2486,62 @@ DECLARE_TEST(bug10563)
 }
 
 
+/*
+ * Bug 6741 - SQL_ATTR_ROW_BIND_OFFSET_PTR is not supported
+ * It was supported for use in some batch operations, but not
+ * standard cursor operations.
+ */
+DECLARE_TEST(bug6741)
+{
+  const int vals = 5;
+  int i;
+  SQLLEN offset;
+  struct {
+    SQLINTEGER xval;
+    SQLLEN ylen;
+  } results[vals];
+
+  ok_sql(hstmt, "drop table if exists t_bug6741");
+  ok_sql(hstmt, "create table t_bug6741 (x int, y int)");
+
+  ok_sql(hstmt, "insert into t_bug6741 values (0,0),(1,NULL),(2,2),(3,NULL),(4,4)");
+  ok_sql(hstmt, "select x,y from t_bug6741 order by x");
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_BIND_OFFSET_PTR,
+          &offset, SQL_IS_UINTEGER));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &results[0].xval, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_LONG, NULL, 0, &results[0].ylen));
+
+  /* fetch all the data */
+  for(i = 0; i < vals; ++i)
+  {
+    offset = i * sizeof(results[0]);
+    ok_stmt(hstmt, SQLFetch(hstmt));
+  }
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  /* verify it */
+  for(i = 0; i < vals; ++i)
+  {
+    printf("xval[%d] = %d\n", i, results[i].xval);
+    printf("ylen[%d] = %d\n", i, results[i].ylen);
+    is_num(results[i].xval, i);
+    if(i % 2)
+    {
+      is_num(results[i].ylen, SQL_NULL_DATA);
+    }
+    else
+    {
+      is_num(results[i].ylen, sizeof(SQLINTEGER));
+    }
+  }
+
+  ok_sql(hstmt, "drop table if exists t_bug6741");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_positioned_cursor)
   ADD_TEST(my_setpos_cursor)
@@ -2524,6 +2580,7 @@ BEGIN_TESTS
   ADD_TEST(tmysql_pcbvalue)
   ADD_TEST(t_bug28255)
   ADD_TEST(bug10563)
+  ADD_TEST(bug6741)
 END_TESTS
 
 

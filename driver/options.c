@@ -134,7 +134,7 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
             break;
 
         case SQL_ATTR_ROW_BIND_OFFSET_PTR:
-            options->bind_offset= (SQLINTEGER *)ValuePtr;
+            options->bind_offset= (SQLLEN *)ValuePtr;
             break;
 
         case 1226:/* MS SQL Server Extension */
@@ -233,9 +233,7 @@ get_constmt_attr(SQLSMALLINT  HandleType,
             break;
 
         case SQL_ATTR_ROW_BIND_OFFSET_PTR:
-            *((SQLINTEGER *) ValuePtr)= options->bind_offset ?
-                                        *(options->bind_offset):
-                                        0;
+            *((SQLLEN *) ValuePtr)= options->bind_offset;
             break;
 
         case SQL_ATTR_ROW_OPERATION_PTR: /* need to support this ....*/

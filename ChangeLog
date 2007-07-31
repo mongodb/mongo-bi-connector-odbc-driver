@@ -24,6 +24,8 @@
   * Tables from the mysql database (catalog) were listed as SYSTEM TABLES
     by SQLTables() even when a different catalog was being queried. This
     also introduced errors due to the fix for Bug #26934.  (Bug #28662)
+  * Added support for SQL_ATTR_ROW_BIND_OFFSET_PTR in normal cursors.
+    (Bug #6741)
 
 ----
 

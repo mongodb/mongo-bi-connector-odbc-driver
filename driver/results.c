@@ -1372,8 +1372,9 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
             {
                 if ( bind->rgbValue || bind->pcbValue )
                 {
-                    ulong offset,pcb_offset;
+                    SQLLEN offset,pcb_offset;
                     SQLLEN pcbValue;
+
                     if ( stmt->stmt_options.bind_type == SQL_BIND_BY_COLUMN )
                     {
                         offset= bind->cbValueMax*i;
@@ -1381,7 +1382,16 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                     }
                     else
                         pcb_offset= offset= stmt->stmt_options.bind_type*i;
+
+                    /* apply SQL_ATTR_ROW_BIND_OFFSET_PTR */
+                    if (stmt->stmt_options.bind_offset)
+                    {
+                      offset     += *stmt->stmt_options.bind_offset;
+                      pcb_offset += *stmt->stmt_options.bind_offset;
+                    }
+
                     stmt->getdata_offset= (ulong) ~0L;
+
                     if ( (tmp_res= sql_get_data( stmt,
                                                  bind->fCType,
                                                  bind->field,
@@ -1401,7 +1411,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                             res= SQL_ERROR;
                     }
                     if (bind->pcbValue)
-                      *(bind->pcbValue + pcb_offset) = pcbValue;
+                      *(bind->pcbValue + (pcb_offset / sizeof(SQLLEN))) = pcbValue;
                 }
                 if ( lengths )
                     lengths++;
