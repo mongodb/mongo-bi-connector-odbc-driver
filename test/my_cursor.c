@@ -2491,15 +2491,16 @@ DECLARE_TEST(bug10563)
  * It was supported for use in some batch operations, but not
  * standard cursor operations.
  */
+#define BUG6741_VALS 5
+
 DECLARE_TEST(bug6741)
 {
-  const int vals = 5;
   int i;
   SQLLEN offset;
   struct {
     SQLINTEGER xval;
     SQLLEN ylen;
-  } results[vals];
+  } results[BUG6741_VALS];
 
   ok_sql(hstmt, "drop table if exists t_bug6741");
   ok_sql(hstmt, "create table t_bug6741 (x int, y int)");
@@ -2513,7 +2514,7 @@ DECLARE_TEST(bug6741)
   ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_LONG, NULL, 0, &results[0].ylen));
 
   /* fetch all the data */
-  for(i = 0; i < vals; ++i)
+  for(i = 0; i < BUG6741_VALS; ++i)
   {
     offset = i * sizeof(results[0]);
     ok_stmt(hstmt, SQLFetch(hstmt));
@@ -2521,7 +2522,7 @@ DECLARE_TEST(bug6741)
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
   /* verify it */
-  for(i = 0; i < vals; ++i)
+  for(i = 0; i < BUG6741_VALS; ++i)
   {
     printf("xval[%d] = %d\n", i, results[i].xval);
     printf("ylen[%d] = %d\n", i, results[i].ylen);
