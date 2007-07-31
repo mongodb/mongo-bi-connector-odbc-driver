@@ -131,7 +131,7 @@ extern "C"
 /* Max Primary keys in a cursor * WHERE clause */
 #define MY_MAX_PK_PARTS 32
 
-#define x_free(A) { gptr tmp=(gptr) (A); if (tmp) my_free(tmp,MYF(MY_WME+MY_FAE)); }
+#define x_free(A) { void *tmp= (A); if (tmp) my_free(tmp,MYF(MY_WME+MY_FAE)); }
 
 /*
   Connection parameters, that affects the driver behaviour
@@ -254,7 +254,7 @@ typedef struct st_bind
 typedef struct st_param_bind
 {
   SQLSMALLINT   SqlType,CType;
-  gptr          buffer;
+  char *        buffer;
   char *        pos_in_query,*value;
   SQLINTEGER    ValueMax;
   SQLLEN *      actual_len;
