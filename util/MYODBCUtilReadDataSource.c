@@ -61,20 +61,7 @@ BOOL MYODBCUtilReadDataSource( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszDSN
 
     *szEntryNames = '\0';
 
-#if defined(__APPLE__) && 0
-    /*!
-        \note   OSX
-
-                SQLGetPrivateProfileString is the proper call and is available - but
-                at this time it appears utterly broken. So we call an alternative
-                instead. 
-    */
-    if ( ( nChars = GetPrivateProfileString( pszDSN, NULL, NULL, szEntryNames, sizeof( szEntryNames ) - 1, "odbc.ini" ) ) < 1 )
-#elif defined(__APPLE__)
-    if ( ( nChars = SQLGetPrivateProfileString( pszDSN, "", "", szEntryNames, sizeof( szEntryNames ) - 1, "odbc.ini" ) ) < 1 )
-#else
-    if ( ( nChars = SQLGetPrivateProfileString( pszDSN, NULL, NULL, szEntryNames, sizeof( szEntryNames ) - 1, "ODBC.INI" ) ) < 1 )
-#endif
+    if ( ( nChars = SQLGetPrivateProfileString( pszDSN, "", "", szEntryNames, sizeof( szEntryNames ) - 1, "ODBC.INI" ) ) < 1 )
     {
         return FALSE;
     }
