@@ -1366,18 +1366,18 @@ static int colattr(SQLHSTMT hstmt, SQLUSMALLINT cno, SQLUSMALLINT attribute,
   }
   else
   {
-	  printf("lnptr = %lld\n", lnptr);
-	  printf("nptr = %lld\n", nptr);
-	  printf("equal  = %d\n", nptr == lnptr);
-	  printf("nequal = %d\n", nptr != lnptr);
-    //is_num(lnptr, nptr);
-do { 
-  if (lnptr != nptr) { 
-    printf("# %s (%ld) != %ld in %s on line %d\n", 
-           "lnptr", (long)lnptr, (long)nptr, __FILE__, __LINE__); 
-    return FAIL; 
-  } 
-} while (0);
+    printf("lnptr = %lld\n", lnptr);
+    printf("nptr = %lld\n", nptr);
+    printf("equal  = %d\n", nptr == lnptr);
+    printf("nequal = %d\n", nptr != lnptr);
+ /* is_num(lnptr, nptr); */
+    do { 
+      if (lnptr != nptr) { 
+        printf("# %s (%ld) != %ld in %s on line %d\n", 
+               "lnptr", (long)lnptr, (long)nptr, __FILE__, __LINE__); 
+        return FAIL; 
+      } 
+    } while (0);
   }
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
