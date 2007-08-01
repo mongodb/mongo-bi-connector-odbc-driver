@@ -61,7 +61,8 @@ BOOL MYODBCUtilReadDataSource( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszDSN
 
     *szEntryNames = '\0';
 
-    if ( ( nChars = SQLGetPrivateProfileString( pszDSN, "", "", szEntryNames, sizeof( szEntryNames ) - 1, "ODBC.INI" ) ) < 1 )
+    /* Get the list of key names for the DSN's section. */
+    if ( ( nChars = SQLGetPrivateProfileString( pszDSN, NULL, "", szEntryNames, sizeof( szEntryNames ) - 1, "ODBC.INI" ) ) < 1 )
     {
         return FALSE;
     }
@@ -101,28 +102,16 @@ BOOL MYODBCUtilReadDataSource( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszDSN
     }
 #endif
 
-    /*!
-        Looks like things are going to work. Lets set DSN.
-    */        
+    /* Looks like things are going to work. Lets set DSN.  */
     if ( !pDataSource->pszDSN )
         pDataSource->pszDSN = _global_strdup( pszDSN ) ;
 
-    /*!
-        Scan result and return TRUE if we find a match.
-    */
+    /* Handle each key we found for this DSN */
     pszEntryName = szEntryNames;
     while ( *pszEntryName )
     {
         *szValue = '\0';
-#if defined(__APPLE__) && 0
-        if ( GetPrivateProfileString( pszDSN, pszEntryName, NULL, szValue, sizeof( szValue ) - 1, "odbc.ini" ) > 0 )
-#elif defined(__APPLE__)
-        if ( SQLGetPrivateProfileString( pszDSN, pszEntryName, "", szValue, sizeof( szValue ) - 1, "odbc.ini" ) > 0 )
-#elif defined(WIN32)
-        if ( SQLGetPrivateProfileString( pszDSN, pszEntryName, NULL, szValue, sizeof( szValue ) - 1, "ODBC.INI" ) > 0 )
-#else
         if ( SQLGetPrivateProfileString( pszDSN, pszEntryName, "", szValue, sizeof( szValue ) - 1, "ODBC.INI" ) > 0 )
-#endif
         {
             /*!
                 ODBC RULE
@@ -252,26 +241,16 @@ BOOL MYODBCUtilReadDataSource( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszDSN
     /* try harder to get the friendly driver name */
     if ( !pDataSource->pszDRIVER )
     {
-#if defined(__APPLE__) && 0
-        if ( GetPrivateProfileString( MYODBCUTIL_ODBCINI_HEADER_SECTION, NULL, NULL, szEntryNames, sizeof( szEntryNames ) - 1, "odbc.ini" ) < 1 )
-#elif defined(__APPLE__)
-        if ( SQLGetPrivateProfileString( MYODBCUTIL_ODBCINI_HEADER_SECTION, "", "", szEntryNames, sizeof( szEntryNames ) - 1, "odbc.ini" ) < 1 )
-#else
-        if ( SQLGetPrivateProfileString( MYODBCUTIL_ODBCINI_HEADER_SECTION, NULL, NULL, szEntryNames, sizeof( szEntryNames ) - 1, "ODBC.INI" ) < 1 )
-#endif
+        if ( SQLGetPrivateProfileString( MYODBCUTIL_ODBCINI_HEADER_SECTION, "", "", szEntryNames, sizeof( szEntryNames ) - 1, "ODBC.INI" ) < 1 )
         {
             return FALSE;
         }
-    
+
         pszEntryName = szEntryNames;
         while ( *pszEntryName )
         {
             *szValue = '\0';
-#if defined(__APPLE__) && 0
-            if ( GetPrivateProfileString( MYODBCUTIL_ODBCINI_HEADER_SECTION, pszEntryName, NULL, szValue, sizeof( szValue ) - 1, "odbc.ini" ) > 0 )
-#else
-            if ( SQLGetPrivateProfileString( MYODBCUTIL_ODBCINI_HEADER_SECTION, pszEntryName, NULL, szValue, sizeof( szValue ) - 1, "ODBC.INI" ) > 0 )
-#endif
+            if ( SQLGetPrivateProfileString( MYODBCUTIL_ODBCINI_HEADER_SECTION, pszEntryName, "", szValue, sizeof( szValue ) - 1, "ODBC.INI" ) > 0 )
             {
                 if ( strcasecmp( pszEntryName, pszDSN ) == 0 )
                 {
