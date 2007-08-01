@@ -1347,47 +1347,11 @@ DECLARE_TEST(t_desccol1)
 }
 
 
-static int colattr(SQLHSTMT hstmt, SQLUSMALLINT cno, SQLUSMALLINT attribute,
-                   SQLCHAR *sptr, SQLSMALLINT slen, SQLLEN nptr)
-{
-  SQLCHAR     lsptr[40];
-  SQLSMALLINT lslen;
-  SQLLEN      lnptr;
-
-  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
-  ok_sql(hstmt, "SELECT * FROM t_colattr");
-
-  ok_stmt(hstmt, SQLColAttribute(hstmt, cno, attribute, lsptr, sizeof(lsptr),
-                                 &lslen, &lnptr));
-  if (sptr)
-  {
-    is_num(lslen, slen);
-    is_str(lsptr, sptr, lslen);
-  }
-  else
-  {
-    printf("lnptr = %lld\n", lnptr);
-    printf("nptr = %lld\n", nptr);
-    printf("equal  = %d\n", nptr == lnptr);
-    printf("nequal = %d\n", nptr != lnptr);
- /* is_num(lnptr, nptr); */
-    do { 
-      if (lnptr != nptr) { 
-        printf("# %s (%ld) != %ld in %s on line %d\n", 
-               "lnptr", (long)lnptr, (long)nptr, __FILE__, __LINE__); 
-        return FAIL; 
-      } 
-    } while (0);
-  }
-
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-
-  return OK;
-}
-
-
 DECLARE_TEST(t_colattributes)
 {
+  SQLLEN count;
+  SQLINTEGER isauto;
+
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_colattr");
 
   ok_sql(hstmt,
@@ -1448,10 +1412,16 @@ DECLARE_TEST(t_colattributes)
          "en ENUM('v1','v2'),"
          "st SET('1','2','3'))");
 
-  if (colattr(hstmt, 1, SQL_COLUMN_COUNT, NULL, 0, 55) != OK)
-    return FAIL;
-  if (colattr(hstmt, 1, SQL_COLUMN_AUTO_INCREMENT, NULL, 0, SQL_TRUE) != OK)
-    return FAIL;
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
+  ok_sql(hstmt, "SELECT * FROM t_colattr");
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_COLUMN_COUNT, NULL, 0, NULL,
+                                 &count));
+  is(count == 55);
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_COLUMN_AUTO_INCREMENT, NULL, 0,
+                                 NULL, &isauto));
+  is_num(isauto, SQL_TRUE);
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_colattr");
 
