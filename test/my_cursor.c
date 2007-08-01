@@ -2537,6 +2537,8 @@ DECLARE_TEST(bug6741)
     }
   }
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
   ok_sql(hstmt, "drop table if exists t_bug6741");
 
   return OK;
