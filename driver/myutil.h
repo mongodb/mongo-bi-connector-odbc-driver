@@ -40,6 +40,7 @@
 #define if_dynamic_cursor(st) ((st)->stmt_options.cursor_type == SQL_CURSOR_DYNAMIC)
 #define if_forward_cache(st) ((st)->stmt_options.cursor_type == SQL_CURSOR_FORWARD_ONLY && \
 			     (st)->dbc->flag & FLAG_NO_CACHE )
+#define is_connected(dbc)    ((dbc)->mysql.net.vio)
 #define trans_supported(db) ((db)->mysql.server_capabilities & CLIENT_TRANSACTIONS)
 #define autocommit_on(db) ((db)->mysql.server_status & SERVER_STATUS_AUTOCOMMIT)
 #define true_dynamic(flag) (!(flag &FLAG_FORWARD_CURSOR ) && (flag & FLAG_DYNAMIC_CURSOR))

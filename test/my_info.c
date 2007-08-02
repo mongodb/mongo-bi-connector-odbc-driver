@@ -137,7 +137,7 @@ DECLARE_TEST(t_bug28657)
 
   ok_stmt(hstmt, SQLGetTypeInfo(hstmt, SQL_DATETIME));
 
-  is(myrowcount(hstmt) > 1);
+  is(myresult(hstmt) > 1);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 

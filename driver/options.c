@@ -276,7 +276,7 @@ set_con_attr(SQLHDBC    hdbc,
         case SQL_ATTR_AUTOCOMMIT:
             if (ValuePtr != (SQLPOINTER) SQL_AUTOCOMMIT_ON)
             {
-                if (!dbc->server) /* no connection yet */
+                if (!is_connected(dbc))
                 {
                     dbc->commit_flag= CHECK_AUTOCOMMIT_OFF;
                     return SQL_SUCCESS;
@@ -288,7 +288,7 @@ set_con_attr(SQLHDBC    hdbc,
                 if (autocommit_on(dbc))
                     return odbc_stmt(dbc,"SET AUTOCOMMIT=0");
             }
-            else if (!dbc->server) /* no connection yet */
+            else if (!is_connected(dbc))
             {
                 dbc->commit_flag= CHECK_AUTOCOMMIT_ON;
                 return SQL_SUCCESS;
@@ -300,7 +300,7 @@ set_con_attr(SQLHDBC    hdbc,
         case SQL_ATTR_LOGIN_TIMEOUT:
             {
                 /* we can't change timeout values in post connect state */
-               if (dbc->server) {
+               if (is_connected(dbc)) {
                   return set_conn_error(dbc, MYERR_S1011, NULL, 0);
                }
                else
@@ -335,7 +335,7 @@ set_con_attr(SQLHDBC    hdbc,
                     return set_conn_error(hdbc,MYERR_S1009,NULL, 0);
 
                 pthread_mutex_lock(&dbc->lock);
-                if ( dbc->mysql.net.vio )
+                if (is_connected(dbc))
                 {
                     if (mysql_select_db(&dbc->mysql,(char*) db))
                     {
@@ -373,7 +373,7 @@ set_con_attr(SQLHDBC    hdbc,
             break;
 
         case SQL_ATTR_TXN_ISOLATION:
-            if (!dbc->server)  /* no connection yet */
+            if (!is_connected(dbc))  /* no connection yet */
             {
                 dbc->txn_isolation= (SQLINTEGER)ValuePtr;
                 return SQL_SUCCESS;
@@ -518,7 +518,7 @@ static SQLRETURN get_con_attr(SQLHDBC    hdbc,
                 Unless we're not connected yet, then we just assume it will
                 be REPEATABLE READ, which is the server default.
               */
-              if (!dbc->server)
+              if (!is_connected(dbc))
               {
                 *((SQLINTEGER *) ValuePtr)= SQL_TRANSACTION_REPEATABLE_READ;
                 break;

@@ -301,7 +301,7 @@ SQLRETURN SQL_API SQLConnect(SQLHDBC  hdbc,
 #else
 
   /* Can't connect if we're already connected. */
-  if (mysql->net.vio != 0)
+  if (is_connected(dbc))
     return set_conn_error(hdbc, MYERR_08002, NULL, 0);
 
   /* Reset error state */
