@@ -133,6 +133,14 @@ DECLARE_TEST(t_bug27591)
 */
 DECLARE_TEST(t_bug28657)
 {
+#ifdef WIN32
+  /*
+   The Microsoft Windows ODBC driver manager automatically maps a request
+   for SQL_DATETIME to SQL_TYPE_DATE, which means our little workaround to
+   get all of the SQL_DATETIME types at once does not work on there.
+  */
+  skip("test doesn't work on with Microsoft Windows ODBC driver manager");
+#else
   SQLSMALLINT pccol;
 
   ok_stmt(hstmt, SQLGetTypeInfo(hstmt, SQL_DATETIME));
@@ -142,6 +150,7 @@ DECLARE_TEST(t_bug28657)
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   return OK;
+#endif
 }
 
 
