@@ -1979,7 +1979,8 @@ DECLARE_TEST(t_setpos_upd_bug1)
     SQLRETURN rc;
     SQLINTEGER id;
     SQLLEN len,id_len,f_len,l_len,ts_len;
-    SQLCHAR fname[21],lname[21],ts[17],szTable[256];
+    SQLCHAR fname[21],lname[21],szTable[256];
+    SQL_TIMESTAMP_STRUCT ts;
     SQLSMALLINT pccol;
     SQLUSMALLINT rgfRowStatus;
 
