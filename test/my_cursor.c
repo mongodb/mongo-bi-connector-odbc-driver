@@ -2023,7 +2023,7 @@ DECLARE_TEST(t_setpos_upd_bug1)
     rc = SQLBindCol(hstmt,3,SQL_C_CHAR,lname,20,&l_len);
     mystmt(hstmt,rc);
 
-    rc = SQLBindCol(hstmt,4,SQL_C_TIMESTAMP,ts,21,&ts_len);
+    rc = SQLBindCol(hstmt,4,SQL_C_TIMESTAMP,&ts,21,&ts_len);
     mystmt(hstmt,rc);
 
     rc = SQLColAttribute(hstmt,1,SQL_COLUMN_TABLE_NAME,szTable,sizeof(szTable),NULL,NULL);
