@@ -2526,7 +2526,7 @@ DECLARE_TEST(bug6741)
   for(i = 0; i < BUG6741_VALS; ++i)
   {
     printf("xval[%d] = %d\n", i, results[i].xval);
-    printf("ylen[%d] = %d\n", i, results[i].ylen);
+    printf("ylen[%d] = %ld\n", i, results[i].ylen);
     is_num(results[i].xval, i);
     if(i % 2)
     {
@@ -2541,6 +2541,41 @@ DECLARE_TEST(bug6741)
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_sql(hstmt, "drop table if exists t_bug6741");
+
+  return OK;
+}
+
+
+/** Test SQL_POSITION */
+DECLARE_TEST(t_chunk)
+{
+  SQLCHAR   txt[100];
+  SQLLEN    len;
+
+  if (!driver_supports_setpos(hdbc))
+    skip("driver doesn't support setpos");
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_chunk");
+  ok_sql(hstmt, "CREATE TABLE t_chunk (id int not null primary key,"
+         "description varchar(50), txt text)");
+  ok_sql(hstmt, "INSERT INTO t_chunk VALUES (1,'venu','Developer, MySQL AB'),"
+         "(2,'monty','Michael Monty Widenius - main MySQL developer'),"
+         "(3,'mysql','MySQL AB- Speed, Power and Precision')");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "SELECT * from t_chunk");
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 1));
+
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 3, SQL_C_CHAR, txt, 100, &len));
+  is_str(txt, "Developer, MySQL AB", 19);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_chunk");
 
   return OK;
 }
@@ -2585,6 +2620,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug28255)
   ADD_TEST(bug10563)
   ADD_TEST(bug6741)
+  ADD_TEST(t_chunk)
 END_TESTS
 
 

@@ -51,7 +51,6 @@ my_error \
 my_info \
 my_keys \
 my_param \
-my_position \
 my_prepare \
 my_relative \
 my_result \
@@ -104,7 +103,6 @@ EXTRA_DIST= \
 	my_info.pro \
 	my_keys.pro \
 	my_param.pro \
-	my_position.pro \
 	my_prepare.pro \
 	my_relative.pro \
 	my_result.pro \
