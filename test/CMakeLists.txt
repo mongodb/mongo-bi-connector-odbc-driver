@@ -30,7 +30,7 @@ ENABLE_TESTING()
 FOREACH(T my_basics my_blob my_bulk my_catalog my_curext my_cursor
 		my_datetime my_dyn_cursor my_error my_info my_keys my_param
 		my_position my_prepare my_relative my_result my_scroll my_tran
-		my_types my_unixodbc my_use_result)
+		my_types my_unixodbc my_use_result my_bug13766)
 	ADD_EXECUTABLE(${T} ${T}.c)
 	TARGET_LINK_LIBRARIES(${T} myodbc3 myodbc3u mysqlclient)
 	ADD_TEST(${T} ${EXECUTABLE_OUTPUT_PATH}/${T})
