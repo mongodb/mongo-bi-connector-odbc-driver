@@ -36,7 +36,6 @@ LDFLAGS=@EXTRA_LDFLAGS@
 build="mysql-connector-odbc-@VERSION@-@SYSTEM_TYPE@-@MACHINE_TYPE@"
 
 SUBDIRS = \
-	@myodbc_dbg_dir@ \
 	util \
 	driver \
 	setup \
@@ -48,7 +47,6 @@ SUBDIRS = \
 	dltest
 
 DIST_SUBDIRS = \
-	MYODBCDbg \
 	util \
 	driver \
 	setup \
@@ -63,7 +61,10 @@ readmedir = $(pkgdatadir)
 readme_DATA = \
 	ChangeLog \
 	README \
-	README.debug
+	README.debug \
+	INSTALL \
+	LICENSE.gpl \
+	LICENSE.exceptions
 
 #
 # Create the binary distribution
@@ -93,9 +94,6 @@ snapshot:
 # Note that directories will be copied recursively
 EXTRA_DIST = \
 	$(readme_DATA) \
-	LICENSE.gpl \
-	LICENSE.exceptions \
-	INSTALL \
 	INSTALL.win \
 	BUILD.unix \
 	BUILD.osx \

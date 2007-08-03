@@ -44,9 +44,6 @@ SQLRETURN odbc_stmt(DBC FAR *dbc, const char *query)
 {
     SQLRETURN result= SQL_SUCCESS;
 
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "stmt: %s", query );
-
     pthread_mutex_lock(&dbc->lock);
     if ( check_if_server_is_alive(dbc) ||
          mysql_real_query(&dbc->mysql,query,strlen(query)) )
@@ -55,7 +52,7 @@ SQLRETURN odbc_stmt(DBC FAR *dbc, const char *query)
                                mysql_errno(&dbc->mysql));
     }
     pthread_mutex_unlock(&dbc->lock);
-    MYODBCDbgReturnReturn(result);
+    return result;
 }
 
 
@@ -91,8 +88,6 @@ void fix_result_types(STMT *stmt)
     uint i;
     MYSQL_RES *result= stmt->result;
 
-    MYODBCDbgEnter;
-
     stmt->state= ST_EXECUTED;  /* Mark set found */
     if ( (stmt->odbc_types= (SQLSMALLINT*)
           my_malloc(sizeof(SQLSMALLINT)*result->field_count, MYF(0))) )
@@ -117,7 +112,7 @@ void fix_result_types(STMT *stmt)
             {
                 /* We should in principle give an error here */
                 stmt->bound_columns= 0;
-                MYODBCDbgReturnVoid;
+                return;
             }
             bzero((gptr) (stmt->bind+stmt->bound_columns),
                   (result->field_count -stmt->bound_columns)*sizeof(BIND));
@@ -133,7 +128,6 @@ void fix_result_types(STMT *stmt)
             stmt->bind[i].field= mysql_fetch_field(result);
         }
     }
-    MYODBCDbgReturnVoid;
 }
 
 
@@ -285,8 +279,6 @@ copy_lresult(SQLSMALLINT HandleType, SQLHANDLE Handle,
     }
     if ( arg_length && cbValueMax >= fill_length )
         return SQL_SUCCESS;
-    MYODBCDbgInfo( "Returned %ld characters from", length );
-    MYODBCDbgInfo( "offset: %lu", *offset - length );
     set_handle_error(HandleType,Handle,MYERR_01004,NULL,0);
     return SQL_SUCCESS_WITH_INFO;
 }
@@ -475,9 +467,6 @@ copy_wchar_result(SQLSMALLINT HandleType, SQLHANDLE Handle,
   if (orig_result_len && result_len >= fill_len)
     return SQL_SUCCESS;
 
-  MYODBCDbgInfo("Returned %ld characters from", length);
-  MYODBCDbgInfo("offset: %lu", *offset - length);
-
   set_handle_error(HandleType, Handle, MYERR_01004, NULL, 0);
 
   return SQL_SUCCESS_WITH_INFO;
@@ -536,296 +525,510 @@ SQLRETURN copy_binary_result( SQLSMALLINT   HandleType,
     }
     if ( (ulong) cbValueMax > length*2 )
         return SQL_SUCCESS;
-    MYODBCDbgInfo( "Returned %ld characters from", length );
-    MYODBCDbgInfo( "offset: %ld", *offset - length );
 
     set_handle_error(HandleType,Handle,MYERR_01004,NULL,0);
     return SQL_SUCCESS_WITH_INFO;
 }
 
 
-/*
-  @type    : myodbc internal
-  @purpose : get type, transfer length and precision for a unireg column
-  note that timestamp is changed to YYYY-MM-DD HH:MM:SS type
+/**
+  Get the SQL data type and (optionally) type name for a MYSQL_FIELD.
 
-  SQLUINTEGER
+  @param[in]  stmt
+  @param[in]  field
+  @param[out] buff
 
+  @return  The SQL data type.
 */
-
-int unireg_to_sql_datatype(STMT FAR *stmt, MYSQL_FIELD *field, char *buff,
-                           ulong *transfer_length, ulong *precision,
-                           ulong *display_size)
+SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 {
-    char *pos;
-    my_bool field_is_binary= binary_field(field);
-/* PAH - SESSION 01
-    if ( stmt->dbc->flag & (FLAG_FIELD_LENGTH | FLAG_SAFE) )
-*/        *transfer_length= *precision= *display_size= max(field->length,
-                                                         field->max_length);
-/* PAH - SESSION 01
-    else
+  my_bool field_is_binary= test(field->charsetnr == 63);
 
-        *transfer_length= *precision= *display_size= field->max_length;
-*/
+  switch (field->type) {
+  case MYSQL_TYPE_BIT:
+    if (buff)
+      (void)strmov(buff, "bit");
+    /*
+      MySQL's BIT type can have more than one bit, in which case we treat
+      it as a BINARY field.
+    */
+    return (field->length > 1) ? SQL_BINARY : SQL_BIT;
 
-/* PAH - SESSION 01
-printf( "[PAH][%s][%d][%s] field->type=%d field_is_binary=%d\n", __FILE__, __LINE__, __FUNCTION__, field->type, field_is_binary );
-*/
-    switch ( field->type )
+  case MYSQL_TYPE_DECIMAL:
+  case MYSQL_TYPE_NEWDECIMAL:
+    if (buff)
+      (void)strmov(buff, "decimal");
+    return SQL_DECIMAL;
+
+  case MYSQL_TYPE_TINY:
+    /* MYSQL_TYPE_TINY could either be a TINYINT or a single CHAR. */
+    if (buff)
     {
-        case MYSQL_TYPE_BIT:
-            if ( buff )
-            {
-                pos= strmov(buff,"bit");
-            }
-            *transfer_length= 1;
-            return SQL_BIT;  
-
-        case MYSQL_TYPE_DECIMAL:
-        case MYSQL_TYPE_NEWDECIMAL:
-            *display_size= max(field->length,field->max_length) -
-                           test(!(field->flags & UNSIGNED_FLAG)) -
-                           test(field->decimals);
-            *precision= *display_size;
-            if ( buff ) strmov(buff,"decimal");
-            return SQL_DECIMAL;
-
-        case MYSQL_TYPE_TINY:
-            if ( num_field(field) )
-            {
-                if ( buff )
-                {
-                    pos= strmov(buff,"tinyint");
-                    if ( field->flags & UNSIGNED_FLAG )
-                        strmov(pos," unsigned");
-                }
-                *transfer_length= 1;
-                return SQL_TINYINT;
-            }
-            if ( buff )
-            {
-                pos= strmov(buff,"char");
-                if ( field->flags & UNSIGNED_FLAG )
-                    strmov(pos," unsigned");
-            }
-            *transfer_length= 1;
-            return SQL_CHAR;
-
-        case MYSQL_TYPE_SHORT:
-            if ( buff )
-            {
-                pos= strmov(buff,"smallint");
-                if ( field->flags & UNSIGNED_FLAG )
-                    strmov(pos," unsigned");
-            }
-            *transfer_length= 2;
-            return SQL_SMALLINT;
-
-        case MYSQL_TYPE_INT24:
-            if ( buff )
-            {
-                pos= strmov(buff,"mediumint");
-                if ( field->flags & UNSIGNED_FLAG )
-                    strmov(pos," unsigned");
-            }
-            *transfer_length= 4;
-            return SQL_INTEGER;
-
-        case MYSQL_TYPE_LONG:
-            if ( buff )
-            {
-                pos= strmov(buff,"integer");
-                if ( field->flags & UNSIGNED_FLAG )
-                    strmov(pos," unsigned");
-            }
-            *transfer_length= 4;
-            return SQL_INTEGER;
-
-        case MYSQL_TYPE_LONGLONG:
-            if ( buff )
-            {
-                pos= strmov(buff,"bigint");
-                if ( field->flags & UNSIGNED_FLAG )
-                    strmov(pos," unsigned");
-            }
-            *transfer_length= 20;
-            if ( stmt->dbc->flag & FLAG_NO_BIGINT )
-                return SQL_INTEGER;
-            if ( field->flags & UNSIGNED_FLAG )
-                *transfer_length= *precision= 20;
-            else
-                *transfer_length= *precision= 19;
-            return SQL_BIGINT;
-
-        case MYSQL_TYPE_FLOAT:
-            if ( buff )
-            {
-                pos= strmov(buff,"float");
-                if ( field->flags & UNSIGNED_FLAG )
-                    strmov(pos," unsigned");
-            }
-            *transfer_length= 4;
-            return SQL_REAL;
-        case MYSQL_TYPE_DOUBLE:
-            if ( buff )
-            {
-                pos= strmov(buff,"double");
-                if ( field->flags & UNSIGNED_FLAG )
-                    strmov(pos," unsigned");
-            }
-            *transfer_length= 8;
-            return SQL_DOUBLE;
-
-        case MYSQL_TYPE_NULL:
-            if ( buff ) strmov(buff,"null");
-            return SQL_VARCHAR;
-
-        case MYSQL_TYPE_YEAR:
-            if ( buff )
-                pos= strmov(buff,"year");
-            *transfer_length= 2;
-            return SQL_SMALLINT;
-
-        case MYSQL_TYPE_TIMESTAMP:
-            if ( buff ) strmov(buff,"timestamp");
-            *transfer_length= 16;      /* size of timestamp_struct */
-            *precision= *display_size= 19;
-            if ( stmt->dbc->env->odbc_ver == SQL_OV_ODBC3 )
-                return SQL_TYPE_TIMESTAMP;
-            return SQL_TIMESTAMP;
-
-        case MYSQL_TYPE_DATETIME:
-            if ( buff ) strmov(buff,"datetime");
-            *transfer_length= 16;      /* size of timestamp_struct */
-            *precision= *display_size= 19;
-            if ( stmt->dbc->env->odbc_ver == SQL_OV_ODBC3 )
-                return SQL_TYPE_TIMESTAMP;
-            return SQL_TIMESTAMP;
-
-        case MYSQL_TYPE_NEWDATE:
-        case MYSQL_TYPE_DATE:
-            if ( buff ) strmov(buff,"date");
-            *transfer_length= 6;       /* size of date struct */
-            *precision= *display_size= 10;
-            if ( stmt->dbc->env->odbc_ver == SQL_OV_ODBC3 )
-                return SQL_TYPE_DATE;
-            return SQL_DATE;
-
-        case MYSQL_TYPE_TIME:
-            if ( buff ) strmov(buff,"time");
-            *transfer_length= 6;       /* size of time struct */
-            *precision= *display_size= 8;
-            if ( stmt->dbc->env->odbc_ver == SQL_OV_ODBC3 )
-                return SQL_TYPE_TIME;
-            return SQL_TIME;
-
-        case MYSQL_TYPE_STRING:
-            /* Binary flag is for handling "VARCHAR() BINARY" but is unreliable (see BUG-4578) - PAH */
-            if (field_is_binary)
-            {
-              if (buff) strmov(buff,"binary");
-              return SQL_BINARY;
-            }
-
-            *transfer_length= *precision= *display_size= field->length ? 
-                (stmt->dbc->mysql.charset ? 
-                field->length/stmt->dbc->mysql.charset->mbmaxlen: field->length): 255;
-            if ( buff ) strmov(buff,"char");
-            return SQL_CHAR;
-
-        /*
-          MYSQL_TYPE_VARCHAR is never actually sent, this just silences
-          a compiler warning.
-        */
-        case MYSQL_TYPE_VARCHAR:
-        case MYSQL_TYPE_VAR_STRING:
-            /* 
-            TODO: field->length should be replaced by max(length, maxlength)
-                  in order to restore FLAG_FIELD_LENGTH option
-            */
-            *transfer_length= *precision= *display_size= field->length ?
-              (stmt->dbc->mysql.charset ?
-               field->length / stmt->dbc->mysql.charset->mbmaxlen :
-               field->length) : 255;
-
-            /*
-            TODO: Uncomment this code when MySQL Server returns the metadata correctly
-
-            if (field_is_binary)
-            {
-                if (buff)
-                  strmov(buff,"varbinary");
-                return SQL_VARBINARY;
-            }
-            */
-
-            if (buff)
-              strmov(buff,"varchar");
-
-            return SQL_VARCHAR;
-
-        case MYSQL_TYPE_TINY_BLOB:
-            if ( buff )
-                strmov(buff,(field_is_binary) ? "tinyblob" : "tinytext");
-/* PAH - SESSION 01
-            if ( stmt->dbc->flag & (FLAG_FIELD_LENGTH | FLAG_SAFE) )
-*/
-                *transfer_length= *precision= *display_size= field->length ? 
-                (stmt->dbc->mysql.charset ?
-                field->length/stmt->dbc->mysql.charset->mbmaxlen: field->length): 255;
-            return(field_is_binary) ? SQL_LONGVARBINARY : SQL_LONGVARCHAR;
-
-        case MYSQL_TYPE_BLOB:
-            if ( buff )
-                strmov( buff, (field_is_binary) ? "blob" : "text" );
-
-/* PAH - SESSION 01
-            if ( stmt->dbc->flag & (FLAG_FIELD_LENGTH | FLAG_SAFE) ) 
-*/
-                *transfer_length= *precision= *display_size= field->length ? (stmt->dbc->mysql.charset ? field->length/stmt->dbc->mysql.charset->mbmaxlen: field->length): 65535;
-
-            return ( field_is_binary ) ? SQL_LONGVARBINARY : SQL_LONGVARCHAR;
-
-        case MYSQL_TYPE_MEDIUM_BLOB:
-            if ( buff )
-                strmov(buff,((field_is_binary) ? "mediumblob" :
-                             "mediumtext"));
-/* PAH - SESSION 01
-            if ( stmt->dbc->flag & (FLAG_FIELD_LENGTH | FLAG_SAFE) )
-*/
-                *transfer_length= *precision= *display_size= field->length ? 
-                (stmt->dbc->mysql.charset ?
-                field->length/stmt->dbc->mysql.charset->mbmaxlen: field->length): (1L << 24)-1L;
-            return(field_is_binary) ? SQL_LONGVARBINARY : SQL_LONGVARCHAR;
-
-        case MYSQL_TYPE_LONG_BLOB:
-            if ( buff )
-                strmov(buff,((field_is_binary) ? "longblob": "longtext"));
-/* PAH - SESSION 01
-            if ( stmt->dbc->flag & (FLAG_FIELD_LENGTH | FLAG_SAFE) )
-*/
-                *transfer_length= *precision= *display_size= field->length ? 
-                (stmt->dbc->mysql.charset ?
-                field->length/stmt->dbc->mysql.charset->mbmaxlen: field->length): INT_MAX32;
-            return(field_is_binary) ? SQL_LONGVARBINARY : SQL_LONGVARCHAR;
-
-        case MYSQL_TYPE_ENUM:
-            if ( buff )
-                strmov(buff,"enum");
-            return SQL_CHAR;
-
-        case MYSQL_TYPE_SET:
-            if ( buff )
-                strmov(buff,"set");
-            return SQL_CHAR;
-
-        case MYSQL_TYPE_GEOMETRY:
-            if ( buff )
-                strmov(buff,"blob");
-            return SQL_LONGVARBINARY;
+      buff= strmov(buff, (field->flags & NUM_FLAG) ? "tinyint" : "char");
+      if (field->flags & UNSIGNED_FLAG)
+        (void)strmov(buff, " unsigned");
     }
-    return 0; /* Impossible */
+    return (field->flags & NUM_FLAG) ? SQL_TINYINT : SQL_CHAR;
+
+  case MYSQL_TYPE_SHORT:
+    if (buff)
+    {
+      buff= strmov(buff, "smallint");
+      if (field->flags & UNSIGNED_FLAG)
+        (void)strmov(buff, " unsigned");
+    }
+    return SQL_SMALLINT;
+
+  case MYSQL_TYPE_INT24:
+    if (buff)
+    {
+      buff= strmov(buff, "mediumint");
+      if (field->flags & UNSIGNED_FLAG)
+        (void)strmov(buff, " unsigned");
+    }
+    return SQL_INTEGER;
+
+  case MYSQL_TYPE_LONG:
+    if (buff)
+    {
+      buff= strmov(buff, "integer");
+      if (field->flags & UNSIGNED_FLAG)
+        (void)strmov(buff, " unsigned");
+    }
+    return SQL_INTEGER;
+
+  case MYSQL_TYPE_LONGLONG:
+    if (buff)
+    {
+      buff= strmov(buff, "bigint");
+      if (field->flags & UNSIGNED_FLAG)
+        (void)strmov(buff, " unsigned");
+    }
+
+    if (stmt->dbc->flag & FLAG_NO_BIGINT)
+      return SQL_INTEGER;
+
+    return SQL_BIGINT;
+
+  case MYSQL_TYPE_FLOAT:
+    if (buff)
+    {
+      buff= strmov(buff, "float");
+      if (field->flags & UNSIGNED_FLAG)
+        (void)strmov(buff, " unsigned");
+    }
+    return SQL_REAL;
+
+  case MYSQL_TYPE_DOUBLE:
+    if (buff)
+    {
+      buff= strmov(buff, "double");
+      if (field->flags & UNSIGNED_FLAG)
+        (void)strmov(buff, " unsigned");
+    }
+    return SQL_DOUBLE;
+
+  case MYSQL_TYPE_NULL:
+    if (buff)
+      (void)strmov(buff, "null");
+    return SQL_VARCHAR;
+
+  case MYSQL_TYPE_YEAR:
+    if (buff)
+      (void)strmov(buff, "year");
+    return SQL_SMALLINT;
+
+  case MYSQL_TYPE_TIMESTAMP:
+    if (buff)
+      (void)strmov(buff, "timestamp");
+    if (stmt->dbc->env->odbc_ver == SQL_OV_ODBC3)
+      return SQL_TYPE_TIMESTAMP;
+    return SQL_TIMESTAMP;
+
+  case MYSQL_TYPE_DATETIME:
+    if (buff)
+      (void)strmov(buff, "datetime");
+    if (stmt->dbc->env->odbc_ver == SQL_OV_ODBC3)
+      return SQL_TYPE_TIMESTAMP;
+    return SQL_TIMESTAMP;
+
+  case MYSQL_TYPE_NEWDATE:
+  case MYSQL_TYPE_DATE:
+    if (buff)
+      (void)strmov(buff, "date");
+    if (stmt->dbc->env->odbc_ver == SQL_OV_ODBC3)
+      return SQL_TYPE_DATE;
+    return SQL_DATE;
+
+  case MYSQL_TYPE_TIME:
+    if (buff)
+      (void)strmov(buff, "time");
+    if (stmt->dbc->env->odbc_ver == SQL_OV_ODBC3)
+      return SQL_TYPE_TIME;
+    return SQL_TIME;
+
+  case MYSQL_TYPE_STRING:
+    if (buff)
+      (void)strmov(buff, field_is_binary ? "binary" : "char");
+
+    return field_is_binary ? SQL_BINARY : SQL_CHAR;
+
+  /*
+    MYSQL_TYPE_VARCHAR is never actually sent, this just silences
+    a compiler warning.
+  */
+  case MYSQL_TYPE_VARCHAR:
+  case MYSQL_TYPE_VAR_STRING:
+    if (buff)
+      (void)strmov(buff, field_is_binary ? "varbinary" : "varchar");
+
+    return field_is_binary ? SQL_VARBINARY : SQL_VARCHAR;
+
+  case MYSQL_TYPE_TINY_BLOB:
+    if (buff)
+      (void)strmov(buff, field_is_binary ? "tinyblob" : "tinytext");
+
+    return field_is_binary ? SQL_LONGVARBINARY : SQL_LONGVARCHAR;
+
+  case MYSQL_TYPE_BLOB:
+    if (buff)
+      (void)strmov(buff, field_is_binary ? "blob" : "text");
+
+    return field_is_binary ? SQL_LONGVARBINARY : SQL_LONGVARCHAR;
+
+  case MYSQL_TYPE_MEDIUM_BLOB:
+    if (buff)
+      (void)strmov(buff, field_is_binary ? "mediumblob" : "mediumtext");
+
+    return field_is_binary ? SQL_LONGVARBINARY : SQL_LONGVARCHAR;
+
+  case MYSQL_TYPE_LONG_BLOB:
+    if (buff)
+      (void)strmov(buff, field_is_binary ? "longblob" : "longtext");
+
+    return field_is_binary ? SQL_LONGVARBINARY : SQL_LONGVARCHAR;
+
+  case MYSQL_TYPE_ENUM:
+    if (buff)
+      (void)strmov(buff, "enum");
+    return SQL_CHAR;
+
+  case MYSQL_TYPE_SET:
+    if (buff)
+      (void)strmov(buff, "set");
+    return SQL_CHAR;
+
+  case MYSQL_TYPE_GEOMETRY:
+    if (buff)
+      (void)strmov(buff, "geometry");
+    return SQL_LONGVARBINARY;
+  }
+
+  if (buff)
+    *buff= '\0';
+  return SQL_UNKNOWN_TYPE;
+}
+
+
+/**
+  Get the column size (in characters) of a field, as defined at:
+    http://msdn2.microsoft.com/en-us/library/ms711786.aspx
+
+  @param[in]  stmt
+  @param[in]  field
+  @param[in]  actual  If true, field->max_length is used instead of
+                      field->length, to retrieve the actual length of
+                      data in the field
+
+  @return  The column size of the field
+*/
+SQLLEN get_column_size(STMT *stmt __attribute__((unused)), MYSQL_FIELD *field,
+                       my_bool actual)
+{
+  CHARSET_INFO *charset= get_charset(field->charsetnr, MYF(0));
+  unsigned int mbmaxlen= charset ? charset->mbmaxlen : 1;
+  SQLLEN length= actual ? field->max_length : field->length;
+
+  switch (field->type) {
+  case MYSQL_TYPE_TINY:
+    return (field->flags & NUM_FLAG) ? 3 : 1;
+
+  case MYSQL_TYPE_SHORT:
+    return 5;
+
+  case MYSQL_TYPE_LONG:
+    return 10;
+
+  case MYSQL_TYPE_FLOAT:
+    return 7;
+
+  case MYSQL_TYPE_DOUBLE:
+    return 15;
+
+  case MYSQL_TYPE_NULL:
+    return 0;
+
+  case MYSQL_TYPE_LONGLONG:
+    return (field->flags & UNSIGNED_FLAG) ? 20 : 19;
+
+  case MYSQL_TYPE_INT24:
+    return 8;
+
+  case MYSQL_TYPE_DATE:
+    return 10;
+
+  case MYSQL_TYPE_TIME:
+    return 8;
+
+  case MYSQL_TYPE_TIMESTAMP:
+  case MYSQL_TYPE_DATETIME:
+  case MYSQL_TYPE_NEWDATE:
+    return 19;
+
+  case MYSQL_TYPE_YEAR:
+    return 4;
+
+  case MYSQL_TYPE_DECIMAL:
+  case MYSQL_TYPE_NEWDECIMAL:
+    return (length -
+            test(!(field->flags & UNSIGNED_FLAG)) - /* sign? */
+            test(field->decimals));                 /* decimal point? */
+
+  case MYSQL_TYPE_BIT:
+    /*
+      We treat a BIT(n) as a SQL_BIT if n == 1, otherwise we treat it
+      as a SQL_BINARY, so length is (bits + 7) / 8. * 2
+    */
+    if (length == 1)
+      return 1;
+    return (length + 7) / 8 * 2;
+
+  case MYSQL_TYPE_ENUM:
+  case MYSQL_TYPE_SET:
+  case MYSQL_TYPE_VARCHAR:
+  case MYSQL_TYPE_VAR_STRING:
+  case MYSQL_TYPE_STRING:
+  case MYSQL_TYPE_TINY_BLOB:
+  case MYSQL_TYPE_MEDIUM_BLOB:
+  case MYSQL_TYPE_LONG_BLOB:
+  case MYSQL_TYPE_BLOB:
+  case MYSQL_TYPE_GEOMETRY:
+    if (field->charsetnr == 63)
+      return length * 2;
+    else
+      return length / mbmaxlen;
+  }
+
+  return SQL_NO_TOTAL;
+}
+
+
+/**
+  Get the decimal digits of a field, as defined at:
+    http://msdn2.microsoft.com/en-us/library/ms709314.aspx
+
+  @param[in]  stmt
+  @param[in]  field
+
+  @return  The decimal digits, or @c SQL_NO_TOTAL where it makes no sense
+*/
+SQLLEN get_decimal_digits(STMT *stmt __attribute__((unused)),
+                          MYSQL_FIELD *field)
+{
+  switch (field->type) {
+  case MYSQL_TYPE_DECIMAL:
+  case MYSQL_TYPE_NEWDECIMAL:
+    return field->decimals;
+
+  /* All exact numeric types. */
+  case MYSQL_TYPE_TINY:
+  case MYSQL_TYPE_SHORT:
+  case MYSQL_TYPE_LONG:
+  case MYSQL_TYPE_LONGLONG:
+  case MYSQL_TYPE_INT24:
+  case MYSQL_TYPE_YEAR:
+  case MYSQL_TYPE_TIME:
+  case MYSQL_TYPE_TIMESTAMP:
+  case MYSQL_TYPE_DATETIME:
+    return 0;
+
+  /* We treat MYSQL_TYPE_BIT as an exact numeric type only for BIT(1). */
+  case MYSQL_TYPE_BIT:
+    if (field->length == 1)
+      return 0;
+
+  default:
+    return SQL_NO_TOTAL;
+  }
+}
+
+
+/**
+  Get the transfer octet length of a field, as defined at:
+    http://msdn2.microsoft.com/en-us/library/ms713979.aspx
+
+  @param[in]  stmt
+  @param[in]  field
+
+  @return  The transfer octet length
+*/
+SQLLEN get_transfer_octet_length(STMT *stmt __attribute__((unused)),
+                                 MYSQL_FIELD *field)
+{
+  switch (field->type) {
+  case MYSQL_TYPE_TINY:
+    return 1;
+
+  case MYSQL_TYPE_SHORT:
+    return 2;
+
+  case MYSQL_TYPE_INT24:
+    return 3;
+
+  case MYSQL_TYPE_LONG:
+    return 4;
+
+  case MYSQL_TYPE_FLOAT:
+    return 4;
+
+  case MYSQL_TYPE_DOUBLE:
+    return 8;
+
+  case MYSQL_TYPE_NULL:
+    return 1;
+
+  case MYSQL_TYPE_LONGLONG:
+    return 20;
+
+  case MYSQL_TYPE_DATE:
+    return sizeof(SQL_DATE_STRUCT);
+
+  case MYSQL_TYPE_TIME:
+    return sizeof(SQL_TIME_STRUCT);
+
+  case MYSQL_TYPE_TIMESTAMP:
+  case MYSQL_TYPE_DATETIME:
+  case MYSQL_TYPE_NEWDATE:
+    return sizeof(SQL_TIMESTAMP_STRUCT);
+
+  case MYSQL_TYPE_YEAR:
+    return 1;
+
+  case MYSQL_TYPE_DECIMAL:
+  case MYSQL_TYPE_NEWDECIMAL:
+    return (field->length -
+            test(!(field->flags & UNSIGNED_FLAG)) - /* sign? */
+            test(field->decimals));                 /* decimal point? */
+
+  case MYSQL_TYPE_BIT:
+    /*
+      We treat a BIT(n) as a SQL_BIT if n == 1, otherwise we treat it
+      as a SQL_BINARY, so length is (bits + 7) / 8. field->length has
+      the number of bits.
+    */
+    return (field->length + 7) / 8;
+
+  case MYSQL_TYPE_ENUM:
+  case MYSQL_TYPE_SET:
+  case MYSQL_TYPE_VARCHAR:
+  case MYSQL_TYPE_VAR_STRING:
+  case MYSQL_TYPE_STRING:
+  case MYSQL_TYPE_TINY_BLOB:
+  case MYSQL_TYPE_MEDIUM_BLOB:
+  case MYSQL_TYPE_LONG_BLOB:
+  case MYSQL_TYPE_BLOB:
+  case MYSQL_TYPE_GEOMETRY:
+    return field->length;
+  }
+
+  return SQL_NO_TOTAL;
+}
+
+
+/**
+  Get the display size of a field, as defined at:
+    http://msdn2.microsoft.com/en-us/library/ms713974.aspx
+
+  @param[in]  stmt
+  @param[in]  field
+
+  @return  The display size
+*/
+SQLLEN get_display_size(STMT *stmt __attribute__((unused)),MYSQL_FIELD *field)
+{
+  CHARSET_INFO *charset= get_charset(field->charsetnr, MYF(0));
+  unsigned int mbmaxlen= charset ? charset->mbmaxlen : 1;
+
+  switch (field->type) {
+  case MYSQL_TYPE_TINY:
+    return 3 + test(field->flags & UNSIGNED_FLAG);
+
+  case MYSQL_TYPE_SHORT:
+    return 5 + test(field->flags & UNSIGNED_FLAG);
+
+  case MYSQL_TYPE_INT24:
+    return 8 + test(field->flags & UNSIGNED_FLAG);
+
+  case MYSQL_TYPE_LONG:
+    return 10 + test(field->flags & UNSIGNED_FLAG);
+
+  case MYSQL_TYPE_FLOAT:
+    return 14;
+
+  case MYSQL_TYPE_DOUBLE:
+    return 24;
+
+  case MYSQL_TYPE_NULL:
+    return 1;
+
+  case MYSQL_TYPE_LONGLONG:
+    return 20;
+
+  case MYSQL_TYPE_DATE:
+    return 10;
+
+  case MYSQL_TYPE_TIME:
+    return 8;
+
+  case MYSQL_TYPE_TIMESTAMP:
+  case MYSQL_TYPE_DATETIME:
+  case MYSQL_TYPE_NEWDATE:
+    return 19;
+
+  case MYSQL_TYPE_YEAR:
+    return 4;
+
+  case MYSQL_TYPE_DECIMAL:
+  case MYSQL_TYPE_NEWDECIMAL:
+    return field->length;
+
+  case MYSQL_TYPE_BIT:
+    /*
+      We treat a BIT(n) as a SQL_BIT if n == 1, otherwise we treat it
+      as a SQL_BINARY, so display length is (bits + 7) / 8 * 2.
+      field->length has the number of bits.
+    */
+    if (field->length == 1)
+      return 1;
+    return (field->length + 7) / 8 * 2;
+
+  case MYSQL_TYPE_ENUM:
+  case MYSQL_TYPE_SET:
+  case MYSQL_TYPE_VARCHAR:
+  case MYSQL_TYPE_VAR_STRING:
+  case MYSQL_TYPE_STRING:
+  case MYSQL_TYPE_TINY_BLOB:
+  case MYSQL_TYPE_MEDIUM_BLOB:
+  case MYSQL_TYPE_LONG_BLOB:
+  case MYSQL_TYPE_BLOB:
+  case MYSQL_TYPE_GEOMETRY:
+    if (field->charsetnr == 63)
+      return field->length * 2;
+    else
+      return field->length / mbmaxlen;
+  }
+
+  return SQL_NO_TOTAL;
 }
 
 
@@ -842,7 +1045,11 @@ int unireg_to_c_datatype(MYSQL_FIELD *field)
         default:
             return SQL_C_CHAR;
         case MYSQL_TYPE_BIT:
-            return SQL_C_BIT;
+            /*
+              MySQL's BIT type can have more than one bit, in which case we
+              treat it as a BINARY field.
+            */
+            return (field->length > 1) ? SQL_C_BINARY : SQL_C_BIT;
         case MYSQL_TYPE_TINY:
             return SQL_C_TINYINT;
         case MYSQL_TYPE_YEAR:
@@ -1381,7 +1588,7 @@ void end_query_log(FILE *query_log)
 void query_print(char *query __attribute__((unused)))
 {
 }
-#endif /* !DBUG_OFF */
+#endif /* !MYODBC_DBG */
 
 
 my_bool is_minimum_version(const char *server_version,const char *version,
@@ -1408,10 +1615,10 @@ my_bool is_minimum_version(const char *server_version,const char *version,
 ulong myodbc_escape_wildcard(MYSQL *mysql, char *to, ulong to_length,
                              const char *from, ulong length)
 {
-  CHARSET_INFO *charset_info= mysql->charset;
   const char *to_start= to;
   const char *end, *to_end=to_start + (to_length ? to_length-1 : 2*length);
   my_bool overflow= FALSE;
+  CHARSET_INFO *charset_info= mysql->charset;
   my_bool use_mb_flag= use_mb(charset_info);
   for (end= from + length; from < end; from++)
   {

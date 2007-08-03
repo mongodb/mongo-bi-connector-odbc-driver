@@ -1,0 +1,71 @@
+#!/bin/sh
+
+##############################################################################
+#
+#  Post Install file for MySQL Connector ODBC 3.51
+#
+##############################################################################
+
+# ----------------------------------------------------------------------
+# ENSURE WE HAVE INI FILES
+#
+# Upon a fresh install of OSX these files do not exist. The ODBC
+# Installer library calls should create these files for us when we do
+# stuff like request to register a driver but this does not seem to
+# happen and the request fails. So we we start by making sure we have
+# some, mostly, empty ini files in place before we make installer
+# calls.
+#
+# Also note that there are many places where these ini files *could*
+# go based upon the search algorythm in the default ODBC system or any
+# other ODBC system which may get installed. We choose the following
+# because they seem to be the ones created when we use the standard
+# ODBC Admin. GUI application.
+# ----------------------------------------------------------------------
+
+libdir=/usr/local/lib
+bindir=/usr/local/bin
+
+for f in ~/Library/ODBC /Library/ODBC
+do
+  echo "Ensuring ~/Library/ODBC, odbcinst.ini and odbc.ini exists..."
+  if [ ! -d $admdir ] ; then
+      mkdir $admdir
+      chmod 775 $admdir
+      chown root:admin $admdir
+  fi
+
+  if [ ! -f $admdir/odbc.ini ] ; then
+      echo "[ODBC Data Sources]"        > $admdir/odbc.ini
+      echo ""                          >> $admdir/odbc.ini
+      echo "[ODBC]"                    >> $admdir/odbc.ini
+      echo "Trace         = 0"         >> $admdir/odbc.ini
+      echo "TraceAutoStop = 0"         >> $admdir/odbc.ini
+      echo "TraceFile     ="           >> $admdir/odbc.ini
+      echo "TraceLibrary  ="           >> $admdir/odbc.ini
+      chmod 664 $admdir/odbc.ini
+      chown root:admin $admdir/odbc.ini
+  fi
+
+  if [ ! -f $admdir/odbcinst.ini ] ; then
+      echo "[ODBC Drivers]"             > $admdir/odbcinst.ini
+      echo ""                          >> $admdir/odbcinst.ini
+      echo "[ODBC Connection Pooling]" >> $admdir/odbcinst.ini
+      echo "PerfMon    = 0"            >> $admdir/odbcinst.ini
+      echo "Retry Wait = "             >> $admdir/odbcinst.ini
+      chmod 664 $admdir/odbcinst.ini
+      chown root:admin $admdir/odbcinst.ini
+  fi
+done
+
+# ----------------------------------------------------------------------
+# REGISTER THE DRIVER
+# ----------------------------------------------------------------------
+echo "Registring driver..."
+$bindir/myodbc3i -a -ds -t"MySQL ODBC 3.51 Driver;Driver=$libdir/libmyodbc3.so;Setup=$libdir/libmyodbc3S.so;"
+
+# ----------------------------------------------------------------------
+# CREATE A SAMPLE DSN
+# ----------------------------------------------------------------------
+echo "Ensuring sample data source name (myodbc) exists..."
+$bindir/myodbc3i -a -s -t"DSN=myodbc;Driver=MySQL ODBC 3.51 Driver;SERVER=localhost;"

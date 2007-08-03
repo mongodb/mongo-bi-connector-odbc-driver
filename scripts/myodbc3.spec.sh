@@ -27,7 +27,7 @@ Name:       mysql-connector-odbc
 Summary:    An ODBC 3.51 driver for MySQL - driver package
 Group:      Applications/Databases
 Version:    @VERSION@
-Release:    0
+Release:    1
 Provides:   mysqlodbcrpmpack
 %if %{com_lic}
 Copyright:  Commercial
@@ -123,17 +123,20 @@ make
 
 %install
 make DESTDIR=$RPM_BUILD_ROOT install
-rm -v $RPM_BUILD_ROOT%{_datadir}/mysql-connector-odbc/{ChangeLog,README,README.debug}
+rm -v $RPM_BUILD_ROOT%{_datadir}/mysql-connector-odbc/{ChangeLog,README,README.debug,LICENSE.*,INSTALL}
 
 # ----------------------------------------------------------------------
 # REGISTER DRIVER
+# Note that "-e" is not working for drivers currently, so we have to
+# deinstall before reinstall to change anything
 # ----------------------------------------------------------------------
 
 %post 
-myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER={_libdir}/libmyodbc3.so"
+myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=%{_libdir}/libmyodbc3.so"
 
 %post setup
-myodbc3i -a -e -t"MySQL ODBC 3.51 Driver;DRIVER={_libdir}/libmyodbc3.so;SETUP={_libdir}/libmyodbc3S.so"
+myodbc3i -r -d -n"MySQL ODBC 3.51 Driver"
+myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=%{_libdir}/libmyodbc3.so;SETUP=%{_libdir}/libmyodbc3S.so"
 
 # ----------------------------------------------------------------------
 # DEREGISTER DRIVER 
@@ -145,7 +148,8 @@ myodbc3i -r -d -n"MySQL ODBC 3.51 Driver"
 
 # Removing the setup RPM, downgrade the registration
 %preun setup
-myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER={_libdir}/libmyodbc3.so"
+myodbc3i -r -d -n"MySQL ODBC 3.51 Driver"
+myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=%{_libdir}/libmyodbc3.so"
 
 ##############################################################################
 #
@@ -160,7 +164,7 @@ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER={_libdir}/libmyodbc3.so"
 %{_libdir}/libmyodbc3.*
 %{_libdir}/libmyodbc3-*
 %{_libdir}/libmyodbc3_*
-%doc ChangeLog README README.debug
+%doc ChangeLog README README.debug INSTALL
 %if %{com_lic}
 %doc LICENSE.commercial
 %else

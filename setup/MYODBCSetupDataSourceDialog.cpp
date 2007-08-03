@@ -422,6 +422,7 @@ void MYODBCSetupDataSourceDialog::doInit()
         ptab3->ptab3c->pcheckboxForceUseOfForwardOnlyCursors->setChecked( nOptions & (1 << 21) ? TRUE : FALSE );  
         ptab3->ptab3a->pcheckboxEnableReconnect->setChecked( nOptions & (1 << 22) ? TRUE : FALSE );
         ptab3->ptab3a->pcheckboxAutoIncrementIsNull->setChecked( nOptions & (1 << 23) ? TRUE : FALSE );
+        ptab3->ptab3c->pcheckboxMultiStatements->setChecked( nOptions & (1 << 26) ? TRUE : FALSE );
     }
 
     connect( ppushbuttonTest, SIGNAL(clicked()), SLOT(slotTest()) );
@@ -467,6 +468,7 @@ void MYODBCSetupDataSourceDialog::doInit()
     connect( ptab3->ptab3c->pcheckboxReadOptionsFromMyCnf, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3c->pcheckboxDisableTransactions, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3c->pcheckboxForceUseOfForwardOnlyCursors, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
+    connect( ptab3->ptab3c->pcheckboxMultiStatements, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3d->pcheckboxTraceDriverCalls, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3d->pcheckboxSaveQueries, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
 

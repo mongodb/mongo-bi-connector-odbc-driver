@@ -480,13 +480,13 @@ DECLARE_TEST(t_columns)
   SQLCHAR       ColumnName[MAX_NAME_LEN], DatabaseName[MAX_NAME_LEN];
   SQLINTEGER    Values[7][5][2]=
   {
-    { {5,2},  {6,4}, {0,2},  {10,2},  {1,2}},
+    { {5,2},  {5,4}, {0,2},  {10,2},  {1,2}},
     { {1,2},  {5,4},  {0,-1}, {10,-1}, {1,2}},
     { {12,2}, {20,4}, {0,-1}, {10,-1}, {0,2}},
     { {3,2},  {10,4}, {2,2},  {10,2},  {1,2}},
-    { {-6,2},  {4,4}, {0,2},  {10,2},  {0,2}},
-    { {4,2}, {11,4}, {0,2},  {10,2},  {0,2}},
-    { {-6,2}, {4,4}, {0,2},  {10,2},  {0,2}}
+    { {-6,2},  {3,4}, {0,2},  {10,2},  {0,2}},
+    { {4,2}, {10,4}, {0,2},  {10,2},  {0,2}},
+    { {-6,2}, {3,4}, {0,2},  {10,2},  {1,2}}
   };
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_columns");
@@ -512,6 +512,7 @@ DECLARE_TEST(t_columns)
   for (i= 0; i < ColumnCount; i++)
   {
     sprintf((char *)ColumnName, "col%d", (int)i);
+    printMessage("checking column `%s`", (char *)ColumnName);
 
     ok_stmt(hstmt, SQLColumns(hstmt,
                               DatabaseName, cbDatabaseName,
@@ -736,10 +737,7 @@ DECLARE_TEST(t_sqltables)
     r  = SQLTables(hstmt,NULL,0,NULL,0,NULL,0,"'system table'",SQL_NTS);
     mystmt(hstmt,r);
 
-    if (driver_min_version(hdbc,"03.51.07",8))
-        myassert(myresult(hstmt) != 0);
-    else
-        myassert(0 == myresult(hstmt));
+    is_num(myresult(hstmt), 0);
 
     r = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,r);
@@ -1079,6 +1077,56 @@ DECLARE_TEST(t_bug26934)
 }
 
 
+/**
+ Bug #29888: Crystal wizard throws error on including tables
+*/
+DECLARE_TEST(t_bug29888)
+{
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug29888");
+  ok_sql(hstmt, "CREATE TABLE t_bug29888 (a INT, b INT)");
+
+  ok_stmt(hstmt, SQLColumns(hstmt, mydb, SQL_NTS, NULL, SQL_NTS,
+                            (SQLCHAR *)"t_bug29888", SQL_NTS,
+                            (SQLCHAR *)"%", SQL_NTS));
+
+  is_num(myrowcount(hstmt), 2);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug29888");
+
+  return OK;
+}
+
+
+/**
+  Bug #14407: SQLColumns gives wrong information of not nulls
+*/
+DECLARE_TEST(t_bug14407)
+{
+  SQLCHAR col[10];
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug14407");
+  ok_sql(hstmt,
+         "CREATE TABLE t_bug14407(a INT NOT NULL AUTO_INCREMENT PRIMARY KEY)");
+
+  ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0,
+                            (SQLCHAR *)"t_bug14407", SQL_NTS, NULL, 0));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, col, 4), "a", 1);
+  is_num(my_fetch_int(hstmt, 11), SQL_NULLABLE);
+  is_str(my_fetch_str(hstmt, col, 18), "YES", 3);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug14407");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -1099,6 +1147,8 @@ BEGIN_TESTS
   ADD_TEST(t_bug28316)
   ADD_TEST(bug8860)
   ADD_TEST(t_bug26934)
+  ADD_TEST(t_bug29888)
+  ADD_TEST(t_bug14407)
 END_TESTS
 
 

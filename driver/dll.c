@@ -45,7 +45,6 @@ CHARSET_INFO *utf8_charset_info= NULL;
 static sig_handler
 myodbc_pipe_sig_handler(int sig __attribute__((unused)))
 {
-  MYODBCDbgInfo( "Hit by signal %d", sig );
 #ifdef DONT_REMEMBER_SIGNAL
   (void) signal(SIGPIPE,myodbc_pipe_sig_handler);
 #endif
@@ -65,7 +64,6 @@ void myodbc_init(void)
   my_init();
   {
     struct lconv *tmp;
-    MYODBCDbgInit;
     init_getfunctions();
     default_locale=my_strdup(setlocale(LC_NUMERIC,NullS),MYF(0));
     setlocale(LC_NUMERIC,"");
@@ -97,7 +95,6 @@ void myodbc_end()
 {
  if (!--myodbc_inited)
  {
-   MYODBCDbgFini;
    my_free(decimal_point,MYF(0));
    my_free(default_locale,MYF(0));
    my_free(thousands_sep,MYF(0));

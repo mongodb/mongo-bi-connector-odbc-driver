@@ -19,12 +19,9 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 ##########################################################################
-IF(ODBC_WINDOWS)
-  SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -MT")
-ENDIF(ODBC_WINDOWS)
 
 ADD_EXECUTABLE(dltest dltest.c)
 
-IF(ODBC_UNIX)
+IF(NOT WIN32)
 	TARGET_LINK_LIBRARIES(dltest ltdl)
-ENDIF(ODBC_UNIX)
+ENDIF(NOT WIN32)

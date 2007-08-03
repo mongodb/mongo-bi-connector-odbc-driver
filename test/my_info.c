@@ -128,12 +128,39 @@ DECLARE_TEST(t_bug27591)
 }
 
 
+/**
+  Bug #28657: ODBC Connector returns FALSE on SQLGetTypeInfo with DATETIME (wxWindows latest)
+*/
+DECLARE_TEST(t_bug28657)
+{
+#ifdef WIN32
+  /*
+   The Microsoft Windows ODBC driver manager automatically maps a request
+   for SQL_DATETIME to SQL_TYPE_DATE, which means our little workaround to
+   get all of the SQL_DATETIME types at once does not work on there.
+  */
+  skip("test doesn't work on with Microsoft Windows ODBC driver manager");
+#else
+  SQLSMALLINT pccol;
+
+  ok_stmt(hstmt, SQLGetTypeInfo(hstmt, SQL_DATETIME));
+
+  is(myresult(hstmt) > 1);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  return OK;
+#endif
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlgetinfo)
   ADD_TEST(t_gettypeinfo)
   ADD_TEST(t_stmt_attr_status)
   ADD_TEST(t_msdev_bug)
   ADD_TEST(t_bug27591)
+  ADD_TEST(t_bug28657)
 END_TESTS
 
 

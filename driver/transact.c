@@ -99,12 +99,6 @@ end_transaction(SQLSMALLINT HandleType,
   ENV FAR *henv;
   LIST *current;
 
-  MYODBCDbgEnter;
-
-  MYODBCDbgInfo("type: %s", MYODBCDbgHandleTypeString(HandleType));
-  MYODBCDbgInfo("handle: 0x%lx", (long)Handle);
-  MYODBCDbgInfo("option: %s", MYODBCDbgTransactionTypeString(CompletionType));
-
   switch (HandleType) {
   case SQL_HANDLE_ENV:
     henv= (ENV *)Handle;
@@ -123,7 +117,7 @@ end_transaction(SQLSMALLINT HandleType,
     set_error(Handle,MYERR_S1092,NULL,0);
     break;
   }
-  MYODBCDbgReturnReturn(result);
+  return result;
 }
 
 
@@ -145,10 +139,7 @@ SQLEndTran(SQLSMALLINT HandleType,
            SQLHANDLE   Handle,
            SQLSMALLINT CompletionType)
 {
-  MYODBCDbgEnter;
-  MYODBCDbgReturnReturn(end_transaction(HandleType,
-                                        Handle,
-                                        CompletionType));
+  return end_transaction(HandleType, Handle, CompletionType);
 }
 
 
@@ -169,11 +160,6 @@ SQLRETURN SQL_API SQLTransact(SQLHENV henv,
 			      SQLHDBC hdbc,
 			      SQLUSMALLINT fType)
 {
-  MYODBCDbgEnter;
-  MYODBCDbgInfo("henv: 0x%lx", (long)henv );
-  MYODBCDbgInfo("hdbc: 0x%lx", (long)hdbc );
-  MYODBCDbgInfo("option: %s", MYODBCDbgTransactionTypeString(fType));
-
-  MYODBCDbgReturnReturn(end_transaction(hdbc ? SQL_HANDLE_DBC : SQL_HANDLE_ENV,
-                                        hdbc ? hdbc : henv, fType));
+  return end_transaction(hdbc ? SQL_HANDLE_DBC : SQL_HANDLE_ENV,
+                         hdbc ? hdbc : henv, fType);
 }

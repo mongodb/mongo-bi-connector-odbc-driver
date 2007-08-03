@@ -42,7 +42,7 @@ AC_PREREQ(2.12)dnl    Minimum Autoconf version required.
 AC_CANONICAL_SYSTEM
 
 # When changing, also change VersionInfo.h and driver/myodbc3.def
-AM_INIT_AUTOMAKE(mysql-connector-odbc,3.51.17)
+AM_INIT_AUTOMAKE(mysql-connector-odbc,3.51.18)
 
 myodbc_version=$VERSION
 ###################################################################
@@ -115,28 +115,6 @@ AC_DEFINE(_UNIX_,1,[Define if we are using unix build environment])
 
 AM_PROG_LIBTOOL
 AC_CHECK_LIB(z,compress)
-
-###################################################################
-#
-# Debug support
-#
-###################################################################
-AC_ARG_WITH(separate-debug-driver,
-    [AC_HELP_STRING(
-        [--with-separate-debug-driver],
-        [Build separate driver with debug support [default=no]])],
-    [with_separate_debug_driver=$withval],
-    [with_separate_debug_driver=no])
-
-AM_CONDITIONAL(WITH_SEPARATE_DEBUG_DRIVER,
-	[test "x$with_separate_debug_driver" != xno])
-
-myodbc_dbg_dir=""
-if test "x$with_debug" != xno -o "x$with_separate_debug_driver" != xno
-then
-  myodbc_dbg_dir="MYODBCDbg"
-fi
-AC_SUBST(myodbc_dbg_dir)
 
 ###################################################################
 #
@@ -993,8 +971,6 @@ AC_COMPILE_IFELSE(
 
 AC_OUTPUT([
   Makefile 
-  MYODBCDbg/Makefile
-  MYODBCDbg/MYODBCDbgLib/Makefile
   util/Makefile
   driver/Makefile
   setup/Makefile

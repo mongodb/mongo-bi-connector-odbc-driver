@@ -65,14 +65,19 @@ extern "C"
 #include "error.h"
 
 #if defined(_WIN32) || defined(WIN32)
-#define INTFUNC  __stdcall
-#define EXPFUNC  __stdcall
-#if !defined(HAVE_LOCALTIME_R)
-#define HAVE_LOCALTIME_R 1
-#endif
+# define INTFUNC  __stdcall
+# define EXPFUNC  __stdcall
+# if !defined(HAVE_LOCALTIME_R)
+#  define HAVE_LOCALTIME_R 1
+# endif
 #else
-#define INTFUNC PASCAL
-#define EXPFUNC __export CALLBACK
+# define INTFUNC PASCAL
+# define EXPFUNC __export CALLBACK
+/* Simple macros to make ltdl look like the Windows library funcs. */
+# define HMODULE lt_dlhandle
+# define LoadLibrary(library) lt_dlopen((library))
+# define GetProcAddress(module, proc) lt_dlsym((module), (proc))
+# define FreeLibrary(module) lt_dlclose((module))
 #endif
 
 #ifdef SQL_SPEC_STRING
@@ -126,7 +131,7 @@ extern "C"
 /* Max Primary keys in a cursor * WHERE clause */
 #define MY_MAX_PK_PARTS 32
 
-#define x_free(A) { gptr tmp=(gptr) (A); if (tmp) my_free(tmp,MYF(MY_WME+MY_FAE)); }
+#define x_free(A) { void *tmp= (A); if (tmp) my_free(tmp,MYF(MY_WME+MY_FAE)); }
 
 /*
   Connection parameters, that affects the driver behaviour
@@ -159,6 +164,7 @@ extern "C"
 #define FLAG_AUTO_IS_NULL     (FLAG_SAFE << 6) /* 8388608 Enables SQL_AUTO_IS_NULL */
 #define FLAG_ZERO_DATE_TO_MIN (1 << 24) /* Convert XXXX-00-00 date to ODBC min date on results */
 #define FLAG_MIN_DATE_TO_ZERO (1 << 25) /* Convert ODBC min date to 0000-00-00 on query */
+#define FLAG_MULTI_STATEMENTS (1 << 26) /* Allow multiple statements in a query */
 
 /* We don't make any assumption about what the default may be. */
 #ifndef DEFAULT_TXN_ISOLATION
@@ -248,7 +254,7 @@ typedef struct st_bind
 typedef struct st_param_bind
 {
   SQLSMALLINT   SqlType,CType;
-  gptr	        buffer;
+  char *        buffer;
   char *        pos_in_query,*value;
   SQLINTEGER    ValueMax;
   SQLLEN *      actual_len;

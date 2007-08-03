@@ -55,6 +55,12 @@ mysql-connector-odbc-@VERSION@.spec: myodbc3.spec
  
 SUFFIXES = .sh 
 
-EXTRA_DIST = make_binary_distribution.sh \
-             myodbc3.spec.sh \
-             makerpm.sh
+EXTRA_DIST = \
+	make_binary_distribution.sh \
+        myodbc3.spec.sh \
+        makerpm.sh \
+	macosx/License.html.in \
+	macosx/ReadMe.html.in \
+	macosx/Welcome.html.in \
+	macosx/myodbc.png \
+	macosx/postflight

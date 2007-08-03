@@ -21,19 +21,33 @@ GOTO doSyntax
 
 :doNormal
 IF EXIST %installdir%\myodbc3i.exe GOTO :doError4
-IF NOT EXIST lib\myodbc3.lib GOTO :doError2
-IF NOT EXIST lib\myodbc3S.lib GOTO :doError2
+
+REM ****
+REM * Find out the bin/lib directory, or use default
+REM ****
+SET libdir=lib
+SET bindir=bin
+IF EXIST lib\release\myodbc3.lib         SET libdir=lib\release
+IF EXIST lib\relwithdebinfo\myodbc3.lib  SET libdir=lib\relwithdebinfo
+IF EXIST bin\release\myodbc3i.exe        SET bindir=bin\release
+IF EXIST bin\relwithdebinfo\myodbc3i.exe SET bindir=bin\relwithdebinfo
+
 REM ****
 REM * Copying myodbc libraries and executables to install dir...
 REM ****
-copy lib\myodbc3S.dll %installdir%
-copy lib\myodbc3S.lib %installdir%
-copy lib\myodbc3.dll  %installdir%
-copy lib\myodbc3.lib  %installdir%
-copy bin\myodbc3i.exe %installdir%
-copy bin\myodbc3m.exe %installdir%
-copy bin\myodbc3c.exe %installdir%
-copy doc\*.hlp        %installdir%
+IF NOT EXIST %bindir%\myodbc3c.exe GOTO :doError2
+IF NOT EXIST %libdir%\myodbc3.lib  GOTO :doError2
+IF NOT EXIST %libdir%\myodbc3S.lib GOTO :doError2
+IF NOT EXIST %bindir%\myodbc3i.exe GOTO :doError2
+IF NOT EXIST %bindir%\myodbc3m.exe GOTO :doError2
+copy %libdir%\myodbc3S.dll %installdir%
+copy %libdir%\myodbc3S.lib %installdir%
+copy %libdir%\myodbc3.dll  %installdir%
+copy %libdir%\myodbc3.lib  %installdir%
+copy %bindir%\myodbc3i.exe      %installdir%
+copy %bindir%\myodbc3m.exe      %installdir%
+copy %bindir%\myodbc3c.exe      %installdir%
+copy doc\*.hlp             %installdir%
 
 REM ****
 REM * Registering driver...
@@ -48,16 +62,22 @@ GOTO doSuccess
 
 
 :doDebug
-IF NOT EXIST lib\myodbc3d.lib goto doError3
-IF NOT EXIST lib\myodbc3E.lib goto doError3
+REM ****
+REM * Find out the bin/lib directory, or use default
+REM ****
+SET libdir=lib
+IF EXIST lib\debug\myodbc3d.lib          SET libdir=lib\debug
+
+IF NOT EXIST %libdir%\myodbc3d.lib goto doError3
+IF NOT EXIST %libdir%\myodbc3E.lib goto doError3
 IF NOT EXIST %installdir%\myodbc3i.exe goto doError1
 REM ****
 REM * Copying myodbc debug libraries to install dir...
 REM ****
-copy lib\myodbc3E.dll %installdir%
-copy lib\myodbc3E.lib %installdir%
-copy lib\myodbc3d.dll %installdir%
-copy lib\myodbc3d.lib %installdir%
+copy %libdir%\myodbc3E.dll %installdir%
+copy %libdir%\myodbc3E.lib %installdir%
+copy %libdir%\myodbc3d.dll %installdir%
+copy %libdir%\myodbc3d.lib %installdir%
 
 REM ****
 REM * Registering driver...

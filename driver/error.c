@@ -49,55 +49,55 @@
 
 static MYODBC3_ERR_STR myodbc3_errors[]=
 {
-    {"01000","General warning",1},
-    {"01004","String data, right truncated",1},
-    {"01S02","Option value changed",1},
-    {"01S03","No rows updated/deleted",1},
-    {"01S04","More than one row updated/deleted",1},
-    {"01S06","Attempt to fetch before the result set returned the first rowset",
-        1},
-    {"07001","SQLBindParameter not used for all parameters",-1},
-    {"07005","Prepared statement not a cursor-specification",-1},
-    {"07006","Restricted data type attribute violation",-1},
-    {"07009","Invalid descriptor index",-1},
-    {"08002","Connection name in use",-1},
-    {"08003","Connection does not exist",-1},
-    {"24000","Invalid cursor state",-1},
-    {"25000","Invalid transaction state",-1},
-    {"25S01","Transaction state unknown",-1},
-    {"34000","Invalid cursor name",-1},
-    {"HYT00","Timeout expired",-1},
-    {"HY000","General driver defined error",-1},
-    {"HY001","Memory allocation error",-1},
-    {"HY002","Invalid column number",-1},
-    {"HY003","Invalid application buffer type",-1},
-    {"HY004","Invalid SQL data type",-1},
-    {"HY009","Invalid use of null pointer",-1},
-    {"HY010","Function sequence error",-1},
-    {"HY011","Attribute can not be set now",-1},
-    {"HY012","Invalid transaction operation code",-1},
-    {"HY013","Memory management error",-1},
-    {"HY015","No cursor name available",-1},
-    {"HY024","Invalid attribute value",-1},
-    {"HY090","Invalid string or buffer length",-1},
-    {"HY091","Invalid descriptor field identifier",-1},
-    {"HY092","Invalid attribute/option identifier",-1},
-    {"HY093","Invalid parameter number",-1},
-    {"HY095","Function type out of range",-1},
-    {"HY106","Fetch type out of range",-1},
-    {"HY107","Row value out of range",-1},
-    {"HY109","Invalid cursor position",-1},
-    {"HYC00","Optional feature not implemented",-1},
-    /* server related..*/
-    {"21S01","Column count does not match value count",-1},
-    {"23000","Integrity constraint violation",-1},
-    {"42000","Syntax error or access violation",-1},
-    {"42S01","Base table or view already exists ",-1},
-    {"42S02","Base table or view not found",-1},
-    {"42S12","Index not found",-1},
-    {"42S21","Column already exists",-1},
-    {"42S22","Column not found",-1},
-    {"08S01","Communication link failure",-1},
+  {"01000","General warning", SQL_SUCCESS_WITH_INFO},
+  {"01004","String data, right truncated", SQL_SUCCESS_WITH_INFO},
+  {"01S02","Option value changed", SQL_SUCCESS_WITH_INFO},
+  {"01S03","No rows updated/deleted", SQL_SUCCESS_WITH_INFO},
+  {"01S04","More than one row updated/deleted", SQL_SUCCESS_WITH_INFO},
+  {"01S06","Attempt to fetch before the result set returned the first rowset",
+    SQL_SUCCESS_WITH_INFO},
+  {"07001","SQLBindParameter not used for all parameters", SQL_ERROR},
+  {"07005","Prepared statement not a cursor-specification", SQL_ERROR},
+  {"07006","Restricted data type attribute violation", SQL_ERROR},
+  {"07009","Invalid descriptor index", SQL_ERROR},
+  {"08002","Connection name in use", SQL_ERROR},
+  {"08003","Connection does not exist", SQL_ERROR},
+  {"24000","Invalid cursor state", SQL_ERROR},
+  {"25000","Invalid transaction state", SQL_ERROR},
+  {"25S01","Transaction state unknown", SQL_ERROR},
+  {"34000","Invalid cursor name", SQL_ERROR},
+  {"HYT00","Timeout expired", SQL_ERROR},
+  {"HY000","General driver defined error", SQL_ERROR},
+  {"HY001","Memory allocation error", SQL_ERROR},
+  {"HY002","Invalid column number", SQL_ERROR},
+  {"HY003","Invalid application buffer type", SQL_ERROR},
+  {"HY004","Invalid SQL data type", SQL_ERROR},
+  {"HY009","Invalid use of null pointer", SQL_ERROR},
+  {"HY010","Function sequence error", SQL_ERROR},
+  {"HY011","Attribute can not be set now", SQL_ERROR},
+  {"HY012","Invalid transaction operation code", SQL_ERROR},
+  {"HY013","Memory management error", SQL_ERROR},
+  {"HY015","No cursor name available", SQL_ERROR},
+  {"HY024","Invalid attribute value", SQL_ERROR},
+  {"HY090","Invalid string or buffer length", SQL_ERROR},
+  {"HY091","Invalid descriptor field identifier", SQL_ERROR},
+  {"HY092","Invalid attribute/option identifier", SQL_ERROR},
+  {"HY093","Invalid parameter number", SQL_ERROR},
+  {"HY095","Function type out of range", SQL_ERROR},
+  {"HY106","Fetch type out of range", SQL_ERROR},
+  {"HY107","Row value out of range", SQL_ERROR},
+  {"HY109","Invalid cursor position", SQL_ERROR},
+  {"HYC00","Optional feature not implemented", SQL_ERROR},
+  /* server related..*/
+  {"21S01","Column count does not match value count", SQL_ERROR},
+  {"23000","Integrity constraint violation", SQL_ERROR},
+  {"42000","Syntax error or access violation", SQL_ERROR},
+  {"42S01","Base table or view already exists ", SQL_ERROR},
+  {"42S02","Base table or view not found", SQL_ERROR},
+  {"42S12","Index not found", SQL_ERROR},
+  {"42S21","Column already exists", SQL_ERROR},
+  {"42S22","Column not found", SQL_ERROR},
+  {"08S01","Communication link failure", SQL_ERROR},
 };
 
 
@@ -195,15 +195,11 @@ SQLRETURN set_stmt_error( STMT FAR *    stmt,
                           const char *  message,
                           uint          errcode )
 {
-    MYODBCDbgEnter;
-
-    MYODBCDbgError( "message: %s", message );
-
     strmov( stmt->error.sqlstate, state );
     strxmov( stmt->error.message, stmt->dbc->st_error_prefix, message, NullS );
     stmt->error.native_error = errcode;
 
-    MYODBCDbgReturnReturn( SQL_ERROR );
+    return SQL_ERROR;
 }
 
 
@@ -273,22 +269,16 @@ static SQLRETURN copy_error(MYERROR *error, myodbc_errid errid,
     SQLCHAR     *errmsg;
     SQLINTEGER  code;
 
-    MYODBCDbgEnter;
-
     errmsg= (errtext ? (SQLCHAR *)errtext :
              (SQLCHAR *)myodbc3_errors[errid].message);
     code=   errcode ? (myodbc_errid) errcode : errid + MYODBC_ERROR_CODE_START;
-
-    MYODBCDbgError( "code : %d", (int)code );
-    MYODBCDbgError( "state: %s", myodbc3_errors[errid].sqlstate );
-    MYODBCDbgError( "err  : %s", errtext );
 
     sqlreturn= error->retcode= myodbc3_errors[errid].retcode;  /* RETCODE */
     error->native_error= code;                     /* NATIVE */
     strmov(error->sqlstate, myodbc3_errors[errid].sqlstate);   /* SQLSTATE */
     strxmov(error->message,prefix,errmsg,NullS);           /* MESSAGE */
 
-    MYODBCDbgReturnReturn( sqlreturn );
+    return sqlreturn;
 }
 
 
@@ -414,8 +404,6 @@ SQLRETURN my_SQLGetDiagRec(SQLSMALLINT HandleType,
     SQLSMALLINT tmp_size;
     SQLINTEGER  tmp_error;
 
-    MYODBCDbgEnter;
-
     if ( !TextLengthPtr )
         TextLengthPtr= &tmp_size;
 
@@ -426,7 +414,7 @@ SQLRETURN my_SQLGetDiagRec(SQLSMALLINT HandleType,
         NativeErrorPtr= &tmp_error;
 
     if ( RecNumber <= 0 || BufferLength < 0 || !Handle )
-        MYODBCDbgReturnReturn( SQL_ERROR );
+        return SQL_ERROR;
 
     /*
       Currently we are not supporting error list, so
@@ -434,7 +422,7 @@ SQLRETURN my_SQLGetDiagRec(SQLSMALLINT HandleType,
     */
 
     if ( RecNumber > 1 )
-        MYODBCDbgReturnReturn( SQL_NO_DATA_FOUND );
+        return SQL_NO_DATA_FOUND;
 
     switch ( HandleType )
     {
@@ -458,22 +446,17 @@ SQLRETURN my_SQLGetDiagRec(SQLSMALLINT HandleType,
             break;
 
         default:
-            MYODBCDbgReturnReturn( SQL_INVALID_HANDLE );
+            return SQL_INVALID_HANDLE;
     }
     if ( !errmsg || !errmsg[0] )
     {
         *TextLengthPtr= 0;
         strmov((char*) Sqlstate, "00000");
-        MYODBCDbgReturnReturn( SQL_NO_DATA_FOUND );
+        return SQL_NO_DATA_FOUND;
     }
 
-    MYODBCDbgInfo( "Sqlstate: %s", Sqlstate );
-    MYODBCDbgReturnReturn( copy_str_data( HandleType,
-                                       Handle,
-                                       MessageText,
-                                       BufferLength, 
-                                       TextLengthPtr,
-                                       (char FAR*)errmsg ) );
+    return copy_str_data(HandleType, Handle, MessageText, BufferLength,
+                         TextLengthPtr, (char *)errmsg);
 }
 
 
@@ -496,17 +479,6 @@ SQLRETURN SQL_API SQLGetDiagField(SQLSMALLINT HandleType,
     SQLPOINTER  szDiagInfo= NULL;
     SQLSMALLINT tmp_size;
 
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "HandleType     : %s", MYODBCDbgHandleTypeString( HandleType ) );
-    MYODBCDbgInfo( "HandleType     : %d", HandleType );
-    MYODBCDbgInfo( "Handle         : %p", Handle );
-    MYODBCDbgInfo( "RecNumber      : %d", RecNumber );
-    MYODBCDbgInfo( "DiagIdentifier : %s", MYODBCDbgDiagFieldString( DiagIdentifier ) );
-    MYODBCDbgInfo( "DiagIdentifier : %d", DiagIdentifier );
-    MYODBCDbgInfo( "DiagInfoPtr    : 0x%x", (uint)DiagInfoPtr );
-    MYODBCDbgInfo( "BufferLength   : %d", BufferLength );
-    MYODBCDbgInfo( "StringLengthPtr: 0x%x", (uint)StringLengthPtr );
-
     if ( !StringLengthPtr )
         StringLengthPtr= &tmp_size;
 
@@ -517,10 +489,10 @@ SQLRETURN SQL_API SQLGetDiagField(SQLSMALLINT HandleType,
          !(HandleType == SQL_HANDLE_STMT ||
            HandleType == SQL_HANDLE_DBC ||
            HandleType == SQL_HANDLE_ENV) )
-        MYODBCDbgReturnReturn( SQL_ERROR );
+        return SQL_ERROR;
 
     if ( RecNumber > 1 )
-        MYODBCDbgReturnReturn( SQL_NO_DATA_FOUND );
+        return SQL_NO_DATA_FOUND;
 
     switch ( DiagIdentifier )
     {
@@ -528,7 +500,7 @@ SQLRETURN SQL_API SQLGetDiagField(SQLSMALLINT HandleType,
         /* DIAG HEADER FIELDS SECTION */
         case SQL_DIAG_DYNAMIC_FUNCTION:
             if ( HandleType != SQL_HANDLE_STMT )
-                MYODBCDbgReturnReturn( SQL_ERROR );
+                return SQL_ERROR;
 
             error= copy_str_data(HandleType, Handle, DiagInfoPtr, BufferLength,
                                  StringLengthPtr, "");
@@ -559,7 +531,7 @@ SQLRETURN SQL_API SQLGetDiagField(SQLSMALLINT HandleType,
 
         case SQL_DIAG_CURSOR_ROW_COUNT:/* at present, return total rows in rs */
             if ( HandleType != SQL_HANDLE_STMT )
-                MYODBCDbgReturnReturn( SQL_ERROR );
+                return SQL_ERROR;
 
             if ( !((STMT FAR*) Handle)->result )
                 *(SQLINTEGER *) DiagInfoPtr= 0;
@@ -571,7 +543,7 @@ SQLRETURN SQL_API SQLGetDiagField(SQLSMALLINT HandleType,
 
         case SQL_DIAG_ROW_COUNT:
             if ( HandleType != SQL_HANDLE_STMT )
-                MYODBCDbgReturnReturn( SQL_ERROR );
+                return SQL_ERROR;
 
             *(SQLINTEGER *) DiagInfoPtr= (SQLINTEGER)
                                          ((STMT FAR*)  Handle)->affected_rows;
@@ -673,9 +645,9 @@ SQLRETURN SQL_API SQLGetDiagField(SQLSMALLINT HandleType,
             break;
 
         default:
-            MYODBCDbgReturnReturn( SQL_ERROR );
+            return SQL_ERROR;
     }
-    MYODBCDbgReturnReturn( error );
+    return error;
 }
 
 
@@ -693,12 +665,9 @@ SQLRETURN SQL_API SQLGetDiagRec(SQLSMALLINT HandleType,
                                 SQLSMALLINT BufferLength,
                                 SQLSMALLINT *TextLengthPtr)
 {
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "HandleType: %s", MYODBCDbgHandleTypeString( HandleType ) );
-    MYODBCDbgInfo( "HandleType: %d", HandleType );
-    MYODBCDbgInfo( "Handle    : %p", Handle );
-    MYODBCDbgInfo( "RecNumber : %d", RecNumber );
-    MYODBCDbgReturnReturn( my_SQLGetDiagRec( HandleType, Handle, RecNumber, Sqlstate, NativeErrorPtr, MessageText, BufferLength, TextLengthPtr ) );
+    return my_SQLGetDiagRec(HandleType, Handle, RecNumber, Sqlstate,
+                            NativeErrorPtr, MessageText, BufferLength,
+                            TextLengthPtr);
 }
 
 
@@ -715,11 +684,6 @@ SQLRETURN SQL_API SQLError(SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt,
                            SQLSMALLINT FAR *pcbErrorMsg)
 {
     SQLRETURN error= SQL_INVALID_HANDLE;
-
-    MYODBCDbgEnter;
-    MYODBCDbgInfo( "henv : %p", henv );
-    MYODBCDbgInfo( "hdb  : %p", hdbc );
-    MYODBCDbgInfo( "hstmt: %p", hstmt );
 
     if ( hstmt )
     {
@@ -745,5 +709,5 @@ SQLRETURN SQL_API SQLError(SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt,
         if ( error == SQL_SUCCESS )
             CLEAR_ENV_ERROR(henv);
     }
-    MYODBCDbgReturnReturn( error );
+    return error;
 }

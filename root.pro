@@ -75,7 +75,6 @@
 # #########################################################
 TEMPLATE        = subdirs
 SUBDIRS         = \
-                MYODBCDbg \
                 dltest \
 		util \
 		setup \

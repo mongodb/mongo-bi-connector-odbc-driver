@@ -21,10 +21,4 @@
 ##########################################################################
 ADD_EXECUTABLE(myodbc3m myodbc3m.c)
 
-IF(ODBC_WINDOWS OR ODBC_UNIX)
-	TARGET_LINK_LIBRARIES(myodbc3m myodbc3u)
-ENDIF(ODBC_WINDOWS OR ODBC_UNIX)
-
-IF(ODBC_MAC OR ODBC_UNIX)
-	TARGET_LINK_LIBRARIES(myodbc3m ${ODBCLIB} ${ODBCINSTLIB})
-ENDIF(ODBC_MAC OR ODBC_UNIX)
+TARGET_LINK_LIBRARIES(myodbc3m ${ODBCLIB} ${ODBCINSTLIB})

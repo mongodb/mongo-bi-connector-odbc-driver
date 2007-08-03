@@ -686,6 +686,165 @@ DECLARE_TEST(t_bug15773)
 }
 
 
+/**
+ Bug #9927: Updating datetime columns
+*/
+DECLARE_TEST(t_bug9927)
+{
+  SQLCHAR col[10];
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug9927");
+  ok_sql(hstmt,
+         "CREATE TABLE t_bug9927 (a TIMESTAMP DEFAULT 0,"
+        "b TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)");
+
+  ok_stmt(hstmt, SQLSpecialColumns(hstmt,SQL_ROWVER,  NULL, 0,
+                                   NULL, 0, (SQLCHAR *)"t_bug9927", SQL_NTS,
+                                   0, SQL_NO_NULLS));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_str(my_fetch_str(hstmt, col, 2), "b", 1);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug9927");
+
+  return OK;
+}
+
+
+/**
+ Bug #30081: Can't distinguish between auto-set TIMESTAMP and auto-updated
+ TIMESTAMP
+*/
+DECLARE_TEST(t_bug30081)
+{
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug30081");
+  ok_sql(hstmt,
+         "CREATE TABLE t_bug30081 (a TIMESTAMP DEFAULT 0,"
+        "b TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+
+  ok_stmt(hstmt, SQLSpecialColumns(hstmt,SQL_ROWVER,  NULL, 0,
+                                   NULL, 0, (SQLCHAR *)"t_bug30081", SQL_NTS,
+                                   0, SQL_NO_NULLS));
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug30081");
+
+  return OK;
+}
+
+
+/**
+  Verify that we get correct data for SQL_DATA_TYPE and SQL_DATETIME_SUB
+  from SQLColumns(). Also check SQL_DESC_TYPE from SQLColAttribute().
+*/
+DECLARE_TEST(t_datecolumns)
+{
+  SQLCHAR col[10];
+  SQLINTEGER type;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_datecolumns");
+  ok_sql(hstmt,
+         "CREATE TABLE t_datecolumns(a TIMESTAMP, b DATETIME, c DATE, d TIME)");
+
+  ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0,
+                            (SQLCHAR *)"t_datecolumns", SQL_NTS, NULL, 0));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_str(my_fetch_str(hstmt, col, 4), "a", 1);
+  is_num(my_fetch_int(hstmt, 14), SQL_DATETIME);
+  is_num(my_fetch_int(hstmt, 15), SQL_TYPE_TIMESTAMP);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_str(my_fetch_str(hstmt, col, 4), "b", 1);
+  is_num(my_fetch_int(hstmt, 14), SQL_DATETIME);
+  is_num(my_fetch_int(hstmt, 15), SQL_TYPE_TIMESTAMP);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_str(my_fetch_str(hstmt, col, 4), "c", 1);
+  is_num(my_fetch_int(hstmt, 14), SQL_DATETIME);
+  is_num(my_fetch_int(hstmt, 15), SQL_TYPE_DATE);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_str(my_fetch_str(hstmt, col, 4), "d", 1);
+  is_num(my_fetch_int(hstmt, 14), SQL_DATETIME);
+  is_num(my_fetch_int(hstmt, 15), SQL_TYPE_TIME);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "SELECT * FROM t_datecolumns");
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_TYPE, NULL, 0, NULL,
+                                 &type));
+  is_num(type, SQL_DATETIME);
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 2, SQL_DESC_TYPE, NULL, 0, NULL,
+                                 &type));
+  is_num(type, SQL_DATETIME);
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 3, SQL_DESC_TYPE, NULL, 0, NULL,
+                                 &type));
+  is_num(type, SQL_DATETIME);
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 4, SQL_DESC_TYPE, NULL, 0, NULL,
+                                 &type));
+  is_num(type, SQL_DATETIME);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_datecolumns");
+  return OK;
+}
+
+
+/**
+  Bug #14414: SQLColumn() does not return timestamp nullable attribute correctly
+*/
+DECLARE_TEST(t_bug14414)
+{
+  SQLCHAR col[10];
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug14414");
+  ok_sql(hstmt, "CREATE TABLE t_bug14414(a TIMESTAMP, b TIMESTAMP NOT NULL,"
+        "c TIMESTAMP NULL)");
+
+  ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0,
+                            (SQLCHAR *)"t_bug14414", SQL_NTS, NULL, 0));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, col, 4), "a", 1);
+  is_num(my_fetch_int(hstmt, 11), SQL_NULLABLE);
+  is_str(my_fetch_str(hstmt, col, 18), "YES", 3);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, col, 4), "b", 1);
+  is_num(my_fetch_int(hstmt, 11), SQL_NO_NULLS);
+  is_str(my_fetch_str(hstmt, col, 18), "NO", 3);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, col, 4), "c", 1);
+  is_num(my_fetch_int(hstmt, 11), SQL_NULLABLE);
+  is_str(my_fetch_str(hstmt, col, 18), "YES", 3);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug14414");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_ts)
   ADD_TEST(t_tstotime)
@@ -695,6 +854,10 @@ BEGIN_TESTS
   ADD_TEST(t_time1)
   ADD_TEST(t_bug12520)
   ADD_TEST(t_bug15773)
+  ADD_TEST(t_bug9927)
+  ADD_TODO(t_bug30081)
+  ADD_TEST(t_datecolumns)
+  ADD_TEST(t_bug14414)
 END_TESTS
 
 

@@ -27,15 +27,8 @@
 */
 DECLARE_TEST(my_transaction)
 {
-  SQLHDBC hdbc2;
-  SQLHSTMT hstmt2;
-  SQLHENV henv2;
-
-  /** @todo need a mechanism for outputting skip results */
   if (!server_supports_trans(hdbc))
-    return FAIL;
-
-  alloc_basic_handles(&henv2, &hdbc2, &hstmt2);
+    skip("Server does not support transactions.");
 
   /* set AUTOCOMMIT to OFF */
   ok_con(hdbc, SQLSetConnectAttr(hdbc,SQL_ATTR_AUTOCOMMIT,
@@ -86,27 +79,25 @@ DECLARE_TEST(my_transaction)
   ok_con(hdbc, SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT));
 
   /* test the results now, select should not find any data */
-  ok_sql(hstmt2,"SELECT * FROM t1 WHERE col1 = 30");
-  expect_stmt(hstmt2, SQLFetch(hstmt2), SQL_NO_DATA_FOUND);
+  ok_sql(hstmt,"SELECT * FROM t1 WHERE col1 = 30");
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
-  ok_stmt(hstmt2, SQLFreeStmt(hstmt2,SQL_CLOSE));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
 
   /* Delete a row to check, and commit the transaction using ENV handler */
   ok_sql(hstmt,"DELETE FROM t1 WHERE col1 = 40");
   ok_con(hdbc, SQLEndTran(SQL_HANDLE_ENV, henv, SQL_COMMIT));
 
   /* test the results now, select should not find any data */
-  ok_sql(hstmt2,"SELECT * FROM t1 WHERE col1 = 40");
-  expect_stmt(hstmt2, SQLFetch(hstmt2), SQL_NO_DATA_FOUND);
+  ok_sql(hstmt,"SELECT * FROM t1 WHERE col1 = 40");
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
-  ok_stmt(hstmt2, SQLFreeStmt(hstmt2,SQL_CLOSE));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
 
   /* drop the table */
   ok_sql(hstmt,"DROP TABLE t1");
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
-
-  free_basic_handles(&henv2,&hdbc2,&hstmt2);
 
   return OK;
 }
@@ -151,6 +142,9 @@ DECLARE_TEST(t_isolation)
 {
   SQLINTEGER isolation;
   SQLCHAR    tx_isolation[20];
+
+  if (!server_supports_trans(hdbc))
+    skip("Server does not support transactions.");
 
   /* Check that the default is REPEATABLE READ. */
   ok_con(hdbc, SQLGetConnectAttr(hdbc, SQL_ATTR_TXN_ISOLATION, &isolation,

@@ -38,13 +38,7 @@ else
   TS_DRIVER=
 endif
 
-if WITH_SEPARATE_DEBUG_DRIVER
-  DEBUG_DRIVER=libmyodbc3_debug.la 
-else
-  DEBUG_DRIVER=
-endif
-
-lib_LTLIBRARIES=libmyodbc3.la $(TS_DRIVER) $(DEBUG_DRIVER)
+lib_LTLIBRARIES=libmyodbc3.la $(TS_DRIVER)
 
 ###################################################################
 #                                                                 #
@@ -71,7 +65,6 @@ utility.c \
 myodbc3.h
 
 libmyodbc3_r_la_SOURCES     = $(libmyodbc3_la_SOURCES)
-libmyodbc3_debug_la_SOURCES = $(libmyodbc3_la_SOURCES)
 
 ###################################################################
 #                                                                 #
@@ -82,11 +75,9 @@ if WITH_DEBUG
 libmyodbc3_la_CPPFLAGS       = -DMYODBC_DBG
 libmyodbc3_r_la_CPPFLAGS     = -DMYODBC_DBG
 endif
-libmyodbc3_debug_la_CPPFLAGS = -DMYODBC_DBG
 
 libmyodbc3_la_LDFLAGS       = -release @myodbc_version@ -module 
 libmyodbc3_r_la_LDFLAGS     = -release @myodbc_version@ -module 
-libmyodbc3_debug_la_LDFLAGS = -release @myodbc_version@ -module 
 
 if WITH_DEBUG
 LTLIBS_DEPS = $(LTLIBS_DEBUG_DEPS)
@@ -94,17 +85,13 @@ else
 LTLIBS_DEPS = ../util/libmyodbc3u.la
 endif
 LTLIBS_DEBUG_DEPS = \
-	../util/libmyodbc3u.la \
-	../MYODBCDbg/MYODBCDbgLib/libMYODBCDbg.la
+	../util/libmyodbc3u.la
 
 libmyodbc3_la_LIBADD         = $(LTLIBS_DEPS) @LTDL_LIB@ @MYSQL_LIB@
 libmyodbc3_la_DEPENDENCIES   = $(LTLIBS_DEPS)
 
 libmyodbc3_r_la_LIBADD       = $(LTLIBS_DEPS) @LTDL_LIB@ @MYSQL_THREADSAFE_LIB@
 libmyodbc3_r_la_DEPENDENCIES = $(LTLIBS_DEPS)
-
-libmyodbc3_debug_la_LIBADD       = $(LTLIBS_DEBUG_DEPS) @LTDL_LIB@ @MYSQL_THREADSAFE_LIB@
-libmyodbc3_debug_la_DEPENDENCIES = $(LTLIBS_DEBUG_DEPS)
 
 LDFLAGS=@EXTRA_LDFLAGS@ 
 

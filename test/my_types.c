@@ -485,6 +485,207 @@ DECLARE_TEST(t_bug16235)
 }
 
 
+/**
+ Bug #27862: Function return incorrect SQL_COLUMN_SIZE
+*/
+DECLARE_TEST(t_bug27862_1)
+{
+  SQLLEN len;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug27862");
+  ok_sql(hstmt, "CREATE TABLE t_bug27862 (a VARCHAR(2), b VARCHAR(2))");
+  ok_sql(hstmt, "INSERT INTO t_bug27862 VALUES ('a','b')");
+
+  ok_sql(hstmt, "SELECT CONCAT(a,b) FROM t_bug27862");
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_DISPLAY_SIZE, NULL, 0,
+                                 NULL, &len));
+  is_num(len, 4);
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_LENGTH, NULL, 0,
+                                 NULL, &len));
+  is_num(len, 2);
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_OCTET_LENGTH, NULL, 0,
+                                 NULL, &len));
+  is_num(len, 5);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug27862");
+
+  return OK;
+}
+
+
+/**
+ Because integers are given the charset 63 (binary) when they are
+ used as strings, functions like CONCAT() return a binary string.
+ This is a server bug that we do not try to work around.
+*/
+DECLARE_TEST(t_bug27862_2)
+{
+  SQLLEN len;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug27862");
+  ok_sql(hstmt, "CREATE TABLE t_bug27862 (c DATE, d INT)");
+  ok_sql(hstmt, "INSERT INTO t_bug27862 VALUES ('2007-01-13',5)");
+
+  ok_sql(hstmt, "SELECT CONCAT_WS(' - ', DATE_FORMAT(c, '%b-%d-%y'), d) "
+         "FROM t_bug27862");
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_DISPLAY_SIZE, NULL, 0,
+                                 NULL, &len));
+  is_num(len, 104);
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_LENGTH, NULL, 0,
+                                 NULL, &len));
+  is_num(len, 26);
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_OCTET_LENGTH, NULL, 0,
+                                 NULL, &len));
+  is_num(len, 27);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug27862");
+
+  return OK;
+}
+
+
+/**
+  SQL_DESC_FIXED_PREC_SCALE was wrong for new DECIMAL types.
+*/
+DECLARE_TEST(decimal_scale)
+{
+  SQLINTEGER fixed= SQL_FALSE;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_decscale");
+  ok_sql(hstmt, "CREATE TABLE t_decscale (a DECIMAL(5,3))");
+
+  ok_sql(hstmt, "SELECT * FROM t_decscale");
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_FIXED_PREC_SCALE,
+                                 NULL, 0, NULL, &fixed));
+
+  is_num(fixed, SQL_TRUE);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_decscale");
+  return OK;
+}
+
+
+/**
+  Wrong value returned for SQL_DESC_LITERAL_SUFFIX for binary field.
+*/
+DECLARE_TEST(binary_suffix)
+{
+  SQLCHAR suffix[10];
+  SQLSMALLINT len;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_binarysuffix");
+  ok_sql(hstmt, "CREATE TABLE t_binarysuffix (a BINARY(10))");
+
+  ok_sql(hstmt, "SELECT * FROM t_binarysuffix");
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_LITERAL_SUFFIX,
+                                 suffix, 10, &len, NULL));
+
+  is_num(len, 0);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_binarysuffix");
+  return OK;
+}
+
+
+/**
+  Wrong value returned for SQL_DESC_SCALE for float and double.
+*/
+DECLARE_TEST(float_scale)
+{
+  SQLINTEGER scale;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_floatscale");
+  ok_sql(hstmt, "CREATE TABLE t_floatscale(a FLOAT, b DOUBLE, c DECIMAL(3,2))");
+
+  ok_sql(hstmt, "SELECT * FROM t_floatscale");
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_SCALE,
+                                 NULL, 0, NULL, &scale));
+
+  is_num(scale, 0);
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 2, SQL_DESC_SCALE,
+                                 NULL, 0, NULL, &scale));
+
+  is_num(scale, 0);
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 3, SQL_DESC_SCALE,
+                                 NULL, 0, NULL, &scale));
+
+  is_num(scale, 2);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_floatscale");
+  return OK;
+}
+
+
+/**
+  Test the BIT type, which has different behavior for BIT(1) and BIT(n > 1).
+*/
+DECLARE_TEST(bit)
+{
+  SQLCHAR col[10];
+  SQLINTEGER type;
+  SQLLEN len;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bit");
+  ok_sql(hstmt, "CREATE TABLE t_bit (a BIT(1), b BIT(17))");
+
+  ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0,
+                            (SQLCHAR *)"t_bit", SQL_NTS, NULL, 0));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_str(my_fetch_str(hstmt, col, 4), "a", 1);
+  is_num(my_fetch_int(hstmt, 5), SQL_BIT); /* DATA_TYPE */
+  is_num(my_fetch_int(hstmt, 7), 1); /* COLUMN_SIZE */
+  is_num(my_fetch_int(hstmt, 8), 1); /* BUFFER_LENGTH */
+  ok_stmt(hstmt, SQLGetData(hstmt, 16, SQL_C_LONG, &type, 0, &len));
+  is_num(len, SQL_NULL_DATA); /* CHAR_OCTET_LENGTH */
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_str(my_fetch_str(hstmt, col, 4), "b", 1);
+  is_num(my_fetch_int(hstmt, 5), SQL_BINARY); /* DATA_TYPE */
+  is_num(my_fetch_int(hstmt, 7), 6); /* COLUMN_SIZE */
+  is_num(my_fetch_int(hstmt, 8), 3); /* BUFFER_LENGTH */
+  is_num(my_fetch_int(hstmt, 16), 3); /* CHAR_OCTET_LENGTH */
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "SELECT * FROM t_bit");
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_TYPE, NULL, 0, NULL,
+                                 &type));
+  is_num(type, SQL_BIT);
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 2, SQL_DESC_TYPE, NULL, 0, NULL,
+                                 &type));
+  is_num(type, SQL_BINARY);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bit");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_longlong1)
   ADD_TEST(t_numeric)
@@ -493,6 +694,12 @@ BEGIN_TESTS
   ADD_TEST(t_enumset)
   ADD_TEST(t_bug16917)
   ADD_TEST(t_bug16235)
+  ADD_TEST(t_bug27862_1)
+  ADD_TODO(t_bug27862_2)
+  ADD_TEST(decimal_scale)
+  ADD_TEST(binary_suffix)
+  ADD_TEST(float_scale)
+  ADD_TEST(bit)
 END_TESTS
 
 

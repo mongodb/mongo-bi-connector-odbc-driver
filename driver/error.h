@@ -34,8 +34,6 @@
 #ifndef __ERROR_H__
 #define __ERROR_H__
 
-#include "../MYODBCDbg/include/MYODBCDbg.h"
-
 /*
   myodbc internal error constants
 */

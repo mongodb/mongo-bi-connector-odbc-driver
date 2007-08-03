@@ -61,18 +61,18 @@ char allowed_chars[]=
       *pcbInfoValue= 0;                                                     \
       strmake((char*)rgbInfoValue,"",cbInfoValueMax);                       \
   }                                                                         \
-  MYODBCDbgReturnReturn(*pcbInfoValue >= cbInfoValueMax ?                      \
-		     SQL_SUCCESS_WITH_INFO:                                         \
-		     SQL_SUCCESS);                                                  \
+  return (*pcbInfoValue >= cbInfoValueMax ?                                 \
+          SQL_SUCCESS_WITH_INFO:                                            \
+          SQL_SUCCESS);                                                      \
 }
 
 #define MYINFO_SET_STR_L(rgbInfoValue,cbInfoValueMax,pcbInfoValue,val,len) \
 { \
   *pcbInfoValue= len; \
   strmake((char*)rgbInfoValue,val,cbInfoValueMax); \
-  MYODBCDbgReturnReturn(len >= cbInfoValueMax ? \
-		     SQL_SUCCESS_WITH_INFO: \
-		     SQL_SUCCESS); \
+  return (len >= cbInfoValueMax ? \
+          SQL_SUCCESS_WITH_INFO: \
+          SQL_SUCCESS); \
 }
 
 static my_bool myodbc_ov2_inited= 0;
@@ -101,14 +101,6 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
   char dummy2[255];
   SQLSMALLINT dummy;
   my_bool using_322;
-
-  MYODBCDbgEnter;
-
-  MYODBCDbgInfo("fInfoType: %s", MYODBCDbgInfoTypeString(fInfoType));
-  MYODBCDbgInfo("fInfoType: %d", fInfoType);
-  MYODBCDbgInfo("rgbInfoValue: 0x%lx", (long)rgbInfoValue);
-  MYODBCDbgInfo("cbInfoValueMax :%d", cbInfoValueMax);
-  MYODBCDbgInfo("pcbInfoValue: 0x%lx", (long)pcbInfoValue);
 
   if (cbInfoValueMax)
     cbInfoValueMax--;
@@ -872,10 +864,10 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
     {
       char buff[80];
       sprintf(buff, "Unsupported option: %d to SQLGetInfo", fInfoType);
-      MYODBCDbgReturnReturn(set_conn_error(hdbc, MYERR_S1C00, buff, 4000));
+      return set_conn_error(hdbc, MYERR_S1C00, buff, 4000);
     }
   }
-  MYODBCDbgReturnReturn( SQL_SUCCESS );
+  return SQL_SUCCESS;
 }
 
 
@@ -939,7 +931,7 @@ char sql_searchable[6], sql_unsearchable[6], sql_nullable[6], sql_no_nulls[6],
      sql_float[6], sql_real[6], sql_double[6], sql_char[6], sql_varchar[6],
      sql_longvarchar[6], sql_timestamp[6], sql_decimal[6], sql_numeric[6],
      sql_varbinary[6], sql_time[6], sql_date[6], sql_binary[6],
-     sql_longvarbinary[6];
+     sql_longvarbinary[6], sql_datetime[6];
 
 char *SQL_GET_TYPE_INFO_values[MYSQL_DATA_TYPES][19]=
 {
@@ -1022,17 +1014,17 @@ char *SQL_GET_TYPE_INFO_values[MYSQL_DATA_TYPES][19]=
   {"double auto_increment",sql_double,"15",NULL,NULL,NULL,sql_no_nulls,"0",sql_searchable,"0","0","1","double auto_increment","0","4",sql_double,NULL,"10",NULL},
 
   /* SQL_TYPE_DATE= 91 */
-  {"date",sql_date,"10","'","'",NULL,sql_nullable,"0",sql_searchable,"0","0","0","date",NULL,NULL,sql_date,NULL,NULL,NULL},
+  {"date",sql_date,"10","'","'",NULL,sql_nullable,"0",sql_searchable,"0","0","0","date",NULL,NULL,sql_datetime,sql_date,NULL,NULL},
 
   /* SQL_TYPE_TIME= 92 */
-  {"time",sql_time,"6","'","'",NULL,sql_nullable,"0",sql_searchable,"0","0","0","time",NULL,NULL,sql_time,NULL,NULL,NULL},
+  {"time",sql_time,"6","'","'",NULL,sql_nullable,"0",sql_searchable,"0","0","0","time",NULL,NULL,sql_datetime,sql_time,NULL,NULL},
 
   /* YEAR - SQL_SMALLINT */
   {"year",sql_smallint,"4",NULL,NULL,NULL,sql_nullable,"0",sql_searchable,"0","0","0","year",NULL,NULL,sql_smallint,NULL,"10",NULL},
 
   /* SQL_TYPE_TIMESTAMP= 93 */
-  {"datetime",sql_timestamp,"21","'","'",NULL,sql_nullable,"0",sql_searchable,"0","0","0","datetime","0","0",sql_timestamp,NULL,NULL,NULL},
-  {"timestamp",sql_timestamp,"14","'","'",NULL,sql_no_nulls,"0",sql_searchable,"0","0","0","timestamp","0","0",sql_timestamp,NULL,NULL,NULL},
+  {"datetime",sql_timestamp,"21","'","'",NULL,sql_nullable,"0",sql_searchable,"0","0","0","datetime","0","0",sql_datetime,sql_timestamp,NULL,NULL},
+  {"timestamp",sql_timestamp,"14","'","'",NULL,sql_no_nulls,"0",sql_searchable,"0","0","0","timestamp","0","0",sql_datetime,sql_timestamp,NULL,NULL},
 
   /* SQL_VARCHAR= 12 */
 #if TO_BE_DELETED /* NO NEED OF THIS, causes problems for DM */
@@ -1060,9 +1052,6 @@ SQLRETURN SQL_API SQLGetTypeInfo(SQLHSTMT hstmt, SQLSMALLINT fSqlType)
   STMT *stmt= (STMT *)hstmt;
   uint i;
 
-  MYODBCDbgEnter;
-  MYODBCDbgInfo("fSqlType: %d", fSqlType);
-
   my_SQLFreeStmt(hstmt, MYSQL_RESET);
 
   /* Set up result Data dictionary. */
@@ -1082,7 +1071,8 @@ SQLRETURN SQL_API SQLGetTypeInfo(SQLHSTMT hstmt, SQLSMALLINT fSqlType)
   {
     for (i= 0 ; i < MYSQL_DATA_TYPES ; i++)
     {
-      if (atoi(SQL_GET_TYPE_INFO_values[i][1]) == fSqlType)
+      if (atoi(SQL_GET_TYPE_INFO_values[i][1]) == fSqlType ||
+          atoi(SQL_GET_TYPE_INFO_values[i][15]) == fSqlType)
       {
         memcpy((gptr)&stmt->result_array[stmt->result->row_count++ *
                                          SQL_GET_TYPE_INFO_FIELDS],
@@ -1093,7 +1083,7 @@ SQLRETURN SQL_API SQLGetTypeInfo(SQLHSTMT hstmt, SQLSMALLINT fSqlType)
   }
   mysql_link_fields(stmt, SQL_GET_TYPE_INFO_fields, SQL_GET_TYPE_INFO_FIELDS);
 
-  MYODBCDbgReturnReturn(SQL_SUCCESS);
+  return SQL_SUCCESS;
 }
 
 
@@ -1104,63 +1094,34 @@ SQLRETURN SQL_API SQLGetTypeInfo(SQLHSTMT hstmt, SQLSMALLINT fSqlType)
 */
 void init_getfunctions(void)
 {
-#if MYSQL_VERSION_ID >= 40100
-  int2str(SQL_SEARCHABLE,sql_searchable,-10,0);
-  int2str(SQL_UNSEARCHABLE,sql_unsearchable,-10,0);
-  int2str(SQL_NULLABLE,sql_nullable,-10,0);
-  int2str(SQL_NO_NULLS,sql_no_nulls,-10,0);
-  int2str(SQL_BIT,sql_bit,-10,0);
-  int2str(SQL_TINYINT,sql_tinyint,-10,0);
-  int2str(SQL_SMALLINT,sql_smallint,-10,0);
-  int2str(SQL_INTEGER,sql_integer,-10,0);
-  int2str(SQL_BIGINT,sql_bigint,-10,0);
-  int2str(SQL_DECIMAL,sql_decimal,-10,0);
-  int2str(SQL_NUMERIC,sql_numeric,-10,0);
-  int2str(SQL_REAL,sql_real,-10,0);
-  int2str(SQL_FLOAT,sql_float,-10,0);
-  int2str(SQL_DOUBLE,sql_double,-10,0);
-  int2str(SQL_CHAR,sql_char,-10,0);
-  int2str(SQL_VARCHAR,sql_varchar,-10,0);
-  int2str(SQL_LONGVARCHAR,sql_longvarchar,-10,0);
-  int2str(SQL_LONGVARBINARY,sql_longvarbinary,-10,0);
-  int2str(SQL_VARBINARY,sql_varbinary,-10,0);
-  int2str(SQL_BINARY,sql_binary,-10,0);
-  int2str(SQL_TYPE_TIMESTAMP,sql_timestamp,-10,0);
-  int2str(SQL_TYPE_DATE,sql_date,-10,0);
-  int2str(SQL_TYPE_TIME,sql_time,-10,0);
+  my_int2str(SQL_SEARCHABLE,sql_searchable,-10,0);
+  my_int2str(SQL_UNSEARCHABLE,sql_unsearchable,-10,0);
+  my_int2str(SQL_NULLABLE,sql_nullable,-10,0);
+  my_int2str(SQL_NO_NULLS,sql_no_nulls,-10,0);
+  my_int2str(SQL_BIT,sql_bit,-10,0);
+  my_int2str(SQL_TINYINT,sql_tinyint,-10,0);
+  my_int2str(SQL_SMALLINT,sql_smallint,-10,0);
+  my_int2str(SQL_INTEGER,sql_integer,-10,0);
+  my_int2str(SQL_BIGINT,sql_bigint,-10,0);
+  my_int2str(SQL_DECIMAL,sql_decimal,-10,0);
+  my_int2str(SQL_NUMERIC,sql_numeric,-10,0);
+  my_int2str(SQL_REAL,sql_real,-10,0);
+  my_int2str(SQL_FLOAT,sql_float,-10,0);
+  my_int2str(SQL_DOUBLE,sql_double,-10,0);
+  my_int2str(SQL_CHAR,sql_char,-10,0);
+  my_int2str(SQL_VARCHAR,sql_varchar,-10,0);
+  my_int2str(SQL_LONGVARCHAR,sql_longvarchar,-10,0);
+  my_int2str(SQL_LONGVARBINARY,sql_longvarbinary,-10,0);
+  my_int2str(SQL_VARBINARY,sql_varbinary,-10,0);
+  my_int2str(SQL_BINARY,sql_binary,-10,0);
+  my_int2str(SQL_DATETIME,sql_datetime,-10,0);
+  my_int2str(SQL_TYPE_TIMESTAMP,sql_timestamp,-10,0);
+  my_int2str(SQL_TYPE_DATE,sql_date,-10,0);
+  my_int2str(SQL_TYPE_TIME,sql_time,-10,0);
 # if (ODBCVER < 0x0300)
   myodbc_sqlstate2_init();
   myodbc_ov2_inited= 1;
 # endif
-#else
-  int2str(SQL_SEARCHABLE,sql_searchable,-10);
-  int2str(SQL_UNSEARCHABLE,sql_unsearchable,-10);
-  int2str(SQL_NULLABLE,sql_nullable,-10);
-  int2str(SQL_NO_NULLS,sql_no_nulls,-10);
-  int2str(SQL_BIT,sql_bit,-10);
-  int2str(SQL_TINYINT,sql_tinyint,-10);
-  int2str(SQL_SMALLINT,sql_smallint,-10);
-  int2str(SQL_INTEGER,sql_integer,-10);
-  int2str(SQL_BIGINT,sql_bigint,-10);
-  int2str(SQL_DECIMAL,sql_decimal,-10);
-  int2str(SQL_NUMERIC,sql_numeric,-10);
-  int2str(SQL_REAL,sql_real,-10);
-  int2str(SQL_FLOAT,sql_float,-10);
-  int2str(SQL_DOUBLE,sql_double,-10);
-  int2str(SQL_CHAR,sql_char,-10);
-  int2str(SQL_VARCHAR,sql_varchar,-10);
-  int2str(SQL_LONGVARCHAR,sql_longvarchar,-10);
-  int2str(SQL_LONGVARBINARY,sql_longvarbinary,-10);
-  int2str(SQL_VARBINARY,sql_varbinary,-10);
-  int2str(SQL_BINARY,sql_binary,-10);
-  int2str(SQL_TYPE_TIMESTAMP,sql_timestamp,-10);
-  int2str(SQL_TYPE_DATE,sql_date,-10);
-  int2str(SQL_TYPE_TIME,sql_time,-10);
-# if (ODBCVER < 0x0300)
-  myodbc_sqlstate2_init();
-  myodbc_ov2_inited= 1;
-# endif
-#endif
 }
 
 /**
@@ -1170,15 +1131,9 @@ void myodbc_ov_init(SQLINTEGER odbc_version)
 {
   if (odbc_version == SQL_OV_ODBC2)
   {
-#if MYSQL_VERSION_ID >= 40100
-    int2str(SQL_TIMESTAMP,sql_timestamp,-10,0);
-    int2str(SQL_DATE,sql_date,-10,0);
-    int2str(SQL_TIME,sql_time,-10,0);
-#else
-    int2str(SQL_TIMESTAMP,sql_timestamp,-10);
-    int2str(SQL_DATE,sql_date,-10);
-    int2str(SQL_TIME,sql_time,-10);
-#endif
+    my_int2str(SQL_TIMESTAMP,sql_timestamp,-10,0);
+    my_int2str(SQL_DATE,sql_date,-10,0);
+    my_int2str(SQL_TIME,sql_time,-10,0);
     myodbc_sqlstate2_init();
     myodbc_ov2_inited= 1;
   }
@@ -1188,15 +1143,9 @@ void myodbc_ov_init(SQLINTEGER odbc_version)
       return;
     myodbc_ov2_inited= 0;
 
-#if MYSQL_VERSION_ID >= 40100
-    int2str(SQL_TYPE_TIMESTAMP,sql_timestamp,-10,0);
-    int2str(SQL_TYPE_DATE,sql_date,-10,0);
-    int2str(SQL_TYPE_TIME,sql_time,-10,0);
-#else
-    int2str(SQL_TYPE_TIMESTAMP,sql_timestamp,-10);
-    int2str(SQL_TYPE_DATE,sql_date,-10);
-    int2str(SQL_TYPE_TIME,sql_time,-10);
-#endif
+    my_int2str(SQL_TYPE_TIMESTAMP,sql_timestamp,-10,0);
+    my_int2str(SQL_TYPE_DATE,sql_date,-10,0);
+    my_int2str(SQL_TYPE_TIME,sql_time,-10,0);
     myodbc_sqlstate3_init();
   }
 }
@@ -1306,9 +1255,6 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
 {
   SQLUSMALLINT index, myodbc_func_size;
 
-  MYODBCDbgEnter;
-  MYODBCDbgInfo("fFunction: %d",fFunction);
-
   myodbc_func_size= sizeof(myodbc3_functions) / sizeof(myodbc3_functions[0]);
 
   if (fFunction == SQL_API_ODBC3_ALL_FUNCTIONS)
@@ -1318,7 +1264,7 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
       SQLUSMALLINT id= myodbc3_functions[index];
       pfExists[id >> 4]|= (1 << (id & 0x000F));
     }
-    MYODBCDbgReturnReturn(SQL_SUCCESS);
+    return SQL_SUCCESS;
   }
 
   if (fFunction == SQL_API_ALL_FUNCTIONS)
@@ -1328,7 +1274,7 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
       if (myodbc3_functions[index] < 100)
         pfExists[myodbc3_functions[index]]= SQL_TRUE;
     }
-    MYODBCDbgReturnReturn(SQL_SUCCESS);
+    return SQL_SUCCESS;
   }
 
   *pfExists= SQL_FALSE;
@@ -1341,5 +1287,5 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
     }
   }
 
-  MYODBCDbgReturnReturn(SQL_SUCCESS);
+  return SQL_SUCCESS;
 }

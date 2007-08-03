@@ -283,7 +283,8 @@ DECLARE_TEST(bind_invalidcol)
   is(check_sqlstate(hstmt, "HY002") == OK);
 
   /* test (unsupported) bookmark column number */
-  expect_stmt(hstmt, SQLBindCol(hstmt, 0, SQL_C_CHAR, "", 4, NULL), SQL_ERROR);
+  expect_stmt(hstmt, SQLBindCol(hstmt, 0, SQL_C_BOOKMARK, "", 4, NULL),
+              SQL_ERROR);
   is(check_sqlstate(hstmt, "HY002") == OK);
 
   return OK;

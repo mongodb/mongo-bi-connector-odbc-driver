@@ -40,14 +40,13 @@
 #define if_dynamic_cursor(st) ((st)->stmt_options.cursor_type == SQL_CURSOR_DYNAMIC)
 #define if_forward_cache(st) ((st)->stmt_options.cursor_type == SQL_CURSOR_FORWARD_ONLY && \
 			     (st)->dbc->flag & FLAG_NO_CACHE )
+#define is_connected(dbc)    ((dbc)->mysql.net.vio)
 #define trans_supported(db) ((db)->mysql.server_capabilities & CLIENT_TRANSACTIONS)
 #define autocommit_on(db) ((db)->mysql.server_status & SERVER_STATUS_AUTOCOMMIT)
 #define true_dynamic(flag) (!(flag &FLAG_FORWARD_CURSOR ) && (flag & FLAG_DYNAMIC_CURSOR))
 #define reset_ptr(x) if (x) x= 0
 #define digit(A) ((int) (A - '0'))
 #define option_flag(A,B) ((A)->dbc->flag & B)
-#define binary_field(fld) ((fld)->flags & BINARY_FLAG)
-#define num_field(fld) ((fld)->flags & NUM_FLAG)
 
 #ifdef MYODBC_DBG
 
@@ -62,6 +61,14 @@
 #define MYLOG_DBC_QUERY(A,B)
 #endif
 
+/* Wrappers to hide differences in client library versions. */
+#if MYSQL_VERSION_ID >= 40100
+# define my_int2str(val, dst, radix, upcase) \
+    int2str((val), (dst), (radix), (upcase))
+#else
+# define my_int2str(val, dst, radix, upcase) \
+    int2str((val), (dst), (radix))
+#endif
 
 /*
   Utility function prototypes that share among files
@@ -108,9 +115,27 @@ SQLRETURN set_stmt_error(STMT *stmt, char *state,const char *message,uint errcod
 SQLRETURN handle_connection_error(STMT *stmt);
 void set_mem_error(MYSQL *mysql);
 void translate_error(char *save_state,myodbc_errid errid,uint mysql_err);
-int unireg_to_sql_datatype(STMT FAR *stmt, MYSQL_FIELD *field, char *buff,
-			   ulong *transfer_length,ulong *precision,
-			   ulong *display_size);
+
+SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff);
+SQLLEN get_column_size(STMT *stmt, MYSQL_FIELD *field, my_bool actual);
+SQLLEN get_decimal_digits(STMT *stmt, MYSQL_FIELD *field);
+SQLLEN get_transfer_octet_length(STMT *stmt, MYSQL_FIELD *field);
+SQLLEN get_display_size(STMT *stmt, MYSQL_FIELD *field);
+
+#define is_char_sql_type(type) \
+  ((type) == SQL_CHAR || (type) == SQL_VARCHAR || (type) == SQL_LONGVARCHAR)
+#define is_wchar_sql_type(type) \
+  ((type) == SQL_WCHAR || (type) == SQL_WVARCHAR || (type) == SQL_WLONGVARCHAR)
+#define is_binary_sql_type(type) \
+  ((type) == SQL_BINARY || (type) == SQL_VARBINARY || \
+   (type) == SQL_LONGVARBINARY)
+
+#define is_numeric_mysql_type(field) \
+  ((field)->type <= MYSQL_TYPE_NULL || (field)->type == MYSQL_TYPE_LONGLONG || \
+   (field)->type == MYSQL_TYPE_INT24 || \
+   ((field)->type == MYSQL_TYPE_BIT && (field)->length == 1) || \
+   (field)->type == MYSQL_TYPE_NEWDECIMAL)
+
 SQLRETURN SQL_API my_SQLBindParameter(SQLHSTMT hstmt,SQLUSMALLINT ipar,
 				      SQLSMALLINT fParamType,
 				      SQLSMALLINT fCType, SQLSMALLINT fSqlType,
@@ -153,14 +178,6 @@ SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV FAR * phenv);
 SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc);
 SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc);
 SQLRETURN SQL_API my_SQLFreeEnv(SQLHENV henv);
-SQLRETURN SQL_API my_SQLDisconnect(SQLHDBC hdbc);
-SQLRETURN SQL_API my_SQLDriverConnect(SQLHDBC hdbc,SQLHWND hwnd,
-				      SQLCHAR FAR *szConnStrIn,
-				      SQLSMALLINT cbConnStrIn,
-				      SQLCHAR FAR *szConnStrOut,
-				      SQLSMALLINT cbConnStrOutMax,
-				      SQLSMALLINT FAR *pcbConnStrOut,
-				      SQLUSMALLINT fDriverCompletion);
 char *extend_buffer(NET *net,char *to,ulong length);
 void myodbc_end();
 my_bool set_dynamic_result(STMT FAR *stmt);

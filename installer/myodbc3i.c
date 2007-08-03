@@ -60,6 +60,8 @@
 #include <odbcinst.h>
 #endif
 
+typedef BOOL (INSTAPI *ConfigDSNFunctor)(HWND, WORD, LPCSTR, LPCSTR);
+
 /*! Our syntax. This is likely to expand over time. */
 char *szSyntax =
 "\n" \
@@ -444,20 +446,8 @@ int doQueryDataSourceName( UWORD nScope )
     MYODBCUTIL_DATASOURCE *pDataSource = MYODBCUtilAllocDataSource( MYODBCUTIL_DATASOURCE_MODE_DSN_VIEW );
 
     /* set scope */
-    switch ( nScope )
-    {
-        case ODBC_BOTH_DSN:
-            if ( !SQLSetConfigMode( nScope ) )
-                return FALSE;
-            break;
-        case ODBC_USER_DSN:
-        case ODBC_SYSTEM_DSN:
-            if ( !SQLSetConfigMode( nScope ) )
-                return FALSE;
-            break;
-        default:
-            return FALSE;
-    }
+    if ( !SQLSetConfigMode( nScope ) )
+        return FALSE;
 
     if ( !MYODBCUtilReadDataSource( pDataSource, pszName ) )
     {
@@ -561,6 +551,15 @@ int doAddDriver()
     {
         fprintf( stderr, "[%s][%d][ERROR] Please provide driver attributes.\n", __FILE__, __LINE__ );
         return 0;
+    }
+
+    switch (cObjectSub) {
+    case 'u':
+      if (!SQLSetConfigMode(ODBC_USER_DSN))
+        return FALSE;
+    case 's':
+      if (!SQLSetConfigMode(ODBC_SYSTEM_DSN))
+        return FALSE;
     }
 
     /*
@@ -812,7 +811,7 @@ int doConfigDataSource( WORD nRequest )
     MYODBCUTIL_DRIVER *     pDriver             = MYODBCUtilAllocDriver();
     MYODBCUTIL_DATASOURCE * pDataSourceGiven    = MYODBCUtilAllocDataSource( MYODBCUTIL_DATASOURCE_MODE_DSN_VIEW );
     MYODBCUTIL_DATASOURCE * pDataSource         = MYODBCUtilAllocDataSource( MYODBCUTIL_DATASOURCE_MODE_DSN_VIEW );
-    BOOL                    (*pFunc)( HWND, WORD, LPCSTR, LPCSTR );
+    ConfigDSNFunctor        pFunc;
 #if defined(WIN32)
     HINSTANCE               hLib                = 0;
 #else
@@ -843,7 +842,7 @@ int doConfigDataSource( WORD nRequest )
         {
             /* pull driver from attributes as we can not have it in there for ConfigDSN() */
             sprintf( szDriver, "%s", pDataSourceGiven->pszDRIVER );
-            free( pDataSourceGiven->pszDRIVER );
+            _global_free( pDataSourceGiven->pszDRIVER );
             pDataSourceGiven->pszDRIVER = NULL;
         }
         else
@@ -891,7 +890,7 @@ int doConfigDataSource( WORD nRequest )
     }
 
     /* lookup ConfigDSN */
-    pFunc = (BOOL (*)(HWND, WORD, LPCSTR, LPCSTR )) GetProcAddress( hLib, "ConfigDSN" );
+    pFunc = (ConfigDSNFunctor) GetProcAddress( hLib, "ConfigDSN" );
     if ( !pFunc )
     {
         doPrintLastErrorString();
@@ -917,7 +916,7 @@ int doConfigDataSource( WORD nRequest )
     }
 
     /* lookup ConfigDSN */
-    pFunc = (BOOL (*)(HWND, WORD, LPCSTR, LPCSTR )) lt_dlsym( hLib, "ConfigDSN" );
+    pFunc = (ConfigDSNFunctor) lt_dlsym( hLib, "ConfigDSN" );
     if ( !pFunc )
     {
         fprintf( stderr, "[%s][%d][ERROR] Could not find ConfigDSN in (%s). Error is %s\n", __FILE__, __LINE__, pDriver->pszSETUP, lt_dlerror() );

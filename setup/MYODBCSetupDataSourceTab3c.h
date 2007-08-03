@@ -48,6 +48,7 @@ protected:
     MYODBCSetupCheckBox *pcheckboxReadOptionsFromMyCnf;         
     MYODBCSetupCheckBox *pcheckboxDisableTransactions;          
     MYODBCSetupCheckBox *pcheckboxForceUseOfForwardOnlyCursors;
+    MYODBCSetupCheckBox *pcheckboxMultiStatements;
 };
 
 #endif

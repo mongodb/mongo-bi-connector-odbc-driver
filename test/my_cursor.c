@@ -1979,7 +1979,8 @@ DECLARE_TEST(t_setpos_upd_bug1)
     SQLRETURN rc;
     SQLINTEGER id;
     SQLLEN len,id_len,f_len,l_len,ts_len;
-    SQLCHAR fname[21],lname[21],ts[17],szTable[256];
+    SQLCHAR fname[21],lname[21],szTable[256];
+    SQL_TIMESTAMP_STRUCT ts;
     SQLSMALLINT pccol;
     SQLUSMALLINT rgfRowStatus;
 
@@ -2022,7 +2023,7 @@ DECLARE_TEST(t_setpos_upd_bug1)
     rc = SQLBindCol(hstmt,3,SQL_C_CHAR,lname,20,&l_len);
     mystmt(hstmt,rc);
 
-    rc = SQLBindCol(hstmt,4,SQL_C_TIMESTAMP,ts,21,&ts_len);
+    rc = SQLBindCol(hstmt,4,SQL_C_TIMESTAMP,&ts,21,&ts_len);
     mystmt(hstmt,rc);
 
     rc = SQLColAttribute(hstmt,1,SQL_COLUMN_TABLE_NAME,szTable,sizeof(szTable),NULL,NULL);
@@ -2486,6 +2487,100 @@ DECLARE_TEST(bug10563)
 }
 
 
+/*
+ * Bug 6741 - SQL_ATTR_ROW_BIND_OFFSET_PTR is not supported
+ * It was supported for use in some batch operations, but not
+ * standard cursor operations.
+ */
+#define BUG6741_VALS 5
+
+DECLARE_TEST(bug6741)
+{
+  int i;
+  SQLLEN offset;
+  struct {
+    SQLINTEGER xval;
+    SQLLEN ylen;
+  } results[BUG6741_VALS];
+
+  ok_sql(hstmt, "drop table if exists t_bug6741");
+  ok_sql(hstmt, "create table t_bug6741 (x int, y int)");
+
+  ok_sql(hstmt, "insert into t_bug6741 values (0,0),(1,NULL),(2,2),(3,NULL),(4,4)");
+  ok_sql(hstmt, "select x,y from t_bug6741 order by x");
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_BIND_OFFSET_PTR,
+          &offset, SQL_IS_UINTEGER));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &results[0].xval, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_LONG, NULL, 0, &results[0].ylen));
+
+  /* fetch all the data */
+  for(i = 0; i < BUG6741_VALS; ++i)
+  {
+    offset = i * sizeof(results[0]);
+    ok_stmt(hstmt, SQLFetch(hstmt));
+  }
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  /* verify it */
+  for(i = 0; i < BUG6741_VALS; ++i)
+  {
+    printf("xval[%d] = %d\n", i, results[i].xval);
+    printf("ylen[%d] = %ld\n", i, results[i].ylen);
+    is_num(results[i].xval, i);
+    if(i % 2)
+    {
+      is_num(results[i].ylen, SQL_NULL_DATA);
+    }
+    else
+    {
+      is_num(results[i].ylen, sizeof(SQLINTEGER));
+    }
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "drop table if exists t_bug6741");
+
+  return OK;
+}
+
+
+/** Test SQL_POSITION */
+DECLARE_TEST(t_chunk)
+{
+  SQLCHAR   txt[100];
+  SQLLEN    len;
+
+  if (!driver_supports_setpos(hdbc))
+    skip("driver doesn't support setpos");
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_chunk");
+  ok_sql(hstmt, "CREATE TABLE t_chunk (id int not null primary key,"
+         "description varchar(50), txt text)");
+  ok_sql(hstmt, "INSERT INTO t_chunk VALUES (1,'venu','Developer, MySQL AB'),"
+         "(2,'monty','Michael Monty Widenius - main MySQL developer'),"
+         "(3,'mysql','MySQL AB- Speed, Power and Precision')");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "SELECT * from t_chunk");
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 1));
+
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 3, SQL_C_CHAR, txt, 100, &len));
+  is_str(txt, "Developer, MySQL AB", 19);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_chunk");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_positioned_cursor)
   ADD_TEST(my_setpos_cursor)
@@ -2524,6 +2619,8 @@ BEGIN_TESTS
   ADD_TEST(tmysql_pcbvalue)
   ADD_TEST(t_bug28255)
   ADD_TEST(bug10563)
+  ADD_TEST(bug6741)
+  ADD_TEST(t_chunk)
 END_TESTS
 
 

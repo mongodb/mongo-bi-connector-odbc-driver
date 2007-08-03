@@ -23,13 +23,6 @@ REM #########################################################
 
 ECHO Creating Visual Studio project files...
 
-ECHO MYODBCDbg...
-cd MYODBCDbg\MYODBCDbgLib
-qmake -t vclib
-cd ..
-qmake
-cd ..
-
 ECHO dltest...
 cd dltest
 qmake -t vcapp

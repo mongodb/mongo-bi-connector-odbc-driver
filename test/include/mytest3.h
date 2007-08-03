@@ -483,10 +483,11 @@ SQLRETURN tmysql_prepare(SQLHSTMT hstmt, char *sql_stmt)
 SQLINTEGER my_fetch_int(SQLHSTMT hstmt, SQLUSMALLINT irow)
 {
     SQLINTEGER nData;
+    SQLLEN len;
 
-    SQLGetData(hstmt,irow,SQL_INTEGER,&nData,0,NULL);
-    printMessage(" my_fetch_int: %ld\n", (long int)nData);
-    return(nData);
+    SQLGetData(hstmt, irow, SQL_INTEGER, &nData, 0, &len);
+    printMessage(" my_fetch_int: %ld (%ld)\n", (long int)nData, len);
+    return (len != SQL_NULL_DATA) ? nData : 0;
 }
 /**
   return string data, by fetching it
