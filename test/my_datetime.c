@@ -722,8 +722,6 @@ DECLARE_TEST(t_bug9927)
 */
 DECLARE_TEST(t_bug30081)
 {
-  SQLCHAR col[10];
-
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug30081");
   ok_sql(hstmt,
          "CREATE TABLE t_bug30081 (a TIMESTAMP DEFAULT 0,"
@@ -809,6 +807,44 @@ DECLARE_TEST(t_datecolumns)
 }
 
 
+/**
+  Bug #14414: SQLColumn() does not return timestamp nullable attribute correctly
+*/
+DECLARE_TEST(t_bug14414)
+{
+  SQLCHAR col[10];
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug14414");
+  ok_sql(hstmt, "CREATE TABLE t_bug14414(a TIMESTAMP, b TIMESTAMP NOT NULL,"
+        "c TIMESTAMP NULL)");
+
+  ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0,
+                            (SQLCHAR *)"t_bug14414", SQL_NTS, NULL, 0));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, col, 4), "a", 1);
+  is_num(my_fetch_int(hstmt, 11), SQL_NULLABLE);
+  is_str(my_fetch_str(hstmt, col, 18), "YES", 3);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, col, 4), "b", 1);
+  is_num(my_fetch_int(hstmt, 11), SQL_NO_NULLS);
+  is_str(my_fetch_str(hstmt, col, 18), "NO", 3);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, col, 4), "c", 1);
+  is_num(my_fetch_int(hstmt, 11), SQL_NULLABLE);
+  is_str(my_fetch_str(hstmt, col, 18), "YES", 3);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug14414");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_ts)
   ADD_TEST(t_tstotime)
@@ -821,6 +857,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug9927)
   ADD_TODO(t_bug30081)
   ADD_TEST(t_datecolumns)
+  ADD_TEST(t_bug14414)
 END_TESTS
 
 

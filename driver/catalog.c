@@ -879,7 +879,15 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
         }
       }
 
-      if (field->flags & NOT_NULL_FLAG)
+      /*
+        If a field has TIMESTAMP_FLAG set, it's an auto-updating timestamp
+        field, and NULL can be stored to it (although it gets turned into
+        something else).
+
+        The same logic applies to fields with AUTO_INCREMENT_FLAG set.
+      */
+      if ((field->flags & NOT_NULL_FLAG) && !(field->flags & TIMESTAMP_FLAG) &&
+          !(field->flags & AUTO_INCREMENT_FLAG))
       {
         sprintf(buff, "%d", SQL_NO_NULLS);
         row[10]= strdup_root(alloc, buff); /* NULLABLE */

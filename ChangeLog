@@ -7,6 +7,10 @@
     ODBC logging should be used.
 
   Bugs fixed:
+  * SQLColumns() incorrectly reported that an auto-incrementing
+    field was not nullable. (Bug #14407)
+  * SQLColumns() incorrectly reported that an auto-updating timestamp
+    field was not nullable. (Bug #14414)
   * Lengths returned by SQLColumns(), SQLDescribeCol(), and SQLColAttribute()
     were often incorrect. These lengths should now conform to the ODBC
     specification. FLAG_FIELD_LENGTH no longer has any effect. The default

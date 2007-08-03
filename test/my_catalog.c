@@ -486,7 +486,7 @@ DECLARE_TEST(t_columns)
     { {3,2},  {10,4}, {2,2},  {10,2},  {1,2}},
     { {-6,2},  {3,4}, {0,2},  {10,2},  {0,2}},
     { {4,2}, {10,4}, {0,2},  {10,2},  {0,2}},
-    { {-6,2}, {3,4}, {0,2},  {10,2},  {0,2}}
+    { {-6,2}, {3,4}, {0,2},  {10,2},  {1,2}}
   };
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_columns");
@@ -1099,6 +1099,34 @@ DECLARE_TEST(t_bug29888)
 }
 
 
+/**
+  Bug #14407: SQLColumns gives wrong information of not nulls
+*/
+DECLARE_TEST(t_bug14407)
+{
+  SQLCHAR col[10];
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug14407");
+  ok_sql(hstmt,
+         "CREATE TABLE t_bug14407(a INT NOT NULL AUTO_INCREMENT PRIMARY KEY)");
+
+  ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0,
+                            (SQLCHAR *)"t_bug14407", SQL_NTS, NULL, 0));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, col, 4), "a", 1);
+  is_num(my_fetch_int(hstmt, 11), SQL_NULLABLE);
+  is_str(my_fetch_str(hstmt, col, 18), "YES", 3);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug14407");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -1120,6 +1148,7 @@ BEGIN_TESTS
   ADD_TEST(bug8860)
   ADD_TEST(t_bug26934)
   ADD_TEST(t_bug29888)
+  ADD_TEST(t_bug14407)
 END_TESTS
 
 
