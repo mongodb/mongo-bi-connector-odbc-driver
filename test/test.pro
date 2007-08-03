@@ -20,7 +20,6 @@ SUBDIRS += my_error.pro
 SUBDIRS += my_info.pro
 SUBDIRS += my_keys.pro
 SUBDIRS += my_param.pro
-SUBDIRS += my_position.pro
 SUBDIRS += my_prepare.pro
 SUBDIRS += my_relative.pro
 SUBDIRS += my_result.pro
