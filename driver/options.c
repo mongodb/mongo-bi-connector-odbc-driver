@@ -107,11 +107,11 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
             break;
 
         case SQL_ATTR_MAX_LENGTH:
-            options->max_length= (SQLUINTEGER) ValuePtr;
+            options->max_length= (SQLULEN) ValuePtr;
             break;
 
         case SQL_ATTR_MAX_ROWS:
-            options->max_rows= (SQLUINTEGER) ValuePtr;
+            options->max_rows= (SQLULEN) ValuePtr;
             break;
 
         case SQL_ATTR_METADATA_ID:
@@ -189,11 +189,11 @@ get_constmt_attr(SQLSMALLINT  HandleType,
             break;
 
         case SQL_ATTR_MAX_LENGTH:
-            *((SQLUINTEGER *) ValuePtr)= options->max_length;
+            *((SQLULEN *) ValuePtr)= options->max_length;
             break;
 
         case SQL_ATTR_MAX_ROWS:
-            *((SQLUINTEGER *) ValuePtr)= options->max_rows;
+            *((SQLULEN *) ValuePtr)= options->max_rows;
             break;
 
         case SQL_ATTR_METADATA_ID:
