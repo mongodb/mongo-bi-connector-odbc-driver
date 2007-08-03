@@ -917,7 +917,7 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
         else
         {
           char *def= alloc_root(alloc, strlen(field->def) + 3);
-          if (is_numeric_mysql_type(field->type))
+          if (is_numeric_mysql_type(field))
             sprintf(def, "%s", field->def);
           else
             sprintf(def, "'%s'", field->def);

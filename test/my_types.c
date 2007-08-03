@@ -640,6 +640,7 @@ DECLARE_TEST(bit)
 {
   SQLCHAR col[10];
   SQLINTEGER type;
+  SQLLEN len;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bit");
   ok_sql(hstmt, "CREATE TABLE t_bit (a BIT(1), b BIT(17))");
@@ -653,7 +654,8 @@ DECLARE_TEST(bit)
   is_num(my_fetch_int(hstmt, 5), SQL_BIT); /* DATA_TYPE */
   is_num(my_fetch_int(hstmt, 7), 1); /* COLUMN_SIZE */
   is_num(my_fetch_int(hstmt, 8), 1); /* BUFFER_LENGTH */
-  is_num(my_fetch_int(hstmt, 16), 1); /* CHAR_OCTET_LENGTH */
+  ok_stmt(hstmt, SQLGetData(hstmt, 16, SQL_C_LONG, &type, 0, &len));
+  is_num(len, SQL_NULL_DATA); /* CHAR_OCTET_LENGTH */
 
   ok_stmt(hstmt, SQLFetch(hstmt));
 

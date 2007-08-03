@@ -125,10 +125,11 @@ SQLLEN get_display_size(STMT *stmt, MYSQL_FIELD *field);
   ((type) == SQL_BINARY || (type) == SQL_VARBINARY || \
    (type) == SQL_LONGVARBINARY)
 
-#define is_numeric_mysql_type(type) \
-  ((type) <= MYSQL_TYPE_NULL || (type) == MYSQL_TYPE_LONGLONG || \
-   (type) == MYSQL_TYPE_INT24 || (type) == MYSQL_TYPE_BIT || \
-   (type) == MYSQL_TYPE_NEWDECIMAL)
+#define is_numeric_mysql_type(field) \
+  ((field)->type <= MYSQL_TYPE_NULL || (field)->type == MYSQL_TYPE_LONGLONG || \
+   (field)->type == MYSQL_TYPE_INT24 || \
+   ((field)->type == MYSQL_TYPE_BIT && (field)->length == 1) || \
+   (field)->type == MYSQL_TYPE_NEWDECIMAL)
 
 SQLRETURN SQL_API my_SQLBindParameter(SQLHSTMT hstmt,SQLUSMALLINT ipar,
 				      SQLSMALLINT fParamType,
