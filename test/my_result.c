@@ -258,8 +258,8 @@ static void desc_col_check(SQLHSTMT hstmt,
                            SQLUSMALLINT icol,
                            const char *name,
                            SQLSMALLINT sql_type,
-                           SQLUINTEGER col_def,
-                           SQLUINTEGER col_def1,
+                           SQLULEN col_def,
+                           SQLULEN col_def1,
                            SQLSMALLINT scale,
                            SQLSMALLINT nullable)
 {
@@ -334,36 +334,31 @@ DECLARE_TEST(t_desc_col)
     fprintf(stdout,"total columns: %d\n", ColumnCount);
     my_assert(ColumnCount == 23);
 
-    desc_col_check(hstmt, 1,  "c1",  SQL_INTEGER,   10, 11, 0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 2,  "c2",  SQL_BINARY,    2,  2,  0,  SQL_NO_NULLS);
+    desc_col_check(hstmt, 1,  "c1",  SQL_INTEGER,   10, 10, 0,  SQL_NULLABLE);
+    desc_col_check(hstmt, 2,  "c2",  SQL_BINARY,    4,  2,  0,  SQL_NO_NULLS);
     desc_col_check(hstmt, 3,  "c3",  SQL_CHAR,      1,  1,  0,  SQL_NULLABLE);
     desc_col_check(hstmt, 4,  "c4",  SQL_VARCHAR,   5,  5,  0,  SQL_NULLABLE);
     desc_col_check(hstmt, 5,  "c5",  SQL_DECIMAL,   10, 10, 3,  SQL_NO_NULLS);
     desc_col_check(hstmt, 6,  "c6",  SQL_TINYINT,   3,  4,  0,  SQL_NULLABLE);
     desc_col_check(hstmt, 7,  "c7",  SQL_SMALLINT,  5,  6,  0,  SQL_NULLABLE);
     desc_col_check(hstmt, 8,  "c8",  SQL_DECIMAL,   4,  4,  2,  SQL_NULLABLE);
-    desc_col_check(hstmt, 9,  "c9",  SQL_DOUBLE,    22, 24, 31, SQL_NULLABLE);
-    desc_col_check(hstmt, 10, "c10", SQL_REAL,      12, 24, 31, SQL_NULLABLE);
+    desc_col_check(hstmt, 9,  "c9",  SQL_DOUBLE,    15, 15, 0, SQL_NULLABLE);
+    desc_col_check(hstmt, 10, "c10", SQL_REAL,      7,  7,  0, SQL_NULLABLE);
     desc_col_check(hstmt, 11, "c11", SQL_BIGINT,    19, 19, 0,  SQL_NO_NULLS);
 
-    /*
-    SQL_VARBINARY is temporarily disabled due to the problems with metadata 
-    returned by the server.
-
-    desc_col_check(hstmt, 12, "c12", SQL_VARBINARY, 12, 12, 0,  SQL_NULLABLE);
-    */
+    desc_col_check(hstmt, 12, "c12", SQL_VARBINARY, 24, 24, 0,  SQL_NULLABLE);
 
     desc_col_check(hstmt, 13, "c13", SQL_CHAR,      20, 20, 0,  SQL_NO_NULLS);
-    desc_col_check(hstmt, 14, "c14", SQL_REAL,      10, 24, 3,  SQL_NULLABLE);
+    desc_col_check(hstmt, 14, "c14", SQL_REAL,      7,  7,  0,  SQL_NULLABLE);
     desc_col_check(hstmt, 15, "c15", SQL_LONGVARCHAR, 255, 255, 0,  SQL_NULLABLE);
     desc_col_check(hstmt, 16, "c16", SQL_LONGVARCHAR, 65535, 65535, 0,  SQL_NULLABLE);
     desc_col_check(hstmt, 17, "c17", SQL_LONGVARCHAR, 16777215, 16777215, 0,  SQL_NULLABLE);
     desc_col_check(hstmt, 18, "c18", SQL_LONGVARCHAR, 4294967295 , 16777215 , 0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 19, "c19", SQL_LONGVARBINARY, 255, 255, 0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 20, "c20", SQL_LONGVARBINARY, 65535, 65535, 0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 21, "c21", SQL_LONGVARBINARY, 16777215, 16777215, 0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 22, "c22", SQL_LONGVARBINARY, 4294967295 , 16777215 , 0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 23, "c23", SQL_LONGVARBINARY, 255, 5, 0,  SQL_NULLABLE);
+    desc_col_check(hstmt, 19, "c19", SQL_LONGVARBINARY, 255 * 2, 255, 0,  SQL_NULLABLE);
+    desc_col_check(hstmt, 20, "c20", SQL_LONGVARBINARY, 65535 * 2, 65535, 0,  SQL_NULLABLE);
+    desc_col_check(hstmt, 21, "c21", SQL_LONGVARBINARY, 16777215 * 2, 16777215, 0,  SQL_NULLABLE);
+    desc_col_check(hstmt, 22, "c22", SQL_LONGVARBINARY, 4294967295 * 2 , 16777215 , 0,  SQL_NULLABLE);
+    desc_col_check(hstmt, 23, "c23", SQL_LONGVARBINARY, 255 * 2, 5, 0,  SQL_NULLABLE);
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
@@ -1132,7 +1127,7 @@ DECLARE_TEST(t_desccol)
 
 
 void desccol(SQLHSTMT hstmt, SQLCHAR    *cname,  SQLSMALLINT clen,
-             SQLSMALLINT sqltype,SQLUINTEGER size,
+             SQLSMALLINT sqltype,SQLULEN size,
              SQLSMALLINT scale,SQLSMALLINT isNull)
 {
     SQLRETURN   rc =0;
@@ -1246,19 +1241,19 @@ DECLARE_TEST(t_desccolext)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    desccol(hstmt,"t1",2,SQL_TINYINT,4,0,SQL_NULLABLE);
-    desccol(hstmt,"t2",2,SQL_TINYINT,10,0,SQL_NULLABLE);
+    desccol(hstmt,"t1",2,SQL_TINYINT,3,0,SQL_NULLABLE);
+    desccol(hstmt,"t2",2,SQL_TINYINT,3,0,SQL_NULLABLE);
     desccol(hstmt,"t3",2,SQL_TINYINT,3,0,SQL_NULLABLE);
 
-    desccol(hstmt,"s1",2,SQL_SMALLINT,6,0,SQL_NULLABLE);
-    desccol(hstmt,"s2",2,SQL_SMALLINT,10,0,SQL_NULLABLE);
+    desccol(hstmt,"s1",2,SQL_SMALLINT,5,0,SQL_NULLABLE);
+    desccol(hstmt,"s2",2,SQL_SMALLINT,5,0,SQL_NULLABLE);
     desccol(hstmt,"s3",2,SQL_SMALLINT,5,0,SQL_NULLABLE);
 
-    desccol(hstmt,"m1",2,SQL_INTEGER,9,0,SQL_NULLABLE);
-    desccol(hstmt,"m2",2,SQL_INTEGER,10,0,SQL_NULLABLE);
+    desccol(hstmt,"m1",2,SQL_INTEGER,8,0,SQL_NULLABLE);
+    desccol(hstmt,"m2",2,SQL_INTEGER,8,0,SQL_NULLABLE);
     desccol(hstmt,"m3",2,SQL_INTEGER,8,0,SQL_NULLABLE);
 
-    desccol(hstmt,"i1",2,SQL_INTEGER,11,0,SQL_NULLABLE);
+    desccol(hstmt,"i1",2,SQL_INTEGER,10,0,SQL_NULLABLE);
     desccol(hstmt,"i2",2,SQL_INTEGER,10,0,SQL_NO_NULLS);
     desccol(hstmt,"i3",2,SQL_INTEGER,10,0,SQL_NULLABLE);
     desccol(hstmt,"i4",2,SQL_INTEGER,10,0,SQL_NULLABLE);
@@ -1267,15 +1262,15 @@ DECLARE_TEST(t_desccolext)
     desccol(hstmt,"b2",2,SQL_BIGINT,19,0,SQL_NULLABLE);
     desccol(hstmt,"b3",2,SQL_BIGINT,20,0,SQL_NULLABLE);
 
-    desccol(hstmt,"f1",2,SQL_REAL,12,31,SQL_NULLABLE);
-    desccol(hstmt,"f2",2,SQL_REAL,12,31,SQL_NULLABLE);
-    desccol(hstmt,"f3",2,SQL_REAL,12,31,SQL_NULLABLE);
-    desccol(hstmt,"f4",2,SQL_REAL,10,4,SQL_NULLABLE);
+    desccol(hstmt,"f1",2,SQL_REAL,7,0,SQL_NULLABLE);
+    desccol(hstmt,"f2",2,SQL_REAL,7,0,SQL_NULLABLE);
+    desccol(hstmt,"f3",2,SQL_REAL,7,0,SQL_NULLABLE);
+    desccol(hstmt,"f4",2,SQL_REAL,7,0,SQL_NULLABLE);
 
-    desccol(hstmt,"d1",2,SQL_DOUBLE,22,31,SQL_NULLABLE);
-    desccol(hstmt,"d2",2,SQL_DOUBLE,30,3,SQL_NULLABLE);
-    desccol(hstmt,"d3",2,SQL_DOUBLE,22,31,SQL_NULLABLE);
-    desccol(hstmt,"d4",2,SQL_DOUBLE,30,3,SQL_NULLABLE);
+    desccol(hstmt,"d1",2,SQL_DOUBLE,15,0,SQL_NULLABLE);
+    desccol(hstmt,"d2",2,SQL_DOUBLE,15,0,SQL_NULLABLE);
+    desccol(hstmt,"d3",2,SQL_DOUBLE,15,0,SQL_NULLABLE);
+    desccol(hstmt,"d4",2,SQL_DOUBLE,15,0,SQL_NULLABLE);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);

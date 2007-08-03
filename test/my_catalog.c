@@ -480,13 +480,13 @@ DECLARE_TEST(t_columns)
   SQLCHAR       ColumnName[MAX_NAME_LEN], DatabaseName[MAX_NAME_LEN];
   SQLINTEGER    Values[7][5][2]=
   {
-    { {5,2},  {6,4}, {0,2},  {10,2},  {1,2}},
+    { {5,2},  {5,4}, {0,2},  {10,2},  {1,2}},
     { {1,2},  {5,4},  {0,-1}, {10,-1}, {1,2}},
     { {12,2}, {20,4}, {0,-1}, {10,-1}, {0,2}},
     { {3,2},  {10,4}, {2,2},  {10,2},  {1,2}},
-    { {-6,2},  {4,4}, {0,2},  {10,2},  {0,2}},
-    { {4,2}, {11,4}, {0,2},  {10,2},  {0,2}},
-    { {-6,2}, {4,4}, {0,2},  {10,2},  {0,2}}
+    { {-6,2},  {3,4}, {0,2},  {10,2},  {0,2}},
+    { {4,2}, {10,4}, {0,2},  {10,2},  {0,2}},
+    { {-6,2}, {3,4}, {0,2},  {10,2},  {0,2}}
   };
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_columns");
@@ -512,6 +512,7 @@ DECLARE_TEST(t_columns)
   for (i= 0; i < ColumnCount; i++)
   {
     sprintf((char *)ColumnName, "col%d", (int)i);
+    printMessage("checking column `%s`", (char *)ColumnName);
 
     ok_stmt(hstmt, SQLColumns(hstmt,
                               DatabaseName, cbDatabaseName,

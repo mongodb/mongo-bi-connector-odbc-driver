@@ -502,7 +502,6 @@ static my_bool insert_field(STMT FAR *stmt, MYSQL_RES *result,
                             SQLUSMALLINT nSrcCol)
 {
     PARAM_BIND  param;
-    ulong       transfer_length,precision,display_size;
     MYSQL_FIELD *field= mysql_fetch_field_direct(result,nSrcCol);
     MYSQL_ROW   row_data= result->data_cursor->data + nSrcCol;
     NET         *net=&stmt->dbc->mysql.net;
@@ -511,12 +510,7 @@ static my_bool insert_field(STMT FAR *stmt, MYSQL_RES *result,
 
     /* Copy row buffer data to statement */
     param.used= 1;
-    param.SqlType= unireg_to_sql_datatype( stmt,
-                                           field,
-                                           0,
-                                           &transfer_length,
-                                           &precision,
-                                           &display_size );
+    param.SqlType= get_sql_data_type(stmt, field, 0);
     param.CType= SQL_C_CHAR;
 
     if ( row_data && *row_data )
@@ -787,7 +781,6 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
                                   DYNAMIC_STRING *dynQuery)
 {
     PARAM_BIND    param;
-    ulong         transfer_length,precision,display_size;
     SQLLEN        length;
     uint          ncol, ignore_count= 0;
     MYSQL_FIELD *field;
@@ -843,11 +836,7 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
         dynstr_append_mem(dynQuery,"=",1);
 
         param.used= 1;
-        param.SqlType= unireg_to_sql_datatype( stmt,field,
-                                               0,
-                                               &transfer_length,
-                                               &precision,
-                                               &display_size );
+        param.SqlType= get_sql_data_type(stmt, field, NULL);
         param.CType= bind->fCType;
         param.buffer= (gptr) bind->rgbValue+irow*bind->cbValueMax;
         param.ValueMax= bind->cbValueMax;
@@ -1151,7 +1140,6 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
             dynstr_append_mem(ext_query,"(", 1);
             for ( ncol= 0; ncol < result->field_count; ncol++ )
             {
-                ulong        transfer_length,precision,display_size;
                 MYSQL_FIELD *field= mysql_fetch_field_direct(result,ncol);
                 BIND        *bind= stmt->bind+ncol;
                 SQLINTEGER   binding_offset= 0;
@@ -1174,12 +1162,7 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
                 else
                   ind_or_len= bind->cbValueMax;
 
-                param.SqlType= unireg_to_sql_datatype(stmt,
-                                                      field,
-                                                      0,
-                                                      &transfer_length,
-                                                      &precision,
-                                                      &display_size);
+                param.SqlType= get_sql_data_type(stmt, field, NULL);
                 param.CType = bind->fCType;
                 param.buffer= ((gptr)bind->rgbValue +
                                binding_offset +

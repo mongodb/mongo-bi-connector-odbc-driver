@@ -822,9 +822,8 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
 
     while ((field= mysql_fetch_field(table_res)))
     {
-      ulong transfer_length, precision, display_size;
+      SQLSMALLINT type;
       char buff[255]; /* @todo justify the size of this buffer */
-      int type;
       MYSQL_ROW row= stmt->result_array + (SQLCOLUMNS_FIELDS * next_row++);
 
       row[0]= db;                     /* TABLE_CAT */
@@ -832,38 +831,55 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
       row[2]= strdup_root(alloc, field->table); /* TABLE_NAME */
       row[3]= strdup_root(alloc, field->name);  /* COLUMN_NAME */
 
-      field->max_length= field->length;
-      type= unireg_to_sql_datatype(stmt, field, buff, &transfer_length,
-                                   &precision, &display_size);
-
-      /* DATA_TYPE and SQL_DATA_TYPE */
-      sprintf(buff, "%d", type);
-      row[4]= row[13]= strdup_root(alloc, buff);
+      type= get_sql_data_type(stmt, field, buff);
 
       row[5]= strdup_root(alloc, buff); /* TYPE_NAME */
 
-      /* COLUMN_SIZE */
-      sprintf(buff, "%ld", precision);
-      row[6]= strdup_root(alloc, buff);
+      sprintf(buff, "%d", type);
+      row[4]= strdup_root(alloc, buff); /* DATA_TYPE */
 
-      /* BUFFER_LENGTH */
-      sprintf(buff, "%ld", transfer_length);
-      row[7]= strdup_root(alloc, buff);
-
-      if (IS_NUM(field->type))
+      if (type == SQL_TYPE_DATE || type == SQL_TYPE_TIME ||
+          type == SQL_TYPE_TIMESTAMP)
       {
-        sprintf(buff, "%d", field->decimals);
-        row[8]= strdup_root(alloc,buff);  /* DECIMAL_DIGITS */
-        row[9]= "10";                     /* NUM_PREC_RADIX */
-        row[15]= NULL;                    /* CHAR_OCTET_LENGTH */
+        row[14]= row[4];    /* SQL_DATETIME_SUB */
+        sprintf(buff, "%d", SQL_DATETIME);
+        row[13]= strdup_root(alloc, buff); /* SQL_DATA_TYPE */
       }
       else
       {
-        row[8]= row[9]= NullS;             /* DECIMAL_DIGITS, NUM_PREC_RADIX */
-        row[15]= strdup_root(alloc, buff); /* CHAR_OCTET_LENGTH */
+        row[13]= row[4];    /* SQL_DATA_TYPE */
+        row[14]= NULL;      /* SQL_DATETIME_SUB */
       }
 
-      if ((field->flags & NOT_NULL_FLAG) == NOT_NULL_FLAG)
+      /* COLUMN_SIZE */
+      sprintf(buff, "%ld", get_column_size(stmt, field, FALSE));
+      row[6]= strdup_root(alloc, buff);
+
+      /* BUFFER_LENGTH */
+      sprintf(buff, "%ld", get_transfer_octet_length(stmt, field));
+      row[7]= strdup_root(alloc, buff);
+
+      if (is_char_sql_type(type) || is_wchar_sql_type(type) ||
+          is_binary_sql_type(type))
+        row[15]= strdup_root(alloc, buff); /* CHAR_OCTET_LENGTH */
+      else
+        row[15]= NULL;                     /* CHAR_OCTET_LENGTH */
+
+      {
+        SQLLEN digits= get_decimal_digits(stmt, field);
+        if (digits != SQL_NO_TOTAL)
+        {
+          sprintf(buff, "%ld", digits);
+          row[8]= strdup_root(alloc, buff);  /* DECIMAL_DIGITS */
+          row[9]= "10";                      /* NUM_PREC_RADIX */
+        }
+        else
+        {
+          row[8]= row[9]= NullS;             /* DECIMAL_DIGITS, NUM_PREC_RADIX */
+        }
+      }
+
+      if (field->flags & NOT_NULL_FLAG)
       {
         sprintf(buff, "%d", SQL_NO_NULLS);
         row[10]= strdup_root(alloc, buff); /* NULLABLE */
@@ -901,16 +917,13 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
         else
         {
           char *def= alloc_root(alloc, strlen(field->def) + 3);
-          if (IS_NUM(field->type))
+          if (is_numeric_mysql_type(field->type))
             sprintf(def, "%s", field->def);
           else
             sprintf(def, "'%s'", field->def);
           row[12]= def; /* COLUMN_DEF */
         }
       }
-
-      /** @todo this is not correct. */
-      row[14]= NULL;    /* SQL_DATETIME_SUB */
 
       sprintf(buff, "%d", ++count);
       row[16]= strdup_root(alloc, buff); /* ORDINAL_POSITION */
@@ -1506,7 +1519,6 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
     MYSQL_RES   *result;
     MYSQL_FIELD *field;
     MEM_ROOT    *alloc;
-    ulong       transfer_length,precision,display_size;
     uint        field_count;
     my_bool     primary_key;
 
@@ -1544,7 +1556,7 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
         for ( row= stmt->result_array;
             (field = mysql_fetch_field(result)); )
         {
-            int type;
+            SQLSMALLINT type;
             if ((field->type != MYSQL_TYPE_TIMESTAMP))
               continue;
             /*
@@ -1555,20 +1567,26 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
             if (!(field->flags & TIMESTAMP_FLAG))
               continue;
             field_count++;
-            sprintf(buff,"%d",SQL_SCOPE_SESSION);
-            row[0]= strdup_root(alloc,buff);
+            row[0]= NULL;
             row[1]= field->name;
-            type= unireg_to_sql_datatype(stmt,field,buff,&transfer_length,
-                                         &precision,&display_size);
+            type= get_sql_data_type(stmt, field, buff);
             row[3]= strdup_root(alloc,buff);
             sprintf(buff,"%d",type);
             row[2]= strdup_root(alloc,buff);
-            sprintf(buff,"%ld",precision);
+            sprintf(buff, "%ld", get_column_size(stmt, field, FALSE));
             row[4]= strdup_root(alloc,buff);
-            sprintf(buff,"%ld",transfer_length);
+            sprintf(buff, "%ld", get_transfer_octet_length(stmt, field));
             row[5]= strdup_root(alloc,buff);
-            sprintf(buff,"%d",field->decimals);
-            row[6]= strdup_root(alloc,buff);
+            {
+              SQLLEN digits= get_decimal_digits(stmt, field);
+              if (digits != SQL_NO_TOTAL)
+              {
+                sprintf(buff,"%ld", digits);
+                row[6]= strdup_root(alloc,buff);
+              }
+              else
+                row[6]= NULL;
+            }
             sprintf(buff,"%d",SQL_PC_NOT_PSEUDO);
             row[7]= strdup_root(alloc,buff);
             row+= SQLSPECIALCOLUMNS_FIELDS;
@@ -1614,7 +1632,7 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
     for ( row= stmt->result_array ;
         (field= mysql_fetch_field(result)); )
     {
-        int type;
+        SQLSMALLINT type;
         if ( primary_key && !(field->flags & PRI_KEY_FLAG) )
             continue;
 #ifndef SQLSPECIALCOLUMNS_RETURN_ALL_COLUMNS
@@ -1627,17 +1645,24 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
         sprintf(buff,"%d",SQL_SCOPE_SESSION);
         row[0]= strdup_root(alloc,buff);
         row[1]= field->name;
-        type= unireg_to_sql_datatype(stmt,field,buff,&transfer_length,
-                                     &precision,&display_size);
+        type= get_sql_data_type(stmt, field, buff);
         row[3]= strdup_root(alloc,buff);
         sprintf(buff,"%d",type);
         row[2]= strdup_root(alloc,buff);
-        sprintf(buff,"%ld",precision);
+        sprintf(buff,"%ld", get_column_size(stmt, field, FALSE));
         row[4]= strdup_root(alloc,buff);
-        sprintf(buff,"%ld",transfer_length);
+        sprintf(buff,"%ld", get_transfer_octet_length(stmt, field));
         row[5]= strdup_root(alloc,buff);
-        sprintf(buff,"%d",field->decimals);
-        row[6]= strdup_root(alloc,buff);
+        {
+          SQLLEN digits= get_decimal_digits(stmt, field);
+          if (digits != SQL_NO_TOTAL)
+          {
+            sprintf(buff,"%ld", digits);
+            row[6]= strdup_root(alloc, buff);
+          }
+          else
+            row[6]= NULL;
+        }
         sprintf(buff,"%d",SQL_PC_NOT_PSEUDO);
         row[7]= strdup_root(alloc,buff);
         row+= SQLSPECIALCOLUMNS_FIELDS;

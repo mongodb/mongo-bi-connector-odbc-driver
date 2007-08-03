@@ -47,8 +47,6 @@
 #define reset_ptr(x) if (x) x= 0
 #define digit(A) ((int) (A - '0'))
 #define option_flag(A,B) ((A)->dbc->flag & B)
-#define binary_field(fld) ((fld)->flags & BINARY_FLAG)
-#define num_field(fld) ((fld)->flags & NUM_FLAG)
 
 #ifdef MYODBC_DBG
 
@@ -112,9 +110,26 @@ SQLRETURN set_stmt_error(STMT *stmt, char *state,const char *message,uint errcod
 SQLRETURN handle_connection_error(STMT *stmt);
 void set_mem_error(MYSQL *mysql);
 void translate_error(char *save_state,myodbc_errid errid,uint mysql_err);
-int unireg_to_sql_datatype(STMT FAR *stmt, MYSQL_FIELD *field, char *buff,
-			   ulong *transfer_length,ulong *precision,
-			   ulong *display_size);
+
+SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff);
+SQLLEN get_column_size(STMT *stmt, MYSQL_FIELD *field, my_bool actual);
+SQLLEN get_decimal_digits(STMT *stmt, MYSQL_FIELD *field);
+SQLLEN get_transfer_octet_length(STMT *stmt, MYSQL_FIELD *field);
+SQLLEN get_display_size(STMT *stmt, MYSQL_FIELD *field);
+
+#define is_char_sql_type(type) \
+  ((type) == SQL_CHAR || (type) == SQL_VARCHAR || (type) == SQL_LONGVARCHAR)
+#define is_wchar_sql_type(type) \
+  ((type) == SQL_WCHAR || (type) == SQL_WVARCHAR || (type) == SQL_WLONGVARCHAR)
+#define is_binary_sql_type(type) \
+  ((type) == SQL_BINARY || (type) == SQL_VARBINARY || \
+   (type) == SQL_LONGVARBINARY)
+
+#define is_numeric_mysql_type(type) \
+  ((type) <= MYSQL_TYPE_NULL || (type) == MYSQL_TYPE_LONGLONG || \
+   (type) == MYSQL_TYPE_INT24 || (type) == MYSQL_TYPE_BIT || \
+   (type) == MYSQL_TYPE_NEWDECIMAL)
+
 SQLRETURN SQL_API my_SQLBindParameter(SQLHSTMT hstmt,SQLUSMALLINT ipar,
 				      SQLSMALLINT fParamType,
 				      SQLSMALLINT fCType, SQLSMALLINT fSqlType,

@@ -7,6 +7,27 @@
     ODBC logging should be used.
 
   Bugs fixed:
+  * Lengths returned by SQLColumns(), SQLDescribeCol(), and SQLColAttribute()
+    were often incorrect. These lengths should now conform to the ODBC
+    specification. FLAG_FIELD_LENGTH no longer has any effect. The default
+    behavior was incorrect. (Bug #27862)
+  * The SQL_DATA_TYPE column in SQLColumns() results did not report the
+    correct value for date and time types.
+  * The SQL_DATETIME_SUB column in SQLColumns() was not correctly set for
+    date and time types.
+  * The value for SQL_DESC_FIXED_PREC_SCALE was not returned correctly
+    for decimal values in MySQL 5.0 and later.
+  * The wrong value from SQL_DESC_LITERAL_SUFFIX was returned for binary
+    fields.
+  * The wrong value for SQL_DESC_TYPE was returned for date and time types.
+  * The wrong value for DECIMAL_DIGITS in SQLColumns() was reported for
+    FLOAT and DOUBLE fields, as well as the wrong value for the scale
+    parameter to SQLDescribeCol(), and the SQL_DESC_SCALE attribute
+    from SQLColAttribute().
+  * MySQL BIT(n) fields were always treated as SQL_BIT data. When n > 1,
+    they are now treated as binary data.
+  * If the connection character set was set to a multibyte character set,
+    such as UTF-8, the wrong column size was reported. (Bug #19345)
   * SQLSpecialColumns() returned all TIMESTAMP fields when queried for
     SQL_ROWVER, not just an auto-updating TIMESTAMP field. (Bug #9927, still
     limited by Bug #30081 in the server.)

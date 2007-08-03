@@ -515,8 +515,6 @@ SQLRETURN SQL_API SQLDescribeCol( SQLHSTMT          hstmt,
     SQLRETURN error;
     MYSQL_FIELD *field;
     STMT FAR *stmt= (STMT FAR*) hstmt;
-    ulong transfer_length,precision,display_size;
-    int type;
 
     if ( (error= check_result(stmt)) != SQL_SUCCESS )
         return error;
@@ -527,16 +525,12 @@ SQLRETURN SQL_API SQLDescribeCol( SQLHSTMT          hstmt,
     if ( !(field= mysql_fetch_field(stmt->result)) )
         return set_error(stmt,MYERR_S1002,"Invalid column number",0);
 
-    type= unireg_to_sql_datatype(stmt,field,0,&transfer_length,&precision,&display_size );
-/*
-printf( "[PAH][%s][%d][%s] type=%d\n", __FILE__, __LINE__, __FUNCTION__, type );
-*/
-    if ( pnColumnSize )
-        *pnColumnSize = precision;
-    if ( pfSqlType )
-        *pfSqlType= type;
-    if ( pibScale )
-        *pibScale= field->decimals;
+    if (pfSqlType)
+      *pfSqlType= get_sql_data_type(stmt, field, NULL);
+    if (pnColumnSize)
+      *pnColumnSize= get_column_size(stmt, field, FALSE);
+    if (pibScale)
+      *pibScale= max(0, get_decimal_digits(stmt, field));
     if ( pfNullable )
         *pfNullable= (((field->flags & (NOT_NULL_FLAG)) ==
                        NOT_NULL_FLAG) ?
@@ -581,7 +575,6 @@ get_col_attr(SQLHSTMT     StatementHandle,
     SQLSMALLINT str_length;
     SQLLEN strparam= 0;
     SQLPOINTER nparam= 0;
-    ulong transfer_length,precision,display_size;
     SQLRETURN error;
 
     if ( check_result(stmt) != SQL_SUCCESS )
@@ -673,56 +666,63 @@ get_col_attr(SQLHSTMT     StatementHandle,
             break;
 
         case SQL_DESC_DISPLAY_SIZE:
-            (void) unireg_to_sql_datatype(stmt,field,0,&transfer_length,&precision,
-                                          &display_size);
-            *NumericAttributePtr= display_size;
+            *NumericAttributePtr= get_display_size(stmt, field);
             break;
 
-        case SQL_DESC_FIXED_PREC_SCALE: /* need to verify later */
-            {
-                if ( field->type == MYSQL_TYPE_DECIMAL )
-                    *(SQLINTEGER *)NumericAttributePtr= SQL_TRUE;
-                else
-                    *(SQLINTEGER *)NumericAttributePtr= SQL_FALSE;
-                break;
-            }
+        case SQL_DESC_FIXED_PREC_SCALE:
+            if (field->type == MYSQL_TYPE_DECIMAL ||
+                field->type == MYSQL_TYPE_NEWDECIMAL)
+              *(SQLINTEGER *)NumericAttributePtr= SQL_TRUE;
+            else
+              *(SQLINTEGER *)NumericAttributePtr= SQL_FALSE;
+            break;
+
+        case SQL_DESC_LENGTH:
+          *NumericAttributePtr= get_column_size(stmt, field, TRUE);
+          break;
 
         case SQL_COLUMN_LENGTH:
-        case SQL_DESC_LENGTH:
-        case SQL_DESC_OCTET_LENGTH: /* need to validate again for octet length..*/
-            (void) unireg_to_sql_datatype(stmt,field,0,&transfer_length,&precision,
-                                          &display_size);
-            *NumericAttributePtr= transfer_length;
-            break;
+        case SQL_DESC_OCTET_LENGTH:
+          /* Need to add 1 for \0 on character fields. */
+          *NumericAttributePtr= get_transfer_octet_length(stmt, field) +
+            test(field->charsetnr != 63);
+          break;
 
-        case SQL_DESC_LITERAL_PREFIX:
         case SQL_DESC_LITERAL_SUFFIX:
-            switch ( field->type )
-            {
-                case MYSQL_TYPE_LONG_BLOB:
-                case MYSQL_TYPE_TINY_BLOB:
-                case MYSQL_TYPE_MEDIUM_BLOB:
-                case MYSQL_TYPE_BLOB:
-                    return copy_str_data(SQL_HANDLE_STMT, stmt,
-                                         CharacterAttributePtr,
-                                         BufferLength, StringLengthPtr, "0x");
+        case SQL_DESC_LITERAL_PREFIX:
+            switch (field->type) {
+            case MYSQL_TYPE_LONG_BLOB:
+            case MYSQL_TYPE_TINY_BLOB:
+            case MYSQL_TYPE_MEDIUM_BLOB:
+            case MYSQL_TYPE_BLOB:
+            case MYSQL_TYPE_DATE:
+            case MYSQL_TYPE_DATETIME:
+            case MYSQL_TYPE_NEWDATE:
+            case MYSQL_TYPE_VAR_STRING:
+            case MYSQL_TYPE_STRING:
+            case MYSQL_TYPE_TIMESTAMP:
+            case MYSQL_TYPE_TIME:
+            case MYSQL_TYPE_YEAR:
+              if (field->charsetnr == 63)
+              {
+                if (FieldIdentifier == SQL_DESC_LITERAL_PREFIX)
+                  return copy_str_data(SQL_HANDLE_STMT, stmt,
+                                       CharacterAttributePtr,
+                                       BufferLength, StringLengthPtr, "0x");
+                else
+                  return copy_str_data(SQL_HANDLE_STMT, stmt,
+                                       CharacterAttributePtr,
+                                       BufferLength, StringLengthPtr, "");
+              }
+              else
+                return copy_str_data(SQL_HANDLE_STMT, stmt,
+                                     CharacterAttributePtr,
+                                     BufferLength, StringLengthPtr, "'");
 
-                case MYSQL_TYPE_DATE:
-                case MYSQL_TYPE_DATETIME:
-                case MYSQL_TYPE_NEWDATE:
-                case MYSQL_TYPE_VAR_STRING:
-                case MYSQL_TYPE_STRING:
-                case MYSQL_TYPE_TIMESTAMP:
-                case MYSQL_TYPE_TIME:
-                case MYSQL_TYPE_YEAR:
-                    return copy_str_data(SQL_HANDLE_STMT, stmt,
-                                         CharacterAttributePtr,
-                                         BufferLength, StringLengthPtr, "'");
-
-                default:
-                    return copy_str_data(SQL_HANDLE_STMT, stmt,
-                                         CharacterAttributePtr,
-                                         BufferLength, StringLengthPtr,"");
+            default:
+                return copy_str_data(SQL_HANDLE_STMT, stmt,
+                                     CharacterAttributePtr,
+                                     BufferLength, StringLengthPtr,"");
             }
             break;
 
@@ -760,14 +760,12 @@ get_col_attr(SQLHSTMT     StatementHandle,
 
         case SQL_COLUMN_PRECISION:
         case SQL_DESC_PRECISION:
-            (void) unireg_to_sql_datatype(stmt,field,0,&transfer_length,&precision,
-                                          &display_size);
-            *(SQLINTEGER *)NumericAttributePtr= precision;
-            break;
+          *NumericAttributePtr= get_column_size(stmt, field, FALSE);
+          break;
 
         case SQL_COLUMN_SCALE:
         case SQL_DESC_SCALE:
-            *(SQLINTEGER *)NumericAttributePtr= field->decimals;
+            *NumericAttributePtr= max(0, get_decimal_digits(stmt, field));
             break;
 
         case SQL_DESC_SCHEMA_NAME:
@@ -779,17 +777,25 @@ get_col_attr(SQLHSTMT     StatementHandle,
             break;
 
         case SQL_DESC_TYPE:
-        case SQL_DESC_CONCISE_TYPE:
-            *(SQLINTEGER *)NumericAttributePtr =
-            unireg_to_sql_datatype(stmt, field, 0, &transfer_length, &precision,
-                                   &display_size);
+          {
+            SQLSMALLINT type= get_sql_data_type(stmt, field, NULL);
+            if (type == SQL_DATE || type == SQL_TYPE_DATE || type == SQL_TIME ||
+                type == SQL_TYPE_TIME || type == SQL_TIMESTAMP ||
+                type == SQL_TYPE_TIMESTAMP)
+              type= SQL_DATETIME;
+            *(SQLINTEGER *)NumericAttributePtr= type;
             break;
+          }
+
+        case SQL_DESC_CONCISE_TYPE:
+          *(SQLINTEGER *)NumericAttributePtr=
+            get_sql_data_type(stmt, field, NULL);
+          break;
 
         case SQL_DESC_TYPE_NAME:
             {
                 char buff[40];
-                (void)unireg_to_sql_datatype(stmt,field,(char *)buff,&transfer_length,
-                                             &precision, &display_size);
+                (void)get_sql_data_type(stmt, field, buff);
                 return copy_str_data(SQL_HANDLE_STMT, stmt,
                                      CharacterAttributePtr, BufferLength,
                                      StringLengthPtr, buff);

@@ -259,6 +259,15 @@ DECLARE_TEST(charset_utf8)
   SQLCHAR   conn[256], conn_out[256];
   SQLSMALLINT conn_out_len;
 
+  /**
+   Bug #19345: Table column length multiplies on size session character set
+  */
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug19345");
+  ok_sql(hstmt, "CREATE TABLE t_bug19345 (a VARCHAR(10), b VARBINARY(10))");
+  ok_sql(hstmt, "INSERT INTO t_bug19345 VALUES ('abc','def')");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
   sprintf((char *)conn, "DSN=%s;UID=%s;PASSWORD=%s;CHARSET=utf8",
           mydsn, myuid, mypwd);
   if (mysock != NULL)
@@ -281,6 +290,22 @@ DECLARE_TEST(charset_utf8)
   is_str(my_fetch_str(hstmt1, conn_out, 1), "s\xC3\xA3o paulo", 10);
 
   expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_stmt(hstmt1, SQLColumns(hstmt1, (SQLCHAR *)"test", SQL_NTS, NULL, 0,
+                             (SQLCHAR *)"t_bug19345", SQL_NTS,
+                             (SQLCHAR *)"%", 1));
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  is_num(my_fetch_int(hstmt1, 7), 10);
+  is_num(my_fetch_int(hstmt1, 8), 30);
+  is_num(my_fetch_int(hstmt1, 16), 30);
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  is_num(my_fetch_int(hstmt1, 7), 20);
+  is_num(my_fetch_int(hstmt1, 8), 10);
+  is_num(my_fetch_int(hstmt1, 16), 10);
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
   ok_con(hdbc1, SQLDisconnect(hdbc1));
