@@ -760,13 +760,15 @@ get_col_attr(SQLHSTMT     StatementHandle,
 
         case SQL_COLUMN_PRECISION:
         case SQL_DESC_PRECISION:
-          *NumericAttributePtr= get_column_size(stmt, field, FALSE);
+          *(SQLINTEGER *)NumericAttributePtr= get_column_size(stmt, field,
+                                                              FALSE);
           break;
 
         case SQL_COLUMN_SCALE:
         case SQL_DESC_SCALE:
-            *NumericAttributePtr= max(0, get_decimal_digits(stmt, field));
-            break;
+          *(SQLINTEGER *)NumericAttributePtr= max(0, get_decimal_digits(stmt,
+                                                                        field));
+          break;
 
         case SQL_DESC_SCHEMA_NAME:
             return copy_str_data(SQL_HANDLE_STMT, stmt, CharacterAttributePtr,
