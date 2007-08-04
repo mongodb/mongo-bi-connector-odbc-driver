@@ -183,8 +183,8 @@ typedef struct stmt_options
   SQLUINTEGER     *paramProcessedPtr;
   SQLULEN         *rowsFetchedPtr;
   SQLUINTEGER	   simulateCursor;
-  SQLINTEGER	   max_length, max_rows,
-                  *bind_offset;
+  SQLULEN          max_length, max_rows;
+  SQLLEN          *bind_offset;
   SQLUSMALLINT	  *paramStatusPtr;
   SQLUSMALLINT	  *rowStatusPtr;
   SQLUSMALLINT	  *rowStatusPtr_ex; /* set by SQLExtendedFetch */
@@ -228,10 +228,6 @@ typedef struct tagDBC
   uint		commit_flag;
 #ifdef THREAD
   pthread_mutex_t lock;
-#endif
-#if defined(_WIN32) || defined(WIN32)
-  /* old buffer to store memory pointer allocated previously in another heap */
-  char      *oldbuf;
 #endif
 } DBC;
 
