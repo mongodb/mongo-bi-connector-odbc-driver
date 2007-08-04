@@ -1,8 +1,6 @@
 #ifndef MYODBC_MYSQL_H
 #define MYODBC_MYSQL_H
 
-#define MIN_MYSQL_VERSION 40000L
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -16,8 +14,9 @@ extern "C"
 #include <m_string.h>
 #include <mysqld_error.h>
 
+#define MIN_MYSQL_VERSION 40100L
 #if MYSQL_VERSION_ID < MIN_MYSQL_VERSION
-error "MyODBC need a newer version of the MYSQL client library to compile"
+# error "Connector/ODBC requires v4.1 (or later) of the MySQL client library"
 #endif
 
 #ifdef THREAD
