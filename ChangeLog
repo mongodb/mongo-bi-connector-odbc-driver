@@ -5,6 +5,7 @@
     multiple statements. Also added to the setup GUI. (Bug #7445)
   * Removed support for the TRACE and TRACEFILE DSN options. The standard
     ODBC logging should be used.
+  * Added SSL options to the GUI setup dialog.
 
   Bugs fixed:
   * SQLColumns() incorrectly reported that an auto-incrementing

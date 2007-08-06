@@ -44,7 +44,12 @@ public:
                                QString stringPort,
                                QString stringSocket,
                                QString stringInitialStatement,
-                               QString stringCharset );
+                               QString stringCharset,
+                               QString stringSSLKey,
+                               QString stringSSLCert,
+                               QString stringSSLCA,
+                               QString stringSSLCAPath,
+                               QString stringSSLCipher );
 
     MYODBCSetupDataSourceTab2( QWidget *pwidgetParent );
 
@@ -52,11 +57,21 @@ public:
     void setSocket( const QString &stringSocket );
     void setInitialStatement( const QString &stringInitialStatement );
     void setCharset( const QString &stringCharset );
+    void setSSLKey( const QString &stringSSLKey );
+    void setSSLCert( const QString &stringSSLCert );
+    void setSSLCA( const QString &stringSSLCA );
+    void setSSLCAPath( const QString &stringSSLCApath );
+    void setSSLCipher( const QString &stringSSLCipher );
 
     QString getPort();
     QString getSocket();
     QString getInitialStatement();
     QString getCharset();
+    QString getSSLKey();
+    QString getSSLCert();
+    QString getSSLCA();
+    QString getSSLCAPath();
+    QString getSSLCipher();
 
 signals:
     void signalRequestCharsetNames();
@@ -66,9 +81,15 @@ protected:
     MYODBCSetupLineEdit *            plineeditSocket;
     MYODBCSetupLineEdit *            plineeditInitialStatement;
     MYODBCSetupComboBoxDatabases *   pcomboboxCharset;
+    MYODBCSetupLineEdit *            plineeditSSLKey;
+    MYODBCSetupLineEdit *            plineeditSSLCert;
+    MYODBCSetupLineEdit *            plineeditSSLCA;
+    MYODBCSetupLineEdit *            plineeditSSLCAPath;
+    MYODBCSetupLineEdit *            plineeditSSLCipher;
 
     void doInit();
 };
 
 #endif
+
 
