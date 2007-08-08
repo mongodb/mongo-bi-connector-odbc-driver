@@ -241,22 +241,6 @@ char *insert_params(STMT FAR *stmt)
 }
 
 
-/**
- Return the length of a SQLWCHAR string.
-
- @param[in]  str     The string
-
- @return The number of characters in the string
-*/
-size_t sqlwchar_strlen(const SQLWCHAR *str)
-{
-  size_t len= 0;
-  while (str && *str++)
-    len++;
-  return len;
-}
-
-
 /*
   Add the value of parameter to a string buffer.
 

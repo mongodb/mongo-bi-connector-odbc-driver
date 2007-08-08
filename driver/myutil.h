@@ -196,6 +196,8 @@ my_bool reget_current_catalog(DBC FAR *dbc);
 ulong myodbc_escape_wildcard(MYSQL *mysql, char *to, ulong to_length,
                              const char *from, ulong length);
 
+size_t sqlwchar_strlen(const SQLWCHAR *str);
+
 /* Functions used when debugging */
 #ifdef MYODBC_DBG
 void query_print(FILE *log_file,char *query);
