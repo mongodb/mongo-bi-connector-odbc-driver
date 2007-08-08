@@ -597,17 +597,10 @@ DECLARE_TEST(t_multistep)
     myassert(pcbValue == 15);
     myassert(strcmp(szData,"Source Database") == 0);
 
-    pcbValue= 99;
-    szData[0]='A';
-    rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,0,&pcbValue);
-    myassert(rc == SQL_SUCCESS_WITH_INFO);
-    fprintf(stdout,"data  : %s (%ld)\n",szData,pcbValue);
-    myassert(pcbValue == 0);
-    myassert(szData[0] == 'A');
+    expect_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_CHAR, szData, 0, &pcbValue),
+                SQL_NO_DATA_FOUND);
 
-
-    rc = SQLFetch(hstmt);
-    myassert(rc == SQL_NO_DATA_FOUND);
+    expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
@@ -648,22 +641,19 @@ DECLARE_TEST(t_zerolength)
     mystmt(hstmt,rc);
 
     pcbValue= pcbValue1= 99;
-    rc = SQLGetData(hstmt,1,SQL_C_CHAR,szData,0,&pcbValue);
-    mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
+    ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, szData, 0, &pcbValue));
     fprintf(stdout,"length: %d\n", pcbValue);
     myassert(pcbValue == 0);
 
     bData[0]=bData[1]='z';
-    rc = SQLGetData(hstmt,2,SQL_C_BINARY,bData,0,&pcbValue1);
-    mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
+    ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_BINARY, bData, 0, &pcbValue1));
     fprintf(stdout,"length: %d\n", pcbValue1);
     myassert(pcbValue1 == 0);
     myassert(bData[0] == 'z');
     myassert(bData[1] == 'z');
 
     bData1[0]=bData1[1]='z';
-    rc = SQLGetData(hstmt,3,SQL_C_BINARY,bData1,0,&pcbValue2);
-    mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
+    ok_stmt(hstmt, SQLGetData(hstmt, 3, SQL_C_BINARY, bData1, 0, &pcbValue2));
     fprintf(stdout,"length: %d\n", pcbValue2);
     myassert(pcbValue2 == 0);
     myassert(bData1[0] == 'z');
@@ -681,7 +671,6 @@ DECLARE_TEST(t_zerolength)
     mystmt(hstmt,rc);
     fprintf(stdout,"data: %s, length: %d\n", bData, pcbValue1);
     myassert(pcbValue1 == 0);
-    myassert(bData[0]== '\0');
 
     bData1[0]=bData1[1]='z';
     rc = SQLGetData(hstmt,3,SQL_C_CHAR,bData1,1,&pcbValue2);

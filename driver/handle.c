@@ -158,14 +158,12 @@ SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc)
     DBC FAR *dbc;
     ENV FAR *penv= (ENV FAR*) henv;
 
-#if MYSQL_VERSION_ID >= 40016
     if (mysql_get_client_version() < MIN_MYSQL_VERSION)
     {
         char buff[255];
         sprintf(buff, "Wrong libmysqlclient library version: %ld.  MyODBC needs at least version: %ld", mysql_get_client_version(), MIN_MYSQL_VERSION);
         return(set_env_error(henv, MYERR_S1000, buff, 0));
     }
-#endif
 
     if (!penv->odbc_ver)
     {
@@ -217,6 +215,8 @@ SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc)
     dbc->env= penv;
     penv->connections= list_add(penv->connections,&dbc->list);
     dbc->list.data= dbc;
+    dbc->unicode= 0;
+    dbc->ansi_charset_info= dbc->cxn_charset_info= NULL;
     pthread_mutex_init(&dbc->lock,NULL);
     pthread_mutex_lock(&dbc->lock);
     myodbc_ov_init(penv->odbc_ver); /* Initialize based on ODBC version */

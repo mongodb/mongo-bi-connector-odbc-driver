@@ -229,6 +229,10 @@ typedef struct tagDBC
 #ifdef THREAD
   pthread_mutex_t lock;
 #endif
+
+  my_bool       unicode;             /* Whether SQL*ConnectW was used */
+  CHARSET_INFO *ansi_charset_info,   /* 'ANSI' charset (SQL_C_CHAR) */
+               *cxn_charset_info;    /* Connection charset ('ANSI' or utf-8) */
 } DBC;
 
 
@@ -350,9 +354,17 @@ typedef struct tagSTMT
   my_ulonglong	affected_rows;
   long		current_row;
   long		cursor_row;
-  ulong		getdata_offset;
   ulong		*result_lengths;
-  uint		last_getdata_col;
+  struct {
+    uint column;      /* Which column is being used with SQLGetData() */
+    char *source;     /* Our current position in the source. */
+    uchar latest[7];  /* Latest character to be converted. */
+    int latest_bytes; /* Bytes of data in latest. */
+    int latest_used;  /* Bytes of latest that have been used. */
+    ulong src_offset; /* @todo remove */
+    ulong dst_bytes;  /* Length of data once it is all converted (in chars). */
+    ulong dst_offset; /* Current offset into dest. (ulong)~0L when not set. */
+  } getdata;
   uint		*order,order_count,param_count,current_param,
 		rows_found_in_set,bound_columns;
   enum MY_STATE state;

@@ -50,6 +50,17 @@
 #define SQL_MY_PRIMARY_KEY 1212
 
 
+void reset_getdata_position(STMT *stmt)
+{
+  stmt->getdata.column= (ulong) ~0L;
+  stmt->getdata.source= NULL;
+  stmt->getdata.dst_bytes= (ulong) ~0L;
+  stmt->getdata.dst_offset= (ulong) ~0L;
+  stmt->getdata.src_offset= (ulong) ~0L;
+  stmt->getdata.latest_bytes= stmt->getdata.latest_used= 0;
+}
+
+
 /**
   Retrieve the data from a field as a specified ODBC C type.
 
@@ -64,7 +75,7 @@
 */
 static SQLRETURN SQL_API
 sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
-             SQLPOINTER rgbValue, SQLINTEGER cbValueMax, SQLLEN *pcbValue,
+             SQLPOINTER rgbValue, SQLLEN cbValueMax, SQLLEN *pcbValue,
              char *value, uint length)
 {
   SQLLEN tmp;
@@ -87,10 +98,9 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
     case SQL_C_CHAR:
       /* Handle BLOB -> CHAR conversion */
       if ((field->flags & (BLOB_FLAG|BINARY_FLAG)) == (BLOB_FLAG|BINARY_FLAG))
-        return copy_binary_result(SQL_HANDLE_STMT, stmt,
+        return copy_binhex_result(stmt,
                                   (SQLCHAR *)rgbValue, cbValueMax, pcbValue,
-                                  value, length, stmt->stmt_options.max_length,
-                                  &stmt->getdata_offset);
+                                  field, value, length);
       /* fall through */
 
     case SQL_C_BINARY:
@@ -149,21 +159,18 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
           length= 19;
         }
 
-        return copy_lresult(SQL_HANDLE_STMT, stmt,
-                            (SQLCHAR *)rgbValue, cbValueMax, pcbValue,
-                            value, length, stmt->stmt_options.max_length,
-                            (field->type == MYSQL_TYPE_STRING ? field->length :
-                             0L), &stmt->getdata_offset,
-                            (fCType == SQL_C_BINARY));
+        if (fCType == SQL_C_BINARY)
+          return copy_binary_result(stmt, (SQLCHAR *)rgbValue, cbValueMax,
+                                    pcbValue, field, value, length);
+        else
+          return copy_ansi_result(stmt, (SQLCHAR *)rgbValue, cbValueMax,
+                                  pcbValue, field, value, length);
       }
 
     case SQL_C_WCHAR:
-      return copy_wchar_result(SQL_HANDLE_STMT, stmt, (SQLWCHAR *)rgbValue,
-                               cbValueMax, pcbValue, value, length,
-                               stmt->stmt_options.max_length,
-                               (field->type == MYSQL_TYPE_STRING ?
-                                field->length : 0L),
-                               &stmt->getdata_offset);
+      return copy_wchar_result(stmt,
+                               (SQLWCHAR *)rgbValue, cbValueMax, pcbValue,
+                               field, value, length);
 
     case SQL_C_BIT:
       if (rgbValue)
@@ -352,10 +359,10 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
     }
   }
 
-  if (stmt->getdata_offset != (ulong) ~0L)  /* Second call to getdata */
+  if (stmt->getdata.source)  /* Second call to getdata */
     return SQL_NO_DATA_FOUND;
 
-  stmt->getdata_offset= 0L;         /* All data is retrevied */
+  stmt->getdata.source= NULL;         /* All data is retrieved */
 
   return SQL_SUCCESS;
 }
@@ -1063,10 +1070,11 @@ SQLRETURN SQL_API SQLGetData( SQLHSTMT      hstmt,
         return SQL_ERROR;
     }
     icol--;     /* Easier code if start from 0 */
-    if ( icol != stmt->last_getdata_col )
-    {   /* New column. Reset old offset */
-        stmt->last_getdata_col= icol;
-        stmt->getdata_offset= (ulong) ~0L;
+    if (icol != stmt->getdata.column)
+    {
+      /* New column. Reset old offset */
+      reset_getdata_position(stmt);
+      stmt->getdata.column= icol;
     }
 
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
@@ -1256,12 +1264,11 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
         pcrow= &dummy_pcrow;
 
     max_row= (long) mysql_num_rows(stmt->result);
-    stmt->last_getdata_col= (uint)  ~0;
+    reset_getdata_position(stmt);
     stmt->current_values= 0;          /* For SQLGetData */
 
     switch ( fFetchType )
     {
-        
         case SQL_FETCH_NEXT:
             cur_row= (stmt->current_row < 0 ? 0 :
                       stmt->current_row+stmt->rows_found_in_set);
@@ -1406,7 +1413,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                       pcb_offset += *stmt->stmt_options.bind_offset;
                     }
 
-                    stmt->getdata_offset= (ulong) ~0L;
+                    reset_getdata_position(stmt);
 
                     if ( (tmp_res= sql_get_data( stmt,
                                                  bind->fCType,

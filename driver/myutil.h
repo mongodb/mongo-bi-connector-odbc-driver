@@ -95,21 +95,26 @@ SQLRETURN my_pos_update(STMT FAR *stmt,STMT FAR *stmtParam,
 char *check_if_positioned_cursor_exists(STMT FAR *stmt, STMT FAR **stmtNew);
 char *insert_param(DBC *dbc, char *to,PARAM_BIND *param);
 char *add_to_buffer(NET *net,char *to,char *from,ulong length);
-SQLRETURN copy_lresult(SQLSMALLINT HandleType, SQLHANDLE handle,
-		       SQLCHAR FAR *rgbValue, SQLINTEGER cbValueMax,
-		       SQLLEN *pcbValue, char *src,
-		       long src_length, long max_length,
-		       long fill_length,ulong *offset,my_bool binary_data);
-SQLRETURN copy_binary_result(SQLSMALLINT HandleType, SQLHANDLE handle,
+
+void reset_getdata_position(STMT *stmt);
+
+SQLRETURN
+copy_ansi_result(STMT *stmt,
+                 SQLCHAR *result, SQLLEN result_bytes, SQLLEN *used_bytes,
+                 MYSQL_FIELD *field, char *src, unsigned long src_bytes);
+SQLRETURN
+copy_binary_result(STMT *stmt,
+                   SQLCHAR *result, SQLLEN result_bytes, SQLLEN *used_bytes,
+                   MYSQL_FIELD *field, char *src, unsigned long src_bytes);
+SQLRETURN copy_binhex_result(STMT *stmt,
 			     SQLCHAR FAR *rgbValue, SQLINTEGER cbValueMax,
-			     SQLLEN *pcbValue, char *src,
-			     ulong src_length, ulong max_length,
-			     ulong *offset);
-SQLRETURN copy_wchar_result(SQLSMALLINT HandleType, SQLHANDLE handle,
+			     SQLLEN *pcbValue, MYSQL_FIELD *field, char *src,
+			     ulong src_length);
+SQLRETURN copy_wchar_result(STMT *stmt,
                             SQLWCHAR *rgbValue, SQLINTEGER cbValueMax,
-                            SQLLEN *pcbValue, char *src,
-                            long src_length, long max_length,
-                            long fill_length, ulong *offset);
+                            SQLLEN *pcbValue, MYSQL_FIELD *field, char *src,
+                            long src_length);
+
 SQLRETURN set_dbc_error(DBC FAR *dbc, char *state,const char *message,uint errcode);
 SQLRETURN set_stmt_error(STMT *stmt, char *state,const char *message,uint errcode);
 SQLRETURN handle_connection_error(STMT *stmt);

@@ -76,12 +76,60 @@ unsigned long get_client_flags(unsigned long options)
 */
 SQLRETURN myodbc_set_initial_character_set(DBC *dbc, const char *charset)
 {
-#if ((MYSQL_VERSION_ID >= 40113 && MYSQL_VERSION_ID < 50000) || \
-     MYSQL_VERSION_ID >= 50006)
-  if (charset && charset[0] && mysql_set_character_set(&dbc->mysql, charset))
-    return set_dbc_error(dbc, "HY000", mysql_error(&dbc->mysql),
-                         mysql_errno(&dbc->mysql));
-#endif
+  if (dbc->unicode)
+  {
+    if (charset && charset[0])
+    {
+      dbc->ansi_charset_info= get_charset_by_csname(charset,
+                                                    MYF(MY_CS_PRIMARY),
+                                                    MYF(0));
+    }
+    else
+    {
+      /*
+        Get the ANSI charset info before we change connection to UTF-8.
+      */
+      MY_CHARSET_INFO my_charset;
+      mysql_get_character_set_info(&dbc->mysql, &my_charset);
+      dbc->ansi_charset_info= get_charset(my_charset.number, MYF(0));
+    }
+
+    if (mysql_set_character_set(&dbc->mysql, "utf8"))
+    {
+      set_dbc_error(dbc, "HY000", mysql_error(&dbc->mysql),
+                    mysql_errno(&dbc->mysql));
+      return SQL_ERROR;
+    }
+  }
+  else
+  {
+    if (charset && charset[0])
+    {
+      if (mysql_set_character_set(&dbc->mysql, charset))
+      {
+        set_dbc_error(dbc, "HY000", mysql_error(&dbc->mysql),
+                      mysql_errno(&dbc->mysql));
+        return SQL_ERROR;
+      }
+    }
+  }
+
+  {
+    MY_CHARSET_INFO my_charset;
+    mysql_get_character_set_info(&dbc->mysql, &my_charset);
+    dbc->cxn_charset_info= get_charset(my_charset.number, MYF(0));
+  }
+
+  if (!dbc->ansi_charset_info)
+    dbc->ansi_charset_info= dbc->cxn_charset_info;
+
+  /*
+    We always set character_set_results to NULL so we can do our own
+    conversion to the ANSI character set or Unicode.
+  */
+  if (odbc_stmt(dbc, "SET character_set_results = NULL") != SQL_SUCCESS)
+    return SQL_ERROR;
+
   return SQL_SUCCESS;
 }
 

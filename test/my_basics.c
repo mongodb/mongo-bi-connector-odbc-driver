@@ -256,7 +256,8 @@ DECLARE_TEST(charset_utf8)
 {
   HDBC hdbc1;
   HSTMT hstmt1;
-  SQLCHAR   conn[256], conn_out[256];
+  SQLCHAR conn[256], conn_out[256];
+  SQLLEN len;
   SQLSMALLINT conn_out_len;
 
   /**
@@ -306,6 +307,30 @@ DECLARE_TEST(charset_utf8)
   is_num(my_fetch_int(hstmt1, 7), 20);
   is_num(my_fetch_int(hstmt1, 8), 10);
   is_num(my_fetch_int(hstmt1, 16), 10);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  /* Big5's 0xA4A4 becomes utf8's 0xE4B8AD */
+  ok_sql(hstmt1, "SELECT _big5 0xA4A4");
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+
+  ok_stmt(hstmt1, SQLGetData(hstmt1, 1, SQL_C_CHAR, conn, 2, &len));
+  is_num(conn[0], 0xE4);
+  is_num(len, 3);
+
+  ok_stmt(hstmt1, SQLGetData(hstmt1, 1, SQL_C_CHAR, conn, 2, &len));
+  is_num(conn[0], 0xB8);
+  is_num(len, 2);
+
+  ok_stmt(hstmt1, SQLGetData(hstmt1, 1, SQL_C_CHAR, conn, 2, &len));
+  is_num(conn[0], 0xAD);
+  is_num(len, 1);
+
+  expect_stmt(hstmt1, SQLGetData(hstmt1, 1, SQL_C_CHAR, conn, 2, &len),
+              SQL_NO_DATA_FOUND);
+
+  expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
   ok_con(hdbc1, SQLDisconnect(hdbc1));

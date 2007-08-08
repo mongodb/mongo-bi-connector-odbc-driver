@@ -1298,7 +1298,7 @@ static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLUSMALLINT irow, SQLUSM
                 stmt->cursor_row= (long)(stmt->current_row+irow);
                 mysql_data_seek(stmt->result,(my_ulonglong)stmt->cursor_row);
                 stmt->current_values= mysql_fetch_row(stmt->result);
-                stmt->last_getdata_col= (uint)  ~0;; /* reset */
+                reset_getdata_position(stmt);
                 if ( stmt->fix_fields )
                     stmt->current_values= (*stmt->fix_fields)(stmt,stmt->current_values);
                 else
