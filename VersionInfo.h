@@ -21,11 +21,11 @@
 */
 
 /* When changing, also change configure.in and driver/myodbc3.def */
-#define SETUP_VERSION         "3.51.18"
+#define SETUP_VERSION         "3.51.19"
 #define DRIVER_VERSION        "0" SETUP_VERSION
 
 #define MYODBC_VERSION        SETUP_VERSION
-#define MYODBC_FILEVER        3,51,18,0
+#define MYODBC_FILEVER        3,51,19,0
 #define MYODBC_PRODUCTVER     MYODBC_FILEVER
-#define MYODBC_STRFILEVER     "3, 51, 18, 0\0"
+#define MYODBC_STRFILEVER     "3, 51, 19, 0\0"
 #define MYODBC_STRPRODUCTVER  MYODBC_STRFILEVER
