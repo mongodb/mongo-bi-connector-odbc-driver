@@ -222,40 +222,24 @@ DECLARE_TEST(my_table_dbs)
 }
 
 
-void my_colpriv_init(SQLHDBC hdbc,SQLHSTMT hstmt)
-{
-    SQLRETURN rc;
-
-    SQLExecDirect( hstmt, "DROP TABLE test_colprev1",SQL_NTS);
-    SQLExecDirect( hstmt, "DROP TABLE test_colprev2",SQL_NTS);
-    SQLExecDirect( hstmt, "DROP TABLE test_colprev3",SQL_NTS);
-
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-
-    rc = SQLExecDirect(hstmt, "CREATE TABLE test_colprev1(a INT,b INT,c INT, d INT)",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt, "CREATE TABLE test_colprev2(a INT,b INT,c INT, d INT)",   SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt, "CREATE TABLE test_colprev3(a INT,b INT,c INT, d INT)",   SQL_NTS);
-    mystmt(hstmt,rc);
-
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-
-    SQLExecDirect(hstmt, "DELETE FROM mysql.columns_priv where USER='my_colpriv'",SQL_NTS); 
-    rc = SQLExecDirect(hstmt, "GRANT SELECT(a,b),INSERT(d), UPDATE(c) ON test_colprev1 TO my_colpriv",SQL_NTS);     
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect( hstmt, "GRANT SELECT(c,a),UPDATE(a,b) ON test_colprev3 TO my_colpriv",  SQL_NTS);     
-    mystmt(hstmt,rc);
-
-    SQLExecDirect(  hstmt, "FLUSH PRIVILEGES",  SQL_NTS);
-    SQLFreeStmt(hstmt, SQL_CLOSE);  
-}
-
-
 DECLARE_TEST(my_colpriv)
 {
-  my_colpriv_init(hdbc, hstmt);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS test_colprev1");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS test_colprev2");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS test_colprev3");
+
+  ok_sql(hstmt, "CREATE TABLE test_colprev1(a INT,b INT,c INT, d INT)");
+  ok_sql(hstmt, "CREATE TABLE test_colprev2(a INT,b INT,c INT, d INT)");
+  ok_sql(hstmt, "CREATE TABLE test_colprev3(a INT,b INT,c INT, d INT)");
+
+  (void)SQLExecDirect(hstmt, (SQLCHAR *)"DROP USER my_colpriv", SQL_NTS);
+
+  ok_sql(hstmt, "GRANT SELECT(a,b),INSERT(d),UPDATE(c) ON test_colprev1 TO my_colpriv");
+  ok_sql(hstmt, "GRANT SELECT(c,a),UPDATE(a,b) ON test_colprev3 TO my_colpriv");
+
+  ok_sql(hstmt, "FLUSH PRIVILEGES");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
                                      NULL, SQL_NTS, NULL, SQL_NTS,
@@ -312,7 +296,10 @@ DECLARE_TEST(my_colpriv)
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
+  ok_sql(hstmt, "DROP USER my_colpriv");
+
   ok_sql(hstmt, "DROP TABLE test_colprev1, test_colprev2, test_colprev3");
+
   return OK;
 }
 
