@@ -1796,6 +1796,25 @@ DECLARE_TEST(t_bug16817)
 }
 
 
+DECLARE_TEST(t_binary_collation)
+{
+  SQLSMALLINT name_length, data_type, decimal_digits, nullable;
+  SQLCHAR column_name[SQL_MAX_COLUMN_NAME_LEN];
+  SQLULEN column_size;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_binary_collation");
+  ok_sql(hstmt, "CREATE TABLE t_binary_collation (id INT)");
+  ok_sql(hstmt, "SHOW CREATE TABLE t_binary_collation");
+
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 1, column_name, sizeof(column_name),
+                                &name_length, &data_type, &column_size,
+                                &decimal_digits, &nullable));
+  is_num(data_type, SQL_VARCHAR);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_binary_collation");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -1817,6 +1836,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug27544)
   ADD_TEST(t_bug16817)
   ADD_TEST(bug6157)
+  ADD_TEST(t_binary_collation)
 END_TESTS
 
 
