@@ -29,7 +29,6 @@
  * The following ODBC APIs are implemented in this file:		   *
  *									   *
  *   SQLExecute		 (ISO 92)					   *
- *   SQLExecDirect	 (ISO 92)					   *
  *   SQLParamData	 (ISO 92)					   *
  *   SQLPutData		 (ISO 92)					   *
  *   SQLCancel		 (ISO 92)					   *
@@ -53,7 +52,7 @@ SQLRETURN do_query(STMT FAR *stmt,char *query)
         return error;       /* Probably error from insert_param */
 
     if ( stmt->stmt_options.max_rows && stmt->stmt_options.max_rows !=
-         (SQLINTEGER) ~0L )
+         (SQLULEN) ~0L )
     {
         /* Add limit to select statement */
         char *pos,*tmp_buffer;
@@ -163,7 +162,7 @@ char *extend_buffer(NET *net, char *to, ulong length)
   @purpose : help function to extend the buffer and copy the data
 */
 
-char *add_to_buffer(NET *net,char *to,char *from,ulong length)
+char *add_to_buffer(NET *net,char *to,const char *from,ulong length)
 {
     if ( !(to= extend_buffer(net,to,length)) )
         return 0;
@@ -464,8 +463,17 @@ char *insert_param(DBC *dbc, char *to, PARAM_BIND *param)
         case SQL_WVARCHAR:
         case SQL_WLONGVARCHAR:
             {
-              if (param->CType == SQL_C_WCHAR)
+              if (param->CType == SQL_C_WCHAR &&
+                  dbc->cxn_charset_info->number != 33 /* UTF-8 */)
                 to= add_to_buffer(net, to, "_utf8", 5);
+              else if (param->CType != SQL_C_WCHAR &&
+                       dbc->cxn_charset_info->number !=
+                       dbc->ansi_charset_info->number)
+              {
+                to= add_to_buffer(net, to, "_", 1);
+                to= add_to_buffer(net, to, dbc->ansi_charset_info->csname,
+                                  strlen(dbc->ansi_charset_info->csname));
+              }
               to= add_to_buffer(net,to,"'",1);
               /* Make sure we have room for a fully-escaped string. */
               if (!(to= extend_buffer(net, to, length * 2)))
@@ -675,27 +683,6 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
     }
 
     return do_query(pStmt, query);
-}
-
-
-/*
-  @type    : ODBC 1.0 API
-  @purpose : executes a preparable statement, using the current values of
-  the parameter marker variables if any parameters exist in the
-  statement
-*/
-
-SQLRETURN SQL_API SQLExecDirect(SQLHSTMT hstmt,
-                                SQLCHAR FAR *szSqlStr,
-                                SQLINTEGER cbSqlStr)
-{
-    int error;
-
-    if ( (error= my_SQLPrepare(hstmt,szSqlStr,cbSqlStr)) )
-        return error;
-    error= my_SQLExecute( (STMT FAR*)hstmt );
-
-    return error;
 }
 
 

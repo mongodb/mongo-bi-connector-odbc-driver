@@ -47,24 +47,29 @@
 /**
   Prepare a statement for later execution.
 
-  @param[in] hStmt     Handle of the statement
-  @param[in] szSqlStr  The statement to prepare
-  @param[in] cbSqlStr  The length of the statement (or @c SQL_NTS if it is
-                       NUL-terminated)
+  @param[in] hStmt  Handle of the statement
+  @param[in] query  The statement to prepare (in connection character set)
+  @param[in] len    The length of the statement (or @c SQL_NTS if it is
+                    NUL-terminated)
+  @param[in] dupe   Set to @c TRUE if query is already a duplicate, and
+                    freeing the value is now up to the driver
 */
-SQLRETURN SQL_API SQLPrepare(SQLHSTMT hStmt, SQLCHAR *szSqlStr,
-                             SQLINTEGER cbSqlStr)
+SQLRETURN SQL_API MySQLPrepare(SQLHSTMT hstmt, SQLCHAR *query, SQLINTEGER len,
+                               my_bool dupe)
 {
-  STMT *stmt= (STMT *)hStmt;
+  STMT *stmt= (STMT *)hstmt;
   /*
     We free orig_query here, instead of my_SQLPrepare, because
     my_SQLPrepare is used by my_pos_update() when a statement requires
     additional parameters.
   */
   if (stmt->orig_query)
-    my_free(stmt->orig_query,MYF(0));
+  {
+    x_free(stmt->orig_query);
+    stmt->orig_query= NULL;
+  }
 
-  return my_SQLPrepare(hStmt, szSqlStr, cbSqlStr);
+  return my_SQLPrepare(hstmt, query, len, dupe);
 }
 
 
@@ -72,129 +77,121 @@ SQLRETURN SQL_API SQLPrepare(SQLHSTMT hStmt, SQLCHAR *szSqlStr,
   @type    : myodbc3 internal
   @purpose : prepares an SQL string for execution
 */
-
-SQLRETURN my_SQLPrepare( SQLHSTMT hstmt, SQLCHAR FAR *szSqlStr, SQLINTEGER cbSqlStr )
+SQLRETURN my_SQLPrepare(SQLHSTMT hstmt, SQLCHAR *szSqlStr, SQLINTEGER cbSqlStr,
+                        my_bool dupe)
 {
-    STMT FAR *stmt= (STMT FAR*) hstmt;
-    char in_string,*pos;
-    uint param_count;
-#ifdef USE_MB
-    char *end;
-#endif
-    CHARSET_INFO *charset_info= stmt->dbc->mysql.charset;
-    int bPerhapsEmbraced = 1;
-    int bEmbraced = 0;
-    char *pcLastCloseBrace = 0;
+  STMT FAR *stmt= (STMT FAR*) hstmt;
+  char in_string, *pos, *end, *pcLastCloseBrace= NULL;
+  uint param_count;
+  CHARSET_INFO *charset_info= stmt->dbc->mysql.charset;
+  int bPerhapsEmbraced= 1, bEmbraced= 0;
 
-#ifdef USE_MB
-    LINT_INIT(end);
-#endif
+  LINT_INIT(end);
 
-    CLEAR_STMT_ERROR(stmt);
-    if (stmt->query)
-        my_free(stmt->query,MYF(0));
-#ifdef NOT_NEEDED  
-    SQLFreeStmt(hstmt,SQL_UNBIND);    /* Not needed according to VB 5.0 */
-#endif
+  CLEAR_STMT_ERROR(stmt);
 
-    if (!(stmt->query= dupp_str((char*) szSqlStr, cbSqlStr)))
-        return set_error(stmt, MYERR_S1001, NULL, 4001);
+  if (stmt->query)
+    my_free(stmt->query, MYF(0));
 
-    /* Count number of parameters and save position for each parameter */
-    in_string= 0;
-    param_count= 0;
+  if (dupe && szSqlStr)
+    stmt->query= (char *)szSqlStr;
+  else
+    if (!(stmt->query= dupp_str((char *)szSqlStr, cbSqlStr)))
+      return set_error(stmt, MYERR_S1001, NULL, 4001);
 
-#ifdef USE_MB
+  /* Count number of parameters and save position for each parameter */
+  in_string= 0;
+  param_count= 0;
+
+  if (use_mb(charset_info))
+    end= strend(stmt->query);
+
+  for (pos= stmt->query; *pos ; pos++)
+  {
     if (use_mb(charset_info))
-        end= strend(stmt->query);
-#endif
-
-    for (pos= stmt->query; *pos ; pos++)
     {
-#ifdef USE_MB
-        if (use_mb(charset_info))
-        {
-            int l;
-            if ((l= my_ismbchar(charset_info, pos , end)))
-            {
-                pos+= l-1;
-                continue;
-            }
-        }
-#endif
-
-        /* handle case where we have statement within {} - in this case we want to replace'em with ' ' */
-        if ( bPerhapsEmbraced )
-        {
-            if ( *pos == '{' )
-            {
-                bPerhapsEmbraced = 0;
-                bEmbraced = 1;
-                *pos =  ' ';
-                pos++;
-                continue;
-            }
-            else if ( !isspace( *pos ) )
-                bPerhapsEmbraced = 0;
-        }
-        else if ( bEmbraced && *pos == '}' )
-            pcLastCloseBrace = pos;
-
-        /* escape char? */
-        if (*pos == '\\' && pos[1])     /* Next char is escaped */
-        {
-            pos++;
-            continue;
-        }
-
-        /* in a string? */
-        if (*pos == in_string)
-        {
-            if (pos[1] == in_string)      /* Two quotes is ok */
-                pos++;
-            else
-                in_string= 0;
-            continue;
-        }
-
-        /* parameter marker? */
-        if (!in_string)
-        {
-            if (*pos == '\'' || *pos == '"' || *pos == '`') /* start of string? */
-            {
-                in_string= *pos;
-                continue;
-            }
-            if (*pos == '?')
-            {
-                PARAM_BIND *param;
-
-                if (param_count >= stmt->params.elements)
-                {
-                    PARAM_BIND tmp_param;
-                    bzero((gptr) &tmp_param,sizeof(tmp_param));
-                    if (push_dynamic(&stmt->params,(gptr) &tmp_param))
-                    {
-                        return set_error(stmt, MYERR_S1001, NULL, 4001);
-                    }
-                }
-                param= dynamic_element(&stmt->params,param_count,PARAM_BIND*);
-                param->pos_in_query= pos;
-                param_count++;
-            }
-        }
+      int l;
+      if ((l= my_ismbchar(charset_info, pos, end)))
+      {
+        pos+= l-1;
+        continue;
+      }
     }
 
-    /* remove closing brace if we have one */
-    if ( pcLastCloseBrace )
-        *pcLastCloseBrace = ' ';
+    /* handle case where we have statement within {} - in this case we want to replace'em with ' ' */
+    if (bPerhapsEmbraced)
+    {
+      if (*pos == '{')
+      {
+        bPerhapsEmbraced = 0;
+        bEmbraced= 1;
+        *pos=  ' ';
+        pos++;
+        continue;
+      }
+      else if (!isspace(*pos))
+        bPerhapsEmbraced= 0;
+    }
+    else if (bEmbraced && *pos == '}')
+      pcLastCloseBrace= pos;
 
-    stmt->param_count= param_count;
-    /* Reset current_param so that SQLParamData starts fresh. */
-    stmt->current_param= 0;
-    stmt->query_end= pos;
-    stmt->state= ST_PREPARED;
-    return SQL_SUCCESS;
+    /* escape char? */
+    if (*pos == '\\' && pos[1]) /* Next char is escaped */
+    {
+      // @todo not multibyte aware
+      pos++;
+      continue;
+    }
+
+    /* in a string? */
+    if (*pos == in_string)
+    {
+      if (pos[1] == in_string)      /* Two quotes is ok */
+        pos++;
+      else
+        in_string= 0;
+      continue;
+    }
+
+    /* parameter marker? */
+    if (!in_string)
+    {
+      if (*pos == '\'' || *pos == '"' || *pos == '`') /* start of string? */
+      {
+        in_string= *pos;
+        continue;
+      }
+      if (*pos == '?')
+      {
+        PARAM_BIND *param;
+
+        if (param_count >= stmt->params.elements)
+        {
+          PARAM_BIND tmp_param;
+          bzero((gptr) &tmp_param,sizeof(tmp_param));
+          if (push_dynamic(&stmt->params,(gptr) &tmp_param))
+          {
+            return set_error(stmt, MYERR_S1001, NULL, 4001);
+          }
+        }
+        param= dynamic_element(&stmt->params,param_count,PARAM_BIND*);
+        param->pos_in_query= pos;
+        param_count++;
+      }
+    }
+  }
+
+  /* remove closing brace if we have one */
+  if (pcLastCloseBrace)
+    *pcLastCloseBrace= ' ';
+
+  /* Reset current_param so that SQLParamData starts fresh. */
+  stmt->current_param= 0;
+  stmt->query_end= pos;
+  stmt->state= ST_PREPARED;
+  stmt->param_count= param_count;
+
+  return SQL_SUCCESS;
 }
 
 

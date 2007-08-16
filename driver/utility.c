@@ -223,7 +223,8 @@ SQLRETURN copy_str_data(SQLSMALLINT HandleType, SQLHANDLE Handle,
                               from @c from
   @param[out]    used_chars   Buffer for returning number of chars consumed
                               from @c from
-  @param[in,out] errors       Number of errors encountered during conversion
+  @param[in,out] errors       Pointer to value where number of errors
+                              encountered is added.
 
   @retval Length of bytes copied to @c to
 */
@@ -283,7 +284,7 @@ outp:
     *used_bytes+= from_cnvres;
     *used_chars+= 1;
   }
-  *errors= error_count;
+  *errors+= error_count;
 
   return (uint32) (to - to_start);
 }
@@ -652,7 +653,7 @@ copy_wchar_result(STMT *stmt,
                         (src_len > 0 ? src_len : 0L));
     uint32 used_bytes, used_chars, bytes;
     UTF8 *temp= (UTF8 *)my_malloc(copy_len * 4, MYF(0));
-    uint errors;
+    uint errors= 0;
 
     bytes= copy_and_convert((char *)temp, copy_len * 4, utf8_charset_info,
                              src, copy_len, charset, &used_bytes, &used_chars,

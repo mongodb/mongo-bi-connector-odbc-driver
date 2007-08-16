@@ -84,15 +84,6 @@ SQLRETURN myodbc_set_initial_character_set(DBC *dbc, const char *charset)
                                                     MYF(MY_CS_PRIMARY),
                                                     MYF(0));
     }
-    else
-    {
-      /*
-        Get the ANSI charset info before we change connection to UTF-8.
-      */
-      MY_CHARSET_INFO my_charset;
-      mysql_get_character_set_info(&dbc->mysql, &my_charset);
-      dbc->ansi_charset_info= get_charset(my_charset.number, MYF(0));
-    }
 
     if (mysql_set_character_set(&dbc->mysql, "utf8"))
     {
@@ -187,6 +178,24 @@ SQLRETURN myodbc_do_connect(DBC *dbc, MYODBCUTIL_DATASOURCE *ds)
                 ds->pszSSLCAPATH, ds->pszSSLCIPHER);
   mysql_options(mysql, MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
                 (const char *)&opt_ssl_verify_server_cert);
+
+  /*
+    By setting MYSQL_SET_CHARSET_NAME, usernames and passwords in non-latin1
+    character sets should be handled properly.
+  */
+  if (dbc->unicode)
+  {
+    /*
+      Get the ANSI charset info before we change connection to UTF-8.
+    */
+    MY_CHARSET_INFO my_charset;
+    mysql_get_character_set_info(&dbc->mysql, &my_charset);
+    dbc->ansi_charset_info= get_charset(my_charset.number, MYF(0));
+
+    mysql_options(mysql, MYSQL_SET_CHARSET_NAME, "utf8");
+  }
+  else if (ds->pszCHARSET && ds->pszCHARSET[0])
+    mysql_options(mysql, MYSQL_SET_CHARSET_NAME, ds->pszCHARSET);
 
   if (!mysql_real_connect(mysql, ds->pszSERVER, ds->pszUSER, ds->pszPASSWORD,
                           ds->pszDATABASE, port, ds->pszSOCKET, flags))
@@ -318,28 +327,27 @@ error:
   Establish a connection to a data source.
 
   @param[in]  hdbc    Connection handle
-  @param[in]  szDSN   Data source name
-  @param[in]  cbDSN   Length of data source name or @c SQL_NTS
-  @param[in]  szUID   User identifier
-  @param[in]  cbUID   Length of user identifier or @c SQL_NTS
-  @param[in]  szAuth  Authentication string (password)
-  @param[in]  cbAuth  Length of authentication string or @c SQL_NTS
+  @param[in]  szDSN   Data source name (in connection charset)
+  @param[in]  cbDSN   Length of data source name in bytes or @c SQL_NTS
+  @param[in]  szUID   User identifier (in connection charset)
+  @param[in]  cbUID   Length of user identifier in bytes or @c SQL_NTS
+  @param[in]  szAuth  Authentication string (password) (in connection charset)
+  @param[in]  cbAuth  Length of authentication string in bytes or @c SQL_NTS
 
   @return  Standard ODBC success codes
 
   @since ODBC 1.0
   @since ISO SQL 92
 */
-SQLRETURN SQL_API SQLConnect(SQLHDBC  hdbc,
-                             SQLCHAR *szDSN,  SQLSMALLINT cbDSN,
-                             SQLCHAR *szUID,
-                             SQLSMALLINT cbUID __attribute__((unused)),
-                             SQLCHAR *szAuth,
-                             SQLSMALLINT cbAuth __attribute__((unused)))
+SQLRETURN SQL_API MySQLConnect(SQLHDBC  hdbc,
+                               SQLCHAR *szDSN,  SQLSMALLINT cbDSN,
+                               SQLCHAR *szUID,
+                               SQLSMALLINT cbUID __attribute__((unused)),
+                               SQLCHAR *szAuth,
+                               SQLSMALLINT cbAuth __attribute__((unused)))
 {
   SQLRETURN rc;
   DBC *dbc= (DBC *)hdbc;
-  MYSQL *mysql= &dbc->mysql;
   char dsn[SQL_MAX_DSN_LENGTH], *dsn_ptr;
   MYODBCUTIL_DATASOURCE *ds;
 

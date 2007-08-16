@@ -509,7 +509,8 @@ wchar_t *my_fetch_wstr(SQLHSTMT hstmt, SQLWCHAR *buffer, SQLUSMALLINT irow)
 {
   SQLRETURN rc;
   SQLLEN nLen;
-  static wchar_t buff[2048], *to= buff;
+  static wchar_t buff[2048];
+  wchar_t *to= buff;
 
   rc= SQLGetData(hstmt, irow, SQL_WCHAR, buffer, MAX_ROW_DATA_LEN + 1, &nLen);
   if (!SQL_SUCCEEDED(rc))

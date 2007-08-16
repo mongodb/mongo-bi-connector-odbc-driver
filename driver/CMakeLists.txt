@@ -21,8 +21,9 @@
 ##########################################################################
 
 SET(DRIVER_SRCS
-	catalog.c connect.c cursor.c dll.c error.c execute.c handle.c info.c myodbc3.c 
-	options.c prepare.c results.c transact.c unicode_transcode.c utility.c)
+        ansi.c catalog.c connect.c cursor.c dll.c error.c execute.c handle.c
+        info.c myodbc3.c options.c prepare.c results.c transact.c unicode.c
+        unicode_transcode.c utility.c)
 
 IF(WIN32)
 	SET(DRIVER_SRCS ${DRIVER_SRCS} myodbc3.def myodbc3.rc)

@@ -74,9 +74,9 @@
   Utility function prototypes that share among files
 */
 
+SQLRETURN my_SQLPrepare(SQLHSTMT hstmt, SQLCHAR *szSqlStr, SQLINTEGER cbSqlStr,
+                        my_bool dupe);
 SQLRETURN my_SQLExecute(STMT FAR* stmt);
-SQLRETURN my_SQLPrepare(SQLHSTMT hstmt,SQLCHAR FAR *szSqlStr,
-			SQLINTEGER cbSqlStr);
 SQLRETURN SQL_API my_SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption);
 SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,
                     SQLUSMALLINT fOption, uint clearAllResults);
@@ -94,10 +94,14 @@ SQLRETURN my_pos_update(STMT FAR *stmt,STMT FAR *stmtParam,
 			SQLUSMALLINT irow,DYNAMIC_STRING *dynStr);
 char *check_if_positioned_cursor_exists(STMT FAR *stmt, STMT FAR **stmtNew);
 char *insert_param(DBC *dbc, char *to,PARAM_BIND *param);
-char *add_to_buffer(NET *net,char *to,char *from,ulong length);
+char *add_to_buffer(NET *net,char *to,const char *from,ulong length);
 
 void reset_getdata_position(STMT *stmt);
 
+uint32
+copy_and_convert(char *to, uint32 to_length, CHARSET_INFO *to_cs,
+                 const char *from, uint32 from_length, CHARSET_INFO *from_cs,
+                 uint32 *used_bytes, uint32 *used_chars, uint *errors);
 SQLRETURN
 copy_ansi_result(STMT *stmt,
                  SQLCHAR *result, SQLLEN result_bytes, SQLLEN *used_bytes,

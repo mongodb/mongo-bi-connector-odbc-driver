@@ -920,7 +920,8 @@ SQLRETURN my_pos_update( STMT FAR *         pStmtCursor,
 
     pStmtTemp = (STMT FAR*)hStmtTemp;
 
-    if ( my_SQLPrepare( pStmtTemp, (SQLCHAR FAR*)dynQuery->str, dynQuery->length ) != SQL_SUCCESS )
+    if (my_SQLPrepare(pStmtTemp, (SQLCHAR *)dynQuery->str, dynQuery->length,
+                      FALSE) != SQL_SUCCESS)
     {
         my_SQLFreeStmt( pStmtTemp, SQL_DROP );
         return set_stmt_error( pStmt, "HY000", "my_SQLPrepare() failed.", 0 );
@@ -940,8 +941,8 @@ SQLRETURN my_pos_update( STMT FAR *         pStmtCursor,
         Re-prepare the statement, which will leave us with a prepared
         statement that is a non-positioned update.
       */
-      if (my_SQLPrepare(pStmt, (SQLCHAR *)dynQuery->str, dynQuery->length) !=
-          SQL_SUCCESS)
+      if (my_SQLPrepare(pStmt, (SQLCHAR *)dynQuery->str, dynQuery->length,
+                        FALSE) != SQL_SUCCESS)
         return SQL_ERROR;
     }
 

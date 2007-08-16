@@ -2120,16 +2120,16 @@ SQLRETURN SQL_API SQLProcedures(SQLHSTMT     hstmt,
       We use the server to generate a fake result with no rows, but
       reasonable column information.
     */
-    if ((rc= my_SQLPrepare(hstmt, (SQLCHAR *)"SELECT "
-                           "'' AS PROCEDURE_CAT,"
-                           "'' AS PROCEDURE_SCHEM,"
-                           "'' AS PROCEDURE_NAME,"
-                           "NULL AS NUM_INPUT_PARAMS,"
-                           "NULL AS NUM_OUTPUT_PARAMS,"
-                           "NULL AS NUM_RESULT_SETS,"
-                           "'' AS REMARKS,"
-                           "0 AS PROCEDURE_TYPE "
-                           "FROM DUAL WHERE 1=0", SQL_NTS)))
+    if ((rc= MySQLPrepare(hstmt, (SQLCHAR *)"SELECT "
+                          "'' AS PROCEDURE_CAT,"
+                          "'' AS PROCEDURE_SCHEM,"
+                          "'' AS PROCEDURE_NAME,"
+                          "NULL AS NUM_INPUT_PARAMS,"
+                          "NULL AS NUM_OUTPUT_PARAMS,"
+                          "NULL AS NUM_RESULT_SETS,"
+                          "'' AS REMARKS,"
+                          "0 AS PROCEDURE_TYPE "
+                          "FROM DUAL WHERE 1=0", SQL_NTS, FALSE)))
       return rc;
 
     return my_SQLExecute(hstmt);
@@ -2141,48 +2141,48 @@ SQLRETURN SQL_API SQLProcedures(SQLHSTMT     hstmt,
     behavior, but seems useful.)
   */
   if (szCatalogName && szProcName)
-    rc= my_SQLPrepare(hstmt, (SQLCHAR *)
-                      "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT,"
-                      "NULL AS PROCEDURE_SCHEM,"
-                      "ROUTINE_NAME AS PROCEDURE_NAME,"
-                      "NULL AS NUM_INPUT_PARAMS,"
-                      "NULL AS NUM_OUTPUT_PARAMS,"
-                      "NULL AS NUM_RESULT_SETS,"
-                      "ROUTINE_COMMENT AS REMARKS,"
-                      "IF(ROUTINE_TYPE = 'FUNCTION', 2,"
-                        "IF(ROUTINE_TYPE= 'PROCEDURE', 1, 0)) AS PROCEDURE_TYPE"
-                      "  FROM INFORMATION_SCHEMA.ROUTINES"
-                      " WHERE ROUTINE_NAME LIKE ? AND ROUTINE_SCHEMA = ?",
-                      SQL_NTS);
+    rc= MySQLPrepare(hstmt, (SQLCHAR *)
+                     "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT,"
+                     "NULL AS PROCEDURE_SCHEM,"
+                     "ROUTINE_NAME AS PROCEDURE_NAME,"
+                     "NULL AS NUM_INPUT_PARAMS,"
+                     "NULL AS NUM_OUTPUT_PARAMS,"
+                     "NULL AS NUM_RESULT_SETS,"
+                     "ROUTINE_COMMENT AS REMARKS,"
+                     "IF(ROUTINE_TYPE = 'FUNCTION', 2,"
+                       "IF(ROUTINE_TYPE= 'PROCEDURE', 1, 0)) AS PROCEDURE_TYPE"
+                     "  FROM INFORMATION_SCHEMA.ROUTINES"
+                     " WHERE ROUTINE_NAME LIKE ? AND ROUTINE_SCHEMA = ?",
+                     SQL_NTS, FALSE);
   else if (szProcName)
-    rc= my_SQLPrepare(hstmt, (SQLCHAR *)
-                      "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT,"
-                      "NULL AS PROCEDURE_SCHEM,"
-                      "ROUTINE_NAME AS PROCEDURE_NAME,"
-                      "NULL AS NUM_INPUT_PARAMS,"
-                      "NULL AS NUM_OUTPUT_PARAMS,"
-                      "NULL AS NUM_RESULT_SETS,"
-                      "ROUTINE_COMMENT AS REMARKS,"
-                      "IF(ROUTINE_TYPE = 'FUNCTION', 2,"
-                        "IF(ROUTINE_TYPE= 'PROCEDURE', 1, 0)) AS PROCEDURE_TYPE"
-                      "  FROM INFORMATION_SCHEMA.ROUTINES"
-                      " WHERE ROUTINE_NAME LIKE ?"
-                      " AND ROUTINE_SCHEMA = DATABASE()",
-                      SQL_NTS);
+    rc= MySQLPrepare(hstmt, (SQLCHAR *)
+                     "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT,"
+                     "NULL AS PROCEDURE_SCHEM,"
+                     "ROUTINE_NAME AS PROCEDURE_NAME,"
+                     "NULL AS NUM_INPUT_PARAMS,"
+                     "NULL AS NUM_OUTPUT_PARAMS,"
+                     "NULL AS NUM_RESULT_SETS,"
+                     "ROUTINE_COMMENT AS REMARKS,"
+                     "IF(ROUTINE_TYPE = 'FUNCTION', 2,"
+                       "IF(ROUTINE_TYPE= 'PROCEDURE', 1, 0)) AS PROCEDURE_TYPE"
+                     "  FROM INFORMATION_SCHEMA.ROUTINES"
+                     " WHERE ROUTINE_NAME LIKE ?"
+                     " AND ROUTINE_SCHEMA = DATABASE()",
+                     SQL_NTS, FALSE);
   else
-    rc= my_SQLPrepare(hstmt, (SQLCHAR *)
-                      "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT,"
-                      "NULL AS PROCEDURE_SCHEM,"
-                      "ROUTINE_NAME AS PROCEDURE_NAME,"
-                      "NULL AS NUM_INPUT_PARAMS,"
-                      "NULL AS NUM_OUTPUT_PARAMS,"
-                      "NULL AS NUM_RESULT_SETS,"
-                      "ROUTINE_COMMENT AS REMARKS,"
-                      "IF(ROUTINE_TYPE = 'FUNCTION', 2,"
-                        "IF(ROUTINE_TYPE= 'PROCEDURE', 1, 0)) AS PROCEDURE_TYPE"
-                      " FROM INFORMATION_SCHEMA.ROUTINES"
-                      " WHERE ROUTINE_SCHEMA = DATABASE()",
-                      SQL_NTS);
+    rc= MySQLPrepare(hstmt, (SQLCHAR *)
+                     "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT,"
+                     "NULL AS PROCEDURE_SCHEM,"
+                     "ROUTINE_NAME AS PROCEDURE_NAME,"
+                     "NULL AS NUM_INPUT_PARAMS,"
+                     "NULL AS NUM_OUTPUT_PARAMS,"
+                     "NULL AS NUM_RESULT_SETS,"
+                     "ROUTINE_COMMENT AS REMARKS,"
+                     "IF(ROUTINE_TYPE = 'FUNCTION', 2,"
+                       "IF(ROUTINE_TYPE= 'PROCEDURE', 1, 0)) AS PROCEDURE_TYPE"
+                     " FROM INFORMATION_SCHEMA.ROUTINES"
+                     " WHERE ROUTINE_SCHEMA = DATABASE()",
+                     SQL_NTS, FALSE);
   if (!SQL_SUCCEEDED(rc))
     return rc;
 

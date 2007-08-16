@@ -408,4 +408,10 @@ extern pthread_mutex_t myodbc_lock;
 
 #include "myutil.h"
 
+SQLRETURN SQL_API MySQLConnect(SQLHDBC hdbc, SQLCHAR *szDSN, SQLSMALLINT cbDSN,
+                               SQLCHAR *szUID, SQLSMALLINT cbUID,
+                               SQLCHAR *szAuth, SQLSMALLINT cbAuth);
+SQLRETURN SQL_API MySQLPrepare(SQLHSTMT hstmt, SQLCHAR *query, SQLINTEGER len,
+                               my_bool dupe);
+
 #endif /* __MYODBC3_H__ */
