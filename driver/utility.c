@@ -900,10 +900,19 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
   */
   case MYSQL_TYPE_VARCHAR:
   case MYSQL_TYPE_VAR_STRING:
+#ifdef SERVER_BUG_10491_FIXED
+    /**
+      @todo Re-enable this when Bug #10491 is fixed in the server.
+    */
     if (buff)
       (void)strmov(buff, field_is_binary ? "varbinary" : "varchar");
 
     return field_is_binary ? SQL_VARBINARY : SQL_VARCHAR;
+#else
+    if (buff)
+      (void)strmov(buff, "varchar");
+    return SQL_VARCHAR;
+#endif
 
   case MYSQL_TYPE_TINY_BLOB:
     if (buff)

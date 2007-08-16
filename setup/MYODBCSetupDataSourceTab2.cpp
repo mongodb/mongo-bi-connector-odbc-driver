@@ -24,7 +24,13 @@ MYODBCSetupDataSourceTab2::MYODBCSetupDataSourceTab2( QWidget *pwidgetParent,
                                                       QString stringPort,
                                                       QString stringSocket,
                                                       QString stringInitialStatement,
-                                                      QString stringCharset )
+                                                      QString stringCharset,
+                                                      QString stringSSLKey,
+                                                      QString stringSSLCert,
+                                                      QString stringSSLCA,
+                                                      QString stringSSLCAPath,
+                                                      QString stringSSLCipher )
+
     : QWidget( pwidgetParent )
 {
     doInit();
@@ -32,6 +38,11 @@ MYODBCSetupDataSourceTab2::MYODBCSetupDataSourceTab2( QWidget *pwidgetParent,
     plineeditSocket->setText( stringSocket );
     plineeditInitialStatement->setText( stringInitialStatement );
     pcomboboxCharset->setEditText( stringCharset );
+    plineeditSSLKey->setText( stringSSLKey );
+    plineeditSSLCert->setText( stringSSLCert );
+    plineeditSSLCA->setText( stringSSLCA );
+    plineeditSSLCAPath->setText( stringSSLCAPath );
+    plineeditSSLCipher->setText( stringSSLCipher );
 }
 
 MYODBCSetupDataSourceTab2::MYODBCSetupDataSourceTab2( QWidget *pwidgetParent )
@@ -60,6 +71,31 @@ void MYODBCSetupDataSourceTab2::setCharset( const QString &stringCharset )
     pcomboboxCharset->setEditText( stringCharset );
 }
 
+void MYODBCSetupDataSourceTab2::setSSLKey( const QString &stringSSLKey )
+{
+    plineeditSSLKey->setText( stringSSLKey );
+}
+
+void MYODBCSetupDataSourceTab2::setSSLCert( const QString &stringSSLCert )
+{
+    plineeditSSLCert->setText( stringSSLCert );
+}
+
+void MYODBCSetupDataSourceTab2::setSSLCA( const QString &stringSSLCA )
+{
+    plineeditSSLCA->setText( stringSSLCA );
+}
+
+void MYODBCSetupDataSourceTab2::setSSLCAPath( const QString &stringSSLCAPath )
+{
+    plineeditSSLCAPath->setText( stringSSLCAPath );
+}
+
+void MYODBCSetupDataSourceTab2::setSSLCipher( const QString &stringSSLCipher )
+{
+    plineeditSSLCipher->setText( stringSSLCipher );
+}
+
 QString MYODBCSetupDataSourceTab2::getPort()
 {
     return plineeditPort->text();
@@ -80,12 +116,42 @@ QString MYODBCSetupDataSourceTab2::getCharset()
     return pcomboboxCharset->currentText();
 }
 
+QString MYODBCSetupDataSourceTab2::getSSLKey()
+{
+    return plineeditSSLKey->text();
+}
+
+QString MYODBCSetupDataSourceTab2::getSSLCert()
+{
+    return plineeditSSLCert->text();
+}
+
+QString MYODBCSetupDataSourceTab2::getSSLCA()
+{
+    return plineeditSSLCA->text();
+}
+
+QString MYODBCSetupDataSourceTab2::getSSLCAPath()
+{
+    return plineeditSSLCAPath->text();
+}
+
+QString MYODBCSetupDataSourceTab2::getSSLCipher()
+{
+    return plineeditSSLCipher->text();
+}
+
 void MYODBCSetupDataSourceTab2::doInit()
 {
     QString         stringPort( tr("The TCP/IP port to use if server is not localhost.\nOptional: Yes (silently uses default)\nDefault: 3306") );
     QString         stringSocket( tr("The socket or Windows pipe to connect to.\nOptional: Yes\nDefault: <empty>") );
     QString         stringInitialStatement( tr("A statement that will be executed when connection to MySQL.\nOptional: Yes\nDefault: <empty>") );
     QString         stringCharset( tr("Default character set to use.\nOptional: Yes\nDefault: <empty>") );
+    QString         stringSSLKey( tr("The name of the SSL key file to use for \nestablishing a secure connection.\nOptional: Yes") );
+    QString         stringSSLCert( tr("The name of the SSL certificate file to use \nfor establishing a secure connection.\nOptional: Yes") );
+    QString         stringSSLCA( tr("The path to a file that contains a list of \ntrusted SSL CAs.\nOptional: Yes") );
+    QString         stringSSLCAPath( tr("The path to a directory that contains \ntrusted SSL CA certificates in PEM format.\nOptional: Yes") );
+    QString         stringSSLCipher( tr("A list of allowable ciphers to use for SSL encryption.\nExample: ALL:-AES:-EXP\nOptional: Yes") );
 #if QT_VERSION >= 0x040000
     QGridLayout *   playoutFields = new QGridLayout();
     setLayout( playoutFields );
@@ -150,6 +216,67 @@ void MYODBCSetupDataSourceTab2::doInit()
     QToolTip::add(pcomboboxCharset, stringCharset);
 #endif
     nRow++;
+
+    plabel = new QLabel( tr("SSL Key"), this );
+    plineeditSSLKey = new MYODBCSetupLineEdit( this );
+    plineeditSSLKey->setAssistText( stringSSLKey );
+    playoutFields->addWidget( plabel, nRow, nColLabel );
+    playoutFields->addWidget( plineeditSSLKey, nRow, nColField );
+#if QT_VERSION >= 0x040000
+    plineeditSSLKey->setToolTip( stringSSLKey );
+#else
+    QToolTip::add( plineeditSSLKey, stringSSLKey );
+#endif
+    nRow++;
+
+    plabel = new QLabel( tr("SSL Certificate"), this );
+    plineeditSSLCert = new MYODBCSetupLineEdit( this );
+    plineeditSSLCert->setAssistText( stringSSLCert );
+    playoutFields->addWidget( plabel, nRow, nColLabel );
+    playoutFields->addWidget( plineeditSSLCert, nRow, nColField );
+#if QT_VERSION >= 0x040000
+    plineeditSSLCert->setToolTip( stringSSLCert );
+#else
+    QToolTip::add( plineeditSSLCert, stringSSLCert );
+#endif
+    nRow++;
+
+    plabel = new QLabel( tr("SSL Certificate Authority"), this );
+    plineeditSSLCA = new MYODBCSetupLineEdit( this );
+    plineeditSSLCA->setAssistText( stringSSLCA );
+    playoutFields->addWidget( plabel, nRow, nColLabel );
+    playoutFields->addWidget( plineeditSSLCA, nRow, nColField );
+#if QT_VERSION >= 0x040000
+    plineeditSSLCA->setToolTip( stringSSLCA );
+#else
+    QToolTip::add( plineeditSSLCA, stringSSLCA );
+#endif
+    nRow++;
+
+    plabel = new QLabel( tr("SSL CA Path"), this );
+    plineeditSSLCAPath = new MYODBCSetupLineEdit( this );
+    plineeditSSLCAPath->setAssistText( stringSSLCAPath );
+    playoutFields->addWidget( plabel, nRow, nColLabel );
+    playoutFields->addWidget( plineeditSSLCAPath, nRow, nColField );
+#if QT_VERSION >= 0x040000
+    plineeditSSLCAPath->setToolTip( stringSSLCAPath );
+#else
+    QToolTip::add( plineeditSSLCAPath, stringSSLCAPath );
+#endif
+    nRow++;
+
+    plabel = new QLabel( tr("SSL Cipher"), this );
+    plineeditSSLCipher = new MYODBCSetupLineEdit( this );
+    plineeditSSLCipher->setAssistText( stringSSLCipher );
+    playoutFields->addWidget( plabel, nRow, nColLabel );
+    playoutFields->addWidget( plineeditSSLCipher, nRow, nColField );
+#if QT_VERSION >= 0x040000
+    plineeditSSLCipher->setToolTip( stringSSLCipher );
+#else
+    QToolTip::add( plineeditSSLCipher, stringSSLCipher );
+#endif
+    nRow++;
 }
+
 
 

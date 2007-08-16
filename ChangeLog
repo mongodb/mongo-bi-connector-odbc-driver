@@ -33,13 +33,39 @@ x.x
 
 ----
 
-3.51.18
+3.51.20
 
   Functionality added or changed:
+
+  Bugs fixed:
+
+----
+
+3.51.19 (8-Aug-2007)
+
+  Functionality added or changed:
+  * Because of Bug #10491 in the server, character string results were
+    sometimes incorrectly identified as SQL_VARBINARY. Until this server
+    bug is corrected, the driver will identify all variable-length
+    strings as SQL_VARCHAR.
+
+----
+
+3.51.18 (6-Aug-2007)
+
+  Functionality added or changed:
+  * An experimental binary package, without an installer, is available
+    for Microsoft Windows x64 Edition.
+  * Binary packages as disk images with installers are now available
+    for Mac OS X.
+  * Binary packages for Sun Solaris are available as PKG packages.
   * Added FLAG_MULTI_STATEMENTS to allow issuing queries that contain
     multiple statements. Also added to the setup GUI. (Bug #7445)
   * Removed support for the TRACE and TRACEFILE DSN options. The standard
     ODBC logging should be used.
+  * Added support for SQL_ATTR_ROW_BIND_OFFSET_PTR in normal cursors.
+    (Bug #6741)
+  * Added SSL options to the GUI setup dialog.
 
   Bugs fixed:
   * SQLColumns() incorrectly reported that an auto-incrementing
@@ -73,7 +99,7 @@ x.x
   * SQLConnect() and SQLDriverConnect() were rewritten to eliminate duplicate
     code and ensure all options were supported using both connection methods.
     SQLDriverConnect() now only requires the setup library to be present when
-    it the call requires it.
+    the call requires it.
   * SQLColumns() failed when a catalog was specified due to an
     incorrectly-generated query. (Bug #29888)
   * SQLGetTypeInfo() returned incorrect information for date and time
@@ -84,8 +110,6 @@ x.x
   * Tables from the mysql database (catalog) were listed as SYSTEM TABLES
     by SQLTables() even when a different catalog was being queried. This
     also introduced errors due to the fix for Bug #26934.  (Bug #28662)
-  * Added support for SQL_ATTR_ROW_BIND_OFFSET_PTR in normal cursors.
-    (Bug #6741)
 
 ----
 
