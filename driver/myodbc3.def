@@ -118,6 +118,10 @@ SQLBulkOperations
 ;SQLGetDescField
 ;SQLGetDescRec
 SQLCloseCursor
+SQLConnectW
+SQLDriverConnectW
+SQLExecDirectW
+SQLPrepareW
 ;
 DllMain
 LoadByOrdinal

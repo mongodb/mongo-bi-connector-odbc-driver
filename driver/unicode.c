@@ -36,6 +36,8 @@
 
 /* Forward declarations. */
 SQLCHAR *sqlwchar_as_utf8(SQLWCHAR *str, SQLINTEGER *len);
+SQLINTEGER utf8_as_sqlwchar(SQLWCHAR *out, SQLINTEGER out_max, SQLCHAR *in,
+                            SQLINTEGER in_len);
 
 SQLRETURN SQL_API
 SQLPrepareWImpl(SQLHSTMT hstmt, SQLWCHAR *str, SQLINTEGER str_len);
@@ -98,7 +100,7 @@ SQLCHAR *sqlwchar_as_sqlchar(CHARSET_INFO *charset_info, SQLWCHAR *str,
     }
 
     i+= copy_and_convert((char *)out + i, out_bytes - i, charset_info,
-                         u8, u8_len, utf8_charset_info, &used_bytes,
+                         (char *)u8, u8_len, utf8_charset_info, &used_bytes,
                          &used_chars, errors);
   }
 
@@ -161,6 +163,39 @@ SQLCHAR *sqlwchar_as_utf8(SQLWCHAR *str, SQLINTEGER *len)
 }
 
 
+/**
+  Convert a SQLCHAR encoded as UTF-8 into a SQLWCHAR.
+
+  @param[out]     out           Pointer to SQLWCHAR buffer
+  @param[in]      out_max       Length of @c out buffer
+  @param[in]      in            Pointer to SQLCHAR string (utf-8 encoded)
+  @param[in]      in_len        Length of @c in (in bytes)
+
+  @return  Number of characters stored in the @c out buffer
+*/
+SQLINTEGER utf8_as_sqlwchar(SQLWCHAR *out, SQLINTEGER out_max, SQLCHAR *in,
+                            SQLINTEGER in_len)
+{
+  SQLINTEGER i;
+  SQLWCHAR *pos, *out_end;
+
+  for (i= 0, pos= out, out_end= out + out_max; i < in_len && pos < out_end; )
+  {
+    if (sizeof(SQLWCHAR) == 4)
+      i+= utf8toutf32(in + i, (UTF32 *)pos++);
+    else
+    {
+      UTF32 u32;
+      i+= utf8toutf32(in + i, &u32);
+      pos+= utf32toutf16(u32, (UTF16 *)pos);
+    }
+  }
+
+  *out= 0;
+  return pos - out;
+}
+
+
 SQLRETURN SQL_API
 SQLConnectW(SQLHDBC hdbc, SQLWCHAR *dsn, SQLSMALLINT dsn_len_in,
             SQLWCHAR *user, SQLSMALLINT user_len_in,
@@ -179,6 +214,44 @@ SQLConnectW(SQLHDBC hdbc, SQLWCHAR *dsn, SQLSMALLINT dsn_len_in,
   x_free(dsn8);
   x_free(user8);
   x_free(auth8);
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
+SQLDriverConnectW(SQLHDBC hdbc, SQLHWND hwnd,
+                  SQLWCHAR *in, SQLSMALLINT in_len_in,
+                  SQLWCHAR *out, SQLSMALLINT out_max, SQLSMALLINT *out_len,
+                  SQLUSMALLINT completion)
+{
+  SQLRETURN rc;
+  SQLINTEGER in_len= in_len_in;
+  SQLSMALLINT out8_max;
+  SQLCHAR *out8, *in8= sqlwchar_as_utf8(in, &in_len);
+
+  if (in_len == SQL_NTS)
+    in_len= sqlwchar_strlen(in);
+
+  out8_max= sizeof(SQLCHAR) * 4 * out_max;
+  out8= (SQLCHAR *)my_malloc(out8_max + 1, MYF(0));
+  if (!out8)
+  {
+    rc= set_dbc_error((DBC *)hdbc, "HY001", NULL, 0);
+    goto error;
+  }
+
+  ((DBC *)hdbc)->unicode= TRUE; /* Hooray, a Unicode connection! */
+
+  rc= MySQLDriverConnect(hdbc, hwnd, in8, in_len, out8, out8_max, out_len,
+                         completion);
+
+  /* Now we have to convert out8 back into a SQLWCHAR. */
+  *out_len= utf8_as_sqlwchar(out, out_max, out8, *out_len);
+
+error:
+  x_free(out8);
+  x_free(in8);
 
   return rc;
 }
@@ -280,15 +353,6 @@ SQLDescribeColW(SQLHSTMT hstmt, SQLUSMALLINT column,
                 SQLWCHAR *name, SQLSMALLINT name_max, SQLSMALLINT *name_len,
                 SQLSMALLINT *type, SQLULEN *def, SQLSMALLINT *scale,
                 SQLSMALLINT *nullable)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLDriverConnectW(SQLHDBC hdbc, SQLHWND hwnd, SQLWCHAR *in, SQLSMALLINT in_len,
-                  SQLWCHAR *out, SQLSMALLINT out_max, SQLSMALLINT *out_len,
-                  SQLUSMALLINT completion)
 {
   NOT_IMPLEMENTED;
 }

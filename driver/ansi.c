@@ -46,6 +46,16 @@ SQLConnect(SQLHDBC hdbc, SQLCHAR *dsn, SQLSMALLINT dsn_len,
 
 
 SQLRETURN SQL_API
+SQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd, SQLCHAR *in, SQLSMALLINT in_len,
+                 SQLCHAR *out, SQLSMALLINT out_max, SQLSMALLINT *out_len,
+                 SQLUSMALLINT completion)
+{
+  return MySQLDriverConnect(hdbc, hwnd, in, in_len, out, out_max, out_len,
+                            completion);
+}
+
+
+SQLRETURN SQL_API
 SQLExecDirect(SQLHSTMT hstmt, SQLCHAR *str, SQLINTEGER str_len)
 {
   int error;
@@ -172,15 +182,6 @@ SQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
                SQLCHAR *name, SQLSMALLINT name_max, SQLSMALLINT *name_len,
                SQLSMALLINT *type, SQLULEN *def, SQLSMALLINT *scale,
                SQLSMALLINT *nullable)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd, SQLCHAR *in, SQLSMALLINT in_len,
-                 SQLCHAR *out, SQLSMALLINT out_max, SQLSMALLINT *out_len,
-                 SQLUSMALLINT completion)
 {
   NOT_IMPLEMENTED;
 }

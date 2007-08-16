@@ -172,10 +172,52 @@ DECLARE_TEST(sqlchar)
 }
 
 
+DECLARE_TEST(sqldriverconnect)
+{
+  HDBC hdbc1;
+  HSTMT hstmt1;
+  wchar_t conn_in[512];
+  wchar_t dummy[80];
+  SQLWCHAR conn_out[512];
+  SQLSMALLINT conn_out_len;
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+
+  swprintf(conn_in,
+           L"DRIVER={MySQL ODBC 3.51 Driver};USER=%s;PASSWORD=%s;"
+           L"DATABASE=%s;SERVER=%s",
+           myuid, mypwd, mydb, myserver);
+  if (mysock != NULL)
+  {
+    wcscat(conn_in, L";SOCKET=");
+    mbstowcs(dummy, (char *)mysock, sizeof(dummy));
+    wcscat(conn_in, dummy);
+  }
+
+  ok_con(hdbc1, SQLDriverConnectW(hdbc1, NULL, WL(conn_in, wcslen(conn_in)),
+                                  wcslen(conn_in), conn_out, sizeof(conn_out),
+                                  &conn_out_len, SQL_DRIVER_NOPROMPT));
+
+  ok_con(hdbc, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_stmt(hstmt1, SQLExecDirectW(hstmt1, W(L"SELECT 1234"), SQL_NTS));
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  is_num(my_fetch_int(hstmt1, 1), 1234);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt1, SQL_DROP));
+
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlconnect)
   ADD_TEST(sqlprepare)
   ADD_TEST(sqlchar)
+  ADD_TEST(sqldriverconnect)
 END_TESTS
 
 

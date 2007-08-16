@@ -411,6 +411,11 @@ extern pthread_mutex_t myodbc_lock;
 SQLRETURN SQL_API MySQLConnect(SQLHDBC hdbc, SQLCHAR *szDSN, SQLSMALLINT cbDSN,
                                SQLCHAR *szUID, SQLSMALLINT cbUID,
                                SQLCHAR *szAuth, SQLSMALLINT cbAuth);
+SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
+                                     SQLCHAR *in, SQLSMALLINT in_len,
+                                     SQLCHAR *out, SQLSMALLINT out_max,
+                                     SQLSMALLINT *out_len,
+                                     SQLUSMALLINT completion);
 SQLRETURN SQL_API MySQLPrepare(SQLHSTMT hstmt, SQLCHAR *query, SQLINTEGER len,
                                my_bool dupe);
 

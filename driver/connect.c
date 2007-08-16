@@ -392,9 +392,9 @@ SQLRETURN SQL_API MySQLConnect(SQLHDBC  hdbc,
 
 
 /**
-  An alternative to SQLDriverConnect that allows specifying more of the
-  connection parameters, and whether or not to prompt the user for more
-  information using the setup library.
+  An alternative to SQLConnect that allows specifying more of the connection
+  parameters, and whether or not to prompt the user for more information
+  using the setup library.
 
   @param[in]  hdbc  Handle of database connection
   @param[in]  hwnd  Window handle. May be @c NULL if no prompting will be done.
@@ -414,14 +414,14 @@ SQLRETURN SQL_API MySQLConnect(SQLHDBC  hdbc,
   @since ODBC 1.0
   @since ISO SQL 92
 */
-SQLRETURN SQL_API SQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
-                                   SQLCHAR *szConnStrIn,
-                                   SQLSMALLINT cbConnStrIn
-                                     __attribute__((unused)),
-                                   SQLCHAR * szConnStrOut,
-                                   SQLSMALLINT cbConnStrOutMax,
-                                   SQLSMALLINT *pcbConnStrOut,
-                                   SQLUSMALLINT fDriverCompletion)
+SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
+                                     SQLCHAR *szConnStrIn,
+                                     SQLSMALLINT cbConnStrIn
+                                       __attribute__((unused)),
+                                     SQLCHAR * szConnStrOut,
+                                     SQLSMALLINT cbConnStrOutMax,
+                                     SQLSMALLINT *pcbConnStrOut,
+                                     SQLUSMALLINT fDriverCompletion)
 {
   SQLRETURN rc= SQL_SUCCESS;
   DBC *dbc= (DBC *)hdbc;
