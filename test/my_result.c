@@ -254,7 +254,7 @@ DECLARE_TEST(t_convert_type)
 }
 
 
-static void desc_col_check(SQLHSTMT hstmt,
+static SQLINTEGER desc_col_check(SQLHSTMT hstmt,
                            SQLUSMALLINT icol,
                            const char *name,
                            SQLSMALLINT sql_type,
@@ -282,85 +282,83 @@ static void desc_col_check(SQLHSTMT hstmt,
   fprintf(stdout, "\t DecimalDigits  : %d\n", pibScale);
   fprintf(stdout, "\t Nullable       : %d\n", pfNullable);
 
-  myassert(strcmp(name,szColName) == 0);
-  myassert(sql_type == pfSqlType);
-  myassert(col_def == pcbColDef || col_def1 == pcbColDef);
-  myassert(scale == pibScale);
-  myassert(nullable == pfNullable);
+  is_str(szColName, name, pcbColName);
+  is_num(pfSqlType, sql_type);
+  is(col_def == pcbColDef || col_def1 == pcbColDef);
+  is_num(pibScale, scale);
+  is_num(pfNullable, nullable);
+
+  return OK;
 }
 
 
 /* To test SQLDescribeCol */
 DECLARE_TEST(t_desc_col)
 {
-  SQLRETURN   rc;
   SQLSMALLINT ColumnCount;
 
-    SQLFreeStmt(hstmt, SQL_CLOSE);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_desc_col");
 
-    SQLExecDirect(hstmt,"DROP TABLE t_desc_col",SQL_NTS);
+  ok_sql(hstmt, "CREATE TABLE t_desc_col("
+         "c1 integer,"
+         "c2 binary(2) NOT NULL,"
+         "c3 char(1),"
+         "c4 varchar(5),"
+         "c5 decimal(10,3) NOT NULL,"
+         "c6 tinyint,"
+         "c7 smallint,"
+         "c8 numeric(4,2),"
+         "c9 real,"
+         "c10 float(5),"
+         "c11 bigint NOT NULL,"
+         "c12 varbinary(12),"
+         "c13 char(20) NOT NULL,"
+         "c14 float(10,3),"
+         "c15 tinytext,"
+         "c16 text,"
+         "c17 mediumtext,"
+         "c18 longtext,"
+         "c19 tinyblob,"
+         "c20 blob,"
+         "c21 mediumblob,"
+         "c22 longblob,"
+         "c23 tinyblob)");
 
-    rc = SQLExecDirect(hstmt,"CREATE TABLE t_desc_col(c1  integer, \
-                                                      c2  binary(2) NOT NULL,\
-                                                      c3  char(1), \
-                                                      c4  varchar(5),\
-                                                      c5  decimal(10,3) NOT NULL,\
-                                                      c6  tinyint,\
-                                                      c7  smallint,\
-                                                      c8  numeric(4,2),\
-                                                      c9  real,\
-                                                      c10 float(5),\
-                                                      c11 bigint NOT NULL,\
-                                                      c12 varbinary(12),\
-                                                      c13 char(20) NOT NULL,\
-                                                      c14 float(10,3),\
-                                                      c15 tinytext,\
-                                                      c16 text,\
-                                                      c17 mediumtext,\
-                                                      c18 longtext,\
-                                                      c19 tinyblob,\
-                                                      c20 blob,\
-                                                      c21 mediumblob,\
-                                                      c22 longblob,\
-                                                      c23 tinyblob)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM t_desc_col");
 
-    rc = SQLExecDirect(hstmt,"SELECT * FROM t_desc_col",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLNumResultCols(hstmt, &ColumnCount));
 
-    rc = SQLNumResultCols(hstmt, &ColumnCount);
-    mystmt(hstmt,rc);
+  is_num(ColumnCount, 23);
 
-    fprintf(stdout,"total columns: %d\n", ColumnCount);
-    my_assert(ColumnCount == 23);
+  is(desc_col_check(hstmt, 1,  "c1",  SQL_INTEGER,   10, 10, 0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 2,  "c2",  SQL_BINARY,    4,  2,  0,  SQL_NO_NULLS) == OK);
+  is(desc_col_check(hstmt, 3,  "c3",  SQL_CHAR,      1,  1,  0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 4,  "c4",  SQL_VARCHAR,   5,  5,  0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 5,  "c5",  SQL_DECIMAL,   10, 10, 3,  SQL_NO_NULLS) == OK);
+  is(desc_col_check(hstmt, 6,  "c6",  SQL_TINYINT,   3,  4,  0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 7,  "c7",  SQL_SMALLINT,  5,  6,  0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 8,  "c8",  SQL_DECIMAL,   4,  4,  2,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 9,  "c9",  SQL_DOUBLE,    15, 15, 0, SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 10, "c10", SQL_REAL,      7,  7,  0, SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 11, "c11", SQL_BIGINT,    19, 19, 0,  SQL_NO_NULLS) == OK);
 
-    desc_col_check(hstmt, 1,  "c1",  SQL_INTEGER,   10, 10, 0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 2,  "c2",  SQL_BINARY,    4,  2,  0,  SQL_NO_NULLS);
-    desc_col_check(hstmt, 3,  "c3",  SQL_CHAR,      1,  1,  0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 4,  "c4",  SQL_VARCHAR,   5,  5,  0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 5,  "c5",  SQL_DECIMAL,   10, 10, 3,  SQL_NO_NULLS);
-    desc_col_check(hstmt, 6,  "c6",  SQL_TINYINT,   3,  4,  0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 7,  "c7",  SQL_SMALLINT,  5,  6,  0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 8,  "c8",  SQL_DECIMAL,   4,  4,  2,  SQL_NULLABLE);
-    desc_col_check(hstmt, 9,  "c9",  SQL_DOUBLE,    15, 15, 0, SQL_NULLABLE);
-    desc_col_check(hstmt, 10, "c10", SQL_REAL,      7,  7,  0, SQL_NULLABLE);
-    desc_col_check(hstmt, 11, "c11", SQL_BIGINT,    19, 19, 0,  SQL_NO_NULLS);
+  is(desc_col_check(hstmt, 12, "c12", SQL_VARCHAR,   24, 24, 0,  SQL_NULLABLE) == OK);
 
-    desc_col_check(hstmt, 12, "c12", SQL_VARBINARY, 24, 24, 0,  SQL_NULLABLE);
+  is(desc_col_check(hstmt, 13, "c13", SQL_CHAR,      20, 20, 0,  SQL_NO_NULLS) == OK);
+  is(desc_col_check(hstmt, 14, "c14", SQL_REAL,      7,  7,  0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 15, "c15", SQL_LONGVARCHAR, 255, 255, 0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 16, "c16", SQL_LONGVARCHAR, 65535, 65535, 0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 17, "c17", SQL_LONGVARCHAR, 16777215, 16777215, 0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 18, "c18", SQL_LONGVARCHAR, 4294967295 , 16777215 , 0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 19, "c19", SQL_LONGVARBINARY, 255 * 2, 255, 0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 20, "c20", SQL_LONGVARBINARY, 65535 * 2, 65535, 0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 21, "c21", SQL_LONGVARBINARY, 16777215 * 2, 16777215, 0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 22, "c22", SQL_LONGVARBINARY, 4294967295 * 2 , 16777215 , 0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 23, "c23", SQL_LONGVARBINARY, 255 * 2, 5, 0,  SQL_NULLABLE) == OK);
 
-    desc_col_check(hstmt, 13, "c13", SQL_CHAR,      20, 20, 0,  SQL_NO_NULLS);
-    desc_col_check(hstmt, 14, "c14", SQL_REAL,      7,  7,  0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 15, "c15", SQL_LONGVARCHAR, 255, 255, 0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 16, "c16", SQL_LONGVARCHAR, 65535, 65535, 0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 17, "c17", SQL_LONGVARCHAR, 16777215, 16777215, 0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 18, "c18", SQL_LONGVARCHAR, 4294967295 , 16777215 , 0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 19, "c19", SQL_LONGVARBINARY, 255 * 2, 255, 0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 20, "c20", SQL_LONGVARBINARY, 65535 * 2, 65535, 0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 21, "c21", SQL_LONGVARBINARY, 16777215 * 2, 16777215, 0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 22, "c22", SQL_LONGVARBINARY, 4294967295 * 2 , 16777215 , 0,  SQL_NULLABLE);
-    desc_col_check(hstmt, 23, "c23", SQL_LONGVARBINARY, 255 * 2, 5, 0,  SQL_NULLABLE);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    SQLFreeStmt(hstmt,SQL_CLOSE);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_desc_col");
 
   return OK;
 }
