@@ -138,7 +138,7 @@ SQLRETURN my_SQLPrepare(SQLHSTMT hstmt, SQLCHAR *szSqlStr, SQLINTEGER cbSqlStr,
     /* escape char? */
     if (*pos == '\\' && pos[1]) /* Next char is escaped */
     {
-      // @todo not multibyte aware
+      /** @todo not multibyte aware */
       pos++;
       continue;
     }

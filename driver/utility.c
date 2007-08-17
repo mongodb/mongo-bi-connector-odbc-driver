@@ -267,7 +267,7 @@ copy_and_convert(char *to, uint32 to_length, CHARSET_INFO *to_cs,
       wc= '?';
     }
     else
-      break;  // Not enough characters
+      break; /* Not enough characters */
 
 outp:
     if ((to_cnvres= (*wc_mb)(to_cs, wc, (uchar*) to, to_end)) > 0)
