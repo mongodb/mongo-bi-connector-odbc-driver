@@ -25,7 +25,7 @@
   @brief Transaction processing functions.
 */
 
-#include "myodbc3.h"
+#include "driver.h"
 
 /**
   Commit or roll back the transactions associated with a particular

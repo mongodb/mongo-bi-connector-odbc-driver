@@ -28,7 +28,7 @@ TEST_ODBCINI   = odbc.ini
 TEST_ODBCINSTINI = odbcinst.ini
 TEST_DSN       = myodbc3
 # XXX this is not really correct, but works for testing.
-TEST_DRIVER    = ../driver/.libs/libmyodbc3.so
+TEST_DRIVER    = ../driver/.libs/libmyodbc5.so
 TEST_DATABASE  = test
 TEST_SERVER    = localhost
 TEST_UID       = root

@@ -25,7 +25,7 @@
   @brief Entry points for ANSI versions of ODBC functions
 */
 
-#include "myodbc3.h"
+#include "driver.h"
 
 
 #define NOT_IMPLEMENTED \

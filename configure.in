@@ -18,31 +18,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-##########################################################################
-#                                                                        #
-# configure.in                                                           #
-#                                                                        #
-# @description: This is the MyODBC 3.51 driver configure.in              #
-#                                                                        #
-# @author     : MySQL AB (monty@mysql.com, venu@mysql.com)               #
-# @date       : 2001-Aug-15                                              #
-# @product    : myodbc3                                                  #
-#                                                                        #
-##########################################################################
-
-###################################################################
-#                                                                 #
-# Initializations                                                 #
-#                                                                 #
-###################################################################
-
-AC_INIT(driver/myodbc3.c)
+AC_INIT(driver/driver.c)
 AC_PREREQ(2.12)dnl    Minimum Autoconf version required.
-#AC_INIT([MySQL ODBC 3.51 Driver],[3.51.12],[myodbc@lists.mysql.com],[libmyodbc3])
 AC_CANONICAL_SYSTEM
 
-# When changing, also change VersionInfo.h and driver/myodbc3.def
-AM_INIT_AUTOMAKE(mysql-connector-odbc,3.51.20)
+# When changing, also change VersionInfo.h and driver/driver.def
+AM_INIT_AUTOMAKE(mysql-connector-odbc, 5.1.0)
 
 myodbc_version=$VERSION
 ###################################################################
@@ -800,9 +781,9 @@ AC_ARG_ENABLE(dmlink,
 if test "x$enable_dmlink" = "xyes" ; then
   myodbc_test_linklib="$ODBC_DM_LIB"
 elif test "x$gotthread" = "xno" ; then
-  myodbc_test_linklib="../driver/libmyodbc3.la"
+  myodbc_test_linklib="../driver/libmyodbc5.la"
 else
-  myodbc_test_linklib="../driver/libmyodbc3_r.la"
+  myodbc_test_linklib="../driver/libmyodbc5_r.la"
 fi
 AC_SUBST(myodbc_test_linklib)
 

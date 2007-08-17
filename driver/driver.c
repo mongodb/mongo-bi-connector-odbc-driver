@@ -21,8 +21,8 @@
 */
 
 /**
-  @file  myodbc3.c
+  @file  driver.c
   @brief Stub for forcing creation of precompiled headers.
 */
 
-#include "myodbc3.h"
+#include "driver.h"

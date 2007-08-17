@@ -27,8 +27,8 @@ REM * Find out the bin/lib directory, or use default
 REM ****
 SET libdir=lib
 SET bindir=bin
-IF EXIST lib\release\myodbc3.lib         SET libdir=lib\release
-IF EXIST lib\relwithdebinfo\myodbc3.lib  SET libdir=lib\relwithdebinfo
+IF EXIST lib\release\myodbc5.lib         SET libdir=lib\release
+IF EXIST lib\relwithdebinfo\myodbc5.lib  SET libdir=lib\relwithdebinfo
 IF EXIST bin\release\myodbc3i.exe        SET bindir=bin\release
 IF EXIST bin\relwithdebinfo\myodbc3i.exe SET bindir=bin\relwithdebinfo
 
@@ -36,14 +36,14 @@ REM ****
 REM * Copying myodbc libraries and executables to install dir...
 REM ****
 IF NOT EXIST %bindir%\myodbc3c.exe GOTO :doError2
-IF NOT EXIST %libdir%\myodbc3.lib  GOTO :doError2
+IF NOT EXIST %libdir%\myodbc5.lib  GOTO :doError2
 IF NOT EXIST %libdir%\myodbc3S.lib GOTO :doError2
 IF NOT EXIST %bindir%\myodbc3i.exe GOTO :doError2
 IF NOT EXIST %bindir%\myodbc3m.exe GOTO :doError2
 copy %libdir%\myodbc3S.dll %installdir%
 copy %libdir%\myodbc3S.lib %installdir%
-copy %libdir%\myodbc3.dll  %installdir%
-copy %libdir%\myodbc3.lib  %installdir%
+copy %libdir%\myodbc5.dll  %installdir%
+copy %libdir%\myodbc5.lib  %installdir%
 copy %bindir%\myodbc3i.exe      %installdir%
 copy %bindir%\myodbc3m.exe      %installdir%
 copy %bindir%\myodbc3c.exe      %installdir%
@@ -56,7 +56,7 @@ REM * We can do this with myodbc3i.exe or the MS Windows ODBCConf.exe. It
 REM * may be safer to use the ODBCConf.exe when we think about such things
 REM * as 64bit windows. 
 REM ****
-myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=myodbc3.dll;SETUP=myodbc3S.dll"
+myodbc3i -a -d -t"MySQL ODBC 5.1 Driver;DRIVER=myodbc5.dll;SETUP=myodbc3S.dll"
 
 GOTO doSuccess
 
@@ -66,9 +66,9 @@ REM ****
 REM * Find out the bin/lib directory, or use default
 REM ****
 SET libdir=lib
-IF EXIST lib\debug\myodbc3d.lib          SET libdir=lib\debug
+IF EXIST lib\debug\myodbc5d.lib          SET libdir=lib\debug
 
-IF NOT EXIST %libdir%\myodbc3d.lib goto doError3
+IF NOT EXIST %libdir%\myodbc5d.lib goto doError3
 IF NOT EXIST %libdir%\myodbc3E.lib goto doError3
 IF NOT EXIST %installdir%\myodbc3i.exe goto doError1
 REM ****
@@ -76,13 +76,13 @@ REM * Copying myodbc debug libraries to install dir...
 REM ****
 copy %libdir%\myodbc3E.dll %installdir%
 copy %libdir%\myodbc3E.lib %installdir%
-copy %libdir%\myodbc3d.dll %installdir%
-copy %libdir%\myodbc3d.lib %installdir%
+copy %libdir%\myodbc5d.dll %installdir%
+copy %libdir%\myodbc5d.lib %installdir%
 
 REM ****
 REM * Registering driver...
 REM ****
-myodbc3i -a -d -t"MySQL ODBC 3.51 Driver (debug);DRIVER=myodbc3d.dll;SETUP=myodbc3E.dll"
+myodbc3i -a -d -t"MySQL ODBC 5.1 Driver (debug);DRIVER=myodbc3d.dll;SETUP=myodbc3E.dll"
 
 goto doSuccess
 

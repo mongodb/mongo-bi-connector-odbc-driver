@@ -25,7 +25,7 @@
   @brief Connection functions.
 */
 
-#include "myodbc3.h"
+#include "driver.h"
 
 #ifndef _UNIX_
 # ifdef USE_IODBC

@@ -22,19 +22,19 @@
 
 SET(DRIVER_SRCS
         ansi.c catalog.c connect.c cursor.c dll.c error.c execute.c handle.c
-        info.c myodbc3.c options.c prepare.c results.c transact.c unicode.c
+        info.c driver.c options.c prepare.c results.c transact.c unicode.c
         unicode_transcode.c utility.c)
 
 IF(WIN32)
-	SET(DRIVER_SRCS ${DRIVER_SRCS} myodbc3.def myodbc3.rc)
+	SET(DRIVER_SRCS ${DRIVER_SRCS} driver.def driver.rc)
 ENDIF(WIN32)
 
-ADD_LIBRARY(myodbc3 SHARED ${DRIVER_SRCS})
+ADD_LIBRARY(myodbc5 SHARED ${DRIVER_SRCS})
 
-INSTALL(TARGETS myodbc3 DESTINATION lib)
+INSTALL(TARGETS myodbc5 DESTINATION lib)
 
 IF(WIN32)
-	TARGET_LINK_LIBRARIES(myodbc3
+	TARGET_LINK_LIBRARIES(myodbc5
 				user32 advapi32 wsock32 ws2_32 myodbc3u
 				mysqlclient ${ODBCLIB} ${ODBCINSTLIB})
 
@@ -42,17 +42,17 @@ IF(WIN32)
 	FIND_LIBRARY(MYSQL_YASSL yassl)
 	FIND_LIBRARY(MYSQL_TAOCRYPT taocrypt)
 	IF (MYSQL_ZLIB)
-		TARGET_LINK_LIBRARIES(myodbc3 zlib)
+		TARGET_LINK_LIBRARIES(myodbc5 zlib)
 	ENDIF (MYSQL_ZLIB)
 	IF (MYSQL_YASSL)
-		TARGET_LINK_LIBRARIES(myodbc3 yassl)
+		TARGET_LINK_LIBRARIES(myodbc5 yassl)
 	ENDIF (MYSQL_YASSL)
 	IF (MYSQL_TAOCRYPT)
-		TARGET_LINK_LIBRARIES(myodbc3 taocrypt)
+		TARGET_LINK_LIBRARIES(myodbc5 taocrypt)
 	ENDIF (MYSQL_TAOCRYPT)
 ELSE(WIN32)
 	SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${ODBC_LINK_FLAGS}")
-	TARGET_LINK_LIBRARIES(myodbc3 ltdl mysqlclient_r)
-	TARGET_LINK_LIBRARIES(myodbc3 myodbc3u)
+	TARGET_LINK_LIBRARIES(myodbc5 ltdl mysqlclient_r)
+	TARGET_LINK_LIBRARIES(myodbc5 myodbc3u)
 ENDIF(WIN32)
 

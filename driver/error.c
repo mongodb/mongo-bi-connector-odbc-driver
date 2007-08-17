@@ -34,7 +34,7 @@
  *									   *
  ****************************************************************************/
 
-#include "myodbc3.h"
+#include "driver.h"
 #include "mysqld_error.h"
 #include "errmsg.h"
 

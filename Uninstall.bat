@@ -24,15 +24,15 @@ IF NOT EXIST %installdir%\myodbc3i.exe GOTO doError2
 REM ****
 REM * Deregistering driver...
 REM ****
-myodbc3i -r -d -n"MySQL ODBC 3.51 Driver"
+myodbc3i -r -d -n"MySQL ODBC 5.1 Driver"
 
 REM ****
 REM * Removing files...
 REM ****
 del /Q /F %installdir%\myodbc3S.dll
 del /Q /F %installdir%\myodbc3S.lib
-del /Q /F %installdir%\myodbc3.dll
-del /Q /F %installdir%\myodbc3.lib
+del /Q /F %installdir%\myodbc5.dll
+del /Q /F %installdir%\myodbc5.lib
 del /Q /F %installdir%\myodbc3i.exe
 del /Q /F %installdir%\myodbc3m.exe
 del /Q /F %installdir%\myodbc3c.exe
@@ -40,20 +40,20 @@ del /Q /F %installdir%\myodbc3*.hlp
 GOTO doSuccess
 
 :doDebug
-IF NOT EXIST %installdir%\myodbc3d.dll GOTO doError3
+IF NOT EXIST %installdir%\myodbc5d.dll GOTO doError3
 IF NOT EXIST %installdir%\myodbc3i.exe GOTO doError1
 REM ****
 REM * Deregistering driver...
 REM ****
-myodbc3i -r -d -n"MySQL ODBC 3.51 Driver (debug)"
+myodbc3i -r -d -n"MySQL ODBC 5.1 Driver (debug)"
 
 REM ****
 REM * Removing files...
 REM ****
 del /Q /F %installdir%\myodbc3E.dll
 del /Q /F %installdir%\myodbc3E.lib
-del /Q /F %installdir%\myodbc3d.dll
-del /Q /F %installdir%\myodbc3d.lib
+del /Q /F %installdir%\myodbc5d.dll
+del /Q /F %installdir%\myodbc5d.lib
 GOTO doSuccess
 
 :doSuccess

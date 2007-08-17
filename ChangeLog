@@ -26,7 +26,7 @@ Guffert TODO
 
 ----
 
-x.x
+5.1.0
 
   Functionality added or changed:
   * Added support for SQL_C_WCHAR.

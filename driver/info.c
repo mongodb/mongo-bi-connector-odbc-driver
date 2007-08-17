@@ -25,7 +25,7 @@
   @brief Driver information functions.
 */
 
-#include "myodbc3.h"
+#include "driver.h"
 
 char allowed_chars[]=
 {

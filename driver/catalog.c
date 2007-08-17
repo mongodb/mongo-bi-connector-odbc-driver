@@ -41,7 +41,7 @@
  *									   *
  ****************************************************************************/
 
-#include "myodbc3.h"
+#include "driver.h"
 
 #define valid_input_parameter(A) ((A) && A[0])
 #define escape_input_parameter(A,B) if (B && B[0]) myodbc_remove_escape(A,B)

@@ -25,7 +25,7 @@
   @brief Entry points for Unicode versions of ODBC functions
 */
 
-#include "myodbc3.h"
+#include "driver.h"
 #include <sqlucode.h>
 #include <stdarg.h>
 

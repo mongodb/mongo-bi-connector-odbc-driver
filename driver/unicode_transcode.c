@@ -26,7 +26,7 @@
 */
 
 #ifndef ODBCTAP
-# include "myodbc3.h"
+# include "driver.h"
 #endif
 
 /**

@@ -37,7 +37,7 @@
  *									   *
  ****************************************************************************/
 
-#include "myodbc3.h"
+#include "driver.h"
 #ifndef _UNIX_
 # include <dos.h>
 #endif /* !_UNIX_ */

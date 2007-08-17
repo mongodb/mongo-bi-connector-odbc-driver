@@ -20,16 +20,10 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-/***************************************************************************
- * MYODBC3.H								   *
- *									   *
- * @description: Definations neaded by the myodbc3 driver		   *
- *									   *
- * @author     : MySQL AB(monty@mysql.com, venu@mysql.com)		   *
- * @date       : 2001-Aug-15						   *
- * @product    : myodbc3						   *
- *									   *
-****************************************************************************/
+/**
+  @file driver.h
+  @brief Definitions needed by the driver
+*/
 
 #ifndef __MYODBC3_H__
 #define __MYODBC3_H__
@@ -91,21 +85,21 @@ extern "C"
 
 #if defined(__APPLE__)
 
-#define DRIVER_DLL_NAME   "libmyodbc3.dylib"
+#define DRIVER_DLL_NAME   "libmyodbc5.dylib"
 #ifdef MYODBC_DBG
 #define DRIVER_QUERY_LOGFILE "/tmp/myodbc.sql"
 #endif
 
 #elif defined(_UNIX_)
 
-#define DRIVER_DLL_NAME   "libmyodbc3.so"
+#define DRIVER_DLL_NAME   "libmyodbc5.so"
 #ifdef MYODBC_DBG
 #define DRIVER_QUERY_LOGFILE "/tmp/myodbc.sql"
 #endif
 
 #else
 
-#define DRIVER_DLL_NAME   "myodbc3.dll"
+#define DRIVER_DLL_NAME   "myodbc5.dll"
 #ifdef MYODBC_DBG
 #define DRIVER_QUERY_LOGFILE "c:\\myodbc.sql"
 #endif

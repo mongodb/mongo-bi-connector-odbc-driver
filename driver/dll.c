@@ -25,7 +25,7 @@
   @brief Library initialization functions.
 */
 
-#include "myodbc3.h"
+#include "driver.h"
 #include <locale.h>
 
 char *default_locale, *decimal_point, *thousands_sep;

@@ -25,7 +25,7 @@
   @brief Utility functions
 */
 
-#include "myodbc3.h"
+#include "driver.h"
 #include "errmsg.h"
 #include <ctype.h>
 

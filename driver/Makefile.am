@@ -18,27 +18,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-##########################################################################
-#                                                                        #
-# Makefile.am                                                            #
-#                                                                        #
-# @description: This is the MyODBC 3.51 driver Makefile.am               #
-#                                                                        #
-# @author     : MySQL AB (monty@mysql.com, venu@mysql.com)               #
-# @date       : 2001-Aug-15                                              #
-# @product    : myodbc3                                                  #
-#                                                                        #
-##########################################################################
-
 AUTOMAKE_OPTIONS=foreign
 
 if SEPARATE_THREAD_SAFE_DRIVER
-  TS_DRIVER=libmyodbc3_r.la
+  TS_DRIVER=libmyodbc5_r.la
 else
   TS_DRIVER=
 endif
 
-lib_LTLIBRARIES=libmyodbc3.la $(TS_DRIVER)
+lib_LTLIBRARIES=libmyodbc5.la $(TS_DRIVER)
 
 ###################################################################
 #                                                                 #
@@ -46,17 +34,17 @@ lib_LTLIBRARIES=libmyodbc3.la $(TS_DRIVER)
 #                                                                 #
 ###################################################################
 
-libmyodbc3_la_SOURCES= \
+libmyodbc5_la_SOURCES= \
 ansi.c \
 catalog.c \
 connect.c \
 cursor.c \
 dll.c \
+driver.c \
 error.c \
 execute.c \
 handle.c\
 info.c \
-myodbc3.c \
 options.c \
 prepare.c \
 results.c \
@@ -64,9 +52,9 @@ transact.c \
 unicode.c \
 unicode_transcode.c \
 utility.c \
-myodbc3.h
+driver.h
 
-libmyodbc3_r_la_SOURCES     = $(libmyodbc3_la_SOURCES)
+libmyodbc5_r_la_SOURCES     = $(libmyodbc5_la_SOURCES)
 
 ###################################################################
 #                                                                 #
@@ -74,12 +62,12 @@ libmyodbc3_r_la_SOURCES     = $(libmyodbc3_la_SOURCES)
 #                                                                 #
 ###################################################################
 if WITH_DEBUG
-libmyodbc3_la_CPPFLAGS       = -DMYODBC_DBG
-libmyodbc3_r_la_CPPFLAGS     = -DMYODBC_DBG
+libmyodbc5_la_CPPFLAGS       = -DMYODBC_DBG
+libmyodbc5_r_la_CPPFLAGS     = -DMYODBC_DBG
 endif
 
-libmyodbc3_la_LDFLAGS       = -release @myodbc_version@ -module 
-libmyodbc3_r_la_LDFLAGS     = -release @myodbc_version@ -module 
+libmyodbc5_la_LDFLAGS       = -release @myodbc_version@ -module 
+libmyodbc5_r_la_LDFLAGS     = -release @myodbc_version@ -module 
 
 if WITH_DEBUG
 LTLIBS_DEPS = $(LTLIBS_DEBUG_DEPS)
@@ -89,17 +77,17 @@ endif
 LTLIBS_DEBUG_DEPS = \
 	../util/libmyodbc3u.la
 
-libmyodbc3_la_LIBADD         = $(LTLIBS_DEPS) @LTDL_LIB@ @MYSQL_LIB@
-libmyodbc3_la_DEPENDENCIES   = $(LTLIBS_DEPS)
+libmyodbc5_la_LIBADD         = $(LTLIBS_DEPS) @LTDL_LIB@ @MYSQL_LIB@
+libmyodbc5_la_DEPENDENCIES   = $(LTLIBS_DEPS)
 
-libmyodbc3_r_la_LIBADD       = $(LTLIBS_DEPS) @LTDL_LIB@ @MYSQL_THREADSAFE_LIB@
-libmyodbc3_r_la_DEPENDENCIES = $(LTLIBS_DEPS)
+libmyodbc5_r_la_LIBADD       = $(LTLIBS_DEPS) @LTDL_LIB@ @MYSQL_THREADSAFE_LIB@
+libmyodbc5_r_la_DEPENDENCIES = $(LTLIBS_DEPS)
 
 LDFLAGS=@EXTRA_LDFLAGS@ 
 
 EXTRA_DIST =	error.h \
 		myutil.h \
                 driver.pro \
-                myodbc3.def \
-                myodbc3.rc \
+                driver.def \
+                driver.rc \
 		CMakeLists.txt
