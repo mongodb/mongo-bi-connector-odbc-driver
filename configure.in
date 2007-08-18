@@ -304,6 +304,11 @@ case "$target_os" in
       CFLAGS="$CFLAGS -Kalloca"
     fi
   ;;
+  *aix*)
+    if test "$GCC" != "yes"; then
+      # We need to enable Unicode escape sequences (\u00e3) in strings
+      CFLAGS="$CFLAGS -qlanglvl=ucs"
+    fi
 esac
 
 AC_SUBST(CC)
