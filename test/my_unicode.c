@@ -194,7 +194,7 @@ DECLARE_TEST(sqldriverconnect)
   HDBC hdbc1;
   HSTMT hstmt1;
   wchar_t conn_in[512];
-  wchar_t dummy[80];
+  wchar_t dummy[256];
   SQLWCHAR conn_out[512];
   SQLSMALLINT conn_out_len;
 
