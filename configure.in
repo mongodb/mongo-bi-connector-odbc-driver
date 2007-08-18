@@ -87,6 +87,9 @@ then
   ac_cv_prog_gcc="no"
 fi
 
+dnl Try to use C99 mode (needed for \u support on older gcc)
+AC_PROG_CC_C99
+
 # Only build shared libraries by default
 AM_ENABLE_SHARED
 AM_DISABLE_STATIC
