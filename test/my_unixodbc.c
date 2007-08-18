@@ -114,44 +114,35 @@ DECLARE_TEST(t_odbc3_handle)
 
 DECLARE_TEST(t_driver_connect)
 {
-    SQLRETURN rc;
-    SQLHENV henv1;
-    SQLHDBC hdbc1;
-    SQLCHAR conn_in[255], conn_out[255];
-    SQLSMALLINT conn_out_len;
+  SQLHENV henv1;
+  SQLHDBC hdbc1;
+  SQLCHAR conn_in[255], conn_out[255];
+  SQLSMALLINT conn_out_len;
 
-    rc = SQLAllocEnv(&henv1);
-    myenv(henv1,rc);
+  ok_env(henv1, SQLAllocEnv(&henv1));
+  ok_env(henv1, SQLAllocConnect(henv1,&hdbc1));
 
-    rc = SQLAllocConnect(henv1,&hdbc1);
-    myenv(henv1,rc);
+  sprintf((char *)conn_in,
+          "DRIVER=%s;USER=%s;PASSWORD=%s;DATABASE=%s;SERVER=%s;"
+          "OPTION=3;STMT=use mysql",
+          (char *)mydriver, (char *)myuid, (char *)mypwd, (char *)mydb,
+          (char *)myserver);
+  if (mysock != NULL)
+  {
+    strcat((char *)conn_in, ";SOCKET=");
+    strcat((char *)conn_in, (char *)mysock);
+  }
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, (SQLHWND)0, conn_in, sizeof(conn_in),
+                                 conn_out, sizeof(conn_out), &conn_out_len,
+                                 SQL_DRIVER_NOPROMPT));
 
-    sprintf(conn_in,"DRIVER={MySQL ODBC 3.51 Driver};USER=%s;PASSWORD=%s;"
-                    "DATABASE=%s;SERVER=%s;OPTION=3;STMT=use mysql",
-            myuid, mypwd, mydb, myserver);
-    if (mysock != NULL)
-    {
-      strcat(conn_in, ";SOCKET=");
-      strcat(conn_in, mysock);
-    }
-    rc = SQLDriverConnect(hdbc1, (SQLHWND)0, conn_in, sizeof(conn_in),
-                          conn_out, sizeof(conn_out), &conn_out_len,
-                          SQL_DRIVER_NOPROMPT);
+  printMessage( "output string: `%s`\n", conn_out);
 
-    if (rc == SQL_SUCCESS)
-    {
-        mycon(hdbc1,rc);
-        printMessage( "output string: `%s`\n", conn_out);
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
 
-        rc = SQLDisconnect(hdbc1);
-        mycon(hdbc1,rc);
-    }
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
 
-    rc = SQLFreeConnect(hdbc1);
-    mycon(hdbc1,rc);
-
-    rc = SQLFreeEnv(henv1);
-    myenv(henv1,rc);
+  ok_env(henv1, SQLFreeEnv(henv1));
 
   return OK;
 }

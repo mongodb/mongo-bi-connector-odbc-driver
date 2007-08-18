@@ -183,10 +183,21 @@ DECLARE_TEST(sqldriverconnect)
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
 
-  swprintf(conn_in,
-           L"DRIVER={MySQL ODBC 3.51 Driver};USER=%s;PASSWORD=%s;"
-           L"DATABASE=%s;SERVER=%s",
-           myuid, mypwd, mydb, myserver);
+  *conn_in= L'\0';
+  wcscat(conn_in, L"DRIVER=");
+  mbstowcs(dummy, (char *)mydriver, sizeof(dummy));
+  wcscat(conn_in, dummy);
+  wcscat(conn_in, L";USER=");
+  mbstowcs(dummy, (char *)myuid, sizeof(dummy));
+  wcscat(conn_in, dummy);
+  wcscat(conn_in, L";PASSWORD=");
+  mbstowcs(dummy, (char *)mypwd, sizeof(dummy));
+  wcscat(conn_in, L";DATABASE=");
+  mbstowcs(dummy, (char *)mydb, sizeof(dummy));
+  wcscat(conn_in, dummy);
+  wcscat(conn_in, L";SERVER=");
+  mbstowcs(dummy, (char *)myserver, sizeof(dummy));
+  wcscat(conn_in, dummy);
   if (mysock != NULL)
   {
     wcscat(conn_in, L";SOCKET=");

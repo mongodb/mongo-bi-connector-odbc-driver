@@ -72,6 +72,7 @@ void printMessage(const char *fmt, ...) { fmt= fmt; /* stifle warning */}
 #define MAX_ROW_DATA_LEN 1000
 #define MYSQL_NAME_LEN 64
 
+SQLCHAR *mydriver= (SQLCHAR *)"MyODBC";
 SQLCHAR *mydsn= (SQLCHAR *)"test";
 SQLCHAR *myuid= (SQLCHAR *)"root";
 SQLCHAR *mypwd= (SQLCHAR *)"";

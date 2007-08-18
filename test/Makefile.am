@@ -67,7 +67,7 @@ noinst_PROGRAMS= $(tap_tests)
 test: make-test-ini $(tap_tests)
 	ODBCSYSINI=. \
 	ODBCINI=$(TEST_ODBCINI) ODBCINSTINI=$(TEST_ODBCINSTINI) \
-	TEST_DSN=$(TEST_DSN) TEST_UID=$(TEST_UID) \
+	TEST_DRIVER=$(TEST_DRIVER) TEST_DSN=$(TEST_DSN) TEST_UID=$(TEST_UID) \
 	TEST_PASSWORD=$(TEST_PASSWORD) TEST_SOCKET=$(TEST_SOCKET) \
 	perl $(srcdir)/unit.pl run $(tap_tests)
 
@@ -78,7 +78,7 @@ test-bt: make-test-ini $(tap_tests)
 	  echo "Starting test $(TEST_PREFIX)$$f" ; \
 	  ODBCSYSINI=. \
 	  ODBCINI=$(TEST_ODBCINI) ODBCINSTINI=$(TEST_ODBCINSTINI) \
-	  TEST_DSN=$(TEST_DSN) TEST_UID=$(TEST_UID) \
+	  TEST_DRIVER=$(TEST_DRIVER) TEST_DSN=$(TEST_DSN) TEST_UID=$(TEST_UID) \
 	  TEST_PASSWORD=$(TEST_PASSWORD) TEST_SOCKET=$(TEST_SOCKET) \
 	  ./$$f ; \
 	  echo "Ending test $(TEST_PREFIX)$$f" ; \

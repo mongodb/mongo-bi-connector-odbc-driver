@@ -124,6 +124,8 @@ int main(int argc, char **argv) \
   /* Set from environment, possibly overrided by command line */ \
   if (getenv("TEST_DSN")) \
     mydsn=  (SQLCHAR *)getenv("TEST_DSN"); \
+  if (getenv("TEST_DRIVER")) \
+    mydriver=  (SQLCHAR *)getenv("TEST_DRIVER"); \
   if (getenv("TEST_UID")) \
     myuid=  (SQLCHAR *)getenv("TEST_UID"); \
   if (getenv("TEST_PASSWORD")) \
