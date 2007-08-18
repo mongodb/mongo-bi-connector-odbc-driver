@@ -517,3 +517,22 @@ SQLWCHAR *dup_wchar_t_as_sqlwchar(wchar_t *from, size_t len)
   }
 }
 
+
+/**
+  Check if we are using a driver manager for testing.
+
+  @param[in] hdbc  Connection handle
+
+  @return 0 if the connection is using a driver manager, 1 if not.
+*/
+int using_dm(HDBC hdbc)
+{
+  SQLCHAR   rgbValue[100];
+  SQLSMALLINT pcbInfo;
+
+  if (SQLGetInfo(hdbc, SQL_DM_VER, rgbValue, sizeof(rgbValue),
+                 &pcbInfo) == SQL_ERROR)
+    return 0;
+
+  return 1;
+}

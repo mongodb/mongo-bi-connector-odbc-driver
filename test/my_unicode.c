@@ -101,6 +101,23 @@ DECLARE_TEST(sqlprepare)
   ok_con(hdbc1, SQLDisconnect(hdbc1));
   ok_con(hdbc1, SQLFreeConnect(hdbc1));
 
+  return OK;
+}
+
+
+/**
+  Test calling SQLPrepareW() on an ANSI connection. Only tested when
+  we're not using a driver manager, otherwise the driver manager does
+  Unicode to ANSI translations.
+*/
+DECLARE_TEST(sqlprepare_ansi)
+{
+  SQLINTEGER data;
+  SQLWCHAR wbuff[30];
+
+  if (using_dm(hdbc))
+    skip("not relevant when using driver manager");
+
   /* Now try SQLPrepareW with an ANSI connection. */
   ok_stmt(hstmt, SQLPrepareW(hstmt,
                              W(L"SELECT '\u00e3' FROM DUAL WHERE 1 = ?"),
@@ -124,7 +141,7 @@ DECLARE_TEST(sqlprepare)
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-  /* Now try SQLPrepareW with a character taht doesn't translate. */
+  /* Now try SQLPrepareW with a character that doesn't translate. */
   expect_stmt(hstmt, SQLPrepareW(hstmt,
                                  W(L"SELECT '\u30a1' FROM DUAL WHERE 1 = ?"),
                                  SQL_NTS),
@@ -227,6 +244,7 @@ DECLARE_TEST(sqldriverconnect)
 BEGIN_TESTS
   ADD_TEST(sqlconnect)
   ADD_TEST(sqlprepare)
+  ADD_TEST(sqlprepare_ansi)
   ADD_TEST(sqlchar)
   ADD_TEST(sqldriverconnect)
 END_TESTS
