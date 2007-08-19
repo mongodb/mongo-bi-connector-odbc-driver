@@ -25,5 +25,4 @@ endif
 
 EXTRA_DIST = \
 	myodbc3m.h \
-	monitor.pro \
 	CMakeLists.txt

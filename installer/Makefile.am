@@ -34,5 +34,4 @@ endif
 ###################################################################
 
 EXTRA_DIST = \
-	installer.pro \
 	CMakeLists.txt

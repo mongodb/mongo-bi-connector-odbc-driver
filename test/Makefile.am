@@ -91,27 +91,6 @@ EXTRA_DIST= \
 	include/mytest3.h \
 	include/odbctap.h \
 	unit.pl \
-	my_basics.pro \
-	my_blob.pro \
-	my_bulk.pro \
-	my_catalog.pro \
-	my_curext.pro \
-	my_cursor.pro \
-	my_datetime.pro \
-	my_dyn_cursor.pro \
-	my_error.pro \
-	my_info.pro \
-	my_keys.pro \
-	my_param.pro \
-	my_prepare.pro \
-	my_relative.pro \
-	my_result.pro \
-	my_scroll.pro \
-	my_tran.pro \
-	my_types.pro \
-	my_unixodbc.pro \
-	my_use_result.pro \
-	test.pro \
 	CMakeLists.txt
 
 # We want to rebuild the "test.ini" file each time, as it might need an
