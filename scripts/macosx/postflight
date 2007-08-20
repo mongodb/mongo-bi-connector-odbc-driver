@@ -28,7 +28,7 @@ bindir=/usr/local/bin
 
 for f in ~/Library/ODBC /Library/ODBC
 do
-  echo "Ensuring ~/Library/ODBC, odbcinst.ini and odbc.ini exists..."
+  echo "Ensuring $f, odbcinst.ini and odbc.ini exists..."
   if [ ! -d $admdir ] ; then
       mkdir $admdir
       chmod 775 $admdir
@@ -43,8 +43,11 @@ do
       echo "TraceAutoStop = 0"         >> $admdir/odbc.ini
       echo "TraceFile     ="           >> $admdir/odbc.ini
       echo "TraceLibrary  ="           >> $admdir/odbc.ini
-      chmod 664 $admdir/odbc.ini
-      chown root:admin $admdir/odbc.ini
+      if [ $f = /Library/ODBC ] ; then
+          chmod 664 $admdir/odbc.ini
+          chown root:admin $admdir/odbc.ini
+      else
+      fi
   fi
 
   if [ ! -f $admdir/odbcinst.ini ] ; then
@@ -53,8 +56,11 @@ do
       echo "[ODBC Connection Pooling]" >> $admdir/odbcinst.ini
       echo "PerfMon    = 0"            >> $admdir/odbcinst.ini
       echo "Retry Wait = "             >> $admdir/odbcinst.ini
-      chmod 664 $admdir/odbcinst.ini
-      chown root:admin $admdir/odbcinst.ini
+      if [ $f = /Library/ODBC ] ; then
+        chmod 664 $admdir/odbcinst.ini
+        chown root:admin $admdir/odbcinst.ini
+      else
+      fi
   fi
 done
 
