@@ -132,11 +132,11 @@ rm -v $RPM_BUILD_ROOT%{_datadir}/mysql-connector-odbc/{ChangeLog,README,README.d
 # ----------------------------------------------------------------------
 
 %post 
-myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=%{_libdir}/libmyodbc3.so"
+myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=%{_libdir}/libmyodbc5.so"
 
 %post setup
 myodbc3i -r -d -n"MySQL ODBC 3.51 Driver"
-myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=%{_libdir}/libmyodbc3.so;SETUP=%{_libdir}/libmyodbc3S.so"
+myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=%{_libdir}/libmyodbc5.so;SETUP=%{_libdir}/libmyodbc3S.so"
 
 # ----------------------------------------------------------------------
 # DEREGISTER DRIVER 
@@ -149,7 +149,7 @@ myodbc3i -r -d -n"MySQL ODBC 3.51 Driver"
 # Removing the setup RPM, downgrade the registration
 %preun setup
 myodbc3i -r -d -n"MySQL ODBC 3.51 Driver"
-myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=%{_libdir}/libmyodbc3.so"
+myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=%{_libdir}/libmyodbc5.so"
 
 ##############################################################################
 #
@@ -161,9 +161,9 @@ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=%{_libdir}/libmyodbc3.so"
 %defattr(-,root,root)
 %{_bindir}/myodbc3i
 %{_bindir}/myodbc3m
-%{_libdir}/libmyodbc3.*
-%{_libdir}/libmyodbc3-*
-%{_libdir}/libmyodbc3_*
+%{_libdir}/libmyodbc5.*
+%{_libdir}/libmyodbc5-*
+%{_libdir}/libmyodbc5_*
 %doc ChangeLog README README.debug INSTALL
 %if %{com_lic}
 %doc LICENSE.commercial
