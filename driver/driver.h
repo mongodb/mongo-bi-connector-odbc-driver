@@ -412,5 +412,8 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
                                      SQLUSMALLINT completion);
 SQLRETURN SQL_API MySQLPrepare(SQLHSTMT hstmt, SQLCHAR *query, SQLINTEGER len,
                                my_bool dupe);
+SQLRETURN SQL_API MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
+                                      SQLPOINTER ValuePtr,
+                                      SQLINTEGER StringLengthPtr);
 
 #endif /* __MYODBC3_H__ */

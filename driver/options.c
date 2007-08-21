@@ -260,11 +260,9 @@ get_constmt_attr(SQLSMALLINT  HandleType,
   @purpose : sets the connection attributes
 */
 
-static SQLRETURN
-set_con_attr(SQLHDBC    hdbc,
-             SQLINTEGER Attribute,
-             SQLPOINTER ValuePtr,
-             SQLINTEGER StringLengthPtr)
+SQLRETURN SQL_API
+MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
+                    SQLPOINTER ValuePtr, SQLINTEGER StringLengthPtr)
 {
     DBC FAR *dbc= (DBC FAR*) hdbc;
 
@@ -774,19 +772,6 @@ static SQLRETURN get_stmt_attr(SQLHSTMT   hstmt,
 
 /*
   @type    : ODBC 1.0 API
-  @purpose : sets the connection options
-*/
-
-SQLRETURN SQL_API SQLSetConnectOption( SQLHDBC      hdbc, 
-                                       SQLUSMALLINT fOption,
-                                       SQLULEN      vParam )
-{
-  return set_con_attr(hdbc, fOption, (SQLPOINTER)vParam, SQL_NTS);
-}
-
-
-/*
-  @type    : ODBC 1.0 API
   @purpose : returns the connection options
 */
 
@@ -886,19 +871,6 @@ SQLGetEnvAttr(SQLHENV    henv,
     return SQL_SUCCESS;
 }
 
-
-/*
-  @type    : ODBC 3.0 API
-  @purpose : sets the connection attributes
-*/
-
-SQLRETURN SQL_API SQLSetConnectAttr(SQLHDBC hdbc,
-                                    SQLINTEGER Attribute,
-                                    SQLPOINTER ValuePtr,
-                                    SQLINTEGER StringLength)
-{
-  return set_con_attr(hdbc, Attribute, ValuePtr, StringLength);
-}
 
 /*
   @type    : ODBC 3.0 API

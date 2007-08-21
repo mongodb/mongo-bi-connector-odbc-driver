@@ -42,6 +42,10 @@ SQLINTEGER utf8_as_sqlwchar(SQLWCHAR *out, SQLINTEGER out_max, SQLCHAR *in,
 SQLRETURN SQL_API
 SQLPrepareWImpl(SQLHSTMT hstmt, SQLWCHAR *str, SQLINTEGER str_len);
 
+SQLRETURN SQL_API
+SQLSetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute,
+                       SQLPOINTER value, SQLINTEGER value_len);
+
 
 /**
   Duplicate a SQLWCHAR as a SQLCHAR in the specified character set.
@@ -295,6 +299,58 @@ SQLPrepareWImpl(SQLHSTMT hstmt, SQLWCHAR *str, SQLINTEGER str_len)
 }
 
 
+SQLRETURN SQL_API
+SQLSetConnectAttrW(SQLHDBC hdbc, SQLINTEGER attribute,
+                   SQLPOINTER value, SQLINTEGER value_len)
+{
+  return SQLSetConnectAttrWImpl(hdbc, attribute, value, value_len);
+}
+
+
+SQLRETURN SQL_API
+SQLSetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute,
+                       SQLPOINTER value, SQLINTEGER value_len)
+{
+  SQLRETURN rc;
+  DBC *dbc= (DBC *)hdbc;
+  my_bool free_value= FALSE;
+
+  switch (attribute) {
+  case SQL_ATTR_CURRENT_CATALOG:
+  case SQL_ATTR_TRACEFILE:
+  case SQL_ATTR_TRANSLATE_LIB:
+    {
+      uint errors= 0;
+      value= sqlwchar_as_sqlchar(dbc->cxn_charset_info,
+                                 value, &value_len, &errors);
+      free_value= TRUE;
+    }
+  }
+
+  rc= MySQLSetConnectAttr(hdbc, attribute, value, value_len);
+
+  if (free_value)
+    x_free(value);
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
+SQLSetConnectOptionW(SQLHDBC hdbc, SQLUSMALLINT option, SQLULEN param)
+{
+  SQLINTEGER value_len= 0;
+  switch (option) {
+  case SQL_ATTR_CURRENT_CATALOG:
+  case SQL_ATTR_TRACEFILE:
+  case SQL_ATTR_TRANSLATE_LIB:
+    value_len= SQL_NTS;
+  }
+
+  return SQLSetConnectAttrWImpl(hdbc, option, (SQLPOINTER)param, value_len);
+}
+
+
 #ifdef NOT_IMPLEMENTED_YET
 SQLRETURN SQL_API
 SQLBrowseConnectW(SQLHDBC hdbc, SQLWCHAR *in, SQLSMALLINT in_len,
@@ -493,21 +549,6 @@ SQLProceduresW(SQLHSTMT hstmt,
                SQLWCHAR *catalog, SQLSMALLINT catalog_len,
                SQLWCHAR *schema, SQLSMALLINT schema_len,
                SQLWCHAR *proc, SQLSMALLINT proc_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLSetConnectAttrW(SQLHDBC hdbc, SQLINTEGER attribute,
-                   SQLPOINTER value, SQLINTEGER value_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLSetConnectOptionW(SQLHDBC hdbc, SQLUSMALLINT option, SQLULEN param)
 {
   NOT_IMPLEMENTED;
 }
