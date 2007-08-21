@@ -166,10 +166,11 @@ int utf32toutf8(UTF32 i, UTF8 *c)
   }
 
   x= len;
-  while (--x)
-  {
-    *c++= (1 << 7) | ((i >> (6 * (x - 1))) & 0x3f);
-  }
+  if (x)
+    while (--x)
+    {
+      *c++= (1 << 7) | ((i >> (6 * (x - 1))) & 0x3f);
+    }
 
   return len;
 }

@@ -114,6 +114,14 @@ SQLExecDirect(SQLHSTMT hstmt, SQLCHAR *str, SQLINTEGER str_len)
 
 
 SQLRETURN SQL_API
+SQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER attribute, SQLPOINTER value,
+                SQLINTEGER value_max, SQLINTEGER *value_len)
+{
+  return MySQLGetStmtAttr(hstmt, attribute, value, value_max, value_len);
+}
+
+
+SQLRETURN SQL_API
 SQLPrepare(SQLHSTMT hstmt, SQLCHAR *str, SQLINTEGER str_len)
 {
   return SQLPrepareImpl(hstmt, str, str_len);
@@ -367,13 +375,6 @@ SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
             SQLSMALLINT value_max, SQLSMALLINT *value_len)
 {
   NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER attribute, SQLPOINTER value,
-                SQLINTEGER value_max, SQLINTEGER *value_len)
-{
 }
 
 

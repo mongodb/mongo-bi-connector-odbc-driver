@@ -662,11 +662,10 @@ set_stmt_attr(SQLHSTMT   hstmt,
   @purpose : returns the statement attribute values
 */
 
-static SQLRETURN get_stmt_attr(SQLHSTMT   hstmt,
-                               SQLINTEGER Attribute,
-                               SQLPOINTER ValuePtr,
-                               SQLINTEGER BufferLength __attribute__((unused)),
-                               SQLINTEGER *StringLengthPtr)
+SQLRETURN SQL_API
+MySQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
+                 SQLINTEGER BufferLength __attribute__((unused)),
+                 SQLINTEGER *StringLengthPtr)
 {
     SQLRETURN result= SQL_SUCCESS;
     STMT FAR *stmt= (STMT FAR*) hstmt;
@@ -796,18 +795,6 @@ SQLRETURN SQL_API SQLSetStmtOption( SQLHSTMT        hstmt,
 
 
 /*
-  @type    : ODBC 1.0 API
-  @purpose : returns the statement options
-*/
-
-SQLRETURN SQL_API SQLGetStmtOption(SQLHSTMT hstmt,SQLUSMALLINT fOption,
-                                   SQLPOINTER vParam)
-{
-  return get_stmt_attr(hstmt, fOption, vParam, SQL_NTS, (SQLINTEGER *)NULL);
-}
-
-
-/*
   @type    : ODBC 3.0 API
   @purpose : sets the environment attributes
 */
@@ -899,16 +886,16 @@ SQLRETURN SQL_API SQLSetStmtAttr(SQLHSTMT   hstmt,
   return set_stmt_attr(hstmt, Attribute, ValuePtr, StringLength );
 }
 
+
 /*
-  @type    : ODBC 3.0 API
-  @purpose : returns the statement attribute values
+  @type    : ODBC 1.0 API
+  @purpose : returns the statement options
 */
-SQLRETURN SQL_API SQLGetStmtAttr(SQLHSTMT   hstmt,
-                                 SQLINTEGER Attribute,
-                                 SQLPOINTER ValuePtr,
-                                 SQLINTEGER BufferLength,
-                                 SQLINTEGER *StringLengthPtr)
+
+SQLRETURN SQL_API SQLGetStmtOption(SQLHSTMT hstmt,SQLUSMALLINT fOption,
+                                   SQLPOINTER vParam)
 {
-  return get_stmt_attr(hstmt ,Attribute, ValuePtr, BufferLength,
-                       StringLengthPtr);
+  return MySQLGetStmtAttr(hstmt, fOption, vParam, SQL_NTS, (SQLINTEGER *)NULL);
 }
+
+

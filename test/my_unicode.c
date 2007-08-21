@@ -66,6 +66,8 @@ DECLARE_TEST(sqlprepare)
 
   expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
 
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
   data= 1;
   ok_stmt(hstmt1, SQLExecute(hstmt1));
 
@@ -75,26 +77,33 @@ DECLARE_TEST(sqlprepare)
 
   expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
 
-  ok_stmt(hstmt, SQLFreeStmt(hstmt1, SQL_CLOSE));
+  /*
+    Some driver managers (like iODBC) will always do the character conversion
+    themselves.
+  */
+  if (!using_dm(hdbc))
+  {
+    ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
-  /* Now try ANSI SQLPrepare. */
-  ok_stmt(hstmt1, SQLPrepare(hstmt1,
-                             (SQLCHAR *)"SELECT '\xe3' FROM DUAL WHERE 1 = ?",
-                             SQL_NTS));
+    /* Now try ANSI SQLPrepare. */
+    ok_stmt(hstmt1, SQLPrepare(hstmt1,
+                               (SQLCHAR *)"SELECT '\xe3' FROM DUAL WHERE 1 = ?",
+                               SQL_NTS));
 
-  data= 0;
-  ok_stmt(hstmt1, SQLExecute(hstmt1));
+    data= 0;
+    ok_stmt(hstmt1, SQLExecute(hstmt1));
 
-  expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
+    expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
 
-  data= 1;
-  ok_stmt(hstmt1, SQLExecute(hstmt1));
+    data= 1;
+    ok_stmt(hstmt1, SQLExecute(hstmt1));
 
-  ok_stmt(hstmt1, SQLFetch(hstmt1));
+    ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-  is_wstr(my_fetch_wstr(hstmt1, wbuff, 1), L"\u00e3", 1);
+    is_wstr(my_fetch_wstr(hstmt1, wbuff, 1), L"\u00e3", 1);
 
-  expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
+    expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
+  }
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt1, SQL_DROP));
 

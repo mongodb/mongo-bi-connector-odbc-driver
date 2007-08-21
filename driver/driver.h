@@ -410,6 +410,11 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
                                      SQLCHAR *out, SQLSMALLINT out_max,
                                      SQLSMALLINT *out_len,
                                      SQLUSMALLINT completion);
+SQLRETURN SQL_API MySQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute,
+                                   SQLPOINTER ValuePtr,
+                                   SQLINTEGER BufferLength
+                                     __attribute__((unused)),
+                                  SQLINTEGER *StringLengthPtr);
 SQLRETURN SQL_API MySQLPrepare(SQLHSTMT hstmt, SQLCHAR *query, SQLINTEGER len,
                                my_bool dupe);
 SQLRETURN SQL_API MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
