@@ -122,6 +122,25 @@ SQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER attribute, SQLPOINTER value,
 
 
 SQLRETURN SQL_API
+SQLNativeSql(SQLHDBC hdbc, SQLCHAR *in, SQLINTEGER in_len,
+             SQLCHAR *out, SQLINTEGER out_max, SQLINTEGER *out_len)
+{
+  if (in_len == SQL_NTS)
+    in_len= strlen((char *)in);
+
+  if (out)
+    *out_len= in_len;
+
+  (void)strncpy((char *)out, (const char *)in, out_max);
+
+  if (in_len > out_max)
+    return set_conn_error((DBC *)hdbc, MYERR_01004, NULL, 0);
+
+  return SQL_SUCCESS;
+}
+
+
+SQLRETURN SQL_API
 SQLPrepare(SQLHSTMT hstmt, SQLCHAR *str, SQLINTEGER str_len)
 {
   return SQLPrepareImpl(hstmt, str, str_len);
@@ -373,14 +392,6 @@ SQLGetDiagRec(SQLSMALLINT handle_type, SQLHANDLE handle,
 SQLRETURN SQL_API
 SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
             SQLSMALLINT value_max, SQLSMALLINT *value_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLNativeSql(SQLHDBC hdbc, SQLCHAR *in, SQLINTEGER in_len,
-             SQLCHAR *out, SQLINTEGER out_max, SQLINTEGER *out_len)
 {
   NOT_IMPLEMENTED;
 }

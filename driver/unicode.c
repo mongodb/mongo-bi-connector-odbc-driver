@@ -283,6 +283,30 @@ SQLGetStmtAttrW(SQLHSTMT hstmt, SQLINTEGER attribute, SQLPOINTER value,
 
 
 SQLRETURN SQL_API
+SQLNativeSqlW(SQLHDBC hdbc, SQLWCHAR *in, SQLINTEGER in_len,
+              SQLWCHAR *out, SQLINTEGER out_max, SQLINTEGER *out_len)
+{
+  SQLRETURN rc= SQL_SUCCESS;
+  if (in_len == SQL_NTS)
+    in_len= sqlwchar_strlen((char *)in);
+
+  if (out)
+    *out_len= in_len;
+
+  if (in_len > out_max)
+    rc= set_conn_error((DBC *)hdbc, MYERR_01004, NULL, 0);
+
+  if (in_len > out_max - 1)
+    in_len= out_max - 1;
+
+  (void)memcpy((char *)out, (const char *)in, in_len * sizeof(SQLWCHAR));
+  out[in_len]= 0;
+
+  return SQL_SUCCESS;
+}
+
+
+SQLRETURN SQL_API
 SQLPrepareW(SQLHSTMT hstmt, SQLWCHAR *str, SQLINTEGER str_len)
 {
   return SQLPrepareWImpl(hstmt, str, str_len);

@@ -688,33 +688,6 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
 
 /*
   @type    : ODBC 1.0 API
-  @purpose : returns the SQL string as modified by the driver
-*/
-
-SQLRETURN SQL_API SQLNativeSql(SQLHDBC hdbc,
-                               SQLCHAR *szSqlStrIn,
-                               SQLINTEGER cbSqlStrIn,
-                               SQLCHAR *szSqlStr,
-                               SQLINTEGER cbSqlStrMax,
-                               SQLINTEGER *pcbSqlStr)
-{
-  if (cbSqlStrIn == SQL_NTS)
-    cbSqlStrIn= strlen((char *)szSqlStrIn);
-
-  if (pcbSqlStr)
-    *pcbSqlStr= cbSqlStrIn;
-
-  (void)strncpy((char *)szSqlStr, (const char *)szSqlStrIn, cbSqlStrMax);
-
-  if (cbSqlStrIn > cbSqlStrMax)
-    return set_conn_error((DBC *)hdbc, MYERR_01004, NULL, 0);
-
-  return SQL_SUCCESS;
-}
-
-
-/*
-  @type    : ODBC 1.0 API
   @purpose : is used in conjunction with SQLPutData to supply parameter
   data at statement execution time
 */

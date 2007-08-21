@@ -250,12 +250,32 @@ DECLARE_TEST(sqldriverconnect)
 }
 
 
+DECLARE_TEST(sqlnativesql)
+{
+  SQLWCHAR    out[128];
+  wchar_t in[]= L"SELECT * FROM venu";
+  SQLINTEGER len;
+
+  ok_con(hdbc, SQLNativeSqlW(hdbc, W(in), SQL_NTS, out, sizeof(out), &len));
+  is_num(len, sizeof(in) / sizeof(wchar_t) - 1);
+  is_wstr(out, W(in), sizeof(in) / sizeof(wchar_t) - 1);
+
+  ok_con(hdbc, SQLNativeSqlW(hdbc, W(in), SQL_NTS, out, 8, &len));
+  is_num(len, sizeof(in) / sizeof(wchar_t) - 1);
+  is_wstr(out, W(in), 7);
+  is(out[7] == 0);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlconnect)
   ADD_TEST(sqlprepare)
   ADD_TEST(sqlprepare_ansi)
   ADD_TEST(sqlchar)
   ADD_TEST(sqldriverconnect)
+  ADD_TEST(sqlnativesql)
 END_TESTS
 
 
