@@ -41,7 +41,6 @@ public:
     MYODBCSetupDataSourceTab3d( QWidget *pwidgetParent );
 
 protected:
-    MYODBCSetupCheckBox *pcheckboxTraceDriverCalls;
     MYODBCSetupCheckBox *pcheckboxSaveQueries;
 };
 

@@ -54,8 +54,6 @@ unsigned int MYODBCSetupDataSourceTab3::getFlags()
         nFlags |= 1 << 0;
     if ( ptab3a->pcheckboxReturnMatchingRows->isChecked() )
         nFlags |= 1 << 1;
-    if ( ptab3d->pcheckboxTraceDriverCalls->isChecked() )
-        nFlags |= 1 << 2;
     if ( ptab3a->pcheckboxAllowBigResults->isChecked() )
         nFlags |= 1 << 3;
     if ( ptab3b->pcheckboxDontPromptOnConnect->isChecked() )
