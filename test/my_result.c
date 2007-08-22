@@ -1149,7 +1149,7 @@ void desccol(SQLHSTMT hstmt, SQLCHAR    *cname,  SQLSMALLINT clen,
                          &lsqltype,&lsize,&lscale,&lisNull);
     mystmt(hstmt,rc);
 
-    printMessage("\n name	: %s (%d)",lcname,lclen);
+    printMessage("\n name: %s (%d)",lcname,lclen);
     printMessage("\n sqltype: %d, size: %d, scale: %d, null: %d\n",lsqltype,lsize,lscale,lisNull);
 
     myassert(strcmp(lcname,cname)==0);
@@ -1813,6 +1813,38 @@ DECLARE_TEST(t_binary_collation)
 }
 
 
+/*
+ * Bug 29239 - Prepare before insert returns wrong result
+ */
+DECLARE_TEST(t_bug29239)
+{
+  SQLHANDLE hstmt2;
+  SQLINTEGER xval;
+
+  ok_sql(hstmt, "drop table if exists bug29239");
+  ok_sql(hstmt, "create table bug29239 ( x int )");
+
+  /* prepare & bind */
+  ok_stmt(hstmt, SQLPrepare(hstmt, "select x from bug29239", SQL_NTS));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &xval, 0, NULL));
+
+  /* insert before execute, with a new stmt handle */
+  is(SQL_SUCCEEDED(SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt2)));
+  ok_stmt(hstmt2, SQLExecDirect(hstmt2,
+                                "insert into bug29239 values (44)", SQL_NTS));
+  is(SQL_SUCCEEDED(SQLFreeHandle(SQL_HANDLE_STMT, hstmt2)));
+
+  /* now execute */
+  ok_stmt(hstmt, SQLExecute(hstmt));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  printf("xval = %d\n", xval);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  ok_sql(hstmt, "drop table if exists bug29239");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -1835,6 +1867,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug16817)
   ADD_TEST(bug6157)
   ADD_TEST(t_binary_collation)
+  ADD_TODO(t_bug29239)
 END_TESTS
 
 
