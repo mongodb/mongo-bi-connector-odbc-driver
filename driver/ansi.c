@@ -148,6 +148,54 @@ SQLExecDirect(SQLHSTMT hstmt, SQLCHAR *str, SQLINTEGER str_len)
 
 
 SQLRETURN SQL_API
+SQLGetCursorName(SQLHSTMT hstmt, SQLCHAR *cursor, SQLSMALLINT cursor_max,
+                 SQLSMALLINT *cursor_len)
+{
+  STMT *stmt= (STMT *)hstmt;
+  SQLCHAR *name;
+  my_bool free_name= FALSE;
+  SQLINTEGER len;
+  uint errors;
+
+  CLEAR_STMT_ERROR(stmt);
+
+  if (cursor_max < 0)
+    return set_error(stmt, MYERR_S1090, NULL, 0);
+
+  if (stmt->dbc->ansi_charset_info->number ==
+      stmt->dbc->cxn_charset_info->number)
+  {
+    name= MySQLGetCursorName(hstmt);
+    len= strlen((char *)name);
+  }
+  else
+  {
+    name= sqlchar_as_sqlchar(stmt->dbc->cxn_charset_info,
+                             stmt->dbc->ansi_charset_info,
+                             MySQLGetCursorName(hstmt),
+                             &len, &errors);
+    free_name= TRUE;
+  }
+
+  if (cursor && cursor_max > 1)
+    strmake((char *)cursor, (char *)name, cursor_max - 1);
+  cursor[cursor_max]= '\0';
+
+  if (cursor_len)
+    *cursor_len= len;
+
+  if (free_name)
+    x_free(name);
+
+  /* Warn if name truncated */
+  if (len > cursor_max - 1)
+    return set_error(stmt, MYERR_01004, NULL, 0);
+
+  return SQL_SUCCESS;
+}
+
+
+SQLRETURN SQL_API
 SQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER attribute, SQLPOINTER value,
                 SQLINTEGER value_max, SQLINTEGER *value_len)
 {
@@ -236,7 +284,8 @@ SQLSetConnectAttrImpl(SQLHDBC hdbc, SQLINTEGER attribute,
   DBC *dbc= (DBC *)hdbc;
   my_bool free_value= FALSE;
 
-  if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+  if (dbc->ansi_charset_info &&
+      dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
   {
     switch (attribute) {
     case SQL_ATTR_CURRENT_CATALOG:
@@ -381,14 +430,6 @@ SQLForeignKeys(SQLHSTMT hstmt,
 SQLRETURN SQL_API
 SQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
                   SQLINTEGER value_max, SQLINTEGER *value_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLGetCursorName(SQLHSTMT hstmt, SQLCHAR *cursor, SQLSMALLINT cursor_max,
-                 SQLSMALLINT *cursor_len)
 {
   NOT_IMPLEMENTED;
 }

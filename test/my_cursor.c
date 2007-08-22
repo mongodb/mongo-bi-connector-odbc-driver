@@ -785,22 +785,21 @@ DECLARE_TEST(t_getcursor)
       rc = SQLGetCursorName(hstmt1,curname,4,&nlen);
       mystmt_err(hstmt1,rc == SQL_SUCCESS_WITH_INFO, rc);
       fprintf(stdout,"truncated cursor name: %s(%d)\n",curname,nlen);
-      myassert(nlen == 8);
-      myassert(!strcmp(curname,"SQL"));
+      is_num(nlen, 8);
+      is_str(curname, "SQL", 4);
 
       rc = SQLGetCursorName(hstmt1,curname,0,&nlen);
       mystmt_err(hstmt1,rc == SQL_SUCCESS_WITH_INFO, rc);
       fprintf(stdout,"untouched cursor name: %s(%d)\n",curname,nlen);
       myassert(nlen == 8);
 
-      rc = SQLGetCursorName(hstmt1,curname,8,&nlen);
-      mystmt_err(hstmt1,rc == SQL_SUCCESS_WITH_INFO, rc);
+      expect_stmt(hstmt1, SQLGetCursorName(hstmt1, curname, 8, &nlen),
+                  SQL_SUCCESS_WITH_INFO);
       fprintf(stdout,"truncated cursor name: %s(%d)\n",curname,nlen);
       myassert(nlen == 8);
       myassert(!strcmp(curname,"SQL_CUR"));
 
       rc = SQLGetCursorName(hstmt1,curname,9,&nlen);
-      mystmt(hstmt1,rc);
       fprintf(stdout,"full cursor name     : %s(%d)\n",curname,nlen);
       myassert(nlen == 8);
       myassert(!strcmp(curname,"SQL_CUR0"));

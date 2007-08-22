@@ -22,6 +22,7 @@
 
 #include "odbctap.h"
 #include <sqlucode.h>
+#include <wchar.h>
 
 
 DECLARE_TEST(sqlconnect)
@@ -252,18 +253,28 @@ DECLARE_TEST(sqldriverconnect)
 
 DECLARE_TEST(sqlnativesql)
 {
+  HDBC hdbc1;
   SQLWCHAR    out[128];
   wchar_t in[]= L"SELECT * FROM venu";
   SQLINTEGER len;
 
-  ok_con(hdbc, SQLNativeSqlW(hdbc, W(in), SQL_NTS, out, sizeof(out), &len));
-  is_num(len, sizeof(in) / sizeof(wchar_t) - 1);
-  is_wstr(out, W(in), sizeof(in) / sizeof(wchar_t) - 1);
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+  ok_con(hdbc1, SQLConnectW(hdbc1,
+                            W(L"myodbc3"), SQL_NTS,
+                            W(L"root"), SQL_NTS,
+                            W(L""), SQL_NTS));
 
-  ok_con(hdbc, SQLNativeSqlW(hdbc, W(in), SQL_NTS, out, 8, &len));
+  ok_con(hdbc1, SQLNativeSqlW(hdbc1, W(in), SQL_NTS, out, sizeof(out), &len));
   is_num(len, sizeof(in) / sizeof(wchar_t) - 1);
-  is_wstr(out, W(in), 7);
+  is_wstr(sqlwchar_to_wchar_t(out), in, sizeof(in) / sizeof(wchar_t) - 1);
+
+  ok_con(hdbc1, SQLNativeSqlW(hdbc1, W(in), SQL_NTS, out, 8, &len));
+  is_num(len, sizeof(in) / sizeof(wchar_t) - 1);
+  is_wstr(sqlwchar_to_wchar_t(out), in, 7);
   is(out[7] == 0);
+
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
 
   return OK;
 }
@@ -276,12 +287,6 @@ DECLARE_TEST(sqlsetcursorname)
   SQLLEN  nRowCount;
   SQLCHAR data[10];
 
-  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
-  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
-                            W(L""), SQL_NTS));
-
-  ok_con(hdbc, SQLAllocStmt(hdbc1, &hstmt1));
-
   ok_sql(hstmt, "DROP TABLE IF EXISTS my_demo_cursor");
   ok_sql(hstmt, "CREATE TABLE my_demo_cursor (id INT, name VARCHAR(20))");
   ok_sql(hstmt, "INSERT INTO my_demo_cursor VALUES (0,'MySQL0'),(1,'MySQL1'),"
@@ -289,8 +294,14 @@ DECLARE_TEST(sqlsetcursorname)
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-  ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
-                                 (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
+                            W(L""), SQL_NTS));
+
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_stmt(hstmt1, SQLSetStmtAttrW(hstmt1, SQL_ATTR_CURSOR_TYPE,
+                                  (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
 
   ok_stmt(hstmt1, SQLSetCursorNameW(hstmt1, W(L"a\u00e3b"), SQL_NTS));
 
@@ -370,6 +381,69 @@ DECLARE_TEST(sqlsetcursorname)
 }
 
 
+DECLARE_TEST(sqlgetcursorname)
+{
+  SQLRETURN rc;
+  HDBC hdbc1;
+  SQLHSTMT hstmt1,hstmt2,hstmt3;
+  SQLWCHAR curname[50];
+  SQLSMALLINT nlen;
+
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
+                            W(L""), SQL_NTS));
+
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt2));
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt3));
+
+  rc= SQLGetCursorNameW(hstmt1, curname, 50, &nlen);
+  if (SQL_SUCCEEDED(rc))
+  {
+    is_num(nlen, 8);
+    is_wstr(sqlwchar_to_wchar_t(curname), L"SQL_CUR0", 8);
+
+    ok_stmt(hstmt3,  SQLGetCursorNameW(hstmt3, curname, 50, &nlen));
+
+    expect_stmt(hstmt3,  SQLGetCursorNameW(hstmt1, curname, 4, &nlen),
+                SQL_SUCCESS_WITH_INFO);
+    is_num(nlen, 8);
+    is_wstr(sqlwchar_to_wchar_t(curname), L"SQL", 4);
+
+    expect_stmt(hstmt3,  SQLGetCursorNameW(hstmt1, curname, 0, &nlen),
+                SQL_SUCCESS_WITH_INFO);
+    rc = SQLGetCursorNameW(hstmt1, curname, 0, &nlen);
+    mystmt_err(hstmt1,rc == SQL_SUCCESS_WITH_INFO, rc);
+    is_num(nlen, 8);
+
+    expect_stmt(hstmt1, SQLGetCursorNameW(hstmt1, curname, 8, &nlen),
+                SQL_SUCCESS_WITH_INFO);
+    is_num(nlen, 8);
+    is_wstr(sqlwchar_to_wchar_t(curname), L"SQL_CUR", 8);
+
+    ok_stmt(hstmt1, SQLGetCursorNameW(hstmt1, curname, 9, &nlen));
+    is_num(nlen, 8);
+    is_wstr(sqlwchar_to_wchar_t(curname), L"SQL_CUR0", 8);
+  }
+
+  ok_stmt(hstmt1,  SQLSetCursorNameW(hstmt1, W(L"venucur123"), 7));
+
+  ok_stmt(hstmt1,  SQLGetCursorNameW(hstmt1, curname, 8, &nlen));
+  is_num(nlen, 7);
+  is_wstr(sqlwchar_to_wchar_t(curname), L"venucur", 8);
+
+  ok_stmt(hstmt3, SQLFreeStmt(hstmt3, SQL_DROP));
+  ok_stmt(hstmt2, SQLFreeStmt(hstmt2, SQL_DROP));
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlconnect)
   ADD_TEST(sqlprepare)
@@ -378,6 +452,7 @@ BEGIN_TESTS
   ADD_TEST(sqldriverconnect)
   ADD_TEST(sqlnativesql)
   ADD_TEST(sqlsetcursorname)
+  ADD_TEST(sqlgetcursorname)
 END_TESTS
 
 

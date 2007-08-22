@@ -1442,43 +1442,21 @@ MySQLSetCursorName(SQLHSTMT hstmt, SQLCHAR *name, SQLSMALLINT len)
 }
 
 
-/*
-  @type    : ODBC 1.0 API
-  @purpose : returns the cursor name associated with a specified statement
+/**
+  Get the current cursor name, generating one if necessary.
+
+  @param[in]   hstmt  Statement handle
+
+  @return  Pointer to cursor name (terminated with '\0')
 */
-
-SQLRETURN SQL_API SQLGetCursorName(SQLHSTMT hstmt, SQLCHAR FAR *szCursor,
-                                   SQLSMALLINT cbCursorMax,
-                                   SQLSMALLINT FAR *pcbCursor)
+SQLCHAR *MySQLGetCursorName(HSTMT hstmt)
 {
-    STMT FAR    *stmt= (STMT FAR*) hstmt;
-    SQLINTEGER  nLength;
-    SQLSMALLINT nDummyLength;
+  STMT *stmt= (STMT *)hstmt;
 
-    CLEAR_STMT_ERROR(stmt);
+  if (!stmt->cursor.name)
+    set_dynamic_cursor_name(stmt);
 
-    if ( cbCursorMax < 0 )
-        return set_error(stmt,MYERR_S1090,NULL,0);
-
-    if ( !pcbCursor )
-        pcbCursor= &nDummyLength;
-
-    if ( cbCursorMax )
-        cbCursorMax-= sizeof(char);
-
-    if ( !stmt->cursor.name )
-        set_dynamic_cursor_name(stmt);
-
-    *pcbCursor= strlen(stmt->cursor.name);
-    if ( szCursor && cbCursorMax > 0 )
-        strmake((char*) szCursor, stmt->cursor.name, cbCursorMax);
-
-    nLength= min(*pcbCursor , cbCursorMax);
-
-    if ( nLength != *pcbCursor )
-        return set_error(stmt,MYERR_01004,NULL,0);
-
-    return SQL_SUCCESS;
+  return stmt->cursor.name;
 }
 
 

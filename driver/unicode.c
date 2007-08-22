@@ -48,6 +48,89 @@ SQLSetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute,
 
 
 /**
+  Duplicate a SQLCHAR in the specified character set as a SQLWCHAR.
+
+  @param[in]      charset_info  Character set to convert into
+  @param[in]      str           String to convert
+  @param[in,out]  len           Pointer to length of source (in chars) or
+                                destination string (in bytes)
+  @param[out]     errors        Pointer to count of errors in conversion
+
+  @return  Pointer to a newly allocated SQLWCHAR, or @c NULL
+*/
+SQLWCHAR *sqlchar_as_sqlwchar(CHARSET_INFO *charset_info, SQLCHAR *str,
+                              SQLINTEGER *len, uint *errors)
+{
+  SQLCHAR *str_end;
+  SQLWCHAR *out;
+  SQLINTEGER i, out_bytes;
+  my_bool free_str= FALSE;
+
+  if (*len == SQL_NTS)
+    *len= strlen((char *)str);
+
+  if (!str || *len == 0)
+  {
+    *len= 0;
+    return NULL;
+  }
+
+  if (charset_info->number != 33) /* not utf-8 */
+  {
+    uint32 used_bytes, used_chars;
+    size_t u8_max= (*len / charset_info->mbminlen *
+                    utf8_charset_info->mbmaxlen + 1);
+    SQLCHAR *u8= (SQLCHAR *)my_malloc(u8_max, MYF(0));
+
+    if (!u8)
+    {
+      *len= -1;
+      return NULL;
+    }
+
+    *len= copy_and_convert((char *)u8, u8_max, utf8_charset_info,
+                           (char *)str, *len, charset_info,
+                           &used_bytes, &used_chars, errors);
+    str= u8;
+    free_str= TRUE;
+  }
+
+  str_end= str + *len;
+
+  out_bytes= (*len + 1) * sizeof(SQLWCHAR);
+
+  out= (SQLWCHAR *)my_malloc(out_bytes, MYF(0));
+  if (!out)
+  {
+    *len= -1;
+    return NULL;
+  }
+
+  for (i= 0; *str && str < str_end; )
+  {
+    if (sizeof(SQLWCHAR) == 4)
+    {
+      str+= utf8toutf32(str, (UTF32 *)(out + i++));
+    }
+    else
+    {
+      UTF32 u32;
+      str+= utf8toutf32(str, &u32);
+      i+= utf32toutf16(u32, (UTF16 *)(out + i));
+    }
+  }
+
+  *len= i;
+  out[i]= 0;
+
+  if (free_str)
+    x_free(str);
+
+  return out;
+}
+
+
+/**
   Duplicate a SQLWCHAR as a SQLCHAR in the specified character set.
 
   @param[in]      charset_info  Character set to convert into
@@ -275,6 +358,44 @@ SQLExecDirectW(SQLHSTMT hstmt, SQLWCHAR *str, SQLINTEGER str_len)
 
 
 SQLRETURN SQL_API
+SQLGetCursorNameW(SQLHSTMT hstmt, SQLWCHAR *cursor, SQLSMALLINT cursor_max,
+                  SQLSMALLINT *cursor_len)
+{
+  SQLRETURN rc= SQL_SUCCESS;
+  STMT *stmt= (STMT *)hstmt;
+  SQLWCHAR *name;
+  SQLINTEGER len= SQL_NTS;
+  uint errors;
+
+  CLEAR_STMT_ERROR(stmt);
+
+  if (cursor_max < 0)
+    return set_error(stmt, MYERR_S1090, NULL, 0);
+
+  name= sqlchar_as_sqlwchar(stmt->dbc->cxn_charset_info,
+                            MySQLGetCursorName(hstmt), &len, &errors);
+
+  if (cursor_len)
+    *cursor_len= len;
+
+  /* Warn if name truncated */
+  if (len > cursor_max - 1)
+    rc= set_error(stmt, MYERR_01004, NULL, 0);
+
+  if (cursor_max > 0)
+  {
+    len= min(len, cursor_max - 1);
+    (void)memcpy((char *)cursor, (const char *)name, len * sizeof(SQLWCHAR));
+    cursor[len]= 0;
+  }
+
+  x_free(name);
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
 SQLGetStmtAttrW(SQLHSTMT hstmt, SQLINTEGER attribute, SQLPOINTER value,
                 SQLINTEGER value_max, SQLINTEGER *value_len)
 {
@@ -287,8 +408,9 @@ SQLNativeSqlW(SQLHDBC hdbc, SQLWCHAR *in, SQLINTEGER in_len,
               SQLWCHAR *out, SQLINTEGER out_max, SQLINTEGER *out_len)
 {
   SQLRETURN rc= SQL_SUCCESS;
+
   if (in_len == SQL_NTS)
-    in_len= sqlwchar_strlen((char *)in);
+    in_len= sqlwchar_strlen(in);
 
   if (out)
     *out_len= in_len;
@@ -296,11 +418,14 @@ SQLNativeSqlW(SQLHDBC hdbc, SQLWCHAR *in, SQLINTEGER in_len,
   if (in_len > out_max)
     rc= set_conn_error((DBC *)hdbc, MYERR_01004, NULL, 0);
 
-  if (in_len > out_max - 1)
-    in_len= out_max - 1;
+  if (out_max > 0)
+  {
+    if (in_len > out_max - 1)
+      in_len= out_max - 1;
 
-  (void)memcpy((char *)out, (const char *)in, in_len * sizeof(SQLWCHAR));
-  out[in_len]= 0;
+    (void)memcpy((char *)out, (const char *)in, in_len * sizeof(SQLWCHAR));
+    out[in_len]= 0;
+  }
 
   return SQL_SUCCESS;
 }
@@ -516,14 +641,6 @@ SQLGetConnectAttrW(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
 
 SQLRETURN SQL_API
 SQLGetConnectOptionW(SQLHDBC hdbc, SQLUSMALLINT option, SQLPOINTER param)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLGetCursorNameW(SQLHSTMT hstmt, SQLWCHAR *cursor, SQLSMALLINT cursor_max,
-                  SQLSMALLINT *cursor_len)
 {
   NOT_IMPLEMENTED;
 }
