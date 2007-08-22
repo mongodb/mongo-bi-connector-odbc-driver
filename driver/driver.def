@@ -110,7 +110,14 @@ SQLCloseCursor
 SQLConnectW
 SQLDriverConnectW
 SQLExecDirectW
+SQLGetStmtAttrW
+SQLNativeSqlW
 SQLPrepareW
+SQLSetConnectAttrW
+SQLSetConnectOptionW
+SQLSetCursorNameW
+SQLSetStmtAttrW
+
 ;
 DllMain
 LoadByOrdinal

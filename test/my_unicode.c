@@ -269,6 +269,107 @@ DECLARE_TEST(sqlnativesql)
 }
 
 
+DECLARE_TEST(sqlsetcursorname)
+{
+  HDBC hdbc1;
+  HSTMT hstmt1, hstmt_pos;
+  SQLLEN  nRowCount;
+  SQLCHAR data[10];
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
+                            W(L""), SQL_NTS));
+
+  ok_con(hdbc, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_demo_cursor");
+  ok_sql(hstmt, "CREATE TABLE my_demo_cursor (id INT, name VARCHAR(20))");
+  ok_sql(hstmt, "INSERT INTO my_demo_cursor VALUES (0,'MySQL0'),(1,'MySQL1'),"
+         "(2,'MySQL2'),(3,'MySQL3'),(4,'MySQL4')");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
+                                 (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
+
+  ok_stmt(hstmt1, SQLSetCursorNameW(hstmt1, W(L"a\u00e3b"), SQL_NTS));
+
+  /* Open the resultset of table 'my_demo_cursor' */
+  ok_sql(hstmt1, "SELECT * FROM my_demo_cursor");
+
+  /* goto the last row */
+  ok_stmt(hstmt1, SQLFetchScroll(hstmt1, SQL_FETCH_LAST, 1L));
+
+  /* create new statement handle */
+  ok_con(hdbc1, SQLAllocHandle(SQL_HANDLE_STMT, hdbc1, &hstmt_pos));
+
+  /* now update the name field to 'updated' using positioned cursor */
+  ok_stmt(hstmt_pos,
+          SQLExecDirectW(hstmt_pos,
+                         W(L"UPDATE my_demo_cursor SET name='updated' "
+                           L"WHERE CURRENT OF a\u00e3b"), SQL_NTS));
+
+  ok_stmt(hstmt_pos, SQLRowCount(hstmt_pos, &nRowCount));
+  is_num(nRowCount, 1);
+
+  ok_stmt(hstmt_pos, SQLFreeStmt(hstmt_pos, SQL_CLOSE));
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  /* Now delete 2nd row */
+  ok_sql(hstmt1, "SELECT * FROM my_demo_cursor");
+
+  /* goto the second row */
+  ok_stmt(hstmt1, SQLFetchScroll(hstmt1, SQL_FETCH_ABSOLUTE, 2L));
+
+  /* now delete the current row */
+  ok_stmt(hstmt_pos,
+          SQLExecDirectW(hstmt_pos,
+                         W(L"DELETE FROM my_demo_cursor "
+                           L"WHERE CURRENT OF a\u00e3b"), SQL_NTS));
+
+  ok_stmt(hstmt_pos, SQLRowCount(hstmt_pos, &nRowCount));
+  is_num(nRowCount, 1);
+
+  /* free the statement cursor */
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  /* Free the statement 'hstmt_pos' */
+  ok_stmt(hstmt_pos, SQLFreeHandle(SQL_HANDLE_STMT, hstmt_pos));
+
+  /* Now fetch and verify the data */
+  ok_sql(hstmt1, "SELECT * FROM my_demo_cursor");
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  is_num(my_fetch_int(hstmt1, 1), 0);
+  is_str(my_fetch_str(hstmt1, data, 2), "MySQL0", 6);
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  is_num(my_fetch_int(hstmt1, 1), 2);
+  is_str(my_fetch_str(hstmt1, data, 2), "MySQL2", 6);
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  is_num(my_fetch_int(hstmt1, 1), 3);
+  is_str(my_fetch_str(hstmt1, data, 2), "MySQL3", 6);
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  is_num(my_fetch_int(hstmt1, 1), 4);
+  is_str(my_fetch_str(hstmt1, data, 2), "updated", 7);
+
+  expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_demo_cursor");
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlconnect)
   ADD_TEST(sqlprepare)
@@ -276,6 +377,7 @@ BEGIN_TESTS
   ADD_TEST(sqlchar)
   ADD_TEST(sqldriverconnect)
   ADD_TEST(sqlnativesql)
+  ADD_TEST(sqlsetcursorname)
 END_TESTS
 
 

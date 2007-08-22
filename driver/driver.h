@@ -420,5 +420,9 @@ SQLRETURN SQL_API MySQLPrepare(SQLHSTMT hstmt, SQLCHAR *query, SQLINTEGER len,
 SQLRETURN SQL_API MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
                                       SQLPOINTER ValuePtr,
                                       SQLINTEGER StringLengthPtr);
+SQLRETURN SQL_API MySQLSetCursorName(SQLHSTMT hstmt, SQLCHAR *name,
+                                     SQLSMALLINT len);
+SQLRETURN SQL_API MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER attribute,
+                                   SQLPOINTER value, SQLINTEGER len);
 
 #endif /* __MYODBC3_H__ */

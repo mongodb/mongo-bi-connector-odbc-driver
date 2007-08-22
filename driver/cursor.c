@@ -1412,38 +1412,33 @@ static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLUSMALLINT irow, SQLUSM
 }
 
 
-/*
-  @type    : ODBC 1.0 API
-  @purpose : associates a cursor name with an active statement.
-  If an application does not call SQLSetCursorName, the driver
-  generates cursor names as needed for SQL statement processing
-*/
-
-SQLRETURN SQL_API SQLSetCursorName(SQLHSTMT hstmt, SQLCHAR *szCursor,
-                                   SQLSMALLINT cbCursor)
+SQLRETURN SQL_API
+MySQLSetCursorName(SQLHSTMT hstmt, SQLCHAR *name, SQLSMALLINT len)
 {
-    STMT FAR *stmt= (STMT FAR*) hstmt;
+  STMT *stmt= (STMT *) hstmt;
 
-    CLEAR_STMT_ERROR(stmt);
+  CLEAR_STMT_ERROR(stmt);
 
-    if ( !szCursor )
-        return set_error(stmt,MYERR_S1009,NULL,0);
+  if (!name)
+    return set_error(stmt, MYERR_S1009, NULL, 0);
 
-    if ( cbCursor == SQL_NTS )
-        cbCursor= (SQLSMALLINT) strlen((char*) szCursor);
+  if (len == SQL_NTS)
+    len= strlen((char *)name);
 
-    if ( cbCursor < 0 )
-        return set_error(stmt,MYERR_S1090,NULL,0);
+  if (len < 0)
+    return set_error(stmt, MYERR_S1009, NULL, 0);
 
-    if ( (cbCursor == 0) ||
-         (cbCursor > MYSQL_MAX_CURSOR_LEN) ||
-         (myodbc_casecmp((char*) szCursor, "SQLCUR", 6) == 0)  ||
-         (myodbc_casecmp((char*) szCursor, "SQL_CUR", 7) == 0) )
-        return set_error(stmt,MYERR_34000,NULL,0);
+  /** @todo use charset-aware casecmp */
+  if (len == 0 ||
+      len > MYSQL_MAX_CURSOR_LEN ||
+      myodbc_casecmp((char *)name, "SQLCUR", 6) == 0 ||
+      myodbc_casecmp((char *)name, "SQL_CUR", 7) == 0)
+    return set_error(stmt, MYERR_34000, NULL, 0);
 
-    x_free((gptr) stmt->cursor.name);
-    stmt->cursor.name= dupp_str((char*) szCursor,cbCursor);
-    return SQL_SUCCESS;
+  x_free(stmt->cursor.name);
+  stmt->cursor.name= dupp_str((char*)name, len);
+
+  return SQL_SUCCESS;
 }
 
 

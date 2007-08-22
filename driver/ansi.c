@@ -91,6 +91,40 @@ SQLConnect(SQLHDBC hdbc, SQLCHAR *dsn, SQLSMALLINT dsn_len,
 
 
 SQLRETURN SQL_API
+SQLSetCursorName(SQLHSTMT hstmt, SQLCHAR *name, SQLSMALLINT name_len)
+{
+  STMT *stmt= (STMT *)hstmt;
+  SQLINTEGER len= name_len;
+  uint errors= 0;
+
+  if (stmt->dbc->ansi_charset_info->number ==
+      stmt->dbc->cxn_charset_info->number)
+    return MySQLSetCursorName(hstmt, name, name_len);
+
+  name= sqlchar_as_sqlchar(stmt->dbc->ansi_charset_info,
+                           stmt->dbc->cxn_charset_info,
+                           name, &len, &errors);
+
+  if (!name && len == -1)
+  {
+    set_mem_error(&stmt->dbc->mysql);
+    return handle_connection_error(stmt);
+  }
+
+  /* Character conversion problems are not tolerated. */
+  if (errors)
+  {
+    x_free(name);
+    return set_stmt_error(stmt, "HY000",
+                          "Cursor name included characters that could not "
+                          "be converted to connection character set", 0);
+  }
+
+  return MySQLSetCursorName(hstmt, name, (SQLSMALLINT)len);
+}
+
+
+SQLRETURN SQL_API
 SQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd, SQLCHAR *in, SQLSMALLINT in_len,
                  SQLCHAR *out, SQLSMALLINT out_max, SQLSMALLINT *out_len,
                  SQLUSMALLINT completion)
@@ -226,7 +260,7 @@ SQLSetConnectAttrImpl(SQLHDBC hdbc, SQLINTEGER attribute,
   rc= MySQLSetConnectAttr(hdbc, attribute, value, value_len);
 
   if (free_value)
-    x_free(value_len);
+    x_free(value);
 
   return rc;
 }
@@ -244,6 +278,15 @@ SQLSetConnectOption(SQLHDBC hdbc, SQLUSMALLINT option, SQLULEN param)
   }
 
   return SQLSetConnectAttrImpl(hdbc, option, (SQLPOINTER)param, value_len);
+}
+
+
+SQLRETURN SQL_API
+SQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER attribute,
+               SQLPOINTER value, SQLINTEGER value_len)
+{
+  /* Nothing special to do, since we don't have any string stmt attribs */
+  return MySQLSetStmtAttr(hstmt, attribute, value, value_len);
 }
 
 
@@ -429,23 +472,8 @@ SQLProcedures(SQLHSTMT hstmt,
 
 
 SQLRETURN SQL_API
-SQLSetCursorName(SQLHSTMT hstmt, SQLCHAR *name, SQLSMALLINT name_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
 SQLSetDescField(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT field,
                 SQLPOINTER value, SQLINTEGER value_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER attribute,
-               SQLPOINTER value, SQLINTEGER value_len)
 {
   NOT_IMPLEMENTED;
 }

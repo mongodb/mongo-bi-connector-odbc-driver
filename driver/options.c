@@ -575,11 +575,9 @@ static SQLRETURN get_con_attr(SQLHDBC    hdbc,
   @purpose : sets the statement attributes
 */
 
-static SQLRETURN
-set_stmt_attr(SQLHSTMT   hstmt,
-              SQLINTEGER Attribute,
-              SQLPOINTER ValuePtr,
-              SQLINTEGER StringLengthPtr __attribute__((unused)))
+SQLRETURN SQL_API
+MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
+                 SQLINTEGER StringLengthPtr __attribute__((unused)))
 {
     STMT FAR *stmt= (STMT FAR*) hstmt;
     SQLRETURN result= SQL_SUCCESS;
@@ -782,19 +780,6 @@ SQLRETURN SQL_API SQLGetConnectOption(SQLHDBC hdbc,SQLUSMALLINT fOption,
 
 
 /*
-  @type    : ODBC 1.0 API
-  @purpose : sets the statement options
-*/
-
-SQLRETURN SQL_API SQLSetStmtOption( SQLHSTMT        hstmt,
-                                    SQLUSMALLINT    fOption,
-                                    SQLULEN         vParam )
-{
-  return set_stmt_attr(hstmt,fOption,(SQLPOINTER)vParam,SQL_NTS);
-}
-
-
-/*
   @type    : ODBC 3.0 API
   @purpose : sets the environment attributes
 */
@@ -873,29 +858,16 @@ SQLRETURN SQL_API SQLGetConnectAttr(SQLHDBC hdbc,
   return get_con_attr(hdbc, Attribute, ValuePtr, BufferLength, StringLengthPtr);
 }
 
-/*
-  @type    : ODBC 3.0 API
-  @purpose : sets the statement attributes
-*/
 
-SQLRETURN SQL_API SQLSetStmtAttr(SQLHSTMT   hstmt,
-                                 SQLINTEGER Attribute,
-                                 SQLPOINTER ValuePtr,
-                                 SQLINTEGER StringLength)
+SQLRETURN SQL_API
+SQLGetStmtOption(SQLHSTMT hstmt,SQLUSMALLINT option, SQLPOINTER param)
 {
-  return set_stmt_attr(hstmt, Attribute, ValuePtr, StringLength );
+  return MySQLGetStmtAttr(hstmt, option, param, SQL_NTS, (SQLINTEGER *)NULL);
 }
 
 
-/*
-  @type    : ODBC 1.0 API
-  @purpose : returns the statement options
-*/
-
-SQLRETURN SQL_API SQLGetStmtOption(SQLHSTMT hstmt,SQLUSMALLINT fOption,
-                                   SQLPOINTER vParam)
+SQLRETURN SQL_API
+SQLSetStmtOption(SQLHSTMT hstmt, SQLUSMALLINT option, SQLULEN param)
 {
-  return MySQLGetStmtAttr(hstmt, fOption, vParam, SQL_NTS, (SQLINTEGER *)NULL);
+  return MySQLSetStmtAttr(hstmt, option, (SQLPOINTER)param, SQL_NTS);
 }
-
-

@@ -369,6 +369,32 @@ SQLSetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute,
 
 
 SQLRETURN SQL_API
+SQLSetCursorNameW(SQLHSTMT hstmt, SQLWCHAR *name, SQLSMALLINT name_len)
+{
+  SQLRETURN rc;
+  DBC *dbc= ((STMT *)hstmt)->dbc;
+  SQLINTEGER len= name_len;
+  uint errors= 0;
+  SQLCHAR *name_char= sqlwchar_as_sqlchar(dbc->cxn_charset_info,
+                                          name, &len, &errors);
+
+  rc= MySQLSetCursorName(hstmt, name_char, len);
+
+  x_free(name_char);
+
+  /* Character conversion problems are not tolerated. */
+  if (errors)
+  {
+    return set_stmt_error((STMT *)hstmt, "HY000",
+                          "Cursor name included characters that could not "
+                          "be converted to connection character set", 0);
+  }
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
 SQLSetConnectOptionW(SQLHDBC hdbc, SQLUSMALLINT option, SQLULEN param)
 {
   SQLINTEGER value_len= 0;
@@ -380,6 +406,15 @@ SQLSetConnectOptionW(SQLHDBC hdbc, SQLUSMALLINT option, SQLULEN param)
   }
 
   return SQLSetConnectAttrWImpl(hdbc, option, (SQLPOINTER)param, value_len);
+}
+
+
+SQLRETURN SQL_API
+SQLSetStmtAttrW(SQLHSTMT hstmt, SQLINTEGER attribute,
+                SQLPOINTER value, SQLINTEGER value_len)
+{
+  /* Nothing special to do, since we don't have any string stmt attribs */
+  return MySQLSetStmtAttr(hstmt, attribute, value, value_len);
 }
 
 
@@ -580,23 +615,8 @@ SQLProceduresW(SQLHSTMT hstmt,
 
 
 SQLRETURN SQL_API
-SQLSetCursorNameW(SQLHSTMT hstmt, SQLWCHAR *name, SQLSMALLINT name_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
 SQLSetDescFieldW(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT field,
                  SQLPOINTER value, SQLINTEGER value_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLSetStmtAttrW(SQLHSTMT hstmt, SQLINTEGER attribute,
-                SQLPOINTER value, SQLINTEGER value_len)
 {
   NOT_IMPLEMENTED;
 }
