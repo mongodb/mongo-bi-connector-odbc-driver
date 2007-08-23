@@ -451,14 +451,16 @@ DECLARE_TEST(sqlcolattribute)
   SQLWCHAR wbuff[40];
   SQLSMALLINT len;
 
-  ok_sql(hstmt, "DROP TABLE IF EXISTS t_colattrib");
-  ok_sql(hstmt, "CREATE TABLE t_colattrib (a\xe3g INT)");
-
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
   ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
                             W(L""), SQL_NTS));
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_colattrib");
+  ok_stmt(hstmt1, SQLExecDirectW(hstmt1,
+                                 W(L"CREATE TABLE t_colattrib (a\u00e3g INT)"),
+                                 SQL_NTS));
 
   ok_sql(hstmt1, "SELECT * FROM t_colattrib AS b");
 
@@ -479,11 +481,12 @@ DECLARE_TEST(sqlcolattribute)
   is_num(len, 7);
   is_wstr(sqlwchar_to_wchar_t(wbuff), L"integer", 8);
 
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_colattrib");
+
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
   ok_con(hdbc1, SQLDisconnect(hdbc1));
   ok_con(hdbc1, SQLFreeConnect(hdbc1));
 
-  ok_sql(hstmt, "DROP TABLE IF EXISTS t_colattrib");
   return OK;
 }
 
