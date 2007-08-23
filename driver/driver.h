@@ -402,6 +402,9 @@ extern pthread_mutex_t myodbc_lock;
 
 #include "myutil.h"
 
+SQLRETURN SQL_API MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
+                                    SQLUSMALLINT attrib, SQLCHAR **char_attr,
+                                    SQLLEN *num_attr);
 SQLRETURN SQL_API MySQLConnect(SQLHDBC hdbc, SQLCHAR *szDSN, SQLSMALLINT cbDSN,
                                SQLCHAR *szUID, SQLSMALLINT cbUID,
                                SQLCHAR *szAuth, SQLSMALLINT cbAuth);

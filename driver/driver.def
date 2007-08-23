@@ -106,6 +106,8 @@ SQLBulkOperations
 ;SQLSetDescRec
 ;SQLGetDescField
 ;SQLGetDescRec
+SQLColAttributeW
+SQLColAttributesW
 SQLCloseCursor
 SQLConnectW
 SQLDriverConnectW

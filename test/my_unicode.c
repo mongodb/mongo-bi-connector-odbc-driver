@@ -444,6 +444,50 @@ DECLARE_TEST(sqlgetcursorname)
 }
 
 
+DECLARE_TEST(sqlcolattribute)
+{
+  HDBC hdbc1;
+  HSTMT hstmt1;
+  SQLWCHAR wbuff[40];
+  SQLSMALLINT len;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_colattrib");
+  ok_sql(hstmt, "CREATE TABLE t_colattrib (a\xe3g INT)");
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
+                            W(L""), SQL_NTS));
+
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_sql(hstmt1, "SELECT * FROM t_colattrib AS b");
+
+  ok_stmt(hstmt1, SQLColAttributeW(hstmt1, 1, SQL_DESC_NAME,
+                                   wbuff, sizeof(wbuff) / sizeof(wbuff[0]),
+                                   &len, NULL));
+  is_num(len, 3);
+  is_wstr(sqlwchar_to_wchar_t(wbuff), L"a\u00e3g", 4);
+
+  ok_stmt(hstmt1, SQLColAttributeW(hstmt1, 1, SQL_DESC_BASE_TABLE_NAME,
+                                   wbuff, 5, &len, NULL));
+  is_num(len, 11);
+  is_wstr(sqlwchar_to_wchar_t(wbuff), L"t_co", 5);
+
+  ok_stmt(hstmt1, SQLColAttributeW(hstmt1, 1, SQL_DESC_TYPE_NAME,
+                                   wbuff, sizeof(wbuff) / sizeof(wbuff[0]),
+                                   &len, NULL));
+  is_num(len, 7);
+  is_wstr(sqlwchar_to_wchar_t(wbuff), L"integer", 8);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_colattrib");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlconnect)
   ADD_TEST(sqlprepare)
@@ -453,6 +497,7 @@ BEGIN_TESTS
   ADD_TEST(sqlnativesql)
   ADD_TEST(sqlsetcursorname)
   ADD_TEST(sqlgetcursorname)
+  ADD_TEST(sqlcolattribute)
 END_TESTS
 
 

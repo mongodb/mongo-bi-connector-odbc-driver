@@ -40,6 +40,11 @@ SQLINTEGER utf8_as_sqlwchar(SQLWCHAR *out, SQLINTEGER out_max, SQLCHAR *in,
                             SQLINTEGER in_len);
 
 SQLRETURN SQL_API
+SQLColAttributeWImpl(SQLHSTMT hstmt, SQLUSMALLINT column,
+                     SQLUSMALLINT field, SQLPOINTER char_attr,
+                     SQLSMALLINT char_attr_max, SQLSMALLINT *char_attr_len,
+                     SQLLEN *num_attr);
+SQLRETURN SQL_API
 SQLPrepareWImpl(SQLHSTMT hstmt, SQLWCHAR *str, SQLINTEGER str_len);
 
 SQLRETURN SQL_API
@@ -52,8 +57,8 @@ SQLSetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute,
 
   @param[in]      charset_info  Character set to convert into
   @param[in]      str           String to convert
-  @param[in,out]  len           Pointer to length of source (in chars) or
-                                destination string (in bytes)
+  @param[in,out]  len           Pointer to length of source (in bytes) or
+                                destination string (in chars)
   @param[out]     errors        Pointer to count of errors in conversion
 
   @return  Pointer to a newly allocated SQLWCHAR, or @c NULL
@@ -280,6 +285,75 @@ SQLINTEGER utf8_as_sqlwchar(SQLWCHAR *out, SQLINTEGER out_max, SQLCHAR *in,
 
   *out= 0;
   return pos - out;
+}
+
+
+SQLRETURN SQL_API
+SQLColAttributeW(SQLHSTMT hstmt, SQLUSMALLINT column,
+                 SQLUSMALLINT field, SQLPOINTER char_attr,
+                 SQLSMALLINT char_attr_max, SQLSMALLINT *char_attr_len,
+#ifdef USE_SQLCOLATTRIBUTE_SQLLEN_PTR
+                 SQLLEN *num_attr
+#else
+                 SQLPOINTER num_attr
+#endif
+               )
+{
+  return SQLColAttributeWImpl(hstmt, column, field, char_attr, char_attr_max,
+                              char_attr_len, num_attr);
+}
+
+
+SQLRETURN SQL_API
+SQLColAttributeWImpl(SQLHSTMT hstmt, SQLUSMALLINT column,
+                     SQLUSMALLINT field, SQLPOINTER char_attr,
+                     SQLSMALLINT char_attr_max, SQLSMALLINT *char_attr_len,
+                     SQLLEN *num_attr)
+{
+  STMT *stmt= (STMT *)hstmt;
+  SQLCHAR *value= NULL;
+  SQLWCHAR *wvalue;
+  SQLINTEGER len= SQL_NTS;
+  uint errors;
+  SQLRETURN rc= MySQLColAttribute(hstmt, column, field, &value, num_attr);
+
+  if (value)
+  {
+    /* SQL_DESC_TYPE_NAME is the only one we need to clean up for now. */
+    my_bool free_value= (field == SQL_DESC_TYPE_NAME);
+    wvalue= sqlchar_as_sqlwchar(stmt->dbc->cxn_charset_info, value,
+                                &len, &errors);
+
+    if (len > char_attr_max - 1)
+      rc= set_error(stmt, MYERR_01004, NULL, 0);
+
+    if (char_attr_len)
+      *char_attr_len= len;
+
+    if (char_attr_max > 0)
+    {
+      len= min(len, char_attr_max - 1);
+      (void)memcpy((char *)char_attr, (const char *)wvalue,
+                   len * sizeof(SQLWCHAR));
+      ((SQLWCHAR *)char_attr)[len]= 0;
+    }
+
+    if (free_value)
+      x_free(value);
+    x_free(wvalue);
+  }
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
+SQLColAttributesW(SQLHSTMT hstmt, SQLUSMALLINT column, SQLUSMALLINT field,
+                  SQLPOINTER char_attr, SQLSMALLINT char_attr_max,
+                  SQLSMALLINT *char_attr_len, SQLLEN *num_attr)
+{
+  return SQLColAttributeWImpl(hstmt, column, field, char_attr, char_attr_max,
+                              char_attr_len, num_attr);
 }
 
 

@@ -33,6 +33,11 @@
 
 
 SQLRETURN SQL_API
+SQLColAttributeImpl(SQLHSTMT hstmt, SQLUSMALLINT column,
+                    SQLUSMALLINT field, SQLPOINTER char_attr,
+                    SQLSMALLINT char_attr_max, SQLSMALLINT *char_attr_len,
+                    SQLLEN *num_attr);
+SQLRETURN SQL_API
 SQLPrepareImpl(SQLHSTMT hstmt, SQLCHAR *str, SQLINTEGER str_len);
 
 SQLRETURN SQL_API
@@ -82,45 +87,85 @@ SQLCHAR *sqlchar_as_sqlchar(CHARSET_INFO *from_charset,
 
 
 SQLRETURN SQL_API
+SQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
+                SQLUSMALLINT field, SQLPOINTER char_attr,
+                SQLSMALLINT char_attr_max, SQLSMALLINT *char_attr_len,
+#ifdef USE_SQLCOLATTRIBUTE_SQLLEN_PTR
+                SQLLEN *num_attr
+#else
+                SQLPOINTER num_attr
+#endif
+               )
+{
+  return SQLColAttributeImpl(hstmt, column, field, char_attr, char_attr_max,
+                             char_attr_len, num_attr);
+}
+
+
+SQLRETURN SQL_API
+SQLColAttributeImpl(SQLHSTMT hstmt, SQLUSMALLINT column,
+                    SQLUSMALLINT field, SQLPOINTER char_attr,
+                    SQLSMALLINT char_attr_max, SQLSMALLINT *char_attr_len,
+                    SQLLEN *num_attr)
+{
+  STMT *stmt= (STMT *)hstmt;
+  SQLCHAR *value= NULL;
+  SQLINTEGER len= SQL_NTS;
+  uint errors;
+  SQLRETURN rc= MySQLColAttribute(hstmt, column, field, &value, num_attr);
+
+  if (value)
+  {
+    /* SQL_DESC_TYPE_NAME is the only one we need to clean up for now. */
+    my_bool free_value= (field == SQL_DESC_TYPE_NAME);
+    SQLCHAR *old_value= value;
+    if (stmt->dbc->ansi_charset_info->number !=
+        stmt->dbc->cxn_charset_info->number)
+    {
+      value= sqlchar_as_sqlchar(stmt->dbc->ansi_charset_info,
+                                stmt->dbc->cxn_charset_info,
+                                value, &len, &errors);
+      if (free_value)
+        x_free(old_value);
+      free_value= TRUE;
+    }
+    else
+      len= strlen((char *)value);
+
+    if (len > char_attr_max - 1)
+      rc= set_error(stmt, MYERR_01004, NULL, 0);
+
+    if (char_attr && char_attr_max > 1)
+      strmake((char *)char_attr, (char *)value, char_attr_max - 1);
+    ((char *)char_attr)[char_attr_max]= '\0';
+
+    if (char_attr_len)
+      *char_attr_len= len;
+
+    if (free_value)
+      x_free(value);
+  }
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
+SQLColAttributes(SQLHSTMT hstmt, SQLUSMALLINT column, SQLUSMALLINT field,
+                 SQLPOINTER char_attr, SQLSMALLINT char_attr_max,
+                 SQLSMALLINT *char_attr_len, SQLLEN *num_attr)
+{
+  return SQLColAttributeImpl(hstmt, column, field, char_attr, char_attr_max,
+                             char_attr_len, num_attr);
+}
+
+
+SQLRETURN SQL_API
 SQLConnect(SQLHDBC hdbc, SQLCHAR *dsn, SQLSMALLINT dsn_len,
            SQLCHAR *user, SQLSMALLINT user_len,
            SQLCHAR *auth, SQLSMALLINT auth_len)
 {
   return MySQLConnect(hdbc, dsn, dsn_len, user, user_len, auth, auth_len);
-}
-
-
-SQLRETURN SQL_API
-SQLSetCursorName(SQLHSTMT hstmt, SQLCHAR *name, SQLSMALLINT name_len)
-{
-  STMT *stmt= (STMT *)hstmt;
-  SQLINTEGER len= name_len;
-  uint errors= 0;
-
-  if (stmt->dbc->ansi_charset_info->number ==
-      stmt->dbc->cxn_charset_info->number)
-    return MySQLSetCursorName(hstmt, name, name_len);
-
-  name= sqlchar_as_sqlchar(stmt->dbc->ansi_charset_info,
-                           stmt->dbc->cxn_charset_info,
-                           name, &len, &errors);
-
-  if (!name && len == -1)
-  {
-    set_mem_error(&stmt->dbc->mysql);
-    return handle_connection_error(stmt);
-  }
-
-  /* Character conversion problems are not tolerated. */
-  if (errors)
-  {
-    x_free(name);
-    return set_stmt_error(stmt, "HY000",
-                          "Cursor name included characters that could not "
-                          "be converted to connection character set", 0);
-  }
-
-  return MySQLSetCursorName(hstmt, name, (SQLSMALLINT)len);
 }
 
 
@@ -331,6 +376,40 @@ SQLSetConnectOption(SQLHDBC hdbc, SQLUSMALLINT option, SQLULEN param)
 
 
 SQLRETURN SQL_API
+SQLSetCursorName(SQLHSTMT hstmt, SQLCHAR *name, SQLSMALLINT name_len)
+{
+  STMT *stmt= (STMT *)hstmt;
+  SQLINTEGER len= name_len;
+  uint errors= 0;
+
+  if (stmt->dbc->ansi_charset_info->number ==
+      stmt->dbc->cxn_charset_info->number)
+    return MySQLSetCursorName(hstmt, name, name_len);
+
+  name= sqlchar_as_sqlchar(stmt->dbc->ansi_charset_info,
+                           stmt->dbc->cxn_charset_info,
+                           name, &len, &errors);
+
+  if (!name && len == -1)
+  {
+    set_mem_error(&stmt->dbc->mysql);
+    return handle_connection_error(stmt);
+  }
+
+  /* Character conversion problems are not tolerated. */
+  if (errors)
+  {
+    x_free(name);
+    return set_stmt_error(stmt, "HY000",
+                          "Cursor name included characters that could not "
+                          "be converted to connection character set", 0);
+  }
+
+  return MySQLSetCursorName(hstmt, name, (SQLSMALLINT)len);
+}
+
+
+SQLRETURN SQL_API
 SQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER attribute,
                SQLPOINTER value, SQLINTEGER value_len)
 {
@@ -343,25 +422,6 @@ SQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER attribute,
 SQLRETURN SQL_API
 SQLBrowseConnect(SQLHDBC hdbc, SQLCHAR *in, SQLSMALLINT in_len,
                  SQLCHAR *out, SQLSMALLINT out_max, SQLSMALLINT *out_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
-                SQLUSMALLINT field, SQLPOINTER char_attr,
-                SQLSMALLINT char_attr_max, SQLSMALLINT *char_attr_len,
-                SQLPOINTER num_attr) /* SHould be SQLLEN * */
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLColAttributes(SQLHSTMT hstmt, SQLUSMALLINT column, SQLUSMALLINT type,
-                 SQLPOINTER char_attr, SQLSMALLINT char_attr_max,
-                 SQLSMALLINT *char_attr_len, SQLLEN *num_attr)
 {
   NOT_IMPLEMENTED;
 }

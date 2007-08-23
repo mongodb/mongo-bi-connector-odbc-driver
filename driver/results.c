@@ -25,23 +25,6 @@
   @brief Result set and related information functions.
 */
 
-/***************************************************************************
- * The following ODBC APIs are implemented in this file:		   *
- *									   *
- *   SQLRowCount	  (ISO 92)					   *
- *   SQLNumResultCols	  (ISO 92)					   *
- *   SQLDescribeCol	  (ISO 92)					   *
- *   SQLColAttribute	  (ISO 92)					   *
- *   SQLColAttributes	  (ODBC, Deprecated)				   *
- *   SQLBindCol		  (ISO 92)					   *
- *   SQLFetch		  (ISO 92)					   *
- *   SQLFetchScroll	  (ISO 92)					   *
- *   SQLGetData		  (ISO 92)					   *
- *   SQLExtendedFetch	  (ODBC, Deprecated)				   *
- *   SQLMoreResults	  (ODBC)					   *
- *									   *
- ****************************************************************************/
-
 #include "driver.h"
 #include <errmsg.h>
 #include <ctype.h>
@@ -52,7 +35,7 @@
 
 void reset_getdata_position(STMT *stmt)
 {
-  stmt->getdata.column= (ulong) ~0L;
+  stmt->getdata.column= (uint) ~0L;
   stmt->getdata.source= NULL;
   stmt->getdata.dst_bytes= (ulong) ~0L;
   stmt->getdata.dst_offset= (ulong) ~0L;
@@ -571,347 +554,250 @@ SQLRETURN SQL_API SQLDescribeCol( SQLHSTMT          hstmt,
                          pcbColName, field->name);
 }
 
-/*
-  @type    : myodbc3 internal
-  @purpose : rerunrs column atribute values
-*/
 
+/*
+  Retrieve an attribute of a column in a result set.
+
+  @param[in]  hstmt          Handle to statement
+  @param[in]  column         The column to retrieve data for, indexed from 1
+  @param[in]  attrib         The attribute to be retrieved
+  @param[out] char_attr      Pointer to a string pointer for returning strings
+                             (caller must make their own copy)
+  @param[out] num_attr       Pointer to an integer to return the value if the
+                             @a attrib corresponds to a numeric type
+
+  @since ODBC 1.0
+*/
 SQLRETURN SQL_API
-get_col_attr(SQLHSTMT     StatementHandle,
-             SQLUSMALLINT ColumnNumber,
-             SQLUSMALLINT FieldIdentifier,
-             SQLPOINTER   CharacterAttributePtr,
-             SQLSMALLINT  BufferLength,
-             SQLSMALLINT  *StringLengthPtr,
-             SQLLEN       *NumericAttributePtr)
+MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
+                  SQLUSMALLINT attrib, SQLCHAR **char_attr, SQLLEN *num_attr)
 {
-    MYSQL_FIELD *field;
-    STMT FAR *stmt= (STMT FAR*) StatementHandle;
-    SQLSMALLINT str_length;
-    SQLLEN strparam= 0;
-    SQLPOINTER nparam= 0;
-    SQLRETURN error;
+  MYSQL_FIELD *field;
+  STMT *stmt= (STMT *)hstmt;
+  SQLLEN nparam= 0;
+  SQLRETURN error;
 
-    if ( check_result(stmt) != SQL_SUCCESS )
-        return SQL_ERROR;
+  if (check_result(stmt) != SQL_SUCCESS)
+    return SQL_ERROR;
 
-    if ( !stmt->result )
-        return set_stmt_error(stmt,"07005","No result set",0);
+  if (!stmt->result)
+    return set_stmt_error(stmt, "07005", "No result set", 0);
+
 #ifdef CHECK_EXTRA_ARGUMENTS
-    if ( ColumnNumber > stmt->result->field_count )
-        return set_error(StatementHandle, MYERR_07009,NULL,0);
+  if (column > stmt->result->field_count)
+    return set_error(hstmt,  MYERR_07009, NULL, 0);
 #endif
-    if ( !StringLengthPtr )
-        StringLengthPtr= &str_length;
 
-    if ( !CharacterAttributePtr )
-        CharacterAttributePtr= nparam;
+  if (!num_attr)
+    num_attr= &nparam;
 
-    if ( !NumericAttributePtr )
-        NumericAttributePtr= &strparam;
+  if ((error= check_result(stmt)) != SQL_SUCCESS)
+    return error;
 
-    if ( (error= check_result(stmt)) != SQL_SUCCESS )
-        return error;
-
-    if ( FieldIdentifier == SQL_DESC_COUNT ||
-         FieldIdentifier == SQL_COLUMN_COUNT )
-    {
-        *NumericAttributePtr= (SQLLEN)stmt->result->field_count;
-        return SQL_SUCCESS;
-    }
-    if ( FieldIdentifier == SQL_DESC_TYPE && ColumnNumber == 0 )
-    {
-        *(SQLINTEGER *) NumericAttributePtr= SQL_INTEGER;
-        return SQL_SUCCESS;
-    }
-    mysql_field_seek(stmt->result,ColumnNumber-1);
-    if ( !(field= mysql_fetch_field(stmt->result)) )
-        return set_error(stmt,MYERR_S1002,"Invalid column number",0);
-
-    switch ( FieldIdentifier )
-    {
-        
-        case SQL_DESC_AUTO_UNIQUE_VALUE:
-            *(SQLINTEGER *)NumericAttributePtr= (field->flags & AUTO_INCREMENT_FLAG ?
-                                                 SQL_TRUE : SQL_FALSE);
-            break;
-
-            /* We need support from server, when aliasing is there */
-        case SQL_DESC_BASE_COLUMN_NAME:
-#if MYSQL_VERSION_ID >= 40100
-            return copy_str_data(SQL_HANDLE_STMT, stmt, CharacterAttributePtr,
-                                 BufferLength, StringLengthPtr,
-                                 (field->org_name ?  field->org_name : ""));
-#endif
-        case SQL_DESC_LABEL:
-        case SQL_DESC_NAME:
-        case SQL_COLUMN_NAME:
-            return copy_str_data(SQL_HANDLE_STMT, stmt, CharacterAttributePtr,
-                                 BufferLength, StringLengthPtr, field->name);
-
-        case SQL_DESC_BASE_TABLE_NAME:
-#if MYSQL_VERSION_ID >= 40100
-            return copy_str_data(SQL_HANDLE_STMT, stmt, CharacterAttributePtr,
-                                 BufferLength, StringLengthPtr,
-                                 (field->org_table ?  field->org_table : ""));
-#endif
-        case SQL_DESC_TABLE_NAME:
-            return copy_str_data(SQL_HANDLE_STMT, stmt, CharacterAttributePtr,
-                                 BufferLength, StringLengthPtr,
-                                 field->table ? field->table : "");
-
-        case SQL_DESC_CASE_SENSITIVE:
-            *(SQLINTEGER *)NumericAttributePtr= (field->flags & BINARY_FLAG ?
-                                                 SQL_FALSE : SQL_TRUE);
-            break;
-
-        case SQL_DESC_CATALOG_NAME:
-#if MYSQL_VERSION_ID < 40100
-            return copy_str_data(SQL_HANDLE_STMT, stmt, CharacterAttributePtr,
-                                 BufferLength, StringLengthPtr,
-                                 stmt->dbc->database);
-#else
-            {
-                char *ldb=  (field->db && field->db[0] != '\0') ? field->db : stmt->dbc->database;
-                return copy_str_data(SQL_HANDLE_STMT, stmt,
-                                     CharacterAttributePtr, BufferLength,
-                                     StringLengthPtr, ldb);
-            }
-#endif
-            break;
-
-        case SQL_DESC_DISPLAY_SIZE:
-            *NumericAttributePtr= get_display_size(stmt, field);
-            break;
-
-        case SQL_DESC_FIXED_PREC_SCALE:
-            if (field->type == MYSQL_TYPE_DECIMAL ||
-                field->type == MYSQL_TYPE_NEWDECIMAL)
-              *(SQLINTEGER *)NumericAttributePtr= SQL_TRUE;
-            else
-              *(SQLINTEGER *)NumericAttributePtr= SQL_FALSE;
-            break;
-
-        case SQL_DESC_LENGTH:
-          *NumericAttributePtr= get_column_size(stmt, field, TRUE);
-          break;
-
-        case SQL_COLUMN_LENGTH:
-        case SQL_DESC_OCTET_LENGTH:
-          /* Need to add 1 for \0 on character fields. */
-          *NumericAttributePtr= get_transfer_octet_length(stmt, field) +
-            test(field->charsetnr != 63);
-          break;
-
-        case SQL_DESC_LITERAL_SUFFIX:
-        case SQL_DESC_LITERAL_PREFIX:
-            switch (field->type) {
-            case MYSQL_TYPE_LONG_BLOB:
-            case MYSQL_TYPE_TINY_BLOB:
-            case MYSQL_TYPE_MEDIUM_BLOB:
-            case MYSQL_TYPE_BLOB:
-            case MYSQL_TYPE_DATE:
-            case MYSQL_TYPE_DATETIME:
-            case MYSQL_TYPE_NEWDATE:
-            case MYSQL_TYPE_VAR_STRING:
-            case MYSQL_TYPE_STRING:
-            case MYSQL_TYPE_TIMESTAMP:
-            case MYSQL_TYPE_TIME:
-            case MYSQL_TYPE_YEAR:
-              if (field->charsetnr == 63)
-              {
-                if (FieldIdentifier == SQL_DESC_LITERAL_PREFIX)
-                  return copy_str_data(SQL_HANDLE_STMT, stmt,
-                                       CharacterAttributePtr,
-                                       BufferLength, StringLengthPtr, "0x");
-                else
-                  return copy_str_data(SQL_HANDLE_STMT, stmt,
-                                       CharacterAttributePtr,
-                                       BufferLength, StringLengthPtr, "");
-              }
-              else
-                return copy_str_data(SQL_HANDLE_STMT, stmt,
-                                     CharacterAttributePtr,
-                                     BufferLength, StringLengthPtr, "'");
-
-            default:
-                return copy_str_data(SQL_HANDLE_STMT, stmt,
-                                     CharacterAttributePtr,
-                                     BufferLength, StringLengthPtr,"");
-            }
-            break;
-
-        case SQL_DESC_NULLABLE:
-        case SQL_COLUMN_NULLABLE:
-            *(SQLINTEGER *)NumericAttributePtr= (((field->flags &
-                                                   (NOT_NULL_FLAG)) ==
-                                                  NOT_NULL_FLAG) ?
-                                                 SQL_NO_NULLS :
-                                                 SQL_NULLABLE);
-            break;
-
-        case SQL_DESC_NUM_PREC_RADIX:
-            switch ( field->type )
-            {
-                case MYSQL_TYPE_SHORT:
-                case MYSQL_TYPE_LONG:
-                case MYSQL_TYPE_LONGLONG:
-                case MYSQL_TYPE_INT24:
-                case MYSQL_TYPE_TINY:
-                case MYSQL_TYPE_DECIMAL:
-                    *(SQLINTEGER *)NumericAttributePtr= 10;
-                    break;
-
-                case MYSQL_TYPE_FLOAT:
-                case MYSQL_TYPE_DOUBLE:
-                    *(SQLINTEGER *) NumericAttributePtr= 2;
-                    break;
-
-                default:
-                    *(SQLINTEGER *)NumericAttributePtr= 0;
-                    break;
-            }
-            break;
-
-        case SQL_COLUMN_PRECISION:
-        case SQL_DESC_PRECISION:
-          *(SQLINTEGER *)NumericAttributePtr= get_column_size(stmt, field,
-                                                              FALSE);
-          break;
-
-        case SQL_COLUMN_SCALE:
-        case SQL_DESC_SCALE:
-          *(SQLINTEGER *)NumericAttributePtr= max(0, get_decimal_digits(stmt,
-                                                                        field));
-          break;
-
-        case SQL_DESC_SCHEMA_NAME:
-            return copy_str_data(SQL_HANDLE_STMT, stmt, CharacterAttributePtr,
-                                 BufferLength,StringLengthPtr, "");
-
-        case SQL_DESC_SEARCHABLE:
-            *(SQLINTEGER *)NumericAttributePtr= SQL_SEARCHABLE;
-            break;
-
-        case SQL_DESC_TYPE:
-          {
-            SQLSMALLINT type= get_sql_data_type(stmt, field, NULL);
-            if (type == SQL_DATE || type == SQL_TYPE_DATE || type == SQL_TIME ||
-                type == SQL_TYPE_TIME || type == SQL_TIMESTAMP ||
-                type == SQL_TYPE_TIMESTAMP)
-              type= SQL_DATETIME;
-            *(SQLINTEGER *)NumericAttributePtr= type;
-            break;
-          }
-
-        case SQL_DESC_CONCISE_TYPE:
-          *(SQLINTEGER *)NumericAttributePtr=
-            get_sql_data_type(stmt, field, NULL);
-          break;
-
-        case SQL_DESC_TYPE_NAME:
-            {
-                char buff[40];
-                (void)get_sql_data_type(stmt, field, buff);
-                return copy_str_data(SQL_HANDLE_STMT, stmt,
-                                     CharacterAttributePtr, BufferLength,
-                                     StringLengthPtr, buff);
-            }
-
-        case SQL_DESC_UNNAMED:
-            *(SQLINTEGER *)NumericAttributePtr= SQL_NAMED;
-            break;
-
-        case SQL_DESC_UNSIGNED:
-            *(SQLINTEGER *) NumericAttributePtr= (field->flags & UNSIGNED_FLAG ?
-                                                  SQL_TRUE : SQL_FALSE);
-            break;
-
-        case SQL_DESC_UPDATABLE:
-            *(SQLINTEGER *)NumericAttributePtr= (field->table && field->table[0] ?
-                                                 SQL_ATTR_READWRITE_UNKNOWN :
-                                                 SQL_ATTR_READONLY);
-            break;
-
-            /*
-              Hack : Fix for the error from ADO 'rs.resync' "Key value for this
-              row was changed or deleted at the data store.  The local
-              row is now deleted. This should also fix some Multi-step
-              generated error cases from ADO
-            */
-        case SQL_MY_PRIMARY_KEY: /* MSSQL extension !! */
-            *(SQLINTEGER *)NumericAttributePtr= (field->flags & PRI_KEY_FLAG ?
-                                                 SQL_TRUE : SQL_FALSE);
-            break;
-
-        default:
-            break;
-    }
+  if (attrib == SQL_DESC_COUNT || attrib == SQL_COLUMN_COUNT)
+  {
+    *num_attr= (SQLLEN)stmt->result->field_count;
     return SQL_SUCCESS;
-}
+  }
 
+  if (attrib == SQL_DESC_TYPE && column == 0)
+  {
+    *(SQLINTEGER *)num_attr= SQL_INTEGER;
+    return SQL_SUCCESS;
+  }
 
-/*
-  Retrieve an attribute of a column in a result set.
+  mysql_field_seek(stmt->result, column - 1);
+  if (!(field= mysql_fetch_field(stmt->result)))
+    return set_error(stmt, MYERR_S1002, "Invalid column number", 0);
 
-  @param[in]  hstmt      Handle to statement
-  @param[in]  icol       The column to retrieve data for, indexed from 1
-  @param[in]  fDescType  The attribute to be retrieved
-  @param[out] rgbDesc    Pointer to buffer in which to return data
-  @param[in]  cbDescMax  Length of @a rgbDesc in bytes
-  @param[out] pcbDesc    Pointer to integer to return the total number of bytes
-                         available to be returned in @a rgbDesc
-  @param[out] pfDesc     Pointer to an integer to return the value if the
-                         @a fDescType corresponds to a numeric type
+  switch (attrib)
+  {
+  case SQL_DESC_AUTO_UNIQUE_VALUE:
+    *(SQLINTEGER *)num_attr= (field->flags & AUTO_INCREMENT_FLAG ?
+                              SQL_TRUE : SQL_FALSE);
+    break;
 
-  @since ODBC 1.0
-*/
-SQLRETURN SQL_API SQLColAttribute(SQLHSTMT     hstmt,
-                                  SQLUSMALLINT icol,
-                                  SQLUSMALLINT fDescType,
-                                  SQLPOINTER   rgbDesc,
-                                  SQLSMALLINT  cbDescMax,
-                                  SQLSMALLINT *pcbDesc,
-#ifdef USE_SQLCOLATTRIBUTE_SQLLEN_PTR
-                                  SQLLEN      *pfDesc
-#else
-                                  SQLPOINTER   pfDesc
-#endif
-                                 )
-{
-  return get_col_attr(hstmt, icol, fDescType, rgbDesc, cbDescMax, pcbDesc,
-                      pfDesc);
-}
+  /* We need support from server, when aliasing is there */
+  case SQL_DESC_BASE_COLUMN_NAME:
+    *char_attr= (SQLCHAR *)(field->org_name ? field->org_name : "");
+    break;
 
+  case SQL_DESC_LABEL:
+  case SQL_DESC_NAME:
+  case SQL_COLUMN_NAME:
+    *char_attr= (SQLCHAR *)field->name;
+    break;
 
-/*
-  Retrieve an attribute of a column in a result set.
+  case SQL_DESC_BASE_TABLE_NAME:
+    *char_attr= (SQLCHAR *)(field->org_table ? field->org_table : "");
+    break;
 
-  @deprecated This function is deprecated. SQLColAttribute() should be used
-  instead.
+  case SQL_DESC_TABLE_NAME:
+    *char_attr= (SQLCHAR *)(field->table ? field->table : "");
+    break;
 
-  @param[in]  hstmt      Handle to statement
-  @param[in]  icol       The column to retrieve data for, indexed from 1
-  @param[in]  fDescType  The attribute to be retrieved
-  @param[out] rgbDesc    Pointer to buffer in which to return data
-  @param[in]  cbDescMax  Length of @a rgbDesc in bytes
-  @param[out] pcbDesc    Pointer to integer to return the total number of bytes
-                         available to be returned in @a rgbDesc
-  @param[out] pfDesc     Pointer to an integer to return the value if the
-                         @a fDescType corresponds to a numeric type
+  case SQL_DESC_CASE_SENSITIVE:
+    *(SQLINTEGER *)num_attr= (field->flags & BINARY_FLAG ?
+                              SQL_FALSE : SQL_TRUE);
+    break;
 
-  @since ODBC 1.0
-*/
-SQLRETURN SQL_API SQLColAttributes(SQLHSTMT     hstmt,
-                                   SQLUSMALLINT icol,
-                                   SQLUSMALLINT fDescType,
-                                   SQLPOINTER   rgbDesc,
-                                   SQLSMALLINT  cbDescMax,
-                                   SQLSMALLINT *pcbDesc,
-                                   SQLLEN      *pfDesc)
-{
-  return get_col_attr(hstmt, icol, fDescType, rgbDesc, cbDescMax, pcbDesc,
-                      pfDesc);
+  case SQL_DESC_CATALOG_NAME:
+    *char_attr= (SQLCHAR *)((field->db && field->db[0]) ?
+                            field->db : stmt->dbc->database);
+    break;
+
+  case SQL_DESC_DISPLAY_SIZE:
+    *num_attr= get_display_size(stmt, field);
+    break;
+
+  case SQL_DESC_FIXED_PREC_SCALE:
+    if (field->type == MYSQL_TYPE_DECIMAL ||
+        field->type == MYSQL_TYPE_NEWDECIMAL)
+      *(SQLINTEGER *)num_attr= SQL_TRUE;
+    else
+      *(SQLINTEGER *)num_attr= SQL_FALSE;
+    break;
+
+  case SQL_DESC_LENGTH:
+    *num_attr= get_column_size(stmt, field, TRUE);
+    break;
+
+  case SQL_COLUMN_LENGTH:
+  case SQL_DESC_OCTET_LENGTH:
+    /* Need to add 1 for \0 on character fields. */
+    *num_attr= get_transfer_octet_length(stmt, field) +
+      test(field->charsetnr != 63);
+    break;
+
+  case SQL_DESC_LITERAL_SUFFIX:
+  case SQL_DESC_LITERAL_PREFIX:
+    switch (field->type) {
+    case MYSQL_TYPE_LONG_BLOB:
+    case MYSQL_TYPE_TINY_BLOB:
+    case MYSQL_TYPE_MEDIUM_BLOB:
+    case MYSQL_TYPE_BLOB:
+    case MYSQL_TYPE_DATE:
+    case MYSQL_TYPE_DATETIME:
+    case MYSQL_TYPE_NEWDATE:
+    case MYSQL_TYPE_VAR_STRING:
+    case MYSQL_TYPE_STRING:
+    case MYSQL_TYPE_TIMESTAMP:
+    case MYSQL_TYPE_TIME:
+    case MYSQL_TYPE_YEAR:
+      if (field->charsetnr == 63)
+      {
+        if (attrib == SQL_DESC_LITERAL_PREFIX)
+          *char_attr= (SQLCHAR *)"0x";
+        else
+          *char_attr= (SQLCHAR *)"";
+      }
+      else
+        *char_attr= (SQLCHAR *)"'";
+
+    default:
+      *char_attr= (SQLCHAR *)"";
+    }
+    break;
+
+  case SQL_DESC_NULLABLE:
+  case SQL_COLUMN_NULLABLE:
+    *(SQLINTEGER *)num_attr= ((field->flags & NOT_NULL_FLAG) ? SQL_NO_NULLS :
+                              SQL_NULLABLE);
+    break;
+
+  case SQL_DESC_NUM_PREC_RADIX:
+    switch (field->type) {
+    case MYSQL_TYPE_SHORT:
+    case MYSQL_TYPE_LONG:
+    case MYSQL_TYPE_LONGLONG:
+    case MYSQL_TYPE_INT24:
+    case MYSQL_TYPE_TINY:
+    case MYSQL_TYPE_DECIMAL:
+      *(SQLINTEGER *)num_attr= 10;
+      break;
+
+    case MYSQL_TYPE_FLOAT:
+    case MYSQL_TYPE_DOUBLE:
+      *(SQLINTEGER *) num_attr= 2;
+      break;
+
+    default:
+      *(SQLINTEGER *)num_attr= 0;
+      break;
+    }
+    break;
+
+  case SQL_COLUMN_PRECISION:
+  case SQL_DESC_PRECISION:
+    *(SQLINTEGER *)num_attr= get_column_size(stmt, field, FALSE);
+    break;
+
+  case SQL_COLUMN_SCALE:
+  case SQL_DESC_SCALE:
+    *(SQLINTEGER *)num_attr= max(0, get_decimal_digits(stmt, field));
+    break;
+
+  case SQL_DESC_SCHEMA_NAME:
+    *char_attr= (SQLCHAR *)"";
+    break;
+
+  case SQL_DESC_SEARCHABLE:
+    *(SQLINTEGER *)num_attr= SQL_SEARCHABLE;
+    break;
+
+  case SQL_DESC_TYPE:
+    {
+      SQLSMALLINT type= get_sql_data_type(stmt, field, NULL);
+      if (type == SQL_DATE || type == SQL_TYPE_DATE || type == SQL_TIME ||
+          type == SQL_TYPE_TIME || type == SQL_TIMESTAMP ||
+          type == SQL_TYPE_TIMESTAMP)
+        type= SQL_DATETIME;
+      *(SQLINTEGER *)num_attr= type;
+      break;
+    }
+
+  case SQL_DESC_CONCISE_TYPE:
+    *(SQLINTEGER *)num_attr= get_sql_data_type(stmt, field, NULL);
+    break;
+
+  case SQL_DESC_TYPE_NAME:
+    {
+      /* Sort of lame that we have to strdup this, but that's life. */
+      char buff[40];
+      (void)get_sql_data_type(stmt, field, buff);
+      *char_attr= (SQLCHAR *)my_strdup(buff, MYF(0));
+    }
+
+  case SQL_DESC_UNNAMED:
+    *(SQLINTEGER *)num_attr= SQL_NAMED;
+    break;
+
+  case SQL_DESC_UNSIGNED:
+    *(SQLINTEGER *) num_attr= ((field->flags & UNSIGNED_FLAG) ?  SQL_TRUE :
+                               SQL_FALSE);
+    break;
+
+  case SQL_DESC_UPDATABLE:
+    *(SQLINTEGER *)num_attr= (field->table && field->table[0] ?
+                              SQL_ATTR_READWRITE_UNKNOWN : SQL_ATTR_READONLY);
+    break;
+
+  /*
+    Hack : Fix for the error from ADO 'rs.resync' "Key value for this row
+    was changed or deleted at the data store.  The local row is now deleted.
+    This should also fix some Multi-step generated error cases from ADO
+  */
+  case SQL_MY_PRIMARY_KEY: /* MSSQL extension !! */
+    *(SQLINTEGER *)num_attr= ((field->flags & PRI_KEY_FLAG) ?
+                              SQL_TRUE : SQL_FALSE);
+    break;
+
+  default:
+    return set_stmt_error(stmt, "HY091",
+                          "Invalid descriptor field identifier",0);
+  }
+
+  return SQL_SUCCESS;
 }
 
 
