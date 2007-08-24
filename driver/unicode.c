@@ -419,6 +419,63 @@ error:
 
 
 SQLRETURN SQL_API
+SQLDescribeColW(SQLHSTMT hstmt, SQLUSMALLINT column,
+                SQLWCHAR *name, SQLSMALLINT name_max, SQLSMALLINT *name_len,
+                SQLSMALLINT *type, SQLULEN *size, SQLSMALLINT *scale,
+                SQLSMALLINT *nullable)
+{
+  STMT *stmt= (STMT *)hstmt;
+  SQLCHAR *value= NULL;
+  SQLWCHAR *wvalue= NULL;
+  SQLINTEGER len= SQL_NTS;
+  SQLSMALLINT free_value;
+  uint errors;
+
+  SQLRETURN rc= MySQLDescribeCol(hstmt, column, &value, &free_value, type,
+                                 size, scale, nullable);
+
+  if (free_value == -1)
+  {
+    set_mem_error(&stmt->dbc->mysql);
+    return handle_connection_error(stmt);
+  }
+
+  if (value)
+  {
+    wvalue= sqlchar_as_sqlwchar(stmt->dbc->cxn_charset_info, value, &len,
+                                &errors);
+    if (!wvalue)
+    {
+      if (free_value)
+        x_free(value);
+      set_mem_error(&stmt->dbc->mysql);
+      return handle_connection_error(stmt);
+    }
+
+    if (len > name_max - 1)
+      rc= set_error(stmt, MYERR_01004, NULL, 0);
+
+    if (name_len)
+      *name_len= len;
+
+    if (name_max > 0)
+    {
+      len= min(len, name_max - 1);
+      (void)memcpy((char *)name, (const char *)wvalue,
+                   len * sizeof(SQLWCHAR));
+      ((SQLWCHAR *)name)[len]= 0;
+    }
+
+    if (free_value)
+      x_free(value);
+    x_free(wvalue);
+  }
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
 SQLExecDirectW(SQLHSTMT hstmt, SQLWCHAR *str, SQLINTEGER str_len)
 {
   int error;
@@ -668,16 +725,6 @@ SQLColumnsW(SQLHSTMT hstmt,
 
 
 //SQLDataSourcesW
-
-
-SQLRETURN SQL_API
-SQLDescribeColW(SQLHSTMT hstmt, SQLUSMALLINT column,
-                SQLWCHAR *name, SQLSMALLINT name_max, SQLSMALLINT *name_len,
-                SQLSMALLINT *type, SQLULEN *def, SQLSMALLINT *scale,
-                SQLSMALLINT *nullable)
-{
-  NOT_IMPLEMENTED;
-}
 
 
 //SQLDriversW

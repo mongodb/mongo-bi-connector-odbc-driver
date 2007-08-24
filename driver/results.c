@@ -494,64 +494,68 @@ SQLRETURN SQL_API SQLNumResultCols(SQLHSTMT  hstmt, SQLSMALLINT FAR *pccol)
     return SQL_SUCCESS;
 }
 
-/*
-  @type    : ODBC 1.0 API
-  @purpose : returns the result column name, type, column size, decimal
-  digits, and nullabilityfor one column in the result set
+
+/**
+  Get some basic properties of a column.
+
+  @param[in]  hstmt      Statement handle
+  @param[in]  column     Column number (starting with 1)
+  @param[out] name       Pointer to column name
+  @param[out] need_free  Whether the column name needs to be freed.
+  @param[out] type       Column SQL type
+  @param[out] size       Column size
+  @param[out] scale      Scale
+  @param[out] nullable   Whether the column is nullable
 */
-
-SQLRETURN SQL_API SQLDescribeCol( SQLHSTMT          hstmt, 
-                                  SQLUSMALLINT      icol,
-                                  SQLCHAR FAR *     szColName,
-                                  SQLSMALLINT       cbColNameMax,
-                                  SQLSMALLINT FAR * pcbColName,
-                                  SQLSMALLINT FAR * pfSqlType,
-                                  SQLULEN *         pnColumnSize,
-                                  SQLSMALLINT FAR * pibScale,
-                                  SQLSMALLINT FAR * pfNullable )
+SQLRETURN SQL_API
+MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
+                 SQLCHAR **name, SQLSMALLINT *need_free, SQLSMALLINT *type,
+                 SQLULEN *size, SQLSMALLINT *scale, SQLSMALLINT *nullable)
 {
-    SQLRETURN error;
-    MYSQL_FIELD *field;
-    STMT FAR *stmt= (STMT FAR*) hstmt;
+  SQLRETURN error;
+  MYSQL_FIELD *field;
+  STMT *stmt= (STMT *)hstmt;
 
-    if ( (error= check_result(stmt)) != SQL_SUCCESS )
-        return error;
-    if ( ! stmt->result )
-        return set_stmt_error(stmt,"07005","No result set",0);
+  if ((error= check_result(stmt)) != SQL_SUCCESS)
+    return error;
+  if (!stmt->result)
+    return set_stmt_error(stmt, "07005", "No result set", 0);
 
-    mysql_field_seek(stmt->result,icol-1);
-    if ( !(field= mysql_fetch_field(stmt->result)) )
-        return set_error(stmt,MYERR_S1002,"Invalid column number",0);
+  mysql_field_seek(stmt->result, column - 1);
+  if (!(field= mysql_fetch_field(stmt->result)))
+    return set_error(stmt, MYERR_S1002, "Invalid column number", 0);
 
-    if (pfSqlType)
-      *pfSqlType= get_sql_data_type(stmt, field, NULL);
-    if (pnColumnSize)
-      *pnColumnSize= get_column_size(stmt, field, FALSE);
-    if (pibScale)
-      *pibScale= max(0, get_decimal_digits(stmt, field));
-    if ( pfNullable )
-        *pfNullable= (((field->flags & (NOT_NULL_FLAG)) ==
-                       NOT_NULL_FLAG) ?
-                      SQL_NO_NULLS :
-                      SQL_NULLABLE);
+  if (type)
+    *type= get_sql_data_type(stmt, field, NULL);
+  if (size)
+    *size= get_column_size(stmt, field, FALSE);
+  if (scale)
+    *scale= max(0, get_decimal_digits(stmt, field));
+  if (nullable)
+    *nullable= ((field->flags & NOT_NULL_FLAG) ? SQL_NO_NULLS : SQL_NULLABLE);
 
-    if ( stmt->dbc->flag & FLAG_FULL_COLUMN_NAMES && field->table )
+  *need_free= 0;
+
+  if (stmt->dbc->flag & FLAG_FULL_COLUMN_NAMES && field->table)
+  {
+    char *tmp= my_malloc(strlen(field->name) + strlen(field->table) + 2,
+                         MYF(0));
+    if (!tmp)
     {
-        char *tmp= my_malloc(strlen(field->name)+strlen(field->table)+2,
-                             MYF(MY_WME));
-        SQLRETURN error;
-        if ( !tmp )
-        {
-            return set_error(stmt,MYERR_S1001,NULL,4001);
-        }
-        strxmov(tmp,field->table,".",field->name,NullS);
-        error= copy_str_data(SQL_HANDLE_STMT, stmt, szColName,
-                             cbColNameMax, pcbColName, tmp);
-        my_free((gptr) tmp,MYF(0));
-        return error;
+      *need_free= -1;
+      *name= NULL;
     }
-    return copy_str_data(SQL_HANDLE_STMT, stmt, szColName, cbColNameMax,
-                         pcbColName, field->name);
+    else
+    {
+      strxmov(tmp, field->table, ".", field->name, NullS);
+      *name= tmp;
+      *need_free= 1;
+    }
+  }
+  else
+    *name= field->name;
+
+  return SQL_SUCCESS;
 }
 
 

@@ -170,6 +170,61 @@ SQLConnect(SQLHDBC hdbc, SQLCHAR *dsn, SQLSMALLINT dsn_len,
 
 
 SQLRETURN SQL_API
+SQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
+               SQLCHAR *name, SQLSMALLINT name_max, SQLSMALLINT *name_len,
+               SQLSMALLINT *type, SQLULEN *size, SQLSMALLINT *scale,
+               SQLSMALLINT *nullable)
+{
+  STMT *stmt= (STMT *)hstmt;
+  SQLCHAR *value= NULL;
+  SQLINTEGER len= SQL_NTS;
+  SQLSMALLINT free_value;
+  uint errors;
+
+  SQLRETURN rc= MySQLDescribeCol(hstmt, column, &value, &free_value, type,
+                                 size, scale, nullable);
+
+  if (free_value == -1)
+  {
+    set_mem_error(&stmt->dbc->mysql);
+    return handle_connection_error(stmt);
+  }
+
+  if (value)
+  {
+    SQLCHAR *old_value= value;
+    if (stmt->dbc->ansi_charset_info->number !=
+        stmt->dbc->cxn_charset_info->number)
+    {
+      value= sqlchar_as_sqlchar(stmt->dbc->cxn_charset_info,
+                                stmt->dbc->ansi_charset_info,
+                                value, &len, &errors);
+      if (free_value)
+        x_free(old_value);
+      free_value= TRUE;
+    }
+    else
+      len= strlen((char *)value);
+
+    if (len > name_max - 1)
+      rc= set_error(stmt, MYERR_01004, NULL, 0);
+
+    if (name && name_max > 1)
+      strmake((char *)name, (char *)value, name_max - 1);
+    ((char *)name)[name_max]= '\0';
+
+    if (name_len)
+      *name_len= len;
+
+    if (free_value)
+      x_free(value);
+  }
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
 SQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd, SQLCHAR *in, SQLSMALLINT in_len,
                  SQLCHAR *out, SQLSMALLINT out_max, SQLSMALLINT *out_len,
                  SQLUSMALLINT completion)
@@ -450,16 +505,6 @@ SQLColumns(SQLHSTMT hstmt,
 
 
 //SQLDataSources
-
-
-SQLRETURN SQL_API
-SQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
-               SQLCHAR *name, SQLSMALLINT name_max, SQLSMALLINT *name_len,
-               SQLSMALLINT *type, SQLULEN *def, SQLSMALLINT *scale,
-               SQLSMALLINT *nullable)
-{
-  NOT_IMPLEMENTED;
-}
 
 
 //SQLDrivers

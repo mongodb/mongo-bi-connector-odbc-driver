@@ -110,6 +110,7 @@ SQLColAttributeW
 SQLColAttributesW
 SQLCloseCursor
 SQLConnectW
+SQLDescribeColW
 SQLDriverConnectW
 SQLExecDirectW
 SQLGetStmtAttrW

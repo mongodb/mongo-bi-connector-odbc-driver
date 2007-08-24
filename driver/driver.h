@@ -408,6 +408,10 @@ SQLRETURN SQL_API MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
 SQLRETURN SQL_API MySQLConnect(SQLHDBC hdbc, SQLCHAR *szDSN, SQLSMALLINT cbDSN,
                                SQLCHAR *szUID, SQLSMALLINT cbUID,
                                SQLCHAR *szAuth, SQLSMALLINT cbAuth);
+SQLRETURN SQL_API MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
+                                   SQLCHAR **name, SQLSMALLINT *need_free,
+                                   SQLSMALLINT *type, SQLULEN *def,
+                                   SQLSMALLINT *scale, SQLSMALLINT *nullable);
 SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
                                      SQLCHAR *in, SQLSMALLINT in_len,
                                      SQLCHAR *out, SQLSMALLINT out_max,

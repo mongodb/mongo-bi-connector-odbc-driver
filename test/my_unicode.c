@@ -470,8 +470,9 @@ DECLARE_TEST(sqlcolattribute)
   is_num(len, 3);
   is_wstr(sqlwchar_to_wchar_t(wbuff), L"a\u00e3g", 4);
 
-  ok_stmt(hstmt1, SQLColAttributeW(hstmt1, 1, SQL_DESC_BASE_TABLE_NAME,
-                                   wbuff, 5, &len, NULL));
+  expect_stmt(hstmt1, SQLColAttributeW(hstmt1, 1, SQL_DESC_BASE_TABLE_NAME,
+                                       wbuff, 5, &len, NULL),
+              SQL_SUCCESS_WITH_INFO);
   is_num(len, 11);
   is_wstr(sqlwchar_to_wchar_t(wbuff), L"t_co", 5);
 
@@ -491,6 +492,50 @@ DECLARE_TEST(sqlcolattribute)
 }
 
 
+DECLARE_TEST(sqldescribecol)
+{
+  HDBC hdbc1;
+  HSTMT hstmt1;
+  SQLWCHAR wbuff[40];
+  SQLSMALLINT len;
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
+                            W(L""), SQL_NTS));
+
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_desc");
+  ok_stmt(hstmt1, SQLExecDirectW(hstmt1,
+                                 W(L"CREATE TABLE t_desc (a\u00e3g INT)"),
+                                 SQL_NTS));
+
+  ok_sql(hstmt1, "SELECT * FROM t_desc");
+
+  ok_stmt(hstmt1, SQLDescribeColW(hstmt1, 1, wbuff,
+                                  sizeof(wbuff) / sizeof(wbuff[0]), &len,
+                                  NULL, NULL, NULL, NULL));
+  is_num(len, 3);
+  is_wstr(sqlwchar_to_wchar_t(wbuff), L"a\u00e3g", 4);
+
+  expect_stmt(hstmt1, SQLDescribeColW(hstmt1, 1, wbuff, 3, &len,
+                                      NULL, NULL, NULL, NULL),
+              SQL_SUCCESS_WITH_INFO);
+  is_num(len, 3);
+  is_wstr(sqlwchar_to_wchar_t(wbuff), L"a\u00e3", 3);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_desc");
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlconnect)
   ADD_TEST(sqlprepare)
@@ -501,6 +546,7 @@ BEGIN_TESTS
   ADD_TEST(sqlsetcursorname)
   ADD_TEST(sqlgetcursorname)
   ADD_TEST(sqlcolattribute)
+  ADD_TEST(sqldescribecol)
 END_TESTS
 
 
