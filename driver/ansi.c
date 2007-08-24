@@ -136,8 +136,10 @@ SQLColAttributeImpl(SQLHSTMT hstmt, SQLUSMALLINT column,
       rc= set_error(stmt, MYERR_01004, NULL, 0);
 
     if (char_attr && char_attr_max > 1)
+    {
       strmake((char *)char_attr, (char *)value, char_attr_max - 1);
-    ((char *)char_attr)[char_attr_max]= '\0';
+      ((char *)char_attr)[char_attr_max]= '\0';
+    }
 
     if (char_attr_len)
       *char_attr_len= len;
@@ -210,8 +212,10 @@ SQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
       rc= set_error(stmt, MYERR_01004, NULL, 0);
 
     if (name && name_max > 1)
+    {
       strmake((char *)name, (char *)value, name_max - 1);
-    ((char *)name)[name_max]= '\0';
+      ((char *)name)[name_max]= '\0';
+    }
 
     if (name_len)
       *name_len= len;
@@ -278,8 +282,10 @@ SQLGetCursorName(SQLHSTMT hstmt, SQLCHAR *cursor, SQLSMALLINT cursor_max,
   }
 
   if (cursor && cursor_max > 1)
+  {
     strmake((char *)cursor, (char *)name, cursor_max - 1);
-  cursor[cursor_max]= '\0';
+    cursor[cursor_max]= '\0';
+  }
 
   if (cursor_len)
     *cursor_len= len;
@@ -292,6 +298,53 @@ SQLGetCursorName(SQLHSTMT hstmt, SQLCHAR *cursor, SQLSMALLINT cursor_max,
     return set_error(stmt, MYERR_01004, NULL, 0);
 
   return SQL_SUCCESS;
+}
+
+
+SQLRETURN SQL_API
+SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
+            SQLSMALLINT value_max, SQLSMALLINT *value_len)
+{
+  DBC *dbc= (DBC *)hdbc;
+  SQLCHAR *char_value= NULL;
+  SQLINTEGER num_value;
+  SQLINTEGER len= SQL_NTS;
+  SQLSMALLINT free_value= FALSE;
+  uint errors;
+
+  SQLRETURN rc= MySQLGetInfo(hdbc, type, &char_value, &num_value);
+
+  if (char_value)
+  {
+    if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+    {
+      char_value= sqlchar_as_sqlchar(dbc->cxn_charset_info,
+                                     dbc->ansi_charset_info,
+                                     char_value, &len, &errors);
+      free_value= TRUE;
+    }
+    else
+      len= strlen((char *)char_value);
+
+    if (len > value_max - 1)
+      rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
+
+    if (value && value_max > 1)
+    {
+      strmake((char *)value, (char *)char_value, value_max - 1);
+      ((char *)value)[value_max]= '\0';
+    }
+
+    if (value_len)
+      *value_len= len;
+
+    if (free_value)
+      x_free(char_value);
+  }
+  else
+    *(SQLINTEGER *)value= num_value;
+
+  return rc;
 }
 
 
@@ -573,14 +626,6 @@ SQLGetDiagRec(SQLSMALLINT handle_type, SQLHANDLE handle,
               SQLSMALLINT record, SQLCHAR *sqlstate,
               SQLINTEGER *native_error, SQLCHAR *message,
               SQLSMALLINT message_max, SQLSMALLINT *message_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
-            SQLSMALLINT value_max, SQLSMALLINT *value_len)
 {
   NOT_IMPLEMENTED;
 }

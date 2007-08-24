@@ -113,6 +113,7 @@ SQLConnectW
 SQLDescribeColW
 SQLDriverConnectW
 SQLExecDirectW
+SQLGetInfoW
 SQLGetStmtAttrW
 SQLNativeSqlW
 SQLPrepareW

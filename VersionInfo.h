@@ -21,7 +21,7 @@
 */
 
 /* When changing, also change configure.in and driver/driver.def */
-#define SETUP_VERSION         "5.1.0"
+#define SETUP_VERSION         "5.01.0000"
 #define DRIVER_VERSION        "0" SETUP_VERSION
 
 #define MYODBC_VERSION        SETUP_VERSION

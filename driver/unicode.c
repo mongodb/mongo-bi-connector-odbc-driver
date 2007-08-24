@@ -527,6 +527,46 @@ SQLGetCursorNameW(SQLHSTMT hstmt, SQLWCHAR *cursor, SQLSMALLINT cursor_max,
 
 
 SQLRETURN SQL_API
+SQLGetInfoW(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
+            SQLSMALLINT value_max, SQLSMALLINT *value_len)
+{
+  DBC *dbc= (DBC *)hdbc;
+  SQLCHAR *char_value= NULL;
+  SQLINTEGER num_value;
+  SQLINTEGER len= SQL_NTS;
+  uint errors;
+
+  SQLRETURN rc= MySQLGetInfo(hdbc, type, &char_value, &num_value);
+
+  if (char_value)
+  {
+    SQLWCHAR *wvalue= sqlchar_as_sqlwchar(dbc->cxn_charset_info,
+                                          char_value, &len, &errors);
+
+    if (len > value_max - 1)
+      rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
+
+    if (value_len)
+      *value_len= len;
+
+    if (value_max > 0)
+    {
+      len= min(len, value_max - 1);
+      (void)memcpy((char *)value, (const char *)wvalue,
+                   len * sizeof(SQLWCHAR));
+      ((SQLWCHAR *)value)[len]= 0;
+    }
+
+    x_free(wvalue);
+  }
+  else
+    *(SQLINTEGER *)value= num_value;
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
 SQLGetStmtAttrW(SQLHSTMT hstmt, SQLINTEGER attribute, SQLPOINTER value,
                 SQLINTEGER value_max, SQLINTEGER *value_len)
 {
@@ -800,14 +840,6 @@ SQLGetDiagRecW(SQLSMALLINT handle_type, SQLHANDLE handle,
                SQLSMALLINT record, SQLWCHAR *sqlstate,
                SQLINTEGER *native_error, SQLWCHAR *message,
                SQLSMALLINT message_max, SQLSMALLINT *message_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLGetInfoW(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
-            SQLSMALLINT value_max, SQLSMALLINT *value_len)
 {
   NOT_IMPLEMENTED;
 }

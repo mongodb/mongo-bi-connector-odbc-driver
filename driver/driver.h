@@ -74,32 +74,24 @@ extern "C"
 # define FreeLibrary(module) lt_dlclose((module))
 #endif
 
-#ifdef SQL_SPEC_STRING
-#undef SQL_SPEC_STRING
-#endif
-
-#define SQL_SPEC_STRING   "03.51"
 #define ODBC_DRIVER	  "ODBC 3.51 Driver"
 #define DRIVER_NAME	  "MySQL ODBC 3.51 Driver"
 #define DRIVER_NONDSN_TAG "DRIVER={MySQL ODBC 3.51 Driver}"
 
 #if defined(__APPLE__)
 
-#define DRIVER_DLL_NAME   "libmyodbc5.dylib"
 #ifdef MYODBC_DBG
 #define DRIVER_QUERY_LOGFILE "/tmp/myodbc.sql"
 #endif
 
 #elif defined(_UNIX_)
 
-#define DRIVER_DLL_NAME   "libmyodbc5.so"
 #ifdef MYODBC_DBG
 #define DRIVER_QUERY_LOGFILE "/tmp/myodbc.sql"
 #endif
 
 #else
 
-#define DRIVER_DLL_NAME   "myodbc5.dll"
 #ifdef MYODBC_DBG
 #define DRIVER_QUERY_LOGFILE "c:\\myodbc.sql"
 #endif
@@ -418,6 +410,8 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
                                      SQLSMALLINT *out_len,
                                      SQLUSMALLINT completion);
 SQLCHAR *MySQLGetCursorName(HSTMT hstmt);
+SQLRETURN SQL_API MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
+                               SQLCHAR **char_info, SQLPOINTER num_info);
 SQLRETURN SQL_API MySQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute,
                                    SQLPOINTER ValuePtr,
                                    SQLINTEGER BufferLength
