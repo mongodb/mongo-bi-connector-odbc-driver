@@ -45,6 +45,9 @@ SQLColAttributeWImpl(SQLHSTMT hstmt, SQLUSMALLINT column,
                      SQLSMALLINT char_attr_max, SQLSMALLINT *char_attr_len,
                      SQLLEN *num_attr);
 SQLRETURN SQL_API
+SQLGetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
+                       SQLINTEGER value_max, SQLINTEGER *value_len);
+SQLRETURN SQL_API
 SQLPrepareWImpl(SQLHSTMT hstmt, SQLWCHAR *str, SQLINTEGER str_len);
 
 SQLRETURN SQL_API
@@ -489,6 +492,62 @@ SQLExecDirectW(SQLHSTMT hstmt, SQLWCHAR *str, SQLINTEGER str_len)
 
 
 SQLRETURN SQL_API
+SQLGetConnectAttrW(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
+                   SQLINTEGER value_max, SQLINTEGER *value_len)
+{
+  return SQLGetConnectAttrWImpl(hdbc, attribute, value, value_max, value_len);
+}
+
+
+SQLRETURN SQL_API
+SQLGetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
+                       SQLINTEGER value_max, SQLINTEGER *value_len)
+{
+  DBC *dbc= (DBC *)hdbc;
+  SQLCHAR *char_value= NULL;
+
+  SQLRETURN rc= MySQLGetConnectAttr(hdbc, attribute, &char_value, value);
+
+  if (char_value)
+  {
+    SQLWCHAR *wvalue;
+    SQLINTEGER len= SQL_NTS;
+    uint errors;
+
+    wvalue= sqlchar_as_sqlwchar(dbc->cxn_charset_info, char_value,
+                                &len, &errors);
+
+    if (len > value_max - 1)
+      rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
+
+    if (value_len)
+      *value_len= len;
+
+    if (value_max > 0)
+    {
+      len= min(len, value_max - 1);
+      (void)memcpy((char *)value, (const char *)wvalue,
+                   len * sizeof(SQLWCHAR));
+      ((SQLWCHAR *)value)[len]= 0;
+    }
+
+    x_free(wvalue);
+  }
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
+SQLGetConnectOptionW(SQLHDBC hdbc, SQLUSMALLINT option, SQLPOINTER param)
+{
+  return SQLGetConnectAttrWImpl(hdbc, option, param,
+                                ((option == SQL_ATTR_CURRENT_CATALOG) ?
+                                 SQL_MAX_OPTION_STRING_LENGTH : 0), NULL);
+}
+
+
+SQLRETURN SQL_API
 SQLGetCursorNameW(SQLHSTMT hstmt, SQLWCHAR *cursor, SQLSMALLINT cursor_max,
                   SQLSMALLINT *cursor_len)
 {
@@ -532,11 +591,10 @@ SQLGetInfoW(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
 {
   DBC *dbc= (DBC *)hdbc;
   SQLCHAR *char_value= NULL;
-  SQLINTEGER num_value;
   SQLINTEGER len= SQL_NTS;
   uint errors;
 
-  SQLRETURN rc= MySQLGetInfo(hdbc, type, &char_value, &num_value);
+  SQLRETURN rc= MySQLGetInfo(hdbc, type, &char_value, value);
 
   if (char_value)
   {
@@ -559,8 +617,6 @@ SQLGetInfoW(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
 
     x_free(wvalue);
   }
-  else
-    *(SQLINTEGER *)value= num_value;
 
   return rc;
 }
@@ -643,16 +699,12 @@ SQLSetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute,
   DBC *dbc= (DBC *)hdbc;
   my_bool free_value= FALSE;
 
-  switch (attribute) {
-  case SQL_ATTR_CURRENT_CATALOG:
-  case SQL_ATTR_TRACEFILE:
-  case SQL_ATTR_TRANSLATE_LIB:
-    {
-      uint errors= 0;
-      value= sqlwchar_as_sqlchar(dbc->cxn_charset_info,
-                                 value, &value_len, &errors);
-      free_value= TRUE;
-    }
+  if (attribute == SQL_ATTR_CURRENT_CATALOG)
+  {
+    uint errors= 0;
+    value= sqlwchar_as_sqlchar(dbc->cxn_charset_info,
+                               value, &value_len, &errors);
+    free_value= TRUE;
   }
 
   rc= MySQLSetConnectAttr(hdbc, attribute, value, value_len);
@@ -693,15 +745,9 @@ SQLSetCursorNameW(SQLHSTMT hstmt, SQLWCHAR *name, SQLSMALLINT name_len)
 SQLRETURN SQL_API
 SQLSetConnectOptionW(SQLHDBC hdbc, SQLUSMALLINT option, SQLULEN param)
 {
-  SQLINTEGER value_len= 0;
-  switch (option) {
-  case SQL_ATTR_CURRENT_CATALOG:
-  case SQL_ATTR_TRACEFILE:
-  case SQL_ATTR_TRANSLATE_LIB:
-    value_len= SQL_NTS;
-  }
-
-  return SQLSetConnectAttrWImpl(hdbc, option, (SQLPOINTER)param, value_len);
+  return SQLSetConnectAttrWImpl(hdbc, option, (SQLPOINTER)param,
+                                ((option == SQL_ATTR_CURRENT_CATALOG) ?
+                                 SQL_NTS : 0));
 }
 
 
@@ -787,21 +833,6 @@ SQLForeignKeysW(SQLHSTMT hstmt,
                 SQLWCHAR *fk_catalog, SQLSMALLINT fk_catalog_len,
                 SQLWCHAR *fk_schema, SQLSMALLINT fk_schema_len,
                 SQLWCHAR *fk_table, SQLSMALLINT fk_table_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLGetConnectAttrW(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
-                   SQLINTEGER value_max, SQLINTEGER *value_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLGetConnectOptionW(SQLHDBC hdbc, SQLUSMALLINT option, SQLPOINTER param)
 {
   NOT_IMPLEMENTED;
 }

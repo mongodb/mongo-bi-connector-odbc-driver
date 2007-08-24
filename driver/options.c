@@ -25,22 +25,6 @@
   @brief Functions for handling handle attributes and options.
 */
 
-/***************************************************************************
- * The following ODBC APIs are implemented in this file:		   *
- *									   *
- *   SQLSetEnvAttr	 (ISO 92)					   *
- *   SQLGetEnvAttr	 (ISO 92)					   *
- *   SQLSetConnectAttr	 (ISO 92)					   *
- *   SQLGetConnectAttr	 (ISO 92)					   *
- *   SQLSetStmtAttr	 (ISO 92)					   *
- *   SQLGetStmtAttr	 (ISO 92)					   *
- *   SQLSetConnectOption (ODBC, Deprecated)				   *
- *   SQLGetConnectOption (ODBC, Deprecated)				   *
- *   SQLSetStmtOption	 (ODBC, Deprecated)				   *
- *   SQLGetStmtOption	 (ODBC, Deprecated)				   *
- *									   *
- ****************************************************************************/
-
 #include "driver.h"
 #include "errmsg.h"
 
@@ -408,165 +392,129 @@ MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
 }
 
 
-/*
-  @type    : myodbc3 internal
-  @purpose : returns the connection attribute values
+/**
+ Retrieve connection attribute values.
+
+ @param[in]  hdbc
+ @param[in]  attrib
+ @param[out] char_attr
+ @param[out] num_attr
 */
-
-static SQLRETURN get_con_attr(SQLHDBC    hdbc,
-                              SQLINTEGER Attribute,
-                              SQLPOINTER ValuePtr,
-                              SQLINTEGER BufferLength,
-                              SQLINTEGER *StringLengthPtr)
+SQLRETURN SQL_API
+MySQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attrib, SQLCHAR **char_attr,
+                    SQLPOINTER num_attr)
 {
-    DBC FAR *dbc= (DBC FAR*) hdbc;
-    SQLRETURN result= SQL_SUCCESS;
-    SQLINTEGER len;
-    SQLPOINTER vparam= 0;
+  DBC *dbc= (DBC *)hdbc;
+  SQLRETURN result= SQL_SUCCESS;
+  SQLINTEGER len;
+  SQLPOINTER vparam= 0;
 
-    if (!ValuePtr)
-        ValuePtr= vparam;
+  switch (attrib) {
+  case SQL_ATTR_ACCESS_MODE:
+    *((SQLUINTEGER *)num_attr)= SQL_MODE_READ_WRITE;
+    break;
 
-    if (!StringLengthPtr)
-        StringLengthPtr= &len;
+  case SQL_ATTR_AUTO_IPD:
+    *((SQLUINTEGER *)num_attr)= SQL_FALSE;
+    break;
 
-    switch (Attribute)
+  case SQL_ATTR_AUTOCOMMIT:
+    *((SQLUINTEGER *)num_attr)= (autocommit_on(dbc) ||
+                                 (!(trans_supported(dbc)) ?
+                                  SQL_AUTOCOMMIT_ON :
+                                  SQL_AUTOCOMMIT_OFF));
+    break;
+
+  case SQL_ATTR_CONNECTION_DEAD:
+    if (mysql_ping(&dbc->mysql) && mysql_errno(&dbc->mysql) == CR_SERVER_LOST)
+      *((SQLUINTEGER *)num_attr)= SQL_CD_TRUE;
+    else
+      *((SQLUINTEGER *)num_attr)= SQL_CD_FALSE;
+    break;
+
+  case SQL_ATTR_CONNECTION_TIMEOUT:
+    /* We don't support this option, so it is always 0. */
+    *((SQLUINTEGER *)num_attr)= 0;
+    break;
+
+  case SQL_ATTR_CURRENT_CATALOG:
+    if (reget_current_catalog(dbc))
+      return set_handle_error(SQL_HANDLE_DBC, hdbc, MYERR_S1000,
+                              "Unable to get current catalog", 0);
+    else
+      *char_attr= dbc->database;
+    break;
+
+  case SQL_ATTR_LOGIN_TIMEOUT:
+    *((SQLUINTEGER *)num_attr)= dbc->login_timeout;
+    break;
+
+  case SQL_ATTR_ODBC_CURSORS:
+    if ((dbc->flag & FLAG_FORWARD_CURSOR))
+      *((SQLUINTEGER *)num_attr)= SQL_CUR_USE_ODBC;
+    else
+      *((SQLUINTEGER *)num_attr)= SQL_CUR_USE_IF_NEEDED;
+    break;
+
+  case SQL_ATTR_PACKET_SIZE:
+    *((SQLUINTEGER *)num_attr)= dbc->mysql.net.max_packet;
+    break;
+
+  case SQL_ATTR_TXN_ISOLATION:
+    /*
+      If we don't know the isolation level already, we need to ask the
+      server.
+    */
+    if (!dbc->txn_isolation)
     {
-        case SQL_ATTR_ACCESS_MODE:
-            *((SQLUINTEGER *) ValuePtr)= SQL_MODE_READ_WRITE;
-            break;
+      /*
+        Unless we're not connected yet, then we just assume it will
+        be REPEATABLE READ, which is the server default.
+      */
+      if (!is_connected(dbc))
+      {
+        *((SQLINTEGER *)num_attr)= SQL_TRANSACTION_REPEATABLE_READ;
+        break;
+      }
 
-        case SQL_ATTR_AUTO_IPD:
-            *((SQLUINTEGER *) ValuePtr)= SQL_FALSE;
-            break;
+      if (odbc_stmt(dbc, "SELECT @@tx_isolation"))
+      {
+        return set_handle_error(SQL_HANDLE_DBC, hdbc, MYERR_S1000,
+                                "Failed to get isolation level", 0);
+      }
+      else
+      {
+        MYSQL_RES *res;
+        MYSQL_ROW  row;
 
-        case SQL_ATTR_AUTOCOMMIT:
-            *((SQLUINTEGER *)ValuePtr)= (autocommit_on(dbc) ||
-                                         !(trans_supported(dbc)) ?
-                                         SQL_AUTOCOMMIT_ON :
-                                         SQL_AUTOCOMMIT_OFF);
-            break;
-
-        case SQL_ATTR_CONNECTION_DEAD:
-            {
-                if ( mysql_ping( &dbc->mysql ) && mysql_errno( &dbc->mysql ) == CR_SERVER_LOST )
-                    *((SQLUINTEGER *) ValuePtr)= SQL_CD_TRUE;
-                else
-                    *((SQLUINTEGER *) ValuePtr)= SQL_CD_FALSE;
-            }
-            break;
-
-        case SQL_ATTR_CONNECTION_TIMEOUT:
-            /* We don't support this option, so it is always 0. */
-            *((SQLUINTEGER *) ValuePtr)= 0;
-            result= SQL_SUCCESS;
-            break;
-
-        case SQL_ATTR_CURRENT_CATALOG:
-
-            if (reget_current_catalog(dbc))
-            {
-                result= SQL_ERROR;
-            }
-            else
-            {
-                *StringLengthPtr= (SQLSMALLINT) (strmake((char*)ValuePtr,dbc->database,
-                                                         BufferLength) -
-                                                 (char*) ValuePtr);
-            }
-            break;
-
-        case SQL_ATTR_LOGIN_TIMEOUT:
-            *((SQLUINTEGER *) ValuePtr)= dbc->login_timeout;
-            break;
-
-        case SQL_ATTR_ODBC_CURSORS:
-            if ((dbc->flag & FLAG_FORWARD_CURSOR))
-                *((SQLUINTEGER *) ValuePtr)= SQL_CUR_USE_ODBC;
-            else
-                *((SQLUINTEGER *) ValuePtr)= SQL_CUR_USE_IF_NEEDED;
-            break;
-
-        case SQL_OPT_TRACE:
-        case SQL_OPT_TRACEFILE:
-        case SQL_QUIET_MODE:
-        case SQL_TRANSLATE_DLL:
-        case SQL_TRANSLATE_OPTION:
-            {
-                char buff[100];
-                sprintf(buff,
-                        "Suppose to get this attribute '%d' through driver manager, not by the driver",
-                        (int) Attribute);
-                result= set_conn_error(hdbc,MYERR_01S02,buff,0);
-                break;
-            }
-
-        case SQL_ATTR_PACKET_SIZE:
-            *((SQLUINTEGER *) ValuePtr)= dbc->mysql.net.max_packet;
-            break;
-
-        case SQL_ATTR_TXN_ISOLATION:
-            /*
-              If we don't know the isolation level already, we need
-              to ask the server.
-            */
-            if (!dbc->txn_isolation)
-            {
-              /*
-                Unless we're not connected yet, then we just assume it will
-                be REPEATABLE READ, which is the server default.
-              */
-              if (!is_connected(dbc))
-              {
-                *((SQLINTEGER *) ValuePtr)= SQL_TRANSACTION_REPEATABLE_READ;
-                break;
-              }
-
-              if (odbc_stmt(dbc, "SELECT @@tx_isolation"))
-              {
-                return set_handle_error(SQL_HANDLE_DBC,hdbc,
-                                        MYERR_S1000,
-                                        "Failed to get isolation level", 0);
-              }
-              else
-              {
-                  MYSQL_RES *res;
-                  MYSQL_ROW  row;
-
-                  if ((res= mysql_store_result(&dbc->mysql)) &&
-                      (row= mysql_fetch_row(res)))
-                  {
-                    if (strncmp(row[0], "READ-UNCOMMITTED", 16) == 0) {
-                      dbc->txn_isolation= SQL_TRANSACTION_READ_UNCOMMITTED;
-                    }
-                    else if (strncmp(row[0], "READ-COMMITTED", 14) == 0) {
-                      dbc->txn_isolation= SQL_TRANSACTION_READ_COMMITTED;
-                    }
-                    else if (strncmp(row[0], "REPEATABLE-READ", 15) == 0) {
-                      dbc->txn_isolation= SQL_TRANSACTION_REPEATABLE_READ;
-                    }
-                    else if (strncmp(row[0], "SERIALIZABLE", 12) == 0) {
-                      dbc->txn_isolation= SQL_TRANSACTION_SERIALIZABLE;
-                    }
-                  }
-                  mysql_free_result(res);
-              }
-            }
-
-            *((SQLINTEGER *) ValuePtr)= dbc->txn_isolation;
-            break;
-
-            /*
-              3.x driver doesn't support any statement attributes
-              at connection level, but to make sure all 2.x apps
-              works fine...lets support it..nothing to loose..
-            */
-        default:
-            result= get_constmt_attr(2,dbc,&dbc->stmt_options,
-                                     Attribute,ValuePtr,
-                                     StringLengthPtr);
+        if ((res= mysql_store_result(&dbc->mysql)) &&
+            (row= mysql_fetch_row(res)))
+        {
+          if (strncmp(row[0], "READ-UNCOMMITTED", 16) == 0) {
+            dbc->txn_isolation= SQL_TRANSACTION_READ_UNCOMMITTED;
+          }
+          else if (strncmp(row[0], "READ-COMMITTED", 14) == 0) {
+            dbc->txn_isolation= SQL_TRANSACTION_READ_COMMITTED;
+          }
+          else if (strncmp(row[0], "REPEATABLE-READ", 15) == 0) {
+            dbc->txn_isolation= SQL_TRANSACTION_REPEATABLE_READ;
+          }
+          else if (strncmp(row[0], "SERIALIZABLE", 12) == 0) {
+            dbc->txn_isolation= SQL_TRANSACTION_SERIALIZABLE;
+          }
+        }
+        mysql_free_result(res);
+      }
     }
-    return result;
+
+    *((SQLINTEGER *)num_attr)= dbc->txn_isolation;
+    break;
+
+  default:
+    return set_handle_error(SQL_HANDLE_DBC, hdbc, MYERR_S1092, NULL, 0);
+  }
+
+  return result;
 }
 
 
@@ -768,18 +716,6 @@ MySQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
 
 
 /*
-  @type    : ODBC 1.0 API
-  @purpose : returns the connection options
-*/
-
-SQLRETURN SQL_API SQLGetConnectOption(SQLHDBC hdbc,SQLUSMALLINT fOption,
-                                      SQLPOINTER vParam)
-{
-  return get_con_attr(hdbc, fOption, vParam, SQL_NTS, (SQLINTEGER *)NULL);
-}
-
-
-/*
   @type    : ODBC 3.0 API
   @purpose : sets the environment attributes
 */
@@ -841,21 +777,6 @@ SQLGetEnvAttr(SQLHENV    henv,
             return set_env_error(henv,MYERR_S1C00,NULL,0);
     }
     return SQL_SUCCESS;
-}
-
-
-/*
-  @type    : ODBC 3.0 API
-  @purpose : returns the connection attribute values
-*/
-
-SQLRETURN SQL_API SQLGetConnectAttr(SQLHDBC hdbc,
-                                    SQLINTEGER Attribute,
-                                    SQLPOINTER ValuePtr,
-                                    SQLINTEGER BufferLength,
-                                    SQLINTEGER *StringLengthPtr)
-{
-  return get_con_attr(hdbc, Attribute, ValuePtr, BufferLength, StringLengthPtr);
 }
 
 

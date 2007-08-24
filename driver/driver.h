@@ -412,6 +412,8 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
 SQLCHAR *MySQLGetCursorName(HSTMT hstmt);
 SQLRETURN SQL_API MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
                                SQLCHAR **char_info, SQLPOINTER num_info);
+SQLRETURN SQL_API MySQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attrib,
+                                      SQLCHAR **char_attr, SQLPOINTER num_attr);
 SQLRETURN SQL_API MySQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute,
                                    SQLPOINTER ValuePtr,
                                    SQLINTEGER BufferLength

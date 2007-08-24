@@ -536,6 +536,38 @@ DECLARE_TEST(sqldescribecol)
 }
 
 
+DECLARE_TEST(sqlgetconnectattr)
+{
+  HDBC hdbc1;
+  HSTMT hstmt1;
+  SQLWCHAR wbuff[40];
+  SQLINTEGER len;
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
+                            W(L""), SQL_NTS));
+
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_stmt(hstmt1, SQLGetConnectAttrW(hdbc1, SQL_ATTR_CURRENT_CATALOG, wbuff,
+                                     sizeof(wbuff) / sizeof(wbuff[0]), &len));
+  is_num(len, 4);
+  is_wstr(sqlwchar_to_wchar_t(wbuff), L"test", 5);
+
+  expect_stmt(hstmt1, SQLGetConnectAttrW(hdbc1, SQL_ATTR_CURRENT_CATALOG,
+                                         wbuff, 3, &len),
+              SQL_SUCCESS_WITH_INFO);
+  is_num(len, 4);
+  is_wstr(sqlwchar_to_wchar_t(wbuff), L"te", 3);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlconnect)
   ADD_TEST(sqlprepare)
@@ -547,6 +579,7 @@ BEGIN_TESTS
   ADD_TEST(sqlgetcursorname)
   ADD_TEST(sqlcolattribute)
   ADD_TEST(sqldescribecol)
+  ADD_TEST(sqlgetconnectattr)
 END_TESTS
 
 

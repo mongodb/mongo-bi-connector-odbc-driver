@@ -38,6 +38,9 @@ SQLColAttributeImpl(SQLHSTMT hstmt, SQLUSMALLINT column,
                     SQLSMALLINT char_attr_max, SQLSMALLINT *char_attr_len,
                     SQLLEN *num_attr);
 SQLRETURN SQL_API
+SQLGetConnectAttrImpl(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
+                      SQLINTEGER value_max, SQLINTEGER *value_len);
+SQLRETURN SQL_API
 SQLPrepareImpl(SQLHSTMT hstmt, SQLCHAR *str, SQLINTEGER str_len);
 
 SQLRETURN SQL_API
@@ -252,6 +255,68 @@ SQLExecDirect(SQLHSTMT hstmt, SQLCHAR *str, SQLINTEGER str_len)
 
 
 SQLRETURN SQL_API
+SQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
+                  SQLINTEGER value_max, SQLINTEGER *value_len)
+{
+  return SQLGetConnectAttrImpl(hdbc, attribute, value, value_max, value_len);
+}
+
+
+SQLRETURN SQL_API
+SQLGetConnectAttrImpl(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
+                      SQLINTEGER value_max, SQLINTEGER *value_len)
+{
+  DBC *dbc= (DBC *)hdbc;
+  SQLCHAR *char_value= NULL;
+
+  SQLRETURN rc= MySQLGetConnectAttr(hdbc, attribute, &char_value, value);
+
+  if (char_value)
+  {
+    SQLSMALLINT free_value= FALSE;
+    SQLINTEGER len= SQL_NTS;
+    uint errors;
+
+    if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+    {
+      char_value= sqlchar_as_sqlchar(dbc->cxn_charset_info,
+                                     dbc->ansi_charset_info,
+                                     char_value, &len, &errors);
+      free_value= TRUE;
+    }
+    else
+      len= strlen((char *)char_value);
+
+    if (len > value_max - 1)
+      rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
+
+    if (value && value_max > 1)
+    {
+      strmake((char *)value, (char *)char_value, value_max - 1);
+      ((char *)value)[value_max]= '\0';
+    }
+
+    if (value_len)
+      *value_len= len;
+
+    if (free_value)
+      x_free(char_value);
+  }
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
+SQLGetConnectOption(SQLHDBC hdbc, SQLUSMALLINT option, SQLPOINTER value)
+{
+  return SQLGetConnectAttrImpl(hdbc, option, value,
+                               ((option == SQL_ATTR_CURRENT_CATALOG) ?
+                                SQL_MAX_OPTION_STRING_LENGTH : 0), NULL);
+}
+
+
+SQLRETURN SQL_API
 SQLGetCursorName(SQLHSTMT hstmt, SQLCHAR *cursor, SQLSMALLINT cursor_max,
                  SQLSMALLINT *cursor_len)
 {
@@ -307,12 +372,11 @@ SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
 {
   DBC *dbc= (DBC *)hdbc;
   SQLCHAR *char_value= NULL;
-  SQLINTEGER num_value;
   SQLINTEGER len= SQL_NTS;
   SQLSMALLINT free_value= FALSE;
   uint errors;
 
-  SQLRETURN rc= MySQLGetInfo(hdbc, type, &char_value, &num_value);
+  SQLRETURN rc= MySQLGetInfo(hdbc, type, &char_value, value);
 
   if (char_value)
   {
@@ -341,8 +405,6 @@ SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
     if (free_value)
       x_free(char_value);
   }
-  else
-    *(SQLINTEGER *)value= num_value;
 
   return rc;
 }
@@ -352,6 +414,7 @@ SQLRETURN SQL_API
 SQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER attribute, SQLPOINTER value,
                 SQLINTEGER value_max, SQLINTEGER *value_len)
 {
+  /* Nothing special to do, since we don't have any string stmt attribs */
   return MySQLGetStmtAttr(hstmt, attribute, value, value_max, value_len);
 }
 
@@ -440,22 +503,19 @@ SQLSetConnectAttrImpl(SQLHDBC hdbc, SQLINTEGER attribute,
   if (dbc->ansi_charset_info &&
       dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
   {
-    switch (attribute) {
-    case SQL_ATTR_CURRENT_CATALOG:
-    case SQL_ATTR_TRACEFILE:
-    case SQL_ATTR_TRANSLATE_LIB:
+    /* SQL_ATTR_CURRENT_CATALOG is the only string attribute we support. */
+    if (attribute == SQL_ATTR_CURRENT_CATALOG)
+    {
+      uint errors= 0;
+      value= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                value, &value_len, &errors);
+      if (!value && value_len == -1)
       {
-        uint errors= 0;
-        value= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
-                                  value, &value_len, &errors);
-        if (!value && value_len == -1)
-        {
-          set_mem_error(&dbc->mysql);
-          return set_conn_error(dbc, MYERR_S1001, mysql_error(&dbc->mysql),
-                                mysql_errno(&dbc->mysql));
-        }
-        free_value= TRUE;
+        set_mem_error(&dbc->mysql);
+        return set_conn_error(dbc, MYERR_S1001, mysql_error(&dbc->mysql),
+                              mysql_errno(&dbc->mysql));
       }
+      free_value= TRUE;
     }
   }
 
@@ -472,12 +532,8 @@ SQLRETURN SQL_API
 SQLSetConnectOption(SQLHDBC hdbc, SQLUSMALLINT option, SQLULEN param)
 {
   SQLINTEGER value_len= 0;
-  switch (option) {
-  case SQL_ATTR_CURRENT_CATALOG:
-  case SQL_ATTR_TRACEFILE:
-  case SQL_ATTR_TRANSLATE_LIB:
+  if (option == SQL_ATTR_CURRENT_CATALOG)
     value_len= SQL_NTS;
-  }
 
   return SQLSetConnectAttrImpl(hdbc, option, (SQLPOINTER)param, value_len);
 }
@@ -580,14 +636,6 @@ SQLForeignKeys(SQLHSTMT hstmt,
                SQLCHAR *fk_catalog, SQLSMALLINT fk_catalog_len,
                SQLCHAR *fk_schema, SQLSMALLINT fk_schema_len,
                SQLCHAR *fk_table, SQLSMALLINT fk_table_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
-                  SQLINTEGER value_max, SQLINTEGER *value_len)
 {
   NOT_IMPLEMENTED;
 }
