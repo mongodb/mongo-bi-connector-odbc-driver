@@ -608,6 +608,13 @@ SQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER attribute, SQLPOINTER value,
 
 
 SQLRETURN SQL_API
+SQLGetTypeInfo(SQLHSTMT hstmt, SQLSMALLINT type)
+{
+  return MySQLGetTypeInfo(hstmt, type);
+}
+
+
+SQLRETURN SQL_API
 SQLNativeSql(SQLHDBC hdbc, SQLCHAR *in, SQLINTEGER in_len,
              SQLCHAR *out, SQLINTEGER out_max, SQLINTEGER *out_len)
 {

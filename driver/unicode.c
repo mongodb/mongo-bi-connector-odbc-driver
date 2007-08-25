@@ -801,6 +801,14 @@ SQLGetStmtAttrW(SQLHSTMT hstmt, SQLINTEGER attribute, SQLPOINTER value,
 }
 
 
+/* This shouldn't be necessary, but iODBC expects it. */
+SQLRETURN SQL_API
+SQLGetTypeInfoW(SQLHSTMT hstmt, SQLSMALLINT type)
+{
+  return MySQLGetTypeInfo(hstmt, type);
+}
+
+
 SQLRETURN SQL_API
 SQLNativeSqlW(SQLHDBC hdbc, SQLWCHAR *in, SQLINTEGER in_len,
               SQLWCHAR *out, SQLINTEGER out_max, SQLINTEGER *out_len)

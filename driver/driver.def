@@ -120,6 +120,7 @@ SQLGetDiagFieldW
 SQLGetDiagRecW
 SQLGetInfoW
 SQLGetStmtAttrW
+SQLGetTypeInfoW
 SQLNativeSqlW
 SQLPrepareW
 SQLSetConnectAttrW

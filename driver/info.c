@@ -951,7 +951,7 @@ char *SQL_GET_TYPE_INFO_values[MYSQL_DATA_TYPES][19]=
   @since ODBC 1.0
   @since ISO SQL 92
 */
-SQLRETURN SQL_API SQLGetTypeInfo(SQLHSTMT hstmt, SQLSMALLINT fSqlType)
+SQLRETURN SQL_API MySQLGetTypeInfo(SQLHSTMT hstmt, SQLSMALLINT fSqlType)
 {
   STMT *stmt= (STMT *)hstmt;
   uint i;
