@@ -732,11 +732,11 @@ convert_to_out:
         if (result)
           *result++= out[0];
 
-         used_chars+= chars;
+        used_chars+= chars;
 
-        if (result && result != result_end)
+        if (chars > 1 && result && result != result_end)
           *result++= out[1];
-        else if (result)
+        else if (chars > 1 && result)
         {
           *((SQLWCHAR *)stmt->getdata.latest)= out[1];
           stmt->getdata.latest_bytes= 2;
@@ -750,7 +750,7 @@ convert_to_out:
             break;
           }
         }
-        else
+        else if (chars > 1)
           continue;
       }
 
