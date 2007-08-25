@@ -414,6 +414,9 @@ SQLRETURN SQL_API MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
                                SQLCHAR **char_info, SQLPOINTER num_info);
 SQLRETURN SQL_API MySQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attrib,
                                       SQLCHAR **char_attr, SQLPOINTER num_attr);
+SQLRETURN SQL_API MySQLGetDiagRec(SQLSMALLINT handle_type, SQLHANDLE handle,
+                                  SQLSMALLINT record, SQLCHAR **sqlstate,
+                                  SQLINTEGER *native, SQLCHAR **message);
 SQLRETURN SQL_API MySQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute,
                                    SQLPOINTER ValuePtr,
                                    SQLINTEGER BufferLength

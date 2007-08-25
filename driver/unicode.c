@@ -48,6 +48,11 @@ SQLRETURN SQL_API
 SQLGetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
                        SQLINTEGER value_max, SQLINTEGER *value_len);
 SQLRETURN SQL_API
+SQLGetDiagRecWImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
+                   SQLSMALLINT record, SQLWCHAR *sqlstate,
+                   SQLINTEGER *native_error, SQLWCHAR *message,
+                   SQLSMALLINT message_max, SQLSMALLINT *message_len);
+SQLRETURN SQL_API
 SQLPrepareWImpl(SQLHSTMT hstmt, SQLWCHAR *str, SQLINTEGER str_len);
 
 SQLRETURN SQL_API
@@ -479,6 +484,39 @@ SQLDescribeColW(SQLHSTMT hstmt, SQLUSMALLINT column,
 
 
 SQLRETURN SQL_API
+SQLErrorW(SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt, SQLWCHAR *sqlstate,
+          SQLINTEGER *native_error, SQLWCHAR *message, SQLSMALLINT message_max,
+          SQLSMALLINT *message_len)
+{
+  SQLRETURN rc= SQL_INVALID_HANDLE;
+
+  if (hstmt)
+  {
+    rc= SQLGetDiagRecWImpl(SQL_HANDLE_STMT, hstmt, 1, sqlstate, native_error,
+                           message, message_max, message_len);
+    if (rc == SQL_SUCCESS)
+      CLEAR_STMT_ERROR(hstmt);
+  }
+  else if (hdbc)
+  {
+    rc= SQLGetDiagRecWImpl(SQL_HANDLE_DBC, hdbc, 1, sqlstate, native_error,
+                           message, message_max, message_len);
+    if (rc == SQL_SUCCESS)
+      CLEAR_DBC_ERROR(hstmt);
+  }
+  else if (henv)
+  {
+    rc= SQLGetDiagRecWImpl(SQL_HANDLE_ENV, henv, 1, sqlstate, native_error,
+                           message, message_max, message_len);
+    if (rc == SQL_SUCCESS)
+      CLEAR_ENV_ERROR(hstmt);
+  }
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
 SQLExecDirectW(SQLHSTMT hstmt, SQLWCHAR *str, SQLINTEGER str_len)
 {
   int error;
@@ -580,6 +618,86 @@ SQLGetCursorNameW(SQLHSTMT hstmt, SQLWCHAR *cursor, SQLSMALLINT cursor_max,
   }
 
   x_free(name);
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
+SQLGetDiagRecW(SQLSMALLINT handle_type, SQLHANDLE handle,
+               SQLSMALLINT record, SQLWCHAR *sqlstate,
+               SQLINTEGER *native_error, SQLWCHAR *message,
+               SQLSMALLINT message_max, SQLSMALLINT *message_len)
+{
+  return SQLGetDiagRecWImpl(handle_type, handle, record, sqlstate, native_error,
+                            message, message_max, message_len);
+}
+
+
+SQLRETURN SQL_API
+SQLGetDiagRecWImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
+                   SQLSMALLINT record, SQLWCHAR *sqlstate,
+                   SQLINTEGER *native_error, SQLWCHAR *message,
+                   SQLSMALLINT message_max, SQLSMALLINT *message_len)
+{
+  DBC *dbc;
+  SQLCHAR *msg_value= NULL, *sqlstate_value= NULL;
+  SQLINTEGER len= SQL_NTS;
+  uint errors;
+
+  switch (handle_type) {
+  case SQL_HANDLE_DBC:
+    dbc= (DBC *)handle;
+    break;
+  case SQL_HANDLE_STMT:
+    dbc= ((STMT *)handle)->dbc;
+    break;
+  case SQL_HANDLE_ENV:
+  default:
+    dbc= NULL;
+  }
+
+  if (message_max < 0)
+    return SQL_ERROR;
+
+  SQLRETURN rc= MySQLGetDiagRec(handle_type, handle, record, &sqlstate_value,
+                                native_error, &msg_value);
+
+  if (msg_value)
+  {
+    SQLWCHAR *wvalue= sqlchar_as_sqlwchar(dbc ? dbc->cxn_charset_info :
+                                          default_charset_info,
+                                          msg_value, &len, &errors);
+
+    if (len > message_max - 1)
+      rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
+
+    if (message_len)
+      *message_len= len;
+
+    if (message_max > 0)
+    {
+      len= min(len, message_max - 1);
+      (void)memcpy((char *)message, (const char *)wvalue,
+                   len * sizeof(SQLWCHAR));
+      ((SQLWCHAR *)message)[len]= 0;
+    }
+
+    x_free(wvalue);
+  }
+
+  if (sqlstate && sqlstate_value)
+  {
+    SQLWCHAR *wvalue= sqlchar_as_sqlwchar(dbc ? dbc->cxn_charset_info :
+                                          default_charset_info,
+                                          sqlstate_value, &len, &errors);
+
+    (void)memcpy((char *)sqlstate, (const char *)wvalue,
+                 5 * sizeof(SQLWCHAR));
+    ((SQLWCHAR *)sqlstate)[5]= 0;
+
+    x_free(wvalue);
+  }
 
   return rc;
 }
@@ -816,14 +934,6 @@ SQLColumnsW(SQLHSTMT hstmt,
 //SQLDriversW
 
 
-SQLRETURN SQL_API
-SQLErrorW(SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt, SQLWCHAR *sqlstate,
-          SQLINTEGER *native_error, SQLWCHAR *message, SQLSMALLINT message_max,
-          SQLSMALLINT *message_len)
-{
-  NOT_IMPLEMENTED;
-}
-
 
 SQLRETURN SQL_API
 SQLForeignKeysW(SQLHSTMT hstmt,
@@ -861,24 +971,6 @@ SQLGetDiagFieldW(SQLSMALLINT handle_type, SQLHANDLE handle,
                  SQLSMALLINT record, SQLSMALLINT field,
                  SQLPOINTER info, SQLSMALLINT info_max,
                  SQLSMALLINT *info_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLGetDiagRecW(SQLSMALLINT handle_type, SQLHANDLE handle,
-               SQLSMALLINT record, SQLWCHAR *sqlstate,
-               SQLINTEGER *native_error, SQLWCHAR *message,
-               SQLSMALLINT message_max, SQLSMALLINT *message_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLNativeSqlW(SQLHDBC hdbc, SQLWCHAR *in, SQLINTEGER in_len,
-              SQLWCHAR *out, SQLINTEGER out_max, SQLINTEGER *out_len)
 {
   NOT_IMPLEMENTED;
 }

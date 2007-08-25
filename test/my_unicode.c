@@ -568,6 +568,57 @@ DECLARE_TEST(sqlgetconnectattr)
 }
 
 
+DECLARE_TEST(sqlgetdiagrec)
+{
+  SQLWCHAR   sqlstate[6]= {0};
+  SQLWCHAR   message[255]= {0};
+  SQLINTEGER native_err= 0;
+  SQLSMALLINT msglen= 0;
+  HDBC hdbc1;
+  HSTMT hstmt1;
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
+                            W(L""), SQL_NTS));
+
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+
+  expect_sql(hstmt1, "DROP TABLE t_odbc3_non_existent_table", SQL_ERROR);
+
+#if UNIXODBC_BUG_FIXED
+  /*
+   This should report no data found, but unixODBC doesn't even pass this
+   down to the driver.
+  */
+  expect_stmt(hstmt1, SQLGetDiagRecW(SQL_HANDLE_STMT, hstmt1, 2, sqlstate,
+                                     &native_err, message, 0, &msglen),
+              SQL_NO_DATA_FOUND);
+#endif
+
+  ok_stmt(hstmt, SQLGetDiagRecW(SQL_HANDLE_STMT, hstmt1, 1, sqlstate,
+                                &native_err, message, 255, &msglen));
+
+  expect_stmt(hstmt1, SQLGetDiagRecW(SQL_HANDLE_STMT, hstmt1, 1, sqlstate,
+                                     &native_err, message, 0, &msglen),
+              SQL_SUCCESS_WITH_INFO);
+
+  expect_stmt(hstmt1, SQLGetDiagRecW(SQL_HANDLE_STMT, hstmt1, 1, sqlstate,
+                                     &native_err, message, 10, &msglen),
+              SQL_SUCCESS_WITH_INFO);
+
+  expect_stmt(hstmt1, SQLGetDiagRecW(SQL_HANDLE_STMT, hstmt1, 1, sqlstate,
+                                     &native_err, message, -1, &msglen),
+              SQL_ERROR);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlconnect)
   ADD_TEST(sqlprepare)
@@ -580,6 +631,7 @@ BEGIN_TESTS
   ADD_TEST(sqlcolattribute)
   ADD_TEST(sqldescribecol)
   ADD_TEST(sqlgetconnectattr)
+  ADD_TEST(sqlgetdiagrec)
 END_TESTS
 
 

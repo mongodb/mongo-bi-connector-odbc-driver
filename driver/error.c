@@ -25,15 +25,6 @@
   @brief Error handling functions.
 */
 
-/***************************************************************************
- * The following ODBC APIs are implemented in this file:		   *
- *									   *
- *   SQLGetDiagField	 (ISO 92)					   *
- *   SQLGetDiagRec	 (ISO 92)					   *
- *   SQLError		 (ODBC, Deprecated)				   *
- *									   *
- ****************************************************************************/
-
 #include "driver.h"
 #include "mysqld_error.h"
 #include "errmsg.h"
@@ -381,82 +372,59 @@ SQLRETURN set_handle_error(SQLSMALLINT HandleType, SQLHANDLE handle,
 }
 
 
-/*
-  @type    : myodbc3 internal
-  @purpose : returns the current values of multiple fields of a diagnostic
-  record that contains error, warning, and status information.
-  Unlike SQLGetDiagField, which returns one diagnostic field
-  per call, SQLGetDiagRec returns several commonly used fields
-  of a diagnostic record, including the SQLSTATE, the native
-  error code, and the diagnostic message text
+/**
 */
-
-SQLRETURN my_SQLGetDiagRec(SQLSMALLINT HandleType,
-                           SQLHANDLE Handle,
-                           SQLSMALLINT RecNumber,
-                           SQLCHAR *Sqlstate,
-                           SQLINTEGER  *NativeErrorPtr,
-                           SQLCHAR *MessageText,
-                           SQLSMALLINT BufferLength,
-                           SQLSMALLINT *TextLengthPtr)
+SQLRETURN SQL_API
+MySQLGetDiagRec(SQLSMALLINT handle_type, SQLHANDLE handle, SQLSMALLINT record,
+                SQLCHAR **sqlstate, SQLINTEGER *native, SQLCHAR **message)
 {
-    char *errmsg,tmp_state[6];
-    SQLSMALLINT tmp_size;
-    SQLINTEGER  tmp_error;
+  MYERROR *error;
+  SQLINTEGER tmp_native;
 
-    if ( !TextLengthPtr )
-        TextLengthPtr= &tmp_size;
+  if (!native)
+    native= &tmp_native;
 
-    if ( !Sqlstate )
-        Sqlstate= (SQLCHAR*) tmp_state;
+  if (!handle || record <= 0)
+    return SQL_ERROR;
 
-    if ( !NativeErrorPtr )
-        NativeErrorPtr= &tmp_error;
+  /*
+    Currently we are not supporting error list, so
+    if RecNumber > 1, return no data found
+  */
+  if (record > 1)
+    return SQL_NO_DATA_FOUND;
 
-    if ( RecNumber <= 0 || BufferLength < 0 || !Handle )
-        return SQL_ERROR;
+  switch (handle_type)
+  {
+  case SQL_HANDLE_STMT:
+    error= &((STMT *)handle)->error;
+    break;
 
-    /*
-      Currently we are not supporting error list, so
-      if RecNumber > 1, return no data found
-    */
+  case SQL_HANDLE_DBC:
+    error= &((DBC *)handle)->error;
+    break;
 
-    if ( RecNumber > 1 )
-        return SQL_NO_DATA_FOUND;
+  case SQL_HANDLE_ENV:
+    error= &((ENV *)handle)->error;
+    break;
 
-    switch ( HandleType )
-    {
-        case SQL_HANDLE_STMT:
-            errmsg= ((STMT FAR*) Handle)->error.message;
-            strmov((char*) Sqlstate,((STMT FAR*) Handle)->error.sqlstate);
-            *NativeErrorPtr= ((STMT FAR*) Handle)->error.native_error;
-            break;
+  default:
+    return SQL_INVALID_HANDLE;
+  }
 
-        case SQL_HANDLE_DBC:
-            errmsg= ((DBC FAR*) Handle)->error.message;
-            strmov((char*) Sqlstate,((DBC FAR*) Handle)->error.sqlstate);
-            *NativeErrorPtr= ((DBC FAR*) Handle)->error.native_error;
+  if (!error->message)
+  {
+    *message= (SQLCHAR *)"";
+    *sqlstate= (SQLCHAR *)"00000";
+    *native= 0;
+    return SQL_NO_DATA_FOUND;
+  }
 
-            break;
+  *message= (SQLCHAR *)error->message;
+  *sqlstate= (SQLCHAR *)error->sqlstate;
+  *native= error->native_error;
 
-        case SQL_HANDLE_ENV:
-            errmsg= ((ENV FAR*) Handle)->error.message;
-            strmov((char*) Sqlstate,((ENV FAR*) Handle)->error.sqlstate);
-            *NativeErrorPtr= ((ENV FAR*) Handle)->error.native_error;
-            break;
-
-        default:
-            return SQL_INVALID_HANDLE;
-    }
-    if ( !errmsg || !errmsg[0] )
-    {
-        *TextLengthPtr= 0;
-        strmov((char*) Sqlstate, "00000");
-        return SQL_NO_DATA_FOUND;
-    }
-
-    return copy_str_data(HandleType, Handle, MessageText, BufferLength,
-                         TextLengthPtr, (char *)errmsg);
+  return SQL_SUCCESS;
 }
 
 
@@ -646,68 +614,6 @@ SQLRETURN SQL_API SQLGetDiagField(SQLSMALLINT HandleType,
 
         default:
             return SQL_ERROR;
-    }
-    return error;
-}
-
-
-/*
-  @type    : ODBC 3.0 API
-  @purpose : returns the current diagnostic record information
-*/
-
-SQLRETURN SQL_API SQLGetDiagRec(SQLSMALLINT HandleType,
-                                SQLHANDLE   Handle,
-                                SQLSMALLINT RecNumber,
-                                SQLCHAR     *Sqlstate,
-                                SQLINTEGER  *NativeErrorPtr,
-                                SQLCHAR     *MessageText,
-                                SQLSMALLINT BufferLength,
-                                SQLSMALLINT *TextLengthPtr)
-{
-    return my_SQLGetDiagRec(HandleType, Handle, RecNumber, Sqlstate,
-                            NativeErrorPtr, MessageText, BufferLength,
-                            TextLengthPtr);
-}
-
-
-/*
-  @type    : ODBC 1.0 API - depricated
-  @purpose : returns error or status information
-*/
-
-SQLRETURN SQL_API SQLError(SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt,
-                           SQLCHAR FAR    *szSqlState,
-                           SQLINTEGER FAR *pfNativeError,
-                           SQLCHAR FAR    *szErrorMsg,
-                           SQLSMALLINT    cbErrorMsgMax,
-                           SQLSMALLINT FAR *pcbErrorMsg)
-{
-    SQLRETURN error= SQL_INVALID_HANDLE;
-
-    if ( hstmt )
-    {
-        error= my_SQLGetDiagRec(SQL_HANDLE_STMT,hstmt,1,szSqlState,
-                                pfNativeError, szErrorMsg,
-                                cbErrorMsgMax,pcbErrorMsg);
-        if ( error == SQL_SUCCESS )
-            CLEAR_STMT_ERROR(hstmt);
-    }
-    else if ( hdbc )
-    {
-        error= my_SQLGetDiagRec(SQL_HANDLE_DBC,hdbc,1,szSqlState,
-                                pfNativeError, szErrorMsg,
-                                cbErrorMsgMax,pcbErrorMsg);
-        if ( error == SQL_SUCCESS )
-            CLEAR_DBC_ERROR(hdbc);
-    }
-    else if ( henv )
-    {
-        error= my_SQLGetDiagRec(SQL_HANDLE_ENV,henv,1,szSqlState,
-                                pfNativeError, szErrorMsg,
-                                cbErrorMsgMax,pcbErrorMsg);
-        if ( error == SQL_SUCCESS )
-            CLEAR_ENV_ERROR(henv);
     }
     return error;
 }

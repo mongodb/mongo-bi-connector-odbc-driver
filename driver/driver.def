@@ -112,9 +112,11 @@ SQLCloseCursor
 SQLConnectW
 SQLDescribeColW
 SQLDriverConnectW
+SQLErrorW
 SQLExecDirectW
 SQLGetConnectAttrW
 SQLGetConnectOptionW
+SQLGetDiagRecW
 SQLGetInfoW
 SQLGetStmtAttrW
 SQLNativeSqlW
