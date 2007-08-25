@@ -908,7 +908,6 @@ char SS_type[10];
 uint SQLSTAT_order[]={2,3,5,7,8,9,10};
 char *SQLSTAT_values[]={NullS,NullS,"","",NullS,"",SS_type,"","","","",NullS,NullS};
 
-#if MYSQL_VERSION_ID >= 40100
 MYSQL_FIELD SQLSTAT_fields[]=
 {
     {"TABLE_CAT",         NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
@@ -925,24 +924,6 @@ MYSQL_FIELD SQLSTAT_fields[]=
     {"PAGES",             NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,9,9, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
     {"FILTER_CONDITION",  NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,10,10, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
 };
-#else
-MYSQL_FIELD SQLSTAT_fields[]=
-{
-    {"TABLE_CAT",         "MySQL_Stat",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",       "MySQL_Stat",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_NAME",        "MySQL_Stat",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0, MYSQL_TYPE_VAR_STRING},
-    {"NON_UNIQUE",        "MySQL_Stat",NullS,NullS,NullS,1,1,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
-    {"INDEX_QUALIFIER",   "MySQL_Stat",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"INDEX_NAME",        "MySQL_Stat",NullS,NullS,NullS,NAME_LEN,NAME_LEN,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TYPE",              "MySQL_Stat",NullS,NullS,NullS,1,1,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
-    {"ORDINAL_POSITION",  "MySQL_Stat",NullS,NullS,NullS,1,2,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
-    {"COLUMN_NAME",       "MySQL_Stat",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
-    {"ASC_OR_DESC",       "MySQL_Stat",NullS,NullS,NullS,1,1,0,0,MYSQL_TYPE_VAR_STRING},
-    {"CARDINALITY",       "MySQL_Stat",NullS,NullS,NullS,11,11,0,0,MYSQL_TYPE_LONG},
-    {"PAGES",             "MySQL_Stat",NullS,NullS,NullS,9,9,0,0,MYSQL_TYPE_LONG},
-    {"FILTER_CONDITION",  "MySQL_Stat",NullS,NullS,NullS,10,10,0,0,MYSQL_TYPE_VAR_STRING},
-};
-#endif
 
 const uint SQLSTAT_FIELDS= array_elements(SQLSTAT_fields);
 
@@ -976,18 +957,14 @@ static MYSQL_RES *mysql_list_dbkeys(DBC FAR    *dbc,
        information as a result set.
 */
 
-SQLRETURN SQL_API SQLStatistics(SQLHSTMT hstmt,
-                                SQLCHAR FAR *szTableQualifier,
-                                SQLSMALLINT cbTableQualifier,
-                                SQLCHAR FAR *szTableOwner
-                                  __attribute__((unused)),
-                                SQLSMALLINT cbTableOwner
-                                  __attribute__((unused)),
-                                SQLCHAR FAR *szTableName,
-                                SQLSMALLINT cbTableName,
-                                SQLUSMALLINT fUnique,
-                                SQLUSMALLINT fAccuracy
-                                  __attribute__((unused)))
+SQLRETURN SQL_API
+MySQLStatistics(SQLHSTMT hstmt,
+                SQLCHAR *szTableQualifier, SQLSMALLINT cbTableQualifier,
+                SQLCHAR *szTableOwner __attribute__((unused)),
+                SQLSMALLINT cbTableOwner __attribute__((unused)),
+                SQLCHAR *szTableName, SQLSMALLINT cbTableName,
+                SQLUSMALLINT fUnique,
+                SQLUSMALLINT fAccuracy __attribute__((unused)))
 {
     STMT FAR  *stmt= (STMT FAR*) hstmt;
     MYSQL FAR *mysql= &stmt->dbc->mysql;

@@ -133,6 +133,7 @@ SQLSetConnectOptionW
 SQLSetCursorNameW
 SQLSetStmtAttrW
 SQLSpecialColumnsW
+SQLStatisticsW
 SQLTablesW
 ;
 DllMain

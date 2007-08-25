@@ -470,6 +470,11 @@ SQLRETURN SQL_API MySQLSpecialColumns(SQLHSTMT hstmt, SQLUSMALLINT type,
                                       SQLCHAR *table, SQLSMALLINT table_len,
                                       SQLUSMALLINT scope,
                                       SQLUSMALLINT nullable);
+SQLRETURN SQL_API MySQLStatistics(SQLHSTMT hstmt,
+                                  SQLCHAR *catalog, SQLSMALLINT catalog_len,
+                                  SQLCHAR *schema, SQLSMALLINT schema_len,
+                                  SQLCHAR *table, SQLSMALLINT table_len,
+                                  SQLUSMALLINT unique, SQLUSMALLINT accuracy);
 SQLRETURN SQL_API MySQLTables(SQLHSTMT hstmt,
                               SQLCHAR *catalog, SQLSMALLINT catalog_len,
                               SQLCHAR *schema, SQLSMALLINT schema_len,
