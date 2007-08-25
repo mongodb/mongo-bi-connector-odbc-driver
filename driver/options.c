@@ -217,7 +217,7 @@ get_constmt_attr(SQLSMALLINT  HandleType,
             break;
 
         case SQL_ATTR_ROW_BIND_OFFSET_PTR:
-            *((SQLLEN *) ValuePtr)= options->bind_offset;
+            *((SQLLEN **) ValuePtr)= options->bind_offset;
             break;
 
         case SQL_ATTR_ROW_OPERATION_PTR: /* need to support this ....*/
@@ -406,7 +406,6 @@ MySQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attrib, SQLCHAR **char_attr,
 {
   DBC *dbc= (DBC *)hdbc;
   SQLRETURN result= SQL_SUCCESS;
-  SQLINTEGER len;
   SQLPOINTER vparam= 0;
 
   switch (attrib) {

@@ -696,6 +696,7 @@ SQLGetDiagRecImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
                   SQLINTEGER *native_error, SQLCHAR *message,
                   SQLSMALLINT message_max, SQLSMALLINT *message_len)
 {
+  SQLRETURN rc;
   DBC *dbc;
   SQLCHAR *msg_value= NULL, *sqlstate_value= NULL;
   SQLINTEGER len= SQL_NTS;
@@ -717,8 +718,8 @@ SQLGetDiagRecImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
   if (message_max < 0)
     return SQL_ERROR;
 
-  SQLRETURN rc= MySQLGetDiagRec(handle_type, handle, record, &sqlstate_value,
-                                native_error, &msg_value);
+  rc= MySQLGetDiagRec(handle_type, handle, record, &sqlstate_value,
+                      native_error, &msg_value);
 
   if (msg_value)
   {

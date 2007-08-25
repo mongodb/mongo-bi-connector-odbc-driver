@@ -269,7 +269,7 @@ typedef struct pk_column
 
 typedef struct cursor
 {
-  const char  *name;
+  char        *name;
   uint	       pk_count;
   my_bool      pk_validated;
   MY_PK_COLUMN pkcol[MY_MAX_PK_PARTS];

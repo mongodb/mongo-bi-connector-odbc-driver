@@ -336,7 +336,7 @@ SQLColAttributeWImpl(SQLHSTMT hstmt, SQLUSMALLINT column,
       rc= set_error(stmt, MYERR_01004, NULL, 0);
 
     if (char_attr_len)
-      *char_attr_len= len;
+      *char_attr_len= (SQLSMALLINT)len;
 
     if (char_attr_max > 0)
     {
@@ -375,7 +375,7 @@ SQLColumnPrivilegesW(SQLHSTMT hstmt,
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8, *column8;
   DBC *dbc= ((STMT *)hstmt)->dbc;
-  SQLINTEGER len= SQL_NTS;;
+  SQLINTEGER len= SQL_NTS;
   uint errors= 0;
 
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
@@ -416,7 +416,7 @@ SQLColumnsW(SQLHSTMT hstmt,
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8, *column8;
   DBC *dbc= ((STMT *)hstmt)->dbc;
-  SQLINTEGER len= SQL_NTS;;
+  SQLINTEGER len= SQL_NTS;
   uint errors= 0;
 
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
@@ -460,7 +460,8 @@ SQLConnectW(SQLHDBC hdbc, SQLWCHAR *dsn, SQLSMALLINT dsn_len_in,
 
   ((DBC *)hdbc)->unicode= TRUE; /* Hooray, a Unicode connection! */
 
-  rc= MySQLConnect(hdbc, dsn8, dsn_len, user8, user_len, auth8, auth_len);
+  rc= MySQLConnect(hdbc, dsn8, (SQLSMALLINT)dsn_len,
+                   user8, (SQLSMALLINT)user_len, auth8, (SQLSMALLINT)auth_len);
 
   x_free(dsn8);
   x_free(user8);
@@ -624,7 +625,7 @@ SQLForeignKeysW(SQLHSTMT hstmt,
   SQLCHAR *pk_catalog8, *pk_schema8, *pk_table8,
           *fk_catalog8, *fk_schema8, *fk_table8;
   DBC *dbc= ((STMT *)hstmt)->dbc;
-  SQLINTEGER len= SQL_NTS;;
+  SQLINTEGER len= SQL_NTS;
   uint errors= 0;
 
   pk_catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, pk_catalog, &len,
@@ -837,6 +838,7 @@ SQLGetDiagRecWImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
                    SQLINTEGER *native_error, SQLWCHAR *message,
                    SQLSMALLINT message_max, SQLSMALLINT *message_len)
 {
+  SQLRETURN rc;
   DBC *dbc;
   SQLCHAR *msg_value= NULL, *sqlstate_value= NULL;
   SQLINTEGER len= SQL_NTS;
@@ -857,8 +859,8 @@ SQLGetDiagRecWImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
   if (message_max < 0)
     return SQL_ERROR;
 
-  SQLRETURN rc= MySQLGetDiagRec(handle_type, handle, record, &sqlstate_value,
-                                native_error, &msg_value);
+  rc= MySQLGetDiagRec(handle_type, handle, record, &sqlstate_value,
+                      native_error, &msg_value);
 
   if (msg_value)
   {
@@ -1015,7 +1017,7 @@ SQLPrimaryKeysW(SQLHSTMT hstmt,
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8;
   DBC *dbc= ((STMT *)hstmt)->dbc;
-  SQLINTEGER len= SQL_NTS;;
+  SQLINTEGER len= SQL_NTS;
   uint errors= 0;
 
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
@@ -1050,7 +1052,7 @@ SQLProceduresW(SQLHSTMT hstmt,
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *proc8;
   DBC *dbc= ((STMT *)hstmt)->dbc;
-  SQLINTEGER len= SQL_NTS;;
+  SQLINTEGER len= SQL_NTS;
   uint errors= 0;
 
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
@@ -1119,7 +1121,7 @@ SQLSetCursorNameW(SQLHSTMT hstmt, SQLWCHAR *name, SQLSMALLINT name_len)
   SQLCHAR *name_char= sqlwchar_as_sqlchar(dbc->cxn_charset_info,
                                           name, &len, &errors);
 
-  rc= MySQLSetCursorName(hstmt, name_char, len);
+  rc= MySQLSetCursorName(hstmt, name_char, (SQLSMALLINT)len);
 
   x_free(name_char);
 
@@ -1163,7 +1165,7 @@ SQLSpecialColumnsW(SQLHSTMT hstmt, SQLUSMALLINT type,
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8;
   DBC *dbc= ((STMT *)hstmt)->dbc;
-  SQLINTEGER len= SQL_NTS;;
+  SQLINTEGER len= SQL_NTS;
   uint errors= 0;
 
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
@@ -1200,7 +1202,7 @@ SQLStatisticsW(SQLHSTMT hstmt,
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8;
   DBC *dbc= ((STMT *)hstmt)->dbc;
-  SQLINTEGER len= SQL_NTS;;
+  SQLINTEGER len= SQL_NTS;
   uint errors= 0;
 
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
@@ -1235,7 +1237,7 @@ SQLTablePrivilegesW(SQLHSTMT hstmt,
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8;
   DBC *dbc= ((STMT *)hstmt)->dbc;
-  SQLINTEGER len= SQL_NTS;;
+  SQLINTEGER len= SQL_NTS;
   uint errors= 0;
 
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
@@ -1271,7 +1273,7 @@ SQLTablesW(SQLHSTMT hstmt,
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8, *type8;
   DBC *dbc= ((STMT *)hstmt)->dbc;
-  SQLINTEGER len= SQL_NTS;;
+  SQLINTEGER len= SQL_NTS;
   uint errors= 0;
 
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);

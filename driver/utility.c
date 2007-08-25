@@ -307,7 +307,8 @@ outp:
 SQLRETURN
 copy_binary_result(STMT *stmt,
                    SQLCHAR *result, SQLLEN result_bytes, SQLLEN *avail_bytes,
-                   MYSQL_FIELD *field, char *src, unsigned long src_bytes)
+                   MYSQL_FIELD *field __attribute__((unused)),
+                   char *src, unsigned long src_bytes)
 {
   SQLRETURN rc= SQL_SUCCESS;
   ulong copy_bytes;
@@ -333,7 +334,7 @@ copy_binary_result(STMT *stmt,
       return SQL_NO_DATA_FOUND;
   }
 
-  copy_bytes= min(result_bytes, src_bytes);
+  copy_bytes= min((unsigned long)result_bytes, src_bytes);
 
   if (result)
     memcpy(result, src, copy_bytes);
@@ -343,7 +344,7 @@ copy_binary_result(STMT *stmt,
 
   stmt->getdata.source+= copy_bytes;
 
-  if (src_bytes > result_bytes)
+  if (src_bytes > (unsigned long)result_bytes)
   {
     set_stmt_error(stmt, "01004", NULL, 0);
     rc= SQL_SUCCESS_WITH_INFO;
@@ -440,8 +441,8 @@ copy_ansi_result(STMT *stmt,
   */
   if (stmt->getdata.latest_bytes)
   {
-    uint new_bytes= min(stmt->getdata.latest_bytes - stmt->getdata.latest_used,
-                        result_end - result);
+    int new_bytes= min(stmt->getdata.latest_bytes - stmt->getdata.latest_used,
+                       result_end - result);
     memcpy(result, stmt->getdata.latest + stmt->getdata.latest_used, new_bytes);
     if (new_bytes + stmt->getdata.latest_used == stmt->getdata.latest_bytes)
       stmt->getdata.latest_bytes= 0;
@@ -568,7 +569,7 @@ convert_to_out:
   if (avail_bytes)
     *avail_bytes= stmt->getdata.dst_bytes - stmt->getdata.dst_offset;
 
-  stmt->getdata.dst_offset+= min(result_bytes ? result_bytes - 1 : 0,
+  stmt->getdata.dst_offset+= min((ulong)(result_bytes ? result_bytes - 1 : 0),
                                  used_bytes);
 
   /* Did we truncate the data? */
@@ -627,7 +628,7 @@ copy_wchar_result(STMT *stmt,
 
   /* Apply max length to source data, if one was specified. */
   if (stmt->stmt_options.max_length &&
-      src_bytes > stmt->stmt_options.max_length)
+      (ulong)src_bytes > stmt->stmt_options.max_length)
     src_bytes= stmt->stmt_options.max_length;
   src_end= src + src_bytes;
 
@@ -779,7 +780,7 @@ convert_to_out:
   if (avail_len)
     *avail_len= stmt->getdata.dst_bytes - stmt->getdata.dst_offset;
 
-  stmt->getdata.dst_offset+= min(result_len ? result_len - 1 : 0,
+  stmt->getdata.dst_offset+= min((ulong)(result_len ? result_len - 1 : 0),
                                  used_chars);
 
   /* Did we truncate the data? */
@@ -807,8 +808,9 @@ convert_to_out:
 
 SQLRETURN copy_binhex_result(STMT *stmt,
                              SQLCHAR *rgbValue, SQLINTEGER cbValueMax,
-                             SQLLEN *pcbValue, MYSQL_FIELD *field, char *src,
-                             ulong src_length)
+                             SQLLEN *pcbValue,
+                             MYSQL_FIELD *field __attribute__((unused)),
+                             char *src, ulong src_length)
 {
   /** @todo padding of BINARY */
     char *dst= (char*) rgbValue;
@@ -1207,8 +1209,6 @@ SQLLEN get_decimal_digits(STMT *stmt __attribute__((unused)),
 SQLLEN get_transfer_octet_length(STMT *stmt __attribute__((unused)),
                                  MYSQL_FIELD *field)
 {
-  CHARSET_INFO *charset= get_charset(field->charsetnr, MYF(0));
-  unsigned int mbmaxlen= charset ? charset->mbmaxlen : 1;
   SQLLEN length= field->length;
 
   switch (field->type) {

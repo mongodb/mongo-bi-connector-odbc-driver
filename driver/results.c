@@ -548,12 +548,12 @@ MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
     else
     {
       strxmov(tmp, field->table, ".", field->name, NullS);
-      *name= tmp;
+      *name= (SQLCHAR *)tmp;
       *need_free= 1;
     }
   }
   else
-    *name= field->name;
+    *name= (SQLCHAR *)field->name;
 
   return SQL_SUCCESS;
 }

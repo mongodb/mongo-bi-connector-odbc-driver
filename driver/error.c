@@ -536,6 +536,8 @@ MySQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle, SQLSMALLINT record,
         sqlstate= dbc->error.sqlstate;
       else if (handle_type == SQL_HANDLE_ENV)
         sqlstate= env->error.sqlstate;
+      else
+        return SQL_ERROR;
 
       if (sqlstate && sqlstate[0] == 'I' && sqlstate[1] == 'M')
         *char_value= (SQLCHAR *)"ODBC 3.0";
@@ -555,11 +557,11 @@ MySQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle, SQLSMALLINT record,
       return SQL_ERROR;
 
     if (handle_type == SQL_HANDLE_STMT)
-      *char_value= stmt->dbc->dsn ? stmt->dbc->dsn : "";
+      *char_value= (SQLCHAR *)(stmt->dbc->dsn ? stmt->dbc->dsn : "");
     else if (handle_type == SQL_HANDLE_DBC)
-      *char_value= dbc->dsn ? dbc->dsn : "";
+      *char_value= (SQLCHAR *)(dbc->dsn ? dbc->dsn : "");
     else
-      *char_value= "";
+      *char_value= (SQLCHAR *)"";
     return SQL_SUCCESS;
 
   case SQL_DIAG_MESSAGE_TEXT:
@@ -572,18 +574,18 @@ MySQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle, SQLSMALLINT record,
     else if (handle_type == SQL_HANDLE_ENV)
       *char_value= (SQLCHAR *)env->error.message;
     if (!*char_value)
-      *char_value= "";
+      *char_value= (SQLCHAR *)"";
     return SQL_SUCCESS;
 
   case SQL_DIAG_NATIVE:
     if (record <= 0)
       return SQL_ERROR;
     if (handle_type == SQL_HANDLE_STMT)
-      *(SQLINTEGER *)num_value= (SQLCHAR *)stmt->error.native_error;
+      *(SQLINTEGER *)num_value= stmt->error.native_error;
     else if (handle_type == SQL_HANDLE_DBC)
-      *(SQLINTEGER *)num_value= (SQLCHAR *)dbc->error.native_error;
+      *(SQLINTEGER *)num_value= dbc->error.native_error;
     else if (handle_type == SQL_HANDLE_ENV)
-      *(SQLINTEGER *)num_value= (SQLCHAR *)env->error.native_error;
+      *(SQLINTEGER *)num_value= env->error.native_error;
     return SQL_SUCCESS;
 
   case SQL_DIAG_ROW_NUMBER:
@@ -596,11 +598,11 @@ MySQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle, SQLSMALLINT record,
     if (record <= 0)
       return SQL_ERROR;
     if (handle_type == SQL_HANDLE_STMT)
-      *char_value= stmt->dbc->server ? stmt->dbc->server : "";
+      *char_value= (SQLCHAR *)(stmt->dbc->server ? stmt->dbc->server : "");
     else if (handle_type == SQL_HANDLE_DBC)
-      *char_value= dbc->server ? dbc->server : "";
+      *char_value= (SQLCHAR *)(dbc->server ? dbc->server : "");
     else
-      *char_value= "";
+      *char_value= (SQLCHAR *)"";
     return SQL_SUCCESS;
 
   case SQL_DIAG_SQLSTATE:
@@ -613,7 +615,7 @@ MySQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle, SQLSMALLINT record,
     else if (handle_type == SQL_HANDLE_ENV)
       *char_value= (SQLCHAR *)env->error.sqlstate;
     if (!*char_value)
-      *char_value= "";
+      *char_value= (SQLCHAR *)"";
     return SQL_SUCCESS;
 
   case SQL_DIAG_SUBCLASS_ORIGIN:
@@ -629,6 +631,8 @@ MySQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle, SQLSMALLINT record,
         sqlstate= dbc->error.sqlstate;
       else if (handle_type == SQL_HANDLE_ENV)
         sqlstate= env->error.sqlstate;
+      else
+        return SQL_ERROR;
 
       if (is_odbc3_subclass(sqlstate))
         *char_value= (SQLCHAR *)"ODBC 3.0";
