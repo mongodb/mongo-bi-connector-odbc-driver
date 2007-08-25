@@ -1384,7 +1384,6 @@ SQLSpecialColumns
 ****************************************************************************
 */
 
-#if MYSQL_VERSION_ID >= 40100
 MYSQL_FIELD SQLSPECIALCOLUMNS_fields[]=
 {
     {"SCOPE",         NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,5,5, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
@@ -1396,19 +1395,6 @@ MYSQL_FIELD SQLSPECIALCOLUMNS_fields[]=
     {"DECIMAL_DIGITS",NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,3,3, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
     {"PSEUDO_COLUMN", NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,3,3, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT}
 };
-#else
-MYSQL_FIELD SQLSPECIALCOLUMNS_fields[]=
-{
-    {"SCOPE",         "MySQL_SpecialColumns",NullS,NullS,NullS,5,5,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
-    {"COLUMN_NAME",   "MySQL_SpecialColumns",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
-    {"DATA_TYPE",     "MySQL_SpecialColumns",NullS,NullS,NullS,5,5,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
-    {"TYPE_NAME",     "MySQL_SpecialColumns",NullS,NullS,NullS,20,20,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
-    {"COLUMN_SIZE",   "MySQL_SpecialColumns",NullS,NullS,NullS,7,7,0,0,MYSQL_TYPE_LONG},
-    {"BUFFER_LENGTH", "MySQL_SpecialColumns",NullS,NullS,NullS,7,7,0,0,MYSQL_TYPE_LONG},
-    {"DECIMAL_DIGITS","MySQL_SpecialColumns",NullS,NullS,NullS,3,3,0,0,MYSQL_TYPE_SHORT},
-    {"PSEUDO_COLUMN", "MySQL_SpecialColumns",NullS,NullS,NullS,3,3,0,0,MYSQL_TYPE_SHORT}
-};
-#endif
 
 char *SQLSPECIALCOLUMNS_values[]= {
     0,NULL,0,NULL,0,0,0,0
@@ -1427,22 +1413,16 @@ const uint SQLSPECIALCOLUMNS_FIELDS= array_elements(SQLSPECIALCOLUMNS_fields);
          row is updated by a transaction
 */
 
-SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
-                                    SQLUSMALLINT fColType,
-                                    SQLCHAR FAR *szTableQualifier,
-                                    SQLSMALLINT cbTableQualifier,
-                                    SQLCHAR FAR *szTableOwner
-                                      __attribute__((unused)),
-                                    SQLSMALLINT cbTableOwner
-                                      __attribute__((unused)),
-                                    SQLCHAR FAR *szTableName,
-                                    SQLSMALLINT cbTableName,
-                                    SQLUSMALLINT fScope
-                                      __attribute__((unused)),
-                                    SQLUSMALLINT fNullable
-                                      __attribute__((unused)))
-{  
-    STMT FAR    *stmt=(STMT FAR*) hstmt;
+SQLRETURN SQL_API
+MySQLSpecialColumns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
+                    SQLCHAR *szTableQualifier, SQLSMALLINT cbTableQualifier,
+                    SQLCHAR *szTableOwner __attribute__((unused)),
+                    SQLSMALLINT cbTableOwner __attribute__((unused)),
+                    SQLCHAR *szTableName, SQLSMALLINT cbTableName,
+                    SQLUSMALLINT fScope __attribute__((unused)),
+                    SQLUSMALLINT fNullable __attribute__((unused)))
+{
+    STMT        *stmt=(STMT *) hstmt;
     char        buff[80];
     char        **row;
     MYSQL_RES   *result;
@@ -1600,6 +1580,7 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
     mysql_link_fields(stmt,SQLSPECIALCOLUMNS_fields,SQLSPECIALCOLUMNS_FIELDS);
     return SQL_SUCCESS;
 }
+
 
 /*
 ****************************************************************************

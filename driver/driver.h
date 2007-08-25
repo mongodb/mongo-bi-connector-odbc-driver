@@ -447,6 +447,12 @@ SQLRETURN SQL_API MySQLSetCursorName(SQLHSTMT hstmt, SQLCHAR *name,
                                      SQLSMALLINT len);
 SQLRETURN SQL_API MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER attribute,
                                    SQLPOINTER value, SQLINTEGER len);
+SQLRETURN SQL_API MySQLSpecialColumns(SQLHSTMT hstmt, SQLUSMALLINT type,
+                                      SQLCHAR *catalog, SQLSMALLINT catalog_len,
+                                      SQLCHAR *schema, SQLSMALLINT schema_len,
+                                      SQLCHAR *table, SQLSMALLINT table_len,
+                                      SQLUSMALLINT scope,
+                                      SQLUSMALLINT nullable);
 SQLRETURN SQL_API MySQLTables(SQLHSTMT hstmt,
                               SQLCHAR *catalog, SQLSMALLINT catalog_len,
                               SQLCHAR *schema, SQLSMALLINT schema_len,

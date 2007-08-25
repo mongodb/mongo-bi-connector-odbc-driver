@@ -901,6 +901,61 @@ SQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER attribute,
   return MySQLSetStmtAttr(hstmt, attribute, value, value_len);
 }
 
+
+SQLRETURN SQL_API
+SQLSpecialColumns(SQLHSTMT hstmt, SQLUSMALLINT type,
+                  SQLCHAR *catalog, SQLSMALLINT catalog_len,
+                  SQLCHAR *schema, SQLSMALLINT schema_len,
+                  SQLCHAR *table, SQLSMALLINT table_len,
+                  SQLUSMALLINT scope, SQLUSMALLINT nullable)
+{
+  SQLRETURN rc;
+  DBC *dbc= ((STMT *)hstmt)->dbc;
+
+  if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+  {
+    SQLINTEGER len= SQL_NTS;
+    uint errors= 0;
+
+    if (catalog)
+    {
+      catalog= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                  catalog, &len, &errors);
+      catalog_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (schema)
+    {
+      schema= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                 schema, &len, &errors);
+      schema_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (table)
+    {
+      table= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                table, &len, &errors);
+      table_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+  }
+
+  rc= MySQLSpecialColumns(hstmt, type, catalog, catalog_len, schema, schema_len,
+                          table, table_len, scope, nullable);
+
+  if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+  {
+    x_free(catalog);
+    x_free(schema);
+    x_free(table);
+  }
+
+  return rc;
+}
+
+
 SQLRETURN SQL_API
 SQLTables(SQLHSTMT hstmt,
           SQLCHAR *catalog, SQLSMALLINT catalog_len,
@@ -1044,17 +1099,6 @@ SQLProcedures(SQLHSTMT hstmt,
 SQLRETURN SQL_API
 SQLSetDescField(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT field,
                 SQLPOINTER value, SQLINTEGER value_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLSpecialColumns(SQLHSTMT hstmt, SQLUSMALLINT type,
-                  SQLCHAR *catalog, SQLSMALLINT catalog_len,
-                  SQLCHAR *schema, SQLSMALLINT schema_len,
-                  SQLCHAR *table, SQLSMALLINT table_len,
-                  SQLUSMALLINT scope, SQLUSMALLINT nullable)
 {
   NOT_IMPLEMENTED;
 }
