@@ -1956,15 +1956,12 @@ SQLProcesures and SQLProcedureColumns
   @param[in] szProcName       Pattern of procedure names to fetch
   @param[in] cbProcName       Length of procedure name
 */
-SQLRETURN SQL_API SQLProcedures(SQLHSTMT     hstmt,
-                                SQLCHAR     *szCatalogName,
-                                SQLSMALLINT  cbCatalogName,
-                                SQLCHAR     *szSchemaName
-                                  __attribute__((unused)),
-                                SQLSMALLINT  cbSchemaName
-                                  __attribute__((unused)),
-                                SQLCHAR     *szProcName,
-                                SQLSMALLINT  cbProcName)
+SQLRETURN SQL_API
+MySQLProcedures(SQLHSTMT hstmt,
+                SQLCHAR *szCatalogName, SQLSMALLINT cbCatalogName,
+                SQLCHAR *szSchemaName __attribute__((unused)),
+                SQLSMALLINT cbSchemaName __attribute__((unused)),
+                SQLCHAR *szProcName, SQLSMALLINT cbProcName)
 {
   SQLRETURN rc;
   STMT *stmt= (STMT *)hstmt;

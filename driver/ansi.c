@@ -949,6 +949,59 @@ SQLPrimaryKeys(SQLHSTMT hstmt,
 
 
 SQLRETURN SQL_API
+SQLProcedures(SQLHSTMT hstmt,
+              SQLCHAR *catalog, SQLSMALLINT catalog_len,
+              SQLCHAR *schema, SQLSMALLINT schema_len,
+              SQLCHAR *proc, SQLSMALLINT proc_len)
+{
+  SQLRETURN rc;
+  DBC *dbc= ((STMT *)hstmt)->dbc;
+
+  if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+  {
+    SQLINTEGER len= SQL_NTS;
+    uint errors= 0;
+
+    if (catalog)
+    {
+      catalog= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                  catalog, &len, &errors);
+      catalog_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (schema)
+    {
+      schema= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                 schema, &len, &errors);
+      schema_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (proc)
+    {
+      proc= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                proc, &len, &errors);
+      proc_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+  }
+
+  rc= MySQLProcedures(hstmt, catalog, catalog_len, schema, schema_len,
+                      proc, proc_len);
+
+  if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+  {
+    x_free(catalog);
+    x_free(schema);
+    x_free(proc);
+  }
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
 SQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER attribute,
                   SQLPOINTER value, SQLINTEGER value_len)
 {
@@ -1202,16 +1255,6 @@ SQLProcedureColumns(SQLHSTMT hstmt,
                     SQLCHAR *schema, SQLSMALLINT schema_len,
                     SQLCHAR *proc, SQLSMALLINT proc_len,
                     SQLCHAR *column, SQLSMALLINT column_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLProcedures(SQLHSTMT hstmt,
-              SQLCHAR *catalog, SQLSMALLINT catalog_len,
-              SQLCHAR *schema, SQLSMALLINT schema_len,
-              SQLCHAR *proc, SQLSMALLINT proc_len)
 {
   NOT_IMPLEMENTED;
 }

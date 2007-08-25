@@ -453,6 +453,10 @@ SQLRETURN SQL_API MySQLPrimaryKeys(SQLHSTMT hstmt,
                                    SQLCHAR *catalog, SQLSMALLINT catalog_len,
                                    SQLCHAR *schema, SQLSMALLINT schema_len,
                                    SQLCHAR *table, SQLSMALLINT table_len);
+SQLRETURN SQL_API MySQLProcedures(SQLHSTMT hstmt,
+                                  SQLCHAR *catalog, SQLSMALLINT catalog_len,
+                                  SQLCHAR *schema, SQLSMALLINT schema_len,
+                                  SQLCHAR *proc, SQLSMALLINT proc_len);
 SQLRETURN SQL_API MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
                                       SQLPOINTER ValuePtr,
                                       SQLINTEGER StringLengthPtr);

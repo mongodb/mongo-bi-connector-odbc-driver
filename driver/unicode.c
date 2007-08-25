@@ -1042,6 +1042,41 @@ SQLPrimaryKeysW(SQLHSTMT hstmt,
 
 
 SQLRETURN SQL_API
+SQLProceduresW(SQLHSTMT hstmt,
+               SQLWCHAR *catalog, SQLSMALLINT catalog_len,
+               SQLWCHAR *schema, SQLSMALLINT schema_len,
+               SQLWCHAR *proc, SQLSMALLINT proc_len)
+{
+  SQLRETURN rc;
+  SQLCHAR *catalog8, *schema8, *proc8;
+  DBC *dbc= ((STMT *)hstmt)->dbc;
+  SQLINTEGER len= SQL_NTS;;
+  uint errors= 0;
+
+  catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
+  catalog_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, schema, &len, &errors);
+  schema_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  proc8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, proc, &len, &errors);
+  proc_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  rc= MySQLProcedures(hstmt, catalog8, catalog_len, schema8, schema_len,
+                      proc8, proc_len);
+
+  x_free(catalog8);
+  x_free(schema8);
+  x_free(proc8);
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
 SQLSetConnectAttrW(SQLHDBC hdbc, SQLINTEGER attribute,
                    SQLPOINTER value, SQLINTEGER value_len)
 {
@@ -1236,16 +1271,6 @@ SQLProcedureColumnsW(SQLHSTMT hstmt,
                      SQLWCHAR *schema, SQLSMALLINT schema_len,
                      SQLWCHAR *proc, SQLSMALLINT proc_len,
                      SQLWCHAR *column, SQLSMALLINT column_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLProceduresW(SQLHSTMT hstmt,
-               SQLWCHAR *catalog, SQLSMALLINT catalog_len,
-               SQLWCHAR *schema, SQLSMALLINT schema_len,
-               SQLWCHAR *proc, SQLSMALLINT proc_len)
 {
   NOT_IMPLEMENTED;
 }
