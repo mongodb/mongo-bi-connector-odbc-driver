@@ -992,11 +992,15 @@ DECLARE_TEST(bug8860)
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-  /* Specifying "" as the table name gets us nothing. */
-  ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0, (SQLCHAR *)"", SQL_NTS,
-                            NULL, 0));
+  if (!using_dm(hdbc))
+  {
+    /* Specifying "" as the table name gets us nothing. */
+    /* But iODBC, for one, will convert our "" into a NULL. */
+    ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0, (SQLCHAR *)"", SQL_NTS,
+                              NULL, 0));
 
-  is_num(myrowcount(hstmt), 0);
+    is(myrowcount(hstmt) == 0);
+  }
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 

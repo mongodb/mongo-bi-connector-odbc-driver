@@ -1641,6 +1641,7 @@ DECLARE_TEST(t_true_length)
   SQLCHAR data1[25],data2[25];
   SQLLEN len1,len2;
   SQLULEN desc_len;
+  SQLSMALLINT name_len;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_true_length");
   ok_sql(hstmt, "CREATE TABLE t_true_length (a CHAR(20), b VARCHAR(15))");
@@ -1650,11 +1651,11 @@ DECLARE_TEST(t_true_length)
 
   ok_sql(hstmt, "SELECT * FROM t_true_length");
 
-  ok_stmt(hstmt, SQLDescribeCol(hstmt, 1, NULL, 0, NULL, NULL,
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 1, data1, sizeof(data1), &name_len, NULL,
                                 &desc_len, NULL, NULL));
   is_num(desc_len, 20);
 
-  ok_stmt(hstmt, SQLDescribeCol(hstmt, 2, NULL, 0, NULL, NULL,
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 2, data1, sizeof(data1), &name_len, NULL,
                                 &desc_len, NULL, NULL));
   is_num(desc_len, 15);
 
