@@ -418,6 +418,97 @@ SQLExecDirect(SQLHSTMT hstmt, SQLCHAR *str, SQLINTEGER str_len)
 
 
 SQLRETURN SQL_API
+SQLForeignKeys(SQLHSTMT hstmt,
+               SQLCHAR *pk_catalog, SQLSMALLINT pk_catalog_len,
+               SQLCHAR *pk_schema, SQLSMALLINT pk_schema_len,
+               SQLCHAR *pk_table, SQLSMALLINT pk_table_len,
+               SQLCHAR *fk_catalog, SQLSMALLINT fk_catalog_len,
+               SQLCHAR *fk_schema, SQLSMALLINT fk_schema_len,
+               SQLCHAR *fk_table, SQLSMALLINT fk_table_len)
+{
+  SQLRETURN rc;
+  DBC *dbc= ((STMT *)hstmt)->dbc;
+
+  if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+  {
+    SQLINTEGER len= SQL_NTS;
+    uint errors= 0;
+
+    if (pk_catalog)
+    {
+      pk_catalog= sqlchar_as_sqlchar(dbc->ansi_charset_info,
+                                     dbc->cxn_charset_info,
+                                     pk_catalog, &len, &errors);
+      pk_catalog_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (pk_schema)
+    {
+      pk_schema= sqlchar_as_sqlchar(dbc->ansi_charset_info,
+                                    dbc->cxn_charset_info,
+                                    pk_schema, &len, &errors);
+      pk_schema_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (pk_table)
+    {
+      pk_table= sqlchar_as_sqlchar(dbc->ansi_charset_info,
+                                   dbc->cxn_charset_info,
+                                   pk_table, &len, &errors);
+      pk_table_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (fk_catalog)
+    {
+      fk_catalog= sqlchar_as_sqlchar(dbc->ansi_charset_info,
+                                     dbc->cxn_charset_info,
+                                     fk_catalog, &len, &errors);
+      fk_catalog_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (fk_schema)
+    {
+      fk_schema= sqlchar_as_sqlchar(dbc->ansi_charset_info,
+                                    dbc->cxn_charset_info,
+                                    fk_schema, &len, &errors);
+      fk_schema_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (fk_table)
+    {
+      fk_table= sqlchar_as_sqlchar(dbc->ansi_charset_info,
+                                   dbc->cxn_charset_info,
+                                   fk_table, &len, &errors);
+      fk_table_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+  }
+
+  rc= MySQLForeignKeys(hstmt, pk_catalog, pk_catalog_len,
+                       pk_schema, pk_schema_len, pk_table, pk_table_len,
+                       fk_catalog, fk_catalog_len, fk_schema, fk_schema_len,
+                       fk_table, fk_table_len);
+
+  if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+  {
+    x_free(pk_catalog);
+    x_free(pk_schema);
+    x_free(pk_table);
+    x_free(fk_catalog);
+    x_free(fk_schema);
+    x_free(fk_table);
+  }
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
 SQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
                   SQLINTEGER value_max, SQLINTEGER *value_len)
 {
@@ -1032,19 +1123,6 @@ SQLBrowseConnect(SQLHDBC hdbc, SQLCHAR *in, SQLSMALLINT in_len,
 
 
 //SQLDrivers
-
-
-SQLRETURN SQL_API
-SQLForeignKeys(SQLHSTMT hstmt,
-               SQLCHAR *pk_catalog, SQLSMALLINT pk_catalog_len,
-               SQLCHAR *pk_schema, SQLSMALLINT pk_schema_len,
-               SQLCHAR *pk_table, SQLSMALLINT pk_table_len,
-               SQLCHAR *fk_catalog, SQLSMALLINT fk_catalog_len,
-               SQLCHAR *fk_schema, SQLSMALLINT fk_schema_len,
-               SQLCHAR *fk_table, SQLSMALLINT fk_table_len)
-{
-  NOT_IMPLEMENTED;
-}
 
 
 SQLRETURN SQL_API

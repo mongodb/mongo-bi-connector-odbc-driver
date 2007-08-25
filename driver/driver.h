@@ -421,6 +421,15 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
                                      SQLCHAR *out, SQLSMALLINT out_max,
                                      SQLSMALLINT *out_len,
                                      SQLUSMALLINT completion);
+SQLRETURN SQL_API MySQLForeignKeys(SQLHSTMT hstmt,
+                                   SQLCHAR *pkcatalog,
+                                   SQLSMALLINT pkcatalog_len,
+                                   SQLCHAR *pkschema, SQLSMALLINT pkschema_len,
+                                   SQLCHAR *pktable, SQLSMALLINT pktable_len,
+                                   SQLCHAR *fkcatalog,
+                                   SQLSMALLINT fkcatalog_len,
+                                   SQLCHAR *fkschema, SQLSMALLINT fkschema_len,
+                                   SQLCHAR *fktable, SQLSMALLINT fktable_len);
 SQLCHAR *MySQLGetCursorName(HSTMT hstmt);
 SQLRETURN SQL_API MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
                                SQLCHAR **char_info, SQLPOINTER num_info);

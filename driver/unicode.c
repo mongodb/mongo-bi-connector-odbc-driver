@@ -612,6 +612,68 @@ SQLExecDirectW(SQLHSTMT hstmt, SQLWCHAR *str, SQLINTEGER str_len)
 
 
 SQLRETURN SQL_API
+SQLForeignKeysW(SQLHSTMT hstmt,
+                SQLWCHAR *pk_catalog, SQLSMALLINT pk_catalog_len,
+                SQLWCHAR *pk_schema, SQLSMALLINT pk_schema_len,
+                SQLWCHAR *pk_table, SQLSMALLINT pk_table_len,
+                SQLWCHAR *fk_catalog, SQLSMALLINT fk_catalog_len,
+                SQLWCHAR *fk_schema, SQLSMALLINT fk_schema_len,
+                SQLWCHAR *fk_table, SQLSMALLINT fk_table_len)
+{
+  SQLRETURN rc;
+  SQLCHAR *pk_catalog8, *pk_schema8, *pk_table8,
+          *fk_catalog8, *fk_schema8, *fk_table8;
+  DBC *dbc= ((STMT *)hstmt)->dbc;
+  SQLINTEGER len= SQL_NTS;;
+  uint errors= 0;
+
+  pk_catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, pk_catalog, &len,
+                                   &errors);
+  pk_catalog_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  pk_schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, pk_schema, &len,
+                                  &errors);
+  pk_schema_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  pk_table8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, pk_table, &len,
+                                 &errors);
+  pk_table_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  fk_catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, fk_catalog, &len,
+                                   &errors);
+  fk_catalog_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  fk_schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, fk_schema, &len,
+                                  &errors);
+  fk_schema_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  fk_table8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, fk_table, &len,
+                                 &errors);
+  fk_table_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  rc= MySQLForeignKeys(hstmt, pk_catalog8, pk_catalog_len,
+                       pk_schema8, pk_schema_len, pk_table8, pk_table_len,
+                       fk_catalog8, fk_catalog_len, fk_schema8, fk_schema_len,
+                       fk_table8, fk_table_len);
+
+  x_free(pk_catalog8);
+  x_free(pk_schema8);
+  x_free(pk_table8);
+  x_free(fk_catalog8);
+  x_free(fk_schema8);
+  x_free(fk_table8);
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
 SQLGetConnectAttrW(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
                    SQLINTEGER value_max, SQLINTEGER *value_len)
 {
@@ -1113,19 +1175,6 @@ SQLBrowseConnectW(SQLHDBC hdbc, SQLWCHAR *in, SQLSMALLINT in_len,
 
 //SQLDriversW
 
-
-
-SQLRETURN SQL_API
-SQLForeignKeysW(SQLHSTMT hstmt,
-                SQLWCHAR *pk_catalog, SQLSMALLINT pk_catalog_len,
-                SQLWCHAR *pk_schema, SQLSMALLINT pk_schema_len,
-                SQLWCHAR *pk_table, SQLSMALLINT pk_table_len,
-                SQLWCHAR *fk_catalog, SQLSMALLINT fk_catalog_len,
-                SQLWCHAR *fk_schema, SQLSMALLINT fk_schema_len,
-                SQLWCHAR *fk_table, SQLSMALLINT fk_table_len)
-{
-  NOT_IMPLEMENTED;
-}
 
 
 SQLRETURN SQL_API

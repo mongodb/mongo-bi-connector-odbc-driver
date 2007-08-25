@@ -116,6 +116,7 @@ SQLDescribeColW
 SQLDriverConnectW
 SQLErrorW
 SQLExecDirectW
+SQLForeignKeysW
 SQLGetConnectAttrW
 SQLGetConnectOptionW
 SQLGetDiagFieldW

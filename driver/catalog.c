@@ -1694,7 +1694,6 @@ SQLRETURN SQL_API SQLPrimaryKeys(SQLHSTMT hstmt,
 SQLForeignJeys
 ****************************************************************************
 */
-#if MYSQL_VERSION_ID >= 40100
 MYSQL_FIELD SQLFORE_KEYS_fields[]=
 {
     {"PKTABLE_CAT",   NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
@@ -1712,25 +1711,6 @@ MYSQL_FIELD SQLFORE_KEYS_fields[]=
     {"PK_NAME",       NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,128,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
     {"DEFERRABILITY", NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
 };
-#else
-MYSQL_FIELD SQLFORE_KEYS_fields[]=
-{
-    {"PKTABLE_CAT",   "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"PKTABLE_SCHEM", "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"PKTABLE_NAME",  "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN, NOT_NULL_FLAG, 0, MYSQL_TYPE_VAR_STRING},
-    {"PKCOLUMN_NAME", "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN, NOT_NULL_FLAG, 0, MYSQL_TYPE_VAR_STRING},
-    {"FKTABLE_CAT",   "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"FKTABLE_SCHEM", "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN, NOT_NULL_FLAG, 0, MYSQL_TYPE_VAR_STRING},
-    {"FKTABLE_NAME",  "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN, NOT_NULL_FLAG, 0, MYSQL_TYPE_VAR_STRING},
-    {"FKCOLUMN_NAME", "MySQL_Foreign_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN, NOT_NULL_FLAG, 0, MYSQL_TYPE_VAR_STRING},
-    {"KEY_SEQ",       "MySQL_Foreign_keys",NullS,NullS,NullS,2,2,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
-    {"UPDATE_RULE",   "MySQL_Foreign_keys",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT},
-    {"DELETE_RULE",   "MySQL_Foreign_keys",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT},
-    {"FK_NAME",       "MySQL_Foreign_keys",NullS,NullS,NullS,128,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"PK_NAME",       "MySQL_Foreign_keys",NullS,NullS,NullS,128,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"DEFERRABILITY", "MySQL_Foreign_keys",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT},
-};
-#endif
 
 const uint SQLFORE_KEYS_FIELDS= array_elements(SQLFORE_KEYS_fields);
 
@@ -1769,25 +1749,17 @@ char *SQLFORE_KEYS_values[]= {
 
   @since ODBC 1.0
 */
-SQLRETURN SQL_API SQLForeignKeys(SQLHSTMT hstmt,
-                                 SQLCHAR FAR *szPkCatalogName
-                                   __attribute__((unused)),
-                                 SQLSMALLINT cbPkCatalogName
-                                   __attribute__((unused)),
-                                 SQLCHAR FAR *szPkSchemaName
-                                   __attribute__((unused)),
-                                 SQLSMALLINT cbPkSchemaName
-                                   __attribute__((unused)),
-                                 SQLCHAR FAR *szPkTableName,
-                                 SQLSMALLINT  cbPkTableName,
-                                 SQLCHAR FAR *szFkCatalogName,
-                                 SQLSMALLINT  cbFkCatalogName,
-                                 SQLCHAR FAR *szFkSchemaName
-                                   __attribute__((unused)),
-                                 SQLSMALLINT  cbFkSchemaName
-                                   __attribute__((unused)),
-                                 SQLCHAR FAR *szFkTableName,
-                                 SQLSMALLINT  cbFkTableName)
+SQLRETURN SQL_API
+MySQLForeignKeys(SQLHSTMT hstmt,
+                 SQLCHAR *szPkCatalogName __attribute__((unused)),
+                 SQLSMALLINT cbPkCatalogName __attribute__((unused)),
+                 SQLCHAR *szPkSchemaName __attribute__((unused)),
+                 SQLSMALLINT cbPkSchemaName __attribute__((unused)),
+                 SQLCHAR *szPkTableName, SQLSMALLINT cbPkTableName,
+                 SQLCHAR *szFkCatalogName, SQLSMALLINT cbFkCatalogName,
+                 SQLCHAR *szFkSchemaName __attribute__((unused)),
+                 SQLSMALLINT cbFkSchemaName __attribute__((unused)),
+                 SQLCHAR *szFkTableName, SQLSMALLINT cbFkTableName)
 {
     STMT FAR *stmt=(STMT FAR*) hstmt;
     uint row_count= 0;
