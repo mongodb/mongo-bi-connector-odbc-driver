@@ -1021,6 +1021,47 @@ SQLSetStmtAttrW(SQLHSTMT hstmt, SQLINTEGER attribute,
 }
 
 
+SQLRETURN SQL_API
+SQLTablesW(SQLHSTMT hstmt,
+           SQLWCHAR *catalog, SQLSMALLINT catalog_len,
+           SQLWCHAR *schema, SQLSMALLINT schema_len,
+           SQLWCHAR *table, SQLSMALLINT table_len,
+           SQLWCHAR *type, SQLSMALLINT type_len)
+{
+  SQLRETURN rc;
+  SQLCHAR *catalog8, *schema8, *table8, *type8;
+  DBC *dbc= ((STMT *)hstmt)->dbc;
+  SQLINTEGER len= SQL_NTS;;
+  uint errors= 0;
+
+  catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
+  catalog_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, schema, &len, &errors);
+  schema_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  table8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, table, &len, &errors);
+  table_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  type8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, type, &len, &errors);
+  type_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  rc= MySQLTables(hstmt, catalog8, catalog_len, schema8, schema_len,
+                  table8, table_len, type8, type_len);
+
+  x_free(catalog8);
+  x_free(schema8);
+  x_free(table8);
+  x_free(type8);
+
+  return rc;
+}
+
+
 #ifdef NOT_IMPLEMENTED_YET
 SQLRETURN SQL_API
 SQLBrowseConnectW(SQLHDBC hdbc, SQLWCHAR *in, SQLSMALLINT in_len,
@@ -1134,17 +1175,6 @@ SQLTablePrivilegesW(SQLHSTMT hstmt,
                     SQLWCHAR *catalog, SQLSMALLINT catalog_len,
                     SQLWCHAR *schema, SQLSMALLINT schema_len,
                     SQLWCHAR *table, SQLSMALLINT table_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLTablesW(SQLHSTMT hstmt,
-           SQLWCHAR *catalog, SQLSMALLINT catalog_len,
-           SQLWCHAR *schema, SQLSMALLINT schema_len,
-           SQLWCHAR *table, SQLSMALLINT table_len,
-           SQLWCHAR *type, SQLSMALLINT type_len)
 {
   NOT_IMPLEMENTED;
 }

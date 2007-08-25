@@ -901,6 +901,68 @@ SQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER attribute,
   return MySQLSetStmtAttr(hstmt, attribute, value, value_len);
 }
 
+SQLRETURN SQL_API
+SQLTables(SQLHSTMT hstmt,
+          SQLCHAR *catalog, SQLSMALLINT catalog_len,
+          SQLCHAR *schema, SQLSMALLINT schema_len,
+          SQLCHAR *table, SQLSMALLINT table_len,
+          SQLCHAR *type, SQLSMALLINT type_len)
+{
+  SQLRETURN rc;
+  DBC *dbc= ((STMT *)hstmt)->dbc;
+
+  if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+  {
+    SQLINTEGER len= SQL_NTS;
+    uint errors= 0;
+
+    if (catalog)
+    {
+      catalog= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                  catalog, &len, &errors);
+      catalog_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (schema)
+    {
+      schema= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                 schema, &len, &errors);
+      schema_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (table)
+    {
+      table= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                table, &len, &errors);
+      table_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (type)
+    {
+      type= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                 type, &len, &errors);
+      type_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+  }
+
+  rc= MySQLTables(hstmt, catalog, catalog_len, schema, schema_len,
+                  table, table_len, type, type_len);
+
+  if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+  {
+    x_free(catalog);
+    x_free(schema);
+    x_free(table);
+    x_free(type);
+  }
+
+  return rc;
+}
+
 
 #ifdef NOT_IMPLEMENTED_YET
 SQLRETURN SQL_API
@@ -1019,13 +1081,4 @@ SQLTablePrivileges(SQLHSTMT hstmt,
 }
 
 
-SQLRETURN SQL_API
-SQLTables(SQLHSTMT hstmt,
-          SQLCHAR *catalog, SQLSMALLINT catalog_len,
-          SQLCHAR *schema, SQLSMALLINT schema_len,
-          SQLCHAR *table, SQLSMALLINT table_len,
-          SQLCHAR *type, SQLSMALLINT type_len)
-{
-  NOT_IMPLEMENTED;
-}
 #endif

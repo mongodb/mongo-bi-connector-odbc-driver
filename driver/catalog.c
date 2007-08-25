@@ -312,7 +312,6 @@ char *SQLTABLES_type_values[3][5]=
     {NULL,NULL,NULL,"VIEW",NULL},
 };
 
-#if MYSQL_VERSION_ID >= 40100
 MYSQL_FIELD SQLTABLES_fields[]=
 {
     {"TABLE_CAT",     NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
@@ -321,28 +320,15 @@ MYSQL_FIELD SQLTABLES_fields[]=
     {"TABLE_TYPE",    NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,5, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
     {"REMARKS",       NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,11, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING}
 };
-#else
-MYSQL_FIELD SQLTABLES_fields[]=
-{
-    {"TABLE_CAT",     "Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",   "Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_NAME",    "Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_TYPE",    "Catalog",NullS,NullS,NullS,NAME_LEN,5,0,0,MYSQL_TYPE_VAR_STRING},
-    {"REMARKS",       "Catalog",NullS,NullS,NullS,NAME_LEN,11,0,0,MYSQL_TYPE_VAR_STRING}
-};
-#endif
 
 const uint SQLTABLES_FIELDS= array_elements(SQLTABLES_values);
 
-SQLRETURN SQL_API SQLTables(SQLHSTMT    hstmt,
-                            SQLCHAR FAR *szTableQualifier,
-                            SQLSMALLINT cbTableQualifier,
-                            SQLCHAR FAR *szTableOwner,
-                            SQLSMALLINT cbTableOwner,
-                            SQLCHAR FAR *szTableName,
-                            SQLSMALLINT cbTableName,
-                            SQLCHAR FAR *szTableType,
-                            SQLSMALLINT cbTableType)
+SQLRETURN SQL_API
+MySQLTables(SQLHSTMT hstmt,
+            SQLCHAR *szTableQualifier, SQLSMALLINT cbTableQualifier,
+            SQLCHAR *szTableOwner, SQLSMALLINT cbTableOwner,
+            SQLCHAR *szTableName, SQLSMALLINT cbTableName,
+            SQLCHAR *szTableType, SQLSMALLINT cbTableType)
 {
     char Qualifier_buff[NAME_LEN+1],
          Owner_buff[NAME_LEN+1],
