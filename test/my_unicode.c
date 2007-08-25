@@ -855,6 +855,49 @@ DECLARE_TEST(sqlforeignkeys)
 
   return OK;
 }
+
+
+DECLARE_TEST(sqlprimarykeys)
+{
+  HDBC hdbc1;
+  HSTMT hstmt1;
+  SQLWCHAR wbuff[40];
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
+                            W(L""), SQL_NTS));
+
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_stmt(hstmt1, SQLExecDirectW(hstmt1, W(L"DROP TABLE IF EXISTS t_a\u00e3g"),
+                                 SQL_NTS));
+  ok_stmt(hstmt1,
+          SQLExecDirectW(hstmt1,
+                         W(L"CREATE TABLE t_a\u00e3g (a INT PRIMARY KEY)"),
+                         SQL_NTS));
+
+  ok_stmt(hstmt1, SQLPrimaryKeysW(hstmt1, NULL, 0, NULL, 0,
+                                  W(L"t_a\u00e3g"), SQL_NTS));
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+
+  is_wstr(my_fetch_wstr(hstmt1, wbuff, 3), L"t_a\u00e3g", 6);
+
+  expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_stmt(hstmt1, SQLExecDirectW(hstmt1, W(L"DROP TABLE IF EXISTS t_a\u00e3g"),
+                                 SQL_NTS));
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlconnect)
   ADD_TEST(sqlprepare)
@@ -873,6 +916,7 @@ BEGIN_TESTS
   ADD_TEST(sqltables)
   ADD_TEST(sqlspecialcolumns)
   ADD_TEST(sqlforeignkeys)
+  ADD_TEST(sqlprimarykeys)
 END_TESTS
 
 

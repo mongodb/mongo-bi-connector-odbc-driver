@@ -126,6 +126,7 @@ SQLGetStmtAttrW
 SQLGetTypeInfoW
 SQLNativeSqlW
 SQLPrepareW
+SQLPrimaryKeysW
 SQLSetConnectAttrW
 SQLSetConnectOptionW
 SQLSetCursorNameW

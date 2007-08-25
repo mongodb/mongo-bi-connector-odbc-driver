@@ -896,6 +896,59 @@ SQLPrepareImpl(SQLHSTMT hstmt, SQLCHAR *str, SQLINTEGER str_len)
 
 
 SQLRETURN SQL_API
+SQLPrimaryKeys(SQLHSTMT hstmt,
+               SQLCHAR *catalog, SQLSMALLINT catalog_len,
+               SQLCHAR *schema, SQLSMALLINT schema_len,
+               SQLCHAR *table, SQLSMALLINT table_len)
+{
+  SQLRETURN rc;
+  DBC *dbc= ((STMT *)hstmt)->dbc;
+
+  if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+  {
+    SQLINTEGER len= SQL_NTS;
+    uint errors= 0;
+
+    if (catalog)
+    {
+      catalog= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                  catalog, &len, &errors);
+      catalog_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (schema)
+    {
+      schema= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                 schema, &len, &errors);
+      schema_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (table)
+    {
+      table= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                table, &len, &errors);
+      table_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+  }
+
+  rc= MySQLPrimaryKeys(hstmt, catalog, catalog_len, schema, schema_len,
+                       table, table_len);
+
+  if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+  {
+    x_free(catalog);
+    x_free(schema);
+    x_free(table);
+  }
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
 SQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER attribute,
                   SQLPOINTER value, SQLINTEGER value_len)
 {
@@ -1138,16 +1191,6 @@ SQLGetDescRec(SQLHDESC hdesc, SQLSMALLINT record, SQLCHAR *name,
               SQLSMALLINT name_max, SQLSMALLINT *name_len, SQLSMALLINT *type,
               SQLSMALLINT *subtype, SQLLEN *length, SQLSMALLINT *precision,
               SQLSMALLINT *scale, SQLSMALLINT *nullable)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLPrimaryKeys(SQLHSTMT hstmt,
-               SQLCHAR *catalog, SQLSMALLINT catalog_len,
-               SQLCHAR *schema, SQLSMALLINT schema_len,
-               SQLCHAR *table, SQLSMALLINT table_len)
 {
   NOT_IMPLEMENTED;
 }

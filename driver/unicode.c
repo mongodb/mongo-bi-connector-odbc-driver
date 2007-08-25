@@ -1007,6 +1007,41 @@ SQLPrepareWImpl(SQLHSTMT hstmt, SQLWCHAR *str, SQLINTEGER str_len)
 
 
 SQLRETURN SQL_API
+SQLPrimaryKeysW(SQLHSTMT hstmt,
+                SQLWCHAR *catalog, SQLSMALLINT catalog_len,
+                SQLWCHAR *schema, SQLSMALLINT schema_len,
+                SQLWCHAR *table, SQLSMALLINT table_len)
+{
+  SQLRETURN rc;
+  SQLCHAR *catalog8, *schema8, *table8;
+  DBC *dbc= ((STMT *)hstmt)->dbc;
+  SQLINTEGER len= SQL_NTS;;
+  uint errors= 0;
+
+  catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
+  catalog_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, schema, &len, &errors);
+  schema_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  table8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, table, &len, &errors);
+  table_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  rc= MySQLPrimaryKeys(hstmt, catalog8, catalog_len, schema8, schema_len,
+                       table8, table_len);
+
+  x_free(catalog8);
+  x_free(schema8);
+  x_free(table8);
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
 SQLSetConnectAttrW(SQLHDBC hdbc, SQLINTEGER attribute,
                    SQLPOINTER value, SQLINTEGER value_len)
 {
@@ -1190,16 +1225,6 @@ SQLGetDescRecW(SQLHDESC hdesc, SQLSMALLINT record, SQLWCHAR *name,
                SQLSMALLINT name_max, SQLSMALLINT *name_len, SQLSMALLINT *type,
                SQLSMALLINT *subtype, SQLLEN *length, SQLSMALLINT *precision,
                SQLSMALLINT *scale, SQLSMALLINT *nullable)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLPrimaryKeysW(SQLHSTMT hstmt,
-                SQLWCHAR *catalog, SQLSMALLINT catalog_len,
-                SQLWCHAR *schema, SQLSMALLINT schema_len,
-                SQLWCHAR *table, SQLSMALLINT table_len)
 {
   NOT_IMPLEMENTED;
 }

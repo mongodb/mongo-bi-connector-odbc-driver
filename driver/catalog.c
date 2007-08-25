@@ -1588,7 +1588,6 @@ SQLPrimaryKeys
 ****************************************************************************
 */
 
-#if MYSQL_VERSION_ID >= 40100
 MYSQL_FIELD SQLPRIM_KEYS_fields[]=
 {
     {"TABLE_CAT",     NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
@@ -1598,17 +1597,6 @@ MYSQL_FIELD SQLPRIM_KEYS_fields[]=
     {"KEY_SEQ",       NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
     {"PK_NAME",       NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,128,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
 };
-#else
-MYSQL_FIELD SQLPRIM_KEYS_fields[]=
-{
-    {"TABLE_CAT",     "MySQL_Primary_keys",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",   "MySQL_Primary_keys",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_NAME",    "MySQL_Primary_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG, 0, MYSQL_TYPE_VAR_STRING},
-    {"COLUMN_NAME",   "MySQL_Primary_keys",NullS,NullS,NullS,NAME_LEN,NAME_LEN, NOT_NULL_FLAG, 0, MYSQL_TYPE_VAR_STRING},
-    {"KEY_SEQ",       "MySQL_Primary_keys",NullS,NullS,NullS,2,2,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
-    {"PK_NAME",       "MySQL_Primary_keys",NullS,NullS,NullS,128,0,0,0,MYSQL_TYPE_VAR_STRING},
-};
-#endif
 
 const uint SQLPRIM_KEYS_FIELDS= array_elements(SQLPRIM_KEYS_fields);
 
@@ -1624,21 +1612,18 @@ char *SQLPRIM_KEYS_values[]= {
        a single call
 */
 
-SQLRETURN SQL_API SQLPrimaryKeys(SQLHSTMT hstmt,
-                                 SQLCHAR FAR *szTableQualifier,
-                                 SQLSMALLINT cbTableQualifier,
-                                 SQLCHAR FAR *szTableOwner
-                                  __attribute__((unused)),
-                                 SQLSMALLINT cbTableOwner
-                                  __attribute__((unused)),
-                                 SQLCHAR FAR *szTableName,
-                                 SQLSMALLINT cbTableName)
+SQLRETURN SQL_API
+MySQLPrimaryKeys(SQLHSTMT hstmt,
+                 SQLCHAR *szTableQualifier, SQLSMALLINT cbTableQualifier,
+                 SQLCHAR *szTableOwner __attribute__((unused)),
+                 SQLSMALLINT cbTableOwner __attribute__((unused)),
+                 SQLCHAR *szTableName, SQLSMALLINT cbTableName)
 {
     char      Qualifier_buff[NAME_LEN+1],Table_buff[NAME_LEN+1],
     *TableQualifier,*TableName;
     STMT FAR  *stmt= (STMT FAR*) hstmt;
     MYSQL_ROW row;
-    char      **data;  
+    char      **data;
     uint      row_count;
 
     TableQualifier= myodbc_get_valid_buffer( Qualifier_buff, szTableQualifier, cbTableQualifier );
