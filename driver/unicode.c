@@ -1227,6 +1227,41 @@ SQLStatisticsW(SQLHSTMT hstmt,
 
 
 SQLRETURN SQL_API
+SQLTablePrivilegesW(SQLHSTMT hstmt,
+                    SQLWCHAR *catalog, SQLSMALLINT catalog_len,
+                    SQLWCHAR *schema, SQLSMALLINT schema_len,
+                    SQLWCHAR *table, SQLSMALLINT table_len)
+{
+  SQLRETURN rc;
+  SQLCHAR *catalog8, *schema8, *table8;
+  DBC *dbc= ((STMT *)hstmt)->dbc;
+  SQLINTEGER len= SQL_NTS;;
+  uint errors= 0;
+
+  catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
+  catalog_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, schema, &len, &errors);
+  schema_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  table8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, table, &len, &errors);
+  table_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  rc= MySQLTablePrivileges(hstmt, catalog8, catalog_len, schema8, schema_len,
+                           table8, table_len);
+
+  x_free(catalog8);
+  x_free(schema8);
+  x_free(table8);
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
 SQLTablesW(SQLHSTMT hstmt,
            SQLWCHAR *catalog, SQLSMALLINT catalog_len,
            SQLWCHAR *schema, SQLSMALLINT schema_len,
@@ -1315,16 +1350,6 @@ SQLProcedureColumnsW(SQLHSTMT hstmt,
 SQLRETURN SQL_API
 SQLSetDescFieldW(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT field,
                  SQLPOINTER value, SQLINTEGER value_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLTablePrivilegesW(SQLHSTMT hstmt,
-                    SQLWCHAR *catalog, SQLSMALLINT catalog_len,
-                    SQLWCHAR *schema, SQLSMALLINT schema_len,
-                    SQLWCHAR *table, SQLSMALLINT table_len)
 {
   NOT_IMPLEMENTED;
 }

@@ -1106,7 +1106,6 @@ char *SQLTABLES_priv_values[]=
     NULL,"",NULL,NULL,NULL,NULL,NULL
 };
 
-#if MYSQL_VERSION_ID >= 40100
 MYSQL_FIELD SQLTABLES_priv_fields[]=
 {
     {"TABLE_CAT",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
@@ -1117,18 +1116,6 @@ MYSQL_FIELD SQLTABLES_priv_fields[]=
     {"PRIVILEGE",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
     {"IS_GRANTABLE",  NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
 };
-#else
-MYSQL_FIELD SQLTABLES_priv_fields[]=
-{
-    {"TABLE_CAT",     "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",   "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_NAME",    "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
-    {"GRANTOR",       "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"GRANTEE",       "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
-    {"PRIVILEGE",     "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
-    {"IS_GRANTABLE",  "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-};
-#endif
 
 const uint SQLTABLES_PRIV_FIELDS= array_elements(SQLTABLES_priv_values);
 
@@ -1139,15 +1126,12 @@ const uint SQLTABLES_PRIV_FIELDS= array_elements(SQLTABLES_priv_values);
              set on the specified statement.
 */
 
-SQLRETURN SQL_API SQLTablePrivileges(SQLHSTMT hstmt,
-                                     SQLCHAR FAR *szTableQualifier,
-                                     SQLSMALLINT cbTableQualifier,
-                                     SQLCHAR FAR *szTableOwner
-                                       __attribute__((unused)),
-                                     SQLSMALLINT cbTableOwner
-                                       __attribute__((unused)),
-                                     SQLCHAR FAR *szTableName,
-                                     SQLSMALLINT cbTableName)
+SQLRETURN SQL_API
+MySQLTablePrivileges(SQLHSTMT hstmt,
+                     SQLCHAR *szTableQualifier, SQLSMALLINT cbTableQualifier,
+                     SQLCHAR *szTableOwner __attribute__((unused)),
+                     SQLSMALLINT cbTableOwner __attribute__((unused)),
+                     SQLCHAR *szTableName, SQLSMALLINT cbTableName)
 {
     char     Qualifier_buff[NAME_LEN+1],Name_buff[NAME_LEN+1],
     *TableQualifier,*TableName;

@@ -134,6 +134,7 @@ SQLSetCursorNameW
 SQLSetStmtAttrW
 SQLSpecialColumnsW
 SQLStatisticsW
+SQLTablePrivilegesW
 SQLTablesW
 ;
 DllMain
