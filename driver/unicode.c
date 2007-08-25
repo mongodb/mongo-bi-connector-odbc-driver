@@ -534,7 +534,7 @@ SQLDescribeColW(SQLHSTMT hstmt, SQLUSMALLINT column,
   {
     wvalue= sqlchar_as_sqlwchar(stmt->dbc->cxn_charset_info, value, &len,
                                 &errors);
-    if (!wvalue)
+    if (len == -1)
     {
       if (free_value)
         x_free(value);
