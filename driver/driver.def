@@ -116,6 +116,7 @@ SQLErrorW
 SQLExecDirectW
 SQLGetConnectAttrW
 SQLGetConnectOptionW
+SQLGetDiagFieldW
 SQLGetDiagRecW
 SQLGetInfoW
 SQLGetStmtAttrW

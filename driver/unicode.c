@@ -624,6 +624,59 @@ SQLGetCursorNameW(SQLHSTMT hstmt, SQLWCHAR *cursor, SQLSMALLINT cursor_max,
 
 
 SQLRETURN SQL_API
+SQLGetDiagFieldW(SQLSMALLINT handle_type, SQLHANDLE handle,
+                 SQLSMALLINT record, SQLSMALLINT field,
+                 SQLPOINTER info, SQLSMALLINT info_max,
+                 SQLSMALLINT *info_len)
+{
+  DBC *dbc;
+  SQLCHAR *value= NULL;
+  SQLINTEGER len= SQL_NTS;
+
+  SQLRETURN rc= MySQLGetDiagField(handle_type, handle, record, field,
+                                  &value, info);
+
+  switch (handle_type) {
+  case SQL_HANDLE_DBC:
+    dbc= (DBC *)handle;
+    break;
+  case SQL_HANDLE_STMT:
+    dbc= ((STMT *)handle)->dbc;
+    break;
+  case SQL_HANDLE_ENV:
+  default:
+    dbc= NULL;
+  }
+
+  if (value)
+  {
+    uint errors;
+    SQLWCHAR *wvalue= sqlchar_as_sqlwchar(dbc ? dbc->cxn_charset_info :
+                                          default_charset_info,
+                                          value, &len, &errors);
+
+    if (len > info_max - 1)
+      rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
+
+    if (info_len)
+      *info_len= len;
+
+    if (info_max > 0)
+    {
+      len= min(len, info_max - 1);
+      (void)memcpy((char *)info, (const char *)wvalue,
+                   len * sizeof(SQLWCHAR));
+      ((SQLWCHAR *)info)[len]= 0;
+    }
+
+    x_free(wvalue);
+  }
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
 SQLGetDiagRecW(SQLSMALLINT handle_type, SQLHANDLE handle,
                SQLSMALLINT record, SQLWCHAR *sqlstate,
                SQLINTEGER *native_error, SQLWCHAR *message,
@@ -961,16 +1014,6 @@ SQLGetDescRecW(SQLHDESC hdesc, SQLSMALLINT record, SQLWCHAR *name,
                SQLSMALLINT name_max, SQLSMALLINT *name_len, SQLSMALLINT *type,
                SQLSMALLINT *subtype, SQLLEN *length, SQLSMALLINT *precision,
                SQLSMALLINT *scale, SQLSMALLINT *nullable)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLGetDiagFieldW(SQLSMALLINT handle_type, SQLHANDLE handle,
-                 SQLSMALLINT record, SQLSMALLINT field,
-                 SQLPOINTER info, SQLSMALLINT info_max,
-                 SQLSMALLINT *info_len)
 {
   NOT_IMPLEMENTED;
 }

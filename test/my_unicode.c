@@ -619,6 +619,51 @@ DECLARE_TEST(sqlgetdiagrec)
 }
 
 
+DECLARE_TEST(sqlgetdiagfield)
+{
+  SQLWCHAR   message[255]= {0};
+  SQLSMALLINT len;
+  SQLINTEGER data;
+  HDBC hdbc1;
+  HSTMT hstmt1;
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
+                            W(L""), SQL_NTS));
+
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+
+  expect_sql(hstmt1, "DROP TABLE t_odbc3_non_existent_table", SQL_ERROR);
+
+  ok_stmt(hstmt, SQLGetDiagFieldW(SQL_HANDLE_STMT, hstmt1, 0,
+                                  SQL_DIAG_NUMBER, &data, 0, NULL));
+  is_num(data, 1);
+
+  ok_stmt(hstmt, SQLGetDiagFieldW(SQL_HANDLE_STMT, hstmt1, 1,
+                                  SQL_DIAG_CLASS_ORIGIN, message, 255, &len));
+  is_num(len, 8);
+  is_wstr(sqlwchar_to_wchar_t(message), L"ISO 9075", 9);
+
+  expect_stmt(hstmt, SQLGetDiagFieldW(SQL_HANDLE_STMT, hstmt1, 1,
+                                      SQL_DIAG_SQLSTATE, message, 4, &len),
+              SQL_SUCCESS_WITH_INFO);
+  is_num(len, 5);
+  is_wstr(sqlwchar_to_wchar_t(message), L"42S", 4);
+
+  ok_stmt(hstmt, SQLGetDiagFieldW(SQL_HANDLE_STMT, hstmt1, 1,
+                                  SQL_DIAG_SUBCLASS_ORIGIN, message, 20, &len));
+  is_num(len, 8);
+  is_wstr(sqlwchar_to_wchar_t(message), L"ODBC 3.0", 9);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlconnect)
   ADD_TEST(sqlprepare)
@@ -632,6 +677,7 @@ BEGIN_TESTS
   ADD_TEST(sqldescribecol)
   ADD_TEST(sqlgetconnectattr)
   ADD_TEST(sqlgetdiagrec)
+  ADD_TEST(sqlgetdiagfield)
 END_TESTS
 
 

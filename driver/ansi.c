@@ -405,6 +405,65 @@ SQLGetCursorName(SQLHSTMT hstmt, SQLCHAR *cursor, SQLSMALLINT cursor_max,
 
 
 SQLRETURN SQL_API
+SQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle,
+                SQLSMALLINT record, SQLSMALLINT field,
+                SQLPOINTER info, SQLSMALLINT info_max,
+                SQLSMALLINT *info_len)
+{
+  DBC *dbc;
+  SQLCHAR *value= NULL;
+  SQLINTEGER len= SQL_NTS;
+
+  SQLRETURN rc= MySQLGetDiagField(handle_type, handle, record, field,
+                                  &value, info);
+
+  switch (handle_type) {
+  case SQL_HANDLE_DBC:
+    dbc= (DBC *)handle;
+    break;
+  case SQL_HANDLE_STMT:
+    dbc= ((STMT *)handle)->dbc;
+    break;
+  case SQL_HANDLE_ENV:
+  default:
+    dbc= NULL;
+  }
+
+  if (value)
+  {
+    SQLINTEGER free_value= FALSE;
+    uint errors;
+    if (dbc && dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+    {
+      value= sqlchar_as_sqlchar(dbc->cxn_charset_info,
+                                    dbc->ansi_charset_info,
+                                    value, &len, &errors);
+      free_value= TRUE;
+    }
+    else
+      len= strlen((char *)value);
+
+    if (len > info_max - 1)
+      rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
+
+    if (info_len)
+      *info_len= len;
+
+    if (info && info_max > 1)
+    {
+      strmake((char *)info, (char *)value, info_max - 1);
+      ((char *)info)[info_max]= '\0';
+    }
+
+    if (free_value)
+      x_free(value);
+  }
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
 SQLGetDiagRec(SQLSMALLINT handle_type, SQLHANDLE handle,
               SQLSMALLINT record, SQLCHAR *sqlstate,
               SQLINTEGER *native_error, SQLCHAR *message,
@@ -774,16 +833,6 @@ SQLGetDescRec(SQLHDESC hdesc, SQLSMALLINT record, SQLCHAR *name,
               SQLSMALLINT name_max, SQLSMALLINT *name_len, SQLSMALLINT *type,
               SQLSMALLINT *subtype, SQLLEN *length, SQLSMALLINT *precision,
               SQLSMALLINT *scale, SQLSMALLINT *nullable)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle,
-                SQLSMALLINT record, SQLSMALLINT field,
-                SQLPOINTER info, SQLSMALLINT info_max,
-                SQLSMALLINT *info_len)
 {
   NOT_IMPLEMENTED;
 }

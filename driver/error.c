@@ -428,192 +428,216 @@ MySQLGetDiagRec(SQLSMALLINT handle_type, SQLHANDLE handle, SQLSMALLINT record,
 }
 
 
+my_bool is_odbc3_subclass(char *sqlstate)
+{
+  char *states[]= { "01S00", "01S01", "01S02", "01S06", "01S07", "07S01",
+    "08S01", "21S01", "21S02", "25S01", "25S02", "25S03", "42S01", "42S02",
+    "42S11", "42S12", "42S21", "42S22", "HY095", "HY097", "HY098", "HY099",
+    "HY100", "HY101", "HY105", "HY107", "HY109", "HY110", "HY111", "HYT00",
+    "HYT01", "IM001", "IM002", "IM003", "IM004", "IM005", "IM006", "IM007",
+    "IM008", "IM010", "IM011", "IM012"};
+  size_t i;
+
+  if (!sqlstate)
+    return FALSE;
+
+  for (i= 0; i < sizeof(states) / sizeof(states[0]); i++)
+    if (memcmp(states[i], sqlstate, 5) == 0)
+      return TRUE;
+
+  return FALSE;
+}
+
+
 /*
   @type    : ODBC 3.0 API
   @purpose : returns the current value of a field of a record of the
   diagnostic data structure (associated with a specified handle)
   that contains error, warning, and status information
 */
-
-SQLRETURN SQL_API SQLGetDiagField(SQLSMALLINT HandleType,
-                                  SQLHANDLE   Handle,
-                                  SQLSMALLINT RecNumber,
-                                  SQLSMALLINT DiagIdentifier,
-                                  SQLPOINTER  DiagInfoPtr,
-                                  SQLSMALLINT BufferLength,
-                                  SQLSMALLINT *StringLengthPtr)
+SQLRETURN SQL_API
+MySQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle, SQLSMALLINT record,
+                  SQLSMALLINT identifier, SQLCHAR **char_value,
+                  SQLPOINTER num_value)
 {
-    SQLRETURN   error= SQL_SUCCESS;
-    SQLPOINTER  szDiagInfo= NULL;
-    SQLSMALLINT tmp_size;
+  SQLLEN num;
 
-    if ( !StringLengthPtr )
-        StringLengthPtr= &tmp_size;
+  /* Handle may not be these types, but this saves lots of casts below. */
+  STMT *stmt= (STMT *)handle;
+  DBC *dbc= (DBC *)handle;
+  ENV *env= (ENV *)handle;
 
-    if ( !DiagInfoPtr )
-        DiagInfoPtr= szDiagInfo;
+  if (!num_value)
+    num_value= &num;
 
-    if ( !Handle ||
-         !(HandleType == SQL_HANDLE_STMT ||
-           HandleType == SQL_HANDLE_DBC ||
-           HandleType == SQL_HANDLE_ENV) )
-        return SQL_ERROR;
+  if (!handle || !(handle_type == SQL_HANDLE_STMT ||
+                   handle_type == SQL_HANDLE_DBC ||
+                   handle_type == SQL_HANDLE_ENV))
+    return SQL_ERROR;
 
-    if ( RecNumber > 1 )
-        return SQL_NO_DATA_FOUND;
+  if (record > 1)
+    return SQL_NO_DATA_FOUND;
 
-    switch ( DiagIdentifier )
+  switch (identifier)
+  {
+  /*  Header fields */
+  case SQL_DIAG_CURSOR_ROW_COUNT:
+    if (handle_type != SQL_HANDLE_STMT)
+      return SQL_ERROR;
+    if (!stmt->result)
+      *(SQLLEN *)num_value= 0;
+    else
+      *(SQLLEN *)num_value= (SQLLEN) mysql_num_rows(stmt->result);
+    return SQL_SUCCESS;
+
+  case SQL_DIAG_DYNAMIC_FUNCTION:
+    if (handle_type != SQL_HANDLE_STMT)
+      return SQL_ERROR;
+    *char_value= (SQLCHAR *)"";
+    return SQL_SUCCESS;
+
+  case SQL_DIAG_DYNAMIC_FUNCTION_CODE:
+    if (handle_type != SQL_HANDLE_STMT)
+      return SQL_ERROR;
+    *(SQLINTEGER *)num_value= 0;
+    return SQL_SUCCESS;
+
+  case SQL_DIAG_NUMBER:
+    *(SQLINTEGER *)num_value= 1;
+    return SQL_SUCCESS;
+
+  case SQL_DIAG_RETURNCODE:
+    if (handle_type == SQL_HANDLE_STMT)
+      *(SQLRETURN *)num_value= stmt->error.retcode;
+    else if (handle_type == SQL_HANDLE_DBC)
+      *(SQLRETURN *)num_value= dbc->error.retcode;
+    else if (handle_type == SQL_HANDLE_ENV)
+      *(SQLRETURN *)num_value= env->error.retcode;
+    return SQL_SUCCESS;
+
+  case SQL_DIAG_ROW_COUNT:
+    if (handle_type != SQL_HANDLE_STMT)
+      return SQL_ERROR;
+    if (!stmt->result)
+      *(SQLLEN *)num_value= 0;
+    else
+      *(SQLLEN *)num_value= (SQLLEN)stmt->affected_rows;
+    return SQL_SUCCESS;
+
+  /* Record fields */
+  case SQL_DIAG_CLASS_ORIGIN:
     {
+      char *sqlstate;
+      if (record <= 0)
+        return SQL_ERROR;
+      if (handle_type == SQL_HANDLE_STMT)
+        sqlstate= stmt->error.sqlstate;
+      else if (handle_type == SQL_HANDLE_DBC)
+        sqlstate= dbc->error.sqlstate;
+      else if (handle_type == SQL_HANDLE_ENV)
+        sqlstate= env->error.sqlstate;
 
-        /* DIAG HEADER FIELDS SECTION */
-        case SQL_DIAG_DYNAMIC_FUNCTION:
-            if ( HandleType != SQL_HANDLE_STMT )
-                return SQL_ERROR;
-
-            error= copy_str_data(HandleType, Handle, DiagInfoPtr, BufferLength,
-                                 StringLengthPtr, "");
-            break;
-
-        case SQL_DIAG_DYNAMIC_FUNCTION_CODE:
-            *(SQLINTEGER *) DiagInfoPtr= 0;
-            break;
-
-        case SQL_DIAG_ROW_NUMBER:
-            *(SQLINTEGER *) DiagInfoPtr= SQL_ROW_NUMBER_UNKNOWN;
-            break;
-
-        case SQL_DIAG_NUMBER:
-            *(SQLINTEGER *) DiagInfoPtr= 1;
-            break;
-
-        case SQL_DIAG_RETURNCODE:
-            if ( HandleType == SQL_HANDLE_STMT )
-                *(SQLRETURN *) DiagInfoPtr= ((STMT FAR*) Handle)->error.retcode;
-
-            else if ( HandleType == SQL_HANDLE_DBC )
-                *(SQLRETURN *) DiagInfoPtr= ((DBC FAR*) Handle)->error.retcode;
-
-            else
-                *(SQLRETURN *) DiagInfoPtr= ((ENV FAR*) Handle)->error.retcode;
-            break;
-
-        case SQL_DIAG_CURSOR_ROW_COUNT:/* at present, return total rows in rs */
-            if ( HandleType != SQL_HANDLE_STMT )
-                return SQL_ERROR;
-
-            if ( !((STMT FAR*) Handle)->result )
-                *(SQLINTEGER *) DiagInfoPtr= 0;
-
-            else
-                *(SQLINTEGER *) DiagInfoPtr= (SQLINTEGER)
-                                             mysql_num_rows(((STMT FAR*)  Handle)->result);
-            break;
-
-        case SQL_DIAG_ROW_COUNT:
-            if ( HandleType != SQL_HANDLE_STMT )
-                return SQL_ERROR;
-
-            *(SQLINTEGER *) DiagInfoPtr= (SQLINTEGER)
-                                         ((STMT FAR*)  Handle)->affected_rows;
-            break;
-
-            /* DIAG RECORD FIELDS SECTION */
-
-        case SQL_DIAG_CLASS_ORIGIN:
-        case SQL_DIAG_SUBCLASS_ORIGIN:
-            error= copy_str_data(HandleType, Handle, DiagInfoPtr, BufferLength,
-                                 StringLengthPtr, "ISO 9075");
-            break;
-
-        case SQL_DIAG_COLUMN_NUMBER:
-            *(SQLINTEGER *) DiagInfoPtr= SQL_COLUMN_NUMBER_UNKNOWN;
-            break;
-
-        case SQL_DIAG_CONNECTION_NAME:
-            /*
-              When the connection fails, ODBC DM calls this function, so don't
-              return dbc->dsn as the connection name instead return empty string
-            */
-
-            if ( HandleType == SQL_HANDLE_STMT )
-                error= copy_str_data(HandleType, Handle, DiagInfoPtr, BufferLength,
-                                     StringLengthPtr,((STMT FAR*) Handle)->dbc->dsn ?
-                                     ((STMT FAR*) Handle)->dbc->dsn:"");
-
-            else if ( HandleType == SQL_HANDLE_DBC )
-                error= copy_str_data(HandleType, Handle, DiagInfoPtr, BufferLength,
-                                     StringLengthPtr,((DBC FAR*) Handle)->dsn ?
-                                     ((DBC FAR*) Handle)->dsn:"");
-
-            else
-            {
-                *(SQLCHAR *) DiagInfoPtr= 0;
-                *StringLengthPtr= 0;
-            }
-            break;
-
-        case SQL_DIAG_MESSAGE_TEXT:
-            if ( HandleType == SQL_HANDLE_STMT )
-                error= copy_str_data(HandleType, Handle, DiagInfoPtr, BufferLength,
-                                     StringLengthPtr,
-                                     ((STMT FAR*) Handle)->error.message);
-
-            else if ( HandleType == SQL_HANDLE_DBC )
-                error= copy_str_data(HandleType, Handle, DiagInfoPtr, BufferLength,
-                                     StringLengthPtr,((DBC FAR*) Handle)->error.message);
-            else
-                error= copy_str_data(HandleType, Handle, DiagInfoPtr, BufferLength,
-                                     StringLengthPtr,((ENV FAR*) Handle)->error.message);
-            break;
-
-        case SQL_DIAG_NATIVE:
-            if ( HandleType == SQL_HANDLE_STMT )
-                *(SQLINTEGER *) DiagInfoPtr= ((STMT FAR*) Handle)->error.native_error;
-
-            else if ( HandleType == SQL_HANDLE_DBC )
-                *(SQLINTEGER *) DiagInfoPtr= ((DBC FAR*) Handle)->error.native_error;
-
-            else
-                *(SQLINTEGER *) DiagInfoPtr= ((ENV FAR*) Handle)->error.native_error;
-            break;
-
-        case SQL_DIAG_SERVER_NAME:
-            if ( HandleType == SQL_HANDLE_STMT )
-                error= copy_str_data(HandleType, Handle, DiagInfoPtr, BufferLength,
-                                     StringLengthPtr,
-                                     ((STMT FAR*) Handle)->dbc->server ?
-                                     ((STMT FAR*) Handle)->dbc->server : "");
-
-            else if ( HandleType == SQL_HANDLE_DBC )
-                error= copy_str_data(HandleType, Handle, DiagInfoPtr, BufferLength,
-                                     StringLengthPtr,((DBC FAR*) Handle)->server ?
-                                     ((DBC FAR*) Handle)->server : "");
-            else
-            {
-                *(SQLCHAR *) DiagInfoPtr= 0;
-                *StringLengthPtr= 0;
-            }
-            break;
-
-        case SQL_DIAG_SQLSTATE:
-            if ( HandleType == SQL_HANDLE_STMT )
-                error= copy_str_data(HandleType, Handle, DiagInfoPtr, BufferLength,
-                                     StringLengthPtr,
-                                     ((STMT FAR*) Handle)->error.sqlstate);
-
-            else if ( HandleType == SQL_HANDLE_DBC )
-                error= copy_str_data(HandleType, Handle, DiagInfoPtr, BufferLength,
-                                     StringLengthPtr,
-                                     ((DBC FAR*) Handle)->error.sqlstate);
-
-            else
-                error= copy_str_data(HandleType, Handle, DiagInfoPtr, BufferLength,
-                                     StringLengthPtr,
-                                     ((ENV FAR*) Handle)->error.sqlstate);
-            break;
-
-        default:
-            return SQL_ERROR;
+      if (sqlstate && sqlstate[0] == 'I' && sqlstate[1] == 'M')
+        *char_value= (SQLCHAR *)"ODBC 3.0";
+      else
+        *char_value= (SQLCHAR *)"ISO 9075";
     }
-    return error;
+    return SQL_SUCCESS;
+
+  case SQL_DIAG_COLUMN_NUMBER:
+    if (record <= 0)
+      return SQL_ERROR;
+    *(SQLINTEGER *)num_value= SQL_COLUMN_NUMBER_UNKNOWN;
+    return SQL_SUCCESS;
+
+  case SQL_DIAG_CONNECTION_NAME:
+    if (record <= 0)
+      return SQL_ERROR;
+
+    if (handle_type == SQL_HANDLE_STMT)
+      *char_value= stmt->dbc->dsn ? stmt->dbc->dsn : "";
+    else if (handle_type == SQL_HANDLE_DBC)
+      *char_value= dbc->dsn ? dbc->dsn : "";
+    else
+      *char_value= "";
+    return SQL_SUCCESS;
+
+  case SQL_DIAG_MESSAGE_TEXT:
+    if (record <= 0)
+      return SQL_ERROR;
+    if (handle_type == SQL_HANDLE_STMT)
+      *char_value= (SQLCHAR *)stmt->error.message;
+    else if (handle_type == SQL_HANDLE_DBC)
+      *char_value= (SQLCHAR *)dbc->error.message;
+    else if (handle_type == SQL_HANDLE_ENV)
+      *char_value= (SQLCHAR *)env->error.message;
+    if (!*char_value)
+      *char_value= "";
+    return SQL_SUCCESS;
+
+  case SQL_DIAG_NATIVE:
+    if (record <= 0)
+      return SQL_ERROR;
+    if (handle_type == SQL_HANDLE_STMT)
+      *(SQLINTEGER *)num_value= (SQLCHAR *)stmt->error.native_error;
+    else if (handle_type == SQL_HANDLE_DBC)
+      *(SQLINTEGER *)num_value= (SQLCHAR *)dbc->error.native_error;
+    else if (handle_type == SQL_HANDLE_ENV)
+      *(SQLINTEGER *)num_value= (SQLCHAR *)env->error.native_error;
+    return SQL_SUCCESS;
+
+  case SQL_DIAG_ROW_NUMBER:
+    if (record <= 0)
+      return SQL_ERROR;
+    *(SQLLEN *)num_value= SQL_ROW_NUMBER_UNKNOWN;
+    return SQL_SUCCESS;
+
+  case SQL_DIAG_SERVER_NAME:
+    if (record <= 0)
+      return SQL_ERROR;
+    if (handle_type == SQL_HANDLE_STMT)
+      *char_value= stmt->dbc->server ? stmt->dbc->server : "";
+    else if (handle_type == SQL_HANDLE_DBC)
+      *char_value= dbc->server ? dbc->server : "";
+    else
+      *char_value= "";
+    return SQL_SUCCESS;
+
+  case SQL_DIAG_SQLSTATE:
+    if (record <= 0)
+      return SQL_ERROR;
+    if (handle_type == SQL_HANDLE_STMT)
+      *char_value= (SQLCHAR *)stmt->error.sqlstate;
+    else if (handle_type == SQL_HANDLE_DBC)
+      *char_value= (SQLCHAR *)dbc->error.sqlstate;
+    else if (handle_type == SQL_HANDLE_ENV)
+      *char_value= (SQLCHAR *)env->error.sqlstate;
+    if (!*char_value)
+      *char_value= "";
+    return SQL_SUCCESS;
+
+  case SQL_DIAG_SUBCLASS_ORIGIN:
+    if (record <= 0)
+      return SQL_ERROR;
+    {
+      char *sqlstate;
+      if (record <= 0)
+        return SQL_ERROR;
+      if (handle_type == SQL_HANDLE_STMT)
+        sqlstate= stmt->error.sqlstate;
+      else if (handle_type == SQL_HANDLE_DBC)
+        sqlstate= dbc->error.sqlstate;
+      else if (handle_type == SQL_HANDLE_ENV)
+        sqlstate= env->error.sqlstate;
+
+      if (is_odbc3_subclass(sqlstate))
+        *char_value= (SQLCHAR *)"ODBC 3.0";
+      else
+        *char_value= (SQLCHAR *)"ISO 9075";
+    }
+    return SQL_SUCCESS;
+
+  default:
+    return SQL_ERROR;
+  }
 }
