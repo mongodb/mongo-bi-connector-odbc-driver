@@ -108,6 +108,7 @@ SQLBulkOperations
 ;SQLGetDescRec
 SQLColAttributeW
 SQLColAttributesW
+SQLColumnPrivilegesW
 SQLCloseCursor
 SQLConnectW
 SQLDescribeColW

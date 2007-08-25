@@ -366,6 +366,47 @@ SQLColAttributesW(SQLHSTMT hstmt, SQLUSMALLINT column, SQLUSMALLINT field,
 
 
 SQLRETURN SQL_API
+SQLColumnPrivilegesW(SQLHSTMT hstmt,
+                     SQLWCHAR *catalog, SQLSMALLINT catalog_len,
+                     SQLWCHAR *schema, SQLSMALLINT schema_len,
+                     SQLWCHAR *table, SQLSMALLINT table_len,
+                     SQLWCHAR *column, SQLSMALLINT column_len)
+{
+  SQLRETURN rc;
+  SQLCHAR *catalog8, *schema8, *table8, *column8;
+  DBC *dbc= ((STMT *)hstmt)->dbc;
+  SQLINTEGER len= SQL_NTS;;
+  uint errors= 0;
+
+  catalog8= sqlwchar_as_sqlchar(dbc->ansi_charset_info, catalog, &len, &errors);
+  catalog_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  schema8= sqlwchar_as_sqlchar(dbc->ansi_charset_info, schema, &len, &errors);
+  schema_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  table8= sqlwchar_as_sqlchar(dbc->ansi_charset_info, table, &len, &errors);
+  table_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  column8= sqlwchar_as_sqlchar(dbc->ansi_charset_info, column, &len, &errors);
+  column_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  rc= MySQLColumnPrivileges(hstmt, catalog8, catalog_len, schema8, schema_len,
+                            table8, table_len, column8, column_len);
+
+  x_free(catalog8);
+  x_free(schema8);
+  x_free(table8);
+  x_free(column8);
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
 SQLConnectW(SQLHDBC hdbc, SQLWCHAR *dsn, SQLSMALLINT dsn_len_in,
             SQLWCHAR *user, SQLSMALLINT user_len_in,
             SQLWCHAR *auth, SQLSMALLINT auth_len_in)
@@ -943,36 +984,6 @@ SQLSetStmtAttrW(SQLHSTMT hstmt, SQLINTEGER attribute,
 SQLRETURN SQL_API
 SQLBrowseConnectW(SQLHDBC hdbc, SQLWCHAR *in, SQLSMALLINT in_len,
                   SQLWCHAR *out, SQLSMALLINT out_max, SQLSMALLINT *out_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLColAttributeW(SQLHSTMT hstmt, SQLUSMALLINT column,
-                 SQLUSMALLINT field, SQLPOINTER char_attr,
-                 SQLSMALLINT char_attr_max, SQLSMALLINT *char_attr_len,
-                 SQLPOINTER num_attr) /* SHould be SQLLEN * */
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLColAttributesW(SQLHSTMT hstmt, SQLUSMALLINT column, SQLUSMALLINT type,
-                  SQLPOINTER char_attr, SQLSMALLINT char_attr_max,
-                  SQLSMALLINT *char_attr_len, SQLLEN *num_attr)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLColumnPrivilegesW(SQLHSTMT hstmt,
-                     SQLWCHAR *catalog, SQLSMALLINT catalog_len,
-                     SQLWCHAR *schema, SQLSMALLINT schema_len,
-                     SQLWCHAR *table, SQLSMALLINT table_len,
-                     SQLWCHAR *column, SQLSMALLINT column_len)
 {
   NOT_IMPLEMENTED;
 }

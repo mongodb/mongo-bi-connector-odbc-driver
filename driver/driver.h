@@ -397,6 +397,13 @@ extern pthread_mutex_t myodbc_lock;
 SQLRETURN SQL_API MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
                                     SQLUSMALLINT attrib, SQLCHAR **char_attr,
                                     SQLLEN *num_attr);
+SQLRETURN SQL_API MySQLColumnPrivileges(SQLHSTMT hstmt,
+                                        SQLCHAR *catalog,
+                                        SQLSMALLINT catalog_len,
+                                        SQLCHAR *schema, SQLSMALLINT schema_len,
+                                        SQLCHAR *table, SQLSMALLINT table_len,
+                                        SQLCHAR *column,
+                                        SQLSMALLINT column_len);
 SQLRETURN SQL_API MySQLConnect(SQLHDBC hdbc, SQLCHAR *szDSN, SQLSMALLINT cbDSN,
                                SQLCHAR *szUID, SQLSMALLINT cbUID,
                                SQLCHAR *szAuth, SQLSMALLINT cbAuth);

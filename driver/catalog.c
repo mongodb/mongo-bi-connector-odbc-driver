@@ -1298,19 +1298,14 @@ SQLRETURN SQL_API SQLTablePrivileges(SQLHSTMT hstmt,
 }
 
 
-/*
-****************************************************************************
-SQLColumnPrivileges
-****************************************************************************
-*/
 
 /*
   @type    : internal
   @purpose : returns a column privileges result, NULL on error
 */
-static MYSQL_RES *mysql_list_column_priv(MYSQL *mysql, 
+static MYSQL_RES *mysql_list_column_priv(MYSQL *mysql,
                                          const char *qualifier,
-                                         const char *table, 
+                                         const char *table,
                                          const char *column)
 {
     char buff[255+3*NAME_LEN+1];
@@ -1333,12 +1328,13 @@ static MYSQL_RES *mysql_list_column_priv(MYSQL *mysql,
     return mysql_store_result(mysql);
 }
 
-char *SQLCOLUMNS_priv_values[]= 
+
+char *SQLCOLUMNS_priv_values[]=
 {
     NULL,"",NULL,NULL,NULL,NULL,NULL,NULL
 };
 
-#if MYSQL_VERSION_ID >= 40100
+
 MYSQL_FIELD SQLCOLUMNS_priv_fields[]=
 {
     {"TABLE_CAT",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
@@ -1349,43 +1345,21 @@ MYSQL_FIELD SQLCOLUMNS_priv_fields[]=
     {"GRANTEE",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
     {"PRIVILEGE",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
     {"IS_GRANTABLE",  NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-};                                                           
-#else
-MYSQL_FIELD SQLCOLUMNS_priv_fields[]=
-{
-    {"TABLE_CAT",     "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",   "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_NAME",    "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
-    {"COLUMN_NAME",   "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
-    {"GRANTOR",       "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"GRANTEE",       "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
-    {"PRIVILEGE",     "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
-    {"IS_GRANTABLE",  "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
 };
-#endif
+
 
 const uint SQLCOLUMNS_PRIV_FIELDS= array_elements(SQLCOLUMNS_priv_values);
 
-/*
-  @type    : ODBC 1.0 API
-  @purpose : returns a list of columns and associated privileges for the
-             specified table. The driver returns the information as a result
-             set on the specified StatementHandle.
-*/
 
-SQLRETURN SQL_API SQLColumnPrivileges(SQLHSTMT hstmt,
-                                      SQLCHAR FAR *szTableQualifier,
-                                      SQLSMALLINT cbTableQualifier,
-                                      SQLCHAR FAR *szTableOwner
-                                       __attribute__((unused)),
-                                      SQLSMALLINT cbTableOwner
-                                       __attribute__((unused)),
-                                      SQLCHAR FAR *szTableName,
-                                      SQLSMALLINT cbTableName,
-                                      SQLCHAR FAR *szColumnName,
-                                      SQLSMALLINT cbColumnName)
-{ 
-    STMT FAR *stmt=(STMT FAR*) hstmt;
+SQLRETURN SQL_API
+MySQLColumnPrivileges(SQLHSTMT hstmt,
+                      SQLCHAR *szTableQualifier, SQLSMALLINT cbTableQualifier,
+                      SQLCHAR *szTableOwner __attribute__((unused)),
+                      SQLSMALLINT cbTableOwner __attribute__((unused)),
+                      SQLCHAR *szTableName, SQLSMALLINT cbTableName,
+                      SQLCHAR *szColumnName, SQLSMALLINT cbColumnName)
+{
+    STMT *stmt=(STMT *) hstmt;
     char     Qualifier_buff[NAME_LEN+1],Table_buff[NAME_LEN+1],
     Column_buff[NAME_LEN+1],
     *TableQualifier,*TableName, *ColumnName;
@@ -1452,10 +1426,11 @@ SQLRETURN SQL_API SQLColumnPrivileges(SQLHSTMT hstmt,
             data+= SQLCOLUMNS_PRIV_FIELDS;
         }
     }
-    stmt->result->row_count= row_count;  
+    stmt->result->row_count= row_count;
     mysql_link_fields(stmt,SQLCOLUMNS_priv_fields,SQLCOLUMNS_PRIV_FIELDS);
     return SQL_SUCCESS;
 }
+
 
 /*
 ****************************************************************************

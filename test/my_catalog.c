@@ -38,8 +38,7 @@ DECLARE_TEST(my_columns_null)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLColumns(hstmt,NULL,SQL_NTS,NULL,SQL_NTS,"my_column_null",SQL_NTS,NULL,SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLColumns(hstmt,NULL,SQL_NTS,NULL,SQL_NTS,"my_column_null",SQL_NTS,NULL,SQL_NTS));
 
     myassert(2 == my_print_non_format_result(hstmt));
 
@@ -67,8 +66,7 @@ DECLARE_TEST(my_drop_table)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLColumns(hstmt,NULL,0,NULL,0,"my_drop_table",SQL_NTS,NULL,0);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLColumns(hstmt,NULL,0,NULL,0,"my_drop_table",SQL_NTS,NULL,0));
 
     myassert(1 == my_print_non_format_result(hstmt));
 
@@ -97,8 +95,7 @@ DECLARE_TEST(my_table_dbs)
     SQLExecDirect(hstmt, "DROP DATABASE my_all_db_test3",   SQL_NTS);
     SQLExecDirect(hstmt, "DROP DATABASE my_all_db_test4",   SQL_NTS);
 
-    rc = SQLTables(hstmt,"%",1,NULL,0,NULL,0,NULL,0);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLTables(hstmt,"%",1,NULL,0,NULL,0,NULL,0));
 
     nrows = my_print_non_format_result(hstmt);
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
@@ -245,7 +242,7 @@ DECLARE_TEST(my_colpriv)
                                      NULL, SQL_NTS, NULL, SQL_NTS,
                                      "test_colprev1", SQL_NTS, NULL, SQL_NTS));
 
-  assert(4 == my_print_non_format_result(hstmt));
+  is(4 == my_print_non_format_result(hstmt));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
@@ -364,8 +361,7 @@ DECLARE_TEST(t_catalog)
     rc = SQLExecDirect(hstmt,"create table t_catalog(a tinyint, b char(4))",SQL_NTS);
     mystmt(hstmt,rc);
 
-    rc = SQLColumns(hstmt,NULL,0,NULL,0,"t_catalog",9,NULL,0);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLColumns(hstmt,NULL,0,NULL,0,"t_catalog",9,NULL,0));
 
     rc = SQLNumResultCols(hstmt, &ncols);
     mystmt(hstmt,rc);
@@ -430,14 +426,9 @@ DECLARE_TEST(tmysql_specialcols)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLSpecialColumns(hstmt,
-                          SQL_BEST_ROWID,
-                          NULL,0,
-                          NULL,0,
-                          "tmysql_specialcols",SQL_NTS,
-                          SQL_SCOPE_SESSION,
-                          SQL_NULLABLE);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLSpecialColumns(hstmt, SQL_BEST_ROWID, NULL,0, NULL,0,
+                                     "tmysql_specialcols",SQL_NTS,
+                                     SQL_SCOPE_SESSION, SQL_NULLABLE));
 
     myresult(hstmt);
 
@@ -588,8 +579,7 @@ DECLARE_TEST(t_tables_bug)
 
    SQLFreeStmt(hstmt, SQL_CLOSE);
 
-   rc = SQLTables(hstmt,NULL,0,NULL,0,NULL,0,"'TABLE'",SQL_NTS);
-   mystmt(hstmt,rc);
+   ok_stmt(hstmt, SQLTables(hstmt,NULL,0,NULL,0,NULL,0,"'TABLE'",SQL_NTS));
 
    rc = SQLNumResultCols(hstmt,&ColumnCount);
    mystmt(hstmt,rc);
@@ -713,8 +703,7 @@ DECLARE_TEST(t_sqltables)
 {
     SQLRETURN r;
 
-    r  = SQLTables(hstmt,NULL,0,NULL,0,NULL,0,NULL,0);
-    mystmt(hstmt,r);
+    ok_stmt(hstmt, SQLTables(hstmt,NULL,0,NULL,0,NULL,0,NULL,0));
 
     myresult(hstmt);
 
