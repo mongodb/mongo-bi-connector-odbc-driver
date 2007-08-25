@@ -691,7 +691,7 @@ DECLARE_TEST(sqlwchar)
 {
   /* Note: this is an SQLCHAR, so it is 'ANSI' data. */
   SQLCHAR data[]= "S\xe3o Paolo", buff[30];
-  SQLWCHAR wbuff[30];
+  SQLWCHAR wbuff[30]= {0};
   wchar_t wcdata[]= L"S\u00e3o Paolo";
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_sqlwchar");

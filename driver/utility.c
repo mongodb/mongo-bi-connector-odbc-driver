@@ -610,7 +610,7 @@ copy_wchar_result(STMT *stmt,
   SQLRETURN rc= SQL_SUCCESS;
   char *src_end;
   SQLWCHAR *result_end;
-  ulong used_chars, error_count= 0;
+  ulong used_chars= 0, error_count= 0;
   CHARSET_INFO *from_cs= get_charset(field->charsetnr ? field->charsetnr : 33,
                                      MYF(0));
 
