@@ -594,105 +594,209 @@ convert_to_out:
 
   @param[in]     stmt        Pointer to statement
   @param[out]    result      Buffer for result
-  @param[in]     result_len  Size of result buffer
+  @param[in]     result_len  Size of result buffer (in characters)
   @param[out]    used_len    Pointer to buffer for storing amount of buffer used
   @param[in]     field       Field being stored
   @param[in]     src         Source data for result
-  @param[in]     src_len     Length of source data (in bytes)
-  @param[in]     max_len     Maximum length (SQL_ATTR_MAX_LENGTH)
+  @param[in]     src_bytes   Length of source data (in bytes)
 
   @return Standard ODBC result code
 */
 SQLRETURN
 copy_wchar_result(STMT *stmt,
-                  SQLWCHAR *result, SQLINTEGER result_len, SQLLEN *used_len,
-                  MYSQL_FIELD *field, char *src, long src_len)
+                  SQLWCHAR *result, SQLINTEGER result_len, SQLLEN *avail_len,
+                  MYSQL_FIELD *field, char *src, long src_bytes)
 {
-  SQLWCHAR *dst= result;
-  SQLINTEGER orig_result_len= result_len;
-  long fill_len= (field->type == MYSQL_TYPE_STRING ?  field->length : 0L);
-  ulong length;
-  ulong max_len= stmt->stmt_options.max_length;
-  ulong *offset= &stmt->getdata.src_offset;
+  SQLRETURN rc= SQL_SUCCESS;
+  char *src_end;
+  SQLWCHAR *result_end;
+  ulong used_chars, error_count= 0;
+  CHARSET_INFO *from_cs= get_charset(field->charsetnr ? field->charsetnr : 33,
+                                     MYF(0));
 
-  /** @todo padding of CHAR */
+  if (!result_len)
+    result= NULL; /* Don't copy anything! */
 
-  /* Calculate actual source length if we got SQL_NTS */
-  if (src_len == SQL_NTS)
-    src_len= src ? strlen(src) : 0;
+  result_end= result + result_len - 1;
 
-  if (result_len)
-    result_len--; /* Need room for end nul */
-  else
-    dst= 0; /* Don't copy anything! */
-
-  /* Apply max length, if one was specified. */
-  if (max_len && max_len < result_len)
-    result_len= max_len;
-
-  if (fill_len < src_len || !stmt->dbc->flag & FLAG_PAD_SPACE)
-    fill_len= src_len;
-
-  if (*offset == (ulong) ~0L)
-    *offset= 0;         /* First call */
-  else if (orig_result_len && *offset >= (ulong) fill_len)
-    return SQL_NO_DATA_FOUND;
-
-  /* Skip already-retrieved data. */
-  src+= *offset;
-  src_len-= (long) *offset;
-  fill_len-= *offset;
-
-  /* Figure out how many characters we actually have left to copy into.  */
-  length= min(fill_len, result_len);
-
-  if (dst)
+  if (result == result_end)
   {
-    CHARSET_INFO *charset= get_charset(field->charsetnr, MYF(0));
-    ulong i, copy_len= (src_len >= (long)length ? length :
-                        (src_len > 0 ? src_len : 0L));
-    uint32 used_bytes, used_chars, bytes;
-    UTF8 *temp= (UTF8 *)my_malloc(copy_len * 4, MYF(0));
-    uint errors= 0;
-
-    bytes= copy_and_convert((char *)temp, copy_len * 4, utf8_charset_info,
-                             src, copy_len, charset, &used_bytes, &used_chars,
-                             &errors);
-
-    /* Update offset for the next call. */
-    (*offset)+= used_bytes;
-
-    if (sizeof(SQLWCHAR) == 4)
-    {
-      for (i= 0; i < bytes; )
-        i+= utf8toutf32(temp + i, (UTF32 *)dst++);
-    }
-    else
-    {
-      for (i= 0; i < bytes; )
-      {
-        UTF32 u32;
-        i+= utf8toutf32(temp + i, &u32);
-        dst+= utf32toutf16(u32, (UTF16 *)dst);
-      }
-    }
-
-    while (dst < result + length)
-      *dst++= ' ';
-
-    if (length != (ulong) result_len)
-      dst= 0;
+    *result= 0;
+    result= 0;
   }
 
-  if (used_len)
-    *used_len= fill_len;
+  /* Apply max length to source data, if one was specified. */
+  if (stmt->stmt_options.max_length &&
+      src_bytes > stmt->stmt_options.max_length)
+    src_bytes= stmt->stmt_options.max_length;
+  src_end= src + src_bytes;
 
-  if (orig_result_len && result_len >= fill_len)
-    return SQL_SUCCESS;
+  /* Initialize the source data */
+  if (!stmt->getdata.source)
+    stmt->getdata.source= src;
+  else
+    src= stmt->getdata.source;
 
-  set_stmt_error(stmt, "01004", NULL, 0);
+  /* If we've already retrieved everything, return SQL_NO_DATA_FOUND */
+  if (stmt->getdata.dst_bytes != (ulong)~0L &&
+      stmt->getdata.dst_offset >= stmt->getdata.dst_bytes)
+    return SQL_NO_DATA_FOUND;
 
-  return SQL_SUCCESS_WITH_INFO;
+  /* We may have a leftover char from the last call. */
+  if (stmt->getdata.latest_bytes)
+  {
+    memcpy(result, stmt->getdata.latest, sizeof(SQLWCHAR));
+    result++;
+
+    if (result == result_end)
+    {
+      *result= 0;
+      result= NULL;
+    }
+
+    used_chars+= 1;
+    stmt->getdata.latest_bytes= 0;
+  }
+
+
+  while (src < src_end)
+  {
+    /* Find the conversion functions. */
+    int (*mb_wc)(struct charset_info_st *, my_wc_t *, const uchar *,
+                 const uchar *) = from_cs->cset->mb_wc;
+    int (*wc_mb)(struct charset_info_st *, my_wc_t, uchar *s,
+                 uchar *e)= utf8_charset_info->cset->wc_mb;
+    my_wc_t wc;
+    uchar u8[5]; /* Max length of utf-8 string we'll see. */
+    SQLWCHAR dummy[2]; /* If SQLWCHAR is UTF-16, we may need two chars. */
+    int to_cnvres;
+
+    int cnvres= (*mb_wc)(from_cs, &wc, (uchar *)src, (uchar *)src_end);
+    if (cnvres == MY_CS_ILSEQ)
+    {
+      error_count++;
+      cnvres= 1;
+      wc= '?';
+    }
+    else if (cnvres < 0 && cnvres > MY_CS_TOOSMALL)
+    {
+      error_count++;
+      cnvres= abs(cnvres);
+      wc= '?';
+    }
+    else if (cnvres < 0)
+      return set_stmt_error(stmt, "HY000",
+                            "Unknown failure when converting character "
+                            "from server character set.", 0);
+
+convert_to_out:
+    /*
+     We always convert into a temporary buffer, so we can properly handle
+     characters that are going to get split across requests.
+    */
+    to_cnvres= (*wc_mb)(utf8_charset_info, wc, u8, u8 + sizeof(u8));
+
+    if (to_cnvres > 0)
+    {
+      u8[to_cnvres]= '\0';
+
+      src+= cnvres;
+
+      if (sizeof(SQLWCHAR) == 4)
+      {
+        utf8toutf32(u8, (UTF32 *)(result ? result : dummy));
+        if (result)
+          result++;
+        used_chars+= 1;
+
+        if (result && result == result_end)
+        {
+          if (stmt->getdata.dst_bytes != (ulong)~0L)
+          {
+            stmt->getdata.source+= cnvres;
+            break;
+          }
+          *result= 0;
+          result= NULL;
+        }
+      }
+      else
+      {
+        UTF32 u32;
+        UTF16 out[2];
+        int chars;
+        utf8toutf32(u8, &u32);
+        chars= utf32toutf16(u32, (UTF16 *)out);
+
+        if (result)
+          *result++= out[0];
+
+         used_chars+= chars;
+
+        if (result && result != result_end)
+          *result++= out[1];
+        else if (result)
+        {
+          *((SQLWCHAR *)stmt->getdata.latest)= out[1];
+          stmt->getdata.latest_bytes= 2;
+          stmt->getdata.latest_used= 0;
+          *result= 0;
+          result= NULL;
+
+          if (stmt->getdata.dst_bytes != (ulong)~0L)
+          {
+            stmt->getdata.source+= cnvres;
+            break;
+          }
+        }
+        else
+          continue;
+      }
+
+      stmt->getdata.source+= cnvres;
+    }
+    else if (stmt->getdata.latest_bytes == MY_CS_ILUNI && wc != '?')
+    {
+      error_count++;
+      wc= '?';
+      goto convert_to_out;
+    }
+    else
+      return set_stmt_error(stmt, "HY000",
+                            "Unknown failure when converting character "
+                            "to result character set.", 0);
+  }
+
+  if (result)
+    *result= 0;
+
+  if (stmt->getdata.dst_bytes == (ulong)~0L)
+  {
+    stmt->getdata.dst_bytes= used_chars;
+    stmt->getdata.dst_offset= 0;
+  }
+
+  if (avail_len)
+    *avail_len= stmt->getdata.dst_bytes - stmt->getdata.dst_offset;
+
+  stmt->getdata.dst_offset+= min(result_len ? result_len - 1 : 0,
+                                 used_chars);
+
+  /* Did we truncate the data? */
+  if (stmt->getdata.dst_bytes > stmt->getdata.dst_offset)
+  {
+    set_stmt_error(stmt, "01004", NULL, 0);
+    rc= SQL_SUCCESS_WITH_INFO;
+  }
+
+  /* Did we encounter any character conversion problems? */
+  if (error_count)
+  {
+    set_stmt_error(stmt, "22018", NULL, 0);
+    rc= SQL_SUCCESS_WITH_INFO;
+  }
+
+  return rc;
 }
 
 

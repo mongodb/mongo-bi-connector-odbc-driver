@@ -186,6 +186,16 @@ DECLARE_TEST(sqlchar)
 
   ok_stmt(hstmt1, SQLFetch(hstmt1));
   is_str(my_fetch_str(hstmt1, buff, 1), data, sizeof(data));
+
+  expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  /* Do it again so we can try as SQLWCHAR */
+  ok_stmt(hstmt1, SQLExecute(hstmt1));
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+
   is_wstr(my_fetch_wstr(hstmt1, wbuff, 1), wcdata, 9);
 
   expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
@@ -664,6 +674,45 @@ DECLARE_TEST(sqlgetdiagfield)
 }
 
 
+DECLARE_TEST(sqlcolumns)
+{
+  HDBC hdbc1;
+  HSTMT hstmt1;
+  SQLWCHAR wbuff[40];
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
+                            W(L""), SQL_NTS));
+
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_columns");
+  ok_stmt(hstmt1, SQLExecDirectW(hstmt1,
+                                 W(L"CREATE TABLE t_columns (a\u00e3g INT)"),
+                                 SQL_NTS));
+
+  ok_stmt(hstmt1, SQLColumnsW(hstmt1, NULL, 0, NULL, 0,
+                              W(L"t_columns"), SQL_NTS,
+                              W(L"a\u00e3g"), SQL_NTS));
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+
+  is_wstr(my_fetch_wstr(hstmt1, wbuff, 4), L"a\u00e3g", 4);
+
+  expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_columns");
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlconnect)
   ADD_TEST(sqlprepare)
@@ -678,6 +727,7 @@ BEGIN_TESTS
   ADD_TEST(sqlgetconnectattr)
   ADD_TEST(sqlgetdiagrec)
   ADD_TEST(sqlgetdiagfield)
+  ADD_TEST(sqlcolumns)
 END_TESTS
 
 

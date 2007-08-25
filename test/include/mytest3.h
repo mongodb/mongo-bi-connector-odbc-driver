@@ -534,6 +534,8 @@ wchar_t *my_fetch_wstr(SQLHSTMT hstmt, SQLWCHAR *buffer, SQLUSMALLINT irow)
   if (!SQL_SUCCEEDED(rc))
     return L"";
 
+  buffer[nLen]= 0;
+
   return sqlwchar_to_wchar_t(buffer);
 }
 

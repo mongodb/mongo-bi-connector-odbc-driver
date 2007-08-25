@@ -234,6 +234,68 @@ SQLColumnPrivileges(SQLHSTMT hstmt,
 
 
 SQLRETURN SQL_API
+SQLColumns(SQLHSTMT hstmt, SQLCHAR *catalog, SQLSMALLINT catalog_len,
+           SQLCHAR *schema, SQLSMALLINT schema_len,
+           SQLCHAR *table, SQLSMALLINT table_len,
+           SQLCHAR *column, SQLSMALLINT column_len)
+{
+  SQLRETURN rc;
+  DBC *dbc= ((STMT *)hstmt)->dbc;
+
+  if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+  {
+    SQLINTEGER len= SQL_NTS;
+    uint errors= 0;
+
+    if (catalog)
+    {
+      catalog= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                  catalog, &len, &errors);
+      catalog_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (schema)
+    {
+      schema= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                 schema, &len, &errors);
+      schema_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (table)
+    {
+      table= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                table, &len, &errors);
+      table_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (column)
+    {
+      column= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                 column, &len, &errors);
+      column_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+  }
+
+  rc= MySQLColumns(hstmt, catalog, catalog_len, schema, schema_len,
+                   table, table_len, column, column_len);
+
+  if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+  {
+    x_free(catalog);
+    x_free(schema);
+    x_free(table);
+    x_free(column);
+  }
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
 SQLConnect(SQLHDBC hdbc, SQLCHAR *dsn, SQLSMALLINT dsn_len,
            SQLCHAR *user, SQLSMALLINT user_len,
            SQLCHAR *auth, SQLSMALLINT auth_len)
@@ -844,17 +906,6 @@ SQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER attribute,
 SQLRETURN SQL_API
 SQLBrowseConnect(SQLHDBC hdbc, SQLCHAR *in, SQLSMALLINT in_len,
                  SQLCHAR *out, SQLSMALLINT out_max, SQLSMALLINT *out_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLColumns(SQLHSTMT hstmt,
-           SQLCHAR *catalog, SQLSMALLINT catalog_len,
-           SQLCHAR *schema, SQLSMALLINT schema_len,
-           SQLCHAR *table, SQLSMALLINT table_len,
-           SQLCHAR *column, SQLSMALLINT column_len)
 {
   NOT_IMPLEMENTED;
 }

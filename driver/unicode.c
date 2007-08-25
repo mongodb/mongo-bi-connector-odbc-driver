@@ -378,24 +378,65 @@ SQLColumnPrivilegesW(SQLHSTMT hstmt,
   SQLINTEGER len= SQL_NTS;;
   uint errors= 0;
 
-  catalog8= sqlwchar_as_sqlchar(dbc->ansi_charset_info, catalog, &len, &errors);
+  catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
   catalog_len= (SQLSMALLINT)len;
   len= SQL_NTS;
 
-  schema8= sqlwchar_as_sqlchar(dbc->ansi_charset_info, schema, &len, &errors);
+  schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, schema, &len, &errors);
   schema_len= (SQLSMALLINT)len;
   len= SQL_NTS;
 
-  table8= sqlwchar_as_sqlchar(dbc->ansi_charset_info, table, &len, &errors);
+  table8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, table, &len, &errors);
   table_len= (SQLSMALLINT)len;
   len= SQL_NTS;
 
-  column8= sqlwchar_as_sqlchar(dbc->ansi_charset_info, column, &len, &errors);
+  column8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, column, &len, &errors);
   column_len= (SQLSMALLINT)len;
   len= SQL_NTS;
 
   rc= MySQLColumnPrivileges(hstmt, catalog8, catalog_len, schema8, schema_len,
                             table8, table_len, column8, column_len);
+
+  x_free(catalog8);
+  x_free(schema8);
+  x_free(table8);
+  x_free(column8);
+
+  return rc;
+}
+
+
+SQLRETURN SQL_API
+SQLColumnsW(SQLHSTMT hstmt,
+            SQLWCHAR *catalog, SQLSMALLINT catalog_len,
+            SQLWCHAR *schema, SQLSMALLINT schema_len,
+            SQLWCHAR *table, SQLSMALLINT table_len,
+            SQLWCHAR *column, SQLSMALLINT column_len)
+{
+  SQLRETURN rc;
+  SQLCHAR *catalog8, *schema8, *table8, *column8;
+  DBC *dbc= ((STMT *)hstmt)->dbc;
+  SQLINTEGER len= SQL_NTS;;
+  uint errors= 0;
+
+  catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
+  catalog_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, schema, &len, &errors);
+  schema_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  table8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, table, &len, &errors);
+  table_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  column8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, column, &len, &errors);
+  column_len= (SQLSMALLINT)len;
+  len= SQL_NTS;
+
+  rc= MySQLColumns(hstmt, catalog8, catalog_len, schema8, schema_len,
+                   table8, table_len, column8, column_len);
 
   x_free(catalog8);
   x_free(schema8);
@@ -984,17 +1025,6 @@ SQLSetStmtAttrW(SQLHSTMT hstmt, SQLINTEGER attribute,
 SQLRETURN SQL_API
 SQLBrowseConnectW(SQLHDBC hdbc, SQLWCHAR *in, SQLSMALLINT in_len,
                   SQLWCHAR *out, SQLSMALLINT out_max, SQLSMALLINT *out_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLColumnsW(SQLHSTMT hstmt,
-            SQLWCHAR *catalog, SQLSMALLINT catalog_len,
-            SQLWCHAR *schema, SQLSMALLINT schema_len,
-            SQLWCHAR *table, SQLSMALLINT table_len,
-            SQLWCHAR *column, SQLSMALLINT column_len)
 {
   NOT_IMPLEMENTED;
 }

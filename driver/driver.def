@@ -109,6 +109,7 @@ SQLBulkOperations
 SQLColAttributeW
 SQLColAttributesW
 SQLColumnPrivilegesW
+SQLColumnsW
 SQLCloseCursor
 SQLConnectW
 SQLDescribeColW

@@ -404,6 +404,11 @@ SQLRETURN SQL_API MySQLColumnPrivileges(SQLHSTMT hstmt,
                                         SQLCHAR *table, SQLSMALLINT table_len,
                                         SQLCHAR *column,
                                         SQLSMALLINT column_len);
+SQLRETURN SQL_API MySQLColumns(SQLHSTMT hstmt,
+                               SQLCHAR *catalog, SQLSMALLINT catalog_len,
+                               SQLCHAR *schema, SQLSMALLINT schema_len,
+                               SQLCHAR *sztable, SQLSMALLINT table_len,
+                               SQLCHAR *column, SQLSMALLINT column_len);
 SQLRETURN SQL_API MySQLConnect(SQLHDBC hdbc, SQLCHAR *szDSN, SQLSMALLINT cbDSN,
                                SQLCHAR *szUID, SQLSMALLINT cbUID,
                                SQLCHAR *szAuth, SQLSMALLINT cbAuth);

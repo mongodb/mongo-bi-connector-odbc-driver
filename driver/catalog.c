@@ -25,22 +25,6 @@
   @brief Catalog functions.
 */
 
-/***************************************************************************
- * The following ODBC APIs are implemented in this file:		   *
- *									   *
- *   SQLColumnPrivileges (ODBC)						   *
- *   SQLColumns		 (X/Open)					   *
- *   SQLForeignKeys	 (ODBC)						   *
- *   SQLPrimaryKeys	 (ODBC)						   *
- *   SQLProcedureColumns (ODBC)						   *
- *   SQLProcedures	 (ODBC)						   *
- *   SQLSpecialColumns	 (X/Open)					   *
- *   SQLStatistics	 (ISO 92)					   *
- *   SQLTablePrivileges  (ODBC)						   *
- *   SQLTables		 (ODBC)						   *
- *									   *
- ****************************************************************************/
-
 #include "driver.h"
 
 #define valid_input_parameter(A) ((A) && A[0])
@@ -568,7 +552,6 @@ char *SQLCOLUMNS_values[]= {
     SC_coldef,SC_sqltype,NullS,SC_octlen,NullS,SC_isnull
 };
 
-#if MYSQL_VERSION_ID >= 40100
 MYSQL_FIELD SQLCOLUMNS_fields[]=
 {
     {"TABLE_CAT",         NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
@@ -590,29 +573,6 @@ MYSQL_FIELD SQLCOLUMNS_fields[]=
     {"ORDINAL_POSITION",  NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_LONG},
     {"IS_NULLABLE",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,3,3, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING}
 };
-#else
-MYSQL_FIELD SQLCOLUMNS_fields[]=
-{
-    {"TABLE_CAT",         "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",       "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_NAME",        "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG, 0, MYSQL_TYPE_VAR_STRING},
-    {"COLUMN_NAME",       "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,NOT_NULL_FLAG, 0, MYSQL_TYPE_VAR_STRING},
-    {"DATA_TYPE",         "MySQL_Catalog",NullS,NullS,NullS,5,5,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
-    {"TYPE_NAME",         "MySQL_Catalog",NullS,NullS,NullS,20,20,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
-    {"COLUMN_SIZE",       "MySQL_Catalog",NullS,NullS,NullS,11,11,0,0,MYSQL_TYPE_LONG},
-    {"BUFFER_LENGTH",     "MySQL_Catalog",NullS,NullS,NullS,11,11,0,0,MYSQL_TYPE_LONG},
-    {"DECIMAL_DIGITS",    "MySQL_Catalog",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT},
-    {"NUM_PREC_RADIX",    "MySQL_Catalog",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT},
-    {"NULLABLE",          "MySQL_Catalog",NullS,NullS,NullS,5,5,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
-    {"REMARKS",           "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,0,0,MYSQL_TYPE_VAR_STRING},
-    {"COLUMN_DEF",        "MySQL_Catalog",NullS,NullS,NullS,NAME_LEN,NAME_LEN,0,0,MYSQL_TYPE_VAR_STRING},
-    {"SQL_DATA_TYPE",     "MySQL_Catalog",NullS,NullS,NullS,5,5,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
-    {"SQL_DATETIME_SUB",  "MySQL_Catalog",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT},
-    {"CHAR_OCTET_LENGTH", "MySQL_Catalog",NullS,NullS,NullS,11,11,0,0,MYSQL_TYPE_LONG},
-    {"ORDINAL_POSITION",  "MySQL_Catalog",NullS,NullS,NullS,11,11,NOT_NULL_FLAG,0,MYSQL_TYPE_LONG},
-    {"IS_NULLABLE",       "MySQL_Catalog",NullS,NullS,NullS,3,3,0,0,MYSQL_TYPE_VAR_STRING}
-};
-#endif
 
 const uint SQLCOLUMNS_FIELDS= array_elements(SQLCOLUMNS_values);
 
@@ -745,12 +705,12 @@ MYSQL_RES *mysql_list_dbcolumns(STMT *stmt,
   @param[in] szColumn         Pattern of column names to match
   @param[in] cbColumn         Length of column pattern
 */
-SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
-                             SQLCHAR FAR *szCatalog, SQLSMALLINT cbCatalog,
-                             SQLCHAR FAR *szSchema __attribute__((unused)),
-                             SQLSMALLINT cbSchema __attribute__((unused)),
-                             SQLCHAR FAR *szTable, SQLSMALLINT cbTable,
-                             SQLCHAR FAR *szColumn, SQLSMALLINT cbColumn)
+SQLRETURN SQL_API
+MySQLColumns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
+             SQLCHAR *szSchema __attribute__((unused)),
+             SQLSMALLINT cbSchema __attribute__((unused)),
+             SQLCHAR *szTable, SQLSMALLINT cbTable,
+             SQLCHAR *szColumn, SQLSMALLINT cbColumn)
 {
   STMT *stmt= (STMT *)hstmt;
   MYSQL_RES *res;
