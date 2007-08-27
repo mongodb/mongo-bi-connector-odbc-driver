@@ -802,15 +802,15 @@ DECLARE_TEST(sqlforeignkeys)
   HSTMT hstmt1;
   SQLWCHAR wbuff[40];
 
+  /** @todo re-enable this test when I_S based SQLForeignKeys is done. */
+  if (mysql_min_version(hdbc, "5.1", 3))
+    skip("can't test foreign keys with 5.1 or later yet");
+
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
   ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
                             W(L""), SQL_NTS));
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
-
-  /** @todo re-enable this test when I_S based SQLForeignKeys is done. */
-  if (mysql_min_version(hdbc, "5.1", 3))
-    skip("can't test foreign keys with 5.1 or later yet");
 
   ok_stmt(hstmt1,
           SQLExecDirectW(hstmt1,
