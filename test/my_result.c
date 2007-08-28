@@ -805,86 +805,57 @@ DECLARE_TEST(t_cache_bug)
   SQLRETURN  rc;
   SQLHENV    henv1;
   SQLHDBC    hdbc1;
-  SQLHSTMT   hstmt11, hstmt12;
+  SQLHSTMT   hstmt1, hstmt2;
   SQLCHAR    conn[MAX_NAME_LEN];
 
-    sprintf(conn,"DSN=%s;USER=%s;PASSWORD=%s;OPTION=1048579",
-            mydsn,myuid,mypwd);
-    if (mysock != NULL)
-    {
-      strcat(conn, ";SOCKET=");
-      strcat(conn, mysock);
-    }
-    mydrvconnect(&henv1,&hdbc1,&hstmt11,conn);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_cache");
+  ok_sql(hstmt, "CREATE TABLE t_cache (id INT)");
+  ok_sql(hstmt, "INSERT INTO t_cache VALUES (1),(2),(3),(4),(5)");
 
-    tmysql_exec(hstmt11,"drop table t_cache");
-    rc = tmysql_exec(hstmt11,"create table t_cache(id int)");
-    mystmt(hstmt11,rc);
+  sprintf((char *)conn, "DSN=%s;USER=%s;PASSWORD=%s;DATABASE=%s;OPTION=1048579",
+          mydsn, myuid, mypwd, mydb);
+  if (mysock != NULL)
+  {
+    strcat((char *)conn, ";SOCKET=");
+    strcat((char *)conn, (char *)mysock);
+  }
+  is(mydrvconnect(&henv1, &hdbc1, &hstmt1, conn) == OK);
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(1)");
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
+                                 (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(2)");
-    mystmt(hstmt11,rc);
+  ok_sql(hstmt1, "SELECT * FROM t_cache");
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(3)");
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(4)");
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(5)");
-    mystmt(hstmt11,rc);
+  ok_con(hdbc1, SQLAllocHandle(SQL_HANDLE_STMT, hdbc1, &hstmt2));
 
-    rc = SQLExecDirect(hstmt11,"select * from t_cache",SQL_NTS);
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt2, SQLColumns(hstmt2, NULL, 0, NULL, 0,
+                             (SQLCHAR *)"t_cache", SQL_NTS, NULL, 0));
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt2, SQLFetch(hstmt2));
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = SQLAllocHandle(SQL_HANDLE_STMT,hdbc1,&hstmt12);
-    mycon(hdbc1,rc);
+  expect_stmt(hstmt2, SQLFetch(hstmt2), SQL_NO_DATA);
 
-    rc = SQLColumns(hstmt12,test_db,SQL_NTS,
-                    NULL,0,"t_cache",SQL_NTS,
-                    NULL,0);
-    mystmt(hstmt12,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = SQLFetch(hstmt12);
-    mystmt(hstmt12,rc);
+  ok_stmt(hstmt2, SQLFreeHandle(SQL_HANDLE_STMT, hstmt2));
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = SQLFetch(hstmt12);
-    myassert(rc == SQL_NO_DATA);
+  expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA);
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt12,rc);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
 
-    rc = SQLFreeHandle(SQL_HANDLE_STMT,hstmt12);
-    mystmt(hstmt12,rc);
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+  ok_env(henv1, SQLFreeEnv(henv1));
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt12,rc);
-
-    rc = SQLFetch(hstmt11);
-    myassert(rc == SQL_NO_DATA);
-
-    rc = SQLFreeStmt(hstmt11, SQL_DROP);
-    mystmt(hstmt11,rc);
-
-    rc = SQLDisconnect(hdbc1);
-    mycon(hdbc1,rc);
-
-    rc = SQLFreeConnect(hdbc1);
-    mycon(hdbc1,rc);
-
-    rc = SQLFreeEnv(henv1);
-    myenv(henv1,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_cache");
 
   return OK;
 }
@@ -896,86 +867,57 @@ DECLARE_TEST(t_non_cache_bug)
   SQLRETURN  rc;
   SQLHENV    henv1;
   SQLHDBC    hdbc1;
-  SQLHSTMT   hstmt11, hstmt12;
+  SQLHSTMT   hstmt1, hstmt2;
   SQLCHAR    conn[MAX_NAME_LEN];
 
-    sprintf(conn,"DSN=%s;USER=%s;PASSWORD=%s;OPTION=3",
-            mydsn,myuid,mypwd);
-    if (mysock != NULL)
-    {
-      strcat(conn, ";SOCKET=");
-      strcat(conn, mysock);
-    }
-    mydrvconnect(&henv1,&hdbc1,&hstmt11,conn);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_cache");
+  ok_sql(hstmt, "CREATE TABLE t_cache (id INT)");
+  ok_sql(hstmt, "INSERT INTO t_cache VALUES (1),(2),(3),(4),(5)");
 
-    tmysql_exec(hstmt11,"drop table t_cache");
-    rc = tmysql_exec(hstmt11,"create table t_cache(id int)");
-    mystmt(hstmt11,rc);
+  sprintf((char *)conn, "DSN=%s;USER=%s;PASSWORD=%s;DATABASE=%s;OPTION=3",
+          mydsn, myuid, mypwd, mydb);
+  if (mysock != NULL)
+  {
+    strcat((char *)conn, ";SOCKET=");
+    strcat((char *)conn, (char *)mysock);
+  }
+  is(mydrvconnect(&henv1, &hdbc1, &hstmt1, conn) == OK);
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(1)");
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
+                                 (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(2)");
-    mystmt(hstmt11,rc);
+  ok_sql(hstmt1, "SELECT * FROM t_cache");
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(3)");
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(4)");
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(5)");
-    mystmt(hstmt11,rc);
+  ok_con(hdbc1, SQLAllocHandle(SQL_HANDLE_STMT, hdbc1, &hstmt2));
 
-    rc = SQLExecDirect(hstmt11,"select * from t_cache",SQL_NTS);
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt2, SQLColumns(hstmt2, NULL, 0, NULL, 0,
+                             (SQLCHAR *)"t_cache", SQL_NTS, NULL, 0));
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt2, SQLFetch(hstmt2));
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = SQLAllocHandle(SQL_HANDLE_STMT,hdbc1,&hstmt12);
-    mycon(hdbc1,rc);
+  expect_stmt(hstmt2, SQLFetch(hstmt2), SQL_NO_DATA);
 
-    rc = SQLColumns(hstmt12,test_db,SQL_NTS,
-                    NULL,0,"t_cache",SQL_NTS,
-                    NULL,0);
-    mystmt(hstmt12,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = SQLFetch(hstmt12);
-    mystmt(hstmt12,rc);
+  ok_stmt(hstmt2, SQLFreeHandle(SQL_HANDLE_STMT, hstmt2));
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = SQLFetch(hstmt12);
-    myassert(rc == SQL_NO_DATA);
+  expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA);
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt12,rc);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
 
-    rc = SQLFreeHandle(SQL_HANDLE_STMT,hstmt12);
-    mystmt(hstmt12,rc);
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+  ok_env(henv1, SQLFreeEnv(henv1));
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt12,rc);
-
-    rc = SQLFetch(hstmt11);
-    myassert(rc == SQL_NO_DATA);
-
-    rc = SQLFreeStmt(hstmt11, SQL_DROP);
-    mystmt(hstmt11,rc);
-
-    rc = SQLDisconnect(hdbc1);
-    mycon(hdbc1,rc);
-
-    rc = SQLFreeConnect(hdbc1);
-    mycon(hdbc1,rc);
-
-    rc = SQLFreeEnv(henv1);
-    myenv(henv1,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_cache");
 
   return OK;
 }

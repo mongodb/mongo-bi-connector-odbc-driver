@@ -35,7 +35,7 @@ TEST_UID       = root
 TEST_PASSWORD  = 
 TEST_SOCKET    = /tmp/mysql.sock
 
-INCLUDES= 		-I$(top_srcdir)/test/include
+INCLUDES= 		-I$(top_srcdir)/test
 AM_LDFLAGS= 		@myodbc_test_linklib@
 
 tap_tests= \
@@ -88,8 +88,7 @@ test-bt: make-test-ini $(tap_tests)
 EXTRA_DIST= \
 	odbc.ini.in \
 	odbcinst.ini.in \
-	include/mytest3.h \
-	include/odbctap.h \
+	odbctap.h \
 	unit.pl \
 	CMakeLists.txt
 

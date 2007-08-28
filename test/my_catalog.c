@@ -107,7 +107,7 @@ DECLARE_TEST(my_table_dbs)
     rc = SQLTables(hstmt,"SQL_ALL_CATALOGS",SQL_NTS,NULL,0,NULL,0,NULL,0);
     mystmt(hstmt,rc);
 
-    assert(nrows == my_print_non_format_result(hstmt));
+    is(nrows == my_print_non_format_result(hstmt));
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
@@ -121,7 +121,7 @@ DECLARE_TEST(my_table_dbs)
     rc = SQLTables(hstmt,"mysql",5,NULL,0,NULL,0,NULL,0);
     mystmt(hstmt,rc);
 
-    assert(my_print_non_format_result(hstmt) != 0);
+    is(my_print_non_format_result(hstmt) != 0);
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
@@ -176,28 +176,28 @@ DECLARE_TEST(my_table_dbs)
     mystmt(hstmt,rc);
 
     nrows += 4;
-    assert(nrows == my_print_non_format_result(hstmt));
+    is(nrows == my_print_non_format_result(hstmt));
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
     rc = SQLTables(hstmt,"SQL_ALL_CATALOGS",SQL_NTS,NULL,0,NULL,0,NULL,0);
     mystmt(hstmt,rc);
 
-    assert(nrows == my_print_non_format_result(hstmt));
+    is(nrows == my_print_non_format_result(hstmt));
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
     rc = SQLTables(hstmt,"my_all_db_test",SQL_NTS,NULL,0,NULL,0,NULL,0);
     mystmt(hstmt,rc);
 
-    assert(0 == my_print_non_format_result(hstmt));
+    is(0 == my_print_non_format_result(hstmt));
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
     rc = SQLTables(hstmt,"my_all_db_test%",SQL_NTS,NULL,0,NULL,0,NULL,0);
     mystmt(hstmt,rc);
 
-    assert(0 == my_print_non_format_result(hstmt));
+    is(0 == my_print_non_format_result(hstmt));
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
@@ -205,7 +205,7 @@ DECLARE_TEST(my_table_dbs)
     rc = SQLTables(hstmt,"my_all_db_test%",SQL_NTS,NULL,0,"xyz",SQL_NTS,NULL,0);
     mystmt(hstmt,rc);
 
-    assert(0 == my_print_non_format_result(hstmt));
+    is(0 == my_print_non_format_result(hstmt));
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
@@ -245,7 +245,7 @@ DECLARE_TEST(my_colpriv)
                                      NULL, SQL_NTS, NULL, SQL_NTS,
                                      "test_colprev1", SQL_NTS, NULL, SQL_NTS));
 
-  assert(4 == my_print_non_format_result(hstmt));
+  is(4 == my_print_non_format_result(hstmt));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
@@ -253,14 +253,14 @@ DECLARE_TEST(my_colpriv)
                                      NULL, SQL_NTS, NULL, SQL_NTS,
                                      "test_colprev1", SQL_NTS, "a", SQL_NTS));
 
-  assert(1 == my_print_non_format_result(hstmt));
+  is(1 == my_print_non_format_result(hstmt));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
                                      NULL, SQL_NTS, NULL, SQL_NTS,
                                      "test_colprev2", SQL_NTS, NULL, SQL_NTS));
-  assert(0 == my_print_non_format_result(hstmt));
+  is(0 == my_print_non_format_result(hstmt));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
@@ -268,7 +268,7 @@ DECLARE_TEST(my_colpriv)
                                      NULL, SQL_NTS, NULL, SQL_NTS,
                                      "test_colprev3", SQL_NTS, NULL, SQL_NTS));
 
-  assert(4 == my_print_non_format_result(hstmt));
+  is(4 == my_print_non_format_result(hstmt));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
@@ -284,7 +284,7 @@ DECLARE_TEST(my_colpriv)
                                      NULL, SQL_NTS, NULL, SQL_NTS,
                                      "test_colprev%", SQL_NTS, NULL, SQL_NTS));
 
-  assert(8 == my_print_non_format_result(hstmt));
+  is(8 == my_print_non_format_result(hstmt));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
@@ -584,7 +584,7 @@ DECLARE_TEST(t_tables_bug)
   SQLSMALLINT i, ColumnCount, pcbColName, pfSqlType, pibScale, pfNullable;
   SQLULEN     pcbColDef;
   SQLCHAR     szColName[MAX_NAME_LEN];
-  bool is51= mysql_min_version(hdbc, "5.1", 3);
+  int is51= mysql_min_version(hdbc, "5.1", 3);
 
    SQLFreeStmt(hstmt, SQL_CLOSE);
 

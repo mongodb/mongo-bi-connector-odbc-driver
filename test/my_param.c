@@ -101,7 +101,7 @@ DECLARE_TEST(my_param_insert)
     rc = SQLExecDirect(hstmt, "SELECT * FROM my_demo_param",SQL_NTS);
     mystmt(hstmt,rc);
 
-    assert(10 == myresult(hstmt));
+    is(10 == myresult(hstmt));
 
   return OK;
 }
@@ -137,7 +137,7 @@ DECLARE_TEST(my_param_update)
     rc = SQLRowCount(hstmt, &nRowCount);
     mystmt(hstmt,rc);
     printMessage("\n total rows updated:%d\n",nRowCount);
-    assert( nRowCount == 1);
+    is( nRowCount == 1);
 
     /* Free statement param resorces */
     rc = SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
@@ -155,7 +155,7 @@ DECLARE_TEST(my_param_update)
     rc = SQLExecDirect(hstmt, "SELECT * FROM my_demo_param",SQL_NTS);
     mystmt(hstmt,rc);
 
-    assert(10 == myresult(hstmt));
+    is(10 == myresult(hstmt));
 
   return OK;
 }
@@ -182,7 +182,7 @@ DECLARE_TEST(my_param_delete)
     rc = SQLRowCount(hstmt, &nRowCount);
     mystmt(hstmt,rc);
     printMessage(" total rows deleted:%d\n",nRowCount);
-    assert( nRowCount == 1);
+    is( nRowCount == 1);
 
     SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt, SQL_CLOSE);
@@ -201,7 +201,7 @@ DECLARE_TEST(my_param_delete)
     rc = SQLRowCount(hstmt, &nRowCount);
     mystmt(hstmt,rc);
     printMessage(" total rows deleted:%d\n",nRowCount);
-    assert( nRowCount == 1);
+    is( nRowCount == 1);
 
     /* Free statement param resorces */
     rc = SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
@@ -219,7 +219,7 @@ DECLARE_TEST(my_param_delete)
     rc = SQLExecDirect(hstmt, "SELECT * FROM my_demo_param",SQL_NTS);
     mystmt(hstmt,rc);
 
-    assert(8 == myresult(hstmt));
+    is(8 == myresult(hstmt));
 
     /* drop the table */
     rc = SQLExecDirect(hstmt,"DROP TABLE my_demo_param",SQL_NTS);

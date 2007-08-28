@@ -94,7 +94,7 @@ DECLARE_TEST(my_pcbvalue)
     mystmt(hstmt, rc);
 
     printMessage(" total rows updated:%d\n",nRowCount);
-    assert(nRowCount == 1);
+    is(nRowCount == 1);
 
     /* Free statement cursor resorces */
     rc = SQLFreeStmt(hstmt, SQL_UNBIND);
@@ -223,7 +223,7 @@ DECLARE_TEST(my_pcbvalue_add)
     mystmt(hstmt, rc);
 
     printMessage(" total rows updated:%d\n",nRowCount);
-    assert(nRowCount == 1);
+    is(nRowCount == 1);
 
     /* Free statement cursor resorces */
     rc = SQLFreeStmt(hstmt, SQL_UNBIND);
