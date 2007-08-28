@@ -309,7 +309,7 @@ DECLARE_TEST(t_relative2)
     ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                   (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    SQLExecDirect(hstmt,"drop table t_relative2",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_relative2");
 
     rc = SQLExecDirect(hstmt,"create table t_relative2(id int)",SQL_NTS);
     mystmt(hstmt,rc);
@@ -541,6 +541,8 @@ DECLARE_TEST(t_relative2)
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)1,0);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_relative2");
+
   return OK;
 }
 
@@ -551,7 +553,7 @@ DECLARE_TEST(t_rows_fetched_ptr)
     SQLULEN rowsFetched, rowsSize;
     long         i;
 
-    SQLExecDirect(hstmt,"drop table t_rows_fetched_ptr",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_rows_fetched_ptr");
 
     rc = SQLExecDirect(hstmt,"create table t_rows_fetched_ptr(a int)",SQL_NTS);
     mystmt(hstmt,rc);
@@ -673,6 +675,8 @@ DECLARE_TEST(t_rows_fetched_ptr)
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, NULL, 0);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_rows_fetched_ptr");
+
   return OK;
 }
 
@@ -683,7 +687,7 @@ DECLARE_TEST(t_rows_fetched_ptr1)
   SQLULEN     rowsFetched, rowsSize;
   SQLINTEGER  i;
 
-    SQLExecDirect(hstmt,"drop table t_rows_fetched_ptr",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_rows_fetched_ptr");
 
     rc = SQLExecDirect(hstmt,"create table t_rows_fetched_ptr(a int)",SQL_NTS);
     mystmt(hstmt,rc);
@@ -804,6 +808,8 @@ DECLARE_TEST(t_rows_fetched_ptr1)
 
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, NULL, 0);
     mystmt(hstmt,rc);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_rows_fetched_ptr");
 
   return OK;
 }

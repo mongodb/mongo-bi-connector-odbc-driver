@@ -30,8 +30,7 @@ DECLARE_TEST(my_no_keys)
     SQLROWCOUNT rowcount;
     SQLINTEGER nData;
 
-    /* INIT */
-    SQLExecDirect(hstmt,"drop table my_no_keys",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_no_keys");
     rc = SQLExecDirect(hstmt,"create table my_no_keys(col1 int,\
                                                       col2 varchar(30),\
                                                       col3 int,\
@@ -127,6 +126,8 @@ DECLARE_TEST(my_no_keys)
 
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_no_keys");
 
   return OK;
 }

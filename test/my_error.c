@@ -222,6 +222,8 @@ DECLARE_TEST(t_warning)
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_warning");
+
   return OK;
 }
 

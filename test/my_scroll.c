@@ -129,7 +129,7 @@ DECLARE_TEST(t_array_relative_10)
     ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                   (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    SQLExecDirect(hstmt,"drop table t_array_relative_10",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_array_relative_10");
 
     rc = SQLExecDirect(hstmt,"create table t_array_relative_10(id int,name char(20))",SQL_NTS);
     mystmt(hstmt,rc);
@@ -258,6 +258,8 @@ DECLARE_TEST(t_array_relative_10)
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)1,0);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_array_relative_10");
+
   return OK;
 }
 
@@ -273,7 +275,7 @@ DECLARE_TEST(t_relative_1)
     ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                   (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    SQLExecDirect(hstmt,"drop table t_relative_1",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_relative_1");
 
     rc = SQLExecDirect(hstmt,"create table t_relative_1(id int)",SQL_NTS);
     mystmt(hstmt,rc);
@@ -467,6 +469,8 @@ DECLARE_TEST(t_relative_1)
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)1,0);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_relative_1");
+
   return OK;
 }
 
@@ -483,7 +487,7 @@ DECLARE_TEST(t_array_relative_2)
     ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                   (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    SQLExecDirect(hstmt,"drop table t_array_relative_2",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_array_relative_2");
 
     rc = SQLExecDirect(hstmt,"create table t_array_relative_2(id int)",SQL_NTS);
     mystmt(hstmt,rc);
@@ -779,6 +783,8 @@ DECLARE_TEST(t_array_relative_2)
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)1,0);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_array_relative_2");
+
   return OK;
 }
 
@@ -794,7 +800,7 @@ DECLARE_TEST(t_absolute_1)
     ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                   (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    SQLExecDirect(hstmt,"drop table t_absolute_1",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_absolute_1");
 
     rc = SQLExecDirect(hstmt,"create table t_absolute_1(id int)",SQL_NTS);
     mystmt(hstmt,rc);
@@ -963,6 +969,8 @@ DECLARE_TEST(t_absolute_1)
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)1,0);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_absolute_1");
+
   return OK;
 }
 
@@ -979,7 +987,7 @@ DECLARE_TEST(t_absolute_2)
     ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                   (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    SQLExecDirect(hstmt,"drop table t_absolute_2",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_absolute_2");
 
     rc = SQLExecDirect(hstmt,"create table t_absolute_2(id int)",SQL_NTS);
     mystmt(hstmt,rc);
@@ -1218,6 +1226,8 @@ DECLARE_TEST(t_absolute_2)
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)1,0);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_absolute_2");
+
   return OK;
 }
 
@@ -1225,8 +1235,8 @@ DECLARE_TEST(t_absolute_2)
 BEGIN_TESTS
   ADD_TEST(t_scroll)
   ADD_TEST(t_array_relative_10)
-  ADD_TEST(t_relative_1)
   ADD_TEST(t_array_relative_2)
+  ADD_TEST(t_relative_1)
   ADD_TEST(t_absolute_1)
   ADD_TEST(t_absolute_2)
 END_TESTS

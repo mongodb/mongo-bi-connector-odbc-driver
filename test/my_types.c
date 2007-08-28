@@ -133,7 +133,7 @@ DECLARE_TEST(t_decimal)
   SQLINTEGER      i_data=189, l_data=-23;
   SQLRETURN       rc;
 
-    tmysql_exec(hstmt,"drop table t_decimal");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_decimal");
     rc = tmysql_exec(hstmt,"create table t_decimal(d1 decimal(10,6))");
     mystmt(hstmt,rc);
 
@@ -214,6 +214,8 @@ DECLARE_TEST(t_decimal)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_decimal");
 
   return OK;
 }
@@ -347,7 +349,7 @@ DECLARE_TEST(t_enumset)
     SQLCHAR szEnum[40]="MYSQL_E1";
     SQLCHAR szSet[40]="THREE,ONE,TWO";
 
-    tmysql_exec(hstmt,"drop table t_enumset");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_enumset");
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -398,6 +400,8 @@ DECLARE_TEST(t_enumset)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_enumset");
 
   return OK;
 }

@@ -311,6 +311,8 @@ DECLARE_TEST(charset_utf8)
   ok_con(hdbc1, SQLDisconnect(hdbc1));
   ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug19345");
+
   return OK;
 }
 

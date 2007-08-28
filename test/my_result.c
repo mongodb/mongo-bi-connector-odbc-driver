@@ -138,8 +138,6 @@ DECLARE_TEST(t_convert_type)
   SQLCHAR     DbVersion[MAX_NAME_LEN];
   SQLINTEGER  OdbcVersion;
 
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-
     rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,&OdbcVersion,0,NULL);
     myenv(henv,rc);
 
@@ -158,7 +156,7 @@ DECLARE_TEST(t_convert_type)
     rc = SQLGetInfo(hdbc,SQL_DBMS_VER,(SQLCHAR *)&DbVersion,MAX_NAME_LEN,NULL);
     mycon(hdbc,rc);
 
-    SQLExecDirect(hstmt,"DROP TABLE t_convert",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_convert");
 
     rc = SQLExecDirect(hstmt,"CREATE TABLE t_convert(col0 integer, \
                                                      col1 date,\
@@ -245,10 +243,7 @@ DECLARE_TEST(t_convert_type)
       SQLFreeStmt(hstmt,SQL_CLOSE);
     }
 
-    rc = SQLExecDirect(hstmt,"DROP TABLE t_convert",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    SQLFreeStmt(hstmt,SQL_CLOSE);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_convert");
 
   return OK;
 }
@@ -371,10 +366,7 @@ DECLARE_TEST(t_convert)
   SQLLEN     data_len;
   SQLCHAR    data[50];
 
-    tmysql_exec(hstmt,"drop table t_convert");
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_convert");
 
     rc = tmysql_exec(hstmt,"CREATE TABLE t_convert(testing tinytext)");
     mystmt(hstmt,rc);
@@ -416,6 +408,8 @@ DECLARE_TEST(t_convert)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_convert");
+
   return OK;
 }
 
@@ -425,7 +419,7 @@ DECLARE_TEST(t_max_rows)
   SQLRETURN rc;
   SQLUINTEGER i;
 
-    tmysql_exec(hstmt,"drop table t_max_rows");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_max_rows");
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -505,6 +499,8 @@ DECLARE_TEST(t_max_rows)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_max_rows");
+
   return OK;
 }
 
@@ -516,7 +512,7 @@ DECLARE_TEST(t_multistep)
   SQLLEN     pcbValue;
   SQLINTEGER id;
 
-    tmysql_exec(hstmt,"drop table t_multistep");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_multistep");
     rc = tmysql_exec(hstmt,"create table t_multistep(col1 int,col2 varchar(200))");
     mystmt(hstmt,rc);
 
@@ -610,6 +606,8 @@ DECLARE_TEST(t_multistep)
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_multistep");
+
   return OK;
 }
 
@@ -620,7 +618,7 @@ DECLARE_TEST(t_zerolength)
   SQLCHAR    szData[100], bData[100], bData1[100];
   SQLLEN     pcbValue,pcbValue1,pcbValue2;
 
-    tmysql_exec(hstmt,"drop table t_zerolength");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_zerolength");
     rc = tmysql_exec(hstmt,"create table t_zerolength(str varchar(20), bin varbinary(20), blb blob)");
     mystmt(hstmt,rc);
 
@@ -794,6 +792,8 @@ DECLARE_TEST(t_zerolength)
 
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_zerolength");
 
   return OK;
 }
@@ -988,7 +988,7 @@ DECLARE_TEST(t_empty_str_bug)
   SQLLEN       name_len, desc_len;
   SQLCHAR      name[20], desc[20];
 
-    tmysql_exec(hstmt,"drop table t_empty_str_bug");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_empty_str_bug");
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -1065,6 +1065,8 @@ DECLARE_TEST(t_empty_str_bug)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_empty_str_bug");
+
   return OK;
 }
 
@@ -1076,6 +1078,7 @@ DECLARE_TEST(t_desccol)
     SQLSMALLINT collen,datatype,decptr,nullable;
     SQLULEN colsize;
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_desccol");
     tmysql_exec(hstmt,"drop table t_desccol");
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
@@ -1119,6 +1122,8 @@ DECLARE_TEST(t_desccol)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_desccol");
 
   return OK;
 }
@@ -1168,7 +1173,7 @@ DECLARE_TEST(t_desccolext)
     SQLRETURN rc;
     SQLCHAR     *sql;
 
-    tmysql_exec(hstmt,"drop table t_desccolext");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_desccolext");
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -1273,6 +1278,8 @@ DECLARE_TEST(t_desccolext)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_desccolext");
+
   return OK;
 }
 
@@ -1281,7 +1288,7 @@ DECLARE_TEST(t_desccol1)
 {
     SQLRETURN rc;
 
-    tmysql_exec(hstmt,"drop table if exists t_desccol1");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_desccol1");
     rc = SQLExecDirect(hstmt,"create table t_desccol1\
                  ( record decimal(8,0),\
                    title varchar(250),\
@@ -1335,6 +1342,8 @@ DECLARE_TEST(t_desccol1)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_desccol1");
 
   return OK;
 }
@@ -1430,7 +1439,7 @@ DECLARE_TEST(t_exfetch)
     ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                   (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    tmysql_exec(hstmt,"drop table t_exfetch");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_exfetch");
 
     rc = tmysql_exec(hstmt,"create table t_exfetch(col1 int)");
     mystmt(hstmt,rc);
@@ -1545,6 +1554,8 @@ DECLARE_TEST(t_exfetch)
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_exfetch");
+
   return OK;
 }
 
@@ -1564,7 +1575,7 @@ DECLARE_TEST(tmysql_rowstatus)
     rc = SQLSetCursorName(hstmt,"venu_cur",SQL_NTS);
     mystmt(hstmt,rc);
 
-    tmysql_exec(hstmt,"drop table tmysql_rowstatus");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_rowstatus");
     rc = tmysql_exec(hstmt,"create table tmysql_rowstatus(col1 int , col2 varchar(30))");
     mystmt(hstmt,rc);
 
@@ -1641,6 +1652,8 @@ DECLARE_TEST(tmysql_rowstatus)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_rowstatus");
 
   return OK;
 }
