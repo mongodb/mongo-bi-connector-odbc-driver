@@ -561,7 +561,6 @@ void myerror( SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle, const char *szF
 /**
   Print resultset dashes
 */
-#if DEBUG_LEVEL > 1
 static void my_print_dashes(SQLHSTMT hstmt, SQLSMALLINT nCol)
 {
     SQLRETURN  rc;
@@ -597,12 +596,8 @@ static void my_print_dashes(SQLHSTMT hstmt, SQLSMALLINT nCol)
     }
     printMessage( "\n" );
 }
-#else
-# define my_print_dashes(a, b)
-#endif
 
 
-#if DEBUG_LEVEL > 1
 static void my_print_data(SQLHSTMT hstmt, SQLUSMALLINT index,
                           SQLCHAR *data, SQLINTEGER length)
 {
@@ -633,9 +628,6 @@ static void my_print_data(SQLHSTMT hstmt, SQLUSMALLINT index,
     else
         printMessage( "%-*s  |",(int)disp_size,data);
 }
-#else
-# define my_print_data(a, b, c, d)
-#endif
 
 
 /**
