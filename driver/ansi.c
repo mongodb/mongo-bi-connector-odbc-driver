@@ -649,7 +649,8 @@ SQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle,
   {
     SQLINTEGER free_value= FALSE;
     uint errors;
-    if (dbc && dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+    if (dbc && dbc->ansi_charset_info &&
+        dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
     {
       value= sqlchar_as_sqlchar(dbc->cxn_charset_info,
                                     dbc->ansi_charset_info,
@@ -723,7 +724,8 @@ SQLGetDiagRecImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
 
   if (msg_value)
   {
-    if (dbc && dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+    if (dbc && dbc->ansi_charset_info &&
+        dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
     {
       msg_value= sqlchar_as_sqlchar(dbc->cxn_charset_info,
                                     dbc->ansi_charset_info,
@@ -751,7 +753,8 @@ SQLGetDiagRecImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
 
   if (sqlstate && sqlstate_value)
   {
-    if (dbc && dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+    if (dbc && dbc->ansi_charset_info &&
+        dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
     {
       sqlstate_value= sqlchar_as_sqlchar(dbc->cxn_charset_info,
                                          dbc->ansi_charset_info,

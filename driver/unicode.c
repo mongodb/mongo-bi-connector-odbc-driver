@@ -796,7 +796,8 @@ SQLGetDiagFieldW(SQLSMALLINT handle_type, SQLHANDLE handle,
   if (value)
   {
     uint errors;
-    SQLWCHAR *wvalue= sqlchar_as_sqlwchar(dbc ? dbc->cxn_charset_info :
+    SQLWCHAR *wvalue= sqlchar_as_sqlwchar((dbc && dbc->cxn_charset_info) ?
+                                          dbc->cxn_charset_info :
                                           default_charset_info,
                                           value, &len, &errors);
 
@@ -864,7 +865,8 @@ SQLGetDiagRecWImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
 
   if (msg_value)
   {
-    SQLWCHAR *wvalue= sqlchar_as_sqlwchar(dbc ? dbc->cxn_charset_info :
+    SQLWCHAR *wvalue= sqlchar_as_sqlwchar((dbc && dbc->cxn_charset_info) ?
+                                          dbc->cxn_charset_info :
                                           default_charset_info,
                                           msg_value, &len, &errors);
 
@@ -887,7 +889,8 @@ SQLGetDiagRecWImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
 
   if (sqlstate && sqlstate_value)
   {
-    SQLWCHAR *wvalue= sqlchar_as_sqlwchar(dbc ? dbc->cxn_charset_info :
+    SQLWCHAR *wvalue= sqlchar_as_sqlwchar((dbc && dbc->cxn_charset_info) ?
+                                          dbc->cxn_charset_info :
                                           default_charset_info,
                                           sqlstate_value, &len, &errors);
 
