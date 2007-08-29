@@ -138,8 +138,6 @@ DECLARE_TEST(t_convert_type)
   SQLCHAR     DbVersion[MAX_NAME_LEN];
   SQLINTEGER  OdbcVersion;
 
-    SQLFreeStmt(hstmt, SQL_CLOSE);
-
     rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,&OdbcVersion,0,NULL);
     myenv(henv,rc);
 
@@ -158,7 +156,7 @@ DECLARE_TEST(t_convert_type)
     rc = SQLGetInfo(hdbc,SQL_DBMS_VER,(SQLCHAR *)&DbVersion,MAX_NAME_LEN,NULL);
     mycon(hdbc,rc);
 
-    SQLExecDirect(hstmt,"DROP TABLE t_convert",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_convert");
 
     rc = SQLExecDirect(hstmt,"CREATE TABLE t_convert(col0 integer, \
                                                      col1 date,\
@@ -245,10 +243,7 @@ DECLARE_TEST(t_convert_type)
       SQLFreeStmt(hstmt,SQL_CLOSE);
     }
 
-    rc = SQLExecDirect(hstmt,"DROP TABLE t_convert",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    SQLFreeStmt(hstmt,SQL_CLOSE);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_convert");
 
   return OK;
 }
@@ -371,10 +366,7 @@ DECLARE_TEST(t_convert)
   SQLLEN     data_len;
   SQLCHAR    data[50];
 
-    tmysql_exec(hstmt,"drop table t_convert");
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_convert");
 
     rc = tmysql_exec(hstmt,"CREATE TABLE t_convert(testing tinytext)");
     mystmt(hstmt,rc);
@@ -416,6 +408,8 @@ DECLARE_TEST(t_convert)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_convert");
+
   return OK;
 }
 
@@ -425,7 +419,7 @@ DECLARE_TEST(t_max_rows)
   SQLRETURN rc;
   SQLUINTEGER i;
 
-    tmysql_exec(hstmt,"drop table t_max_rows");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_max_rows");
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -505,6 +499,8 @@ DECLARE_TEST(t_max_rows)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_max_rows");
+
   return OK;
 }
 
@@ -516,7 +512,7 @@ DECLARE_TEST(t_multistep)
   SQLLEN     pcbValue;
   SQLINTEGER id;
 
-    tmysql_exec(hstmt,"drop table t_multistep");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_multistep");
     rc = tmysql_exec(hstmt,"create table t_multistep(col1 int,col2 varchar(200))");
     mystmt(hstmt,rc);
 
@@ -595,13 +591,20 @@ DECLARE_TEST(t_multistep)
     myassert(pcbValue == 15);
     myassert(strcmp(szData,"Source Database") == 0);
 
+    pcbValue= 99;
+    szData[0]='A';
     expect_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_CHAR, szData, 0, &pcbValue),
-                SQL_NO_DATA_FOUND);
+                SQL_SUCCESS_WITH_INFO);
+    fprintf(stdout,"data  : %s (%ld)\n",szData,pcbValue);
+    myassert(pcbValue == 0);
+    myassert(szData[0] == 'A');
 
     expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_multistep");
 
   return OK;
 }
@@ -613,7 +616,7 @@ DECLARE_TEST(t_zerolength)
   SQLCHAR    szData[100], bData[100], bData1[100];
   SQLLEN     pcbValue,pcbValue1,pcbValue2;
 
-    tmysql_exec(hstmt,"drop table t_zerolength");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_zerolength");
     rc = tmysql_exec(hstmt,"create table t_zerolength(str varchar(20), bin varbinary(20), blb blob)");
     mystmt(hstmt,rc);
 
@@ -784,6 +787,8 @@ DECLARE_TEST(t_zerolength)
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_zerolength");
+
   return OK;
 }
 
@@ -791,89 +796,59 @@ DECLARE_TEST(t_zerolength)
 /* Test the bug when two stmts are used with the don't cache results */
 DECLARE_TEST(t_cache_bug)
 {
-  SQLRETURN  rc;
   SQLHENV    henv1;
   SQLHDBC    hdbc1;
-  SQLHSTMT   hstmt11, hstmt12;
+  SQLHSTMT   hstmt1, hstmt2;
   SQLCHAR    conn[MAX_NAME_LEN];
 
-    sprintf(conn,"DSN=%s;USER=%s;PASSWORD=%s;OPTION=1048579",
-            mydsn,myuid,mypwd);
-    if (mysock != NULL)
-    {
-      strcat(conn, ";SOCKET=");
-      strcat(conn, mysock);
-    }
-    mydrvconnect(&henv1,&hdbc1,&hstmt11,conn);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_cache");
+  ok_sql(hstmt, "CREATE TABLE t_cache (id INT)");
+  ok_sql(hstmt, "INSERT INTO t_cache VALUES (1),(2),(3),(4),(5)");
 
-    tmysql_exec(hstmt11,"drop table t_cache");
-    rc = tmysql_exec(hstmt11,"create table t_cache(id int)");
-    mystmt(hstmt11,rc);
+  sprintf((char *)conn, "DSN=%s;USER=%s;PASSWORD=%s;DATABASE=%s;OPTION=1048579",
+          mydsn, myuid, mypwd, mydb);
+  if (mysock != NULL)
+  {
+    strcat((char *)conn, ";SOCKET=");
+    strcat((char *)conn, (char *)mysock);
+  }
+  is(mydrvconnect(&henv1, &hdbc1, &hstmt1, conn) == OK);
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(1)");
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
+                                 (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(2)");
-    mystmt(hstmt11,rc);
+  ok_sql(hstmt1, "SELECT * FROM t_cache");
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(3)");
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(4)");
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(5)");
-    mystmt(hstmt11,rc);
+  ok_con(hdbc1, SQLAllocHandle(SQL_HANDLE_STMT, hdbc1, &hstmt2));
 
-    rc = SQLExecDirect(hstmt11,"select * from t_cache",SQL_NTS);
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt2, SQLColumns(hstmt2, NULL, 0, NULL, 0,
+                             (SQLCHAR *)"t_cache", SQL_NTS, NULL, 0));
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt2, SQLFetch(hstmt2));
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = SQLAllocHandle(SQL_HANDLE_STMT,hdbc1,&hstmt12);
-    mycon(hdbc1,rc);
+  expect_stmt(hstmt2, SQLFetch(hstmt2), SQL_NO_DATA);
 
-    rc = SQLColumns(hstmt12,test_db,SQL_NTS,
-                    NULL,0,"t_cache",SQL_NTS,
-                    NULL,0);
-    mystmt(hstmt12,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = SQLFetch(hstmt12);
-    mystmt(hstmt12,rc);
+  ok_stmt(hstmt2, SQLFreeHandle(SQL_HANDLE_STMT, hstmt2));
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = SQLFetch(hstmt12);
-    myassert(rc == SQL_NO_DATA);
+  expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA);
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt12,rc);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
 
-    rc = SQLFreeHandle(SQL_HANDLE_STMT,hstmt12);
-    mystmt(hstmt12,rc);
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+  ok_env(henv1, SQLFreeEnv(henv1));
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt12,rc);
-
-    rc = SQLFetch(hstmt11);
-    myassert(rc == SQL_NO_DATA);
-
-    rc = SQLFreeStmt(hstmt11, SQL_DROP);
-    mystmt(hstmt11,rc);
-
-    rc = SQLDisconnect(hdbc1);
-    mycon(hdbc1,rc);
-
-    rc = SQLFreeConnect(hdbc1);
-    mycon(hdbc1,rc);
-
-    rc = SQLFreeEnv(henv1);
-    myenv(henv1,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_cache");
 
   return OK;
 }
@@ -882,89 +857,59 @@ DECLARE_TEST(t_cache_bug)
 /* Test the bug when two stmts are used with the don't cache results */
 DECLARE_TEST(t_non_cache_bug)
 {
-  SQLRETURN  rc;
   SQLHENV    henv1;
   SQLHDBC    hdbc1;
-  SQLHSTMT   hstmt11, hstmt12;
+  SQLHSTMT   hstmt1, hstmt2;
   SQLCHAR    conn[MAX_NAME_LEN];
 
-    sprintf(conn,"DSN=%s;USER=%s;PASSWORD=%s;OPTION=3",
-            mydsn,myuid,mypwd);
-    if (mysock != NULL)
-    {
-      strcat(conn, ";SOCKET=");
-      strcat(conn, mysock);
-    }
-    mydrvconnect(&henv1,&hdbc1,&hstmt11,conn);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_cache");
+  ok_sql(hstmt, "CREATE TABLE t_cache (id INT)");
+  ok_sql(hstmt, "INSERT INTO t_cache VALUES (1),(2),(3),(4),(5)");
 
-    tmysql_exec(hstmt11,"drop table t_cache");
-    rc = tmysql_exec(hstmt11,"create table t_cache(id int)");
-    mystmt(hstmt11,rc);
+  sprintf((char *)conn, "DSN=%s;USER=%s;PASSWORD=%s;DATABASE=%s;OPTION=3",
+          mydsn, myuid, mypwd, mydb);
+  if (mysock != NULL)
+  {
+    strcat((char *)conn, ";SOCKET=");
+    strcat((char *)conn, (char *)mysock);
+  }
+  is(mydrvconnect(&henv1, &hdbc1, &hstmt1, conn) == OK);
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(1)");
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
+                                 (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(2)");
-    mystmt(hstmt11,rc);
+  ok_sql(hstmt1, "SELECT * FROM t_cache");
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(3)");
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(4)");
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = tmysql_exec(hstmt11,"insert into t_cache values(5)");
-    mystmt(hstmt11,rc);
+  ok_con(hdbc1, SQLAllocHandle(SQL_HANDLE_STMT, hdbc1, &hstmt2));
 
-    rc = SQLExecDirect(hstmt11,"select * from t_cache",SQL_NTS);
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt2, SQLColumns(hstmt2, NULL, 0, NULL, 0,
+                             (SQLCHAR *)"t_cache", SQL_NTS, NULL, 0));
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt2, SQLFetch(hstmt2));
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = SQLAllocHandle(SQL_HANDLE_STMT,hdbc1,&hstmt12);
-    mycon(hdbc1,rc);
+  expect_stmt(hstmt2, SQLFetch(hstmt2), SQL_NO_DATA);
 
-    rc = SQLColumns(hstmt12,test_db,SQL_NTS,
-                    NULL,0,"t_cache",SQL_NTS,
-                    NULL,0);
-    mystmt(hstmt12,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = SQLFetch(hstmt12);
-    mystmt(hstmt12,rc);
+  ok_stmt(hstmt2, SQLFreeHandle(SQL_HANDLE_STMT, hstmt2));
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt11,rc);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    rc = SQLFetch(hstmt12);
-    myassert(rc == SQL_NO_DATA);
+  expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA);
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt12,rc);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
 
-    rc = SQLFreeHandle(SQL_HANDLE_STMT,hstmt12);
-    mystmt(hstmt12,rc);
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+  ok_env(henv1, SQLFreeEnv(henv1));
 
-    rc = SQLFetch(hstmt11);
-    mystmt(hstmt12,rc);
-
-    rc = SQLFetch(hstmt11);
-    myassert(rc == SQL_NO_DATA);
-
-    rc = SQLFreeStmt(hstmt11, SQL_DROP);
-    mystmt(hstmt11,rc);
-
-    rc = SQLDisconnect(hdbc1);
-    mycon(hdbc1,rc);
-
-    rc = SQLFreeConnect(hdbc1);
-    mycon(hdbc1,rc);
-
-    rc = SQLFreeEnv(henv1);
-    myenv(henv1,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_cache");
 
   return OK;
 }
@@ -977,7 +922,7 @@ DECLARE_TEST(t_empty_str_bug)
   SQLLEN       name_len, desc_len;
   SQLCHAR      name[20], desc[20];
 
-    tmysql_exec(hstmt,"drop table t_empty_str_bug");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_empty_str_bug");
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -1054,6 +999,8 @@ DECLARE_TEST(t_empty_str_bug)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_empty_str_bug");
+
   return OK;
 }
 
@@ -1065,6 +1012,7 @@ DECLARE_TEST(t_desccol)
     SQLSMALLINT collen,datatype,decptr,nullable;
     SQLULEN colsize;
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_desccol");
     tmysql_exec(hstmt,"drop table t_desccol");
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
@@ -1109,13 +1057,15 @@ DECLARE_TEST(t_desccol)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_desccol");
+
   return OK;
 }
 
 
-void desccol(SQLHSTMT hstmt, SQLCHAR    *cname,  SQLSMALLINT clen,
-             SQLSMALLINT sqltype,SQLULEN size,
-             SQLSMALLINT scale,SQLSMALLINT isNull)
+int desccol(SQLHSTMT hstmt, SQLCHAR *cname, SQLSMALLINT clen,
+            SQLSMALLINT sqltype, SQLULEN size,
+            SQLSMALLINT scale, SQLSMALLINT isNull)
 {
     SQLRETURN   rc =0;
     SQLCHAR     lcname[254];
@@ -1138,7 +1088,7 @@ void desccol(SQLHSTMT hstmt, SQLCHAR    *cname,  SQLSMALLINT clen,
                          &lsqltype,&lsize,&lscale,&lisNull);
     mystmt(hstmt,rc);
 
-    printMessage("\n name	: %s (%d)",lcname,lclen);
+    printMessage("\n name: %s (%d)",lcname,lclen);
     printMessage("\n sqltype: %d, size: %d, scale: %d, null: %d\n",lsqltype,lsize,lscale,lisNull);
 
     myassert(strcmp(lcname,cname)==0);
@@ -1149,6 +1099,8 @@ void desccol(SQLHSTMT hstmt, SQLCHAR    *cname,  SQLSMALLINT clen,
     myassert(lisNull == isNull);
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
+
+    return OK;
 }
 
 
@@ -1157,7 +1109,7 @@ DECLARE_TEST(t_desccolext)
     SQLRETURN rc;
     SQLCHAR     *sql;
 
-    tmysql_exec(hstmt,"drop table t_desccolext");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_desccolext");
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -1228,39 +1180,41 @@ DECLARE_TEST(t_desccolext)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    desccol(hstmt,"t1",2,SQL_TINYINT,3,0,SQL_NULLABLE);
-    desccol(hstmt,"t2",2,SQL_TINYINT,3,0,SQL_NULLABLE);
-    desccol(hstmt,"t3",2,SQL_TINYINT,3,0,SQL_NULLABLE);
+    is(desccol(hstmt,"t1",2,SQL_TINYINT,3,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"t2",2,SQL_TINYINT,3,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"t3",2,SQL_TINYINT,3,0,SQL_NULLABLE) == OK);
 
-    desccol(hstmt,"s1",2,SQL_SMALLINT,5,0,SQL_NULLABLE);
-    desccol(hstmt,"s2",2,SQL_SMALLINT,5,0,SQL_NULLABLE);
-    desccol(hstmt,"s3",2,SQL_SMALLINT,5,0,SQL_NULLABLE);
+    is(desccol(hstmt,"s1",2,SQL_SMALLINT,5,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"s2",2,SQL_SMALLINT,5,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"s3",2,SQL_SMALLINT,5,0,SQL_NULLABLE) == OK);
 
-    desccol(hstmt,"m1",2,SQL_INTEGER,8,0,SQL_NULLABLE);
-    desccol(hstmt,"m2",2,SQL_INTEGER,8,0,SQL_NULLABLE);
-    desccol(hstmt,"m3",2,SQL_INTEGER,8,0,SQL_NULLABLE);
+    is(desccol(hstmt,"m1",2,SQL_INTEGER,8,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"m2",2,SQL_INTEGER,8,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"m3",2,SQL_INTEGER,8,0,SQL_NULLABLE) == OK);
 
-    desccol(hstmt,"i1",2,SQL_INTEGER,10,0,SQL_NULLABLE);
-    desccol(hstmt,"i2",2,SQL_INTEGER,10,0,SQL_NO_NULLS);
-    desccol(hstmt,"i3",2,SQL_INTEGER,10,0,SQL_NULLABLE);
-    desccol(hstmt,"i4",2,SQL_INTEGER,10,0,SQL_NULLABLE);
+    is(desccol(hstmt,"i1",2,SQL_INTEGER,10,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"i2",2,SQL_INTEGER,10,0,SQL_NO_NULLS) == OK);
+    is(desccol(hstmt,"i3",2,SQL_INTEGER,10,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"i4",2,SQL_INTEGER,10,0,SQL_NULLABLE) == OK);
 
-    desccol(hstmt,"b1",2,SQL_BIGINT,19,0,SQL_NULLABLE);
-    desccol(hstmt,"b2",2,SQL_BIGINT,19,0,SQL_NULLABLE);
-    desccol(hstmt,"b3",2,SQL_BIGINT,20,0,SQL_NULLABLE);
+    is(desccol(hstmt,"b1",2,SQL_BIGINT,19,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"b2",2,SQL_BIGINT,19,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"b3",2,SQL_BIGINT,20,0,SQL_NULLABLE) == OK);
 
-    desccol(hstmt,"f1",2,SQL_REAL,7,0,SQL_NULLABLE);
-    desccol(hstmt,"f2",2,SQL_REAL,7,0,SQL_NULLABLE);
-    desccol(hstmt,"f3",2,SQL_REAL,7,0,SQL_NULLABLE);
-    desccol(hstmt,"f4",2,SQL_REAL,7,0,SQL_NULLABLE);
+    is(desccol(hstmt,"f1",2,SQL_REAL,7,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"f2",2,SQL_REAL,7,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"f3",2,SQL_REAL,7,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"f4",2,SQL_REAL,7,0,SQL_NULLABLE) == OK);
 
-    desccol(hstmt,"d1",2,SQL_DOUBLE,15,0,SQL_NULLABLE);
-    desccol(hstmt,"d2",2,SQL_DOUBLE,15,0,SQL_NULLABLE);
-    desccol(hstmt,"d3",2,SQL_DOUBLE,15,0,SQL_NULLABLE);
-    desccol(hstmt,"d4",2,SQL_DOUBLE,15,0,SQL_NULLABLE);
+    is(desccol(hstmt,"d1",2,SQL_DOUBLE,15,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"d2",2,SQL_DOUBLE,15,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"d3",2,SQL_DOUBLE,15,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"d4",2,SQL_DOUBLE,15,0,SQL_NULLABLE) == OK);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_desccolext");
 
   return OK;
 }
@@ -1270,7 +1224,7 @@ DECLARE_TEST(t_desccol1)
 {
     SQLRETURN rc;
 
-    tmysql_exec(hstmt,"drop table if exists t_desccol1");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_desccol1");
     rc = SQLExecDirect(hstmt,"create table t_desccol1\
                  ( record decimal(8,0),\
                    title varchar(250),\
@@ -1324,6 +1278,8 @@ DECLARE_TEST(t_desccol1)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_desccol1");
 
   return OK;
 }
@@ -1419,7 +1375,7 @@ DECLARE_TEST(t_exfetch)
     ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                   (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    tmysql_exec(hstmt,"drop table t_exfetch");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_exfetch");
 
     rc = tmysql_exec(hstmt,"create table t_exfetch(col1 int)");
     mystmt(hstmt,rc);
@@ -1534,6 +1490,8 @@ DECLARE_TEST(t_exfetch)
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_exfetch");
+
   return OK;
 }
 
@@ -1553,7 +1511,7 @@ DECLARE_TEST(tmysql_rowstatus)
     rc = SQLSetCursorName(hstmt,"venu_cur",SQL_NTS);
     mystmt(hstmt,rc);
 
-    tmysql_exec(hstmt,"drop table tmysql_rowstatus");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_rowstatus");
     rc = tmysql_exec(hstmt,"create table tmysql_rowstatus(col1 int , col2 varchar(30))");
     mystmt(hstmt,rc);
 
@@ -1630,6 +1588,8 @@ DECLARE_TEST(tmysql_rowstatus)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_rowstatus");
 
   return OK;
 }
@@ -1754,7 +1714,6 @@ Bug #16817: ODBC doesn't return multiple resultsets
 DECLARE_TEST(t_bug16817)
 {
   SQLCHAR name[30];
-  SQLSMALLINT len;
   SQLSMALLINT ncol;
 
   ok_sql(hstmt, "DROP PROCEDURE IF EXISTS p_bug16817");
@@ -1803,6 +1762,38 @@ DECLARE_TEST(t_binary_collation)
 }
 
 
+/*
+ * Bug 29239 - Prepare before insert returns wrong result
+ */
+DECLARE_TEST(t_bug29239)
+{
+  SQLHANDLE hstmt2;
+  SQLINTEGER xval;
+
+  ok_sql(hstmt, "drop table if exists bug29239");
+  ok_sql(hstmt, "create table bug29239 ( x int )");
+
+  /* prepare & bind */
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)"select x from bug29239",
+                            SQL_NTS));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &xval, 0, NULL));
+
+  /* insert before execute, with a new stmt handle */
+  ok_con(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt2));
+  ok_sql(hstmt2, "insert into bug29239 values (44)");
+  ok_stmt(hstmt2, SQLFreeHandle(SQL_HANDLE_STMT, hstmt2));
+
+  /* now execute */
+  ok_stmt(hstmt, SQLExecute(hstmt));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(xval, 44);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  ok_sql(hstmt, "drop table if exists bug29239");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -1825,6 +1816,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug16817)
   ADD_TEST(bug6157)
   ADD_TEST(t_binary_collation)
+  ADD_TODO(t_bug29239)
 END_TESTS
 
 

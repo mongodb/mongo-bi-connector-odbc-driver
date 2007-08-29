@@ -130,7 +130,7 @@ DECLARE_TEST(t_tstotime)
     ts.second = 45;
     ts.fraction = 05;   
 
-    tmysql_exec(hstmt,"drop table t_tstotime");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_tstotime");
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -183,6 +183,8 @@ DECLARE_TEST(t_tstotime)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_tstotime");
+
   return OK;
 }
 
@@ -224,6 +226,8 @@ DECLARE_TEST(t_tstotime1)
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_tstotime1");
 
   return OK;
 }
@@ -279,7 +283,7 @@ DECLARE_TEST(t_time)
   SQL_TIME_STRUCT tm;
   SQLCHAR         str[20];
 
-    tmysql_exec(hstmt,"drop table t_time");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_time");
     rc = tmysql_exec(hstmt,"create table t_time(tm time, ts timestamp(14))");
     mystmt(hstmt,rc);
 
@@ -333,6 +337,8 @@ DECLARE_TEST(t_time)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_time");
+
   return OK;
 }
 
@@ -345,7 +351,7 @@ DECLARE_TEST(t_time1)
   SQLCHAR         data[30];
   SQLLEN          length;
 
-    SQLExecDirect(hstmt,"drop table t_time",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_time");
     rc = SQLExecDirect(hstmt,"create table t_time(t time, t1 timestamp, t2 datetime, t3 date)",SQL_NTS);
     mystmt(hstmt,rc);
 
@@ -601,6 +607,8 @@ DECLARE_TEST(t_time1)
 
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_time");
 
   return OK;
 }

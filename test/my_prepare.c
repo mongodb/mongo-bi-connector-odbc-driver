@@ -31,7 +31,7 @@ DECLARE_TEST(t_prep_basic)
     SQLLEN length1, length2, pcrow;
     char       name[20];
 
-    SQLExecDirect(hstmt,"drop table t_prep_basic",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_basic");
 
     rc = SQLExecDirect(hstmt,"create table t_prep_basic(a int, b char(4))",SQL_NTS);
     mystmt(hstmt,rc);
@@ -81,6 +81,8 @@ DECLARE_TEST(t_prep_basic)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_basic");
+
   return OK;
 }
 
@@ -91,7 +93,7 @@ DECLARE_TEST(t_prep_buffer_length)
     SQLLEN length;
     char       buffer[20];
 
-    SQLExecDirect(hstmt,"drop table t_prep_buffer_length",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_buffer_length");
 
     rc = SQLExecDirect(hstmt,"create table t_prep_buffer_length(a varchar(20))",SQL_NTS);
     mystmt(hstmt,rc);
@@ -176,6 +178,8 @@ DECLARE_TEST(t_prep_buffer_length)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_buffer_length");
+
   return OK;
 }
 
@@ -186,8 +190,7 @@ DECLARE_TEST(t_prep_truncate)
     SQLLEN length, length1, pcrow;
     SQLCHAR    name[20], bin[10];
 
-
-    SQLExecDirect(hstmt,"drop table t_prep_truncate",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_truncate");
 
     rc = SQLExecDirect(hstmt,"create table t_prep_truncate(a int, b char(4), c binary(4))",SQL_NTS);
     mystmt(hstmt,rc);
@@ -243,6 +246,8 @@ DECLARE_TEST(t_prep_truncate)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_truncate");
 
   return OK;
 }
@@ -325,7 +330,7 @@ DECLARE_TEST(t_prep_getdata)
     SQLLEN     length;
     SQLCHAR    tiny;
 
-    SQLExecDirect(hstmt,"drop table t_prep_getdata",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_getdata");
 
     rc = SQLExecDirect(hstmt,"create table t_prep_getdata(a tinyint, b int, c char(4))",SQL_NTS);
     mystmt(hstmt,rc);
@@ -397,6 +402,8 @@ DECLARE_TEST(t_prep_getdata)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_getdata");
+
   return OK;
 }
 
@@ -407,7 +414,7 @@ DECLARE_TEST(t_prep_getdata1)
     SQLCHAR     data[11];
     SQLLEN length;
 
-    SQLExecDirect(hstmt,"drop table t_prep_getdata",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_getdata");
 
     rc = SQLExecDirect(hstmt,"create table t_prep_getdata(a char(10), b int)",SQL_NTS);
     mystmt(hstmt,rc);
@@ -523,6 +530,8 @@ DECLARE_TEST(t_prep_getdata1)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_getdata");
+
   return OK;
 }
 
@@ -532,7 +541,7 @@ DECLARE_TEST(t_prep_catalog)
     SQLCHAR     table[20];
     SQLLEN      length;
 
-    SQLExecDirect(hstmt,"drop table t_prep_catalog",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_catalog");
 
     rc = SQLExecDirect(hstmt,"create table t_prep_catalog(a int default 100)",SQL_NTS);
     mystmt(hstmt,rc);
@@ -593,6 +602,8 @@ DECLARE_TEST(t_prep_catalog)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_catalog");
+
   return OK;
 }
 
@@ -611,9 +622,8 @@ DECLARE_TEST(t_sps)
     }
 */
 
-    SQLExecDirect(hstmt,"drop procedure t_sp",SQL_NTS);
-
-    SQLExecDirect(hstmt,"drop table t_tabsp",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_tabsp");
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS t_sp");
 
     rc = SQLExecDirect(hstmt,"create table t_tabsp(a int, b varchar(10))",SQL_NTS);
     mystmt(hstmt,rc);
@@ -665,12 +675,8 @@ DECLARE_TEST(t_sps)
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
 
-    rc = SQLExecDirect(hstmt,"drop procedure t_sp",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"drop table t_tabsp",SQL_NTS);
-    mystmt(hstmt,rc);
-    SQLFreeStmt(hstmt, SQL_CLOSE);
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS t_sp");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_tabsp");
 
   return OK;
 }
@@ -684,9 +690,7 @@ DECLARE_TEST(t_prepare)
   char      szodata[20],szidata[20]="MySQL";
   SQLSMALLINT pccol;
 
-    SQLFreeStmt(hstmt,SQL_CLOSE);
-
-    tmysql_exec(hstmt,"drop table t_prepare");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_prepare");
 
     rc = tmysql_exec(hstmt,"create table t_prepare(col1 int primary key, col2 varchar(30), col3 set(\"one\", \"two\"))");
     mystmt(hstmt,rc);
@@ -739,6 +743,8 @@ DECLARE_TEST(t_prepare)
     rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_prepare");
+
   return OK;
 }
 
@@ -748,7 +754,7 @@ DECLARE_TEST(t_prepare1)
   SQLRETURN rc;
   SQLINTEGER nidata= 1000;
 
-    tmysql_exec(hstmt,"drop table t_prepare1");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_prepare1");
 
     rc = tmysql_exec(hstmt,"create table t_prepare1(col1 int primary key, col2 varchar(30))");
     mystmt(hstmt,rc);
@@ -792,6 +798,8 @@ DECLARE_TEST(t_prepare1)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_prepare1");
+
   return OK;
 }
 
@@ -803,7 +811,7 @@ DECLARE_TEST(tmysql_bindcol)
     SQLLEN     nlen;
     SQLCHAR   szodata[20],szidata[20]="MySQL";
 
-    tmysql_exec(hstmt,"drop table tmysql_bindcol");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_bindcol");
 
     rc = tmysql_exec(hstmt,"create table tmysql_bindcol(col1 int primary key, col2 varchar(30))");
     mystmt(hstmt,rc);
@@ -859,11 +867,7 @@ DECLARE_TEST(tmysql_bindcol)
     rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
     mystmt(hstmt,rc);
 
-    rc = tmysql_exec(hstmt,"drop table tmysql_bindcol");
-    mystmt(hstmt,rc);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_bindcol");
 
   return OK;
 }
@@ -953,7 +957,8 @@ DECLARE_TEST(t_acc_update)
     SQLLEN pcrow;
     SQLHSTMT hstmt1;
 
-    tmysql_exec(hstmt,"drop table t_acc_update");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_acc_update");
+
     rc = tmysql_exec(hstmt,"create table t_acc_update(id int)");
     mystmt(hstmt,rc);
 
@@ -1022,6 +1027,8 @@ DECLARE_TEST(t_acc_update)
 
     rc = SQLSetConnectOption(hdbc,SQL_AUTOCOMMIT,1L);
     mycon(hdbc,rc);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_acc_update");
 
   return OK;
 }

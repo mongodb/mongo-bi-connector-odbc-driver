@@ -23,7 +23,6 @@
 MYODBCSetupDataSourceTab3d::MYODBCSetupDataSourceTab3d( QWidget *pwidgetParent )
     : QWidget( pwidgetParent )
 {
-    QString         stringTraceDriverCalls( tr("Make a debug log in `c:\\myodbc.log'. This is the same as putting MYSQL_DEBUG=d:t:O,c::\\myodbc.log in `AUTOEXEC.BAT'. (On Unix, the file is `/tmp/myodbc.log'.)") );
     QString         stringSaveQueries( tr("Enable query logging to `myodbc.sql' file. (Enabled only in debug mode.)") );
 #if QT_VERSION >= 0x040000
     QVBoxLayout *   playoutFields = new QVBoxLayout;
@@ -36,15 +35,6 @@ MYODBCSetupDataSourceTab3d::MYODBCSetupDataSourceTab3d( QWidget *pwidgetParent )
     playoutFields->setMargin( 20 );
     playoutFields->setSpacing( 5 );
     playoutFields->addStretch( 10 );
-
-    pcheckboxTraceDriverCalls = new MYODBCSetupCheckBox( tr("Trace Driver Calls To myodbc.log"), this );
-    pcheckboxTraceDriverCalls->setAssistText( stringTraceDriverCalls );
-    playoutFields->addWidget( pcheckboxTraceDriverCalls );
-#if QT_VERSION >= 0x040000
-    pcheckboxTraceDriverCalls->setToolTip( stringTraceDriverCalls );
-#else
-    QToolTip::add( pcheckboxTraceDriverCalls, stringTraceDriverCalls );
-#endif
 
     pcheckboxSaveQueries = new MYODBCSetupCheckBox( tr("Save Queries to myodbc.sql"), this );
     pcheckboxSaveQueries->setAssistText( stringSaveQueries );

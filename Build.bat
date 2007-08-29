@@ -10,34 +10,9 @@ REM \sa     README.win
 REM
 REM #########################################################
 
-ECHO "+-----------------------------------------------------+"
-ECHO "| BUILD                                               |"
-ECHO "+-----------------------------------------------------+"
-REM ****
-REM * Removing libraries and executables to force relink...
-REM * We do not want to del all in lib as some may be 
-REM * additional libs for distro building.
-REM ****
-IF EXIST lib ( 
-    rem rmdir /Q /S lib
-    del /Q lib\myodbc*
-)
-IF EXIST bin ( 
-    rmdir /Q /S bin
-)
+# This is a future place holder for doing nmake builds on
+# Windows
 
-REM Invoke qmake - without relying upon its mechanism to dive into sub dirs.
-CALL CreateMakefiles.bat
-
-REM ****
-REM * Making the libraries and executables...
-REM ****
-ECHO Make...
-nmake
-
-goto doSuccess
-
-:doSuccess
 ECHO "+-----------------------------------------------------+"
 ECHO "| BUILD DONE                                          |"
 ECHO "+-----------------------------------------------------+"

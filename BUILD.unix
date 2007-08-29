@@ -87,20 +87,7 @@ execute configure again with the desired options.
 
 Then do;
 
-$ make
-
-
-Qt
---
-
-If you want to build with Qt project files (instead of the gnu 
-auto-tools) then;
-
-1. review the *pro and *qmake files in the root dir
-2. $ qmake; make
-
-NOTE: You will find the executables in the bin sub-dir and the
-      libraries in the lib sub-dir of MyODBC.
+ $ make
 
 
 INSTALL

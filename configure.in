@@ -625,7 +625,7 @@ echo
 
 if test "$ac_cv_prog_gcc" = "yes"
 then
-  DEBUG_CFLAGS="-g -O"
+  DEBUG_CFLAGS="-ggdb3"
   OPTIMIZE_CFLAGS="-O3"
 else
   DEBUG_CFLAGS="-g"

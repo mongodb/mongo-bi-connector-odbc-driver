@@ -31,7 +31,7 @@
           myodbc itself).
 
           For example; this program is used in the postinstall script
-          of the MyODBC for OSX installer package. 
+          of the MyODBC for Mac OS X installer package. 
 */
 
 /*!
@@ -140,7 +140,7 @@ char *szSyntax =
         
         $ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;Driver=myodbc3.dll;Setup=myodbc3.dll"
         
-    OSX
+    Mac OS X
 
           At least some of the functions dealing with the
           odbc system information are case sensitive
@@ -226,8 +226,6 @@ int doRemoveDriver();
 int doRemoveDataSource();
 int doRemoveDataSourceName();
 int doConfigDataSource( WORD nRequest );
-/* added here to address build issue on osx 10.4 */
-BOOL INSTAPI AppleConfigDSN( HWND hWnd, WORD nRequest, LPCSTR pszDriver, LPCSTR pszAttributes );
 
 /*!
     \brief  This is the entry point to this program.
@@ -259,9 +257,6 @@ int main( int argc, char *argv[] )
             {
                 /* actions */
                 case 'e':
-#ifdef __APPLE__
-                    printf( "[WARNING] The dialogs on OSX may have serious focus problems being invoked this way.\nThis has yet to be corrected.\nConsider using MYODBCConfig.\n" );
-#endif
                 case 'q':
                 case 'a':
                 case 'r':
@@ -515,10 +510,10 @@ int doAdd()
             All ODBC drivers *should* be installed in the standard location (\windows\system32) and this call
             reflects this as no path is given for the driver file.
 
-    \note   OSX
+    \note   Mac OS X
     
-            On OSX there are many odbcinst.ini files - each account has one in ~/Library/ODBC and there
-            is a system wide one in /Library/ODBC. This function will register the driver in ~/Library/ODBC.
+            On Mac OS X there are many odbcinst.ini files - each account has one in ~/Library/ODBC and there
+            is a system wide one in /Library/ODBC.
 
             There are at least two notable complicating factors;
               - the files are read-ony for average user so one should use sudo when doing this
@@ -529,7 +524,7 @@ int doAdd()
             but path seems needed for iodbc. The implication is that
             the driver *must* be installed in /usr/lib for this to work.
 
-            Usage Count is not returned on OSX and returned location does not seem to reflect reality.
+            Usage Count is not returned on Mac OS X and returned location does not seem to reflect reality.
 
     \note   Linux/UNIX
 
@@ -897,8 +892,6 @@ int doConfigDataSource( WORD nRequest )
         fprintf( stderr, "[%s][%d][ERROR] Could not find ConfigDSN in (%s).\n", __FILE__, __LINE__, pDriver->pszSETUP );
         goto doConfigDataSourceExit1;
     }
-#elif defined( __APPLE__ )
-
 #else
     /* load it */
     lt_dlinit();
@@ -925,17 +918,13 @@ int doConfigDataSource( WORD nRequest )
 #endif
 
     /* make call */
-#if defined(__APPLE__)    
-    if ( !AppleConfigDSN( (HWND)NULL, nRequest, szDriver, szAttributes ) )
-#else
     /*!
         \note
 
-        A fake window handle seems to work for platforms other than OSX :) It will not be
+        A fake window handle seems to work for platforms other than Mac OS X :) It will not be
         used as a window handle - just as a flag to get the GUI.
     */    
     if ( !pFunc( (HWND)nWnd /* fake window handle */, nRequest, szDriver, szAttributes ) )
-#endif
     {
         doPrintInstallerError( __FILE__, __LINE__ );
         goto doConfigDataSourceExit1;
@@ -958,341 +947,5 @@ doConfigDataSourceExit2:
 
     return bReturn;
 }
-#endif
-
-
-
-/* Some code added here as a hack to get build on osx 10.4 to work */
-
-#ifdef __APPLE__
-/*!
-    \internal
-    \brief      Adds a new DSN.
-
-    \note       This function uses the current SQLSetConfigMode().
-*/    
-BOOL MYODBCSetupConfigDSNAdd( HWND hWnd, MYODBCUTIL_DATASOURCE *pDataSource )
-{
-    pDataSource->nMode = MYODBCUTIL_DATASOURCE_MODE_DSN_ADD;
-
-    /*!
-        ODBC RULE
-
-        We must have a driver name.
-    */    
-    if ( !pDataSource->pszDRIVER )
-    {
-        SQLPostInstallerError( ODBC_ERROR_INVALID_NAME, "Missing driver name." );
-        return FALSE;
-    }
-    if ( !(*pDataSource->pszDRIVER) )
-    {
-        SQLPostInstallerError( ODBC_ERROR_INVALID_KEYWORD_VALUE, "Missing driver name value." );
-        return FALSE;
-    }
-
-    /*! 
-        \todo 
-
-        Use pDataSource->pszDriverFileName to get pDataSource->pszDRIVER
-    */
-
-    /*!
-        ODBC RULE
-
-        If a data source name is passed to ConfigDSN in lpszAttributes, ConfigDSN 
-        checks that the name is valid.
-    */    
-    if ( pDataSource->pszDSN )
-    {
-        /*!
-            ODBC RULE
-
-            ConfigDSN should call SQLValidDSN to check the length of the data source 
-            name and to verify that no invalid characters are included in the name.
-        */    
-        /*!
-            MYODBC RULE
-             
-            Assumption is that this also checks to ensure we are not trying to create 
-            a DSN using an odbc.ini reserved section name. 
-        */
-        if ( !SQLValidDSN( pDataSource->pszDSN ) )
-        {
-            SQLPostInstallerError( ODBC_ERROR_REQUEST_FAILED, "DSN contains illegal characters or length does not make sense." );
-            return FALSE;
-        }
-    }
-
-    /*!
-        ODBC RULE
-
-        If lpszAttributes contains enough information to connect to a data source, 
-        ConfigDSN can add the data source or display a dialog box with which the user 
-        can change the connection information. If lpszAttributes does not contain 
-        enough information to connect to a data source, ConfigDSN must determine the 
-        necessary information; if hwndParent is not null, it displays a dialog box to 
-        retrieve the information from the user.
-    */
-
-    /*!
-        ODBC RULE
-        
-        If ConfigDSN cannot get complete connection information for a data source, it 
-        returns FALSE.
-    */
-    /*!
-        MYODBC RULE
-
-        We want pszDriver and a DSN attribute - we can default the rest.
-    */    
-    if ( !pDataSource->pszDSN )
-    {
-        SQLPostInstallerError( ODBC_ERROR_INVALID_KEYWORD_VALUE, "Missing DSN attribute." );
-        return FALSE;
-    }
-
-    if ( !(*pDataSource->pszDSN) )
-    {
-        SQLPostInstallerError( ODBC_ERROR_INVALID_KEYWORD_VALUE, "Missing DSN attribute value." );
-        return FALSE;
-    }
-
-    /*!
-        ODBC RULE
-
-        If the data source name matches an existing data source name and hwndParent is null, 
-        ConfigDSN overwrites the existing name. If it matches an existing name and hwndParent 
-        is not null, ConfigDSN prompts the user to overwrite the existing name.        
-    */
-    return MYODBCUtilWriteDataSource( pDataSource );
-}
-
-/*!
-    \internal
-    \brief      Configure an existing DSN.
-
-    \note       This function uses the current SQLSetConfigMode().
-*/    
-BOOL MYODBCSetupConfigDSNEdit( HWND hWnd, MYODBCUTIL_DATASOURCE *pDataSource )
-{
-    pDataSource->nMode = MYODBCUTIL_DATASOURCE_MODE_DSN_EDIT;
-
-    /*!
-        ODBC RULE
-
-        To modify a data source, a data source name must be passed to ConfigDSN in 
-        lpszAttributes.
-    */    
-    if ( !pDataSource->pszDSN )
-    {
-        SQLPostInstallerError( ODBC_ERROR_INVALID_KEYWORD_VALUE, "Missing DSN attribute." );
-        return FALSE;
-    }
-
-    if ( !(*pDataSource->pszDSN) )
-    {
-        SQLPostInstallerError( ODBC_ERROR_INVALID_KEYWORD_VALUE, "Missing DSN attribute value." );
-        return FALSE;
-    }
-
-    /*!
-        ODBC RULE
-
-        ConfigDSN should call SQLValidDSN to check the length of the data source 
-        name and to verify that no invalid characters are included in the name.
-    */
-    /*!
-        MYODBC RULE
-         
-        Assumption is that this also checks to ensure we are not trying to create 
-        a DSN using an odbc.ini reserved section name. 
-    */
-    if ( !SQLValidDSN( pDataSource->pszDSN ) )
-    {
-        SQLPostInstallerError( ODBC_ERROR_REQUEST_FAILED, "DSN contains illegal characters or length does not make sense." );
-        return FALSE;
-    }
-
-    /*!
-        ODBC RULE
-
-        ConfigDSN checks that the data source name is in the Odbc.ini file (or 
-        registry).
-    */
-    if ( !MYODBCUtilDSNExists( pDataSource->pszDSN ) )
-    {
-        SQLPostInstallerError( ODBC_ERROR_REQUEST_FAILED, "DSN does not exist." );
-        return FALSE;
-    }
-
-    /* merge in any missing attributes we can find in the system information */
-    MYODBCUtilReadDataSource( pDataSource, pDataSource->pszDSN );
-
-    /*!
-        ODBC RULE
-
-        If the data source name was not changed, ConfigDSN calls 
-        SQLWritePrivateProfileString in the installer DLL to make any other changes.
-    */
-    /*!
-        MYODBC RULE
-
-        We do not support changing the DSN name.
-    */
-    return MYODBCUtilWriteDataSource( pDataSource );
-}
-
-/*!
-    \internal
-    \brief      Remove given DSN.
-
-    \note       This function uses the current SQLSetConfigMode().
-*/    
-BOOL MYODBCSetupConfigDSNRemove( MYODBCUTIL_DATASOURCE *pDataSource )
-{
-    /*!
-        ODBC RULE
-
-        To delete a data source, a data source name must be passed to ConfigDSN 
-        in lpszAttributes.
-    */    
-    if ( !pDataSource->pszDSN )
-    {
-        SQLPostInstallerError( ODBC_ERROR_INVALID_KEYWORD_VALUE, "Missing DSN attribute." );
-        return FALSE;
-    }
-
-    if ( !(*pDataSource->pszDSN) )
-    {
-        SQLPostInstallerError( ODBC_ERROR_INVALID_KEYWORD_VALUE, "Missing DSN attribute value." );
-        return FALSE;
-    }
-
-    /*!
-        ODBC RULE
-
-        ConfigDSN should call SQLValidDSN to check the length of the data source 
-        name and to verify that no invalid characters are included in the name.
-    */    
-    /*!
-        MYODBC RULE
-
-        Assumption is that this also checks to ensure we are not trying to create 
-        a DSN using an odbc.ini reserved section name. 
-    */
-    if ( !SQLValidDSN( pDataSource->pszDSN ) )
-    {
-        SQLPostInstallerError( ODBC_ERROR_REQUEST_FAILED, "DSN contains illegal characters or length does not make sense." );
-        return FALSE;
-    }
-
-    /*!
-        ODBC RULE
-
-        ConfigDSN checks that the data source name is in the Odbc.ini file (or 
-        registry).
-    */    
-    if ( !MYODBCUtilDSNExists( pDataSource->pszDSN ) )
-    {
-        SQLPostInstallerError( ODBC_ERROR_REQUEST_FAILED, "DSN does not exist." );
-        return FALSE;
-    }
-
-    /*!
-        ODBC RULE
-
-        It then calls SQLRemoveDSNFromIni in the installer DLL to remove the 
-        data source.
-    */    
-    return SQLRemoveDSNFromIni( pDataSource->pszDSN );
-}
-
-
-/*!
-    \brief  Add, edit, or remove a Data Source Name (DSN).
-
-            This function should be called from the ODBC Administrator
-            program when our driver is being used during a request to
-            add, edit or remove a DSN. This allows us to do driver 
-            specific stuff such as use our dialogs to work with our
-            driver.
-
-            This function is also a viable entry point and a public API
-            for use by special function code such as an installer or an
-            application which has embedded the driver functionality.
-*/  
-BOOL INSTAPI AppleConfigDSN( HWND hWnd, WORD nRequest, LPCSTR pszDriver, LPCSTR pszAttributes )
-{
-    MYODBCUTIL_DATASOURCE * pDataSource = MYODBCUtilAllocDataSource( MYODBCUTIL_DATASOURCE_MODE_DSN_VIEW );
-    BOOL                    bReturn     = FALSE;
-
-    /*
-        \note   unixODBC
-    
-                In some cases on unixODBC a semi-colon will be used
-                to indicate the end of name/value pair. This is like
-                in SQLDriverConnect(). This is incorrect but we try
-                to simply ignore semi-colon and hope rest of format
-                is ok.
-
-                So we should call this with MYODBCUTIL_DELIM_NULL but we use
-                MYODBCUTIL_DELIM_BOTH instead.
-
-                This was tested with pszAttributes "DSN=test;".    
-    */
-    if ( !MYODBCUtilReadDataSourceStr( pDataSource, MYODBCUTIL_DELIM_BOTH, pszAttributes ) )
-    {
-        SQLPostInstallerError( ODBC_ERROR_INVALID_KEYWORD_VALUE, "Data Source string seems invalid." );
-        goto exitConfigDSN;
-    }
-
-    /*!
-        ODBC RULE
-
-        DRIVER is not a valid attribute for ConfigDSN().
-        Also; ConfigDSN may not delete or change the value of the Driver keyword...
-        when ODBC_CONFIG_DSN.
-    */
-    if ( pDataSource->pszDRIVER )
-    {
-        SQLPostInstallerError( ODBC_ERROR_INVALID_KEYWORD_VALUE, "DRIVER is an invalid attribute." );
-        goto exitConfigDSN;
-    }
-
-    /*!
-        ODBC RULE
-
-        Driver description (usually the name of the associated DBMS) presented to users 
-        instead of the physical driver name.
-    */    
-    if ( !pszDriver || !(*pszDriver) )
-    {
-        SQLPostInstallerError( ODBC_ERROR_INVALID_KEYWORD_VALUE, "Need driver name." );
-        goto exitConfigDSN;
-    }
-
-    pDataSource->pszDRIVER = (char *)strdup( pszDriver );
-
-    switch ( nRequest )
-    {
-        case ODBC_ADD_DSN:
-            bReturn = MYODBCSetupConfigDSNAdd( hWnd, pDataSource );
-            break;
-        case ODBC_CONFIG_DSN:
-            bReturn = MYODBCSetupConfigDSNEdit( hWnd, pDataSource );
-            break;
-        case ODBC_REMOVE_DSN:
-            bReturn = MYODBCSetupConfigDSNRemove( pDataSource );
-            break;
-        default:
-            SQLPostInstallerError( ODBC_ERROR_INVALID_REQUEST_TYPE, "Invalid request." );
-    }
-
-exitConfigDSN:
-    MYODBCUtilFreeDataSource( pDataSource );
-    return bReturn;
-}     
-
 #endif
 

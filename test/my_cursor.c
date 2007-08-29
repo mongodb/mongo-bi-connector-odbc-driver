@@ -636,10 +636,11 @@ DECLARE_TEST(t_pos_datetime_delete1)
   SQLLEN row_count, cur_type;
   SQLUSMALLINT rgfRowStatus;
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_delete");
+
     rc = SQLAllocStmt(hdbc,&hstmt1);
     mycon(hdbc,rc);
 
-    tmysql_exec(hstmt,"drop table t_pos_delete");
     rc = tmysql_exec(hstmt,"create table t_pos_delete(id int not null default '0',\
                                                       name varchar(20) NOT NULL default '',\
                                                       created datetime NOT NULL default '2000-01-01')");
@@ -752,6 +753,8 @@ DECLARE_TEST(t_pos_datetime_delete1)
 
     rc = SQLFreeStmt(hstmt1,SQL_DROP);
     mystmt(hstmt1,rc);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_delete");
 
   return OK;
 }
@@ -1042,7 +1045,7 @@ DECLARE_TEST(tmysql_setpos_upd)
     SQLROWSETSIZE pcrow;
     SQLUSMALLINT rgfRowStatus;
 
-    tmysql_exec(hstmt,"drop table tmysql_setpos");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_setpos");
     rc = tmysql_exec(hstmt,"create table tmysql_setpos(col1 int, col2 varchar(30))");
     mystmt(hstmt,rc);
 
@@ -1138,6 +1141,8 @@ DECLARE_TEST(tmysql_setpos_upd)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_setpos");
+
   return OK;
 }
 
@@ -1151,7 +1156,7 @@ DECLARE_TEST(tmysql_setpos_add)
     SQLROWSETSIZE pcrow;
     SQLUSMALLINT rgfRowStatus;
 
-    tmysql_exec(hstmt,"drop table tmysql_setpos_add");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_setpos_add");
     rc = tmysql_exec(hstmt,"create table tmysql_setpos_add(col1 int, col2 varchar(30))");
     mystmt(hstmt,rc);
 
@@ -1232,6 +1237,8 @@ DECLARE_TEST(tmysql_setpos_add)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_setpos_add");
 
   return OK;
 }
@@ -1637,8 +1644,7 @@ DECLARE_TEST(tmysql_mtab_setpos_del)
     SQLROWSETSIZE pcrow;
     SQLUSMALLINT rgfRowStatus;
 
-    tmysql_exec(hstmt,"drop table tmysql_t1");
-    tmysql_exec(hstmt,"drop table tmysql_t2");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_t1, tmysql_t2");
     rc = tmysql_exec(hstmt,"create table tmysql_t1(col1 int, col2 varchar(20))");
     mystmt(hstmt,rc);
     rc = tmysql_exec(hstmt,"create table tmysql_t2(col1 int, col2 varchar(20))");
@@ -1696,6 +1702,8 @@ DECLARE_TEST(tmysql_mtab_setpos_del)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_t1, tmysql_t2");
+
   return OK;
 }
 
@@ -1709,7 +1717,7 @@ DECLARE_TEST(tmysql_setpos_pkdel)
     SQLROWSETSIZE pcrow;
     SQLUSMALLINT rgfRowStatus;
 
-    tmysql_exec(hstmt,"drop table tmysql_setpos1");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_setpos1");
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -1776,6 +1784,8 @@ DECLARE_TEST(tmysql_setpos_pkdel)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_setpos1");
 
   return OK;
 }
@@ -1983,7 +1993,7 @@ DECLARE_TEST(t_setpos_upd_bug1)
     SQLSMALLINT pccol;
     SQLUSMALLINT rgfRowStatus;
 
-    tmysql_exec(hstmt,"drop table if exists t_setpos_upd_bug1");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_setpos_upd_bug1");
     rc = tmysql_exec(hstmt,"create table t_setpos_upd_bug1(id int(11) NOT NULL auto_increment,\
                                                            fname char(20) NOT NULL default '',\
                                                            lname char(20) NOT NULL default '',\
@@ -2081,6 +2091,8 @@ DECLARE_TEST(t_setpos_upd_bug1)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_setpos_upd_bug1");
+
   return OK;
 }
 
@@ -2094,7 +2106,8 @@ DECLARE_TEST(my_setpos_upd_pk_order)
     SQLROWSETSIZE pcrow;
     SQLUSMALLINT rgfRowStatus;
 
-    tmysql_exec(hstmt,"drop table my_setpos_upd_pk_order");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_setpos_upd_pk_order");
+
     rc = tmysql_exec(hstmt,"create table my_setpos_upd_pk_order(col1 int not null, col2 varchar(30) NOT NULL, primary key(col2,col1))");
     mystmt(hstmt,rc);
 
@@ -2162,6 +2175,8 @@ DECLARE_TEST(my_setpos_upd_pk_order)
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_setpos_upd_pk_order");
 
   return OK;
 }

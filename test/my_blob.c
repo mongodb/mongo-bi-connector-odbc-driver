@@ -63,10 +63,9 @@ DECLARE_TEST(t_blob)
 
     start = clock();
 
-    rc = SQLExecute(hstmt);
-    mystmt_err(hstmt,rc == SQL_NEED_DATA, rc);
-    rc = SQLParamData(hstmt, &token);
-    if (rc == SQL_NEED_DATA)
+    expect_stmt(hstmt, SQLExecute(hstmt), SQL_NEED_DATA);
+
+    expect_stmt(hstmt, SQLParamData(hstmt, &token), SQL_NEED_DATA);
     {
         for (j = 0; j < blob_size; )
         {
@@ -84,10 +83,6 @@ DECLARE_TEST(t_blob)
         }
         rc = SQLParamData(hstmt, &token);
         mystmt(hstmt,rc);
-    }
-    else
-    {
-        my_error();
     }
     finish = clock();
 

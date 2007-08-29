@@ -98,12 +98,6 @@ EXTRA_DIST = \
 	BUILD.unix \
 	BUILD.osx \
 	BUILD.win \
-	root.pro \
-	common.pri \
-	config.pri \
-	defines.pri \
-	mysql.pri \
-	odbc.pri \
 	resource.h \
 	VersionInfo.h \
 	MYODBC_CONF.h \
@@ -112,12 +106,9 @@ EXTRA_DIST = \
 	mysql.bmp \
 	Build.sh \
 	Build.bat \
-	CreateMakefiles.sh \
 	CreateBinaryMsi.bat \
 	CreateBinaryZip.bat \
-	CreateMakefiles.bat \
 	CreateSourceZip.bat \
-	CreateVisualStudioProjects.bat \
 	RemoveMakefiles.sh \
 	Install.bat \
 	PostBuildTest.bat \

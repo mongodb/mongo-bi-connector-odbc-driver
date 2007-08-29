@@ -30,8 +30,7 @@ DECLARE_TEST(my_pcbvalue)
     SQLLEN      int_pcbValue, pcbValue, pcbValue1, pcbValue2;
     SQLCHAR     szData[255]={0};
 
-    /* initialize data */
-    SQLExecDirect(hstmt,"drop table my_pcbValue",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_pcbValue");
 
     rc = SQLExecDirect(hstmt,"create table my_pcbValue(id int, name varchar(30),\
                                                        name1 varchar(30),\
@@ -95,7 +94,7 @@ DECLARE_TEST(my_pcbvalue)
     mystmt(hstmt, rc);
 
     printMessage(" total rows updated:%d\n",nRowCount);
-    assert(nRowCount == 1);
+    is(nRowCount == 1);
 
     /* Free statement cursor resorces */
     rc = SQLFreeStmt(hstmt, SQL_UNBIND);
@@ -138,12 +137,13 @@ DECLARE_TEST(my_pcbvalue)
     printMessage("\n szData:%s\n",szData);
     myassert(strcmp(szData,"updated") == 0);
 
-    rc = SQLFetch(hstmt);
-    mystmt_err(hstmt,rc==SQL_NO_DATA_FOUND,rc);
+    expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
     SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_pcbValue");
 
   return OK;
 }
@@ -158,8 +158,7 @@ DECLARE_TEST(my_pcbvalue_add)
     SQLLEN      int_pcbValue, pcbValue, pcbValue1, pcbValue2;
     SQLCHAR     szData[255]={0};
 
-    /* initialize data */
-    SQLExecDirect(hstmt,"drop table my_pcbValue_add",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_pcbValue_add");
 
     rc = SQLExecDirect(hstmt,"create table my_pcbValue_add(id int, name varchar(30),\
                                                        name1 varchar(30),\
@@ -223,7 +222,7 @@ DECLARE_TEST(my_pcbvalue_add)
     mystmt(hstmt, rc);
 
     printMessage(" total rows updated:%d\n",nRowCount);
-    assert(nRowCount == 1);
+    is(nRowCount == 1);
 
     /* Free statement cursor resorces */
     rc = SQLFreeStmt(hstmt, SQL_UNBIND);
@@ -276,6 +275,8 @@ DECLARE_TEST(my_pcbvalue_add)
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
 
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_pcbValue_add");
+
   return OK;
 }
 
@@ -285,12 +286,7 @@ DECLARE_TEST(my_columnspace)
 {
     SQLRETURN   rc;
 
-    /* initialize data */
-    rc = SQLExecDirect(hstmt,"DROP TABLE IF EXISTS TestColNames",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS TestColNames");
 
     rc = SQLExecDirect(hstmt,"CREATE TABLE `TestColNames`(`Value One` text,\
                                                            `Value Two` text,\
@@ -341,8 +337,7 @@ DECLARE_TEST(my_empty_string)
     SQLLEN      pcbValue;
     SQLCHAR     szData[255]={0};
 
-    /* initialize data */
-    SQLExecDirect(hstmt,"drop table my_empty_string",SQL_NTS);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_empty_string");
 
     rc = SQLExecDirect(hstmt,"create table my_empty_string(name varchar(30))",SQL_NTS);
     mystmt(hstmt,rc);
@@ -372,6 +367,8 @@ DECLARE_TEST(my_empty_string)
 
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS my_empty_string");
 
   return OK;
 }

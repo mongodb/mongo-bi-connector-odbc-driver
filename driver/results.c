@@ -406,7 +406,7 @@ BOOL isStatementForRead( STMT FAR *stmt )
   @type    : myodbc3 internal
   @purpose : execute the query if it is only prepared. This is needed
   because the ODBC standard allows calling some functions
-  before SQLExecute(). (Stupid!)
+  before SQLExecute().
 */
 
 static SQLRETURN check_result(STMT FAR *stmt )

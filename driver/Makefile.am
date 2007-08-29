@@ -87,7 +87,6 @@ LDFLAGS=@EXTRA_LDFLAGS@
 
 EXTRA_DIST =	error.h \
 		myutil.h \
-                driver.pro \
                 driver.def \
                 driver.rc \
 		CMakeLists.txt

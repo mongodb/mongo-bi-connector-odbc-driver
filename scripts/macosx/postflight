@@ -26,12 +26,12 @@
 libdir=/usr/local/lib
 bindir=/usr/local/bin
 
-for f in ~/Library/ODBC /Library/ODBC
+for admdir in ~/Library/ODBC /Library/ODBC
 do
-  echo "Ensuring ~/Library/ODBC, odbcinst.ini and odbc.ini exists..."
+  echo "Ensuring $admdir, odbcinst.ini and odbc.ini exists..."
   if [ ! -d $admdir ] ; then
       mkdir $admdir
-      chmod 775 $admdir
+      chmod 755 $admdir
       chown root:admin $admdir
   fi
 
@@ -43,7 +43,7 @@ do
       echo "TraceAutoStop = 0"         >> $admdir/odbc.ini
       echo "TraceFile     ="           >> $admdir/odbc.ini
       echo "TraceLibrary  ="           >> $admdir/odbc.ini
-      chmod 664 $admdir/odbc.ini
+      chmod 644 $admdir/odbc.ini
       chown root:admin $admdir/odbc.ini
   fi
 
@@ -53,19 +53,31 @@ do
       echo "[ODBC Connection Pooling]" >> $admdir/odbcinst.ini
       echo "PerfMon    = 0"            >> $admdir/odbcinst.ini
       echo "Retry Wait = "             >> $admdir/odbcinst.ini
-      chmod 664 $admdir/odbcinst.ini
+      chmod 644 $admdir/odbcinst.ini
       chown root:admin $admdir/odbcinst.ini
   fi
 done
 
 # ----------------------------------------------------------------------
+# SET USER PERMISSIONS
+#
+# Note that if the Mac OS X "ODBC Administrator" is run before this
+# script, and unlocked (root rights), it would save files in the user
+# area with root permissions, causing trouble later when trying to
+# change user settings without unlocking (root rights).
+# ----------------------------------------------------------------------
+if [ "$USER" -a "$GROUPS" ] ; then
+    chown -R $USER:$GROUPS ~/Library/ODBC
+fi
+
+# ----------------------------------------------------------------------
 # REGISTER THE DRIVER
 # ----------------------------------------------------------------------
 echo "Registring driver..."
-$bindir/myodbc3i -a -ds -t"MySQL ODBC 3.51 Driver;Driver=$libdir/libmyodbc3.so;Setup=$libdir/libmyodbc3S.so;"
+$bindir/myodbc3i -a -ds -t"MySQL ODBC 3.51 Driver;Driver=$libdir/libmyodbc3.so;Setup=$libdir/libmyodbc3S.so;" -w0
 
 # ----------------------------------------------------------------------
 # CREATE A SAMPLE DSN
 # ----------------------------------------------------------------------
 echo "Ensuring sample data source name (myodbc) exists..."
-$bindir/myodbc3i -a -s -t"DSN=myodbc;Driver=MySQL ODBC 3.51 Driver;SERVER=localhost;"
+$bindir/myodbc3i -a -s -t"DSN=myodbc;Driver=MySQL ODBC 3.51 Driver;SERVER=localhost;" -w0

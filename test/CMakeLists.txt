@@ -20,7 +20,7 @@
 
 ##########################################################################
 
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/test/include)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/test)
 
 # put the test exe's in test/
 SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/test")

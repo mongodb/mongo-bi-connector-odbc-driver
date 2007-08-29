@@ -101,7 +101,7 @@ DECLARE_TEST(my_param_insert)
     rc = SQLExecDirect(hstmt, "SELECT * FROM my_demo_param",SQL_NTS);
     mystmt(hstmt,rc);
 
-    assert(10 == myresult(hstmt));
+    is(10 == myresult(hstmt));
 
   return OK;
 }
@@ -137,7 +137,7 @@ DECLARE_TEST(my_param_update)
     rc = SQLRowCount(hstmt, &nRowCount);
     mystmt(hstmt,rc);
     printMessage("\n total rows updated:%d\n",nRowCount);
-    assert( nRowCount == 1);
+    is( nRowCount == 1);
 
     /* Free statement param resorces */
     rc = SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
@@ -155,7 +155,7 @@ DECLARE_TEST(my_param_update)
     rc = SQLExecDirect(hstmt, "SELECT * FROM my_demo_param",SQL_NTS);
     mystmt(hstmt,rc);
 
-    assert(10 == myresult(hstmt));
+    is(10 == myresult(hstmt));
 
   return OK;
 }
@@ -182,7 +182,7 @@ DECLARE_TEST(my_param_delete)
     rc = SQLRowCount(hstmt, &nRowCount);
     mystmt(hstmt,rc);
     printMessage(" total rows deleted:%d\n",nRowCount);
-    assert( nRowCount == 1);
+    is( nRowCount == 1);
 
     SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt, SQL_CLOSE);
@@ -201,7 +201,7 @@ DECLARE_TEST(my_param_delete)
     rc = SQLRowCount(hstmt, &nRowCount);
     mystmt(hstmt,rc);
     printMessage(" total rows deleted:%d\n",nRowCount);
-    assert( nRowCount == 1);
+    is( nRowCount == 1);
 
     /* Free statement param resorces */
     rc = SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
@@ -219,7 +219,7 @@ DECLARE_TEST(my_param_delete)
     rc = SQLExecDirect(hstmt, "SELECT * FROM my_demo_param",SQL_NTS);
     mystmt(hstmt,rc);
 
-    assert(8 == myresult(hstmt));
+    is(8 == myresult(hstmt));
 
     /* drop the table */
     rc = SQLExecDirect(hstmt,"DROP TABLE my_demo_param",SQL_NTS);
@@ -239,25 +239,9 @@ DECLARE_TEST(tmysql_fix)
 {
     SQLRETURN rc;
 
-    /* dump based */
-    printMessage("table structure for 'shop'..\n");
-    tmysql_exec(hstmt,"drop table if exists shop");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_err");
 
-    rc = tmysql_exec(hstmt,"CREATE TABLE shop (\
-                valor varchar(20) NOT NULL default ''\
-                ) TYPE=MyISAM;");
-    mystmt(hstmt,rc);
-
-    rc = tmysql_exec(hstmt,"LOCK TABLES shop WRITE");
-    mystmt(hstmt,rc);
-
-    rc = tmysql_exec(hstmt,"UNLOCK TABLES");
-    mystmt(hstmt,rc);
-
-    printMessage("table structure for 'sqlerr'..\n");
-    tmysql_exec(hstmt,"drop table if exists sqlerr");
-
-    rc = tmysql_exec(hstmt,"CREATE TABLE sqlerr (\
+    rc = tmysql_exec(hstmt,"CREATE TABLE tmysql_err (\
                   td date NOT NULL default '0000-00-00',\
                   node varchar(8) NOT NULL default '',\
                   tag varchar(10) NOT NULL default '',\
@@ -268,10 +252,7 @@ DECLARE_TEST(tmysql_fix)
                 ) TYPE=MyISAM");
     mystmt(hstmt,rc);
 
-    printMessage("dump data for table 'sqlerr'..\n");
-    rc = tmysql_exec(hstmt,"LOCK TABLES sqlerr WRITE");
-    mystmt(hstmt,rc);
-    rc = tmysql_exec(hstmt,"INSERT INTO sqlerr VALUES\
+    rc = tmysql_exec(hstmt,"INSERT INTO tmysql_err VALUES\
                   ('0000-00-00','0','0','0','0','0','0'),\
                   ('2001-08-29','FIX','SQLT2','ins1',\
                   NULL,NULL, 'Error.  SQL cmd %s is not terminated or too long.'),\
@@ -292,30 +273,6 @@ DECLARE_TEST(tmysql_fix)
                   ('0000-00-00','0','0','0','0','0','0'),('2001-08-29','FIX','SQLT2',\
                   'ins1',NULL,NULL,'Error.  SQL cmd %s is not terminated or too long.')");
 
-    rc = tmysql_exec(hstmt,"UNLOCK TABLES");
-    mystmt(hstmt,rc);
-
-    printMessage("table structure for 'sqllib'..\n");
-    tmysql_exec(hstmt,"drop table if exists sqllib");
-
-    rc = tmysql_exec(hstmt,"CREATE TABLE sqllib (\
-                  sqlname varchar(8) NOT NULL default '',\
-                  sqlcmd varchar(150) NOT NULL default '',\
-                  PRIMARY KEY  (sqlname)\
-                ) TYPE=MyISAM");
-    mystmt(hstmt,rc);
-
-    printMessage("dump data for 'sqllib'..\n");
-    rc = tmysql_exec(hstmt,"LOCK TABLES sqllib WRITE");
-    mystmt(hstmt,rc);
-    rc = tmysql_exec(hstmt,"INSERT INTO sqllib VALUES ('ins1','insert into shop (valor) values(?)')");
-    mystmt(hstmt,rc);
-    rc = tmysql_exec(hstmt,"UNLOCK TABLES");
-    mystmt(hstmt,rc);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
     /* trace based */
     {
         SQLSMALLINT pcpar,pccol,pfSqlType,pibScale,pfNullable;
@@ -330,7 +287,7 @@ DECLARE_TEST(tmysql_fix)
         SQLULEN     pcbParamDef;
 
         SQLFreeStmt(hstmt,SQL_CLOSE);
-        rc = SQLPrepare(hstmt,"insert into sqlerr (TD, NODE, TAG, SQLNAME, SQL_ERR, FIX_ERR, PROG_ERR)\
+        rc = SQLPrepare(hstmt,"insert into tmysql_err (TD, NODE, TAG, SQLNAME, SQL_ERR, FIX_ERR, PROG_ERR)\
                          values (?, ?, ?, ?, ?, ?, ?)",200);
         mystmt(hstmt,rc);
 
@@ -368,6 +325,8 @@ DECLARE_TEST(tmysql_fix)
         rc = SQLExecute(hstmt);
         mystmt(hstmt,rc);
     }
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_err");
 
   return OK;
 }

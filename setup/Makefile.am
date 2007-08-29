@@ -9,16 +9,6 @@
 #       this if the gui flag has been set in configure (default is yes)
 #       and if Qt is installed.
 #
-# NOTE:
-#	This may not be used on all platforms because of problems
-#	with libtool in building share libs under certian 
-#	circumstances. In this case qmake is used instead. The qmake
-#       method must be done manually after the driver is built and 
-#       installed. This is the case on OSX for example.
-#
-# SEE:
-#	root.pro
-#
 ###################################################################
 
 AUTOMAKE_OPTIONS=foreign
@@ -161,6 +151,5 @@ EXTRA_DIST = \
 	SideImage.xpm \
 	TopImage.xpm \
 	MySQL-16.xpm \
-	setup.pro \
 	myodbc3S.rc \
 	CMakeLists.txt
