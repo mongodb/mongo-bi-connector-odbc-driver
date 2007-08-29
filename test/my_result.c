@@ -593,8 +593,8 @@ DECLARE_TEST(t_multistep)
 
     pcbValue= 99;
     szData[0]='A';
-    rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,0,&pcbValue);
-    myassert(rc == SQL_SUCCESS_WITH_INFO);
+    expect_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_CHAR, szData, 0, &pcbValue),
+                SQL_SUCCESS_WITH_INFO);
     fprintf(stdout,"data  : %s (%ld)\n",szData,pcbValue);
     myassert(pcbValue == 0);
     myassert(szData[0] == 'A');

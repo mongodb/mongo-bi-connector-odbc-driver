@@ -93,9 +93,7 @@ static char *myodbc_get_valid_buffer(char *to, SQLCHAR *from, int length)
   @purpose : appends wild card to the query
 */
 
-static void my_append_wild(char *to, 
-                           char *end, 
-                           const char *wild)
+static char *my_append_wild(char *to, char *end, const char *wild)
 {
     end-= 5;         /* Some extra */
     to= strmov(to," like '");
@@ -110,8 +108,10 @@ static void my_append_wild(char *to,
         }
     }
     *to++= '%';        /* Nicer this way */
-    to[0]= '\'';
-    to[1]= 0;
+    *to++= '\'';
+    *to= '\0';
+
+    return to;
 }
 
 
@@ -1159,15 +1159,15 @@ static MYSQL_RES *mysql_list_table_priv(DBC FAR *dbc,
                                         const char *table)
 {
     MYSQL FAR *mysql= &dbc->mysql;
-    char      buff[255+2*NAME_LEN+1];
+    char      buff[255+2*NAME_LEN+1], *pos;
 
-    my_append_wild(strmov(buff,
-                          "SELECT Db,User,Table_name,Grantor,Table_priv\
-    FROM mysql.tables_priv WHERE Table_name"),
-                   buff+sizeof(buff),table);
-    strxmov(buff,buff," AND Db",NullS);
-    my_append_wild(strmov(buff,buff),buff+sizeof(buff),qualifier);
-    strxmov(buff,buff," ORDER BY Db,Table_name,Table_priv,User",NullS);
+    pos= my_append_wild(strmov(buff,
+                               "SELECT Db,User,Table_name,Grantor,Table_priv "
+                               "FROM mysql.tables_priv WHERE Table_name"),
+                        buff + sizeof(buff), table);
+    pos= strxmov(pos, " AND Db", NullS);
+    pos= my_append_wild(pos, buff + sizeof(buff), qualifier);
+    pos= strxmov(pos, " ORDER BY Db,Table_name,Table_priv,User", NullS);
 
     MYLOG_DBC_QUERY(dbc, buff);
     if (mysql_query(mysql,buff))
@@ -1313,25 +1313,28 @@ static MYSQL_RES *mysql_list_column_priv(MYSQL *mysql,
                                          const char *table, 
                                          const char *column)
 {
-    char buff[255+3*NAME_LEN+1];
+  char buff[255+3*NAME_LEN+1], *pos;
 
-    my_append_wild(strmov(buff,
-                          "SELECT c.Db, c.User,c.Table_name,c.Column_name,\
-    t.Grantor,c.Column_priv,t.Table_priv FROM mysql.columns_priv as c,\
-    mysql.tables_priv as t WHERE c.Table_name"),
-                   buff+sizeof(buff),table);
-    strxmov(buff,buff," AND c.Db",NullS);
-    my_append_wild(strmov(buff,buff),buff+sizeof(buff),qualifier);
-    strxmov(buff,buff," AND c.Column_name",NullS);
-    my_append_wild(strmov(buff,buff),buff+sizeof(buff),column);
-    strxmov(buff,buff," AND c.Table_name=t.Table_name",
-            " ORDER BY c.Db,c.Table_name,c.Column_name,c.Column_priv", NullS);
+  pos= my_append_wild(strmov(buff,
+                             "SELECT c.Db, c.User,c.Table_name,c.Column_name,"
+                             "t.Grantor,c.Column_priv,t.Table_priv "
+                             "FROM mysql.columns_priv as c,"
+                             "mysql.tables_priv as t WHERE c.Table_name"),
+                      buff + sizeof(buff), table);
+  pos= strxmov(pos, " AND c.Db", NullS);
+  pos= my_append_wild(pos, buff + sizeof(buff), qualifier);
+  pos= strxmov(pos, " AND c.Column_name", NullS);
+  pos= my_append_wild(pos, buff + sizeof(buff), column);
+  pos= strxmov(pos, " AND c.Table_name=t.Table_name",
+               " ORDER BY c.Db,c.Table_name,c.Column_name,c.Column_priv",
+               NullS);
 
-    if ( mysql_query(mysql,buff) )
-        return NULL;
+  if (mysql_query(mysql, buff))
+      return NULL;
 
-    return mysql_store_result(mysql);
+  return mysql_store_result(mysql);
 }
+
 
 char *SQLCOLUMNS_priv_values[]= 
 {

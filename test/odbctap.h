@@ -441,122 +441,81 @@ static void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
 }
 
 
-/* PROTOTYPE */
-void myerror( SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle, const char *szFile, int nLine );
-
-#define my_error() fprintf(stdout," ERROR occured at %d@%s\n",__LINE__,__FILE__)
-
 SQLUINTEGER myresult(SQLHSTMT hstmt);
 
 /* UTILITY MACROS */
 #define myenv(henv,r)  \
-        if ( ((r) != SQL_SUCCESS) ) \
-            myerror( r, 1, henv,  __FILE__, __LINE__ ); \
-        my_assert( ((r) == SQL_SUCCESS) || ((r) == SQL_SUCCESS_WITH_INFO) )
+  do { \
+    print_diag(r, SQL_HANDLE_ENV, (henv), "myenv(henv,r)", \
+               __FILE__, __LINE__); \
+    if (r != SQL_SUCCESS && r != SQL_SUCCESS_WITH_INFO) \
+      return FAIL; \
+  } while (0)
 
 #define myenv_r(henv,r)  \
-        if ( r == SQL_ERROR ) \
-            myerror( r, 1, henv,  __FILE__, __LINE__ ); \
-        my_assert( r == SQL_ERROR )
+  do { \
+    print_diag(r, SQL_HANDLE_ENV, (henv), "myenv(henv_r,r)", \
+               __FILE__, __LINE__); \
+    if (r != SQL_ERROR) \
+      return FAIL; \
+  } while (0)
 
 #define myenv_err(henv,r,rc)  \
-        if ( rc == SQL_ERROR || rc == SQL_SUCCESS_WITH_INFO ) \
-            myerror( rc, 1, henv,  __FILE__, __LINE__ ); \
-        my_assert( r )
+  do { \
+    print_diag(rc, SQL_HANDLE_ENV, (henv), "myenv_err(henv,r)",\
+               __FILE__, __LINE__); \
+    if (!r) \
+      return FAIL; \
+  } while (0)
 
 #define mycon(hdbc,r)  \
-        if ( ((r) != SQL_SUCCESS) ) \
-            myerror( r, 2, hdbc,  __FILE__, __LINE__ ); \
-        my_assert( ((r) == SQL_SUCCESS) || ((r) == SQL_SUCCESS_WITH_INFO) )
+  do { \
+    print_diag(r, SQL_HANDLE_DBC, (hdbc), "mycon(hdbc,r)", \
+               __FILE__, __LINE__); \
+    if (r != SQL_SUCCESS && r != SQL_SUCCESS_WITH_INFO) \
+      return FAIL; \
+  } while (0)
 
 #define mycon_r(hdbc,r)  \
-        if ( r == SQL_ERROR ) \
-            myerror( r, 2, hdbc,  __FILE__, __LINE__ ); \
-        my_assert(r==SQL_ERROR)
+  do { \
+    print_diag(r, SQL_HANDLE_DBC, (hdbc), "mycon_r(hdbc,r)", \
+               __FILE__, __LINE__); \
+    if (r != SQL_ERROR) \
+      return FAIL; \
+  } while (0)
 
 #define mycon_err(hdbc,r,rc)  \
-        if ( rc == SQL_ERROR || rc == SQL_SUCCESS_WITH_INFO ) \
-            myerror( rc, 2, hdbc, __FILE__, __LINE__ ); \
-        my_assert( r )
+  do { \
+    print_diag(rc, SQL_HANDLE_DBC, (hdbc), "mycon_err(hdbc,r)", \
+               __FILE__, __LINE__); \
+    if (!r) \
+      return FAIL; \
+  } while (0)
 
-#define mystmt(hstmt,r)  \
-        if ( ((r) != SQL_SUCCESS) ) \
-            myerror( r, 3, hstmt,  __FILE__, __LINE__ ); \
-        my_assert( ((r) == SQL_SUCCESS) || ((r) == SQL_SUCCESS_WITH_INFO) )
+#define mystmt(hdbc,r)  \
+  do { \
+    print_diag(r, SQL_HANDLE_DBC, (hdbc), "mystmt(hdbc,r)", \
+               __FILE__, __LINE__); \
+    if (r != SQL_SUCCESS && r != SQL_SUCCESS_WITH_INFO) \
+      return FAIL; \
+  } while (0)
 
-#define mystmt_r(hstmt,r)  \
-        if ( r == SQL_ERROR ) \
-            myerror( r, 3, hstmt,  __FILE__, __LINE__ ); \
-        my_assert( r == SQL_ERROR )
+#define mystmt_r(hdbc,r)  \
+  do { \
+    print_diag(r, SQL_HANDLE_DBC, (hdbc), "mystmt_r(hdbc,r)", \
+               __FILE__, __LINE__); \
+    if (r != SQL_ERROR) \
+      return FAIL; \
+  } while (0)
 
-#define mystmt_err(hstmt,r,rc)  \
-        if ( rc == SQL_ERROR || rc == SQL_SUCCESS_WITH_INFO ) \
-            myerror( rc, 3, hstmt, __FILE__, __LINE__ ); \
-        my_assert( r )
+#define mystmt_err(hdbc,r,rc)  \
+  do { \
+    print_diag(rc, SQL_HANDLE_DBC, (hdbc), "mystmt_err(hdbc,r)", \
+               __FILE__, __LINE__); \
+    if (!r) \
+      return FAIL; \
+  } while (0)
 
-#if defined(USE_C99_FUNC_MACRO)
-#define printMessageHeader()\
-    {\
-        g_nCursor = sprintf( g_szHeader, "[%s][%s][%d]\n", __FILE__, __func__, __LINE__ );\
-        fprintf( stdout, g_szHeader );\
-    }
-#elif defined(USE_GNU_FUNC_MACRO)
-#define printMessageHeader()\
-    {\
-        g_nCursor = sprintf( g_szHeader, "[%s][%s][%d]\n", __FILE__, __FUNCTION__, __LINE__ );\
-        fprintf( stdout, g_szHeader );\
-    }
-#else
-#define printMessageHeader()\
-    {\
-        g_nCursor = sprintf( g_szHeader, "[%s][%d]\n", __FILE__, __LINE__ );\
-        fprintf( stdout, g_szHeader );\
-    }
-#endif
-
-#define printMessageFooter( A )\
-    {\
-        int nDot = g_nCursor;\
-        if ( g_nCursor < 1 )\
-            fprintf( stdout, "\n" );\
-        for ( ; nDot < 71; nDot++ )\
-        {\
-            fprintf( stdout, "." );\
-        }\
-        if ( A )\
-            fprintf( stdout, "[  OK  ]\n" );\
-        else\
-            fprintf( stdout, "[FAILED]\n" );\
-    }
-
-
-/**
-ERROR HANDLER
-*/
-void myerror( SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle, const char *szFile, int nLine )
-{
-    RETCODE lrc;
-
-    if ( !SQL_SUCCEEDED( rc ) )
-    {
-        SQLCHAR      szSqlState[6],szErrorMsg[SQL_MAX_MESSAGE_LENGTH];
-        SQLINTEGER   pfNativeError;
-        SQLSMALLINT  pcbErrorMsg;
-
-        lrc = SQLGetDiagRec(htype, handle,1,    
-                            (SQLCHAR *)&szSqlState,
-                            (SQLINTEGER *)&pfNativeError,
-                            (SQLCHAR *)&szErrorMsg,
-                            SQL_MAX_MESSAGE_LENGTH-1,
-                            (SQLSMALLINT *)&pcbErrorMsg);
-        if ( SQL_SUCCEEDED( lrc ) )
-            fprintf( stdout, "\n\n[%s][%d][%s]%s\n\n", szFile, nLine, szSqlState, szErrorMsg );
-        else
-            fprintf( stdout, "\n\n[%s][%d] SQLGetDiagRec returned :%d, but rc = %d\n\n", szFile, nLine, lrc, rc );
-
-        g_nCursor = 0;
-    }
-}
 
 /**
   Print resultset dashes
