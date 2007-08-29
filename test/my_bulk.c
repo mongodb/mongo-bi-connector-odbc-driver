@@ -212,8 +212,8 @@ typedef struct {
 DECLARE_TEST(t_bulk_insert_rows)
 {
   row        rows[3];
-  SQLINTEGER nData, offset;
-  SQLLEN     nLen;
+  SQLINTEGER nData;
+  SQLLEN     nLen, offset;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS my_bulk");
   ok_sql(hstmt, "CREATE TABLE my_bulk (id int default 5)");
