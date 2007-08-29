@@ -441,8 +441,6 @@ static void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
 }
 
 
-SQLUINTEGER myresult(SQLHSTMT hstmt);
-
 /* UTILITY MACROS */
 #define myenv(henv,r)  \
   do { \
@@ -520,61 +518,55 @@ SQLUINTEGER myresult(SQLHSTMT hstmt);
 /**
   Print resultset dashes
 */
-static void my_print_dashes(SQLHSTMT hstmt, SQLSMALLINT nCol)
+static int my_print_dashes(SQLHSTMT hstmt, SQLSMALLINT nCol)
 {
-    SQLRETURN  rc;
     SQLLEN     disp_size, nullable;
     SQLCHAR    ColName[MAX_NAME_LEN+1];
     SQLUSMALLINT field_count, i, j;
     SQLSMALLINT  col_len;
 
     field_count= (SQLUSMALLINT)nCol;
-    printMessage( "\t" );
-    printMessage( "+" );
+    fprintf(stdout, "# ");
+    fprintf(stdout, "+");
 
     for (i=1; i<= field_count; i++)
     {
         nullable = 0;
-        rc = SQLColAttribute(hstmt,i,SQL_DESC_BASE_COLUMN_NAME,&ColName,
-                             MAX_NAME_LEN,&col_len,NULL);
-        mystmt(hstmt,rc);
-        rc = SQLColAttribute(hstmt,i,SQL_DESC_DISPLAY_SIZE,NULL,0,
-                             NULL,&disp_size);
-        mystmt(hstmt,rc);
-        rc = SQLColAttribute(hstmt,i,SQL_DESC_NULLABLE,NULL,0,
-                             NULL,&nullable);
-        mystmt(hstmt,rc);
+        ok_stmt(hstmt, SQLColAttribute(hstmt, i, SQL_DESC_BASE_COLUMN_NAME,
+                                       &ColName, MAX_NAME_LEN, &col_len, NULL));
+        ok_stmt(hstmt, SQLColAttribute(hstmt, i, SQL_DESC_DISPLAY_SIZE,
+                                       NULL, 0, NULL, &disp_size));
+        ok_stmt(hstmt, SQLColAttribute(hstmt, i, SQL_DESC_NULLABLE,
+                                       NULL, 0, NULL, &nullable));
 
         if (disp_size < col_len)
             disp_size = col_len;
         if (disp_size < 4 && nullable)
             disp_size = 4;
         for (j=1; j < disp_size+3; j++)
-            printMessage( "-" );
-        printMessage( "+" );
+          fprintf(stdout, "-");
+        fprintf(stdout, "+");
     }
-    printMessage( "\n" );
+    fprintf(stdout, "\n");
+
+    return OK;
 }
 
 
-static void my_print_data(SQLHSTMT hstmt, SQLUSMALLINT index,
-                          SQLCHAR *data, SQLINTEGER length)
+static int my_print_data(SQLHSTMT hstmt, SQLUSMALLINT index,
+                         SQLCHAR *data, SQLINTEGER length)
 {
-    SQLRETURN  rc;
-    SQLLEN     disp_size, nullable;
+    SQLLEN     disp_size, nullable= 0;
     SQLCHAR    ColName[MAX_NAME_LEN+1];
     SQLSMALLINT col_len;
 
-    nullable = 0;
-    rc = SQLColAttribute(hstmt,index,SQL_DESC_BASE_COLUMN_NAME,&ColName,
-                         MAX_NAME_LEN,&col_len,NULL);
-    mystmt(hstmt,rc);
-    rc = SQLColAttribute(hstmt,index,SQL_DESC_DISPLAY_SIZE,NULL,0,
-                         NULL,&disp_size);
-    mystmt(hstmt,rc);
-    rc = SQLColAttribute(hstmt,index,SQL_DESC_NULLABLE,NULL,0,
-                         NULL,&nullable);
-    mystmt(hstmt,rc);
+    nullable= 0;
+    ok_stmt(hstmt, SQLColAttribute(hstmt, index, SQL_DESC_BASE_COLUMN_NAME,
+                                   &ColName, MAX_NAME_LEN, &col_len, NULL));
+    ok_stmt(hstmt, SQLColAttribute(hstmt, index, SQL_DESC_DISPLAY_SIZE,
+                                   NULL, 0, NULL, &disp_size));
+    ok_stmt(hstmt, SQLColAttribute(hstmt, index, SQL_DESC_NULLABLE,
+                                   NULL, 0, NULL, &nullable));
 
     if (disp_size < length)
         disp_size = length;
@@ -583,9 +575,11 @@ static void my_print_data(SQLHSTMT hstmt, SQLUSMALLINT index,
     if (disp_size < 4 && nullable)
         disp_size = 4;
     if (length == SQL_NULL_DATA)
-        printMessage( "%-*s  |",(int)disp_size, "NULL");
+        fprintf(stdout, "%-*s  |", (int)disp_size, "NULL");
     else
-        printMessage( "%-*s  |",(int)disp_size,data);
+        fprintf(stdout, "%-*s  |", (int)disp_size, data);
+
+    return OK;
 }
 
 
@@ -604,45 +598,42 @@ int my_print_non_format_result(SQLHSTMT hstmt)
     rc = SQLNumResultCols(hstmt,&ncol);
     mystmt(hstmt,rc);
 
-    printMessage("\n");
-
     for (nIndex = 1; nIndex <= ncol; nIndex++)
     {
         rc = SQLDescribeCol(hstmt,nIndex,szColName, MAX_NAME_LEN+1, NULL,
                             &pfSqlType,&pcColDef,&pcbScale,&pfNullable);
         mystmt(hstmt,rc);
 
-        printMessage("%s\t",szColName);
+        fprintf(stdout, "%s\t", szColName);
 
         rc = SQLBindCol(hstmt,nIndex, SQL_C_CHAR, szData[nIndex-1],
                         MAX_ROW_DATA_LEN+1,NULL);
         mystmt(hstmt,rc);
     }
 
-    printMessage("\n------------------------------------------------------\n");
-
     rc = SQLFetch(hstmt);
     while (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
     {
         nRowCount++;
         for (nIndex=0; nIndex< ncol; nIndex++)
-            printMessage("%s\t",szData[nIndex]);
+            fprintf(stdout, "%s\t", szData[nIndex]);
 
-        printMessage("\n");
+        fprintf(stdout, "\n");
         rc = SQLFetch(hstmt);
     }
 
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    printMessage("Total rows fetched: %d\n",(int)nRowCount);
-    return(nRowCount);
+    fprintf(stdout, "# Total rows fetched: %d\n", (int)nRowCount);
+
+    return nRowCount;
 }
 
 /**
   RESULT SET
 */
-SQLUINTEGER myresult(SQLHSTMT hstmt)
+SQLINTEGER myresult(SQLHSTMT hstmt)
 {
     SQLRETURN   rc;
     SQLUINTEGER nRowCount;
@@ -658,20 +649,20 @@ SQLUINTEGER myresult(SQLHSTMT hstmt)
     if (ncol > 10)
         return my_print_non_format_result(hstmt);
 
-    printMessage( "\n" );
-    my_print_dashes(hstmt, ncol);
-    printMessage( "\t" );
-    printMessage( "|" );
+    if (my_print_dashes(hstmt, ncol) != OK)
+      return -1;
+    fprintf(stdout, "# |");
 
     for (nIndex = 1; nIndex <= ncol; nIndex++)
     {
-        rc = SQLColAttribute(hstmt,nIndex,SQL_DESC_BASE_COLUMN_NAME,ColName,MAX_NAME_LEN,
-                             NULL,NULL);
-        mystmt(hstmt,rc);
-        my_print_data(hstmt,nIndex,ColName,0);
+        ok_stmt(hstmt, SQLColAttribute(hstmt, nIndex, SQL_DESC_BASE_COLUMN_NAME,
+                                       ColName, MAX_NAME_LEN, NULL, NULL));
+        if (my_print_data(hstmt, nIndex, ColName, 0) != OK)
+          return -1;
     }
-    printMessage( "\n" );
-    my_print_dashes(hstmt, ncol);
+    fprintf(stdout, "\n");
+    if (my_print_dashes(hstmt, ncol) != OK)
+      return -1;
 
     nRowCount= 0;
 
@@ -679,8 +670,7 @@ SQLUINTEGER myresult(SQLHSTMT hstmt)
     while (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
     {
         nRowCount++;
-        printMessage( "\t" );
-        printMessage( "|" );
+        fprintf(stdout, "# |");
 
         for (nIndex=1; nIndex<= ncol; nIndex++)
         {
@@ -690,17 +680,18 @@ SQLUINTEGER myresult(SQLHSTMT hstmt)
             rc = SQLGetData(hstmt, nIndex, SQL_C_CHAR, Data,
                             MAX_ROW_DATA_LEN,&pcbLength);
             mystmt(hstmt,rc);
-            my_print_data(hstmt, nIndex, Data, pcbLength);
+            if (my_print_data(hstmt, nIndex, Data, pcbLength) != OK)
+              return -1;
         }
-        printMessage( "\t" );
-        printMessage( "\n" );
+        fprintf(stdout,"\n");
         rc = SQLFetch(hstmt);
     }
-    my_print_dashes(hstmt,ncol);
+    if (my_print_dashes(hstmt, ncol) != OK)
+      return -1;
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    printMessage("Total rows fetched: %d\n",(int)nRowCount);
+    fprintf(stdout, "# Total rows fetched: %d\n", (int)nRowCount);
     return nRowCount;
 }
 
@@ -719,7 +710,7 @@ SQLUINTEGER myrowcount(SQLHSTMT hstmt)
         rc = SQLFetch(hstmt);
     }
     SQLFreeStmt(hstmt,SQL_UNBIND);
-    printMessage("Total rows fetched: %d\n",(int)nRowCount);
+    fprintf(stdout, "# Total rows fetched: %d\n", (int)nRowCount);
     return(nRowCount);
 }
 /**
@@ -745,7 +736,7 @@ SQLINTEGER my_fetch_int(SQLHSTMT hstmt, SQLUSMALLINT irow)
     SQLLEN len;
 
     SQLGetData(hstmt, irow, SQL_INTEGER, &nData, 0, &len);
-    printMessage(" my_fetch_int: %ld (%ld)\n", (long int)nData, len);
+    printMessage("my_fetch_int: %ld (%ld)", (long int)nData, len);
     return (len != SQL_NULL_DATA) ? nData : 0;
 }
 /**
@@ -756,7 +747,7 @@ const char *my_fetch_str(SQLHSTMT hstmt, SQLCHAR *szData,SQLUSMALLINT irow)
     SQLLEN nLen;
 
     SQLGetData(hstmt,irow,SQL_CHAR,szData,MAX_ROW_DATA_LEN+1,&nLen);
-    printMessage( " my_fetch_str: %s(%ld)\n",szData,nLen);
+    printMessage(" my_fetch_str: %s(%ld)",szData,nLen);
     return((const char *)szData);
 }
 

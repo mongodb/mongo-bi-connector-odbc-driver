@@ -133,10 +133,10 @@ DECLARE_TEST(my_no_keys)
 }
 
 
-/* Initialize the foreignkey tables (MySQL specific) */
-static void my_init_mysql_fkey(SQLHDBC hdbc,SQLHSTMT hstmt)
+DECLARE_TEST(my_foreign_keys)
 {
-    SQLRETURN rc;     
+    SQLRETURN   rc=0;
+    char        dbc[255];
 
     SQLExecDirect(hstmt,"DROP DATABASE test_odbc_fk",SQL_NTS);
     SQLExecDirect(hstmt,"CREATE DATABASE test_odbc_fk",SQL_NTS);
@@ -233,83 +233,6 @@ static void my_init_mysql_fkey(SQLHDBC hdbc,SQLHSTMT hstmt)
     mystmt(hstmt,rc);
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
-}
-
-
-/* Initialize the foreignkey tables (std) */
-static void my_init_fkey(SQLHDBC hdbc,SQLHSTMT hstmt)
-{
-    SQLRETURN rc;     
-
-    SQLExecDirect(hstmt,"DROP DATABASE test_odbc_fk",SQL_NTS);
-    SQLExecDirect(hstmt,"CREATE DATABASE test_odbc_fk",SQL_NTS);
-    SQLExecDirect(hstmt,"use test_odbc_fk",SQL_NTS);
-
-    rc = SQLExecDirect(hstmt,"DROP TABLE test_fkey_c1",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"DROP TABLE test_fkey3",SQL_NTS);    
-    rc = SQLExecDirect(hstmt,"DROP TABLE test_fkey2",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"DROP TABLE test_fkey1",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"DROP TABLE test_fkey_p1",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"DROP TABLE test_fkey_comment_f",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"DROP TABLE test_fkey_comment_p",SQL_NTS);
-
-    rc = SQLExecDirect(hstmt,
-                       "CREATE TABLE test_fkey1(\
-                 A INTEGER NOT NULL,B INTEGER NOT NULL,C INTEGER NOT NULL,\
-                 D INTEGER,PRIMARY KEY (C,B,A))",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,
-                       "CREATE TABLE test_fkey_p1(\
-                 A INTEGER NOT NULL,B INTEGER NOT NULL,C INTEGER NOT NULL,\
-                 D INTEGER NOT NULL,E INTEGER NOT NULL,F INTEGER NOT NULL,\
-                 G INTEGER NOT NULL,H INTEGER NOT NULL,I INTEGER NOT NULL,\
-                 J INTEGER NOT NULL,K INTEGER NOT NULL,L INTEGER NOT NULL,\
-                 M INTEGER NOT NULL,N INTEGER NOT NULL,O INTEGER NOT NULL,\
-                 P INTEGER NOT NULL,Q INTEGER NOT NULL,R INTEGER NOT NULL,\
-                 PRIMARY KEY (D,F,G,H,I,J,K,L,M,N,O))",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc  = SQLExecDirect(hstmt,
-                        "CREATE TABLE test_fkey2 (\
-                 E INTEGER NOT NULL,C INTEGER NOT NULL,B INTEGER NOT NULL,\
-                 A INTEGER NOT NULL,PRIMARY KEY (E),\
-                 FOREIGN KEY (C,B,A) REFERENCES test_fkey1(C,B,A))",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc  = SQLExecDirect(hstmt,
-                        "CREATE TABLE test_fkey3 (\
-                 F INTEGER NOT NULL,C INTEGER NOT NULL,E INTEGER NOT NULL,\
-                 G INTEGER, A INTEGER NOT NULL, B INTEGER NOT NULL,\
-                 PRIMARY KEY (F),\
-                 FOREIGN KEY (C,B,A) REFERENCES test_fkey1(C,B,A),\
-                 FOREIGN KEY (E) REFERENCES test_fkey2(E))", SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,
-                       "CREATE TABLE test_fkey_c1(\
-                 A INTEGER NOT NULL,B INTEGER NOT NULL,C INTEGER NOT NULL,\
-                 D INTEGER NOT NULL,E INTEGER NOT NULL,F INTEGER NOT NULL,\
-                 G INTEGER NOT NULL,H INTEGER NOT NULL,I INTEGER NOT NULL,\
-                 J INTEGER NOT NULL,K INTEGER NOT NULL,L INTEGER NOT NULL,\
-                 M INTEGER NOT NULL,N INTEGER NOT NULL,O INTEGER NOT NULL,\
-                 P INTEGER NOT NULL,Q INTEGER NOT NULL,R INTEGER NOT NULL,\
-                 PRIMARY KEY (A,B,C,D,E,F,G,H,I,J,K,L,M,N,O),\
-                 FOREIGN KEY (D,F,G,H,I,J,K,L,M,N,O) REFERENCES \
-                   test_fkey_p1(D,F,G,H,I,J,K,L,M,N,O),\
-                 FOREIGN KEY (C,B,A) REFERENCES test_fkey1(C,B,A),\
-                 FOREIGN KEY (E) REFERENCES test_fkey2(E))",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    SQLFreeStmt(hstmt,SQL_CLOSE);
-}
-
-
-DECLARE_TEST(my_foreign_keys)
-{
-    SQLRETURN   rc=0;
-    char        dbc[255];
-
-    server_is_mysql(hdbc) ? my_init_mysql_fkey(hdbc,hstmt) : my_init_fkey(hdbc,hstmt);
 
     strcpy(dbc, "test_odbc_fk");
 

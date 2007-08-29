@@ -802,7 +802,6 @@ DECLARE_TEST(t_zerolength)
 /* Test the bug when two stmts are used with the don't cache results */
 DECLARE_TEST(t_cache_bug)
 {
-  SQLRETURN  rc;
   SQLHENV    henv1;
   SQLHDBC    hdbc1;
   SQLHSTMT   hstmt1, hstmt2;
@@ -864,7 +863,6 @@ DECLARE_TEST(t_cache_bug)
 /* Test the bug when two stmts are used with the don't cache results */
 DECLARE_TEST(t_non_cache_bug)
 {
-  SQLRETURN  rc;
   SQLHENV    henv1;
   SQLHDBC    hdbc1;
   SQLHSTMT   hstmt1, hstmt2;
@@ -1071,9 +1069,9 @@ DECLARE_TEST(t_desccol)
 }
 
 
-void desccol(SQLHSTMT hstmt, SQLCHAR    *cname,  SQLSMALLINT clen,
-             SQLSMALLINT sqltype,SQLULEN size,
-             SQLSMALLINT scale,SQLSMALLINT isNull)
+int desccol(SQLHSTMT hstmt, SQLCHAR *cname, SQLSMALLINT clen,
+            SQLSMALLINT sqltype, SQLULEN size,
+            SQLSMALLINT scale, SQLSMALLINT isNull)
 {
     SQLRETURN   rc =0;
     SQLCHAR     lcname[254];
@@ -1107,6 +1105,8 @@ void desccol(SQLHSTMT hstmt, SQLCHAR    *cname,  SQLSMALLINT clen,
     myassert(lisNull == isNull);
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
+
+    return OK;
 }
 
 
@@ -1186,36 +1186,36 @@ DECLARE_TEST(t_desccolext)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    desccol(hstmt,"t1",2,SQL_TINYINT,3,0,SQL_NULLABLE);
-    desccol(hstmt,"t2",2,SQL_TINYINT,3,0,SQL_NULLABLE);
-    desccol(hstmt,"t3",2,SQL_TINYINT,3,0,SQL_NULLABLE);
+    is(desccol(hstmt,"t1",2,SQL_TINYINT,3,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"t2",2,SQL_TINYINT,3,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"t3",2,SQL_TINYINT,3,0,SQL_NULLABLE) == OK);
 
-    desccol(hstmt,"s1",2,SQL_SMALLINT,5,0,SQL_NULLABLE);
-    desccol(hstmt,"s2",2,SQL_SMALLINT,5,0,SQL_NULLABLE);
-    desccol(hstmt,"s3",2,SQL_SMALLINT,5,0,SQL_NULLABLE);
+    is(desccol(hstmt,"s1",2,SQL_SMALLINT,5,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"s2",2,SQL_SMALLINT,5,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"s3",2,SQL_SMALLINT,5,0,SQL_NULLABLE) == OK);
 
-    desccol(hstmt,"m1",2,SQL_INTEGER,8,0,SQL_NULLABLE);
-    desccol(hstmt,"m2",2,SQL_INTEGER,8,0,SQL_NULLABLE);
-    desccol(hstmt,"m3",2,SQL_INTEGER,8,0,SQL_NULLABLE);
+    is(desccol(hstmt,"m1",2,SQL_INTEGER,8,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"m2",2,SQL_INTEGER,8,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"m3",2,SQL_INTEGER,8,0,SQL_NULLABLE) == OK);
 
-    desccol(hstmt,"i1",2,SQL_INTEGER,10,0,SQL_NULLABLE);
-    desccol(hstmt,"i2",2,SQL_INTEGER,10,0,SQL_NO_NULLS);
-    desccol(hstmt,"i3",2,SQL_INTEGER,10,0,SQL_NULLABLE);
-    desccol(hstmt,"i4",2,SQL_INTEGER,10,0,SQL_NULLABLE);
+    is(desccol(hstmt,"i1",2,SQL_INTEGER,10,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"i2",2,SQL_INTEGER,10,0,SQL_NO_NULLS) == OK);
+    is(desccol(hstmt,"i3",2,SQL_INTEGER,10,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"i4",2,SQL_INTEGER,10,0,SQL_NULLABLE) == OK);
 
-    desccol(hstmt,"b1",2,SQL_BIGINT,19,0,SQL_NULLABLE);
-    desccol(hstmt,"b2",2,SQL_BIGINT,19,0,SQL_NULLABLE);
-    desccol(hstmt,"b3",2,SQL_BIGINT,20,0,SQL_NULLABLE);
+    is(desccol(hstmt,"b1",2,SQL_BIGINT,19,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"b2",2,SQL_BIGINT,19,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"b3",2,SQL_BIGINT,20,0,SQL_NULLABLE) == OK);
 
-    desccol(hstmt,"f1",2,SQL_REAL,7,0,SQL_NULLABLE);
-    desccol(hstmt,"f2",2,SQL_REAL,7,0,SQL_NULLABLE);
-    desccol(hstmt,"f3",2,SQL_REAL,7,0,SQL_NULLABLE);
-    desccol(hstmt,"f4",2,SQL_REAL,7,0,SQL_NULLABLE);
+    is(desccol(hstmt,"f1",2,SQL_REAL,7,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"f2",2,SQL_REAL,7,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"f3",2,SQL_REAL,7,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"f4",2,SQL_REAL,7,0,SQL_NULLABLE) == OK);
 
-    desccol(hstmt,"d1",2,SQL_DOUBLE,15,0,SQL_NULLABLE);
-    desccol(hstmt,"d2",2,SQL_DOUBLE,15,0,SQL_NULLABLE);
-    desccol(hstmt,"d3",2,SQL_DOUBLE,15,0,SQL_NULLABLE);
-    desccol(hstmt,"d4",2,SQL_DOUBLE,15,0,SQL_NULLABLE);
+    is(desccol(hstmt,"d1",2,SQL_DOUBLE,15,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"d2",2,SQL_DOUBLE,15,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"d3",2,SQL_DOUBLE,15,0,SQL_NULLABLE) == OK);
+    is(desccol(hstmt,"d4",2,SQL_DOUBLE,15,0,SQL_NULLABLE) == OK);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
@@ -1719,7 +1719,6 @@ Bug #16817: ODBC doesn't return multiple resultsets
 DECLARE_TEST(t_bug16817)
 {
   SQLCHAR name[30];
-  SQLSMALLINT len;
   SQLSMALLINT ncol;
 
   ok_sql(hstmt, "DROP PROCEDURE IF EXISTS p_bug16817");
@@ -1780,19 +1779,19 @@ DECLARE_TEST(t_bug29239)
   ok_sql(hstmt, "create table bug29239 ( x int )");
 
   /* prepare & bind */
-  ok_stmt(hstmt, SQLPrepare(hstmt, "select x from bug29239", SQL_NTS));
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)"select x from bug29239",
+                            SQL_NTS));
   ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &xval, 0, NULL));
 
   /* insert before execute, with a new stmt handle */
-  is(SQL_SUCCEEDED(SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt2)));
-  ok_stmt(hstmt2, SQLExecDirect(hstmt2,
-                                "insert into bug29239 values (44)", SQL_NTS));
-  is(SQL_SUCCEEDED(SQLFreeHandle(SQL_HANDLE_STMT, hstmt2)));
+  ok_con(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt2));
+  ok_sql(hstmt2, "insert into bug29239 values (44)");
+  ok_stmt(hstmt2, SQLFreeHandle(SQL_HANDLE_STMT, hstmt2));
 
   /* now execute */
   ok_stmt(hstmt, SQLExecute(hstmt));
   ok_stmt(hstmt, SQLFetch(hstmt));
-  printf("xval = %d\n", xval);
+  is_num(xval, 44);
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
 
   ok_sql(hstmt, "drop table if exists bug29239");
