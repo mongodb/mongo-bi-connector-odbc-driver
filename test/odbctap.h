@@ -490,25 +490,25 @@ static void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
       return FAIL; \
   } while (0)
 
-#define mystmt(hdbc,r)  \
+#define mystmt(hstmt,r)  \
   do { \
-    print_diag(r, SQL_HANDLE_DBC, (hdbc), "mystmt(hdbc,r)", \
+    print_diag(r, SQL_HANDLE_STMT, (hstmt), "mystmt(hstmt,r)", \
                __FILE__, __LINE__); \
     if (r != SQL_SUCCESS && r != SQL_SUCCESS_WITH_INFO) \
       return FAIL; \
   } while (0)
 
-#define mystmt_r(hdbc,r)  \
+#define mystmt_r(hstmt,r)  \
   do { \
-    print_diag(r, SQL_HANDLE_DBC, (hdbc), "mystmt_r(hdbc,r)", \
+    print_diag(r, SQL_HANDLE_STMT, (hstmt), "mystmt_r(hstmt,r)", \
                __FILE__, __LINE__); \
     if (r != SQL_ERROR) \
       return FAIL; \
   } while (0)
 
-#define mystmt_err(hdbc,r,rc)  \
+#define mystmt_err(hstmt,r,rc)  \
   do { \
-    print_diag(rc, SQL_HANDLE_DBC, (hdbc), "mystmt_err(hdbc,r)", \
+    print_diag(rc, SQL_HANDLE_STMT, (hstmt), "mystmt_err(hstmt,r)", \
                __FILE__, __LINE__); \
     if (!r) \
       return FAIL; \
