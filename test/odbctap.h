@@ -953,7 +953,8 @@ int free_basic_handles(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt)
 /**
  Helper for possibly converting a (wchar_t *) to a (SQLWCHAR *)
 */
-#define W(string) dup_wchar_t_as_sqlwchar((string), sizeof(string))
+#define W(string) dup_wchar_t_as_sqlwchar((string), \
+                                          sizeof(string) / sizeof(wchar_t))
 #define WL(string, len) dup_wchar_t_as_sqlwchar((string), (len))
 
 
