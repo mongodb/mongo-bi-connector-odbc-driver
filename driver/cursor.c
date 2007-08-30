@@ -100,18 +100,20 @@ static const char *find_used_table(STMT *stmt)
   if we found the start of the string, return it
 */
 
-static const char *mystr_get_prev_token( const char **query, const char *start )
+static const char *mystr_get_prev_token(CHARSET_INFO *charset,
+                                        const char **query, const char *start)
 {
-    const char *pos = *query;
+  const char *pos= *query;
 
-    do
-    {
-        if ( pos == start )
-            return ( *query = start );     /* Return start of string */
-    } while ( !isspace( *(--pos) ) ) ;
-    *query = pos;      /* Remember pos to space */
+  do
+  {
+    if (pos == start)
+      return (*query = start);     /* Return start of string */
+  } while (!my_isspace(charset, *(--pos))) ;
 
-    return ( pos + 1 );   /* Return found token */
+  *query= pos;      /* Remember pos to space */
+
+  return pos + 1;   /* Return found token */
 }
 
 
@@ -129,14 +131,18 @@ char *check_if_positioned_cursor_exists(STMT *pStmt, STMT **pStmtCursor)
   if (pStmt->query && pStmt->query_end)
   {
     const char *pszQueryTokenPos= pStmt->query_end;
-    const char *pszCursor= mystr_get_prev_token((const char**)&pszQueryTokenPos,
+    const char *pszCursor= mystr_get_prev_token(pStmt->dbc->ansi_charset_info,
+                                                (const char**)&pszQueryTokenPos,
                                                 pStmt->query);
 
-    if (!myodbc_casecmp(mystr_get_prev_token(&pszQueryTokenPos,
+    if (!myodbc_casecmp(mystr_get_prev_token(pStmt->dbc->ansi_charset_info,
+                                             &pszQueryTokenPos,
                                              pStmt->query),"OF",2) &&
-        !myodbc_casecmp(mystr_get_prev_token(&pszQueryTokenPos,
+        !myodbc_casecmp(mystr_get_prev_token(pStmt->dbc->ansi_charset_info,
+                                             &pszQueryTokenPos,
                                              pStmt->query),"CURRENT",7) &&
-        !myodbc_casecmp(mystr_get_prev_token(&pszQueryTokenPos,
+        !myodbc_casecmp(mystr_get_prev_token(pStmt->dbc->ansi_charset_info,
+                                             &pszQueryTokenPos,
                                              pStmt->query),"WHERE",5) )
     {
       LIST *list_element;
