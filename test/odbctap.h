@@ -623,7 +623,7 @@ int my_print_non_format_result(SQLHSTMT hstmt)
     SQLRETURN   rc;
     SQLUINTEGER nRowCount=0;
     SQLULEN     pcColDef;
-    SQLCHAR     szColName[MAX_NAME_LEN];
+    SQLCHAR     szColName[MAX_NAME_LEN+1];
     SQLCHAR     szData[MAX_COLUMNS][MAX_ROW_DATA_LEN]={{0}};
     SQLSMALLINT nIndex,ncol,pfSqlType, pcbScale, pfNullable;
 
@@ -632,7 +632,7 @@ int my_print_non_format_result(SQLHSTMT hstmt)
 
     for (nIndex = 1; nIndex <= ncol; nIndex++)
     {
-        rc = SQLDescribeCol(hstmt,nIndex,szColName, MAX_NAME_LEN+1, NULL,
+        rc = SQLDescribeCol(hstmt,nIndex,szColName, MAX_NAME_LEN, NULL,
                             &pfSqlType,&pcColDef,&pcbScale,&pfNullable);
         mystmt(hstmt,rc);
 
@@ -845,7 +845,7 @@ int driver_supports_setpos(SQLHDBC hdbc)
 */
 int mysql_min_version(SQLHDBC hdbc, char *min_version, unsigned int length)
 {
-    SQLCHAR server_version[MYSQL_NAME_LEN];
+    SQLCHAR server_version[MYSQL_NAME_LEN+1];
     SQLRETURN rc;
 
     rc = SQLGetInfo(hdbc,SQL_DBMS_VER,server_version,MYSQL_NAME_LEN,NULL);
@@ -879,7 +879,7 @@ int server_supports_trans(SQLHDBC hdbc)
 */
 int mydrvconnect(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt, SQLCHAR *connIn)
 {
-  SQLCHAR   connOut[MAX_NAME_LEN];
+  SQLCHAR   connOut[MAX_NAME_LEN+1];
   SQLSMALLINT len;
 
   ok_env(*henv, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, henv));
@@ -889,7 +889,7 @@ int mydrvconnect(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt, SQLCHAR *connIn)
 
   ok_env(*henv, SQLAllocHandle(SQL_HANDLE_DBC, *henv,  hdbc));
 
-  ok_con(*hdbc, SQLDriverConnect(*hdbc, NULL, connIn, MAX_NAME_LEN, connOut,
+  ok_con(*hdbc, SQLDriverConnect(*hdbc, NULL, connIn, SQL_NTS, connOut,
                                  MAX_NAME_LEN, &len, SQL_DRIVER_NOPROMPT));
 
   ok_con(*hdbc, SQLSetConnectAttr(*hdbc, SQL_ATTR_AUTOCOMMIT,
@@ -903,7 +903,7 @@ int mydrvconnect(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt, SQLCHAR *connIn)
 
 int alloc_basic_handles(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt)
 {
-  SQLCHAR   connIn[MAX_NAME_LEN], connOut[MAX_NAME_LEN];
+  SQLCHAR   connIn[MAX_NAME_LEN+1], connOut[MAX_NAME_LEN+1];
   SQLSMALLINT len;
 
   ok_env(*henv, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, henv));
@@ -921,7 +921,7 @@ int alloc_basic_handles(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt)
     strcat((char *)connIn, (char *)mysock);
   }
 
-  ok_con(*hdbc, SQLDriverConnect(*hdbc, NULL, connIn, MAX_NAME_LEN, connOut,
+  ok_con(*hdbc, SQLDriverConnect(*hdbc, NULL, connIn, SQL_NTS, connOut,
                                  MAX_NAME_LEN, &len, SQL_DRIVER_NOPROMPT));
 
   ok_con(*hdbc, SQLSetConnectAttr(*hdbc, SQL_ATTR_AUTOCOMMIT,
