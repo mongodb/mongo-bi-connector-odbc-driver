@@ -2248,29 +2248,21 @@ DECLARE_TEST(my_setpos_upd_pk_order1)
 }
 
 
-static int tmy_cursor(SQLHSTMT hstmt, char *setCurName,
-                      SQLCHAR *getCurName, SQLSMALLINT setLen)
-{
-  SQLSMALLINT getLen;
-
-  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)setCurName, setLen));
-  ok_stmt(hstmt, SQLGetCursorName(hstmt, getCurName, 20, &getLen));
-
-  return OK;
-}
-
-
 DECLARE_TEST(tmy_cursor1)
 {
   SQLCHAR getCurName[20];
+  SQLSMALLINT getLen;
 
-  nok_pass_on(tmy_cursor(hstmt,"MYSQL", getCurName, 5));
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"MYSQL", 5));
+  ok_stmt(hstmt, SQLGetCursorName(hstmt, getCurName, 20, &getLen));
   is_str(getCurName, "MYSQL", 5);
 
-  nok_pass_on(tmy_cursor(hstmt,"MYSQL", getCurName, 10));
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"MYSQL", 10));
+  ok_stmt(hstmt, SQLGetCursorName(hstmt, getCurName, 20, &getLen));
   is_str(getCurName, "MYSQL", 5);
 
-  nok_pass_on(tmy_cursor(hstmt,"MYSQL", getCurName, 2));
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"MYSQL", 2));
+  ok_stmt(hstmt, SQLGetCursorName(hstmt, getCurName, 20, &getLen));
   is_str(getCurName, "MY", 2);
 
   return OK;

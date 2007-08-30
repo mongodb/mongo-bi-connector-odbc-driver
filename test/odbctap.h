@@ -288,20 +288,6 @@ do { \
 
 
 /**
-  If calling a help function that doesn't return OK,
-  terminate as we would have using ok_stmt()
-
-  @param call  The function call
-*/
-#define nok_pass_on(call) \
-do { \
-  int rc= (call); \
-  if (rc != OK) \
-    return rc; \
-} while (0)
-
-
-/**
   Verify that the result of an ODBC function call matches an expected
   result, such as SQL_NO_DATA_FOUND.
 
