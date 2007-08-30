@@ -887,6 +887,7 @@ SQLGetDiagRecWImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
     x_free(wvalue);
   }
 
+  len= SQL_NTS;
   if (sqlstate && sqlstate_value)
   {
     SQLWCHAR *wvalue= sqlchar_as_sqlwchar((dbc && dbc->cxn_charset_info) ?

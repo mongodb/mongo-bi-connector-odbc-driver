@@ -756,6 +756,7 @@ SQLGetDiagRecImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
     if (dbc && dbc->ansi_charset_info &&
         dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
     {
+      len= SQL_NTS;
       sqlstate_value= sqlchar_as_sqlchar(dbc->cxn_charset_info,
                                          dbc->ansi_charset_info,
                                          sqlstate_value, &len, &errors);

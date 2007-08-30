@@ -312,6 +312,7 @@ SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
     stmt->stmt_options= dbc->stmt_options;
     stmt->state= ST_UNKNOWN;
     stmt->dummy_state= ST_DUMMY_UNKNOWN;
+    strmov(stmt->error.sqlstate, "00000");
 #if !defined(DBUG_OFF) && defined(my_init_dynamic_array)
     my_init_dynamic_array(&stmt->params,sizeof(PARAM_BIND),32,64);
 #else
