@@ -452,7 +452,6 @@ DECLARE_TEST(t_columns)
   SQLLEN        cbColumnSize, cbDecimalDigits, cbNumPrecRadix,
                 cbDataType, cbNullable;
   SQLINTEGER    cbDatabaseName;
-  SQLRETURN     rc;
   SQLUINTEGER   ColumnSize, i;
   SQLUINTEGER   ColumnCount= 7;
   SQLCHAR       ColumnName[MAX_NAME_LEN], DatabaseName[MAX_NAME_LEN];
@@ -571,47 +570,41 @@ t_describe_col t_tables_bug_data[5] =
 
 DECLARE_TEST(t_tables_bug)
 {
-  SQLRETURN   rc;
   SQLSMALLINT i, ColumnCount, pcbColName, pfSqlType, pibScale, pfNullable;
   SQLULEN     pcbColDef;
   SQLCHAR     szColName[MAX_NAME_LEN];
-  int is51= mysql_min_version(hdbc, "5.1", 3);
 
-   SQLFreeStmt(hstmt, SQL_CLOSE);
+  ok_stmt(hstmt,  SQLTables(hstmt, NULL, 0, NULL, 0, NULL, 0,
+                            (SQLCHAR *)"'TABLE'", SQL_NTS));
 
-   ok_stmt(hstmt, SQLTables(hstmt,NULL,0,NULL,0,NULL,0,"'TABLE'",SQL_NTS));
-
-   rc = SQLNumResultCols(hstmt,&ColumnCount);
-   mystmt(hstmt,rc);
-
-   fprintf(stdout, "total columns in SQLTables: %d\n", ColumnCount);
-   myassert(ColumnCount == 5);
+   ok_stmt(hstmt, SQLNumResultCols(hstmt, &ColumnCount));
+   is_num(ColumnCount, 5);
 
    for (i= 1; i <= ColumnCount; i++)
    {
-     rc = SQLDescribeCol(hstmt, (SQLUSMALLINT)i,
-                         szColName,MAX_NAME_LEN,&pcbColName,
-                         &pfSqlType,&pcbColDef,&pibScale,&pfNullable);
-     mystmt(hstmt,rc);
+     ok_stmt(hstmt, SQLDescribeCol(hstmt, (SQLUSMALLINT)i, szColName,
+                                   MAX_NAME_LEN, &pcbColName, &pfSqlType,
+                                   &pcbColDef, &pibScale, &pfNullable));
 
-     fprintf(stdout, "Column Number'%d':\n", i);
-     fprintf(stdout, "\t Column Name    : %s\n", szColName);
-     fprintf(stdout, "\t NameLengh      : %d\n", pcbColName);
-     fprintf(stdout, "\t DataType       : %d\n", pfSqlType);
-     fprintf(stdout, "\t ColumnSize     : %d\n", pcbColDef);
-     fprintf(stdout, "\t DecimalDigits  : %d\n", pibScale);
-     fprintf(stdout, "\t Nullable       : %d\n", pfNullable);
+     fprintf(stdout, "# Column '%d':\n", i);
+     fprintf(stdout, "#  Column Name   : %s\n", szColName);
+     fprintf(stdout, "#  NameLengh     : %d\n", pcbColName);
+     fprintf(stdout, "#  DataType      : %d\n", pfSqlType);
+     fprintf(stdout, "#  ColumnSize    : %d\n", pcbColDef);
+     fprintf(stdout, "#  DecimalDigits : %d\n", pibScale);
+     fprintf(stdout, "#  Nullable      : %d\n", pfNullable);
 
-     myassert(strcmp(t_tables_bug_data[i-1].szColName,szColName) == 0);
-     myassert(t_tables_bug_data[i-1].pcbColName == pcbColName);
-     myassert(t_tables_bug_data[i-1].pfSqlType == pfSqlType);
+     is_str(t_tables_bug_data[i-1].szColName, szColName, pcbColName);
+     is_num(t_tables_bug_data[i-1].pcbColName, pcbColName);
+     is_num(t_tables_bug_data[i-1].pfSqlType, pfSqlType);
      /* This depends on NAME_LEN in mysql_com.h */
      is(t_tables_bug_data[i-1].pcbColDef == pcbColDef ||
         t_tables_bug_data[i-1].pcbColDef == pcbColDef / 3);
-     myassert(t_tables_bug_data[i-1].pibScale == pibScale);
-     myassert(t_tables_bug_data[i-1].pfNullable == pfNullable);
+     is_num(t_tables_bug_data[i-1].pibScale, pibScale);
+     is_num(t_tables_bug_data[i-1].pfNullable, pfNullable);
    }
-   SQLFreeStmt(hstmt,SQL_CLOSE);
+
+   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   return OK;
 }
@@ -650,7 +643,8 @@ DECLARE_TEST(t_current_catalog)
     rc = SQLGetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, (char *)db, 255, &len);
     mycon(hdbc,rc);
     fprintf(stdout,"current_catalog: %s (%ld)\n", db, len);
-    myassert(strcmp(cur_db, db) == 0 || strlen(cur_db) == len);
+    is_num(len, 17);
+    is_str(db, cur_db, 18);
 
     strcpy(cur_db, "test_odbc_current_12455");
     rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, (char *)cur_db, SQL_NTS);
