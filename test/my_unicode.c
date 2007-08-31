@@ -475,21 +475,19 @@ DECLARE_TEST(sqlcolattribute)
   ok_sql(hstmt1, "SELECT * FROM t_colattrib AS b");
 
   ok_stmt(hstmt1, SQLColAttributeW(hstmt1, 1, SQL_DESC_NAME,
-                                   wbuff, sizeof(wbuff) / sizeof(wbuff[0]),
-                                   &len, NULL));
-  is_num(len, 3);
+                                   wbuff, sizeof(wbuff), &len, NULL));
+  is_num(len, 3 * sizeof(SQLWCHAR));
   is_wstr(sqlwchar_to_wchar_t(wbuff), L"a\u00e3g", 4);
 
   expect_stmt(hstmt1, SQLColAttributeW(hstmt1, 1, SQL_DESC_BASE_TABLE_NAME,
-                                       wbuff, 5, &len, NULL),
+                                       wbuff, 5 * sizeof(SQLWCHAR), &len, NULL),
               SQL_SUCCESS_WITH_INFO);
-  is_num(len, 11);
+  is_num(len, 11 * sizeof(SQLWCHAR));
   is_wstr(sqlwchar_to_wchar_t(wbuff), L"t_co", 5);
 
   ok_stmt(hstmt1, SQLColAttributeW(hstmt1, 1, SQL_DESC_TYPE_NAME,
-                                   wbuff, sizeof(wbuff) / sizeof(wbuff[0]),
-                                   &len, NULL));
-  is_num(len, 7);
+                                   wbuff, sizeof(wbuff), &len, NULL));
+  is_num(len, 7 * sizeof(SQLWCHAR));
   is_wstr(sqlwchar_to_wchar_t(wbuff), L"integer", 8);
 
   ok_sql(hstmt1, "DROP TABLE IF EXISTS t_colattrib");
@@ -560,14 +558,14 @@ DECLARE_TEST(sqlgetconnectattr)
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
   ok_stmt(hstmt1, SQLGetConnectAttrW(hdbc1, SQL_ATTR_CURRENT_CATALOG, wbuff,
-                                     sizeof(wbuff) / sizeof(wbuff[0]), &len));
-  is_num(len, 4);
+                                     sizeof(wbuff), &len));
+  is_num(len, 4 * sizeof(SQLWCHAR));
   is_wstr(sqlwchar_to_wchar_t(wbuff), L"test", 5);
 
   expect_stmt(hstmt1, SQLGetConnectAttrW(hdbc1, SQL_ATTR_CURRENT_CATALOG,
-                                         wbuff, 3, &len),
+                                         wbuff, 3 * sizeof(SQLWCHAR), &len),
               SQL_SUCCESS_WITH_INFO);
-  is_num(len, 4);
+  is_num(len, 4 * sizeof(SQLWCHAR));
   is_wstr(sqlwchar_to_wchar_t(wbuff), L"te", 3);
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
@@ -651,19 +649,22 @@ DECLARE_TEST(sqlgetdiagfield)
   is_num(data, 1);
 
   ok_stmt(hstmt, SQLGetDiagFieldW(SQL_HANDLE_STMT, hstmt1, 1,
-                                  SQL_DIAG_CLASS_ORIGIN, message, 255, &len));
-  is_num(len, 8);
+                                  SQL_DIAG_CLASS_ORIGIN, message,
+                                  sizeof(message), &len));
+  is_num(len, 8 * sizeof(SQLWCHAR));
   is_wstr(sqlwchar_to_wchar_t(message), L"ISO 9075", 9);
 
   expect_stmt(hstmt, SQLGetDiagFieldW(SQL_HANDLE_STMT, hstmt1, 1,
-                                      SQL_DIAG_SQLSTATE, message, 4, &len),
+                                      SQL_DIAG_SQLSTATE, message,
+                                      4 * sizeof(SQLWCHAR), &len),
               SQL_SUCCESS_WITH_INFO);
-  is_num(len, 5);
+  is_num(len, 5 * sizeof(SQLWCHAR));
   is_wstr(sqlwchar_to_wchar_t(message), L"42S", 4);
 
   ok_stmt(hstmt, SQLGetDiagFieldW(SQL_HANDLE_STMT, hstmt1, 1,
-                                  SQL_DIAG_SUBCLASS_ORIGIN, message, 20, &len));
-  is_num(len, 8);
+                                  SQL_DIAG_SUBCLASS_ORIGIN, message,
+                                  sizeof(message), &len));
+  is_num(len, 8 * sizeof(SQLWCHAR));
   is_wstr(sqlwchar_to_wchar_t(message), L"ODBC 3.0", 9);
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));

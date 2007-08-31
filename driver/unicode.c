@@ -334,13 +334,13 @@ SQLColAttributeWImpl(SQLHSTMT hstmt, SQLUSMALLINT column,
                                 &len, &errors);
 
     /* char_attr_max is in bytes, we want it in chars. */
-    char_attr_max/= 2;
+    char_attr_max/= sizeof(SQLWCHAR);
 
     if (len > char_attr_max - 1)
       rc= set_error(stmt, MYERR_01004, NULL, 0);
 
     if (char_attr_len)
-      *char_attr_len= (SQLSMALLINT)len;
+      *char_attr_len= (SQLSMALLINT)len * sizeof(SQLWCHAR);
 
     if (char_attr_max > 0)
     {
@@ -705,13 +705,13 @@ SQLGetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
                                 &len, &errors);
 
     /* value_max is in bytes, we want it in chars. */
-    value_max/= 2;
+    value_max/= sizeof(SQLWCHAR);
 
     if (len > value_max - 1)
       rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
 
     if (value_len)
-      *value_len= len;
+      *value_len= len * sizeof(SQLWCHAR);
 
     if (value_max > 0)
     {
@@ -809,13 +809,13 @@ SQLGetDiagFieldW(SQLSMALLINT handle_type, SQLHANDLE handle,
                                           value, &len, &errors);
 
     /* info_max is in bytes, we want it in chars. */
-    info_max/= 2;
+    info_max/= sizeof(SQLWCHAR);
 
     if (len > info_max - 1)
       rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
 
     if (info_len)
-      *info_len= len;
+      *info_len= len * sizeof(SQLWCHAR);
 
     if (info_max > 0)
     {
@@ -935,13 +935,13 @@ SQLGetInfoW(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
                                           char_value, &len, &errors);
 
     /* value_max is in bytes, we want it in chars. */
-    value_max/= 2;
+    value_max/= sizeof(SQLWCHAR);
 
     if (len > value_max - 1)
       rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
 
     if (value_len)
-      *value_len= len;
+      *value_len= len * sizeof(SQLWCHAR);
 
     if (value_max > 0)
     {
