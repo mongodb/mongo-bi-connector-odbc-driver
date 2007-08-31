@@ -28,7 +28,7 @@ DECLARE_TEST(my_resultset)
     SQLRETURN   rc;
     SQLUINTEGER nRowCount=0;
     SQLULEN     pcColDef;
-    SQLCHAR     szColName[MAX_NAME_LEN];
+    SQLCHAR     szColName[MAX_NAME_LEN+1];
     SQLCHAR     szData[MAX_ROW_DATA_LEN+1];
     SQLSMALLINT nIndex,ncol,pfSqlType, pcbScale, pfNullable;
 
