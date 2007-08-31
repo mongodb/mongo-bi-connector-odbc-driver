@@ -291,8 +291,8 @@ SQLINTEGER utf8_as_sqlwchar(SQLWCHAR *out, SQLINTEGER out_max, SQLCHAR *in,
     }
   }
 
-  if (out)
-    *out= 0;
+  if (pos)
+    *pos= 0;
   return pos - out;
 }
 
@@ -504,11 +504,22 @@ SQLDriverConnectW(SQLHDBC hdbc, SQLHWND hwnd,
   rc= MySQLDriverConnect(hdbc, hwnd, in8, in_len, out8, out8_max, out_len,
                          completion);
 
-  /* Now we have to convert out8 back into a SQLWCHAR. */
-  *out_len= utf8_as_sqlwchar(out, out_max, out8, *out_len);
+#ifdef WIN32
+  /*
+    Microsoft ADO/VB? specifies in and out to be the same, but then gives a
+    nonsense value for out_max. Just don't do anything in this case.
 
-  if (*out_len > out_max - 1)
-    rc= set_dbc_error((DBC *)hdbc, "01004", NULL, 0);
+    @todo verify that this actually happens.
+  */
+  if (in != out)
+#endif
+  {
+    /* Now we have to convert out8 back into a SQLWCHAR. */
+    *out_len= utf8_as_sqlwchar(out, out_max, out8, *out_len);
+
+    if (*out_len > out_max - 1)
+      rc= set_dbc_error((DBC *)hdbc, "01004", NULL, 0);
+  }
 
 error:
   x_free(out8);
