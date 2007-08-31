@@ -74,7 +74,7 @@ SQLSetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute,
 SQLWCHAR *sqlchar_as_sqlwchar(CHARSET_INFO *charset_info, SQLCHAR *str,
                               SQLINTEGER *len, uint *errors)
 {
-  SQLCHAR *str_end;
+  SQLCHAR *pos, *str_end;
   SQLWCHAR *out;
   SQLINTEGER i, out_bytes;
   my_bool free_str= FALSE;
@@ -119,16 +119,16 @@ SQLWCHAR *sqlchar_as_sqlwchar(CHARSET_INFO *charset_info, SQLCHAR *str,
     return NULL;
   }
 
-  for (i= 0; *str && str < str_end; )
+  for (pos= str, i= 0; *pos && pos < str_end; )
   {
     if (sizeof(SQLWCHAR) == 4)
     {
-      str+= utf8toutf32(str, (UTF32 *)(out + i++));
+      pos+= utf8toutf32(pos, (UTF32 *)(out + i++));
     }
     else
     {
       UTF32 u32;
-      str+= utf8toutf32(str, &u32);
+      pos+= utf8toutf32(pos, &u32);
       i+= utf32toutf16(u32, (UTF16 *)(out + i));
     }
   }
@@ -332,6 +332,9 @@ SQLColAttributeWImpl(SQLHSTMT hstmt, SQLUSMALLINT column,
     my_bool free_value= (field == SQL_DESC_TYPE_NAME);
     wvalue= sqlchar_as_sqlwchar(stmt->dbc->cxn_charset_info, value,
                                 &len, &errors);
+
+    /* char_attr_max is in bytes, we want it in chars. */
+    char_attr_max/= 2;
 
     if (len > char_attr_max - 1)
       rc= set_error(stmt, MYERR_01004, NULL, 0);
@@ -701,6 +704,9 @@ SQLGetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
     wvalue= sqlchar_as_sqlwchar(dbc->cxn_charset_info, char_value,
                                 &len, &errors);
 
+    /* value_max is in bytes, we want it in chars. */
+    value_max/= 2;
+
     if (len > value_max - 1)
       rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
 
@@ -801,6 +807,9 @@ SQLGetDiagFieldW(SQLSMALLINT handle_type, SQLHANDLE handle,
                                           dbc->cxn_charset_info :
                                           default_charset_info,
                                           value, &len, &errors);
+
+    /* info_max is in bytes, we want it in chars. */
+    info_max/= 2;
 
     if (len > info_max - 1)
       rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
@@ -924,6 +933,9 @@ SQLGetInfoW(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
                                            dbc->cxn_charset_info :
                                            default_charset_info),
                                           char_value, &len, &errors);
+
+    /* value_max is in bytes, we want it in chars. */
+    value_max/= 2;
 
     if (len > value_max - 1)
       rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
