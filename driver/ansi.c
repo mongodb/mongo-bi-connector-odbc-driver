@@ -146,7 +146,7 @@ SQLColAttributeImpl(SQLHSTMT hstmt, SQLUSMALLINT column,
     if (char_attr && char_attr_max > 1)
     {
       strmake((char *)char_attr, (char *)value, char_attr_max - 1);
-      ((char *)char_attr)[char_attr_max]= '\0';
+      ((char *)char_attr)[char_attr_max - 1]= '\0';
     }
 
     if (char_attr_len)
@@ -347,7 +347,7 @@ SQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
     if (name && name_max > 1)
     {
       strmake((char *)name, (char *)value, name_max - 1);
-      ((char *)name)[name_max]= '\0';
+      ((char *)name)[name_max - 1]= '\0';
     }
 
     if (name_len)
@@ -547,7 +547,7 @@ SQLGetConnectAttrImpl(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
     if (value && value_max > 1)
     {
       strmake((char *)value, (char *)char_value, value_max - 1);
-      ((char *)value)[value_max]= '\0';
+      ((char *)value)[value_max - 1]= '\0';
     }
 
     if (value_len)
@@ -603,7 +603,7 @@ SQLGetCursorName(SQLHSTMT hstmt, SQLCHAR *cursor, SQLSMALLINT cursor_max,
   if (cursor && cursor_max > 1)
   {
     strmake((char *)cursor, (char *)name, cursor_max - 1);
-    cursor[cursor_max]= '\0';
+    cursor[cursor_max - 1]= '\0';
   }
 
   if (cursor_len)
@@ -669,7 +669,7 @@ SQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle,
     if (info && info_max > 1)
     {
       strmake((char *)info, (char *)value, info_max - 1);
-      ((char *)info)[info_max]= '\0';
+      ((char *)info)[info_max - 1]= '\0';
     }
 
     if (free_value)
@@ -744,7 +744,7 @@ SQLGetDiagRecImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
     if (message && message_max > 1)
     {
       strmake((char *)message, (char *)msg_value, message_max - 1);
-      ((char *)message)[message_max]= '\0';
+      ((char *)message)[message_max - 1]= '\0';
     }
 
     if (free_value)
@@ -805,7 +805,7 @@ SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
     if (value && value_max > 1)
     {
       strmake((char *)value, (char *)char_value, value_max - 1);
-      ((char *)value)[value_max]= '\0';
+      ((char *)value)[value_max - 1]= '\0';
     }
 
     if (value_len)
