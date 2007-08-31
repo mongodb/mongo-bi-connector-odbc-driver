@@ -30,12 +30,14 @@
 #define MYINFO_SET_ULONG(val) \
 do { \
   *((SQLUINTEGER *)num_info)= (val); \
+  *value_len= sizeof(SQLUINTEGER); \
   return SQL_SUCCESS; \
 } while(0)
 
 #define MYINFO_SET_USHORT(val) \
 do { \
   *((SQLUSMALLINT *)num_info)= (val); \
+  *value_len= sizeof(SQLUSMALLINT); \
   return SQL_SUCCESS; \
 } while(0)
 
@@ -54,19 +56,20 @@ static my_bool myodbc_ov2_inited= 0;
 
   @param[in]  hdbc            Handle of database connection
   @param[in]  fInfoType       Type of information to retrieve
-  @param[out] rgbInfoValue    Pointer to buffer for returning information
-  @param[in]  cbInfoValueMax  Length of buffer pointed to by @a rgbInfoValue
-  @param[out] pcbInfoValue    Pointer to buffer in which to return bytes of
-                              @a rgbInfoValue that are used
-
-  @since ODBC 1.0
-  @since ISO SQL 92
+  @param[out] char_info       Pointer to buffer for returning string
+  @param[out] num_info        Pointer to buffer for returning numeric info
+  @param[out] value_len       Pointer to buffer for returning length (only
+                              used for numeric data)
 */
 SQLRETURN SQL_API
 MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
-             SQLCHAR **char_info, SQLPOINTER num_info)
+             SQLCHAR **char_info, SQLPOINTER num_info, SQLSMALLINT *value_len)
 {
   DBC *dbc= (DBC *)hdbc;
+  SQLSMALLINT dummy;
+
+  if (!value_len)
+    value_len= &dummy;
 
   switch (fInfoType) {
   case SQL_ACTIVE_ENVIRONMENTS:
@@ -522,7 +525,7 @@ MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
                      SQL_FN_NUM_TRUNCATE);
 
   case SQL_ODBC_API_CONFORMANCE:
-    MYINFO_SET_ULONG(SQL_OAC_LEVEL1);
+    MYINFO_SET_USHORT(SQL_OAC_LEVEL1);
 
   case SQL_ODBC_INTERFACE_CONFORMANCE:
     MYINFO_SET_ULONG(SQL_OIC_LEVEL1);

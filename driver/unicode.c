@@ -483,11 +483,13 @@ SQLDriverConnectW(SQLHDBC hdbc, SQLHWND hwnd,
 {
   SQLRETURN rc;
   SQLINTEGER in_len= in_len_in;
-  SQLSMALLINT out8_max;
+  SQLSMALLINT out8_max, dummy_out;
   SQLCHAR *out8, *in8= sqlwchar_as_utf8(in, &in_len);
 
   if (in_len == SQL_NTS)
     in_len= sqlwchar_strlen(in);
+  if (!out_len)
+    out_len= &dummy_out;
 
   out8_max= sizeof(SQLCHAR) * 4 * out_max;
   out8= (SQLCHAR *)my_malloc(out8_max + 1, MYF(0));
@@ -504,6 +506,9 @@ SQLDriverConnectW(SQLHDBC hdbc, SQLHWND hwnd,
 
   /* Now we have to convert out8 back into a SQLWCHAR. */
   *out_len= utf8_as_sqlwchar(out, out_max, out8, *out_len);
+
+  if (*out_len > out_max - 1)
+    rc= set_dbc_error((DBC *)hdbc, "01004", NULL, 0);
 
 error:
   x_free(out8);
@@ -925,7 +930,7 @@ SQLGetInfoW(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
   SQLINTEGER len= SQL_NTS;
   uint errors;
 
-  SQLRETURN rc= MySQLGetInfo(hdbc, type, &char_value, value);
+  SQLRETURN rc= MySQLGetInfo(hdbc, type, &char_value, value, value_len);
 
   if (char_value)
   {

@@ -785,7 +785,7 @@ SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
   SQLSMALLINT free_value= FALSE;
   uint errors;
 
-  SQLRETURN rc= MySQLGetInfo(hdbc, type, &char_value, value);
+  SQLRETURN rc= MySQLGetInfo(hdbc, type, &char_value, value, value_len);
 
   if (char_value)
   {
