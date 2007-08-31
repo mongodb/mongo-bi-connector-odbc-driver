@@ -256,9 +256,23 @@ copy_lresult(SQLSMALLINT HandleType, SQLHANDLE Handle,
             fill_length= src_length;
     }
     if ( *offset == (ulong) ~0L )
-        *offset= 0;         /* First call */
-    else if ( arg_length && *offset >= (ulong) fill_length )
-        return SQL_NO_DATA_FOUND;
+    {
+      /*
+        This is first call. Even if data has zero size, we don't
+        return SQL_NO_DATA_FOUND.
+      */
+      *offset= 0;
+    }
+    else if ( *offset >= (ulong) fill_length )
+    {
+      /*
+        If not the first call, and we have no data left,
+        must be a call after we gave the last data.
+        We always return SQL_NO_DATA_FOUND in this case,
+        even if size is 0.
+      */
+      return SQL_NO_DATA_FOUND;
+    }
 
     src+= *offset;
     src_length-= (long) *offset;
