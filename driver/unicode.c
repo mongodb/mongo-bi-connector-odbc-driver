@@ -291,7 +291,8 @@ SQLINTEGER utf8_as_sqlwchar(SQLWCHAR *out, SQLINTEGER out_max, SQLCHAR *in,
     }
   }
 
-  *out= 0;
+  if (out)
+    *out= 0;
   return pos - out;
 }
 
@@ -919,7 +920,9 @@ SQLGetInfoW(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
 
   if (char_value)
   {
-    SQLWCHAR *wvalue= sqlchar_as_sqlwchar(dbc->cxn_charset_info,
+    SQLWCHAR *wvalue= sqlchar_as_sqlwchar((dbc->cxn_charset_info ?
+                                           dbc->cxn_charset_info :
+                                           default_charset_info),
                                           char_value, &len, &errors);
 
     if (len > value_max - 1)
