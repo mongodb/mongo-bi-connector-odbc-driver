@@ -36,8 +36,6 @@
 
 /* Forward declarations. */
 SQLCHAR *sqlwchar_as_utf8(SQLWCHAR *str, SQLINTEGER *len);
-SQLINTEGER utf8_as_sqlwchar(SQLWCHAR *out, SQLINTEGER out_max, SQLCHAR *in,
-                            SQLINTEGER in_len);
 
 SQLRETURN SQL_API
 SQLColAttributeWImpl(SQLHSTMT hstmt, SQLUSMALLINT column,
@@ -273,8 +271,8 @@ SQLCHAR *sqlwchar_as_utf8(SQLWCHAR *str, SQLINTEGER *len)
 
   @return  Number of characters stored in the @c out buffer
 */
-SQLINTEGER utf8_as_sqlwchar(SQLWCHAR *out, SQLINTEGER out_max, SQLCHAR *in,
-                            SQLINTEGER in_len)
+SQLSMALLINT utf8_as_sqlwchar(SQLWCHAR *out, SQLINTEGER out_max, SQLCHAR *in,
+                             SQLINTEGER in_len)
 {
   SQLINTEGER i;
   SQLWCHAR *pos, *out_end;
@@ -501,8 +499,8 @@ SQLDriverConnectW(SQLHDBC hdbc, SQLHWND hwnd,
 
   ((DBC *)hdbc)->unicode= TRUE; /* Hooray, a Unicode connection! */
 
-  rc= MySQLDriverConnect(hdbc, hwnd, in8, in_len, out8, out8_max, out_len,
-                         completion);
+  rc= MySQLDriverConnect(hdbc, hwnd, in8, (SQLSMALLINT)in_len, out8, out8_max,
+                         out_len, completion);
 
 #ifdef WIN32
   /*
@@ -567,7 +565,7 @@ SQLDescribeColW(SQLHSTMT hstmt, SQLUSMALLINT column,
       rc= set_error(stmt, MYERR_01004, NULL, 0);
 
     if (name_len)
-      *name_len= len;
+      *name_len= (SQLSMALLINT)len;
 
     if (name_max > 0)
     {
@@ -772,7 +770,7 @@ SQLGetCursorNameW(SQLHSTMT hstmt, SQLWCHAR *cursor, SQLSMALLINT cursor_max,
                             MySQLGetCursorName(hstmt), &len, &errors);
 
   if (cursor_len)
-    *cursor_len= len;
+    *cursor_len= (SQLSMALLINT)len;
 
   /* Warn if name truncated */
   if (len > cursor_max - 1)
@@ -831,7 +829,7 @@ SQLGetDiagFieldW(SQLSMALLINT handle_type, SQLHANDLE handle,
       rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
 
     if (info_len)
-      *info_len= len * sizeof(SQLWCHAR);
+      *info_len= (SQLSMALLINT)len * sizeof(SQLWCHAR);
 
     if (info_max > 0)
     {
@@ -900,7 +898,7 @@ SQLGetDiagRecWImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
       rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
 
     if (message_len)
-      *message_len= len;
+      *message_len= (SQLSMALLINT)len;
 
     if (message_max > 0)
     {
@@ -957,7 +955,7 @@ SQLGetInfoW(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
       rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
 
     if (value_len)
-      *value_len= len * sizeof(SQLWCHAR);
+      *value_len= (SQLSMALLINT)len * sizeof(SQLWCHAR);
 
     if (value_max > 0)
     {

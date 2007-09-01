@@ -746,7 +746,8 @@ MySQLColumns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
     /* Get list of columns matching szColumn for each table. */
     lengths= mysql_fetch_lengths(res);
     table_res= mysql_list_dbcolumns(stmt, szCatalog, cbCatalog,
-                                    (SQLCHAR *)table_row[0], lengths[0],
+                                    (SQLCHAR *)table_row[0],
+                                    (SQLSMALLINT)lengths[0],
                                     szColumn, cbColumn);
 
     if (!table_res)

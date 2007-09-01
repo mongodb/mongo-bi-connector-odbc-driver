@@ -530,7 +530,7 @@ MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
   if (size)
     *size= get_column_size(stmt, field, FALSE);
   if (scale)
-    *scale= max(0, get_decimal_digits(stmt, field));
+    *scale= (SQLSMALLINT)max(0, get_decimal_digits(stmt, field));
   if (nullable)
     *nullable= ((field->flags & NOT_NULL_FLAG) ? SQL_NO_NULLS : SQL_NULLABLE);
 

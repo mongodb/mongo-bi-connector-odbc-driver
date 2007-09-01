@@ -150,7 +150,7 @@ SQLColAttributeImpl(SQLHSTMT hstmt, SQLUSMALLINT column,
     }
 
     if (char_attr_len)
-      *char_attr_len= len;
+      *char_attr_len= (SQLSMALLINT)len;
 
     if (free_value)
       x_free(value);
@@ -351,7 +351,7 @@ SQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
     }
 
     if (name_len)
-      *name_len= len;
+      *name_len= (SQLSMALLINT)len;
 
     if (free_value)
       x_free(value);
@@ -607,7 +607,7 @@ SQLGetCursorName(SQLHSTMT hstmt, SQLCHAR *cursor, SQLSMALLINT cursor_max,
   }
 
   if (cursor_len)
-    *cursor_len= len;
+    *cursor_len= (SQLSMALLINT)len;
 
   if (free_name)
     x_free(name);
@@ -664,7 +664,7 @@ SQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle,
       rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
 
     if (info_len)
-      *info_len= len;
+      *info_len= (SQLSMALLINT)len;
 
     if (info && info_max > 1)
     {
@@ -739,7 +739,7 @@ SQLGetDiagRecImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
       rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
 
     if (message_len)
-      *message_len= len;
+      *message_len= (SQLSMALLINT)len;
 
     if (message && message_max > 1)
     {
@@ -809,7 +809,7 @@ SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
     }
 
     if (value_len)
-      *value_len= len;
+      *value_len= (SQLSMALLINT)len;
 
     if (free_value)
       x_free(char_value);

@@ -37,7 +37,7 @@
 #include "../MYODBC_CONF.h"
 #include "../MYODBC_ODBC.h"
 
-#ifdef WIN32
+#if defined(WIN32) && !defined(strcasecmp)
 #define strcasecmp( a, b ) stricmp( a, b )
 #endif
 
@@ -232,6 +232,7 @@ BOOL                    MYODBCUtilInsertStr( char *pszStr, LPCSTR pszStrIn, SQLS
 #  define _global_strndup(s, n) strnglobaldup(s, n)
 #  define _global_alloc(n) GlobalAlloc(GMEM_FIXED, (n))
 #  define _global_free(p) GlobalFree(p)
+   char *myodbc_strndup( const char *s, size_t n );
 #else
 #  define _global_strdup(s) strdup(s)
 #  ifdef HAVE_STRNDUP
