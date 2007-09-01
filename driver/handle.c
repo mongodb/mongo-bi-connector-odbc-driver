@@ -424,11 +424,11 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
       }
     }
     else
-      x_free((gptr)stmt->result);
-    x_free((gptr) stmt->fields);
-    x_free((gptr) stmt->array);
-    x_free((gptr) stmt->result_array);
-    x_free((gptr) stmt->odbc_types);
+      x_free(stmt->result);
+    x_free(stmt->fields);
+    x_free(stmt->array);
+    x_free(stmt->result_array);
+    x_free(stmt->odbc_types);
     stmt->result= 0;
     stmt->fake_result= 0;
     stmt->result_lengths= 0;
@@ -445,7 +445,7 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     if (fOption == MYSQL_RESET_BUFFERS)
         return SQL_SUCCESS;
 
-    x_free((gptr) stmt->table_name);
+    x_free(stmt->table_name);
     stmt->table_name= 0;
     stmt->dummy_state= ST_DUMMY_UNKNOWN;
     stmt->cursor.pk_validated= FALSE;
@@ -458,8 +458,8 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
         return SQL_SUCCESS;
 
     /* At this point, only MYSQL_RESET and SQL_DROP left out */
-    x_free((gptr) stmt->query);
-    x_free((gptr) stmt->orig_query);
+    x_free(stmt->query);
+    x_free(stmt->orig_query);
     stmt->query= stmt->orig_query= 0;
     stmt->param_count= 0;
 
@@ -468,8 +468,8 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
 
     odbc_reset_stmt_options(&stmt->stmt_options);
 
-    x_free((gptr) stmt->cursor.name);
-    x_free((gptr) stmt->bind);
+    x_free(stmt->cursor.name);
+    x_free(stmt->bind);
     delete_dynamic(&stmt->params);
     stmt->dbc->statements= list_delete(stmt->dbc->statements,&stmt->list);
 #ifndef _UNIX_

@@ -291,7 +291,6 @@ SQLRETURN SQL_API SQLConnect(SQLHDBC  hdbc,
 {
   SQLRETURN rc;
   DBC *dbc= (DBC *)hdbc;
-  MYSQL *mysql= &dbc->mysql;
   char dsn[SQL_MAX_DSN_LENGTH], *dsn_ptr;
   MYODBCUTIL_DATASOURCE *ds;
 

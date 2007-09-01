@@ -52,8 +52,8 @@ SQLRETURN do_query(STMT FAR *stmt,char *query)
     if ( !query )
         return error;       /* Probably error from insert_param */
 
-    if ( stmt->stmt_options.max_rows && stmt->stmt_options.max_rows !=
-         (SQLINTEGER) ~0L )
+    if (stmt->stmt_options.max_rows &&
+        stmt->stmt_options.max_rows != (SQLULEN)~0L)
     {
         /* Add limit to select statement */
         char *pos,*tmp_buffer;
@@ -67,7 +67,7 @@ SQLRETURN do_query(STMT FAR *stmt,char *query)
                 sprintf(tmp_buffer+length, " limit %lu",
                         (unsigned long)stmt->stmt_options.max_rows);
                 if ( query != stmt->query )
-                    my_free((gptr) query,MYF(0));
+                    my_free(query,MYF(0));
                 query= tmp_buffer;
             }
         }
@@ -116,7 +116,7 @@ SQLRETURN do_query(STMT FAR *stmt,char *query)
     exit:
     pthread_mutex_unlock(&stmt->dbc->lock);
     if ( query != stmt->query )
-        my_free((gptr) query,MYF(0));
+        my_free(query,MYF(0));
 
     /*
       If the original query was modified, we reset stmt->query so that the
@@ -124,7 +124,7 @@ SQLRETURN do_query(STMT FAR *stmt,char *query)
     */
     if (stmt->orig_query)
     {
-        my_free((gptr) stmt->query,MYF(0));
+        my_free(stmt->query,MYF(0));
         stmt->query= stmt->orig_query;
         stmt->query_end= stmt->orig_query_end;
         stmt->orig_query= NULL;
@@ -750,7 +750,7 @@ SQLRETURN SQL_API SQLPutData( SQLHSTMT      hstmt,
         else
         {
             /* This should never happen */
-            gptr old_pos= param->value;
+            char *old_pos= param->value;
             if ( !(param->value= my_malloc(param->value_length+cbValue+1,MYF(0))) )
                 return set_error(stmt,MYERR_S1001,NULL,4001);
             memcpy(param->value,old_pos,param->value_length);

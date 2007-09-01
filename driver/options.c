@@ -82,7 +82,7 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
             else if (((STMT FAR*)Handle)->dbc->flag & FLAG_DYNAMIC_CURSOR)
             {
                 if (ValuePtr != (SQLPOINTER)SQL_CURSOR_KEYSET_DRIVEN)
-                    options->cursor_type= (SQLUINTEGER)ValuePtr;
+                    options->cursor_type= (SQLUINTEGER)(SQLULEN)ValuePtr;
 
                 else
                 {
@@ -95,7 +95,7 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
             {
                 if (ValuePtr == (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY ||
                     ValuePtr == (SQLPOINTER)SQL_CURSOR_STATIC)
-                    options->cursor_type= (SQLUINTEGER)ValuePtr;
+                    options->cursor_type= (SQLUINTEGER)(SQLULEN)ValuePtr;
 
                 else
                 {
@@ -124,7 +124,7 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
             break;
 
         case SQL_ATTR_ROW_BIND_TYPE:
-            options->bind_type= (SQLUINTEGER) ValuePtr;
+            options->bind_type= (SQLUINTEGER)(SQLULEN)ValuePtr;
             break;
 
         case SQL_ATTR_SIMULATE_CURSOR:
@@ -233,7 +233,7 @@ get_constmt_attr(SQLSMALLINT  HandleType,
             break;
 
         case SQL_ATTR_ROW_BIND_OFFSET_PTR:
-            *((SQLLEN *) ValuePtr)= options->bind_offset;
+            *((SQLLEN **) ValuePtr)= options->bind_offset;
             break;
 
         case SQL_ATTR_ROW_OPERATION_PTR: /* need to support this ....*/
@@ -305,7 +305,7 @@ set_con_attr(SQLHDBC    hdbc,
                }
                else
                {
-                  dbc->login_timeout= (SQLUINTEGER) ValuePtr;
+                  dbc->login_timeout= (SQLUINTEGER)(SQLULEN)ValuePtr;
                   return SQL_SUCCESS;
                }
             }
@@ -344,7 +344,7 @@ set_con_attr(SQLHDBC    hdbc,
                         return SQL_ERROR;
                     }
                 }
-                my_free((gptr) dbc->database,MYF(0));
+                my_free(dbc->database,MYF(0));
                 dbc->database= my_strdup(db,MYF(MY_WME));
                 pthread_mutex_unlock(&dbc->lock);
             }
@@ -375,7 +375,7 @@ set_con_attr(SQLHDBC    hdbc,
         case SQL_ATTR_TXN_ISOLATION:
             if (!is_connected(dbc))  /* no connection yet */
             {
-                dbc->txn_isolation= (SQLINTEGER)ValuePtr;
+                dbc->txn_isolation= (SQLINTEGER)(SQLLEN)ValuePtr;
                 return SQL_SUCCESS;
             }
             if (trans_supported(dbc))
@@ -383,17 +383,17 @@ set_con_attr(SQLHDBC    hdbc,
                 char buff[80];
                 const char *level;
 
-                if ((SQLINTEGER)ValuePtr & SQL_TXN_SERIALIZABLE)
+                if ((SQLINTEGER)(SQLLEN)ValuePtr & SQL_TXN_SERIALIZABLE)
                     level="SERIALIZABLE";
-                else if ((SQLINTEGER)ValuePtr & SQL_TXN_REPEATABLE_READ)
+                else if ((SQLINTEGER)(SQLLEN)ValuePtr & SQL_TXN_REPEATABLE_READ)
                     level="REPEATABLE READ";
-                else if ((SQLINTEGER)ValuePtr & SQL_TXN_REPEATABLE_READ)
+                else if ((SQLINTEGER)(SQLLEN)ValuePtr & SQL_TXN_REPEATABLE_READ)
                     level="READ COMMITTED";
                 else
                     level="READ UNCOMMITTED";
                 sprintf(buff,"SET SESSION TRANSACTION ISOLATION LEVEL %s",level);
                 if (odbc_stmt(dbc,buff) == SQL_SUCCESS)
-                    dbc->txn_isolation= (SQLINTEGER)ValuePtr;
+                    dbc->txn_isolation= (SQLINTEGER)(SQLLEN)ValuePtr;
             }
             break;
 
@@ -622,7 +622,7 @@ set_stmt_attr(SQLHSTMT   hstmt,
 
         case SQL_ATTR_ROW_ARRAY_SIZE:
         case SQL_ROWSET_SIZE:
-            options->rows_in_set= (SQLUINTEGER)ValuePtr;
+            options->rows_in_set= (SQLUINTEGER)(SQLULEN)ValuePtr;
             break;
 
         case SQL_ATTR_ROW_NUMBER:
@@ -643,7 +643,7 @@ set_stmt_attr(SQLHSTMT   hstmt,
             break;
 
         case SQL_ATTR_SIMULATE_CURSOR:
-            options->simulateCursor= (SQLUINTEGER)ValuePtr;
+            options->simulateCursor= (SQLUINTEGER)(SQLULEN)ValuePtr;
             break;
 
             /*
@@ -728,7 +728,7 @@ static SQLRETURN get_stmt_attr(SQLHSTMT   hstmt,
             break;
 
         case SQL_ATTR_SIMULATE_CURSOR:
-            ValuePtr= (SQLUSMALLINT *)options->simulateCursor;
+            *(SQLUINTEGER *)ValuePtr= options->simulateCursor;
             break;
 
             /*
@@ -840,7 +840,7 @@ SQLSetEnvAttr(SQLHENV    henv,
     switch (Attribute)
     {
         case SQL_ATTR_ODBC_VERSION:
-            ((ENV FAR *)henv)->odbc_ver= (SQLINTEGER)ValuePtr;
+            ((ENV FAR *)henv)->odbc_ver= (SQLINTEGER)(SQLLEN)ValuePtr;
             break;
 
         case SQL_ATTR_OUTPUT_NTS:

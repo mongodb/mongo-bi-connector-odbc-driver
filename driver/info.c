@@ -875,53 +875,28 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
   Function sets up a result set containing details of the types
   supported by mysql.
 */
-#if MYSQL_VERSION_ID >= 40100
 MYSQL_FIELD SQL_GET_TYPE_INFO_fields[]=
 {
-  {"TYPE_NAME",         NullS,"GetTypeInfo",NullS,NullS,NullS,NullS,32,32, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-  {"DATA_TYPE",         NullS,"GetTypeInfo",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
-  {"COLUMN_SIZE",       NullS,"GetTypeInfo",NullS,NullS,NullS,NullS,10,10, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
-  {"LITERAL_PREFIX",    NullS,"GetTypeInfo",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-  {"LITERAL_SUFFIX",    NullS,"GetTypeInfo",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-  {"CREATE_PARAMS",     NullS,"GetTypeInfo",NullS,NullS,NullS,NullS,15,15, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-  {"NULLABLE",          NullS,"GetTypeInfo",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
-  {"CASE_SENSITIVE",    NullS,"GetTypeInfo",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
-  {"SEARCHABLE",        NullS,"GetTypeInfo",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
-  {"UNSIGNED_ATTRIBUTE",NullS,"GetTypeInfo",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
-  {"FIXED_PREC_SCALE",  NullS,"GetTypeInfo",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
-  {"AUTO_UNIQUE_VALUE", NullS,"GetTypeInfo",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
-  {"LOCAL_TYPE_NAME",   NullS,"GetTypeInfo",NullS,NullS,NullS,NullS,60,60, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-  {"MINIMUM_SCALE",     NullS,"GetTypeInfo",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
-  {"MAXIMUM_SCALE",     NullS,"GetTypeInfo",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
-  {"SQL_DATATYPE",      NullS,"GetTypeInfo",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
-  {"SQL_DATETIME_SUB",  NullS,"GetTypeInfo",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
-  {"NUM_PREC_RADIX",    NullS,"GetTypeInfo",NullS,NullS,NullS,NullS,10,10, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
-  {"INTERVAL_PRECISION",NullS,"GetTypeInfo",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
+  MYODBC_FIELD_STRING("TYPE_NAME", 32, NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT("DATA_TYPE", NOT_NULL_FLAG),
+  MYODBC_FIELD_LONG("COLUMN_SIZE", 0),
+  MYODBC_FIELD_STRING("LITERAL_PREFIX", 2, 0),
+  MYODBC_FIELD_STRING("LITERAL_SUFFIX", 1, 0),
+  MYODBC_FIELD_STRING("CREATE_PARAMS", 15, 0),
+  MYODBC_FIELD_SHORT("NULLABLE", NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT("CASE_SENSITIVE", NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT("SEARCHABLE", NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT("UNSIGNED_ATTRIBUTE", 0),
+  MYODBC_FIELD_SHORT("FIXED_PREC_SCALE", NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT("AUTO_UNIQUE_VALUE", 0),
+  MYODBC_FIELD_STRING("LOCAL_TYPE_NAME", 60, 0),
+  MYODBC_FIELD_SHORT("MINIMUM_SCALE", 0),
+  MYODBC_FIELD_SHORT("MAXIMUM_SCALE", 0),
+  MYODBC_FIELD_SHORT("SQL_DATATYPE", NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT("SQL_DATETIME_SUB", 0),
+  MYODBC_FIELD_LONG("NUM_PREC_RADIX", 0),
+  MYODBC_FIELD_SHORT("INTERVAL_PRECISION", 0),
 };
-#else
-MYSQL_FIELD SQL_GET_TYPE_INFO_fields[]=
-{
-  {"TYPE_NAME",         "GetTypeInfo",NullS,NullS,NullS,32,32,NOT_NULL_FLAG,0,MYSQL_TYPE_VAR_STRING},
-  {"DATA_TYPE",         "GetTypeInfo",NullS,NullS,NullS,2,2,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
-  {"COLUMN_SIZE",       "GetTypeInfo",NullS,NullS,NullS,10,10,0,0,MYSQL_TYPE_LONG},
-  {"LITERAL_PREFIX",    "GetTypeInfo",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_VAR_STRING},
-  {"LITERAL_SUFFIX",    "GetTypeInfo",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_VAR_STRING},
-  {"CREATE_PARAMS",     "GetTypeInfo",NullS,NullS,NullS,15,15, 0,0,MYSQL_TYPE_VAR_STRING},
-  {"NULLABLE",          "GetTypeInfo",NullS,NullS,NullS,2,2,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
-  {"CASE_SENSITIVE",    "GetTypeInfo",NullS,NullS,NullS,2,2,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
-  {"SEARCHABLE",        "GetTypeInfo",NullS,NullS,NullS,2,2,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
-  {"UNSIGNED_ATTRIBUTE","GetTypeInfo",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT},
-  {"FIXED_PREC_SCALE",  "GetTypeInfo",NullS,NullS,NullS,2,2,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
-  {"AUTO_UNIQUE_VALUE", "GetTypeInfo",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT},
-  {"LOCAL_TYPE_NAME",   "GetTypeInfo",NullS,NullS,NullS,60,60,0,0,MYSQL_TYPE_VAR_STRING},
-  {"MINIMUM_SCALE",     "GetTypeInfo",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT},
-  {"MAXIMUM_SCALE",     "GetTypeInfo",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT},
-  {"SQL_DATATYPE",      "GetTypeInfo",NullS,NullS,NullS,2,2,NOT_NULL_FLAG,0,MYSQL_TYPE_SHORT},
-  {"SQL_DATETIME_SUB",  "GetTypeInfo",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT},
-  {"NUM_PREC_RADIX",    "GetTypeInfo",NullS,NullS,NullS,10,10,0,0,MYSQL_TYPE_LONG},
-  {"INTERVAL_PRECISION","GetTypeInfo",NullS,NullS,NullS,2,2,0,0,MYSQL_TYPE_SHORT},
-};
-#endif
 
 const uint SQL_GET_TYPE_INFO_FIELDS= array_elements(SQL_GET_TYPE_INFO_fields);
 #define MYSQL_DATA_TYPES 53
@@ -1062,8 +1037,8 @@ SQLRETURN SQL_API SQLGetTypeInfo(SQLHSTMT hstmt, SQLSMALLINT fSqlType)
 
   if (fSqlType == SQL_ALL_TYPES)
   {
-    memcpy((byte *)stmt->result_array,
-           (byte *)SQL_GET_TYPE_INFO_values,
+    memcpy(stmt->result_array,
+           SQL_GET_TYPE_INFO_values,
            sizeof(SQL_GET_TYPE_INFO_values));
     stmt->result->row_count= MYSQL_DATA_TYPES;
   }
@@ -1074,9 +1049,9 @@ SQLRETURN SQL_API SQLGetTypeInfo(SQLHSTMT hstmt, SQLSMALLINT fSqlType)
       if (atoi(SQL_GET_TYPE_INFO_values[i][1]) == fSqlType ||
           atoi(SQL_GET_TYPE_INFO_values[i][15]) == fSqlType)
       {
-        memcpy((gptr)&stmt->result_array[stmt->result->row_count++ *
-                                         SQL_GET_TYPE_INFO_FIELDS],
-               (gptr)&SQL_GET_TYPE_INFO_values[i][0],
+        memcpy(&stmt->result_array[stmt->result->row_count++ *
+                                   SQL_GET_TYPE_INFO_FIELDS],
+               &SQL_GET_TYPE_INFO_values[i][0],
                sizeof(char *) * SQL_GET_TYPE_INFO_FIELDS);
       }
     }

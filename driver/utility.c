@@ -114,7 +114,7 @@ void fix_result_types(STMT *stmt)
                 stmt->bound_columns= 0;
                 return;
             }
-            bzero((gptr) (stmt->bind+stmt->bound_columns),
+            bzero((stmt->bind+stmt->bound_columns),
                   (result->field_count -stmt->bound_columns)*sizeof(BIND));
             stmt->bound_columns= result->field_count;
         }
@@ -1028,7 +1028,7 @@ my_bool str_to_ts(SQL_TIMESTAMP_STRUCT *ts, const char *str, int zeroToMin)
 
     if ( length == 6 || length == 12 )  /* YYMMDD or YYMMDDHHMMSS */
     {
-        bmove_upp(to+2,to,length);
+        memmove(to+2, to, length);
         if ( buff[0] <= '6' )
         {
             buff[0]='2';
@@ -1270,7 +1270,7 @@ my_bool dynstr_append_quoted_name(DYNAMIC_STRING *str, const char *name)
 
 my_bool reget_current_catalog(DBC FAR *dbc)
 {
-    my_free((gptr) dbc->database,MYF(0));
+    my_free(dbc->database,MYF(0));
     if ( odbc_stmt(dbc, "select database()") )
     {
         return 1;
@@ -1446,7 +1446,8 @@ my_bool is_minimum_version(const char *server_version,const char *version,
  @param[in]   length        The length of the string to escape
 
 */
-ulong myodbc_escape_wildcard(MYSQL *mysql, char *to, ulong to_length,
+ulong myodbc_escape_wildcard(MYSQL *mysql __attribute__((unused)),
+                             char *to, ulong to_length,
                              const char *from, ulong length)
 {
   const char *to_start= to;
