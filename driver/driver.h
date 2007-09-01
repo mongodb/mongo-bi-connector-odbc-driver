@@ -330,7 +330,7 @@ typedef struct tagSTMT
   MYCURSOR	cursor;
   MYERROR	error;
   STMT_OPTIONS	stmt_options;
-  const char	*table_name;
+  char		*table_name;
   char		*query,*query_end;
   /*
     We save a copy of the original query before we modify it for 'WHERE

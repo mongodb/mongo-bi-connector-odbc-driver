@@ -39,12 +39,14 @@ Guffert TODO
   Functionality added or changed:
 
   Bugs fixed:
+  * SQLGetData() will now always return SQL_NO_DATA_FOUND on second call
+    when no data left, even if requested size is 0. (Bug#30520)
 
 ----
 
 3.51.19 (8-Aug-2007)
 
-  Functionality added or changed:
+  Functionality added or changed
   * Because of Bug #10491 in the server, character string results were
     sometimes incorrectly identified as SQL_VARBINARY. Until this server
     bug is corrected, the driver will identify all variable-length

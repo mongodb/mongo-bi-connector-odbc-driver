@@ -433,7 +433,7 @@ static SQLRETURN copy_rowdata(STMT FAR *stmt, PARAM_BIND  param,
     /* insert "," */
     param.SqlType= SQL_INTEGER;
     param.CType= SQL_C_CHAR;
-    param.buffer= (gptr) ",";
+    param.buffer= ",";
     *param.actual_len= 1;
 
     if ( !(*to= (SQLCHAR*) insert_param(stmt->dbc,(char*) *to, &param)) )
@@ -488,7 +488,7 @@ static SQLRETURN copy_field_data(STMT FAR *stmt, PARAM_BIND *param,
     /* Insert " AND ", where clause with multiple search */
     dummy.SqlType= SQL_INTEGER;
     dummy.CType= SQL_C_CHAR;
-    dummy.buffer= (gptr) " AND ";
+    dummy.buffer= " AND ";
     dummy.actual_len= &dummy_len;
 
     if ( !(*to= (SQLCHAR*) insert_param(stmt->dbc, (char*) *to, &dummy)) )
@@ -521,7 +521,7 @@ static my_bool insert_field(STMT FAR *stmt, MYSQL_RES *result,
 
     if ( row_data && *row_data )
     {
-        param.buffer= (gptr) *row_data;
+        param.buffer= *row_data;
         length= strlen(*row_data);
 
         param.actual_len= &length;
@@ -773,7 +773,7 @@ static void copy_input_param(STMT FAR *stmt,STMT FAR *stmtNew,
         PARAM_BIND *param= dynamic_element(&stmt->params,pcount,PARAM_BIND*);
         PARAM_BIND *paramNew= dynamic_element(&stmtNew->params,pcount,PARAM_BIND*);
         param->pos_in_query= paramNew->pos_in_query;
-        set_dynamic(&stmtNew->params,(gptr) param,pcount);
+        set_dynamic(&stmtNew->params, (DYNAMIC_ELEMENT)param, pcount);
     }
 }
 
@@ -844,7 +844,7 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
         param.used= 1;
         param.SqlType= get_sql_data_type(stmt, field, NULL);
         param.CType= bind->fCType;
-        param.buffer= (gptr) bind->rgbValue+irow*bind->cbValueMax;
+        param.buffer= bind->rgbValue+irow*bind->cbValueMax;
         param.ValueMax= bind->cbValueMax;
         /*
             Check when SQL_LEN_DATA_AT_EXEC() macro was used instead of data length
@@ -1161,7 +1161,7 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
                   element_size= stmt->stmt_options.bind_type;
 
                 if (bind->pcbValue)
-                  ind_or_len= *(SQLLEN *)((gptr)bind->pcbValue +
+                  ind_or_len= *(SQLLEN *)((char *)bind->pcbValue +
                                           binding_offset +
                                           count * (element_size ?
                                                    element_size :
@@ -1171,7 +1171,7 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
 
                 param.SqlType= get_sql_data_type(stmt, field, NULL);
                 param.CType = bind->fCType;
-                param.buffer= ((gptr)bind->rgbValue +
+                param.buffer= ((char *)bind->rgbValue +
                                binding_offset +
                                count * (element_size ?
                                         element_size :
@@ -1462,7 +1462,7 @@ SQLCHAR *MySQLGetCursorName(HSTMT hstmt)
   if (!stmt->cursor.name)
     set_dynamic_cursor_name(stmt);
 
-  return stmt->cursor.name;
+  return (SQLCHAR *)stmt->cursor.name;
 }
 
 

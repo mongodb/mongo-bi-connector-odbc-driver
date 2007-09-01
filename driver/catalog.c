@@ -190,17 +190,17 @@ static MYSQL_ROW fix_fields_copy(STMT FAR *stmt,MYSQL_ROW row)
   @return SQL_SUCCESS or SQL_ERROR (and diag is set)
 */
 static SQLRETURN
-create_fake_resultset(STMT *stmt, gptr rowval, size_t rowsize, my_ulonglong rowcnt,
-                      MYSQL_FIELD *fields, uint fldcnt)
+create_fake_resultset(STMT *stmt, MYSQL_ROW rowval, size_t rowsize,
+                      my_ulonglong rowcnt, MYSQL_FIELD *fields, uint fldcnt)
 {
   stmt->result= (MYSQL_RES*) my_malloc(sizeof(MYSQL_RES), MYF(MY_ZEROFILL));
-  stmt->result_array= (MYSQL_ROW) my_memdup((gptr) rowval, rowsize, MYF(0));
+  stmt->result_array= (MYSQL_ROW)my_memdup((char *)rowval, rowsize, MYF(0));
   if (!(stmt->result && stmt->result_array))
   {
     if (stmt->result)
-      my_free((gptr) stmt->result, MYF(0));
+      my_free((char *)stmt->result, MYF(0));
     if (stmt->result_array)
-      my_free((gptr) stmt->result_array, MYF(0));
+      my_free((char *)stmt->result_array, MYF(0));
     set_mem_error(&stmt->dbc->mysql);
     return handle_connection_error(stmt);
   }
@@ -223,7 +223,7 @@ create_fake_resultset(STMT *stmt, gptr rowval, size_t rowsize, my_ulonglong rowc
   @return SQL_SUCCESS or SQL_ERROR (and diag is set)
 */
 static SQLRETURN
-create_empty_fake_resultset(STMT *stmt, gptr rowval, size_t rowsize,
+create_empty_fake_resultset(STMT *stmt, MYSQL_ROW rowval, size_t rowsize,
                             MYSQL_FIELD *fields, uint fldcnt)
 {
   return create_fake_resultset(stmt, rowval, rowsize, 0 /* rowcnt */,
@@ -314,11 +314,11 @@ char *SQLTABLES_type_values[3][5]=
 
 MYSQL_FIELD SQLTABLES_fields[]=
 {
-    {"TABLE_CAT",     NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",   NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_NAME",    NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_TYPE",    NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,5, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"REMARKS",       NullS,"Catalog",NullS,NullS,NullS,NullS,NAME_LEN,11, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING}
+  MYODBC_FIELD_STRING("TABLE_CAT",   NAME_LEN, 0),
+  MYODBC_FIELD_STRING("TABLE_SCHEM", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("TABLE_NAME",  NAME_LEN, 0),
+  MYODBC_FIELD_STRING("TABLE_TYPE",  NAME_LEN, 0),
+  MYODBC_FIELD_STRING("REMARKS",     NAME_LEN, 0),
 };
 
 const uint SQLTABLES_FIELDS= array_elements(SQLTABLES_values);
@@ -372,7 +372,7 @@ MySQLTables(SQLHSTMT hstmt,
         stmt->order         = SQLTABLES_qualifier_order;
         stmt->order_count   = array_elements(SQLTABLES_qualifier_order);
         stmt->fix_fields    = fix_fields_copy;
-        stmt->array= (MYSQL_ROW) my_memdup((gptr) SQLTABLES_qualifier_values,
+        stmt->array= (MYSQL_ROW) my_memdup((char *)SQLTABLES_qualifier_values,
                                            sizeof(SQLTABLES_qualifier_values),
                                            MYF(0));
         if (!stmt->array)
@@ -389,7 +389,7 @@ MySQLTables(SQLHSTMT hstmt,
          !TableName[0] )
     {
         /* Return set of allowed Table owners */
-        return create_fake_resultset(stmt, (gptr) SQLTABLES_owner_values,
+        return create_fake_resultset(stmt, SQLTABLES_owner_values,
                                      sizeof(SQLTABLES_owner_values),
                                      1, SQLTABLES_fields, SQLTABLES_FIELDS);
     }
@@ -401,7 +401,7 @@ MySQLTables(SQLHSTMT hstmt,
           !myodbc_casecmp(TableType,"SQL_ALL_TABLE_TYPES",19)) )
     {
         /* Return set of TableType qualifiers */
-        return create_fake_resultset(stmt, (gptr) SQLTABLES_type_values,
+        return create_fake_resultset(stmt, (MYSQL_ROW)SQLTABLES_type_values,
                                      sizeof(SQLTABLES_type_values),
                                      sizeof(SQLTABLES_type_values) /
                                      sizeof(SQLTABLES_type_values[0]),
@@ -514,7 +514,7 @@ MySQLTables(SQLHSTMT hstmt,
     return SQL_SUCCESS;
 
 empty_set:
-  return create_empty_fake_resultset(stmt, (gptr) SQLTABLES_values,
+  return create_empty_fake_resultset(stmt, SQLTABLES_values,
                                      sizeof(SQLTABLES_values),
                                      SQLTABLES_fields,
                                      SQLTABLES_FIELDS);
@@ -540,24 +540,24 @@ char *SQLCOLUMNS_values[]= {
 
 MYSQL_FIELD SQLCOLUMNS_fields[]=
 {
-    {"TABLE_CAT",         NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_NAME",        NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"COLUMN_NAME",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"DATA_TYPE",         NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,5,5, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
-    {"TYPE_NAME",         NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,20,20, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"COLUMN_SIZE",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
-    {"BUFFER_LENGTH",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
-    {"DECIMAL_DIGITS",    NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
-    {"NUM_PREC_RADIX",    NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
-    {"NULLABLE",          NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,5,5, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
-    {"REMARKS",           NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"COLUMN_DEF",        NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"SQL_DATA_TYPE",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,5,5, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
-    {"SQL_DATETIME_SUB",  NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
-    {"CHAR_OCTET_LENGTH", NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
-    {"ORDINAL_POSITION",  NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_LONG},
-    {"IS_NULLABLE",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,3,3, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING}
+  MYODBC_FIELD_STRING("TABLE_CAT", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("TABLE_SCHEM", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("TABLE_NAME", NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("COLUMN_NAME", NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT("DATA_TYPE", NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("TYPE_NAME", 20, NOT_NULL_FLAG),
+  MYODBC_FIELD_LONG("COLUMN_SIZE", 0),
+  MYODBC_FIELD_LONG("BUFFER_LENGTH", 0),
+  MYODBC_FIELD_SHORT("DECIMAL_DIGITS", 0),
+  MYODBC_FIELD_SHORT("NUM_PREC_RADIX", 0),
+  MYODBC_FIELD_SHORT("NULLABLE", NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("REMARKS", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("COLUMN_DEF", NAME_LEN, 0),
+  MYODBC_FIELD_SHORT("SQL_DATA_TYPE", NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT("SQL_DATETIME_SUB", 0),
+  MYODBC_FIELD_LONG("CHAR_OCTET_LENGTH", 0),
+  MYODBC_FIELD_LONG("ORDINAL_POSITION", NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("IS_NULLABLE", 3, 0),
 };
 
 const uint SQLCOLUMNS_FIELDS= array_elements(SQLCOLUMNS_values);
@@ -756,7 +756,7 @@ MySQLColumns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
 
     rows+= mysql_num_fields(table_res);
 
-    stmt->result_array= (char **)my_realloc((gptr)stmt->result_array,
+    stmt->result_array= (char **)my_realloc((char *)stmt->result_array,
                                             sizeof(char *) *
                                             SQLCOLUMNS_FIELDS * rows,
                                             MYF(MY_ALLOW_ZERO_PTR));
@@ -891,7 +891,7 @@ MySQLColumns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
   return SQL_SUCCESS;
 
 empty_set:
-  return create_empty_fake_resultset(stmt, (gptr) SQLCOLUMNS_values,
+  return create_empty_fake_resultset(stmt, SQLCOLUMNS_values,
                                      sizeof(SQLCOLUMNS_values),
                                      SQLCOLUMNS_fields,
                                      SQLCOLUMNS_FIELDS);
@@ -910,19 +910,19 @@ char *SQLSTAT_values[]={NullS,NullS,"","",NullS,"",SS_type,"","","","",NullS,Nul
 
 MYSQL_FIELD SQLSTAT_fields[]=
 {
-    {"TABLE_CAT",         NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",       NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_NAME",        NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"NON_UNIQUE",        NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,1,1, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
-    {"INDEX_QUALIFIER",   NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"INDEX_NAME",        NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TYPE",              NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,1,1, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
-    {"ORDINAL_POSITION",  NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,1,2, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
-    {"COLUMN_NAME",       NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"ASC_OR_DESC",       NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,1,1, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"CARDINALITY",       NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,11,11, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
-    {"PAGES",             NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,9,9, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
-    {"FILTER_CONDITION",  NullS,"MySQL_Stat",NullS,NullS,NullS,NullS,10,10, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+  MYODBC_FIELD_STRING("TABLE_CAT", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("TABLE_SCHEM", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("TABLE_NAME", NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT("NON_UNIQUE", 0),
+  MYODBC_FIELD_STRING("INDEX_QUALIFIER", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("INDEX_NAME", NAME_LEN, 0),
+  MYODBC_FIELD_SHORT("TYPE", NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT("ORDINAL_POSITION", 0),
+  MYODBC_FIELD_STRING("COLUMN_NAME", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("ASC_OR_DESC", 1, 0),
+  MYODBC_FIELD_SHORT("CARDINALITY", 0),
+  MYODBC_FIELD_SHORT("PAGES", 0),
+  MYODBC_FIELD_STRING("FILTER_CONDITION", 10, 0),
 };
 
 const uint SQLSTAT_FIELDS= array_elements(SQLSTAT_fields);
@@ -998,7 +998,7 @@ MySQLStatistics(SQLHSTMT hstmt,
     stmt->order=       SQLSTAT_order;
     stmt->order_count= array_elements(SQLSTAT_order);
     stmt->fix_fields=  fix_fields_copy;
-    stmt->array= (MYSQL_ROW) my_memdup((gptr) SQLSTAT_values,
+    stmt->array= (MYSQL_ROW) my_memdup((char *)SQLSTAT_values,
                                        sizeof(SQLSTAT_values),MYF(0));
     if (!stmt->array)
     {
@@ -1035,7 +1035,7 @@ MySQLStatistics(SQLHSTMT hstmt,
     return SQL_SUCCESS;
 
 empty_set:
-  return create_empty_fake_resultset(stmt, (gptr) SQLSTAT_values,
+  return create_empty_fake_resultset(stmt, SQLSTAT_values,
                                      sizeof(SQLSTAT_values),
                                      SQLSTAT_fields, SQLSTAT_FIELDS);
 }
@@ -1108,13 +1108,13 @@ char *SQLTABLES_priv_values[]=
 
 MYSQL_FIELD SQLTABLES_priv_fields[]=
 {
-    {"TABLE_CAT",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",   NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_NAME",    NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"GRANTOR",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"GRANTEE",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"PRIVILEGE",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"IS_GRANTABLE",  NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+  MYODBC_FIELD_STRING("TABLE_CAT", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("TABLE_SCHEM", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("TABLE_NAME", NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("GRANTOR", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("GRANTEE", NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("PRIVILEGE", NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("IS_GRANTABLE", NAME_LEN, 0),
 };
 
 const uint SQLTABLES_PRIV_FIELDS= array_elements(SQLTABLES_priv_values);
@@ -1243,17 +1243,16 @@ char *SQLCOLUMNS_priv_values[]=
     NULL,"",NULL,NULL,NULL,NULL,NULL,NULL
 };
 
-
 MYSQL_FIELD SQLCOLUMNS_priv_fields[]=
 {
-    {"TABLE_CAT",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",   NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_NAME",    NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"COLUMN_NAME",   NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"GRANTOR",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"GRANTEE",       NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"PRIVILEGE",     NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"IS_GRANTABLE",  NullS,"MySQL_Catalog",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+  MYODBC_FIELD_STRING("TABLE_CAT", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("TABLE_SCHEM", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("TABLE_NAME", NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("COLUMN_NAME", NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("GRANTOR", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("GRANTEE", NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("PRIVILEGE", NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("IS_GRANTABLE", NAME_LEN, 0),
 };
 
 
@@ -1349,14 +1348,14 @@ SQLSpecialColumns
 
 MYSQL_FIELD SQLSPECIALCOLUMNS_fields[]=
 {
-    {"SCOPE",         NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,5,5, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
-    {"COLUMN_NAME",   NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"DATA_TYPE",     NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,5,5, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
-    {"TYPE_NAME",     NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,20,20, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"COLUMN_SIZE",   NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,7,7, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
-    {"BUFFER_LENGTH", NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,7,7, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_LONG},
-    {"DECIMAL_DIGITS",NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,3,3, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
-    {"PSEUDO_COLUMN", NullS,"MySQL_SpecialColumns",NullS,NullS,NullS,NullS,3,3, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT}
+  MYODBC_FIELD_SHORT("SCOPE", 0),
+  MYODBC_FIELD_STRING("COLUMN_NAME", NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT("DATA_TYPE", NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("TYPE_NAME", 20, NOT_NULL_FLAG),
+  MYODBC_FIELD_LONG("COLUMN_SIZE", 0),
+  MYODBC_FIELD_LONG("BUFFER_LENGTH", 0),
+  MYODBC_FIELD_LONG("DECIMAL_DIGITS", 0),
+  MYODBC_FIELD_SHORT("PSEUDO_COLUMN", 0),
 };
 
 char *SQLSPECIALCOLUMNS_values[]= {
@@ -1553,12 +1552,12 @@ SQLPrimaryKeys
 
 MYSQL_FIELD SQLPRIM_KEYS_fields[]=
 {
-    {"TABLE_CAT",     NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_SCHEM",   NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"TABLE_NAME",    NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN,  0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"COLUMN_NAME",   NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN,  0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"KEY_SEQ",       NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
-    {"PK_NAME",       NullS,"MySQL_Primary_keys",NullS,NullS,NullS,NullS,128,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
+  MYODBC_FIELD_STRING("TABLE_CAT", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("TABLE_SCHEM", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("TABLE_NAME", NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("COLUMN_NAME", NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT("KEY_SEQ", NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("PK_NAME", 128, 0),
 };
 
 const uint SQLPRIM_KEYS_FIELDS= array_elements(SQLPRIM_KEYS_fields);
@@ -1644,20 +1643,20 @@ SQLForeignJeys
 */
 MYSQL_FIELD SQLFORE_KEYS_fields[]=
 {
-    {"PKTABLE_CAT",   NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"PKTABLE_SCHEM", NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"PKTABLE_NAME",  NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"PKCOLUMN_NAME", NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"FKTABLE_CAT",   NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"FKTABLE_SCHEM", NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"FKTABLE_NAME",  NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"FKCOLUMN_NAME", NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,NAME_LEN,NAME_LEN, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_VAR_STRING},
-    {"KEY_SEQ",       NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, NOT_NULL_FLAG,0,0,MYSQL_TYPE_SHORT},
-    {"UPDATE_RULE",   NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
-    {"DELETE_RULE",   NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
-    {"FK_NAME",       NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,128,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"PK_NAME",       NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,128,0, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_VAR_STRING},
-    {"DEFERRABILITY", NullS,"MySQL_Foreign_keys",NullS,NullS,NullS,NullS,2,2, 0,0,0,0,0,0,0, 0,0,0,MYSQL_TYPE_SHORT},
+  MYODBC_FIELD_STRING("PKTABLE_CAT", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("PKTABLE_SCHEM", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("PKTABLE_NAME", NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("PKCOLUMN_NAME", NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("FKTABLE_CAT", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("FKTABLE_SCHEM", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("FKTABLE_NAME", NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("FKCOLUMN_NAME", NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT("KEY_SEQ", NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT("UPDATE_RULE", 0),
+  MYODBC_FIELD_SHORT("DELETE_RULE", 0),
+  MYODBC_FIELD_STRING("FK_NAME", NAME_LEN, 0),
+  MYODBC_FIELD_STRING("PK_NAME", NAME_LEN, 0),
+  MYODBC_FIELD_SHORT("DEFERRABILITY", 0),
 };
 
 const uint SQLFORE_KEYS_FIELDS= array_elements(SQLFORE_KEYS_fields);
@@ -1872,13 +1871,15 @@ MySQLForeignKeys(SQLHSTMT hstmt,
 
                 } while ( (comment_token = strchr(comment_token,';')) );/* multi table ref */
             }
-        } 
-        
+        }
+
         /* Copy only the elements that contain fk names */
-        stmt->result_array= (MYSQL_ROW) my_memdup((gptr) tempdata,
-                                                sizeof(char*)*SQLFORE_KEYS_FIELDS*row_count, 
-                                                MYF(0)); 
-        my_free((gptr)tempdata, MYF(0));
+        stmt->result_array= (MYSQL_ROW)my_memdup((char *)tempdata,
+                                                 sizeof(char *) *
+                                                 SQLFORE_KEYS_FIELDS *
+                                                 row_count,
+                                                 MYF(0));
+        my_free((char *)tempdata, MYF(0));
         if (!stmt->result_array)
         {
           set_mem_error(&stmt->dbc->mysql);
@@ -1894,7 +1895,7 @@ MySQLForeignKeys(SQLHSTMT hstmt,
     return SQL_SUCCESS;
 
 empty_set:
-  return create_empty_fake_resultset(stmt, (gptr) SQLFORE_KEYS_values,
+  return create_empty_fake_resultset(stmt, SQLFORE_KEYS_values,
                                      sizeof(SQLFORE_KEYS_values),
                                      SQLFORE_KEYS_fields,
                                      SQLFORE_KEYS_FIELDS);

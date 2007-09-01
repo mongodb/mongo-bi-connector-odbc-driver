@@ -168,8 +168,8 @@ SQLRETURN my_SQLPrepare(SQLHSTMT hstmt, SQLCHAR *szSqlStr, SQLINTEGER cbSqlStr,
         if (param_count >= stmt->params.elements)
         {
           PARAM_BIND tmp_param;
-          bzero((gptr) &tmp_param,sizeof(tmp_param));
-          if (push_dynamic(&stmt->params,(gptr) &tmp_param))
+          bzero(&tmp_param, sizeof(tmp_param));
+          if (push_dynamic(&stmt->params, (DYNAMIC_ELEMENT)&tmp_param))
           {
             return set_error(stmt, MYERR_S1001, NULL, 4001);
           }
@@ -236,10 +236,10 @@ SQLRETURN SQL_API my_SQLBindParameter( SQLHSTMT     hstmt,
             old->alloced= 0;
             my_free(old->value,MYF(0));
         }
-        memcpy((gptr) &param,(gptr) old,sizeof(param));
+        memcpy(&param, old, sizeof(param));
     }
     else
-        bzero((gptr)&param, sizeof(param));
+        bzero(&param, sizeof(param));
     /* Simply record the values. These are used later (SQLExecute) */
     param.used= 1;
     param.SqlType= fSqlType;
@@ -249,7 +249,7 @@ SQLRETURN SQL_API my_SQLBindParameter( SQLHSTMT     hstmt,
     param.actual_len= pcbValue;
     param.real_param_done= TRUE;
 
-    if (set_dynamic(&stmt->params,(gptr) &param,ipar))
+    if (set_dynamic(&stmt->params, (DYNAMIC_ELEMENT)&param, ipar))
     {
         set_error(stmt,MYERR_S1001,NULL,4001);
         return SQL_ERROR;

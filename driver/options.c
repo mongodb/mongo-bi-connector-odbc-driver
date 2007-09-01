@@ -66,7 +66,7 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
             else if (((STMT FAR*)Handle)->dbc->flag & FLAG_DYNAMIC_CURSOR)
             {
                 if (ValuePtr != (SQLPOINTER)SQL_CURSOR_KEYSET_DRIVEN)
-                    options->cursor_type= (SQLUINTEGER)ValuePtr;
+                    options->cursor_type= (SQLUINTEGER)(SQLULEN)ValuePtr;
 
                 else
                 {
@@ -79,7 +79,7 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
             {
                 if (ValuePtr == (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY ||
                     ValuePtr == (SQLPOINTER)SQL_CURSOR_STATIC)
-                    options->cursor_type= (SQLUINTEGER)ValuePtr;
+                    options->cursor_type= (SQLUINTEGER)(SQLULEN)ValuePtr;
 
                 else
                 {
@@ -108,7 +108,7 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
             break;
 
         case SQL_ATTR_ROW_BIND_TYPE:
-            options->bind_type= (SQLUINTEGER) ValuePtr;
+            options->bind_type= (SQLUINTEGER)(SQLULEN)ValuePtr;
             break;
 
         case SQL_ATTR_SIMULATE_CURSOR:
@@ -287,7 +287,7 @@ MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
                }
                else
                {
-                  dbc->login_timeout= (SQLUINTEGER) ValuePtr;
+                  dbc->login_timeout= (SQLUINTEGER)(SQLULEN)ValuePtr;
                   return SQL_SUCCESS;
                }
             }
@@ -326,7 +326,7 @@ MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
                         return SQL_ERROR;
                     }
                 }
-                my_free((gptr) dbc->database,MYF(0));
+                my_free(dbc->database,MYF(0));
                 dbc->database= my_strdup(db,MYF(MY_WME));
                 pthread_mutex_unlock(&dbc->lock);
             }
@@ -357,7 +357,7 @@ MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
         case SQL_ATTR_TXN_ISOLATION:
             if (!is_connected(dbc))  /* no connection yet */
             {
-                dbc->txn_isolation= (SQLINTEGER)ValuePtr;
+                dbc->txn_isolation= (SQLINTEGER)(SQLLEN)ValuePtr;
                 return SQL_SUCCESS;
             }
             if (trans_supported(dbc))
@@ -365,17 +365,17 @@ MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
                 char buff[80];
                 const char *level;
 
-                if ((SQLINTEGER)ValuePtr & SQL_TXN_SERIALIZABLE)
+                if ((SQLINTEGER)(SQLLEN)ValuePtr & SQL_TXN_SERIALIZABLE)
                     level="SERIALIZABLE";
-                else if ((SQLINTEGER)ValuePtr & SQL_TXN_REPEATABLE_READ)
+                else if ((SQLINTEGER)(SQLLEN)ValuePtr & SQL_TXN_REPEATABLE_READ)
                     level="REPEATABLE READ";
-                else if ((SQLINTEGER)ValuePtr & SQL_TXN_REPEATABLE_READ)
+                else if ((SQLINTEGER)(SQLLEN)ValuePtr & SQL_TXN_REPEATABLE_READ)
                     level="READ COMMITTED";
                 else
                     level="READ UNCOMMITTED";
                 sprintf(buff,"SET SESSION TRANSACTION ISOLATION LEVEL %s",level);
                 if (odbc_stmt(dbc,buff) == SQL_SUCCESS)
-                    dbc->txn_isolation= (SQLINTEGER)ValuePtr;
+                    dbc->txn_isolation= (SQLINTEGER)(SQLLEN)ValuePtr;
             }
             break;
 
@@ -406,7 +406,6 @@ MySQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attrib, SQLCHAR **char_attr,
 {
   DBC *dbc= (DBC *)hdbc;
   SQLRETURN result= SQL_SUCCESS;
-  SQLPOINTER vparam= 0;
 
   switch (attrib) {
   case SQL_ATTR_ACCESS_MODE:
@@ -441,7 +440,7 @@ MySQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attrib, SQLCHAR **char_attr,
       return set_handle_error(SQL_HANDLE_DBC, hdbc, MYERR_S1000,
                               "Unable to get current catalog", 0);
     else
-      *char_attr= dbc->database;
+      *char_attr= (SQLCHAR *)dbc->database;
     break;
 
   case SQL_ATTR_LOGIN_TIMEOUT:
@@ -565,7 +564,7 @@ MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
 
         case SQL_ATTR_ROW_ARRAY_SIZE:
         case SQL_ROWSET_SIZE:
-            options->rows_in_set= (SQLUINTEGER)ValuePtr;
+            options->rows_in_set= (SQLUINTEGER)(SQLULEN)ValuePtr;
             break;
 
         case SQL_ATTR_ROW_NUMBER:
@@ -586,7 +585,7 @@ MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
             break;
 
         case SQL_ATTR_SIMULATE_CURSOR:
-            options->simulateCursor= (SQLUINTEGER)ValuePtr;
+            options->simulateCursor= (SQLUINTEGER)(SQLULEN)ValuePtr;
             break;
 
             /*
@@ -670,7 +669,7 @@ MySQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
             break;
 
         case SQL_ATTR_SIMULATE_CURSOR:
-            ValuePtr= (SQLUSMALLINT *)options->simulateCursor;
+            *(SQLUINTEGER *)ValuePtr= options->simulateCursor;
             break;
 
             /*
@@ -732,7 +731,7 @@ SQLSetEnvAttr(SQLHENV    henv,
     switch (Attribute)
     {
         case SQL_ATTR_ODBC_VERSION:
-            ((ENV FAR *)henv)->odbc_ver= (SQLINTEGER)ValuePtr;
+            ((ENV FAR *)henv)->odbc_ver= (SQLINTEGER)(SQLLEN)ValuePtr;
             break;
 
         case SQL_ATTR_OUTPUT_NTS:

@@ -459,7 +459,7 @@ SQLRETURN do_dummy_parambind(SQLHSTMT hstmt)
             param->buffer= "NULL";
             param->actual_len= 0;
 
-            if ( set_dynamic(&stmt->params,(gptr)param,nparam) )
+            if (set_dynamic(&stmt->params, (DYNAMIC_ELEMENT)param, nparam))
                 return set_stmt_error(stmt,"S1001","Not enough memory",4001);
         }
     }
@@ -845,7 +845,7 @@ SQLRETURN SQL_API SQLBindCol( SQLHSTMT      hstmt,
                 stmt->bound_columns= 0;
                 return set_error(stmt,MYERR_S1001,NULL,4001);
             }
-            bzero((gptr) (stmt->bind+stmt->bound_columns),
+            bzero((stmt->bind+stmt->bound_columns),
                   (icol+1-stmt->bound_columns)*sizeof(BIND));
             stmt->bound_columns= icol+1;
         }
@@ -907,11 +907,11 @@ my_bool set_dynamic_result(STMT FAR *stmt)
         return 1;
 
     pthread_mutex_lock(&stmt->dbc->lock);
-    x_free((gptr) stmt->odbc_types);
+    x_free(stmt->odbc_types);
     if (!stmt->fake_result)
       mysql_free_result(stmt->result);
     else
-      x_free((gptr)stmt->result);
+      x_free(stmt->result);
     stmt->result= 0;
     stmt->fake_result= 0;
     stmt->odbc_types= 0;
