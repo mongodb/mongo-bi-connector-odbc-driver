@@ -595,7 +595,7 @@ convert_to_out:
 
   @param[in]     stmt        Pointer to statement
   @param[out]    result      Buffer for result
-  @param[in]     result_len  Size of result buffer (in characters)
+  @param[in]     avail_bytes Size of result buffer (in characters)
   @param[out]    used_len    Pointer to buffer for storing amount of buffer used
   @param[in]     field       Field being stored
   @param[in]     src         Source data for result
@@ -605,7 +605,7 @@ convert_to_out:
 */
 SQLRETURN
 copy_wchar_result(STMT *stmt,
-                  SQLWCHAR *result, SQLINTEGER result_len, SQLLEN *avail_len,
+                  SQLWCHAR *result, SQLINTEGER result_len, SQLLEN *avail_bytes,
                   MYSQL_FIELD *field, char *src, long src_bytes)
 {
   SQLRETURN rc= SQL_SUCCESS;
@@ -773,15 +773,15 @@ convert_to_out:
 
   if (stmt->getdata.dst_bytes == (ulong)~0L)
   {
-    stmt->getdata.dst_bytes= used_chars;
+    stmt->getdata.dst_bytes= used_chars * sizeof(SQLWCHAR);
     stmt->getdata.dst_offset= 0;
   }
 
-  if (avail_len)
-    *avail_len= stmt->getdata.dst_bytes - stmt->getdata.dst_offset;
+  if (avail_bytes)
+    *avail_bytes= stmt->getdata.dst_bytes - stmt->getdata.dst_offset;
 
   stmt->getdata.dst_offset+= min((ulong)(result_len ? result_len - 1 : 0),
-                                 used_chars);
+                                 used_chars) * sizeof(SQLWCHAR);
 
   /* Did we truncate the data? */
   if (stmt->getdata.dst_bytes > stmt->getdata.dst_offset)

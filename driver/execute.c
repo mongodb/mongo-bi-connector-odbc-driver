@@ -314,6 +314,9 @@ char *insert_param(DBC *dbc, char *to, PARAM_BIND *param)
             char *to;
             int i= 0;
 
+            /* length is in bytes, we want chars */
+            length= length / sizeof(SQLWCHAR);
+
             /* Use buff if it is big enough, otherwise alloc some space. */
             if (sizeof(buff) >= (size_t)length * 4)
               to= buff;
