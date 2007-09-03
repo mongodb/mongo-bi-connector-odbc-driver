@@ -262,9 +262,14 @@ char *insert_param(DBC *dbc, char *to,PARAM_BIND *param)
             else if ( param->ValueMax )
             {
 #ifndef strnlen
-                length=strlen(data);
-                if ( length > param->ValueMax )
-                    length = param->ValueMax;
+                length= strlen(data);
+                /* 
+                  For safety reasons add checking for SQL_SETPARAM_VALUE_MAX (-1)
+                  The negative length can be passed through the deprecated 
+                  function SQLSetParam 
+                */
+                if (length != SQL_SETPARAM_VALUE_MAX && length > param->ValueMax)
+                    length= param->ValueMax;
 #else
                 length=strnlen(data,param->ValueMax);
 #endif
