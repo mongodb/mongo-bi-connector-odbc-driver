@@ -1,0 +1,204 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG1 DIALOGEX 0, 0, 279, 405
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "ODBC Connection Paramentes",IDC_STATIC,18,53,248,148
+    EDITTEXT        IDC_EDIT_drvname,98,69,143,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_drvdesc,98,89,143,14,ES_AUTOHSCROLL
+    EDITTEXT        10002,98,121,85,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_port,212,121,28,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_EDIT_username,98,140,85,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_password,98,158,85,14,ES_PASSWORD | ES_AUTOHSCROLL
+    RTEXT           "Data Source Name:",IDC_STATIC,23,72,67,8
+    RTEXT           "Description:",IDC_STATIC,23,92,67,8
+    RTEXT           "Server:",IDC_STATIC,23,123,67,8
+    RTEXT           "Port:",IDC_STATIC,187,123,19,8
+    RTEXT           "User:",IDC_STATIC,23,143,67,8
+    RTEXT           "Password:",IDC_STATIC,23,162,67,8
+    RTEXT           "Database:",IDC_STATIC,23,179,67,8
+    CONTROL         "",IDC_TAB1,"SysTabControl32",WS_TABSTOP,17,214,249,154
+    DEFPUSHBUTTON   "OK",IDOK,111,375,50,15
+    PUSHBUTTON      "&Cancel",IDCANCEL,165,375,50,15
+    PUSHBUTTON      "&Test",IDC_BUTTON_TEST,199,175,41,14
+    PUSHBUTTON      "&Details >>",IDC_BUTTON_DETAILS,17,376,50,14
+    PUSHBUTTON      "&Help",IDC_BUTTON_HELP,217,375,49,15
+    CONTROL         130,IDC_STATIC,"Static",SS_BITMAP,0,0,279,39
+    COMBOBOX        IDC_EDIT_dbname,98,176,85,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_TAB1 DIALOGEX 0, 0, 209, 151
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "Don't Optimize Column Width",IDC_CHECK_dont_optimize_column_width,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,7,148,10
+    CONTROL         "Return Matching Rows",IDC_CHECK_return_matching_rows,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,22,148,10
+    CONTROL         "Allow Big Results",IDC_CHECK_allow_big_results,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,38,148,10
+    CONTROL         "Use Compressed Protocol",IDC_CHECK_use_compressed_protocol,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,54,148,10
+    CONTROL         "Change BIGINT Columns To Int",IDC_CHECK_change_bigint_columns_to_int,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,70,148,10
+    CONTROL         "Safe",IDC_CHECK_safe,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,86,148,10
+    CONTROL         "Enable To Reconnect",IDC_CHECK_enable_auto_reconnect,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,102,148,10
+    CONTROL         "Enable auto_increment NULL search",IDC_CHECK_enable_auto_increment_null_search,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,116,148,10
+END
+
+IDD_TAB2 DIALOGEX 0, 0, 209, 151
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "Don't Prompt Upon Connect",IDC_CHECK_dont_prompt_upon_connect,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,7,148,10
+    CONTROL         "Enable Dynamic Cursor",IDC_CHECK_enable_dynamic_cursor,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,22,148,10
+    CONTROL         "Ignore ? In Name Table",IDC_CHECK_ignore_N_in_name_table,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,38,148,10
+    CONTROL         "User Manager Cursor",IDC_CHECK_user_manager_cursor,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,54,148,10
+    CONTROL         "Don't Use Set Locale",IDC_CHECK_dont_use_set_locale,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,70,148,10
+    CONTROL         "Pad Char To Full Length",IDC_CHECK_pad_char_to_full_length,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,86,148,10
+    CONTROL         "Don't Cache Result",IDC_CHECK_dont_cache_result,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,102,148,10
+END
+
+IDD_TAB3 DIALOGEX 0, 0, 209, 151
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "Return Table Names For SQLDesribeCol",IDC_CHECK_return_table_names_for_SqlDesribeCol,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,7,148,10
+    CONTROL         "Ignore Space After Function Names",IDC_CHECK_ignore_space_after_function_names,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,22,148,10
+    CONTROL         "Force Use Of Named Pipes",IDC_CHECK_force_use_of_named_pipes,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,38,148,10
+    CONTROL         "No Catalog",IDC_CHECK_no_catalog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,54,148,10
+    CONTROL         "Read Options From my.cnf",IDC_CHECK_read_options_from_mycnf,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,70,148,10
+    CONTROL         "Disable Transactions",IDC_CHECK_disable_transactions,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,86,148,10
+    CONTROL         "Force Use Of Forward Only Cursors",IDC_CHECK_force_use_of_forward_only_cursors,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,102,148,10
+END
+
+IDD_TAB4 DIALOGEX 0, 0, 209, 151
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "Trace Drivers Calls To myodbc.log",IDC_CHECK_trace_drivers_calls,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,7,148,10
+    CONTROL         "Save Queries To myodbc.sql",IDC_CHECK_save_queries,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,22,148,10
+END
+
+IDD_TAB5 DIALOGEX 0, 0, 209, 151
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_EDIT_sslkey,89,11,97,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_sslcert,89,27,97,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_sslca,89,41,97,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_sslcapath,89,57,97,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_EDIT_sslcipher,89,72,97,14,ES_AUTOHSCROLL
+    RTEXT           "SSL Key",IDC_STATIC,12,11,67,14
+    RTEXT           "SSL Certificate",IDC_STATIC,2,27,78,14
+    RTEXT           "SSL Certificate Authotity",IDC_STATIC,0,41,79,14
+    RTEXT           "SSL CA Path",IDC_STATIC,18,56,61,14
+    RTEXT           "SSL Cipher",IDC_STATIC,12,72,67,14
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""windows.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_LOGO                BITMAP                  "connector_odbc_header.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    IDC_DIALOG              "DIALOG"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

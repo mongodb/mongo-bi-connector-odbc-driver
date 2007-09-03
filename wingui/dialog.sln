@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dialog", "dialog\dialog.vcproj", "{2101C1F1-9C19-4F19-9EA8-6DCA910374DA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{95E5157E-10F1-41C8-B2E7-AA82D491B563} = {95E5157E-10F1-41C8-B2E7-AA82D491B563}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "odbcdialogparams", "odbcdialogparams\odbcdialogparams.vcproj", "{95E5157E-10F1-41C8-B2E7-AA82D491B563}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2101C1F1-9C19-4F19-9EA8-6DCA910374DA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2101C1F1-9C19-4F19-9EA8-6DCA910374DA}.Debug|Win32.Build.0 = Debug|Win32
+		{2101C1F1-9C19-4F19-9EA8-6DCA910374DA}.Release|Win32.ActiveCfg = Release|Win32
+		{2101C1F1-9C19-4F19-9EA8-6DCA910374DA}.Release|Win32.Build.0 = Release|Win32
+		{95E5157E-10F1-41C8-B2E7-AA82D491B563}.Debug|Win32.ActiveCfg = Debug|Win32
+		{95E5157E-10F1-41C8-B2E7-AA82D491B563}.Debug|Win32.Build.0 = Debug|Win32
+		{95E5157E-10F1-41C8-B2E7-AA82D491B563}.Release|Win32.ActiveCfg = Release|Win32
+		{95E5157E-10F1-41C8-B2E7-AA82D491B563}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -37,7 +37,7 @@
 #include "../MYODBC_CONF.h"
 #include "../MYODBC_ODBC.h"
 
-#if defined(WIN32) && !defined(strcasecmp)
+#ifdef WIN32
 #define strcasecmp( a, b ) stricmp( a, b )
 #endif
 
@@ -62,11 +62,12 @@
 #endif
 
 /* Could use DRIVER_NAME but trying to keep dependency upon driver specific code to a min */
-#define MYODBCINST_DRIVER_NAME "MySQL ODBC 3.51 Driver"
+#define MYODBCINST_DRIVER_NAME L"MySQL ODBC 3.51 Driver"
 
 /* max dsn's we can have in odbc sys info - need to get rid of this limit */
 #define MYODBCUTIL_MAX_DSN_NAMES 50
 
+#define MYODBC_DB_NAME_MAX 255
 /*!
     \internal
     \brief      Delimiter type used for an attribute string.
@@ -232,7 +233,6 @@ BOOL                    MYODBCUtilInsertStr( char *pszStr, LPCSTR pszStrIn, SQLS
 #  define _global_strndup(s, n) strnglobaldup(s, n)
 #  define _global_alloc(n) GlobalAlloc(GMEM_FIXED, (n))
 #  define _global_free(p) GlobalFree(p)
-   char *myodbc_strndup( const char *s, size_t n );
 #else
 #  define _global_strdup(s) strdup(s)
 #  ifdef HAVE_STRNDUP
