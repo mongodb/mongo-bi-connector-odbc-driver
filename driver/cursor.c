@@ -838,7 +838,7 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
         param.used= 1;
         param.SqlType= get_sql_data_type(stmt, field, NULL);
         param.CType= bind->fCType;
-        param.buffer= bind->rgbValue+irow*bind->cbValueMax;
+        param.buffer= ((char *)bind->rgbValue)+irow*bind->cbValueMax;
         param.ValueMax= bind->cbValueMax;
         /*
             Check when SQL_LEN_DATA_AT_EXEC() macro was used instead of data length
