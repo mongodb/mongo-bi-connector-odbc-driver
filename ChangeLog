@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * The specified length of the username and authentication parameters to
+    SQLConnect() were not being honored. (Bug #30774)
   * SQLGetData() will now always return SQL_NO_DATA_FOUND on second call
     when no data left, even if requested size is 0. (Bug#30520)
   * SQLSetParam() caused memory allocation errors due to driver manager's 

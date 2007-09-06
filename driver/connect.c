@@ -316,9 +316,17 @@ SQLRETURN SQL_API SQLConnect(SQLHDBC  hdbc,
 
   /* Set username and password if they were provided. */
   if (szUID && szUID[0])
-    ds->pszUSER= _global_strdup((char *)szUID);
+  {
+    if (cbUID == SQL_NTS)
+      cbUID= strlen((char *)szUID);
+    ds->pszUSER= _global_strndup((char *)szUID, cbUID);
+  }
   if (szAuth && szAuth[0])
-    ds->pszPASSWORD= _global_strdup((char *)szAuth);
+  {
+    if (cbAuth == SQL_NTS)
+      cbAuth= strlen((char *)szAuth);
+    ds->pszPASSWORD= _global_strndup((char *)szAuth, cbAuth);
+  }
 
   /*
     We don't care if this fails, because we might be able to get away

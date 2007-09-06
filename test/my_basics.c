@@ -416,6 +416,41 @@ DECLARE_TEST(t_bug7445)
 }
 
 
+/**
+ Bug #30774: Username argument to SQLConnect used incorrectly
+*/
+DECLARE_TEST(t_bug30774)
+{
+  SQLHDBC hdbc1;
+  SQLHSTMT hstmt1;
+  SQLCHAR username[80]= {0};
+
+  strcat((char *)username, (char *)myuid);
+  strcat((char *)username, "!!!");
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+  ok_con(hdbc1, SQLConnect(hdbc1, mydsn, SQL_NTS,
+                           username, strlen((char *)myuid),
+                           mypwd, SQL_NTS));
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_sql(hstmt1, "SELECT USER()");
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  my_fetch_str(hstmt1, username, 1);
+  printMessage("username: %s", username);
+  is(!strstr((char *)username, "!!!"));
+
+  expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -428,6 +463,7 @@ BEGIN_TESTS
   ADD_TEST(charset_utf8)
   ADD_TEST(charset_gbk)
   ADD_TEST(t_bug7445)
+  ADD_TEST(t_bug30774)
 END_TESTS
 
 
