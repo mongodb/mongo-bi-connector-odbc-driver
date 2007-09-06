@@ -303,7 +303,7 @@ DECLARE_TEST(charset_utf8)
   is_num(my_fetch_int(hstmt1, 16), 30);
 
   ok_stmt(hstmt1, SQLFetch(hstmt1));
-  is_num(my_fetch_int(hstmt1, 7), 20);
+  is_num(my_fetch_int(hstmt1, 7), 10);
   is_num(my_fetch_int(hstmt1, 8), 10);
   is_num(my_fetch_int(hstmt1, 16), 10);
 

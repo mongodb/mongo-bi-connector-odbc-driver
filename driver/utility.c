@@ -631,11 +631,11 @@ SQLLEN get_column_size(STMT *stmt __attribute__((unused)), MYSQL_FIELD *field,
   case MYSQL_TYPE_BIT:
     /*
       We treat a BIT(n) as a SQL_BIT if n == 1, otherwise we treat it
-      as a SQL_BINARY, so length is (bits + 7) / 8. * 2
+      as a SQL_BINARY, so length is (bits + 7) / 8.
     */
     if (length == 1)
       return 1;
-    return (length + 7) / 8 * 2;
+    return (length + 7) / 8;
 
   case MYSQL_TYPE_ENUM:
   case MYSQL_TYPE_SET:
@@ -648,7 +648,7 @@ SQLLEN get_column_size(STMT *stmt __attribute__((unused)), MYSQL_FIELD *field,
   case MYSQL_TYPE_BLOB:
   case MYSQL_TYPE_GEOMETRY:
     if (field->charsetnr == 63)
-      return length * 2;
+      return length;
     else
       return length / mbmaxlen;
   }
