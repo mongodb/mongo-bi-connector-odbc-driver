@@ -23,7 +23,6 @@
 MYODBCSetupDataSourceTab3a::MYODBCSetupDataSourceTab3a( QWidget *pwidgetParent )
     : QWidget( pwidgetParent )
 {
-    QString         stringDontOptimizeColumnWidth( tr("The client can't handle that MyODBC returns the real width of a column.") );
     QString         stringReturnMatchingRows( tr("The client can't handle that MySQL returns the true value of affected rows. If this flag is set, MySQL returns ``found rows'' instead. You must have MySQL 3.21.14 or newer to get this to work.") );
     QString         stringAllowBigResults( tr("Don't set any packet limit for results and parameters.") );
     QString         stringUseCompressedProtocol( tr("Use the compressed client/server protocol.") );
@@ -40,15 +39,6 @@ MYODBCSetupDataSourceTab3a::MYODBCSetupDataSourceTab3a( QWidget *pwidgetParent )
     playoutFields->setMargin( 20 );
     playoutFields->setSpacing( 5 );
     playoutFields->addStretch( 10 );
-
-    pcheckboxDontOptimizeColumnWidth = new MYODBCSetupCheckBox( tr("Don't Optimize Column Width"), this );
-    pcheckboxDontOptimizeColumnWidth->setAssistText( stringDontOptimizeColumnWidth );
-    playoutFields->addWidget( pcheckboxDontOptimizeColumnWidth );
-#if QT_VERSION >= 0x040000
-    pcheckboxDontOptimizeColumnWidth->setToolTip( stringDontOptimizeColumnWidth );
-#else
-    QToolTip::add( pcheckboxDontOptimizeColumnWidth, stringDontOptimizeColumnWidth );
-#endif
 
     pcheckboxReturnMatchingRows = new MYODBCSetupCheckBox( tr("Return Matching Rows"), this );
     pcheckboxReturnMatchingRows->setAssistText( stringReturnMatchingRows );

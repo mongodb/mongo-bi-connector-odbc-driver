@@ -42,7 +42,6 @@ public:
     MYODBCSetupDataSourceTab3a( QWidget *pwidgetParent );
 
 protected:
-    MYODBCSetupCheckBox *pcheckboxDontOptimizeColumnWidth;
     MYODBCSetupCheckBox *pcheckboxReturnMatchingRows;
     MYODBCSetupCheckBox *pcheckboxAllowBigResults;
     MYODBCSetupCheckBox *pcheckboxUseCompressedProtocol;

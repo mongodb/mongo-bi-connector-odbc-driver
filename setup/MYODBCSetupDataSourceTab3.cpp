@@ -50,8 +50,6 @@ unsigned int MYODBCSetupDataSourceTab3::getFlags()
 {
     unsigned int nFlags = 0;
 
-    if ( ptab3a->pcheckboxDontOptimizeColumnWidth->isChecked() )
-        nFlags |= 1 << 0;
     if ( ptab3a->pcheckboxReturnMatchingRows->isChecked() )
         nFlags |= 1 << 1;
     if ( ptab3a->pcheckboxAllowBigResults->isChecked() )
