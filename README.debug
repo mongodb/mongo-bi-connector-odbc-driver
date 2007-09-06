@@ -14,9 +14,8 @@ programmers - particularly driver developers.
 Debugging the driver can be done in a number of ways but is
 not usually done by stepping through the source code in debug
 mode of gdb or an IDE for example. The most common method is to
-get the driver manager, the driver (or both) to produce trace 
-information showing the calls being made, the return codes and 
-other useful information.
+get the driver manager to produce trace information showing the
+calls being made, the return codes and other useful information.
 
 
 COMPILER DEBUG INFORMATION
@@ -65,100 +64,6 @@ Invoke the ODBCConfig GUI. This can be done from the command-line
 in a shell. Turn ODBC Trace on/off and close the application.
 
 
-DRIVER TRACE
----------------------------------------------------------------
-
-Connector/ODBC is capable of producing a trace of its own. This 
-trace is similar to the ODBC Trace but reflects the requests 
-actually being made to the driver. This may reveal unexpected 
-mappings between the calls to the DM and the DM's calls to the
-driver. The driver trace is also most capapble of showing details 
-about what the driver is doing to meet the requests made upon it.
-
-A driver trace can be used with or without the use of a DM. This 
-is of particular interest to applications which link directly to 
-the driver but is also very useful complement to the ODBC Trace.
-
-NOTE:   Some platforms will cache dll's in memory so simply
-        replacing them on disk may not mean you are going to
-        use the new dll. 
-        
-The following settings affect the behaviour of the driver trace;
-
-DBUG_OFF 
---------
-
-This compiler definition indicates whether or not we want to
-include MySQL client trace options in the resulting binaries. This
-feature is turned on by default - passing/defining DBUG_OFF to
-the compiler turns this feature off. Turning it off may make the
-driver perform a little bit faster.
-
-This is, 99%, implemented in the MySQL client.
-
-see defines.pri 
-
-MYODBC_LOG 
-----------
-
-This environment variable, if set, will be used to
-set format information and file name for the trace 
-output. For example; "d:t:S:O,c::\\myodbc.log". 
-
-Unlike other trace options for the driver - this one enables
-trace when the driver is instantiated. The other options to
-get trace output are connection based and, in some cases, DSN
-based.
-
-Enabling trace with this option effectively causes the other
-options to be ignored.
-
-Even this is meaningless if DBUG_OFF has been set at build-time.
-
-
-TRACE
------
-
-This is a DSN attribute which is used to indicate the relevance
-of TRACEFILE. TRACEFILE is relevant if this is set to "ON".
-
-This is supported for compat. with unixODBC - FLAG_DEBUG must be 
-turned on to get trace output. 
-
-This is meaningless if DBUG_OFF has been set at build-time.
-
-TRACEFILE
----------
-
-This DSN attribute specifies the trace file name. The format
-string ("d:t:F:L:S:A") will automatically be used. This is only
-used if TRACE is turned "ON".
-
-TRACEFILE has precedence over MYODBC_LOG.
- 
-This is supported for compat. with unixODBC - FLAG_DEBUG must be 
-turned on to get trace output. 
-
-This is meaningless if DBUG_OFF has been set at build-time.
-
-FLAG_DEBUG
-----------
-
-This is a DSN config option which can be set to turn on trace 
-output. The location of the trace output is dependent upon 
-MYODBC_LOG or failing that - TRACEFILE.
-
-In the case where neither MYODBC_LOG nor TRACEFILE have been set
-- the following defaults are used;
-
-           WIN : "d:t:S:O,c::\\myodbc.log"
-           UNIX: "d:t:S:O,/tmp/myodbc.log"
-
-This option may be presented as "Trace Driver Calls" in the
-DSN edit.
-
-This is meaningless if DBUG_OFF has been set at build-time.
-
 FLAG_LOG_QUERY
 --------------
 
@@ -191,22 +96,3 @@ SQL_OPT_TRACEFILE
 -----------------
 
 This connection attribute is implemented in the Driver Manager.
-
-
-SUMMARY
----------------------------------------------------------------
-
-Follow these steps to get trace information from the driver;
-
-1. Ensure the driver was NOT built with DBUG_OFF. In most cases
-   the driver will be ok so if you are not sure - skip this step.
-2. Turn on ODBC Trace using the ODBC Administrator.
-3. Turn on Driver Trace using one of the following;
-        - MYODBC_LOG environment variable
-        - FLAG_DEBUG
-        - FLAG_LOG_QUERY (as needed)
-
-Look in the resulting files for anything which may provide a 
-better understanding of the problem.
-
-Good hunting!
