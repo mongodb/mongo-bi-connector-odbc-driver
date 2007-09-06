@@ -582,10 +582,10 @@ get_col_attr(SQLHSTMT     StatementHandle,
 
     if ( !stmt->result )
         return set_stmt_error(stmt,"07005","No result set",0);
-#ifdef CHECK_EXTRA_ARGUMENTS
+
     if ( ColumnNumber > stmt->result->field_count )
         return set_error(StatementHandle, MYERR_07009,NULL,0);
-#endif
+
     if ( !StringLengthPtr )
         StringLengthPtr= &str_length;
 

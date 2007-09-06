@@ -1370,7 +1370,6 @@ int myodbc_casecmp(const char *s, const char *t, uint len)
   @purpose : logs the queries sent to server
 */
 
-#ifdef MYODBC_DBG
 void query_print(FILE *log_file,char *query)
 {
     if ( log_file && query )
@@ -1417,12 +1416,6 @@ void end_query_log(FILE *query_log)
         query_log= 0;
     }
 }
-
-#else
-void query_print(char *query __attribute__((unused)))
-{
-}
-#endif /* !MYODBC_DBG */
 
 
 my_bool is_minimum_version(const char *server_version,const char *version,

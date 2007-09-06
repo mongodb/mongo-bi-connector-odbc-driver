@@ -181,10 +181,8 @@ SQLRETURN myodbc_do_connect(DBC *dbc, MYODBCUTIL_DATASOURCE *ds)
   dbc->port= port;
   dbc->flag= options;
 
-#ifdef MYODBC_DBG
   if (options & FLAG_LOG_QUERY && !dbc->query_log)
     dbc->query_log= init_query_log();
-#endif
 
   /* Set the statement error prefix based on the server version. */
   strxmov(dbc->st_error_prefix, MYODBC3_ERROR_PREFIX, "[mysqld-",
@@ -672,10 +670,8 @@ SQLRETURN SQL_API SQLDisconnect(SQLHDBC hdbc)
   my_free(dbc->password, MYF(0));
   dbc->dsn= dbc->database= dbc->server= dbc->user= dbc->password= 0;
 
-#ifdef MYODBC_DBG
   if (dbc->flag & FLAG_LOG_QUERY)
     end_query_log(dbc->query_log);
-#endif
 
   return SQL_SUCCESS;
 }
