@@ -109,7 +109,8 @@ static const char *mystr_get_prev_token(CHARSET_INFO *charset,
   {
     if (pos == start)
       return (*query = start);     /* Return start of string */
-  } while (!my_isspace(charset, *(--pos))) ;
+    pos--;
+  } while (*pos < 0 || !my_isspace(charset, *pos)) ;
 
   *query= pos;      /* Remember pos to space */
 
@@ -503,8 +504,8 @@ static my_bool insert_field(STMT FAR *stmt, MYSQL_RES *result,
     SQLCHAR     *to= net->buff;
     SQLLEN      length;
 
-	desc_rec_init_apd(aprec);
-	desc_rec_init_ipd(iprec);
+    desc_rec_init_apd(aprec);
+    desc_rec_init_ipd(iprec);
 
     /* Copy row buffer data to statement */
     iprec->concise_type= get_sql_data_type(stmt, field, 0);
@@ -770,8 +771,8 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
 
     dynstr_append_mem(dynQuery," SET ",5);
 
-	desc_rec_init_apd(aprec);
-	desc_rec_init_ipd(iprec);
+    desc_rec_init_apd(aprec);
+    desc_rec_init_ipd(iprec);
 
     /*
       To make sure, it points to correct row in the
@@ -1104,8 +1105,8 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
     DESCREC aprec_, iprec_;
     DESCREC *aprec= &aprec_, *iprec= &iprec_;
 
-	desc_rec_init_apd(aprec);
-	desc_rec_init_ipd(iprec);
+    desc_rec_init_apd(aprec);
+    desc_rec_init_ipd(iprec);
 
     /* determine the number of rows to insert when irow = 0 */
     if ( !irow && stmt->ard->array_size > 1 ) /* batch wise */
@@ -1157,7 +1158,7 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
 
                 iprec->concise_type= get_sql_data_type(stmt, field, NULL);
                 aprec->concise_type= bind->fCType;
-                aprec->data_ptr= ((SQLPOINTER)bind->rgbValue +
+                aprec->data_ptr= (((char *)bind->rgbValue) +
                                   binding_offset +
                                   count * (element_size ?
                                            element_size :

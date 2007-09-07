@@ -36,6 +36,7 @@
 #ifdef WIN32
 #  include <windows.h>
 #  define sleep(x) Sleep(x*1000)
+#  include <crtdbg.h>
 #else
 #  include <unistd.h>
 #  include <signal.h>
@@ -142,6 +143,18 @@ typedef struct {
 #define RUN_TESTS_ALARM  if (do_alarms) alarm(30)
 #endif
 
+void mem_debug_init()
+{
+#ifdef _WIN32
+  int dbg = _CrtSetDbgFlag(_CRTDBG_REPORT_FLAG);
+  dbg |= _CRTDBG_ALLOC_MEM_DF;
+  dbg |= _CRTDBG_CHECK_ALWAYS_DF;
+  dbg |= _CRTDBG_DELAY_FREE_MEM_DF;
+  dbg |= _CRTDBG_LEAK_CHECK_DF;
+  _CrtSetDbgFlag(dbg);
+#endif
+}
+
 #define BEGIN_TESTS my_test tests[]= {
 #define ADD_TEST(name) { #name, name, OK   },
 #define ADD_TODO(name) { #name, name, FAIL },
@@ -159,6 +172,8 @@ int main(int argc, char **argv) \
   SQLHSTMT hstmt; \
   int      i, num_tests, failcnt= 0; \
   ENABLE_ALARMS; \
+\
+  mem_debug_init(); \
 \
   /* Set from environment, possibly overrided by command line */ \
   if (getenv("TEST_DSN")) \
@@ -790,12 +805,12 @@ SQLRETURN tmysql_prepare(SQLHSTMT hstmt, char *sql_stmt)
 /**
   return integer data by fetching it
 */
-SQLINTEGER my_fetch_int(SQLHSTMT hstmt, SQLUSMALLINT irow)
+SQLINTEGER my_fetch_int(SQLHSTMT hstmt, SQLUSMALLINT icol)
 {
     SQLINTEGER nData;
     SQLLEN len;
 
-    SQLGetData(hstmt, irow, SQL_INTEGER, &nData, 0, &len);
+    SQLGetData(hstmt, icol, SQL_INTEGER, &nData, 0, &len);
     printMessage("my_fetch_int: %ld (%ld)", (long int)nData, len);
     return (len != SQL_NULL_DATA) ? nData : 0;
 }
@@ -804,11 +819,11 @@ SQLINTEGER my_fetch_int(SQLHSTMT hstmt, SQLUSMALLINT irow)
 /**
   return string data, by fetching it
 */
-const char *my_fetch_str(SQLHSTMT hstmt, SQLCHAR *szData,SQLUSMALLINT irow)
+const char *my_fetch_str(SQLHSTMT hstmt, SQLCHAR *szData,SQLUSMALLINT icol)
 {
     SQLLEN nLen;
 
-    SQLGetData(hstmt,irow,SQL_CHAR,szData,MAX_ROW_DATA_LEN+1,&nLen);
+    SQLGetData(hstmt,icol,SQL_CHAR,szData,MAX_ROW_DATA_LEN+1,&nLen);
     printMessage(" my_fetch_str: %s(%ld)",szData,nLen);
     return((const char *)szData);
 }
@@ -837,12 +852,12 @@ wchar_t *sqlwchar_to_wchar_t(SQLWCHAR *in)
 /**
   return wide string data, by fetching it and possibly converting it to wchar_t
 */
-wchar_t *my_fetch_wstr(SQLHSTMT hstmt, SQLWCHAR *buffer, SQLUSMALLINT irow)
+wchar_t *my_fetch_wstr(SQLHSTMT hstmt, SQLWCHAR *buffer, SQLUSMALLINT icol)
 {
   SQLRETURN rc;
   SQLLEN nLen;
 
-  rc= SQLGetData(hstmt, irow, SQL_WCHAR, buffer, MAX_ROW_DATA_LEN + 1, &nLen);
+  rc= SQLGetData(hstmt, icol, SQL_WCHAR, buffer, MAX_ROW_DATA_LEN + 1, &nLen);
   if (!SQL_SUCCEEDED(rc))
     return L"";
 

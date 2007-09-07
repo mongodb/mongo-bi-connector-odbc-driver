@@ -21,7 +21,8 @@
 ##########################################################################
 
 SET(DRIVER_SRCS
-        ansi.c catalog.c connect.c cursor.c dll.c error.c execute.c handle.c
+		ansi.c catalog.c connect.c cursor.c desc.c dll.c error.c execute.c
+        handle.c
         info.c driver.c options.c prepare.c results.c transact.c unicode.c
         unicode_transcode.c utility.c)
 

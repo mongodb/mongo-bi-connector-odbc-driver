@@ -691,7 +691,6 @@ SQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandle)
   DESC *src= (DESC *)SourceDescHandle;
   DESC *dest= (DESC *)TargetDescHandle;
   /* size of all records for memcpy() */
-  size_t recsize= sizeof(DESCREC) * src->records.max_element;
   SQLSMALLINT alloc_type;
 
   CLEAR_DESC_ERROR(dest);
@@ -721,7 +720,7 @@ SQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandle)
               "Memory allocation error",
               MYERR_S1001);
   }
-  memcpy(&dest->records, &src->records, recsize);
+  memcpy(&dest->records, &src->records, src->records.max_element);
 
   /* TODO consistency check on target, if needed (apd) */
 

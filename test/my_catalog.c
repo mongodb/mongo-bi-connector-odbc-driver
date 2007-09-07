@@ -115,7 +115,8 @@ DECLARE_TEST(my_table_dbs)
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLTables(hstmt,"mysql",5,NULL,0,NULL,0,NULL,0);
+    /* test fails on Win2003 x86 w/DM if len=5, SQL_NTS is used instead */
+    rc = SQLTables(hstmt,"mysql",SQL_NTS,NULL,0,NULL,0,NULL,0);
     mystmt(hstmt,rc);
 
     is(my_print_non_format_result(hstmt) != 0);

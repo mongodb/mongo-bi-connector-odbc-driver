@@ -102,10 +102,10 @@ SQLEndTran
 SQLFetchScroll
 SQLColAttribute
 SQLBulkOperations
-;SQLSetDescField
-;SQLSetDescRec
-;SQLGetDescField
-;SQLGetDescRec
+SQLSetDescField
+SQLSetDescRec
+SQLGetDescField
+SQLGetDescRec
 SQLColAttributeW
 SQLColAttributesW
 SQLColumnPrivilegesW
@@ -119,6 +119,9 @@ SQLExecDirectW
 SQLForeignKeysW
 SQLGetConnectAttrW
 SQLGetConnectOptionW
+SQLGetCursorNameW
+SQLGetDescFieldW
+SQLGetDescRecW
 SQLGetDiagFieldW
 SQLGetDiagRecW
 SQLGetInfoW
@@ -131,6 +134,8 @@ SQLProceduresW
 SQLSetConnectAttrW
 SQLSetConnectOptionW
 SQLSetCursorNameW
+SQLSetDescFieldW
+SQLSetDescRecW
 SQLSetStmtAttrW
 SQLSpecialColumnsW
 SQLStatisticsW

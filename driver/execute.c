@@ -206,7 +206,7 @@ char *insert_params(STMT FAR *stmt)
             pthread_mutex_unlock(&stmt->dbc->lock);
             return 0;
         }
-        get_dynamic(&stmt->param_pos, &pos, i);
+        get_dynamic(&stmt->param_pos, (void *)&pos, i);
         length= (uint) (pos-query);
         if ( !(to= add_to_buffer(net,to,query,length)) )
             goto error;
@@ -614,8 +614,6 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
 {
     char       *query, *cursor_pos;
     uint        i;
-    uint        nIndex;
-    DESCREC *aprec;
     STMT FAR *  pStmtCursor = pStmt;
     SQLRETURN rc;
 
