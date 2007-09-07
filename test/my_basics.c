@@ -470,8 +470,8 @@ DECLARE_TEST(t_bug30840)
 
   ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
 
-  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), conn_out,
-                                 sizeof(conn_out), &conn_out_len,
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, (SQLHWND)1, conn, sizeof(conn),
+                                 conn_out, sizeof(conn_out), &conn_out_len,
                                  SQL_DRIVER_PROMPT));
 
   ok_con(hdbc1, SQLDisconnect(hdbc1));
