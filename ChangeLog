@@ -1,6 +1,4 @@
-3.51.20
-
-  Functionality added or changed:
+3.51.20 (7-Sep-2007)
 
   Bugs fixed:
   * The FLAG_NO_PROMPT option was not handled by SQLDriverConnect().
