@@ -23,7 +23,7 @@
 /***************************************************************************
  * ERROR.H								   *
  *									   *
- * @description: Definations for error handling				   *
+ * @description: Definitions for error handling				   *
  *									   *
  * @author     : MySQL AB(monty@mysql.com, venu@mysql.com)		   *
  * @date       : 2001-Aug-15						   *
@@ -59,9 +59,10 @@ typedef struct tagERROR {
 } MYERROR;
 
 
-#define CLEAR_ENV_ERROR(env)   ((ENV FAR *)env)->error.message[0]='\0'
-#define CLEAR_DBC_ERROR(dbc)   ((DBC FAR *)dbc)->error.message[0]='\0'
-#define CLEAR_STMT_ERROR(stmt) ((STMT FAR *)stmt)->error.message[0]='\0'
+#define CLEAR_ENV_ERROR(env)   (((ENV *)env)->error.message[0]='\0')
+#define CLEAR_DBC_ERROR(dbc)   (((DBC *)dbc)->error.message[0]='\0')
+#define CLEAR_STMT_ERROR(stmt) (((STMT *)stmt)->error.message[0]='\0')
+#define CLEAR_DESC_ERROR(desc) (((DESC *)desc)->error.message[0]='\0')
 
 /*
   list of MyODBC3 error codes
@@ -90,12 +91,14 @@ typedef enum myodbc_errid
     MYERR_S1002,
     MYERR_S1003,
     MYERR_S1004,
+    MYERR_S1007,
     MYERR_S1009,
     MYERR_S1010,
     MYERR_S1011,
     MYERR_S1012,
     MYERR_S1013,
     MYERR_S1015,
+    MYERR_S1016,
     MYERR_S1024,
     MYERR_S1090,
     MYERR_S1091,
@@ -106,6 +109,7 @@ typedef enum myodbc_errid
     MYERR_S1107,
     MYERR_S1109,
     MYERR_S1C00,
+
     MYERR_21S01,
     MYERR_23000,
     MYERR_42000,

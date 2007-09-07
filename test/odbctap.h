@@ -288,6 +288,22 @@ do { \
 
 
 /**
+  Verify that the results of an ODBC function call on a descriptor handle was
+  SQL_SUCCESS or SQL_SUCCESS_WITH_INFO.
+
+  @param desc Handle for descriptor object
+  @param call The function call
+*/
+#define ok_desc(desc, call) \
+do { \
+  SQLRETURN rc= (call); \
+  print_diag(rc, SQL_HANDLE_DESC, (desc), #call, __FILE__, __LINE__); \
+  if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO) \
+    return FAIL; \
+} while (0)
+
+
+/**
   Verify that the result of an ODBC function call matches an expected
   result, such as SQL_NO_DATA_FOUND.
 
@@ -301,6 +317,27 @@ do { \
   if (rc != (expect)) \
   { \
     print_diag(rc, SQL_HANDLE_STMT, (statement), #call, __FILE__, __LINE__); \
+    printf("# Expected %d, but got %d in %s on line %d\n", (expect), rc, \
+           __FILE__, __LINE__); \
+    return FAIL; \
+  } \
+} while (0)
+
+
+/**
+  Verify that the result of an ODBC function call matches an expected
+  result, such as SQL_ERROR.
+
+  @param desc   Handle for descriptor object
+  @param call   The function call
+  @param expect The expected result
+*/
+#define expect_desc(desc, call, expect) \
+do { \
+  SQLRETURN rc= (call); \
+  if (rc != (expect)) \
+  { \
+    print_diag(rc, SQL_HANDLE_DESC, (desc), #call, __FILE__, __LINE__); \
     printf("# Expected %d, but got %d in %s on line %d\n", (expect), rc, \
            __FILE__, __LINE__); \
     return FAIL; \
@@ -413,7 +450,12 @@ do { \
 } while (0);
 
 
-int check_sqlstate(SQLHSTMT hstmt, char *sqlstate)
+/* convenience macro for using statement */
+#define check_sqlstate(stmt, sqlstate) \
+  check_sqlstate_ex((stmt), SQL_HANDLE_STMT, (sqlstate))
+
+
+int check_sqlstate_ex(SQLHANDLE hnd, SQLSMALLINT hndtype, char *sqlstate)
 {
   SQLCHAR     sql_state[6];
   SQLINTEGER  err_code= 0;
@@ -421,7 +463,7 @@ int check_sqlstate(SQLHSTMT hstmt, char *sqlstate)
   SQLSMALLINT err_len= 0;
 
   memset(err_msg, 'C', SQL_MAX_MESSAGE_LENGTH);
-  SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sql_state, &err_code, err_msg,
+  SQLGetDiagRec(hndtype, hnd, 1, sql_state, &err_code, err_msg,
                 SQL_MAX_MESSAGE_LENGTH - 1, &err_len);
 
   is_str(sql_state, (SQLCHAR *)sqlstate, 5);
@@ -804,7 +846,7 @@ wchar_t *my_fetch_wstr(SQLHSTMT hstmt, SQLWCHAR *buffer, SQLUSMALLINT irow)
   if (!SQL_SUCCEEDED(rc))
     return L"";
 
-  buffer[nLen]= 0;
+  buffer[nLen/sizeof(SQLWCHAR)]= 0;
 
   return sqlwchar_to_wchar_t(buffer);
 }

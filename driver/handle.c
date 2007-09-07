@@ -206,8 +206,6 @@ SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc)
     dbc->flag= 0;
     dbc->commit_flag= 0;
     dbc->stmt_options.max_rows= dbc->stmt_options.max_length= 0L;
-    dbc->stmt_options.bind_type= SQL_BIND_BY_COLUMN;
-    dbc->stmt_options.rows_in_set= 1;
     dbc->stmt_options.cursor_type= SQL_CURSOR_FORWARD_ONLY;  /* ODBC default */
     dbc->login_timeout= 0;
     dbc->last_query_time= (time_t) time((time_t*) 0);
@@ -293,18 +291,15 @@ SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
     hstmt= GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(STMT));
     if (!hstmt || (*phstmt= (SQLHSTMT)GlobalLock(hstmt)) == SQL_NULL_HSTMT)
     {
-        GlobalFree(hstmt);
         *phstmt= SQL_NULL_HSTMT;
-        return SQL_ERROR;
+        GlobalFree(hstmt);
     }
 #else
     *phstmt= (SQLHSTMT) my_malloc(sizeof (STMT), MYF(MY_ZEROFILL | MY_WME));
-    if (*phstmt == SQL_NULL_HSTMT)
-    {
-        *phstmt= SQL_NULL_HSTMT;
-        return SQL_ERROR;
-    }
 #endif /* IS UNIX */
+    if (*phstmt == SQL_NULL_HSTMT)
+        goto error;
+
     stmt= (STMT FAR*) *phstmt;
     stmt->dbc= dbc;
     dbc->statements= list_add(dbc->statements,&stmt->list);
@@ -313,12 +308,32 @@ SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
     stmt->state= ST_UNKNOWN;
     stmt->dummy_state= ST_DUMMY_UNKNOWN;
     strmov(stmt->error.sqlstate, "00000");
-#if !defined(DBUG_OFF) && defined(my_init_dynamic_array)
-    my_init_dynamic_array(&stmt->params,sizeof(PARAM_BIND),32,64);
-#else
-    init_dynamic_array(&stmt->params,sizeof(PARAM_BIND),32,64);
-#endif
+    init_dynamic_array(&stmt->param_pos, sizeof(char *), 0, 0);
+
+    if (!(stmt->ard= desc_alloc(stmt, SQL_DESC_ALLOC_AUTO,
+                                DESC_APP, DESC_ROW)))
+        goto error;
+    if (!(stmt->ird= desc_alloc(stmt, SQL_DESC_ALLOC_AUTO,
+                                DESC_IMP, DESC_ROW)))
+        goto error;
+    if (!(stmt->apd= desc_alloc(stmt, SQL_DESC_ALLOC_AUTO,
+                                DESC_APP, DESC_PARAM)))
+        goto error;
+    if (!(stmt->ipd= desc_alloc(stmt, SQL_DESC_ALLOC_AUTO,
+                                DESC_IMP, DESC_PARAM)))
+        goto error;
+
     return SQL_SUCCESS;
+error:
+    if (stmt->ard)
+      my_free((char *)stmt->ard, MYF(0));
+    if (stmt->ard)
+      my_free((char *)stmt->ard, MYF(0));
+    if (stmt->ard)
+      my_free((char *)stmt->ard, MYF(0));
+    if (stmt->ard)
+      my_free((char *)stmt->ard, MYF(0));
+    return set_dbc_error(dbc, "HY001", "Memory allocation error", MYERR_S1001);
 }
 
 
@@ -346,16 +361,6 @@ SQLRETURN SQL_API SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption)
     return my_SQLFreeStmt(hstmt,fOption);
 }
 
-
-void odbc_reset_stmt_options(STMT_OPTIONS *options)
-{
-    reset_ptr(options->paramProcessedPtr);
-    reset_ptr(options->paramStatusPtr);
-    reset_ptr(options->rowOperationPtr);
-    reset_ptr(options->rowsFetchedPtr);
-    reset_ptr(options->rowStatusPtr);
-    reset_ptr(options->rowStatusPtr_ex);
-}
 
 /*
   @type    : myodbc3 internal
@@ -386,27 +391,29 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
 
     if (fOption == SQL_UNBIND)
     {
+        /* TODO something here for row descs */
         x_free(stmt->bind);
         stmt->bind= 0;
         stmt->bound_columns= 0;
         return SQL_SUCCESS;
     }
-    for (i= 0 ; i < stmt->params.elements ; i++)
+    /* free any allocated memory from SQLPutData() */
+    for (i= 0; i < stmt->apd->count; i++)
     {
-        PARAM_BIND *param= dynamic_element(&stmt->params,i,PARAM_BIND*);
-        if (param->alloced)
+        DESCREC *aprec= desc_get_rec(stmt->apd, i, FALSE);
+        if (aprec->par.alloced)
         {
-            param->alloced= 0;
-            my_free(param->value,MYF(0));
-        }
-        if (fOption == SQL_RESET_PARAMS)
-        {
-            param->used= 0;
-            param->real_param_done= FALSE;
+            aprec->par.alloced= FALSE;
+            my_free(aprec->par.value,MYF(0));
         }
     }
     if (fOption == SQL_RESET_PARAMS)
+    {
+        /* remove all params and reset count to 0 (per spec) */
+        /* http://msdn2.microsoft.com/en-us/library/ms709284.aspx */
+        stmt->apd->count= 0;
         return SQL_SUCCESS;
+    }
 
     if (!stmt->fake_result)
     {
@@ -441,10 +448,11 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     stmt->fix_fields= 0;
     stmt->affected_rows= 0;
     stmt->current_row= stmt->cursor_row= stmt->rows_found_in_set= 0;
-    stmt->state= ST_UNKNOWN;
 
     if (fOption == MYSQL_RESET_BUFFERS)
         return SQL_SUCCESS;
+
+    stmt->state= ST_UNKNOWN;
 
     x_free(stmt->table_name);
     stmt->table_name= 0;
@@ -467,11 +475,18 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     if (fOption == MYSQL_RESET)
         return SQL_SUCCESS;
 
-    odbc_reset_stmt_options(&stmt->stmt_options);
+    reset_ptr(stmt->apd->rows_processed_ptr);
+    reset_ptr(stmt->ard->rows_processed_ptr);
+    reset_ptr(stmt->ipd->array_status_ptr);
+    reset_ptr(stmt->ird->array_status_ptr);
+    reset_ptr(stmt->apd->array_status_ptr);
+    reset_ptr(stmt->ard->array_status_ptr);
+    reset_ptr(stmt->stmt_options.rowStatusPtr_ex);
+    /* TODO what else to reset? */
 
     x_free(stmt->cursor.name);
     x_free(stmt->bind);
-    delete_dynamic(&stmt->params);
+    delete_dynamic(&stmt->param_pos);
     stmt->dbc->statements= list_delete(stmt->dbc->statements,&stmt->list);
 #ifndef _UNIX_
     GlobalUnlock(GlobalHandle ((HGLOBAL) hstmt));

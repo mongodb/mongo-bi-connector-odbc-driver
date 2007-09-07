@@ -358,9 +358,9 @@ static SQLRETURN update_status(STMT FAR *stmt, SQLUSMALLINT status)
       SQLBulkOperations(), so we don't have to worry about the row status
       set by SQLExtendedFetch().
     */
-    else if ( stmt->stmt_options.rowStatusPtr )
+    else if ( stmt->ird->array_status_ptr )
     {
-        SQLUSMALLINT *ptr= stmt->stmt_options.rowStatusPtr+stmt->current_row;
+        SQLUSMALLINT *ptr= stmt->ird->array_status_ptr+stmt->current_row;
         SQLUSMALLINT *end= ptr+stmt->affected_rows;
 
         for ( ; ptr != end ; ptr++ )
@@ -387,9 +387,9 @@ static SQLRETURN update_setpos_status(STMT FAR *stmt, SQLINTEGER irow,
     If all rows successful, then only update status..else
     don't update...just for the sake of performance..
   */
-  if (stmt->stmt_options.rowStatusPtr)
+  if (stmt->ird->array_status_ptr)
   {
-    SQLUSMALLINT *ptr= stmt->stmt_options.rowStatusPtr;
+    SQLUSMALLINT *ptr= stmt->ird->array_status_ptr;
     SQLUSMALLINT *end= ptr+rows;
 
     for ( ; ptr != end; ptr++)
@@ -414,29 +414,30 @@ static SQLRETURN update_setpos_status(STMT FAR *stmt, SQLINTEGER irow,
   @purpose : copy row buffers to statement
 */
 
-static SQLRETURN copy_rowdata(STMT FAR *stmt, PARAM_BIND  param,
-                              NET **net, SQLCHAR **to)
+static SQLRETURN copy_rowdata(STMT FAR *stmt, DESCREC *aprec,
+                              DESCREC *iprec, NET **net, SQLCHAR **to)
 {
     SQLCHAR *orig_to= *to;
     /* Negative length means either NULL or DEFAULT, so we need 7 chars. */
-    SQLUINTEGER length= (*param.actual_len > 0 ? *param.actual_len + 1 : 7);
+    SQLUINTEGER length= (*aprec->octet_length_ptr > 0 ?
+                         *aprec->octet_length_ptr + 1 : 7);
 
     if ( !(*to= (SQLCHAR *) extend_buffer(*net,(char*) *to,length)) )
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
-    if ( !(*to= (SQLCHAR*) insert_param(stmt->dbc, (char*) *to, &param)) )
+    if ( !(*to= (SQLCHAR*) insert_param(stmt->dbc, (char*) *to, aprec, iprec)) )
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
     /* We have to remove zero bytes or we have problems! */
     while ( (*to > orig_to) && (*((*to) - 1) == (SQLCHAR) 0) ) (*to)--;
 
     /* insert "," */
-    param.SqlType= SQL_INTEGER;
-    param.CType= SQL_C_CHAR;
-    param.buffer= ",";
-    *param.actual_len= 1;
+    iprec->concise_type= SQL_INTEGER;
+    aprec->concise_type= SQL_C_CHAR;
+    aprec->data_ptr= ",";
+    *aprec->octet_length_ptr= 1;
 
-    if ( !(*to= (SQLCHAR*) insert_param(stmt->dbc,(char*) *to, &param)) )
+    if ( !(*to= (SQLCHAR*) insert_param(stmt->dbc,(char*) *to, aprec, iprec)) )
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
     return(SQL_SUCCESS);
@@ -472,26 +473,13 @@ static SQLRETURN exec_stmt_query(STMT FAR *stmt,char *query,
   @purpose : copy row buffers to statement
 */
 
-static SQLRETURN copy_field_data(STMT FAR *stmt, PARAM_BIND *param,
-                                 NET **net, SQLCHAR **to)
+static SQLRETURN copy_field_data(STMT FAR *stmt, DESCREC *aprec,
+                                 DESCREC *iprec, NET **net, SQLCHAR **to)
 {
-    PARAM_BIND dummy;
-    SQLLEN     dummy_len= 5; /* sizeof(" AND ") */
-    SQLUINTEGER length= *(param->actual_len)+5;
-
-    if ( !(*to= (SQLCHAR*) extend_buffer(*net, (char*) *to,length)) )
+    if (!(*to= (SQLCHAR*) insert_param(stmt->dbc, (char*) *to, aprec, iprec)))
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
-    if ( !(*to= (SQLCHAR*) insert_param(stmt->dbc, (char*) *to, param)) )
-        return set_error(stmt,MYERR_S1001,NULL,4001);
-
-    /* Insert " AND ", where clause with multiple search */
-    dummy.SqlType= SQL_INTEGER;
-    dummy.CType= SQL_C_CHAR;
-    dummy.buffer= " AND ";
-    dummy.actual_len= &dummy_len;
-
-    if ( !(*to= (SQLCHAR*) insert_param(stmt->dbc, (char*) *to, &dummy)) )
+    if (!(*to= add_to_buffer(*net, *to, " AND ", 5)))
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
     return SQL_SUCCESS;
@@ -507,26 +495,29 @@ static my_bool insert_field(STMT FAR *stmt, MYSQL_RES *result,
                             DYNAMIC_STRING *dynQuery,
                             SQLUSMALLINT nSrcCol)
 {
-    PARAM_BIND  param;
+    DESCREC aprec_, iprec_;
+    DESCREC *aprec= &aprec_, *iprec= &iprec_;
     MYSQL_FIELD *field= mysql_fetch_field_direct(result,nSrcCol);
     MYSQL_ROW   row_data= result->data_cursor->data + nSrcCol;
     NET         *net=&stmt->dbc->mysql.net;
     SQLCHAR     *to= net->buff;
     SQLLEN      length;
 
+	desc_rec_init_apd(aprec);
+	desc_rec_init_ipd(iprec);
+
     /* Copy row buffer data to statement */
-    param.used= 1;
-    param.SqlType= get_sql_data_type(stmt, field, 0);
-    param.CType= SQL_C_CHAR;
+    iprec->concise_type= get_sql_data_type(stmt, field, 0);
+    aprec->concise_type= SQL_C_CHAR;
 
     if ( row_data && *row_data )
     {
-        param.buffer= *row_data;
+        aprec->data_ptr= (SQLPOINTER) *row_data;
         length= strlen(*row_data);
 
-        param.actual_len= &length;
+        aprec->octet_length_ptr= &length;
 
-        if ( copy_field_data(stmt,&param,&net,&to) != SQL_SUCCESS )
+        if ( copy_field_data(stmt,aprec,iprec,&net,&to) != SQL_SUCCESS )
             return 1;
 
         length= (uint) ((char *)to - (char*) net->buff);
@@ -708,7 +699,7 @@ static SQLRETURN append_all_fields(STMT FAR *stmt,
 }
 
 /*
-  @type	  : myodbc3 internal
+  @type    : myodbc3 internal
   @purpose : build the where clause
 */
 
@@ -747,7 +738,7 @@ static SQLRETURN build_where_clause( STMT FAR *       pStmt,
         char buff[32];
 
         sprintf( buff, " LIMIT %lu",
-                 (unsigned long)pStmt->stmt_options.rows_in_set );
+                 (unsigned long)pStmt->ard->array_size );
         dynstr_append( dynQuery, buff );
     }
     else
@@ -760,25 +751,6 @@ static SQLRETURN build_where_clause( STMT FAR *       pStmt,
 
 
 /*
-  @type	  : myodbc3 internal
-  @purpose : if input param buffers exist, copy them to new
-  statement
-*/
-
-static void copy_input_param(STMT FAR *stmt,STMT FAR *stmtNew,
-                             SQLUINTEGER pcount)
-{
-    while ( pcount-- )
-    {
-        PARAM_BIND *param= dynamic_element(&stmt->params,pcount,PARAM_BIND*);
-        PARAM_BIND *paramNew= dynamic_element(&stmtNew->params,pcount,PARAM_BIND*);
-        param->pos_in_query= paramNew->pos_in_query;
-        set_dynamic(&stmtNew->params, (DYNAMIC_ELEMENT)param, pcount);
-    }
-}
-
-
-/*
   @type    : myodbc3 internal
   @purpose : set clause building..
 */
@@ -786,7 +758,8 @@ static void copy_input_param(STMT FAR *stmt,STMT FAR *stmtNew,
 static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
                                   DYNAMIC_STRING *dynQuery)
 {
-    PARAM_BIND    param;
+    DESCREC aprec_, iprec_;
+    DESCREC *aprec= &aprec_, *iprec= &iprec_;
     SQLLEN        length;
     uint          ncol, ignore_count= 0;
     MYSQL_FIELD *field;
@@ -796,6 +769,9 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
     SQLLEN      *pcbValue;
 
     dynstr_append_mem(dynQuery," SET ",5);
+
+	desc_rec_init_apd(aprec);
+	desc_rec_init_ipd(iprec);
 
     /*
       To make sure, it points to correct row in the
@@ -841,22 +817,21 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
         dynstr_append_quoted_name(dynQuery,field->name);
         dynstr_append_mem(dynQuery,"=",1);
 
-        param.used= 1;
-        param.SqlType= get_sql_data_type(stmt, field, NULL);
-        param.CType= bind->fCType;
-        param.buffer= (char *)bind->rgbValue+irow*bind->cbValueMax;
-        param.ValueMax= bind->cbValueMax;
+        iprec->concise_type= get_sql_data_type(stmt, field, NULL);
+        aprec->concise_type= bind->fCType;
+        aprec->data_ptr= (char *)bind->rgbValue+irow*bind->cbValueMax;
+        aprec->octet_length= bind->cbValueMax;
         /*
             Check when SQL_LEN_DATA_AT_EXEC() macro was used instead of data length
         */
         if (length == SQL_NTS)
-            length= strlen(param.buffer);
+            length= strlen(aprec->data_ptr);
         else if (length <= SQL_LEN_DATA_AT_EXEC_OFFSET)
             length= -(length - SQL_LEN_DATA_AT_EXEC_OFFSET);
 
-        param.actual_len= &length;
+        aprec->octet_length_ptr= &length;
 
-        if ( copy_rowdata(stmt,param,&net,&to) != SQL_SUCCESS )
+        if ( copy_rowdata(stmt,aprec,iprec,&net,&to) != SQL_SUCCESS )
             return(SQL_ERROR);
 
         length= (uint) ((char *)to - (char*) net->buff);
@@ -907,13 +882,13 @@ SQLRETURN my_pos_update( STMT FAR *         pStmtCursor,
                          SQLUSMALLINT       nRow, 
                          DYNAMIC_STRING *   dynQuery )
 {
-    SQLRETURN   nReturn;
+    SQLRETURN   rc;
     SQLHSTMT    hStmtTemp;
     STMT FAR  * pStmtTemp;
 
-    nReturn = build_where_clause( pStmtCursor, dynQuery, nRow );
-    if ( !SQL_SUCCEEDED( nReturn ) )
-        return nReturn;
+    rc = build_where_clause( pStmtCursor, dynQuery, nRow );
+    if ( !SQL_SUCCEEDED( rc ) )
+        return rc;
 
     /*
       Prepare and check if parameters exists in set clause..
@@ -933,15 +908,22 @@ SQLRETURN my_pos_update( STMT FAR *         pStmtCursor,
         return set_stmt_error( pStmt, "HY000", "my_SQLPrepare() failed.", 0 );
     }
     if ( pStmtTemp->param_count )      /* SET clause has parameters */
-        copy_input_param( pStmt, pStmtTemp, pStmtTemp->param_count );
+    {
+        if (!SQL_SUCCEEDED(rc= stmt_SQLCopyDesc(pStmt, pStmt->apd,
+                                                pStmtTemp->apd)))
+          return rc;
+        if (!SQL_SUCCEEDED(rc= stmt_SQLCopyDesc(pStmt, pStmt->ipd,
+                                                pStmtTemp->ipd)))
+          return rc;
+    }
 
-    nReturn = my_SQLExecute( pStmtTemp );
-    if ( SQL_SUCCEEDED( nReturn ) )
+    rc = my_SQLExecute( pStmtTemp );
+    if ( SQL_SUCCEEDED( rc ) )
     {
         pStmt->affected_rows = mysql_affected_rows( &pStmtTemp->dbc->mysql );
-        nReturn = update_status( pStmt, SQL_ROW_UPDATED );
+        rc = update_status( pStmt, SQL_ROW_UPDATED );
     }
-    else if (nReturn == SQL_NEED_DATA)
+    else if (rc == SQL_NEED_DATA)
     {
       /*
         Re-prepare the statement, which will leave us with a prepared
@@ -954,7 +936,7 @@ SQLRETURN my_pos_update( STMT FAR *         pStmtCursor,
 
     my_SQLFreeStmt( pStmtTemp, SQL_DROP );
 
-    return nReturn;
+    return rc;
 }
 
 
@@ -1119,12 +1101,16 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
     ulong        query_length= 0;           /* our original query len so we can reset pos if break_insert   */
     my_bool      break_insert= FALSE;       /* true if we are to exceed max data size for transmission      
                                                but this seems to be misused                                 */
-    PARAM_BIND   param;
+    DESCREC aprec_, iprec_;
+    DESCREC *aprec= &aprec_, *iprec= &iprec_;
+
+	desc_rec_init_apd(aprec);
+	desc_rec_init_ipd(iprec);
 
     /* determine the number of rows to insert when irow = 0 */
-    if ( !irow && stmt->stmt_options.rows_in_set > 1 ) /* batch wise */
+    if ( !irow && stmt->ard->array_size > 1 ) /* batch wise */
     {
-        insert_count= stmt->stmt_options.rows_in_set;
+        insert_count= stmt->ard->array_size;
         query_length= ext_query->length;
     }
 
@@ -1153,12 +1139,12 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
                 SQLUINTEGER  element_size= 0;
                 SQLLEN       ind_or_len;
 
-                if (stmt->stmt_options.bind_type != SQL_BIND_BY_COLUMN &&
-                    stmt->stmt_options.bind_offset)
-                  binding_offset= *(stmt->stmt_options.bind_offset);
+                if (stmt->ard->bind_type != SQL_BIND_BY_COLUMN &&
+                    stmt->ard->bind_offset_ptr)
+                  binding_offset= *(stmt->ard->bind_offset_ptr);
 
-                if (stmt->stmt_options.bind_type != SQL_BIND_BY_COLUMN)
-                  element_size= stmt->stmt_options.bind_type;
+                if (stmt->ard->bind_type != SQL_BIND_BY_COLUMN)
+                  element_size= stmt->ard->bind_type;
 
                 if (bind->pcbValue)
                   ind_or_len= *(SQLLEN *)((char *)bind->pcbValue +
@@ -1169,19 +1155,19 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
                 else
                   ind_or_len= bind->cbValueMax;
 
-                param.SqlType= get_sql_data_type(stmt, field, NULL);
-                param.CType = bind->fCType;
-                param.buffer= ((char *)bind->rgbValue +
-                               binding_offset +
-                               count * (element_size ?
-                                        element_size :
-                                        bind_length(bind->fCType,
-                                                    bind->cbValueMax)));
+                iprec->concise_type= get_sql_data_type(stmt, field, NULL);
+                aprec->concise_type= bind->fCType;
+                aprec->data_ptr= ((SQLPOINTER)bind->rgbValue +
+                                  binding_offset +
+                                  count * (element_size ?
+                                           element_size :
+                                           bind_length(bind->fCType,
+                                                       bind->cbValueMax)));
 
                 switch (ind_or_len) {
                 case SQL_NTS:
-                  if (param.buffer)
-                    length= strlen(param.buffer);
+                  if (aprec->data_ptr)
+                    length= strlen(aprec->data_ptr);
                   break;
                 /*
                   We pass through SQL_COLUMN_IGNORE and SQL_NULL_DATA,
@@ -1194,9 +1180,9 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
                   length= ind_or_len;
                 }
 
-                param.actual_len= &length;
+                aprec->octet_length_ptr= &length;
 
-                if (copy_rowdata(stmt, param, &net, &to) != SQL_SUCCESS)
+                if (copy_rowdata(stmt, aprec, iprec, &net, &to) != SQL_SUCCESS)
                   return SQL_ERROR;
 
             } /* END OF for (ncol= 0; ncol < result->field_count; ncol++) */
@@ -1210,7 +1196,7 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
               We have a limited capacity to shove data across the wire, but
               we handle this by sending in multiple calls to exec_stmt_query()
             */
-            if (ext_query->length + (uint)length >= net_buffer_length)
+            if (ext_query->length + length >= (SQLLEN) net_buffer_length)
             {
                 break_insert= TRUE;
                 break;
@@ -1229,10 +1215,10 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
     stmt->affected_rows= stmt->dbc->mysql.affected_rows= insert_count;
 
     /* update row status pointer(s) */
-    if (stmt->stmt_options.rowStatusPtr)
+    if (stmt->ird->array_status_ptr)
     {
       for (count= insert_count; count--; )
-        stmt->stmt_options.rowStatusPtr[count]= SQL_ROW_ADDED;
+        stmt->ird->array_status_ptr[count]= SQL_ROW_ADDED;
     }
     if (stmt->stmt_options.rowStatusPtr_ex)
     {
@@ -1404,10 +1390,10 @@ static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLUSMALLINT irow, SQLUSM
                   buffers
                 */
                 sqlRet= my_SQLExtendedFetch(hstmt, SQL_FETCH_ABSOLUTE, irow,
-                                            stmt->stmt_options.rowsFetchedPtr,
+                                            stmt->ird->rows_processed_ptr,
                                             stmt->stmt_options.rowStatusPtr_ex ?
                                             stmt->stmt_options.rowStatusPtr_ex :
-                                            stmt->stmt_options.rowStatusPtr, 0);
+                                            stmt->ird->array_status_ptr, 0);
                 break;
             }
 

@@ -809,6 +809,9 @@ SQLGetDiagFieldW(SQLSMALLINT handle_type, SQLHANDLE handle,
   case SQL_HANDLE_STMT:
     dbc= ((STMT *)handle)->dbc;
     break;
+  case SQL_HANDLE_DESC:
+    dbc= ((DESC *)handle)->stmt->dbc;
+    break;
   case SQL_HANDLE_ENV:
   default:
     dbc= NULL;
@@ -875,6 +878,9 @@ SQLGetDiagRecWImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
     break;
   case SQL_HANDLE_STMT:
     dbc= ((STMT *)handle)->dbc;
+    break;
+  case SQL_HANDLE_DESC:
+    dbc= ((DESC *)handle)->stmt->dbc;
     break;
   case SQL_HANDLE_ENV:
   default:

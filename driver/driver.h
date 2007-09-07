@@ -36,6 +36,9 @@
 #define WIN32	/* Hack for rc files */
 #endif
 
+/* Needed for offsetof() CPP macro */
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -161,21 +164,135 @@ extern "C"
 #define CHECK_AUTOCOMMIT_ON	1  /* AUTOCOMMIT_ON */
 #define CHECK_AUTOCOMMIT_OFF	2  /* AUTOCOMMIT_OFF */
 
+/* implementation or application descriptor? */
+typedef enum { DESC_IMP, DESC_APP } desc_ref_type;
+
+/* parameter or row descriptor? */
+typedef enum { DESC_PARAM, DESC_ROW } desc_desc_type;
+
+/* header or record field? (location in descriptor) */
+typedef enum { DESC_HDR, DESC_REC } fld_loc;
+
+/* permissions - header, and base for record */
+#define P_RI 1 /* imp */
+#define P_WI 2
+#define P_RA 4 /* app */
+#define P_WA 8
+
+/* macros to encode the constants above */
+#define P_ROW(P) (P)
+#define P_PAR(P) ((P) << 4)
+
+#define PR_RIR  P_ROW(P_RI)
+#define PR_WIR (P_ROW(P_WI) | PR_RIR)
+#define PR_RAR  P_ROW(P_RA)
+#define PR_WAR (P_ROW(P_WA) | PR_RAR)
+#define PR_RIP  P_PAR(P_RI)
+#define PR_WIP (P_PAR(P_WI) | PR_RIP)
+#define PR_RAP  P_PAR(P_RI)
+#define PR_WAP (P_PAR(P_WA) | PR_RAP)
+
+/* macros to test type */
+#define IS_APD(d) ((d)->desc_type == DESC_PARAM && (d)->ref_type == DESC_APP)
+#define IS_IPD(d) ((d)->desc_type == DESC_PARAM && (d)->ref_type == DESC_IMP)
+#define IS_ARD(d) ((d)->desc_type == DESC_ROW && (d)->ref_type == DESC_APP)
+#define IS_IRD(d) ((d)->desc_type == DESC_ROW && (d)->ref_type == DESC_IMP)
+
+typedef struct {
+  int perms;
+  SQLSMALLINT data_type; /* SQL_IS_SMALLINT, etc */
+  fld_loc loc;
+  size_t offset; /* offset of field in struct */
+} desc_field;
+
+/* descriptor */
+struct tagSTMT;
+typedef struct {
+  /* header fields */
+  SQLSMALLINT   alloc_type;
+  SQLUINTEGER   array_size;
+  SQLUSMALLINT *array_status_ptr;
+  SQLINTEGER   *bind_offset_ptr;
+  SQLINTEGER    bind_type;
+  SQLSMALLINT   count;
+  SQLUINTEGER  *rows_processed_ptr;
+
+  /* internal fields */
+  desc_desc_type  desc_type;
+  desc_ref_type   ref_type;
+  DYNAMIC_ARRAY   records;
+  MYERROR         error;
+  struct tagSTMT *stmt;
+} DESC;
+
+/* descriptor record */
+typedef struct {
+  /* ODBC spec fields */
+  SQLINTEGER  auto_unique_value; /* row only */
+  SQLCHAR *   base_column_name; /* row only */
+  SQLCHAR *   base_table_name; /* row only */
+  SQLINTEGER  case_sensitive; /* row only */
+  SQLCHAR *   catalog_name; /* row only */
+  SQLSMALLINT concise_type;
+  SQLPOINTER  data_ptr;
+  SQLSMALLINT datetime_interval_code;
+  SQLINTEGER  datetime_interval_precision;
+  SQLINTEGER  display_size; /* row only */
+  SQLSMALLINT fixed_prec_scale;
+  SQLINTEGER *indicator_ptr;
+  SQLCHAR *   label; /* row only */
+  SQLUINTEGER length;
+  SQLCHAR *   literal_prefix; /* row only */
+  SQLCHAR *   literal_suffix; /* row only */
+  SQLCHAR *   local_type_name;
+  SQLCHAR *   name;
+  SQLSMALLINT nullable;
+  SQLINTEGER  num_prec_radix;
+  SQLINTEGER  octet_length;
+  SQLINTEGER *octet_length_ptr;
+  SQLSMALLINT parameter_type; /* param only */
+  SQLSMALLINT precision;
+  SQLSMALLINT rowver;
+  SQLSMALLINT scale;
+  SQLCHAR *   schema_name; /* row only */
+  SQLSMALLINT searchable; /* row only */
+  SQLCHAR *   table_name; /* row only */
+  SQLSMALLINT type;
+  SQLCHAR *   type_name;
+  SQLSMALLINT unnamed;
+  SQLSMALLINT is_unsigned;
+  SQLSMALLINT updatable; /* row only */
+
+  /* internal descriptor fields */
+
+  /* parameter-specific */
+  struct {
+    /* value, value_length, and alloced are used for data
+     * at exec parameters */
+    char *value;
+    SQLINTEGER value_length;
+    my_bool alloced;
+    /* Whether this parameter has been bound by the application
+     * (if not, was created by dummy execution) */
+    my_bool real_param_done;
+  } par;
+
+  /* row-specific */
+  struct {
+    MYSQL_FIELD * field;
+  } row;
+} DESCREC;
+
+
 /* Statement attributes */
 
 typedef struct stmt_options
 {
-  SQLUINTEGER	   bind_type,rows_in_set,cursor_type;
-  SQLUINTEGER     *paramProcessedPtr;
-  SQLULEN         *rowsFetchedPtr;
-  SQLUINTEGER	   simulateCursor;
+  SQLUINTEGER      cursor_type;
+  SQLUINTEGER      simulateCursor;
   SQLULEN          max_length, max_rows;
-  SQLLEN          *bind_offset;
-  SQLUSMALLINT	  *paramStatusPtr;
-  SQLUSMALLINT	  *rowStatusPtr;
-  SQLUSMALLINT	  *rowStatusPtr_ex; /* set by SQLExtendedFetch */
-  SQLUSMALLINT	  *rowOperationPtr;
-  my_bool	   retrieve_data;
+  SQLUSMALLINT    *rowStatusPtr_ex; /* set by SQLExtendedFetch */
+  my_bool      retrieve_data;
 } STMT_OPTIONS;
 
 
@@ -231,23 +348,7 @@ typedef struct st_bind
   SQLPOINTER	rgbValue;
   SQLINTEGER	cbValueMax;
   SQLLEN *      pcbValue;
-  LIST		    list;
 } BIND;
-
-
-/* Statement param binding handler */
-
-typedef struct st_param_bind
-{
-  SQLSMALLINT   SqlType,CType;
-  char *        buffer;
-  char *        pos_in_query,*value;
-  SQLINTEGER    ValueMax;
-  SQLLEN *      actual_len;
-  SQLINTEGER    value_length;
-  bool	        alloced,used;
-  bool	        real_param_done;
-} PARAM_BIND;
 
 
 /* Statement states */
@@ -276,43 +377,6 @@ typedef struct cursor
 } MYCURSOR;
 
 
-/* IRD decriptor */
-
-typedef struct irdDESC
-{
-  BIND *bind;
-  uint count;
-} IRD_DESC;
-
-
-/* ARD descriptor */
-typedef struct ardDESC
-{
-  DYNAMIC_ARRAY param;
-  uint		count;
-} ARD_DESC;
-
-
-/* Descriptor handler */
-
-typedef struct tagDESC
-{
-  DBC FAR  *dbc;
-  IRD_DESC *ird;
-  ARD_DESC *ard;
-  LIST	   list;
-} DESC;
-
-
-/* Implementation descriptors */
-typedef struct tagSTMT MY_STMT;
-typedef struct impDESC
-{
-  MY_STMT *stmt;
-  DESC	  *desc;
-} IMPDESC;
-
-
 /* Main statement handler */
 
 typedef struct tagSTMT
@@ -324,7 +388,7 @@ typedef struct tagSTMT
   MYSQL_ROW	(*fix_fields)(struct tagSTMT FAR* stmt,MYSQL_ROW row);
   MYSQL_FIELD	*fields;
   MYSQL_ROW_OFFSET  end_of_set;
-  DYNAMIC_ARRAY params;
+  DYNAMIC_ARRAY param_pos; /* param placeholder positions */
   BIND		*bind;
   LIST		list;
   MYCURSOR	cursor;
@@ -357,13 +421,10 @@ typedef struct tagSTMT
   enum MY_DUMMY_STATE dummy_state;
   SQLSMALLINT	*odbc_types;
 
-  /*
-    DESC PART..not yet supported....., to make MS ODBC DM to work
-    without crashing, just return the dummy pointers, when it
-    internally calls SQLGetStmtAttr at the time of stmt allocation
-  */
-  IMPDESC	ird,ard;
-  IMPDESC	ipd,apd;
+  DESC *ard;
+  DESC *ird;
+  DESC *apd;
+  DESC *ipd;
 } STMT;
 
 

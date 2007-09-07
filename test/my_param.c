@@ -315,11 +315,11 @@ DECLARE_TEST(tmysql_fix)
         mystmt(hstmt,rc);
         rc = SQLBindParameter(hstmt,4,SQL_PARAM_INPUT,1,12,0,0,sqlname,100,0);
         mystmt(hstmt,rc);
-        rc = SQLBindParameter(hstmt,6,SQL_PARAM_INPUT,1,12,0,0,sqlerr,0,0);
+        rc = SQLBindParameter(hstmt,5,SQL_PARAM_INPUT,1,12,0,0,sqlerr,0,0);
         mystmt(hstmt,rc);
-        rc = SQLBindParameter(hstmt,7,SQL_PARAM_INPUT,1,12,0,0,fixerr,0,0);
+        rc = SQLBindParameter(hstmt,6,SQL_PARAM_INPUT,1,12,0,0,fixerr,0,0);
         mystmt(hstmt,rc);
-        rc = SQLBindParameter(hstmt,8,SQL_PARAM_INPUT,1,12,0,0,progerr,0,0);
+        rc = SQLBindParameter(hstmt,7,SQL_PARAM_INPUT,1,12,0,0,progerr,0,0);
         mystmt(hstmt,rc);
 
         rc = SQLExecute(hstmt);

@@ -294,6 +294,44 @@ DECLARE_TEST(bind_invalidcol)
 
 
 /*
+ * Test the error given when not enough params are bound to execute
+ * the statement.
+ */
+DECLARE_TEST(bind_notenoughparam1)
+{
+  SQLINTEGER i= 0;
+  ok_stmt(hstmt, SQLPrepare(hstmt, "select ?, ?", SQL_NTS));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_LONG,
+                                  SQL_INTEGER, 0, 0, &i, 0, NULL));
+  expect_stmt(hstmt, SQLExecute(hstmt), SQL_ERROR);
+  return check_sqlstate(hstmt, "07001");
+}
+
+
+/*
+ * Test the error given when not enough params are bound to execute
+ * the statement, also given that a pre-execute happens (due to calling
+ * SQLNumResultCols).
+ */
+DECLARE_TEST(bind_notenoughparam2)
+{
+  SQLINTEGER i= 0;
+  SQLSMALLINT cols= 0;
+  ok_stmt(hstmt, SQLPrepare(hstmt, "select ?, ?", SQL_NTS));
+
+  /* trigger pre-execute */
+  ok_stmt(hstmt, SQLNumResultCols(hstmt, &cols));
+  is_num(cols, 2);
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_LONG,
+                                  SQL_INTEGER, 0, 0, &i, 0, NULL));
+  expect_stmt(hstmt, SQLExecute(hstmt), SQL_ERROR);
+  return check_sqlstate(hstmt, "07001");
+}
+
+
+/*
  * Test that calling SQLGetData() without a nullind ptr
  * when the data is null returns an error.
  */
@@ -325,6 +363,8 @@ BEGIN_TESTS
   ADD_TODO(t_bug3456)
   ADD_TEST(t_bug16224)
   ADD_TEST(bind_invalidcol)
+  ADD_TEST(bind_notenoughparam1)
+  ADD_TEST(bind_notenoughparam2)
   ADD_TEST(getdata_need_nullind)
 END_TESTS
 

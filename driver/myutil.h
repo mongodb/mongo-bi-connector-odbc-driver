@@ -44,17 +44,17 @@
 #define trans_supported(db) ((db)->mysql.server_capabilities & CLIENT_TRANSACTIONS)
 #define autocommit_on(db) ((db)->mysql.server_status & SERVER_STATUS_AUTOCOMMIT)
 #define true_dynamic(flag) (!(flag &FLAG_FORWARD_CURSOR ) && (flag & FLAG_DYNAMIC_CURSOR))
-#define reset_ptr(x) if (x) x= 0
+#define reset_ptr(x) {if (x) x= 0;}
 #define digit(A) ((int) (A - '0'))
 #define option_flag(A,B) ((A)->dbc->flag & B)
 
 #ifdef MYODBC_DBG
 
-#define MYLOG_QUERY(A,B) if ((A)->dbc->flag & FLAG_LOG_QUERY) \
-			   query_print((A)->dbc->query_log,(char*) B)
+#define MYLOG_QUERY(A,B) {if ((A)->dbc->flag & FLAG_LOG_QUERY) \
+               query_print((A)->dbc->query_log,(char*) B);}
 
-#define MYLOG_DBC_QUERY(A,B) if((A)->flag & FLAG_LOG_QUERY) \
-			   query_print((A)->query_log,(char*) B)
+#define MYLOG_DBC_QUERY(A,B) {if((A)->flag & FLAG_LOG_QUERY) \
+               query_print((A)->query_log,(char*) B);}
 
 #else
 #define MYLOG_QUERY(A,B)
@@ -131,7 +131,7 @@ SQLRETURN my_pos_delete(STMT FAR *stmt,STMT FAR *stmtParam,
 SQLRETURN my_pos_update(STMT FAR *stmt,STMT FAR *stmtParam,
 			SQLUSMALLINT irow,DYNAMIC_STRING *dynStr);
 char *check_if_positioned_cursor_exists(STMT FAR *stmt, STMT FAR **stmtNew);
-char *insert_param(DBC *dbc, char *to,PARAM_BIND *param);
+char *insert_param(DBC *dbc, char *to,DESCREC *aprec,DESCREC *iprec);
 char *add_to_buffer(NET *net,char *to,const char *from,ulong length);
 
 void reset_getdata_position(STMT *stmt);
@@ -159,6 +159,8 @@ SQLRETURN copy_wchar_result(STMT *stmt,
 
 SQLRETURN set_dbc_error(DBC FAR *dbc, char *state,const char *message,uint errcode);
 SQLRETURN set_stmt_error(STMT *stmt, char *state,const char *message,uint errcode);
+SQLRETURN set_desc_error(DESC *desc, char *state,
+                         const char *message, uint errcode);
 SQLRETURN handle_connection_error(STMT *stmt);
 void set_mem_error(MYSQL *mysql);
 void translate_error(char *save_state,myodbc_errid errid,uint mysql_err);
@@ -237,6 +239,17 @@ my_bool reget_current_catalog(DBC FAR *dbc);
 
 ulong myodbc_escape_wildcard(MYSQL *mysql, char *to, ulong to_length,
                              const char *from, ulong length);
+
+DESCREC *desc_get_rec(DESC *desc, int recnum, my_bool expand);
+
+DESC *desc_alloc(STMT *stmt, SQLSMALLINT alloc_type,
+                 desc_ref_type ref_type, desc_desc_type desc_type);
+void desc_rec_init_apd(DESCREC *rec);
+void desc_rec_init_ipd(DESCREC *rec);
+SQLRETURN
+stmt_SQLSetDescField(STMT *stmt, DESC *desc, SQLSMALLINT recnum,
+                     SQLSMALLINT fldid, SQLPOINTER val, SQLINTEGER buflen);
+SQLRETURN stmt_SQLCopyDesc(STMT *stmt, DESC *src, DESC *dest);
 
 size_t sqlwchar_strlen(const SQLWCHAR *str);
 

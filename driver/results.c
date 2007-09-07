@@ -441,29 +441,28 @@ static SQLRETURN check_result(STMT FAR *stmt )
 
 SQLRETURN do_dummy_parambind(SQLHSTMT hstmt)
 {
+    SQLRETURN rc;
     STMT FAR *stmt= (STMT FAR *)hstmt;
     uint     nparam;
 
     for ( nparam= 0; nparam < stmt->param_count; nparam++ )
     {
-        PARAM_BIND *param= dynamic_element(&stmt->params,nparam,PARAM_BIND*);
-        if ( param->real_param_done != TRUE && param->used != 1 )
+        DESCREC *aprec= desc_get_rec(stmt->apd, nparam, FALSE);
+        if (!aprec->par.real_param_done)
         {
-            /*
-          do the dummy bind temporarily to get the result set
-          and once everything is done, remove it
-            */
-            param->used= 1;
-            param->SqlType= SQL_VARCHAR;
-            param->CType= SQL_C_CHAR;
-            param->buffer= "NULL";
-            param->actual_len= 0;
-
-            if (set_dynamic(&stmt->params, (DYNAMIC_ELEMENT)param, nparam))
-                return set_stmt_error(stmt,"S1001","Not enough memory",4001);
+            /* do the dummy bind temporarily to get the result set
+               and once everything is done, remove it */
+            if (!SQL_SUCCEEDED(rc= my_SQLBindParameter(hstmt, nparam+1,
+                                                       SQL_PARAM_INPUT,
+                                                       SQL_C_CHAR,
+                                                       SQL_VARCHAR, 0, 0,
+                                                       "NULL", SQL_NTS, NULL)))
+                return rc;
+            /* reset back to false (this is the *dummy* param bind) */
+            aprec->par.real_param_done= FALSE;
         }
     }
-    stmt->dummy_state= ST_DUMMY_EXECUTED;
+    stmt->dummy_state= ST_DUMMY_PREPARED;
     return(SQL_SUCCESS);
 }
 
@@ -1165,19 +1164,19 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
             break;
         case SQL_FETCH_PRIOR:
             cur_row= (stmt->current_row <= 0 ? -1 :
-                      (long) (stmt->current_row - stmt->stmt_options.rows_in_set));
+                      (long)(stmt->current_row - stmt->ard->array_size));
             break;
         case SQL_FETCH_FIRST:
             cur_row= 0L;
             break;
         case SQL_FETCH_LAST:
-            cur_row= max_row-stmt->stmt_options.rows_in_set;
+            cur_row= max_row-stmt->ard->array_size;
             break;
         case SQL_FETCH_ABSOLUTE:
             if ( irow < 0 )
             {
                 /* Fetch from end of result set */
-                if ( max_row+irow < 0 && -irow <= (long) stmt->stmt_options.rows_in_set )
+                if ( max_row+irow < 0 && -irow <= (long) stmt->ard->array_size )
                 {
                     /*
                       | FetchOffset | > LastResultRow AND
@@ -1195,7 +1194,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
         case SQL_FETCH_RELATIVE:
             cur_row= stmt->current_row + irow;
             if ( stmt->current_row > 0 && cur_row < 0 &&
-                 (long) -irow <= (long)stmt->stmt_options.rows_in_set )
+                 (long)-irow <= (long)stmt->ard->array_size )
                 cur_row= 0;
             break;
 
@@ -1229,13 +1228,13 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     }
     stmt->current_row= cur_row;
 
-    rows_to_fetch= min(max_row-cur_row, (long)stmt->stmt_options.rows_in_set);
+    rows_to_fetch= min(max_row-cur_row, (long)stmt->ard->array_size);
     if ( !rows_to_fetch )
     {
         *pcrow= 0;
         stmt->rows_found_in_set= 0;
-        if ( upd_status && stmt->stmt_options.rowsFetchedPtr )
-            *stmt->stmt_options.rowsFetchedPtr= 0;
+        if ( upd_status && stmt->ird->rows_processed_ptr )
+            *stmt->ird->rows_processed_ptr= 0;
         return SQL_NO_DATA_FOUND;
     }
 
@@ -1272,8 +1271,8 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
         /*
           No need to update rowStatusPtr_ex, it's the same as rgfRowStatus.
         */
-        if (upd_status && stmt->stmt_options.rowStatusPtr)
-          stmt->stmt_options.rowStatusPtr[i]= SQL_ROW_SUCCESS;
+        if (upd_status && stmt->ird->array_status_ptr)
+          stmt->ird->array_status_ptr[i]= SQL_ROW_SUCCESS;
 
         if (stmt->bind)             /* Should always be true */
         {
@@ -1288,19 +1287,19 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                     SQLLEN offset,pcb_offset;
                     SQLLEN pcbValue;
 
-                    if ( stmt->stmt_options.bind_type == SQL_BIND_BY_COLUMN )
+                    if ( stmt->ard->bind_type == SQL_BIND_BY_COLUMN )
                     {
                         offset= bind->cbValueMax*i;
                         pcb_offset= sizeof(SQLLEN)*i;
                     }
                     else
-                        pcb_offset= offset= stmt->stmt_options.bind_type*i;
+                        pcb_offset= offset= stmt->ard->bind_type*i;
 
                     /* apply SQL_ATTR_ROW_BIND_OFFSET_PTR */
-                    if (stmt->stmt_options.bind_offset)
+                    if (stmt->ard->bind_offset_ptr)
                     {
-                      offset     += *stmt->stmt_options.bind_offset;
-                      pcb_offset += *stmt->stmt_options.bind_offset;
+                      offset     += *stmt->ard->bind_offset_ptr;
+                      pcb_offset += *stmt->ard->bind_offset_ptr;
                     }
 
                     reset_getdata_position(stmt);
@@ -1335,19 +1334,19 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     stmt->rows_found_in_set= i;
     *pcrow= i;
 
-    if ( upd_status && stmt->stmt_options.rowsFetchedPtr )
-        *stmt->stmt_options.rowsFetchedPtr= i;
+    if ( upd_status && stmt->ird->rows_processed_ptr )
+        *stmt->ird->rows_processed_ptr= i;
 
     if ( rgfRowStatus )
-        for ( ; i < stmt->stmt_options.rows_in_set ; i++ )
+        for ( ; i < stmt->ard->array_size ; i++ )
             rgfRowStatus[i]= SQL_ROW_NOROW;
 
     /*
       No need to update rowStatusPtr_ex, it's the same as rgfRowStatus.
     */
-    if ( upd_status && stmt->stmt_options.rowStatusPtr )
-        for ( ; i < stmt->stmt_options.rows_in_set ; i++ )
-            stmt->stmt_options.rowStatusPtr[i]= SQL_ROW_NOROW;
+    if ( upd_status && stmt->ird->array_status_ptr )
+        for ( ; i < stmt->ard->array_size ; i++ )
+            stmt->ird->array_status_ptr[i]= SQL_ROW_NOROW;
 
     if ( !stmt->result_array && !if_forward_cache(stmt) )
     {
@@ -1407,12 +1406,13 @@ SQLRETURN SQL_API SQLFetchScroll( SQLHSTMT      StatementHandle,
                                   SQLSMALLINT   FetchOrientation,
                                   SQLLEN        FetchOffset )
 {
-    STMT_OPTIONS *options= &((STMT FAR *)StatementHandle)->stmt_options;
+    STMT *stmt = (STMT *)StatementHandle;
+    STMT_OPTIONS *options= &stmt->stmt_options;
 
     options->rowStatusPtr_ex= NULL;
 
     return my_SQLExtendedFetch(StatementHandle, FetchOrientation, FetchOffset,
-                               options->rowsFetchedPtr, options->rowStatusPtr,
+                               stmt->ird->rows_processed_ptr, stmt->ird->array_status_ptr,
                                0);
 }
 
@@ -1424,11 +1424,12 @@ SQLRETURN SQL_API SQLFetchScroll( SQLHSTMT      StatementHandle,
 
 SQLRETURN SQL_API SQLFetch(SQLHSTMT StatementHandle)
 {
-    STMT_OPTIONS *options= &((STMT FAR *)StatementHandle)->stmt_options;
+    STMT *stmt = (STMT *)StatementHandle;
+    STMT_OPTIONS *options= &stmt->stmt_options;
 
     options->rowStatusPtr_ex= NULL;
 
     return my_SQLExtendedFetch(StatementHandle, SQL_FETCH_NEXT, 0,
-                               options->rowsFetchedPtr, options->rowStatusPtr,
+                               stmt->ird->rows_processed_ptr, stmt->ird->array_status_ptr,
                                0);
 }

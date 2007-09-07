@@ -46,6 +46,7 @@ my_catalog \
 my_curext \
 my_cursor \
 my_datetime \
+my_desc \
 my_dyn_cursor \
 my_error \
 my_info \

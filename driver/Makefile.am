@@ -39,6 +39,7 @@ ansi.c \
 catalog.c \
 connect.c \
 cursor.c \
+desc.c \
 dll.c \
 driver.c \
 error.c \

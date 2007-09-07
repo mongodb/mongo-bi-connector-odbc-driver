@@ -191,10 +191,14 @@ char *insert_params(STMT FAR *stmt)
         setlocale(LC_NUMERIC,"English");  /* force use of '.' as decimal point */
     for ( i= 0; i < stmt->param_count; i++ )
     {
-        PARAM_BIND *param= dynamic_element(&stmt->params,i,PARAM_BIND*);
+        DESCREC *aprec= desc_get_rec(stmt->apd, i, FALSE);
+        DESCREC *iprec= desc_get_rec(stmt->ipd, i, FALSE);
         char *pos;
 
-        if ( !param->used )
+        assert(aprec && iprec);
+
+        if (stmt->dummy_state != ST_DUMMY_PREPARED &&
+            !aprec->par.real_param_done)
         {
             if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
                 setlocale(LC_NUMERIC,default_locale);
@@ -202,12 +206,12 @@ char *insert_params(STMT FAR *stmt)
             pthread_mutex_unlock(&stmt->dbc->lock);
             return 0;
         }
-        pos= param->pos_in_query;
+        get_dynamic(&stmt->param_pos, &pos, i);
         length= (uint) (pos-query);
         if ( !(to= add_to_buffer(net,to,query,length)) )
             goto error;
-        query= pos+1;  /* Skipp '?' */
-        if ( !(to= insert_param(stmt->dbc,to,param)) )
+        query= pos+1;  /* Skip '?' */
+        if ( !(to= insert_param(stmt->dbc,to,aprec,iprec)) )
             goto error;
     }
     length= (uint) (stmt->query_end - query);
@@ -223,8 +227,9 @@ char *insert_params(STMT FAR *stmt)
         return 0;
     }
 
-    if ( stmt->stmt_options.paramProcessedPtr )
-        *stmt->stmt_options.paramProcessedPtr= 1; /* We don't support PARAMSET */
+    /* TODO We don't *yet* support PARAMSET */
+    if ( stmt->apd->rows_processed_ptr )
+        *stmt->apd->rows_processed_ptr= 1;
 
     pthread_mutex_unlock(&stmt->dbc->lock);
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
@@ -245,34 +250,35 @@ char *insert_params(STMT FAR *stmt)
 
   @param[in]      mysql
   @param[in,out]  to
-  @param[in]      param
+  @param[in]      aprec The APD record of the parameter
+  @param[in]      iprec The IPD record of the parameter
 */
-char *insert_param(DBC *dbc, char *to, PARAM_BIND *param)
+char *insert_param(DBC *dbc, char *to, DESCREC *aprec, DESCREC *iprec)
 {
     int length;
     char buff[128], *data;
     my_bool convert= FALSE, free_data= FALSE;
     NET *net= &dbc->mysql.net;
 
-    if (!param->actual_len || *(param->actual_len) == SQL_NTS)
+    if (!aprec->octet_length_ptr || *aprec->octet_length_ptr == SQL_NTS)
     {
-      data= param->buffer;
+      data= aprec->data_ptr;
       if (data)
       {
-        if (param->CType == SQL_C_WCHAR)
+        if (aprec->concise_type == SQL_C_WCHAR)
           length= sqlwchar_strlen((SQLWCHAR *)data) * sizeof(SQLWCHAR);
         else
           length= strlen(data);
 
-        if (!param->actual_len && param->ValueMax)
-          length= min(length, param->ValueMax);
+        if (!aprec->octet_length_ptr && aprec->octet_length)
+          length= min(length, aprec->octet_length);
       }
       else
       {
         length= 0;     /* This is actually an error */
       }
     }
-    else if ( *(param->actual_len) == SQL_NULL_DATA )
+    else if ( *(aprec->octet_length_ptr) == SQL_NULL_DATA )
     {
         return add_to_buffer(net,to,"NULL",4);
     }
@@ -281,27 +287,27 @@ char *insert_param(DBC *dbc, char *to, PARAM_BIND *param)
       may have been told to ignore a column in one particular row. So we
       try to insert DEFAULT, or NULL for really old servers.
     */
-    else if ( *(param->actual_len) == SQL_COLUMN_IGNORE )
+    else if ( *(aprec->octet_length_ptr) == SQL_COLUMN_IGNORE )
     {
       if (is_minimum_version(dbc->mysql.server_version, "4.0.3", 5))
         return add_to_buffer(net,to,"DEFAULT",7);
       else
         return add_to_buffer(net,to,"NULL",4);
     }
-    else if ( *param->actual_len == SQL_DATA_AT_EXEC ||
-              *param->actual_len <= SQL_LEN_DATA_AT_EXEC_OFFSET )
+    else if ( *aprec->octet_length_ptr == SQL_DATA_AT_EXEC ||
+              *aprec->octet_length_ptr <= SQL_LEN_DATA_AT_EXEC_OFFSET )
     {
-        length= param->value_length;
-        if ( !(data= param->value) )
+        length= aprec->par.value_length;
+        if ( !(data= aprec->par.value) )
             return add_to_buffer(net,to,"NULL",4);
     }
     else
     {
-        data= param->buffer;
-        length= *param->actual_len;
+        data= aprec->data_ptr;
+        length= *aprec->octet_length_ptr;
     }
 
-    switch ( param->CType )
+    switch ( aprec->concise_type )
     {
         case SQL_C_BINARY:
         case SQL_C_CHAR:
@@ -388,7 +394,7 @@ char *insert_param(DBC *dbc, char *to, PARAM_BIND *param)
             data= buff;
             break;
         case SQL_C_FLOAT:
-            if ( param->SqlType != SQL_NUMERIC && param->SqlType != SQL_DECIMAL )
+            if ( iprec->concise_type != SQL_NUMERIC && iprec->concise_type != SQL_DECIMAL )
                 sprintf(buff,"%.17e",*((float*) data));
             else
                 /* We should perpare this data for string comparison */
@@ -396,7 +402,7 @@ char *insert_param(DBC *dbc, char *to, PARAM_BIND *param)
             length= strlen(data= buff);
             break;
         case SQL_C_DOUBLE:
-            if ( param->SqlType != SQL_NUMERIC && param->SqlType != SQL_DECIMAL )
+            if ( iprec->concise_type != SQL_NUMERIC && iprec->concise_type != SQL_DECIMAL )
                 sprintf(buff,"%.17e",*((double*) data));
             else
                 /* We should perpare this data for string comparison */
@@ -444,7 +450,7 @@ char *insert_param(DBC *dbc, char *to, PARAM_BIND *param)
                 break;
             }
     }
-    switch ( param->SqlType )
+    switch ( iprec->concise_type )
     {
         case SQL_DATE:
         case SQL_TYPE_DATE:
@@ -466,10 +472,10 @@ char *insert_param(DBC *dbc, char *to, PARAM_BIND *param)
         case SQL_WVARCHAR:
         case SQL_WLONGVARCHAR:
             {
-              if (param->CType == SQL_C_WCHAR &&
+              if (aprec->concise_type == SQL_C_WCHAR &&
                   dbc->cxn_charset_info->number != 33 /* UTF-8 */)
                 to= add_to_buffer(net, to, "_utf8", 5);
-              else if (param->CType != SQL_C_WCHAR &&
+              else if (aprec->concise_type != SQL_C_WCHAR &&
                        dbc->cxn_charset_info->number !=
                        dbc->ansi_charset_info->number)
               {
@@ -487,10 +493,10 @@ char *insert_param(DBC *dbc, char *to, PARAM_BIND *param)
             }
         case SQL_TIME:
         case SQL_TYPE_TIME:
-            if ( param->CType == SQL_C_TIMESTAMP ||
-                 param->CType == SQL_C_TYPE_TIMESTAMP )
+            if ( aprec->concise_type == SQL_C_TIMESTAMP ||
+                 aprec->concise_type == SQL_C_TYPE_TIMESTAMP )
             {
-                TIMESTAMP_STRUCT *time= (TIMESTAMP_STRUCT*) param->buffer;
+                TIMESTAMP_STRUCT *time= (TIMESTAMP_STRUCT*) aprec->data_ptr;
                 sprintf(buff,"'%02d:%02d:%02d'",time->hour,time->minute,time->second);
                 to= add_to_buffer(net, to, buff, 10);
             }
@@ -609,8 +615,9 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
     char       *query, *cursor_pos;
     uint        i;
     uint        nIndex;
-    PARAM_BIND *param;
+    DESCREC *aprec;
     STMT FAR *  pStmtCursor = pStmt;
+    SQLRETURN rc;
 
     if ( !pStmt )
         return SQL_ERROR;
@@ -638,21 +645,10 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
       return do_my_pos_cursor(pStmt, pStmtCursor);
     }
 
-    for ( nIndex= 0 ; nIndex < pStmt->param_count ; )
-    {
-        param= dynamic_element(&pStmt->params,nIndex++,PARAM_BIND*);
-        if ( param->real_param_done == FALSE && param->used == 1 )
-        {
-            pthread_mutex_lock(&pStmt->dbc->lock);
-            mysql_free_result(pStmt->result);
-            pthread_mutex_unlock(&pStmt->dbc->lock);
-            break;
-        }
-    }
-
-    if ( pStmt->dummy_state == ST_DUMMY_EXECUTED )
-        pStmt->state= ST_PREPARED;
-    if ( pStmt->state == ST_PRE_EXECUTED )
+    /* If this statement has been executed, there are no
+     * parameters, we do not need to execute it again */
+    if (pStmt->state == ST_PRE_EXECUTED &&
+        pStmt->dummy_state != ST_DUMMY_EXECUTED)
     {
         pStmt->state= ST_EXECUTED;
         return SQL_SUCCESS;
@@ -660,8 +656,8 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
     my_SQLFreeStmt((SQLHSTMT)pStmt,MYSQL_RESET_BUFFERS);
     query= pStmt->query;
 
-    if ( pStmt->stmt_options.paramProcessedPtr )
-        *pStmt->stmt_options.paramProcessedPtr= 0;
+    if ( pStmt->apd->rows_processed_ptr )
+        *pStmt->apd->rows_processed_ptr= 0;
 
     if ( pStmt->param_count )
     {
@@ -671,21 +667,25 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
          */
         for ( i= 0; i < pStmt->param_count; i++ )
         {
-            PARAM_BIND *param= dynamic_element(&pStmt->params,i,PARAM_BIND*);
-            if ( param->actual_len &&
-                 (*param->actual_len == (long) SQL_DATA_AT_EXEC ||
-                  *param->actual_len <= SQL_LEN_DATA_AT_EXEC_OFFSET) )
+            DESCREC *aprec= desc_get_rec(pStmt->apd, i, FALSE);
+            assert(aprec);
+            if ( aprec->octet_length_ptr &&
+                 (*aprec->octet_length_ptr == (long) SQL_DATA_AT_EXEC ||
+                  *aprec->octet_length_ptr <= SQL_LEN_DATA_AT_EXEC_OFFSET) )
             {
-                pStmt->current_param= i;      /* Fix by Giovanni */
-                param->value= 0;
-                param->alloced= 0;
+                pStmt->current_param= i;
+                aprec->par.value= NULL;
+                aprec->par.alloced= FALSE;
                 return SQL_NEED_DATA;
             }
         }
         query= insert_params(pStmt);     /* Checked in do_query */
     }
 
-    return do_query(pStmt, query);
+    rc= do_query(pStmt, query);
+    if (pStmt->dummy_state == ST_DUMMY_PREPARED)
+        pStmt->dummy_state= ST_DUMMY_EXECUTED;
+    return rc;
 }
 
 
@@ -702,16 +702,16 @@ SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER FAR *prbgValue)
 
     for ( i= stmt->current_param; i < stmt->param_count; i++ )
     {
-        PARAM_BIND *param= dynamic_element(&stmt->params,i,PARAM_BIND*);
-        if ( param->actual_len &&
-             (*param->actual_len == (long) SQL_DATA_AT_EXEC ||
-              *param->actual_len <= SQL_LEN_DATA_AT_EXEC_OFFSET) )
+        DESCREC *aprec= desc_get_rec(stmt->apd, i, FALSE);
+        if ( aprec->octet_length_ptr &&
+             (*aprec->octet_length_ptr == (long) SQL_DATA_AT_EXEC ||
+              *aprec->octet_length_ptr <= SQL_LEN_DATA_AT_EXEC_OFFSET) )
         {
             stmt->current_param= i+1;
             if ( prbgValue )
-                *prbgValue= param->buffer;
-            param->value= 0;
-            param->alloced= 0;
+                *prbgValue= aprec->data_ptr;
+            aprec->par.value= NULL;
+            aprec->par.alloced= FALSE;
             return SQL_NEED_DATA;
         }
     }
@@ -732,54 +732,56 @@ SQLRETURN SQL_API SQLPutData( SQLHSTMT      hstmt,
                               SQLLEN        cbValue )
 {
     STMT FAR *stmt= (STMT FAR*) hstmt;
-    PARAM_BIND *param;
+    DESCREC *aprec;
 
     if ( !stmt )
         return SQL_ERROR;
 
     if ( cbValue == SQL_NTS )
         cbValue= strlen(rgbValue);
-    param= dynamic_element(&stmt->params,stmt->current_param-1,PARAM_BIND*);
+    aprec= desc_get_rec(stmt->apd, stmt->current_param - 1, FALSE);
+    assert(aprec);
     if ( cbValue == SQL_NULL_DATA )
     {
-        if ( param->alloced )
-            my_free(param->value,MYF(0));
-        param->alloced= 0;
-        param->value= 0;
+        if ( aprec->par.alloced )
+            my_free(aprec->par.value,MYF(0));
+        aprec->par.alloced= FALSE;
+        aprec->par.value= NULL;
         return SQL_SUCCESS;
     }
-    if ( param->value )
+    if ( aprec->par.value )
     {
         /* Append to old value */
-        if ( param->alloced )
+        assert(aprec->par.alloced);
+        if ( aprec->par.alloced )
         {
-            if ( !(param->value= my_realloc(param->value,
-                                            param->value_length + cbValue + 1,
-                                            MYF(0))) )
+            if ( !(aprec->par.value= my_realloc(aprec->par.value,
+                                                aprec->par.value_length + cbValue + 1,
+                                                MYF(0))) )
                 return set_error(stmt,MYERR_S1001,NULL,4001);
         }
         else
         {
             /* This should never happen */
-            char *old_pos= param->value;
-            if ( !(param->value= my_malloc(param->value_length+cbValue+1,MYF(0))) )
+            char *old_pos= aprec->par.value;
+            if ( !(aprec->par.value= my_malloc(aprec->par.value_length+cbValue+1,MYF(0))) )
                 return set_error(stmt,MYERR_S1001,NULL,4001);
-            memcpy(param->value,old_pos,param->value_length);
+            memcpy(aprec->par.value,old_pos,aprec->par.value_length);
         }
-        memcpy(param->value+param->value_length,rgbValue,cbValue);
-        param->value_length+= cbValue;
-        param->value[param->value_length]= 0;
-        param->alloced= 1;
+        memcpy(aprec->par.value+aprec->par.value_length,rgbValue,cbValue);
+        aprec->par.value_length+= cbValue;
+        aprec->par.value[aprec->par.value_length]= 0;
+        aprec->par.alloced= TRUE;
     }
     else
     {
         /* New value */
-        if ( !(param->value= my_malloc(cbValue+1,MYF(0))) )
+        if ( !(aprec->par.value= my_malloc(cbValue+1,MYF(0))) )
             return set_error(stmt,MYERR_S1001,NULL,4001);
-        memcpy(param->value,rgbValue,cbValue);
-        param->value_length= cbValue;
-        param->value[param->value_length]= 0;
-        param->alloced= 1;
+        memcpy(aprec->par.value,rgbValue,cbValue);
+        aprec->par.value_length= cbValue;
+        aprec->par.value[aprec->par.value_length]= 0;
+        aprec->par.alloced= TRUE;
     }
     return SQL_SUCCESS;
 }

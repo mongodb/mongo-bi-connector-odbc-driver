@@ -107,18 +107,10 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
         case SQL_ATTR_RETRIEVE_DATA:
             break;
 
-        case SQL_ATTR_ROW_BIND_TYPE:
-            options->bind_type= (SQLUINTEGER)(SQLULEN)ValuePtr;
-            break;
-
         case SQL_ATTR_SIMULATE_CURSOR:
             if (ValuePtr != (SQLPOINTER) SQL_SC_TRY_UNIQUE)
                 return set_handle_error(HandleType,Handle,MYERR_01S02,
                                         "Option value changed to default cursor simulation",0);
-            break;
-
-        case SQL_ATTR_ROW_BIND_OFFSET_PTR:
-            options->bind_offset= (SQLLEN *)ValuePtr;
             break;
 
         case 1226:/* MS SQL Server Extension */
@@ -126,19 +118,16 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
         case 1228:
             break;
 
+        case SQL_ATTR_FETCH_BOOKMARK_PTR:
+        case SQL_ATTR_USE_BOOKMARKS:
+            return set_handle_error(HandleType,Handle,MYERR_S1C00,NULL,0);
+
         case SQL_ATTR_QUERY_TIMEOUT:
         case SQL_ATTR_KEYSET_SIZE:
         case SQL_ATTR_CONCURRENCY:
         case SQL_ATTR_NOSCAN:
-        case SQL_ATTR_ROW_OPERATION_PTR: /* need to support this ....*/
-            break;
-
-        case SQL_ATTR_FETCH_BOOKMARK_PTR:
-        case SQL_ATTR_USE_BOOKMARKS:
-            return set_handle_error(HandleType,Handle,MYERR_S1C00,NULL,0);
-            break;
-
         default:
+            /* ignored */
             break;
     }
     return SQL_SUCCESS;
@@ -192,10 +181,6 @@ get_constmt_attr(SQLSMALLINT  HandleType,
             *((SQLUINTEGER *) ValuePtr)= SQL_RD_DEFAULT;
             break;
 
-        case SQL_ATTR_ROW_BIND_TYPE:
-            *((SQLUINTEGER *) ValuePtr)= options->bind_type;
-            break;
-
         case SQL_ATTR_SIMULATE_CURSOR:
             *((SQLUINTEGER *) ValuePtr)= SQL_SC_TRY_UNIQUE;
             break;
@@ -208,20 +193,9 @@ get_constmt_attr(SQLSMALLINT  HandleType,
             *((SQLUINTEGER *) ValuePtr)= 0L;
             break;
 
-        case SQL_ROWSET_SIZE:
-            *(SQLUINTEGER *)ValuePtr= options->rows_in_set;
-            break;
-
         case SQL_NOSCAN:
             *((SQLUINTEGER *) ValuePtr)= SQL_NOSCAN_ON;
             break;
-
-        case SQL_ATTR_ROW_BIND_OFFSET_PTR:
-            *((SQLLEN **) ValuePtr)= options->bind_offset;
-            break;
-
-        case SQL_ATTR_ROW_OPERATION_PTR: /* need to support this ....*/
-            return SQL_SUCCESS_WITH_INFO;
 
         case SQL_ATTR_FETCH_BOOKMARK_PTR:
         case SQL_ATTR_USE_BOOKMARKS:
@@ -230,9 +204,8 @@ get_constmt_attr(SQLSMALLINT  HandleType,
         case 1226:/* MS SQL Server Extension */
         case 1227:
         case 1228:
-            break;
-
         default:
+            /* ignored */
             break;
     }
     return SQL_SUCCESS;
@@ -525,7 +498,7 @@ SQLRETURN SQL_API
 MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
                  SQLINTEGER StringLengthPtr __attribute__((unused)))
 {
-    STMT FAR *stmt= (STMT FAR*) hstmt;
+    STMT *stmt= (STMT *)hstmt;
     SQLRETURN result= SQL_SUCCESS;
     STMT_OPTIONS *options= &stmt->stmt_options;
 
@@ -542,47 +515,76 @@ MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
             break;
 
         case SQL_ATTR_AUTO_IPD:
+        case SQL_ATTR_ENABLE_AUTO_IPD:
             if (ValuePtr != (SQLPOINTER)SQL_FALSE)
-                return set_error(hstmt,MYERR_01S02,
-                                 "Option value changed to default auto ipd",0);
+                return set_error(hstmt,MYERR_S1C00,
+                                 "Optional feature not implemented",0);
             break;
+
+        case SQL_ATTR_PARAM_BIND_OFFSET_PTR: /* need to support this ....*/
+            return stmt_SQLSetDescField(stmt, stmt->apd, 0,
+                                        SQL_DESC_BIND_OFFSET_PTR,
+                                        ValuePtr, SQL_IS_POINTER);
+
+        case SQL_ATTR_PARAM_BIND_TYPE:
+            return stmt_SQLSetDescField(stmt, stmt->apd, 0,
+                                        SQL_DESC_BIND_TYPE,
+                                        ValuePtr, SQL_IS_INTEGER);
+
+        case SQL_ATTR_PARAM_OPERATION_PTR: /* need to support this ....*/
+            return stmt_SQLSetDescField(stmt, stmt->apd, 0,
+                                        SQL_DESC_ARRAY_STATUS_PTR,
+                                        ValuePtr, SQL_IS_POINTER);
 
         case SQL_ATTR_PARAM_STATUS_PTR: /* need to support this ....*/
-            options->paramStatusPtr= (SQLUSMALLINT *)ValuePtr;
-            break;
+            return stmt_SQLSetDescField(stmt, stmt->ipd, 0,
+                                        SQL_DESC_ARRAY_STATUS_PTR,
+                                        ValuePtr, SQL_IS_POINTER);
 
         case SQL_ATTR_PARAMS_PROCESSED_PTR: /* need to support this ....*/
-            options->paramProcessedPtr= (SQLUINTEGER *)ValuePtr;
-            break;
+            return stmt_SQLSetDescField(stmt, stmt->ipd, 0,
+                                        SQL_DESC_ROWS_PROCESSED_PTR,
+                                        ValuePtr, SQL_IS_POINTER);
 
         case SQL_ATTR_PARAMSET_SIZE:
-            if (ValuePtr != (SQLPOINTER)1)
-                return set_error(hstmt,MYERR_01S02,
-                                 "Option value changed to default parameter size",
-                                 0);
-            break;
+            return stmt_SQLSetDescField(stmt, stmt->apd, 0,
+                                        SQL_DESC_ARRAY_SIZE,
+                                        ValuePtr, SQL_IS_UINTEGER);
 
         case SQL_ATTR_ROW_ARRAY_SIZE:
         case SQL_ROWSET_SIZE:
-            options->rows_in_set= (SQLUINTEGER)(SQLULEN)ValuePtr;
-            break;
+            return stmt_SQLSetDescField(stmt, stmt->ard, 0,
+                                        SQL_DESC_ARRAY_SIZE,
+                                        ValuePtr, SQL_IS_UINTEGER);
+
+        case SQL_ATTR_ROW_BIND_OFFSET_PTR:
+            return stmt_SQLSetDescField(stmt, stmt->ard, 0,
+                                        SQL_DESC_BIND_OFFSET_PTR,
+                                        ValuePtr, SQL_IS_POINTER);
+
+        case SQL_ATTR_ROW_BIND_TYPE:
+            return stmt_SQLSetDescField(stmt, stmt->ard, 0,
+                                        SQL_DESC_BIND_TYPE,
+                                        ValuePtr, SQL_IS_INTEGER);
 
         case SQL_ATTR_ROW_NUMBER:
             return set_error(hstmt,MYERR_S1000,
                              "Trying to set read-only attribute",0);
-            break;
 
         case SQL_ATTR_ROW_OPERATION_PTR:
-            options->rowOperationPtr= (SQLUSMALLINT *)ValuePtr;
-            break;
+            return stmt_SQLSetDescField(stmt, stmt->ard, 0,
+                                        SQL_DESC_ARRAY_STATUS_PTR,
+                                        ValuePtr, SQL_IS_POINTER);
 
         case SQL_ATTR_ROW_STATUS_PTR:
-            options->rowStatusPtr= (SQLUSMALLINT *)ValuePtr;
-            break;
+            return stmt_SQLSetDescField(stmt, stmt->ird, 0,
+                                        SQL_DESC_ARRAY_STATUS_PTR,
+                                        ValuePtr, SQL_IS_POINTER);
 
         case SQL_ATTR_ROWS_FETCHED_PTR:
-            options->rowsFetchedPtr= (SQLULEN *)ValuePtr;
-            break;
+            return stmt_SQLSetDescField(stmt, stmt->ird, 0,
+                                        SQL_DESC_ROWS_PROCESSED_PTR,
+                                        ValuePtr, SQL_IS_POINTER);
 
         case SQL_ATTR_SIMULATE_CURSOR:
             options->simulateCursor= (SQLUINTEGER)(SQLULEN)ValuePtr;
@@ -614,7 +616,7 @@ MySQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
     SQLRETURN result= SQL_SUCCESS;
     STMT FAR *stmt= (STMT FAR*) hstmt;
     STMT_OPTIONS *options= &stmt->stmt_options;
-    SQLPOINTER vparam;
+    SQLINTEGER vparam= 0;
     SQLINTEGER len;
 
     if (!ValuePtr)
@@ -636,20 +638,41 @@ MySQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
             *(SQLUINTEGER *)ValuePtr= SQL_FALSE;
             break;
 
+        case SQL_ATTR_PARAM_BIND_OFFSET_PTR: /* need to support this ....*/
+            *(SQLPOINTER *)ValuePtr= stmt->apd->bind_offset_ptr;
+            break;
+
+        case SQL_ATTR_PARAM_BIND_TYPE:
+            *(SQLINTEGER *)ValuePtr= stmt->apd->bind_type;
+            break;
+
+        case SQL_ATTR_PARAM_OPERATION_PTR: /* need to support this ....*/
+            *(SQLPOINTER *)ValuePtr= stmt->apd->array_status_ptr;
+            break;
+
         case SQL_ATTR_PARAM_STATUS_PTR: /* need to support this ....*/
-            ValuePtr= (SQLUSMALLINT *)options->paramStatusPtr;
+            *(SQLPOINTER *)ValuePtr= stmt->ipd->array_status_ptr;
             break;
 
         case SQL_ATTR_PARAMS_PROCESSED_PTR: /* need to support this ....*/
-            ValuePtr= (SQLUSMALLINT *)options->paramProcessedPtr;
+            *(SQLPOINTER *)ValuePtr= stmt->ipd->rows_processed_ptr;
             break;
 
         case SQL_ATTR_PARAMSET_SIZE:
-            *(SQLUINTEGER *)ValuePtr= 1;
+            *(SQLUINTEGER *)ValuePtr= stmt->apd->array_size;
             break;
 
         case SQL_ATTR_ROW_ARRAY_SIZE:
-            *(SQLUINTEGER *)ValuePtr= options->rows_in_set;
+        case SQL_ROWSET_SIZE:
+            *(SQLUINTEGER *)ValuePtr= stmt->ard->array_size;
+            break;
+
+        case SQL_ATTR_ROW_BIND_OFFSET_PTR:
+            *((SQLPOINTER *) ValuePtr)= stmt->ard->bind_offset_ptr;
+            break;
+
+        case SQL_ATTR_ROW_BIND_TYPE:
+            *((SQLINTEGER *) ValuePtr)= stmt->ard->bind_type;
             break;
 
         case SQL_ATTR_ROW_NUMBER:
@@ -657,44 +680,38 @@ MySQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
             break;
 
         case SQL_ATTR_ROW_OPERATION_PTR: /* need to support this ....*/
-            ValuePtr= (SQLUSMALLINT *)options->rowOperationPtr;
+            *(SQLPOINTER *)ValuePtr= stmt->ard->array_status_ptr;
             break;
 
         case SQL_ATTR_ROW_STATUS_PTR:
-            ValuePtr= (SQLUSMALLINT *)options->rowStatusPtr;
+            *(SQLPOINTER *)ValuePtr= stmt->ird->array_status_ptr;
             break;
 
         case SQL_ATTR_ROWS_FETCHED_PTR:
-            ValuePtr= (SQLULEN *)options->rowsFetchedPtr;
+            *(SQLPOINTER *)ValuePtr= stmt->ird->rows_processed_ptr;
             break;
 
         case SQL_ATTR_SIMULATE_CURSOR:
             *(SQLUINTEGER *)ValuePtr= options->simulateCursor;
             break;
 
-            /*
-              To make iODBC and MS ODBC DM to work, return the following cases
-              as success, by just allocating...else
-              - iODBC is hanging at the time of stmt allocation
-              - MS ODB DM is crashing at the time of stmt allocation
-            */
         case SQL_ATTR_APP_ROW_DESC:
-            *(SQLPOINTER *)ValuePtr= &stmt->ard;
+            *(SQLPOINTER *)ValuePtr= stmt->ard;
             *StringLengthPtr= sizeof(SQLPOINTER);
             break;
 
         case SQL_ATTR_IMP_ROW_DESC:
-            *(SQLPOINTER *)ValuePtr= &stmt->ird;
+            *(SQLPOINTER *)ValuePtr= stmt->ird;
             *StringLengthPtr= sizeof(SQLPOINTER);
             break;
 
         case SQL_ATTR_APP_PARAM_DESC:
-            *(SQLPOINTER *)ValuePtr= &stmt->apd;
+            *(SQLPOINTER *)ValuePtr= stmt->apd;
             *StringLengthPtr= sizeof(SQLPOINTER);
             break;
 
         case SQL_ATTR_IMP_PARAM_DESC:
-            *(SQLPOINTER *)ValuePtr= &stmt->ipd;
+            *(SQLPOINTER *)ValuePtr= stmt->ipd;
             *StringLengthPtr= sizeof(SQLPOINTER);
             break;
 

@@ -163,19 +163,11 @@ SQLRETURN my_SQLPrepare(SQLHSTMT hstmt, SQLCHAR *szSqlStr, SQLINTEGER cbSqlStr,
       }
       if (*pos == '?')
       {
-        PARAM_BIND *param;
-
-        if (param_count >= stmt->params.elements)
-        {
-          PARAM_BIND tmp_param;
-          bzero(&tmp_param, sizeof(tmp_param));
-          if (push_dynamic(&stmt->params, (DYNAMIC_ELEMENT)&tmp_param))
-          {
-            return set_error(stmt, MYERR_S1001, NULL, 4001);
-          }
-        }
-        param= dynamic_element(&stmt->params,param_count,PARAM_BIND*);
-        param->pos_in_query= pos;
+        DESCREC *aprec= desc_get_rec(stmt->apd, param_count, TRUE);
+        DESCREC *iprec= desc_get_rec(stmt->ipd, param_count, TRUE);
+        if (aprec == NULL || iprec == NULL ||
+            set_dynamic(&stmt->param_pos, (char *)&pos, param_count))
+          return set_error(stmt, MYERR_S1001, NULL, 4001);
         param_count++;
       }
     }
@@ -200,60 +192,204 @@ SQLRETURN my_SQLPrepare(SQLHSTMT hstmt, SQLCHAR *szSqlStr, SQLINTEGER cbSqlStr,
   @purpose : binds a buffer to a parameter marker in an SQL statement.
 */
 
-SQLRETURN SQL_API my_SQLBindParameter( SQLHSTMT     hstmt,
-                                       SQLUSMALLINT ipar,
-                                       SQLSMALLINT  fParamType __attribute__((unused)),
-                                       SQLSMALLINT  fCType,
-                                       SQLSMALLINT  fSqlType,
-                                       SQLULEN      cbColDef __attribute__((unused)),
-                                       SQLSMALLINT  ibScale __attribute__((unused)),
-                                       SQLPOINTER   rgbValue,
-                                       SQLLEN       cbValueMax,
-                                       SQLLEN *     pcbValue )
+SQLRETURN SQL_API my_SQLBindParameter( SQLHSTMT     StatementHandle,
+                                       SQLUSMALLINT ParameterNumber,
+                                       SQLSMALLINT  InputOutputType,
+                                       SQLSMALLINT  ValueType,
+                                       SQLSMALLINT  ParameterType,
+                                       SQLULEN      ColumnSize,
+                                       SQLSMALLINT  DecimalDigits,
+                                       SQLPOINTER   ParameterValuePtr,
+                                       SQLLEN       BufferLength,
+                                       SQLLEN *     StrLen_or_IndPtr )
 {
-    STMT FAR *stmt= (STMT FAR*) hstmt;
-    PARAM_BIND param;
+    STMT *stmt= (STMT *)StatementHandle;
+    DESCREC *aprec= desc_get_rec(stmt->apd, ParameterNumber - 1, TRUE);
+    DESCREC *iprec= desc_get_rec(stmt->ipd, ParameterNumber - 1, TRUE);
+    SQLRETURN rc;
+    SQLSMALLINT dtcode = 0; /* DATETIME_INTERVAL_CODE */
+    /* TODO if this function fails, the SQL_DESC_COUNT should be unchanged in apd, ipd */
 
     CLEAR_STMT_ERROR(stmt);
 
-    if (ipar-- < 1)
+    if (ParameterNumber < 1)
     {
         set_error(stmt,MYERR_S1093,NULL,0);
         return SQL_ERROR;
     }
-    if (fCType == SQL_C_NUMERIC) /* We don't support this now */
+
+    if (ValueType == SQL_C_NUMERIC) /* We don't support this now */
     {
         set_error(stmt,MYERR_07006,
                   "Restricted data type attribute violation(SQL_C_NUMERIC)",0);
         return SQL_ERROR;
     }
-    if (stmt->params.elements > ipar)
-    {
-        /* Change old bind parameter */
-        PARAM_BIND *old= dynamic_element(&stmt->params,ipar,PARAM_BIND*);
-        if (old->alloced)
-        {
-            old->alloced= 0;
-            my_free(old->value,MYF(0));
-        }
-        memcpy(&param, old, sizeof(param));
-    }
-    else
-        bzero(&param, sizeof(param));
-    /* Simply record the values. These are used later (SQLExecute) */
-    param.used= 1;
-    param.SqlType= fSqlType;
-    param.CType= (fCType == SQL_C_DEFAULT ? default_c_type(fSqlType) : fCType);
-    param.buffer= rgbValue;
-    param.ValueMax= cbValueMax;
-    param.actual_len= pcbValue;
-    param.real_param_done= TRUE;
 
-    if (set_dynamic(&stmt->params, (DYNAMIC_ELEMENT)&param, ipar))
+    if (aprec->par.alloced)
     {
-        set_error(stmt,MYERR_S1001,NULL,4001);
-        return SQL_ERROR;
+        aprec->par.alloced= FALSE;
+        assert(aprec->par.value);
+        my_free(aprec->par.value,MYF(0));
+        aprec->par.value = NULL;
     }
+
+    /* reset all param fields */
+    desc_rec_init_apd(aprec);
+    desc_rec_init_apd(iprec);
+
+    /* first, set apd fields */
+    if (ValueType == SQL_C_DEFAULT)
+        ValueType= default_c_type(ParameterType);
+    if (!SQL_SUCCEEDED(rc = stmt_SQLSetDescField(stmt, stmt->apd,
+                                                 ParameterNumber,
+                                                 SQL_DESC_CONCISE_TYPE,
+                                                 (SQLPOINTER)(SQLINTEGER)ValueType,
+                                                 SQL_IS_SMALLINT)))
+        return rc;
+
+    /* SQL_DESC_DATETIME_INTERVAL_CODE must be before SQL_DESC_TYPE */
+    if (ValueType == SQL_C_DATE || ValueType == SQL_C_TYPE_DATE)
+        dtcode= SQL_CODE_DATE;
+    else if (ValueType == SQL_C_TIME || ValueType == SQL_C_TYPE_TIME)
+        dtcode= SQL_CODE_TIME;
+    else if (ValueType == SQL_C_TIMESTAMP || ValueType == SQL_C_TYPE_TIMESTAMP)
+        dtcode= SQL_CODE_TIMESTAMP;
+    else if (ValueType == SQL_C_INTERVAL_DAY)
+        dtcode= SQL_CODE_DAY;
+    else if (ValueType == SQL_C_INTERVAL_DAY_TO_HOUR)
+        dtcode= SQL_CODE_DAY_TO_HOUR;
+    else if (ValueType == SQL_C_INTERVAL_DAY_TO_MINUTE)
+        dtcode= SQL_CODE_DAY_TO_MINUTE;
+    else if (ValueType == SQL_C_INTERVAL_DAY_TO_SECOND)
+        dtcode= SQL_CODE_DAY_TO_SECOND;
+    else if (ValueType == SQL_C_INTERVAL_HOUR)
+        dtcode= SQL_CODE_HOUR;
+    else if (ValueType == SQL_C_INTERVAL_HOUR_TO_MINUTE)
+        dtcode= SQL_CODE_HOUR_TO_MINUTE;
+    else if (ValueType == SQL_C_INTERVAL_HOUR_TO_SECOND)
+        dtcode= SQL_CODE_HOUR_TO_SECOND;
+    else if (ValueType == SQL_C_INTERVAL_MINUTE)
+        dtcode= SQL_CODE_MINUTE;
+    else if (ValueType == SQL_C_INTERVAL_MINUTE_TO_SECOND)
+        dtcode= SQL_CODE_MINUTE_TO_SECOND;
+    else if (ValueType == SQL_C_INTERVAL_MONTH)
+        dtcode= SQL_CODE_MONTH;
+    else if (ValueType == SQL_C_INTERVAL_SECOND)
+        dtcode= SQL_CODE_SECOND;
+    else if (ValueType == SQL_C_INTERVAL_YEAR)
+        dtcode= SQL_CODE_YEAR;
+    else if (ValueType == SQL_C_INTERVAL_YEAR_TO_MONTH)
+        dtcode= SQL_CODE_YEAR_TO_MONTH;
+
+    if (!SQL_SUCCEEDED(rc= stmt_SQLSetDescField(stmt, stmt->apd,
+                                                ParameterNumber,
+                                                SQL_DESC_DATETIME_INTERVAL_CODE,
+                                                (SQLPOINTER)(SQLINTEGER)dtcode,
+                                                SQL_IS_SMALLINT)))
+        return rc;
+
+    switch (ValueType)
+    {
+    /* datetime data types */
+    case SQL_C_DATE:
+    case SQL_C_TYPE_DATE:
+    case SQL_C_TIME:
+    case SQL_C_TYPE_TIME:
+    case SQL_C_TIMESTAMP:
+    case SQL_C_TYPE_TIMESTAMP:
+        rc= stmt_SQLSetDescField(stmt, stmt->apd, ParameterNumber,
+                                 SQL_DESC_TYPE, (SQLPOINTER)SQL_DATETIME,
+                                 SQL_IS_SMALLINT);
+        break;
+    /* interval data types */
+    case SQL_C_INTERVAL_YEAR:
+    case SQL_C_INTERVAL_MONTH:
+    case SQL_C_INTERVAL_DAY:
+    case SQL_C_INTERVAL_HOUR:
+    case SQL_C_INTERVAL_MINUTE:
+    case SQL_C_INTERVAL_SECOND:
+    case SQL_C_INTERVAL_YEAR_TO_MONTH:
+    case SQL_C_INTERVAL_DAY_TO_HOUR:
+    case SQL_C_INTERVAL_DAY_TO_MINUTE:
+    case SQL_C_INTERVAL_DAY_TO_SECOND:
+    case SQL_C_INTERVAL_HOUR_TO_MINUTE:
+    case SQL_C_INTERVAL_HOUR_TO_SECOND:
+    case SQL_C_INTERVAL_MINUTE_TO_SECOND:
+        rc= stmt_SQLSetDescField(stmt, stmt->apd, ParameterNumber,
+                                 SQL_DESC_TYPE, (SQLPOINTER)SQL_INTERVAL,
+                                 SQL_IS_SMALLINT);
+        break;
+    /* else, set same */
+    default:
+        rc= stmt_SQLSetDescField(stmt, stmt->apd, ParameterNumber, SQL_DESC_TYPE,
+                                 (SQLPOINTER)(SQLINTEGER)ValueType,
+                                 SQL_IS_SMALLINT);
+        break;
+    }
+    if (!SQL_SUCCEEDED(rc))
+        return rc;
+
+    if (!SQL_SUCCEEDED(rc= stmt_SQLSetDescField(stmt, stmt->apd, ParameterNumber,
+                                                SQL_DESC_DATA_PTR,
+                                                ParameterValuePtr, SQL_IS_POINTER)))
+        return rc;
+    if (!SQL_SUCCEEDED(rc= stmt_SQLSetDescField(stmt, stmt->apd, ParameterNumber,
+                                                SQL_DESC_OCTET_LENGTH,
+                                                (SQLPOINTER)BufferLength,
+                                                SQL_IS_INTEGER)))
+        return rc;
+    if (!SQL_SUCCEEDED(rc= stmt_SQLSetDescField(stmt, stmt->apd, ParameterNumber,
+                                                SQL_DESC_OCTET_LENGTH_PTR,
+                                                StrLen_or_IndPtr, SQL_IS_POINTER)))
+        return rc;
+    if (!SQL_SUCCEEDED(rc= stmt_SQLSetDescField(stmt, stmt->apd, ParameterNumber,
+                                                SQL_DESC_INDICATOR_PTR,
+                                                StrLen_or_IndPtr, SQL_IS_POINTER)))
+        return rc;
+
+    /* now the ipd fields */
+    if (!SQL_SUCCEEDED(rc= stmt_SQLSetDescField(stmt, stmt->ipd,
+                                                ParameterNumber,
+                                                SQL_DESC_CONCISE_TYPE,
+                                                (SQLPOINTER)(SQLINTEGER)ParameterType,
+                                                SQL_IS_SMALLINT)))
+        return rc;
+
+    if (!SQL_SUCCEEDED(rc= stmt_SQLSetDescField(stmt, stmt->ipd,
+                                                ParameterNumber,
+                                                SQL_DESC_PARAMETER_TYPE,
+                                                (SQLPOINTER)(SQLINTEGER)InputOutputType,
+                                                SQL_IS_SMALLINT)))
+        return rc;
+
+    switch (ParameterType)
+    {
+    case SQL_TYPE_TIME:
+    case SQL_TYPE_TIMESTAMP:
+    case SQL_INTERVAL_SECOND:
+    case SQL_INTERVAL_DAY_TO_SECOND:
+    case SQL_INTERVAL_HOUR_TO_SECOND:
+    case SQL_INTERVAL_MINUTE_TO_SECOND:
+        rc= stmt_SQLSetDescField(stmt, stmt->ipd, ParameterNumber,
+                                 SQL_DESC_PRECISION,
+                                 (SQLPOINTER)(SQLINTEGER)DecimalDigits,
+                                 SQL_IS_SMALLINT);
+        break;
+    case SQL_NUMERIC:
+    case SQL_DECIMAL:
+        rc= stmt_SQLSetDescField(stmt, stmt->ipd, ParameterNumber,
+                                 SQL_DESC_SCALE,
+                                 (SQLPOINTER)(SQLINTEGER)DecimalDigits,
+                                 SQL_IS_SMALLINT);
+        break;
+    default:
+        rc= SQL_SUCCESS;
+    }
+    if (!SQL_SUCCEEDED(rc))
+        return rc;
+
+    aprec->par.real_param_done= TRUE;
+
     return SQL_SUCCESS;
 }
 
@@ -359,9 +495,7 @@ SQLRETURN SQL_API SQLSetScrollOptions(  SQLHSTMT        hstmt,
                                         SQLLEN          crowKeyset __attribute__((unused)),
                                         SQLUSMALLINT    crowRowset )
 {
-    STMT FAR *stmt= (STMT FAR*) hstmt;
-
-    stmt->stmt_options.rows_in_set= crowRowset;
-
-    return SQL_SUCCESS;
+    return SQLSetDescField(((STMT *)hstmt)->ard, 0, SQL_DESC_ARRAY_SIZE,
+                           (SQLPOINTER)(SQLUINTEGER)crowRowset, SQL_IS_USMALLINT);
 }
+
