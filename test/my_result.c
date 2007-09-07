@@ -594,9 +594,9 @@ DECLARE_TEST(t_multistep)
     pcbValue= 99;
     szData[0]='A';
     expect_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_CHAR, szData, 0, &pcbValue),
-                SQL_SUCCESS_WITH_INFO);
+                SQL_NO_DATA_FOUND);
     fprintf(stdout,"data  : %s (%ld)\n",szData,pcbValue);
-    myassert(pcbValue == 0);
+    myassert(pcbValue == 99);
     myassert(szData[0] == 'A');
 
     expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
@@ -1768,7 +1768,7 @@ DECLARE_TEST(t_binary_collation)
 DECLARE_TEST(t_bug29239)
 {
   SQLHANDLE hstmt2;
-  SQLINTEGER xval;
+  SQLINTEGER xval = 88;
 
   ok_sql(hstmt, "drop table if exists bug29239");
   ok_sql(hstmt, "create table bug29239 ( x int )");
