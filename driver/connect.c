@@ -380,6 +380,7 @@ SQLRETURN SQL_API SQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
   MYODBCUTIL_DRIVER *pDriver= MYODBCUtilAllocDriver();
   BOOL bPrompt= FALSE;
   HMODULE hModule= NULL;
+  unsigned long options;
 
   /* Parse the incoming string */
   if (!MYODBCUtilReadConnectStr(ds, (LPCSTR)szConnStrIn))
@@ -400,6 +401,14 @@ SQLRETURN SQL_API SQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
   if (ds->pszDSN)
     (void)MYODBCUtilReadDataSource(ds, ds->pszDSN);
 #endif
+
+  /* If FLAG_NO_PROMPT is no set, force prompting off. */
+  if (ds->pszOPTION)
+  {
+    options= strtoul(ds->pszOPTION, NULL, 10);
+    if (options & FLAG_NO_PROMPT)
+      fDriverCompletion= SQL_DRIVER_NOPROMPT;
+  }
 
   /*
     We only prompt if we need to.

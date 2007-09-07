@@ -451,6 +451,37 @@ DECLARE_TEST(t_bug30774)
 }
 
 
+/**
+  Bug #30840: FLAG_NO_PROMPT doesn't do anything
+*/
+DECLARE_TEST(t_bug30840)
+{
+  HDBC hdbc1;
+  SQLCHAR   conn[256], conn_out[256];
+  SQLSMALLINT conn_out_len;
+
+  sprintf((char *)conn, "DSN=%s;UID=%s;PASSWORD=%s;OPTION=16",
+          mydsn, myuid, mypwd);
+  if (mysock != NULL)
+  {
+    strcat((char *)conn, ";SOCKET=");
+    strcat((char *)conn, (char *)mysock);
+  }
+
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), conn_out,
+                                 sizeof(conn_out), &conn_out_len,
+                                 SQL_DRIVER_PROMPT));
+
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -464,6 +495,7 @@ BEGIN_TESTS
   ADD_TEST(charset_gbk)
   ADD_TEST(t_bug7445)
   ADD_TEST(t_bug30774)
+  ADD_TEST(t_bug30840)
 END_TESTS
 
 
