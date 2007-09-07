@@ -706,6 +706,7 @@ DECLARE_TEST(t_prepare)
 
     rc = SQLNumResultCols(hstmt,&pccol);
     mystmt(hstmt,rc);
+    is_num(pccol, 3);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nodata,0,&nlen);
     mystmt(hstmt,rc);
