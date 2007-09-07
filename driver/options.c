@@ -451,7 +451,13 @@ static SQLRETURN get_con_attr(SQLHDBC    hdbc,
 
         case SQL_ATTR_CONNECTION_DEAD:
             {
-                if ( mysql_ping( &dbc->mysql ) && mysql_errno( &dbc->mysql ) == CR_SERVER_LOST )
+                /*
+                  We have to check for both CR_SERVER_LOST and 
+                  CR_SERVER_GONE_ERROR to report about dead connections
+                */
+                if ( mysql_ping( &dbc->mysql ) && 
+                     (mysql_errno( &dbc->mysql ) == CR_SERVER_LOST ||
+                      mysql_errno( &dbc->mysql ) == CR_SERVER_GONE_ERROR) )
                     *((SQLUINTEGER *) ValuePtr)= SQL_CD_TRUE;
                 else
                     *((SQLUINTEGER *) ValuePtr)= SQL_CD_FALSE;

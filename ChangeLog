@@ -14,6 +14,8 @@
     when no data left, even if requested size is 0. (Bug#30520)
   * SQLSetParam() caused memory allocation errors due to driver manager's 
     mapping of deprecated functions (buffer length -1). (Bug#29871)
+  * SQLGetConnectAttr() did not reflect the connection state correctly.
+    (Bug#14639)
 
 ----
 
