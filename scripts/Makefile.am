@@ -36,6 +36,7 @@ CLEANFILES = make_binary_distribution \
 	rm -f $@ $@-t
 	sed \
 	-e 's!@''VERSION''@!@VERSION@!' \
+	-e 's!@''NUMERIC_VERSION''@!@NUMERIC_VERSION@!' \
 	-e 's!@''MACHINE_TYPE''@!@MACHINE_TYPE@!' \
 	-e 's!@''SYSTEM_TYPE''@!@SYSTEM_TYPE@!' \
 	-e 's!@''ODBC_DM_PATH_ARG''@!@ODBC_DM_PATH_ARG@!' \

@@ -114,7 +114,7 @@ INCLUDES = -I@top_srcdir@/include $(QT_CXXFLAGS) -DSYSTEM_FILE_PATH=\"@sysconfdi
 libmyodbc3S_la_LDFLAGS = \
 	-export-dynamic \
 	-export-symbols @srcdir@/myodbc3S.export \
-	-release @myodbc_version@ \
+	-release @NUMERIC_VERSION@ \
 	-module
 
 # libmyodbc3S_la_LIBADD = @QT_LDFLAGS@ @LIB_QT@ ../util/libmyodbc3u.la

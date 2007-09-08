@@ -67,8 +67,8 @@ libmyodbc5_la_CPPFLAGS       = -DMYODBC_DBG
 libmyodbc5_r_la_CPPFLAGS     = -DMYODBC_DBG
 endif
 
-libmyodbc5_la_LDFLAGS       = -release @myodbc_version@ -module 
-libmyodbc5_r_la_LDFLAGS     = -release @myodbc_version@ -module 
+libmyodbc5_la_LDFLAGS       = -release @NUMERIC_VERSION@ -module 
+libmyodbc5_r_la_LDFLAGS     = -release @NUMERIC_VERSION@ -module 
 
 if WITH_DEBUG
 LTLIBS_DEPS = $(LTLIBS_DEBUG_DEPS)

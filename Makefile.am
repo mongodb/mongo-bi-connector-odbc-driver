@@ -22,7 +22,7 @@
 #                                                                        #
 # Makefile.am                                                            #
 #                                                                        #
-# @description: This is the MyODBC 3.51 driver Makefile.am               #
+# @description: This is the MyODBC 5.1 driver Makefile.am                #
 #                                                                        #
 # @author     : MySQL AB (monty@mysql.com, venu@mysql.com)               #
 # @date       : 2001-Aug-15                                              #
@@ -89,7 +89,7 @@ test:
 # Create a source snapshot
 #
 snapshot:
-	$(MAKE) dist distdir=mysql-connector-odbc-@myodbc_version@-`date +"%Y%m%d"`
+	$(MAKE) dist distdir=mysql-connector-odbc-@VERSION@-`date +"%Y%m%d"`
 
 # Note that directories will be copied recursively
 EXTRA_DIST = \
