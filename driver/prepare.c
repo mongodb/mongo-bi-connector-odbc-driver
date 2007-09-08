@@ -495,7 +495,9 @@ SQLRETURN SQL_API SQLSetScrollOptions(  SQLHSTMT        hstmt,
                                         SQLLEN          crowKeyset __attribute__((unused)),
                                         SQLUSMALLINT    crowRowset )
 {
-    return SQLSetDescField(((STMT *)hstmt)->ard, 0, SQL_DESC_ARRAY_SIZE,
-                           (SQLPOINTER)(SQLUINTEGER)crowRowset, SQL_IS_USMALLINT);
+    STMT *stmt= (STMT *)hstmt;
+    return stmt_SQLSetDescField(stmt, stmt->ard, 0, SQL_DESC_ARRAY_SIZE,
+                                (SQLPOINTER)(SQLUINTEGER)crowRowset,
+                                SQL_IS_USMALLINT);
 }
 

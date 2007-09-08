@@ -444,9 +444,9 @@ getfield(SQLSMALLINT fldid)
   @type    : ODBC 3.0 API
   @purpose : Get a field of a descriptor.
  */
-SQLRETURN SQL_API
-SQLGetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
-                SQLPOINTER valptr, SQLINTEGER buflen, SQLINTEGER *strlen)
+SQLRETURN
+MySQLGetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
+                  SQLPOINTER valptr, SQLINTEGER buflen, SQLINTEGER *strlen)
 {
   desc_field *fld= getfield(fldid);
   DESC *desc= (DESC *)hdesc;
@@ -578,9 +578,9 @@ SQLGetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
   @type    : ODBC 3.0 API
   @purpose : Set a field of a descriptor.
  */
-SQLRETURN SQL_API
-SQLSetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
-                SQLPOINTER val, SQLINTEGER buflen)
+SQLRETURN
+MySQLSetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
+                  SQLPOINTER val, SQLINTEGER buflen)
 {
   desc_field *fld= getfield(fldid);
   DESC *desc= (DESC *)hdesc;
@@ -685,8 +685,7 @@ SQLSetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
   @purpose : Set a field of a descriptor.
              Errors are placed in the TargetDescHandle.
  */
-SQLRETURN SQL_API
-SQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandle)
+SQLRETURN MySQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandle)
 {
   DESC *src= (DESC *)SourceDescHandle;
   DESC *dest= (DESC *)TargetDescHandle;
@@ -732,19 +731,18 @@ SQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandle)
  * Call SQLGetDescField in the "context" of a statement. This will copy
  * any error from the descriptor to the statement.
  */
-#if 0 /* UNUSED */
+/* TODO UNUSED */
 SQLRETURN
 stmt_SQLGetDescField(STMT *stmt, DESC *desc, SQLSMALLINT recnum,
                      SQLSMALLINT fldid, SQLPOINTER valptr,
                      SQLINTEGER buflen, SQLINTEGER *strlen)
 {
   SQLRETURN rc;
-  if ((rc= SQLGetDescField((SQLHANDLE)desc, recnum, fldid,
-                            valptr, buflen, strlen)) != SQL_SUCCESS)
+  if ((rc= MySQLGetDescField((SQLHANDLE)desc, recnum, fldid,
+                             valptr, buflen, strlen)) != SQL_SUCCESS)
     memcpy(&stmt->error, &desc->error, sizeof(MYERROR));
   return rc;
 }
-#endif
 
 
 /*
@@ -756,8 +754,8 @@ stmt_SQLSetDescField(STMT *stmt, DESC *desc, SQLSMALLINT recnum,
                      SQLSMALLINT fldid, SQLPOINTER val, SQLINTEGER buflen)
 {
   SQLRETURN rc;
-  if ((rc= SQLSetDescField((SQLHANDLE)desc, recnum, fldid,
-                            val, buflen)) != SQL_SUCCESS)
+  if ((rc= MySQLSetDescField((SQLHANDLE)desc, recnum, fldid,
+                             val, buflen)) != SQL_SUCCESS)
     memcpy(&stmt->error, &desc->error, sizeof(MYERROR));
   return rc;
 }
@@ -770,8 +768,48 @@ stmt_SQLSetDescField(STMT *stmt, DESC *desc, SQLSMALLINT recnum,
 SQLRETURN stmt_SQLCopyDesc(STMT *stmt, DESC *src, DESC *dest)
 {
   SQLRETURN rc;
-  if ((rc= SQLCopyDesc((SQLHANDLE)src, (SQLHANDLE)dest)) != SQL_SUCCESS)
+  if ((rc= MySQLCopyDesc((SQLHANDLE)src, (SQLHANDLE)dest)) != SQL_SUCCESS)
     memcpy(&stmt->error, &dest->error, sizeof(MYERROR));
   return rc;
 }
+
+
+SQLRETURN SQL_API
+SQLGetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
+                SQLPOINTER valptr, SQLINTEGER buflen, SQLINTEGER *strlen)
+{
+  return MySQLGetDescField(hdesc, recnum, fldid, valptr, buflen, strlen);
+}
+
+
+SQLRETURN SQL_API
+SQLSetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
+                SQLPOINTER val, SQLINTEGER buflen)
+{
+  return MySQLSetDescField(hdesc, recnum, fldid, val, buflen);
+}
+
+
+SQLRETURN SQL_API
+SQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandle)
+{
+  return MySQLCopyDesc(SourceDescHandle, TargetDescHandle);
+}
+
+
+SQLRETURN SQL_API
+SQLGetDescFieldW(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
+                 SQLPOINTER valptr, SQLINTEGER buflen, SQLINTEGER *strlen)
+{
+  return MySQLGetDescField(hdesc, recnum, fldid, valptr, buflen, strlen);
+}
+
+
+SQLRETURN SQL_API
+SQLSetDescFieldW(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
+                 SQLPOINTER val, SQLINTEGER buflen)
+{
+  return MySQLSetDescField(hdesc, recnum, fldid, val, buflen);
+}
+
 
