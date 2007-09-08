@@ -54,7 +54,6 @@ struct _ODBCPARAMDLL OdbcDialogParams
 	bool disable_transactions;
 	bool force_use_of_forward_only_cursors;
 	// debug
-	bool trace_drivers_calls;
 	bool save_queries;
 };
 

@@ -119,10 +119,8 @@ IDD_TAB4 DIALOGEX 0, 0, 209, 151
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "Trace Drivers Calls To myodbc.log",IDC_CHECK_trace_drivers_calls,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,7,148,10
     CONTROL         "Save Queries To myodbc.sql",IDC_CHECK_save_queries,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,22,148,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,32,14,148,10
 END
 
 IDD_TAB5 DIALOGEX 0, 0, 209, 151
@@ -139,6 +137,10 @@ BEGIN
     RTEXT           "SSL Certificate Authotity",IDC_STATIC,0,41,79,14
     RTEXT           "SSL CA Path",IDC_STATIC,18,56,61,14
     RTEXT           "SSL Cipher",IDC_STATIC,12,72,67,14
+    PUSHBUTTON      "...",IDC_SSLKEYCHOOSER,189,14,13,10
+    PUSHBUTTON      "...",IDC_SSLCERTCHOOSER,189,30,13,10
+    PUSHBUTTON      "...",IDC_SSLCACHOOSER,189,44,13,10
+    PUSHBUTTON      "...",IDC_SSLCAPATHCHOOSER,189,60,13,10
 END
 
 

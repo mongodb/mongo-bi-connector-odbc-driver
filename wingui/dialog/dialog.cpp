@@ -38,20 +38,197 @@ myString		popupMsg		= L"";
 
 SQLHDBC			hDBC			= SQL_NULL_HDBC;
 
-SQLRETURN Connect( SQLHDBC  &   hDbc, OdbcDialogParams * params );
+static WCHAR ** databases		= NULL;
+
+void ShowDiagnostics( SQLRETURN nReturn, SQLSMALLINT nHandleType, SQLHANDLE h );
+
+void FreeEnvHandle( SQLHENV &hEnv )
+{
+	if ( hDBC == SQL_NULL_HDBC )
+		SQLFreeHandle( SQL_HANDLE_ENV, hEnv );
+}
+
+void Disconnect( SQLHDBC &hDbc, SQLHENV &hEnv  )
+{
+
+slotLoadDatabaseNamesExit3:
+
+slotLoadDatabaseNamesExit2:
+	SQLDisconnect( hDbc );
+	if ( hDBC == SQL_NULL_HDBC )
+		SQLFreeHandle( SQL_HANDLE_DBC, hDbc );
+slotLoadDatabaseNamesExit1:
+
+	FreeEnvHandle( hEnv );
+}
+
+void Disconnect( SQLHSTMT &hStmt, SQLHDBC &hDbc, SQLHENV &hEnv  )
+{
+	SQLFreeHandle( SQL_HANDLE_STMT, hStmt );
+
+	Disconnect( hDbc, hEnv );
+}
+
+const myString & buildConnectString( OdbcDialogParams* params )
+{
+	stringConnectIn = L"DRIVER=";
+
+	concat( stringConnectIn, MYODBCINST_DRIVER_NAME );
+
+	wchar_t portstr[5];
+
+#ifdef Q_WS_MACX
+	/*
+	The iODBC that ships with Mac OS X (10.4) must be given a filename for
+	the driver library in SQLDriverConnect(), not just the driver name.  So
+	we have to look it up using SQLGetPrivateProfileString() if we haven't
+	already.
+	*/
+	{
+		if (!params->drvname.empty())
+		{
+			/*
+			SQLGetPrivateProfileString has bugs on iODBC, so we have to check
+			both the SYSTEM and USER space explicitly.
+			*/
+			UWORD configMode;
+			if (!SQLGetConfigMode(&configMode))
+				return FALSE;
+			if (!SQLSetConfigMode(ODBC_SYSTEM_DSN))
+				return FALSE;
+
+			char driver[PATH_MAX];
+			if (!SQLGetPrivateProfileString(pDataSource->pszDRIVER,
+				"DRIVER", pDataSource->pszDRIVER,
+				driver, sizeof(driver),
+				"ODBCINST.INI"))
+				return FALSE;
+
+			/* If we're creating a user DSN, make sure we really got a driver.  */
+			if (configMode != ODBC_SYSTEM_DSN &&
+				strcmp(driver, pDataSource->pszDRIVER) == 0)
+			{
+				if (configMode != ODBC_SYSTEM_DSN)
+				{
+					if (!SQLSetConfigMode(ODBC_USER_DSN))
+						return FALSE;
+					if (!SQLGetPrivateProfileString(pDataSource->pszDRIVER,
+						"DRIVER", pDataSource->pszDRIVER,
+						driver, sizeof(driver),
+						"ODBCINST.INI"))
+						return FALSE;
+				}
+			}
+
+			pDataSource->pszDriverFileName= _global_strdup(driver);
+
+			if (!SQLSetConfigMode(configMode))
+				return FALSE;
+		}
+
+		stringConnectIn= concat( stringConnectIn, pDataSource->pszDriverFileName );
+	}
+	/*
+	//#else
+	concat(stringConnectIn, params->drvname );//pDataSource->pszDRIVER);*/
+#endif
+
+
+	concat( concat( stringConnectIn, L";UID=" ), params->username );
+
+	concat( concat( stringConnectIn, L";PWD=" ), params->password );
+
+	concat( concat( stringConnectIn, L";SERVER=" ), params->srvname );
+
+	if ( myStrlen( params->dbname ) )
+		concat( concat( stringConnectIn, L";DATABASE="), params->dbname );
+
+	if ( params->port > 0 )
+	{
+		wsprintf( portstr, L"%d", params->port );
+		concat( concat( stringConnectIn, L";PORT=" ), myString( portstr ) );
+	}
+	if ( myStrlen( params->socket) )
+		concat( concat( stringConnectIn, L";SOCKET=" ), params->socket );
+	//    if ( myStrlen( params->getOptions()) )
+	//        stringConnectIn += ";OPTION=" ), params->getOptions );
+	if ( myStrlen( params->initstmt))
+		concat( concat( stringConnectIn, L";STMT=" ), params->initstmt );
+	if ( myStrlen( params->charset ) )
+		concat( concat( stringConnectIn, L";CHARSET=" ), params->charset );
+	if ( myStrlen( params->sslkey) )
+		concat( concat( stringConnectIn, L";SSLKEY=" ), params->sslkey );
+	if ( myStrlen( params->sslcert ) )
+		concat( concat( stringConnectIn, L";SSLERT=" ), params->sslcert );
+	if ( myStrlen( params->sslca ) )
+		concat( concat( stringConnectIn, L";SSLCA=" ), params->sslca);
+	if ( myStrlen( params->sslcapath ) )
+		concat( concat( stringConnectIn, L";SSLCAPATH=" ), params->sslcapath );
+	if ( myStrlen( params->sslcipher ) )
+		concat( concat( stringConnectIn, L";SSLCIPHER=" ), params->sslcipher );
+
+	return stringConnectIn;
+}
+
+SQLRETURN Connect( SQLHDBC  &   hDbc, SQLHENV   &  hEnv, OdbcDialogParams * params )
+{
+	SQLRETURN   nReturn;
+	//			QStringList stringlistDatabases;
+	myString    stringConnectIn= buildConnectString( params );
+
+
+	if ( hDBC == SQL_NULL_HDBC )
+	{
+		nReturn = SQLAllocHandle( SQL_HANDLE_ENV, NULL, &hEnv );
+
+		if ( nReturn != SQL_SUCCESS )
+			ShowDiagnostics( nReturn, SQL_HANDLE_ENV, NULL );
+
+		if ( !SQL_SUCCEEDED(nReturn) )
+			return nReturn;
+
+		nReturn = SQLSetEnvAttr( hEnv, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC3, 0 );
+
+		if ( nReturn != SQL_SUCCESS )
+			ShowDiagnostics( nReturn, SQL_HANDLE_ENV, NULL );
+
+		if ( !SQL_SUCCEEDED(nReturn) )
+		{
+			return nReturn;
+		}
+
+		nReturn = SQLAllocHandle( SQL_HANDLE_DBC, hEnv, &hDbc );
+		if ( nReturn != SQL_SUCCESS )
+			ShowDiagnostics( nReturn, SQL_HANDLE_ENV, hEnv );
+		if ( !SQL_SUCCEEDED(nReturn) )
+		{
+			return nReturn;
+		}
+	}
+
+	nReturn = SQLDriverConnectW( hDbc, NULL, (SQLWCHAR*)( stringConnectIn.c_str() ), SQL_NTS, NULL, 0, NULL, SQL_DRIVER_NOPROMPT );
+
+	if ( nReturn != SQL_SUCCESS )
+		ShowDiagnostics( nReturn, SQL_HANDLE_DBC, hDbc );
+
+	return nReturn;
+}
 
 const wchar_t * mytest(HWND hwnd, OdbcDialogParams* params)
 {
 	SQLHDBC hDbc = hDBC;
+	SQLHENV hEnv = SQL_NULL_HENV;
 
-	if ( SQL_SUCCEEDED( Connect( hDbc, params ) ) )
+	if ( SQL_SUCCEEDED( Connect( hDbc, hEnv, params ) ) )
 		return L"Connection successful";
 	else
 	{
 		strAssign(popupMsg, concat(myString(L"Connection Failed:"), popupMsg ) );
+
 		return popupMsg.c_str();
 	}
 
+	Disconnect( hDbc, hEnv );
 	//MessageBox(hwnd, params->dbname.c_str(), params->drvdesc.c_str(), MB_OK);
 }
 
@@ -120,166 +297,9 @@ long CompileOptions( OdbcDialogParams * params )
 	return result;
 }
 
-const myString & buildConnectString( OdbcDialogParams* params )
-{
-	stringConnectIn = L"DRIVER=";
-
-	concat( stringConnectIn, MYODBCINST_DRIVER_NAME );
-
-	wchar_t portstr[5];
-
-#ifdef Q_WS_MACX
-	/*
-	The iODBC that ships with Mac OS X (10.4) must be given a filename for
-	the driver library in SQLDriverConnect(), not just the driver name.  So
-	we have to look it up using SQLGetPrivateProfileString() if we haven't
-	already.
-	*/
-	{
-		if (!params->drvname.empty())
-		{
-			/*
-			SQLGetPrivateProfileString has bugs on iODBC, so we have to check
-			both the SYSTEM and USER space explicitly.
-			*/
-			UWORD configMode;
-			if (!SQLGetConfigMode(&configMode))
-				return FALSE;
-			if (!SQLSetConfigMode(ODBC_SYSTEM_DSN))
-				return FALSE;
-
-			char driver[PATH_MAX];
-			if (!SQLGetPrivateProfileString(pDataSource->pszDRIVER,
-				"DRIVER", pDataSource->pszDRIVER,
-				driver, sizeof(driver),
-				"ODBCINST.INI"))
-				return FALSE;
-
-			/* If we're creating a user DSN, make sure we really got a driver.  */
-			if (configMode != ODBC_SYSTEM_DSN &&
-				strcmp(driver, pDataSource->pszDRIVER) == 0)
-			{
-				if (configMode != ODBC_SYSTEM_DSN)
-				{
-					if (!SQLSetConfigMode(ODBC_USER_DSN))
-						return FALSE;
-					if (!SQLGetPrivateProfileString(pDataSource->pszDRIVER,
-						"DRIVER", pDataSource->pszDRIVER,
-						driver, sizeof(driver),
-						"ODBCINST.INI"))
-						return FALSE;
-				}
-			}
-
-			pDataSource->pszDriverFileName= _global_strdup(driver);
-
-			if (!SQLSetConfigMode(configMode))
-				return FALSE;
-		}
-
-		stringConnectIn= concat( stringConnectIn, pDataSource->pszDriverFileName );
-	}
-/*
-//#else
- 	concat(stringConnectIn, params->drvname );//pDataSource->pszDRIVER);*/
-#endif
-
-
-	concat( concat( stringConnectIn, L";UID=" ), params->username );
-	
-	concat( concat( stringConnectIn, L";PWD=" ), params->password );
-
-	concat( concat( stringConnectIn, L";SERVER=" ), params->srvname );
-
-	if ( myStrlen( params->dbname ) )
-		concat( concat( stringConnectIn, L";DATABASE="), params->dbname );
-
-	if ( params->port > 0 )
-	{
-		wsprintf( portstr, L"%d", params->port );
-		concat( concat( stringConnectIn, L";PORT=" ), myString( portstr ) );
-	}
-	if ( myStrlen( params->socket) )
-		concat( concat( stringConnectIn, L";SOCKET=" ), params->socket );
-	//    if ( myStrlen( params->getOptions()) )
-	//        stringConnectIn += ";OPTION=" ), params->getOptions );
-	if ( myStrlen( params->initstmt))
-		concat( concat( stringConnectIn, L";STMT=" ), params->initstmt );
-	if ( myStrlen( params->charset ) )
-		concat( concat( stringConnectIn, L";CHARSET=" ), params->charset );
-	if ( myStrlen( params->sslkey) )
-		concat( concat( stringConnectIn, L";SSLKEY=" ), params->sslkey );
-	if ( myStrlen( params->sslcert ) )
-		concat( concat( stringConnectIn, L";SSLERT=" ), params->sslcert );
-	if ( myStrlen( params->sslca ) )
-		concat( concat( stringConnectIn, L";SSLCA=" ), params->sslca);
-	if ( myStrlen( params->sslcapath ) )
-		concat( concat( stringConnectIn, L";SSLCAPATH=" ), params->sslcapath );
-	if ( myStrlen( params->sslcipher ) )
-		concat( concat( stringConnectIn, L";SSLCIPHER=" ), params->sslcipher );
-
-	return stringConnectIn;
-}
-
-SQLRETURN Connect( SQLHDBC  &   hDbc, OdbcDialogParams * params )
-{
-	SQLHENV     hEnv        = SQL_NULL_HENV;
-	SQLRETURN   nReturn, result = SQL_SUCCESS;
-	//			QStringList stringlistDatabases;
-	myString    stringConnectIn= buildConnectString( params );
-
-
-	if ( hDBC == SQL_NULL_HDBC )
-	{
-		nReturn = SQLAllocHandle( SQL_HANDLE_ENV, NULL, &hEnv );
-		if ( nReturn != SQL_SUCCESS )
-			ShowDiagnostics( nReturn, SQL_HANDLE_ENV, NULL );
-		if ( !SQL_SUCCEEDED(nReturn) )
-			return nReturn;
-
-		nReturn = SQLSetEnvAttr( hEnv, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC3, 0 );
-		if ( nReturn != SQL_SUCCESS )
-			ShowDiagnostics( nReturn, SQL_HANDLE_ENV, NULL );
-		if ( !SQL_SUCCEEDED(nReturn) )
-		{
-			result = nReturn;
-			goto slotLoadDatabaseNamesExit1;
-		}
-
-		nReturn = SQLAllocHandle( SQL_HANDLE_DBC, hEnv, &hDbc );
-		if ( nReturn != SQL_SUCCESS )
-			ShowDiagnostics( nReturn, SQL_HANDLE_ENV, hEnv );
-		if ( !SQL_SUCCEEDED(nReturn) )
-		{
-			result = nReturn;
-			goto slotLoadDatabaseNamesExit1;
-		}
-	}
-
-	nReturn = SQLDriverConnectW( hDbc, NULL, (SQLWCHAR*)( stringConnectIn.c_str() ), SQL_NTS, NULL, 0, NULL, SQL_DRIVER_NOPROMPT );
-
-	if ( nReturn != SQL_SUCCESS )
-		ShowDiagnostics( nReturn, SQL_HANDLE_DBC, hDbc );
-	if ( !SQL_SUCCEEDED(nReturn) )
-	{
-		result = nReturn;
-		goto slotLoadDatabaseNamesExit2;
-	}
-
-slotLoadDatabaseNamesExit2:
-	nReturn = SQLDisconnect( hDbc );
-	if ( hDBC == SQL_NULL_HDBC )
-		nReturn = SQLFreeHandle( SQL_HANDLE_DBC, hDbc );
-slotLoadDatabaseNamesExit1:
-	if ( hDBC == SQL_NULL_HDBC )
-		nReturn = SQLFreeHandle( SQL_HANDLE_ENV, hEnv );
-
-	return result;
-}
-
 const WCHAR** mygetdatabases(HWND hwnd, OdbcDialogParams* params)
 {
-	static WCHAR ** databases = NULL;// = { L"DB1", L"DB2", NULL };
+	// = { L"DB1", L"DB2", NULL };
 
 	SQLHENV     hEnv        = SQL_NULL_HENV;
 	SQLHDBC     hDbc        = hDBC;
@@ -292,50 +312,30 @@ const WCHAR** mygetdatabases(HWND hwnd, OdbcDialogParams* params)
 
 	clearList(databases);
 
-	if ( hDBC == SQL_NULL_HDBC )
-	{
-		nReturn = SQLAllocHandle( SQL_HANDLE_ENV, NULL, &hEnv );
-		if ( nReturn != SQL_SUCCESS )
-			ShowDiagnostics( nReturn, SQL_HANDLE_ENV, NULL );
-		if ( !SQL_SUCCEEDED(nReturn) )
-			return (const WCHAR**)databases;
-
-		nReturn = SQLSetEnvAttr( hEnv, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC3, 0 );
-		if ( nReturn != SQL_SUCCESS )
-			ShowDiagnostics( nReturn, SQL_HANDLE_ENV, NULL );
-		if ( !SQL_SUCCEEDED(nReturn) )
-			goto slotLoadDatabaseNamesExit1;
-
-		nReturn = SQLAllocHandle( SQL_HANDLE_DBC, hEnv, &hDbc );
-		if ( nReturn != SQL_SUCCESS )
-			ShowDiagnostics( nReturn, SQL_HANDLE_ENV, hEnv );
-		if ( !SQL_SUCCEEDED(nReturn) )
-			goto slotLoadDatabaseNamesExit1;
-	}
-
-	nReturn = SQLDriverConnectW( hDbc, NULL, (SQLWCHAR*)( stringConnectIn.c_str() ), SQL_NTS, NULL, 0, NULL, SQL_DRIVER_NOPROMPT );
+	nReturn = Connect( hDbc, hEnv, params );
 
 	if ( nReturn != SQL_SUCCESS )
 		ShowDiagnostics( nReturn, SQL_HANDLE_DBC, hDbc );
 	if ( !SQL_SUCCEEDED(nReturn) )
-		goto slotLoadDatabaseNamesExit2;
+		Disconnect( hDbc,hEnv );
 
 	nReturn = SQLAllocHandle( SQL_HANDLE_STMT, hDbc, &hStmt );
 	if ( nReturn != SQL_SUCCESS )
 		ShowDiagnostics( nReturn, SQL_HANDLE_DBC, hDbc );
 	if ( !SQL_SUCCEEDED(nReturn) )
-		goto slotLoadDatabaseNamesExit2;
+		Disconnect( hDbc,hEnv );
 
 	nReturn = SQLTablesW( hStmt, (SQLWCHAR*)SQL_ALL_CATALOGS, SQL_NTS, (SQLWCHAR*)L"", SQL_NTS, (SQLWCHAR*)L"", 0, (SQLWCHAR*)L"", 0 );
 	if ( nReturn != SQL_SUCCESS )
 		ShowDiagnostics( nReturn, SQL_HANDLE_STMT, hStmt );
 	if ( !SQL_SUCCEEDED(nReturn) )
-		goto slotLoadDatabaseNamesExit3;
+		Disconnect( hStmt, hDbc, hEnv );
 
 	nReturn = SQLBindCol( hStmt, 1, SQL_C_WCHAR, szCatalog, MYODBC_DB_NAME_MAX, &nCatalog );
 	while ( TRUE )
 	{
 		nReturn = SQLFetch( hStmt );
+
 		if ( nReturn == SQL_NO_DATA )
 			break;
 		else if ( nReturn != SQL_SUCCESS )
@@ -346,15 +346,7 @@ const WCHAR** mygetdatabases(HWND hwnd, OdbcDialogParams* params)
 			break;
 	}
 
-slotLoadDatabaseNamesExit3:
-	nReturn = SQLFreeHandle( SQL_HANDLE_STMT, hStmt );
-slotLoadDatabaseNamesExit2:
-	nReturn = SQLDisconnect( hDbc );
-	if ( hDBC == SQL_NULL_HDBC )
-		nReturn = SQLFreeHandle( SQL_HANDLE_DBC, hDbc );
-slotLoadDatabaseNamesExit1:
-	if ( hDBC == SQL_NULL_HDBC )
-		nReturn = SQLFreeHandle( SQL_HANDLE_ENV, hEnv );
+	Disconnect( hStmt, hDbc, hEnv );
 
 	return (const WCHAR**)databases;
 }
@@ -391,6 +383,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
     InitCommonControls();
 	
 	int res = ShowOdbcParamsDialog(L"Demo ODBC Dialog", &Params, NULL, myhelp, mytest, mytestaccept, mygetdatabases);
-	const WCHAR* tmp = Params.drvname.c_str(); 
+	const WCHAR* tmp = Params.drvname.c_str();
+	clearList(databases);
+	clearList(errorMsgs);
 	return res;
 }

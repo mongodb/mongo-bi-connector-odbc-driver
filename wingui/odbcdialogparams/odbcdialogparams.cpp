@@ -18,6 +18,7 @@
 #include "TabCtrl.h"
 #include "odbcdialogparams.h"
 #include <assert.h>
+#include <commdlg.h>
 
 
 extern HINSTANCE ghInstance;
@@ -93,7 +94,6 @@ void InitStaticValues()
 	SET_BOOL(3,disable_transactions);\
 	SET_BOOL(3,force_use_of_forward_only_cursors);\
 	/* debug*/\
-	SET_BOOL(4,trace_drivers_calls);\
 	SET_BOOL(4,save_queries); } while(false)
 
 
@@ -266,7 +266,50 @@ void btnHelp_Click (HWND hwnd)
 	}
 }
 
+void chooseFile( HWND parent, int hostCtlId )
+{
+	OPENFILENAMEW dialog;
 
+	HWND			hostControl = GetDlgItem( parent, hostCtlId );
+
+	wchar_t szFile[MAX_PATH];    // buffer for file name
+
+	Edit_GetText( hostControl, szFile, sizeof(szFile) );
+	// Initialize OPENFILENAME
+	ZeroMemory(&dialog, sizeof(dialog));
+
+	dialog.lStructSize			= sizeof(dialog);
+	dialog.lpstrFile			= szFile;
+
+	dialog.lpstrTitle			= L"Select File";
+	dialog.nMaxFile				= sizeof(szFile);
+	dialog.lpstrFileTitle		= NULL;
+	dialog.nMaxFileTitle		= 0;
+	dialog.lpstrInitialDir		= NULL;
+	dialog.Flags				= OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST ;
+	dialog.hwndOwner			= parent;
+	dialog.lpstrCustomFilter	= L"All Files\0*.*\0PEM\0*.pem\0";
+	dialog.nFilterIndex			= 2;
+
+	if ( GetOpenFileNameW( &dialog ) )
+	{
+		Edit_SetText( hostControl, dialog.lpstrFile );
+	}
+}
+
+void choosePath( HWND parent, int hostCtlId )
+{
+	HWND			hostControl = GetDlgItem( parent, hostCtlId );
+
+	wchar_t			szPath[MAX_PATH];    // buffer for file name
+
+	Edit_GetText( hostControl, szPath, sizeof(szPath) );
+
+	if ( false )
+	{
+		Edit_SetText( hostControl, szPath );
+	}
+}
 void FormMain_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
 	switch (id)
@@ -281,6 +324,14 @@ void FormMain_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			btnHelp_Click (hwnd); break;
 		case IDC_BUTTON_TEST:
 			btnTest_Click (hwnd); break;
+		case IDC_SSLKEYCHOOSER:
+			chooseFile( hwnd, IDC_EDIT_sslkey ); break;
+		case IDC_SSLCERTCHOOSER:
+			chooseFile( hwnd, IDC_EDIT_sslcert ); break;
+		case IDC_SSLCACHOOSER:
+			chooseFile( hwnd, IDC_EDIT_sslca ); break;
+		case IDC_SSLCAPATHCHOOSER:
+			choosePath( hwnd, IDC_EDIT_sslcapath ); break;
 		case IDC_EDIT_drvname:
 		{
 			if (codeNotify==EN_CHANGE) {
