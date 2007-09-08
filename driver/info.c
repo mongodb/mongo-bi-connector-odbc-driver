@@ -240,7 +240,7 @@ MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
 #endif
 
   case SQL_DRIVER_ODBC_VER:
-    MYINFO_SET_STR("03.51");
+    MYINFO_SET_STR("03.51");               /* What standard we implement */
 
   case SQL_DRIVER_VER:
     MYINFO_SET_STR(DRIVER_VERSION);

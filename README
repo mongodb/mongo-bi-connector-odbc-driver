@@ -29,13 +29,9 @@ driver and programs. Connector/ODBC is the ODBC driver
 for MySQL which is ODBC 3.5x compliant and MyODBC is 
 2.5x compliant.
 
-If you want to ensure the development of this product, you 
-should register for MySQL support and tell that you are 
-using Connector/ODBC 3.51 in the comment field!
-
-To get all functionality from the ODBC 3.51 driver (like 
-transaction support) you should use it against MySQL 
-3.23.36 or above.
+To get all functionality from the ODBC 5.1 driver (like 
+transaction support) you should use it against MySQL 4.1
+or above.
 
 LICENSE
 ---------------------------------------------------------------
@@ -61,10 +57,9 @@ The following, key, files are provided by Connector/ODBC (the MS
 Windows names are included for reference but the file names for 
 other platforms would be similar).
 
-Driver (myodbc3.dll)
+Driver (myodbc3.dll or myodbc5.dll)
 
-        The most important part of Connector/ODBC is the driver. The
-        driver is a single file called myodbc3.dll on windows. 
+        The most important part of Connector/ODBC is the driver.
         Application developers can link directly to the driver but 
         more often use the driver indirectly, via a Driver Manager
         such as the one provided by Microsoft or unixODBC.
@@ -128,12 +123,12 @@ myodbc3u
 RESOURCES
 ---------------------------------------------------------------
 
-MySQL, MyODBC, MyODBC 3.51 is brought to you by the MySQL 
+MySQL, MyODBC, MyODBC 5.1 is brought to you by the MySQL 
 team at MySQL AB, and MySQL is the trademark of MySQL AB.
 
 For more information about MySQL, see
 http://www.mysql.com
 
-For more information about MySQL ODBC 3.51 Driver, including
+For more information about MySQL ODBC 5.1 Driver, including
 installation instructions, please visit;
 http://www.mysql.com/products/myodbc/index.html

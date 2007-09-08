@@ -139,12 +139,12 @@ Source
 RESOURCES
 ---------------------------------------------------------------
 
-MySQL, Connector/ODBC 3.51 is brought to you by the MySQL 
+MySQL, Connector/ODBC 5.1 is brought to you by the MySQL 
 team at MySQL AB, and MySQL is the trademark of MySQL AB.
 
 For more information about MySQL, see
 http://www.mysql.com
 
-For more information about MySQL ODBC 3.51 Driver, including
+For more information about MySQL ODBC 5.1 Driver, including
 installation instructions, please visit;
 http://www.mysql.com/products/myodbc/index.html

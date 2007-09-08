@@ -4,7 +4,7 @@ data_source_name = myodbc3
 [myodbc3]
 Driver          = @TEST_DRIVER@
 DATABASE        = @TEST_DATABASE@
-DESCRIPTION     = MySQL ODBC 3.51 Driver test
+DESCRIPTION     = MySQL ODBC 5.1 Driver test
 SERVER          = @TEST_SERVER@
 UID             = @TEST_UID@
 PASSWORD        = @TEST_PASSWORD@

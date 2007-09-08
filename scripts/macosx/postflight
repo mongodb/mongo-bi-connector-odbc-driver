@@ -2,7 +2,7 @@
 
 ##############################################################################
 #
-#  Post Install file for MySQL Connector ODBC 3.51
+#  Post Install file for MySQL Connector ODBC 5.1
 #
 ##############################################################################
 
@@ -74,10 +74,10 @@ fi
 # REGISTER THE DRIVER
 # ----------------------------------------------------------------------
 echo "Registring driver..."
-$bindir/myodbc3i -a -ds -t"MySQL ODBC 3.51 Driver;Driver=$libdir/libmyodbc3.so;Setup=$libdir/libmyodbc3S.so;" -w0
+$bindir/myodbc3i -a -ds -t"MySQL ODBC 5.1 Driver;Driver=$libdir/libmyodbc5.so;Setup=$libdir/libmyodbc3S.so;" -w0
 
 # ----------------------------------------------------------------------
 # CREATE A SAMPLE DSN
 # ----------------------------------------------------------------------
 echo "Ensuring sample data source name (myodbc) exists..."
-$bindir/myodbc3i -a -s -t"DSN=myodbc;Driver=MySQL ODBC 3.51 Driver;SERVER=localhost;" -w0
+$bindir/myodbc3i -a -s -t"DSN=myodbc;Driver=MySQL ODBC 5.1 Driver;SERVER=localhost;" -w0
