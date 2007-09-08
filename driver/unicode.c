@@ -925,8 +925,19 @@ SQLGetDiagRecWImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
                                           default_charset_info,
                                           sqlstate_value, &len, &errors);
 
-    (void)memcpy((char *)sqlstate, (const char *)wvalue,
-                 5 * sizeof(SQLWCHAR));
+    if (wvalue)
+    {
+      (void)memcpy((char *)sqlstate, (const char *)wvalue,
+                   5 * sizeof(SQLWCHAR));
+    }
+    else
+    {
+      sqlstate[0]= '0';
+      sqlstate[1]= '0';
+      sqlstate[2]= '0';
+      sqlstate[3]= '0';
+      sqlstate[4]= '0';
+    }
     ((SQLWCHAR *)sqlstate)[5]= 0;
 
     x_free(wvalue);

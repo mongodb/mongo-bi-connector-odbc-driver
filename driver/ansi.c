@@ -771,7 +771,8 @@ SQLGetDiagRecImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
     else
       free_value= FALSE;
 
-    strmake((char *)sqlstate, (char *)sqlstate_value, 5);
+    strmake((char *)sqlstate,
+            sqlstate_value ? (char *)sqlstate_value : "00000", 5);
 
     if (free_value)
       x_free(sqlstate_value);
