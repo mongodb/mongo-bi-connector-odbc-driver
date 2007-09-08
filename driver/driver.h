@@ -200,11 +200,11 @@ struct tagSTMT;
 typedef struct {
   /* header fields */
   SQLSMALLINT   alloc_type;
-  SQLUINTEGER   array_size;
+  SQLULEN       array_size;
   SQLUSMALLINT *array_status_ptr;
   SQLINTEGER   *bind_offset_ptr;
   SQLINTEGER    bind_type;
-  SQLSMALLINT   count;
+  SQLLEN        count;
   SQLUINTEGER  *rows_processed_ptr;
 
   /* internal fields */
@@ -227,19 +227,19 @@ typedef struct {
   SQLPOINTER  data_ptr;
   SQLSMALLINT datetime_interval_code;
   SQLINTEGER  datetime_interval_precision;
-  SQLINTEGER  display_size; /* row only */
+  SQLLEN      display_size; /* row only */
   SQLSMALLINT fixed_prec_scale;
   SQLINTEGER *indicator_ptr;
   SQLCHAR *   label; /* row only */
-  SQLUINTEGER length;
+  SQLULEN     length;
   SQLCHAR *   literal_prefix; /* row only */
   SQLCHAR *   literal_suffix; /* row only */
   SQLCHAR *   local_type_name;
   SQLCHAR *   name;
   SQLSMALLINT nullable;
   SQLINTEGER  num_prec_radix;
-  SQLINTEGER  octet_length;
-  SQLINTEGER *octet_length_ptr;
+  SQLLEN      octet_length;
+  SQLLEN     *octet_length_ptr;
   SQLSMALLINT parameter_type; /* param only */
   SQLSMALLINT precision;
   SQLSMALLINT rowver;
