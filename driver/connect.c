@@ -282,10 +282,8 @@ error:
 */
 SQLRETURN SQL_API SQLConnect(SQLHDBC  hdbc,
                              SQLCHAR *szDSN,  SQLSMALLINT cbDSN,
-                             SQLCHAR *szUID,
-                             SQLSMALLINT cbUID __attribute__((unused)),
-                             SQLCHAR *szAuth,
-                             SQLSMALLINT cbAuth __attribute__((unused)))
+                             SQLCHAR *szUID, SQLSMALLINT cbUID,
+                             SQLCHAR *szAuth, SQLSMALLINT cbAuth)
 {
   SQLRETURN rc;
   DBC *dbc= (DBC *)hdbc;
