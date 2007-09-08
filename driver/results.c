@@ -586,10 +586,10 @@ MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
   if (!stmt->result)
     return set_stmt_error(stmt, "07005", "No result set", 0);
 
-#ifdef CHECK_EXTRA_ARGUMENTS
+
   if (column > stmt->result->field_count)
     return set_error(hstmt,  MYERR_07009, NULL, 0);
-#endif
+
 
   if (!num_attr)
     num_attr= &nparam;

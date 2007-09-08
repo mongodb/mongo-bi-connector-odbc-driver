@@ -304,7 +304,7 @@ DECLARE_TEST(charset_utf8)
   is_num(my_fetch_int(hstmt1, 16), 30);
 
   ok_stmt(hstmt1, SQLFetch(hstmt1));
-  is_num(my_fetch_int(hstmt1, 7), 20);
+  is_num(my_fetch_int(hstmt1, 7), 10);
   is_num(my_fetch_int(hstmt1, 8), 10);
   is_num(my_fetch_int(hstmt1, 16), 10);
 
@@ -441,6 +441,72 @@ DECLARE_TEST(t_bug7445)
 }
 
 
+/**
+ Bug #30774: Username argument to SQLConnect used incorrectly
+*/
+DECLARE_TEST(t_bug30774)
+{
+  SQLHDBC hdbc1;
+  SQLHSTMT hstmt1;
+  SQLCHAR username[80]= {0};
+
+  strcat((char *)username, (char *)myuid);
+  strcat((char *)username, "!!!");
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+  ok_con(hdbc1, SQLConnect(hdbc1, mydsn, SQL_NTS,
+                           username, strlen((char *)myuid),
+                           mypwd, SQL_NTS));
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_sql(hstmt1, "SELECT USER()");
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  my_fetch_str(hstmt1, username, 1);
+  printMessage("username: %s", username);
+  is(!strstr((char *)username, "!!!"));
+
+  expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  return OK;
+}
+
+
+/**
+  Bug #30840: FLAG_NO_PROMPT doesn't do anything
+*/
+DECLARE_TEST(t_bug30840)
+{
+  HDBC hdbc1;
+  SQLCHAR   conn[256], conn_out[256];
+  SQLSMALLINT conn_out_len;
+
+  sprintf((char *)conn, "DSN=%s;UID=%s;PASSWORD=%s;OPTION=16",
+          mydsn, myuid, mypwd);
+  if (mysock != NULL)
+  {
+    strcat((char *)conn, ";SOCKET=");
+    strcat((char *)conn, (char *)mysock);
+  }
+
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, (SQLHWND)1, conn, sizeof(conn),
+                                 conn_out, sizeof(conn_out), &conn_out_len,
+                                 SQL_DRIVER_PROMPT));
+
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -453,6 +519,8 @@ BEGIN_TESTS
   ADD_TEST(charset_utf8)
   ADD_TEST(charset_gbk)
   ADD_TEST(t_bug7445)
+  ADD_TEST(t_bug30774)
+  ADD_TEST(t_bug30840)
 END_TESTS
 
 

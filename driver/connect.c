@@ -238,10 +238,8 @@ SQLRETURN myodbc_do_connect(DBC *dbc, MYODBCUTIL_DATASOURCE *ds)
   dbc->port= port;
   dbc->flag= options;
 
-#ifdef MYODBC_DBG
   if (options & FLAG_LOG_QUERY && !dbc->query_log)
     dbc->query_log= init_query_log();
-#endif
 
   /* Set the statement error prefix based on the server version. */
   strxmov(dbc->st_error_prefix, MYODBC3_ERROR_PREFIX, "[mysqld-",
@@ -373,9 +371,17 @@ SQLRETURN SQL_API MySQLConnect(SQLHDBC  hdbc,
 
   /* Set username and password if they were provided. */
   if (szUID && szUID[0])
-    ds->pszUSER= _global_strdup((char *)szUID);
+  {
+    if (cbUID == SQL_NTS)
+      cbUID= strlen((char *)szUID);
+    ds->pszUSER= _global_strndup((char *)szUID, cbUID);
+  }
   if (szAuth && szAuth[0])
-    ds->pszPASSWORD= _global_strdup((char *)szAuth);
+  {
+    if (cbAuth == SQL_NTS)
+      cbAuth= strlen((char *)szAuth);
+    ds->pszPASSWORD= _global_strndup((char *)szAuth, cbAuth);
+  }
 
   /*
     We don't care if this fails, because we might be able to get away
@@ -431,6 +437,7 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
   MYODBCUTIL_DRIVER *pDriver= MYODBCUtilAllocDriver();
   BOOL bPrompt= FALSE;
   HMODULE hModule= NULL;
+  unsigned long options;
 
   /* Parse the incoming string */
   if (!MYODBCUtilReadConnectStr(ds, (LPCSTR)szConnStrIn))
@@ -451,6 +458,14 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
   if (ds->pszDSN)
     (void)MYODBCUtilReadDataSource(ds, ds->pszDSN);
 #endif
+
+  /* If FLAG_NO_PROMPT is no set, force prompting off. */
+  if (ds->pszOPTION)
+  {
+    options= strtoul(ds->pszOPTION, NULL, 10);
+    if (options & FLAG_NO_PROMPT)
+      fDriverCompletion= SQL_DRIVER_NOPROMPT;
+  }
 
   /*
     We only prompt if we need to.
@@ -721,10 +736,8 @@ SQLRETURN SQL_API SQLDisconnect(SQLHDBC hdbc)
   my_free(dbc->password, MYF(0));
   dbc->dsn= dbc->database= dbc->server= dbc->user= dbc->password= 0;
 
-#ifdef MYODBC_DBG
   if (dbc->flag & FLAG_LOG_QUERY)
     end_query_log(dbc->query_log);
-#endif
 
   return SQL_SUCCESS;
 }

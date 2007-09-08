@@ -424,7 +424,6 @@ void MYODBCSetupDataSourceDialog::doInit()
     if ( pDataSource->pszOPTION )
     {
         ulong nOptions = atol( pDataSource->pszOPTION );
-        ptab3->ptab3a->pcheckboxDontOptimizeColumnWidth->setChecked( nOptions & (1 << 0) ? TRUE : FALSE );
         ptab3->ptab3a->pcheckboxReturnMatchingRows->setChecked( nOptions & (1 << 1) ? TRUE : FALSE );
         ptab3->ptab3a->pcheckboxAllowBigResults->setChecked( nOptions & (1 << 3) ? TRUE : FALSE );
         ptab3->ptab3b->pcheckboxDontPromptOnConnect->setChecked( nOptions & (1 << 4) ? TRUE : FALSE );
@@ -476,7 +475,6 @@ void MYODBCSetupDataSourceDialog::doInit()
     connect( ptab2->plineeditSSLCA, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab2->plineeditSSLCAPath, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab2->plineeditSSLCipher, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
-	connect( ptab3->ptab3a->pcheckboxDontOptimizeColumnWidth, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3a->pcheckboxReturnMatchingRows, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3a->pcheckboxAllowBigResults, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3a->pcheckboxUseCompressedProtocol, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );

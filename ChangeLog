@@ -19,7 +19,7 @@ Guffert TODO
     http://msdn2.microsoft.com/en-us/library/ms712446.aspx
   * Implement SQLCancel() (Bug #15601):
     http://msdn2.microsoft.com/en-us/library/ms714112.aspx
-  * Implement arays of parameters:
+  * Implement arrays of parameters:
     http://msdn2.microsoft.com/en-us/library/ms711818.aspx
 
 ----
@@ -34,19 +34,28 @@ Guffert TODO
 
 ----
 
-3.51.20
-
-  Functionality added or changed:
+3.51.20 (7-Sep-2007)
 
   Bugs fixed:
+  * The FLAG_NO_PROMPT option was not handled by SQLDriverConnect().
+    (Bug #30840)
+  * Removed checkbox in setup dialog for FLAG_FIELD_LENGTH ("Don't
+    Optimize Column Width"), which was removed from the driver in 3.51.18.
+  * The wrong column size was returned for binary data. (Bug #30547)
+  * The specified length of the username and authentication parameters to
+    SQLConnect() were not being honored. (Bug #30774)
   * SQLGetData() will now always return SQL_NO_DATA_FOUND on second call
     when no data left, even if requested size is 0. (Bug#30520)
+  * SQLSetParam() caused memory allocation errors due to driver manager's 
+    mapping of deprecated functions (buffer length -1). (Bug#29871)
+  * SQLGetConnectAttr() did not reflect the connection state correctly.
+    (Bug#14639)
 
 ----
 
 3.51.19 (8-Aug-2007)
 
-  Functionality added or changed
+  Functionality added or changed:
   * Because of Bug #10491 in the server, character string results were
     sometimes incorrectly identified as SQL_VARBINARY. Until this server
     bug is corrected, the driver will identify all variable-length

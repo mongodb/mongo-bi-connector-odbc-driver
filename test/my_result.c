@@ -337,7 +337,7 @@ DECLARE_TEST(t_desc_col)
   is(desc_col_check(hstmt, 10, "c10", SQL_REAL,      7,  7,  0, SQL_NULLABLE) == OK);
   is(desc_col_check(hstmt, 11, "c11", SQL_BIGINT,    19, 19, 0,  SQL_NO_NULLS) == OK);
 
-  is(desc_col_check(hstmt, 12, "c12", SQL_VARCHAR,   24, 24, 0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 12, "c12", SQL_VARCHAR,   12, 12, 0,  SQL_NULLABLE) == OK);
 
   is(desc_col_check(hstmt, 13, "c13", SQL_CHAR,      20, 20, 0,  SQL_NO_NULLS) == OK);
   is(desc_col_check(hstmt, 14, "c14", SQL_REAL,      7,  7,  0,  SQL_NULLABLE) == OK);
@@ -345,11 +345,11 @@ DECLARE_TEST(t_desc_col)
   is(desc_col_check(hstmt, 16, "c16", SQL_LONGVARCHAR, 65535, 65535, 0,  SQL_NULLABLE) == OK);
   is(desc_col_check(hstmt, 17, "c17", SQL_LONGVARCHAR, 16777215, 16777215, 0,  SQL_NULLABLE) == OK);
   is(desc_col_check(hstmt, 18, "c18", SQL_LONGVARCHAR, 4294967295 , 16777215 , 0,  SQL_NULLABLE) == OK);
-  is(desc_col_check(hstmt, 19, "c19", SQL_LONGVARBINARY, 255 * 2, 255, 0,  SQL_NULLABLE) == OK);
-  is(desc_col_check(hstmt, 20, "c20", SQL_LONGVARBINARY, 65535 * 2, 65535, 0,  SQL_NULLABLE) == OK);
-  is(desc_col_check(hstmt, 21, "c21", SQL_LONGVARBINARY, 16777215 * 2, 16777215, 0,  SQL_NULLABLE) == OK);
-  is(desc_col_check(hstmt, 22, "c22", SQL_LONGVARBINARY, 4294967295 * 2 , 16777215 , 0,  SQL_NULLABLE) == OK);
-  is(desc_col_check(hstmt, 23, "c23", SQL_LONGVARBINARY, 255 * 2, 5, 0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 19, "c19", SQL_LONGVARBINARY, 255, 255, 0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 20, "c20", SQL_LONGVARBINARY, 65535, 65535, 0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 21, "c21", SQL_LONGVARBINARY, 16777215, 16777215, 0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 22, "c22", SQL_LONGVARBINARY, 4294967295 , 16777215 , 0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 23, "c23", SQL_LONGVARBINARY, 255, 5, 0,  SQL_NULLABLE) == OK);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 

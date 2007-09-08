@@ -665,7 +665,7 @@ DECLARE_TEST(bit)
 
   is_str(my_fetch_str(hstmt, col, 4), "b", 1);
   is_num(my_fetch_int(hstmt, 5), SQL_BINARY); /* DATA_TYPE */
-  is_num(my_fetch_int(hstmt, 7), 6); /* COLUMN_SIZE */
+  is_num(my_fetch_int(hstmt, 7), 3); /* COLUMN_SIZE */
   is_num(my_fetch_int(hstmt, 8), 3); /* BUFFER_LENGTH */
   is_num(my_fetch_int(hstmt, 16), 3); /* CHAR_OCTET_LENGTH */
 

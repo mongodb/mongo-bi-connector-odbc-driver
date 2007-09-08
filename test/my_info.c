@@ -153,6 +153,39 @@ DECLARE_TEST(t_bug28657)
 #endif
 }
 
+DECLARE_TEST(t_bug14639)
+{
+  SQLINTEGER connection_id;
+  SQLUINTEGER is_dead;
+  char buf[100];
+  SQLHENV henv2;
+  SQLHDBC  hdbc2;
+  SQLHSTMT hstmt2;
+
+  /* Create a new connection that we deliberately will kill */
+  alloc_basic_handles(&henv2, &hdbc2, &hstmt2);
+  ok_sql(hstmt2, "SELECT connection_id()");
+  ok_stmt(hstmt2, SQLFetch(hstmt2));
+  connection_id= my_fetch_int(hstmt2, 1);
+  ok_stmt(hstmt2, SQLFreeStmt(hstmt2, SQL_CLOSE));
+
+  /* Check that connection is alive */
+  ok_con(hdbc2, SQLGetConnectAttr(hdbc2, SQL_ATTR_CONNECTION_DEAD, &is_dead,
+                                 sizeof(is_dead), 0));
+  is(is_dead == SQL_CD_FALSE)
+
+  /* From another connection, kill the connection created above */
+  sprintf(buf, "KILL %d", connection_id);
+  ok_stmt(hstmt, SQLExecDirect(hstmt, (SQLCHAR *)buf, SQL_NTS));
+
+  /* Now check that the connection killed returns the right state */
+  ok_con(hdbc, SQLGetConnectAttr(hdbc2, SQL_ATTR_CONNECTION_DEAD, &is_dead,
+                                 sizeof(is_dead), 0));
+  is(is_dead == SQL_CD_TRUE)
+
+  return OK;
+}
+
 
 BEGIN_TESTS
   ADD_TEST(sqlgetinfo)
@@ -161,6 +194,7 @@ BEGIN_TESTS
   ADD_TEST(t_msdev_bug)
   ADD_TEST(t_bug27591)
   ADD_TEST(t_bug28657)
+  ADD_TEST(t_bug14639)
 END_TESTS
 
 

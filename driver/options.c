@@ -397,7 +397,9 @@ MySQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attrib, SQLCHAR **char_attr,
     break;
 
   case SQL_ATTR_CONNECTION_DEAD:
-    if (mysql_ping(&dbc->mysql) && mysql_errno(&dbc->mysql) == CR_SERVER_LOST)
+    if (mysql_ping(&dbc->mysql) &&
+        (mysql_errno(&dbc->mysql) == CR_SERVER_LOST ||
+         mysql_errno(&dbc->mysql) == CR_SERVER_GONE_ERROR))
       *((SQLUINTEGER *)num_attr)= SQL_CD_TRUE;
     else
       *((SQLUINTEGER *)num_attr)= SQL_CD_FALSE;

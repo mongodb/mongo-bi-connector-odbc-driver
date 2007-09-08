@@ -48,18 +48,12 @@
 #define digit(A) ((int) (A - '0'))
 #define option_flag(A,B) ((A)->dbc->flag & B)
 
-#ifdef MYODBC_DBG
-
 #define MYLOG_QUERY(A,B) {if ((A)->dbc->flag & FLAG_LOG_QUERY) \
                query_print((A)->dbc->query_log,(char*) B);}
 
 #define MYLOG_DBC_QUERY(A,B) {if((A)->flag & FLAG_LOG_QUERY) \
                query_print((A)->query_log,(char*) B);}
 
-#else
-#define MYLOG_QUERY(A,B)
-#define MYLOG_DBC_QUERY(A,B)
-#endif
 
 #define UTF8_CHARSET_NUMBER 33
 
@@ -254,11 +248,9 @@ SQLRETURN stmt_SQLCopyDesc(STMT *stmt, DESC *src, DESC *dest);
 size_t sqlwchar_strlen(const SQLWCHAR *str);
 
 /* Functions used when debugging */
-#ifdef MYODBC_DBG
 void query_print(FILE *log_file,char *query);
 FILE *init_query_log(void);
 void end_query_log(FILE *query_log);
-#endif
 
 #ifdef __WIN__
 #define cmp_database(A,B) myodbc_strcasecmp((const char *)(A),(const char *)(B))

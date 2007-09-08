@@ -96,7 +96,6 @@ EXTRA_DIST = \
 	$(readme_DATA) \
 	INSTALL.win \
 	BUILD.unix \
-	BUILD.osx \
 	BUILD.win \
 	resource.h \
 	VersionInfo.h \

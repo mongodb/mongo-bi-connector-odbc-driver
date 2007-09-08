@@ -83,26 +83,16 @@ extern "C"
 
 #if defined(__APPLE__)
 
-#ifdef MYODBC_DBG
 #define DRIVER_QUERY_LOGFILE "/tmp/myodbc.sql"
-#endif
 
 #elif defined(_UNIX_)
 
-#ifdef MYODBC_DBG
 #define DRIVER_QUERY_LOGFILE "/tmp/myodbc.sql"
-#endif
 
 #else
 
-#ifdef MYODBC_DBG
 #define DRIVER_QUERY_LOGFILE "c:\\myodbc.sql"
-#endif
 
-#endif
-
-#ifdef MYODBC_DBG
-#define CHECK_EXTRA_ARGUMENTS
 #endif
 
 /*
@@ -125,9 +115,9 @@ extern "C"
 /*
   Connection parameters, that affects the driver behaviour
 */
-#define FLAG_FIELD_LENGTH	1   /* field_length instead of max_length */
+#define FLAG_FIELD_LENGTH	1   /* no longer used*/
 #define FLAG_FOUND_ROWS		2   /* Access can't handle affected_rows */
-#define FLAG_DEBUG		4   /* Put a debug log on C:\myodbc.log */
+#define FLAG_DEBUG		4   /* no longer used */
 #define FLAG_BIG_PACKETS	8   /* Allow BIG packets. */
 #define FLAG_NO_PROMPT		16  /* Don't prompt on connection */
 #define FLAG_DYNAMIC_CURSOR	32  /* Enables the dynamic cursor */
