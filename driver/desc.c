@@ -237,47 +237,37 @@ apply_desc_val(void *dest, SQLSMALLINT dest_type, void *src, SQLINTEGER buflen)
   switch (buflen)
   {
   case SQL_IS_SMALLINT:
+  case SQL_IS_INTEGER:
+  case SQL_IS_LEN:
     if (dest_type == SQL_IS_SMALLINT)
-      *(SQLSMALLINT *)dest= (SQLINTEGER)src;
+      *(SQLSMALLINT *)dest= (SQLLEN)src;
     else if (dest_type == SQL_IS_USMALLINT)
-      *(SQLUSMALLINT *)dest= (SQLINTEGER)src;
+      *(SQLUSMALLINT *)dest= (SQLLEN)src;
     else if (dest_type == SQL_IS_INTEGER)
-      *(SQLINTEGER *)dest= (SQLINTEGER)src;
+      *(SQLINTEGER *)dest= (SQLLEN)src;
     else if (dest_type == SQL_IS_UINTEGER)
-      *(SQLUINTEGER *)dest= (SQLINTEGER)src;
+      *(SQLUINTEGER *)dest= (SQLLEN)src;
+    else if (dest_type == SQL_IS_LEN)
+      *(SQLLEN *)dest= (SQLLEN)src;
+    else if (dest_type == SQL_IS_ULEN)
+      *(SQLULEN *)dest= (SQLLEN)src;
     break;
 
   case SQL_IS_USMALLINT:
-    if (dest_type == SQL_IS_SMALLINT)
-      *(SQLSMALLINT *)dest= (SQLUINTEGER)src;
-    else if (dest_type == SQL_IS_USMALLINT)
-      *(SQLUSMALLINT *)dest= (SQLUINTEGER)src;
-    else if (dest_type == SQL_IS_INTEGER)
-      *(SQLINTEGER *)dest= (SQLUINTEGER)src;
-    else if (dest_type == SQL_IS_UINTEGER)
-      *(SQLUINTEGER *)dest= (SQLUINTEGER)src;
-    break;
-
-  case SQL_IS_INTEGER:
-    if (dest_type == SQL_IS_SMALLINT)
-      *(SQLSMALLINT *)dest= (SQLINTEGER)src;
-    else if (dest_type == SQL_IS_USMALLINT)
-      *(SQLUSMALLINT *)dest= (SQLINTEGER)src;
-    else if (dest_type == SQL_IS_INTEGER)
-      *(SQLINTEGER *)dest= (SQLINTEGER)src;
-    else if (dest_type == SQL_IS_UINTEGER)
-      *(SQLUINTEGER *)dest= (SQLINTEGER)src;
-    break;
-
   case SQL_IS_UINTEGER:
+  case SQL_IS_ULEN:
     if (dest_type == SQL_IS_SMALLINT)
-      *(SQLSMALLINT *)dest= (SQLUINTEGER)src;
+      *(SQLSMALLINT *)dest= (SQLULEN)src;
     else if (dest_type == SQL_IS_USMALLINT)
-      *(SQLUSMALLINT *)dest= (SQLUINTEGER)src;
+      *(SQLUSMALLINT *)dest= (SQLULEN)src;
     else if (dest_type == SQL_IS_INTEGER)
-      *(SQLINTEGER *)dest= (SQLUINTEGER)src;
+      *(SQLINTEGER *)dest= (SQLULEN)src;
     else if (dest_type == SQL_IS_UINTEGER)
-      *(SQLUINTEGER *)dest= (SQLUINTEGER)src;
+      *(SQLUINTEGER *)dest= (SQLULEN)src;
+    else if (dest_type == SQL_IS_LEN)
+      *(SQLLEN *)dest= (SQLULEN)src;
+    else if (dest_type == SQL_IS_ULEN)
+      *(SQLULEN *)dest= (SQLULEN)src;
     break;
 
   case SQL_IS_POINTER:
@@ -307,11 +297,11 @@ getfield(SQLSMALLINT fldid)
   /* See: SQLSetDescField() documentation
    * http://msdn2.microsoft.com/en-us/library/ms713560.aspx */
   HDR_FLD(alloc_type        , P_RI|P_RA          , SQL_IS_SMALLINT);
-  HDR_FLD(array_size        , P_RA|P_WA          , SQL_IS_UINTEGER);
+  HDR_FLD(array_size        , P_RA|P_WA          , SQL_IS_ULEN    );
   HDR_FLD(array_status_ptr  , P_RI|P_WI|P_RA|P_WA, SQL_IS_POINTER );
   HDR_FLD(bind_offset_ptr   , P_RA|P_WA          , SQL_IS_POINTER );
   HDR_FLD(bind_type         , P_RA|P_WA          , SQL_IS_INTEGER );
-  HDR_FLD(count             , P_RI|P_WI|P_RA|P_WA, SQL_IS_SMALLINT);
+  HDR_FLD(count             , P_RI|P_WI|P_RA|P_WA, SQL_IS_LEN     );
   HDR_FLD(rows_processed_ptr, P_RI|P_WI          , SQL_IS_POINTER );
 
   REC_FLD(auto_unique_value, PR_RIR                     , SQL_IS_INTEGER);
@@ -321,18 +311,18 @@ getfield(SQLSMALLINT fldid)
   REC_FLD(catalog_name     , PR_RIR                     , SQL_IS_POINTER);
   REC_FLD(concise_type     , PR_WAR|PR_WAP|PR_RIR|PR_WIP, SQL_IS_SMALLINT);
   REC_FLD(data_ptr         , PR_WAR|PR_WAP              , SQL_IS_POINTER);
-  REC_FLD(display_size     , PR_RIR                     , SQL_IS_INTEGER);
+  REC_FLD(display_size     , PR_RIR                     , SQL_IS_LEN);
   REC_FLD(fixed_prec_scale , PR_RIR|PR_RIP              , SQL_IS_SMALLINT);
   REC_FLD(indicator_ptr    , PR_WAR|PR_WAP              , SQL_IS_POINTER);
   REC_FLD(label            , PR_RIR                     , SQL_IS_POINTER);
-  REC_FLD(length           , PR_WAR|PR_WAP|PR_RIR|PR_WIP, SQL_IS_UINTEGER);
+  REC_FLD(length           , PR_WAR|PR_WAP|PR_RIR|PR_WIP, SQL_IS_ULEN);
   REC_FLD(literal_prefix   , PR_RIR                     , SQL_IS_POINTER);
   REC_FLD(literal_suffix   , PR_RIR                     , SQL_IS_POINTER);
   REC_FLD(local_type_name  , PR_RIR|PR_RIP              , SQL_IS_POINTER);
   REC_FLD(name             , PR_RIR|PR_WIP              , SQL_IS_POINTER);
   REC_FLD(nullable         , PR_RIR|PR_RIP              , SQL_IS_SMALLINT);
   REC_FLD(num_prec_radix   , PR_WAR|PR_WAP|PR_RIR|PR_WIP, SQL_IS_INTEGER);
-  REC_FLD(octet_length     , PR_WAR|PR_WAP|PR_RIR|PR_WIP, SQL_IS_INTEGER);
+  REC_FLD(octet_length     , PR_WAR|PR_WAP|PR_RIR|PR_WIP, SQL_IS_LEN);
   REC_FLD(octet_length_ptr , PR_WAR|PR_WAP              , SQL_IS_POINTER);
   REC_FLD(parameter_type   , PR_WIP                     , SQL_IS_SMALLINT);
   REC_FLD(precision        , PR_WAR|PR_WAP|PR_RIR|PR_WIP, SQL_IS_SMALLINT);
@@ -525,6 +515,10 @@ MySQLGetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
       *(SQLSMALLINT *)valptr= *(SQLINTEGER *)src;
     else if (fld->data_type == SQL_IS_UINTEGER)
       *(SQLSMALLINT *)valptr= *(SQLUINTEGER *)src;
+    else if (fld->data_type == SQL_IS_LEN)
+      *(SQLSMALLINT *)valptr= *(SQLLEN *)src;
+    else if (fld->data_type == SQL_IS_ULEN)
+      *(SQLSMALLINT *)valptr= *(SQLULEN *)src;
     break;
 
   case SQL_IS_USMALLINT:
@@ -536,6 +530,10 @@ MySQLGetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
       *(SQLUSMALLINT *)valptr= *(SQLINTEGER *)src;
     else if (fld->data_type == SQL_IS_UINTEGER)
       *(SQLUSMALLINT *)valptr= *(SQLUINTEGER *)src;
+    else if (fld->data_type == SQL_IS_LEN)
+      *(SQLUSMALLINT *)valptr= *(SQLLEN *)src;
+    else if (fld->data_type == SQL_IS_ULEN)
+      *(SQLUSMALLINT *)valptr= *(SQLULEN *)src;
     break;
 
   case SQL_IS_INTEGER:
@@ -547,6 +545,10 @@ MySQLGetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
       *(SQLINTEGER *)valptr= *(SQLINTEGER *)src;
     else if (fld->data_type == SQL_IS_UINTEGER)
       *(SQLINTEGER *)valptr= *(SQLUINTEGER *)src;
+    else if (fld->data_type == SQL_IS_LEN)
+      *(SQLINTEGER *)valptr= *(SQLLEN *)src;
+    else if (fld->data_type == SQL_IS_ULEN)
+      *(SQLINTEGER *)valptr= *(SQLULEN *)src;
     break;
 
   case SQL_IS_UINTEGER:
@@ -558,6 +560,40 @@ MySQLGetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
       *(SQLUINTEGER *)valptr= *(SQLINTEGER *)src;
     else if (fld->data_type == SQL_IS_UINTEGER)
       *(SQLUINTEGER *)valptr= *(SQLUINTEGER *)src;
+    else if (fld->data_type == SQL_IS_LEN)
+      *(SQLUINTEGER *)valptr= *(SQLLEN *)src;
+    else if (fld->data_type == SQL_IS_ULEN)
+      *(SQLUINTEGER *)valptr= *(SQLULEN *)src;
+    break;
+
+  case SQL_IS_LEN:
+    if (fld->data_type == SQL_IS_SMALLINT)
+      *(SQLLEN *)valptr= *(SQLSMALLINT *)src;
+    else if (fld->data_type == SQL_IS_USMALLINT)
+      *(SQLLEN *)valptr= *(SQLUSMALLINT *)src;
+    else if (fld->data_type == SQL_IS_INTEGER)
+      *(SQLLEN *)valptr= *(SQLINTEGER *)src;
+    else if (fld->data_type == SQL_IS_UINTEGER)
+      *(SQLLEN *)valptr= *(SQLUINTEGER *)src;
+    else if (fld->data_type == SQL_IS_LEN)
+      *(SQLLEN *)valptr= *(SQLLEN *)src;
+    else if (fld->data_type == SQL_IS_ULEN)
+      *(SQLLEN *)valptr= *(SQLULEN *)src;
+    break;
+
+  case SQL_IS_ULEN:
+    if (fld->data_type == SQL_IS_SMALLINT)
+      *(SQLULEN *)valptr= *(SQLSMALLINT *)src;
+    else if (fld->data_type == SQL_IS_USMALLINT)
+      *(SQLULEN *)valptr= *(SQLUSMALLINT *)src;
+    else if (fld->data_type == SQL_IS_INTEGER)
+      *(SQLULEN *)valptr= *(SQLINTEGER *)src;
+    else if (fld->data_type == SQL_IS_UINTEGER)
+      *(SQLULEN *)valptr= *(SQLUINTEGER *)src;
+    else if (fld->data_type == SQL_IS_LEN)
+      *(SQLULEN *)valptr= *(SQLLEN *)src;
+    else if (fld->data_type == SQL_IS_ULEN)
+      *(SQLULEN *)valptr= *(SQLULEN *)src;
     break;
 
   case SQL_IS_POINTER:

@@ -188,6 +188,10 @@ typedef enum { DESC_HDR, DESC_REC } fld_loc;
 #define IS_ARD(d) ((d)->desc_type == DESC_ROW && (d)->ref_type == DESC_APP)
 #define IS_IRD(d) ((d)->desc_type == DESC_ROW && (d)->ref_type == DESC_IMP)
 
+/* additional field types needed, but not defined in ODBC */
+#define SQL_IS_ULEN (-9)
+#define SQL_IS_LEN (-10)
+
 typedef struct {
   int perms;
   SQLSMALLINT data_type; /* SQL_IS_SMALLINT, etc */

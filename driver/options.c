@@ -551,13 +551,13 @@ MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
         case SQL_ATTR_PARAMSET_SIZE:
             return stmt_SQLSetDescField(stmt, stmt->apd, 0,
                                         SQL_DESC_ARRAY_SIZE,
-                                        ValuePtr, SQL_IS_UINTEGER);
+                                        ValuePtr, SQL_IS_ULEN);
 
         case SQL_ATTR_ROW_ARRAY_SIZE:
         case SQL_ROWSET_SIZE:
             return stmt_SQLSetDescField(stmt, stmt->ard, 0,
                                         SQL_DESC_ARRAY_SIZE,
-                                        ValuePtr, SQL_IS_UINTEGER);
+                                        ValuePtr, SQL_IS_ULEN);
 
         case SQL_ATTR_ROW_BIND_OFFSET_PTR:
             return stmt_SQLSetDescField(stmt, stmt->ard, 0,
