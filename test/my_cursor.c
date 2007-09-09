@@ -2516,7 +2516,7 @@ DECLARE_TEST(bug6741)
   ok_sql(hstmt, "select x,y from t_bug6741 order by x");
 
   ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_BIND_OFFSET_PTR,
-          &offset, SQL_IS_UINTEGER));
+          &offset, SQL_IS_POINTER));
   ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &results[0].xval, 0, NULL));
   ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_LONG, NULL, 0, &results[0].ylen));
 

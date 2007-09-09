@@ -206,7 +206,14 @@ typedef struct {
   SQLSMALLINT   alloc_type;
   SQLULEN       array_size;
   SQLUSMALLINT *array_status_ptr;
-  SQLINTEGER   *bind_offset_ptr;
+  /* NOTE: This field is defined as SQLINTEGER* in the descriptor
+   * documentation, but corresponds to SQL_ATTR_ROW_BIND_OFFSET_PTR or
+   * SQL_ATTR_PARAM_BIND_OFFSET_PTR when set via SQLSetStmtAttr(). The
+   * 64-bit ODBC addendum says that when set via SQLSetStmtAttr(), this
+   * is now a 64-bit value. These two are conflicting, so we opt for
+   * the 64-bit value.
+   */
+  SQLULEN      *bind_offset_ptr;
   SQLINTEGER    bind_type;
   SQLLEN        count;
   SQLUINTEGER  *rows_processed_ptr;
