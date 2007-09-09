@@ -87,11 +87,11 @@ Build Connector/ODBC using the CMake "cmake" command-line tool by
 doing the following from the source root directory (in a command
 prompt window);
 
-  cmake -G 'Visual Studio 7 .NET 2003'
+  cmake -G "Visual Studio 7 .NET 2003"
 
 or for a debug enabled "myodbc3d.dll"
 
-  cmake -G 'Visual Studio 7 .NET 2003' -DCMAKE_BUILD_TYPE=Debug
+  cmake -G "Visual Studio 7 .NET 2003" -DCMAKE_BUILD_TYPE=Debug
 
 This produces Visual Studio project, you can use the Visual Studio
 IDE or from the command line one of

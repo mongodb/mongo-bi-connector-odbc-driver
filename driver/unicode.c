@@ -482,7 +482,7 @@ SQLDriverConnectW(SQLHDBC hdbc, SQLHWND hwnd,
   SQLRETURN rc;
   SQLINTEGER in_len= in_len_in;
   SQLSMALLINT out8_max, dummy_out;
-  SQLCHAR *out8, *in8= sqlwchar_as_utf8(in, &in_len);
+  SQLCHAR *out8= NULL, *in8= sqlwchar_as_utf8(in, &in_len);
 
   if (in_len == SQL_NTS)
     in_len= sqlwchar_strlen(in);
@@ -490,11 +490,14 @@ SQLDriverConnectW(SQLHDBC hdbc, SQLHWND hwnd,
     out_len= &dummy_out;
 
   out8_max= sizeof(SQLCHAR) * 4 * out_max;
-  out8= (SQLCHAR *)my_malloc(out8_max + 1, MYF(0));
-  if (!out8)
+  if (out8_max)
   {
-    rc= set_dbc_error((DBC *)hdbc, "HY001", NULL, 0);
-    goto error;
+    out8= (SQLCHAR *)my_malloc(out8_max + 1, MYF(0));
+    if (!out8)
+    {
+      rc= set_dbc_error((DBC *)hdbc, "HY001", NULL, 0);
+      goto error;
+    }
   }
 
   ((DBC *)hdbc)->unicode= TRUE; /* Hooray, a Unicode connection! */
@@ -509,7 +512,9 @@ SQLDriverConnectW(SQLHDBC hdbc, SQLHWND hwnd,
 
     @todo verify that this actually happens.
   */
-  if (in != out)
+  if (rc == SQL_SUCCESS && out && in != out)
+#else
+  if (rc == SQL_SUCCESS && out)
 #endif
   {
     /* Now we have to convert out8 back into a SQLWCHAR. */
@@ -901,7 +906,7 @@ SQLGetDiagRecWImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
                                           msg_value, &len, &errors);
 
     if (len > message_max - 1)
-      rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
+      rc= SQL_SUCCESS_WITH_INFO;
 
     if (message_len)
       *message_len= (SQLSMALLINT)len;
