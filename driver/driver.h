@@ -25,8 +25,8 @@
   @brief Definitions needed by the driver
 */
 
-#ifndef __MYODBC3_H__
-#define __MYODBC3_H__
+#ifndef __DRIVER_H__
+#define __DRIVER_H__
 
 #include "../MYODBC_MYSQL.h"
 #include "../MYODBC_CONF.h"
@@ -455,6 +455,7 @@ extern pthread_mutex_t myodbc_lock;
 #endif
 
 #include "myutil.h"
+#include "stringutil.h"
 
 SQLRETURN SQL_API MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
                                     SQLUSMALLINT attrib, SQLCHAR **char_attr,
@@ -549,4 +550,4 @@ SQLRETURN SQL_API MySQLTables(SQLHSTMT hstmt,
                               SQLCHAR *table, SQLSMALLINT table_len,
                               SQLCHAR *type, SQLSMALLINT type_len);
 
-#endif /* __MYODBC3_H__ */
+#endif /* __DRIVER_H__ */

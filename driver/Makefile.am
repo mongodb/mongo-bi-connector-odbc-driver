@@ -28,6 +28,8 @@ endif
 
 lib_LTLIBRARIES=libmyodbc5.la $(TS_DRIVER)
 
+INCLUDES=-I../util
+
 ###################################################################
 #                                                                 #
 # Driver Source files                                             #
@@ -51,7 +53,6 @@ prepare.c \
 results.c \
 transact.c \
 unicode.c \
-unicode_transcode.c \
 utility.c \
 driver.h
 

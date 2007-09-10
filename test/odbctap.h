@@ -60,7 +60,7 @@ typedef unsigned int UTF32;
 typedef unsigned short UTF16;
 typedef unsigned char UTF8;
 
-#include "../driver/unicode_transcode.c"
+#include "../util/unicode_transcode.c"
 
 
 void printMessage(char *fmt, ...) {

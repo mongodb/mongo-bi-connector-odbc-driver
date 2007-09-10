@@ -207,89 +207,6 @@ SQLRETURN copy_str_data(SQLSMALLINT HandleType, SQLHANDLE Handle,
 }
 
 
-/**
-  Copy a string from one character set to another. Taken from sql_string.cc
-  in the MySQL Server source code, since we don't export this functionality
-  in libmysql yet.
-
-  @c to must be at least as big as @c from_length * @c to_cs->mbmaxlen
-
-  @param[in,out] to           Store result here
-  @param[in]     to_cs        Character set of result string
-  @param[in]     from         Copy from here
-  @param[in]     from_length  Length of string in @c from (in bytes)
-  @param[in]     from_cs      Character set of string in @c from
-  @param[out]    used_bytes   Buffer for returning number of bytes consumed
-                              from @c from
-  @param[out]    used_chars   Buffer for returning number of chars consumed
-                              from @c from
-  @param[in,out] errors       Pointer to value where number of errors
-                              encountered is added.
-
-  @retval Length of bytes copied to @c to
-*/
-uint32
-copy_and_convert(char *to, uint32 to_length, CHARSET_INFO *to_cs,
-                 const char *from, uint32 from_length, CHARSET_INFO *from_cs,
-                 uint32 *used_bytes, uint32 *used_chars, uint *errors)
-{
-  int         from_cnvres, to_cnvres;
-  my_wc_t     wc;
-  const uchar *from_end= (const uchar*) from+from_length;
-  char *to_start= to;
-  uchar *to_end= (uchar*) to+to_length;
-  int (*mb_wc)(struct charset_info_st *, my_wc_t *, const uchar *,
-               const uchar *) = from_cs->cset->mb_wc;
-  int (*wc_mb)(struct charset_info_st *, my_wc_t, uchar *s, uchar *e)=
-    to_cs->cset->wc_mb;
-  uint error_count= 0;
-
-  *used_bytes= *used_chars= 0;
-
-  while (1)
-  {
-    if ((from_cnvres= (*mb_wc)(from_cs, &wc, (uchar*) from, from_end)) > 0)
-      from+= from_cnvres;
-    else if (from_cnvres == MY_CS_ILSEQ)
-    {
-      error_count++;
-      from++;
-      wc= '?';
-    }
-    else if (from_cnvres > MY_CS_TOOSMALL)
-    {
-      /*
-        A correct multibyte sequence detected
-        But it doesn't have Unicode mapping.
-      */
-      error_count++;
-      from+= (-from_cnvres);
-      wc= '?';
-    }
-    else
-      break; /* Not enough characters */
-
-outp:
-    if ((to_cnvres= (*wc_mb)(to_cs, wc, (uchar*) to, to_end)) > 0)
-      to+= to_cnvres;
-    else if (to_cnvres == MY_CS_ILUNI && wc != '?')
-    {
-      error_count++;
-      wc= '?';
-      goto outp;
-    }
-    else
-      break;
-
-    *used_bytes+= from_cnvres;
-    *used_chars+= 1;
-  }
-  *errors+= error_count;
-
-  return (uint32) (to - to_start);
-}
-
-
 /*
   Copy a field to a byte string.
 
@@ -1999,22 +1916,6 @@ ulong myodbc_escape_wildcard(MYSQL *mysql __attribute__((unused)),
   }
   *to= 0;
   return overflow ? (ulong)~0 : (ulong) (to - to_start);
-}
-
-
-/**
- Return the length of a SQLWCHAR string.
-
- @param[in]  str     The string
-
- @return The number of characters in the string
-*/
-size_t sqlwchar_strlen(const SQLWCHAR *str)
-{
-  size_t len= 0;
-  while (str && *str++)
-    len++;
-  return len;
 }
 
 

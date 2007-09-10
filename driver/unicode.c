@@ -35,8 +35,6 @@
 
 
 /* Forward declarations. */
-SQLCHAR *sqlwchar_as_utf8(SQLWCHAR *str, SQLINTEGER *len);
-
 SQLRETURN SQL_API
 SQLColAttributeWImpl(SQLHSTMT hstmt, SQLUSMALLINT column,
                      SQLUSMALLINT field, SQLPOINTER char_attr,
@@ -56,243 +54,6 @@ SQLPrepareWImpl(SQLHSTMT hstmt, SQLWCHAR *str, SQLINTEGER str_len);
 SQLRETURN SQL_API
 SQLSetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute,
                        SQLPOINTER value, SQLINTEGER value_len);
-
-
-/**
-  Duplicate a SQLCHAR in the specified character set as a SQLWCHAR.
-
-  @param[in]      charset_info  Character set to convert into
-  @param[in]      str           String to convert
-  @param[in,out]  len           Pointer to length of source (in bytes) or
-                                destination string (in chars)
-  @param[out]     errors        Pointer to count of errors in conversion
-
-  @return  Pointer to a newly allocated SQLWCHAR, or @c NULL
-*/
-SQLWCHAR *sqlchar_as_sqlwchar(CHARSET_INFO *charset_info, SQLCHAR *str,
-                              SQLINTEGER *len, uint *errors)
-{
-  SQLCHAR *pos, *str_end;
-  SQLWCHAR *out;
-  SQLINTEGER i, out_bytes;
-  my_bool free_str= FALSE;
-
-  if (*len == SQL_NTS)
-    *len= strlen((char *)str);
-
-  if (!str || *len == 0)
-  {
-    *len= 0;
-    return NULL;
-  }
-
-  if (charset_info->number != 33) /* not utf-8 */
-  {
-    uint32 used_bytes, used_chars;
-    size_t u8_max= (*len / charset_info->mbminlen *
-                    utf8_charset_info->mbmaxlen + 1);
-    SQLCHAR *u8= (SQLCHAR *)my_malloc(u8_max, MYF(0));
-
-    if (!u8)
-    {
-      *len= -1;
-      return NULL;
-    }
-
-    *len= copy_and_convert((char *)u8, u8_max, utf8_charset_info,
-                           (char *)str, *len, charset_info,
-                           &used_bytes, &used_chars, errors);
-    str= u8;
-    free_str= TRUE;
-  }
-
-  str_end= str + *len;
-
-  out_bytes= (*len + 1) * sizeof(SQLWCHAR);
-
-  out= (SQLWCHAR *)my_malloc(out_bytes, MYF(0));
-  if (!out)
-  {
-    *len= -1;
-    return NULL;
-  }
-
-  for (pos= str, i= 0; *pos && pos < str_end; )
-  {
-    if (sizeof(SQLWCHAR) == 4)
-    {
-      pos+= utf8toutf32(pos, (UTF32 *)(out + i++));
-    }
-    else
-    {
-      UTF32 u32;
-      pos+= utf8toutf32(pos, &u32);
-      i+= utf32toutf16(u32, (UTF16 *)(out + i));
-    }
-  }
-
-  *len= i;
-  out[i]= 0;
-
-  if (free_str)
-    x_free(str);
-
-  return out;
-}
-
-
-/**
-  Duplicate a SQLWCHAR as a SQLCHAR in the specified character set.
-
-  @param[in]      charset_info  Character set to convert into
-  @param[in]      str           String to convert
-  @param[in,out]  len           Pointer to length of source (in chars) or
-                                destination string (in bytes)
-  @param[out]     errors        Pointer to count of errors in conversion
-
-  @return  Pointer to a newly allocated SQLCHAR, or @c NULL
-*/
-SQLCHAR *sqlwchar_as_sqlchar(CHARSET_INFO *charset_info, SQLWCHAR *str,
-                             SQLINTEGER *len, uint *errors)
-{
-  SQLWCHAR *str_end;
-  SQLCHAR *out;
-  SQLINTEGER i, u8_len, out_bytes;
-  UTF8 u8[7];
-  uint32 used_bytes, used_chars;
-
-  *errors= 0;
-
-  if (charset_info->number == 33)
-    return sqlwchar_as_utf8(str, len);
-
-  if (*len == SQL_NTS)
-    *len= sqlwchar_strlen(str);
-  if (!str || *len == 0)
-  {
-    *len= 0;
-    return NULL;
-  }
-
-  out_bytes= *len * charset_info->mbmaxlen * sizeof(SQLCHAR) + 1;
-  out= (SQLCHAR *)my_malloc(out_bytes, MYF(0));
-  if (!out)
-  {
-    *len= -1;
-    return NULL;
-  }
-
-  str_end= str + *len;
-
-  for (i= 0; str < str_end; )
-  {
-    if (sizeof(SQLWCHAR) == 4)
-    {
-      u8_len= utf32toutf8((UTF32)*str++, u8);
-    }
-    else
-    {
-      UTF32 u32;
-      str+= utf16toutf32((UTF16 *)str, &u32);
-      u8_len= utf32toutf8(u32, u8);
-    }
-
-    i+= copy_and_convert((char *)out + i, out_bytes - i, charset_info,
-                         (char *)u8, u8_len, utf8_charset_info, &used_bytes,
-                         &used_chars, errors);
-  }
-
-  *len= i;
-  out[i]= '\0';
-  return out;
-}
-
-
-/**
-  Duplicate a SQLWCHAR as a SQLCHAR encoded as UTF-8.
-
-  @param[in]      str           String to convert
-  @param[in,out]  len           Pointer to length of source (in chars) or
-                                destination string (in bytes)
-
-  @return  Pointer to a newly allocated SQLCHAR, or @c NULL
-*/
-SQLCHAR *sqlwchar_as_utf8(SQLWCHAR *str, SQLINTEGER *len)
-{
-  SQLWCHAR *str_end;
-  UTF8 *u8;
-  SQLSMALLINT i;
-
-  if (*len == SQL_NTS)
-    *len= sqlwchar_strlen(str);
-  if (!str || *len == 0)
-  {
-    *len= 0;
-    return NULL;
-  }
-
-  u8= (UTF8 *)my_malloc(sizeof(UTF8) * 4 * *len + 1, MYF(0));
-  if (!u8)
-  {
-    *len= -1;
-    return NULL;
-  }
-
-  str_end= str + *len;
-
-  if (sizeof(SQLWCHAR) == 4)
-  {
-    for (i= 0; str < str_end; )
-      i+= utf32toutf8((UTF32)*str++, u8 + i);
-  }
-  else
-  {
-    for (i= 0; str < str_end; )
-    {
-      UTF32 u32;
-      str+= utf16toutf32((UTF16 *)str, &u32);
-      i+= utf32toutf8(u32, u8 + i);
-    }
-  }
-
-  *len= i;
-  u8[i]= '\0';
-  return u8;
-}
-
-
-/**
-  Convert a SQLCHAR encoded as UTF-8 into a SQLWCHAR.
-
-  @param[out]     out           Pointer to SQLWCHAR buffer
-  @param[in]      out_max       Length of @c out buffer
-  @param[in]      in            Pointer to SQLCHAR string (utf-8 encoded)
-  @param[in]      in_len        Length of @c in (in bytes)
-
-  @return  Number of characters stored in the @c out buffer
-*/
-SQLSMALLINT utf8_as_sqlwchar(SQLWCHAR *out, SQLINTEGER out_max, SQLCHAR *in,
-                             SQLINTEGER in_len)
-{
-  SQLINTEGER i;
-  SQLWCHAR *pos, *out_end;
-
-  for (i= 0, pos= out, out_end= out + out_max; i < in_len && pos < out_end; )
-  {
-    if (sizeof(SQLWCHAR) == 4)
-      i+= utf8toutf32(in + i, (UTF32 *)pos++);
-    else
-    {
-      UTF32 u32;
-      i+= utf8toutf32(in + i, &u32);
-      pos+= utf32toutf16(u32, (UTF16 *)pos);
-    }
-  }
-
-  if (pos)
-    *pos= 0;
-  return pos - out;
-}
 
 
 SQLRETURN SQL_API
@@ -485,7 +246,7 @@ SQLDriverConnectW(SQLHDBC hdbc, SQLHWND hwnd,
   SQLCHAR *out8= NULL, *in8= sqlwchar_as_utf8(in, &in_len);
 
   if (in_len == SQL_NTS)
-    in_len= sqlwchar_strlen(in);
+    in_len= sqlwcharlen(in);
   if (!out_len)
     out_len= &dummy_out;
 
@@ -1017,7 +778,7 @@ SQLNativeSqlW(SQLHDBC hdbc, SQLWCHAR *in, SQLINTEGER in_len,
   SQLRETURN rc= SQL_SUCCESS;
 
   if (in_len == SQL_NTS)
-    in_len= sqlwchar_strlen(in);
+    in_len= sqlwcharlen(in);
 
   if (out)
     *out_len= in_len;

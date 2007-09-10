@@ -2,6 +2,9 @@ noinst_LTLIBRARIES = libmyodbc3u.la
 
 # base source list
 libmyodbc3u_la_SOURCES = \
+	stringutil.h \
+	stringutil.c \
+	unicode_transcode.c \
 	MYODBCUtil.h \
 	MYODBCUtilAllocDataSource.c \
 	MYODBCUtilAllocDriver.c \
@@ -28,6 +31,10 @@ libmyodbc3u_la_SOURCES += \
 	MYODBCUtilWriteDataSourceStr.c \
 	MYODBCUtilWriteDriver.c
 endif
+
+# libmysql lib deps
+libmyodbc3u_la_LIBADD         = $(LTLIBS_DEPS) @LTDL_LIB@ @MYSQL_LIB@
+libmyodbc3u_la_DEPENDENCIES   = $(LTLIBS_DEPS)
 
 EXTRA_DIST = \
 	CMakeLists.txt

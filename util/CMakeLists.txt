@@ -20,7 +20,11 @@
 
 ##########################################################################
 
-ADD_LIBRARY(myodbc3u STATIC MYODBCUtilAllocDataSource.c
+ADD_LIBRARY(myodbc3u STATIC
+                        stringutil.c
+                        stringutil.h
+                        unicode_transcode.c
+                        MYODBCUtilAllocDataSource.c
                         MYODBCUtilAllocDriver.c
                         MYODBCUtilClearDataSource.c
                         MYODBCUtilClearDriver.c

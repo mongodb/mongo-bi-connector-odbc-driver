@@ -553,7 +553,7 @@ DECLARE_TEST(t_blob_bug)
     {
       SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
       SQLFreeStmt(hstmt,SQL_CLOSE);
-      return;
+      return FAIL;
     }
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_CHAR,SQL_VARBINARY,

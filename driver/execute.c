@@ -266,7 +266,7 @@ char *insert_param(DBC *dbc, char *to, DESCREC *aprec, DESCREC *iprec)
       if (data)
       {
         if (aprec->concise_type == SQL_C_WCHAR)
-          length= sqlwchar_strlen((SQLWCHAR *)data) * sizeof(SQLWCHAR);
+          length= sqlwcharlen((SQLWCHAR *)data) * sizeof(SQLWCHAR);
         else
           length= strlen(data);
 

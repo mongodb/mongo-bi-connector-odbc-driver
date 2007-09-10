@@ -53,47 +53,6 @@ SQLSetConnectAttrImpl(SQLHDBC hdbc, SQLINTEGER attribute,
                       SQLPOINTER value, SQLINTEGER value_len);
 
 
-/**
-  Duplicate a SQLCHAR as a SQLCHAR in the specified character set.
-
-  @param[in]      from_charset  Character set to convert from
-  @param[in]      to_charset    Character set to convert into
-  @param[in]      str           String to convert
-  @param[in,out]  len           Pointer to length of source (in chars) or
-                                destination string (in bytes)
-  @param[out]     errors        Pointer to count of errors in conversion
-
-  @return  Pointer to a newly allocated SQLCHAR, or @c NULL
-*/
-SQLCHAR *sqlchar_as_sqlchar(CHARSET_INFO *from_charset,
-                            CHARSET_INFO *to_charset,
-                            SQLCHAR *str, SQLINTEGER *len, uint *errors)
-{
-  uint32 used_bytes, used_chars, bytes;
-  SQLCHAR *conv;
-
-  if (*len == SQL_NTS)
-    *len= strlen((char *)str);
-
-  bytes= (*len / from_charset->mbminlen * to_charset->mbmaxlen);
-  conv= (SQLCHAR *)my_malloc(bytes + 1, MYF(0));
-  if (!conv)
-  {
-    *len= -1;
-    return NULL;
-  }
-
-  *len= copy_and_convert((char *)conv, bytes, to_charset,
-                         (char *)str, *len,
-                         from_charset, &used_bytes,
-                         &used_chars, errors);
-
-  conv[*len]= '\0';
-
-  return conv;
-}
-
-
 SQLRETURN SQL_API
 SQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
                 SQLUSMALLINT field, SQLPOINTER char_attr,

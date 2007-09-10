@@ -245,8 +245,6 @@ stmt_SQLSetDescField(STMT *stmt, DESC *desc, SQLSMALLINT recnum,
                      SQLSMALLINT fldid, SQLPOINTER val, SQLINTEGER buflen);
 SQLRETURN stmt_SQLCopyDesc(STMT *stmt, DESC *src, DESC *dest);
 
-size_t sqlwchar_strlen(const SQLWCHAR *str);
-
 /* Functions used when debugging */
 void query_print(FILE *log_file,char *query);
 FILE *init_query_log(void);
@@ -257,17 +255,5 @@ void end_query_log(FILE *query_log);
 #else
 #define cmp_database(A,B) strcmp((A),(B))
 #endif
-
-/* Unicode transcoding */
-typedef unsigned int UTF32;
-typedef unsigned short UTF16;
-typedef unsigned char UTF8;
-
-extern CHARSET_INFO *utf8_charset_info;
-
-int utf16toutf32(UTF16 *i, UTF32 *u);
-int utf32toutf16(UTF32 i, UTF16 *u);
-int utf8toutf32(UTF8 *i, UTF32 *u);
-int utf32toutf8(UTF32 i, UTF8 *c);
 
 #endif /* __MYUTIL_H__ */
