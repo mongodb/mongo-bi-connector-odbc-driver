@@ -1148,9 +1148,9 @@ SQLSetDescFieldW(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT field,
 
 SQLRETURN SQL_API
 SQLSetDescRecW(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT type,
-               SQLSMALLINT subtype, SQLINTEGER length, SQLSMALLINT precision,
+               SQLSMALLINT subtype, SQLLEN length, SQLSMALLINT precision,
                SQLSMALLINT scale, SQLPOINTER data_ptr,
-               SQLINTEGER *octet_length_ptr, SQLINTEGER *indicator_ptr)
+               SQLLEN *octet_length_ptr, SQLLEN *indicator_ptr)
 {
   NOT_IMPLEMENTED;
 }
