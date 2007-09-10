@@ -26,7 +26,7 @@
 */
 
 #ifndef ODBCTAP
-# include "driver.h"
+# include "stringutil.h"
 #endif
 
 /**

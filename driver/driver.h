@@ -499,6 +499,9 @@ SQLRETURN SQL_API MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
                                SQLSMALLINT *value_len);
 SQLRETURN SQL_API MySQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attrib,
                                       SQLCHAR **char_attr, SQLPOINTER num_attr);
+SQLRETURN MySQLGetDescField(SQLHDESC hdesc, SQLSMALLINT recnum,
+		                    SQLSMALLINT fldid, SQLPOINTER valptr,
+		                    SQLINTEGER buflen, SQLINTEGER *strlen);
 SQLRETURN SQL_API MySQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle,
                                     SQLSMALLINT record, SQLSMALLINT identifier,
                                     SQLCHAR **char_value, SQLPOINTER num_value);
@@ -526,6 +529,9 @@ SQLRETURN SQL_API MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
                                       SQLINTEGER StringLengthPtr);
 SQLRETURN SQL_API MySQLSetCursorName(SQLHSTMT hstmt, SQLCHAR *name,
                                      SQLSMALLINT len);
+SQLRETURN MySQLSetDescField(SQLHDESC hdesc, SQLSMALLINT recnum,
+                            SQLSMALLINT fldid, SQLPOINTER val,
+                            SQLINTEGER buflen);
 SQLRETURN SQL_API MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER attribute,
                                    SQLPOINTER value, SQLINTEGER len);
 SQLRETURN SQL_API MySQLSpecialColumns(SQLHSTMT hstmt, SQLUSMALLINT type,

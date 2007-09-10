@@ -485,6 +485,12 @@ DECLARE_TEST(t_bug30840)
   SQLCHAR   conn[256], conn_out[256];
   SQLSMALLINT conn_out_len;
 
+  /* Windows DM checks if we try to prompt with an invalid
+   * window handle */
+#ifdef _WIN32
+  return OK;
+#endif
+
   sprintf((char *)conn, "DSN=%s;UID=%s;PASSWORD=%s;OPTION=16",
           mydsn, myuid, mypwd);
   if (mysock != NULL)

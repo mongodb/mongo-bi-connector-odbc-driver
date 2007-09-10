@@ -561,7 +561,7 @@ unsigned long sqlwchartoul(const SQLWCHAR *wstr)
     c= *end;
     if (c < '0' || c > '9')
       return 0;
-    res += (c - '0') * pten;
+    res += (SQLWCHAR)((c - '0') * pten);
   }
   return res;
 }
@@ -575,9 +575,9 @@ void sqlwcharfromul(SQLWCHAR *wstr, unsigned long v)
   int chars;
   unsigned long v1;
   for(chars= 0, v1= v; v1 > 0; chars++, v1 /= 10);
-  wstr[chars]= 0;
+  wstr[chars]= (SQLWCHAR)0;
   for(v1= v; v1 > 0; v1 /= 10)
-    wstr[--chars]= '0' + (v1 % 10);
+    wstr[--chars]= (SQLWCHAR)('0' + (v1 % 10));
 }
 
 

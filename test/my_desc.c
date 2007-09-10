@@ -132,15 +132,21 @@ DECLARE_TEST(t_desc_set_error)
 
   /* Test the HY016 error received when setting any field on an IRD
    * besides SQL_DESC_ARRAY_STATUS_PTR or SQL_DESC_ROWS_PROCESSED_PTR.
+   *
+   * Windows intercepts this and returns HY091
    */
   ok_desc(ird, SQLSetDescField(ird, 0, SQL_DESC_ARRAY_STATUS_PTR,
                                array_status_ptr, SQL_IS_POINTER));
   expect_desc(ird, SQLSetDescField(ird, 0, SQL_DESC_AUTO_UNIQUE_VALUE,
                                    (SQLPOINTER) 1, SQL_IS_INTEGER),
               SQL_ERROR);
+#ifdef _WIN32
+  is(check_sqlstate_ex(ird, SQL_HANDLE_DESC, "HY091") == OK);
+#else
   is(check_sqlstate_ex(ird, SQL_HANDLE_DESC, "HY016") == OK);
+#endif
 
-  /* Test invalid field indentifier (will be HY016 on ird, HY091 on others) */
+  /* Test invalid field identifier (will be HY016 on ird, HY091 on others) */
   expect_desc(ard, SQLSetDescField(ard, 0, 999, NULL, SQL_IS_POINTER),
               SQL_ERROR);
   is(check_sqlstate_ex(ard, SQL_HANDLE_DESC, "HY091") == OK);
