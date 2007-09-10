@@ -138,24 +138,24 @@ SQLColumnPrivilegesW(SQLHSTMT hstmt,
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8, *column8;
   DBC *dbc= ((STMT *)hstmt)->dbc;
-  SQLINTEGER len= SQL_NTS;
+  SQLINTEGER len;
   uint errors= 0;
 
+  len= catalog_len;
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
   catalog_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= schema_len;
   schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, schema, &len, &errors);
   schema_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= table_len;
   table8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, table, &len, &errors);
   table_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= column_len;
   column8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, column, &len, &errors);
   column_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
   rc= MySQLColumnPrivileges(hstmt, catalog8, catalog_len, schema8, schema_len,
                             table8, table_len, column8, column_len);
@@ -179,24 +179,24 @@ SQLColumnsW(SQLHSTMT hstmt,
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8, *column8;
   DBC *dbc= ((STMT *)hstmt)->dbc;
-  SQLINTEGER len= SQL_NTS;
+  SQLINTEGER len;
   uint errors= 0;
 
+  len= catalog_len;
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
   catalog_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= schema_len;
   schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, schema, &len, &errors);
   schema_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= table_len;
   table8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, table, &len, &errors);
   table_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= column_len;
   column8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, column, &len, &errors);
   column_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
   rc= MySQLColumns(hstmt, catalog8, catalog_len, schema8, schema_len,
                    table8, table_len, column8, column_len);
@@ -409,38 +409,38 @@ SQLForeignKeysW(SQLHSTMT hstmt,
   SQLCHAR *pk_catalog8, *pk_schema8, *pk_table8,
           *fk_catalog8, *fk_schema8, *fk_table8;
   DBC *dbc= ((STMT *)hstmt)->dbc;
-  SQLINTEGER len= SQL_NTS;
+  SQLINTEGER len;
   uint errors= 0;
 
+  len= pk_catalog_len;
   pk_catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, pk_catalog, &len,
                                    &errors);
   pk_catalog_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= pk_schema_len;
   pk_schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, pk_schema, &len,
                                   &errors);
   pk_schema_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= pk_table_len;
   pk_table8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, pk_table, &len,
                                  &errors);
   pk_table_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= fk_catalog_len;
   fk_catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, fk_catalog, &len,
                                    &errors);
   fk_catalog_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= fk_schema_len;
   fk_schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, fk_schema, &len,
                                   &errors);
   fk_schema_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= fk_table_len;
   fk_table8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, fk_table, &len,
                                  &errors);
   fk_table_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
   rc= MySQLForeignKeys(hstmt, pk_catalog8, pk_catalog_len,
                        pk_schema8, pk_schema_len, pk_table8, pk_table_len,
@@ -833,20 +833,20 @@ SQLPrimaryKeysW(SQLHSTMT hstmt,
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8;
   DBC *dbc= ((STMT *)hstmt)->dbc;
-  SQLINTEGER len= SQL_NTS;
+  SQLINTEGER len;
   uint errors= 0;
 
+  len= catalog_len;
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
   catalog_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= schema_len;
   schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, schema, &len, &errors);
   schema_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= table_len;
   table8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, table, &len, &errors);
   table_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
   rc= MySQLPrimaryKeys(hstmt, catalog8, catalog_len, schema8, schema_len,
                        table8, table_len);
@@ -868,20 +868,20 @@ SQLProceduresW(SQLHSTMT hstmt,
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *proc8;
   DBC *dbc= ((STMT *)hstmt)->dbc;
-  SQLINTEGER len= SQL_NTS;
+  SQLINTEGER len;
   uint errors= 0;
 
+  len= catalog_len;
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
   catalog_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= schema_len;
   schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, schema, &len, &errors);
   schema_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= proc_len;
   proc8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, proc, &len, &errors);
   proc_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
   rc= MySQLProcedures(hstmt, catalog8, catalog_len, schema8, schema_len,
                       proc8, proc_len);
@@ -981,20 +981,20 @@ SQLSpecialColumnsW(SQLHSTMT hstmt, SQLUSMALLINT type,
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8;
   DBC *dbc= ((STMT *)hstmt)->dbc;
-  SQLINTEGER len= SQL_NTS;
+  SQLINTEGER len;
   uint errors= 0;
 
+  len= catalog_len;
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
   catalog_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= schema_len;
   schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, schema, &len, &errors);
   schema_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= table_len;
   table8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, table, &len, &errors);
   table_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
   rc= MySQLSpecialColumns(hstmt, type, catalog8, catalog_len,
                           schema8, schema_len, table8, table_len,
@@ -1018,20 +1018,20 @@ SQLStatisticsW(SQLHSTMT hstmt,
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8;
   DBC *dbc= ((STMT *)hstmt)->dbc;
-  SQLINTEGER len= SQL_NTS;
+  SQLINTEGER len;
   uint errors= 0;
 
+  len= catalog_len;
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
   catalog_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= schema_len;
   schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, schema, &len, &errors);
   schema_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= table_len;
   table8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, table, &len, &errors);
   table_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
   rc= MySQLStatistics(hstmt, catalog8, catalog_len, schema8, schema_len,
                       table8, table_len, unique, accuracy);
@@ -1053,20 +1053,20 @@ SQLTablePrivilegesW(SQLHSTMT hstmt,
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8;
   DBC *dbc= ((STMT *)hstmt)->dbc;
-  SQLINTEGER len= SQL_NTS;
+  SQLINTEGER len;
   uint errors= 0;
 
+  len= catalog_len;
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
   catalog_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= schema_len;
   schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, schema, &len, &errors);
   schema_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= table_len;
   table8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, table, &len, &errors);
   table_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
   rc= MySQLTablePrivileges(hstmt, catalog8, catalog_len, schema8, schema_len,
                            table8, table_len);
@@ -1089,24 +1089,24 @@ SQLTablesW(SQLHSTMT hstmt,
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8, *type8;
   DBC *dbc= ((STMT *)hstmt)->dbc;
-  SQLINTEGER len= SQL_NTS;
+  SQLINTEGER len;
   uint errors= 0;
 
+  len= catalog_len;
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
   catalog_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= schema_len;
   schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, schema, &len, &errors);
   schema_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= table_len;
   table8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, table, &len, &errors);
   table_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
+  len= type_len;
   type8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, type, &len, &errors);
   type_len= (SQLSMALLINT)len;
-  len= SQL_NTS;
 
   rc= MySQLTables(hstmt, catalog8, catalog_len, schema8, schema_len,
                   table8, table_len, type8, type_len);
