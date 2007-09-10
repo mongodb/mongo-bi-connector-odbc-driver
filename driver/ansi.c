@@ -1294,6 +1294,42 @@ SQLTables(SQLHSTMT hstmt,
 }
 
 
+SQLRETURN SQL_API
+SQLGetDescField(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT field,
+                SQLPOINTER value, SQLINTEGER value_max, SQLINTEGER *value_len)
+{
+  return MySQLGetDescField(hdesc, record, field, value, value_max, value_len);
+}
+
+
+SQLRETURN SQL_API
+SQLGetDescRec(SQLHDESC hdesc, SQLSMALLINT record, SQLCHAR *name,
+              SQLSMALLINT name_max, SQLSMALLINT *name_len, SQLSMALLINT *type,
+              SQLSMALLINT *subtype, SQLLEN *length, SQLSMALLINT *precision,
+              SQLSMALLINT *scale, SQLSMALLINT *nullable)
+{
+  NOT_IMPLEMENTED;
+}
+
+
+SQLRETURN SQL_API
+SQLSetDescField(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT field,
+                SQLPOINTER value, SQLINTEGER value_len)
+{
+  return MySQLSetDescField(hdesc, record, field, value, value_len);
+}
+
+
+SQLRETURN SQL_API
+SQLSetDescRec(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT type,
+              SQLSMALLINT subtype, SQLINTEGER length, SQLSMALLINT precision,
+              SQLSMALLINT scale, SQLPOINTER data_ptr,
+              SQLINTEGER *octet_length_ptr, SQLINTEGER *indicator_ptr)
+{
+  NOT_IMPLEMENTED;
+}
+
+
 #ifdef NOT_IMPLEMENTED_YET
 SQLRETURN SQL_API
 SQLBrowseConnect(SQLHDBC hdbc, SQLCHAR *in, SQLSMALLINT in_len,
@@ -1310,37 +1346,11 @@ SQLBrowseConnect(SQLHDBC hdbc, SQLCHAR *in, SQLSMALLINT in_len,
 
 
 SQLRETURN SQL_API
-SQLGetDescField(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT field,
-                SQLPOINTER value, SQLINTEGER value_max, SQLINTEGER *value_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLGetDescRec(SQLHDESC hdesc, SQLSMALLINT record, SQLCHAR *name,
-              SQLSMALLINT name_max, SQLSMALLINT *name_len, SQLSMALLINT *type,
-              SQLSMALLINT *subtype, SQLLEN *length, SQLSMALLINT *precision,
-              SQLSMALLINT *scale, SQLSMALLINT *nullable)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
 SQLProcedureColumns(SQLHSTMT hstmt,
                     SQLCHAR *catalog, SQLSMALLINT catalog_len,
                     SQLCHAR *schema, SQLSMALLINT schema_len,
                     SQLCHAR *proc, SQLSMALLINT proc_len,
                     SQLCHAR *column, SQLSMALLINT column_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLSetDescField(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT field,
-                SQLPOINTER value, SQLINTEGER value_len)
 {
   NOT_IMPLEMENTED;
 }

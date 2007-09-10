@@ -135,6 +135,7 @@ SQLSetConnectAttrW
 SQLSetConnectOptionW
 SQLSetCursorNameW
 SQLSetDescFieldW
+SQLSetDescRecW
 SQLSetStmtAttrW
 SQLSpecialColumnsW
 SQLStatisticsW

@@ -811,41 +811,8 @@ SQLRETURN stmt_SQLCopyDesc(STMT *stmt, DESC *src, DESC *dest)
 
 
 SQLRETURN SQL_API
-SQLGetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
-                SQLPOINTER valptr, SQLINTEGER buflen, SQLINTEGER *strlen)
-{
-  return MySQLGetDescField(hdesc, recnum, fldid, valptr, buflen, strlen);
-}
-
-
-SQLRETURN SQL_API
-SQLSetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
-                SQLPOINTER val, SQLINTEGER buflen)
-{
-  return MySQLSetDescField(hdesc, recnum, fldid, val, buflen);
-}
-
-
-SQLRETURN SQL_API
 SQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandle)
 {
   return MySQLCopyDesc(SourceDescHandle, TargetDescHandle);
 }
-
-
-SQLRETURN SQL_API
-SQLGetDescFieldW(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
-                 SQLPOINTER valptr, SQLINTEGER buflen, SQLINTEGER *strlen)
-{
-  return MySQLGetDescField(hdesc, recnum, fldid, valptr, buflen, strlen);
-}
-
-
-SQLRETURN SQL_API
-SQLSetDescFieldW(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
-                 SQLPOINTER val, SQLINTEGER buflen)
-{
-  return MySQLSetDescField(hdesc, recnum, fldid, val, buflen);
-}
-
 

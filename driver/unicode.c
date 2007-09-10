@@ -1120,6 +1120,42 @@ SQLTablesW(SQLHSTMT hstmt,
 }
 
 
+SQLRETURN SQL_API
+SQLGetDescFieldW(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT field,
+                 SQLPOINTER value, SQLINTEGER value_max, SQLINTEGER *value_len)
+{
+  return MySQLGetDescField(hdesc, record, field, value, value_max, value_len);
+}
+
+
+SQLRETURN SQL_API
+SQLGetDescRecW(SQLHDESC hdesc, SQLSMALLINT record, SQLWCHAR *name,
+               SQLSMALLINT name_max, SQLSMALLINT *name_len, SQLSMALLINT *type,
+               SQLSMALLINT *subtype, SQLLEN *length, SQLSMALLINT *precision,
+               SQLSMALLINT *scale, SQLSMALLINT *nullable)
+{
+  NOT_IMPLEMENTED;
+}
+
+
+SQLRETURN SQL_API
+SQLSetDescFieldW(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT field,
+                 SQLPOINTER value, SQLINTEGER value_len)
+{
+  return MySQLSetDescField(hdesc, record, field, value, value_len);
+}
+
+
+SQLRETURN SQL_API
+SQLSetDescRecW(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT type,
+               SQLSMALLINT subtype, SQLINTEGER length, SQLSMALLINT precision,
+               SQLSMALLINT scale, SQLPOINTER data_ptr,
+               SQLINTEGER *octet_length_ptr, SQLINTEGER *indicator_ptr)
+{
+  NOT_IMPLEMENTED;
+}
+
+
 #ifdef NOT_IMPLEMENTED_YET
 SQLRETURN SQL_API
 SQLBrowseConnectW(SQLHDBC hdbc, SQLWCHAR *in, SQLSMALLINT in_len,
@@ -1135,25 +1171,6 @@ SQLBrowseConnectW(SQLHDBC hdbc, SQLWCHAR *in, SQLSMALLINT in_len,
 //SQLDriversW
 
 
-
-SQLRETURN SQL_API
-SQLGetDescFieldW(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT field,
-                 SQLPOINTER value, SQLINTEGER value_max, SQLINTEGER *value_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
-SQLRETURN SQL_API
-SQLGetDescRecW(SQLHDESC hdesc, SQLSMALLINT record, SQLWCHAR *name,
-               SQLSMALLINT name_max, SQLSMALLINT *name_len, SQLSMALLINT *type,
-               SQLSMALLINT *subtype, SQLLEN *length, SQLSMALLINT *precision,
-               SQLSMALLINT *scale, SQLSMALLINT *nullable)
-{
-  NOT_IMPLEMENTED;
-}
-
-
 SQLRETURN SQL_API
 SQLProcedureColumnsW(SQLHSTMT hstmt,
                      SQLWCHAR *catalog, SQLSMALLINT catalog_len,
@@ -1165,10 +1182,5 @@ SQLProcedureColumnsW(SQLHSTMT hstmt,
 }
 
 
-SQLRETURN SQL_API
-SQLSetDescFieldW(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT field,
-                 SQLPOINTER value, SQLINTEGER value_len)
-{
-  NOT_IMPLEMENTED;
-}
 #endif
+
