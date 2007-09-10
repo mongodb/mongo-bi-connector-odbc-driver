@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1251"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="8,00"
 	Name="dialog"
 	ProjectGUID="{2101C1F1-9C19-4F19-9EA8-6DCA910374DA}"
 	RootNamespace="dialog"
@@ -177,6 +177,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\callbacks.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\dialog.cpp"
 				>
 				<FileConfiguration
@@ -184,6 +188,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						RuntimeLibrary="3"
 						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
@@ -208,12 +213,20 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\utils.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\callbacks.h"
+				>
+			</File>
 			<File
 				RelativePath=".\dialog.h"
 				>
@@ -224,6 +237,10 @@
 			</File>
 			<File
 				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\utils.h"
 				>
 			</File>
 		</Filter>

@@ -19,6 +19,7 @@
 #include "odbcdialogparams.h"
 #include <assert.h>
 #include <commdlg.h>
+#include <shlobj.h>
 
 
 extern HINSTANCE ghInstance;
@@ -40,19 +41,19 @@ DatabaseNamesCallbackType* gDatabaseNamesCallback = NULL;
 
 void InitStaticValues()
 {
-	BusyIndicator = true;
-	pParams = NULL;
-	pCaption = NULL;
-	OkPressed = false;
+	BusyIndicator	= true;
+	pParams			= NULL;
+	pCaption		= NULL;
+	OkPressed		= false;
 
-	mod = 1;
-	flag = false;
-	BusyIndicator = false;
+	mod				= 1;
+	flag			= false;
+	BusyIndicator	= false;
 
-	gTestButtonPressedCallback = NULL;
-	gHelpButtonPressedCallback = NULL;
-	gAcceptParamsCallback = NULL;
-	gDatabaseNamesCallback = NULL;
+	gTestButtonPressedCallback	= NULL;
+	gHelpButtonPressedCallback	= NULL;
+	gAcceptParamsCallback		= NULL;
+	gDatabaseNamesCallback		= NULL;
 }
 
 #define Refresh(A) RedrawWindow(A,NULL,NULL,RDW_ERASE|RDW_INVALIDATE|RDW_ALLCHILDREN|RDW_UPDATENOW);
@@ -65,7 +66,12 @@ void InitStaticValues()
 	SET_UNSIGNED(port);\
 	SET_STRING(username);\
 	SET_STRING(password);\
-	SET_STRING(dbname); } while(false)\
+	SET_STRING(dbname);\
+	SET_STRING(sslkey)\
+	SET_STRING(sslcert);\
+	SET_STRING(sslca);\
+	SET_STRING(sslcapath);\
+	SET_STRING(sslcipher);} while(false)\
 
 #define DO_ADVANCED_DATA_EXCHANGE do {\
 	/* flags 1*/\
@@ -268,11 +274,11 @@ void btnHelp_Click (HWND hwnd)
 
 void chooseFile( HWND parent, int hostCtlId )
 {
-	OPENFILENAMEW dialog;
+	OPENFILENAMEW	dialog;
 
 	HWND			hostControl = GetDlgItem( parent, hostCtlId );
 
-	wchar_t szFile[MAX_PATH];    // buffer for file name
+	wchar_t			szFile[MAX_PATH];    // buffer for file name
 
 	Edit_GetText( hostControl, szFile, sizeof(szFile) );
 	// Initialize OPENFILENAME
@@ -301,13 +307,31 @@ void choosePath( HWND parent, int hostCtlId )
 {
 	HWND			hostControl = GetDlgItem( parent, hostCtlId );
 
-	wchar_t			szPath[MAX_PATH];    // buffer for file name
+	BROWSEINFOW		dialog;
+	wchar_t			path[MAX_PATH];    // buffer for file name
 
-	Edit_GetText( hostControl, szPath, sizeof(szPath) );
+	Edit_GetText( hostControl, path, sizeof(path) );
 
-	if ( false )
+	ZeroMemory(&dialog,sizeof(dialog));
+
+	dialog.lpszTitle		= _T("Pick a CA Path");
+	dialog.hwndOwner		= parent;
+	dialog.pszDisplayName	= path;
+
+	LPITEMIDLIST pidl = SHBrowseForFolder ( &dialog );
+
+	if ( pidl )
 	{
-		Edit_SetText( hostControl, szPath );
+		SHGetPathFromIDList ( pidl, path );
+
+		Edit_SetText( hostControl, path );
+
+		IMalloc * imalloc = 0;
+		if ( SUCCEEDED( SHGetMalloc ( &imalloc )) )
+		{
+			imalloc->Free ( pidl );
+			imalloc->Release ( );
+		}
 	}
 }
 void FormMain_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
