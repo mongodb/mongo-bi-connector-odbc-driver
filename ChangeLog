@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * Empty selection for database and character set comboboxes in setup
+    were set to " " instead of an empty string. (Bug #30568)
 
 ----
 

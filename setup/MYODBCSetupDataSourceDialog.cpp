@@ -804,7 +804,7 @@ BOOL MYODBCSetupDataSourceDialog::doLoadCharsetNamesUsingDriverManager()
     SQLLEN      nCatalog;
     QString     stringConnectIn= buildConnectString();
 
-    stringlistDatabases += " ";
+    stringlistDatabases += "";
 
     if ( hDBC == SQL_NULL_HDBC )
     {
@@ -900,7 +900,7 @@ BOOL MYODBCSetupDataSourceDialog::doLoadDatabaseNamesUsingDriverManager()
     SQLLEN      nCatalog;
     QString     stringConnectIn= buildConnectString();
 
-    stringlistDatabases += " ";
+    stringlistDatabases += "";
 
     if ( hDBC == SQL_NULL_HDBC )
     {
