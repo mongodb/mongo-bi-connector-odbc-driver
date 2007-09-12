@@ -853,6 +853,24 @@ DECLARE_TEST(t_bug14414)
 }
 
 
+/**
+ Bug #30939: SQLGetTypeInfo returns 6 instead of 8 for COLUMN_SIZE for
+ SQL_TYPE_TIME
+*/
+DECLARE_TEST(t_bug30939)
+{
+  ok_stmt(hstmt, SQLGetTypeInfo(hstmt, SQL_TYPE_TIME));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_num(my_fetch_int(hstmt, 3), 8);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_ts)
   ADD_TEST(t_tstotime)
@@ -866,6 +884,7 @@ BEGIN_TESTS
   ADD_TODO(t_bug30081)
   ADD_TEST(t_datecolumns)
   ADD_TEST(t_bug14414)
+  ADD_TEST(t_bug30939)
 END_TESTS
 
 

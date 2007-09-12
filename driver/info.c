@@ -992,7 +992,7 @@ char *SQL_GET_TYPE_INFO_values[MYSQL_DATA_TYPES][19]=
   {"date",sql_date,"10","'","'",NULL,sql_nullable,"0",sql_searchable,"0","0","0","date",NULL,NULL,sql_datetime,sql_date,NULL,NULL},
 
   /* SQL_TYPE_TIME= 92 */
-  {"time",sql_time,"6","'","'",NULL,sql_nullable,"0",sql_searchable,"0","0","0","time",NULL,NULL,sql_datetime,sql_time,NULL,NULL},
+  {"time",sql_time,"8","'","'",NULL,sql_nullable,"0",sql_searchable,"0","0","0","time",NULL,NULL,sql_datetime,sql_time,NULL,NULL},
 
   /* YEAR - SQL_SMALLINT */
   {"year",sql_smallint,"4",NULL,NULL,NULL,sql_nullable,"0",sql_searchable,"0","0","0","year",NULL,NULL,sql_smallint,NULL,"10",NULL},
