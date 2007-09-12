@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * SQLDescribeCol() incorrectly reported whether auto-increment and
+    some timestamp fields were nullable. (Bug #26108)
   * SQLGetTypeInfo() reported the wrong column size for the SQL_TYPE_TIME
     type. (Bug #30939)
   * Empty selection for database and character set comboboxes in setup

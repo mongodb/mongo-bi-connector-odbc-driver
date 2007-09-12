@@ -531,11 +531,17 @@ SQLRETURN SQL_API SQLDescribeCol( SQLHSTMT          hstmt,
       *pnColumnSize= get_column_size(stmt, field, FALSE);
     if (pibScale)
       *pibScale= max(0, get_decimal_digits(stmt, field));
-    if ( pfNullable )
-        *pfNullable= (((field->flags & (NOT_NULL_FLAG)) ==
-                       NOT_NULL_FLAG) ?
-                      SQL_NO_NULLS :
-                      SQL_NULLABLE);
+    if (pfNullable)
+    {
+      if ((field->flags & NOT_NULL_FLAG) &&
+          !(field->flags & TIMESTAMP_FLAG) &&
+          !(field->flags & AUTO_INCREMENT_FLAG))
+      {
+        *pfNullable= SQL_NO_NULLS;
+      }
+      else
+        *pfNullable= SQL_NULLABLE;
+    }
 
     if ( stmt->dbc->flag & FLAG_FULL_COLUMN_NAMES && field->table )
     {

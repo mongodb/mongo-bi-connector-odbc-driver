@@ -1094,6 +1094,7 @@ DECLARE_TEST(t_bug29888)
 DECLARE_TEST(t_bug14407)
 {
   SQLCHAR col[10];
+  SQLSMALLINT nullable;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug14407");
   ok_sql(hstmt,
@@ -1108,6 +1109,18 @@ DECLARE_TEST(t_bug14407)
   is_str(my_fetch_str(hstmt, col, 18), "YES", 3);
 
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /**
+    Bug #26108  MyODBC ADO field attributes reporting adFldMayBeNull for
+    not null columns
+  */
+  ok_sql(hstmt, "SELECT * FROM t_bug14407");
+
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 1, NULL, 0, NULL, NULL, NULL, NULL,
+                                &nullable));
+  is_num(nullable, SQL_NULLABLE);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
