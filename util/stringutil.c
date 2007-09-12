@@ -206,7 +206,7 @@ SQLCHAR *sqlwchar_as_utf8(SQLWCHAR *str, SQLINTEGER *len)
     return NULL;
   }
 
-  u8= (UTF8 *)my_malloc(sizeof(UTF8) * 4 * *len + 1, MYF(0));
+  u8= (UTF8 *)my_malloc(sizeof(UTF8) * MAX_BYTES_PER_UTF8_CP * *len + 1, MYF(0));
   if (!u8)
   {
     *len= -1;
@@ -556,12 +556,14 @@ unsigned long sqlwchartoul(const SQLWCHAR *wstr)
   SQLWCHAR c;
   int pten= 1;
   unsigned long res= 0;
+  if (!wstr)
+    return 0;
   for (; end >= wstr; pten *= 10, end--)
   {
     c= *end;
     if (c < '0' || c > '9')
       return 0;
-    res += (SQLWCHAR)((c - '0') * pten);
+    res += (c - '0') * pten;
   }
   return res;
 }
@@ -578,6 +580,28 @@ void sqlwcharfromul(SQLWCHAR *wstr, unsigned long v)
   wstr[chars]= (SQLWCHAR)0;
   for(v1= v; v1 > 0; v1 /= 10)
     wstr[--chars]= (SQLWCHAR)('0' + (v1 % 10));
+}
+
+
+/*
+ * Concatenate two strings. This differs from the convential
+ * strncat() in that the parameter n is reduced by the number
+ * of characters used (including NULL).
+ */
+void sqlwcharncat2(SQLWCHAR *dest, const SQLWCHAR *src, size_t *n)
+{
+  if (!n || !*n)
+    return;
+  dest += sqlwcharlen(dest);
+  while (*src && *n && (*n)--)
+    *dest++ = *src++;
+  if (*n)
+  {
+    (*n)--;
+    *dest= 0;
+  }
+  else
+    *(dest - 1)= 0;
 }
 
 

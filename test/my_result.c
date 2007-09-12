@@ -805,7 +805,7 @@ DECLARE_TEST(t_cache_bug)
   ok_sql(hstmt, "CREATE TABLE t_cache (id INT)");
   ok_sql(hstmt, "INSERT INTO t_cache VALUES (1),(2),(3),(4),(5)");
 
-  sprintf((char *)conn, "DSN=%s;USER=%s;PASSWORD=%s;DATABASE=%s;OPTION=1048579",
+  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;DATABASE=%s;OPTION=1048579",
           mydsn, myuid, mypwd, mydb);
   if (mysock != NULL)
   {
@@ -866,7 +866,7 @@ DECLARE_TEST(t_non_cache_bug)
   ok_sql(hstmt, "CREATE TABLE t_cache (id INT)");
   ok_sql(hstmt, "INSERT INTO t_cache VALUES (1),(2),(3),(4),(5)");
 
-  sprintf((char *)conn, "DSN=%s;USER=%s;PASSWORD=%s;DATABASE=%s;OPTION=3",
+  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;DATABASE=%s;OPTION=3",
           mydsn, myuid, mypwd, mydb);
   if (mysock != NULL)
   {

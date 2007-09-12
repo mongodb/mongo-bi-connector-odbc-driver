@@ -24,6 +24,8 @@ ADD_LIBRARY(myodbc3u STATIC
                         stringutil.c
                         stringutil.h
                         unicode_transcode.c
+                        installer.c
+                        installer.h
                         MYODBCUtilAllocDataSource.c
                         MYODBCUtilAllocDriver.c
                         MYODBCUtilClearDataSource.c

@@ -35,7 +35,7 @@
 # endif
 #endif
 
-#include "../util/MYODBCUtil.h"
+#include "installer.h"
 
 #ifndef CLIENT_NO_SCHEMA
 # define CLIENT_NO_SCHEMA      16
@@ -85,23 +85,16 @@ SQLRETURN myodbc_set_initial_character_set(DBC *dbc, const char *charset)
                                                     MYF(0));
     }
 
-    if (mysql_set_character_set(&dbc->mysql, "utf8"))
+    charset= "utf8";
+  }
+
+  if (charset && charset[0])
+  {
+    if (mysql_set_character_set(&dbc->mysql, charset))
     {
       set_dbc_error(dbc, "HY000", mysql_error(&dbc->mysql),
                     mysql_errno(&dbc->mysql));
       return SQL_ERROR;
-    }
-  }
-  else
-  {
-    if (charset && charset[0])
-    {
-      if (mysql_set_character_set(&dbc->mysql, charset))
-      {
-        set_dbc_error(dbc, "HY000", mysql_error(&dbc->mysql),
-                      mysql_errno(&dbc->mysql));
-        return SQL_ERROR;
-      }
     }
   }
 
@@ -135,20 +128,15 @@ SQLRETURN myodbc_set_initial_character_set(DBC *dbc, const char *charset)
   @return Standard SQLRETURN code. If it is @c SQL_SUCCESS or @c
   SQL_SUCCESS_WITH_INFO, a connection has been established.
 */
-SQLRETURN myodbc_do_connect(DBC *dbc, MYODBCUTIL_DATASOURCE *ds)
+SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
 {
   SQLRETURN rc= SQL_SUCCESS;
   MYSQL *mysql= &dbc->mysql;
   unsigned long options, flags;
-  unsigned int port;
   /* Use 'int' and fill all bits to avoid alignment Bug#25920 */
   unsigned int opt_ssl_verify_server_cert = ~0;
 
-  /* Make sure default values are set on data source. */
-  MYODBCUtilDefaultDataSource(ds);
-
-  options= strtoul(ds->pszOPTION, NULL, 10);
-  port= (unsigned int)atoi(ds->pszPORT);
+  options= sqlwchartoul(ds->option);
 
   mysql_init(mysql);
 
@@ -166,16 +154,21 @@ SQLRETURN myodbc_do_connect(DBC *dbc, MYODBCUTIL_DATASOURCE *ds)
   if (options & FLAG_USE_MYCNF)
     mysql_options(mysql, MYSQL_READ_DEFAULT_GROUP, "odbc");
 
-  if (ds->pszSTMT && ds->pszSTMT[0])
-    mysql_options(mysql, MYSQL_INIT_COMMAND, ds->pszSTMT);
+  if (ds->initstmt && ds->initstmt[0])
+    mysql_options(mysql, MYSQL_INIT_COMMAND,
+                  ds_get_utf8attr(ds->initstmt, &ds->initstmt8));
 
   if (dbc->login_timeout)
     mysql_options(mysql, MYSQL_OPT_CONNECT_TIMEOUT,
                   (char *)&dbc->login_timeout);
 
   /* set SSL parameters */
-  mysql_ssl_set(mysql, ds->pszSSLKEY, ds->pszSSLCERT, ds->pszSSLCA,
-                ds->pszSSLCAPATH, ds->pszSSLCIPHER);
+  mysql_ssl_set(mysql,
+                ds_get_utf8attr(ds->sslkey,    &ds->sslkey8),
+                ds_get_utf8attr(ds->sslcert,   &ds->sslcert8),
+                ds_get_utf8attr(ds->sslca,     &ds->sslca8),
+                ds_get_utf8attr(ds->sslcapath, &ds->sslcapath8),
+                ds_get_utf8attr(ds->sslcipher, &ds->sslcipher8));
   mysql_options(mysql, MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
                 (const char *)&opt_ssl_verify_server_cert);
 
@@ -192,20 +185,29 @@ SQLRETURN myodbc_do_connect(DBC *dbc, MYODBCUTIL_DATASOURCE *ds)
     mysql_get_character_set_info(&dbc->mysql, &my_charset);
     dbc->ansi_charset_info= get_charset(my_charset.number, MYF(0));
 
-    mysql_options(mysql, MYSQL_SET_CHARSET_NAME, "utf8");
   }
-  else if (ds->pszCHARSET && ds->pszCHARSET[0])
-    mysql_options(mysql, MYSQL_SET_CHARSET_NAME, ds->pszCHARSET);
+  /*
+    We always use utf8 for the connection, and change it afterwards if needed.
+  */
+  mysql_options(mysql, MYSQL_SET_CHARSET_NAME, "utf8");
 
-  if (!mysql_real_connect(mysql, ds->pszSERVER, ds->pszUSER, ds->pszPASSWORD,
-                          ds->pszDATABASE, port, ds->pszSOCKET, flags))
+  if (!mysql_real_connect(mysql,
+                          ds_get_utf8attr(ds->server,   &ds->server8),
+                          ds_get_utf8attr(ds->uid,      &ds->uid8),
+                          ds_get_utf8attr(ds->pwd,      &ds->pwd8),
+                          ds_get_utf8attr(ds->database, &ds->database8),
+                          ds->port,
+                          ds_get_utf8attr(ds->socket,   &ds->socket8),
+                          flags))
   {
     set_dbc_error(dbc, "HY000", mysql_error(mysql), mysql_errno(mysql));
     translate_error(dbc->error.sqlstate, MYERR_S1000, mysql_errno(mysql));
     return SQL_ERROR;
   }
 
-  if (!SQL_SUCCEEDED(myodbc_set_initial_character_set(dbc, ds->pszCHARSET)))
+  rc= myodbc_set_initial_character_set(dbc, ds_get_utf8attr(ds->charset,
+                                                            &ds->charset8));
+  if (!SQL_SUCCEEDED(rc))
   {
     /** @todo set failure reason */
     goto error;
@@ -224,18 +226,21 @@ SQLRETURN myodbc_do_connect(DBC *dbc, MYODBCUTIL_DATASOURCE *ds)
     goto error;
   }
 
-  if (ds->pszDSN)
-    dbc->dsn= my_strdup(ds->pszDSN, MYF(MY_WME));
-  if (ds->pszSERVER)
-    dbc->server= my_strdup(ds->pszSERVER, MYF(MY_WME));
-  if (ds->pszUSER)
-    dbc->user= my_strdup(ds->pszUSER, MYF(MY_WME));
-  if (ds->pszPASSWORD)
-    dbc->password= my_strdup(ds->pszPASSWORD, MYF(MY_WME));
-  if (ds->pszDATABASE)
-    dbc->database= my_strdup(ds->pszDATABASE, MYF(MY_WME));
+  /* TODO why cant the dbc just keep a copy of the DataSource */
+  if (ds->name)
+    dbc->dsn= my_strdup(ds_get_utf8attr(ds->name, &ds->name8), MYF(MY_WME));
+  if (ds->server)
+    dbc->server= my_strdup(ds_get_utf8attr(ds->server, &ds->server8),
+                           MYF(MY_WME));
+  if (ds->uid)
+    dbc->user= my_strdup(ds_get_utf8attr(ds->uid, &ds->uid8), MYF(MY_WME));
+  if (ds->pwd)
+    dbc->password= my_strdup(ds_get_utf8attr(ds->pwd, &ds->pwd8), MYF(MY_WME));
+  if (ds->database)
+    dbc->database= my_strdup(ds_get_utf8attr(ds->database, &ds->database8),
+                             MYF(MY_WME));
 
-  dbc->port= port;
+  dbc->port= ds->port;
   dbc->flag= options;
 
   if (options & FLAG_LOG_QUERY && !dbc->query_log)
@@ -337,17 +342,14 @@ error:
   @since ODBC 1.0
   @since ISO SQL 92
 */
-SQLRETURN SQL_API MySQLConnect(SQLHDBC  hdbc,
-                               SQLCHAR *szDSN,  SQLSMALLINT cbDSN,
-                               SQLCHAR *szUID,
-                               SQLSMALLINT cbUID __attribute__((unused)),
-                               SQLCHAR *szAuth,
-                               SQLSMALLINT cbAuth __attribute__((unused)))
+SQLRETURN SQL_API MySQLConnect(SQLHDBC   hdbc,
+                               SQLWCHAR *szDSN, SQLSMALLINT cbDSN,
+                               SQLWCHAR *szUID, SQLSMALLINT cbUID,
+                               SQLWCHAR *szAuth, SQLSMALLINT cbAuth)
 {
   SQLRETURN rc;
   DBC *dbc= (DBC *)hdbc;
-  char dsn[SQL_MAX_DSN_LENGTH], *dsn_ptr;
-  MYODBCUTIL_DATASOURCE *ds;
+  DataSource *ds;
 
 #ifdef NO_DRIVERMANAGER
   return set_dbc_error(dbc, "HY000",
@@ -361,37 +363,23 @@ SQLRETURN SQL_API MySQLConnect(SQLHDBC  hdbc,
   /* Reset error state */
   CLEAR_DBC_ERROR(dbc);
 
-  dsn_ptr= fix_str(dsn, (char *)szDSN, cbDSN);
-
-  if (dsn_ptr && !dsn_ptr[0])
+  if (szDSN && !szDSN[0])
+  {
     return set_conn_error(hdbc, MYERR_S1000,
                           "Invalid connection parameters", 0);
-
-  ds= MYODBCUtilAllocDataSource(MYODBCUTIL_DATASOURCE_MODE_DRIVER_CONNECT);
-
-  /* Set username and password if they were provided. */
-  if (szUID && szUID[0])
-  {
-    if (cbUID == SQL_NTS)
-      cbUID= strlen((char *)szUID);
-    ds->pszUSER= _global_strndup((char *)szUID, cbUID);
-  }
-  if (szAuth && szAuth[0])
-  {
-    if (cbAuth == SQL_NTS)
-      cbAuth= strlen((char *)szAuth);
-    ds->pszPASSWORD= _global_strndup((char *)szAuth, cbAuth);
   }
 
-  /*
-    We don't care if this fails, because we might be able to get away
-    with the defaults. We probably should warn about this, though.
-  */
-  (void)MYODBCUtilReadDataSource(ds, dsn_ptr);
+  ds= ds_new();
+
+  ds_set_strnattr(&ds->name, szDSN, cbDSN);
+  ds_set_strnattr(&ds->uid, szUID, cbUID);
+  ds_set_strnattr(&ds->pwd, szAuth, cbAuth);
+
+  ds_lookup(ds);
 
   rc= myodbc_do_connect(dbc, ds);
 
-  MYODBCUtilFreeDataSource(ds);
+  ds_delete(ds);
   return rc;
 #endif
 }
@@ -421,26 +409,24 @@ SQLRETURN SQL_API MySQLConnect(SQLHDBC  hdbc,
   @since ISO SQL 92
 */
 SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
-                                     SQLCHAR *szConnStrIn,
-                                     SQLSMALLINT cbConnStrIn
-                                       __attribute__((unused)),
-                                     SQLCHAR * szConnStrOut,
+                                     SQLWCHAR *szConnStrIn,
+                                     SQLSMALLINT cbConnStrIn,
+                                     SQLWCHAR *szConnStrOut,
                                      SQLSMALLINT cbConnStrOutMax,
                                      SQLSMALLINT *pcbConnStrOut,
                                      SQLUSMALLINT fDriverCompletion)
 {
   SQLRETURN rc= SQL_SUCCESS;
   DBC *dbc= (DBC *)hdbc;
-  MYODBCUTIL_DATASOURCE *ds=
-    MYODBCUtilAllocDataSource(MYODBCUTIL_DATASOURCE_MODE_DRIVER_CONNECT);
+  DataSource *ds= ds_new();
   /* We may have to read driver info to find the setup library. */
-  MYODBCUTIL_DRIVER *pDriver= MYODBCUtilAllocDriver();
+  Driver *pDriver= driver_new();
   BOOL bPrompt= FALSE;
   HMODULE hModule= NULL;
   unsigned long options;
 
-  /* Parse the incoming string */
-  if (!MYODBCUtilReadConnectStr(ds, (LPCSTR)szConnStrIn))
+  /* Parse the incoming string */ /* TODO use cbConnStrIn? */
+  if (ds_from_kvpair(ds, szConnStrIn, (SQLWCHAR)';'))
   {
     rc= set_dbc_error(dbc, "HY000",
                       "Failed to parse the incoming connect string.", 0);
@@ -455,14 +441,14 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
 
    This also allows us to get pszDRIVER (if not already given).
   */
-  if (ds->pszDSN)
-    (void)MYODBCUtilReadDataSource(ds, ds->pszDSN);
+  if (ds->name)
+    ds_lookup(ds);
 #endif
 
   /* If FLAG_NO_PROMPT is no set, force prompting off. */
-  if (ds->pszOPTION)
+  if (ds->option)
   {
-    options= strtoul(ds->pszOPTION, NULL, 10);
+    options= sqlwchartoul(ds->option);
     if (options & FLAG_NO_PROMPT)
       fDriverCompletion= SQL_DRIVER_NOPROMPT;
   }
@@ -480,26 +466,26 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
   switch (fDriverCompletion)
   {
   case SQL_DRIVER_PROMPT:
-    ds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_PROMPT;
+    //ds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_PROMPT;
     bPrompt= TRUE;
     break;
 
   case SQL_DRIVER_COMPLETE:
-    ds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_COMPLETE;
+    //ds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_COMPLETE;
     if (myodbc_do_connect(dbc, ds) == SQL_SUCCESS)
       goto connected;
     bPrompt= TRUE;
     break;
 
   case SQL_DRIVER_COMPLETE_REQUIRED:
-    ds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_REQUIRED;
+    //ds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_REQUIRED;
     if (myodbc_do_connect(dbc, ds) == SQL_SUCCESS)
       goto connected;
     bPrompt= TRUE;
     break;
 
   case SQL_DRIVER_NOPROMPT:
-    ds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_NOPROMPT;
+    //ds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_NOPROMPT;
     bPrompt= FALSE;
     break;
 
@@ -526,7 +512,7 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
 
   if (bPrompt)
   {
-    BOOL (*pFunc)(SQLHDBC, SQLHWND, MYODBCUTIL_DATASOURCE *);
+    BOOL (*pFunc)(SQLHDBC, SQLHWND, DataSource *);
 
     /*
      We can not present a prompt unless we can lookup the name of the setup
@@ -537,12 +523,14 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
      connect with a DSN which does not exist. A possible solution would be to
      hard-code some fall-back value for ds->pszDRIVER.
     */
-    if (!ds->pszDRIVER && !ds->pszDriverFileName)
+    /* TODO support pszDriverFileName somewhere? */
+    if (!ds->driver /*&& !ds->pszDriverFileName*/)
     {
       char szError[1024];
       sprintf(szError,
               "Could not determine the driver name; "
-              "could not lookup setup library. DSN=(%s)\n", ds->pszDSN);
+              "could not lookup setup library. DSN=(%s)\n",
+              ds_get_utf8attr(ds->name, &ds->name8));
       rc= set_dbc_error(hdbc, "HY000", szError, 0);
       goto error;
     }
@@ -562,21 +550,18 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
      ODBC system info. This allows someone configure for a custom setup
      interface.
     */
-    if (!MYODBCUtilReadDriver(pDriver, ds->pszDRIVER, ds->pszDriverFileName))
+    ds_set_strattr(&pDriver->name, ds->driver);
+    if (!driver_lookup(pDriver))
     {
       char sz[1024];
-      if (ds->pszDRIVER && ds->pszDRIVER[0])
-        sprintf(sz, "Could not find driver '%s' in system information.",
-                ds->pszDRIVER);
-      else
-        sprintf(sz, "Could not find driver '%s' in system information.",
-                ds->pszDriverFileName);
+      sprintf(sz, "Could not find driver '%s' in system information.",
+              ds_get_utf8attr(ds->driver, &ds->driver8));
 
       rc= set_dbc_error(hdbc, "IM003", sz, 0);
       goto error;
     }
 
-    if (!pDriver->pszSETUP )
+    if (!pDriver->setup_lib)
 #endif
     {
       rc= set_dbc_error(hdbc, "HY000",
@@ -593,10 +578,12 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
     lt_dlinit();
 #endif
 
-    if (!(hModule= LoadLibrary(pDriver->pszSETUP)))
+    if (!(hModule= LoadLibrary(ds_get_utf8attr(pDriver->setup_lib,
+                                               &pDriver->setup_lib8))))
     {
       char sz[1024];
-      sprintf(sz, "Could not load the setup library '%s'.", pDriver->pszSETUP);
+      sprintf(sz, "Could not load the setup library '%s'.",
+              ds_get_utf8attr(pDriver->setup_lib, &pDriver->setup_lib8));
       rc= set_dbc_error(hdbc, "HY000", sz, 0);
       goto error;
     }
@@ -605,7 +592,8 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
        The setup library should expose a MYODBCSetupDriverConnect() C entry point
        for us to call.
     */
-    pFunc= (BOOL (*)(SQLHDBC, SQLHWND, MYODBCUTIL_DATASOURCE *))
+    /* TODO new name? args? */
+    pFunc= (BOOL (*)(SQLHDBC, SQLHWND, DataSource *))
       GetProcAddress(hModule, "MYODBCSetupDriverConnect");
 
     if (pFunc == NULL)
@@ -629,29 +617,17 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
     if (!pFunc(hdbc, hwnd, ds))
     {
       set_dbc_error(hdbc, "HY000", "User cancelled.", 0);
-      rc= ds->bSaveFileDSN ? SQL_NO_DATA : SQL_ERROR;
-      goto error;
-    }
-  }
-
-  if (myodbc_do_connect(dbc, ds) != SQL_SUCCESS)
-  {
-    if (!ds->bSaveFileDSN)
-    {
-      /** @todo error message? */
       rc= SQL_ERROR;
       goto error;
     }
-    else
-    {
-      set_dbc_error(hdbc, "08001", "Client unable to establish connection.", 0);
-      rc= SQL_SUCCESS_WITH_INFO;
-    }
   }
+
+  if ((rc= myodbc_do_connect(dbc, ds)) != SQL_SUCCESS)
+    goto error;
 
 connected:
 
-  if (szConnStrOut)
+  if (szConnStrOut /*&& cbConnStrOutMax*/)
   {
 #ifdef WIN32
     /*
@@ -663,7 +639,7 @@ connected:
 #endif
     {
       *szConnStrOut= '\0';
-      if (!MYODBCUtilWriteConnectStr(ds, (char *)szConnStrOut, cbConnStrOutMax))
+      if (ds_to_kvpair(ds, szConnStrOut, cbConnStrOutMax, L';') < 0)
       {
         set_dbc_error(dbc, "01000",
                       "Something went wrong while building the "
@@ -672,16 +648,17 @@ connected:
       }
     }
 
+    /* TODO set this even if cbConnStrOutMax == 0? */
     if (pcbConnStrOut)
-      *pcbConnStrOut= strlen((char *)szConnStrOut);
+      *pcbConnStrOut= wcslen(szConnStrOut);
   }
 
 error:
   if (hModule)
     FreeLibrary(hModule);
 
-  MYODBCUtilFreeDriver(pDriver);
-  MYODBCUtilFreeDataSource(ds);
+  driver_delete(pDriver);
+  ds_delete(ds);
 
   return rc;
 }

@@ -3,7 +3,6 @@ Guffert TODO
   Functionality to add or change:
   * Add support for SQL_NUMERIC_STRUCT (Bug #3028):
     http://msdn2.microsoft.com/en-us/library/ms714556.aspx
-  * Replace installer library with new implementation (from v5 tree)
   * Implement native Windows setup library
   * Implement native Mac OS X setup library
   * Replace OPTIONS flags with individual DSN settings (but support OPTIONS
@@ -27,6 +26,7 @@ Guffert TODO
 5.1.1
 
   Functionality added or changed:
+  * Replace installer library with new implementation (from v5 tree)
 
   Bugs fixed:
 

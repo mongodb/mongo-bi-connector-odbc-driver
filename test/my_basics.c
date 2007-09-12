@@ -269,7 +269,7 @@ DECLARE_TEST(charset_utf8)
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-  sprintf((char *)conn, "DSN=%s;UID=%s;PASSWORD=%s;CHARSET=utf8",
+  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;CHARSET=utf8",
           mydsn, myuid, mypwd);
   if (mysock != NULL)
   {
@@ -361,7 +361,7 @@ DECLARE_TEST(charset_gbk)
   SQLCHAR str[]= "\xef\xbb\xbf\x27\xbf\x10";
   SQLSMALLINT conn_out_len;
 
-  sprintf((char *)conn, "DSN=%s;UID=%s;PASSWORD=%s;CHARSET=gbk",
+  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;CHARSET=gbk",
           mydsn, myuid, mypwd);
   if (mysock != NULL)
   {
@@ -491,7 +491,7 @@ DECLARE_TEST(t_bug30840)
   return OK;
 #endif
 
-  sprintf((char *)conn, "DSN=%s;UID=%s;PASSWORD=%s;OPTION=16",
+  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;OPTION=16",
           mydsn, myuid, mypwd);
   if (mysock != NULL)
   {

@@ -956,7 +956,7 @@ int alloc_basic_handles(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt)
 
   ok_env(*henv, SQLAllocHandle(SQL_HANDLE_DBC, *henv, hdbc));
 
-  sprintf((char *)connIn, "DSN=%s;USER=%s;PASSWORD=%s;DATABASE=test;OPTION=%d",
+  sprintf((char *)connIn, "DSN=%s;UID=%s;PWD=%s;DATABASE=test;OPTION=%d",
           (char *)mydsn, (char *)myuid, (char *)mypwd, myoption);
   if (mysock && mysock[0])
   {

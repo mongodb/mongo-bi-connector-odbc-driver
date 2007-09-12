@@ -4,6 +4,8 @@ noinst_LTLIBRARIES = libmyodbc3u.la
 libmyodbc3u_la_SOURCES = \
 	stringutil.h \
 	stringutil.c \
+	installer.h \
+	installer.c \
 	unicode_transcode.c \
 	MYODBCUtil.h \
 	MYODBCUtilAllocDataSource.c \

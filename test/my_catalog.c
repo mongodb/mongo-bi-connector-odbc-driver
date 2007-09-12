@@ -922,7 +922,7 @@ DECLARE_TEST(bug15713)
   ok_sql(hstmt, "CREATE TABLE t_bug15713 (a INT)");
 
   /* The connection strings must not include DATABASE. */
-  sprintf((char *)conn, "DSN=%s;UID=%s;PASSWORD=%s", mydsn, myuid, mypwd);
+  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s", mydsn, myuid, mypwd);
   if (mysock != NULL)
   {
     strcat((char *)conn, ";SOCKET=");

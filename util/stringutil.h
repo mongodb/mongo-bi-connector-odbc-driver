@@ -38,6 +38,8 @@
 #define x_free(A) { void *tmp= (A); if (tmp) my_free(tmp,MYF(MY_WME+MY_FAE)); }
 #endif
 
+#define MAX_BYTES_PER_UTF8_CP 4 /* max 4 bytes per utf8 codepoint */
+
 /* Unicode transcoding */
 typedef unsigned int UTF32;
 typedef unsigned short UTF16;
@@ -79,6 +81,7 @@ size_t sqlwcharlen(const SQLWCHAR *wstr);
 SQLWCHAR *sqlwchardup(const SQLWCHAR *wstr);
 unsigned long sqlwchartoul(const SQLWCHAR *wstr);
 void sqlwcharfromul(SQLWCHAR *wstr, unsigned long v);
+void sqlwcharncat2(SQLWCHAR *dest, const SQLWCHAR *src, size_t *n);
 
 
 #endif /* _STRINGUTIL_H */

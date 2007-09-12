@@ -224,10 +224,10 @@ DECLARE_TEST(sqldriverconnect)
   wcscat(conn_in, L"DRIVER=");
   mbstowcs(dummy, (char *)mydriver, sizeof(dummy));
   wcscat(conn_in, dummy);
-  wcscat(conn_in, L";USER=");
+  wcscat(conn_in, L";UID=");
   mbstowcs(dummy, (char *)myuid, sizeof(dummy));
   wcscat(conn_in, dummy);
-  wcscat(conn_in, L";PASSWORD=");
+  wcscat(conn_in, L";PWD=");
   mbstowcs(dummy, (char *)mypwd, sizeof(dummy));
   wcscat(conn_in, L";DATABASE=");
   mbstowcs(dummy, (char *)mydb, sizeof(dummy));

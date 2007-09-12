@@ -472,16 +472,16 @@ SQLRETURN SQL_API MySQLColumns(SQLHSTMT hstmt,
                                SQLCHAR *schema, SQLSMALLINT schema_len,
                                SQLCHAR *sztable, SQLSMALLINT table_len,
                                SQLCHAR *column, SQLSMALLINT column_len);
-SQLRETURN SQL_API MySQLConnect(SQLHDBC hdbc, SQLCHAR *szDSN, SQLSMALLINT cbDSN,
-                               SQLCHAR *szUID, SQLSMALLINT cbUID,
-                               SQLCHAR *szAuth, SQLSMALLINT cbAuth);
+SQLRETURN SQL_API MySQLConnect(SQLHDBC hdbc, SQLWCHAR *szDSN, SQLSMALLINT cbDSN,
+                               SQLWCHAR *szUID, SQLSMALLINT cbUID,
+                               SQLWCHAR *szAuth, SQLSMALLINT cbAuth);
 SQLRETURN SQL_API MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
                                    SQLCHAR **name, SQLSMALLINT *need_free,
                                    SQLSMALLINT *type, SQLULEN *def,
                                    SQLSMALLINT *scale, SQLSMALLINT *nullable);
 SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
-                                     SQLCHAR *in, SQLSMALLINT in_len,
-                                     SQLCHAR *out, SQLSMALLINT out_max,
+                                     SQLWCHAR *in, SQLSMALLINT in_len,
+                                     SQLWCHAR *out, SQLSMALLINT out_max,
                                      SQLSMALLINT *out_len,
                                      SQLUSMALLINT completion);
 SQLRETURN SQL_API MySQLForeignKeys(SQLHSTMT hstmt,
@@ -500,8 +500,8 @@ SQLRETURN SQL_API MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
 SQLRETURN SQL_API MySQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attrib,
                                       SQLCHAR **char_attr, SQLPOINTER num_attr);
 SQLRETURN MySQLGetDescField(SQLHDESC hdesc, SQLSMALLINT recnum,
-		                    SQLSMALLINT fldid, SQLPOINTER valptr,
-		                    SQLINTEGER buflen, SQLINTEGER *strlen);
+                            SQLSMALLINT fldid, SQLPOINTER valptr,
+                            SQLINTEGER buflen, SQLINTEGER *strlen);
 SQLRETURN SQL_API MySQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle,
                                     SQLSMALLINT record, SQLSMALLINT identifier,
                                     SQLCHAR **char_value, SQLPOINTER num_value);

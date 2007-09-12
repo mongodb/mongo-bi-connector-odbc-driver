@@ -255,11 +255,30 @@ SQLColumns(SQLHSTMT hstmt, SQLCHAR *catalog, SQLSMALLINT catalog_len,
 
 
 SQLRETURN SQL_API
-SQLConnect(SQLHDBC hdbc, SQLCHAR *dsn, SQLSMALLINT dsn_len,
-           SQLCHAR *user, SQLSMALLINT user_len,
-           SQLCHAR *auth, SQLSMALLINT auth_len)
+SQLConnect(SQLHDBC hdbc, SQLCHAR *dsn, SQLSMALLINT dsn_len_in,
+           SQLCHAR *user, SQLSMALLINT user_len_in,
+           SQLCHAR *auth, SQLSMALLINT auth_len_in)
 {
-  return MySQLConnect(hdbc, dsn, dsn_len, user, user_len, auth, auth_len);
+  uint errors;
+  SQLRETURN rc;
+  SQLINTEGER dsn_len= dsn_len_in, user_len= user_len_in,
+             auth_len= auth_len_in;
+
+  SQLWCHAR *dsnw=  sqlchar_as_sqlwchar(default_charset_info,
+                                       dsn, &dsn_len, &errors);
+  SQLWCHAR *userw= sqlchar_as_sqlwchar(default_charset_info,
+                                       user, &user_len, &errors);
+  SQLWCHAR *authw= sqlchar_as_sqlwchar(default_charset_info,
+                                       auth, &auth_len, &errors);
+
+  rc= MySQLConnect(hdbc, dsnw, dsn_len_in, userw, user_len_in,
+                   authw, auth_len_in);
+
+  x_free(dsnw);
+  x_free(userw);
+  x_free(authw);
+
+  return rc;
 }
 
 
@@ -325,8 +344,60 @@ SQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd, SQLCHAR *in, SQLSMALLINT in_len,
                  SQLCHAR *out, SQLSMALLINT out_max, SQLSMALLINT *out_len,
                  SQLUSMALLINT completion)
 {
-  return MySQLDriverConnect(hdbc, hwnd, in, in_len, out, out_max, out_len,
-                            completion);
+  SQLRETURN rc;
+  uint errors;
+  SQLWCHAR *outw= NULL;
+  SQLINTEGER inw_len;
+  SQLWCHAR *inw= sqlchar_as_sqlwchar(utf8_charset_info, in, &inw_len, &errors);
+  SQLSMALLINT outw_max, dummy_out;
+
+  if (in_len == SQL_NTS)
+    in_len= strlen(in);
+  if (!out_len)
+    out_len= &dummy_out;
+
+  outw_max= (sizeof(SQLWCHAR) * out_max) / MAX_BYTES_PER_UTF8_CP;
+
+  if (outw_max)
+  {
+    outw= (SQLWCHAR *)my_malloc(sizeof(SQLWCHAR) * out_max, MYF(0));
+    if (!outw)
+    {
+      rc= set_dbc_error((DBC *)hdbc, "HY001", NULL, 0);
+      goto error;
+    }
+  }
+
+  rc= MySQLDriverConnect(hdbc, hwnd, inw, in_len,
+                         outw, out_max, out_len, completion);
+
+#ifdef WIN32
+  /*
+    Microsoft ADO/VB? specifies in and out to be the same, but then gives a
+    nonsense value for out_max. Just don't do anything in this case.
+
+    @todo verify that this actually happens.
+  */
+  if (rc == SQL_SUCCESS && out && in != out)
+#else
+  if (rc == SQL_SUCCESS && out)
+#endif
+  {
+    uint errors;
+    /* Now we have to convert SQLWCHAR back into a SQLCHAR. */
+    *out_len= sqlwchar_as_sqlchar_buf(default_charset_info, out, out_max,
+                                      outw, *out_len, &errors);
+    /* TODO what to do with errors? */
+
+    if (*out_len > out_max - 1)
+      rc= set_dbc_error((DBC *)hdbc, "01004", NULL, 0);
+  }
+
+error:
+  x_free(outw);
+  x_free(inw);
+
+  return rc;
 }
 
 

@@ -211,85 +211,26 @@ SQLColumnsW(SQLHSTMT hstmt,
 
 
 SQLRETURN SQL_API
-SQLConnectW(SQLHDBC hdbc, SQLWCHAR *dsn, SQLSMALLINT dsn_len_in,
-            SQLWCHAR *user, SQLSMALLINT user_len_in,
-            SQLWCHAR *auth, SQLSMALLINT auth_len_in)
+SQLConnectW(SQLHDBC hdbc, SQLWCHAR *dsn, SQLSMALLINT dsn_len,
+            SQLWCHAR *user, SQLSMALLINT user_len,
+            SQLWCHAR *auth, SQLSMALLINT auth_len)
 {
-  SQLRETURN rc;
-  SQLINTEGER dsn_len= dsn_len_in, user_len= user_len_in, auth_len= auth_len_in;
-  SQLCHAR *dsn8= sqlwchar_as_utf8(dsn, &dsn_len),
-          *user8= sqlwchar_as_utf8(user, &user_len),
-          *auth8= sqlwchar_as_utf8(auth, &auth_len);
-
   ((DBC *)hdbc)->unicode= TRUE; /* Hooray, a Unicode connection! */
 
-  rc= MySQLConnect(hdbc, dsn8, (SQLSMALLINT)dsn_len,
-                   user8, (SQLSMALLINT)user_len, auth8, (SQLSMALLINT)auth_len);
-
-  x_free(dsn8);
-  x_free(user8);
-  x_free(auth8);
-
-  return rc;
+  return MySQLConnect(hdbc, dsn, dsn_len, user, user_len, auth, auth_len);
 }
 
 
 SQLRETURN SQL_API
 SQLDriverConnectW(SQLHDBC hdbc, SQLHWND hwnd,
-                  SQLWCHAR *in, SQLSMALLINT in_len_in,
+                  SQLWCHAR *in, SQLSMALLINT in_len,
                   SQLWCHAR *out, SQLSMALLINT out_max, SQLSMALLINT *out_len,
                   SQLUSMALLINT completion)
 {
-  SQLRETURN rc;
-  SQLINTEGER in_len= in_len_in;
-  SQLSMALLINT out8_max, dummy_out;
-  SQLCHAR *out8= NULL, *in8= sqlwchar_as_utf8(in, &in_len);
-
-  if (in_len == SQL_NTS)
-    in_len= sqlwcharlen(in);
-  if (!out_len)
-    out_len= &dummy_out;
-
-  out8_max= sizeof(SQLCHAR) * 4 * out_max;
-  if (out8_max)
-  {
-    out8= (SQLCHAR *)my_malloc(out8_max + 1, MYF(0));
-    if (!out8)
-    {
-      rc= set_dbc_error((DBC *)hdbc, "HY001", NULL, 0);
-      goto error;
-    }
-  }
-
   ((DBC *)hdbc)->unicode= TRUE; /* Hooray, a Unicode connection! */
 
-  rc= MySQLDriverConnect(hdbc, hwnd, in8, (SQLSMALLINT)in_len, out8, out8_max,
-                         out_len, completion);
-
-#ifdef WIN32
-  /*
-    Microsoft ADO/VB? specifies in and out to be the same, but then gives a
-    nonsense value for out_max. Just don't do anything in this case.
-
-    @todo verify that this actually happens.
-  */
-  if (rc == SQL_SUCCESS && out && in != out)
-#else
-  if (rc == SQL_SUCCESS && out)
-#endif
-  {
-    /* Now we have to convert out8 back into a SQLWCHAR. */
-    *out_len= utf8_as_sqlwchar(out, out_max, out8, *out_len);
-
-    if (*out_len > out_max - 1)
-      rc= set_dbc_error((DBC *)hdbc, "01004", NULL, 0);
-  }
-
-error:
-  x_free(out8);
-  x_free(in8);
-
-  return rc;
+  return MySQLDriverConnect(hdbc, hwnd, in, in_len, out, out_max,
+                            out_len, completion);
 }
 
 

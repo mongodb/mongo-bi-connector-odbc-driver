@@ -119,7 +119,7 @@ DECLARE_TEST(t_driver_connect)
   ok_env(henv1, SQLAllocConnect(henv1,&hdbc1));
 
   sprintf((char *)conn_in,
-          "DRIVER=%s;USER=%s;PASSWORD=%s;DATABASE=%s;SERVER=%s;"
+          "DRIVER=%s;UID=%s;PWD=%s;DATABASE=%s;SERVER=%s;"
           "OPTION=3;STMT=use mysql",
           (char *)mydriver, (char *)myuid, (char *)mypwd, (char *)mydb,
           (char *)myserver);
