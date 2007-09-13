@@ -26,7 +26,9 @@ Guffert TODO
 5.1.1
 
   Functionality added or changed:
-  * Replace installer library with new implementation (from v5 tree)
+  * Replaced the internal library which handles creation and loading
+    of DSN information. The new library, which was originally a part of
+    Connector/ODBC 5.0, supports Unicode option values.
 
   Bugs fixed:
 
