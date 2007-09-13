@@ -47,6 +47,17 @@ typedef unsigned char UTF8;
 
 extern CHARSET_INFO *utf8_charset_info;
 
+
+/**
+ Determine whether a charset number represents a UTF-8 collation.
+*/
+#define is_utf8_charset(number) \
+  (number == 33 || number == 83 || \
+   (number >= 192 && number <= 211) || number == 253 || \
+   number == 45 || number == 46 || \
+   (number >= 224 && number <= 243))
+
+
 int utf16toutf32(UTF16 *i, UTF32 *u);
 int utf32toutf16(UTF32 i, UTF16 *u);
 int utf8toutf32(UTF8 *i, UTF32 *u);

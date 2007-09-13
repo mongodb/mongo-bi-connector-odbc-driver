@@ -61,7 +61,7 @@ SQLWCHAR *sqlchar_as_sqlwchar(CHARSET_INFO *charset_info, SQLCHAR *str,
     return NULL;
   }
 
-  if (charset_info->number != 33) /* not utf-8 */
+  if (!is_utf8_charset(charset_info))
   {
     uint32 used_bytes, used_chars;
     size_t u8_max= (*len / charset_info->mbminlen *
@@ -133,12 +133,12 @@ SQLCHAR *sqlwchar_as_sqlchar(CHARSET_INFO *charset_info, SQLWCHAR *str,
   SQLWCHAR *str_end;
   SQLCHAR *out;
   SQLINTEGER i, u8_len, out_bytes;
-  UTF8 u8[7];
+  UTF8 u8[MAX_BYTES_PER_UTF8_CP + 1];
   uint32 used_bytes, used_chars;
 
   *errors= 0;
 
-  if (charset_info->number == 33)
+  if (is_utf8_charset(charset_info->number))
     return sqlwchar_as_utf8(str, len);
 
   if (*len == SQL_NTS)
@@ -206,7 +206,8 @@ SQLCHAR *sqlwchar_as_utf8(SQLWCHAR *str, SQLINTEGER *len)
     return NULL;
   }
 
-  u8= (UTF8 *)my_malloc(sizeof(UTF8) * MAX_BYTES_PER_UTF8_CP * *len + 1, MYF(0));
+  u8= (UTF8 *)my_malloc(sizeof(UTF8) * MAX_BYTES_PER_UTF8_CP * *len + 1,
+                        MYF(0));
   if (!u8)
   {
     *len= -1;
@@ -330,7 +331,7 @@ SQLINTEGER sqlwchar_as_sqlchar_buf(CHARSET_INFO *charset_info,
 {
   SQLWCHAR *str_end;
   SQLINTEGER i, u8_len;
-  UTF8 u8[7];
+  UTF8 u8[MAX_BYTES_PER_UTF8_CP + 1];
   uint32 used_bytes, used_chars;
 
   *errors= 0;

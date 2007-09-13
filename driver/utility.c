@@ -295,8 +295,8 @@ copy_ansi_result(STMT *stmt,
   SQLCHAR *result_end;
   ulong used_bytes= 0, used_chars= 0, error_count= 0;
   CHARSET_INFO *to_cs= stmt->dbc->ansi_charset_info,
-               /* @todo 33 is utf8, hack for our internal result sets */
-               *from_cs= get_charset(field->charsetnr ? field->charsetnr : 33,
+               *from_cs= get_charset(field->charsetnr ? field->charsetnr :
+                                     UTF8_CHARSET_NUMBER,
                                      MYF(0));
 
   if (!result_bytes)
@@ -529,7 +529,8 @@ copy_wchar_result(STMT *stmt,
   char *src_end;
   SQLWCHAR *result_end;
   ulong used_chars= 0, error_count= 0;
-  CHARSET_INFO *from_cs= get_charset(field->charsetnr ? field->charsetnr : 33,
+  CHARSET_INFO *from_cs= get_charset(field->charsetnr ? field->charsetnr :
+                                     UTF8_CHARSET_NUMBER,
                                      MYF(0));
 
   if (!result_len)

@@ -55,6 +55,7 @@
                query_print((A)->query_log,(char*) B);}
 
 
+/** @todo Need to make this version-aware so we get 4-byte UTF-8 in 5.2.  */
 #define UTF8_CHARSET_NUMBER 33
 
 /* Wrappers to hide differences in client library versions. */
