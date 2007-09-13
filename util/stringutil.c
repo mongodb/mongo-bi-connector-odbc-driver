@@ -533,13 +533,14 @@ size_t sqlwcharlen(const SQLWCHAR *wstr)
  *
  * @return A pointer to a new string.
  */
-SQLWCHAR *sqlwchardup(const SQLWCHAR *wstr)
+SQLWCHAR *sqlwchardup(const SQLWCHAR *wstr, size_t charlen)
 {
-  size_t size= (sqlwcharlen(wstr) + 1) * sizeof(SQLWCHAR);
-  SQLWCHAR *res= (SQLWCHAR *)my_malloc(size, MYF(0));
+  size_t chars= charlen == SQL_NTS ? sqlwcharlen(wstr) : charlen;
+  SQLWCHAR *res= (SQLWCHAR *)my_malloc((chars + 1) * sizeof(SQLWCHAR), MYF(0));
   if (!res)
     return NULL;
-  memcpy(res, wstr, size);
+  memcpy(res, wstr, chars * sizeof(SQLWCHAR));
+  res[chars]= 0;
   return res;
 }
 

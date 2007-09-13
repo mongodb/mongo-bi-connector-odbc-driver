@@ -78,7 +78,7 @@ copy_and_convert(char *to, uint32 to_length, CHARSET_INFO *to_cs,
 int sqlwcharcasecmp(const SQLWCHAR *s1, const SQLWCHAR *s2);
 const SQLWCHAR *sqlwcharchr(const SQLWCHAR *wstr, SQLWCHAR wchr);
 size_t sqlwcharlen(const SQLWCHAR *wstr);
-SQLWCHAR *sqlwchardup(const SQLWCHAR *wstr);
+SQLWCHAR *sqlwchardup(const SQLWCHAR *wstr, size_t charlen);
 unsigned long sqlwchartoul(const SQLWCHAR *wstr);
 void sqlwcharfromul(SQLWCHAR *wstr, unsigned long v);
 void sqlwcharncat2(SQLWCHAR *dest, const SQLWCHAR *src, size_t *n);

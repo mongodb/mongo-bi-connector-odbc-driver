@@ -425,7 +425,10 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
   HMODULE hModule= NULL;
   unsigned long options;
 
-  /* Parse the incoming string */ /* TODO use cbConnStrIn? */
+  if (cbConnStrIn != SQL_NTS)
+    szConnStrIn= sqlwchardup(szConnStrIn, cbConnStrIn);
+
+  /* Parse the incoming string */
   if (ds_from_kvpair(ds, szConnStrIn, (SQLWCHAR)';'))
   {
     rc= set_dbc_error(dbc, "HY000",
@@ -656,6 +659,8 @@ connected:
 error:
   if (hModule)
     FreeLibrary(hModule);
+  if (cbConnStrIn != SQL_NTS)
+    x_free(szConnStrIn);
 
   driver_delete(pDriver);
   ds_delete(ds);

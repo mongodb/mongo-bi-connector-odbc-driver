@@ -372,8 +372,8 @@ int ds_set_strattr(SQLWCHAR **attr, const SQLWCHAR *val)
 {
   if (*attr)
     x_free(*attr);
-  if (val)
-    *attr= sqlwchardup(val);
+  if (val && *val)
+    *attr= sqlwchardup(val, SQL_NTS);
   else
     *attr= NULL;
   return *attr || 0;
@@ -398,13 +398,8 @@ int ds_set_strnattr(SQLWCHAR **attr, const SQLWCHAR *val, size_t charcount)
     return 1;
   }
 
-  if (val)
-  {
-    *attr= (SQLWCHAR *)my_malloc((charcount + 1) * sizeof(SQLWCHAR),
-                                 MYF(0));
-    memcpy(*attr, val, charcount * sizeof(SQLWCHAR));
-    (*attr)[charcount]= 0;
-  }
+  if (val && *val)
+    *attr= sqlwchardup(val, charcount);
   else
     *attr= NULL;
   return *attr || 0;
