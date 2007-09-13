@@ -1799,6 +1799,61 @@ DECLARE_TEST(t_bug29239)
 }
 
 
+/*
+   Bug 30958, blank "text" fields are not accessible through ADO.
+   This is a result of us not handle SQLGetData() w/a zero-len
+   buffer correctly.
+*/
+DECLARE_TEST(t_bug30958)
+{
+  SQLCHAR outbuf[20]= "bug";
+  SQLINTEGER outlen;
+  SQLINTEGER outmax= 0;
+
+  ok_sql(hstmt, "drop table if exists bug30958");
+  ok_sql(hstmt, "CREATE TABLE bug30958 (tt_textfield TEXT NOT NULL)");
+  ok_sql(hstmt, "INSERT INTO bug30958 (tt_textfield) VALUES ('')");
+
+  ok_sql(hstmt, "select tt_textfield from bug30958");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  /*
+     check first that we get truncation, with zero bytes
+     available in out buffer, outbuffer should be untouched
+  */
+  outlen= 99;
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax,
+                                &outlen), SQL_SUCCESS_WITH_INFO);
+  is_str(outbuf, "bug", 3);
+  is_num(outlen, 0);
+  is(check_sqlstate(hstmt, "01004") == OK);
+
+  /* exact the same result, and not SQL_NO_DATA */
+  outlen= 99;
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax,
+                                &outlen), SQL_SUCCESS_WITH_INFO);
+  is_str(outbuf, "bug", 3);
+  is_num(outlen, 0);
+  is(check_sqlstate(hstmt, "01004") == OK);
+
+  /* now provide a space to read the data */
+  outmax= 1;
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax, &outlen));
+  is_num(outbuf[0], 0);
+  is_num(outlen, 0);
+
+  /* only now is it unavailable (test with empty and non-empty out buffer) */
+  outmax= 0;
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax,
+                                &outlen), SQL_NO_DATA);
+  outmax= 1;
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax,
+                                &outlen), SQL_NO_DATA);
+
+  ok_sql(hstmt, "drop table if exists bug30958");
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -1822,6 +1877,7 @@ BEGIN_TESTS
   ADD_TEST(bug6157)
   ADD_TEST(t_binary_collation)
   ADD_TODO(t_bug29239)
+  ADD_TODO(t_bug30958)
 END_TESTS
 
 
