@@ -348,13 +348,16 @@ SQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd, SQLCHAR *in, SQLSMALLINT in_len,
   uint errors;
   SQLWCHAR *outw= NULL;
   SQLINTEGER inw_len;
-  SQLWCHAR *inw= sqlchar_as_sqlwchar(utf8_charset_info, in, &inw_len, &errors);
+  SQLWCHAR *inw;
   SQLSMALLINT outw_max, dummy_out;
 
   if (in_len == SQL_NTS)
     in_len= strlen(in);
   if (!out_len)
     out_len= &dummy_out;
+
+  inw_len= in_len;
+  inw= sqlchar_as_sqlwchar(utf8_charset_info, in, &inw_len, &errors);
 
   outw_max= (sizeof(SQLWCHAR) * out_max) / MAX_BYTES_PER_UTF8_CP;
 
