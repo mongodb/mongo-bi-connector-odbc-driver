@@ -322,7 +322,7 @@ BEGIN_TESTS
 #endif
   ADD_TEST(t_diagrec)
   ADD_TEST(t_warning)
-  ADD_TODO(t_bug3456)
+  ADD_TEST(t_bug3456)
   ADD_TEST(t_bug16224)
   ADD_TEST(bind_invalidcol)
   ADD_TEST(getdata_need_nullind)
