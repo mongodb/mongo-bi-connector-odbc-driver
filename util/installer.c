@@ -47,7 +47,10 @@ static SQLWCHAR W_DESCRIPTION[]=
   {'D', 'E', 'S', 'C', 'R', 'I', 'P', 'T', 'I', 'O', 'N', 0};
 static SQLWCHAR W_SERVER[]= {'S', 'E', 'R', 'V', 'E', 'R', 0};
 static SQLWCHAR W_UID[]= {'U', 'I', 'D', 0};
+static SQLWCHAR W_USER[]= {'U', 'S', 'E', 'R', 0};
 static SQLWCHAR W_PWD[]= {'P', 'W', 'D', 0};
+static SQLWCHAR W_PASSWORD[]= {'P', 'A', 'S', 'S', 'W', 'O', 'R', 'D', 0};
+static SQLWCHAR W_DB[]= {'D', 'B', 0};
 static SQLWCHAR W_DATABASE[]= {'D', 'A', 'T', 'A', 'B', 'A', 'S', 'E', 0};
 static SQLWCHAR W_SOCKET[]= {'S', 'O', 'C', 'K', 'E', 'T', 0};
 static SQLWCHAR W_INITSTMT[]= {'I', 'N', 'I', 'T', 'S', 'T', 'M', 'T', 0};
@@ -417,6 +420,7 @@ void ds_map_param(DataSource *ds, const SQLWCHAR *param,
 {
   *strdest= NULL;
   *intdest= NULL;
+  /* parameter aliases can be used here, see W_UID, W_USER */
   if (!sqlwcharcasecmp(W_DSN, param))
     *strdest= &ds->name;
   else if (!sqlwcharcasecmp(W_DRIVER, param))
@@ -427,8 +431,14 @@ void ds_map_param(DataSource *ds, const SQLWCHAR *param,
     *strdest= &ds->server;
   else if (!sqlwcharcasecmp(W_UID, param))
     *strdest= &ds->uid;
+  else if (!sqlwcharcasecmp(W_USER, param))
+    *strdest= &ds->uid;
   else if (!sqlwcharcasecmp(W_PWD, param))
     *strdest= &ds->pwd;
+  else if (!sqlwcharcasecmp(W_PASSWORD, param))
+    *strdest= &ds->pwd;
+  else if (!sqlwcharcasecmp(W_DB, param))
+    *strdest= &ds->database;
   else if (!sqlwcharcasecmp(W_DATABASE, param))
     *strdest= &ds->database;
   else if (!sqlwcharcasecmp(W_SOCKET, param))
