@@ -196,7 +196,7 @@ SQLCHAR *sqlwchar_as_utf8(SQLWCHAR *str, SQLINTEGER *len)
 {
   SQLWCHAR *str_end;
   UTF8 *u8;
-  SQLSMALLINT i;
+  SQLINTEGER i;
 
   if (*len == SQL_NTS)
     *len= sqlwcharlen(str);

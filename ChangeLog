@@ -31,6 +31,7 @@ Guffert TODO
     Connector/ODBC 5.0, supports Unicode option values.
 
   Bugs fixed:
+  * SQL Statements limited to 64k. (Bug #30983)
 
 ----
 

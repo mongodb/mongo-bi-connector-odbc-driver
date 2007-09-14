@@ -513,6 +513,33 @@ DECLARE_TEST(t_bug30840)
 }
 
 
+/**
+  Bug #30983: SQL Statements limited to 64k
+*/
+DECLARE_TEST(t_bug30983)
+{
+  SQLCHAR buf[(80 * 1024) + 100]; /* ~80k */
+  SQLCHAR *bufp = buf;
+  SQLINTEGER buflen;
+  int i, j;
+
+  bufp += sprintf(bufp, "select '");
+
+  /* fill 1k of each value */
+  for (i= 0; i < 80; ++i)
+    for (j= 0; j < 512; ++j, bufp += 2)
+      sprintf(bufp, "%02x", i);
+
+  sprintf(bufp, "' as val");
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, buf, SQL_NTS));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, buf, 0, &buflen));
+  is_num(buflen, 80 * 1024);
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -527,6 +554,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug7445)
   ADD_TEST(t_bug30774)
   ADD_TEST(t_bug30840)
+  ADD_TEST(t_bug30983)
 END_TESTS
 
 
