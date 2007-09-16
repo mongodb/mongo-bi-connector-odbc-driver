@@ -61,7 +61,7 @@ SQLWCHAR *sqlchar_as_sqlwchar(CHARSET_INFO *charset_info, SQLCHAR *str,
     return NULL;
   }
 
-  if (!is_utf8_charset(charset_info))
+  if (!is_utf8_charset(charset_info->number))
   {
     uint32 used_bytes, used_chars;
     size_t u8_max= (*len / charset_info->mbminlen *
