@@ -68,9 +68,13 @@ static SQLWCHAR W_SETUP[]= {'S', 'E', 'T', 'U', 'P', 0};
 /* DS_PARAM */
 
 /* convenience macro to append a single character */
-#define APPEND_SQLWCHAR(c) {\
-  if (attrslen) { \
-    *attrs++= (c); attrslen--; }}
+#define APPEND_SQLWCHAR(buf, ctr, c) {\
+  if (ctr) { \
+    *((buf)++)= (c); \
+    if (--(ctr)) \
+        *(buf)= 0; \
+  } \
+}
 
 
 /*
@@ -276,28 +280,28 @@ int driver_from_kvpair_semicolon(Driver *driver, const SQLWCHAR *attrs)
  */
 int driver_to_kvpair_null(Driver *driver, SQLWCHAR *attrs, size_t attrslen)
 {
-  sqlwcharncat2(attrs, driver->name, &attrslen);
+  attrs+= sqlwcharncat2(attrs, driver->name, &attrslen);
 
   /* append NULL-separator */
-  attrs += sqlwcharlen(attrs) + 1;
+  *(attrs++)= 0;
   attrslen--;
 
-  sqlwcharncat2(attrs, W_DRIVER, &attrslen);
-  APPEND_SQLWCHAR('=');
-  sqlwcharncat2(attrs, driver->lib, &attrslen);
+  attrs+= sqlwcharncat2(attrs, W_DRIVER, &attrslen);
+  APPEND_SQLWCHAR(attrs, attrslen, '=');
+  attrs+= sqlwcharncat2(attrs, driver->lib, &attrslen);
 
   /* append NULL-separator */
-  attrs += sqlwcharlen(attrs) + 1;
+  *(attrs++)= 0;
   attrslen--;
 
   if (*driver->setup_lib)
   {
-    sqlwcharncat2(attrs, W_SETUP, &attrslen);
-    APPEND_SQLWCHAR('=');
-    sqlwcharncat2(attrs, driver->setup_lib, &attrslen);
+    attrs+= sqlwcharncat2(attrs, W_SETUP, &attrslen);
+    APPEND_SQLWCHAR(attrs, attrslen, '=');
+    attrs+= sqlwcharncat2(attrs, driver->setup_lib, &attrslen);
 
     /* append NULL-separator */
-    attrs += sqlwcharlen(attrs) + 1;
+    *(attrs++)= 0;
     attrslen--;
   }
   if (attrslen--)
@@ -627,27 +631,31 @@ int ds_to_kvpair(DataSource *ds, SQLWCHAR *attrs, size_t attrslen,
   {
     ds_map_param(ds, params[i], &strval, &intval);
 
+    /* We skip the driver is dsn is given */
+    if (!sqlwcharcasecmp(W_DRIVER, params[i]) && ds->name && *ds->name)
+      continue;
+
     if (strval && *strval && **strval)
     {
-      sqlwcharncat2(attrs, params[i], &attrslen);
-      APPEND_SQLWCHAR('=');
+      attrs+= sqlwcharncat2(attrs, params[i], &attrslen);
+      APPEND_SQLWCHAR(attrs, attrslen, '=');
       if (value_needs_escaped(*strval))
       {
-        APPEND_SQLWCHAR('{');
-        sqlwcharncat2(attrs, *strval, &attrslen);
-        APPEND_SQLWCHAR('}');
+        APPEND_SQLWCHAR(attrs, attrslen, '{');
+        attrs+= sqlwcharncat2(attrs, *strval, &attrslen);
+        APPEND_SQLWCHAR(attrs, attrslen, '}');
       }
       else
-        sqlwcharncat2(attrs, *strval, &attrslen);
-      APPEND_SQLWCHAR(delim);
+        attrs+= sqlwcharncat2(attrs, *strval, &attrslen);
+      APPEND_SQLWCHAR(attrs, attrslen, delim);
     }
     else if (intval)
     {
-      sqlwcharncat2(attrs, params[i], &attrslen);
-      APPEND_SQLWCHAR('=');
+      attrs+= sqlwcharncat2(attrs, params[i], &attrslen);
+      APPEND_SQLWCHAR(attrs, attrslen, '=');
       sqlwcharfromul(numbuf, *intval);
-      sqlwcharncat2(attrs, numbuf, &attrslen);
-      APPEND_SQLWCHAR(delim);
+      attrs+= sqlwcharncat2(attrs, numbuf, &attrslen);
+      APPEND_SQLWCHAR(attrs, attrslen, delim);
     }
 
     if (!attrslen)

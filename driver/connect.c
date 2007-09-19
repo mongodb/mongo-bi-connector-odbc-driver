@@ -634,8 +634,8 @@ connected:
   {
 #ifdef WIN32
     /*
-      Work around a bug in ADO/VB -- the intput and output strings are
-      set tot he same address, but the output string is not guaranteed
+      Work around a bug in ADO/VB -- the input and output strings are
+      set to the same address, but the output string is not guaranteed
       to have the recommended amount of space (1024 bytes).
     */
     if (szConnStrOut != szConnStrIn)

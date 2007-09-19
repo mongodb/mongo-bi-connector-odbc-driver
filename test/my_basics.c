@@ -540,6 +540,54 @@ DECLARE_TEST(t_bug30983)
 }
 
 
+/*
+   Test the output string after calling SQLDriverConnect
+*/
+DECLARE_TEST(t_driverconnect_outstring)
+{
+  HDBC hdbc1;
+  SQLCHAR conn[256], conn_out[256], exp_out[256];
+  SQLSMALLINT conn_out_len;
+  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;CHARSET=utf8",
+          mydsn, myuid, mypwd);
+  if (mysock != NULL)
+  {
+    strcat((char *)conn, ";SOCKET=");
+    strcat((char *)conn, (char *)mysock);
+  }
+
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), conn_out,
+                                 sizeof(conn_out), &conn_out_len,
+                                 SQL_DRIVER_NOPROMPT));
+
+  sprintf((char *)exp_out, "DSN=%s;UID=%s", mydsn, myuid);
+  if (mypwd && *mypwd)
+  {
+    strcat((char *)exp_out, ";PWD=");
+    strcat((char *)exp_out, (char *)mypwd);
+  }
+  strcat((char *)exp_out, ";DATABASE=");
+  ok_con(hdbc1, SQLGetConnectAttr(hdbc1, SQL_ATTR_CURRENT_CATALOG,
+                                  exp_out + strlen(exp_out), 100, NULL));
+
+  if (mysock != NULL)
+  {
+    strcat((char *)exp_out, ";SOCKET=");
+    strcat((char *)exp_out, (char *)mysock);
+  }
+  strcat((char *)exp_out, ";PORT=3306;CHARSET=utf8");
+
+  printMessage("Output connection string: %s", conn_out);
+  printMessage("Expected output   string: %s", exp_out);
+  is_str(conn_out, exp_out, strlen(conn_out));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -555,6 +603,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug30774)
   ADD_TEST(t_bug30840)
   ADD_TEST(t_bug30983)
+  ADD_TEST(t_driverconnect_outstring)
 END_TESTS
 
 

@@ -92,7 +92,7 @@ size_t sqlwcharlen(const SQLWCHAR *wstr);
 SQLWCHAR *sqlwchardup(const SQLWCHAR *wstr, size_t charlen);
 unsigned long sqlwchartoul(const SQLWCHAR *wstr);
 void sqlwcharfromul(SQLWCHAR *wstr, unsigned long v);
-void sqlwcharncat2(SQLWCHAR *dest, const SQLWCHAR *src, size_t *n);
+size_t sqlwcharncat2(SQLWCHAR *dest, const SQLWCHAR *src, size_t *n);
 
 
 #endif /* _STRINGUTIL_H */

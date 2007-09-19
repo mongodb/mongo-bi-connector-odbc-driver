@@ -589,12 +589,15 @@ void sqlwcharfromul(SQLWCHAR *wstr, unsigned long v)
  * Concatenate two strings. This differs from the convential
  * strncat() in that the parameter n is reduced by the number
  * of characters used (including NULL).
+ *
+ * Returns the number of characters copied.
  */
-void sqlwcharncat2(SQLWCHAR *dest, const SQLWCHAR *src, size_t *n)
+size_t sqlwcharncat2(SQLWCHAR *dest, const SQLWCHAR *src, size_t *n)
 {
+  SQLWCHAR *orig_dest;
   if (!n || !*n)
-    return;
-  dest += sqlwcharlen(dest);
+    return 0;
+  orig_dest = (dest += sqlwcharlen(dest));
   while (*src && *n && (*n)--)
     *dest++ = *src++;
   if (*n)
@@ -604,6 +607,7 @@ void sqlwcharncat2(SQLWCHAR *dest, const SQLWCHAR *src, size_t *n)
   }
   else
     *(dest - 1)= 0;
+  return dest - orig_dest;
 }
 
 
