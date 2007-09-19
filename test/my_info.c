@@ -187,6 +187,25 @@ DECLARE_TEST(t_bug14639)
 }
 
 
+/**
+ Bug #31055: Uninitiated memory returned by SQLGetFunctions() with
+ SQL_API_ODBC3_ALL_FUNCTION
+*/
+DECLARE_TEST(t_bug31055)
+{
+  SQLUSMALLINT funcs[SQL_API_ODBC3_ALL_FUNCTIONS_SIZE];
+
+  memset(funcs, 0xff, sizeof(SQLUSMALLINT) * SQL_API_ODBC3_ALL_FUNCTIONS_SIZE);
+
+  ok_stmt(hstmt, SQLGetFunctions(hstmt, SQL_API_ODBC3_ALL_FUNCTIONS,
+                                 funcs));
+
+  is(!SQL_FUNC_EXISTS(funcs, SQL_API_SQLALLOCHANDLESTD));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlgetinfo)
   ADD_TEST(t_gettypeinfo)
@@ -195,6 +214,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug27591)
   ADD_TEST(t_bug28657)
   ADD_TEST(t_bug14639)
+  ADD_TEST(t_bug31055)
 END_TESTS
 
 
