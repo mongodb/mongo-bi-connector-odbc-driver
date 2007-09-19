@@ -892,6 +892,38 @@ DECLARE_TEST(t_bug30939)
 }
 
 
+/**
+ Bug #31009: Wrong SQL_DESC_LITERAL_PREFIX for date-time types
+*/
+DECLARE_TEST(t_bug31009)
+{
+  SQLCHAR data[20];
+  SQLSMALLINT len;
+
+  ok_sql(hstmt, "SELECT CAST('2007-01-13' AS DATE) AS col1");
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_LITERAL_PREFIX,
+                                 data, sizeof(data), &len, NULL));
+  is_num(len, 1);
+  is_str(data, "'", 2);
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_LITERAL_SUFFIX,
+                                 data, sizeof(data), &len, NULL));
+  is_num(len, 1);
+  is_str(data, "'", 2);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &len));
+  is_num(len, 10);
+  is_str(data, "2007-01-13", 11);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_ts)
   ADD_TEST(t_tstotime)
@@ -906,6 +938,7 @@ BEGIN_TESTS
   ADD_TEST(t_datecolumns)
   ADD_TEST(t_bug14414)
   ADD_TEST(t_bug30939)
+  ADD_TEST(t_bug31009)
 END_TESTS
 
 

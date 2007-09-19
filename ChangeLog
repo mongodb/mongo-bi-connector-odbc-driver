@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * The wrong value was returned for SQL_DESC_LITERAL_PREFIX and
+    SQL_DESC_LITERAL_SUFFIX for date-time fields. (Bug #31009)
   * The wrong SQLSTATE was reported when the connection to the server
     was lost. (Bug #3456)
   * SQLDescribeCol() incorrectly reported whether auto-increment and

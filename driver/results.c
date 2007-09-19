@@ -701,14 +701,8 @@ get_col_attr(SQLHSTMT     StatementHandle,
             case MYSQL_TYPE_TINY_BLOB:
             case MYSQL_TYPE_MEDIUM_BLOB:
             case MYSQL_TYPE_BLOB:
-            case MYSQL_TYPE_DATE:
-            case MYSQL_TYPE_DATETIME:
-            case MYSQL_TYPE_NEWDATE:
             case MYSQL_TYPE_VAR_STRING:
             case MYSQL_TYPE_STRING:
-            case MYSQL_TYPE_TIMESTAMP:
-            case MYSQL_TYPE_TIME:
-            case MYSQL_TYPE_YEAR:
               if (field->charsetnr == 63)
               {
                 if (FieldIdentifier == SQL_DESC_LITERAL_PREFIX)
@@ -720,10 +714,16 @@ get_col_attr(SQLHSTMT     StatementHandle,
                                        CharacterAttributePtr,
                                        BufferLength, StringLengthPtr, "");
               }
-              else
-                return copy_str_data(SQL_HANDLE_STMT, stmt,
-                                     CharacterAttributePtr,
-                                     BufferLength, StringLengthPtr, "'");
+              /* FALLTHROUGH */
+
+            case MYSQL_TYPE_DATE:
+            case MYSQL_TYPE_DATETIME:
+            case MYSQL_TYPE_NEWDATE:
+            case MYSQL_TYPE_TIMESTAMP:
+            case MYSQL_TYPE_TIME:
+            case MYSQL_TYPE_YEAR:
+              return copy_str_data(SQL_HANDLE_STMT, stmt, CharacterAttributePtr,
+                                   BufferLength, StringLengthPtr, "'");
 
             default:
                 return copy_str_data(SQL_HANDLE_STMT, stmt,
