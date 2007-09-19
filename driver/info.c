@@ -1234,6 +1234,9 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
 
   if (fFunction == SQL_API_ODBC3_ALL_FUNCTIONS)
   {
+    /* Clear and set bits in the 4000 bit vector */
+    memset(pfExists, 0,
+           sizeof(SQLUSMALLINT) * SQL_API_ODBC3_ALL_FUNCTIONS_SIZE);
     for (index= 0; index < myodbc_func_size; index++)
     {
       SQLUSMALLINT id= myodbc3_functions[index];
@@ -1244,6 +1247,8 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
 
   if (fFunction == SQL_API_ALL_FUNCTIONS)
   {
+    /* Clear and set elements in the SQLUSMALLINT 100 element array */
+    memset(pfExists, 0, sizeof(SQLUSMALLINT) * 100);
     for (index= 0; index < myodbc_func_size; index++)
     {
       if (myodbc3_functions[index] < 100)
