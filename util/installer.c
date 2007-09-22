@@ -91,6 +91,14 @@ static int value_needs_escaped(SQLWCHAR *str)
       continue;
     else if (c >= 'A' && c <= 'Z')
       continue;
+    /* other non-alphanumeric characters that don't need escaping */
+    switch (c)
+    {
+    case '_':
+    case ' ':
+    case '.':
+      continue;
+    }
     return 1;
   }
   return 0;
