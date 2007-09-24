@@ -221,7 +221,7 @@ int main(int argc, char **argv) \
            (tests[i].expect == FAIL ? "# TODO" : \
             rc == SKIP ? "# SKIP " : ""), \
            SKIP_REASON ? SKIP_REASON : ""); \
-    if (rc == FAIL != tests[i].expect) \
+    if ((rc == FAIL) && (FAIL != tests[i].expect)) \
       failcnt++; \
     SKIP_REASON= NULL; /* Reset SKIP_REASON */ \
     /* Re-allocate statement to reset all its properties. */ \
