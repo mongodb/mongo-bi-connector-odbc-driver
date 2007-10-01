@@ -13,6 +13,7 @@
     type. (Bug #30939)
   * Empty selection for database and character set comboboxes in setup
     were set to " " instead of an empty string. (Bug #30568)
+  * Fixed incorrect input requirement in the setup dialog. (Bug #30499)
 
 ----
 
