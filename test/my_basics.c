@@ -459,6 +459,11 @@ DECLARE_TEST(t_bug30840)
   HDBC hdbc1;
   SQLCHAR   conn[256], conn_out[256];
   SQLSMALLINT conn_out_len;
+#ifdef WIN32
+  HWND wnd= GetForegroundWindow();
+#else
+  HWND wnd= (HWND)1;
+#endif
 
   sprintf((char *)conn, "DSN=%s;UID=%s;PASSWORD=%s;OPTION=16",
           mydsn, myuid, mypwd);
@@ -470,7 +475,7 @@ DECLARE_TEST(t_bug30840)
 
   ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
 
-  ok_con(hdbc1, SQLDriverConnect(hdbc1, (SQLHWND)1, conn, sizeof(conn),
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, wnd, conn, sizeof(conn),
                                  conn_out, sizeof(conn_out), &conn_out_len,
                                  SQL_DRIVER_PROMPT));
 
