@@ -899,6 +899,7 @@ DECLARE_TEST(t_bug31009)
 {
   SQLCHAR data[20];
   SQLSMALLINT len;
+  SQLLEN dlen;
 
   ok_sql(hstmt, "SELECT CAST('2007-01-13' AS DATE) AS col1");
 
@@ -914,8 +915,8 @@ DECLARE_TEST(t_bug31009)
 
   ok_stmt(hstmt, SQLFetch(hstmt));
 
-  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &len));
-  is_num(len, 10);
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &dlen));
+  is_num(dlen, 10);
   is_str(data, "2007-01-13", 11);
 
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
