@@ -320,44 +320,40 @@ do { \
 
 /**
   Verify that the result of an ODBC function call matches an expected
-  result, such as SQL_NO_DATA_FOUND.
+  result, such as SQL_ERROR or SQL_NO_DATA_FOUND.
 
-  @param statement Handle for statement object
+  @param hnd       Handle for object
+  @param type      Type of handle
   @param call      The function call
   @param expect    The expected result
 */
+#define expect_odbc(hnd, type, call, expect) \
+do { \
+  SQLRETURN rc= (call); \
+  if (rc != (expect)) \
+  { \
+    print_diag(rc, (type), (hnd), #call, __FILE__, __LINE__); \
+    printf("# Expected %d, but got %d in %s on line %d\n", (expect), rc, \
+           __FILE__, __LINE__); \
+    return FAIL; \
+  } \
+} while (0)
+
+
+#define expect_env(env, call, expect) \
+  expect_odbc((env), SQL_HANDLE_STMT, (call), (expect))
+
+
+#define expect_dbc(dbc, call, expect) \
+  expect_odbc((dbc), SQL_HANDLE_STMT, (call), (expect))
+
+
 #define expect_stmt(statement, call, expect) \
-do { \
-  SQLRETURN rc= (call); \
-  if (rc != (expect)) \
-  { \
-    print_diag(rc, SQL_HANDLE_STMT, (statement), #call, __FILE__, __LINE__); \
-    printf("# Expected %d, but got %d in %s on line %d\n", (expect), rc, \
-           __FILE__, __LINE__); \
-    return FAIL; \
-  } \
-} while (0)
+  expect_odbc((statement), SQL_HANDLE_STMT, (call), (expect))
 
 
-/**
-  Verify that the result of an ODBC function call matches an expected
-  result, such as SQL_ERROR.
-
-  @param desc   Handle for descriptor object
-  @param call   The function call
-  @param expect The expected result
-*/
 #define expect_desc(desc, call, expect) \
-do { \
-  SQLRETURN rc= (call); \
-  if (rc != (expect)) \
-  { \
-    print_diag(rc, SQL_HANDLE_DESC, (desc), #call, __FILE__, __LINE__); \
-    printf("# Expected %d, but got %d in %s on line %d\n", (expect), rc, \
-           __FILE__, __LINE__); \
-    return FAIL; \
-  } \
-} while (0)
+  expect_odbc((desc), SQL_HANDLE_DESC, (call), (expect))
 
 
 /**

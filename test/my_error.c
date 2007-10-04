@@ -351,6 +351,38 @@ DECLARE_TEST(getdata_need_nullind)
 }
 
 
+/*
+   Handle-specific tests for env and dbc diagnostics
+*/
+DECLARE_TEST(t_handle_err)
+{
+  SQLHANDLE henv1, hdbc1;
+
+  ok_env(henv1, SQLAllocHandle(SQL_HANDLE_ENV, NULL, &henv1));
+  ok_env(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
+                              (SQLPOINTER)SQL_OV_ODBC3, SQL_IS_INTEGER));
+  ok_env(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &hdbc1));
+
+  /* we have to connect for the DM to pass the calls to the driver */
+  ok_con(hdbc1, SQLConnect(hdbc1, mydsn, SQL_NTS, myuid, SQL_NTS,
+                           mypwd, SQL_NTS));
+
+  expect_env(henv1, SQLSetEnvAttr(henv1, 999, (SQLPOINTER)1, 0), SQL_ERROR);
+  is(check_sqlstate_ex(henv1, SQL_HANDLE_ENV, "HY010") == OK);
+
+  expect_dbc(hdbc1, SQLSetConnectAttr(hdbc1, SQL_ATTR_ASYNC_ENABLE,
+                                      (SQLPOINTER)SQL_ASYNC_ENABLE_ON,
+                                      SQL_IS_INTEGER), SQL_SUCCESS_WITH_INFO);
+  is(check_sqlstate_ex(hdbc1, SQL_HANDLE_DBC, "01S02") == OK);
+
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+  ok_env(henv1, SQLFreeHandle(SQL_HANDLE_ENV, henv1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
 #ifndef NO_DRIVERMANAGER
   ADD_TEST(t_odbc2_error)
@@ -366,6 +398,7 @@ BEGIN_TESTS
   ADD_TEST(bind_notenoughparam1)
   ADD_TEST(bind_notenoughparam2)
   ADD_TEST(getdata_need_nullind)
+  ADD_TEST(t_handle_err)
 END_TESTS
 
 RUN_TESTS

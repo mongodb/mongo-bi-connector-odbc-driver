@@ -32,6 +32,7 @@ Guffert TODO
 
   Bugs fixed:
   * SQL Statements limited to 64k. (Bug #30983)
+  * Diagnostics were not correctly cleared on dbc/env handles.
 
 ----
 

@@ -310,14 +310,14 @@ SQLErrorW(SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt, SQLWCHAR *sqlstate,
     rc= SQLGetDiagRecWImpl(SQL_HANDLE_DBC, hdbc, 1, sqlstate, native_error,
                            message, message_max, message_len);
     if (rc == SQL_SUCCESS)
-      CLEAR_DBC_ERROR(hstmt);
+      CLEAR_DBC_ERROR(hdbc);
   }
   else if (henv)
   {
     rc= SQLGetDiagRecWImpl(SQL_HANDLE_ENV, henv, 1, sqlstate, native_error,
                            message, message_max, message_len);
     if (rc == SQL_SUCCESS)
-      CLEAR_ENV_ERROR(hstmt);
+      CLEAR_ENV_ERROR(henv);
   }
 
   return rc;
