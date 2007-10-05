@@ -1,6 +1,4 @@
-3.51.21
-
-  Functionality added or changed:
+3.51.21 (5-Oct-2007)
 
   Bugs fixed:
   * The wrong value was returned for SQL_DESC_LITERAL_PREFIX and
