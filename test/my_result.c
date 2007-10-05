@@ -1854,6 +1854,56 @@ DECLARE_TEST(t_bug30958)
 }
 
 
+DECLARE_TEST(t_bug31246)
+{
+  SQLSMALLINT ncol;
+  SQLCHAR     *buf = "Key1";
+  SQLCHAR     field1[20];
+  SQLINTEGER  field2;
+  SQLCHAR     field3[20];
+  SQLRETURN   rc;
+  
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug31246");
+  ok_sql(hstmt, "CREATE TABLE t_bug31246 ("
+                "field1 VARCHAR(50) NOT NULL PRIMARY KEY, "
+                "field2 int DEFAULT 10, "
+                "field3 VARCHAR(50) DEFAULT \"Default Text\")");
+
+  /* No need to insert any rows in the table, so do SELECT */
+  ok_sql(hstmt, "SELECT * FROM t_bug31246");
+  ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
+  is_num(ncol, 3);
+
+  /* Bind only one column instead of three ones */
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, buf, strlen(buf), NULL));
+
+  /* Expect SQL_NO_DATA_FOUND result from the empty table */
+  rc= SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, NULL, NULL);
+  is_num(rc, SQL_NO_DATA_FOUND);
+
+  /* Here was the problem */
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_ADD, SQL_LOCK_NO_CHANGE));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* Check whether the row was inserted with the default values*/
+  ok_sql(hstmt, "SELECT * FROM t_bug31246 WHERE field1=\"Key1\"");
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, field1, 
+          sizeof(field1), NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_LONG, &field2, 
+          sizeof(SQLINTEGER), NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 3, SQL_C_CHAR, field3, 
+          sizeof(field3), NULL));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  
+  /* Clean-up */
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "DROP TABLE t_bug31246");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -1878,6 +1928,7 @@ BEGIN_TESTS
   ADD_TEST(t_binary_collation)
   ADD_TODO(t_bug29239)
   ADD_TODO(t_bug30958)
+  ADD_TODO(t_bug31246)
 END_TESTS
 
 
