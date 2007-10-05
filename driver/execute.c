@@ -268,8 +268,11 @@ char *insert_param(DBC *dbc, char *to,PARAM_BIND *param)
                   The negative length can be passed through the deprecated 
                   function SQLSetParam 
                 */
-                if (length != SQL_SETPARAM_VALUE_MAX && length > param->ValueMax)
-                    length= param->ValueMax;
+                if (param->ValueMax != SQL_SETPARAM_VALUE_MAX && 
+                    length > param->ValueMax)
+                {
+                  length= param->ValueMax;
+                }
 #else
                 length=strnlen(data,param->ValueMax);
 #endif
