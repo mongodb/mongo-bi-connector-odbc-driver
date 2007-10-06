@@ -1035,7 +1035,6 @@ DECLARE_TEST(t_acc_update)
 }
 
 
-#ifdef SQL_SET_PARAM_FIXED
 DECLARE_TEST(t_bug29871)
 {
   SQLCHAR *param= "1";
@@ -1057,7 +1056,6 @@ DECLARE_TEST(t_bug29871)
   ok_sql(hstmt, "DROP TABLE t_bug29871");
   return OK;
 }
-#endif
 
 
 BEGIN_TESTS
@@ -1074,9 +1072,7 @@ BEGIN_TESTS
   ADD_TEST(tmysql_bindcol)
   ADD_TEST(tmysql_bindparam)
   ADD_TEST(t_acc_update)
-#ifdef SQL_SET_PARAM_FIXED
   ADD_TEST(t_bug29871)
-#endif
 END_TESTS
 
 

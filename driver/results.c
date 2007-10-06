@@ -531,7 +531,10 @@ MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
   if (scale)
     *scale= (SQLSMALLINT)max(0, get_decimal_digits(stmt, field));
   if (nullable)
-    *nullable= ((field->flags & NOT_NULL_FLAG) ? SQL_NO_NULLS : SQL_NULLABLE);
+    *nullable= (((field->flags & NOT_NULL_FLAG) &&
+                 !(field->flags & TIMESTAMP_FLAG) &&
+                 !(field->flags & AUTO_INCREMENT_FLAG)) ?
+                SQL_NO_NULLS : SQL_NULLABLE);
 
   *need_free= 0;
 
@@ -679,23 +682,26 @@ MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
     case MYSQL_TYPE_TINY_BLOB:
     case MYSQL_TYPE_MEDIUM_BLOB:
     case MYSQL_TYPE_BLOB:
-    case MYSQL_TYPE_DATE:
-    case MYSQL_TYPE_DATETIME:
-    case MYSQL_TYPE_NEWDATE:
     case MYSQL_TYPE_VAR_STRING:
     case MYSQL_TYPE_STRING:
-    case MYSQL_TYPE_TIMESTAMP:
-    case MYSQL_TYPE_TIME:
-    case MYSQL_TYPE_YEAR:
       if (field->charsetnr == 63)
       {
         if (attrib == SQL_DESC_LITERAL_PREFIX)
           *char_attr= (SQLCHAR *)"0x";
         else
           *char_attr= (SQLCHAR *)"";
+        break;
       }
-      else
-        *char_attr= (SQLCHAR *)"'";
+      /* FALLTHROUGH */
+
+    case MYSQL_TYPE_DATE:
+    case MYSQL_TYPE_DATETIME:
+    case MYSQL_TYPE_NEWDATE:
+    case MYSQL_TYPE_TIMESTAMP:
+    case MYSQL_TYPE_TIME:
+    case MYSQL_TYPE_YEAR:
+      *char_attr= (SQLCHAR *)"'";
+      break;
 
     default:
       *char_attr= (SQLCHAR *)"";

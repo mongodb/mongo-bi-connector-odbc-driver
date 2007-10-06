@@ -31,8 +31,11 @@ Guffert TODO
     Connector/ODBC 5.0, supports Unicode option values.
 
   Bugs fixed:
-  * SQL Statements limited to 64k. (Bug #30983)
-  * Diagnostics were not correctly cleared on dbc/env handles.
+  * SQL statements limited to 64k. (Bug #30983)
+  * Diagnostics were not correctly cleared on connection and
+    environment handles.
+  
+  Includes changes from Connector/ODBC 3.51.21.
 
 ----
 
@@ -42,6 +45,27 @@ Guffert TODO
   * Added support for SQL_C_WCHAR.
   * Added support for Unicode functions (SQLConnectW, etc).
   * Added descriptor support (SQLGetDescField, SQLGetDescRec, etc)
+
+----
+
+3.51.21 (5-Oct-2007)
+
+  Bugs fixed:
+  * The wrong value was returned for SQL_DESC_LITERAL_PREFIX and
+    SQL_DESC_LITERAL_SUFFIX for date-time fields. (Bug #31009)
+  * The wrong SQLSTATE was reported when the connection to the server
+    was lost. (Bug #3456)
+  * SQLDescribeCol() incorrectly reported whether auto-increment and
+    some timestamp fields were nullable. (Bug #26108)
+  * SQLGetTypeInfo() reported the wrong column size for the SQL_TYPE_TIME
+    type. (Bug #30939)
+  * Empty selection for database and character set comboboxes in setup
+    were set to " " instead of an empty string. (Bug #30568)
+  * Fixed incorrect input requirement in the setup dialog. (Bug #30499)
+  * Added SQLSetParam function and fixed handling of buffer length in
+    SQLBindParameter. (Bug #29871)
+  * Fixed SQLSetPos that generated incorrect INSERT statement for result
+    columns without bound data buffers. (Bug #31246)
 
 ----
 

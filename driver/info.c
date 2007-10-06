@@ -902,7 +902,7 @@ char *SQL_GET_TYPE_INFO_values[MYSQL_DATA_TYPES][19]=
   {"date",sql_date,"10","'","'",NULL,sql_nullable,"0",sql_searchable,"0","0","0","date",NULL,NULL,sql_datetime,sql_date,NULL,NULL},
 
   /* SQL_TYPE_TIME= 92 */
-  {"time",sql_time,"6","'","'",NULL,sql_nullable,"0",sql_searchable,"0","0","0","time",NULL,NULL,sql_datetime,sql_time,NULL,NULL},
+  {"time",sql_time,"8","'","'",NULL,sql_nullable,"0",sql_searchable,"0","0","0","time",NULL,NULL,sql_datetime,sql_time,NULL,NULL},
 
   /* YEAR - SQL_SMALLINT */
   {"year",sql_smallint,"4",NULL,NULL,NULL,sql_nullable,"0",sql_searchable,"0","0","0","year",NULL,NULL,sql_smallint,NULL,"10",NULL},
@@ -1091,7 +1091,7 @@ SQLUSMALLINT myodbc3_functions[]=
     SQL_API_SQLSETDESCFIELD,
     SQL_API_SQLSETDESCREC,
     SQL_API_SQLSETENVATTR,
-    /* SQL_API_SQLSETPARAM */
+    SQL_API_SQLSETPARAM,
     SQL_API_SQLSETSTMTATTR,
     SQL_API_SQLSETSTMTOPTION,
     SQL_API_SQLSPECIALCOLUMNS,
@@ -1144,6 +1144,9 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
 
   if (fFunction == SQL_API_ODBC3_ALL_FUNCTIONS)
   {
+    /* Clear and set bits in the 4000 bit vector */
+    memset(pfExists, 0,
+           sizeof(SQLUSMALLINT) * SQL_API_ODBC3_ALL_FUNCTIONS_SIZE);
     for (index= 0; index < myodbc_func_size; index++)
     {
       SQLUSMALLINT id= myodbc3_functions[index];
@@ -1154,6 +1157,8 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
 
   if (fFunction == SQL_API_ALL_FUNCTIONS)
   {
+    /* Clear and set elements in the SQLUSMALLINT 100 element array */
+    memset(pfExists, 0, sizeof(SQLUSMALLINT) * 100);
     for (index= 0; index < myodbc_func_size; index++)
     {
       if (myodbc3_functions[index] < 100)

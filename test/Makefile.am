@@ -34,6 +34,7 @@ TEST_SERVER    = localhost
 TEST_UID       = root
 TEST_PASSWORD  = 
 TEST_SOCKET    = /tmp/mysql.sock
+VALGRIND       =
 
 INCLUDES= 		-I$(top_srcdir)/test
 AM_LDFLAGS= 		@myodbc_test_linklib@
@@ -81,7 +82,7 @@ test-bt: make-test-ini $(tap_tests)
 	  ODBCINI=$(TEST_ODBCINI) ODBCINSTINI=$(TEST_ODBCINSTINI) \
 	  TEST_DRIVER=$(TEST_DRIVER) TEST_DSN=$(TEST_DSN) TEST_UID=$(TEST_UID) \
 	  TEST_PASSWORD=$(TEST_PASSWORD) TEST_SOCKET=$(TEST_SOCKET) \
-	  ./$$f ; \
+	  $(VALGRIND) ./$$f ; \
 	  echo "Ending test $(TEST_PREFIX)$$f" ; \
 	done ; \
 	echo "" ; \

@@ -286,8 +286,14 @@ char *insert_param(DBC *dbc, char *to, DESCREC *aprec, DESCREC *iprec)
       We may see SQL_COLUMN_IGNORE from bulk INSERT operations, where we
       may have been told to ignore a column in one particular row. So we
       try to insert DEFAULT, or NULL for really old servers.
+
+      In case there are less parameters than result columns we have to
+      insert NULL or DEFAULT.
     */
-    else if ( *(aprec->octet_length_ptr) == SQL_COLUMN_IGNORE )
+    else if (*(aprec->octet_length_ptr) == SQL_COLUMN_IGNORE ||
+             (*(aprec->octet_length_ptr) == 0 &&
+              aprec->concise_type == SQL_C_DEFAULT &&
+              aprec->par.value == NULL))
     {
       if (is_minimum_version(dbc->mysql.server_version, "4.0.3", 5))
         return add_to_buffer(net,to,"DEFAULT",7);

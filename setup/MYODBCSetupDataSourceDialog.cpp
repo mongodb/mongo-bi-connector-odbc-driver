@@ -152,12 +152,6 @@ void MYODBCSetupDataSourceDialog::slotOk()
                 QMessageBox::warning( this, "MyODBC", tr("Missing Data Source Name"), tr("&Ok"), QString::null, QString::null, 0, 1 );
                 return;
             }
-            if ( ptab1->getUser().isEmpty() )
-            {
-                ptab1->plineeditUser->setFocus();
-                QMessageBox::warning( this, "MyODBC", tr("Missing User ID"), tr("&Ok"), QString::null, QString::null, 0, 1 );
-                return;
-            }
 
             /*!
                 ODBC RULE
@@ -192,22 +186,6 @@ void MYODBCSetupDataSourceDialog::slotOk()
             break;
 
         case MYODBCUTIL_DATASOURCE_MODE_DRIVER_CONNECT:
-            /*
-                MYODBC RULE
-
-                A UID is really the only thing we MUST have for a driver connect.
-            */                
-            if ( ptab1->getUser().isEmpty() )
-            {
-#if QT_VERSION >= 0x040000
-                ptabwidget->setCurrentWidget( 0 );
-#else
-                ptabwidget->setCurrentPage( 0 );
-#endif
-                ptab1->plineeditUser->setFocus();
-                QMessageBox::warning( this, "MyODBC", tr("Missing User ID"), tr("&Ok"), QString::null, QString::null, 0, 1 );
-                return;
-            }
             break;
 
         default:
@@ -804,7 +782,7 @@ BOOL MYODBCSetupDataSourceDialog::doLoadCharsetNamesUsingDriverManager()
     SQLLEN      nCatalog;
     QString     stringConnectIn= buildConnectString();
 
-    stringlistDatabases += " ";
+    stringlistDatabases += "";
 
     if ( hDBC == SQL_NULL_HDBC )
     {
@@ -900,7 +878,7 @@ BOOL MYODBCSetupDataSourceDialog::doLoadDatabaseNamesUsingDriverManager()
     SQLLEN      nCatalog;
     QString     stringConnectIn= buildConnectString();
 
-    stringlistDatabases += " ";
+    stringlistDatabases += "";
 
     if ( hDBC == SQL_NULL_HDBC )
     {
@@ -1084,6 +1062,7 @@ void MYODBCSetupDataSourceDialog::slotLoadCharsetNames()
   else
     doLoadCharsetNamesUsingDriverManager();
 }
+
 
 
 

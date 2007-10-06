@@ -1794,6 +1794,111 @@ DECLARE_TEST(t_bug29239)
 }
 
 
+/*
+   Bug 30958, blank "text" fields are not accessible through ADO.
+   This is a result of us not handle SQLGetData() w/a zero-len
+   buffer correctly.
+*/
+DECLARE_TEST(t_bug30958)
+{
+  SQLCHAR outbuf[20]= "bug";
+  SQLINTEGER outlen;
+  SQLINTEGER outmax= 0;
+
+  ok_sql(hstmt, "drop table if exists bug30958");
+  ok_sql(hstmt, "CREATE TABLE bug30958 (tt_textfield TEXT NOT NULL)");
+  ok_sql(hstmt, "INSERT INTO bug30958 (tt_textfield) VALUES ('')");
+
+  ok_sql(hstmt, "select tt_textfield from bug30958");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  /*
+     check first that we get truncation, with zero bytes
+     available in out buffer, outbuffer should be untouched
+  */
+  outlen= 99;
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax,
+                                &outlen), SQL_SUCCESS_WITH_INFO);
+  is_str(outbuf, "bug", 3);
+  is_num(outlen, 0);
+  is(check_sqlstate(hstmt, "01004") == OK);
+
+  /* exact the same result, and not SQL_NO_DATA */
+  outlen= 99;
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax,
+                                &outlen), SQL_SUCCESS_WITH_INFO);
+  is_str(outbuf, "bug", 3);
+  is_num(outlen, 0);
+  is(check_sqlstate(hstmt, "01004") == OK);
+
+  /* now provide a space to read the data */
+  outmax= 1;
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax, &outlen));
+  is_num(outbuf[0], 0);
+  is_num(outlen, 0);
+
+  /* only now is it unavailable (test with empty and non-empty out buffer) */
+  outmax= 0;
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax,
+                                &outlen), SQL_NO_DATA);
+  outmax= 1;
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax,
+                                &outlen), SQL_NO_DATA);
+
+  ok_sql(hstmt, "drop table if exists bug30958");
+}
+
+
+DECLARE_TEST(t_bug31246)
+{
+  SQLSMALLINT ncol;
+  SQLCHAR     *buf = "Key1";
+  SQLCHAR     field1[20];
+  SQLINTEGER  field2;
+  SQLCHAR     field3[20];
+  SQLRETURN   rc;
+  
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug31246");
+  ok_sql(hstmt, "CREATE TABLE t_bug31246 ("
+                "field1 VARCHAR(50) NOT NULL PRIMARY KEY, "
+                "field2 int DEFAULT 10, "
+                "field3 VARCHAR(50) DEFAULT \"Default Text\")");
+
+  /* No need to insert any rows in the table, so do SELECT */
+  ok_sql(hstmt, "SELECT * FROM t_bug31246");
+  ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
+  is_num(ncol, 3);
+
+  /* Bind only one column instead of three ones */
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, buf, strlen(buf), NULL));
+
+  /* Expect SQL_NO_DATA_FOUND result from the empty table */
+  rc= SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, NULL, NULL);
+  is_num(rc, SQL_NO_DATA_FOUND);
+
+  /* Here was the problem */
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_ADD, SQL_LOCK_NO_CHANGE));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* Check whether the row was inserted with the default values*/
+  ok_sql(hstmt, "SELECT * FROM t_bug31246 WHERE field1=\"Key1\"");
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, field1, 
+          sizeof(field1), NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_LONG, &field2, 
+          sizeof(SQLINTEGER), NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 3, SQL_C_CHAR, field3, 
+          sizeof(field3), NULL));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  
+  /* Clean-up */
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "DROP TABLE t_bug31246");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -1817,6 +1922,8 @@ BEGIN_TESTS
   ADD_TEST(bug6157)
   ADD_TEST(t_binary_collation)
   ADD_TODO(t_bug29239)
+  ADD_TODO(t_bug30958)
+  ADD_TODO(t_bug31246)
 END_TESTS
 
 

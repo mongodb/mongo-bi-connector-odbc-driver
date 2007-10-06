@@ -97,6 +97,15 @@ SQLRETURN myodbc_set_initial_character_set(DBC *dbc, const char *charset)
       return SQL_ERROR;
     }
   }
+  else
+  {
+    if (mysql_set_character_set(&dbc->mysql, dbc->ansi_charset_info->csname))
+    {
+      set_dbc_error(dbc, "HY000", mysql_error(&dbc->mysql),
+                    mysql_errno(&dbc->mysql));
+      return SQL_ERROR;
+    }
+  }
 
   {
     MY_CHARSET_INFO my_charset;
@@ -104,7 +113,7 @@ SQLRETURN myodbc_set_initial_character_set(DBC *dbc, const char *charset)
     dbc->cxn_charset_info= get_charset(my_charset.number, MYF(0));
   }
 
-  if (!dbc->ansi_charset_info)
+  if (!dbc->unicode)
     dbc->ansi_charset_info= dbc->cxn_charset_info;
 
   /*
@@ -172,11 +181,6 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
   mysql_options(mysql, MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
                 (const char *)&opt_ssl_verify_server_cert);
 
-  /*
-    By setting MYSQL_SET_CHARSET_NAME, usernames and passwords in non-latin1
-    character sets should be handled properly.
-  */
-  if (dbc->unicode)
   {
     /*
       Get the ANSI charset info before we change connection to UTF-8.
@@ -186,6 +190,7 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
     dbc->ansi_charset_info= get_charset(my_charset.number, MYF(0));
 
   }
+
   /*
     We always use utf8 for the connection, and change it afterwards if needed.
   */

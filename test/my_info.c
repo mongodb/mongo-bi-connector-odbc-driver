@@ -139,10 +139,8 @@ DECLARE_TEST(t_bug28657)
    for SQL_DATETIME to SQL_TYPE_DATE, which means our little workaround to
    get all of the SQL_DATETIME types at once does not work on there.
   */
-  skip("test doesn't work on with Microsoft Windows ODBC driver manager");
+  skip("test doesn't work with Microsoft Windows ODBC driver manager");
 #else
-  SQLSMALLINT pccol;
-
   ok_stmt(hstmt, SQLGetTypeInfo(hstmt, SQL_DATETIME));
 
   is(myresult(hstmt) > 1);
@@ -187,6 +185,24 @@ DECLARE_TEST(t_bug14639)
 }
 
 
+/**
+ Bug #31055: Uninitiated memory returned by SQLGetFunctions() with
+ SQL_API_ODBC3_ALL_FUNCTION
+*/
+DECLARE_TEST(t_bug31055)
+{
+  SQLUSMALLINT funcs[SQL_API_ODBC3_ALL_FUNCTIONS_SIZE];
+
+  memset(funcs, 0xff, sizeof(SQLUSMALLINT) * SQL_API_ODBC3_ALL_FUNCTIONS_SIZE);
+
+  ok_con(hdbc, SQLGetFunctions(hdbc, SQL_API_ODBC3_ALL_FUNCTIONS, funcs));
+
+  is(!SQL_FUNC_EXISTS(funcs, SQL_API_SQLALLOCHANDLESTD));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlgetinfo)
   ADD_TEST(t_gettypeinfo)
@@ -195,6 +211,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug27591)
   ADD_TEST(t_bug28657)
   ADD_TEST(t_bug14639)
+  ADD_TEST(t_bug31055)
 END_TESTS
 
 

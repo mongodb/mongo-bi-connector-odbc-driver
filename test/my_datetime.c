@@ -821,6 +821,7 @@ DECLARE_TEST(t_datecolumns)
 DECLARE_TEST(t_bug14414)
 {
   SQLCHAR col[10];
+  SQLSMALLINT nullable;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug14414");
   ok_sql(hstmt, "CREATE TABLE t_bug14414(a TIMESTAMP, b TIMESTAMP NOT NULL,"
@@ -848,7 +849,78 @@ DECLARE_TEST(t_bug14414)
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
+  /**
+    Bug #26108  MyODBC ADO field attributes reporting adFldMayBeNull for
+    not null columns
+  */
+  ok_sql(hstmt, "SELECT * FROM t_bug14414");
+
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 1, NULL, 0, NULL, NULL, NULL, NULL,
+                                &nullable));
+  is_num(nullable, SQL_NULLABLE);
+
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 2, NULL, 0, NULL, NULL, NULL, NULL,
+                                &nullable));
+  is_num(nullable, SQL_NO_NULLS);
+
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 3, NULL, 0, NULL, NULL, NULL, NULL,
+                                &nullable));
+  is_num(nullable, SQL_NULLABLE);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug14414");
+  return OK;
+}
+
+
+/**
+ Bug #30939: SQLGetTypeInfo returns 6 instead of 8 for COLUMN_SIZE for
+ SQL_TYPE_TIME
+*/
+DECLARE_TEST(t_bug30939)
+{
+  ok_stmt(hstmt, SQLGetTypeInfo(hstmt, SQL_TYPE_TIME));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_num(my_fetch_int(hstmt, 3), 8);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  return OK;
+}
+
+
+/**
+ Bug #31009: Wrong SQL_DESC_LITERAL_PREFIX for date-time types
+*/
+DECLARE_TEST(t_bug31009)
+{
+  SQLCHAR data[20];
+  SQLSMALLINT len;
+  SQLLEN dlen;
+
+  ok_sql(hstmt, "SELECT CAST('2007-01-13' AS DATE) AS col1");
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_LITERAL_PREFIX,
+                                 data, sizeof(data), &len, NULL));
+  is_num(len, 1);
+  is_str(data, "'", 2);
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_LITERAL_SUFFIX,
+                                 data, sizeof(data), &len, NULL));
+  is_num(len, 1);
+  is_str(data, "'", 2);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &dlen));
+  is_num(dlen, 10);
+  is_str(data, "2007-01-13", 11);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
   return OK;
 }
 
@@ -866,6 +938,8 @@ BEGIN_TESTS
   ADD_TODO(t_bug30081)
   ADD_TEST(t_datecolumns)
   ADD_TEST(t_bug14414)
+  ADD_TEST(t_bug30939)
+  ADD_TEST(t_bug31009)
 END_TESTS
 
 

@@ -260,6 +260,8 @@ void translate_error(char *save_state,myodbc_errid errid,uint mysql_err)
             break;
         case CR_SERVER_HANDSHAKE_ERR:
         case CR_CONNECTION_ERROR:
+        case CR_SERVER_GONE_ERROR:
+        case CR_SERVER_LOST:
             state= "08S01";
             break;
         default: break;

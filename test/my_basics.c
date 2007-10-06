@@ -481,6 +481,9 @@ DECLARE_TEST(t_bug30774)
 */
 DECLARE_TEST(t_bug30840)
 {
+#ifdef WIN32
+  skip("test does not work on Windows");
+#else
   HDBC hdbc1;
   SQLCHAR   conn[256], conn_out[256];
   SQLSMALLINT conn_out_len;
@@ -501,7 +504,7 @@ DECLARE_TEST(t_bug30840)
 
   ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
 
-  ok_con(hdbc1, SQLDriverConnect(hdbc1, (SQLHWND)1, conn, sizeof(conn),
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, (HWND)1, conn, sizeof(conn),
                                  conn_out, sizeof(conn_out), &conn_out_len,
                                  SQL_DRIVER_PROMPT));
 
@@ -510,6 +513,7 @@ DECLARE_TEST(t_bug30840)
   ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
 
   return OK;
+#endif
 }
 
 

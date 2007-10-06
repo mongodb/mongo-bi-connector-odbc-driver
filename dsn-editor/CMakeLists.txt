@@ -19,7 +19,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 ##########################################################################
-INCLUDE_DIRECTORIES(../util ../setup)
+INCLUDE_DIRECTORIES(${QT_INCLUDE_DIR} ../util ../setup)
 
 SET(myodbc3c_SRCS
             main.cpp 
