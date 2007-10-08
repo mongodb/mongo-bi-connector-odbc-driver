@@ -13,7 +13,7 @@
 // Callbacks indeed
 const	wchar_t *	mytest			(HWND hwnd, OdbcDialogParams* params);
 		BOOL		mytestaccept	(HWND hwnd, OdbcDialogParams* params);
-		BOOL		mytestaccept	(HWND hwnd, OdbcDialogParams* params);
+		/*BOOL		mytestaccept	(HWND hwnd, OdbcDialogParams* params);*/
 const	WCHAR**		mygetdatabases	(HWND hwnd, OdbcDialogParams* params);
 		void		myhelp			(HWND hwnd);
 

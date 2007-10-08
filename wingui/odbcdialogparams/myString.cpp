@@ -25,7 +25,13 @@ size_t myStrlen( myString & str )
 
 myString & strAssign	( myString &dest, const wchar_t * src )
 {
-	return strAssign( dest, myString( src ) );
+    if (src != NULL)
+	    return strAssign( dest, myString( src ) );
+    else
+    {
+        dest= L"";
+        return dest;
+    }
 }
 
 myString & strAssign( myString &dest, const myString & src )

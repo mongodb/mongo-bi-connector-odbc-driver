@@ -50,7 +50,7 @@ const wchar_t * mytest(HWND hwnd, OdbcDialogParams* params)
 
 BOOL mytestaccept(HWND hwnd, OdbcDialogParams* params)
 {
-	return (IDYES == MessageBox(hwnd, params->dbname.c_str(), params->drvdesc.c_str(), MB_YESNO));
+	return true/*(IDYES == MessageBoxW(hwnd, params->dbname.c_str(), params->drvdesc.c_str(), MB_YESNO))*/;
 }
 
 const WCHAR** mygetdatabases(HWND hwnd, OdbcDialogParams* params)
@@ -109,5 +109,6 @@ const WCHAR** mygetdatabases(HWND hwnd, OdbcDialogParams* params)
 
 void myhelp(HWND hwnd)
 {
-	MessageBox(hwnd, L"HELP", L"Sorry, Help is not Available", MB_OK);
+    /** TODO: Rewrite - Shouldn't be windows stuff here */
+	MessageBoxW(hwnd, L"HELP", L"Sorry, Help is not Available", MB_OK);
 }

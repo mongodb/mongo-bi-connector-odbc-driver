@@ -10,7 +10,7 @@
 #include "myString.h"
 
 // procedure describes all items shown on the dialog
-struct _ODBCPARAMDLL OdbcDialogParams
+struct OdbcDialogParams
 {
 	myString		drvname;
 	myString		drvdesc;
@@ -70,7 +70,7 @@ typedef const WCHAR** DatabaseNamesCallbackType(HWND dialog, OdbcDialogParams* p
 
 // exported procedure (the one)
 // returns TRUE if user pressed OK, FALSE - otherwise
-int _ODBCPARAMDLL ShowOdbcParamsDialog(
+int ShowOdbcParamsDialog(
     PWCHAR caption,                 /*[in] Dialog caption*/
 	OdbcDialogParams* params,                  /*[inout] params */
 	HWND ParentWnd = NULL,                     /* [in] could be NULL */

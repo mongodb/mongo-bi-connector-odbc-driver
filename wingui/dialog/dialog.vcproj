@@ -40,10 +40,11 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="../util/;&quot;D:\Program Files\MySQL\MySQL Server 5.0\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -177,10 +178,6 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\callbacks.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\dialog.cpp"
 				>
 				<FileConfiguration
@@ -213,20 +210,12 @@
 					/>
 				</FileConfiguration>
 			</File>
-			<File
-				RelativePath=".\utils.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-			<File
-				RelativePath=".\callbacks.h"
-				>
-			</File>
 			<File
 				RelativePath=".\dialog.h"
 				>
@@ -237,10 +226,6 @@
 			</File>
 			<File
 				RelativePath=".\stdafx.h"
-				>
-			</File>
-			<File
-				RelativePath=".\utils.h"
 				>
 			</File>
 		</Filter>

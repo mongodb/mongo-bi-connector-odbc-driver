@@ -499,15 +499,18 @@ int ShowOdbcParamsDialog(
 	assert(!BusyIndicator);
 	InitStaticValues();
 
-	pParams = params;
-	pCaption = caption;
-	gHelpButtonPressedCallback = hcallback;
-	gTestButtonPressedCallback = tcallback;
-	gAcceptParamsCallback = acallback;
-	gDatabaseNamesCallback = dcallback;
+	pParams=                    params;
+	pCaption=                   caption;
+	gHelpButtonPressedCallback= hcallback;
+	gTestButtonPressedCallback= tcallback;
+	gAcceptParamsCallback=      acallback;
+	gDatabaseNamesCallback=     dcallback;
 
     // The user interface is a modal dialog box.
-    DialogBox(ghInstance, MAKEINTRESOURCE(IDD_DIALOG1), ParentWnd, (DLGPROC)FormMain_DlgProc);
+    DWORD err;
+    if ( DialogBox(ghInstance, MAKEINTRESOURCE(IDD_DIALOG1), ParentWnd, (DLGPROC)FormMain_DlgProc) )
+        err = GetLastError();
+
 	BusyIndicator = false;
 	return OkPressed;
 }
