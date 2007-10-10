@@ -193,6 +193,14 @@ DECLARE_TEST(t_bug31055)
 {
   SQLUSMALLINT funcs[SQL_API_ODBC3_ALL_FUNCTIONS_SIZE];
 
+  /*
+     The DM will presumably return true for all functions that it
+     can satisfy in place of the driver. This test will only work
+     when linked directly to the driver.
+  */
+  if (using_dm(hdbc))
+    return OK;
+
   memset(funcs, 0xff, sizeof(SQLUSMALLINT) * SQL_API_ODBC3_ALL_FUNCTIONS_SIZE);
 
   ok_con(hdbc, SQLGetFunctions(hdbc, SQL_API_ODBC3_ALL_FUNCTIONS, funcs));
