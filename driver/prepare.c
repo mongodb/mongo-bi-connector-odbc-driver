@@ -235,7 +235,7 @@ SQLRETURN SQL_API my_SQLBindParameter( SQLHSTMT     StatementHandle,
 
     /* reset all param fields */
     desc_rec_init_apd(aprec);
-    desc_rec_init_apd(iprec);
+    desc_rec_init_ipd(iprec);
 
     /* first, set apd fields */
     if (ValueType == SQL_C_DEFAULT)

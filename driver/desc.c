@@ -56,6 +56,11 @@ DESC *desc_alloc(STMT *stmt, SQLSMALLINT alloc_type,
   DESC *desc= (DESC *)my_malloc(sizeof(DESC), MYF(MY_ZEROFILL));
   if (!desc)
     return NULL;
+  /*
+     We let the dynamic array handle the memory for the whole DESCREC,
+     but in desc_get_rec we manually get a pointer to it. This avoids
+     having to call set_dynamic after modifying the DESCREC.
+  */
   if (my_init_dynamic_array(&desc->records, sizeof(DESCREC), 0, 0))
   {
     my_free((char *)desc, MYF(0));
@@ -725,8 +730,8 @@ SQLRETURN MySQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandle)
 {
   DESC *src= (DESC *)SourceDescHandle;
   DESC *dest= (DESC *)TargetDescHandle;
-  /* size of all records for memcpy() */
   SQLSMALLINT alloc_type;
+  STMT *stmt;
 
   CLEAR_DESC_ERROR(dest);
 
@@ -735,15 +740,15 @@ SQLRETURN MySQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandle)
                           "Cannot modify an implementation row descriptor",
                           MYERR_S1016);
 
-  /* we save this because it shouldn't be overwritten */
+  /* we save these because they shouldn't be overwritten */
   alloc_type= dest->alloc_type;
+  stmt= dest->stmt;
 
   if (IS_IRD(src) && src->stmt->state < ST_PREPARED)
     return set_desc_error(dest, "HY007",
               "Associated statement is not prepared",
               MYERR_S1007);
 
-  /* TODO is the same stmt* /parent going to cause an issue? */
   memcpy(dest, src, sizeof(DESC));
 
   /* copy the records */
@@ -755,7 +760,12 @@ SQLRETURN MySQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandle)
               "Memory allocation error",
               MYERR_S1001);
   }
-  memcpy(&dest->records, &src->records, src->records.max_element);
+  memcpy(dest->records.buffer, src->records.buffer,
+         src->records.max_element * src->records.size_of_element);
+
+  /* restore needed fields */
+  dest->alloc_type= alloc_type;
+  dest->stmt= stmt;
 
   /* TODO consistency check on target, if needed (apd) */
 
