@@ -483,6 +483,14 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     reset_ptr(stmt->ard->array_status_ptr);
     reset_ptr(stmt->stmt_options.rowStatusPtr_ex);
     /* TODO what else to reset? */
+    delete_dynamic(&stmt->apd->records);
+    delete_dynamic(&stmt->ipd->records);
+    delete_dynamic(&stmt->ard->records);
+    delete_dynamic(&stmt->ird->records);
+    x_free(stmt->apd);
+    x_free(stmt->ard);
+    x_free(stmt->ipd);
+    x_free(stmt->ird);
 
     x_free(stmt->cursor.name);
     x_free(stmt->bind);

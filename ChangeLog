@@ -34,6 +34,8 @@ Guffert TODO
   * SQL statements limited to 64k. (Bug #30983)
   * Diagnostics were not correctly cleared on connection and
     environment handles.
+  * SQLCopyDesc did not correctly copy all records.
+  * Memory leak. (Bug #31115)
   
   Includes changes from Connector/ODBC 3.51.21.
 
