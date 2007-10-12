@@ -894,3 +894,21 @@ int free_basic_handles(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt)
   return OK;
 }
 
+
+/**
+  Check if we are using a driver manager for testing.
+
+  @param[in] hdbc  Connection handle
+
+  @return 0 if the connection is using a driver manager, 1 if not.
+*/
+int using_dm(HDBC hdbc)
+{
+  SQLCHAR val[20];
+  SQLSMALLINT len;
+
+  if (SQLGetInfo(hdbc, SQL_DM_VER, val, sizeof(val), &len) == SQL_ERROR)
+    return 0;
+
+  return 1;
+}
