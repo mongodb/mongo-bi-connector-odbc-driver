@@ -1,6 +1,9 @@
 3.51.22
 
   Functionality added or changed:
+  * Added FLAG_COLUMN_SIZE_S32 to limit the reported column size to a
+    signed 32-bit integer. This option is automatically enabled for ADO
+    applications, in order to work around a bug in ADO. (Bug #13776)
 
   Bugs fixed:
 

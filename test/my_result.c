@@ -1904,6 +1904,116 @@ DECLARE_TEST(t_bug31246)
 }
 
 
+/**
+  Bug #13776: Invalid string or buffer length error
+*/
+DECLARE_TEST(t_bug13776)
+{
+  SQLHENV  henv1;
+  SQLHDBC  hdbc1;
+  SQLHSTMT hstmt1;
+
+  SQLULEN     pcColSz;
+  SQLCHAR     szColName[MAX_NAME_LEN];
+  SQLSMALLINT pfSqlType, pcbScale, pfNullable;
+
+  SET_DSN_OPTION(1 << 27);
+
+  /* Establish the new connection */
+  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_bug13776");
+  ok_sql(hstmt1, "CREATE TABLE t_bug13776(ltext LONGTEXT)");
+  ok_sql(hstmt1, "INSERT INTO t_bug13776 VALUES ('long text test')");
+  ok_sql(hstmt1, "SELECT * FROM t_bug13776");
+  ok_stmt(hstmt1, SQLDescribeCol(hstmt1, 1, szColName, MAX_NAME_LEN+1, NULL,
+                                 &pfSqlType, &pcColSz, &pcbScale, &pfNullable));
+
+  /* Size of LONGTEXT should have been capped to 1 << 31. */
+  is_num(pcColSz, 2147483647L);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_bug13776");
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  SET_DSN_OPTION(0);
+
+  return OK;
+}
+
+
+/**
+  Test that FLAG_COLUMN_SIZE_S32 is automatically enabled when ADO library
+  is loaded.
+*/
+DECLARE_TEST(t_bug13776_auto)
+{
+#ifdef WIN32
+  SQLHENV  henv1;
+  SQLHDBC  hdbc1;
+  SQLHSTMT hstmt1;
+  HMODULE  ado_dll;
+
+  SQLULEN     pcColSz;
+  SQLCHAR     szColName[MAX_NAME_LEN];
+  SQLCHAR     szData[MAX_ROW_DATA_LEN+1];
+  SQLSMALLINT pfSqlType, pcbScale, pfNullable;
+  SQLCHAR     *env_path= NULL;
+  SQLCHAR     szFileToLoad[255];
+
+  /** @todo get the full path to the library using getenv */
+  env_path= getenv("CommonProgramFiles(x86)");
+  if (!env_path)
+    env_path= getenv("CommonProgramFiles");
+
+  if (!env_path)
+  {
+    printf("# No path for CommonProgramFiles in %s on line %d\n",
+           __FILE__, __LINE__);
+    return FAIL;
+  }
+
+  sprintf(szFileToLoad, "%s\\System\\ado\\msado15.dll", env_path);
+
+  ado_dll= LoadLibrary(szFileToLoad);
+  if (!ado_dll)
+  {
+    printf("# Could not load %s in %s on line %d\n",
+           szFileToLoad, __FILE__, __LINE__);
+    return FAIL;
+  }
+
+  /* Establish the new connection */
+  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_bug13776");
+  ok_sql(hstmt1, "CREATE TABLE t_bug13776(ltext LONGTEXT)");
+  ok_sql(hstmt1, "INSERT INTO t_bug13776 VALUES ('long text test')");
+  ok_sql(hstmt1, "SELECT * FROM t_bug13776");
+  ok_stmt(hstmt1, SQLDescribeCol(hstmt1, 1, szColName, MAX_NAME_LEN+1, NULL,
+                                 &pfSqlType, &pcColSz, &pcbScale, &pfNullable));
+
+  /*
+    IF adodb15.dll is loaded SQLDescribeCol should return the length of
+    LONGTEXT columns as 2G instead of 4G
+  */
+  is_num(pcColSz, 2147483647L);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_bug13776");
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  FreeLibrary(ado_dll);
+#endif
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -1929,6 +2039,8 @@ BEGIN_TESTS
   ADD_TODO(t_bug29239)
   ADD_TODO(t_bug30958)
   ADD_TODO(t_bug31246)
+  ADD_TEST(t_bug13776)
+  ADD_TEST(t_bug13776_auto)
 END_TESTS
 
 

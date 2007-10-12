@@ -528,7 +528,12 @@ SQLRETURN SQL_API SQLDescribeCol( SQLHSTMT          hstmt,
     if (pfSqlType)
       *pfSqlType= get_sql_data_type(stmt, field, NULL);
     if (pnColumnSize)
-      *pnColumnSize= get_column_size(stmt, field, FALSE);
+    {
+      SQLULEN size= get_column_size(stmt, field, FALSE);
+      if ((stmt->dbc->flag & FLAG_COLUMN_SIZE_S32) && size > INT_MAX32)
+        size= INT_MAX32;
+      *pnColumnSize= size;
+    }
     if (pibScale)
       *pibScale= max(0, get_decimal_digits(stmt, field));
     if (pfNullable)
