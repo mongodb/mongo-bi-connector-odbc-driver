@@ -611,3 +611,19 @@ size_t sqlwcharncat2(SQLWCHAR *dest, const SQLWCHAR *src, size_t *n)
 }
 
 
+/*
+ * Copy up to 'n' characters (including NULL) from src to dest.
+ */
+SQLWCHAR *sqlwcharncpy(SQLWCHAR *dest, const SQLWCHAR *src, size_t n)
+{
+  if (!dest || !src)
+    return NULL;
+  while (*src && n--)
+    *dest++= *src++;
+  if (n)
+    *dest= 0;
+  else
+    *(dest - 1)= 0;
+  return dest;
+}
+

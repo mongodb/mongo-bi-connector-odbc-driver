@@ -66,6 +66,7 @@ typedef struct {
 
 Driver *driver_new();
 void driver_delete(Driver *driver);
+int driver_lookup_name(Driver *driver);
 int driver_lookup(Driver *driver);
 int driver_from_kvpair_semicolon(Driver *driver, const SQLWCHAR *attrs);
 int driver_to_kvpair_null(Driver *driver, SQLWCHAR *attrs, size_t attrslen);
@@ -99,6 +100,7 @@ typedef struct {
   SQLCHAR *database8;
   SQLCHAR *socket8;
   SQLCHAR *initstmt8;
+  SQLCHAR *option8;
   SQLCHAR *charset8;
   SQLCHAR *sslkey8;
   SQLCHAR *sslcert8;
@@ -119,6 +121,7 @@ int ds_to_kvpair(DataSource *ds, SQLWCHAR *attrs, size_t attrslen,
 int ds_add(DataSource *ds);
 int ds_exists(SQLWCHAR *name);
 SQLCHAR *ds_get_utf8attr(SQLWCHAR *attrw, SQLCHAR **attr8);
+int ds_setattr_from_utf8(SQLWCHAR **attr, SQLCHAR *val8);
 
 #ifdef __cplusplus
 }

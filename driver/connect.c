@@ -36,6 +36,8 @@
 #endif
 
 #include "installer.h"
+#include "stringutil.h"
+#include "MYODBCUtil.h"
 
 #ifndef CLIENT_NO_SCHEMA
 # define CLIENT_NO_SCHEMA      16
@@ -395,6 +397,11 @@ SQLRETURN SQL_API MySQLConnect(SQLHDBC   hdbc,
   parameters, and whether or not to prompt the user for more information
   using the setup library.
 
+  NOTE: The prompting done in this function using MYODBCUTIL_DATASOURCE has
+        been observed to cause an access violation outside of our code
+        (specifically in Access after prompting, before table link list).
+        This has only been seen when setting a breakpoint on this function.
+
   @param[in]  hdbc  Handle of database connection
   @param[in]  hwnd  Window handle. May be @c NULL if no prompting will be done.
   @param[in]  szConnStrIn  The connection string
@@ -426,6 +433,8 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
   DataSource *ds= ds_new();
   /* We may have to read driver info to find the setup library. */
   Driver *pDriver= driver_new();
+  /* Legacy setup lib, used for prompting, will be deprecated by native guis */
+  MYODBCUTIL_DATASOURCE *oldds= MYODBCUtilAllocDataSource(MYODBCUTIL_DATASOURCE_MODE_DRIVER_CONNECT);
   BOOL bPrompt= FALSE;
   HMODULE hModule= NULL;
   unsigned long options;
@@ -474,26 +483,26 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
   switch (fDriverCompletion)
   {
   case SQL_DRIVER_PROMPT:
-    //ds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_PROMPT;
+    oldds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_PROMPT;
     bPrompt= TRUE;
     break;
 
   case SQL_DRIVER_COMPLETE:
-    //ds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_COMPLETE;
+    oldds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_COMPLETE;
     if (myodbc_do_connect(dbc, ds) == SQL_SUCCESS)
       goto connected;
     bPrompt= TRUE;
     break;
 
   case SQL_DRIVER_COMPLETE_REQUIRED:
-    //ds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_REQUIRED;
+    oldds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_REQUIRED;
     if (myodbc_do_connect(dbc, ds) == SQL_SUCCESS)
       goto connected;
     bPrompt= TRUE;
     break;
 
   case SQL_DRIVER_NOPROMPT:
-    //ds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_NOPROMPT;
+    oldds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_NOPROMPT;
     bPrompt= FALSE;
     break;
 
@@ -520,7 +529,7 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
 
   if (bPrompt)
   {
-    BOOL (*pFunc)(SQLHDBC, SQLHWND, DataSource *);
+    BOOL (*pFunc)(SQLHDBC, SQLHWND, MYODBCUTIL_DATASOURCE *);
 
     /*
      We can not present a prompt unless we can lookup the name of the setup
@@ -558,8 +567,8 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
      ODBC system info. This allows someone configure for a custom setup
      interface.
     */
-    ds_set_strattr(&pDriver->name, ds->driver);
-    if (!driver_lookup(pDriver))
+    sqlwcharncpy(pDriver->lib, ds->driver, ODBCDRIVER_STRLEN);
+    if (driver_lookup(pDriver))
     {
       char sz[1024];
       sprintf(sz, "Could not find driver '%s' in system information.",
@@ -569,7 +578,7 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
       goto error;
     }
 
-    if (!pDriver->setup_lib)
+    if (!*pDriver->setup_lib)
 #endif
     {
       rc= set_dbc_error(hdbc, "HY000",
@@ -601,7 +610,7 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
        for us to call.
     */
     /* TODO new name? args? */
-    pFunc= (BOOL (*)(SQLHDBC, SQLHWND, DataSource *))
+    pFunc= (BOOL (*)(SQLHDBC, SQLHWND, MYODBCUTIL_DATASOURCE *))
       GetProcAddress(hModule, "MYODBCSetupDriverConnect");
 
     if (pFunc == NULL)
@@ -621,13 +630,77 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
       goto error;
     }
 
+    /* Copy to the legacy data source structure for prompting */
+    if (ds->name)
+      oldds->pszDSN=         _global_strdup(ds_get_utf8attr(ds->name, &ds->name8));
+    if (ds->description)
+      oldds->pszDESCRIPTION= _global_strdup(ds_get_utf8attr(ds->description, &ds->description8));
+    if (ds->server)
+      oldds->pszSERVER=      _global_strdup(ds_get_utf8attr(ds->server, &ds->server8));
+    if (ds->uid)
+      oldds->pszUSER=        _global_strdup(ds_get_utf8attr(ds->uid, &ds->uid8));
+    if (ds->pwd)
+      oldds->pszPASSWORD=    _global_strdup(ds_get_utf8attr(ds->pwd, &ds->pwd8));
+    if (ds->database)
+      oldds->pszDATABASE=    _global_strdup(ds_get_utf8attr(ds->database, &ds->database8));
+    if (ds->socket)
+      oldds->pszSOCKET=      _global_strdup(ds_get_utf8attr(ds->socket, &ds->socket8));
+    if (ds->initstmt)
+      oldds->pszSTMT=        _global_strdup(ds_get_utf8attr(ds->initstmt, &ds->initstmt8));
+    if (ds->option)
+      oldds->pszOPTION=      _global_strdup(ds_get_utf8attr(ds->option, &ds->option8));
+    if (ds->sslkey)
+      oldds->pszSSLKEY=      _global_strdup(ds_get_utf8attr(ds->sslkey, &ds->sslkey8));
+    if (ds->sslcert)
+      oldds->pszSSLCERT=     _global_strdup(ds_get_utf8attr(ds->sslcert, &ds->sslcert8));
+    if (ds->sslca)
+      oldds->pszSSLCA=       _global_strdup(ds_get_utf8attr(ds->sslca, &ds->sslca8));
+    if (ds->sslcapath)
+      oldds->pszSSLCAPATH=   _global_strdup(ds_get_utf8attr(ds->sslcapath, &ds->sslcapath8));
+    if (ds->sslcipher)
+      oldds->pszSSLCIPHER=   _global_strdup(ds_get_utf8attr(ds->sslcipher, &ds->sslcipher8));
+    if (ds->charset)
+      oldds->pszCHARSET=     _global_strdup(ds_get_utf8attr(ds->charset, &ds->charset8));
+    oldds->pszPORT= _global_strdup("        ");
+    sprintf(oldds->pszPORT, "%d", ds->port);
+
     /* Prompt. Function returns false if user cancels.  */
-    if (!pFunc(hdbc, hwnd, ds))
+    if (!pFunc(hdbc, hwnd, oldds))
     {
       set_dbc_error(hdbc, "HY000", "User cancelled.", 0);
       rc= SQL_ERROR;
       goto error;
     }
+
+    /* After prompting, copy data back from legacy datasource struct */
+    if (oldds->pszSERVER)
+      ds_setattr_from_utf8(&ds->server, oldds->pszSERVER);
+    if (oldds->pszUSER)
+      ds_setattr_from_utf8(&ds->uid, oldds->pszUSER);
+    if (oldds->pszPASSWORD)
+      ds_setattr_from_utf8(&ds->pwd, oldds->pszPASSWORD);
+    if (oldds->pszDATABASE)
+      ds_setattr_from_utf8(&ds->database, oldds->pszDATABASE);
+    if (oldds->pszSOCKET)
+      ds_setattr_from_utf8(&ds->socket, oldds->pszSOCKET);
+    if (oldds->pszSTMT)
+      ds_setattr_from_utf8(&ds->initstmt, oldds->pszSTMT);
+    if (oldds->pszOPTION)
+      ds_setattr_from_utf8(&ds->option, oldds->pszOPTION);
+    if (oldds->pszSSLKEY)
+      ds_setattr_from_utf8(&ds->sslkey, oldds->pszSSLKEY);
+    if (oldds->pszSSLCERT)
+      ds_setattr_from_utf8(&ds->sslcert, oldds->pszSSLCERT);
+    if (oldds->pszSSLCA)
+      ds_setattr_from_utf8(&ds->sslca, oldds->pszSSLCA);
+    if (oldds->pszSSLCAPATH)
+      ds_setattr_from_utf8(&ds->sslcapath, oldds->pszSSLCAPATH);
+    if (oldds->pszSSLCIPHER)
+      ds_setattr_from_utf8(&ds->sslcipher, oldds->pszSSLCIPHER);
+    if (oldds->pszCHARSET)
+      ds_setattr_from_utf8(&ds->charset, oldds->pszCHARSET);
+    if (oldds->pszPORT)
+      ds->port= strtoul(oldds->pszPORT, NULL, 10);
   }
 
   if ((rc= myodbc_do_connect(dbc, ds)) != SQL_SUCCESS)
@@ -669,6 +742,7 @@ error:
 
   driver_delete(pDriver);
   ds_delete(ds);
+  MYODBCUtilFreeDataSource(oldds);
 
   return rc;
 }

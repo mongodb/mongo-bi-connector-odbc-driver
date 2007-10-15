@@ -190,6 +190,49 @@ void driver_delete(Driver *driver)
 
 
 /*
+ * Lookup a driver given only the filename of the driver. This is used
+ * to support prompting for additional DSN info upon connect when the
+ * driver uses an external setup library.
+ */
+int driver_lookup_name(Driver *driver)
+{
+  SQLWCHAR drivers[1024];
+  SQLWCHAR *pdrv= drivers;
+  SQLWCHAR driverinfo[1024];
+  int len;
+  short slen; /* WORD needed for windows */
+
+  /* get list of drivers */
+#ifdef _WIN32
+  if (!SQLGetInstalledDriversW(pdrv, 1023, &slen) || !(len= slen))
+#else
+  if (!(len= SQLGetPrivateProfileStringW(NULL, NULL, W_EMPTY, pdrv,
+                                         1023, W_ODBCINST_INI)))
+#endif
+    return -1;
+
+  /* check the lib of each driver for one that matches the given lib name */
+  while (len > 0)
+  {
+    if (!SQLGetPrivateProfileStringW(pdrv, W_DRIVER, W_EMPTY, driverinfo,
+                                    1023, W_ODBCINST_INI))
+      continue;
+
+    if (!sqlwcharcasecmp(driverinfo, driver->lib))
+    {
+      sqlwcharncpy(driver->name, pdrv, ODBCDRIVER_STRLEN);
+      return 0;
+    }
+
+    len -= sqlwcharlen(pdrv) + 1;
+    pdrv += sqlwcharlen(pdrv) + 1;
+  }
+
+  return -1;
+}
+
+
+/*
  * Lookup a driver in the system. The driver name is read from the given
  * object. If greater-than zero is returned, additional information
  * can be obtained from SQLInstallerError(). A less-than zero return code
@@ -200,6 +243,13 @@ int driver_lookup(Driver *driver)
   SQLWCHAR buf[4096];
   SQLWCHAR *entries= buf;
   SQLWCHAR *dest;
+
+  /* if only the filename is given, we must get the driver's name */
+  if (!*driver->name && *driver->lib)
+  {
+    if (driver_lookup_name(driver))
+      return -1;
+  }
 
   /* get entries and make sure the driver exists */
   if (SQLGetPrivateProfileStringW(driver->name, NULL, W_EMPTY, buf, 4096,
@@ -368,6 +418,7 @@ void ds_delete(DataSource *ds)
   x_free(ds->database8);
   x_free(ds->socket8);
   x_free(ds->initstmt8);
+  x_free(ds->option8);
   x_free(ds->charset8);
   x_free(ds->sslkey8);
   x_free(ds->sslcert8);
@@ -385,8 +436,7 @@ void ds_delete(DataSource *ds)
  */
 int ds_set_strattr(SQLWCHAR **attr, const SQLWCHAR *val)
 {
-  if (*attr)
-    x_free(*attr);
+  x_free(*attr);
   if (val && *val)
     *attr= sqlwchardup(val, SQL_NTS);
   else
@@ -401,8 +451,7 @@ int ds_set_strattr(SQLWCHAR **attr, const SQLWCHAR *val)
  */
 int ds_set_strnattr(SQLWCHAR **attr, const SQLWCHAR *val, size_t charcount)
 {
-  if (*attr)
-    x_free(*attr);
+  x_free(*attr);
 
   if (charcount == SQL_NTS)
     charcount= sqlwcharlen(val);
@@ -777,9 +826,22 @@ int ds_exists(SQLWCHAR *name)
 SQLCHAR *ds_get_utf8attr(SQLWCHAR *attrw, SQLCHAR **attr8)
 {
   SQLINTEGER len= SQL_NTS;
-  if (*attr8)
-    x_free(*attr8);
+  x_free(*attr8);
   *attr8= sqlwchar_as_utf8(attrw, &len);
   return *attr8;
+}
+
+
+/*
+ * Assign a data source attribute from a UTF-8 string.
+ */
+int ds_setattr_from_utf8(SQLWCHAR **attr, SQLCHAR *val8)
+{
+  size_t len= strlen(val8);
+  x_free(*attr);
+  if (!(*attr= (SQLWCHAR *)my_malloc((len + 1) * sizeof(SQLWCHAR), MYF(0))))
+    return -1;
+  utf8_as_sqlwchar(*attr, len, val8, len);
+  return 0;
 }
 
