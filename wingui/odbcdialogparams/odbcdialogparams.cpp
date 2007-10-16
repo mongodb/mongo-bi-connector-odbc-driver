@@ -60,7 +60,7 @@ void InitStaticValues()
 
 
 #define DO_DATA_EXCHANGE do {\
-	SET_STRING(drvname);\
+	SET_STRING(dsname);\
 	SET_STRING(drvdesc);\
 	SET_STRING(srvname);\
 	SET_UNSIGNED(port);\
@@ -184,7 +184,9 @@ void FormMain_OnClose(HWND hwnd)
 	PostQuitMessage(0);// turn off message loop
 	TabControl_Destroy(&TabCtrl_1);
 
-	EndDialog(hwnd, 0);
+    DWORD err;
+	if (EndDialog(hwnd, 0) == 0)
+        err = GetLastError();
 }
 
 /****************************************************************************
@@ -257,9 +259,13 @@ void btnTest_Click (HWND hwnd)
 	{
 		OdbcDialogParams params;
 		FillParameters(hwnd, params);
+
+        if ( pParams )
+            params.drvname= pParams->drvname;
+
 		const wchar_t * testResultMsg = (*gTestButtonPressedCallback)( hwnd, &params );
 
-		MessageBoxW( hwnd, testResultMsg, params.drvname.c_str(), MB_OK );
+		MessageBoxW( hwnd, testResultMsg, params.dsname.c_str(), MB_OK );
 	}
 }
 
@@ -356,10 +362,10 @@ void FormMain_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			chooseFile( hwnd, IDC_EDIT_sslca ); break;
 		case IDC_SSLCAPATHCHOOSER:
 			choosePath( hwnd, IDC_EDIT_sslcapath ); break;
-		case IDC_EDIT_drvname:
+		case IDC_EDIT_dsname:
 		{
 			if (codeNotify==EN_CHANGE) {
-				int len = Edit_GetTextLength(GetDlgItem(hwnd,IDC_EDIT_drvname));
+				int len = Edit_GetTextLength(GetDlgItem(hwnd,IDC_EDIT_dsname));
 				Button_Enable(GetDlgItem(hwnd,IDOK), len > 0);
 				Button_Enable(GetDlgItem(hwnd,IDC_BUTTON_TEST), len > 0);
 				RedrawWindow(hwnd,NULL,NULL,RDW_INVALIDATE);	
@@ -508,7 +514,18 @@ int ShowOdbcParamsDialog(
 
     // The user interface is a modal dialog box.
     DWORD err;
-    if ( DialogBox(ghInstance, MAKEINTRESOURCE(IDD_DIALOG1), ParentWnd, (DLGPROC)FormMain_DlgProc) )
+    
+    /*HINSTANCE my= ::GetModuleHandle(L"myodbc3s.dll");
+    HANDLE hResInfo= FindResource( ghInstance,MAKEINTRESOURCE(IDD_DIALOG1),RT_DIALOG );
+ 
+    if ( hResInfo)
+        params->port = 1111;
+    else
+        params->port = 0;*/
+
+    INT_PTR res = DialogBox(ghInstance, MAKEINTRESOURCE(IDD_DIALOG1), ParentWnd, (DLGPROC)FormMain_DlgProc);
+
+    if ( res == -1 )
         err = GetLastError();
 
 	BusyIndicator = false;

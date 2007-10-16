@@ -55,6 +55,7 @@
 #define IDC_SSLCACHOOSER                1026
 #define IDC_SSLCAPATHCHOOSER            1027
 #define IDC_EDIT_drvname                10000
+#define IDC_EDIT_dsname                 10000
 #define IDC_EDIT_drvdesc                10001
 #define IDC_EDIT_srvname                10002
 #define IDC_EDIT_port                   10003

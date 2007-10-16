@@ -18,7 +18,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#include "../util/MYODBCUtil.h"
+/*#include "../util/MYODBCUtil.h"*/
 #include "../util/installer.h"
 
 #include "MYODBCSetup.h"
@@ -94,7 +94,7 @@ BOOL INSTAPI ConfigDSNW( HWND hWnd, WORD nRequest, LPCWSTR pszDriver, LPCWSTR ps
     switch ( nRequest )
     {
         case ODBC_ADD_DSN:
-            /*bReturn = MYODBCSetupConfigDSNAdd( hWnd, pDataSource );*/
+            bReturn = MYODBCSetupConfigDSNAdd( hWnd, pDataSource );
             break;
         case ODBC_CONFIG_DSN:
             bReturn = MYODBCSetupConfigDSNEdit( hWnd, pDataSource );

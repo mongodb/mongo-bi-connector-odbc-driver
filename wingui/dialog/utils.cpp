@@ -35,7 +35,8 @@ extern	myString		popupMsg;
 
 void DS2DialogParams(DataSource &src, OdbcDialogParams &target)
 {
-	strAssign( target.drvname, src.name );
+	strAssign( target.drvname, src.driver );
+    strAssign( target.dsname, src.name );
 	strAssign(target.drvdesc, src.description);
 	strAssign(target.srvname, src.server);
 
@@ -85,7 +86,7 @@ void DS2DialogParams(DataSource &src, OdbcDialogParams &target)
 void DialogParams2DS( OdbcDialogParams &src, DataSource &target )
 {
     //TODO: should make copy probably
-	target.name=		(SQLWCHAR*)src.drvname.c_str();
+	target.name=		(SQLWCHAR*)src.dsname.c_str();
 	target.description=	(SQLWCHAR*)src.drvdesc.c_str();
 	target.server=		(SQLWCHAR*)src.srvname.c_str();
 
@@ -140,7 +141,10 @@ const myString & buildConnectString( OdbcDialogParams* params )
 {
 	stringConnectIn = L"DRIVER=";
 
-	concat( stringConnectIn, MYODBCINST_DRIVER_NAME );
+    if ( myStrlen(params->drvname) > 0 )
+        concat(stringConnectIn, params->drvname);
+    else
+	    concat( stringConnectIn, MYODBCINST_DRIVER_NAME );
 
 	wchar_t portstr[5];
 

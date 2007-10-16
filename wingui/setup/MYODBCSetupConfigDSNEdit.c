@@ -100,6 +100,7 @@ BOOL MYODBCSetupConfigDSNEdit( HWND hWnd, DataSource *pDataSource )
             return FALSE;
 
         DialogParams2DS( params, *pDataSource );
+        cleanUp();
     }
 
     /*!

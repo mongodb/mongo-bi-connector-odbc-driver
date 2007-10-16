@@ -6,6 +6,7 @@
 #endif
 
 HINSTANCE ghInstance;
+const LPCWSTR className = L"MySQLSetupLib";
 
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
@@ -22,13 +23,18 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		if (!GetClassInfoEx(NULL, MAKEINTRESOURCE(32770), &wcx))
 			return 0;
 
+        //FindResource(hModule, RT_DIALOG );
 		// Add our own stuff.
 		wcx.hInstance = hModule;
 	//    wcx.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDR_ICO_MAIN));
-		wcx.lpszClassName = _T("TabCtrlDmoClass");
+		wcx.lpszClassName = className;
 		if (!RegisterClassEx(&wcx) )
 			return 0;
 	}
+    else if ( ul_reason_for_call = DLL_PROCESS_DETACH )
+    {
+        UnregisterClass(className,ghInstance);
+    }
 	
     return TRUE;
 }

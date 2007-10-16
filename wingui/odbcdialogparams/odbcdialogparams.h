@@ -13,6 +13,7 @@
 struct OdbcDialogParams
 {
 	myString		drvname;
+    myString        dsname;
 	myString		drvdesc;
 	myString		srvname;
 	unsigned		port;
@@ -68,9 +69,9 @@ typedef BOOL AcceptParamsCallbackType(HWND dialog, OdbcDialogParams* params);
 typedef const WCHAR** DatabaseNamesCallbackType(HWND dialog, OdbcDialogParams* params);
 
 
-// exported procedure (the one)
+// exported procedure (the one) - not any more. statically linked.
 // returns TRUE if user pressed OK, FALSE - otherwise
-int ShowOdbcParamsDialog(
+int /*_ODBCPARAMDLL*/ ShowOdbcParamsDialog(
     PWCHAR caption,                 /*[in] Dialog caption*/
 	OdbcDialogParams* params,                  /*[inout] params */
 	HWND ParentWnd = NULL,                     /* [in] could be NULL */

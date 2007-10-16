@@ -1,8 +1,8 @@
 /****************************************************************************
  *                                                                          *
- * File    : 						                               *
+ * File    : 						                                        *
  *                                                                          *
- * Purpose : GUI Callbacks                    *
+ * Purpose : GUI Callbacks                                                  *
  *                                                                          *
  * History : Date      Reason                                               *
  *           00/00/00  Created                                              *
@@ -73,19 +73,29 @@ const WCHAR** mygetdatabases(HWND hwnd, OdbcDialogParams* params)
 	if ( nReturn != SQL_SUCCESS )
 		ShowDiagnostics( nReturn, SQL_HANDLE_DBC, hDbc );
 	if ( !SQL_SUCCEEDED(nReturn) )
+    {
 		Disconnect( hDbc,hEnv );
+        return NULL;
+    }
 
 	nReturn = SQLAllocHandle( SQL_HANDLE_STMT, hDbc, &hStmt );
 	if ( nReturn != SQL_SUCCESS )
 		ShowDiagnostics( nReturn, SQL_HANDLE_DBC, hDbc );
 	if ( !SQL_SUCCEEDED(nReturn) )
+    {
 		Disconnect( hDbc,hEnv );
+        return NULL;
+    }
 
 	nReturn = SQLTablesW( hStmt, (SQLWCHAR*)SQL_ALL_CATALOGS, SQL_NTS, (SQLWCHAR*)L"", SQL_NTS, (SQLWCHAR*)L"", 0, (SQLWCHAR*)L"", 0 );
+
 	if ( nReturn != SQL_SUCCESS )
 		ShowDiagnostics( nReturn, SQL_HANDLE_STMT, hStmt );
 	if ( !SQL_SUCCEEDED(nReturn) )
+    {
 		Disconnect( hStmt, hDbc, hEnv );
+        return NULL;
+    }
 
 	nReturn = SQLBindCol( hStmt, 1, SQL_C_WCHAR, szCatalog, MYODBC_DB_NAME_MAX, &nCatalog );
 	while ( TRUE )

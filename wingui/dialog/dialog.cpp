@@ -21,15 +21,17 @@
 /* #define NOMCX */
 /* #define NOIME */
 
+#include "stdafx.h"
+
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
 
-//#include <stdio.h>
 #include "resource.h"
 
-#include "../odbcdialogparams/odbcdialogparams.h"
-#include "callbacks.h"
+#include <odbcinst.h>
+// #include "../odbcdialogparams/odbcdialogparams.h"
+// #include "callbacks.h"
 
 // this is client application
 int APIENTRY wWinMain(HINSTANCE hInstance,
@@ -37,7 +39,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
                      LPTSTR    lpCmdLine,
                      int       nCmdShow)
 {
-	OdbcDialogParams Params;
+	/*OdbcDialogParams Params;
 	Params.drvname	= L"MySQL-ODBC";
 	Params.drvdesc	= L"";
 	Params.srvname	= L"";
@@ -58,10 +60,10 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
     // Initialize common controls. Also needed for MANIFEST's.
     InitCommonControls();
 	
-	int				res = ShowOdbcParamsDialog(L"Demo ODBC Dialog", &Params, NULL, myhelp, mytest, mytestaccept, mygetdatabases);
+	int				res = ShowOdbcParamsDialog(L"MyODBC DSN Dialog", &Params, NULL, myhelp, mytest, mytestaccept, mygetdatabases);
 	const WCHAR*	tmp = Params.drvname.c_str();
 
-	cleanUp();
+	cleanUp();*/
 
-	return res;
+    return ConfigDSNW( NULL, ODBC_ADD_DSN, L"MySQL ODBC(debug)+wingui", L"" );
 }

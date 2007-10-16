@@ -4,6 +4,7 @@
 	Version="8,00"
 	Name="myodbc3u"
 	ProjectGUID="{E91C5EB9-F177-42AF-8AE4-510242B667DA}"
+	RootNamespace="myodbc3u"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -135,7 +136,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions=" /Zm1000"
-				Optimization="2"
+				Optimization="0"
 				InlineFunctionExpansion="2"
 				AdditionalIncludeDirectories="D:\Qt-4.3.0\include;D:\Qt-4.3.0\include\Qt;D:\Qt-4.3.0\mkspecs\default;E:\work\!MySQL!!!\Projects\ODBC3.51\connOdbc3-pr2\branches\guffert\1;D:\Qt-4.3.0\include\QtCore;D:\Qt-4.3.0\include\QtGui;D:\Qt-4.3.0\include\Qt3Support;D:\Qt-4.3.0\include\QtAssistant;D:\Qt-4.3.0\include\QtDesigner;D:\Qt-4.3.0\include\QtNetwork;D:\Qt-4.3.0\include\QtOpenGL;D:\Qt-4.3.0\include\QtSql;D:\Qt-4.3.0\include\QtXml;D:\Qt-4.3.0\include\QtSvg;D:\Qt-4.3.0\include\QtUiTools;D:\Qt-4.3.0\include\QtTest;d:\PROGRA~1\MySQL\MYSQLS~1.0\include;"
 				PreprocessorDefinitions="WIN32,_WINDOWS,NDEBUG,DBUG_OFF,_CRT_SECURE_NO_DEPRECATE,_CRT_NONSTDC_NO_DEPRECATE,ENGLISH,MYODBC_EXPORTS,_USERDLL,_WIN32,WIN32,_WINDOWS,__WIN__,&quot;CMAKE_INTDIR=\&quot;Release\&quot;&quot;"
@@ -161,7 +162,9 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				AdditionalDependencies="libmysql.lib"
 				OutputFile="E:\work\!MySQL!!!\Projects\ODBC3.51\connOdbc3-pr2\branches\guffert\lib\$(OutDir)\myodbc3u.lib"
+				AdditionalLibraryDirectories="D:\MySQLclient5.0.26\opt"
 			/>
 			<Tool
 				Name="VCALinkTool"
