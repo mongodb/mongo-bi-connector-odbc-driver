@@ -7,9 +7,7 @@ extern "C"
 #endif
 
 #define DONT_DEFINE_VOID
-#pragma message("---------------------Including myGlobal-----------------------------------")
 #include <my_global.h>
-#pragma message("---------------------Including mySys-----------------------------------")
 #include <my_sys.h>
 #include <mysql.h>
 #include <my_list.h>
