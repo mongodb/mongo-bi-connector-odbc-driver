@@ -1,3 +1,5 @@
+#include <winsock2.h>
+#include "mysql.h"
 #include "stdafx.h"
 #include "resource.h"
 
@@ -15,6 +17,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 {
 	if ( ul_reason_for_call == DLL_PROCESS_ATTACH )
 	{
+		my_init();
 		InitCommonControls();
 		ghInstance = hModule;
 		WNDCLASSEX wcx;
@@ -31,8 +34,9 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		if (!RegisterClassEx(&wcx) )
 			return 0;
 	}
-    else if ( ul_reason_for_call = DLL_PROCESS_DETACH )
+    else if ( ul_reason_for_call == DLL_PROCESS_DETACH )
     {
+        my_end(0);
         UnregisterClass(className,ghInstance);
     }
 	
