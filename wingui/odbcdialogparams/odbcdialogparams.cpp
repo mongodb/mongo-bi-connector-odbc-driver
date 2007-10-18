@@ -12,7 +12,7 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
-#include <tchar.h>
+/* #include <tchar.h> */
 #include <stdio.h>
 #include "resource.h"
 #include "TabCtrl.h"
@@ -20,11 +20,12 @@
 #include <assert.h>
 #include <commdlg.h>
 #include <shlobj.h>
+#include <xstring>
 
 
 extern HINSTANCE ghInstance;
 
-OdbcDialogParams* pParams = NULL;
+DataSource* pParams = NULL;
 PWCHAR pCaption = NULL;
 bool OkPressed = false;
 
@@ -60,13 +61,13 @@ void InitStaticValues()
 
 
 #define DO_DATA_EXCHANGE do {\
-	SET_STRING(dsname);\
-	SET_STRING(drvdesc);\
-	SET_STRING(srvname);\
+	SET_STRING(name);\
+	SET_STRING(description);\
+	SET_STRING(server);\
 	SET_UNSIGNED(port);\
-	SET_STRING(username);\
-	SET_STRING(password);\
-	SET_STRING(dbname);\
+	SET_STRING(uid);\
+	SET_STRING(pwd);\
+	SET_STRING(database);\
 	SET_STRING(sslkey)\
 	SET_STRING(sslcert);\
 	SET_STRING(sslca);\
@@ -143,16 +144,16 @@ static BOOL FormMain_OnNotify (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-void FillParameters(HWND hwnd, OdbcDialogParams& params)
+void FillParameters(HWND hwnd, DataSource & params)
 {
 /** need also to resize, cuz otherwise string thinks it's zero length*/
 #define SET_STRING(param) { \
-	params.param = L""; \
+	if (params.param)\
+        *(params.param) = NULL; \
 	int len = Edit_GetTextLength(GetDlgItem(hwnd,IDC_EDIT_##param)); \
 	if(len>0) { \
-		params.param.reserve(len+1);\
-		params.param.resize(len);\
-		Edit_GetText(GetDlgItem(hwnd,IDC_EDIT_##param), (LPWSTR)params.param.c_str(), len+1);}}
+		my_realloc(params.param, len+1, 64 );\
+		Edit_GetText(GetDlgItem(hwnd,IDC_EDIT_##param), (LPWSTR)params.param, len+1);}}
 
 #define SET_UNSIGNED(param) { \
 	params.param = 0U; \
@@ -237,9 +238,9 @@ void btnOk_Click (HWND hwnd)
 {
 	if ( gAcceptParamsCallback ) 
 	{
-		OdbcDialogParams params;
-		FillParameters(hwnd, params);
-		if( (*gAcceptParamsCallback)( hwnd, &params ) )
+		/*DataSource params;*/
+		FillParameters(hwnd, *pParams);
+		if( (*gAcceptParamsCallback)( hwnd, pParams ) )
 		{
 			OkPressed = true;
 			PostMessage(hwnd, WM_CLOSE, NULL, NULL);
@@ -257,15 +258,15 @@ void btnTest_Click (HWND hwnd)
 {
 	if(gTestButtonPressedCallback)
 	{
-		OdbcDialogParams params;
-		FillParameters(hwnd, params);
+		/*OdbcDialogParams params;*/
+		FillParameters(hwnd, *pParams);
 
-        if ( pParams )
-            params.drvname= pParams->drvname;
+        /*if ( pParams )
+            params.driver= pParams->driver;*/
 
-		const wchar_t * testResultMsg = (*gTestButtonPressedCallback)( hwnd, &params );
+		const wchar_t * testResultMsg = (*gTestButtonPressedCallback)( hwnd, pParams );
 
-		MessageBoxW( hwnd, testResultMsg, params.dsname.c_str(), MB_OK );
+		MessageBoxW( hwnd, testResultMsg, pParams->name, MB_OK );
 	}
 }
 
@@ -362,10 +363,10 @@ void FormMain_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			chooseFile( hwnd, IDC_EDIT_sslca ); break;
 		case IDC_SSLCAPATHCHOOSER:
 			choosePath( hwnd, IDC_EDIT_sslcapath ); break;
-		case IDC_EDIT_dsname:
+		case IDC_EDIT_name:
 		{
 			if (codeNotify==EN_CHANGE) {
-				int len = Edit_GetTextLength(GetDlgItem(hwnd,IDC_EDIT_dsname));
+				int len = Edit_GetTextLength(GetDlgItem(hwnd,IDC_EDIT_name));
 				Button_Enable(GetDlgItem(hwnd,IDOK), len > 0);
 				Button_Enable(GetDlgItem(hwnd,IDC_BUTTON_TEST), len > 0);
 				RedrawWindow(hwnd,NULL,NULL,RDW_INVALIDATE);	
@@ -376,9 +377,9 @@ void FormMain_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 		case IDC_EDIT_dbname:
 		{
 			if(codeNotify==CBN_DROPDOWN && gDatabaseNamesCallback) {
-				OdbcDialogParams params;
-				FillParameters(hwnd, params);
-				const WCHAR** items = gDatabaseNamesCallback( hwnd, &params );
+				/*OdbcDialogParams params;*/
+				FillParameters(hwnd, *pParams);
+				const WCHAR** items = gDatabaseNamesCallback( hwnd, pParams );
 				if( items )
 				{
 					ComboBox_ResetContent(hwndCtl);
@@ -461,7 +462,7 @@ BOOL FormMain_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 	//in order to fix the minimum size of dialog
 
 #define SET_STRING(param) \
-	Edit_SetText(GetDlgItem(hwnd,IDC_EDIT_##param), pParams->param.c_str());
+	Edit_SetText(GetDlgItem(hwnd,IDC_EDIT_##param), pParams->param);
 
 #define SET_UNSIGNED(param) { \
 	wchar_t buf[1024]; \
@@ -477,6 +478,9 @@ BOOL FormMain_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 
 BOOL FormMain_DlgProc (HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    int *i;
+    i = (int*)0x1003879e;
+
 	switch(msg)
 	{
 		HANDLE_MSG (hwndDlg, WM_CLOSE, FormMain_OnClose);
@@ -495,7 +499,7 @@ BOOL FormMain_DlgProc (HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 // returns FALSE if 'cancel' button pressed
 int ShowOdbcParamsDialog(
     PWCHAR caption,
-	OdbcDialogParams* params,                  /*[inout]*/
+	DataSource* params,                  /*[inout]*/
 	HWND ParentWnd,                     /* [in] could be NULL */
 	HelpButtonPressedCallbackType* hcallback, /* [in] could be NULL */
 	TestButtonPressedCallbackType* tcallback, /* [in] could be NULL */

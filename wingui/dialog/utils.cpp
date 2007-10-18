@@ -33,83 +33,34 @@ extern	myString		stringConnectIn;
 extern	WCHAR **		errorMsgs;
 extern	myString		popupMsg;
 
-void DS2DialogParams(DataSource &src, OdbcDialogParams &target)
+void DecompileOptions(DataSource &params)
 {
-	strAssign( target.drvname, src.driver );
-    strAssign( target.dsname, src.name );
-	strAssign(target.drvdesc, src.description);
-	strAssign(target.srvname, src.server);
+	ulong nOptions = sqlwchartoul( params.option );
 
-	target.port = src.port;
-
-	strAssign(target.dbname, src.database);
-	strAssign(target.username, src.uid);
-	strAssign(target.password, src.pwd);
-	strAssign(target.socket, src.socket);
-
-	strAssign(target.sslkey, src.sslkey);
-	strAssign(target.sslcert, src.sslcert);
-	strAssign(target.sslca, src.sslca);
-	strAssign(target.sslcapath, src.sslcapath);
-	strAssign(target.sslcipher, src.sslcipher);
-
-	strAssign(target.initstmt, src.initstmt);
-	strAssign(target.charset, src.charset);
-
-	ulong nOptions = sqlwchartoul( src.option );
-
-    target.dont_optimize_column_width=				(nOptions & FLAG_FIELD_LENGTH) > 0;
-    target.return_matching_rows=                    (nOptions & FLAG_FOUND_ROWS) > 0;  /* 2 */
-	target.allow_big_results=						(nOptions & FLAG_BIG_PACKETS) > 0;
-	target.dont_prompt_upon_connect=				(nOptions & FLAG_NO_PROMPT) > 0;
-	target.enable_dynamic_cursor=					(nOptions & FLAG_DYNAMIC_CURSOR) > 0;
-	target.ignore_N_in_name_table=					(nOptions & FLAG_NO_SCHEMA) > 0;
-	target.user_manager_cursor=						(nOptions & FLAG_NO_DEFAULT_CURSOR) > 0;
-	target.dont_use_set_locale=						(nOptions & FLAG_NO_LOCALE) > 0;
-	target.pad_char_to_full_length=					(nOptions & FLAG_PAD_SPACE) > 0;
-	target.return_table_names_for_SqlDesribeCol=    (nOptions & FLAG_FULL_COLUMN_NAMES) > 0;
-	target.use_compressed_protocol=					(nOptions & FLAG_COMPRESSED_PROTO) > 0;
-	target.ignore_space_after_function_names=		(nOptions & FLAG_IGNORE_SPACE) > 0; 
-	target.force_use_of_named_pipes=				(nOptions & FLAG_NAMED_PIPE) > 0;          
-	target.change_bigint_columns_to_int=			(nOptions & FLAG_NO_BIGINT) > 0;
-	target.no_catalog=								(nOptions & FLAG_NO_CATALOG) > 0;
-	target.read_options_from_mycnf=					(nOptions & FLAG_USE_MYCNF) > 0;          
-	target.safe=									(nOptions & FLAG_SAFE) > 0;
-	target.disable_transactions=					(nOptions & FLAG_NO_TRANSACTIONS) > 0;           
-	target.save_queries=							(nOptions & FLAG_LOG_QUERY) > 0;
-	target.dont_cache_result=						(nOptions & FLAG_NO_CACHE) > 0;
-	target.force_use_of_forward_only_cursors=		(nOptions & FLAG_FORWARD_CURSOR) > 0;  
-	target.enable_auto_reconnect=					(nOptions & FLAG_AUTO_RECONNECT) > 0;
-	target.enable_auto_increment_null_search=		(nOptions & FLAG_AUTO_IS_NULL ) > 0;
+    params.dont_optimize_column_width=				(nOptions & FLAG_FIELD_LENGTH) > 0;
+    params.return_matching_rows=                    (nOptions & FLAG_FOUND_ROWS) > 0;  /* 2 */
+	params.allow_big_results=						(nOptions & FLAG_BIG_PACKETS) > 0;
+	params.dont_prompt_upon_connect=				(nOptions & FLAG_NO_PROMPT) > 0;
+	params.enable_dynamic_cursor=					(nOptions & FLAG_DYNAMIC_CURSOR) > 0;
+	params.ignore_N_in_name_table=					(nOptions & FLAG_NO_SCHEMA) > 0;
+	params.user_manager_cursor=						(nOptions & FLAG_NO_DEFAULT_CURSOR) > 0;
+	params.dont_use_set_locale=						(nOptions & FLAG_NO_LOCALE) > 0;
+	params.pad_char_to_full_length=					(nOptions & FLAG_PAD_SPACE) > 0;
+	params.return_table_names_for_SqlDesribeCol=    (nOptions & FLAG_FULL_COLUMN_NAMES) > 0;
+	params.use_compressed_protocol=					(nOptions & FLAG_COMPRESSED_PROTO) > 0;
+	params.ignore_space_after_function_names=		(nOptions & FLAG_IGNORE_SPACE) > 0; 
+	params.force_use_of_named_pipes=				(nOptions & FLAG_NAMED_PIPE) > 0;          
+	params.change_bigint_columns_to_int=			(nOptions & FLAG_NO_BIGINT) > 0;
+	params.no_catalog=								(nOptions & FLAG_NO_CATALOG) > 0;
+	params.read_options_from_mycnf=					(nOptions & FLAG_USE_MYCNF) > 0;          
+	params.safe=									(nOptions & FLAG_SAFE) > 0;
+	params.disable_transactions=					(nOptions & FLAG_NO_TRANSACTIONS) > 0;           
+	params.save_queries=							(nOptions & FLAG_LOG_QUERY) > 0;
+	params.dont_cache_result=						(nOptions & FLAG_NO_CACHE) > 0;
+	params.force_use_of_forward_only_cursors=		(nOptions & FLAG_FORWARD_CURSOR) > 0;  
+	params.enable_auto_reconnect=					(nOptions & FLAG_AUTO_RECONNECT) > 0;
+	params.enable_auto_increment_null_search=		(nOptions & FLAG_AUTO_IS_NULL ) > 0;
 }
-
-void DialogParams2DS( OdbcDialogParams &src, DataSource &target )
-{
-    //TODO: should make copy probably
-	target.name=		(SQLWCHAR*)src.dsname.c_str();
-	target.description=	(SQLWCHAR*)src.drvdesc.c_str();
-	target.server=		(SQLWCHAR*)src.srvname.c_str();
-
-	target.port=		src.port;
-
-	target.database=	(SQLWCHAR*)src.dbname.c_str();
-	target.uid=			(SQLWCHAR*)src.username.c_str();
-	target.pwd=			(SQLWCHAR*)src.password.c_str();
-	target.socket=		(SQLWCHAR*)src.socket.c_str();
-
-	target.sslkey=		(SQLWCHAR*)src.sslkey.c_str();
-	target.sslcert=		(SQLWCHAR*)src.sslcert.c_str();
-	target.sslca=		(SQLWCHAR*)src.sslca.c_str();
-	target.sslcapath=	(SQLWCHAR*)src.sslcapath.c_str();
-	target.sslcipher=	(SQLWCHAR*)src.sslcipher.c_str();
-
-	target.initstmt=	(SQLWCHAR*)src.initstmt.c_str();
-	target.charset=		(SQLWCHAR*)src.charset.c_str();
-
-    unsigned long nOptions = CompileOptions( &src );
-    target.option = L"";
-}
-
 
 void FreeEnvHandle( SQLHENV &hEnv )
 {
@@ -137,12 +88,12 @@ void Disconnect( SQLHSTMT &hStmt, SQLHDBC &hDbc, SQLHENV &hEnv  )
 }
 
 
-const myString & buildConnectString( OdbcDialogParams* params )
+const myString & buildConnectString( DataSource* params )
 {
 	stringConnectIn = L"DRIVER=";
 
-    if ( myStrlen(params->drvname) > 0 )
-        concat(stringConnectIn, params->drvname);
+    if ( myStrlen(params->driver) > 0 )
+        concat(stringConnectIn, params->driver);
     else
 	    concat( stringConnectIn, MYODBCINST_DRIVER_NAME );
 
@@ -204,14 +155,14 @@ const myString & buildConnectString( OdbcDialogParams* params )
 	concat(stringConnectIn, params->drvname );//pDataSource->pszDRIVER);*/
 #endif
 
-	concat( concat( stringConnectIn, L";UID=" ), params->username );
+	concat( concat( stringConnectIn, L";UID=" ), params->uid );
 
-	concat( concat( stringConnectIn, L";PWD=" ), params->password );
+	concat( concat( stringConnectIn, L";PWD=" ), params->pwd );
 
-	concat( concat( stringConnectIn, L";SERVER=" ), params->srvname );
+	concat( concat( stringConnectIn, L";SERVER=" ), params->server );
 
-	if ( myStrlen( params->dbname ) )
-		concat( concat( stringConnectIn, L";DATABASE="), params->dbname );
+	if ( myStrlen( params->database ) )
+		concat( concat( stringConnectIn, L";DATABASE="), params->database );
 
 	if ( params->port > 0 )
 	{
@@ -241,7 +192,7 @@ const myString & buildConnectString( OdbcDialogParams* params )
 }
 
 
-SQLRETURN Connect( SQLHDBC  &   hDbc, SQLHENV   &  hEnv, OdbcDialogParams * params )
+SQLRETURN Connect( SQLHDBC  &   hDbc, SQLHENV   &  hEnv, DataSource * params )
 {
 	SQLRETURN   nReturn;
 	//			QStringList stringlistDatabases;
@@ -277,7 +228,7 @@ SQLRETURN Connect( SQLHDBC  &   hDbc, SQLHENV   &  hEnv, OdbcDialogParams * para
 		}
 	}
 
-	nReturn = SQLDriverConnectW( hDbc, NULL, (SQLWCHAR*)( stringConnectIn.c_str() ), SQL_NTS, NULL, 0, NULL, SQL_DRIVER_NOPROMPT );
+	nReturn = SQLDriverConnectW( hDbc, NULL, (SQLWCHAR*)( stringConnectIn ), SQL_NTS, NULL, 0, NULL, SQL_DRIVER_NOPROMPT );
 
 	if ( nReturn != SQL_SUCCESS )
 		ShowDiagnostics( nReturn, SQL_HANDLE_DBC, hDbc );
@@ -340,7 +291,7 @@ void ShowDiagnostics( SQLRETURN nReturn, SQLSMALLINT nHandleType, SQLHANDLE h )
 }
 
 
-unsigned long CompileOptions( OdbcDialogParams * params )
+unsigned long CompileOptions( DataSource * params )
 {
 	unsigned long nFlags = 0;
 

@@ -30,7 +30,7 @@ void cleanUp()
 	clearList(errorMsgs);
 }
 
-const wchar_t * mytest(HWND hwnd, OdbcDialogParams* params)
+const wchar_t * mytest(HWND hwnd, DataSource* params)
 {
 	SQLHDBC hDbc = hDBC;
 	SQLHENV hEnv = SQL_NULL_HENV;
@@ -39,21 +39,27 @@ const wchar_t * mytest(HWND hwnd, OdbcDialogParams* params)
 		return L"Connection successful";
 	else
 	{
-		strAssign(popupMsg, concat(myString(L"Connection Failed:"), popupMsg ) );
+        myString tmp = NULL;
 
-		return popupMsg.c_str();
+        strAssign(tmp,myString(L"Connection Failed:"));
+
+		strAssign(popupMsg, concat( tmp, popupMsg ) );
+
+        x_free( tmp );
+
+		return popupMsg;
 	}
 
 	Disconnect( hDbc, hEnv );
 	//MessageBox(hwnd, params->dbname.c_str(), params->drvdesc.c_str(), MB_OK);
 }
 
-BOOL mytestaccept(HWND hwnd, OdbcDialogParams* params)
+BOOL mytestaccept(HWND hwnd, DataSource* params)
 {
 	return true/*(IDYES == MessageBoxW(hwnd, params->dbname.c_str(), params->drvdesc.c_str(), MB_YESNO))*/;
 }
 
-const WCHAR** mygetdatabases(HWND hwnd, OdbcDialogParams* params)
+const WCHAR** mygetdatabases(HWND hwnd, DataSource* params)
 {
 	// = { L"DB1", L"DB2", NULL };
 

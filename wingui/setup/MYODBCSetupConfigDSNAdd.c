@@ -105,13 +105,9 @@ BOOL MYODBCSetupConfigDSNAdd( HWND hWnd, DataSource *pDataSource )
     */    
     if ( hWnd )
     {
-        OdbcDialogParams params;
-        DS2DialogParams(*pDataSource,params);
-
-        if ( !ShowOdbcParamsDialog( L"Adding New DSN", &params, hWnd, myhelp, mytest, mytestaccept, mygetdatabases ) )
+        if ( !ShowOdbcParamsDialog( L"Adding New DSN", pDataSource, hWnd, myhelp, mytest, mytestaccept, mygetdatabases ) )
             return FALSE;
 
-        DialogParams2DS( params, *pDataSource );
         cleanUp();
     }
 

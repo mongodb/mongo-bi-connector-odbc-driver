@@ -11,10 +11,10 @@
 		void		cleanUp();
 
 // Callbacks indeed
-const	wchar_t *	mytest			(HWND hwnd, OdbcDialogParams* params);
-		BOOL		mytestaccept	(HWND hwnd, OdbcDialogParams* params);
-		/*BOOL		mytestaccept	(HWND hwnd, OdbcDialogParams* params);*/
-const	WCHAR**		mygetdatabases	(HWND hwnd, OdbcDialogParams* params);
+const	wchar_t *	mytest			(HWND hwnd, DataSource* params);
+		BOOL		mytestaccept	(HWND hwnd, DataSource* params);
+		/*BOOL		mytestaccept	(HWND hwnd, DataSource* params);*/
+const	WCHAR**		mygetdatabases	(HWND hwnd, DataSource* params);
 		void		myhelp			(HWND hwnd);
 
 

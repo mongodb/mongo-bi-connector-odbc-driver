@@ -552,7 +552,7 @@ SQLWCHAR *sqlwchardup(const SQLWCHAR *wstr, size_t charlen)
  * @return The integer result of the conversion or 0 if the
  *         string could not be parsed.
  */
-ulong sqlwchartoul(const SQLWCHAR *wstr)
+unsigned long sqlwchartoul(const SQLWCHAR *wstr)
 {
   const SQLWCHAR *end= wstr + sqlwcharlen(wstr) - 1;
   SQLWCHAR c;
@@ -611,3 +611,18 @@ size_t sqlwcharncat2(SQLWCHAR *dest, const SQLWCHAR *src, size_t *n)
 }
 
 
+/*
+ * Copy up to 'n' characters (including NULL) from src to dest.
+ */
+SQLWCHAR *sqlwcharncpy(SQLWCHAR *dest, const SQLWCHAR *src, size_t n)
+{
+  if (!dest || !src)
+    return NULL;
+  while (*src && n--)
+    *dest++= *src++;
+  if (n)
+    *dest= 0;
+  else
+    *(dest - 1)= 0;
+  return dest;
+}

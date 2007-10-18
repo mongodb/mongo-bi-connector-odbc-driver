@@ -66,6 +66,7 @@ typedef struct {
 
 Driver *driver_new();
 void driver_delete(Driver *driver);
+int driver_lookup_name(Driver *driver);
 int driver_lookup(Driver *driver);
 int driver_from_kvpair_semicolon(Driver *driver, const SQLWCHAR *attrs);
 int driver_to_kvpair_null(Driver *driver, SQLWCHAR *attrs, size_t attrslen);
@@ -99,6 +100,7 @@ typedef struct {
   SQLCHAR *database8;
   SQLCHAR *socket8;
   SQLCHAR *initstmt8;
+  SQLCHAR *option8;
   SQLCHAR *charset8;
   SQLCHAR *sslkey8;
   SQLCHAR *sslcert8;
@@ -106,6 +108,35 @@ typedef struct {
   SQLCHAR *sslcapath8;
   SQLCHAR *sslcipher8;
   /* A bitmask of all options carried over from MyODBC 3.51 */
+
+  // flags 1
+  bool dont_optimize_column_width;
+  bool return_matching_rows;
+  bool allow_big_results;
+  bool use_compressed_protocol;
+  bool change_bigint_columns_to_int;
+  bool safe;
+  bool enable_auto_reconnect;
+  bool enable_auto_increment_null_search;
+  // flags 2
+  bool dont_prompt_upon_connect;
+  bool enable_dynamic_cursor;
+  bool ignore_N_in_name_table;
+  bool user_manager_cursor;
+  bool dont_use_set_locale;
+  bool pad_char_to_full_length;
+  bool dont_cache_result;
+  // flags 3
+  bool return_table_names_for_SqlDesribeCol;
+  bool ignore_space_after_function_names;
+  bool force_use_of_named_pipes;
+  bool no_catalog;
+  bool read_options_from_mycnf;
+  bool disable_transactions;
+  bool force_use_of_forward_only_cursors;
+  // debug
+  bool save_queries;
+
 } DataSource;
 
 DataSource *ds_new();
@@ -119,6 +150,7 @@ int ds_to_kvpair(DataSource *ds, SQLWCHAR *attrs, size_t attrslen,
 int ds_add(DataSource *ds);
 int ds_exists(SQLWCHAR *name);
 SQLCHAR *ds_get_utf8attr(SQLWCHAR *attrw, SQLCHAR **attr8);
+int ds_setattr_from_utf8(SQLWCHAR **attr, SQLCHAR *val8);
 
 #ifdef __cplusplus
 }

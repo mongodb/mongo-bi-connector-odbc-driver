@@ -12,8 +12,9 @@ typedef std::wstring		myString;
 
 /** Type definitions and includes if _do_not_ use string class*/
 
-#include <string.h>
-#typedef wchar_t*			myString;
+#include "../util/stringutil.h"
+
+typedef SQLWCHAR*			myString;
 
 #endif /*using wstring or wchar_t **/
 
@@ -30,7 +31,7 @@ static const size_t InvalidSize = size_t(-1);
 
 myString &  concat      ( myString &left, const myString &right );
 
-size_t      myStrlen    ( myString & str );
+size_t      myStrlen    ( const myString & str );
 
 myString &  strAssign   ( myString &dest, const myString & src );
 myString &  strAssign   ( myString &dest, const wchar_t * src );
