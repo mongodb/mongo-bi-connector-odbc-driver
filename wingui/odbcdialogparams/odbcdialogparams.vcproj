@@ -41,7 +41,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="D:\mysqlclient5.0.26\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ODBCDIALOGPARAMS_EXPORTS;_DO_NOT_USE_STRING_"
+				PreprocessorDefinitions="WIN32,_WINDOWS,_DEBUG,DBUG_OFF,_CRT_SECURE_NO_DEPRECATE,_CRT_NONSTDC_NO_DEPRECATE,ENGLISH,_WIN32,WIN32,_WINDOWS,__WIN__,ODBCDIALOGPARAMS_EXPORTS;_DO_NOT_USE_STRING_;VOIDTYPE"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -61,8 +61,8 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="comctl32.lib"
-				AdditionalLibraryDirectories=""
+				AdditionalDependencies="comctl32.lib myodbc3u.lib"
+				AdditionalLibraryDirectories="&quot;..\..\lib\$(ConfigurationName)&quot;"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -125,8 +125,8 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="comctl32.lib"
-				AdditionalLibraryDirectories=""
+				AdditionalDependencies="comctl32.lib myodbc3u.lib"
+				AdditionalLibraryDirectories="&quot;..\..\lib\$(ConfigurationName)&quot;"
 			/>
 			<Tool
 				Name="VCALinkTool"

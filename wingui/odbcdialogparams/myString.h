@@ -12,7 +12,7 @@ typedef std::wstring		myString;
 
 /** Type definitions and includes if _do_not_ use string class*/
 
-#include "../util/stringutil.h"
+#include <sqltypes.h>
 
 typedef SQLWCHAR*			myString;
 

@@ -12,7 +12,7 @@
 #include "stdafx.h"
 
 /** couple of temporary hacks to make it compile here*/
-typedef char	byte;
+//typedef char	byte;
 #include <winsock2.h>
 /** end hacks */
 
@@ -21,12 +21,10 @@ typedef char	byte;
 #include "utils.h"
 #include "../odbcdialogparams/myString.h"
 
-extern "C"
-{
 #include "../driver/driver.h"
 #include "../util/stringutil.h"
 #include "../util/MYODBCUtil.h"
-};
+
 
 extern	SQLHDBC			hDBC;
 extern	myString		stringConnectIn;

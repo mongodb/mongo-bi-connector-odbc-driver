@@ -16,12 +16,16 @@
 #include <stdio.h>
 #include "resource.h"
 #include "TabCtrl.h"
-#include "odbcdialogparams.h"
 #include <assert.h>
 #include <commdlg.h>
 #include <shlobj.h>
 #include <xstring>
 
+#include <winsock2.h>
+
+#include "odbcdialogparams.h"
+
+#include "../MYODBC_MYSQL.h"
 
 extern HINSTANCE ghInstance;
 
@@ -152,7 +156,7 @@ void FillParameters(HWND hwnd, DataSource & params)
         *(params.param) = NULL; \
 	int len = Edit_GetTextLength(GetDlgItem(hwnd,IDC_EDIT_##param)); \
 	if(len>0) { \
-		my_realloc(params.param, len+1, 64 );\
+		my_realloc((gptr)params.param, len+1, 64 );\
 		Edit_GetText(GetDlgItem(hwnd,IDC_EDIT_##param), (LPWSTR)params.param, len+1);}}
 
 #define SET_UNSIGNED(param) { \
@@ -478,9 +482,6 @@ BOOL FormMain_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 
 BOOL FormMain_DlgProc (HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    int *i;
-    i = (int*)0x1003879e;
-
 	switch(msg)
 	{
 		HANDLE_MSG (hwndDlg, WM_CLOSE, FormMain_OnClose);

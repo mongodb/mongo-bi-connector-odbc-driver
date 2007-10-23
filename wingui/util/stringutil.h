@@ -28,11 +28,24 @@
 #ifndef _STRINGUTIL_H
 #define _STRINGUTIL_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include "../MYODBC_MYSQL.h"
 
 #include <string.h>
 #include <sql.h>
 #include <sqlext.h>
+
+/*#include <winsock2.h>
+
+#ifndef small
+typedef char    byte;
+#endif*/
+
+
 
 #ifndef x_free
 #define x_free(A) { void *tmp= (A); if (tmp) my_free(tmp,MYF(MY_WME+MY_FAE)); }
@@ -95,6 +108,9 @@ void sqlwcharfromul(SQLWCHAR *wstr, unsigned long v);
 size_t sqlwcharncat2(SQLWCHAR *dest, const SQLWCHAR *src, size_t *n);
 SQLWCHAR *sqlwcharncpy(SQLWCHAR *dest, const SQLWCHAR *src, size_t n);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _STRINGUTIL_H */
 

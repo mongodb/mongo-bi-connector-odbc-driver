@@ -109,7 +109,7 @@ typedef struct {
   SQLCHAR *sslcipher8;
   /* A bitmask of all options carried over from MyODBC 3.51 */
 
-  // flags 1
+  /* flags 1 */
   bool dont_optimize_column_width;
   bool return_matching_rows;
   bool allow_big_results;

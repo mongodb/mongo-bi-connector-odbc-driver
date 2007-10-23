@@ -12,9 +12,11 @@
 #include "stdafx.h"
 
 #include "callbacks.h"
-#include "../odbcdialogparams/odbcdialogparams.h"
+/*#include "../odbcdialogparams/odbcdialogparams.h"*/
 #include "../odbcdialogparams/myString.h"
 #include "../../util/MYODBCUtil.h"
+#include <WinSock2.h>
+#include "../util/stringutil.h"
 
 myString		stringConnectIn	= L"";
 WCHAR **		errorMsgs		= NULL;

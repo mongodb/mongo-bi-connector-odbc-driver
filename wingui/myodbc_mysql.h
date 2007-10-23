@@ -7,6 +7,13 @@ extern "C"
 #endif
 
 #define DONT_DEFINE_VOID
+
+/* DIRTY hack 
+#include <winsock2.h>
+typedef char    byte;*/
+
+/************************************************************************/
+
 #include <my_global.h>
 #include <my_sys.h>
 #include <mysql.h>

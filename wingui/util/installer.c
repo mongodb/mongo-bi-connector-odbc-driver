@@ -30,8 +30,10 @@
  *    Initialize/destroy them in ds_new/ds_delete
  *    
  */
+
 #include "stringutil.h"
 #include "installer.h"
+
 
 /* ODBC Installer Config Wrapper */
 

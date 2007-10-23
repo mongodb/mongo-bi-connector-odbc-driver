@@ -7,8 +7,8 @@
 #define _ODBCPARAMDLL __declspec(dllimport)
 #endif
 
-#include "myString.h"
 #include "../util/installer.h"
+#include "myString.h"
 
 // procedure describes all items shown on the dialog
 

@@ -2,6 +2,8 @@
 
 #include "myString.h"
 
+#include <WinSock2.h>
+#include "../util/stringutil.h"
 
 /*myString & operator += ( myString & lhs, const wchar_t * rhs)
 {
