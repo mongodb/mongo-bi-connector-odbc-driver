@@ -475,7 +475,7 @@ BOOL FormMain_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 
 	DO_DATA_EXCHANGE;
 
-	BOOL b = DoCreateDialogTooltip();
+//	BOOL b = DoCreateDialogTooltip();
 	return 0;
 }
 

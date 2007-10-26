@@ -98,9 +98,30 @@ size_t	listSize( const WCHAR ** list )
 
 myString & concat( myString &left, const myString &right )
 {
-    size_t len = myStrlen(right);
-    my_realloc((gptr)left,myStrlen(left)+myStrlen(right)+1, MY_ALLOW_ZERO_PTR);
-    sqlwcharncat2(left, right, &len );
+    if ( right == NULL )
+        return left;
+
+    size_t      len = myStrlen(right) + 1;
+    myString    tmp = (myString) my_realloc((gptr)left,(myStrlen(left)+len)*sizeof(SQLWCHAR), MY_ALLOW_ZERO_PTR);
+
+    
+    if (tmp == NULL)
+    {
+        tmp = (myString) my_malloc((myStrlen(left)+len+1)*sizeof(SQLWCHAR), MYF(0));
+
+        if ( tmp )
+        {
+            sqlwcharncpy(tmp,left,myStrlen(left)+1);
+            x_free(left);
+        }
+    }
+
+    if ( tmp != NULL )
+    {
+        left = tmp;
+        sqlwcharncat2(left, right, &len );
+    }
+
     //return left.length();
     return left;
 }
@@ -116,7 +137,9 @@ myString & strAssign	( myString &dest, const wchar_t * src )
         return strAssign( dest, myString( src ) );
     else
     {
-        dest= L"";
+        if ( dest )
+            *dest = 0;
+
         return dest;
     }
 }

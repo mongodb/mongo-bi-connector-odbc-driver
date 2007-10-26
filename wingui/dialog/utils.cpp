@@ -88,7 +88,7 @@ void Disconnect( SQLHSTMT &hStmt, SQLHDBC &hDbc, SQLHENV &hEnv  )
 
 const myString & buildConnectString( DataSource* params )
 {
-	stringConnectIn = L"DRIVER=";
+	strAssign(stringConnectIn, L"DRIVER=");
 
     if ( myStrlen(params->driver) > 0 )
         concat(stringConnectIn, params->driver);
@@ -153,7 +153,7 @@ const myString & buildConnectString( DataSource* params )
 	concat(stringConnectIn, params->drvname );//pDataSource->pszDRIVER);*/
 #endif
 
-	concat( concat( stringConnectIn, L";UID=" ), params->uid );
+	concat( concat( stringConnectIn,L";UID=" ), params->uid );
 
 	concat( concat( stringConnectIn, L";PWD=" ), params->pwd );
 
