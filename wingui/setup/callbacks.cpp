@@ -18,9 +18,9 @@
 #include <WinSock2.h>
 #include "../util/stringutil.h"
 
-myString		stringConnectIn	= L"";
+myString		stringConnectIn	= NULL;
 WCHAR **		errorMsgs		= NULL;
-myString		popupMsg		= L"";
+myString		popupMsg		= NULL;
 
 SQLHDBC			hDBC			= SQL_NULL_HDBC;
 
@@ -30,6 +30,9 @@ void cleanUp()
 {
 	clearList(databases);
 	clearList(errorMsgs);
+
+    x_free( stringConnectIn );
+    x_free( popupMsg        );
 }
 
 const wchar_t * mytest(HWND hwnd, DataSource* params)

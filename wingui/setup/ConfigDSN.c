@@ -20,7 +20,7 @@
 
 /*#include "../util/MYODBCUtil.h"*/
 #include "../util/installer.h"
-
+#include "callbacks.h"
 #include "MYODBCSetup.h"
 
 /*!
@@ -108,5 +108,6 @@ BOOL INSTAPI ConfigDSNW( HWND hWnd, WORD nRequest, LPCWSTR pszDriver, LPCWSTR ps
 
 exitConfigDSN:
     ds_delete( pDataSource );
+    cleanUp();
     return bReturn;
 }     

@@ -436,7 +436,7 @@
 			Name="Source Files"
 			>
 			<File
-				RelativePath="..\dialog\callbacks.cpp"
+				RelativePath=".\callbacks.cpp"
 				>
 			</File>
 			<File
@@ -456,7 +456,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\dialog\utils.cpp"
+				RelativePath=".\utils.cpp"
 				>
 			</File>
 		</Filter>
@@ -464,11 +464,11 @@
 			Name="Header Files"
 			>
 			<File
-				RelativePath="..\dialog\callbacks.h"
+				RelativePath=".\callbacks.h"
 				>
 			</File>
 			<File
-				RelativePath="..\dialog\utils.h"
+				RelativePath=".\utils.h"
 				>
 			</File>
 		</Filter>

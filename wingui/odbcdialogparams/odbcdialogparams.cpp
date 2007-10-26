@@ -254,7 +254,8 @@ void btnOk_Click (HWND hwnd)
 
 void btnCancel_Click (HWND hwnd)
 {
-	OkPressed = false;
+    /* OK pressed by default. And only can be false if ok really pressed. so, no need to set it to "false" here*/
+	/*OkPressed = false;*/
 	PostMessage(hwnd, WM_CLOSE, NULL, NULL);
 }
 

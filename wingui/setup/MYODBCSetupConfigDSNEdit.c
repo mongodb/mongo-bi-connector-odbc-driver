@@ -19,7 +19,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "MYODBCSetup.h"
-#include "../dialog/callbacks.h"
+#include "callbacks.h"
 
 /*!
     \internal
@@ -95,8 +95,6 @@ BOOL MYODBCSetupConfigDSNEdit( HWND hWnd, DataSource *pDataSource )
     {
         if ( !ShowOdbcParamsDialog( L"Adding New DSN", pDataSource, hWnd, myhelp, mytest, mytestaccept, mygetdatabases ) )
             return FALSE;
-
-        cleanUp();
     }
 
     /*!
