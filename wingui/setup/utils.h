@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef _CALLBACKS_UTILS_
 
 #define _CALLBACKS_UTILS_

@@ -8,14 +8,13 @@
  *           00/00/00  Created                                              *
  *                                                                          *
  ****************************************************************************/
-
-#include "stdafx.h"
+/*#include "stdafx.h"*/
 
 #include "callbacks.h"
 /*#include "../odbcdialogparams/odbcdialogparams.h"*/
 #include "../odbcdialogparams/myString.h"
 #include "../../util/MYODBCUtil.h"
-#include <WinSock2.h>
+/*#include <WinSock2.h>*/
 #include "../util/stringutil.h"
 
 myString		stringConnectIn	= NULL;
@@ -48,9 +47,11 @@ const wchar_t * mytest(HWND hwnd, DataSource* params)
 
         strAssign(tmp,myString(L"Connection Failed:"));
 
-		strAssign(popupMsg, concat( tmp, popupMsg ) );
+		concat( tmp, popupMsg );
 
-        x_free( tmp );
+        x_free( popupMsg );
+
+        popupMsg = tmp;
 
 		return popupMsg;
 	}

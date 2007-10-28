@@ -19,6 +19,7 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 #include "MYODBCSetup.h"
+#include "../util/stringutil.h"
 #include "callbacks.h"
 
 /*!
@@ -93,7 +94,15 @@ BOOL MYODBCSetupConfigDSNEdit( HWND hWnd, DataSource *pDataSource )
     */
     if ( hWnd )
     {
-        if ( !ShowOdbcParamsDialog( L"Adding New DSN", pDataSource, hWnd, myhelp, mytest, mytestaccept, mygetdatabases ) )
+        SQLWCHAR caption[2048];
+        const SQLWCHAR * common = L"Editing DSN \"";
+        sqlwcharncpy(caption, common, sqlwcharlen(common) + 1);
+        size_t len = sqlwcharlen(pDataSource->name) + 1;
+        sqlwcharncat2( caption, pDataSource->name, &len );
+        len = 2;
+        sqlwcharncat2( caption, L"\"", &len );
+
+        if ( !ShowOdbcParamsDialog( caption, pDataSource, hWnd, myhelp, mytest, mytestaccept, mygetdatabases ) )
             return FALSE;
     }
 

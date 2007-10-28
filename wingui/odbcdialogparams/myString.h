@@ -29,16 +29,17 @@ static const size_t InvalidSize = size_t(-1);
 #endif
 #endif
 
-myString &  concat      ( myString &left, const myString &right );
+size_t      myReserveMemory ( myString &oldptr, size_t newLen );
+myString &  concat          ( myString &left, const myString &right );
 
-size_t      myStrlen    ( const myString & str );
+size_t      myStrlen        ( const myString & str );
 
-myString &  strAssign   ( myString &dest, const myString & src );
-myString &  strAssign   ( myString &dest, const wchar_t * src );
+myString &  strAssign       ( myString &dest, const myString & src );
+myString &  strAssign       ( myString &dest, const wchar_t * src );
 
 /*** List related functions */
-void        add2list	( WCHAR ** & list, const wchar_t * newmember );
-void        clearList	( WCHAR ** & list );
-size_t      listSize	( const WCHAR ** list );
+void        add2list	    ( WCHAR ** & list, const wchar_t * newmember );
+void        clearList	    ( WCHAR ** & list );
+size_t      listSize	    ( const WCHAR ** list );
 
 #endif /* __MYSTRING__*/

@@ -96,29 +96,47 @@ size_t	listSize( const WCHAR ** list )
 
 #else
 
+/*
+ *reallocates memory for the string; newLen - in characters, not bytes, not counting NULL
+ */
+size_t myReserveMemory( myString & oldptr, size_t newLen )
+{
+    newLen++;
+    myString    tmp = (myString) my_realloc((gptr)oldptr, (uint)(newLen*sizeof(SQLWCHAR)), MY_ALLOW_ZERO_PTR);
+
+    /* Had weird NULLs returned by my_realloc, while my_malloc called right after worked */
+    if (tmp == NULL)
+    {
+        tmp = (myString) my_malloc((uint)(newLen*sizeof(SQLWCHAR)), MYF(0));
+
+        if (tmp)
+        {
+            sqlwcharncpy(tmp,oldptr,myStrlen(oldptr)+1);
+            x_free(oldptr);
+        }
+    }
+
+    if (tmp)
+    {
+        oldptr = tmp;
+
+        return newLen;
+    }
+
+    return 0;
+}
+
 myString & concat( myString &left, const myString &right )
 {
     if ( right == NULL )
         return left;
 
-    size_t      len = myStrlen(right) + 1;
-    myString    tmp = (myString) my_realloc((gptr)left,(myStrlen(left)+len)*sizeof(SQLWCHAR), MY_ALLOW_ZERO_PTR);
-
+    size_t      len = myStrlen(right);
     
-    if (tmp == NULL)
+    if ( myReserveMemory( left, myStrlen(left) + len ) > 0 )
     {
-        tmp = (myString) my_malloc((myStrlen(left)+len+1)*sizeof(SQLWCHAR), MYF(0));
-
-        if ( tmp )
-        {
-            sqlwcharncpy(tmp,left,myStrlen(left)+1);
-            x_free(left);
-        }
-    }
-
-    if ( tmp != NULL )
-    {
-        left = tmp;
+        /* just len truncated last symbol :x */
+        len++;
         sqlwcharncat2(left, right, &len );
     }
 

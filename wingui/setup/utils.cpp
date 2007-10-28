@@ -9,11 +9,13 @@
  *                                                                          *
  ****************************************************************************/
 
-#include "stdafx.h"
+/*#include "stdafx.h"*/
 
 /** couple of temporary hacks to make it compile here*/
-//typedef char	byte;
+/*typedef char	byte;*/
+#ifdef _WIN32
 #include <winsock2.h>
+#endif
 /** end hacks */
 
 #include <sql.h>

@@ -1,14 +1,15 @@
-#pragma once
-
 #ifndef _CALLBACKS_H
-
 #define _CALLBACKS_H
 
-#include <windef.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include "utils.h"
 
+
 // Not a callback though
-		void		cleanUp();
+		void        cleanUp();
 
 // Callbacks indeed
 const	wchar_t *	mytest			(HWND hwnd, DataSource* params);

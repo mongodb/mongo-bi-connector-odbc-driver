@@ -63,51 +63,6 @@ void InitStaticValues()
 
 #define Refresh(A) RedrawWindow(A,NULL,NULL,RDW_ERASE|RDW_INVALIDATE|RDW_ALLCHILDREN|RDW_UPDATENOW);
 
-
-#define DO_DATA_EXCHANGE do {\
-	SET_STRING(name);\
-	SET_STRING(description);\
-	SET_STRING(server);\
-	SET_UNSIGNED(port);\
-	SET_STRING(uid);\
-	SET_STRING(pwd);\
-	SET_STRING(database);\
-	SET_STRING(sslkey)\
-	SET_STRING(sslcert);\
-	SET_STRING(sslca);\
-	SET_STRING(sslcapath);\
-	SET_STRING(sslcipher);} while(false)\
-
-#define DO_ADVANCED_DATA_EXCHANGE do {\
-	/* flags 1*/\
-	SET_BOOL(1,dont_optimize_column_width);\
-	SET_BOOL(1,return_matching_rows);\
-	SET_BOOL(1,allow_big_results);\
-	SET_BOOL(1,use_compressed_protocol);\
-	SET_BOOL(1,change_bigint_columns_to_int);\
-	SET_BOOL(1,safe);\
-	SET_BOOL(1,enable_auto_reconnect);\
-	SET_BOOL(1,enable_auto_increment_null_search);\
-	/* flags 2*/\
-	SET_BOOL(2,dont_prompt_upon_connect);\
-	SET_BOOL(2,enable_dynamic_cursor);\
-	SET_BOOL(2,ignore_N_in_name_table);\
-	SET_BOOL(2,user_manager_cursor);\
-	SET_BOOL(2,dont_use_set_locale);\
-	SET_BOOL(2,pad_char_to_full_length);\
-	SET_BOOL(2,dont_cache_result);\
-	/* flags 3 */\
-	SET_BOOL(3,return_table_names_for_SqlDesribeCol);\
-	SET_BOOL(3,ignore_space_after_function_names);\
-	SET_BOOL(3,force_use_of_named_pipes);\
-	SET_BOOL(3,no_catalog);\
-	SET_BOOL(3,read_options_from_mycnf);\
-	SET_BOOL(3,disable_transactions);\
-	SET_BOOL(3,force_use_of_forward_only_cursors);\
-	/* debug*/\
-	SET_BOOL(4,save_queries); } while(false)
-
-
 BOOL FormMain_DlgProc (HWND, UINT, WPARAM, LPARAM);
 
 void DoEvents (void)
@@ -148,44 +103,171 @@ static BOOL FormMain_OnNotify (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
+void getStrFieldData(HWND hwnd, myString & param, int idc )
+{
+    if (param)
+        *(param) = NULL;
+
+    int len = Edit_GetTextLength(GetDlgItem(hwnd,idc));
+
+    if (len>0)
+    {
+        if ( myReserveMemory( param, len ) > 0 )
+            Edit_GetText(GetDlgItem(hwnd,idc), param, len+1);
+    }
+}
+
+void setUnsignedFieldData(HWND hwnd, unsigned int & param, int idc )
+{
+    wchar_t buf[1024];
+    _itow( param, (wchar_t*)buf, 10 );
+    Edit_SetText(GetDlgItem(hwnd,idc), buf);
+}
+
+void getUnsignedFieldData( HWND hwnd, unsigned int & param, int idc )
+{
+    param = 0U;
+    int len = Edit_GetTextLength(GetDlgItem(hwnd,idc));
+
+    if(len>0)
+    {
+        myString tmp = NULL;
+
+        if ( myReserveMemory( tmp, len ) > 0 )
+        {
+            Edit_GetText(GetDlgItem(hwnd,idc), tmp, len+1);
+            param = _wtol(tmp);
+        }
+    }
+}
+
+bool getBoolFieldData(unsigned int framenum, int idc)
+{
+    assert(TabCtrl_1.hTabPages);
+    HWND checkbox = GetDlgItem(TabCtrl_1.hTabPages[framenum-1], idc);
+
+    assert(checkbox);
+    if (checkbox)
+        return !!Button_GetCheck(checkbox);
+
+    return false;
+}
+
+#define GET_STRING(name)    getStrFieldData(hwnd,params.name,IDC_EDIT_##name)
+
+#define SET_STRING(name) \
+    Edit_SetText(GetDlgItem(hwnd,IDC_EDIT_##name), params.name)
+
+#define GET_UNSIGNED(name)  getUnsignedFieldData(hwnd,params.name,IDC_EDIT_##name)
+#define SET_UNSIGNED(name)  setUnsignedFieldData(hwnd,params.name,IDC_EDIT_##name)
+
+#define GET_BOOL(framenum,name) \
+    params.name = getBoolFieldData(framenum,IDC_CHECK_##name)
+
+#define SET_BOOL(framenum,name) \
+    Button_SetCheck(GetDlgItem(TabCtrl_1.hTabPages[framenum-1],IDC_CHECK_##name), params.name)
+
+void syncData(HWND hwnd, DataSource &params)
+{
+    GET_STRING(name);
+    GET_STRING(description);
+    GET_STRING(server);
+    GET_UNSIGNED(port);
+    GET_STRING(uid);
+    GET_STRING(pwd);
+    GET_STRING(database);
+    GET_STRING(sslkey);
+    GET_STRING(sslcert);
+    GET_STRING(sslca);
+    GET_STRING(sslcapath);
+    GET_STRING(sslcipher);
+}
+
+void syncForm(HWND hwnd, DataSource &params)
+{
+    SET_STRING(name);
+    SET_STRING(description);
+    SET_STRING(server);
+    SET_UNSIGNED(port);
+    SET_STRING(uid);
+    SET_STRING(pwd);
+    SET_STRING(database);
+    SET_STRING(sslkey);
+    SET_STRING(sslcert);
+    SET_STRING(sslca);
+    SET_STRING(sslcapath);
+    SET_STRING(sslcipher);
+}
+void syncTabsData(HWND hwnd, DataSource &params)
+{
+    GET_BOOL(1,dont_optimize_column_width);
+    GET_BOOL(1,return_matching_rows);
+    GET_BOOL(1,allow_big_results);
+    GET_BOOL(1,use_compressed_protocol);
+    GET_BOOL(1,change_bigint_columns_to_int);
+    GET_BOOL(1,safe);
+    GET_BOOL(1,enable_auto_reconnect);
+    GET_BOOL(1,enable_auto_increment_null_search);
+    /* flags 2*/
+    GET_BOOL(2,dont_prompt_upon_connect);
+    GET_BOOL(2,enable_dynamic_cursor);
+    GET_BOOL(2,ignore_N_in_name_table);
+    GET_BOOL(2,user_manager_cursor);
+    GET_BOOL(2,dont_use_set_locale);
+    GET_BOOL(2,pad_char_to_full_length);
+    GET_BOOL(2,dont_cache_result);
+    /* flags 3 */
+    GET_BOOL(3,return_table_names_for_SqlDesribeCol);
+    GET_BOOL(3,ignore_space_after_function_names);
+    GET_BOOL(3,force_use_of_named_pipes);
+    GET_BOOL(3,no_catalog);
+    GET_BOOL(3,read_options_from_mycnf);
+    GET_BOOL(3,disable_transactions);
+    GET_BOOL(3,force_use_of_forward_only_cursors);
+    /* debug*/
+    GET_BOOL(4,save_queries);
+}
+
+void syncTabs(HWND hwnd, DataSource &params)
+{
+    SET_BOOL(1,dont_optimize_column_width);
+    SET_BOOL(1,return_matching_rows);
+    SET_BOOL(1,allow_big_results);
+    SET_BOOL(1,use_compressed_protocol);
+    SET_BOOL(1,change_bigint_columns_to_int);
+    SET_BOOL(1,safe);
+    SET_BOOL(1,enable_auto_reconnect);
+    SET_BOOL(1,enable_auto_increment_null_search);
+    /* flags 2*/
+    SET_BOOL(2,dont_prompt_upon_connect);
+    SET_BOOL(2,enable_dynamic_cursor);
+    SET_BOOL(2,ignore_N_in_name_table);
+    SET_BOOL(2,user_manager_cursor);
+    SET_BOOL(2,dont_use_set_locale);
+    SET_BOOL(2,pad_char_to_full_length);
+    SET_BOOL(2,dont_cache_result);
+    /* flags 3 */
+    SET_BOOL(3,return_table_names_for_SqlDesribeCol);
+    SET_BOOL(3,ignore_space_after_function_names);
+    SET_BOOL(3,force_use_of_named_pipes);
+    SET_BOOL(3,no_catalog);
+    SET_BOOL(3,read_options_from_mycnf);
+    SET_BOOL(3,disable_transactions);
+    SET_BOOL(3,force_use_of_forward_only_cursors);
+    /* debug*/
+    SET_BOOL(4,save_queries);
+}
+
 void FillParameters(HWND hwnd, DataSource & params)
 {
-/** need also to resize, cuz otherwise string thinks it's zero length*/
-#define SET_STRING(param) { \
-	if (params.param)\
-        *(params.param) = NULL; \
-	int len = Edit_GetTextLength(GetDlgItem(hwnd,IDC_EDIT_##param)); \
-	if(len>0) { \
-		my_realloc((gptr)params.param, len+1, 64 );\
-		Edit_GetText(GetDlgItem(hwnd,IDC_EDIT_##param), (LPWSTR)params.param, len+1);}}
+	syncData(hwnd, params );
 
-#define SET_UNSIGNED(param) { \
-	params.param = 0U; \
-	std::wstring tmpStr; \
-	int len = Edit_GetTextLength(GetDlgItem(hwnd,IDC_EDIT_##param)); \
-	if(len>0) { \
-		tmpStr.reserve(len+1); \
-		Edit_GetText(GetDlgItem(hwnd,IDC_EDIT_##param), (LPWSTR)tmpStr.c_str(), len+1); \
-		params.param = _wtol(tmpStr.c_str()); }}
-
-#define SET_BOOL(framenum,param) \
-	params.param = !!Button_GetCheck(GetDlgItem(TabCtrl_1.hTabPages[framenum-1],IDC_CHECK_##param));
-
-	DO_DATA_EXCHANGE;
 	if( TabCtrl_1.hTab )
-		DO_ADVANCED_DATA_EXCHANGE;
-
-#undef SET_STRING
-#undef SET_UNSIGNED
-#undef SET_BOOL
+		syncTabsData(hwnd, params);
 }
 
 void FormMain_OnClose(HWND hwnd)
 {
-	if(OkPressed)
-	{
-		FillParameters(hwnd, *pParams);
-	}
 	PostQuitMessage(0);// turn off message loop
 	TabControl_Destroy(&TabCtrl_1);
 
@@ -230,10 +312,7 @@ void btnDetails_Click (HWND hwnd)
 					TRUE); // stretch tab page to fit tab ctrl
 		flag = true;		
 
-		#define SET_BOOL(framenum,param) \
-		Button_SetCheck(GetDlgItem(TabCtrl_1.hTabPages[framenum-1],IDC_CHECK_##param), pParams->param);
-
-		DO_ADVANCED_DATA_EXCHANGE;
+		syncTabs(hwnd, *pParams);
 	}
 	MoveWindow( hwnd, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top + 280*mod, TRUE );
 }
@@ -466,17 +545,9 @@ BOOL FormMain_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 	//Get the initial Width and height of the dialog
 	//in order to fix the minimum size of dialog
 
-#define SET_STRING(param) \
-	Edit_SetText(GetDlgItem(hwnd,IDC_EDIT_##param), pParams->param);
+	syncForm(hwnd,*pParams);
 
-#define SET_UNSIGNED(param) { \
-	wchar_t buf[1024]; \
-	_itow( pParams->param, (wchar_t*)buf, 10 ); \
-	Edit_SetText(GetDlgItem(hwnd,IDC_EDIT_##param), buf);}
-
-	DO_DATA_EXCHANGE;
-
-//	BOOL b = DoCreateDialogTooltip();
+	BOOL b = DoCreateDialogTooltip();
 	return 0;
 }
 
