@@ -110,7 +110,7 @@ extern "C"
 /* Max Primary keys in a cursor * WHERE clause */
 #define MY_MAX_PK_PARTS 32
 
-#define x_free(A) { void *tmp= (A); if (tmp) my_free(tmp,MYF(MY_WME+MY_FAE)); }
+#define x_free(A) { void *tmp= (A); if (tmp) my_free((char *) tmp,MYF(MY_WME+MY_FAE)); }
 
 /*
   Connection parameters, that affects the driver behaviour

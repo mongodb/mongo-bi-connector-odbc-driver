@@ -35,7 +35,7 @@
 #include <sqlext.h>
 
 #ifndef x_free
-#define x_free(A) { void *tmp= (A); if (tmp) my_free(tmp,MYF(MY_WME+MY_FAE)); }
+#define x_free(A) { void *tmp= (A); if (tmp) my_free((char *) tmp,MYF(MY_WME+MY_FAE)); }
 #endif
 
 #define MAX_BYTES_PER_UTF8_CP 4 /* max 4 bytes per utf8 codepoint */
