@@ -20,7 +20,7 @@
 
 #include "MYODBCSetup.h"
 #include "../util/stringutil.h"
-#include "callbacks.h"
+#include "../odbcdialogparams/callbacks.h"
 
 /*!
     \internal

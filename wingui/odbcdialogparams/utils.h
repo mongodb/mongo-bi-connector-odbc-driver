@@ -14,6 +14,6 @@ void				Disconnect			( SQLHSTMT &hStmt, SQLHDBC &hDbc, SQLHENV &hEnv  );
 const myString &	buildConnectString	( DataSource* params );
 SQLRETURN			Connect				( SQLHDBC  &   hDbc, SQLHENV   &  hEnv, DataSource * params );
 unsigned long		CompileOptions		( DataSource * params );
-void				DecompileOptions	( DataSource &src );
+void				DecompileOptions	( DataSource * src );
 
 #endif

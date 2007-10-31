@@ -9,6 +9,9 @@
 /* #define NOMCX */
 /* #define NOIME */
 
+#define DEBUG_TAB   4
+#define SSL_TAB     5
+
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
@@ -24,6 +27,7 @@
 #include <winsock2.h>
 
 #include "odbcdialogparams.h"
+#include "utils.h"
 
 #include "../MYODBC_MYSQL.h"
 
@@ -76,6 +80,7 @@ void DoEvents (void)
 }
 
 VOID OnWMNotify(WPARAM wParam, LPARAM lParam);
+
 static BOOL FormMain_OnNotify (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
 	OnWMNotify(wParam, lParam);
@@ -115,6 +120,16 @@ void getStrFieldData(HWND hwnd, myString & param, int idc )
         if ( myReserveMemory( param, len ) > 0 )
             Edit_GetText(GetDlgItem(hwnd,idc), param, len+1);
     }
+}
+
+void getStrFieldData(myString & param, unsigned int framenum, int idc )
+{
+    assert(TabCtrl_1.hTabPages);
+    HWND tab = TabCtrl_1.hTabPages[framenum-1];
+
+    assert(tab);
+
+    getStrFieldData(tab, param, idc );
 }
 
 void setUnsignedFieldData(HWND hwnd, unsigned int & param, int idc )
@@ -176,11 +191,6 @@ void syncData(HWND hwnd, DataSource &params)
     GET_STRING(uid);
     GET_STRING(pwd);
     GET_STRING(database);
-    GET_STRING(sslkey);
-    GET_STRING(sslcert);
-    GET_STRING(sslca);
-    GET_STRING(sslcapath);
-    GET_STRING(sslcipher);
 }
 
 void syncForm(HWND hwnd, DataSource &params)
@@ -192,11 +202,6 @@ void syncForm(HWND hwnd, DataSource &params)
     SET_STRING(uid);
     SET_STRING(pwd);
     SET_STRING(database);
-    SET_STRING(sslkey);
-    SET_STRING(sslcert);
-    SET_STRING(sslca);
-    SET_STRING(sslcapath);
-    SET_STRING(sslcipher);
 }
 void syncTabsData(HWND hwnd, DataSource &params)
 {
@@ -226,6 +231,13 @@ void syncTabsData(HWND hwnd, DataSource &params)
     GET_BOOL(3,force_use_of_forward_only_cursors);
     /* debug*/
     GET_BOOL(4,save_queries);
+
+    /* ssl settings */
+    getStrFieldData( params.sslkey      , 5, IDC_EDIT_sslkey);
+    getStrFieldData( params.sslcert     , 5, IDC_EDIT_sslcert);
+    getStrFieldData( params.sslca       , 5, IDC_EDIT_sslca);
+    getStrFieldData( params.sslcapath   , 5, IDC_EDIT_sslcapath);
+    getStrFieldData( params.sslcipher   , 5, IDC_EDIT_sslkey);
 }
 
 void syncTabs(HWND hwnd, DataSource &params)
@@ -255,7 +267,20 @@ void syncTabs(HWND hwnd, DataSource &params)
     SET_BOOL(3,disable_transactions);
     SET_BOOL(3,force_use_of_forward_only_cursors);
     /* debug*/
-    SET_BOOL(4,save_queries);
+    SET_BOOL(DEBUG_TAB,save_queries);
+
+    /* ssl related */
+    if ( TabCtrl_1.hTabPages[SSL_TAB-1])
+    {
+        HWND tabHwnd = TabCtrl_1.hTabPages[SSL_TAB-1];
+
+        Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslkey)     , params.sslkey);
+        Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslcert)    , params.sslcert);
+        Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslca)      , params.sslca);
+        Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslcapath)  , params.sslcapath);
+        Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslcipher)  , params.sslcipher);
+    }
+
 }
 
 void FillParameters(HWND hwnd, DataSource & params)
@@ -266,9 +291,14 @@ void FillParameters(HWND hwnd, DataSource & params)
 		syncTabsData(hwnd, params);
 }
 
+void OnDialogClose();
+
 void FormMain_OnClose(HWND hwnd)
 {
-	PostQuitMessage(0);// turn off message loop
+	//PostQuitMessage(0);// turn off message loop
+    //Unhooks hook(s) :)
+    OnDialogClose();
+
 	TabControl_Destroy(&TabCtrl_1);
 
     DWORD err;
@@ -326,6 +356,7 @@ void btnOk_Click (HWND hwnd)
 		if( (*gAcceptParamsCallback)( hwnd, pParams ) )
 		{
 			OkPressed = true;
+            CompileOptions( pParams );
 			PostMessage(hwnd, WM_CLOSE, NULL, NULL);
 		}
 	}
@@ -545,6 +576,7 @@ BOOL FormMain_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 	//Get the initial Width and height of the dialog
 	//in order to fix the minimum size of dialog
 
+    DecompileOptions( pParams );
 	syncForm(hwnd,*pParams);
 
 	BOOL b = DoCreateDialogTooltip();

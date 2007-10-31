@@ -436,7 +436,7 @@
 			Name="Source Files"
 			>
 			<File
-				RelativePath=".\callbacks.cpp"
+				RelativePath="..\odbcdialogparams\callbacks.cpp"
 				>
 			</File>
 			<File
@@ -456,7 +456,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\utils.cpp"
+				RelativePath="..\odbcdialogparams\utils.cpp"
 				>
 			</File>
 		</Filter>
@@ -464,11 +464,11 @@
 			Name="Header Files"
 			>
 			<File
-				RelativePath=".\callbacks.h"
+				RelativePath="..\odbcdialogparams\callbacks.h"
 				>
 			</File>
 			<File
-				RelativePath=".\utils.h"
+				RelativePath="..\odbcdialogparams\utils.h"
 				>
 			</File>
 		</Filter>

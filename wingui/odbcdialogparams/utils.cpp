@@ -33,33 +33,36 @@ extern	myString		stringConnectIn;
 extern	WCHAR **		errorMsgs;
 extern	myString		popupMsg;
 
-void DecompileOptions(DataSource &params)
+void DecompileOptions(DataSource * params)
 {
-	ulong nOptions = sqlwchartoul( params.option );
+    if ( params == NULL )
+        return;
 
-    params.dont_optimize_column_width=				(nOptions & FLAG_FIELD_LENGTH) > 0;
-    params.return_matching_rows=                    (nOptions & FLAG_FOUND_ROWS) > 0;  /* 2 */
-	params.allow_big_results=						(nOptions & FLAG_BIG_PACKETS) > 0;
-	params.dont_prompt_upon_connect=				(nOptions & FLAG_NO_PROMPT) > 0;
-	params.enable_dynamic_cursor=					(nOptions & FLAG_DYNAMIC_CURSOR) > 0;
-	params.ignore_N_in_name_table=					(nOptions & FLAG_NO_SCHEMA) > 0;
-	params.user_manager_cursor=						(nOptions & FLAG_NO_DEFAULT_CURSOR) > 0;
-	params.dont_use_set_locale=						(nOptions & FLAG_NO_LOCALE) > 0;
-	params.pad_char_to_full_length=					(nOptions & FLAG_PAD_SPACE) > 0;
-	params.return_table_names_for_SqlDesribeCol=    (nOptions & FLAG_FULL_COLUMN_NAMES) > 0;
-	params.use_compressed_protocol=					(nOptions & FLAG_COMPRESSED_PROTO) > 0;
-	params.ignore_space_after_function_names=		(nOptions & FLAG_IGNORE_SPACE) > 0; 
-	params.force_use_of_named_pipes=				(nOptions & FLAG_NAMED_PIPE) > 0;          
-	params.change_bigint_columns_to_int=			(nOptions & FLAG_NO_BIGINT) > 0;
-	params.no_catalog=								(nOptions & FLAG_NO_CATALOG) > 0;
-	params.read_options_from_mycnf=					(nOptions & FLAG_USE_MYCNF) > 0;          
-	params.safe=									(nOptions & FLAG_SAFE) > 0;
-	params.disable_transactions=					(nOptions & FLAG_NO_TRANSACTIONS) > 0;           
-	params.save_queries=							(nOptions & FLAG_LOG_QUERY) > 0;
-	params.dont_cache_result=						(nOptions & FLAG_NO_CACHE) > 0;
-	params.force_use_of_forward_only_cursors=		(nOptions & FLAG_FORWARD_CURSOR) > 0;  
-	params.enable_auto_reconnect=					(nOptions & FLAG_AUTO_RECONNECT) > 0;
-	params.enable_auto_increment_null_search=		(nOptions & FLAG_AUTO_IS_NULL ) > 0;
+	ulong nOptions = sqlwchartoul( params->option );
+
+    params->dont_optimize_column_width=             (nOptions & FLAG_FIELD_LENGTH) > 0;
+    params->return_matching_rows=                   (nOptions & FLAG_FOUND_ROWS) > 0;  /* 2 */
+	params->allow_big_results=                      (nOptions & FLAG_BIG_PACKETS) > 0;
+	params->dont_prompt_upon_connect=               (nOptions & FLAG_NO_PROMPT) > 0;
+	params->enable_dynamic_cursor=                  (nOptions & FLAG_DYNAMIC_CURSOR) > 0;
+	params->ignore_N_in_name_table=                 (nOptions & FLAG_NO_SCHEMA) > 0;
+	params->user_manager_cursor=                    (nOptions & FLAG_NO_DEFAULT_CURSOR) > 0;
+	params->dont_use_set_locale=                    (nOptions & FLAG_NO_LOCALE) > 0;
+	params->pad_char_to_full_length=                (nOptions & FLAG_PAD_SPACE) > 0;
+	params->return_table_names_for_SqlDesribeCol=   (nOptions & FLAG_FULL_COLUMN_NAMES) > 0;
+	params->use_compressed_protocol=                (nOptions & FLAG_COMPRESSED_PROTO) > 0;
+	params->ignore_space_after_function_names=      (nOptions & FLAG_IGNORE_SPACE) > 0; 
+	params->force_use_of_named_pipes=               (nOptions & FLAG_NAMED_PIPE) > 0;          
+	params->change_bigint_columns_to_int=           (nOptions & FLAG_NO_BIGINT) > 0;
+	params->no_catalog=                             (nOptions & FLAG_NO_CATALOG) > 0;
+	params->read_options_from_mycnf=                (nOptions & FLAG_USE_MYCNF) > 0;          
+	params->safe=                                   (nOptions & FLAG_SAFE) > 0;
+	params->disable_transactions=                   (nOptions & FLAG_NO_TRANSACTIONS) > 0;           
+	params->save_queries=                           (nOptions & FLAG_LOG_QUERY) > 0;
+	params->dont_cache_result=                      (nOptions & FLAG_NO_CACHE) > 0;
+	params->force_use_of_forward_only_cursors=      (nOptions & FLAG_FORWARD_CURSOR) > 0;  
+	params->enable_auto_reconnect=                  (nOptions & FLAG_AUTO_RECONNECT) > 0;
+	params->enable_auto_increment_null_search=      (nOptions & FLAG_AUTO_IS_NULL ) > 0;
 }
 
 void FreeEnvHandle( SQLHENV &hEnv )
@@ -295,6 +298,9 @@ unsigned long CompileOptions( DataSource * params )
 {
 	unsigned long nFlags = 0;
 
+    if (params==NULL)
+        return NULL;
+
     if (params->dont_optimize_column_width)				nFlags |= FLAG_FIELD_LENGTH;
     if (params->return_matching_rows)                   nFlags |= FLAG_FOUND_ROWS;  /* 2 */
     if (params->allow_big_results)						nFlags |= FLAG_BIG_PACKETS;
@@ -318,6 +324,11 @@ unsigned long CompileOptions( DataSource * params )
     if (params->force_use_of_forward_only_cursors)		nFlags |= FLAG_FORWARD_CURSOR;  
     if (params->enable_auto_reconnect)					nFlags |= FLAG_AUTO_RECONNECT;
     if (params->enable_auto_increment_null_search)		nFlags |= FLAG_AUTO_IS_NULL;
+
+    if (params->option == NULL)
+        myReserveMemory(params->option, 20);
+
+    sqlwcharfromul(params->option, nFlags);
 
 	return nFlags;
 }
