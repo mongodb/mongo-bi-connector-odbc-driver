@@ -1,9 +1,7 @@
-#include "stdafx.h"
-/* DIRTY hack */
-#include <winsock2.h>
-/*typedef char    byte;*/
-#include "../MYODBC_MYSQL.h"
+#include "MYODBC_MYSQL.h"
 #include "resource.h"
+#include <windows.h>
+#include <commctrl.h>
 
 #ifdef _MANAGED
 #pragma managed(push, off)

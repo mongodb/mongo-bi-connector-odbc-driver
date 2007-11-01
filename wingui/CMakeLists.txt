@@ -25,15 +25,9 @@ ADD_DEFINITIONS(-DUNICODE -D_UNICODE)
 ADD_LIBRARY(myodbc5S SHARED
     dialog/callbacks.cpp
     dialog/callbacks.h
-    dialog/dialog.cpp
-    dialog/dialog.h
-    dialog/stdafx.cpp
-    dialog/stdafx.h
     dialog/utils.cpp
     dialog/utils.h
     odbcdialogparams/main.cpp
-    odbcdialogparams/myString.cpp
-    odbcdialogparams/myString.h
     odbcdialogparams/odbcdialogparams.cpp
     odbcdialogparams/odbcdialogparams.h
     odbcdialogparams/odbcdialogparams.rc
@@ -45,6 +39,7 @@ ADD_LIBRARY(myodbc5S SHARED
     myodbc5S.def
     )
 
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/util)
 
 TARGET_LINK_LIBRARIES(myodbc5S

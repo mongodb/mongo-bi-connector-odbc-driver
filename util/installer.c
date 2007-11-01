@@ -190,9 +190,12 @@ void driver_delete(Driver *driver)
 
 
 /*
- * Lookup a driver given only the filename of the driver. This is used
- * to support prompting for additional DSN info upon connect when the
+ * Lookup a driver given only the filename of the driver. This is used:
+ *
+ * When prompting for additional DSN info upon connect when the
  * driver uses an external setup library.
+ *
+ * When testing a connection when adding/editing a DSN.
  */
 int driver_lookup_name(Driver *driver)
 {

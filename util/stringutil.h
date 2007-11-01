@@ -28,6 +28,10 @@
 #ifndef _STRINGUTIL_H
 #define _STRINGUTIL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "../MYODBC_MYSQL.h"
 
 #include <string.h>
@@ -95,6 +99,10 @@ void sqlwcharfromul(SQLWCHAR *wstr, unsigned long v);
 size_t sqlwcharncat2(SQLWCHAR *dest, const SQLWCHAR *src, size_t *n);
 SQLWCHAR *sqlwcharncpy(SQLWCHAR *dest, const SQLWCHAR *src, size_t n);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _STRINGUTIL_H */
 

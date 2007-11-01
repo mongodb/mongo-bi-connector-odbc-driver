@@ -107,7 +107,35 @@ typedef struct {
   SQLCHAR *sslca8;
   SQLCHAR *sslcapath8;
   SQLCHAR *sslcipher8;
-  /* A bitmask of all options carried over from MyODBC 3.51 */
+
+  /* flags 1 */
+  BOOL dont_optimize_column_width;
+  BOOL return_matching_rows;
+  BOOL allow_big_results;
+  BOOL use_compressed_protocol;
+  BOOL change_bigint_columns_to_int;
+  BOOL safe;
+  BOOL enable_auto_reconnect;
+  BOOL enable_auto_increment_null_search;
+  /* flags 2 */
+  BOOL dont_prompt_upon_connect;
+  BOOL enable_dynamic_cursor;
+  BOOL ignore_N_in_name_table;
+  BOOL user_manager_cursor;
+  BOOL dont_use_set_locale;
+  BOOL pad_char_to_full_length;
+  BOOL dont_cache_result;
+  /* flags 3 */
+  BOOL return_table_names_for_SqlDesribeCol;
+  BOOL ignore_space_after_function_names;
+  BOOL force_use_of_named_pipes;
+  BOOL no_catalog;
+  BOOL read_options_from_mycnf;
+  BOOL disable_transactions;
+  BOOL force_use_of_forward_only_cursors;
+  /* debug */
+  BOOL save_queries;
+
 } DataSource;
 
 DataSource *ds_new();

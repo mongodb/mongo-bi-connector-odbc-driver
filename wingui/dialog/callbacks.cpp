@@ -8,77 +8,58 @@
  *           00/00/00  Created                                              *
  *                                                                          *
  ****************************************************************************/
-/*#include "stdafx.h"*/
 
 #include "callbacks.h"
-/*#include "../odbcdialogparams/odbcdialogparams.h"*/
-#include "../odbcdialogparams/myString.h"
-#include "../../util/MYODBCUtil.h"
-/*#include <WinSock2.h>*/
-#include "../util/stringutil.h"
+#include "stringutil.h"
 
-myString		stringConnectIn	= NULL;
 WCHAR **		errorMsgs		= NULL;
-myString		popupMsg		= NULL;
 
 SQLHDBC			hDBC			= SQL_NULL_HDBC;
 
-static WCHAR **	databases		= NULL;
-
-void cleanUp()
-{
-	clearList(databases);
-	clearList(errorMsgs);
-
-    x_free( stringConnectIn );
-    x_free( popupMsg        );
-}
-
-const wchar_t * mytest(HWND hwnd, DataSource* params)
+wchar_t * mytest(HWND hwnd, DataSource* params)
 {
 	SQLHDBC hDbc = hDBC;
 	SQLHENV hEnv = SQL_NULL_HENV;
 
 	if ( SQL_SUCCEEDED( Connect( hDbc, hEnv, params ) ) )
-		return L"Connection successful";
+		return sqlwchardup(L"Connection successful", SQL_NTS);
 	else
 	{
-        myString tmp = NULL;
+        wchar_t *tmp= (wchar_t *) my_malloc(512 * sizeof(SQLWCHAR), MYF(0));
+        SQLWCHAR state[10];
+        SQLINTEGER native;
+        SQLSMALLINT len;
+        *tmp= 0;
 
-        strAssign(tmp,myString(L"Connection Failed:"));
+        wcscat(tmp, L"Connection Failed: [");
+        len= sqlwcharlen(tmp);
+        SQLGetDiagRecW(SQL_HANDLE_DBC, hDbc, 1, state, &native,
+                       tmp + len + 7, 512 - len - 8, &len);
+        sqlwcharncpy(tmp + sqlwcharlen(tmp), state, 6);
+        *(tmp + sqlwcharlen(tmp) + 1) = ' ';
+        *(tmp + sqlwcharlen(tmp)) = ']';
 
-		concat( tmp, popupMsg );
-
-        x_free( popupMsg );
-
-        popupMsg = tmp;
-
-		return popupMsg;
+        return tmp;
 	}
 
 	Disconnect( hDbc, hEnv );
-	//MessageBox(hwnd, params->dbname.c_str(), params->drvdesc.c_str(), MB_OK);
 }
 
 BOOL mytestaccept(HWND hwnd, DataSource* params)
 {
-	return true/*(IDYES == MessageBoxW(hwnd, params->dbname.c_str(), params->drvdesc.c_str(), MB_YESNO))*/;
+    /* TODO validation */
+	return TRUE;
 }
 
-const WCHAR** mygetdatabases(HWND hwnd, DataSource* params)
+LIST *mygetdatabases(HWND hwnd, DataSource* params)
 {
-	// = { L"DB1", L"DB2", NULL };
-
 	SQLHENV     hEnv        = SQL_NULL_HENV;
 	SQLHDBC     hDbc        = hDBC;
 	SQLHSTMT    hStmt;
 	SQLRETURN   nReturn;
-	//			QStringList stringlistDatabases;
-	SQLWCHAR     szCatalog[MYODBC_DB_NAME_MAX];//MYODBC_DB_NAME_MAX]; 
+	SQLWCHAR     szCatalog[MYODBC_DB_NAME_MAX];
 	SQLLEN      nCatalog;
-	myString    stringConnectIn= buildConnectString( params );
-
-	clearList(databases);
+    LIST *dbs= NULL;
 
 	nReturn = Connect( hDbc, hEnv, params );
 
@@ -119,14 +100,14 @@ const WCHAR** mygetdatabases(HWND hwnd, DataSource* params)
 		else if ( nReturn != SQL_SUCCESS )
 			ShowDiagnostics( nReturn, SQL_HANDLE_STMT, hStmt );
 		if ( SQL_SUCCEEDED(nReturn) )
-			add2list( databases, (const wchar_t*)(szCatalog) );
+			dbs= list_cons(sqlwchardup(szCatalog, SQL_NTS), dbs);
 		else
 			break;
 	}
 
 	Disconnect( hStmt, hDbc, hEnv );
 
-	return (const WCHAR**)databases;
+	return list_reverse(dbs);
 }
 
 void myhelp(HWND hwnd)

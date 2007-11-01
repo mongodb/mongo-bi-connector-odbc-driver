@@ -1,8 +1,6 @@
 // odbcdialogparams.cpp : Defines the entry point for the DLL application.
 //
 
-#include "stdafx.h"
-
 #define WIN32_LEAN_AND_MEAN
 /* #define NOCRYPT */
 /* #define NOSERVICE */
@@ -27,42 +25,39 @@
 #include <winsock2.h>
 
 #include "odbcdialogparams.h"
-#include "utils.h"
 
-#include "../MYODBC_MYSQL.h"
+#include "MYODBC_MYSQL.h"
+#include "installer.h"
+#include "stringutil.h"
+#include "../dialog/callbacks.h"
+#include "../dialog/utils.h"
 
 extern HINSTANCE ghInstance;
 
-DataSource* pParams = NULL;
-PWCHAR pCaption = NULL;
-bool OkPressed = false;
+static DataSource* pParams = NULL;
+static PWCHAR pCaption = NULL;
+static int OkPressed = 0;
 
 static int mod = 1;
 static bool flag = false;
-bool  BusyIndicator = false;
+static bool  BusyIndicator = false;
 
 static TABCTRL TabCtrl_1;
 
-TestButtonPressedCallbackType* gTestButtonPressedCallback = NULL;
 HelpButtonPressedCallbackType* gHelpButtonPressedCallback = NULL;
-AcceptParamsCallbackType* gAcceptParamsCallback = NULL;
-DatabaseNamesCallbackType* gDatabaseNamesCallback = NULL;
 
 void InitStaticValues()
 {
 	BusyIndicator	= true;
 	pParams			= NULL;
 	pCaption		= NULL;
-	OkPressed		= false;
+	OkPressed		= 0;
 
 	mod				= 1;
 	flag			= false;
 	BusyIndicator	= false;
 
-	gTestButtonPressedCallback	= NULL;
 	gHelpButtonPressedCallback	= NULL;
-	gAcceptParamsCallback		= NULL;
-	gDatabaseNamesCallback		= NULL;
 }
 
 #define Refresh(A) RedrawWindow(A,NULL,NULL,RDW_ERASE|RDW_INVALIDATE|RDW_ALLCHILDREN|RDW_UPDATENOW);
@@ -108,21 +103,22 @@ static BOOL FormMain_OnNotify (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-void getStrFieldData(HWND hwnd, myString & param, int idc )
+void getStrFieldData(HWND hwnd, SQLWCHAR **param, int idc)
 {
-    if (param)
-        *(param) = NULL;
+  x_free(*param);
+  *param= NULL;
 
     int len = Edit_GetTextLength(GetDlgItem(hwnd,idc));
 
     if (len>0)
     {
-        if ( myReserveMemory( param, len ) > 0 )
-            Edit_GetText(GetDlgItem(hwnd,idc), param, len+1);
+      *param= (SQLWCHAR *)my_malloc((len + 1) * sizeof(SQLWCHAR), MYF(0));
+      if (*param)
+        Edit_GetText(GetDlgItem(hwnd,idc), *param, len+1);
     }
 }
 
-void getStrFieldData(myString & param, unsigned int framenum, int idc )
+void getStrFieldData(SQLWCHAR **param, unsigned int framenum, int idc )
 {
     assert(TabCtrl_1.hTabPages);
     HWND tab = TabCtrl_1.hTabPages[framenum-1];
@@ -134,7 +130,7 @@ void getStrFieldData(myString & param, unsigned int framenum, int idc )
 
 void setUnsignedFieldData(HWND hwnd, unsigned int & param, int idc )
 {
-    wchar_t buf[1024];
+    wchar_t buf[20];
     _itow( param, (wchar_t*)buf, 10 );
     Edit_SetText(GetDlgItem(hwnd,idc), buf);
 }
@@ -146,12 +142,13 @@ void getUnsignedFieldData( HWND hwnd, unsigned int & param, int idc )
 
     if(len>0)
     {
-        myString tmp = NULL;
-
-        if ( myReserveMemory( tmp, len ) > 0 )
+        SQLWCHAR *tmp1= (SQLWCHAR *)my_malloc((len + 1) * sizeof(SQLWCHAR),
+                                             MYF(0));
+        if (tmp1)
         {
-            Edit_GetText(GetDlgItem(hwnd,idc), tmp, len+1);
-            param = _wtol(tmp);
+            Edit_GetText(GetDlgItem(hwnd,idc), tmp1, len+1);
+            param = _wtol(tmp1);
+            x_free(tmp1);
         }
     }
 }
@@ -168,7 +165,7 @@ bool getBoolFieldData(unsigned int framenum, int idc)
     return false;
 }
 
-#define GET_STRING(name)    getStrFieldData(hwnd,params.name,IDC_EDIT_##name)
+#define GET_STRING(name)    getStrFieldData(hwnd,&params.name,IDC_EDIT_##name)
 
 #define SET_STRING(name) \
     Edit_SetText(GetDlgItem(hwnd,IDC_EDIT_##name), params.name)
@@ -233,11 +230,11 @@ void syncTabsData(HWND hwnd, DataSource &params)
     GET_BOOL(4,save_queries);
 
     /* ssl settings */
-    getStrFieldData( params.sslkey      , 5, IDC_EDIT_sslkey);
-    getStrFieldData( params.sslcert     , 5, IDC_EDIT_sslcert);
-    getStrFieldData( params.sslca       , 5, IDC_EDIT_sslca);
-    getStrFieldData( params.sslcapath   , 5, IDC_EDIT_sslcapath);
-    getStrFieldData( params.sslcipher   , 5, IDC_EDIT_sslkey);
+    getStrFieldData(&params.sslkey      , 5, IDC_EDIT_sslkey);
+    getStrFieldData(&params.sslcert     , 5, IDC_EDIT_sslcert);
+    getStrFieldData(&params.sslca       , 5, IDC_EDIT_sslca);
+    getStrFieldData(&params.sslcapath   , 5, IDC_EDIT_sslcapath);
+    getStrFieldData(&params.sslcipher   , 5, IDC_EDIT_sslkey);
 }
 
 void syncTabs(HWND hwnd, DataSource &params)
@@ -287,6 +284,12 @@ void FillParameters(HWND hwnd, DataSource & params)
 {
 	syncData(hwnd, params );
 
+  /* pack option values into bitmap */
+  unsigned long opts= CompileOptions(pParams);
+  SQLWCHAR optstr[15];
+  sqlwcharfromul(optstr, opts);
+  ds_set_strattr(&pParams->option, optstr);
+
 	if( TabCtrl_1.hTab )
 		syncTabsData(hwnd, params);
 }
@@ -300,10 +303,7 @@ void FormMain_OnClose(HWND hwnd)
     OnDialogClose();
 
 	TabControl_Destroy(&TabCtrl_1);
-
-    DWORD err;
-	if (EndDialog(hwnd, 0) == 0)
-        err = GetLastError();
+  EndDialog(hwnd, NULL);
 }
 
 /****************************************************************************
@@ -349,40 +349,27 @@ void btnDetails_Click (HWND hwnd)
 
 void btnOk_Click (HWND hwnd)
 {
-	if ( gAcceptParamsCallback ) 
-	{
-		/*DataSource params;*/
-		FillParameters(hwnd, *pParams);
-		if( (*gAcceptParamsCallback)( hwnd, pParams ) )
-		{
-			OkPressed = true;
-            CompileOptions( pParams );
-			PostMessage(hwnd, WM_CLOSE, NULL, NULL);
-		}
-	}
+  FillParameters(hwnd, *pParams);
+
+  /* if DS params are valid, close dialog */
+  if (mytestaccept(hwnd, pParams))
+  {
+    OkPressed= 1;
+    PostMessage(hwnd, WM_CLOSE, NULL, NULL);
+  }
 }
 
 void btnCancel_Click (HWND hwnd)
 {
-    /* OK pressed by default. And only can be false if ok really pressed. so, no need to set it to "false" here*/
-	/*OkPressed = false;*/
-	PostMessage(hwnd, WM_CLOSE, NULL, NULL);
+  PostMessage(hwnd, WM_CLOSE, NULL, NULL);
 }
 
 void btnTest_Click (HWND hwnd)
 {
-	if(gTestButtonPressedCallback)
-	{
-		/*OdbcDialogParams params;*/
-		FillParameters(hwnd, *pParams);
-
-        /*if ( pParams )
-            params.driver= pParams->driver;*/
-
-		const wchar_t * testResultMsg = (*gTestButtonPressedCallback)( hwnd, pParams );
-
-		MessageBoxW( hwnd, testResultMsg, pParams->name, MB_OK );
-	}
+  FillParameters(hwnd, *pParams);
+  wchar_t *testResultMsg= mytest(hwnd, pParams);
+  MessageBoxW(hwnd, testResultMsg, L"Test Result", MB_OK);
+  x_free(testResultMsg);
 }
 
 
@@ -436,7 +423,7 @@ void choosePath( HWND parent, int hostCtlId )
 
 	ZeroMemory(&dialog,sizeof(dialog));
 
-	dialog.lpszTitle		= _T("Pick a CA Path");
+	dialog.lpszTitle		= L"Pick a CA Path";
 	dialog.hwndOwner		= parent;
 	dialog.pszDisplayName	= path;
 
@@ -456,6 +443,7 @@ void choosePath( HWND parent, int hostCtlId )
 		}
 	}
 }
+
 void FormMain_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
 	switch (id)
@@ -491,19 +479,14 @@ void FormMain_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 
 		case IDC_EDIT_dbname:
 		{
-			if(codeNotify==CBN_DROPDOWN && gDatabaseNamesCallback) {
-				/*OdbcDialogParams params;*/
+			if(codeNotify==CBN_DROPDOWN) {
 				FillParameters(hwnd, *pParams);
-				const WCHAR** items = gDatabaseNamesCallback( hwnd, pParams );
-				if( items )
-				{
-					ComboBox_ResetContent(hwndCtl);
-					while (*items)
-					{
-						ComboBox_AddString(hwndCtl, *items);
-						items++;
-					}
-				}
+				LIST *dbs= mygetdatabases(hwnd, pParams);
+        LIST *dbtmp= dbs;
+        ComboBox_ResetContent(hwndCtl);
+        for (; dbtmp; dbtmp= list_rest(dbtmp))
+          ComboBox_AddString(hwndCtl, (SQLWCHAR *)dbtmp->data);
+        list_free(dbs, 1);
 			}
 		}
 	}
@@ -601,42 +584,27 @@ BOOL FormMain_DlgProc (HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 }
 
 
-// returns FALSE if 'cancel' button pressed
-int ShowOdbcParamsDialog(
-    PWCHAR caption,
-	DataSource* params,                  /*[inout]*/
-	HWND ParentWnd,                     /* [in] could be NULL */
-	HelpButtonPressedCallbackType* hcallback, /* [in] could be NULL */
-	TestButtonPressedCallbackType* tcallback, /* [in] could be NULL */
-	AcceptParamsCallbackType* acallback, /* [in] could be NULL */
-	DatabaseNamesCallbackType* dcallback)
+/*
+   Display the DSN dialog
+
+   @param params DataSource struct, should be pre-populated
+   @param ParentWnd Parent window handle
+   @return 1 if the params were correctly populated and OK was pressed
+           0 if the dialog was closed or cancelled
+*/
+extern "C"
+int ShowOdbcParamsDialog(DataSource* params, HWND ParentWnd)
 {
 	assert(!BusyIndicator);
 	InitStaticValues();
 
 	pParams=                    params;
-	pCaption=                   caption;
-	gHelpButtonPressedCallback= hcallback;
-	gTestButtonPressedCallback= tcallback;
-	gAcceptParamsCallback=      acallback;
-	gDatabaseNamesCallback=     dcallback;
+	pCaption=                   L"Dialog";
 
-    // The user interface is a modal dialog box.
-    DWORD err;
-    
-    /*HINSTANCE my= ::GetModuleHandle(L"myodbc3s.dll");
-    HANDLE hResInfo= FindResource( ghInstance,MAKEINTRESOURCE(IDD_DIALOG1),RT_DIALOG );
- 
-    if ( hResInfo)
-        params->port = 1111;
-    else
-        params->port = 0;*/
-
-    INT_PTR res = DialogBox(ghInstance, MAKEINTRESOURCE(IDD_DIALOG1), ParentWnd, (DLGPROC)FormMain_DlgProc);
-
-    if ( res == -1 )
-        err = GetLastError();
+  DialogBox(ghInstance, MAKEINTRESOURCE(IDD_DIALOG1), ParentWnd,
+            (DLGPROC)FormMain_DlgProc);
 
 	BusyIndicator = false;
 	return OkPressed;
 }
+
