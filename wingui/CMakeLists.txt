@@ -23,9 +23,9 @@
 ADD_DEFINITIONS(-DUNICODE -D_UNICODE)
 
 ADD_LIBRARY(myodbc5S SHARED
-    dialog/callbacks.cpp
+    dialog/callbacks.c
     dialog/callbacks.h
-    dialog/utils.cpp
+    dialog/utils.c
     dialog/utils.h
     odbcdialogparams/main.cpp
     odbcdialogparams/odbcdialogparams.cpp
@@ -41,6 +41,7 @@ ADD_LIBRARY(myodbc5S SHARED
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/util)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/driver)
 
 TARGET_LINK_LIBRARIES(myodbc5S
 		myodbc3u ${ODBCLIB} ${ODBCINSTLIB} ${MYSQL_CLIENT_LIBS}

@@ -9,8 +9,6 @@
  *                                                                          *
  ****************************************************************************/
 
-/*#include "stdafx.h"*/
-
 /** couple of temporary hacks to make it compile here*/
 /*typedef char	byte;*/
 #ifdef _WIN32
@@ -22,9 +20,8 @@
 
 #include "utils.h"
 
-#include "../driver/driver.h"
-#include "../util/stringutil.h"
-#include "../util/MYODBCUtil.h"
+#include "driver.h"
+#include "stringutil.h"
 
 
 extern	SQLHDBC			hDBC;
@@ -59,14 +56,14 @@ void DecompileOptions(DataSource *params)
 	params->enable_auto_increment_null_search=		(nOptions & FLAG_AUTO_IS_NULL ) > 0;
 }
 
-void FreeEnvHandle( SQLHENV &hEnv )
+void FreeEnvHandle( SQLHENV hEnv )
 {
 	if ( hDBC == SQL_NULL_HDBC )
 		SQLFreeHandle( SQL_HANDLE_ENV, hEnv );
 }
 
 
-void Disconnect( SQLHDBC &hDbc, SQLHENV &hEnv  )
+void Disconnect( SQLHDBC hDbc, SQLHENV hEnv  )
 {
 	SQLDisconnect( hDbc );
 
@@ -77,15 +74,7 @@ void Disconnect( SQLHDBC &hDbc, SQLHENV &hEnv  )
 }
 
 
-void Disconnect( SQLHSTMT &hStmt, SQLHDBC &hDbc, SQLHENV &hEnv  )
-{
-	SQLFreeHandle( SQL_HANDLE_STMT, hStmt );
-
-	Disconnect( hDbc, hEnv );
-}
-
-
-SQLRETURN Connect( SQLHDBC  &   hDbc, SQLHENV   &  hEnv, DataSource * params )
+SQLRETURN Connect(SQLHDBC *hDbc, SQLHENV *hEnv, DataSource *params)
 {
 	SQLRETURN   nReturn;
 	SQLWCHAR      stringConnectIn[1024] = {0};
@@ -101,7 +90,7 @@ SQLRETURN Connect( SQLHDBC  &   hDbc, SQLHENV   &  hEnv, DataSource * params )
 
 	if ( hDBC == SQL_NULL_HDBC )
 	{
-		nReturn = SQLAllocHandle( SQL_HANDLE_ENV, NULL, &hEnv );
+		nReturn = SQLAllocHandle( SQL_HANDLE_ENV, NULL, hEnv );
 
 		if ( nReturn != SQL_SUCCESS )
 			ShowDiagnostics( nReturn, SQL_HANDLE_ENV, NULL );
@@ -109,7 +98,7 @@ SQLRETURN Connect( SQLHDBC  &   hDbc, SQLHENV   &  hEnv, DataSource * params )
 		if ( !SQL_SUCCEEDED(nReturn) )
 			return nReturn;
 
-		nReturn = SQLSetEnvAttr( hEnv, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC3, 0 );
+		nReturn = SQLSetEnvAttr(*hEnv, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC3, 0 );
 
 		if ( nReturn != SQL_SUCCESS )
 			ShowDiagnostics( nReturn, SQL_HANDLE_ENV, NULL );
@@ -119,19 +108,19 @@ SQLRETURN Connect( SQLHDBC  &   hDbc, SQLHENV   &  hEnv, DataSource * params )
 			return nReturn;
 		}
 
-		nReturn = SQLAllocHandle( SQL_HANDLE_DBC, hEnv, &hDbc );
+		nReturn = SQLAllocHandle( SQL_HANDLE_DBC, *hEnv, hDbc );
 		if ( nReturn != SQL_SUCCESS )
-			ShowDiagnostics( nReturn, SQL_HANDLE_ENV, hEnv );
+			ShowDiagnostics( nReturn, SQL_HANDLE_ENV, *hEnv );
 		if ( !SQL_SUCCEEDED(nReturn) )
 		{
 			return nReturn;
 		}
 	}
 
-	nReturn = SQLDriverConnectW( hDbc, NULL, (SQLWCHAR*)( stringConnectIn ), SQL_NTS, NULL, 0, NULL, SQL_DRIVER_NOPROMPT );
+	nReturn = SQLDriverConnectW(*hDbc, NULL, (SQLWCHAR*)( stringConnectIn ), SQL_NTS, NULL, 0, NULL, SQL_DRIVER_NOPROMPT );
 
 	if ( nReturn != SQL_SUCCESS )
-		ShowDiagnostics( nReturn, SQL_HANDLE_DBC, hDbc );
+		ShowDiagnostics( nReturn, SQL_HANDLE_DBC, *hDbc );
 
 	return nReturn;
 }

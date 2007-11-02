@@ -43,6 +43,8 @@ static bool flag = false;
 static bool  BusyIndicator = false;
 
 static TABCTRL TabCtrl_1;
+/* Whether we are in SQLDriverConnect() prompt mode (used to disable fields) */
+static BOOL g_isPrompt;
 
 HelpButtonPressedCallbackType* gHelpButtonPressedCallback = NULL;
 
@@ -284,14 +286,14 @@ void FillParameters(HWND hwnd, DataSource & params)
 {
 	syncData(hwnd, params );
 
+	if( TabCtrl_1.hTab )
+		syncTabsData(hwnd, params);
+
   /* pack option values into bitmap */
   unsigned long opts= CompileOptions(pParams);
   SQLWCHAR optstr[15];
   sqlwcharfromul(optstr, opts);
   ds_set_strattr(&pParams->option, optstr);
-
-	if( TabCtrl_1.hTab )
-		syncTabsData(hwnd, params);
 }
 
 void OnDialogClose();
@@ -562,6 +564,13 @@ BOOL FormMain_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
     DecompileOptions( pParams );
 	syncForm(hwnd,*pParams);
 
+  /* Disable fields if in prompt mode */
+  if (g_isPrompt)
+  {
+    EnableWindow(GetDlgItem(hwnd, IDC_EDIT_name), FALSE);
+    EnableWindow(GetDlgItem(hwnd, IDC_EDIT_description), FALSE);
+  }
+
 	BOOL b = DoCreateDialogTooltip();
 	return 0;
 }
@@ -593,13 +602,14 @@ BOOL FormMain_DlgProc (HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
            0 if the dialog was closed or cancelled
 */
 extern "C"
-int ShowOdbcParamsDialog(DataSource* params, HWND ParentWnd)
+int ShowOdbcParamsDialog(DataSource* params, HWND ParentWnd, BOOL isPrompt)
 {
 	assert(!BusyIndicator);
 	InitStaticValues();
 
 	pParams=                    params;
 	pCaption=                   L"Dialog";
+  g_isPrompt= isPrompt;
 
   DialogBox(ghInstance, MAKEINTRESOURCE(IDD_DIALOG1), ParentWnd,
             (DLGPROC)FormMain_DlgProc);

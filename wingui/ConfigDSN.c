@@ -27,6 +27,55 @@
 #include "stringutil.h"
 #include "odbcdialogparams/odbcdialogparams.h"
 
+/* TODO no L"" */
+static SQLWCHAR *W_INVALID_ATTR_STR = L"Invalid attribute string";
+static SQLWCHAR *W_USER_CANCELLED = L"User cancelled";
+
+BOOL Driver_Prompt(HWND hWnd, SQLWCHAR *instr, SQLUSMALLINT completion,
+                   SQLWCHAR *outstr, SQLINTEGER outmax, SQLINTEGER *outlen)
+{
+  DataSource *ds= ds_new();
+  BOOL rc= FALSE;
+
+  /*
+     parse the attr string, dsn lookup will have already been
+     done in the driver
+  */
+  if (instr && *instr)
+  {
+    if (ds_from_kvpair(ds, instr, (SQLWCHAR)';'))
+    {
+      SQLPostInstallerError(ODBC_ERROR_INVALID_KEYWORD_VALUE,
+                            W_INVALID_ATTR_STR);
+      goto exit;
+    }
+  }
+
+  /* TODO make sure the ds->driver is ok, for Test,etc */
+  /* Show the dialog and handle result */
+  if (ShowOdbcParamsDialog(ds, hWnd, TRUE) == 1)
+  {
+    /* serialize to outstr */
+    if ((*outlen= ds_to_kvpair(ds, outstr, outmax, (SQLWCHAR)';')) == -1)
+    {
+      /* truncated, up to caller to see outmax == *outlen */
+      *outlen= outmax;
+      outstr[outmax]= 0;
+    }
+    rc= TRUE;
+  }
+  else
+  {
+    SQLPostInstallerError(ODBC_ERROR_INVALID_KEYWORD_VALUE,
+                          W_USER_CANCELLED);
+  }
+
+exit:
+  ds_delete(ds);
+  return rc;
+}
+
+
 /*
    Add, edit, or remove a Data Source Name (DSN). This function is
    called by "Data Source Administrator" on Windows, or similar
@@ -39,15 +88,14 @@ BOOL INSTAPI ConfigDSNW(HWND hWnd, WORD nRequest, LPCWSTR pszDriver,
   BOOL rc= TRUE;
   SQLWCHAR *driverfile;
 
-  if (*pszAttributes)
+  if (pszAttributes && *pszAttributes)
   {
     if (ds_from_kvpair(ds, pszAttributes, (SQLWCHAR)';'))
     {
-        SQLPostInstallerError(ODBC_ERROR_INVALID_KEYWORD_VALUE,
-                              /* TODO can't be long string */
-                              L"Invalid attribute string");
-        rc= FALSE;
-        goto exitConfigDSN;
+      SQLPostInstallerError(ODBC_ERROR_INVALID_KEYWORD_VALUE,
+                            W_INVALID_ATTR_STR);
+      rc= FALSE;
+      goto exitConfigDSN;
     }
     if (ds_lookup(ds))
     {
@@ -71,7 +119,7 @@ BOOL INSTAPI ConfigDSNW(HWND hWnd, WORD nRequest, LPCWSTR pszDriver,
   {
   case ODBC_ADD_DSN:
   case ODBC_CONFIG_DSN:
-    if (ShowOdbcParamsDialog(ds, hWnd) == 1)
+    if (ShowOdbcParamsDialog(ds, hWnd, FALSE) == 1)
     {
       ds_set_strattr(&ds->driver, driverfile);
       /* save datasource */

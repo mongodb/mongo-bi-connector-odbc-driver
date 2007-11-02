@@ -20,12 +20,14 @@
 
 ##########################################################################
 
-ADD_LIBRARY(myodbc3u STATIC
-                        stringutil.c
-                        stringutil.h
-                        unicode_transcode.c
-                        installer.c
-                        installer.h
+SET(myodbc3u_SRCS stringutil.c
+                  stringutil.h
+                  unicode_transcode.c
+                  installer.c
+                  installer.h)
+
+#IF(NOT WIN32)
+  SET(myodbc3u_SRCS ${myodbc3u_SRCS}
                         MYODBCUtilAllocDataSource.c
                         MYODBCUtilAllocDriver.c
                         MYODBCUtilClearDataSource.c
@@ -46,6 +48,9 @@ ADD_LIBRARY(myodbc3u STATIC
                         MYODBCUtilWriteDataSource.c
                         MYODBCUtilWriteDataSourceStr.c
                         MYODBCUtilWriteDriver.c)
+#ENDIF(NOT WIN32)
+
+ADD_LIBRARY(myodbc3u STATIC ${myodbc3u_SRCS})
 
 TARGET_LINK_LIBRARIES(myodbc3u ${ODBCINSTLIB})
 

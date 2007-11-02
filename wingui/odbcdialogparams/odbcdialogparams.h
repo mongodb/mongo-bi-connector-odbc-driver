@@ -22,7 +22,8 @@ typedef BOOL AcceptParamsCallbackType(HWND dialog, DataSource* params);
 // returns TRUE if user pressed OK, FALSE - otherwise
 int ShowOdbcParamsDialog(
 	DataSource* params,                  /*[inout] params */
-	HWND ParentWnd);                    /* [in] could be NULL */
+	HWND ParentWnd,                     /* [in] could be NULL */
+	BOOL isPrompt);
 
 #ifdef __cplusplus
 }

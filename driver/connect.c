@@ -43,6 +43,7 @@
 # define CLIENT_NO_SCHEMA      16
 #endif
 
+#define USE_LEGACY_ODBC_GUI
 
 /**
   Get the connection flags based on the driver options.
@@ -433,8 +434,10 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
   DataSource *ds= ds_new();
   /* We may have to read driver info to find the setup library. */
   Driver *pDriver= driver_new();
+#ifdef USE_LEGACY_ODBC_GUI
   /* Legacy setup lib, used for prompting, will be deprecated by native guis */
   MYODBCUTIL_DATASOURCE *oldds= MYODBCUtilAllocDataSource(MYODBCUTIL_DATASOURCE_MODE_DRIVER_CONNECT);
+#endif /* USE_LEGACY_ODBC_GUI */
   BOOL bPrompt= FALSE;
   HMODULE hModule= NULL;
   unsigned long options;
@@ -483,26 +486,17 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
   switch (fDriverCompletion)
   {
   case SQL_DRIVER_PROMPT:
-    oldds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_PROMPT;
     bPrompt= TRUE;
     break;
 
   case SQL_DRIVER_COMPLETE:
-    oldds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_COMPLETE;
-    if (myodbc_do_connect(dbc, ds) == SQL_SUCCESS)
-      goto connected;
-    bPrompt= TRUE;
-    break;
-
   case SQL_DRIVER_COMPLETE_REQUIRED:
-    oldds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_REQUIRED;
     if (myodbc_do_connect(dbc, ds) == SQL_SUCCESS)
       goto connected;
     bPrompt= TRUE;
     break;
 
   case SQL_DRIVER_NOPROMPT:
-    oldds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_NOPROMPT;
     bPrompt= FALSE;
     break;
 
@@ -510,6 +504,25 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
     rc= set_dbc_error(hdbc, "HY110", "Invalid driver completion.", 0);
     goto error;
   }
+
+#ifdef USE_LEGACY_ODBC_GUI
+  /* set prompt type for legacy GUI code */
+  switch (fDriverCompletion)
+  {
+  case SQL_DRIVER_PROMPT:
+    oldds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_PROMPT;
+    break;
+  case SQL_DRIVER_COMPLETE:
+    oldds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_COMPLETE;
+    break;
+  case SQL_DRIVER_COMPLETE_REQUIRED:
+    oldds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_REQUIRED;
+    break;
+  case SQL_DRIVER_NOPROMPT:
+    oldds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_NOPROMPT;
+    break;
+  }
+#endif /* USE_LEGACY_ODBC_GUI */
 
 #ifdef __APPLE__
   /*
@@ -529,7 +542,11 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
 
   if (bPrompt)
   {
+#ifndef USE_LEGACY_ODBC_GUI
+    BOOL (*pFunc)(SQLHWND, SQLWCHAR *, SQLUSMALLINT, SQLWCHAR *, SQLINTEGER);
+#else /* USE_LEGACY_ODBC_GUI */
     BOOL (*pFunc)(SQLHDBC, SQLHWND, MYODBCUTIL_DATASOURCE *);
+#endif /* USE_LEGACY_ODBC_GUI */
 
     /*
      We can not present a prompt unless we can lookup the name of the setup
@@ -540,8 +557,7 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
      connect with a DSN which does not exist. A possible solution would be to
      hard-code some fall-back value for ds->pszDRIVER.
     */
-    /* TODO support pszDriverFileName somewhere? */
-    if (!ds->driver /*&& !ds->pszDriverFileName*/)
+    if (!ds->driver)
     {
       char szError[1024];
       sprintf(szError,
@@ -605,13 +621,17 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
       goto error;
     }
 
+#ifndef USE_LEGACY_ODBC_GUI
+    pFunc= (BOOL (*)(SQLHWND, SQLWCHAR *, SQLUSMALLINT, SQLWCHAR *, SQLINTEGER))
+      GetProcAddress(hModule, "Driver_Prompt");
+#else /* USE_LEGACY_ODBC_GUI */
     /*
        The setup library should expose a MYODBCSetupDriverConnect() C entry point
        for us to call.
     */
-    /* TODO new name? args? */
     pFunc= (BOOL (*)(SQLHDBC, SQLHWND, MYODBCUTIL_DATASOURCE *))
       GetProcAddress(hModule, "MYODBCSetupDriverConnect");
+#endif /* USE_LEGACY_ODBC_GUI */
 
     if (pFunc == NULL)
     {
@@ -630,6 +650,16 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
       goto error;
     }
 
+#ifndef USE_LEGACY_ODBC_GUI
+    /* TODO new */
+    /* Prompt. Function returns false if user cancels.  */
+    //if (!pFunc(hdbc, hwnd, NULL))
+    {
+      set_dbc_error(hdbc, "HY000", "User cancelled.", 0);
+      rc= SQL_ERROR;
+      goto error;
+    }
+#else /* USE_LEGACY_ODBC_GUI */
     /* Copy to the legacy data source structure for prompting */
     if (ds->name)
       oldds->pszDSN=         _global_strdup(ds_get_utf8attr(ds->name, &ds->name8));
@@ -701,6 +731,7 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
       ds_setattr_from_utf8(&ds->charset, oldds->pszCHARSET);
     if (oldds->pszPORT)
       ds->port= strtoul(oldds->pszPORT, NULL, 10);
+#endif /* USE_LEGACY_ODBC_GUI */
   }
 
   if ((rc= myodbc_do_connect(dbc, ds)) != SQL_SUCCESS)
@@ -742,7 +773,9 @@ error:
 
   driver_delete(pDriver);
   ds_delete(ds);
+#ifdef USE_LEGACY_ODBC_GUI
   MYODBCUtilFreeDataSource(oldds);
+#endif /* USE_LEGACY_ODBC_GUI */
 
   return rc;
 }
