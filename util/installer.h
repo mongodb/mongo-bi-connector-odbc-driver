@@ -27,19 +27,13 @@
 #ifndef _INSTALLER_H
 #define _INSTALLER_H
 
+#include <wchar.h>
+#include "../MYODBC_CONF.h"
+#include "../MYODBC_ODBC.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#ifdef _WIN32
-# include <windows.h>
-#endif
-
-#include <wchar.h>
-
-#include <sql.h>
-#include <sqlext.h>
-#include <odbcinst.h>
 
 /* the different modes used when calling MYODBCSetupDataSourceConfig */
 #define CONFIG_ADD 1
