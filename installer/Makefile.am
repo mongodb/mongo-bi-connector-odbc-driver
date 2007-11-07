@@ -18,6 +18,8 @@
 
 if MYODBCINST
 
+INCLUDES = -I$(top_srcdir)
+
 bin_PROGRAMS = myodbc3i
 myodbc3i_SOURCES = myodbc3i.c
 myodbc3i_LDADD        = ../util/libmyodbc3u.la @LTDL_LIB@

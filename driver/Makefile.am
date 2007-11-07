@@ -28,7 +28,7 @@ endif
 
 lib_LTLIBRARIES=libmyodbc5.la $(TS_DRIVER)
 
-INCLUDES=-I../util
+INCLUDES=-I$(top_srcdir)/util -I$(top_srcdir)
 
 ###################################################################
 #                                                                 #

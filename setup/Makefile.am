@@ -108,8 +108,7 @@ mMYODBCSetupLineEdit.cpp: @srcdir@/MYODBCSetupLineEdit.h
 #                                                                 #
 ###################################################################
 
-# INCLUDES = -I@top_srcdir@/include @QT_INCLUDES@ -DSYSTEM_FILE_PATH=\"@sysconfdir@\" -DDEFLIB_PATH=\"@libdir@\" $(INCLTDL)
-INCLUDES = -I@top_srcdir@/include $(QT_CXXFLAGS) -DSYSTEM_FILE_PATH=\"@sysconfdir@\" -DDEFLIB_PATH=\"@libdir@\" $(LTDLINCL)
+INCLUDES = -I$(top_srcdir) $(QT_CXXFLAGS) -DSYSTEM_FILE_PATH=\"$(sysconfdir)\" -DDEFLIB_PATH=\"$(libdir)\" $(LTDLINCL)
 
 libmyodbc3S_la_LDFLAGS = \
 	-export-dynamic \
@@ -117,13 +116,10 @@ libmyodbc3S_la_LDFLAGS = \
 	-release @NUMERIC_VERSION@ \
 	-module
 
-# libmyodbc3S_la_LIBADD = @QT_LDFLAGS@ @LIB_QT@ ../util/libmyodbc3u.la
 libmyodbc3S_la_LIBADD = $(QT_LDFLAGS) $(QT_LIBS) $(EXTRA_XLIBS) \
 			../util/libmyodbc3u.la
 
 libmyodbc3S_la_DEPENDENCIES = ../util/libmyodbc3u.la
-
-# LDFLAGS=@EXTRA_LDFLAGS@ 
 
 ###################################################################
 #                                                                 #

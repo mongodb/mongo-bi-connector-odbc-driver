@@ -1,3 +1,5 @@
+INCLUDES = -I$(top_srcdir)
+
 noinst_LTLIBRARIES = libmyodbc3u.la
 
 # base source list
