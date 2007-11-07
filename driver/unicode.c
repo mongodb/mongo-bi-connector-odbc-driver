@@ -681,7 +681,7 @@ SQLGetInfoW(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
     if (value_len)
       *value_len= (SQLSMALLINT)len * sizeof(SQLWCHAR);
 
-    if (value_max > 0)
+    if (value && value_max > 0)
     {
       len= min(len, value_max - 1);
       (void)memcpy((char *)value, (const char *)wvalue,

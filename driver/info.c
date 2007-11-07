@@ -67,9 +67,12 @@ MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
 {
   DBC *dbc= (DBC *)hdbc;
   SQLSMALLINT dummy;
+  SQLINTEGER dummy_value;
 
   if (!value_len)
     value_len= &dummy;
+  if (!num_info)
+    num_info= &dummy_value;
 
   switch (fInfoType) {
   case SQL_ACTIVE_ENVIRONMENTS:

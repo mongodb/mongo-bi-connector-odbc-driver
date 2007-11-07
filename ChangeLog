@@ -37,6 +37,7 @@ Guffert TODO
   * SQLCopyDesc did not correctly copy all records.
   * Memory leak. (Bug #31115)
   * Added missing SQL_ODBC_SQL_CONFORMANCE to SQLGetInfo.
+  * Fixed handling of NULL pointers passed to SQLGetInfo.
   
   Includes changes from Connector/ODBC 3.51.21.
 
