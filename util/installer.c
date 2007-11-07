@@ -40,6 +40,9 @@ static SQLWCHAR W_EMPTY[]= {0};
 static SQLWCHAR W_ODBCINST_INI[]=
   {'O', 'D', 'B', 'C', 'I', 'N', 'S', 'T', '.', 'I', 'N', 'I', 0};
 static SQLWCHAR W_ODBC_INI[]= {'O', 'D', 'B', 'C', '.', 'I', 'N', 'I', 0};
+static SQLWCHAR W_CANNOT_FIND_DRIVER[]= {'C', 'a', 'n', 'n', 'o', 't', ' ',
+                                         'f', 'i', 'n', 'd', ' ',
+                                         'd', 'r', 'i', 'v', 'e', 'r', 0};
 
 static SQLWCHAR W_DSN[]= {'D', 'S', 'N', 0};
 static SQLWCHAR W_DRIVER[]= {'D', 'R', 'I', 'V', 'E', 'R', 0};
@@ -65,6 +68,24 @@ static SQLWCHAR W_SSLCIPHER[]=
   {'S', 'S', 'L', 'C', 'I', 'P', 'H', 'E', 'R', 0};
 static SQLWCHAR W_PORT[]= {'P', 'O', 'R', 'T', 0};
 static SQLWCHAR W_SETUP[]= {'S', 'E', 'T', 'U', 'P', 0};
+/* DS_PARAM */
+/* externally used strings */
+const SQLWCHAR W_DRIVER_PARAM[]= {';', 'D', 'R', 'I', 'V', 'E', 'R', '=', 0};
+const SQLWCHAR W_DRIVER_NAME[]= {'M', 'y', 'S', 'Q', 'L', ' ',
+                                 'O', 'D', 'B', 'C', ' ', '5', '.', '1', ' ',
+                                 'D', 'r', 'i', 'v', 'e', 'r', 0};
+const SQLWCHAR W_INVALID_ATTR_STR[]= {'I', 'n', 'v', 'a', 'l', 'i', 'd', ' ',
+                                      'a', 't', 't', 'r', 'i', 'b', 'u', 't', 'e', ' ',
+                                      's', 't', 'r', 'i', 'n', 'g', 0};
+
+/* List of all DSN params, used when serializing to string */
+static const
+SQLWCHAR *dsnparams[]= {W_DSN, W_DRIVER, W_DESCRIPTION, W_SERVER,
+                        W_UID, W_PWD, W_DATABASE, W_SOCKET, W_INITSTMT,
+                        W_PORT, W_OPTION, W_CHARSET, W_SSLKEY,
+                        W_SSLCERT, W_SSLCA, W_SSLCAPATH, W_SSLCIPHER};
+static const
+int dsnparamcnt= sizeof(dsnparams) / sizeof(SQLWCHAR *);
 /* DS_PARAM */
 
 /* convenience macro to append a single character */
@@ -192,10 +213,10 @@ void driver_delete(Driver *driver)
 /*
  * Lookup a driver given only the filename of the driver. This is used:
  *
- * When prompting for additional DSN info upon connect when the
- * driver uses an external setup library.
+ * 1. When prompting for additional DSN info upon connect when the
+ *    driver uses an external setup library.
  *
- * When testing a connection when adding/editing a DSN.
+ * 2. When testing a connection when adding/editing a DSN.
  */
 int driver_lookup_name(Driver *driver)
 {
@@ -218,7 +239,7 @@ int driver_lookup_name(Driver *driver)
   while (len > 0)
   {
     if (!SQLGetPrivateProfileStringW(pdrv, W_DRIVER, W_EMPTY, driverinfo,
-                                    1023, W_ODBCINST_INI))
+                                     1023, W_ODBCINST_INI))
       continue;
 
     if (!sqlwcharcasecmp(driverinfo, driver->lib))
@@ -384,7 +405,9 @@ DataSource *ds_new()
     return NULL;
   memset(ds, 0, sizeof(DataSource));
 
+  /* non-zero DataSource defaults here */
   ds->port= 3306;
+  /* DS_PARAM */
 
   return ds;
 }
@@ -480,7 +503,7 @@ int ds_set_strnattr(SQLWCHAR **attr, const SQLWCHAR *val, size_t charcount)
  * string (SQLWCHAR *) or int parameters.
  */
 void ds_map_param(DataSource *ds, const SQLWCHAR *param,
-    SQLWCHAR ***strdest, int **intdest)
+                  SQLWCHAR ***strdest, int **intdest)
 {
   *strdest= NULL;
   *intdest= NULL;
@@ -672,32 +695,30 @@ int ds_from_kvpair(DataSource *ds, const SQLWCHAR *attrs, SQLWCHAR delim)
  * characters written.
  */
 int ds_to_kvpair(DataSource *ds, SQLWCHAR *attrs, size_t attrslen,
-         SQLWCHAR delim)
+                 SQLWCHAR delim)
 {
-  /* TODO centralize all this */
-  const SQLWCHAR *params[]= {W_DSN, W_DRIVER, W_DESCRIPTION, W_SERVER,
-                             W_UID, W_PWD, W_DATABASE, W_SOCKET, W_INITSTMT,
-                             W_PORT, W_OPTION, W_CHARSET, W_SSLKEY,
-                             W_SSLCERT, W_SSLCA, W_SSLCAPATH, W_SSLCIPHER};
-  /* DS_PARAM */
-  int paramcnt= sizeof(params) / sizeof(SQLWCHAR *);
   int i;
   SQLWCHAR **strval;
   int *intval;
   int origchars= attrslen;
   SQLWCHAR numbuf[21];
 
-  for (i= 0; i < paramcnt; ++i)
-  {
-    ds_map_param(ds, params[i], &strval, &intval);
+  if (!attrslen)
+    return -1;
 
-    /* We skip the driver is dsn is given */
-    if (!sqlwcharcasecmp(W_DRIVER, params[i]) && ds->name && *ds->name)
+  *attrs= 0;
+
+  for (i= 0; i < dsnparamcnt; ++i)
+  {
+    ds_map_param(ds, dsnparams[i], &strval, &intval);
+
+    /* We skip the driver if dsn name is given */
+    if (!sqlwcharcasecmp(W_DRIVER, dsnparams[i]) && ds->name && *ds->name)
       continue;
 
     if (strval && *strval && **strval)
     {
-      attrs+= sqlwcharncat2(attrs, params[i], &attrslen);
+      attrs+= sqlwcharncat2(attrs, dsnparams[i], &attrslen);
       APPEND_SQLWCHAR(attrs, attrslen, '=');
       if (value_needs_escaped(*strval))
       {
@@ -711,7 +732,7 @@ int ds_to_kvpair(DataSource *ds, SQLWCHAR *attrs, size_t attrslen,
     }
     else if (intval)
     {
-      attrs+= sqlwcharncat2(attrs, params[i], &attrslen);
+      attrs+= sqlwcharncat2(attrs, dsnparams[i], &attrslen);
       APPEND_SQLWCHAR(attrs, attrslen, '=');
       sqlwcharfromul(numbuf, *intval);
       attrs+= sqlwcharncat2(attrs, numbuf, &attrslen);
@@ -731,11 +752,57 @@ int ds_to_kvpair(DataSource *ds, SQLWCHAR *attrs, size_t attrslen,
 
 
 /*
+ * Calculate the length of serializing this DataSource to a string
+ * including null terminator. Given in characters.
+ */
+size_t ds_to_kvpair_len(DataSource *ds)
+{
+  size_t len= 0;
+  int i;
+  SQLWCHAR **strval;
+  int *intval;
+  SQLWCHAR numbuf[21];
+
+  for (i= 0; i < dsnparamcnt; ++i)
+  {
+    ds_map_param(ds, dsnparams[i], &strval, &intval);
+
+    /* We skip the driver if dsn name is given */
+    if (!sqlwcharcasecmp(W_DRIVER, dsnparams[i]) && ds->name && *ds->name)
+      continue;
+
+    if (strval && *strval && **strval)
+    {
+      len+= sqlwcharlen(dsnparams[i]);
+      len+= sqlwcharlen(*strval);
+      if (value_needs_escaped(*strval))
+        len += 2; /* for escape braces */
+      len+= 2; /* for = and delimiter */
+    }
+    else if (intval)
+    {
+      len+= sqlwcharlen(dsnparams[i]);
+      sqlwcharfromul(numbuf, *intval);
+      len+= sqlwcharlen(numbuf);
+      len+= 2; /* for = and delimiter */
+    }
+  }
+
+  /*
+     delimiter is always counted at the end, so we don't add one
+     for the null terminator
+   */
+
+  return len;
+}
+
+
+/*
  * Utility method for ds_add() to add a single string
  * property via the installer api.
  */
 int ds_add_strprop(const SQLWCHAR *name, const SQLWCHAR *propname,
-           const SQLWCHAR *propval)
+                   const SQLWCHAR *propval)
 {
   /* don't write if its null or empty string */
   if (propval && *propval)
@@ -763,18 +830,32 @@ int ds_add_intprop(const SQLWCHAR *name, const SQLWCHAR *propname, int propval)
  */
 int ds_add(DataSource *ds)
 {
+  Driver *driver= NULL;
+  int rc= 1;
+
   /* Validate data source name */
   if (!SQLValidDSNW(ds->name))
-    return 1;
+    goto error;
 
   /* remove if exists, FYI SQLRemoveDSNFromIni returns true
    * even if the dsn isnt found, false only if there is a failure */
   if (!SQLRemoveDSNFromIniW(ds->name))
-    return 1;
+    goto error;
+
+  /* Get the actual driver name (not just file name) */
+  driver= driver_new();
+  memcpy(driver->lib, ds->driver,
+         (sqlwcharlen(ds->driver) + 1) * sizeof(SQLWCHAR));
+  if (driver_lookup_name(driver))
+  {
+    SQLPostInstallerErrorW(ODBC_ERROR_INVALID_KEYWORD_VALUE,
+                           W_CANNOT_FIND_DRIVER);
+    goto error;
+  }
 
   /* "Create" section for data source */
-  if (!SQLWriteDSNToIniW(ds->name, ds->driver))
-    return 1;
+  if (!SQLWriteDSNToIniW(ds->name, driver->name))
+    goto error;
 
   /* write all fields (util method takes care of skipping blank fields) */
   if (ds_add_strprop(ds->name, W_DRIVER     , ds->driver     )) goto error;
@@ -797,10 +878,12 @@ int ds_add(DataSource *ds)
 
   /* DS_PARAM */
 
-  return 0;
+  rc= 0;
 
 error:
-  return 1;
+  if (driver)
+    driver_delete(driver);
+  return rc;
 }
 
 

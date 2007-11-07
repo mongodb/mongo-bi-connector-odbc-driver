@@ -77,16 +77,35 @@ void Disconnect( SQLHDBC hDbc, SQLHENV hEnv  )
 SQLRETURN Connect(SQLHDBC *hDbc, SQLHENV *hEnv, DataSource *params)
 {
 	SQLRETURN   nReturn;
-	SQLWCHAR      stringConnectIn[1024] = {0};
+	SQLWCHAR      stringConnectIn[1024];
+  Driver *driver;
+  size_t inlen= 1024;
 
-	/* Blank out DSN name, otherwise it will pull the info from the registry */
-	ds_set_strattr(&params->name, NULL);
+  assert(params->driver && *params->driver);
 
-    if (ds_to_kvpair(params, stringConnectIn, 1024-1, ';') == -1)
-    {
-        /* TODO error message..... */
-        return SQL_ERROR;
-    }
+  /* Blank out DSN name, otherwise it will pull the info from the registry */
+  ds_set_strattr(&params->name, NULL);
+
+  if (ds_to_kvpair(params, stringConnectIn, 1024, ';') == -1)
+  {
+      /* TODO error message..... */
+      return SQL_ERROR;
+  }
+  inlen-= sqlwcharlen(stringConnectIn);
+
+  /* Add driver name (not file) to connect string */
+  driver= driver_new();
+  memcpy(driver->lib, params->driver,
+         (sqlwcharlen(params->driver) + 1) * sizeof(SQLWCHAR));
+  if (driver_lookup_name(driver))
+  {
+    driver_delete(driver);
+    /* TODO error message */
+    return SQL_ERROR;
+  }
+  sqlwcharncat2(stringConnectIn, W_DRIVER_PARAM, &inlen);
+  sqlwcharncat2(stringConnectIn, driver->name, &inlen);
+  driver_delete(driver);
 
 	if ( hDBC == SQL_NULL_HDBC )
 	{

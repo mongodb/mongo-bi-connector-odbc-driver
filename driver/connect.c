@@ -45,6 +45,13 @@
 
 #define USE_LEGACY_ODBC_GUI
 
+#ifndef USE_LEGACY_ODBC_GUI
+typedef BOOL (*PromptFunc)(SQLHWND, SQLWCHAR *, SQLUSMALLINT,
+                           SQLWCHAR *, SQLSMALLINT, SQLSMALLINT *);
+#else /* USE_LEGACY_ODBC_GUI */
+typedef BOOL (*PromptFunc)(SQLHDBC, SQLHWND, MYODBCUTIL_DATASOURCE *);
+#endif /* USE_LEGACY_ODBC_GUI */
+
 /**
   Get the connection flags based on the driver options.
 
@@ -434,7 +441,10 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
   DataSource *ds= ds_new();
   /* We may have to read driver info to find the setup library. */
   Driver *pDriver= driver_new();
-#ifdef USE_LEGACY_ODBC_GUI
+#ifndef USE_LEGACY_ODBC_GUI
+  SQLWCHAR *prompt_instr= NULL;
+  size_t prompt_inlen;
+#else /* USE_LEGACY_ODBC_GUI */
   /* Legacy setup lib, used for prompting, will be deprecated by native guis */
   MYODBCUTIL_DATASOURCE *oldds= MYODBCUtilAllocDataSource(MYODBCUTIL_DATASOURCE_MODE_DRIVER_CONNECT);
 #endif /* USE_LEGACY_ODBC_GUI */
@@ -542,11 +552,7 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
 
   if (bPrompt)
   {
-#ifndef USE_LEGACY_ODBC_GUI
-    BOOL (*pFunc)(SQLHWND, SQLWCHAR *, SQLUSMALLINT, SQLWCHAR *, SQLINTEGER);
-#else /* USE_LEGACY_ODBC_GUI */
-    BOOL (*pFunc)(SQLHDBC, SQLHWND, MYODBCUTIL_DATASOURCE *);
-#endif /* USE_LEGACY_ODBC_GUI */
+    PromptFunc pFunc;
 
     /*
      We can not present a prompt unless we can lookup the name of the setup
@@ -622,15 +628,13 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
     }
 
 #ifndef USE_LEGACY_ODBC_GUI
-    pFunc= (BOOL (*)(SQLHWND, SQLWCHAR *, SQLUSMALLINT, SQLWCHAR *, SQLINTEGER))
-      GetProcAddress(hModule, "Driver_Prompt");
+    pFunc= (PromptFunc)GetProcAddress(hModule, "Driver_Prompt");
 #else /* USE_LEGACY_ODBC_GUI */
     /*
        The setup library should expose a MYODBCSetupDriverConnect() C entry point
        for us to call.
     */
-    pFunc= (BOOL (*)(SQLHDBC, SQLHWND, MYODBCUTIL_DATASOURCE *))
-      GetProcAddress(hModule, "MYODBCSetupDriverConnect");
+    pFunc= (PromptFunc)GetProcAddress(hModule, "MYODBCSetupDriverConnect");
 #endif /* USE_LEGACY_ODBC_GUI */
 
     if (pFunc == NULL)
@@ -651,12 +655,36 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
     }
 
 #ifndef USE_LEGACY_ODBC_GUI
-    /* TODO new */
-    /* Prompt. Function returns false if user cancels.  */
-    //if (!pFunc(hdbc, hwnd, NULL))
+    /* create a string for prompting, and add driver manually */
+    prompt_inlen= ds_to_kvpair_len(ds) + sqlwcharlen(W_DRIVER_PARAM) +
+                  sqlwcharlen(ds->driver) + 1;
+    prompt_instr= (SQLWCHAR *) my_malloc(prompt_inlen * sizeof(SQLWCHAR),
+                                         MYF(0));
+    if (ds_to_kvpair(ds, prompt_instr, prompt_inlen, ';') == -1)
+    {
+      rc= set_dbc_error(dbc, "HY000",
+                        "Failed to prepare prompt input.", 0);
+      goto error;
+    }
+    prompt_inlen-= sqlwcharlen(prompt_instr);
+    sqlwcharncat2(prompt_instr, W_DRIVER_PARAM, &prompt_inlen);
+    sqlwcharncat2(prompt_instr, ds->driver, &prompt_inlen);
+
+    if (!pFunc(hwnd, prompt_instr, fDriverCompletion,
+               szConnStrOut, cbConnStrOutMax, pcbConnStrOut))
     {
       set_dbc_error(hdbc, "HY000", "User cancelled.", 0);
       rc= SQL_ERROR;
+      goto error;
+    }
+
+    /* refresh our DataSource */
+    ds_delete(ds);
+    ds= ds_new();
+    if (ds_from_kvpair(ds, szConnStrOut, ';'))
+    {
+      rc= set_dbc_error(dbc, "HY000",
+                        "Failed to parse the prompt output string.", 0);
       goto error;
     }
 #else /* USE_LEGACY_ODBC_GUI */
@@ -739,6 +767,14 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
 
 connected:
 
+#ifndef USE_LEGACY_ODBC_GUI
+  /* return SQL_SUCCESS_WITH_INFO if truncated */
+  if (pcbConnStrOut && cbConnStrOutMax > *pcbConnStrOut)
+  {
+    set_dbc_error(hdbc, "01004", "String data, right truncated.", 0);
+    rc= SQL_SUCCESS_WITH_INFO;
+  }
+#else /* USE_LEGACY_ODBC_GUI */
   if (szConnStrOut /*&& cbConnStrOutMax*/)
   {
 #ifdef WIN32
@@ -750,7 +786,6 @@ connected:
     if (szConnStrOut != szConnStrIn)
 #endif
     {
-      *szConnStrOut= '\0';
       if (ds_to_kvpair(ds, szConnStrOut, cbConnStrOutMax, L';') < 0)
       {
         set_dbc_error(dbc, "01000",
@@ -764,6 +799,7 @@ connected:
     if (pcbConnStrOut)
       *pcbConnStrOut= wcslen(szConnStrOut);
   }
+#endif /* USE_LEGACY_ODBC_GUI */
 
 error:
   if (hModule)
@@ -773,7 +809,9 @@ error:
 
   driver_delete(pDriver);
   ds_delete(ds);
-#ifdef USE_LEGACY_ODBC_GUI
+#ifndef USE_LEGACY_ODBC_GUI
+  x_free(prompt_instr);
+#else /* USE_LEGACY_ODBC_GUI */
   MYODBCUtilFreeDataSource(oldds);
 #endif /* USE_LEGACY_ODBC_GUI */
 

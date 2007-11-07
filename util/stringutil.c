@@ -417,7 +417,7 @@ copy_and_convert(char *to, uint32 to_length, CHARSET_INFO *to_cs,
   char *to_start= to;
   uchar *to_end= (uchar*) to+to_length;
   int (*mb_wc)(struct charset_info_st *, my_wc_t *, const uchar *,
-               const uchar *) = from_cs->cset->mb_wc;
+               const uchar *)= from_cs->cset->mb_wc;
   int (*wc_mb)(struct charset_info_st *, my_wc_t, uchar *s, uchar *e)=
     to_cs->cset->wc_mb;
   uint error_count= 0;
@@ -588,7 +588,7 @@ void sqlwcharfromul(SQLWCHAR *wstr, unsigned long v)
 /*
  * Concatenate two strings. This differs from the convential
  * strncat() in that the parameter n is reduced by the number
- * of characters used (including NULL).
+ * of characters used.
  *
  * Returns the number of characters copied.
  */
@@ -597,14 +597,11 @@ size_t sqlwcharncat2(SQLWCHAR *dest, const SQLWCHAR *src, size_t *n)
   SQLWCHAR *orig_dest;
   if (!n || !*n)
     return 0;
-  orig_dest = (dest += sqlwcharlen(dest));
+  orig_dest= (dest += sqlwcharlen(dest));
   while (*src && *n && (*n)--)
-    *dest++ = *src++;
+    *dest++= *src++;
   if (*n)
-  {
-    (*n)--;
     *dest= 0;
-  }
   else
     *(dest - 1)= 0;
   return dest - orig_dest;

@@ -27,12 +27,12 @@
 #include "stringutil.h"
 #include "odbcdialogparams/odbcdialogparams.h"
 
-/* TODO no L"" */
-static SQLWCHAR *W_INVALID_ATTR_STR = L"Invalid attribute string";
-static SQLWCHAR *W_USER_CANCELLED = L"User cancelled";
 
+/*
+   Entry point for GUI prompting from SQLDriverConnect().
+*/
 BOOL Driver_Prompt(HWND hWnd, SQLWCHAR *instr, SQLUSMALLINT completion,
-                   SQLWCHAR *outstr, SQLINTEGER outmax, SQLINTEGER *outlen)
+                   SQLWCHAR *outstr, SQLSMALLINT outmax, SQLSMALLINT *outlen)
 {
   DataSource *ds= ds_new();
   BOOL rc= FALSE;
@@ -45,29 +45,22 @@ BOOL Driver_Prompt(HWND hWnd, SQLWCHAR *instr, SQLUSMALLINT completion,
   {
     if (ds_from_kvpair(ds, instr, (SQLWCHAR)';'))
     {
-      SQLPostInstallerError(ODBC_ERROR_INVALID_KEYWORD_VALUE,
-                            W_INVALID_ATTR_STR);
+      rc= FALSE;
       goto exit;
     }
   }
 
-  /* TODO make sure the ds->driver is ok, for Test,etc */
   /* Show the dialog and handle result */
   if (ShowOdbcParamsDialog(ds, hWnd, TRUE) == 1)
   {
     /* serialize to outstr */
     if ((*outlen= ds_to_kvpair(ds, outstr, outmax, (SQLWCHAR)';')) == -1)
     {
-      /* truncated, up to caller to see outmax == *outlen */
-      *outlen= outmax;
+      /* truncated, up to caller to see outmax > *outlen */
+      *outlen= ds_to_kvpair_len(ds);
       outstr[outmax]= 0;
     }
     rc= TRUE;
-  }
-  else
-  {
-    SQLPostInstallerError(ODBC_ERROR_INVALID_KEYWORD_VALUE,
-                          W_USER_CANCELLED);
   }
 
 exit:
@@ -86,7 +79,7 @@ BOOL INSTAPI ConfigDSNW(HWND hWnd, WORD nRequest, LPCWSTR pszDriver,
 {
   DataSource *ds= ds_new();
   BOOL rc= TRUE;
-  SQLWCHAR *driverfile;
+  Driver *driver= NULL;
 
   if (pszAttributes && *pszAttributes)
   {
@@ -105,23 +98,25 @@ BOOL INSTAPI ConfigDSNW(HWND hWnd, WORD nRequest, LPCWSTR pszDriver,
     }
   }
 
-  /*
-     We set the actual name of the driver on the DataSource. This is
-     needed when testing the connection. We save the file name (which
-     was given to us, to save back to the registry).
-  */
-  driverfile= ds->driver;
-  ds->driver= NULL;
-  /* TODO .... constant for driver name */
-	ds_set_strattr(&ds->driver, L"MySQL ODBC 5.1 Driver");
-
   switch (nRequest)
   {
   case ODBC_ADD_DSN:
+    /*
+       Lookup driver filename using W_DRIVER_NAME for a new DSN.
+       It's not given by the DM and needed for Test/DB list.
+    */
+    driver= driver_new();
+    memcpy(driver->name, W_DRIVER_NAME,
+           (sqlwcharlen(W_DRIVER_NAME) + 1) * sizeof(SQLWCHAR));
+    if (driver_lookup(driver))
+    {
+      rc= FALSE;
+      break;
+    }
+    ds_set_strattr(&ds->driver, driver->lib);
   case ODBC_CONFIG_DSN:
     if (ShowOdbcParamsDialog(ds, hWnd, FALSE) == 1)
     {
-      ds_set_strattr(&ds->driver, driverfile);
       /* save datasource */
       if (ds_add(ds))
         rc= FALSE;
@@ -134,8 +129,9 @@ BOOL INSTAPI ConfigDSNW(HWND hWnd, WORD nRequest, LPCWSTR pszDriver,
   }
 
 exitConfigDSN:
-  x_free(driverfile);
   ds_delete(ds);
+  if (driver)
+    driver_delete(driver);
   return rc;
 }
 

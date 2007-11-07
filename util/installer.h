@@ -27,7 +27,6 @@
 #ifndef _INSTALLER_H
 #define _INSTALLER_H
 
-#include <wchar.h>
 #include "../MYODBC_CONF.h"
 #include "../MYODBC_ODBC.h"
 
@@ -67,7 +66,7 @@ int driver_to_kvpair_null(Driver *driver, SQLWCHAR *attrs, size_t attrslen);
 
 typedef struct {
   SQLWCHAR *name;
-  SQLWCHAR *driver;
+  SQLWCHAR *driver; /* driver filename */
   SQLWCHAR *description;
   SQLWCHAR *server;
   SQLWCHAR *uid;
@@ -140,10 +139,15 @@ int ds_lookup(DataSource *ds);
 int ds_from_kvpair(DataSource *ds, const SQLWCHAR *attrs, SQLWCHAR delim);
 int ds_to_kvpair(DataSource *ds, SQLWCHAR *attrs, size_t attrslen,
                  SQLWCHAR delim);
+size_t ds_to_kvpair_len(DataSource *ds);
 int ds_add(DataSource *ds);
 int ds_exists(SQLWCHAR *name);
 SQLCHAR *ds_get_utf8attr(SQLWCHAR *attrw, SQLCHAR **attr8);
 int ds_setattr_from_utf8(SQLWCHAR **attr, SQLCHAR *val8);
+
+extern const SQLWCHAR W_DRIVER_PARAM[];
+extern const SQLWCHAR W_DRIVER_NAME[];
+extern const SQLWCHAR W_INVALID_ATTR_STR[];
 
 #ifdef __cplusplus
 }
