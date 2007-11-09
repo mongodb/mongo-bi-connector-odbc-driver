@@ -1929,7 +1929,6 @@ DECLARE_TEST(t_bug13776_auto)
 
   SQLULEN     pcColSz;
   SQLCHAR     szColName[MAX_NAME_LEN];
-  SQLCHAR     szData[MAX_ROW_DATA_LEN+1];
   SQLSMALLINT pfSqlType, pcbScale, pfNullable;
   SQLCHAR     *env_path= NULL;
   SQLCHAR     szFileToLoad[255];
