@@ -1,6 +1,8 @@
 3.51.22
 
   Functionality added or changed:
+  * Removed workaround for bug #10491 in the server, which has now been
+    fixed in MySQL Server 5.0.48 and 5.1.21.
   * Added FLAG_COLUMN_SIZE_S32 to limit the reported column size to a
     signed 32-bit integer. This option is automatically enabled for ADO
     applications, in order to work around a bug in ADO. (Bug #13776)
