@@ -303,10 +303,11 @@ DECLARE_TEST(my_colpriv)
   return OK;
 }
 
+
 DECLARE_TEST(t_sqlprocedures)
 {
-  SQLRETURN rc;
-  /** @todo check server version */
+  if (!mysql_min_version(hdbc, "5.0", 3))
+    skip("server does not support stored procedures");
 
   /* avoid errors in case binary log is activated */
   ok_sql(hstmt, "SET GLOBAL log_bin_trust_function_creators = 1");
@@ -460,8 +461,7 @@ DECLARE_TEST(t_columns)
   SQLSMALLINT   NumPrecRadix, DataType, Nullable, DecimalDigits;
   SQLLEN        cbColumnSize, cbDecimalDigits, cbNumPrecRadix,
                 cbDataType, cbNullable;
-  SQLINTEGER    cbDatabaseName;
-  SQLRETURN     rc;
+  SQLSMALLINT   cbDatabaseName;
   SQLUINTEGER   ColumnSize, i;
   SQLUINTEGER   ColumnCount= 7;
   SQLCHAR       ColumnName[MAX_NAME_LEN], DatabaseName[MAX_NAME_LEN];
