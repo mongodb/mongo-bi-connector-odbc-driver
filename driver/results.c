@@ -535,7 +535,7 @@ SQLRETURN SQL_API SQLDescribeCol( SQLHSTMT          hstmt,
       *pnColumnSize= size;
     }
     if (pibScale)
-      *pibScale= max(0, get_decimal_digits(stmt, field));
+      *pibScale= (SQLSMALLINT)max(0, get_decimal_digits(stmt, field));
     if (pfNullable)
     {
       if ((field->flags & NOT_NULL_FLAG) &&
