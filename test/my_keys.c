@@ -27,7 +27,6 @@
 DECLARE_TEST(my_no_keys)
 {
     SQLRETURN rc;
-    SQLROWCOUNT rowcount;
     SQLINTEGER nData;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS my_no_keys");
@@ -73,17 +72,6 @@ DECLARE_TEST(my_no_keys)
 
     nData = 999;
 
-    /* TO BE FIXED LATER
-	
-	rc = SQLSetPos(hstmt,2,SQL_UPDATE,SQL_LOCK_NO_CHANGE);
-    mystmt(hstmt,rc);
-
-    rc = SQLRowCount(hstmt,&rowcount);
-    mystmt(hstmt,rc);
-
-    printMessage(" rows affected:%d\n",rowcount); 
-    myassert(rowcount == 1); */
-
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
 
@@ -99,17 +87,7 @@ DECLARE_TEST(my_no_keys)
     mystmt(hstmt,rc);
 
     rc = SQLExecDirect(hstmt,"select * from my_no_keys",SQL_NTS);
-    mystmt(hstmt,rc);    
-
-    rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
-    myassert(3000 == my_fetch_int(hstmt,4));
-
-    /*  TO BE FIXED LATER (SEE ABOVE)
-	
-	rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-    myassert(999 == my_fetch_int(hstmt,4)); */
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
@@ -119,10 +97,9 @@ DECLARE_TEST(my_no_keys)
     mystmt(hstmt,rc);
     myassert(3000 == my_fetch_int(hstmt,4));
 
-    /* TO BE FIXED LATER (SEE ABOVE)
-	
-	rc = SQLFetch(hstmt);
-    mystmt_err(hstmt,rc==SQL_NO_DATA_FOUND,rc); */
+    rc = SQLFetch(hstmt);
+    mystmt(hstmt,rc);
+    myassert(3000 == my_fetch_int(hstmt,4));
 
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
