@@ -115,7 +115,9 @@ EXTRA_DIST = \
 	Upgrade.bat \
 	CMakeLists.txt \
 	cmake \
+	wingui \
 	doc
+
 
 # Remove Subversion ".svn" subdirectories from source distribution
 dist-hook:
