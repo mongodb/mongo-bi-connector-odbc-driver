@@ -31,6 +31,7 @@ ADD_LIBRARY(myodbc5S SHARED
     odbcdialogparams/odbcdialogparams.cpp
     odbcdialogparams/odbcdialogparams.h
     odbcdialogparams/odbcdialogparams.rc
+    odbcdialogparams/resource.h
     odbcdialogparams/TabCtrl.cpp
     odbcdialogparams/TabCtrl.h
     odbcdialogparams/tooltip.cpp
