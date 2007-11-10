@@ -2,10 +2,6 @@
 //
 
 #define WIN32_LEAN_AND_MEAN
-/* #define NOCRYPT */
-/* #define NOSERVICE */
-/* #define NOMCX */
-/* #define NOIME */
 
 #define DEBUG_TAB   4
 #define SSL_TAB     5
@@ -13,7 +9,6 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
-/* #include <tchar.h> */
 #include <stdio.h>
 #include "resource.h"
 #include "TabCtrl.h"
@@ -607,14 +602,14 @@ int ShowOdbcParamsDialog(DataSource* params, HWND ParentWnd, BOOL isPrompt)
 	assert(!BusyIndicator);
 	InitStaticValues();
 
-	pParams=                    params;
-	pCaption=                   L"Dialog";
+	pParams= params;
+	pCaption= L"MySQL Connector/ODBC Data Source Configuration";
   g_isPrompt= isPrompt;
 
   DialogBox(ghInstance, MAKEINTRESOURCE(IDD_DIALOG1), ParentWnd,
             (DLGPROC)FormMain_DlgProc);
 
-	BusyIndicator = false;
+	BusyIndicator= false;
 	return OkPressed;
 }
 
