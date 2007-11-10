@@ -461,7 +461,7 @@ DECLARE_TEST(t_columns)
   SQLSMALLINT   NumPrecRadix, DataType, Nullable, DecimalDigits;
   SQLLEN        cbColumnSize, cbDecimalDigits, cbNumPrecRadix,
                 cbDataType, cbNullable;
-  SQLSMALLINT   cbDatabaseName;
+  SQLINTEGER    cbDatabaseName;
   SQLUINTEGER   ColumnSize, i;
   SQLUINTEGER   ColumnCount= 7;
   SQLCHAR       ColumnName[MAX_NAME_LEN], DatabaseName[MAX_NAME_LEN];
@@ -502,7 +502,7 @@ DECLARE_TEST(t_columns)
     printMessage("checking column `%s`", (char *)ColumnName);
 
     ok_stmt(hstmt, SQLColumns(hstmt,
-                              DatabaseName, cbDatabaseName,
+                              DatabaseName, (SQLSMALLINT)cbDatabaseName,
                               (SQLCHAR *)"", SQL_NTS,
                               (SQLCHAR *)"t_columns", SQL_NTS,
                               ColumnName, SQL_NTS));
