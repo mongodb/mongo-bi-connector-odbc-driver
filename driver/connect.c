@@ -43,8 +43,6 @@
 # define CLIENT_NO_SCHEMA      16
 #endif
 
-#define USE_LEGACY_ODBC_GUI
-
 #ifndef USE_LEGACY_ODBC_GUI
 typedef BOOL (*PromptFunc)(SQLHWND, SQLWCHAR *, SQLUSMALLINT,
                            SQLWCHAR *, SQLSMALLINT, SQLSMALLINT *);
@@ -768,7 +766,17 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
 connected:
 
 #ifndef USE_LEGACY_ODBC_GUI
-  /* return SQL_SUCCESS_WITH_INFO if truncated */
+  /* copy input to output if connected without prompting */
+  if (!bPrompt)
+  {
+    size_t inlen= (sqlwcharlen(szConnStrIn) + 1) * sizeof(SQLWCHAR);
+    size_t copylen= min((size_t)cbConnStrOutMax, inlen);
+    memcpy(szConnStrOut, szConnStrIn, copylen);
+    if (pcbConnStrOut)
+      *pcbConnStrOut= copylen;
+  }
+
+  /* return SQL_SUCCESS_WITH_INFO if truncated output string */
   if (pcbConnStrOut && cbConnStrOutMax > *pcbConnStrOut)
   {
     set_dbc_error(hdbc, "01004", "String data, right truncated.", 0);
