@@ -29,13 +29,12 @@ myodbc3i -r -d -n"MySQL ODBC 5.1 Driver"
 REM ****
 REM * Removing files...
 REM ****
-del /Q /F %installdir%\myodbc3S.dll
-del /Q /F %installdir%\myodbc3S.lib
+del /Q /F %installdir%\myodbc5S.dll
+del /Q /F %installdir%\myodbc5S.lib
 del /Q /F %installdir%\myodbc5.dll
 del /Q /F %installdir%\myodbc5.lib
 del /Q /F %installdir%\myodbc3i.exe
 del /Q /F %installdir%\myodbc3m.exe
-del /Q /F %installdir%\myodbc3c.exe
 del /Q /F %installdir%\myodbc3*.hlp
 GOTO doSuccess
 
@@ -50,8 +49,8 @@ myodbc3i -r -d -n"MySQL ODBC 5.1 Driver (debug)"
 REM ****
 REM * Removing files...
 REM ****
-del /Q /F %installdir%\myodbc3E.dll
-del /Q /F %installdir%\myodbc3E.lib
+del /Q /F %installdir%\myodbc5E.dll
+del /Q /F %installdir%\myodbc5E.lib
 del /Q /F %installdir%\myodbc5d.dll
 del /Q /F %installdir%\myodbc5d.lib
 GOTO doSuccess

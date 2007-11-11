@@ -35,18 +35,16 @@ IF EXIST bin\relwithdebinfo\myodbc3i.exe SET bindir=bin\relwithdebinfo
 REM ****
 REM * Copying myodbc libraries and executables to install dir...
 REM ****
-IF NOT EXIST %bindir%\myodbc3c.exe GOTO :doError2
 IF NOT EXIST %libdir%\myodbc5.lib  GOTO :doError2
-IF NOT EXIST %libdir%\myodbc3S.lib GOTO :doError2
+IF NOT EXIST %libdir%\myodbc5S.lib GOTO :doError2
 IF NOT EXIST %bindir%\myodbc3i.exe GOTO :doError2
 IF NOT EXIST %bindir%\myodbc3m.exe GOTO :doError2
-copy %libdir%\myodbc3S.dll %installdir%
-copy %libdir%\myodbc3S.lib %installdir%
+copy %libdir%\myodbc5S.dll %installdir%
+copy %libdir%\myodbc5S.lib %installdir%
 copy %libdir%\myodbc5.dll  %installdir%
 copy %libdir%\myodbc5.lib  %installdir%
 copy %bindir%\myodbc3i.exe      %installdir%
 copy %bindir%\myodbc3m.exe      %installdir%
-copy %bindir%\myodbc3c.exe      %installdir%
 copy doc\*.hlp             %installdir%
 
 REM ****
@@ -56,7 +54,7 @@ REM * We can do this with myodbc3i.exe or the MS Windows ODBCConf.exe. It
 REM * may be safer to use the ODBCConf.exe when we think about such things
 REM * as 64bit windows. 
 REM ****
-myodbc3i -a -d -t"MySQL ODBC 5.1 Driver;DRIVER=myodbc5.dll;SETUP=myodbc3S.dll"
+myodbc3i -a -d -t"MySQL ODBC 5.1 Driver;DRIVER=myodbc5.dll;SETUP=myodbc5S.dll"
 
 GOTO doSuccess
 
@@ -69,20 +67,20 @@ SET libdir=lib
 IF EXIST lib\debug\myodbc5d.lib          SET libdir=lib\debug
 
 IF NOT EXIST %libdir%\myodbc5d.lib goto doError3
-IF NOT EXIST %libdir%\myodbc3E.lib goto doError3
+IF NOT EXIST %libdir%\myodbc5E.lib goto doError3
 IF NOT EXIST %installdir%\myodbc3i.exe goto doError1
 REM ****
 REM * Copying myodbc debug libraries to install dir...
 REM ****
-copy %libdir%\myodbc3E.dll %installdir%
-copy %libdir%\myodbc3E.lib %installdir%
+copy %libdir%\myodbc5E.dll %installdir%
+copy %libdir%\myodbc5E.lib %installdir%
 copy %libdir%\myodbc5d.dll %installdir%
 copy %libdir%\myodbc5d.lib %installdir%
 
 REM ****
 REM * Registering driver...
 REM ****
-myodbc3i -a -d -t"MySQL ODBC 5.1 Driver (debug);DRIVER=myodbc3d.dll;SETUP=myodbc3E.dll"
+myodbc3i -a -d -t"MySQL ODBC 5.1 Driver (debug);DRIVER=myodbc5d.dll;SETUP=myodbc5E.dll"
 
 goto doSuccess
 

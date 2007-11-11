@@ -25,7 +25,7 @@
 
     \param  pDriver     Driver struct.
     \param  pszName     User friendly name of driver such as "MySQL ODBC 3.51 Driver (32 bit)"
-    \param  pszFileName File name such as value found in DSN->Driver; "/usr/lib/libmyodbc3.dylib"
+    \param  pszFileName File name such as value found in DSN->Driver; "/usr/lib/libmyodbc5.dylib"
         
     \note   This will not replace existing values in pDriver.
 */            

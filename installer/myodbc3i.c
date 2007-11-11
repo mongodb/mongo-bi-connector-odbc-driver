@@ -125,7 +125,7 @@ char *szSyntax =
 "  List data source attributes for MyODBC;\n" \
 "    $ myodbc3i -q -s -n\"MySQL ODBC 3.51 Driver\"\n" \
 "  Register a driver;\n" \
-"    $ myodbc3i -a -d -t\"MySQL ODBC 3.51 Driver;Driver=/usr/lib/libmyodbc3.so;Setup=/usr/lib/libmyodbc3S.so\"\n" \
+"    $ myodbc3i -a -d -t\"MySQL ODBC 3.51 Driver;Driver=/usr/lib/libmyodbc5.so;Setup=/usr/lib/libmyodbc5S.so\"\n" \
 "  Create a user data source name;\n" \
 "    $ myodbc3i -a -su -t\"DSN=MyDSN;Driver=MySQL ODBC 3.51 Driver;Server=localhost;UID=pharvey\"\n";
 
@@ -134,11 +134,11 @@ char *szSyntax =
     
     XP
     
-        $ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;Driver=myodbc3.dll;Setup=myodbc3S.dll"
+        $ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;Driver=myodbc5.dll;Setup=myodbc5S.dll"
         
         OR for old GUI...
         
-        $ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;Driver=myodbc3.dll;Setup=myodbc3.dll"
+        $ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;Driver=myodbc5.dll;Setup=myodbc5.dll"
         
     Mac OS X
 
@@ -147,11 +147,11 @@ char *szSyntax =
           (contrary to the ODBC spec.). They appear to like
           leading caps.
           
-        $ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;Driver=/usr/lib/libmyodbc3.so;Setup=/usr/lib/libmyodbc3S.dylib"
+        $ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;Driver=/usr/lib/libmyodbc5.so;Setup=/usr/lib/libmyodbc5S.dylib"
         
     UNIX/Linux
     
-        $ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=/usr/lib/libmyodbc3.so;SETUP=/usr/lib/libmyodbc3S.so"
+        $ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=/usr/lib/libmyodbc5.so;SETUP=/usr/lib/libmyodbc5S.so"
 
 */
 

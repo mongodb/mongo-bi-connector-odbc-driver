@@ -107,8 +107,8 @@ typedef enum tMYODBCUTIL_ATTR_PARSE_STATE
 typedef struct tMYODBCUTIL_DRIVER
 {
     char *pszName;              /* Friendly name for driver.                (ie "MySQL ODBC 3.51 Driver")   */
-    char *pszDRIVER;            /* File name - typically complete abs path. (ie "/usr/lib/libmyodbc3.so")   */
-    char *pszSETUP;             /* File name - typically complete abs path. (ie "/usr/lib/libmyodbc3S.so")  */
+    char *pszDRIVER;            /* File name - typically complete abs path. (ie "/usr/lib/libmyodbc5.so")   */
+    char *pszSETUP;             /* File name - typically complete abs path. (ie "/usr/lib/libmyodbc5S.so")  */
 
 } MYODBCUTIL_DRIVER;
 
@@ -164,7 +164,7 @@ typedef enum tMYODBCUTIL_DATASOURCE_MODE
 */
 typedef struct tMYODBCUTIL_DATASOURCE
 {
-    char *pszDriverFileName;    /* As used in DSN; often the abs path to driver.        (ie "/usr/lib/libmyodbc3.so")           */
+    char *pszDriverFileName;    /* As used in DSN; often the abs path to driver.        (ie "/usr/lib/libmyodbc5.so")           */
     char *pszDSN;               /* The name of our data source.                         (ie "test")                             */    
     char *pszDRIVER;            /* Friendly driver name as used in DSN and connect str. (ie "MySQL ODBC 3.51 Driver (32 bit)")  */
     char *pszDESCRIPTION;       /* General description or long name of DSN.                                                     */
