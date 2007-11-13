@@ -255,7 +255,8 @@ copy_lresult(SQLSMALLINT HandleType, SQLHANDLE Handle,
              !(((STMT FAR*)Handle)->dbc->flag & FLAG_PAD_SPACE) )
             fill_length= src_length;
     }
-    if ( *offset == (ulong) ~0L )
+
+    if (arg_length && *offset == (ulong) ~0L)
     {
       /*
         This is first call. Even if data has zero size, we don't
@@ -263,7 +264,7 @@ copy_lresult(SQLSMALLINT HandleType, SQLHANDLE Handle,
       */
       *offset= 0;
     }
-    else if ( *offset >= (ulong) fill_length )
+    else if (*offset != (ulong) ~0L && *offset >= (ulong) fill_length)
     {
       /*
         If not the first call, and we have no data left,
@@ -274,9 +275,12 @@ copy_lresult(SQLSMALLINT HandleType, SQLHANDLE Handle,
       return SQL_NO_DATA_FOUND;
     }
 
-    src+= *offset;
-    src_length-= (long) *offset;
-    fill_length-= *offset;
+    if (*offset != (ulong) ~0L)
+    {
+      src+= *offset;
+      src_length-= (long) *offset;
+      fill_length-= *offset;
+    }
 
     length= min(fill_length, cbValueMax);
     (*offset)+= length;        /* Fix for next call */

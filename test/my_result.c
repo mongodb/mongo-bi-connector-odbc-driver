@@ -1783,8 +1783,8 @@ DECLARE_TEST(t_bug30958)
   ok_stmt(hstmt, SQLFetch(hstmt));
 
   /*
-     check first that we get truncation, with zero bytes
-     available in out buffer, outbuffer should be untouched
+   check first that we get truncation, with zero bytes
+   available in out buffer, outbuffer should be untouched
   */
   outlen= 99;
   expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax,
@@ -1793,7 +1793,7 @@ DECLARE_TEST(t_bug30958)
   is_num(outlen, 0);
   is(check_sqlstate(hstmt, "01004") == OK);
 
-  /* exact the same result, and not SQL_NO_DATA */
+  /* expect the same result, and not SQL_NO_DATA */
   outlen= 99;
   expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax,
                                 &outlen), SQL_SUCCESS_WITH_INFO);
@@ -1814,6 +1814,8 @@ DECLARE_TEST(t_bug30958)
   outmax= 1;
   expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax,
                                 &outlen), SQL_NO_DATA);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_sql(hstmt, "drop table if exists bug30958");
 
@@ -2007,7 +2009,7 @@ BEGIN_TESTS
   ADD_TEST(bug6157)
   ADD_TEST(t_binary_collation)
   ADD_TODO(t_bug29239)
-  ADD_TODO(t_bug30958)
+  ADD_TEST(t_bug30958)
   ADD_TEST(t_bug31246)
   ADD_TEST(t_bug13776)
   ADD_TEST(t_bug13776_auto)

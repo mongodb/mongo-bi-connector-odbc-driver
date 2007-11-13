@@ -8,6 +8,8 @@
     applications, in order to work around a bug in ADO. (Bug #13776)
 
   Bugs fixed:
+  * The wrong result was returned by SQLGetData() when the data was an
+    empty string and a zero-sized buffer was specified. (Bug #30958)
 
 ----
 
