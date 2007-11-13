@@ -656,19 +656,26 @@ int ds_from_kvpair(DataSource *ds, const SQLWCHAR *attrs, SQLWCHAR delim)
     if ((split= sqlwcharchr(attrs, (SQLWCHAR)'=')) == NULL)
       return 1;
 
-    if ((end= sqlwcharchr(attrs, delim)) == NULL)
-      end= attrs + sqlwcharlen(attrs);
-
     memcpy(attribute, attrs, (split - attrs) * sizeof(SQLWCHAR));
     attribute[split - attrs]= 0;
     split++;
+
+    /* check for an "escaped" value */
+    if ((*split == '{' && (end= sqlwcharchr(attrs, '}')) == NULL) ||
+        /* or a delimited value */
+        (*split != '{' && (end= sqlwcharchr(attrs, delim)) == NULL))
+      /* otherwise, take the rest of the string */
+      end= attrs + sqlwcharlen(attrs);
 
     ds_map_param(ds, attribute, &dest, &intdest);
 
     if (dest)
     {
-      if (*split == L'{' && *(end - 1) == '}')
-        ds_set_strnattr(dest, split + 1, end - split - 2);
+      if (*split == '{' && *end == '}')
+      {
+        ds_set_strnattr(dest, split + 1, end - split - 1);
+        end++;
+      }
       else
         ds_set_strnattr(dest, split, end - split);
     }
