@@ -11,7 +11,7 @@
 
 
 /* TODO no L"" */
-
+#include <winsock2.h>
 #include "callbacks.h"
 #include "stringutil.h"
 

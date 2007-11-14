@@ -466,7 +466,7 @@ BOOL OnSelChanged(void)
 
 	// A tab has been pressed (TCN_SELCHANGE)
 	// Using GWL_USERDATA of the tab control to keep the current visible child of the tab control
-	HWND hVisible = (HWND)GetWindowLong(This->hTab, GWL_USERDATA);
+	HWND hVisible = (HWND)GetWindowLong(This->hTab, GWLP_USERDATA);
 	int iSel = TabCtrl_GetCurSel(This->hTab);
 
 	//Hide the current child dialog box, if any.
@@ -476,7 +476,7 @@ BOOL OnSelChanged(void)
 	ShowWindow(This->hTabPages[iSel],TRUE);
 
 	// Save the current child
-	SetWindowLong(This->hTab, GWL_USERDATA, (long)This->hTabPages[iSel]);
+	SetWindowLong(This->hTab, GWLP_USERDATA, (long)This->hTabPages[iSel]);
 
 	return TRUE;
 }
@@ -560,5 +560,5 @@ void New_TabControl(LPTABCTRL tc,
 	ShowWindow(This->hTabPages[0],SW_SHOW);
 
 	// Save the current child
-	SetWindowLong(This->hTab, GWL_USERDATA, (long)This->hTabPages[0]);
+	SetWindowLong(This->hTab, GWLP_USERDATA, (long)This->hTabPages[0]);
 }

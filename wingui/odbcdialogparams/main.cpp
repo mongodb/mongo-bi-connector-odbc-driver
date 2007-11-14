@@ -1,7 +1,9 @@
-#include "MYODBC_MYSQL.h"
 #include "resource.h"
+#include <winsock2.h>
 #include <windows.h>
 #include <commctrl.h>
+#include <new>
+#include "MYODBC_MYSQL.h"
 
 #ifdef _MANAGED
 #pragma managed(push, off)
