@@ -288,9 +288,13 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
   case SQL_SUBQUERIES:
   case SQL_TIMEDATE_ADD_INTERVALS:
   case SQL_TIMEDATE_DIFF_INTERVALS:
-  case SQL_UNION:
   case SQL_LOCK_TYPES:
     *((SQLUINTEGER *)rgbInfoValue)= 0L;
+    *pcbInfoValue= sizeof(SQLUINTEGER);
+    break;
+
+  case SQL_UNION:
+    *((SQLUINTEGER *)rgbInfoValue)= (SQL_U_UNION | SQL_U_UNION_ALL);
     *pcbInfoValue= sizeof(SQLUINTEGER);
     break;
 

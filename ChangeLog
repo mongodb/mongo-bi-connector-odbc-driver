@@ -8,6 +8,7 @@
     applications, in order to work around a bug in ADO. (Bug #13776)
 
   Bugs fixed:
+  * SQLGetInfo() reported that UNION was not supported. (Bug #32253)
   * The non-portable "English" locale was used for handling of decimal
     and floating-point values instead of "C". (Bug #32294)
   * Unsigned integer values greater than the maximum value of a signed
