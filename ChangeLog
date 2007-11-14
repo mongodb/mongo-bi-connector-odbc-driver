@@ -8,6 +8,8 @@
     applications, in order to work around a bug in ADO. (Bug #13776)
 
   Bugs fixed:
+  * Unsigned integer values greater than the maximum value of a signed
+    integer were handled incorrectly. (Bug #32171)
   * The wrong result was returned by SQLGetData() when the data was an
     empty string and a zero-sized buffer was specified. (Bug #30958)
 

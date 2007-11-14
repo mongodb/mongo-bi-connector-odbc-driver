@@ -690,6 +690,37 @@ DECLARE_TEST(bit)
 }
 
 
+/**
+ Bug #32171: ODBC Driver incorrectly parses large Unsigned Integers
+*/
+DECLARE_TEST(t_bug32171)
+{
+  SQLUINTEGER in= 4255080020, out;
+  SQLCHAR buff[128];
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug32171");
+  ok_sql(hstmt, "CREATE TABLE t_bug32171 (a INT UNSIGNED)");
+
+  sprintf((char *)buff, "INSERT INTO t_bug32171 VALUES ('%lu')", in);
+  ok_stmt(hstmt, SQLExecDirect(hstmt, buff, SQL_NTS));
+
+  ok_sql(hstmt, "SELECT * FROM t_bug32171");
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_ULONG, &out, 0, NULL));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_num(out, in);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug32171");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_longlong1)
   ADD_TEST(t_numeric)
@@ -704,6 +735,7 @@ BEGIN_TESTS
   ADD_TEST(binary_suffix)
   ADD_TEST(float_scale)
   ADD_TEST(bit)
+  ADD_TEST(t_bug32171)
 END_TESTS
 
 

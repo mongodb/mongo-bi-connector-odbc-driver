@@ -209,7 +209,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
 
     case SQL_C_ULONG:
       if (rgbValue)
-        *((SQLUINTEGER *)rgbValue)= (SQLUINTEGER)atol(value);
+        *((SQLUINTEGER *)rgbValue)= (SQLUINTEGER)strtoul(value, NULL, 10);
       *pcbValue= sizeof(SQLUINTEGER);
       break;
 
