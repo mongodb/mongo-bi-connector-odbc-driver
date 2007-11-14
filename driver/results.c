@@ -1073,7 +1073,7 @@ SQLRETURN SQL_API SQLGetData( SQLHSTMT      hstmt,
     }
 
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
-        setlocale(LC_NUMERIC,"English");
+      setlocale(LC_NUMERIC, "C");
     result= sql_get_data( stmt,
                           (SQLSMALLINT) (fCType == SQL_C_DEFAULT ? stmt->odbc_types[icol] : fCType),
                           stmt->result->fields+icol,
@@ -1346,7 +1346,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     }
 
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
-        setlocale(LC_NUMERIC,"English");
+      setlocale(LC_NUMERIC, "C");
     res= SQL_SUCCESS;
     for ( i= 0 ; i < rows_to_fetch ; i++ )
     {

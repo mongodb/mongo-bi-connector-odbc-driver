@@ -189,7 +189,7 @@ char *insert_params(STMT FAR *stmt)
     net= &stmt->dbc->mysql.net;
     to= (char*) net->buff;
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
-        setlocale(LC_NUMERIC,"English");  /* force use of '.' as decimal point */
+      setlocale(LC_NUMERIC, "C");  /* force use of '.' as decimal point */
     for ( i= 0; i < stmt->param_count; i++ )
     {
         PARAM_BIND *param= dynamic_element(&stmt->params,i,PARAM_BIND*);
