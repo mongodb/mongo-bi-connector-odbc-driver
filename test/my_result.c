@@ -33,53 +33,43 @@ DECLARE_TEST(my_resultset)
     SQLSMALLINT nIndex,ncol,pfSqlType, pcbScale, pfNullable;
 
     /* drop table 'myodbc3_demo_result' if it already exists */
-    rc = SQLExecDirect(hstmt,"DROP TABLE if exists myodbc3_demo_result",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "DROP TABLE if exists myodbc3_demo_result");
 
     /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
+    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
     mycon(hdbc,rc);
 
     /* create the table 'myodbc3_demo_result' */
-    rc = SQLExecDirect(hstmt,"CREATE TABLE myodbc3_demo_result(\
-                              id int primary key auto_increment,\
-                              name varchar(20))",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"CREATE TABLE myodbc3_demo_result("
+           "id int primary key auto_increment,name varchar(20))");
 
     rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
-    mycon(hdbc,rc);    
-
-    /* insert 2 rows of data */    
-    rc = SQLExecDirect(hstmt,"INSERT INTO myodbc3_demo_result values(\
-                              1,'MySQL')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"INSERT INTO myodbc3_demo_result values(\
-                              2,'MyODBC')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
     mycon(hdbc,rc);
 
-    /* update second row */    
-    rc = SQLExecDirect(hstmt,"UPDATE myodbc3_demo_result set name=\
-                              'MyODBC 3.51' where id=2",SQL_NTS);
-    mystmt(hstmt,rc);
+    /* insert 2 rows of data */
+    ok_sql(hstmt, "INSERT INTO myodbc3_demo_result values(1,'MySQL')");
+    ok_sql(hstmt, "INSERT INTO myodbc3_demo_result values(2,'MyODBC')");
 
     /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT); 
+    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
     mycon(hdbc,rc);
 
-    /* now fetch back..*/   
-    rc = SQLExecDirect(hstmt,"SELECT * from myodbc3_demo_result",SQL_NTS);
-    mystmt(hstmt,rc);
+    /* update second row */
+    ok_sql(hstmt, "UPDATE myodbc3_demo_result set name="
+           "'MyODBC 3.51' where id=2");
+
+    /* commit the transaction */
+    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
+    mycon(hdbc,rc);
+
+    /* now fetch back..*/
+    ok_sql(hstmt, "SELECT * from myodbc3_demo_result");
 
     /* get total number of columns from the resultset */
     rc = SQLNumResultCols(hstmt,&ncol);
     mystmt(hstmt,rc);
 
-    printMessage(" total columns in resultset:%d\n\n",ncol);
+    printMessage("total columns in resultset:%d",ncol);
 
     /* print the column names  and do the row bind */
     for (nIndex = 1; nIndex <= ncol; nIndex++)
@@ -88,11 +78,10 @@ DECLARE_TEST(my_resultset)
                             &pfSqlType,&pcColDef,&pcbScale,&pfNullable);
         mystmt(hstmt,rc);
 
-        printMessage(" %s\t",szColName);
+        printf("%s\t",szColName);
 
     }
-
-    printMessage("\n--------------------\n");
+    printf("\n");
 
     /* now fetch row by row */
     rc = SQLFetch(hstmt);
@@ -104,15 +93,15 @@ DECLARE_TEST(my_resultset)
             rc = SQLGetData(hstmt,nIndex, SQL_C_CHAR, szData,
                             MAX_ROW_DATA_LEN,NULL);
             mystmt(hstmt,rc);
-            printMessage(" %s\t",szData);
+            printf("%s\t",szData);
         }
 
-        printMessage("\n");
+        printf("\n");
         rc = SQLFetch(hstmt);
     }
     SQLFreeStmt(hstmt,SQL_UNBIND);
 
-    printMessage("\n total rows fetched:%d\n",nRowCount);
+    printMessage("total rows fetched:%d",nRowCount);
 
     /* free the statement row bind resources */
     rc = SQLFreeStmt(hstmt, SQL_UNBIND);
@@ -122,8 +111,7 @@ DECLARE_TEST(my_resultset)
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt, "DROP TABLE myodbc3_demo_result", SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE myodbc3_demo_result");
 
   return OK;
 }
@@ -141,103 +129,89 @@ DECLARE_TEST(t_convert_type)
     rc = SQLGetEnvAttr(henv,SQL_ATTR_ODBC_VERSION,&OdbcVersion,0,NULL);
     myenv(henv,rc);
 
-    fprintf(stdout,"odbc version:\n");
+    fprintf(stdout,"# odbc version:");
     if (OdbcVersion == SQL_OV_ODBC2)
     {
-      fprintf(stdout," SQL_OV_ODBC2");
+      fprintf(stdout," SQL_OV_ODBC2\n");
       DateType= SQL_DATE;
     }
     else
     {
-      fprintf(stdout," SQL_OV_ODBC3");
+      fprintf(stdout," SQL_OV_ODBC3\n");
       DateType= SQL_TYPE_DATE;
     }
 
-    rc = SQLGetInfo(hdbc,SQL_DBMS_VER,(SQLCHAR *)&DbVersion,MAX_NAME_LEN,NULL);
+    rc = SQLGetInfo(hdbc,SQL_DBMS_VER,DbVersion,MAX_NAME_LEN,NULL);
     mycon(hdbc,rc);
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_convert");
 
-    rc = SQLExecDirect(hstmt,"CREATE TABLE t_convert(col0 integer, \
-                                                     col1 date,\
-                                                     col2 char(10))",SQL_NTS);
+  ok_sql(hstmt, "CREATE TABLE t_convert(col0 int, col1 date, col2 char(10))");
+
+  ok_sql(hstmt, "INSERT INTO t_convert VALUES(10,'2002-10-24','venu')");
+  ok_sql(hstmt, "INSERT INTO t_convert VALUES(20,'2002-10-23','venu1')");
+  ok_sql(hstmt, "INSERT INTO t_convert VALUES(30,'2002-10-25','venu2')");
+  ok_sql(hstmt, "INSERT INTO t_convert VALUES(40,'2002-10-24','venu3')");
+
+    ok_sql(hstmt, "SELECT MAX(col0) FROM t_convert");
+
+    rc = SQLDescribeCol(hstmt,1,ColName,MAX_NAME_LEN,NULL,&SqlType,NULL,NULL,NULL);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"INSERT INTO t_convert VALUES(10,'2002-10-24','venu')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"INSERT INTO t_convert VALUES(20,'2002-10-23','venu1')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"INSERT INTO t_convert VALUES(30,'2002-10-25','venu2')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"INSERT INTO t_convert VALUES(40,'2002-10-24','venu3')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"SELECT MAX(col0) FROM t_convert",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLDescribeCol(hstmt,1,(SQLCHAR *)&ColName,MAX_NAME_LEN,NULL,&SqlType,NULL,NULL,NULL);
-    mystmt(hstmt,rc);
-
-    fprintf(stdout,"MAX(col0): %d\n", SqlType);
+    printMessage("MAX(col0): %d", SqlType);
     myassert(SqlType == SQL_INTEGER);
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    rc = SQLExecDirect(hstmt,"SELECT MAX(col1) FROM t_convert",SQL_NTS);
+    ok_sql(hstmt, "SELECT MAX(col1) FROM t_convert");
+
+    rc = SQLDescribeCol(hstmt,1,ColName,MAX_NAME_LEN,NULL,&SqlType,NULL,NULL,NULL);
     mystmt(hstmt,rc);
 
-    rc = SQLDescribeCol(hstmt,1,(SQLCHAR *)&ColName,MAX_NAME_LEN,NULL,&SqlType,NULL,NULL,NULL);
-    mystmt(hstmt,rc);
-
-    fprintf(stdout,"MAX(col1): %d\n", SqlType);
+    printMessage("MAX(col1): %d", SqlType);
     myassert(SqlType == DateType);
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    rc = SQLExecDirect(hstmt,"SELECT MAX(col2) FROM t_convert",SQL_NTS);
+    ok_sql(hstmt, "SELECT MAX(col2) FROM t_convert");
+
+    rc = SQLDescribeCol(hstmt,1,ColName,MAX_NAME_LEN,NULL,&SqlType,NULL,NULL,NULL);
     mystmt(hstmt,rc);
 
-    rc = SQLDescribeCol(hstmt,1,(SQLCHAR *)&ColName,MAX_NAME_LEN,NULL,&SqlType,NULL,NULL,NULL);
-    mystmt(hstmt,rc);
-
-    fprintf(stdout,"MAX(col0): %d\n", SqlType);
+    printMessage("MAX(col0): %d", SqlType);
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    if (strncmp(DbVersion,"4.",2) >= 0)
+    if (strncmp((char *)DbVersion,"4.",2) >= 0)
     {
-      rc = SQLExecDirect(hstmt,"SELECT CAST(MAX(col1) AS DATE) AS col1 FROM t_convert",SQL_NTS);
+      ok_sql(hstmt, "SELECT CAST(MAX(col1) AS DATE) AS col1 FROM t_convert");
       mystmt(hstmt,rc);
 
-      rc = SQLDescribeCol(hstmt,1,(SQLCHAR *)&ColName,MAX_NAME_LEN,NULL,&SqlType,NULL,NULL,NULL);
+      rc = SQLDescribeCol(hstmt,1,ColName,MAX_NAME_LEN,NULL,&SqlType,NULL,NULL,NULL);
       mystmt(hstmt,rc);
 
-      fprintf(stdout,"CAST(MAX(col1) AS DATE): %d\n", SqlType);
+      printMessage("CAST(MAX(col1) AS DATE): %d", SqlType);
       myassert(SqlType == DateType);
 
       SQLFreeStmt(hstmt,SQL_CLOSE);
 
-      rc = SQLExecDirect(hstmt,"SELECT CONVERT(MAX(col1),DATE) AS col1 FROM t_convert",SQL_NTS);
+      ok_sql(hstmt, "SELECT CONVERT(MAX(col1),DATE) AS col1 FROM t_convert");
       mystmt(hstmt,rc);
 
-      rc = SQLDescribeCol(hstmt,1,(SQLCHAR *)&ColName,MAX_NAME_LEN,NULL,&SqlType,NULL,NULL,NULL);
+      rc = SQLDescribeCol(hstmt,1,ColName,MAX_NAME_LEN,NULL,&SqlType,NULL,NULL,NULL);
       mystmt(hstmt,rc);
 
-      fprintf(stdout,"CONVERT(MAX(col1),DATE): %d\n", SqlType);
+      printMessage("CONVERT(MAX(col1),DATE): %d", SqlType);
       myassert(SqlType == DateType);
 
       SQLFreeStmt(hstmt,SQL_CLOSE);
 
-      rc = SQLExecDirect(hstmt,"SELECT CAST(MAX(col1) AS CHAR) AS col1 FROM t_convert",SQL_NTS);
-      mystmt(hstmt,rc);
+      ok_sql(hstmt,"SELECT CAST(MAX(col1) AS CHAR) AS col1 FROM t_convert");
 
       rc = SQLDescribeCol(hstmt,1,(SQLCHAR *)&ColName,MAX_NAME_LEN,NULL,&SqlType,NULL,NULL,NULL);
       mystmt(hstmt,rc);
 
-      fprintf(stdout,"CAST(MAX(col1) AS CHAR): %d\n", SqlType);
+      printMessage("CAST(MAX(col1) AS CHAR): %d", SqlType);
       myassert(SqlType == SQL_VARCHAR || SqlType == SQL_LONGVARCHAR);
 
       SQLFreeStmt(hstmt,SQL_CLOSE);
@@ -268,14 +242,14 @@ static SQLINTEGER desc_col_check(SQLHSTMT hstmt,
                       &pfSqlType,&pcbColDef,&pibScale,&pfNullable);
   mystmt(hstmt,rc);
 
-  fprintf(stdout, "\n\n Column Number'%d':", icol);
+  printMessage("Column Number'%d':", icol);
 
-  fprintf(stdout, "\t Column Name    : %s\n", szColName);
-  fprintf(stdout, "\t NameLengh      : %d\n", pcbColName);
-  fprintf(stdout, "\t DataType       : %d\n", pfSqlType);
-  fprintf(stdout, "\t ColumnSize     : %d\n", pcbColDef);
-  fprintf(stdout, "\t DecimalDigits  : %d\n", pibScale);
-  fprintf(stdout, "\t Nullable       : %d\n", pfNullable);
+  printMessage(" Column Name    : %s", szColName);
+  printMessage(" NameLengh      : %d", pcbColName);
+  printMessage(" DataType       : %d", pfSqlType);
+  printMessage(" ColumnSize     : %d", pcbColDef);
+  printMessage(" DecimalDigits  : %d", pibScale);
+  printMessage(" Nullable       : %d", pfNullable);
 
   is_str(szColName, name, pcbColName);
   is_num(pfSqlType, sql_type);
@@ -337,7 +311,7 @@ DECLARE_TEST(t_desc_col)
   is(desc_col_check(hstmt, 10, "c10", SQL_REAL,      7,  7,  0, SQL_NULLABLE) == OK);
   is(desc_col_check(hstmt, 11, "c11", SQL_BIGINT,    19, 19, 0,  SQL_NO_NULLS) == OK);
 
-  is(desc_col_check(hstmt, 12, "c12", SQL_VARCHAR,   12, 12, 0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 12, "c12", SQL_VARBINARY, 12, 12, 0,  SQL_NULLABLE) == OK);
 
   is(desc_col_check(hstmt, 13, "c13", SQL_CHAR,      20, 20, 0,  SQL_NO_NULLS) == OK);
   is(desc_col_check(hstmt, 14, "c14", SQL_REAL,      7,  7,  0,  SQL_NULLABLE) == OK);
@@ -391,13 +365,13 @@ DECLARE_TEST(t_convert)
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
-    myassert(strcmp(data,"record1-must be string") == 0 ||
-             strcmp(data,"record2-must be string") == 0);
+    myassert(strcmp((char *)data,"record1-must be string") == 0 ||
+             strcmp((char *)data,"record2-must be string") == 0);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
-    myassert(strcmp(data,"record1-must be string") == 0 ||
-             strcmp(data,"record2-must be string") == 0);
+    myassert(strcmp((char *)data,"record1-must be string") == 0 ||
+             strcmp((char *)data,"record2-must be string") == 0);
 
     rc = SQLFetch(hstmt);
     myassert( rc == SQL_NO_DATA);
@@ -430,8 +404,9 @@ DECLARE_TEST(t_max_rows)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = SQLPrepare(hstmt,"insert into t_max_rows values(?)",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLPrepare(hstmt,
+                              (SQLCHAR *)"insert into t_max_rows values(?)",
+                              SQL_NTS));
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_ULONG,SQL_INTEGER,0,0,&i,0,NULL);
     mystmt(hstmt,rc);
@@ -536,66 +511,66 @@ DECLARE_TEST(t_multistep)
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
-    fprintf(stdout,"id: %ld\n",id);
+    printMessage("id: %ld",id);
     myassert(id == 10);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,0,&pcbValue);
     myassert(rc == SQL_SUCCESS_WITH_INFO);
-    fprintf(stdout,"length: %ld\n", pcbValue);
+    printMessage("length: %ld", pcbValue);
     myassert(pcbValue == 28);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,0,&pcbValue);
     myassert(rc == SQL_SUCCESS_WITH_INFO);
-    fprintf(stdout,"length: %ld\n", pcbValue);
+    printMessage("length: %ld", pcbValue);
     myassert(pcbValue == 28);
 
     rc = SQLGetData(hstmt,2,SQL_C_BINARY,szData,0,&pcbValue);
     myassert(rc == SQL_SUCCESS_WITH_INFO);
-    fprintf(stdout,"length: %ld\n", pcbValue);
+    printMessage("length: %ld", pcbValue);
     myassert(pcbValue == 28);
 
     rc = SQLGetData(hstmt,2,SQL_C_BINARY,szData,0,&pcbValue);
     myassert(rc == SQL_SUCCESS_WITH_INFO);
-    fprintf(stdout,"length: %ld\n", pcbValue);
+    printMessage("length: %ld", pcbValue);
     myassert(pcbValue == 28);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,0,&pcbValue);
     myassert(rc == SQL_SUCCESS_WITH_INFO);
-    fprintf(stdout,"length: %ld\n", pcbValue);
-    myassert(pcbValue == 28);
+    printMessage("length: %ld", pcbValue);
+    is_num(pcbValue, 28);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,10,&pcbValue);
     myassert(rc == SQL_SUCCESS_WITH_INFO);
-    fprintf(stdout,"data  : %s (%ld)\n",szData,pcbValue);
-    myassert(pcbValue == 28);
-    myassert(strcmp(szData,"MySQL - O") == 0);
+    printMessage("data  : %s (%ld)",szData,pcbValue);
+    is_num(pcbValue, 28);
+    is_str(szData, "MySQL - O", 10);
 
     pcbValue= 0;
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,5,&pcbValue);
     myassert(rc == SQL_SUCCESS_WITH_INFO);
-    fprintf(stdout,"data  : %s (%ld)\n",szData,pcbValue);
-    myassert(pcbValue == 19);
-    myassert(strcmp(szData,"pen ") == 0);
+    printMessage("data  : %s (%ld)",szData,pcbValue);
+    is_num(pcbValue, 19);
+    is_str(szData, "pen ", 5);
 
     pcbValue= 0;
     szData[0]='A';
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,0,&pcbValue);
     myassert(rc == SQL_SUCCESS_WITH_INFO);
-    fprintf(stdout,"data  : %s (%ld)\n",szData,pcbValue);
+    printMessage("data  : %s (%ld)",szData,pcbValue);
     myassert(pcbValue == 15);
     myassert(szData[0] == 'A');
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,pcbValue+1,&pcbValue);
     mystmt(hstmt,rc);
-    fprintf(stdout,"data  : %s (%ld)\n",szData,pcbValue);
-    myassert(pcbValue == 15);
-    myassert(strcmp(szData,"Source Database") == 0);
+    printMessage("data  : %s (%ld)",szData,pcbValue);
+    is_num(pcbValue, 15);
+    is_str(szData,"Source Database", 16);
 
     pcbValue= 99;
     szData[0]='A';
     expect_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_CHAR, szData, 0, &pcbValue),
                 SQL_NO_DATA_FOUND);
-    fprintf(stdout,"data  : %s (%ld)\n",szData,pcbValue);
+    printMessage("data  : %s (%ld)",szData,pcbValue);
     myassert(pcbValue == 99);
     myassert(szData[0] == 'A');
 
@@ -643,19 +618,19 @@ DECLARE_TEST(t_zerolength)
 
     pcbValue= pcbValue1= 99;
     ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, szData, 0, &pcbValue));
-    fprintf(stdout,"length: %d\n", pcbValue);
+    printMessage("length: %d", pcbValue);
     myassert(pcbValue == 0);
 
     bData[0]=bData[1]='z';
     ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_BINARY, bData, 0, &pcbValue1));
-    fprintf(stdout,"length: %d\n", pcbValue1);
+    printMessage("length: %d", pcbValue1);
     myassert(pcbValue1 == 0);
     myassert(bData[0] == 'z');
     myassert(bData[1] == 'z');
 
     bData1[0]=bData1[1]='z';
     ok_stmt(hstmt, SQLGetData(hstmt, 3, SQL_C_BINARY, bData1, 0, &pcbValue2));
-    fprintf(stdout,"length: %d\n", pcbValue2);
+    printMessage("length: %d", pcbValue2);
     myassert(pcbValue2 == 0);
     myassert(bData1[0] == 'z');
     myassert(bData1[1] == 'z');
@@ -663,20 +638,20 @@ DECLARE_TEST(t_zerolength)
     pcbValue= pcbValue1= 99;
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,szData,1,&pcbValue);
     mystmt(hstmt,rc);
-    fprintf(stdout,"data: %s, length: %d\n", szData, pcbValue);
+    printMessage("data: %s, length: %d", szData, pcbValue);
     myassert(pcbValue == 0);
     myassert(szData[0] == '\0');
 
     bData[0]=bData[1]='z';
     rc = SQLGetData(hstmt,2,SQL_C_BINARY,bData,1,&pcbValue1);
     mystmt(hstmt,rc);
-    fprintf(stdout,"data: %s, length: %d\n", bData, pcbValue1);
+    printMessage("data: %s, length: %d", bData, pcbValue1);
     myassert(pcbValue1 == 0);
 
     bData1[0]=bData1[1]='z';
     rc = SQLGetData(hstmt,3,SQL_C_CHAR,bData1,1,&pcbValue2);
     mystmt(hstmt,rc);
-    fprintf(stdout,"data: %s, length: %d\n", bData1, pcbValue2);
+    printMessage("data: %s, length: %d", bData1, pcbValue2);
     myassert(pcbValue2 == 0);
     myassert(bData1[0] == '\0');
     myassert(bData1[1] == 'z');
@@ -688,40 +663,40 @@ DECLARE_TEST(t_zerolength)
     szData[0]= bData[0]= 'z';
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,szData,0,&pcbValue);
     mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
-    fprintf(stdout,"length: %d\n", pcbValue);
+    printMessage("length: %d", pcbValue);
     myassert(pcbValue == 4);
     myassert(szData[0] == 'z');
 
     rc = SQLGetData(hstmt,2,SQL_C_BINARY,bData,0,&pcbValue1);
     mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
-    fprintf(stdout,"length: %d\n", pcbValue1);
+    printMessage("length: %d", pcbValue1);
     myassert(pcbValue1 == 5);
     myassert(bData[0] == 'z');
 
     bData[0]=bData1[1]='z';
     rc = SQLGetData(hstmt,3,SQL_C_BINARY,bData1,0,&pcbValue2);
     mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
-    fprintf(stdout,"length: %d\n", pcbValue2);
+    printMessage("length: %d", pcbValue2);
     myassert(pcbValue2 == 5);
 
     pcbValue= pcbValue1= 99;
     szData[0]= szData[1]= bData[0]= bData[1]= 'z';
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,szData,1,&pcbValue);
     mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
-    fprintf(stdout,"data: %s, length: %d\n", szData,pcbValue);
+    printMessage("data: %s, length: %d", szData,pcbValue);
     myassert(pcbValue == 4);
     myassert(szData[0] == '\0');
 
     rc = SQLGetData(hstmt,2,SQL_C_BINARY,bData,1,&pcbValue1);
     mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
-    fprintf(stdout,"data; %s, length: %d\n", bData, pcbValue1);
+    printMessage("data; %s, length: %d", bData, pcbValue1);
     myassert(pcbValue1 == 5);
     myassert(bData[0] == 'm');
 
     bData[0]=bData1[1]='z';
     rc = SQLGetData(hstmt,3,SQL_C_BINARY,bData1,1,&pcbValue2);
     mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
-    fprintf(stdout,"length: %d\n", pcbValue2);
+    printMessage("length: %d", pcbValue2);
     myassert(pcbValue2 == 5);
     myassert(bData1[0] == 'm');
     myassert(bData1[1] == 'z');
@@ -729,33 +704,33 @@ DECLARE_TEST(t_zerolength)
     pcbValue= pcbValue1= 99;
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,szData,4,&pcbValue);
     mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
-    fprintf(stdout,"data: %s, length: %d\n", szData, pcbValue);
-    myassert(pcbValue == 4);
-    myassert(strcmp(szData,"ven")==0);
+    printMessage("data: %s, length: %d", szData, pcbValue);
+    is_num(pcbValue, 4);
+    is_str(szData,"ven", 3);
 
     rc = SQLGetData(hstmt,2,SQL_C_BINARY,bData,4,&pcbValue1);
     mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
-    fprintf(stdout,"data: %s, length: %d\n", bData, pcbValue1);
-    myassert(pcbValue1 == 5);
-    myassert(strncmp(bData,"mysq",4)==0);
+    printMessage("data: %s, length: %d", bData, pcbValue1);
+    is_num(pcbValue1, 5);
+    is_str(bData, "mysq", 4);
 
     pcbValue= pcbValue1= 99;
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,szData,5,&pcbValue);
     mystmt(hstmt,rc);
-    fprintf(stdout,"data: %s, length: %d\n", szData, pcbValue);
-    myassert(pcbValue == 4);
-    myassert(strcmp(szData,"venu")==0);
+    printMessage("data: %s, length: %d", szData, pcbValue);
+    is_num(pcbValue, 4);
+    is_str(szData, "venu", 4);
 
     rc = SQLGetData(hstmt,2,SQL_C_BINARY,bData,5,&pcbValue1);
     mystmt(hstmt,rc);
-    fprintf(stdout,"data: %s, length: %d\n", bData, pcbValue1);
-    myassert(pcbValue1 == 5);
-    myassert(strncmp(bData,"mysql",5)==0);
+    printMessage("data: %s, length: %d", bData, pcbValue1);
+    is_num(pcbValue1, 5);
+    is_str(bData, "mysql", 5);
 
     szData[0]= 'z';
     rc = SQLGetData(hstmt,3,SQL_C_CHAR,szData,0,&pcbValue);
     mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
-    fprintf(stdout,"data: %s, length: %d\n", szData, pcbValue);
+    printMessage("data: %s, length: %d", szData, pcbValue);
     myassert(pcbValue == 5 || pcbValue == 10);
     myassert(szData[0] == 'z');
 
@@ -763,20 +738,20 @@ DECLARE_TEST(t_zerolength)
     szData[0]=szData[1]='z';
     rc = SQLGetData(hstmt,3,SQL_C_CHAR,szData,1,&pcbValue);
     mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
-    fprintf(stdout,"data: %s, length: %d\n", szData, pcbValue);
+    printMessage("data: %s, length: %d", szData, pcbValue);
     myassert(pcbValue == 10);
     myassert(szData[0] == 'm');
     myassert(szData[1] == 'z');
 
     rc = SQLGetData(hstmt,3,SQL_C_CHAR,szData,4,&pcbValue);
     mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
-    fprintf(stdout,"data: %s, length: %d\n", szData, pcbValue);
+    printMessage("data: %s, length: %d", szData, pcbValue);
     myassert(pcbValue == 10);
     myassert(strncmp(szData,"mont",4) == 0);
 
     rc = SQLGetData(hstmt,3,SQL_C_CHAR,szData,5,&pcbValue);
     mystmt(hstmt,rc);
-    fprintf(stdout,"data: %s, length: %d\n", szData, pcbValue);
+    printMessage("data: %s, length: %d", szData, pcbValue);
     myassert(pcbValue == 10);
     myassert(strncmp(szData,"monty",5) == 0);
 #endif
@@ -939,8 +914,7 @@ DECLARE_TEST(t_empty_str_bug)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"venu", SQL_NTS));
 
     rc = tmysql_exec(hstmt,"select * from t_empty_str_bug");
     mystmt(hstmt,rc);
@@ -958,8 +932,10 @@ DECLARE_TEST(t_empty_str_bug)
     myassert(rc == SQL_NO_DATA_FOUND);
 
     id= 10;
-    strcpy(name,"MySQL AB");name_len= SQL_NTS;
-    strcpy(desc,"");desc_len= SQL_COLUMN_IGNORE;
+    strcpy((char *)name,"MySQL AB");
+    name_len= SQL_NTS;
+    strcpy((char *)desc,"");
+    desc_len= SQL_COLUMN_IGNORE;
 
     rc = SQLSetPos(hstmt,1,SQL_ADD,SQL_LOCK_NO_CHANGE);
     mystmt(hstmt,rc);
@@ -967,7 +943,7 @@ DECLARE_TEST(t_empty_str_bug)
     rc = SQLRowCount(hstmt,&name_len);
     mystmt(hstmt,rc);
 
-    fprintf(stdout," rows affected:%d\n",name_len);
+    printMessage("rows affected: %d",name_len);
     myassert(name_len == 1);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
@@ -1027,8 +1003,7 @@ DECLARE_TEST(t_desccol)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"insert into t_desccol values(10,'venu','mysql')",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"insert into t_desccol values(10,'venu','mysql')");
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
@@ -1039,17 +1014,17 @@ DECLARE_TEST(t_desccol)
     rc = tmysql_exec(hstmt,"select * from t_desccol");
     mystmt(hstmt,rc);
 
-    rc = SQLDescribeCol(hstmt,1,(char *)colname,20,&collen,&datatype,&colsize,&decptr,&nullable);
+    rc = SQLDescribeCol(hstmt,1,colname,20,&collen,&datatype,&colsize,&decptr,&nullable);
     mystmt(hstmt,rc);
-    printMessage("1: %s,%d,%d,%d,%d,%d\n",colname,collen,datatype,colsize,decptr,nullable);;
+    printMessage("1: %s,%d,%d,%d,%d,%d",colname,collen,datatype,colsize,decptr,nullable);;
 
-    rc = SQLDescribeCol(hstmt,2,(char *)colname,20,&collen,&datatype,&colsize,&decptr,&nullable);
+    rc = SQLDescribeCol(hstmt,2,colname,20,&collen,&datatype,&colsize,&decptr,&nullable);
     mystmt(hstmt,rc);
-    printMessage("2: %s,%d,%d,%d,%d,%d\n",colname,collen,datatype,colsize,decptr,nullable);;
+    printMessage("2: %s,%d,%d,%d,%d,%d",colname,collen,datatype,colsize,decptr,nullable);;
 
-    rc = SQLDescribeCol(hstmt,3,(char *)colname,20,&collen,&datatype,&colsize,&decptr,&nullable);
+    rc = SQLDescribeCol(hstmt,3,colname,20,&collen,&datatype,&colsize,&decptr,&nullable);
     mystmt(hstmt,rc);
-    printMessage("3: %s,%d,%d,%d,%d,%d\n",colname,collen,datatype,colsize,decptr,nullable);;
+    printMessage("3: %s,%d,%d,%d,%d,%d",colname,collen,datatype,colsize,decptr,nullable);;
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
@@ -1063,7 +1038,7 @@ DECLARE_TEST(t_desccol)
 }
 
 
-int desccol(SQLHSTMT hstmt, SQLCHAR *cname, SQLSMALLINT clen,
+int desccol(SQLHSTMT hstmt, char *cname, SQLSMALLINT clen,
             SQLSMALLINT sqltype, SQLULEN size,
             SQLSMALLINT scale, SQLSMALLINT isNull)
 {
@@ -1078,8 +1053,8 @@ int desccol(SQLHSTMT hstmt, SQLCHAR *cname, SQLSMALLINT clen,
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    sprintf(select,"select %s from t_desccolext",cname);
-    printMessage("\n%s",select);
+    sprintf((char *)select,"select %s from t_desccolext",cname);
+    printMessage("%s",select);
 
     rc = SQLExecDirect(hstmt,select,SQL_NTS);
     mystmt(hstmt,rc);
@@ -1088,10 +1063,10 @@ int desccol(SQLHSTMT hstmt, SQLCHAR *cname, SQLSMALLINT clen,
                          &lsqltype,&lsize,&lscale,&lisNull);
     mystmt(hstmt,rc);
 
-    printMessage("\n name: %s (%d)",lcname,lclen);
-    printMessage("\n sqltype: %d, size: %d, scale: %d, null: %d\n",lsqltype,lsize,lscale,lisNull);
+    printMessage("name: %s (%d)",lcname,lclen);
+    printMessage(" sqltype: %d, size: %d, scale: %d, null: %d\n",lsqltype,lsize,lscale,lisNull);
 
-    myassert(strcmp(lcname,cname)==0);
+    is_str(lcname, cname, clen);
     myassert(lclen == clen);
     myassert(lsqltype == sqltype);
     myassert(lsize == size);
@@ -1107,14 +1082,10 @@ int desccol(SQLHSTMT hstmt, SQLCHAR *cname, SQLSMALLINT clen,
 DECLARE_TEST(t_desccolext)
 {
     SQLRETURN rc;
-    SQLCHAR     *sql;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_desccolext");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    sql= "create table t_desccolext\
+  ok_sql(hstmt, "create table t_desccolext\
       ( t1 tinyint,\
         t2 tinyint(10),\
         t3 tinyint unsigned,\
@@ -1169,13 +1140,7 @@ DECLARE_TEST(t_desccolext)
         txt3 mediumtext,\
         txt4 longtext,\
         en enum('v1','v2'),\
-        st set('1','2','3'))";
-
-    rc = tmysql_exec(hstmt,sql);
-    mystmt(hstmt,rc);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+        st set('1','2','3'))");
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
@@ -1225,7 +1190,7 @@ DECLARE_TEST(t_desccol1)
     SQLRETURN rc;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_desccol1");
-    rc = SQLExecDirect(hstmt,"create table t_desccol1\
+    rc = SQLExecDirect(hstmt,(SQLCHAR *)"create table t_desccol1\
                  ( record decimal(8,0),\
                    title varchar(250),\
                    num1 float,\
@@ -1258,9 +1223,9 @@ DECLARE_TEST(t_desccol1)
 
         rc = SQLNumResultCols(hstmt,(SQLSMALLINT *)&pccol);
         mystmt(hstmt,rc);
-        printMessage("total columns:%d\n",pccol);
+        printMessage("total columns:%d",pccol);
 
-        printMessage("Name   nlen type    size decs null\n");
+        printMessage("Name   nlen type    size decs null");
         for ( index = 1; index <= pccol; index++)
         {
             rc = SQLDescribeCol(hstmt, index, ColumnName,
@@ -1270,7 +1235,7 @@ DECLARE_TEST(t_desccol1)
                                 &ColumnDecimals, &ColumnNullable);
             mystmt(hstmt,rc);
 
-            printMessage("%-6s %4d %4d %7ld %4d %4d\n", ColumnName,
+            printMessage("%-6s %4d %4d %7ld %4d %4d", ColumnName,
                          ColumnNameSize, ColumnSQLDataType, ColumnSize,
                          ColumnDecimals, ColumnNullable);
         }
@@ -1380,7 +1345,8 @@ DECLARE_TEST(t_exfetch)
     rc = tmysql_exec(hstmt,"create table t_exfetch(col1 int)");
     mystmt(hstmt,rc);
 
-    rc = SQLPrepare(hstmt,"insert into t_exfetch values(?)",SQL_NTS);
+    rc = SQLPrepare(hstmt, (SQLCHAR *)"insert into t_exfetch values (?)",
+                    SQL_NTS);
     mystmt(hstmt,rc);
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT, SQL_C_ULONG,
@@ -1399,7 +1365,7 @@ DECLARE_TEST(t_exfetch)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = SQLExecDirect(hstmt,"select * from t_exfetch",SQL_NTS);
+    rc = SQLExecDirect(hstmt, (SQLCHAR *)"select * from t_exfetch",SQL_NTS);
     mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&i,0,NULL);
@@ -1505,11 +1471,9 @@ DECLARE_TEST(tmysql_rowstatus)
     SQLINTEGER nData= 555;
     SQLCHAR szData[255] = "setpos-update";
 
-    rc = SQLAllocStmt(hdbc,&hstmt1);
-    mycon(hdbc,rc);
+  ok_con(hdbc, SQLAllocStmt(hdbc, &hstmt1));
 
-    rc = SQLSetCursorName(hstmt,"venu_cur",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"venu_cur", SQL_NTS));
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_rowstatus");
     rc = tmysql_exec(hstmt,"create table tmysql_rowstatus(col1 int , col2 varchar(30))");
@@ -1561,8 +1525,9 @@ DECLARE_TEST(tmysql_rowstatus)
     rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt1,"UPDATE tmysql_rowstatus SET col1= 999, col2 = 'pos-update' WHERE CURRENT OF venu_cur",SQL_NTS);
-    mystmt(hstmt1,rc);
+    ok_sql(hstmt1,
+           "UPDATE tmysql_rowstatus SET col1 = 999,"
+           "col2 = 'pos-update' WHERE CURRENT OF venu_cur");
 
     rc = SQLExtendedFetch(hstmt,SQL_FETCH_LAST,1,NULL,NULL);
     mystmt(hstmt,rc);
@@ -1570,7 +1535,7 @@ DECLARE_TEST(tmysql_rowstatus)
     rc = SQLSetPos(hstmt,1,SQL_DELETE,SQL_LOCK_NO_CHANGE);
     mystmt(hstmt,rc);
 
-    printMessage("\nrgfRowStatus[0]:%d",rgfRowStatus[0]);
+    printMessage("rgfRowStatus[0]:%d",rgfRowStatus[0]);
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
@@ -1802,7 +1767,7 @@ DECLARE_TEST(t_bug29239)
 DECLARE_TEST(t_bug30958)
 {
   SQLCHAR outbuf[20]= "bug";
-  SQLINTEGER outlen;
+  SQLLEN outlen;
   SQLINTEGER outmax= 0;
 
   ok_sql(hstmt, "drop table if exists bug30958");
@@ -1813,8 +1778,8 @@ DECLARE_TEST(t_bug30958)
   ok_stmt(hstmt, SQLFetch(hstmt));
 
   /*
-     check first that we get truncation, with zero bytes
-     available in out buffer, outbuffer should be untouched
+   check first that we get truncation, with zero bytes
+   available in out buffer, outbuffer should be untouched
   */
   outlen= 99;
   expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax,
@@ -1823,7 +1788,7 @@ DECLARE_TEST(t_bug30958)
   is_num(outlen, 0);
   is(check_sqlstate(hstmt, "01004") == OK);
 
-  /* exact the same result, and not SQL_NO_DATA */
+  /* expect the same result, and not SQL_NO_DATA */
   outlen= 99;
   expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax,
                                 &outlen), SQL_SUCCESS_WITH_INFO);
@@ -1845,19 +1810,140 @@ DECLARE_TEST(t_bug30958)
   expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax,
                                 &outlen), SQL_NO_DATA);
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
   ok_sql(hstmt, "drop table if exists bug30958");
+
+  return OK;
 }
 
 
+/**
+ A variant of the above test, with charset != ansi charset
+*/
+DECLARE_TEST(t_bug30958_ansi)
+{
+  SQLCHAR outbuf[20]= "bug";
+  SQLLEN outlen;
+  SQLINTEGER outmax= 0;
+
+  ok_sql(hstmt, "drop table if exists bug30958");
+  ok_sql(hstmt, "CREATE TABLE bug30958 (tt_textfield TEXT CHARACTER SET cp1251 NOT NULL)");
+  ok_sql(hstmt, "INSERT INTO bug30958 (tt_textfield) VALUES ('')");
+
+  ok_sql(hstmt, "select tt_textfield from bug30958");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  /*
+   check first that we get truncation, with zero bytes
+   available in out buffer, outbuffer should be untouched
+  */
+  outlen= 99;
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax,
+                                &outlen), SQL_SUCCESS_WITH_INFO);
+  is_str(outbuf, "bug", 3);
+  is_num(outlen, 0);
+  is(check_sqlstate(hstmt, "01004") == OK);
+
+  /* expect the same result, and not SQL_NO_DATA */
+  outlen= 99;
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax,
+                                &outlen), SQL_SUCCESS_WITH_INFO);
+  is_str(outbuf, "bug", 3);
+  is_num(outlen, 0);
+  is(check_sqlstate(hstmt, "01004") == OK);
+
+  /* now provide a space to read the data */
+  outmax= 1;
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax, &outlen));
+  is_num(outbuf[0], 0);
+  is_num(outlen, 0);
+
+  /* only now is it unavailable (test with empty and non-empty out buffer) */
+  outmax= 0;
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax,
+                                &outlen), SQL_NO_DATA);
+  outmax= 1;
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, outmax,
+                                &outlen), SQL_NO_DATA);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "drop table if exists bug30958");
+
+  return OK;
+}
+
+
+/**
+ A variant of the above tests using SQLWVARCHAR
+*/
+DECLARE_TEST(t_bug30958_wchar)
+{
+  SQLCHAR outbuf[20]= "bug";
+  SQLLEN outlen;
+  SQLINTEGER outmax= 0;
+
+  ok_sql(hstmt, "drop table if exists bug30958");
+  ok_sql(hstmt, "CREATE TABLE bug30958 (tt_textfield TEXT NOT NULL)");
+  ok_sql(hstmt, "INSERT INTO bug30958 (tt_textfield) VALUES ('')");
+
+  ok_sql(hstmt, "select tt_textfield from bug30958");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  /*
+   check first that we get truncation, with zero bytes
+   available in out buffer, outbuffer should be untouched
+  */
+  outlen= 99;
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_WCHAR, outbuf, outmax,
+                                &outlen), SQL_SUCCESS_WITH_INFO);
+  is_str(outbuf, "bug", 3);
+  is_num(outlen, 0);
+  is(check_sqlstate(hstmt, "01004") == OK);
+
+  /* expect the same result, and not SQL_NO_DATA */
+  outlen= 99;
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_WCHAR, outbuf, outmax,
+                                &outlen), SQL_SUCCESS_WITH_INFO);
+  is_str(outbuf, "bug", 3);
+  is_num(outlen, 0);
+  is(check_sqlstate(hstmt, "01004") == OK);
+
+  /* now provide a space to read the data */
+  outmax= 2;
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_WCHAR, outbuf, outmax, &outlen));
+  is_num(outbuf[0], 0);
+  is_num(outlen, 0);
+
+  /* only now is it unavailable (test with empty and non-empty out buffer) */
+  outmax= 0;
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_WCHAR, outbuf, outmax,
+                                &outlen), SQL_NO_DATA);
+  outmax= 1;
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_WCHAR, outbuf, outmax,
+                                &outlen), SQL_NO_DATA);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "drop table if exists bug30958");
+
+  return OK;
+}
+
+
+/**
+ Bug #31246: Opening rowset with extra fields leads to incorrect SQL INSERT
+*/
 DECLARE_TEST(t_bug31246)
 {
   SQLSMALLINT ncol;
-  SQLCHAR     *buf = "Key1";
+  SQLCHAR     *buf= (SQLCHAR *)"Key1";
   SQLCHAR     field1[20];
   SQLINTEGER  field2;
   SQLCHAR     field3[20];
   SQLRETURN   rc;
-  
+
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug31246");
   ok_sql(hstmt, "CREATE TABLE t_bug31246 ("
                 "field1 VARCHAR(50) NOT NULL PRIMARY KEY, "
@@ -1870,7 +1956,8 @@ DECLARE_TEST(t_bug31246)
   is_num(ncol, 3);
 
   /* Bind only one column instead of three ones */
-  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, buf, strlen(buf), NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR,
+                            buf, strlen((char *)buf), NULL));
 
   /* Expect SQL_NO_DATA_FOUND result from the empty table */
   rc= SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, NULL, NULL);
@@ -1884,17 +1971,126 @@ DECLARE_TEST(t_bug31246)
 
   /* Check whether the row was inserted with the default values*/
   ok_sql(hstmt, "SELECT * FROM t_bug31246 WHERE field1=\"Key1\"");
-  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, field1, 
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, field1,
           sizeof(field1), NULL));
-  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_LONG, &field2, 
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_LONG, &field2,
           sizeof(SQLINTEGER), NULL));
-  ok_stmt(hstmt, SQLBindCol(hstmt, 3, SQL_C_CHAR, field3, 
+  ok_stmt(hstmt, SQLBindCol(hstmt, 3, SQL_C_CHAR, field3,
           sizeof(field3), NULL));
   ok_stmt(hstmt, SQLFetch(hstmt));
-  
+
   /* Clean-up */
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
   ok_sql(hstmt, "DROP TABLE t_bug31246");
+  return OK;
+}
+
+
+/**
+  Bug #13776: Invalid string or buffer length error
+*/
+DECLARE_TEST(t_bug13776)
+{
+  SQLHENV  henv1;
+  SQLHDBC  hdbc1;
+  SQLHSTMT hstmt1;
+
+  SQLULEN     pcColSz;
+  SQLCHAR     szColName[MAX_NAME_LEN];
+  SQLSMALLINT pfSqlType, pcbScale, pfNullable;
+
+  SET_DSN_OPTION(1 << 27);
+
+  /* Establish the new connection */
+  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_bug13776");
+  ok_sql(hstmt1, "CREATE TABLE t_bug13776(ltext LONGTEXT)");
+  ok_sql(hstmt1, "INSERT INTO t_bug13776 VALUES ('long text test')");
+  ok_sql(hstmt1, "SELECT * FROM t_bug13776");
+  ok_stmt(hstmt1, SQLDescribeCol(hstmt1, 1, szColName, MAX_NAME_LEN+1, NULL,
+                                 &pfSqlType, &pcColSz, &pcbScale, &pfNullable));
+
+  /* Size of LONGTEXT should have been capped to 1 << 31. */
+  is_num(pcColSz, 2147483647L);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_bug13776");
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  SET_DSN_OPTION(0);
+
+  return OK;
+}
+
+
+/**
+  Test that FLAG_COLUMN_SIZE_S32 is automatically enabled when ADO library
+  is loaded.
+*/
+DECLARE_TEST(t_bug13776_auto)
+{
+#ifdef WIN32
+  SQLHENV  henv1;
+  SQLHDBC  hdbc1;
+  SQLHSTMT hstmt1;
+  HMODULE  ado_dll;
+
+  SQLULEN     pcColSz;
+  SQLCHAR     szColName[MAX_NAME_LEN];
+  SQLSMALLINT pfSqlType, pcbScale, pfNullable;
+  SQLCHAR     *env_path= NULL;
+  SQLCHAR     szFileToLoad[255];
+
+  /** @todo get the full path to the library using getenv */
+  env_path= getenv("CommonProgramFiles(x86)");
+  if (!env_path)
+    env_path= getenv("CommonProgramFiles");
+
+  if (!env_path)
+  {
+    printf("# No path for CommonProgramFiles in %s on line %d\n",
+           __FILE__, __LINE__);
+    return FAIL;
+  }
+
+  sprintf(szFileToLoad, "%s\\System\\ado\\msado15.dll", env_path);
+
+  ado_dll= LoadLibrary(szFileToLoad);
+  if (!ado_dll)
+  {
+    printf("# Could not load %s in %s on line %d\n",
+           szFileToLoad, __FILE__, __LINE__);
+    return FAIL;
+  }
+
+  /* Establish the new connection */
+  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_bug13776");
+  ok_sql(hstmt1, "CREATE TABLE t_bug13776(ltext LONGTEXT)");
+  ok_sql(hstmt1, "INSERT INTO t_bug13776 VALUES ('long text test')");
+  ok_sql(hstmt1, "SELECT * FROM t_bug13776");
+  ok_stmt(hstmt1, SQLDescribeCol(hstmt1, 1, szColName, MAX_NAME_LEN+1, NULL,
+                                 &pfSqlType, &pcColSz, &pcbScale, &pfNullable));
+
+  /*
+    IF adodb15.dll is loaded SQLDescribeCol should return the length of
+    LONGTEXT columns as 2G instead of 4G
+  */
+  is_num(pcColSz, 2147483647L);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_bug13776");
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  FreeLibrary(ado_dll);
+#endif
+
   return OK;
 }
 
@@ -1922,8 +2118,12 @@ BEGIN_TESTS
   ADD_TEST(bug6157)
   ADD_TEST(t_binary_collation)
   ADD_TODO(t_bug29239)
-  ADD_TODO(t_bug30958)
-  ADD_TODO(t_bug31246)
+  ADD_TEST(t_bug30958)
+  ADD_TEST(t_bug30958_ansi)
+  ADD_TEST(t_bug30958_wchar)
+  ADD_TEST(t_bug31246)
+  ADD_TEST(t_bug13776)
+  ADD_TEST(t_bug13776_auto)
 END_TESTS
 
 

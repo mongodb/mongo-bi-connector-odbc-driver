@@ -155,6 +155,15 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
 
   options= sqlwchartoul(ds->option);
 
+#ifdef WIN32
+  /*
+   Detect if we are running with ADO present, and force on the
+   FLAG_COLUMN_SIZE_S32 option if we are.
+  */
+  if (GetModuleHandle("msado15.dll") != NULL)
+    options|= FLAG_COLUMN_SIZE_S32;
+#endif
+
   mysql_init(mysql);
 
   flags= get_client_flags(options);

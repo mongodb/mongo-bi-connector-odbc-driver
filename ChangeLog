@@ -40,7 +40,7 @@ Guffert TODO
   * Fixed handling of NULL pointers passed to SQLGetInfo.
   * Parse Password - Unable to Connect. (Bug #16178)
   
-  Includes changes from Connector/ODBC 3.51.21.
+  Includes changes from Connector/ODBC 3.51.21 and 3.51.22.
 
 ----
 
@@ -50,6 +50,26 @@ Guffert TODO
   * Added support for SQL_C_WCHAR.
   * Added support for Unicode functions (SQLConnectW, etc).
   * Added descriptor support (SQLGetDescField, SQLGetDescRec, etc)
+
+----
+
+3.51.22 (13-Nov-2007)
+
+  Functionality added or changed:
+  * Removed workaround for bug #10491 in the server, which has now been
+    fixed in MySQL Server 5.0.48 and 5.1.21.
+  * Added FLAG_COLUMN_SIZE_S32 to limit the reported column size to a
+    signed 32-bit integer. This option is automatically enabled for ADO
+    applications, in order to work around a bug in ADO. (Bug #13776)
+
+  Bugs fixed:
+  * SQLGetInfo() reported that UNION was not supported. (Bug #32253)
+  * The non-portable "English" locale was used for handling of decimal
+    and floating-point values instead of "C". (Bug #32294)
+  * Unsigned integer values greater than the maximum value of a signed
+    integer were handled incorrectly. (Bug #32171)
+  * The wrong result was returned by SQLGetData() when the data was an
+    empty string and a zero-sized buffer was specified. (Bug #30958)
 
 ----
 

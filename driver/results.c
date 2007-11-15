@@ -207,7 +207,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
 
     case SQL_C_ULONG:
       if (rgbValue)
-        *((SQLUINTEGER *)rgbValue)= (SQLUINTEGER)atol(value);
+        *((SQLUINTEGER *)rgbValue)= (SQLUINTEGER)strtoul(value, NULL, 10);
       *pcbValue= sizeof(SQLUINTEGER);
       break;
 
@@ -527,7 +527,12 @@ MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
   if (type)
     *type= get_sql_data_type(stmt, field, NULL);
   if (size)
-    *size= get_column_size(stmt, field, FALSE);
+  {
+    SQLULEN csize= get_column_size(stmt, field, FALSE);
+    if ((stmt->dbc->flag & FLAG_COLUMN_SIZE_S32) && csize > INT_MAX32)
+      csize= INT_MAX32;
+    *size= csize;
+  }
   if (scale)
     *scale= (SQLSMALLINT)max(0, get_decimal_digits(stmt, field));
   if (nullable)
@@ -973,7 +978,7 @@ SQLRETURN SQL_API SQLGetData( SQLHSTMT      hstmt,
     }
 
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
-        setlocale(LC_NUMERIC,"English");
+      setlocale(LC_NUMERIC, "C");
     result= sql_get_data( stmt,
                           (SQLSMALLINT) (fCType == SQL_C_DEFAULT ? stmt->odbc_types[icol] : fCType),
                           stmt->result->fields+icol,
@@ -1245,7 +1250,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     }
 
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
-        setlocale(LC_NUMERIC,"English");
+      setlocale(LC_NUMERIC, "C");
     res= SQL_SUCCESS;
     for ( i= 0 ; i < rows_to_fetch ; i++ )
     {

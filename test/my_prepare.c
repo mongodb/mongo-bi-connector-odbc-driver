@@ -33,11 +33,12 @@ DECLARE_TEST(t_prep_basic)
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_basic");
 
-    rc = SQLExecDirect(hstmt,"create table t_prep_basic(a int, b char(4))",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "create table t_prep_basic(a int, b char(4))");
 
-    rc = SQLPrepare(hstmt, "insert into t_prep_basic values(?,'venu')",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt,
+          SQLPrepare(hstmt,
+                     (SQLCHAR *)"insert into t_prep_basic values(?,'venu')",
+                     SQL_NTS));
 
     rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0, 0, &id, 0, NULL);
     mystmt(hstmt,rc);
@@ -55,11 +56,10 @@ DECLARE_TEST(t_prep_basic)
     SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    rc = SQLExecDirect(hstmt,"select * from t_prep_basic",SQL_NTS);
-    mystmt(hstmt,rc);  
+    ok_sql(hstmt, "select * from t_prep_basic");
 
     rc = SQLBindCol(hstmt, 1, SQL_C_LONG, &id, 0, &length1);
-    mystmt(hstmt,rc);  
+    mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt, 2, SQL_C_CHAR, name, 5, &length2);
     mystmt(hstmt,rc);
@@ -90,19 +90,20 @@ DECLARE_TEST(t_prep_basic)
 /* to test buffer length */
 DECLARE_TEST(t_prep_buffer_length)
 {
-    SQLLEN length;
-    char       buffer[20];
+  SQLLEN length;
+  SQLCHAR buffer[20];
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_buffer_length");
 
-    rc = SQLExecDirect(hstmt,"create table t_prep_buffer_length(a varchar(20))",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "create table t_prep_buffer_length(a varchar(20))");
 
-    rc = SQLPrepare(hstmt, "insert into t_prep_buffer_length values(?)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt,
+          SQLPrepare(hstmt,
+                     (SQLCHAR *)"insert into t_prep_buffer_length values(?)",
+                     SQL_NTS));
 
-    length= 0;
-    strcpy(buffer,"abcdefghij");
+  length= 0;
+  strcpy((char *)buffer, "abcdefghij");
 
     rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR, 15, 10, buffer, 4, &length);
     mystmt(hstmt,rc);
@@ -125,7 +126,7 @@ DECLARE_TEST(t_prep_buffer_length)
     rc = SQLExecute(hstmt);
     mystmt(hstmt,rc);
 
-    length= SQL_NTS;    
+    length= SQL_NTS;
 
     rc = SQLExecute(hstmt);
     mystmt(hstmt,rc);
@@ -133,8 +134,7 @@ DECLARE_TEST(t_prep_buffer_length)
     SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    rc = SQLExecDirect(hstmt,"select * from t_prep_buffer_length",SQL_NTS);
-    mystmt(hstmt,rc);  
+    ok_sql(hstmt, "select * from t_prep_buffer_length");
 
     rc = SQLBindCol(hstmt, 1, SQL_C_CHAR, buffer, 15, &length);
     mystmt(hstmt,rc);
@@ -143,31 +143,36 @@ DECLARE_TEST(t_prep_buffer_length)
     mystmt(hstmt,rc);
 
     printMessage( "outdata: %s (%ld)\n", buffer, length);
-    myassert(buffer[0] == '\0' && length == 0);
+    is_num(length, 0);
+    is_num(buffer[0], '\0');
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     printMessage("outdata: %s (%ld)\n", buffer, length);
-    myassert(strcmp(buffer,"abc") == 0 && length == 3);
+    is_num(length, 3);
+    is_str(buffer, "abc", 10);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     printMessage("outdata: %s (%ld)\n", buffer, length);
-    myassert(strcmp(buffer,"abcdefghij") == 0 && length == 10);
+    is_num(length, 10);
+    is_str(buffer, "abcdefghij", 10);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     printMessage("outdata: %s (%ld)\n", buffer, length);
-    myassert(strcmp(buffer,"abcdefghi") == 0 && length == 9);
+    is_num(length, 9);
+    is_str(buffer, "abcdefghi", 9);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     printMessage("outdata: %s (%ld)\n", buffer, length);
-    myassert(strcmp(buffer,"abcdefghij") == 0 && length == 10);
+    is_num(length, 10);
+    is_str(buffer, "abcdefghij", 10);
 
     rc = SQLFetch(hstmt);
     myassert(rc == SQL_NO_DATA_FOUND);
@@ -192,13 +197,14 @@ DECLARE_TEST(t_prep_truncate)
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_truncate");
 
-    rc = SQLExecDirect(hstmt,"create table t_prep_truncate(a int, b char(4), c binary(4))",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "create table t_prep_truncate(a int, b char(4), c binary(4))");
 
-    rc = SQLPrepare(hstmt, "insert into t_prep_truncate values(500,'venu','venu')",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt,
+          SQLPrepare(hstmt,
+                     (SQLCHAR *)"insert into t_prep_truncate "
+                     "values(500,'venu','venu')", SQL_NTS));
 
-    strcpy(name,"venu");
+    strcpy((char *)name,"venu");
     rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR, 10, 10, name, 5, NULL);
     mystmt(hstmt,rc);
 
@@ -217,8 +223,7 @@ DECLARE_TEST(t_prep_truncate)
     SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    rc = SQLExecDirect(hstmt,"select b,c from t_prep_truncate",SQL_NTS);
-    mystmt(hstmt,rc);  
+    ok_sql(hstmt, "select b,c from t_prep_truncate");
 
     rc = SQLBindCol(hstmt, 1, SQL_C_CHAR, name, 2, &length);
     mystmt(hstmt,rc);
@@ -230,13 +235,13 @@ DECLARE_TEST(t_prep_truncate)
     mystmt(hstmt,rc);
 
     printMessage("str outdata: %s(%d)\n",name,length);
-    myassert(strcmp(name,"v")==0);
-    myassert(length == 4);
+    is_num(length, 4);
+    is_str(bin, "v", 1);
 
     bin[4]='M';
     printMessage("bin outdata: %s(%d)\n",bin,length1);
-    myassert(strncmp(bin,"venuM",5)==0);
-    myassert(length == 4);
+    is_num(length, 4);
+    is_str(bin, "venuM", 5);
 
     rc = SQLFetch(hstmt);
     myassert(rc == SQL_NO_DATA_FOUND);
@@ -332,11 +337,12 @@ DECLARE_TEST(t_prep_getdata)
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_getdata");
 
-    rc = SQLExecDirect(hstmt,"create table t_prep_getdata(a tinyint, b int, c char(4))",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "create table t_prep_getdata(a tinyint, b int, c char(4))");
 
-    rc = SQLPrepare(hstmt,"insert into t_prep_getdata values(?,?,?)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt,
+          SQLPrepare(hstmt,
+                     (SQLCHAR *)"insert into t_prep_getdata values(?,?,?)",
+                     SQL_NTS));
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_LONG,SQL_TINYINT,
                           0,0,&data,0,NULL);
@@ -348,7 +354,7 @@ DECLARE_TEST(t_prep_getdata)
                           10,10,name,6,NULL);
     mystmt(hstmt,rc);
 
-    sprintf(name,"venu"); data = 10;
+    sprintf((char *)name,"venu"); data = 10;
 
     rc = SQLExecute(hstmt);
     mystmt(hstmt,rc);
@@ -360,7 +366,7 @@ DECLARE_TEST(t_prep_getdata)
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
     data= 0;
-    rc = SQLExecDirect(hstmt,"select * from t_prep_getdata",SQL_NTS);
+    ok_sql(hstmt, "select * from t_prep_getdata");
     mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt, 1,SQL_C_TINYINT, &tiny, 0, NULL);
@@ -387,13 +393,14 @@ DECLARE_TEST(t_prep_getdata)
 
     printMessage("record 3 : %s(%ld)\n", name, (long)length);
 
-    myassert(strcmp(name,"venu")== 0 && length == 4);
+    is_num(length, 4);
+    is_str(name, "venu", 4);
 
     data = 0;
     rc = SQLGetData(hstmt,1,SQL_C_LONG,&data,0,NULL);
     mystmt(hstmt,rc);
 
-    printMessage("record 1 : %ld\n", data);
+    printMessage("record 1 : %ld", data);
     myassert( data == 10);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
@@ -416,16 +423,13 @@ DECLARE_TEST(t_prep_getdata1)
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_getdata");
 
-    rc = SQLExecDirect(hstmt,"create table t_prep_getdata(a char(10), b int)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "create table t_prep_getdata(a char(10), b int)");
 
-    rc = SQLExecDirect(hstmt,"insert into t_prep_getdata values('abcdefghij',12345)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "insert into t_prep_getdata values('abcdefghij',12345)");
 
-    SQLFreeStmt(hstmt,SQL_CLOSE);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-    rc = SQLExecDirect(hstmt,"select * from t_prep_getdata",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "select * from t_prep_getdata");
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt, rc);
@@ -435,44 +439,51 @@ DECLARE_TEST(t_prep_getdata1)
     mystmt(hstmt,rc);
 
     printMessage("data: %s (%ld)\n", data, length);
-    myassert(strcmp(data,"M") == 0 && length == 10);
+    is_num(length, 10);
+    is_str(data, "M", 1);
 
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,data,4,&length);
     mystmt(hstmt,rc);
 
     printMessage("data: %s (%ld)\n", data, length);
-    myassert(strcmp(data,"abc") == 0 && length == 10);
+    is_num(length, 10);
+    is_str(data, "abc", 3);
 
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,data,4,&length);
     mystmt(hstmt,rc);
 
     printMessage("data: %s (%ld)\n", data, length);
-    myassert(strcmp(data,"def") == 0 && length == 7);
+    is_num(length, 7);
+    is_str(data, "def", 3);
 
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,data,4,&length);
     mystmt(hstmt,rc);
 
     printMessage("data: %s (%ld)\n", data, length);
-    myassert(strcmp(data,"ghi") == 0 && length == 4);
+    is_num(length, 4);
+    is_str(data, "ghi", 3);
 
     data[0]= 'M';
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,data,0,&length);
     mystmt(hstmt,rc);
 
     printMessage("data: %s (%ld)\n", data, length);
-    myassert(data[0] == 'M' && length == 1);
+    is_num(length, 1);
+    is_str(data, "M", 1);
 
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,data,1,&length);
     mystmt(hstmt,rc);
 
     printMessage("data: %s (%ld)\n", data, length);
-    myassert(data[0] == '\0' && length == 1);
+    is_num(length, 1);
+    is_num(data[0], '\0');
 
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,data,2,&length);
     mystmt(hstmt,rc);
 
     printMessage("data: %s (%ld)\n", data, length);
-    myassert(strcmp(data,"j") == 0 && length == 1);
+    is_num(length, 1);
+    is_str(data, "j", 1);
 
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,data,2,&length);
     myassert(rc == SQL_NO_DATA);
@@ -482,44 +493,52 @@ DECLARE_TEST(t_prep_getdata1)
     mystmt(hstmt,rc);
 
     printMessage("data: %s (%ld)\n", data, length);
-    myassert(strcmp(data,"M") == 0 && length == 5);
+    is_num(length, 5);
+    is_str(data, "M", 2);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,data,3,&length);
     mystmt(hstmt,rc);
 
     printMessage("data: %s (%ld)\n", data, length);
-    myassert(strcmp(data,"12") == 0 && length == 5);
+    is_num(length, 5);
+    is_str(data, "12", 2);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,data,2,&length);
     mystmt(hstmt,rc);
 
     printMessage("data: %s (%ld)\n", data, length);
-    myassert(strcmp(data,"3") == 0 && length == 3);
+    is_num(length, 3);
+    is_str(data, "3", 1);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,data,2,&length);
     mystmt(hstmt,rc);
 
     printMessage("data: %s (%ld)\n", data, length);
-    myassert(strcmp(data,"4") == 0 && length == 2);
+    is_num(length, 2);
+    is_str(data, "4", 1);
 
     data[0]= 'M';
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,data,0,&length);
     mystmt(hstmt,rc);
 
     printMessage("data: %s (%ld)\n", data, length);
-    myassert(data[0] == 'M' && length == 1);
+    is_num(length, 1);
+    is_str(data, "M", 1);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,data,1,&length);
     mystmt(hstmt,rc);
 
     printMessage("data: %s (%ld)\n", data, length);
     myassert(data[0] == '\0' && length == 1);
+    is_num(length, 1);
+    is_num(data[0], '\0');
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,data,2,&length);
     mystmt(hstmt,rc);
 
     printMessage("data: %s (%ld)\n", data, length);
-    myassert(strcmp(data,"5") == 0 && length == 1);
+    is_num(length, 1);
+    is_str(data, "5", 1);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,data,2,&length);
     myassert(rc == SQL_NO_DATA);
@@ -543,10 +562,10 @@ DECLARE_TEST(t_prep_catalog)
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_prep_catalog");
 
-    rc = SQLExecDirect(hstmt,"create table t_prep_catalog(a int default 100)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "create table t_prep_catalog(a int default 100)");
 
-    rc = SQLTables(hstmt,NULL,0,NULL,0,"t_prep_catalog",14,"TABLE",5);
+    rc = SQLTables(hstmt,NULL,0,NULL,0,(SQLCHAR *)"t_prep_catalog",14,
+                   (SQLCHAR *)"TABLE",5);
     mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
@@ -558,7 +577,8 @@ DECLARE_TEST(t_prep_catalog)
 
     rc = SQLGetData(hstmt,3,SQL_C_CHAR,table,15,&length);
     mystmt(hstmt,rc);
-    myassert(strcmp(table,"t_prep_catalog") == 0 && length == 14);
+    is_num(length, 14);
+    is_str(table, "t_prep_catalog", 14);
 
     rc = SQLFetch(hstmt);
     myassert(rc == SQL_NO_DATA);
@@ -569,7 +589,7 @@ DECLARE_TEST(t_prep_catalog)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLColumns(hstmt,NULL,0,NULL,0,"t_prep_catalog",14,NULL,0);
+    rc = SQLColumns(hstmt,NULL,0,NULL,0,(SQLCHAR *)"t_prep_catalog",14,NULL,0);
     mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
@@ -586,12 +606,14 @@ DECLARE_TEST(t_prep_catalog)
 
     rc = SQLGetData(hstmt,4,SQL_C_CHAR,table,2,&length);
     mystmt(hstmt,rc);
-    myassert(strcmp(table,"a") == 0 && length == 1);
+    is_num(length, 1);
+    is_str(table, "a", 1);
 
     rc = SQLGetData(hstmt,13,SQL_C_CHAR,table,10,&length);
     mystmt(hstmt,rc);
     printMessage("table: %s(%d)\n", table, length);
-    myassert(strcmp(table,"100") == 0 && length == 3);
+    is_num(length, 3);
+    is_str(table, "100", 3);
 
     rc = SQLFetch(hstmt);
     myassert(rc == SQL_NO_DATA);
@@ -614,28 +636,18 @@ DECLARE_TEST(t_sps)
     SQLLEN length, length1;
     char b[]= "abcdefghij", b1[10];
 
-/*
-    if (!mysql_min_version(hdbc, "5.0",3))
-    {
-        printMessage("server doesn't support stored procedures..skipped\n");
-        return;
-    }
-*/
+  if (!mysql_min_version(hdbc, "5.0", 3))
+    skip("server does not support stored procedures");
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_tabsp");
   ok_sql(hstmt, "DROP PROCEDURE IF EXISTS t_sp");
 
-    rc = SQLExecDirect(hstmt,"create table t_tabsp(a int, b varchar(10))",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "create table t_tabsp(a int, b varchar(10))");
 
-    rc = SQLExecDirect(hstmt,"create procedure t_sp(x int, y char(10)) \
-                              begin \
-                                insert into t_tabsp values(x, y); \
-                              end;",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt,"create procedure t_sp(x int, y char(10)) "
+         "begin insert into t_tabsp values(x, y); end;");
 
-    rc = SQLPrepare(hstmt,"call t_sp(?,?)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)"call t_sp(?,?)", SQL_NTS));
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_LONG,SQL_INTEGER,
                           0,0,&a,0,NULL);
@@ -653,8 +665,7 @@ DECLARE_TEST(t_sps)
     SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt, SQL_CLOSE);
 
-    rc = SQLExecDirect(hstmt,"select * from t_tabsp",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "select * from t_tabsp");
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&a,0,NULL);
     mystmt(hstmt,rc);
@@ -701,8 +712,8 @@ DECLARE_TEST(t_prepare)
     rc = tmysql_exec(hstmt,"insert into t_prepare values(200,'MySQL','two')");
     mystmt(hstmt,rc);
 
-    rc = SQLPrepare(hstmt,"select * from t_prepare where col2 = ? AND col1 = ?",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)"select * from t_prepare "
+                              "where col2 = ? AND col1 = ?",SQL_NTS));
 
     rc = SQLNumResultCols(hstmt,&pccol);
     mystmt(hstmt,rc);
@@ -729,7 +740,7 @@ DECLARE_TEST(t_prepare)
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
-    fprintf(stdout," outdata: %d, %s(%d)\n", nodata,szodata,nlen);
+    fprintf(stdout," outdata: %d, %s(%ld)\n", nodata,szodata,nlen);
     my_assert(nodata == 200);
 
     rc = SQLFetch(hstmt);
@@ -791,8 +802,7 @@ DECLARE_TEST(t_prepare1)
     rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"SELECT * FROM t_prepare1",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "SELECT * FROM t_prepare1");
 
     myassert(3 == myresult(hstmt));/* unless prepare is supported..*/
 
@@ -975,8 +985,10 @@ DECLARE_TEST(t_acc_update)
 
     mystmt(hstmt,rc);
 
-    rc = SQLPrepare(hstmt,"select id from t_acc_update where id = ?",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt,
+            SQLPrepare(hstmt,
+                       (SQLCHAR *)"select id from t_acc_update where id = ?",
+                       SQL_NTS));
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_DEFAULT,SQL_INTEGER,11,0,&id,0,NULL);
     mystmt(hstmt,rc);
@@ -1012,8 +1024,7 @@ DECLARE_TEST(t_acc_update)
     rc = SQLBindParameter(hstmt1,2,SQL_PARAM_INPUT,SQL_C_DEFAULT,SQL_INTEGER,11,0,&id1,0,NULL);
     mystmt(hstmt1,rc);
 
-    rc = SQLExecDirect(hstmt1,"UPDATE t_acc_update SET id = ?  WHERE id = ?",SQL_NTS);
-    mystmt(hstmt1,rc);
+    ok_sql(hstmt1, "UPDATE t_acc_update SET id = ?  WHERE id = ?");
 
     rc = SQLRowCount(hstmt1,&pcrow);
     mystmt(hstmt1,rc);
@@ -1035,24 +1046,23 @@ DECLARE_TEST(t_acc_update)
 }
 
 
+/**
+  Bug #29871: MyODBC problem with MS Query ('Memory allocation error')
+*/
 DECLARE_TEST(t_bug29871)
 {
-  SQLCHAR *param= "1";
-
-  skip("skipping this test for a while due to DM-related issues");
+  SQLCHAR *param= (SQLCHAR *)"1";
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug29871");
   ok_sql(hstmt, "CREATE TABLE t_bug29871 (a INT)");
-  
+
   /* The bug is related to calling deprecated SQLSetParam */
-  ok_stmt(hstmt, SQLSetParam(hstmt, 1, SQL_C_CHAR, SQL_INTEGER, 10, 0, 
+  ok_stmt(hstmt, SQLSetParam(hstmt, 1, SQL_C_CHAR, SQL_INTEGER, 10, 0,
                              param, 0));
-  ok_stmt(hstmt, SQLExecDirect(hstmt,"INSERT INTO t_bug29871 VALUES (?)",
-	                       SQL_NTS));
-  ok_stmt(hstmt, SQLSetParam(hstmt, 1, SQL_C_CHAR, SQL_INTEGER, 10, 0, 
+  ok_sql(hstmt, "INSERT INTO t_bug29871 VALUES (?)");
+  ok_stmt(hstmt, SQLSetParam(hstmt, 1, SQL_C_CHAR, SQL_INTEGER, 10, 0,
                              param, 0));
-  ok_stmt(hstmt, SQLExecDirect(hstmt,"SELECT * FROM t_bug29871 WHERE a=?",
-	                       SQL_NTS));
+  ok_sql(hstmt, "SELECT * FROM t_bug29871 WHERE a=?");
   ok_sql(hstmt, "DROP TABLE t_bug29871");
   return OK;
 }

@@ -188,7 +188,7 @@ char *insert_params(STMT FAR *stmt)
     net= &stmt->dbc->mysql.net;
     to= (char*) net->buff;
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
-        setlocale(LC_NUMERIC,"English");  /* force use of '.' as decimal point */
+      setlocale(LC_NUMERIC, "C");  /* force use of '.' as decimal point */
     for ( i= 0; i < stmt->param_count; i++ )
     {
         DESCREC *aprec= desc_get_rec(stmt->apd, i, FALSE);
@@ -292,7 +292,7 @@ char *insert_param(DBC *dbc, char *to, DESCREC *aprec, DESCREC *iprec)
     */
     else if (*(aprec->octet_length_ptr) == SQL_COLUMN_IGNORE ||
              (*(aprec->octet_length_ptr) == 0 &&
-              aprec->concise_type == SQL_C_DEFAULT &&
+              aprec->concise_type == 0 &&
               aprec->par.value == NULL))
     {
       if (is_minimum_version(dbc->mysql.server_version, "4.0.3", 5))

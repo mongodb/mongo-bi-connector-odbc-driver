@@ -25,8 +25,7 @@
 /* Testing basic scrolling feature */
 DECLARE_TEST(t_scroll)
 {
-    SQLRETURN rc;
-    SQLUINTEGER i;
+  SQLUINTEGER i;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_scroll");
   ok_sql(hstmt, "CREATE TABLE t_scroll (col1 INT)");
@@ -122,8 +121,8 @@ DECLARE_TEST(t_array_relative_10)
 {
     SQLRETURN rc;
     SQLINTEGER iarray[15];
-    SQLLEN   nrows;
-    SQLUINTEGER i,index;
+    SQLLEN   nrows, index;
+    SQLUINTEGER i;
     char name[21];
 
     ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
@@ -270,7 +269,7 @@ DECLARE_TEST(t_relative_1)
     SQLRETURN rc;
     SQLLEN nrows;
     SQLUINTEGER i;
-    const int max_rows=10;
+    const SQLUINTEGER max_rows=10;
 
     ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                   (SQLPOINTER)SQL_CURSOR_STATIC, 0));
@@ -482,7 +481,7 @@ DECLARE_TEST(t_array_relative_2)
     SQLUINTEGER i;
     SQLLEN nrows;
     SQLINTEGER iarray[15];
-    const int max_rows=10;
+    const SQLUINTEGER max_rows=10;
 
     ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                   (SQLPOINTER)SQL_CURSOR_STATIC, 0));
@@ -795,7 +794,7 @@ DECLARE_TEST(t_absolute_1)
     SQLRETURN rc;
     SQLLEN nrows;
     SQLUINTEGER i;
-    const int max_rows=10;
+    const SQLUINTEGER max_rows=10;
 
     ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                   (SQLPOINTER)SQL_CURSOR_STATIC, 0));
@@ -981,7 +980,7 @@ DECLARE_TEST(t_absolute_2)
     SQLRETURN rc;
     SQLLEN nrows;
     SQLINTEGER iarray[15];
-    const int max_rows=10;
+    const SQLUINTEGER max_rows=10;
     SQLUINTEGER i;
 
     ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,

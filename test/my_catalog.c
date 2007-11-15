@@ -301,10 +301,11 @@ DECLARE_TEST(my_colpriv)
   return OK;
 }
 
+
 DECLARE_TEST(t_sqlprocedures)
 {
-  SQLRETURN rc;
-  /** @todo check server version */
+  if (!mysql_min_version(hdbc, "5.0", 3))
+    skip("server does not support stored procedures");
 
   /* avoid errors in case binary log is activated */
   ok_sql(hstmt, "SET GLOBAL log_bin_trust_function_creators = 1");
@@ -493,7 +494,7 @@ DECLARE_TEST(t_columns)
     printMessage("checking column `%s`", (char *)ColumnName);
 
     ok_stmt(hstmt, SQLColumns(hstmt,
-                              DatabaseName, cbDatabaseName,
+                              DatabaseName, (SQLSMALLINT)cbDatabaseName,
                               (SQLCHAR *)"", SQL_NTS,
                               (SQLCHAR *)"t_columns", SQL_NTS,
                               ColumnName, SQL_NTS));

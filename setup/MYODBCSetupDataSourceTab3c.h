@@ -49,6 +49,7 @@ protected:
     MYODBCSetupCheckBox *pcheckboxDisableTransactions;          
     MYODBCSetupCheckBox *pcheckboxForceUseOfForwardOnlyCursors;
     MYODBCSetupCheckBox *pcheckboxMultiStatements;
+    MYODBCSetupCheckBox *pcheckboxCapColumnSize;
 };
 
 #endif

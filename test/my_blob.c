@@ -28,7 +28,7 @@ DECLARE_TEST(t_blob)
     SQLUINTEGER j= 0;
     SQLINTEGER l;
     SQLLEN cbValue;
-    char *blobbuf;
+    SQLCHAR *blobbuf;
     SQLUINTEGER blobbuf_size = 1024 * 1 * 6L;
     SQLUINTEGER blob_read;
     SQLPOINTER token;
@@ -39,25 +39,18 @@ DECLARE_TEST(t_blob)
     rc = SQLSetConnectOption(hdbc, SQL_AUTOCOMMIT, 0L);
     mycon(hdbc,rc);
 
-    rc = SQLExecDirect(hstmt,
-                       "DROP TABLE TBLOB",
-                       SQL_NTS);
-    rc = SQLTransact(NULL, hdbc, SQL_COMMIT);
-
-    rc = SQLExecDirect(hstmt,
-                       "CREATE TABLE TBLOB (I INTEGER NOT NULL PRIMARY KEY, B LONGBLOB)",
-                       SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLTransact(NULL, hdbc, SQL_COMMIT);
-    mycon(hdbc,rc);
+    ok_sql(hstmt, "DROP TABLE IF EXISTS TBLOB");
+    ok_sql(hstmt, "CREATE TABLE TBLOB (I INTEGER NOT NULL PRIMARY KEY,"
+           "B LONGBLOB)");
 
     cbValue = 0;
-    rc = SQLPrepare(hstmt, "INSERT INTO TBLOB VALUES (1, ?)", SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLBindParameter(hstmt,SQL_PARAM_INPUT, 1, SQL_C_BINARY, SQL_LONGVARBINARY, 
-                          blob_size, 0, NULL, 0, &cbValue);
-    mystmt(hstmt,rc);
-    cbValue = SQL_DATA_AT_EXEC;        
+    ok_stmt(hstmt, SQLPrepare(hstmt,
+                              (SQLCHAR *)"INSERT INTO TBLOB VALUES (1, ?)",
+                              SQL_NTS));
+    ok_stmt(hstmt, SQLBindParameter(hstmt, SQL_PARAM_INPUT, 1, SQL_C_BINARY,
+                                    SQL_LONGVARBINARY, blob_size, 0, NULL,
+                                    0, &cbValue));
+    cbValue = SQL_DATA_AT_EXEC;
     blobbuf = (SQLCHAR *)malloc(blobbuf_size);
     memset(blobbuf, 'A', blobbuf_size);
 
@@ -87,9 +80,9 @@ DECLARE_TEST(t_blob)
     finish = clock();
 
     duration = (finish-start)/CLOCKS_PER_SEC;
-    printMessage("\n j: %d\n", j);
+    printMessage("j: %d", j);
     myassert(j == blob_size);
-    printMessage("Wrote %ld bytes in %3.3lf seconds (%lg bytes/s)\n",
+    printMessage("Wrote %ld bytes in %3.3lf seconds (%lg bytes/s)",
                  j, duration, duration == 0.0 ? 9.99e99 : j / duration);
 
     rc = SQLTransact(NULL, hdbc, SQL_COMMIT);
@@ -100,8 +93,9 @@ DECLARE_TEST(t_blob)
 
 
     memset(blobbuf, ~0, 100);
-    rc = SQLPrepare(hstmt, "SELECT I, B FROM TBLOB WHERE I = 1", SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLPrepare(hstmt,
+                              (SQLCHAR *)"SELECT I, B FROM TBLOB WHERE I = 1",
+                              SQL_NTS));
 
     start = clock();
 
@@ -123,8 +117,9 @@ DECLARE_TEST(t_blob)
     myassert(blob_read == blob_size);
     finish = clock();
     duration = (finish-start)/CLOCKS_PER_SEC;
-    printMessage("Read  %ld bytes in %3.3lf seconds (%lg bytes/s)\n",
-                 blob_read, duration, duration == 0.0 ? 9.99e99 : blob_read / duration);
+    printMessage("Read  %ld bytes in %3.3lf seconds (%lg bytes/s)",
+                 blob_read, duration, duration == 0.0 ? 9.99e99 :
+                 blob_read / duration);
 
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
@@ -143,17 +138,9 @@ DECLARE_TEST(t_1piecewrite2)
     SQLCHAR* blobbuf;
     size_t i;
 
-    rc = SQLExecDirect(hstmt,
-                       "DROP TABLE TBLOB",
-                       SQL_NTS);
-    rc = SQLTransact(NULL, hdbc, SQL_COMMIT);
-
-    rc = SQLExecDirect(hstmt,
-                       "CREATE TABLE TBLOB (I INTEGER NOT NULL PRIMARY KEY, B LONG VARCHAR NOT NULL)",
-                       SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLTransact(NULL, hdbc, SQL_COMMIT);
-    mycon(hdbc,rc);
+    ok_sql(hstmt, "DROP TABLE IF EXISTS TBLOB");
+    ok_sql(hstmt, "CREATE TABLE TBLOB (I INTEGER NOT NULL PRIMARY KEY,"
+          "B LONG VARCHAR NOT NULL)");
 
     cbValue = 3510L;
 
@@ -168,14 +155,14 @@ DECLARE_TEST(t_1piecewrite2)
     mystmt(hstmt,rc);
     rc = SQLBindParameter(hstmt,SQL_PARAM_INPUT, 2, SQL_C_CHAR, SQL_LONGVARCHAR, 0, 0, blobbuf,cbValue, NULL);
     mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt, "INSERT INTO TBLOB VALUES (1,?)", SQL_NTS);
+    ok_sql(hstmt, "INSERT INTO TBLOB VALUES (1,?)");
     mystmt(hstmt,rc);
     rc = SQLTransact(NULL, hdbc, SQL_COMMIT);
     mycon(hdbc,rc);
     memset(blobbuf, 1, (size_t)cbValue);
     rc = SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
     mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt, "SELECT B FROM TBLOB WHERE I = 1", SQL_NTS);
+    ok_sql(hstmt, "SELECT B FROM TBLOB WHERE I = 1");
     mystmt(hstmt,rc);
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
@@ -207,12 +194,12 @@ DECLARE_TEST(t_putdata)
   SQLCHAR    data[255];
   SQLPOINTER token;
 
-    SQLExecDirect(hstmt,"drop table t_putdata",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"create table t_putdata(c1 int, c2 long varchar)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_putdata");
+  ok_sql(hstmt, "CREATE TABLE t_putdata (c1 INT, c2 LONG VARCHAR)");
 
-    rc = SQLPrepare(hstmt,"insert into t_putdata values(?,?)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLPrepare(hstmt,
+                            (SQLCHAR *)"insert into t_putdata values(?,?)",
+                            SQL_NTS));
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_LONG,
                           SQL_INTEGER,0,0,&c1,0,NULL);
@@ -230,12 +217,12 @@ DECLARE_TEST(t_putdata)
     rc = SQLParamData(hstmt, &token);
     myassert(rc == SQL_NEED_DATA);
 
-    strcpy(data,"mysql ab");
+    strcpy((char *)data,"mysql ab");
     rc = SQLPutData(hstmt,data,6);
     mystmt(hstmt,rc);
 
-    strcpy(data,"- the open source database company");
-    rc = SQLPutData(hstmt,data,strlen(data));
+    strcpy((char *)data,"- the open source database company");
+    rc = SQLPutData(hstmt,data,strlen((char *)data));
     mystmt(hstmt,rc);
 
     rc = SQLParamData(hstmt, &token);
@@ -244,7 +231,7 @@ DECLARE_TEST(t_putdata)
     SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt, SQL_CLOSE);
 
-    rc = SQLExecDirect(hstmt,"select c2 from t_putdata where c1= 10",SQL_NTS);
+    ok_sql(hstmt, "select c2 from t_putdata where c1= 10");
     mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
@@ -253,8 +240,8 @@ DECLARE_TEST(t_putdata)
     pcbLength= 0;
     rc = SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &pcbLength);
     mystmt(hstmt,rc);
-    fprintf(stdout,"data: %s(%d)\n", data, pcbLength);
-    myassert(strcmp(data,"mysql - the open source database company")==0);
+    printMessage("data: %s(%ld)", data, pcbLength);
+    is_str(data, "mysql - the open source database company", 40);
     myassert(pcbLength == 40);
 
     SQLFreeStmt(hstmt, SQL_UNBIND);
@@ -275,15 +262,14 @@ DECLARE_TEST(t_putdata1)
   SQLCHAR    data[255];
   SQLPOINTER token;
 
-    SQLExecDirect(hstmt,"drop table t_putdata",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"create table t_putdata(c1 int, c2 long varchar)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_putdata");
+  ok_sql(hstmt, "CREATE TABLE t_putdata (c1 INT, c2 LONG VARCHAR)");
+  ok_sql(hstmt, "INSERT INTO t_putdata VALUES (10,'venu')");
 
-    rc = SQLExecDirect(hstmt,"insert into t_putdata values(10,'venu')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLPrepare(hstmt,"update t_putdata set c2= ? where c1 = ?",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt,
+          SQLPrepare(hstmt,
+                     (SQLCHAR *)"UPDATE t_putdata SET c2= ? WHERE c1 = ?",
+                     SQL_NTS));
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_CHAR,
                           SQL_LONGVARCHAR,0,0,
@@ -301,12 +287,12 @@ DECLARE_TEST(t_putdata1)
     rc = SQLParamData(hstmt, &token);
     myassert(rc == SQL_NEED_DATA);
 
-    strcpy(data,"mysql ab");
+    strcpy((char *)data,"mysql ab");
     rc = SQLPutData(hstmt,data,6);
     mystmt(hstmt,rc);
 
-    strcpy(data,"- the open source database company");
-    rc = SQLPutData(hstmt,data,strlen(data));
+    strcpy((char *)data,"- the open source database company");
+    rc = SQLPutData(hstmt,data,strlen((char *)data));
     mystmt(hstmt,rc);
 
     rc = SQLParamData(hstmt, &token);
@@ -315,7 +301,7 @@ DECLARE_TEST(t_putdata1)
     SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt, SQL_CLOSE);
 
-    rc = SQLExecDirect(hstmt,"select c2 from t_putdata where c1= 10",SQL_NTS);
+    ok_sql(hstmt, "select c2 from t_putdata where c1= 10");
     mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
@@ -324,8 +310,8 @@ DECLARE_TEST(t_putdata1)
     pcbLength= 0;
     rc = SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &pcbLength);
     mystmt(hstmt,rc);
-    fprintf(stdout,"data: %s(%d)\n", data, pcbLength);
-    myassert(strcmp(data,"mysql - the open source database company")==0);
+    printMessage("data: %s(%ld)", data, pcbLength);
+    is_str(data,"mysql - the open source database company", 40);
     myassert(pcbLength == 40);
 
     SQLFreeStmt(hstmt, SQL_UNBIND);
@@ -346,12 +332,13 @@ DECLARE_TEST(t_putdata2)
   SQLCHAR    data[255];
   SQLPOINTER token;
 
-    SQLExecDirect(hstmt,"drop table t_putdata",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"create table t_putdata(c1 int, c2 long varchar, c3 long varchar)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_putdata");
+  ok_sql(hstmt, "CREATE TABLE t_putdata (c1 INT, c2 LONG VARCHAR,"
+        "c3 LONG VARCHAR)");
 
-    rc = SQLPrepare(hstmt,"insert into t_putdata values(?,?,?)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLPrepare(hstmt,
+                            (SQLCHAR *)"insert into t_putdata values(?,?,?)",
+                            SQL_NTS));
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_LONG,
                           SQL_INTEGER,0,0,&c1,0,NULL);
@@ -373,18 +360,18 @@ DECLARE_TEST(t_putdata2)
     rc = SQLParamData(hstmt, &token);
     myassert(rc == SQL_NEED_DATA);
 
-    strcpy(data,"mysql ab");
+    strcpy((char *)data,"mysql ab");
     rc = SQLPutData(hstmt,data,6);
     mystmt(hstmt,rc);
 
-    strcpy(data,"- the open source database company");
-    rc = SQLPutData(hstmt,data,strlen(data));
+    strcpy((char *)data,"- the open source database company");
+    rc = SQLPutData(hstmt,data,strlen((char *)data));
     mystmt(hstmt,rc);
 
     rc = SQLParamData(hstmt, &token);
     myassert(rc == SQL_NEED_DATA);
 
-    strcpy(data,"MySQL AB");
+    strcpy((char *)data,"MySQL AB");
     rc = SQLPutData(hstmt,data, 8);
     mystmt(hstmt,rc);
 
@@ -394,7 +381,7 @@ DECLARE_TEST(t_putdata2)
     SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt, SQL_CLOSE);
 
-    rc = SQLExecDirect(hstmt,"select c2,c3 from t_putdata where c1= 10",SQL_NTS);
+    ok_sql(hstmt, "select c2,c3 from t_putdata where c1= 10");
     mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
@@ -403,15 +390,15 @@ DECLARE_TEST(t_putdata2)
     pcbLength= 0;
     rc = SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &pcbLength);
     mystmt(hstmt,rc);
-    fprintf(stdout,"data: %s(%d)\n", data, pcbLength);
-    myassert(strcmp(data,"mysql - the open source database company")==0);
+    printMessage("data: %s(%ld)", data, pcbLength);
+    is_str(data, "mysql - the open source database company", 40);
     myassert(pcbLength == 40);
 
     pcbLength= 0;
     rc = SQLGetData(hstmt, 2, SQL_C_CHAR, data, sizeof(data), &pcbLength);
     mystmt(hstmt,rc);
-    fprintf(stdout,"data: %s(%d)\n", data, pcbLength);
-    myassert(strcmp(data,"MySQL AB")==0);
+    printMessage("data: %s(%ld)", data, pcbLength);
+    is_str(data, "MySQL AB", 8);
     myassert(pcbLength == 8);
 
     SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
@@ -431,10 +418,10 @@ DECLARE_TEST(t_putdata3)
   SQLINTEGER  id, id1, id2, id3;
   SQLLEN      resId, resUTimeSec, resUTimeMSec, resDataLen, resData;
 
-  char buffer[]= "MySQL - The worlds's most popular open source database";
+  SQLCHAR buffer[]= "MySQL - The worlds's most popular open source database";
   const int MAX_PART_SIZE = 5;
 
-  char *pdata= 0, data[50];
+  SQLCHAR data[50];
   int commonLen= 20;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_putdata3");
@@ -542,12 +529,12 @@ DECLARE_TEST(t_blob_bug)
   SQLLEN     length;
   const SQLINTEGER max_blob_size=1024*100;
 
-    SQLExecDirect(hstmt,"drop table t_blob",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"create table t_blob(blb long varbinary)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_blob");
+  ok_sql(hstmt, "CREATE TABLE t_blob (blb LONG VARBINARY)");
 
-    rc = SQLPrepare(hstmt,"insert into t_blob values(?)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt,
+          SQLPrepare(hstmt,
+                     (SQLCHAR *)"INSERT INTO t_blob  VALUES (?)",SQL_NTS));
 
     if (!(data = (SQLCHAR *)calloc(max_blob_size,sizeof(SQLCHAR))))
     {
@@ -562,10 +549,8 @@ DECLARE_TEST(t_blob_bug)
 
     memset(data,'X',max_blob_size);
 
-    fprintf(stdout,"inserting %d rows\n\n", max_blob_size / 1024);
     for (length=1024; length <= max_blob_size; length+= 1024)
     {
-      fprintf(stdout,"\r %d", length/1024);
       rc = SQLExecute(hstmt);
       mystmt(hstmt,rc);
     }
@@ -573,8 +558,7 @@ DECLARE_TEST(t_blob_bug)
     SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    rc = SQLExecDirect(hstmt,"SELECT length(blb) FROM t_blob",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "SELECT length(blb) FROM t_blob");
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&val,0,NULL);
     mystmt(hstmt,rc);
@@ -584,7 +568,7 @@ DECLARE_TEST(t_blob_bug)
       rc = SQLFetch(hstmt);
       mystmt(hstmt,rc);
 
-      fprintf(stdout,"row %d length: %d\n", i, val);
+      printMessage("row %d length: %d", i, val);
       myassert(val == i * 1024);
     }
     rc = SQLFetch(hstmt);
@@ -609,15 +593,14 @@ DECLARE_TEST(t_text_fetch)
   SQLLEN     row_count, length;
   SQLCHAR    data[TEST_ODBC_TEXT_LEN+1];
 
-    SQLExecDirect(hstmt,"drop table t_text_fetch",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"create table t_text_fetch(t1 tinytext, \
-                                                      t2 text, \
-                                                      t3 mediumtext, \
-                                                      t4 longtext)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_text_fetch");
+  ok_sql(hstmt, "CREATE TABLE t_text_fetch(t1 tinytext,"
+         "t2 text, t3 mediumtext, t4 longtext)");
 
-    rc = SQLPrepare(hstmt,"insert into t_text_fetch values(?,?,?,?)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt,
+          SQLPrepare(hstmt,
+                     (SQLCHAR *)"insert into t_text_fetch values(?,?,?,?)",
+                     SQL_NTS));
 
     rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR,
                           0,0,(char *)data, TEST_ODBC_TEXT_LEN/3, NULL);
@@ -648,45 +631,43 @@ DECLARE_TEST(t_text_fetch)
     SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt, SQL_CLOSE);
 
-    rc = SQLExecDirect(hstmt,"SELECT * FROM t_text_fetch",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "SELECT * FROM t_text_fetch");
 
     row_count= 0;
     rc = SQLFetch(hstmt);
     while (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
     {
-       fprintf(stdout,"row '%d' (lengths: \n", row_count);
+       printf("# row '%ld' (lengths:", row_count);
        rc = SQLGetData(hstmt,1,SQL_C_CHAR,(char *)data,TEST_ODBC_TEXT_LEN,&length);
        mystmt(hstmt,rc);
-       fprintf(stdout,"%d", length);
+       printf("%ld", length);
        myassert(length == 255);
 
        rc = SQLGetData(hstmt,2,SQL_C_CHAR,(char *)data,TEST_ODBC_TEXT_LEN,&length);
        mystmt(hstmt,rc);
-       fprintf(stdout,",%d", length);
+       printf(",%ld", length);
        myassert(length == TEST_ODBC_TEXT_LEN/2);
 
        rc = SQLGetData(hstmt,3,SQL_C_CHAR,(char *)data,TEST_ODBC_TEXT_LEN,&length);
        mystmt(hstmt,rc);
-       fprintf(stdout,",%d", length);
+       printf(",%ld", length);
        myassert(length == (SQLINTEGER)(TEST_ODBC_TEXT_LEN/1.5));
 
        rc = SQLGetData(hstmt,4,SQL_C_CHAR,(char *)data,TEST_ODBC_TEXT_LEN,&length);
        mystmt(hstmt,rc);
-       fprintf(stdout,",%d)", length);
+       printf(",%ld)\n", length);
        myassert(length == TEST_ODBC_TEXT_LEN-1);
        row_count++;
 
        rc = SQLFetch(hstmt);
     }
-    fprintf(stdout,"total rows: %d\n", row_count);
+    printMessage("total rows: %ld", row_count);
     myassert(row_count == i);
 
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
 
-    rc = SQLExecDirect(hstmt,"DROP TABLE t_text_fetch",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "DROP TABLE t_text_fetch");
 
   return OK;
 }
@@ -761,7 +742,7 @@ DECLARE_TEST(t_bug10562)
   ok_sql(hstmt, "create table t_bug10562 ( id int not null primary key, mb longblob )");
   ok_sql(hstmt, "insert into t_bug10562 (mb) values ('zzzzzzzzzz')");
 
-  ok_stmt(hstmt, SQLExecDirect(hstmt, "select id, mb from t_bug10562", SQL_NTS));
+  ok_sql(hstmt, "select id, mb from t_bug10562");
   ok_stmt(hstmt, SQLFetch(hstmt));
   ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_BINARY, blob, bsize, &bsize));
   ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));

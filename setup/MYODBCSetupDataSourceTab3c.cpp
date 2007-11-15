@@ -31,6 +31,7 @@ MYODBCSetupDataSourceTab3c::MYODBCSetupDataSourceTab3c( QWidget *pwidgetParent )
     QString         stringDisableTransactions( tr("Disable transactions.") );
     QString         stringForceUseOfForwardOnlyCursors( tr("Force the use of Forward-only cursor type. In case of applications setting the default static/dynamic cursor type, and one wants driver to use non-cache result sets, then this option will ensure the forward-only cursor behavior.") );
     QString         stringMultiStatements( tr("Allow multiple statements in a single query.") );
+    QString         stringCapColumnSize( tr("Limit reported column size to signed 32-bit integer (possible workaround for some applications, automatically enabled for applications using ADO)") );
 
 #if QT_VERSION >= 0x040000
     QVBoxLayout *playoutFields = new QVBoxLayout;
@@ -113,6 +114,15 @@ MYODBCSetupDataSourceTab3c::MYODBCSetupDataSourceTab3c( QWidget *pwidgetParent )
     pcheckboxMultiStatements->setToolTip( stringMultiStatements );
 #else
     QToolTip::add( pcheckboxMultiStatements, stringMultiStatements );
+#endif
+
+    pcheckboxCapColumnSize = new MYODBCSetupCheckBox( tr("Limit column size to signed 32-bit range"), this );
+    pcheckboxCapColumnSize->setAssistText( stringCapColumnSize );
+    playoutFields->addWidget( pcheckboxCapColumnSize );
+#if QT_VERSION >= 0x040000
+    pcheckboxCapColumnSize->setToolTip( stringCapColumnSize );
+#else
+    QToolTip::add( pcheckboxCapColumnSize, stringCapColumnSize );
 #endif
 
     playoutFields->addStretch( 10 );

@@ -312,6 +312,13 @@ copy_ansi_result(STMT *stmt,
     if (!avail_bytes)
       avail_bytes= &bytes;
 
+    if (!result_bytes && !stmt->getdata.source)
+    {
+      *avail_bytes= src_bytes;
+      set_stmt_error(stmt, "01004", NULL, 0);
+      return SQL_SUCCESS_WITH_INFO;
+    }
+
     if (result_bytes)
       result_bytes--;
 
@@ -477,20 +484,25 @@ convert_to_out:
   if (result)
     *result= 0;
 
-  if (stmt->getdata.dst_bytes == (ulong)~0L)
+  if (result_bytes && stmt->getdata.dst_bytes == (ulong)~0L)
   {
     stmt->getdata.dst_bytes= used_bytes;
     stmt->getdata.dst_offset= 0;
   }
 
   if (avail_bytes)
-    *avail_bytes= stmt->getdata.dst_bytes - stmt->getdata.dst_offset;
+  {
+    if (stmt->getdata.dst_bytes != (ulong)~0L)
+      *avail_bytes= stmt->getdata.dst_bytes - stmt->getdata.dst_offset;
+    else
+      *avail_bytes= used_bytes;
+  }
 
   stmt->getdata.dst_offset+= min((ulong)(result_bytes ? result_bytes - 1 : 0),
                                  used_bytes);
 
   /* Did we truncate the data? */
-  if (stmt->getdata.dst_bytes > stmt->getdata.dst_offset)
+  if (!result_bytes || stmt->getdata.dst_bytes > stmt->getdata.dst_offset)
   {
     set_stmt_error(stmt, "01004", NULL, 0);
     rc= SQL_SUCCESS_WITH_INFO;
@@ -689,20 +701,25 @@ convert_to_out:
   if (result)
     *result= 0;
 
-  if (stmt->getdata.dst_bytes == (ulong)~0L)
+  if (result_len && stmt->getdata.dst_bytes == (ulong)~0L)
   {
     stmt->getdata.dst_bytes= used_chars * sizeof(SQLWCHAR);
     stmt->getdata.dst_offset= 0;
   }
 
   if (avail_bytes)
-    *avail_bytes= stmt->getdata.dst_bytes - stmt->getdata.dst_offset;
+  {
+    if (result_len)
+      *avail_bytes= stmt->getdata.dst_bytes - stmt->getdata.dst_offset;
+    else
+      *avail_bytes= used_chars * sizeof(SQLWCHAR);
+  }
 
   stmt->getdata.dst_offset+= min((ulong)(result_len ? result_len - 1 : 0),
                                  used_chars) * sizeof(SQLWCHAR);
 
   /* Did we truncate the data? */
-  if (stmt->getdata.dst_bytes > stmt->getdata.dst_offset)
+  if (!result_len || stmt->getdata.dst_bytes > stmt->getdata.dst_offset)
   {
     set_stmt_error(stmt, "01004", NULL, 0);
     rc= SQL_SUCCESS_WITH_INFO;
@@ -924,19 +941,10 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
   */
   case MYSQL_TYPE_VARCHAR:
   case MYSQL_TYPE_VAR_STRING:
-#ifdef SERVER_BUG_10491_FIXED
-    /**
-      @todo Re-enable this when Bug #10491 is fixed in the server.
-    */
     if (buff)
       (void)strmov(buff, field_is_binary ? "varbinary" : "varchar");
 
     return field_is_binary ? SQL_VARBINARY : SQL_VARCHAR;
-#else
-    if (buff)
-      (void)strmov(buff, "varchar");
-    return SQL_VARCHAR;
-#endif
 
   case MYSQL_TYPE_TINY_BLOB:
     if (buff)
