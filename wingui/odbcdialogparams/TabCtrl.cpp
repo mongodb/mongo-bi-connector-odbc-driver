@@ -58,7 +58,7 @@ void TabControl_GetClientRect(HWND hwnd,RECT* prc)
 	// prc.left = left, prc.top = top, prc.right = width, and prc.bottom = height 
 
 	RECT rtab_0;
-	LONG lStyle = GetWindowLong(hwnd,GWL_STYLE); 
+	LONG lStyle= GetWindowLongPtr(hwnd,GWL_STYLE);
 
 	// Calculate the tab control's display area
 	GetWindowRect(hwnd, prc);
@@ -158,8 +158,8 @@ BOOL OnKeyDown(LPARAM lParam)
 
 	if(itemCount <= 1) return FALSE; // Ignore if only one TabPage
 
-	verticalTabs = GetWindowLong(This->hTab, GWL_STYLE) & TCS_VERTICAL;
-	
+	verticalTabs= GetWindowLongPtr(This->hTab, GWL_STYLE) & TCS_VERTICAL;
+
 	if(verticalTabs)
 	{
 		switch (tk->wVKey)
@@ -298,7 +298,8 @@ void TabPage_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
 	// Handle the Dialog virtual keys
 	// Forward the rest of the commands to ParentProc
-	BOOL verticalTabs = GetWindowLong(This->hTab, GWL_STYLE) & TCS_VERTICAL;
+	BOOL verticalTabs= (GetWindowLongPtr(This->hTab, GWL_STYLE) &
+                            TCS_VERTICAL);
 	if(verticalTabs)
 	{
 		switch (id)
@@ -461,25 +462,28 @@ static void ResetTabPageMessageLoop (HWND hwnd)
 	TabPageMessageLoop(hwnd);
 }
 
+
 BOOL OnSelChanged(void)
 {
+  /*
+   A tab has been pressed (TCN_SELCHANGE) Using GWL_USERDATA of the tab
+   control to keep the current visible child of the tab control
+  */
+  HWND hVisible= (HWND)GetWindowLongPtr(This->hTab, GWLP_USERDATA);
+  int iSel= TabCtrl_GetCurSel(This->hTab);
 
-	// A tab has been pressed (TCN_SELCHANGE)
-	// Using GWL_USERDATA of the tab control to keep the current visible child of the tab control
-	HWND hVisible = (HWND)GetWindowLong(This->hTab, GWLP_USERDATA);
-	int iSel = TabCtrl_GetCurSel(This->hTab);
+  // Hide the current child dialog box, if any.
+  ShowWindow(hVisible, FALSE);
 
-	//Hide the current child dialog box, if any.
-	ShowWindow(hVisible,FALSE);
+  // Show the new child dialog box.
+  ShowWindow(This->hTabPages[iSel], TRUE);
 
-	//Show the new child dialog box.
-	ShowWindow(This->hTabPages[iSel],TRUE);
+  // Save the current child
+  SetWindowLongPtr(This->hTab, GWLP_USERDATA, (LONG_PTR)This->hTabPages[iSel]);
 
-	// Save the current child
-	SetWindowLong(This->hTab, GWLP_USERDATA, (long)This->hTabPages[iSel]);
-
-	return TRUE;
+  return TRUE;
 }
+
 
 void TabControl_Select(LPTABCTRL tc)
 {
@@ -560,5 +564,6 @@ void New_TabControl(LPTABCTRL tc,
 	ShowWindow(This->hTabPages[0],SW_SHOW);
 
 	// Save the current child
-	SetWindowLong(This->hTab, GWLP_USERDATA, (long)This->hTabPages[0]);
+	SetWindowLongPtr(This->hTab, GWLP_USERDATA,
+                         (LONG_PTR)This->hTabPages[0]);
 }
