@@ -20,16 +20,7 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-
-/** couple of temporary hacks to make it compile here*/
-#ifdef _WIN32
-#include <winsock2.h>
-#endif
-/** end hacks */
-
-#include <sql.h>
-
-#include "utils.h"
+#include "setupgui.h"
 
 #include "driver.h"
 #include "stringutil.h"
@@ -63,6 +54,8 @@ void DecompileOptions(DataSource *params)
   params->save_queries=                         (nOptions & FLAG_LOG_QUERY) > 0;
   params->dont_cache_result=                    (nOptions & FLAG_NO_CACHE) > 0;
   params->force_use_of_forward_only_cursors=    (nOptions & FLAG_FORWARD_CURSOR) > 0;
+  params->allow_multiple_statements=            (nOptions & FLAG_MULTI_STATEMENTS) > 0;
+  params->limit_column_size=                    (nOptions & FLAG_COLUMN_SIZE_S32) > 0;
   params->enable_auto_reconnect=                (nOptions & FLAG_AUTO_RECONNECT) > 0;
   params->enable_auto_increment_null_search=    (nOptions & FLAG_AUTO_IS_NULL) > 0;
 }
@@ -260,6 +253,10 @@ unsigned long CompileOptions(DataSource * params)
     nFlags|= FLAG_NO_CACHE;
   if (params->force_use_of_forward_only_cursors)
     nFlags|= FLAG_FORWARD_CURSOR;
+  if (params->allow_multiple_statements)
+    nFlags|= FLAG_MULTI_STATEMENTS;
+  if (params->limit_column_size)
+    nFlags|= FLAG_COLUMN_SIZE_S32;
   if (params->enable_auto_reconnect)
     nFlags|= FLAG_AUTO_RECONNECT;
   if (params->enable_auto_increment_null_search)

@@ -221,7 +221,6 @@ void syncForm(HWND hwnd, DataSource &params)
 }
 void syncTabsData(HWND hwnd, DataSource &params)
 {
-    GET_BOOL(1,dont_optimize_column_width);
     GET_BOOL(1,return_matching_rows);
     GET_BOOL(1,allow_big_results);
     GET_BOOL(1,use_compressed_protocol);
@@ -245,6 +244,8 @@ void syncTabsData(HWND hwnd, DataSource &params)
     GET_BOOL(3,read_options_from_mycnf);
     GET_BOOL(3,disable_transactions);
     GET_BOOL(3,force_use_of_forward_only_cursors);
+    GET_BOOL(3,allow_multiple_statements);
+    GET_BOOL(3,limit_column_size);
     /* debug*/
     GET_BOOL(4,save_queries);
 
@@ -258,7 +259,6 @@ void syncTabsData(HWND hwnd, DataSource &params)
 
 void syncTabs(HWND hwnd, DataSource &params)
 {
-    SET_BOOL(1,dont_optimize_column_width);
     SET_BOOL(1,return_matching_rows);
     SET_BOOL(1,allow_big_results);
     SET_BOOL(1,use_compressed_protocol);
@@ -282,6 +282,8 @@ void syncTabs(HWND hwnd, DataSource &params)
     SET_BOOL(3,read_options_from_mycnf);
     SET_BOOL(3,disable_transactions);
     SET_BOOL(3,force_use_of_forward_only_cursors);
+    SET_BOOL(3,allow_multiple_statements);
+    SET_BOOL(3,limit_column_size);
     /* debug*/
     SET_BOOL(DEBUG_TAB,save_queries);
 

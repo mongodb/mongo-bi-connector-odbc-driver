@@ -90,7 +90,10 @@
 #define IDC_CHECK_disable_transactions  10027
 #define IDC_CHECK_force_use_of_forward_only_cursors 10028
 #define IDC_CHECK_trace_drivers_calls   10029
+#define IDC_CHECK_allow_multiple_statements 10029
 #define IDC_CHECK_save_queries          10030
+#define IDC_CHECK_force_use_of_forward_only_cursors3 10030
+#define IDC_CHECK_limit_column_size     10030
 #define IDC_EDIT_sslca                  10031
 #define IDC_EDIT_sslcapath              10032
 #define IDC_EDIT_sslcert                10033

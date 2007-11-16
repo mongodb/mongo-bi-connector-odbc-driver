@@ -126,6 +126,8 @@ typedef struct {
   BOOL read_options_from_mycnf;
   BOOL disable_transactions;
   BOOL force_use_of_forward_only_cursors;
+  BOOL allow_multiple_statements;
+  BOOL limit_column_size;
   /* debug */
   BOOL save_queries;
 

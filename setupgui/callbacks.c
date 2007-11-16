@@ -22,7 +22,7 @@
 
 
 /* TODO no L"" */
-#include "callbacks.h"
+#include "setupgui.h"
 #include "stringutil.h"
 
 SQLWCHAR **errorMsgs= NULL;
