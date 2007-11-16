@@ -292,6 +292,7 @@ char *insert_param(DBC *dbc, char *to, DESCREC *aprec, DESCREC *iprec)
       insert NULL or DEFAULT.
     */
     else if (*(aprec->octet_length_ptr) == SQL_COLUMN_IGNORE ||
+             /* empty values mean it's an unbound column */
              (*(aprec->octet_length_ptr) == 0 &&
               aprec->concise_type == 0 &&
               aprec->par.value == NULL))

@@ -1979,6 +1979,10 @@ DECLARE_TEST(t_bug31246)
           sizeof(field3), NULL));
   ok_stmt(hstmt, SQLFetch(hstmt));
 
+  is_str(field1, buf, strlen(buf) + 1);
+  is_num(field2, 10);
+  is_str(field3, "Default Text", 13);
+
   /* Clean-up */
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
   ok_sql(hstmt, "DROP TABLE t_bug31246");

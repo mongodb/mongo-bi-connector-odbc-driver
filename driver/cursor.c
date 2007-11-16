@@ -433,12 +433,7 @@ static SQLRETURN copy_rowdata(STMT FAR *stmt, DESCREC *aprec,
     while ( (*to > orig_to) && (*((*to) - 1) == (SQLCHAR) 0) ) (*to)--;
 
     /* insert "," */
-    iprec->concise_type= SQL_INTEGER;
-    aprec->concise_type= SQL_C_CHAR;
-    aprec->data_ptr= ",";
-    *aprec->octet_length_ptr= 1;
-
-    if ( !(*to= (SQLCHAR*) insert_param(stmt->dbc,(char*) *to, aprec, iprec)) )
+    if (!(*to= add_to_buffer(&stmt->dbc->mysql.net,*to,",",1)))
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
     return(SQL_SUCCESS);
