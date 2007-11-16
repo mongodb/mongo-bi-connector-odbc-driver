@@ -31,10 +31,6 @@
 #include "installer.h"
 #include "stringutil.h"
 
-#ifdef WIN32
-# include "windows/odbcdialogparams.h"
-#endif
-
 /*
    Entry point for GUI prompting from SQLDriverConnect().
 */

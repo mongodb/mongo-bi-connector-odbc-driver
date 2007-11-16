@@ -23,8 +23,6 @@
 #ifndef __ODBCPARAMS_H__
 #define __ODBCPARAMS_H__
 
-#include "installer.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -39,13 +37,6 @@ typedef BOOL AcceptParamsCallbackType(HWND dialog, DataSource* params);
 // called when DataBase combobox Drops Down
 //typedef const WCHAR** DatabaseNamesCallbackType(HWND dialog, DataSource* params);
 
-
-// exported procedure (the one) - not any more. statically linked.
-// returns TRUE if user pressed OK, FALSE - otherwise
-int ShowOdbcParamsDialog(
-	DataSource* params,                  /*[inout] params */
-	HWND ParentWnd,                     /* [in] could be NULL */
-	BOOL isPrompt);
 
 #ifdef __cplusplus
 }

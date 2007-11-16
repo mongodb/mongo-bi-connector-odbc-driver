@@ -43,13 +43,11 @@
 
 #include <winsock2.h>
 
+#include "../setupgui.h"
+
 #include "odbcdialogparams.h"
 
-#include "MYODBC_MYSQL.h"
-#include "installer.h"
 #include "stringutil.h"
-#include "../callbacks.h"
-#include "../utils.h"
 
 extern HINSTANCE ghInstance;
 
@@ -119,7 +117,7 @@ static BOOL FormMain_OnNotify (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	}
-	
+
 
 	return FALSE;
 }

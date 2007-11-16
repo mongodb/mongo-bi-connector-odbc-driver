@@ -22,7 +22,7 @@
 
 ADD_DEFINITIONS(-DUNICODE -D_UNICODE)
 
-SET(SETUP_SRCS ConfigDSN.c callbacks.c callbacks.h utils.c utils.h)
+SET(SETUP_SRCS ConfigDSN.c callbacks.c setupgui.h utils.c)
 
 IF (WIN32)
   SET(SETUP_SRCS ${SETUP_SRCS}
