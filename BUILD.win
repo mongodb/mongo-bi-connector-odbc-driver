@@ -1,6 +1,6 @@
 +-------------------------------------------------------------+
 | MySQL Connector/ODBC                                        |
-| Build on MS Windows                                         |
+| Build on Microsoft Windows                                  |
 +-------------------------------------------------------------+
 
 WHAT YOU NEED
@@ -8,29 +8,29 @@ WHAT YOU NEED
 
 Windows
 
-        ODBC has been a standard part of Windows since 3.1 but we do
-        not build for very old versions of Windows. Consider building 
-        on and for Windows XP or newer. Windows 2000 should be fine also.
+  ODBC has been a standard part of Windows since 3.1 but we do
+  not build for very old versions of Windows. Consider building 
+  on and for Windows XP or newer. Windows 2000 should be fine also.
 
 Compiler Tools
 
-        We regularly build using either Microsoft Visual Studio 7 or 8.
-        Other compilers may work, but are untested.
+  We regularly build using Microsoft Visual Studio 7 and 8.
+  Other compilers may work, but are untested.
 
-	You also need CMake 2.4,
+  You also need CMake 2.4,
 
-		http://www.cmake.org
+    http://www.cmake.org
 
 Source Code
 
-        The source code is the main thing. You can get it from the 
-        source repository if you want the 'bleeding edge' code but most
-        people will simply download the zip of the source.
+  The source code is the main thing. You can get it from the 
+  source repository if you want the 'bleeding edge' code but most
+  people will simply download the zip of the source.
         
 MySQL
 
-        We usually build with the latest stable release of MySQL - 
-        using a static client lib and other development files.   
+  We usually build with the latest stable release of MySQL - 
+  using a static client lib and other development files.   
 
 
 BUILD
@@ -46,25 +46,25 @@ installed, using the short-style filenames:
 
   set MYSQL_DIR=C:\PROGRA~1\MySQL\MYSQLS~1.0
 
-Build Connector/ODBC using the CMake "cmake" command-line tool by
-doing the following from the source root directory (in a command
-prompt window);
+Build Connector/ODBC using the "cmake" command-line tool by doing the
+following from the source root directory (in a command prompt window);
 
-  cmake -G "Visual Studio 7 .NET 2003"
+  cmake -G "Visual Studio 8 2005"
 
-or for a debug enabled "myodbc3d.dll"
-
-  cmake -G "Visual Studio 7 .NET 2003" -DCMAKE_BUILD_TYPE=Debug
-
-This produces Visual Studio project, you can use the Visual Studio
-IDE or from the command line one of
+This produces a project file that you can open with Visual Studio or
+build from the command line with either of:
 
   devenv.com MySQL_Connector_ODBC.sln /build Release
   devenv.com MySQL_Connector_ODBC.sln /build RelWithDbgInfo
+
+To compile the "Debug" build, you must run set the cmake build type so
+the correct version of the MySQL client libraries are used:
+
+  cmake -G "Visual Studio 8 2005" -DCMAKE_BUILD_TYPE=Debug
   devenv.com MySQL_Connector_ODBC.sln /build Debug
 
-Upon completion; you will find the executables in the target sub
-directories under the "bin" and "lib" directories.
+Upon completion; you will find the executables in the subdirectories of the
+"bin" and "lib" directories.
 
 INSTALL
 ---------------------------------------------------------------
@@ -75,7 +75,7 @@ script.
 To install, execute the Install.bat script to copy the files to your system
 directory and to register the driver.
 
-NOTE: The Uninstall script does not actually honour the usage count - it
+NOTE: The uninstall script does not actually honour the usage count - it
 will remove the files regardless of the value of the usage counter.
 
 See the INSTALL file for more details.
