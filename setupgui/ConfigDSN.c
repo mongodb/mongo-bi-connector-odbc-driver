@@ -20,15 +20,7 @@
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifdef _WIN32
-#include <winsock2.h>
-#include <windows.h>
-#endif
-
-#include <sql.h>
-#include <sqlext.h>
-
-#include "installer.h"
+#include "setupgui.h"
 #include "stringutil.h"
 
 /*
