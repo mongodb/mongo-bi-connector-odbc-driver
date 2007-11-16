@@ -3,12 +3,6 @@
 | Build on MS Windows                                         |
 +-------------------------------------------------------------+
 
-INTRODUCTION
----------------------------------------------------------------
-
-In this document we explain how to build MySQL Connector/ODBC on
-Windows platforms. We will be as brief as possible.
-
 WHAT YOU NEED
 ---------------------------------------------------------------
 
@@ -20,8 +14,8 @@ Windows
 
 Compiler Tools
 
-        We regularly build using either MS Visual C/C++ v6 or MS
-        Visual C/C++ v7 (.NET). Other compilers may work as well.
+        We regularly build using either Microsoft Visual Studio 7 or 8.
+        Other compilers may work, but are untested.
 
 	You also need CMake 2.4,
 
@@ -33,25 +27,6 @@ Source Code
         source repository if you want the 'bleeding edge' code but most
         people will simply download the zip of the source.
         
-        NOTE: The source was kept in a public bk repository but is now
-              in a svn repository.
-
-Qt Class Library
-
-        The old GUI was based upon CTL3D and was Windows specific. The 
-        old GUI has been phased out - in its place you will find 
-        a Qt based GUI which works on all platforms.
-        
-        You must use a recent (latest) version of Qt v3 - not Qt v4. For
-        example; Qt v3.3.5. We have done some work to make this work with 
-        Qt v4 but it is incomplete.
-        
-        It is possible to build the driver only - no GUI bits - but this
-        build process is currently geared to building everything.
-        
-        see;
-        	http://www.trolltech.com
-
 MySQL
 
         We usually build with the latest stable release of MySQL - 
@@ -70,18 +45,6 @@ You need to set MYSQL_DIR to point to where the MySQL server is
 installed, using the short-style filenames:
 
   set MYSQL_DIR=C:\PROGRA~1\MySQL\MYSQLS~1.0
-
-And you will also need to set QTDIR:
-
-  set QTDIR=C:\path\to\qt
-
-and QMAKESPEC (pick the one that fits your build environment):
-
-  set QMAKESPEC=win32-msvc2005
-
-and you will need to have the binaries for Qt in your path, such as:
-
-  set PATH=%PATH%;%QTDIR%\bin
 
 Build Connector/ODBC using the CMake "cmake" command-line tool by
 doing the following from the source root directory (in a command
@@ -106,16 +69,13 @@ directories under the "bin" and "lib" directories.
 INSTALL
 ---------------------------------------------------------------
 
-Execute the Install.bat script to copy the files to your system
+Before installing over an existing installation, run the Uninstall.bat
+script.
+
+To install, execute the Install.bat script to copy the files to your system
 directory and to register the driver.
 
-Those wishing to install over an existing installation
-should consider executing the Uninstall.bat script first. This
-will avoid incrementing the internal usage counter beyond what
-is needed.
-
-NOTE: The Uninstall script does not, currently, honour the 
-      usage count - it will remove the files regardless of the
-      value of the usage counter.
+NOTE: The Uninstall script does not actually honour the usage count - it
+will remove the files regardless of the value of the usage counter.
 
 See the INSTALL file for more details.
