@@ -24,12 +24,16 @@
 #include <winsock2.h>
 #include <windows.h>
 #endif
+
 #include <sql.h>
 #include <sqlext.h>
+
 #include "installer.h"
 #include "stringutil.h"
-#include "odbcdialogparams/odbcdialogparams.h"
 
+#ifdef WIN32
+# include "windows/odbcdialogparams.h"
+#endif
 
 /*
    Entry point for GUI prompting from SQLDriverConnect().

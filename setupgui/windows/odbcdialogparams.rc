@@ -177,7 +177,7 @@ END
 // Bitmap
 //
 
-IDB_LOGO                BITMAP                  "../odbcdialogparams/connector_odbc_header.bmp"
+IDB_LOGO                BITMAP                  "connector_odbc_header.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //

@@ -26,6 +26,7 @@ SET(SETUP_SRCS ConfigDSN.c callbacks.c callbacks.h utils.c utils.h)
 
 IF (WIN32)
   SET(SETUP_SRCS ${SETUP_SRCS}
+                 myodbc5S.def
                  windows/main.cpp
                  windows/odbcdialogparams.cpp
                  windows/odbcdialogparams.h
