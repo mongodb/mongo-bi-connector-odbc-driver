@@ -1112,6 +1112,77 @@ SQLRETURN SQL_API SQLRowCount( SQLHSTMT hstmt,
 }
 
 
+/**
+  Populate a single row of fetch buffers
+
+  @param[in]  stmt        Handle of statement
+  @param[in]  values      Row buffers from libmysql
+  @param[in]  rownum      Row number of current fetch block
+*/
+static SQLRETURN
+fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
+{
+  SQLRETURN res= SQL_SUCCESS, tmp_res;
+  ulong *lengths= stmt->result_lengths;
+  BIND *bind,*end;
+
+  if (!stmt->bind)
+    return SQL_SUCCESS;
+
+  for (bind= stmt->bind,end= bind + stmt->result->field_count;
+       bind < end; bind++,values++)
+  {
+    if (bind->rgbValue || bind->pcbValue)
+    {
+      SQLLEN offset,pcb_offset;
+      SQLLEN pcbValue;
+
+      if (stmt->ard->bind_type == SQL_BIND_BY_COLUMN)
+      {
+        offset= bind->cbValueMax*rownum;
+        pcb_offset= sizeof(SQLLEN)*rownum;
+      }
+      else
+        pcb_offset= offset= stmt->ard->bind_type*rownum;
+
+      /* apply SQL_ATTR_ROW_BIND_OFFSET_PTR */
+      if (stmt->ard->bind_offset_ptr)
+      {
+        offset     += *stmt->ard->bind_offset_ptr;
+        pcb_offset += *stmt->ard->bind_offset_ptr;
+      }
+
+      reset_getdata_position(stmt);
+
+      if ((tmp_res= sql_get_data(stmt,
+                    bind->fCType,
+                    bind->field,
+                    (bind->rgbValue ? (char*) bind->rgbValue + offset : 0),
+                    bind->cbValueMax,
+                    &pcbValue,
+                    *values,
+                    (lengths ? *lengths : *values ? strlen(*values) : 0) ) )
+         != SQL_SUCCESS)
+      {
+        if (tmp_res == SQL_SUCCESS_WITH_INFO)
+        {
+          if (res == SQL_SUCCESS)
+            res= tmp_res;
+        }
+        else
+          res= SQL_ERROR;
+      }
+      if (bind->pcbValue)
+        *(bind->pcbValue + (pcb_offset / sizeof(SQLLEN))) = pcbValue;
+    }
+    if (lengths)
+      lengths++;
+  }
+
+  return res;
+}
+
+
 /*
   @type    : myodbc3 internal
   @purpose : fetches the specified rowset of data from the result set and
@@ -1128,7 +1199,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     ulong rows_to_fetch;
     long cur_row, max_row;
     uint i;
-    SQLRETURN res,tmp_res;
+    SQLRETURN res;
     STMT FAR *stmt= (STMT FAR*) hstmt;
     MYSQL_ROW values= 0;
     MYSQL_ROW_OFFSET save_position;
@@ -1285,61 +1356,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
         if (upd_status && stmt->ird->array_status_ptr)
           stmt->ird->array_status_ptr[i]= SQL_ROW_SUCCESS;
 
-        if (stmt->bind)             /* Should always be true */
-        {
-            ulong *lengths= stmt->result_lengths;
-            BIND *bind,*end;
-            for ( bind= stmt->bind,end= bind + stmt->result->field_count ;
-                bind < end ;
-                bind++,values++ )
-            {
-                if ( bind->rgbValue || bind->pcbValue )
-                {
-                    SQLLEN offset,pcb_offset;
-                    SQLLEN pcbValue;
-
-                    if ( stmt->ard->bind_type == SQL_BIND_BY_COLUMN )
-                    {
-                        offset= bind->cbValueMax*i;
-                        pcb_offset= sizeof(SQLLEN)*i;
-                    }
-                    else
-                        pcb_offset= offset= stmt->ard->bind_type*i;
-
-                    /* apply SQL_ATTR_ROW_BIND_OFFSET_PTR */
-                    if (stmt->ard->bind_offset_ptr)
-                    {
-                      offset     += *stmt->ard->bind_offset_ptr;
-                      pcb_offset += *stmt->ard->bind_offset_ptr;
-                    }
-
-                    reset_getdata_position(stmt);
-
-                    if ( (tmp_res= sql_get_data( stmt,
-                                                 bind->fCType,
-                                                 bind->field,
-                                                 (bind->rgbValue ? (char*) bind->rgbValue + offset : 0),
-                                                 bind->cbValueMax,
-                                                 &pcbValue,
-                                                 *values,
-                                                 (lengths ? *lengths : *values ? strlen(*values) : 0) ) )
-                         != SQL_SUCCESS )
-                    {
-                        if ( tmp_res == SQL_SUCCESS_WITH_INFO )
-                        {
-                            if ( res == SQL_SUCCESS )
-                                res= tmp_res;
-                        }
-                        else
-                            res= SQL_ERROR;
-                    }
-                    if (bind->pcbValue)
-                      *(bind->pcbValue + (pcb_offset / sizeof(SQLLEN))) = pcbValue;
-                }
-                if ( lengths )
-                    lengths++;
-            }
-        }
+        res= fill_fetch_buffers(stmt, values, i);
         cur_row++;
     }
     stmt->rows_found_in_set= i;

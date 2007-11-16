@@ -625,7 +625,7 @@ int ds_lookup(DataSource *ds)
     }
     else if (!size)
       /* skip blanks */;
-    else if (dest)
+    else if (dest && !*dest)
       ds_set_strattr(dest, val);
     else if (intdest)
       *intdest= sqlwchartoul(val);
