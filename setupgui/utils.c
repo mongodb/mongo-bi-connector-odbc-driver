@@ -1,13 +1,25 @@
-/****************************************************************************
- *                                                                          *
- * File    :                                                                *
- *                                                                          *
- * Purpose : utilities for callbacks.                                       *
- *                                                                          *
- * History : Date      Reason                                               *
- *           00/00/00  Created                                              *
- *                                                                          *
- ****************************************************************************/
+/*
+  Copyright (C) 2007 MySQL AB
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of version 2 of the GNU General Public License as
+  published by the Free Software Foundation.
+
+  There are special exceptions to the terms and conditions of the GPL
+  as it is applied to this software. View the full text of the exception
+  in file LICENSE.exceptions in the top-level directory of this software
+  distribution.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
 
 /** couple of temporary hacks to make it compile here*/
 #ifdef _WIN32
@@ -41,16 +53,16 @@ void DecompileOptions(DataSource *params)
   params->pad_char_to_full_length=              (nOptions & FLAG_PAD_SPACE) > 0;
   params->return_table_names_for_SqlDesribeCol= (nOptions & FLAG_FULL_COLUMN_NAMES) > 0;
   params->use_compressed_protocol=              (nOptions & FLAG_COMPRESSED_PROTO) > 0;
-  params->ignore_space_after_function_names=    (nOptions & FLAG_IGNORE_SPACE) > 0; 
-  params->force_use_of_named_pipes=             (nOptions & FLAG_NAMED_PIPE) > 0;          
+  params->ignore_space_after_function_names=    (nOptions & FLAG_IGNORE_SPACE) > 0;
+  params->force_use_of_named_pipes=             (nOptions & FLAG_NAMED_PIPE) > 0;
   params->change_bigint_columns_to_int=         (nOptions & FLAG_NO_BIGINT) > 0;
   params->no_catalog=                           (nOptions & FLAG_NO_CATALOG) > 0;
-  params->read_options_from_mycnf=              (nOptions & FLAG_USE_MYCNF) > 0;          
+  params->read_options_from_mycnf=              (nOptions & FLAG_USE_MYCNF) > 0;
   params->safe=                                 (nOptions & FLAG_SAFE) > 0;
-  params->disable_transactions=                 (nOptions & FLAG_NO_TRANSACTIONS) > 0;           
+  params->disable_transactions=                 (nOptions & FLAG_NO_TRANSACTIONS) > 0;
   params->save_queries=                         (nOptions & FLAG_LOG_QUERY) > 0;
   params->dont_cache_result=                    (nOptions & FLAG_NO_CACHE) > 0;
-  params->force_use_of_forward_only_cursors=    (nOptions & FLAG_FORWARD_CURSOR) > 0;  
+  params->force_use_of_forward_only_cursors=    (nOptions & FLAG_FORWARD_CURSOR) > 0;
   params->enable_auto_reconnect=                (nOptions & FLAG_AUTO_RECONNECT) > 0;
   params->enable_auto_increment_null_search=    (nOptions & FLAG_AUTO_IS_NULL) > 0;
 }
@@ -206,30 +218,52 @@ unsigned long CompileOptions(DataSource * params)
 {
   unsigned long nFlags= 0;
 
-  if (params->dont_optimize_column_width)           nFlags |= FLAG_FIELD_LENGTH;
-  if (params->return_matching_rows)                 nFlags |= FLAG_FOUND_ROWS;  /* 2 */
-  if (params->allow_big_results)                    nFlags |= FLAG_BIG_PACKETS;
-  if (params->dont_prompt_upon_connect)             nFlags |= FLAG_NO_PROMPT;
-  if (params->enable_dynamic_cursor)                nFlags |= FLAG_DYNAMIC_CURSOR;
-  if (params->ignore_N_in_name_table)               nFlags |= FLAG_NO_SCHEMA;
-  if (params->user_manager_cursor)                  nFlags |= FLAG_NO_DEFAULT_CURSOR;
-  if (params->dont_use_set_locale)                  nFlags |= FLAG_NO_LOCALE;
-  if (params->pad_char_to_full_length)              nFlags |= FLAG_PAD_SPACE;
-  if (params->return_table_names_for_SqlDesribeCol) nFlags |= FLAG_FULL_COLUMN_NAMES;
-  if (params->use_compressed_protocol)              nFlags |= FLAG_COMPRESSED_PROTO;
-  if (params->ignore_space_after_function_names)    nFlags |= FLAG_IGNORE_SPACE; 
-  if (params->force_use_of_named_pipes)             nFlags |= FLAG_NAMED_PIPE;          
-  if (params->change_bigint_columns_to_int)         nFlags |= FLAG_NO_BIGINT;
-  if (params->no_catalog)                           nFlags |= FLAG_NO_CATALOG;
-  if (params->read_options_from_mycnf)              nFlags |= FLAG_USE_MYCNF;          
-  if (params->safe)                                 nFlags |= FLAG_SAFE;
-  if (params->disable_transactions)                 nFlags |= FLAG_NO_TRANSACTIONS;
-  if (params->save_queries)                         nFlags |= FLAG_LOG_QUERY;
-  if (params->dont_cache_result)                    nFlags |= FLAG_NO_CACHE;
-  if (params->force_use_of_forward_only_cursors)    nFlags |= FLAG_FORWARD_CURSOR;  
-  if (params->enable_auto_reconnect)                nFlags |= FLAG_AUTO_RECONNECT;
-  if (params->enable_auto_increment_null_search)    nFlags |= FLAG_AUTO_IS_NULL;
+  if (params->dont_optimize_column_width)
+    nFlags|= FLAG_FIELD_LENGTH;
+  if (params->return_matching_rows)
+    nFlags|= FLAG_FOUND_ROWS;
+  if (params->allow_big_results)
+    nFlags|= FLAG_BIG_PACKETS;
+  if (params->dont_prompt_upon_connect)
+    nFlags|= FLAG_NO_PROMPT;
+  if (params->enable_dynamic_cursor)
+    nFlags|= FLAG_DYNAMIC_CURSOR;
+  if (params->ignore_N_in_name_table)
+    nFlags|= FLAG_NO_SCHEMA;
+  if (params->user_manager_cursor)
+    nFlags|= FLAG_NO_DEFAULT_CURSOR;
+  if (params->dont_use_set_locale)
+    nFlags|= FLAG_NO_LOCALE;
+  if (params->pad_char_to_full_length)
+    nFlags|= FLAG_PAD_SPACE;
+  if (params->return_table_names_for_SqlDesribeCol)
+    nFlags|= FLAG_FULL_COLUMN_NAMES;
+  if (params->use_compressed_protocol)
+    nFlags|= FLAG_COMPRESSED_PROTO;
+  if (params->ignore_space_after_function_names)
+    nFlags|= FLAG_IGNORE_SPACE;
+  if (params->force_use_of_named_pipes)
+    nFlags|= FLAG_NAMED_PIPE;
+  if (params->change_bigint_columns_to_int)
+    nFlags|= FLAG_NO_BIGINT;
+  if (params->no_catalog)
+    nFlags|= FLAG_NO_CATALOG;
+  if (params->read_options_from_mycnf)
+    nFlags|= FLAG_USE_MYCNF;
+  if (params->safe)
+    nFlags|= FLAG_SAFE;
+  if (params->disable_transactions)
+    nFlags|= FLAG_NO_TRANSACTIONS;
+  if (params->save_queries)
+    nFlags|= FLAG_LOG_QUERY;
+  if (params->dont_cache_result)
+    nFlags|= FLAG_NO_CACHE;
+  if (params->force_use_of_forward_only_cursors)
+    nFlags|= FLAG_FORWARD_CURSOR;
+  if (params->enable_auto_reconnect)
+    nFlags|= FLAG_AUTO_RECONNECT;
+  if (params->enable_auto_increment_null_search)
+    nFlags|= FLAG_AUTO_IS_NULL;
 
   return nFlags;
 }
-

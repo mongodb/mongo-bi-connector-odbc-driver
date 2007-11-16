@@ -1,18 +1,37 @@
-/****************************************************************************
- *                                                                          *
- * File    : TabCtrl.cpp                                                    *
- *                                                                          *
- * Purpose : Tab Control Enhanced.					                        *
- *			 Make Creating and modifying Tab Control Property pages a snap  *
- *			 (c) 2006 David MacDermot										*
- *			 This module is distributed in the hope that it will be useful, *
- *			 but WITHOUT ANY WARRANTY; without even the implied warranty of *
- *			 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.			*
- *                                                                          *
- * History : Date      Reason                                               *
- *           06/22/06  Created                                              *
- *                                                                          *
- ****************************************************************************/
+/*
+  Copyright (C) 2007 MySQL AB
+
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of version 2 of the GNU General Public License as
+  published by the Free Software Foundation.
+
+  There are special exceptions to the terms and conditions of the GPL
+  as it is applied to this software. View the full text of the exception
+  in file LICENSE.exceptions in the top-level directory of this software
+  distribution.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+/**
+ @file TabCtrl.cpp
+ @brief Tab Control Enhanced.
+
+ Make Creating and modifying Tab Control Property pages a snap.
+
+ (c) 2006 David MacDermot
+
+ This module is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+*/
 #define WIN32_LEAN_AND_MEAN
 
 #include <windows.h>
@@ -55,7 +74,7 @@ void TabControl_GetClientRect(HWND hwnd,RECT* prc)
 	// desired rectangle under every possible tab position
 	//
 	// Note: This function does not populate a standard rectangle format but rather
-	// prc.left = left, prc.top = top, prc.right = width, and prc.bottom = height 
+	// prc.left = left, prc.top = top, prc.right = width, and prc.bottom = height
 
 	RECT rtab_0;
 	LONG lStyle= GetWindowLongPtr(hwnd,GWL_STYLE);
@@ -201,7 +220,7 @@ BOOL OnKeyDown(LPARAM lParam)
 				SetFocus(This->hTabPages[currentSel]);
 				TabPageMessageLoop (This->hTabPages[currentSel]);
 			}
-			return TRUE; 
+			return TRUE;
 			default: return FALSE;
 		}
 	} // if(verticalTabs)
@@ -247,7 +266,7 @@ BOOL OnKeyDown(LPARAM lParam)
 				SetFocus(This->hTabPages[currentSel]);
 				TabPageMessageLoop (This->hTabPages[currentSel]);
 			}
-			return TRUE; 
+			return TRUE;
 			default: return FALSE;
 		}
 	} //else // horizontal Tabs
@@ -401,7 +420,7 @@ BOOL CALLBACK TabPage_DlgProc (HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lPa
  * Purpose : Monitor and respond to user keyboard input and system messages *
  *			 Note: Send PostQuitMessage(0); from any cancel or exit event.	*
  *			 Failure to do so will leave the process running even after		*
- *			 application exit.												* 
+ *			 application exit.												*
  *                                                                          *
  * History : Date      Reason                                               *
  *           00/00/00  Created                                              *
@@ -418,7 +437,7 @@ static void TabPageMessageLoop (HWND hwnd)
 	HACCEL hAccTable = CreateAccTable();
 
 	while((status = GetMessage(&msg, NULL, 0, 0 )) != 0 && !stopTabPageMessageLoop)
-	{ 
+	{
 	    if (status == -1) // Exception
 	    {
 	        return;

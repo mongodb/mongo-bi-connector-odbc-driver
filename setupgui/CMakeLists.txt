@@ -22,29 +22,28 @@
 
 ADD_DEFINITIONS(-DUNICODE -D_UNICODE)
 
-ADD_LIBRARY(myodbc5S SHARED
-    dialog/callbacks.c
-    dialog/callbacks.h
-    dialog/utils.c
-    dialog/utils.h
-    odbcdialogparams/main.cpp
-    odbcdialogparams/odbcdialogparams.cpp
-    odbcdialogparams/odbcdialogparams.h
-    odbcdialogparams/odbcdialogparams.rc
-    odbcdialogparams/resource.h
-    odbcdialogparams/TabCtrl.cpp
-    odbcdialogparams/TabCtrl.h
-    odbcdialogparams/tooltip.cpp
-    odbcdialogparams/connector_odbc_header.bmp
-    ConfigDSN.c
-    myodbc5S.def
-    )
+SET(SETUP_SRCS ConfigDSN.c callbacks.c callbacks.h utils.c utils.h)
+
+IF (WIN32)
+  SET(SETUP_SRCS ${SETUP_SRCS}
+                 windows/main.cpp
+                 windows/odbcdialogparams.cpp
+                 windows/odbcdialogparams.h
+                 windows/odbcdialogparams.rc
+                 windows/resource.h
+                 windows/TabCtrl.cpp
+                 windows/TabCtrl.h
+                 windows/tooltip.cpp
+                 windows/connector_odbc_header.bmp)
+  SET(PLATFORM_LIBS comctl32)
+ENDIF (WIN32)
+
+ADD_LIBRARY(myodbc5S SHARED ${SETUP_SRCS})
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/util)
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/driver)
 
 TARGET_LINK_LIBRARIES(myodbc5S
-		myodbc3u ${ODBCLIB} ${ODBCINSTLIB} ${MYSQL_CLIENT_LIBS}
-        comctl32)
-
+                      myodbc3u ${ODBCLIB} ${ODBCINSTLIB} ${MYSQL_CLIENT_LIBS}
+                      ${PLATFORM_LIBS})

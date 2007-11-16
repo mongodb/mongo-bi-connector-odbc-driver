@@ -18,7 +18,6 @@ extern "C" {
 wchar_t *mytest(HWND hwnd, DataSource* params);
 BOOL mytestaccept(HWND hwnd, DataSource* params);
 LIST *mygetdatabases(HWND hwnd, DataSource* params);
-void myhelp(HWND hwnd);
 
 #ifdef __cplusplus
 }
