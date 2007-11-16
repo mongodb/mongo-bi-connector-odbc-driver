@@ -115,7 +115,7 @@ EXTRA_DIST = \
 	Upgrade.bat \
 	CMakeLists.txt \
 	cmake \
-	wingui \
+	setupgui \
 	doc
 
 
