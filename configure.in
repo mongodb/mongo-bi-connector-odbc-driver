@@ -1,4 +1,4 @@
-# Copyright (C) 1995-2006 MySQL AB
+# Copyright (C) 1995-2007 MySQL AB
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of version 2 of the GNU General Public License as
@@ -36,7 +36,6 @@ NUMERIC_VERSION=`echo "$VERSION" | sed 's/-.*//'`
 ###################################################################
 
 SHARED_LIB_VERSION=1:0:0
-# AM_CONFIG_HEADER(driver/myconf.h)
 AC_CONFIG_HEADERS(driver/myconf.h)
 AC_SUBST(NUMERIC_VERSION)
 
@@ -44,40 +43,7 @@ AC_SUBST(NUMERIC_VERSION)
 SYSTEM_TYPE="$host_vendor-$host_os"
 MACHINE_TYPE="$host_cpu"
 AC_SUBST(SYSTEM_TYPE)
-# AC_DEFINE_UNQUOTED(SYSTEM_TYPE, "$SYSTEM_TYPE", [Define SYSTEM_TYPE])
 AC_SUBST(MACHINE_TYPE)
-# AC_DEFINE_UNQUOTED(MACHINE_TYPE, "$MACHINE_TYPE", [Define MACHINE_TYPE])
-
-# ------------------------------------------------------------------------------
-# FIXME nothing in this section is used....
-# ------------------------------------------------------------------------------
-
-# Save some variables and the command line options for mysqlbug
-SAVE_CFLAGS="$CFLAGS"
-SAVE_LDFLAGS="$LDFLAGS"
-CONF_COMMAND="$0 $ac_configure_args"
-AC_SUBST(CONF_COMMAND)
-AC_SUBST(SAVE_CFLAGS)
-AC_SUBST(SAVE_LDFLAGS)
-
-# This is need before AC_PROG_CC
-#
-
-if test "x${CFLAGS-}" = x ; then
-  cflags_is_set=no
-else
-  cflags_is_set=yes
-fi
-
-if test "x${LDFLAGS-}" = x ; then
-  ldflags_is_set=no
-else
-  ldflags_is_set=yes
-fi
-
-# ------------------------------------------------------------------------------
-# End of section of unused
-# ------------------------------------------------------------------------------
 
 dnl Checks for programs.
 AC_PROG_CC
@@ -92,6 +58,7 @@ fi
 # See if we need --std=c99 for \u escapes
 if test "$ac_cv_prog_gcc" = "yes"
 then
+  SAVE_CFLAGS="$CFLAGS"
   CFLAGS="-Werror $CFLAGS"
   AC_MSG_CHECKING([if --std=c99 is necessary])
   AC_TRY_COMPILE([#include <wchar.h>],
@@ -163,35 +130,6 @@ dnl [ AC_MSG_ERROR([Could not use libtool "libltdl" library, please check config
 
 ###################################################################
 #
-# --enable-bundles
-#
-###################################################################
-bundles=false
-AC_ARG_ENABLE( bundles,
-[AC_HELP_STRING([--enable-bundles],[make OSX bundles [default=no]])],
-[ case "${enableval}" in
-    yes)
-        bundles=true ;;
-    no) 
-        bundles=false ;;
-    *) 
-        AC_MSG_ERROR(bad value ${enableval} for --enable-bundles) ;;
-esac], [bundles=false])
-
-case $SYSTEM_TYPE in
-  *darwin*)
-    is_darwin=true
-    ;;
-  *)
-    bundles=false;		# always false if not darwin/osx
-    ;;
-esac
-
-AM_CONDITIONAL(IS_DARWIN, test x$is_darwin = xtrue)
-AM_CONDITIONAL(ENABLE_BUNDLES, test x$bundles = xtrue)
-
-###################################################################
-#
 # --enable-myodbc3i
 #
 ###################################################################
@@ -226,109 +164,8 @@ AC_ARG_ENABLE( myodbc3m,
 
 AM_CONDITIONAL(IMYODBC, test "x$myodbc3m" = "xtrue" )
 
-###################################################################
-#
-# option, cache_name, variable,
-# code to execute if yes, code to exectute if fail
-#
-###################################################################
-AC_DEFUN([AC_SYS_COMPILER_FLAG],
-[
-  AC_MSG_CHECKING($1)
-  OLD_CFLAGS="[$]CFLAGS"
-  AC_CACHE_VAL(mysql_cv_option_$2,
-  [
-    CFLAGS="[$]OLD_CFLAGS $1"
-    AC_TRY_RUN([int main(){exit(0);}],mysql_cv_option_$2=yes,mysql_cv_option_$2=no,mysql_cv_option_$2=no)
-  ])
-  CFLAGS="[$]OLD_CFLAGS"
-  if test x"[$]mysql_cv_option_$2" = "xyes" ; then
-    $3="[$]$3 $1"
-    AC_MSG_RESULT(yes)
-    $5
-  else
-    AC_MSG_RESULT(no)
-    $4
-  fi
-])
-
-###################################################################
-#
-# arch, option, cache_name, variable
-#
-###################################################################
-AC_DEFUN([AC_SYS_CPU_COMPILER_FLAG],
-[
-  if test "`uname -m 2>/dev/null`" = "$1" ; then
-    AC_SYS_COMPILER_FLAG($2,$3,$4)
-  fi
-])
-
-# os, option, cache_name, variable
-AC_DEFUN([AC_SYS_OS_COMPILER_FLAG],
-[
-  if test "x$mysql_cv_sys_os" = "x$1" ; then
-    AC_SYS_COMPILER_FLAG($2,$3,$4)
-  fi
-])
-
-# We need some special hacks when running solaris
-AC_PATH_PROG(uname_prog, uname, no)
-
-# We should go through this and put all the explictly system dependent
-# stuff in one place
-AC_MSG_CHECKING(operating system)
-AC_CACHE_VAL(mysql_cv_sys_os,
-[
-  if test "$uname_prog" != "no"; then
-    mysql_cv_sys_os="`uname`"
-  else
-    mysql_cv_sys_os="Not Solaris"
-  fi
-])
-AC_MSG_RESULT($mysql_cv_sys_os)
-
-# This should be rewritten to use $target_os
+dnl Enable system-specific compiler flags
 case "$target_os" in
- sco3.2v5*) 
-     CFLAGS="$CFLAGS -DSCO"
-     LD='$(CC) $(CFLAGS)'
-     case "$CFLAGS" in
-       *-belf*) 
-         AC_SYS_COMPILER_FLAG(-belf,sco_belf_option,CFLAGS,[],[
-         case "$LDFLAGS" in
-           *-belf*) ;;
-           *) echo "Adding -belf option to ldflags."
-              LDFLAGS="$LDFLAGS -belf"
-           ;;
-         esac
-         ])
-       ;;
-       *)
-         AC_SYS_COMPILER_FLAG(-belf,sco_belf_option,CFLAGS,[],[
-         case "$LDFLAGS" in
-           *-belf*) ;;
-           *)
-             echo "Adding -belf option to ldflags."
-             LDFLAGS="$LDFLAGS -belf"
-           ;;
-         esac
-         ])
-       ;;
-     esac
-  ;;
-  sysv5UnixWare*) 
-    if test "$GCC" != "yes"; then
-      # We are using built-in inline function
-      CFLAGS="$CFLAGS -Kalloca"
-    fi
-  ;;
-  sysv5OpenUNIX8*) 
-    if test "$GCC" != "yes"; then
-      # We are using built-in inline function
-      CFLAGS="$CFLAGS -Kalloca"
-    fi
-  ;;
   *aix*)
     if test "$GCC" != "yes"; then
       # We need to enable Unicode escape sequences (\u00e3) in strings
@@ -447,29 +284,57 @@ fi
 AC_SUBST(MYSQL_LIB)
 AC_SUBST(MYSQL_THREADSAFE_LIB)
 
-echo "END OF MYSQL CONFIGURATION"
-echo ""
-echo "ODBC DRIVER MANAGER CONFIGURATION - LIBRARIES AND HEADERS"
-
-# iODBC
-
-use_iODBC=no
+dm=
 AC_ARG_WITH(iODBC,
-[  --with-iODBC[=DIR]        Use iODBC located in DIR],
-[ use_iODBC=yes
-  iodbc="$withval"
-],
-[ use_iODBC="" ])
+            [  --with-iODBC[=DIR]        Use iODBC located in DIR],
+            [
+              dm=iODBC
+              iODBC="$withval"
+            ],
+            [
+              iODBC="/usr"
+            ])
 
-# Default to /usr if not specified
-if test "x$iodbc" = "x" -o "x$iodbc" = "xyes"
+AC_ARG_WITH(unixODBC,
+            [  --with-unixODBC[=DIR]     Use unixODBC located in DIR],
+            [
+              dm=unixODBC
+              unixODBC="$withval"
+            ],
+            [ unixODBC="/usr" ])
+
+if test "x$dm" = "x"
 then
-  iodbc="/usr";
+  AC_PATH_PROG(iodbc_conf, iodbc-config, no)
+  if test "x$iodbc_conf" = "xno"
+  then
+    AC_MSG_CHECKING(for SQL_ATTR_UNIXODBC_VERSION in sqlext.h)
+    AC_PREPROC_IFELSE(
+      [AC_LANG_PROGRAM([[#include <sqlext.h>]],
+                       [[printf("%d", SQL_ATTR_UNIXODBC_VERSION)]])],
+      [
+       dm=unixODBC
+       AC_MSG_RESULT(found)
+      ],
+      [AC_MSG_RESULT(not found)])
+  else
+    dm=iODBC
+  fi
 fi
 
-if test "x$use_iODBC" = "xyes"
+if test "x$dm" = "x"
+then
+  AC_MSG_ERROR(no suitable driver manager selected or found)
+fi
+
+if test "$dm" = "iODBC"
 then
   AC_DEFINE([USE_IODBC], [1], [use iODBC])
+
+  if test "x$iodbc_conf" = "xno"
+  then
+    AC_PATH_PROG(iodbc_conf, iodbc-config, no, "$iodbc/bin:$PATH")
+  fi
 
   AC_ARG_WITH(iodbc-includes,
               [  --with-iodbc-includes=DIR Find iODBC headers in DIR],
@@ -480,7 +345,6 @@ then
               iodbc_libs="$withval", iodbc_libs="$iodbc/lib")
 
   AC_MSG_CHECKING([for iODBC version])
-  AC_PATH_PROG(iodbc_conf, iodbc-config, no)
   if test "$iodbc_conf" != "no"
   then
     iodbc_version=`$iodbc_conf --version`
@@ -514,18 +378,7 @@ then
 
 else
 # unixODBC
-
-  AC_ARG_WITH(unixODBC,
-              [  --with-unixODBC[=DIR]     Use unixODBC located in DIR],
-              [ unixODBC="$withval" ], [ unixODBC="" ])
-
   AC_DEFINE([USE_UNIXODBC], [1], [use unixODBC])
-
-  # Default to /usr if not specified
-  if test "x$unixODBC" = "x" -o "x$unixODBC" = "xyes"
-  then
-    unixODBC="/usr";
-  fi
 
   AC_MSG_CHECKING([for unixODBC version])
   AC_PATH_PROG(isql, isql, no, ["$unixODBC/bin:$PATH"])
@@ -610,9 +463,6 @@ option.
 ----------------------------------------------------------------
 EOF
 fi
-
-echo "END OF DRIVER MANAGER CONFIGURATION"
-echo
 
 ###################################################################
 #                                                                 #
