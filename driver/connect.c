@@ -786,7 +786,7 @@ connected:
   }
 
   /* return SQL_SUCCESS_WITH_INFO if truncated output string */
-  if (pcbConnStrOut && cbConnStrOutMax > *pcbConnStrOut)
+  if (pcbConnStrOut && cbConnStrOutMax < *pcbConnStrOut)
   {
     set_dbc_error(hdbc, "01004", "String data, right truncated.", 0);
     rc= SQL_SUCCESS_WITH_INFO;

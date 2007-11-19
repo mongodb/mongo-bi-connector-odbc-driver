@@ -51,7 +51,7 @@ BOOL Driver_Prompt(HWND hWnd, SQLWCHAR *instr, SQLUSMALLINT completion,
     /* serialize to outstr */
     if ((*outlen= ds_to_kvpair(ds, outstr, outmax, (SQLWCHAR)';')) == -1)
     {
-      /* truncated, up to caller to see outmax > *outlen */
+      /* truncated, up to caller to see outmax < *outlen */
       *outlen= ds_to_kvpair_len(ds);
       outstr[outmax]= 0;
     }
