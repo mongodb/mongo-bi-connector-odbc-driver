@@ -37,6 +37,11 @@
  * driver and data source entries in the system. See usage text for details.
  */
 
+#include "MYODBC_MYSQL.h"
+#include "MYODBC_CONF.h"
+#include "installer.h"
+#include "stringutil.h"
+
 #ifdef _WIN32
 #   include <windows.h>
 #endif
@@ -47,11 +52,6 @@
 #include <sql.h>
 #include <sqlext.h>
 #include <odbcinst.h>
-
-#include "installer.h"
-#include "stringutil.h"
-#include "VersionInfo.h"
-#include "MYODBC_MYSQL.h"
 
 const char *usage =
 "+---                                                                   \n"
@@ -678,7 +678,7 @@ int main(int argc, char **argv)
     case OPT_SCOPE:
       /* convert to integer */
       scope= *(++arg) - '0';
-      if (scope < 0 || scope > 2 || *(arg + 1) /* another char exists */)
+      if (scope > 2 || *(arg + 1) /* another char exists */)
       {
         fprintf(stderr, "[ERROR] Invalid scope: %s\n", arg);
         return 1;
