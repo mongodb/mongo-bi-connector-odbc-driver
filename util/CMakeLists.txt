@@ -26,7 +26,7 @@ SET(myodbc3u_SRCS stringutil.c
                   installer.c
                   installer.h)
 
-#IF(USE_LEGACY_ODBC_GUI)
+IF(USE_LEGACY_ODBC_GUI)
   SET(myodbc3u_SRCS ${myodbc3u_SRCS}
                         MYODBCUtilAllocDataSource.c
                         MYODBCUtilAllocDriver.c
@@ -48,7 +48,7 @@ SET(myodbc3u_SRCS stringutil.c
                         MYODBCUtilWriteDataSource.c
                         MYODBCUtilWriteDataSourceStr.c
                         MYODBCUtilWriteDriver.c)
-#ENDIF(USE_LEGACY_ODBC_GUI)
+ENDIF(USE_LEGACY_ODBC_GUI)
 
 ADD_LIBRARY(myodbc3u STATIC ${myodbc3u_SRCS})
 

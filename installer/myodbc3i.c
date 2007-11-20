@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2005 MySQL AB
+/* Copyright (C) 2000-2007 MySQL AB
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,933 +19,719 @@
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
 /*!
-  \file   myodbc3i.c
-  \author Peter Harvey <peterh@mysql.com>
-  \brief  This program will aid installers when installing/uninstalling
+  @brief  This program will aid installers when installing/uninstalling
           MyODBC.
 
-          This program can; register/deregister a myodbc driver and create
+          This program can register/deregister a myodbc driver and create
           a sample dsn. The key thing here is that it does this with 
           cross-platform code - thanks to the ODBC installer API. This is
           most useful to those creating installers (apps using myodbc or 
           myodbc itself).
 
-          For example; this program is used in the postinstall script
+          For example, this program is used in the postinstall script
           of the MyODBC for Mac OS X installer package. 
 */
 
-/*!
-    \note   This program uses MYODBCUtil in similar fashion to the *driver*
-            but does not use it the way the setup library does. 
-*/
+/*
+ * Installer utility application. Handles installing/removing/listing, etc
+ * driver and data source entries in the system. See usage text for details.
+ */
+
+#ifdef _WIN32
+#   include <windows.h>
+#endif
 
 #include <stdio.h>
+#include <stdlib.h>
 
-#ifndef TRUE
-    #define TRUE 1
-    #define FALSE 0
-#endif
-
-#ifdef WIN32
-    #include <windows.h>
-#else
-    #include <ltdl.h>
-#endif
-
-#include "../util/MYODBCUtil.h"
-
-#ifdef USE_IODBC
-#include <iodbcinst.h>
-#else
+#include <sql.h>
+#include <sqlext.h>
 #include <odbcinst.h>
-#endif
 
-typedef BOOL (INSTAPI *ConfigDSNFunctor)(HWND, WORD, LPCSTR, LPCSTR);
+#include "installer.h"
+#include "stringutil.h"
+#include "VersionInfo.h"
+#include "MYODBC_MYSQL.h"
 
-/*! Our syntax. This is likely to expand over time. */
-char *szSyntax =
-"\n" \
-"+----------------------------------------------------------+\n" \
-"|                          myodbc3i                        |\n" \
-"+----------------------------------------------------------+\n" \
-"\n" \
-"  Use this program to manage ODBC system information from the\n" \
-"  command-line. This is particularly useful for installation \n" \
-"  processes. It is also useful for testing the abstraction/\n" \
-"  portability of ODBC system information provided by the  \n" \
-"  MYODBCUtil library.\n" \
-"\n" \
-"+----------------------------------------------------------+\n" \
-"|                         U S A G E                        |\n" \
-"+----------------------------------------------------------+\n" \
-"\n" \
-"  $ myodbc3i <action> <object> <option>\n" \
-"\n" \
-"+----------------------------------------------------------+\n" \
-"|                        A C T I O N                       |\n" \
-"+----------------------------------------------------------+\n" \
-"\n" \
-"  q    Query\n" \
-"  a    Add\n" \
-"  e    Edit\n" \
-"  r    Remove\n" \
-"\n" \
-"+----------------------------------------------------------+\n" \
-"|                        O B J E C T                       |\n" \
-"+----------------------------------------------------------+\n" \
-"\n" \
-"  d    Driver.\n" \
-"  n    Driver or data source name. String follows this.\n" \
-"  s    User & system data source(s).\n" \
-"  su   User data source(s).\n" \
-"  ss   System data source(s).\n" \
-"\n" \
-"+----------------------------------------------------------+\n" \
-"|                        O P T I O N                       |\n" \
-"+----------------------------------------------------------+\n" \
-"\n" \
-"  t    Attribute string. String of semi delim key=value pairs follows this.\n" \
-"  w    Window handle. Numeric follows this. 0 to disable GUI prompts, 1 to fake a window handle (default).\n" \
-"\n" \
-"+----------------------------------------------------------+\n" \
-"|                        S Y N T A X                       |\n" \
-"+----------------------------------------------------------+\n" \
-"\n" \
-"  q d|s|su|ss [n] [w]\n" \
-"  a d|s|su|ss t [w]\n" \
-"  e s|su|ss t [w]\n" \
-"  r d|s|su|ss n [w]\n" \
-"\n" \
-"+----------------------------------------------------------+\n" \
-"|                       E X A M P L E S                    |\n" \
-"+----------------------------------------------------------+\n" \
-"\n" \
-"  List all data source names;\n" \
-"    $ myodbc3i -q -s\n" \
-"  List data source attributes for MyODBC;\n" \
-"    $ myodbc3i -q -s -n\"MySQL ODBC 3.51 Driver\"\n" \
-"  Register a driver;\n" \
-"    $ myodbc3i -a -d -t\"MySQL ODBC 3.51 Driver;Driver=/usr/lib/libmyodbc5.so;Setup=/usr/lib/libmyodbc5S.so\"\n" \
-"  Create a user data source name;\n" \
-"    $ myodbc3i -a -su -t\"DSN=MyDSN;Driver=MySQL ODBC 3.51 Driver;Server=localhost;UID=pharvey\"\n";
+const char *usage =
+"+---                                                                   \n"
+"| myodbc3i v" MYODBC_VERSION "                                         \n"
+"+---                                                                   \n"
+"|                                                                      \n"
+"| Description                                                          \n"
+"|                                                                      \n"
+"|    This program can be used to create, edit or remove a DSN. It      \n"
+"|    can also be used to register or deregister a driver. In other     \n"
+"|    words - it can be used to manage ODBC system information.         \n"
+"|                                                                      \n"
+"|    This operates consistently across platforms. This has been created\n"
+"|    specifically for MySQL Connector/ODBC.                            \n"
+"|                                                                      \n"
+"| Syntax                                                               \n"
+"|                                                                      \n"
+"|    myodbc3i <Object> <Action> [Options]                              \n"
+"|                                                                      \n"
+"| Object                                                               \n"
+"|                                                                      \n"
+"|     -d driver                                                        \n"
+"|     -s datasource                                                    \n"
+"|                                                                      \n"
+"| Action                                                               \n"
+"|                                                                      \n"
+"|     -l list                                                          \n"
+"|     -a add (add/update for data source)                              \n"
+"|     -r remove                                                        \n"
+"|                                                                      \n"
+"| Options                                                              \n"
+"|                                                                      \n"
+"|     -n <name>                                                        \n"
+"|     -t <attribute string>                                            \n"
+/* Note: These scope values line up with the SQLSetConfigMode constants */
+"|     -c0 both                                                         \n"
+"|     -c1 user data source                                             \n"
+"|     -c2 system data source (default)                                 \n"
+"|                                                                      \n"
+"| Examples                                                             \n"
+"|                                                                      \n"
+"|    List drivers                                                      \n"
+"|        -d -l                                                         \n"
+"|                                                                      \n"
+"|    Register a driver (Windows specific)                              \n"
+"|        -d -a -n \"MySQL ODBC 5.1 Driver\" \\                         \n"
+"|              -t \"DRIVER=myodbc5.dll;SETUP=myodbc5S.dll\"            \n"
+"|                                                                      \n"
+"|    Add a new data source name                                        \n"
+"|        -s -a -c2 -n \"test\" \\                                      \n"
+"|              -t \"DRIVER=MySQL ODBC 5.1 Driver;SERVER=localhost;DATABASE=test;UID=myid;PWD=mypwd\"\n"
+"|                                                                      \n"
+"|    List data source name attributes for 'test'                       \n"
+"|        -s -l -c2 -n \"test\"                                         \n"
+"+---                                                                   \n";
+
+/* command line args */
+#define OBJ_DRIVER 'd'
+#define OBJ_DATASOURCE 's'
+
+#define ACTION_LIST 'l'
+#define ACTION_ADD 'a'
+#define ACTION_REMOVE 'r'
+
+#define OPT_NAME 'n'
+#define OPT_ATTR 't'
+#define OPT_SCOPE 'c'
+
+static char obj= 0;
+static char action= 0;
+static UWORD scope= ODBC_SYSTEM_DSN; /* default = system */
+
+/* these two are 'paired' and the char data is converted to the wchar buf.
+ * we check the char * to see if the arg was given then use the wchar in the
+ * installer api. */
+static char *name= NULL;
+static SQLWCHAR *wname;
+
+static char *attrstr= NULL;
+static SQLWCHAR *wattrs;
+
+
+void object_usage()
+{
+  fprintf(stderr,
+          "[ERROR] Object must be either driver (d) or data source (s)\n");
+}
+
+
+void action_usage()
+{
+  fprintf(stderr, "[ERROR] One action must be specified\n");
+}
+
+
+void main_usage()
+{
+  fprintf(stderr, usage);
+}
+
 
 /*
-    Register Driver for Various Platforms
-    
-    XP
-    
-        $ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;Driver=myodbc5.dll;Setup=myodbc5S.dll"
-        
-        OR for old GUI...
-        
-        $ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;Driver=myodbc5.dll;Setup=myodbc5.dll"
-        
-    Mac OS X
-
-          At least some of the functions dealing with the
-          odbc system information are case sensitive
-          (contrary to the ODBC spec.). They appear to like
-          leading caps.
-          
-        $ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;Driver=/usr/lib/libmyodbc5.so;Setup=/usr/lib/libmyodbc5S.dylib"
-        
-    UNIX/Linux
-    
-        $ myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=/usr/lib/libmyodbc5.so;SETUP=/usr/lib/libmyodbc5S.so"
-
-*/
-
-char    cAction         = '\0';
-char    cObject         = '\0';
-char    cObjectSub      = '\0';
-long    nWnd            = 1;
-char *  pszName         = NULL;
-char *  pszAttributes   = NULL;
-
-char    szBuffer[32000];
-int     nBuffer = 32000;
-
-#if defined(WIN32)
-/*!
-    \brief  Get the last *Windows* error and display string ver of it.
-*/
-void doPrintLastErrorString() 
+ * Print an error retrieved from SQLInstallerError.
+ */
+void print_installer_error()
 {
-    LPVOID pszMsg;
-
-    FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                   NULL,
-                   GetLastError(),
-                   MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                   (LPTSTR)&pszMsg,
-                   0, 
-                   NULL );
-    fprintf( stderr, pszMsg );
-    LocalFree( pszMsg );
+  int msgno;
+  DWORD errcode;
+  SQLCHAR errmsg[256];
+  for(msgno= 1; msgno < 9; ++msgno)
+  {
+    if (SQLInstallerError(msgno, &errcode, errmsg, 256, NULL) != SQL_SUCCESS)
+      return;
+    fprintf(stderr, "[ERROR] SQLInstaller error %d: %s\n", errcode, errmsg);
+  }
 }
-#endif
 
-/*!
-    \brief  Prints any installer errors sitting in the installers
-            error queue.
 
-            General purpose error dump function for installer 
-            errors. Hopefully; it provides useful information about
-            any failed installer call.
-
-    \note   Does not try to process all 8 possible records from the queue.
-*/            
-void doPrintInstallerError( char *pszFile, int nLine )
+/*
+ * Print a general ODBC error (non-odbcinst).
+ */
+void print_odbc_error(SQLHANDLE hnd, SQLSMALLINT type)
 {
-    WORD      nRecord = 1;
-    DWORD     nError;
-    char      szError[SQL_MAX_MESSAGE_LENGTH];
-    RETCODE   nReturn;
+  char sqlstate[20];
+  char errmsg[1000];
+  SQLINTEGER nativeerr;
 
-    nReturn = SQLInstallerError( nRecord, &nError, szError, SQL_MAX_MESSAGE_LENGTH - 1, 0 );
-    if ( SQL_SUCCEEDED( nReturn ) )
-        fprintf( stderr, "[%s][%d][ERROR] ODBC Installer error %d: %s\n", pszFile, nLine, (int)nError, szError );
+  fprintf(stderr, "[ERROR] ODBC error");
+
+  if(SQL_SUCCEEDED(SQLGetDiagRec(type, hnd, 1, sqlstate, &nativeerr,
+                                 errmsg, 1000, NULL)))
+    printf(": [%s] %d -> %s\n", sqlstate, nativeerr, errmsg);
+  printf("\n");
+}
+
+
+/*
+ * Handler for "list driver" command (-d -l -n drivername)
+ */
+int list_driver_details(Driver *driver)
+{
+  SQLWCHAR buf[50000];
+  SQLWCHAR *entries= buf;
+  int rc;
+
+  /* lookup the driver */
+  if ((rc= driver_lookup(driver)) < 0)
+  {
+    fprintf(stderr, "[ERROR] Driver not found '%s'\n",
+            ds_get_utf8attr(driver->name, &driver->name8));
+    return 1;
+  }
+  else if (rc > 0)
+  {
+    print_installer_error();
+    return 1;
+  }
+
+  /* print driver details */
+  printf("FriendlyName: %s\n", ds_get_utf8attr(driver->name, &driver->name8));
+  printf("DRIVER      : %s\n", ds_get_utf8attr(driver->lib, &driver->lib8));
+  printf("SETUP       : %s\n", ds_get_utf8attr(driver->setup_lib,
+                                               &driver->setup_lib8));
+
+  return 0;
+}
+
+
+/*
+ * Handler for "list drivers" command (-d -l)
+ */
+int list_drivers()
+{
+  SQLCHAR buf[50000];
+  SQLCHAR *drivers= buf;
+
+  if (!SQLGetInstalledDrivers(buf, 50000, NULL))
+  {
+    print_installer_error();
+    return 1;
+  }
+
+  while (*drivers)
+  {
+    printf("%s\n", drivers);
+    drivers += strlen(drivers) + 1;
+  }
+
+  return 0;
+}
+
+
+/*
+ * Handler for "add driver" command (-d -a -n drivername -t attrs)
+ */
+int add_driver(Driver *driver, const SQLWCHAR *attrs)
+{
+  DWORD usage_count;
+  SQLWCHAR attrs_null[4096]; /* null-delimited pairs */
+  SQLWCHAR prevpath[256];
+
+  /* read driver attributes into object */
+  if (driver_from_kvpair_semicolon(driver, attrs))
+  {
+    fprintf(stderr,
+            "[ERROR] Could not parse key-value pair attribute string\n");
+    return 1;
+  }
+
+  /* convert to null-delimited for installer API */
+  if (driver_to_kvpair_null(driver, attrs_null, 4096))
+  {
+    fprintf(stderr,
+            "[ERROR] Could not create new key-value pair attribute string\n");
+    return 1;
+  }
+
+  if (SQLInstallDriverExW(attrs_null, NULL, prevpath, 256, NULL,
+                          ODBC_INSTALL_COMPLETE, &usage_count) != TRUE)
+  {
+    print_installer_error();
+    return 1;
+  }
+
+  printf("Success: Usage count is %d\n", usage_count);
+
+  return 0;
+}
+
+
+/*
+ * Handler for "remove driver" command (-d -a -n drivername)
+ */
+int remove_driver(Driver *driver)
+{
+  DWORD usage_count;
+
+  if (SQLRemoveDriverW(driver->name, FALSE, &usage_count) != TRUE)
+  {
+    print_installer_error();
+    return 1;
+  }
+
+  printf("Success: Usage count is %d\n", usage_count);
+
+  return 0;
+}
+
+
+/*
+ * Handle driver actions. We setup a driver object to be used
+ * for all actions.
+ */
+int handle_driver_action()
+{
+  int rc= 0;
+  Driver *driver= driver_new();
+
+  /* check name is given if needed */
+  switch (action)
+  {
+  case ACTION_ADD:
+  case ACTION_REMOVE:
+    if (!name)
+    {
+      fprintf(stderr, "[ERROR] Name missing to add/remove driver\n");
+      rc= 1;
+      goto end;
+    }
+  }
+
+  /* set the driver name */
+  if (name)
+    sqlwcharncpy(driver->name, wname, ODBCDRIVER_STRLEN);
+
+  /* perform given action */
+  switch (action)
+  {
+  case ACTION_LIST:
+    if (name)
+      rc= list_driver_details(driver);
     else
-        fprintf( stderr, "[%s][%d][ERROR] ODBC Installer error (unknown)\n", pszFile, nLine );
+      rc= list_drivers();
+    break;
+  case ACTION_ADD:
+    if (attrstr)
+      rc= add_driver(driver, wattrs);
+    else
+    {
+      fprintf(stderr, "[ERROR] Attribute string missing to add driver\n");
+      rc= 1;
+    }
+    break;
+  case ACTION_REMOVE:
+    rc= remove_driver(driver);
+    break;
+  }
+
+end:
+  driver_delete(driver);
+  return rc;
 }
 
 
-int doQuery();
-int doQueryDriver();
-int doQueryDriverName();
-int doQueryDataSource();
-int doQueryDataSourceName( UWORD nScope );
-int doAdd();
-int doAddDriver();
-int doAddDataSource();
-int doEdit();
-int doEditDriver();
-int doEditDataSource();
-int doRemove();
-int doRemoveDriver();
-int doRemoveDataSource();
-int doRemoveDataSourceName();
-int doConfigDataSource( WORD nRequest );
-
-/*!
-    \brief  This is the entry point to this program.
-            
-    \note   More features/args will probably be added in the future.
-*/
-int main( int argc, char *argv[] )
+/*
+ * Handler for "list data source" command (-s -l -n drivername)
+ */
+int list_datasource_details(DataSource *ds)
 {
-    int nArg;
-    int nReturn;
+  int rc;
 
-    /*
-        help; possible newbie
-    */
-    if ( argc <= 1 )
-    {
-        printf( szSyntax );
-        exit( 1 );
-    }
-
-    /* 
-        parse args 
-    */
-    for ( nArg = 1; nArg < argc; nArg++ )
-    {
-        if ( argv[nArg][0] == '-' )
-        {
-            switch ( argv[nArg][1] )
-            {
-                /* actions */
-                case 'e':
-                case 'q':
-                case 'a':
-                case 'r':
-                    cAction = argv[nArg][1];
-                    break;
-                    /* objects */
-                case 'd':
-                case 's':
-                    cObject     = argv[nArg][1];
-                    cObjectSub  = argv[nArg][2]; /* '\0' if not provided */
-                    break;
-                    /* options */
-                case 'n':
-                    pszName = &(argv[nArg][2]);
-                    break;
-                case 't':
-                    pszAttributes = &(argv[nArg][2]);
-                    break;
-                case 'w':
-                    nWnd = atoi( &(argv[nArg][2]) );
-                    break;
-                default:
-                    {
-                        printf( szSyntax );
-                        exit( 1 );
-                    }
-            }
-        }
-        else
-        {
-            printf( szSyntax );
-            exit( 1 );
-        }
-    }
-
-    /* 
-        process args
-    */
-    switch ( cAction )
-    {
-        case 'q':
-            nReturn = doQuery();
-            break;
-        case 'a':
-            nReturn = doAdd();
-            break;
-        case 'e':
-            nReturn = doEdit();
-            break;
-        case 'r':
-            nReturn = doRemove();
-            break;
-        default:  
-            printf( "[%s][%d][ERROR] Invalid, or missing, action.\n", __FILE__, __LINE__ );
-            exit( 1 );
-    }
-
-    return ( !nReturn ); 
-}
-
-/*!
-    \brief  Show a list of drivers or data source names.
-
-
-    \note   XP
-
-            SQLGetPrivateProfileString() with a NULL 1st arg does not
-            return anything - ever. To return a list of drivers we can
-            use SQLGetInstalledDrivers() but no alternative in ODBC
-            installer for getting a list of data source names.
-*/
-int doQuery()
-{
-    switch ( cObject )
-    {
-        case 'd':
-            return doQueryDriver();
-        case 's':
-            return doQueryDataSource();
-        default:
-            fprintf( stderr, "[%s][%d][ERROR] Missing or invalid object type specified.\n", __FILE__, __LINE__ );
-            return 0;
-    }
-}
-
-int doQueryDriver()
-{
-    char *psz;
-
-    if ( pszName )
-        return doQueryDriverName();
-
-    if ( !MYODBCUtilGetDriverNames( szBuffer, nBuffer ) )
-    {
-        doPrintInstallerError( __FILE__, __LINE__ );
-        fprintf( stderr, "[%s][%d][WARNING] Failed to get driver names. Perhaps none installed?\n", __FILE__, __LINE__ );
-        return 0;
-    }
-
-    psz = szBuffer;
-    while ( *psz )
-    {
-        printf( "%s\n", psz );
-        psz += strlen( psz ) + 1;
-    }
-
+  if ((rc= ds_lookup(ds)) < 0)
+  {
+    fprintf(stderr, "[ERROR] Data source not found '%s'\n",
+            ds_get_utf8attr(ds->name, &ds->name8));
     return 1;
-}
-
-int doQueryDriverName()
-{
-    int bReturn = 0; 
-    MYODBCUTIL_DRIVER *pDriver = MYODBCUtilAllocDriver();
-
-    if ( !MYODBCUtilReadDriver( pDriver, pszName, NULL ) )
-    {
-        fprintf( stderr, "[%s][%d][WARNING] Could not load (%s)\n", __FILE__, __LINE__, pszName );
-        goto doQueryDriverNameExit1;   
-    }
-
-    printf( "Name............: %s\n", pDriver->pszName );
-    printf( "DRIVER..........: %s\n", pDriver->pszDRIVER );
-    printf( "SETUP...........: %s\n", pDriver->pszSETUP );
-
-    bReturn = 1;
-
-    doQueryDriverNameExit1:
-    MYODBCUtilFreeDriver( pDriver );
-
-    return bReturn;
-}
-
-int doQueryDataSource()
-{
-    int     bReturn;
-    char *  psz;
-
-    switch ( cObjectSub )
-    {
-        case '\0':
-            if ( pszName )
-                return doQueryDataSourceName( ODBC_BOTH_DSN );
-            else
-                bReturn = MYODBCUtilGetDataSourceNames( szBuffer, nBuffer, ODBC_BOTH_DSN );
-            break;
-        case 'u':
-            if ( pszName )
-                return doQueryDataSourceName( ODBC_USER_DSN );
-            else
-                bReturn = MYODBCUtilGetDataSourceNames( szBuffer, nBuffer, ODBC_USER_DSN );
-            break;
-        case 's':
-            if ( pszName )
-                return doQueryDataSourceName( ODBC_SYSTEM_DSN );
-            else
-                bReturn = MYODBCUtilGetDataSourceNames( szBuffer, nBuffer, ODBC_SYSTEM_DSN );
-            break;
-        default:
-            fprintf( stderr, "[%s][%d][ERROR] Invalid object type qualifier specified.\n", __FILE__, __LINE__ );
-            return 0;
-    }
-
-    if ( !bReturn )
-    {
-        doPrintInstallerError( __FILE__, __LINE__ );
-        return 0;
-    }
-
-    psz = szBuffer;
-    while ( *psz )
-    {
-        printf( "%s\n", psz );
-        psz += strlen( psz ) + 1;
-    }
-
+  }
+  else if (rc > 0)
+  {
+    print_installer_error();
     return 1;
+  }
+
+  /* print the data source fields */
+                       printf("Name:                %s\n", ds_get_utf8attr(ds->name, &ds->name8));
+  if (ds->driver     ) printf("Driver:              %s\n", ds_get_utf8attr(ds->driver, &ds->driver8));
+  if (ds->description) printf("Description:         %s\n", ds_get_utf8attr(ds->description, &ds->description8));
+  if (ds->server     ) printf("Server:              %s\n", ds_get_utf8attr(ds->server, &ds->server8));
+  if (ds->uid        ) printf("Uid:                 %s\n", ds_get_utf8attr(ds->uid, &ds->uid8));
+  if (ds->pwd        ) printf("Pwd:                 %s\n", ds_get_utf8attr(ds->pwd, &ds->pwd8));
+  if (ds->database   ) printf("Database:            %s\n", ds_get_utf8attr(ds->database, &ds->database8));
+  if (ds->socket     ) printf("Socket:              %s\n", ds_get_utf8attr(ds->socket, &ds->socket8));
+  if (ds->initstmt   ) printf("Initial statement:   %s\n", ds_get_utf8attr(ds->initstmt, &ds->initstmt8));
+  if (ds->initstmt   ) printf("Option:              %s\n", ds_get_utf8attr(ds->option, &ds->option8));
+  if (ds->initstmt   ) printf("Character set:       %s\n", ds_get_utf8attr(ds->charset, &ds->charset8));
+  if (ds->initstmt   ) printf("SSL key:             %s\n", ds_get_utf8attr(ds->sslkey, &ds->sslkey8));
+  if (ds->initstmt   ) printf("SSL cert:            %s\n", ds_get_utf8attr(ds->sslcert, &ds->sslcert8));
+  if (ds->initstmt   ) printf("SSL CA:              %s\n", ds_get_utf8attr(ds->sslca, &ds->sslca8));
+  if (ds->initstmt   ) printf("SSL CA path:         %s\n", ds_get_utf8attr(ds->sslcapath, &ds->sslcapath8));
+  if (ds->initstmt   ) printf("SSL cipher:          %s\n", ds_get_utf8attr(ds->sslcipher, &ds->sslcipher8));
+  if (ds->port       ) printf("Port:                %d\n", ds->port);
+
+  return 0;
 }
 
-int doQueryDataSourceName( UWORD nScope )
+
+/*
+ * Handler for "list data sources" command (-s -l)
+ */
+int list_datasources()
 {
-    int bReturn = 0; 
-    MYODBCUTIL_DATASOURCE *pDataSource = MYODBCUtilAllocDataSource( MYODBCUTIL_DATASOURCE_MODE_DSN_VIEW );
+  SQLHANDLE env;
+  SQLRETURN rc;
+  SQLUSMALLINT dir= 0; /* SQLDataSources fetch direction */
+  SQLCHAR name[256];
+  SQLCHAR description[256];
 
-    /* set scope */
-    if ( !SQLSetConfigMode( nScope ) )
-        return FALSE;
+  /* determine 'direction' to pass to SQLDataSources */
+  switch (scope)
+  {
+  case ODBC_BOTH_DSN:
+    dir= SQL_FETCH_FIRST;
+    break;
+  case ODBC_USER_DSN:
+    dir= SQL_FETCH_FIRST_USER;
+    break;
+  case ODBC_SYSTEM_DSN:
+    dir= SQL_FETCH_FIRST_SYSTEM;
+    break;
+  }
 
-    if ( !MYODBCUtilReadDataSource( pDataSource, pszName ) )
-    {
-        fprintf( stderr, "[%s][%d][WARNING] Could not load (%s)\n", __FILE__, __LINE__, pszName );
-        goto doQueryDataSourceNameExit1;   
-    }
-
-    printf( "DSN.............: %s\n", pDataSource->pszDSN );
-    printf( "DRIVER..........: %s\n", pDataSource->pszDRIVER );
-    printf( "Driver file name: %s\n", pDataSource->pszDriverFileName );
-    printf( "DESCRIPTION.....: %s\n", pDataSource->pszDESCRIPTION );
-    printf( "SERVER..........: %s\n", pDataSource->pszSERVER );
-    printf( "UID.............: %s\n", pDataSource->pszUSER );
-    printf( "PWD.............: %s\n", pDataSource->pszPASSWORD );
-    printf( "DATABASE........: %s\n", pDataSource->pszDATABASE );
-    printf( "PORT............: %s\n", pDataSource->pszPORT );
-    printf( "SOCKET..........: %s\n", pDataSource->pszSOCKET );
-    printf( "STMT............: %s\n", pDataSource->pszSTMT );
-    printf( "OPTION..........: %s\n", pDataSource->pszOPTION );
-
-    bReturn = 1;
-
-doQueryDataSourceNameExit1:
-    /* unset scope */
-    switch ( nScope )
-    {
-        case ODBC_BOTH_DSN:
-            SQLSetConfigMode( ODBC_BOTH_DSN );
-            break;
-        case ODBC_USER_DSN:
-        case ODBC_SYSTEM_DSN:
-            SQLSetConfigMode( ODBC_BOTH_DSN );
-            break;
-    }
-
-    MYODBCUtilFreeDataSource( pDataSource );
-
-    return bReturn;
-}
-
-int doAdd()
-{
-    switch ( cObject )
-    {
-        case 'd':
-            return doAddDriver();
-        case 's':
-            return doAddDataSource();
-        default:
-            fprintf( stderr, "[%s][%d][ERROR] Missing or invalid object type specified.\n", __FILE__, __LINE__ );
-            return 0;
-    }
-}
-
-/*!
-    \brief  Register the driver (or just increase usage count).
-
-    \note   XP
-    
-            On MS Windows (XP for example) the driver is registered in two places; 
-              1) \windows\system32\odbcinst.ini
-              2) registry
-              Fortunately the installer calls will ensure they are both updated.
-
-            All ODBC drivers *should* be installed in the standard location (\windows\system32) and this call
-            reflects this as no path is given for the driver file.
-
-    \note   Mac OS X
-    
-            On Mac OS X there are many odbcinst.ini files - each account has one in ~/Library/ODBC and there
-            is a system wide one in /Library/ODBC.
-
-            There are at least two notable complicating factors;
-              - the files are read-ony for average user so one should use sudo when doing this
-              - the files do not exist until someone manually creates entries using the ODBC Administrator AND
-                they are not created by iodbc installer lib when we execute this code (we get error)
-
-            ODBC spec says that "Driver" should NOT include path 
-            but path seems needed for iodbc. The implication is that
-            the driver *must* be installed in /usr/lib for this to work.
-
-            Usage Count is not returned on Mac OS X and returned location does not seem to reflect reality.
-
-    \note   Linux/UNIX
-
-            ODBC spec says that "Driver" should NOT include path 
-            but path seems needed for unixODBC. The implication is that
-            the driver *must* be installed in /usr/lib for this to work.
-
-            Location returned does not seem to reflect reality.
-*/
-int doAddDriver()
-{
-    char  *pszDriverInfo = NULL;
-    char  szLoc[FILENAME_MAX];
-    WORD  nLocLen;
-    DWORD nUsageCount;
-    int   nChar;
-
-    if ( !pszAttributes )
-    {
-        fprintf( stderr, "[%s][%d][ERROR] Please provide driver attributes.\n", __FILE__, __LINE__ );
-        return 0;
-    }
-
-    switch (cObjectSub) {
-    case 'u':
-      if (!SQLSetConfigMode(ODBC_USER_DSN))
-        return FALSE;
-    case 's':
-      if (!SQLSetConfigMode(ODBC_SYSTEM_DSN))
-        return FALSE;
-    }
-
-    /*
-        Create a oopy of pszAttributes where the ';' are replaced
-        with '\0' and ensure that at least 2 '\0' are at the end.
-        SQLInstallDriverEx() needs it formatted this way.
-    */
-    pszDriverInfo = (char *)malloc( strlen(pszAttributes) + 2 );
-
-    for ( nChar = 0; pszAttributes[nChar]; nChar++ )
-    {
-        if ( pszAttributes[nChar] == ';' )
-            pszDriverInfo[nChar] = '\0';
-        else
-            pszDriverInfo[nChar] = pszAttributes[nChar];
-    }
-
-    pszDriverInfo[nChar++]  = '\0';
-    pszDriverInfo[nChar]    = '\0';
-
-    /*
-        Call ODBC installer to do the work.
-    */    
-    if ( !SQLInstallDriverEx( pszDriverInfo, 0, szLoc, FILENAME_MAX, &nLocLen, ODBC_INSTALL_COMPLETE, &nUsageCount ) )
-    {
-        doPrintInstallerError( __FILE__, __LINE__ );
-        fprintf( stderr, "[%s][%d][ERROR] Failed to register driver\n", __FILE__, __LINE__ );
-        free( pszDriverInfo );
-        return 0;
-    }
-
-    printf( "[%s][%d][INFO] Driver registered. Usage count is %d. Location \"%s\" \n", __FILE__, __LINE__, (int)nUsageCount, szLoc );
-    free( pszDriverInfo );
-
+  /* allocate handle and set ODBC API v3 */
+  if ((rc= SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE,
+                          &env)) != SQL_SUCCESS)
+  {
+    fprintf(stderr, "[ERROR] Failed to allocate env handle\n");
     return 1;
-}
+  }
 
-
-int doAddDataSource()
-{
-    int bReturn = 1;
-
-    switch ( cObjectSub )
-    {
-        case '\0':
-            return doConfigDataSource( ODBC_ADD_DSN );
-        case 'u':
-            if ( !SQLSetConfigMode( (UWORD)ODBC_USER_DSN ) )
-            {
-                doPrintInstallerError( __FILE__, __LINE__ );
-                fprintf( stderr, "[%s][%d][ERROR] Failed to set config mode.\n", __FILE__, __LINE__ );
-                return 0;
-            }
-            bReturn = doConfigDataSource( ODBC_ADD_DSN );
-            SQLSetConfigMode( (UWORD)ODBC_BOTH_DSN );
-            break;
-        case 's':
-            if ( !SQLSetConfigMode( (UWORD)ODBC_SYSTEM_DSN ) )
-            {
-                doPrintInstallerError( __FILE__, __LINE__ );
-                fprintf( stderr, "[%s][%d][ERROR] Failed to set config mode.\n", __FILE__, __LINE__ );
-                return 0;
-            }
-            bReturn = doConfigDataSource( ODBC_ADD_DSN );
-            SQLSetConfigMode( (UWORD)ODBC_BOTH_DSN );
-            break;
-        default:
-            fprintf( stderr, "[%s][%d][ERROR] Missing or invalid object sub-type specified.\n", __FILE__, __LINE__ );
-            return 0;
-    }
-
-    return bReturn;
-}
-
-int doEdit()
-{
-    switch ( cObject )
-    {
-        case 'd':
-            return doEditDriver();
-        case 's':
-            return doEditDataSource();
-        default:
-            fprintf( stderr, "[%s][%d][ERROR] Missing or invalid object type specified.\n", __FILE__, __LINE__ );
-            return 0;
-    }
-}
-
-int doEditDriver()
-{
+  if ((rc= SQLSetEnvAttr(env, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC3,
+                         SQL_IS_INTEGER)) != SQL_SUCCESS)
+  {
+    print_odbc_error(env, SQL_HANDLE_ENV);
+    SQLFreeHandle(SQL_HANDLE_ENV, env);
     return 1;
-}
+  }
 
-int doEditDataSource()
-{
-    int bReturn = 1;
+  /* retrieve and print data source */
+  while ((rc= SQLDataSources(env, dir, name, 256, NULL, description,
+                             256, NULL)) == SQL_SUCCESS)
+  {
+    printf("%-20s - %s\n", name, description);
+    dir= SQL_FETCH_NEXT;
+  }
 
-    switch ( cObjectSub )
-    {
-        case '\0':
-            return doConfigDataSource( ODBC_CONFIG_DSN );
-        case 'u':
-            if ( !SQLSetConfigMode( ODBC_USER_DSN ) )
-            {
-                doPrintInstallerError( __FILE__, __LINE__ );
-                fprintf( stderr, "[%s][%d][ERROR] Failed to set config mode.\n", __FILE__, __LINE__ );
-                return 0;
-            }
-            bReturn = doConfigDataSource( ODBC_CONFIG_DSN );
-            SQLSetConfigMode( ODBC_BOTH_DSN );
-            break;
-        case 's':
-            if ( !SQLSetConfigMode( ODBC_SYSTEM_DSN ) )
-            {
-                doPrintInstallerError( __FILE__, __LINE__ );
-                fprintf( stderr, "[%s][%d][ERROR] Failed to set config mode.\n", __FILE__, __LINE__ );
-                return 0;
-            }
-            bReturn = doConfigDataSource( ODBC_CONFIG_DSN );
-            SQLSetConfigMode( ODBC_BOTH_DSN );
-            break;
-        default:
-            fprintf( stderr, "[%s][%d][ERROR] Invalid object sub-type specified.\n", __FILE__, __LINE__ );
-            return 0;
-    }
-
-    return bReturn;
-}
-
-int doRemove()
-{
-    switch ( cObject )
-    {
-        case 'd':
-            return doRemoveDriver();
-        case 's':
-            return doRemoveDataSource();
-        default:
-            fprintf( stderr, "[%s][%d][ERROR] Missing or invalid object type specified.\n", __FILE__, __LINE__ );
-            return 0;
-    }
-}
-
-/*!
-  \brief  Deregister the driver.
-
-      Simply removes driver from the list of known ODBC 
-      drivers - does not remove any files.
-*/
-int doRemoveDriver()
-{
-    DWORD nUsageCount;
-    BOOL  bRemoveDSNs = FALSE;
-
-    if ( !pszName )
-    {
-        fprintf( stderr, "[%s][%d][ERROR] Please provide driver name.\n", __FILE__, __LINE__ );
-        return 0;
-    }
-
-    if ( !SQLRemoveDriver( pszName, bRemoveDSNs, &nUsageCount ) )
-    {
-        doPrintInstallerError( __FILE__, __LINE__ );
-        fprintf( stderr, "[%s][%d][ERROR] Failed to deregister driver.\n", __FILE__, __LINE__ );
-        return 0;
-    }
-
-    printf( "[%s][%d][INFO] Driver deregistered. Usage count is %d.\n", __FILE__, __LINE__, (int)nUsageCount );
+  if (rc != SQL_NO_DATA)
+  {
+    print_odbc_error(env, SQL_HANDLE_ENV);
+    SQLFreeHandle(SQL_HANDLE_ENV, env);
     return 1;
+  }
+
+  SQLFreeHandle(SQL_HANDLE_ENV, env);
+
+  return 0;
 }
 
-int doRemoveDataSource()
+
+/*
+ * Handler for "add data source" command (-s -a -n drivername -t attrs)
+ */
+int add_datasource(DataSource *ds, const SQLWCHAR *attrs)
 {
-    int bReturn = 1;
+  Driver *driver= NULL;
+  int rc= 1;
 
-    switch ( cObjectSub )
-    {
-        case '\0':
-            bReturn = doRemoveDataSourceName();
-            break;
-        case 'u':
-            if ( !SQLSetConfigMode( ODBC_USER_DSN ) )
-            {
-                doPrintInstallerError( __FILE__, __LINE__ );
-                fprintf( stderr, "[%s][%d][ERROR] Failed to set config mode.\n", __FILE__, __LINE__ );
-                return 0;
-            }
-            bReturn = doRemoveDataSourceName();
-            SQLSetConfigMode( ODBC_BOTH_DSN );
-        case 's':
-            if ( !SQLSetConfigMode( ODBC_SYSTEM_DSN ) )
-            {
-                doPrintInstallerError( __FILE__, __LINE__ );
-                fprintf( stderr, "[%s][%d][ERROR] Failed to set config mode.\n", __FILE__, __LINE__ );
-                return 0;
-            }
-            bReturn = doRemoveDataSourceName();
-            SQLSetConfigMode( ODBC_BOTH_DSN );
-        default:
-            fprintf( stderr, "[%s][%d][ERROR] Missing or invalid object sub-type specified.\n", __FILE__, __LINE__ );
-            return 0;
-    }
+  /* read datasource object from attributes */
+  if (ds_from_kvpair(ds, attrs, ';'))
+  {
+    fprintf(stderr,
+            "[ERROR] Could not parse key-value pair attribute string\n");
+    goto end;
+  }
 
-    return bReturn;
+  /* validate */
+  if (!ds->driver)
+  {
+    fprintf(stderr, "[ERROR] Driver must be specified for a data source\n");
+    goto end;
+  }
+
+  /* Lookup driver filename and add to DataSource */
+  driver= driver_new();
+  memcpy(driver->name, ds->driver,
+         (sqlwcharlen(ds->driver) + 1) * sizeof(SQLWCHAR));
+  if (driver_lookup(driver))
+  {
+    fprintf(stderr, "[ERROR] Cannot locate driver\n");
+    goto end;
+  }
+  ds_set_strattr(&ds->driver, driver->lib);
+
+  /* Add it */
+  if (ds_add(ds))
+  {
+    print_installer_error();
+    fprintf(stderr,
+            "[ERROR] Data source entry failed, remove or try again\n");
+    goto end;
+  }
+
+  printf("Success\n");
+  rc= 0;
+
+end:
+  x_free(driver);
+  return rc;
 }
 
-/*!
-    \brief  Remove data source name from ODBC system information.
-*/
-int doRemoveDataSourceName()
-{
-    if ( SQLRemoveDSNFromIni( pszName ) == FALSE )
-    {
-        doPrintInstallerError( __FILE__, __LINE__ );
-        fprintf( stderr, "[%s][%d][ERROR] Request failed.\n", __FILE__, __LINE__ );
-        return 0;
-    }
 
+/*
+ * Handler for "remove data source" command (-s -r -n drivername)
+ */
+int remove_datasource(DataSource *ds)
+{
+  /*
+     First check that it exists, because SQLRemoveDSNFromIni
+     returns true, even if it doesn't.
+   */
+  if (ds_exists(ds->name))
+  {
+    fprintf(stderr, "[ERROR] Data source doesn't exist\n");
     return 1;
-}
+  }
 
-#if defined(_DIRECT_)
-/*!
-    \brief  Call drivers ConfigDSN when we are linked directly to driver.
-
-    \note   This needs to be updated to reflect recent code changes.
-*/
-int doConfigDataSource( WORD nRequest )
-{
-    char  szAttributes[nDataSourceNameAttributesLength + strlen(pszDataSourceName) + 5];
-
-    sprintf( szAttributes, "DSN=%s", pszDataSourceName );
-    memcpy( &(szAttributes[strlen(szAttributes) + 1]), pszDataSourceNameAttributes, nDataSourceNameAttributesLength ); 
-    if ( !ConfigDSN( (HWND)bGUI /* fake window handle */, nRequest, pszDriverName, szAttributes ) )
-    {
-        doPrintInstallerError( __FILE__, __LINE__ );
-        return 0;
-    }
-
+  if (SQLRemoveDSNFromIniW(ds->name) != TRUE)
+  {
+    print_installer_error();
     return 1;
+  }
+
+  printf("Success\n");
+
+  return 0;
 }
-#else
-/*!
-    \brief  Call drivers ConfigDSN without going through the DM.
-*/
-int doConfigDataSource( WORD nRequest )
+
+
+/*
+ * Handle driver actions. We setup a data source object to be used
+ * for all actions. Config/scope set+restore is wrapped around the
+ * action.
+ */
+int handle_datasource_action()
 {
-    int                     bReturn             = FALSE; 
-    MYODBCUTIL_DRIVER *     pDriver             = MYODBCUtilAllocDriver();
-    MYODBCUTIL_DATASOURCE * pDataSourceGiven    = MYODBCUtilAllocDataSource( MYODBCUTIL_DATASOURCE_MODE_DSN_VIEW );
-    MYODBCUTIL_DATASOURCE * pDataSource         = MYODBCUtilAllocDataSource( MYODBCUTIL_DATASOURCE_MODE_DSN_VIEW );
-    ConfigDSNFunctor        pFunc;
-#if defined(WIN32)
-    HINSTANCE               hLib                = 0;
-#else
-    void *                  hLib                = 0;
-    void *                  hLibDrv             = 0;
-#endif
-    char                    szDriver[1024];
-    char                    szAttributes[1024];
-    
-    /* sanity check */
-    if ( !pszAttributes )
-    {
-        fprintf( stderr, "[%s][%d][ERROR] Please provide an attributes string.\n", __FILE__, __LINE__ );
-        goto doConfigDataSourceExit2;   
-    }
+  int rc= 0;
+  UWORD config_mode= config_set(scope);
+  DataSource *ds= ds_new();
 
-    /* parse given attribute string */
-    if ( !MYODBCUtilReadDataSourceStr( pDataSourceGiven, MYODBCUTIL_DELIM_SEMI, pszAttributes ) )
+  /* check name is given if needed */
+  switch (action)
+  {
+  case ACTION_ADD:
+  case ACTION_REMOVE:
+    if (!name)
     {
-        fprintf( stderr, "[%s][%d][ERROR] Malformed attribute string (%s)\n", __FILE__, __LINE__, pszAttributes );
-        goto doConfigDataSourceExit2;
+      fprintf(stderr, "[ERROR] Name missing to add/remove data source\n");
+      rc= 1;
+      goto end;
     }
+  }
 
-    /* check that we have min attributes for request */
-    if ( nRequest == ODBC_ADD_DSN )
+  /* set name if given */
+  if (name)
+    ds_set_strattr(&ds->name, wname);
+
+  /* perform given action */
+  switch (action)
+  {
+  case ACTION_LIST:
+    if (name)
+      rc= list_datasource_details(ds);
+    else
+      rc= list_datasources();
+    break;
+  case ACTION_ADD:
+    if (scope == ODBC_BOTH_DSN)
     {
-        if ( pDataSourceGiven->pszDRIVER )
-        {
-            /* pull driver from attributes as we can not have it in there for ConfigDSN() */
-            sprintf( szDriver, "%s", pDataSourceGiven->pszDRIVER );
-            _global_free( pDataSourceGiven->pszDRIVER );
-            pDataSourceGiven->pszDRIVER = NULL;
-        }
-        else
-        {
-            fprintf( stderr, "[%s][%d][WARNING] DRIVER attribute not provided - using %s.\n", __FILE__, __LINE__, MYODBCINST_DRIVER_NAME );
-            sprintf( szDriver, "%s", MYODBCINST_DRIVER_NAME );
-        }
+      fprintf(stderr, "[ERROR] Adding data source must be either "
+                      "user or system scope (not both)\n");
+      rc= 1;
+    }
+    else if (!attrstr)
+    {
+      fprintf(stderr, "[ERROR] Attribute string missing to add data source\n");
+      rc= 1;
     }
     else
     {
-        if ( !pDataSourceGiven->pszDSN )
-        {
-            fprintf( stderr, "[%s][%d][ERROR] Please provide DSN attribute.\n", __FILE__, __LINE__ );
-            goto doConfigDataSourceExit2;
-        }
-
-        /* get driver name for given dsn */
-        if ( !MYODBCUtilReadDataSource( pDataSource, pDataSourceGiven->pszDSN ) )
-        {
-            fprintf( stderr, "[%s][%d][ERROR] Could not load data source name info (%s)\n", __FILE__, __LINE__, pDataSourceGiven->pszDSN );
-            goto doConfigDataSourceExit2;
-        }
-
-        sprintf( szDriver, "%s", pDataSource->pszDRIVER );
+      rc= add_datasource(ds, wattrs);
     }
+    break;
+  case ACTION_REMOVE:
+    rc= remove_datasource(ds);
+    break;
+  }
 
-    /* get setup library name */
-    if ( !MYODBCUtilReadDriver( pDriver, szDriver, NULL ) )
-    {
-        fprintf( stderr, "[%s][%d][ERROR] Could not load driver info (%s)\n", __FILE__, __LINE__, szDriver );
-        goto doConfigDataSourceExit2;   
-    }
-
-    /* create a NULL delimited set of attributes for ConfigDSN() call */
-    MYODBCUtilWriteDataSourceStr( pDataSourceGiven, MYODBCUTIL_DELIM_NULL, szAttributes, sizeof(szAttributes) - 1 );  
-
-#if defined(WIN32)
-    /* load it */
-    hLib = LoadLibrary( pDriver->pszSETUP );
-    if ( !hLib )
-    {
-        doPrintLastErrorString();
-        fprintf( stderr, "[%s][%d][ERROR] Could not load driver setup library (%s).\n", __FILE__, __LINE__, pDriver->pszSETUP );
-        goto doConfigDataSourceExit2;   
-    }
-
-    /* lookup ConfigDSN */
-    pFunc = (ConfigDSNFunctor) GetProcAddress( hLib, "ConfigDSN" );
-    if ( !pFunc )
-    {
-        doPrintLastErrorString();
-        fprintf( stderr, "[%s][%d][ERROR] Could not find ConfigDSN in (%s).\n", __FILE__, __LINE__, pDriver->pszSETUP );
-        goto doConfigDataSourceExit1;
-    }
-#else
-    /* load it */
-    lt_dlinit();
-
-    if ( !(hLibDrv = lt_dlopen( pDriver->pszDRIVER )) )
-    {
-        fprintf( stderr, "[%s][%d][ERROR] Could not load driver library (%s). Error is %s\n", __FILE__, __LINE__, pDriver->pszDRIVER, lt_dlerror() );
-        goto doConfigDataSourceExit2;   
-    }
-
-    if ( !(hLib = lt_dlopen( pDriver->pszSETUP )) )
-    {
-        fprintf( stderr, "[%s][%d][ERROR] Could not load driver setup library (%s). Error is %s\n", __FILE__, __LINE__, pDriver->pszSETUP, lt_dlerror() );
-        goto doConfigDataSourceExit2;   
-    }
-
-    /* lookup ConfigDSN */
-    pFunc = (ConfigDSNFunctor) lt_dlsym( hLib, "ConfigDSN" );
-    if ( !pFunc )
-    {
-        fprintf( stderr, "[%s][%d][ERROR] Could not find ConfigDSN in (%s). Error is %s\n", __FILE__, __LINE__, pDriver->pszSETUP, lt_dlerror() );
-        goto doConfigDataSourceExit1;   
-    }
-#endif
-
-    /* make call */
-    /*!
-        \note
-
-        A fake window handle seems to work for platforms other than Mac OS X :) It will not be
-        used as a window handle - just as a flag to get the GUI.
-    */    
-    if ( !pFunc( (HWND)nWnd /* fake window handle */, nRequest, szDriver, szAttributes ) )
-    {
-        doPrintInstallerError( __FILE__, __LINE__ );
-        goto doConfigDataSourceExit1;
-    }
-
-    bReturn = 1;
-
-doConfigDataSourceExit1:
-#if defined(WIN32)
-    FreeLibrary( hLib );
-#else
-    lt_dlclose( hLibDrv );
-    lt_dlclose( hLib );
-#endif
-
-doConfigDataSourceExit2:
-    MYODBCUtilFreeDataSource( pDataSource );
-    MYODBCUtilFreeDataSource( pDataSourceGiven );
-    MYODBCUtilFreeDriver( pDriver );
-
-    return bReturn;
+end:
+  ds_delete(ds);
+  config_set(config_mode);
+  return rc;
 }
-#endif
+
+
+/*
+ * Entry point, parse args and do first set of validation.
+ */
+int main(int argc, char **argv)
+{
+  char *arg;
+  int i;
+  SQLINTEGER convlen;
+
+  /* minimum number of args to do anything useful */
+  if (argc < 3)
+  {
+    fprintf(stderr, "[ERROR] Not enough arguments given\n");
+    main_usage();
+    return 1;
+  }
+
+  /* parse args */
+  for(i= 1; i < argc; ++i)
+  {
+    arg= argv[i];
+    if (*arg == '-')
+      arg++;
+
+    /* we should be left with a single character option (except scope)
+     * all strings are skipped by the respective option below */
+    if (*arg != OPT_SCOPE && *(arg + 1))
+    {
+      fprintf(stderr, "[ERROR] Invalid command line option: %s\n", arg);
+      return 1;
+    }
+
+    switch (*arg)
+    {
+    case OBJ_DRIVER:
+    case OBJ_DATASOURCE:
+      /* make sure we haven't already assigned the object */
+      if (obj)
+      {
+        object_usage();
+        return 1;
+      }
+      obj= *arg;
+      break;
+    case ACTION_LIST:
+    case ACTION_ADD:
+    case ACTION_REMOVE:
+      if (action)
+      {
+        action_usage();
+        return 1;
+      }
+      action= *arg;
+      break;
+    case OPT_NAME:
+      if (i + 1 == argc || *argv[i + 1] == '-')
+      {
+        fprintf(stderr, "[ERROR] Missing name\n");
+        return 1;
+      }
+      name= argv[++i];
+      break;
+    case OPT_ATTR:
+      if (i + 1 == argc || *argv[i + 1] == '-')
+      {
+        fprintf(stderr, "[ERROR] Missing attribute string\n");
+        return 1;
+      }
+      attrstr= argv[++i];
+      break;
+    case OPT_SCOPE:
+      /* convert to integer */
+      scope= *(++arg) - '0';
+      if (scope < 0 || scope > 2 || *(arg + 1) /* another char exists */)
+      {
+        fprintf(stderr, "[ERROR] Invalid scope: %s\n", arg);
+        return 1;
+      }
+      break;
+    case 'h':
+      /* print usage if -h is given anywhere */
+      main_usage();
+      return 1;
+    default:
+      fprintf(stderr, "[ERROR] Invalid command line option: %s\n", arg);
+      return 1;
+    }
+  }
+
+  if (!action)
+  {
+    action_usage();
+    return 1;
+  }
+
+  /* init libmysqlclient */
+  my_init();
+  utf8_charset_info= get_charset_by_csname("utf8", MYF(MY_CS_PRIMARY),
+                                           MYF(0));
+
+  /* convert to SQLWCHAR for installer API */
+  convlen= SQL_NTS;
+  if (name && !(wname= sqlchar_as_sqlwchar(default_charset_info,
+                                           name, &convlen, NULL)))
+  {
+    fprintf(stderr, "[ERROR] Name is invalid\n");
+    return 1;
+  }
+
+  convlen= SQL_NTS;
+  if (attrstr && !(wattrs= sqlchar_as_sqlwchar(default_charset_info,
+                                               attrstr, &convlen, NULL)))
+  {
+    fprintf(stderr, "[ERROR] Attribute string is invalid\n");
+    return 1;
+  }
+
+  /* handle appropriate action */
+  switch (obj)
+  {
+  case OBJ_DRIVER:
+    return handle_driver_action();
+  case OBJ_DATASOURCE:
+    return handle_datasource_action();
+  default:
+    object_usage();
+    return 1;
+  }
+}
 

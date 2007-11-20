@@ -80,17 +80,6 @@ mkdir mysql-connector-odbc-%1-win-src\installer
 copy installer\*.pro mysql-connector-odbc-%1-win-src\installer
 copy installer\*.c mysql-connector-odbc-%1-win-src\installer
 
-REM monitor
-mkdir mysql-connector-odbc-%1-win-src\monitor 
-copy monitor\*.pro mysql-connector-odbc-%1-win-src\monitor
-copy monitor\*.c mysql-connector-odbc-%1-win-src\monitor
-copy monitor\*.h mysql-connector-odbc-%1-win-src\monitor
-
-REM dsn-editor
-mkdir mysql-connector-odbc-%1-win-src\dsn-editor 
-copy dsn-editor\*.pro mysql-connector-odbc-%1-win-src\dsn-editor
-copy dsn-editor\*.cpp mysql-connector-odbc-%1-win-src\dsn-editor
-
 REM driver
 mkdir mysql-connector-odbc-%1-win-src\driver
 copy driver\*.pro mysql-connector-odbc-%1-win-src\driver

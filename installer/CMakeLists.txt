@@ -20,8 +20,12 @@
 
 ##########################################################################
 
-ADD_EXECUTABLE(myodbc3i myodbc3i.c)
-TARGET_LINK_LIBRARIES(myodbc3i myodbc3u ${ODBCLIB} ${ODBCINSTLIB})
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/util)
 
-INSTALL(TARGETS myodbc3i DESTINATION bin)
+ADD_EXECUTABLE(myodbc-installer myodbc3i.c)
+TARGET_LINK_LIBRARIES(myodbc-installer myodbc3u ${ODBCLIB} ${ODBCINSTLIB}
+		${MYSQL_CLIENT_LIBS})
+
+INSTALL(TARGETS myodbc-installer DESTINATION bin)
 

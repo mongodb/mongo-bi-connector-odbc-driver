@@ -39,9 +39,7 @@ SUBDIRS = \
 	util \
 	driver \
 	setup \
-	dsn-editor \
 	installer \
-	monitor \
 	@myodbc_test_dir@ \
 	scripts \
 	dltest
@@ -50,9 +48,7 @@ DIST_SUBDIRS = \
 	util \
 	driver \
 	setup \
-	dsn-editor \
 	installer \
-	monitor \
 	test \
 	scripts \
 	dltest
@@ -103,14 +99,10 @@ EXTRA_DIST = \
 	MYODBC_MYSQL.h \
 	MYODBC_ODBC.h \
 	mysql.bmp \
-	Build.sh \
-	Build.bat \
 	CreateBinaryMsi.bat \
 	CreateBinaryZip.bat \
 	CreateSourceZip.bat \
-	RemoveMakefiles.sh \
 	Install.bat \
-	PostBuildTest.bat \
 	Uninstall.bat \
 	Upgrade.bat \
 	CMakeLists.txt \

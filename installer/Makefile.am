@@ -20,10 +20,12 @@ if MYODBCINST
 
 INCLUDES = -I$(top_srcdir)
 
-bin_PROGRAMS = myodbc3i
+bin_PROGRAMS = myodbc-installer
 myodbc3i_SOURCES = myodbc3i.c
 myodbc3i_LDADD        = ../util/libmyodbc3u.la @LTDL_LIB@
 myodbc3i_DEPENDENCIES = ../util/libmyodbc3u.la
+
+INCLUDES=-I.. -I../util
 
 # LDFLAGS=@EXTRA_LDFLAGS@
 

@@ -130,39 +130,21 @@ dnl [ AC_MSG_ERROR([Could not use libtool "libltdl" library, please check config
 
 ###################################################################
 #
-# --enable-myodbc3i
+# --enable-myodbc-installer
 #
 ###################################################################
-AC_ARG_ENABLE( myodbc3i,
-[AC_HELP_STRING([--enable-myodbc3i],[Build myodbc installer command-line interface [default=yes]])],
+AC_ARG_ENABLE( myodbc-installer,
+[AC_HELP_STRING([--enable-myodbc-installer],[Build myodbc installer command-line interface [default=yes]])],
 [ case "${enableval}" in
-    yes) myodbc3i=true ;;
-    no) myodbc3i=false ;;
-    *) AC_MSG_ERROR(bad value ${enableval} for --enable-myodbc3i) ;;
-    esac],[myodbc3i=true])
+    yes) myodbc_installer=true ;;
+    no) myodbc_installer=false ;;
+    *) AC_MSG_ERROR(bad value ${enableval} for --enable-myodbc-installer) ;;
+    esac],[myodbc_installer=true])
 #
 # TO DO: Ensure we have libltdl.
 #
 
-AM_CONDITIONAL(MYODBCINST, test "x$myodbc3i" = "xtrue" )
-
-###################################################################
-#
-# --enable-myodbc3m
-#
-###################################################################
-AC_ARG_ENABLE( myodbc3m,
-[AC_HELP_STRING([--enable-myodbc3m],[Build myodbc command-line shell [default=yes]])],
-[ case "${enableval}" in
-    yes) myodbc3m=true ;;
-    no) myodbc3m=false ;;
-    *) AC_MSG_ERROR(bad value ${enableval} for --enable-myodbc3m) ;;
-    esac],[myodbc3m=true])
-#
-# TO DO: Ensure we have libltdl.
-#
-
-AM_CONDITIONAL(IMYODBC, test "x$myodbc3m" = "xtrue" )
+AM_CONDITIONAL(MYODBCINST, test "x$myodbc_installer" = "xtrue" )
 
 dnl Enable system-specific compiler flags
 case "$target_os" in
@@ -835,9 +817,7 @@ AC_OUTPUT([
   util/Makefile
   driver/Makefile
   setup/Makefile
-  dsn-editor/Makefile
   installer/Makefile
-  monitor/Makefile
   test/Makefile
   scripts/Makefile
   dltest/Makefile

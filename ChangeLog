@@ -29,6 +29,9 @@ Guffert TODO
     of DSN information. The new library, which was originally a part of
     Connector/ODBC 5.0, supports Unicode option values.
   * Implement native Windows setup library
+  * Removed monitor (myodbc3m) and dsn-editor (myodbc3c).
+  * Replaced myodbc3i (now myodbc-installer) with Connector/ODBC 5.0
+    version.
 
   Bugs fixed:
   * SQL statements limited to 64k. (Bug #30983)

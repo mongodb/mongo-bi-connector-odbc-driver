@@ -23,11 +23,13 @@
 /*
  * Installer wrapper implementations.
  *
- * How to add a data-source option:
+ * How to add a data-source parameter:
  *    Search for DS_PARAM, and follow the code around it
  *    Add an extra field to the DataSource struct (installer.h)
  *    Add a default value in ds_new()
  *    Initialize/destroy them in ds_new/ds_delete
+ *    Print the field in myodbc3i.c
+ *    Add to the configuration GUIs
  *    
  */
 #include "stringutil.h"
@@ -362,19 +364,18 @@ int driver_from_kvpair_semicolon(Driver *driver, const SQLWCHAR *attrs)
  */
 int driver_to_kvpair_null(Driver *driver, SQLWCHAR *attrs, size_t attrslen)
 {
+  *attrs= 0;
   attrs+= sqlwcharncat2(attrs, driver->name, &attrslen);
 
   /* append NULL-separator */
-  *(attrs++)= 0;
-  attrslen--;
+  APPEND_SQLWCHAR(attrs, attrslen, 0);
 
   attrs+= sqlwcharncat2(attrs, W_DRIVER, &attrslen);
   APPEND_SQLWCHAR(attrs, attrslen, '=');
   attrs+= sqlwcharncat2(attrs, driver->lib, &attrslen);
 
   /* append NULL-separator */
-  *(attrs++)= 0;
-  attrslen--;
+  APPEND_SQLWCHAR(attrs, attrslen, 0);
 
   if (*driver->setup_lib)
   {
@@ -383,8 +384,7 @@ int driver_to_kvpair_null(Driver *driver, SQLWCHAR *attrs, size_t attrslen)
     attrs+= sqlwcharncat2(attrs, driver->setup_lib, &attrslen);
 
     /* append NULL-separator */
-    *(attrs++)= 0;
-    attrslen--;
+    APPEND_SQLWCHAR(attrs, attrslen, 0);
   }
   if (attrslen--)
     *attrs= 0;

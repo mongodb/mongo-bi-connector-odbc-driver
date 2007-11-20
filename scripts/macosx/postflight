@@ -74,10 +74,10 @@ fi
 # REGISTER THE DRIVER
 # ----------------------------------------------------------------------
 echo "Registring driver..."
-$bindir/myodbc3i -a -ds -t"MySQL ODBC 5.1 Driver;Driver=$libdir/libmyodbc5.so;Setup=$libdir/libmyodbc3S.so;" -w0
+$bindir/myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "Driver=$libdir/libmyodbc5.so;Setup=$libdir/libmyodbc3S.so;"
 
 # ----------------------------------------------------------------------
 # CREATE A SAMPLE DSN
 # ----------------------------------------------------------------------
 echo "Ensuring sample data source name (myodbc) exists..."
-$bindir/myodbc3i -a -s -t"DSN=myodbc;Driver=MySQL ODBC 5.1 Driver;SERVER=localhost;" -w0
+$bindir/myodbc-installer -a -s -t "DSN=myodbc;Driver=MySQL ODBC 5.1 Driver;SERVER=localhost;"

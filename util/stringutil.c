@@ -462,7 +462,8 @@ outp:
     *used_bytes+= from_cnvres;
     *used_chars+= 1;
   }
-  *errors+= error_count;
+  if (errors)
+    *errors+= error_count;
 
   return (uint32) (to - to_start);
 }

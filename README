@@ -86,28 +86,10 @@ Installer (myodbc3i.exe)
         Invoke myodbc3i, in a command shell and without options, to 
         get help on its use.
 
-Monitor (myodbc3m.exe)
-
-        This command-line utility can be used to; send statements to the
-        MySQL server and to view the results. It can provide output in 
-        several different formats - making it useful as a batch processing
-        tool but it was developed to test a connection and for problem
-        solving.
-                
-        Invoke myodbc3m, in a command shell and without options, to 
-        get help on its use.
-
 Library Loading Tester (dltest.exe)
 
         This command-line utility is useful fo debugging problems related
         to loading a library and resolving symbols in it.
-
-Data Source Name Editor (myodbc3c.exe, no Windows version in ODBC 5.1)
-
-        This is a GUI application designed to be invoked from the 
-        command-line. It allows a GUI to be invoked to add/edit a DSN. It
-        is not useful on all platforms but on most platforms it can be a
-        great aid during an install process.
 
 Connector/ODBC SDK
 ---------------------------------------------------------------

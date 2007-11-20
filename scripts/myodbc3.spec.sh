@@ -132,11 +132,11 @@ rm -v $RPM_BUILD_ROOT%{_datadir}/mysql-connector-odbc/{ChangeLog,README,README.d
 # ----------------------------------------------------------------------
 
 %post 
-myodbc3i -a -d -t"MySQL ODBC 5.1 Driver;DRIVER=%{_libdir}/libmyodbc5.so"
+myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5.so"
 
 %post setup
-myodbc3i -r -d -n"MySQL ODBC 5.1 Driver"
-myodbc3i -a -d -t"MySQL ODBC 5.1 Driver;DRIVER=%{_libdir}/libmyodbc5.so;SETUP=%{_libdir}/libmyodbc3S.so"
+myodbc-installer -r -d -n "MySQL ODBC 5.1 Driver"
+myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5.so;SETUP=%{_libdir}/libmyodbc3S.so"
 
 # ----------------------------------------------------------------------
 # DEREGISTER DRIVER 
@@ -144,12 +144,12 @@ myodbc3i -a -d -t"MySQL ODBC 5.1 Driver;DRIVER=%{_libdir}/libmyodbc5.so;SETUP=%{
 
 # Removing the driver package, we simply orphan any related DSNs
 %preun
-myodbc3i -r -d -n"MySQL ODBC 5.1 Driver"
+myodbc-installer -r -d -n "MySQL ODBC 5.1 Driver"
 
 # Removing the setup RPM, downgrade the registration
 %preun setup
-myodbc3i -r -d -n"MySQL ODBC 5.1 Driver"
-myodbc3i -a -d -t"MySQL ODBC 5.1 Driver;DRIVER=%{_libdir}/libmyodbc5.so"
+myodbc-installer -r -d -n "MySQL ODBC 5.1 Driver"
+myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5.so"
 
 ##############################################################################
 #
@@ -159,7 +159,7 @@ myodbc3i -a -d -t"MySQL ODBC 5.1 Driver;DRIVER=%{_libdir}/libmyodbc5.so"
 
 %files 
 %defattr(-,root,root)
-%{_bindir}/myodbc3i
+%{_bindir}/myodbc-installer
 %{_bindir}/myodbc3m
 %{_libdir}/libmyodbc5.*
 %{_libdir}/libmyodbc5-*
