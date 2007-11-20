@@ -54,9 +54,10 @@
 #define MYLOG_DBC_QUERY(A,B) {if((A)->flag & FLAG_LOG_QUERY) \
                query_print((A)->query_log,(char*) B);}
 
-
-/** @todo Need to make this version-aware so we get 4-byte UTF-8 in 5.2.  */
-#define UTF8_CHARSET_NUMBER 33
+/* A few character sets we care about. */
+#define ASCII_CHARSET_NUMBER  11
+#define BINARY_CHARSET_NUMBER 63
+#define UTF8_CHARSET_NUMBER   33
 
 /* Wrappers to hide differences in client library versions. */
 #if MYSQL_VERSION_ID >= 40100

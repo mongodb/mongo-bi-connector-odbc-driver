@@ -677,7 +677,7 @@ MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
   case SQL_DESC_OCTET_LENGTH:
     /* Need to add 1 for \0 on character fields. */
     *num_attr= get_transfer_octet_length(stmt, field) +
-      test(field->charsetnr != 63);
+      test(field->charsetnr != BINARY_CHARSET_NUMBER);
     break;
 
   case SQL_DESC_LITERAL_SUFFIX:
@@ -689,7 +689,7 @@ MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
     case MYSQL_TYPE_BLOB:
     case MYSQL_TYPE_VAR_STRING:
     case MYSQL_TYPE_STRING:
-      if (field->charsetnr == 63)
+      if (field->charsetnr == BINARY_CHARSET_NUMBER)
       {
         if (attrib == SQL_DESC_LITERAL_PREFIX)
           *char_attr= (SQLCHAR *)"0x";

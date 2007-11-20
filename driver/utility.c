@@ -804,7 +804,7 @@ SQLRETURN copy_binhex_result(STMT *stmt,
 */
 SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 {
-  my_bool field_is_binary= test(field->charsetnr == 63);
+  my_bool field_is_binary= test(field->charsetnr == BINARY_CHARSET_NUMBER);
 
   switch (field->type) {
   case MYSQL_TYPE_BIT:
@@ -1073,10 +1073,7 @@ SQLLEN get_column_size(STMT *stmt __attribute__((unused)), MYSQL_FIELD *field,
   case MYSQL_TYPE_LONG_BLOB:
   case MYSQL_TYPE_BLOB:
   case MYSQL_TYPE_GEOMETRY:
-    if (field->charsetnr == 63)
-      return length;
-    else
-      return length;
+    return length;
   }
 
   return SQL_NO_TOTAL;
@@ -1204,7 +1201,7 @@ SQLLEN get_transfer_octet_length(STMT *stmt __attribute__((unused)),
   case MYSQL_TYPE_LONG_BLOB:
   case MYSQL_TYPE_BLOB:
   case MYSQL_TYPE_GEOMETRY:
-    if (field->charsetnr == 63)
+    if (field->charsetnr == BINARY_CHARSET_NUMBER)
       return length;
     if (field->charsetnr != stmt->dbc->ansi_charset_info->number)
       return length * stmt->dbc->ansi_charset_info->mbmaxlen;
@@ -1292,7 +1289,7 @@ SQLLEN get_display_size(STMT *stmt __attribute__((unused)),MYSQL_FIELD *field)
   case MYSQL_TYPE_LONG_BLOB:
   case MYSQL_TYPE_BLOB:
   case MYSQL_TYPE_GEOMETRY:
-    if (field->charsetnr == 63)
+    if (field->charsetnr == BINARY_CHARSET_NUMBER)
       return field->length * 2;
     else
       return field->length / mbmaxlen;
