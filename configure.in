@@ -278,7 +278,7 @@ AC_ARG_WITH(iODBC,
 AC_ARG_WITH(unixODBC,
             [  --with-unixODBC[=DIR]     Use unixODBC located in DIR],
             [
-              dm="unixODBC"
+              dm_type="unixODBC"
               dm_prefix="$withval"
             ])
 
