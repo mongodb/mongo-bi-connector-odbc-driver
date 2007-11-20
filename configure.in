@@ -266,28 +266,25 @@ fi
 AC_SUBST(MYSQL_LIB)
 AC_SUBST(MYSQL_THREADSAFE_LIB)
 
-dm=
+dm_type=
+dm_prefix="/usr"		dnl Default to /usr
 AC_ARG_WITH(iODBC,
             [  --with-iODBC[=DIR]        Use iODBC located in DIR],
             [
-              dm=iODBC
-              iODBC="$withval"
-            ],
-            [
-              iODBC="/usr"
+              dm_type="iODBC"
+              dm_prefix="$withval"
             ])
 
 AC_ARG_WITH(unixODBC,
             [  --with-unixODBC[=DIR]     Use unixODBC located in DIR],
             [
-              dm=unixODBC
-              unixODBC="$withval"
-            ],
-            [ unixODBC="/usr" ])
+              dm="unixODBC"
+              dm_prefix="$withval"
+            ])
 
-if test "x$dm" = "x"
+if test "x$dm_type" = "x"
 then
-  AC_PATH_PROG(iodbc_conf, iodbc-config, no)
+  AC_PATH_PROGS(iodbc_conf, iodbc-config, no)
   if test "x$iodbc_conf" = "xno"
   then
     AC_MSG_CHECKING(for SQL_ATTR_UNIXODBC_VERSION in sqlext.h)
@@ -295,36 +292,38 @@ then
       [AC_LANG_PROGRAM([[#include <sqlext.h>]],
                        [[printf("%d", SQL_ATTR_UNIXODBC_VERSION)]])],
       [
-       dm=unixODBC
+       dm_type="unixODBC"
        AC_MSG_RESULT(found)
       ],
       [AC_MSG_RESULT(not found)])
   else
-    dm=iODBC
+    dm_type="iODBC"
   fi
 fi
 
-if test "x$dm" = "x"
+if test "x$dm_type" = "x"
 then
   AC_MSG_ERROR(no suitable driver manager selected or found)
 fi
 
-if test "$dm" = "iODBC"
+if test "$dm_type" = "iODBC"
 then
   AC_DEFINE([USE_IODBC], [1], [use iODBC])
 
   if test "x$iodbc_conf" = "xno"
   then
-    AC_PATH_PROG(iodbc_conf, iodbc-config, no, "$iodbc/bin:$PATH")
+    AC_PATH_PROGS(iodbc_conf, iodbc-config, no, [$dm_prefix/bin:$PATH])
   fi
 
   AC_ARG_WITH(iodbc-includes,
               [  --with-iodbc-includes=DIR Find iODBC headers in DIR],
-              iodbc_includes="$withval", iodbc_includes="$iodbc/include")
+	      iodbc_includes="$withval",
+	      iodbc_includes="$dm_prefix/include")
 
   AC_ARG_WITH(iodbc-libs,
               [  --with-iodbc-libs=DIR     Find iODBC libraries in DIR],
-              iodbc_libs="$withval", iodbc_libs="$iodbc/lib")
+              iodbc_libs="$withval",
+	      iodbc_libs="$dm_prefix/lib")
 
   AC_MSG_CHECKING([for iODBC version])
   if test "$iodbc_conf" != "no"
@@ -347,7 +346,7 @@ then
 
   AC_ARG_WITH(odbc-ini,
   [  --with-odbc-ini=PATH    Location of system ODBC.INI [IODBCDIR/etc/odbc.ini]],
-  odbc_ini="$withval", odbc_ini="$iodbc/etc/odbc.ini")
+  odbc_ini="$withval", odbc_ini="$dm_prefix/etc/odbc.ini")
 
   if test "x$have_iodbcinst" != "xyes"
   then
@@ -355,7 +354,7 @@ then
                        [Define path to system ODBC.INI file])
   fi
 
-  ODBC_DM_PATH_ARG="--with-iodbc=$iodbc"
+  ODBC_DM_PATH_ARG="--with-iodbc=$dm_prefix"
   AC_SUBST(ODBC_DM_PATH_ARG)
 
 else
@@ -363,7 +362,7 @@ else
   AC_DEFINE([USE_UNIXODBC], [1], [use unixODBC])
 
   AC_MSG_CHECKING([for unixODBC version])
-  AC_PATH_PROG(isql, isql, no, ["$unixODBC/bin:$PATH"])
+  AC_PATH_PROGS(isql, isql, no, [$dm_prefix/bin:$PATH])
   if test "$isql" != "no"
   then
     unixodbc_version=`$isql --version`
@@ -375,17 +374,19 @@ else
   AC_ARG_WITH(unixODBC-includes,
               [  --with-unixODBC-includes=DIR Find unixODBC headers in DIR],
               unixODBC_includes="$withval",
-              unixODBC_includes="$unixODBC/include")
+              unixODBC_includes="$dm_prefix/include")
 
   AC_ARG_WITH(unixODBC-libs,
               [  --with-unixODBC-libs=DIR Find unixODBC libraries in DIR],
-              unixODBC_libs="$withval", unixODBC_libs="$unixODBC/lib")
+              unixODBC_libs="$withval",
+	      unixODBC_libs="$dm_prefix/lib")
 
   AC_CHECK_UNIXODBC($unixODBC_includes, $unixODBC_libs)
 
   AC_ARG_WITH(odbc-ini,
               [  --with-odbc-ini=PATH    Location of system ODBC.INI [UnixODBCDIR/etc/odbc.ini]],
-              odbc_ini="$withval", odbc_ini="$unixODBC/etc/odbc.ini")
+              odbc_ini="$withval",
+	      odbc_ini="$unixODBC/etc/odbc.ini")
 
   if test "x$have_odbcinst" != "xyes"
   then
@@ -393,7 +394,7 @@ else
                        [Define path to system ODBC.INI file])
   fi
 
-  ODBC_DM_PATH_ARG="--with-unixODBC=$unixODBC"
+  ODBC_DM_PATH_ARG="--with-unixODBC=$dm_prefix"
   AC_SUBST(ODBC_DM_PATH_ARG)
 
   ODBC_DM_LIB="-lodbc"
