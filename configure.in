@@ -268,6 +268,7 @@ AC_SUBST(MYSQL_THREADSAFE_LIB)
 
 dm_type=
 dm_prefix="/usr"		dnl Default to /usr
+iodbc_conf=
 AC_ARG_WITH(iODBC,
             [  --with-iODBC[=DIR]        Use iODBC located in DIR],
             [
@@ -284,7 +285,7 @@ AC_ARG_WITH(unixODBC,
 
 if test "x$dm_type" = "x"
 then
-  AC_PATH_PROGS(iodbc_conf, iodbc-config, no)
+  AC_PATH_PROGS(iodbc_conf, iodbc-config, no, [$dm_prefix/bin:$PATH])
   if test "x$iodbc_conf" = "xno"
   then
     AC_MSG_CHECKING(for SQL_ATTR_UNIXODBC_VERSION in sqlext.h)
@@ -310,7 +311,7 @@ if test "$dm_type" = "iODBC"
 then
   AC_DEFINE([USE_IODBC], [1], [use iODBC])
 
-  if test "x$iodbc_conf" = "xno"
+  if test "x$iodbc_conf" = "x"
   then
     AC_PATH_PROGS(iodbc_conf, iodbc-config, no, [$dm_prefix/bin:$PATH])
   fi
