@@ -96,13 +96,9 @@ BOOL INSTAPI ConfigDSNW(HWND hWnd, WORD nRequest, LPCWSTR pszDriver,
   switch (nRequest)
   {
   case ODBC_ADD_DSN:
-    /*
-       Lookup driver filename using W_DRIVER_NAME for a new DSN.
-       It's not given by the DM and needed for Test/DB list.
-    */
     driver= driver_new();
-    memcpy(driver->name, W_DRIVER_NAME,
-           (sqlwcharlen(W_DRIVER_NAME) + 1) * sizeof(SQLWCHAR));
+    memcpy(driver->name, pszDriver,
+           (sqlwcharlen(pszDriver) + 1) * sizeof(SQLWCHAR));
     if (driver_lookup(driver))
     {
       rc= FALSE;
