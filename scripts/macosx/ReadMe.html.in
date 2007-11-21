@@ -62,8 +62,7 @@
 <p>
 The command-line utility file are;
 <ul>
-  <li><code>/usr/local/bin/myodbc3i</code></li>
-  <li><code>/usr/local/bin/myodbc3m</code></li>
+  <li><code>/usr/local/bin/myodbc-installer</code></li>
 </ul>
 
 <p>
