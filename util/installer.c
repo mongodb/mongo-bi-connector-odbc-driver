@@ -281,7 +281,7 @@ int driver_lookup(Driver *driver)
   if (SQLGetPrivateProfileStringW(driver->name, NULL, W_EMPTY, buf, 4096,
                                   W_ODBCINST_INI) < 1)
   {
-    SQLPostInstallerError(ODBC_ERROR_INVALID_NAME, W_CANNOT_FIND_DRIVER);
+    SQLPostInstallerErrorW(ODBC_ERROR_INVALID_NAME, W_CANNOT_FIND_DRIVER);
     return -1;
   }
 
