@@ -267,7 +267,7 @@ char *insert_param(DBC *dbc, char *to, DESCREC *aprec, DESCREC *iprec)
       {
         if (aprec->concise_type == SQL_C_WCHAR)
           length= sqlwcharlen((SQLWCHAR *)data) * sizeof(SQLWCHAR);
-        else
+        else /* TODO this is stupid, check condition above, shouldn't we be checking only octet_length, not ptr? */
           length= strlen(data);
 
         if (!aprec->octet_length_ptr && aprec->octet_length &&
@@ -276,7 +276,7 @@ char *insert_param(DBC *dbc, char *to, DESCREC *aprec, DESCREC *iprec)
       }
       else
       {
-        length= 0;     /* This is actually an error */
+        length= 0;     /* TODO? This is actually an error */
       }
     }
     else if ( *(aprec->octet_length_ptr) == SQL_NULL_DATA )
@@ -294,7 +294,7 @@ char *insert_param(DBC *dbc, char *to, DESCREC *aprec, DESCREC *iprec)
     else if (*(aprec->octet_length_ptr) == SQL_COLUMN_IGNORE ||
              /* empty values mean it's an unbound column */
              (*(aprec->octet_length_ptr) == 0 &&
-              aprec->concise_type == 0 &&
+              aprec->concise_type == SQL_C_DEFAULT &&
               aprec->par.value == NULL))
     {
       if (is_minimum_version(dbc->mysql.server_version, "4.0.3", 5))
@@ -457,6 +457,21 @@ char *insert_param(DBC *dbc, char *to, DESCREC *aprec, DESCREC *iprec)
                 length= 19;
                 break;
             }
+        case SQL_C_NUMERIC:
+            {
+              int trunc;
+              SQL_NUMERIC_STRUCT *sqlnum= (SQL_NUMERIC_STRUCT *) aprec->data_ptr;
+              sqlnum_to_str(sqlnum, buff + sizeof(buff) - 1, (SQLCHAR **) &data,
+                            iprec->precision, iprec->scale, &trunc);
+              length= strlen(data);
+              /* TODO no way to return an error here? */
+              if (trunc == SQLNUM_TRUNC_FRAC)
+              {/* 01S07 SQL_SUCCESS_WITH_INFO */}
+              else if (trunc == SQLNUM_TRUNC_WHOLE)
+              {/* 22003 SQL_ERROR */
+                return NULL;
+              }
+            }
     }
     switch ( iprec->concise_type )
     {
@@ -469,7 +484,7 @@ char *insert_param(DBC *dbc, char *to, DESCREC *aprec, DESCREC *iprec)
               to= add_to_buffer(net, to, data, length);
               break;
             }
-            /* else threat as a string */
+            /* else treat as a string */
         case SQL_CHAR:
         case SQL_VARCHAR:
         case SQL_LONGVARCHAR:
@@ -481,7 +496,7 @@ char *insert_param(DBC *dbc, char *to, DESCREC *aprec, DESCREC *iprec)
         case SQL_WLONGVARCHAR:
             {
               if (aprec->concise_type == SQL_C_WCHAR &&
-                  dbc->cxn_charset_info->number != 33 /* UTF-8 */)
+                  dbc->cxn_charset_info->number != UTF8_CHARSET_NUMBER)
                 to= add_to_buffer(net, to, "_utf8", 5);
               else if (aprec->concise_type != SQL_C_WCHAR &&
                        dbc->cxn_charset_info->number !=

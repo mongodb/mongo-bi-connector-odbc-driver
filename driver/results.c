@@ -47,6 +47,9 @@ void reset_getdata_position(STMT *stmt)
 /**
   Retrieve the data from a field as a specified ODBC C type.
 
+  TODO arrec->indicator_ptr could be different than pcbValue
+  ideally, two separate pointers would be passed here
+
   @param[in]  stmt        Handle of statement
   @param[in]  fCType      ODBC C type to return data as
   @param[in]  field       Field describing the type of the data
@@ -55,13 +58,44 @@ void reset_getdata_position(STMT *stmt)
   @param[out] pcbValue    Bytes used in the buffer, or SQL_NULL_DATA
   @param[out] value       The field data to be converted and returned
   @param[in]  length      Length of value
+  @param[in]  arrec       ARD record for this column (can be NULL)
 */
 static SQLRETURN SQL_API
 sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
              SQLPOINTER rgbValue, SQLLEN cbValueMax, SQLLEN *pcbValue,
-             char *value, uint length)
+             char *value, uint length, DESCREC *arrec)
 {
   SQLLEN tmp;
+
+  /* get the exact type if we don't already have it */
+  if (fCType == SQL_C_DEFAULT)
+  {
+    fCType= unireg_to_c_datatype(field);
+    if (!cbValueMax)
+      cbValueMax= bind_length(fCType, 0);
+  }
+  else if (fCType == SQL_ARD_TYPE)
+  {
+    if (!arrec)
+      return set_stmt_error(stmt, "07009", "Invalid descriptor index", 0);
+    fCType= arrec->concise_type;
+  }
+
+  /* set prec and scale for numeric */
+  if (fCType == SQL_C_NUMERIC && rgbValue)
+  {
+    SQL_NUMERIC_STRUCT *sqlnum= (SQL_NUMERIC_STRUCT *) rgbValue;
+    if (arrec) /* normally set via ard */
+    {
+      sqlnum->precision= arrec->precision;
+      sqlnum->scale= arrec->scale;
+    }
+    else /* just take the defaults */
+    {
+      sqlnum->precision= 38;
+      sqlnum->scale= 0;
+    }
+  }
 
   if (!value)
   {
@@ -157,7 +191,12 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
 
     case SQL_C_BIT:
       if (rgbValue)
-        *((char *)rgbValue)= (value[0] == 1 ? 1 : (atoi(value) == 0) ? 0 : 1);
+      {
+        if (value[0] == 1 || !atoi(value))
+          *((char *)rgbValue)= 1;
+        else
+          *((char *)rgbValue)= 0;
+      }
       *pcbValue= 1;
       break;
 
@@ -219,7 +258,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
 
     case SQL_C_DOUBLE:
       if (rgbValue)
-        *((double *)rgbValue)= (double)atof(value);
+        *((double *)rgbValue)= (double)strtod(value, NULL);
       *pcbValue= sizeof(double);
       break;
 
@@ -338,6 +377,19 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
       if (rgbValue)
           *((ulonglong *)rgbValue)= (ulonglong)strtoull(value, NULL, 10);
       *pcbValue= sizeof(ulonglong);
+      break;
+
+    case SQL_C_NUMERIC:
+      {
+        int overflow= 0;
+        SQL_NUMERIC_STRUCT *sqlnum= (SQL_NUMERIC_STRUCT *) rgbValue;
+        if (rgbValue)
+          sqlnum_from_str(value, sqlnum, &overflow);
+        *pcbValue= sizeof(ulonglong);
+        if (overflow)
+          return set_stmt_error(stmt, "22003",
+                                "Numeric value out of range", 0);
+      }
       break;
     }
   }
@@ -512,40 +564,33 @@ MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
                  SQLULEN *size, SQLSMALLINT *scale, SQLSMALLINT *nullable)
 {
   SQLRETURN error;
-  MYSQL_FIELD *field;
   STMT *stmt= (STMT *)hstmt;
+  DESCREC* irrec;
 
   if ((error= check_result(stmt)) != SQL_SUCCESS)
     return error;
   if (!stmt->result)
     return set_stmt_error(stmt, "07005", "No result set", 0);
+  if (column == 0 || column > stmt->ird->count)
+    return set_stmt_error(stmt, "07009", "Invalid descriptor index", 0);
 
-  mysql_field_seek(stmt->result, column - 1);
-  if (!(field= mysql_fetch_field(stmt->result)))
-    return set_error(stmt, MYERR_S1002, "Invalid column number", 0);
+  irrec= desc_get_rec(stmt->ird, column - 1, FALSE);
+  assert(irrec);
 
   if (type)
-    *type= get_sql_data_type(stmt, field, NULL);
+    *type= irrec->concise_type;
   if (size)
-  {
-    SQLULEN csize= get_column_size(stmt, field, FALSE);
-    if ((stmt->dbc->flag & FLAG_COLUMN_SIZE_S32) && csize > INT_MAX32)
-      csize= INT_MAX32;
-    *size= csize;
-  }
+    *size= irrec->length;
   if (scale)
-    *scale= (SQLSMALLINT)max(0, get_decimal_digits(stmt, field));
+    *scale= irrec->scale;
   if (nullable)
-    *nullable= (((field->flags & NOT_NULL_FLAG) &&
-                 !(field->flags & TIMESTAMP_FLAG) &&
-                 !(field->flags & AUTO_INCREMENT_FLAG)) ?
-                SQL_NO_NULLS : SQL_NULLABLE);
+    *nullable= irrec->nullable;
 
   *need_free= 0;
 
-  if (stmt->dbc->flag & FLAG_FULL_COLUMN_NAMES && field->table)
+  if ((stmt->dbc->flag & FLAG_FULL_COLUMN_NAMES) && irrec->table_name)
   {
-    char *tmp= my_malloc(strlen(field->name) + strlen(field->table) + 2,
+    char *tmp= my_malloc(strlen(irrec->name) + strlen(irrec->table_name) + 2,
                          MYF(0));
     if (!tmp)
     {
@@ -554,13 +599,13 @@ MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
     }
     else
     {
-      strxmov(tmp, field->table, ".", field->name, NullS);
+      strxmov(tmp, irrec->table_name, ".", irrec->name, NullS);
       *name= (SQLCHAR *)tmp;
       *need_free= 1;
     }
   }
   else
-    *name= (SQLCHAR *)field->name;
+    *name= (SQLCHAR *)irrec->name;
 
   return SQL_SUCCESS;
 }
@@ -583,10 +628,10 @@ SQLRETURN SQL_API
 MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
                   SQLUSMALLINT attrib, SQLCHAR **char_attr, SQLLEN *num_attr)
 {
-  MYSQL_FIELD *field;
   STMT *stmt= (STMT *)hstmt;
   SQLLEN nparam= 0;
-  SQLRETURN error;
+  SQLRETURN error= SQL_SUCCESS;
+  DESCREC *irrec;
 
   if (check_result(stmt) != SQL_SUCCESS)
     return SQL_ERROR;
@@ -594,10 +639,15 @@ MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
   if (!stmt->result)
     return set_stmt_error(stmt, "07005", "No result set", 0);
 
+  /* we report bookmark type if requested, nothing else */
+  if (attrib == SQL_DESC_TYPE && column == 0)
+  {
+    *(SQLINTEGER *)num_attr= SQL_INTEGER;
+    return SQL_SUCCESS;
+  }
 
-  if (column > stmt->result->field_count)
+  if (column == 0 || column > stmt->ird->count)
     return set_error(hstmt,  MYERR_07009, NULL, 0);
-
 
   if (!num_attr)
     num_attr= &nparam;
@@ -607,193 +657,99 @@ MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
 
   if (attrib == SQL_DESC_COUNT || attrib == SQL_COLUMN_COUNT)
   {
-    *num_attr= (SQLLEN)stmt->result->field_count;
+    *num_attr= stmt->ird->count;
     return SQL_SUCCESS;
   }
 
-  if (attrib == SQL_DESC_TYPE && column == 0)
+  irrec= desc_get_rec(stmt->ird, column - 1, FALSE);
+  assert(irrec);
+
+  /*
+     Map to descriptor fields. This approach is only valid
+     for ODBC 3.0 API applications.
+
+     @todo Add additional logic to properly handle these fields
+           for ODBC 2.0 API applications.
+  */
+  switch (attrib)
   {
-    *(SQLINTEGER *)num_attr= SQL_INTEGER;
-    return SQL_SUCCESS;
+  case SQL_COLUMN_SCALE:
+    attrib= SQL_DESC_SCALE;
+    break;
+  case SQL_COLUMN_PRECISION:
+    attrib= SQL_DESC_PRECISION;
+    break;
+  case SQL_COLUMN_NULLABLE:
+    attrib= SQL_DESC_NULLABLE;
+    break;
+  case SQL_COLUMN_LENGTH:
+    attrib= SQL_DESC_OCTET_LENGTH;
+    break;
+  case SQL_COLUMN_NAME:
+    attrib= SQL_DESC_NAME;
+    break;
   }
-
-  mysql_field_seek(stmt->result, column - 1);
-  if (!(field= mysql_fetch_field(stmt->result)))
-    return set_error(stmt, MYERR_S1002, "Invalid column number", 0);
 
   switch (attrib)
   {
   case SQL_DESC_AUTO_UNIQUE_VALUE:
-    *(SQLINTEGER *)num_attr= (field->flags & AUTO_INCREMENT_FLAG ?
-                              SQL_TRUE : SQL_FALSE);
+  case SQL_DESC_CASE_SENSITIVE:
+  case SQL_DESC_FIXED_PREC_SCALE:
+  case SQL_DESC_NULLABLE:
+  case SQL_DESC_NUM_PREC_RADIX:
+  case SQL_DESC_PRECISION:
+  case SQL_DESC_SCALE:
+  case SQL_DESC_SEARCHABLE:
+  case SQL_DESC_TYPE:
+  case SQL_DESC_CONCISE_TYPE:
+  case SQL_DESC_UNNAMED:
+  case SQL_DESC_UNSIGNED:
+  case SQL_DESC_UPDATABLE:
+  case SQL_DESC_DISPLAY_SIZE:
+  case SQL_DESC_LENGTH:
+  case SQL_DESC_OCTET_LENGTH:
+    error= stmt_SQLGetDescField(stmt, stmt->ird, column, attrib,
+                                num_attr, SQL_IS_INTEGER, NULL);
     break;
 
   /* We need support from server, when aliasing is there */
   case SQL_DESC_BASE_COLUMN_NAME:
-    *char_attr= (SQLCHAR *)(field->org_name ? field->org_name : "");
+    *char_attr= irrec->base_column_name ? irrec->base_column_name :
+                                          (SQLCHAR *) "";
     break;
 
   case SQL_DESC_LABEL:
   case SQL_DESC_NAME:
-  case SQL_COLUMN_NAME:
-    *char_attr= (SQLCHAR *)field->name;
+    *char_attr= irrec->name;
     break;
 
   case SQL_DESC_BASE_TABLE_NAME:
-    *char_attr= (SQLCHAR *)(field->org_table ? field->org_table : "");
+    *char_attr= irrec->base_table_name ? irrec->base_table_name :
+                                         (SQLCHAR *) "";
     break;
 
   case SQL_DESC_TABLE_NAME:
-    *char_attr= (SQLCHAR *)(field->table ? field->table : "");
-    break;
-
-  case SQL_DESC_CASE_SENSITIVE:
-    *(SQLINTEGER *)num_attr= (field->flags & BINARY_FLAG ?
-                              SQL_FALSE : SQL_TRUE);
+    *char_attr= irrec->table_name ? irrec->table_name : (SQLCHAR *) "";
     break;
 
   case SQL_DESC_CATALOG_NAME:
-    *char_attr= (SQLCHAR *)((field->db && field->db[0]) ?
-                            field->db : stmt->dbc->database);
+    *char_attr= irrec->catalog_name;
     break;
 
-  case SQL_DESC_DISPLAY_SIZE:
-    *num_attr= get_display_size(stmt, field);
-    break;
-
-  case SQL_DESC_FIXED_PREC_SCALE:
-    if (field->type == MYSQL_TYPE_DECIMAL ||
-        field->type == MYSQL_TYPE_NEWDECIMAL)
-      *(SQLINTEGER *)num_attr= SQL_TRUE;
-    else
-      *(SQLINTEGER *)num_attr= SQL_FALSE;
-    break;
-
-  case SQL_DESC_LENGTH:
-    *num_attr= get_column_size(stmt, field, TRUE);
-    break;
-
-  case SQL_COLUMN_LENGTH:
-  case SQL_DESC_OCTET_LENGTH:
-    /* Need to add 1 for \0 on character fields. */
-    *num_attr= get_transfer_octet_length(stmt, field) +
-      test(field->charsetnr != BINARY_CHARSET_NUMBER);
+  case SQL_DESC_LITERAL_PREFIX:
+    *char_attr= irrec->literal_prefix;
     break;
 
   case SQL_DESC_LITERAL_SUFFIX:
-  case SQL_DESC_LITERAL_PREFIX:
-    switch (field->type) {
-    case MYSQL_TYPE_LONG_BLOB:
-    case MYSQL_TYPE_TINY_BLOB:
-    case MYSQL_TYPE_MEDIUM_BLOB:
-    case MYSQL_TYPE_BLOB:
-    case MYSQL_TYPE_VAR_STRING:
-    case MYSQL_TYPE_STRING:
-      if (field->charsetnr == BINARY_CHARSET_NUMBER)
-      {
-        if (attrib == SQL_DESC_LITERAL_PREFIX)
-          *char_attr= (SQLCHAR *)"0x";
-        else
-          *char_attr= (SQLCHAR *)"";
-        break;
-      }
-      /* FALLTHROUGH */
-
-    case MYSQL_TYPE_DATE:
-    case MYSQL_TYPE_DATETIME:
-    case MYSQL_TYPE_NEWDATE:
-    case MYSQL_TYPE_TIMESTAMP:
-    case MYSQL_TYPE_TIME:
-    case MYSQL_TYPE_YEAR:
-      *char_attr= (SQLCHAR *)"'";
-      break;
-
-    default:
-      *char_attr= (SQLCHAR *)"";
-    }
-    break;
-
-  case SQL_DESC_NULLABLE:
-  case SQL_COLUMN_NULLABLE:
-    *(SQLINTEGER *)num_attr= ((field->flags & NOT_NULL_FLAG) ? SQL_NO_NULLS :
-                              SQL_NULLABLE);
-    break;
-
-  case SQL_DESC_NUM_PREC_RADIX:
-    switch (field->type) {
-    case MYSQL_TYPE_SHORT:
-    case MYSQL_TYPE_LONG:
-    case MYSQL_TYPE_LONGLONG:
-    case MYSQL_TYPE_INT24:
-    case MYSQL_TYPE_TINY:
-    case MYSQL_TYPE_DECIMAL:
-      *(SQLINTEGER *)num_attr= 10;
-      break;
-
-    case MYSQL_TYPE_FLOAT:
-    case MYSQL_TYPE_DOUBLE:
-      *(SQLINTEGER *) num_attr= 2;
-      break;
-
-    default:
-      *(SQLINTEGER *)num_attr= 0;
-      break;
-    }
-    break;
-
-  case SQL_COLUMN_PRECISION:
-  case SQL_DESC_PRECISION:
-    *(SQLINTEGER *)num_attr= get_column_size(stmt, field, FALSE);
-    break;
-
-  case SQL_COLUMN_SCALE:
-  case SQL_DESC_SCALE:
-    *(SQLINTEGER *)num_attr= max(0, get_decimal_digits(stmt, field));
+    *char_attr= irrec->literal_suffix;
     break;
 
   case SQL_DESC_SCHEMA_NAME:
-    *char_attr= (SQLCHAR *)"";
-    break;
-
-  case SQL_DESC_SEARCHABLE:
-    *(SQLINTEGER *)num_attr= SQL_SEARCHABLE;
-    break;
-
-  case SQL_DESC_TYPE:
-    {
-      SQLSMALLINT type= get_sql_data_type(stmt, field, NULL);
-      if (type == SQL_DATE || type == SQL_TYPE_DATE || type == SQL_TIME ||
-          type == SQL_TYPE_TIME || type == SQL_TIMESTAMP ||
-          type == SQL_TYPE_TIMESTAMP)
-        type= SQL_DATETIME;
-      *(SQLINTEGER *)num_attr= type;
-      break;
-    }
-
-  case SQL_DESC_CONCISE_TYPE:
-    *(SQLINTEGER *)num_attr= get_sql_data_type(stmt, field, NULL);
+    *char_attr= irrec->schema_name;
     break;
 
   case SQL_DESC_TYPE_NAME:
-    {
-      /* Sort of lame that we have to strdup this, but that's life. */
-      char buff[40];
-      (void)get_sql_data_type(stmt, field, buff);
-      *char_attr= (SQLCHAR *)my_strdup(buff, MYF(0));
-    }
-
-  case SQL_DESC_UNNAMED:
-    *(SQLINTEGER *)num_attr= SQL_NAMED;
-    break;
-
-  case SQL_DESC_UNSIGNED:
-    *(SQLINTEGER *) num_attr= ((field->flags & UNSIGNED_FLAG) ?  SQL_TRUE :
-                               SQL_FALSE);
-    break;
-
-  case SQL_DESC_UPDATABLE:
-    *(SQLINTEGER *)num_attr= (field->table && field->table[0] ?
-                              SQL_ATTR_READWRITE_UNKNOWN : SQL_ATTR_READONLY);
+    *char_attr= irrec->type_name;
     break;
 
   /*
@@ -802,7 +758,7 @@ MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
     This should also fix some Multi-step generated error cases from ADO
   */
   case SQL_MY_PRIMARY_KEY: /* MSSQL extension !! */
-    *(SQLINTEGER *)num_attr= ((field->flags & PRI_KEY_FLAG) ?
+    *(SQLINTEGER *)num_attr= ((irrec->row.field->flags & PRI_KEY_FLAG) ?
                               SQL_TRUE : SQL_FALSE);
     break;
 
@@ -811,7 +767,7 @@ MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
                           "Invalid descriptor field identifier",0);
   }
 
-  return SQL_SUCCESS;
+  return error;
 }
 
 
@@ -820,89 +776,85 @@ MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
   @purpose : binds application data buffers to columns in the result set
 */
 
-SQLRETURN SQL_API SQLBindCol( SQLHSTMT      hstmt, 
-                              SQLUSMALLINT  icol,
-                              SQLSMALLINT   fCType, 
-                              SQLPOINTER    rgbValue,
-                              SQLLEN        cbValueMax, 
-                              SQLLEN *      pcbValue )
+SQLRETURN SQL_API SQLBindCol(SQLHSTMT      StatementHandle, 
+                             SQLUSMALLINT  ColumnNumber,
+                             SQLSMALLINT   TargetType, 
+                             SQLPOINTER    TargetValuePtr,
+                             SQLLEN        BufferLength, 
+                             SQLLEN *      StrLen_or_IndPtr)
 {
-    BIND *bind;
-    STMT FAR *stmt= (STMT FAR*) hstmt;
-    SQLRETURN error;
+  SQLRETURN rc;
+  STMT FAR *stmt= (STMT FAR*) StatementHandle;
+  DESCREC *arrec;
+  /* TODO if this function fails, the SQL_DESC_COUNT should be unchanged in ard */
 
-    icol--;
+  CLEAR_STMT_ERROR(stmt);
+
+  if (!TargetValuePtr && !StrLen_or_IndPtr) /* Handling unbinding */
+  {
     /*
-      The next case if because of VB 5.0 that binds columns before preparing
-      a statement
+       If unbinding the last bound column, we reduce the
+       ARD records until the highest remaining bound column.
     */
-
-    if ( stmt->state == ST_UNKNOWN )
+    if (ColumnNumber == stmt->ard->count)
     {
-        if ( fCType == SQL_C_NUMERIC ) /* We don't support this */
-        {
-            set_error(stmt,MYERR_07006,
-                      "Restricted data type attribute violation(SQL_C_NUMERIC)",0);
-            return SQL_ERROR;
-        }
-        if ( icol >= stmt->bound_columns )
-        {
-            if ( !(stmt->bind= (BIND*) my_realloc((char*) stmt->bind,
-                                                  (icol+1)*sizeof(BIND),
-                                                  MYF(MY_ALLOW_ZERO_PTR |
-                                                      MY_FREE_ON_ERROR))) )
-            {
-                stmt->bound_columns= 0;
-                return set_error(stmt,MYERR_S1001,NULL,4001);
-            }
-            bzero((stmt->bind+stmt->bound_columns),
-                  (icol+1-stmt->bound_columns)*sizeof(BIND));
-            stmt->bound_columns= icol+1;
-        }
+      int i;
+      stmt->ard->count--;
+      for (i= stmt->ard->count - 1; i >= 0; --i)
+      {
+        arrec= desc_get_rec(stmt->ard, i, FALSE);
+        if (ARD_IS_BOUND(arrec))
+          break;
+        else
+          stmt->ard->count--;
+      }
     }
     else
     {
-        /* Bind parameter to current set  (The normal case) */
-        /* select stmt with parameters */
-        if ( stmt->param_count > 0 && stmt->dummy_state == ST_DUMMY_UNKNOWN &&
-             (stmt->state != ST_PRE_EXECUTED || stmt->state != ST_EXECUTED) )
-        {
-            if ( do_dummy_parambind(hstmt) != SQL_SUCCESS )
-                return SQL_ERROR;
-        }
-        if ( fCType == SQL_C_NUMERIC ) /* We don't support this */
-        {
-            set_error(stmt,MYERR_07006,
-                      "Restricted data type attribute violation(SQL_C_NUMERIC)",0);
-            return SQL_ERROR;
-        }
-        if ( (error= check_result(stmt)) != SQL_SUCCESS )
-            return error;
-
-        if ( !stmt->result || (uint) icol >= stmt->result->field_count )
-        {
-            error= set_error(stmt,MYERR_S1002,"Invalid column number",0);
-            return error;
-        }
-        if ( !stmt->bind )
-        {
-            if ( !(stmt->bind= (BIND*) my_malloc(sizeof(BIND)*
-                                                 stmt->result->field_count,
-                                                 MYF(MY_ZEROFILL))) )
-                return set_error(stmt,MYERR_S1001,NULL,4001);
-            stmt->bound_columns= stmt->result->field_count;
-        }
-        mysql_field_seek(stmt->result,icol);
-        stmt->bind[icol].field= mysql_fetch_field(stmt->result);
+      arrec= desc_get_rec(stmt->ard, ColumnNumber - 1, FALSE);
+      if (arrec)
+      {
+        arrec->data_ptr= NULL;
+        arrec->octet_length_ptr= NULL;
+      }
     }
-    bind= stmt->bind+icol;
-    bind->fCType= fCType;
-    if ( fCType == SQL_C_DEFAULT && stmt->odbc_types )
-        bind->fCType= stmt->odbc_types[icol];
-    bind->rgbValue= rgbValue;
-    bind->cbValueMax= bind_length(bind->fCType,cbValueMax);
-    bind->pcbValue= pcbValue;
     return SQL_SUCCESS;
+  }
+
+  if (ColumnNumber == 0 || (stmt->state == ST_EXECUTED &&
+                            ColumnNumber > stmt->ird->count))
+  {
+    return set_stmt_error(stmt, "07009", "Invalid descriptor index",
+                          MYERR_07009);
+  }
+
+  arrec= desc_get_rec(stmt->ard, ColumnNumber - 1, TRUE);
+
+  if ((rc= stmt_SQLSetDescField(stmt, stmt->ard, ColumnNumber,
+                                SQL_DESC_CONCISE_TYPE,
+                                (SQLPOINTER)(SQLINTEGER) TargetType,
+                                SQL_IS_SMALLINT)) != SQL_SUCCESS)
+    return rc;
+  if ((rc= stmt_SQLSetDescField(stmt, stmt->ard, ColumnNumber,
+                                SQL_DESC_OCTET_LENGTH,
+                                (SQLPOINTER) bind_length(TargetType,
+                                                         BufferLength),
+                                SQL_IS_LEN)) != SQL_SUCCESS)
+    return rc;
+  if ((rc= stmt_SQLSetDescField(stmt, stmt->ard, ColumnNumber,
+                                SQL_DESC_DATA_PTR, TargetValuePtr,
+                                SQL_IS_POINTER)) != SQL_SUCCESS)
+    return rc;
+  if ((rc= stmt_SQLSetDescField(stmt, stmt->ard, ColumnNumber,
+                                SQL_DESC_INDICATOR_PTR, StrLen_or_IndPtr,
+                                SQL_IS_POINTER)) != SQL_SUCCESS)
+    return rc;
+  if ((rc= stmt_SQLSetDescField(stmt, stmt->ard, ColumnNumber,
+                                SQL_DESC_OCTET_LENGTH_PTR, StrLen_or_IndPtr,
+                                SQL_IS_POINTER)) != SQL_SUCCESS)
+    return rc;
+
+  return SQL_SUCCESS;
 }
 
 
@@ -917,14 +869,12 @@ my_bool set_dynamic_result(STMT FAR *stmt)
         return 1;
 
     pthread_mutex_lock(&stmt->dbc->lock);
-    x_free(stmt->odbc_types);
     if (!stmt->fake_result)
       mysql_free_result(stmt->result);
     else
       x_free(stmt->result);
     stmt->result= 0;
     stmt->fake_result= 0;
-    stmt->odbc_types= 0;
     stmt->cursor_row= 0;
     stmt->result= mysql_store_result(&stmt->dbc->mysql);
     if ( !stmt->result )
@@ -948,45 +898,52 @@ my_bool set_dynamic_result(STMT FAR *stmt)
   in parts
 */
 
-SQLRETURN SQL_API SQLGetData( SQLHSTMT      hstmt,
-                              SQLUSMALLINT  icol,
-                              SQLSMALLINT   fCType,
-                              SQLPOINTER    rgbValue,
-                              SQLLEN        cbValueMax, 
-                              SQLLEN *      pcbValue )
+SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
+                             SQLUSMALLINT  ColumnNumber,
+                             SQLSMALLINT   TargetType,
+                             SQLPOINTER    TargetValuePtr,
+                             SQLLEN        BufferLength,
+                             SQLLEN *      StrLen_or_IndPtr)
 {
-    STMT FAR *stmt= (STMT FAR*) hstmt;
+    STMT *stmt= (STMT *) StatementHandle;
     SQLRETURN result;
+    uint length= 0;
+    DESCREC *irrec;
 
-    if ( !stmt->result || !stmt->current_values )
+    if (!stmt->result || !stmt->current_values)
     {
-        set_stmt_error(stmt,"24000","SQLGetData without a preceding SELECT",0);
-        return SQL_ERROR;
+      set_stmt_error(stmt,"24000","SQLGetData without a preceding SELECT",0);
+      return SQL_ERROR;
     }
-    if ( fCType == SQL_C_NUMERIC ) /* We don't support this */
+
+    if (ColumnNumber < 1 || ColumnNumber > stmt->ird->count)
     {
-        set_error(stmt,MYERR_07006,
-                  "Restricted data type attribute violation(SQL_C_NUMERIC)",0);
-        return SQL_ERROR;
+      return set_stmt_error(stmt, "07009", "Invalid descriptor index",
+                            MYERR_07009);
     }
-    icol--;     /* Easier code if start from 0 */
-    if (icol != stmt->getdata.column)
+    ColumnNumber--;     /* Easier code if start from 0 */
+    if (ColumnNumber != stmt->getdata.column)
     {
       /* New column. Reset old offset */
       reset_getdata_position(stmt);
-      stmt->getdata.column= icol;
+      stmt->getdata.column= ColumnNumber;
     }
+
+    irrec= desc_get_rec(stmt->ird, ColumnNumber, FALSE);
+    assert(irrec);
+
+    /* catalog functions with "fake" results won't have lengths */
+    length= irrec->row.datalen;
+    if (!length && stmt->current_values[ColumnNumber])
+      length= strlen(stmt->current_values[ColumnNumber]);
 
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
       setlocale(LC_NUMERIC, "C");
-    result= sql_get_data( stmt,
-                          (SQLSMALLINT) (fCType == SQL_C_DEFAULT ? stmt->odbc_types[icol] : fCType),
-                          stmt->result->fields+icol,
-                          rgbValue,
-                          cbValueMax,
-                          pcbValue,
-                          stmt->current_values[icol],
-                          (stmt->result_lengths ? stmt->result_lengths[icol] : (stmt->current_values[icol] ? strlen( stmt->current_values[icol] ) : 0 ) ) );
+
+    result= sql_get_data(stmt, TargetType, irrec->row.field,
+                         TargetValuePtr, BufferLength, StrLen_or_IndPtr,
+                         stmt->current_values[ColumnNumber], length,
+                         desc_get_rec(stmt->ard, ColumnNumber, FALSE));
 
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
         setlocale(LC_NUMERIC,default_locale);
@@ -1113,6 +1070,34 @@ SQLRETURN SQL_API SQLRowCount( SQLHSTMT hstmt,
 
 
 /**
+  Populate the data lengths in the IRD for the current row
+
+  @param[in]  ird         IRD to populate
+  @param[in]  lengths     Data lengths from mysql_fetch_lengths()
+  @param[in]  fields      Number of fields
+*/
+static void fill_ird_data_lengths(DESC *ird, ulong *lengths, uint fields)
+{
+  uint i;
+  DESCREC *irrec;
+
+  assert(fields == ird->count);
+
+  /* This will be NULL for catalog functions with "fake" results */
+  if (!lengths)
+    return;
+
+  for (i= 0; i < fields; ++i)
+  {
+    irrec= desc_get_rec(ird, i, FALSE);
+    assert(irrec);
+
+    irrec->row.datalen= lengths[i];
+  }
+}
+
+
+/**
   Populate a single row of fetch buffers
 
   @param[in]  stmt        Handle of statement
@@ -1123,27 +1108,28 @@ static SQLRETURN
 fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
 {
   SQLRETURN res= SQL_SUCCESS, tmp_res;
-  ulong *lengths= stmt->result_lengths;
-  BIND *bind,*end;
+  uint i, length= 0;
+  DESCREC *irrec, *arrec;
 
-  if (!stmt->bind)
-    return SQL_SUCCESS;
-
-  for (bind= stmt->bind,end= bind + stmt->result->field_count;
-       bind < end; bind++,values++)
+  for (i= 0; i < min(stmt->ird->count, stmt->ard->count); ++i, ++values)
   {
-    if (bind->rgbValue || bind->pcbValue)
+    irrec= desc_get_rec(stmt->ird, i, FALSE);
+    arrec= desc_get_rec(stmt->ard, i, FALSE);
+    assert(irrec && arrec);
+
+    if (ARD_IS_BOUND(arrec))
     {
-      SQLLEN offset,pcb_offset;
+      SQLLEN offset, pcb_offset;
       SQLLEN pcbValue;
+      SQLPOINTER TargetValuePtr= NULL;
 
       if (stmt->ard->bind_type == SQL_BIND_BY_COLUMN)
       {
-        offset= bind->cbValueMax*rownum;
-        pcb_offset= sizeof(SQLLEN)*rownum;
+        offset= arrec->octet_length * rownum;
+        pcb_offset= sizeof(SQLLEN) * rownum;
       }
       else
-        pcb_offset= offset= stmt->ard->bind_type*rownum;
+        pcb_offset= offset= stmt->ard->bind_type * rownum;
 
       /* apply SQL_ATTR_ROW_BIND_OFFSET_PTR */
       if (stmt->ard->bind_offset_ptr)
@@ -1154,15 +1140,18 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
 
       reset_getdata_position(stmt);
 
-      if ((tmp_res= sql_get_data(stmt,
-                    bind->fCType,
-                    bind->field,
-                    (bind->rgbValue ? (char*) bind->rgbValue + offset : 0),
-                    bind->cbValueMax,
-                    &pcbValue,
-                    *values,
-                    (lengths ? *lengths : *values ? strlen(*values) : 0) ) )
-         != SQL_SUCCESS)
+      if (arrec->data_ptr)
+        TargetValuePtr= ((char*) arrec->data_ptr) + offset;
+
+      /* catalog functions with "fake" results won't have lengths */
+      length= irrec->row.datalen;
+      if (!length && *values)
+        length= strlen(*values);
+
+      tmp_res= sql_get_data(stmt, arrec->concise_type, irrec->row.field,
+                            TargetValuePtr, arrec->octet_length, &pcbValue,
+                            *values, length, arrec);
+      if (tmp_res != SQL_SUCCESS)
       {
         if (tmp_res == SQL_SUCCESS_WITH_INFO)
         {
@@ -1172,11 +1161,10 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
         else
           res= SQL_ERROR;
       }
-      if (bind->pcbValue)
-        *(bind->pcbValue + (pcb_offset / sizeof(SQLLEN))) = pcbValue;
+
+      if (arrec->octet_length_ptr)
+        *(arrec->octet_length_ptr + (pcb_offset / sizeof(SQLLEN))) = pcbValue;
     }
-    if (lengths)
-      lengths++;
   }
 
   return res;
@@ -1343,8 +1331,6 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
             }
             if ( stmt->fix_fields )
                 values= (*stmt->fix_fields)(stmt,values);
-            else
-                stmt->result_lengths= mysql_fetch_lengths(stmt->result);
             stmt->current_values= values;
         }
 
@@ -1356,6 +1342,9 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
         if (upd_status && stmt->ird->array_status_ptr)
           stmt->ird->array_status_ptr[i]= SQL_ROW_SUCCESS;
 
+        if (!stmt->fix_fields)
+          fill_ird_data_lengths(stmt->ird, mysql_fetch_lengths(stmt->result),
+                                stmt->result->field_count);
         res= fill_fetch_buffers(stmt, values, i);
         cur_row++;
     }
@@ -1385,8 +1374,6 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
             stmt->current_values= mysql_fetch_row(stmt->result);
             if ( stmt->fix_fields )
                 stmt->current_values= (*stmt->fix_fields)(stmt,stmt->current_values);
-            else
-                stmt->result_lengths= mysql_fetch_lengths(stmt->result);
         }
     }
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )

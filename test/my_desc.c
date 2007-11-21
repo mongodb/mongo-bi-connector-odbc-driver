@@ -160,9 +160,71 @@ DECLARE_TEST(t_desc_set_error)
 }
 
 
+/*
+   Implicit Resetting of COUNT Field with SQLBindCol()
+*/
+DECLARE_TEST(t_sqlbindcol_count_reset)
+{
+  SQLHANDLE ard;
+  SQLINTEGER count;
+  SQLCHAR *buf[10];
+
+  ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_APP_ROW_DESC,
+                                &ard, SQL_IS_POINTER, NULL));
+
+  ok_desc(ard, SQLGetDescField(ard, 0, SQL_DESC_COUNT, &count,
+                               SQL_IS_INTEGER, NULL));
+  is_num(count, 0);
+
+  ok_sql(hstmt, "select 1,2,3,4,5");
+
+  ok_desc(ard, SQLGetDescField(ard, 0, SQL_DESC_COUNT, &count,
+                               SQL_IS_INTEGER, NULL));
+  is_num(count, 0);
+
+  /* bind column 3 -> expand to count = 3 */
+  ok_stmt(hstmt, SQLBindCol(hstmt, 3, SQL_C_CHAR, buf, 10, NULL));
+
+  ok_desc(ard, SQLGetDescField(ard, 0, SQL_DESC_COUNT, &count,
+                               SQL_IS_INTEGER, NULL));
+  is_num(count, 3);
+
+  /* unbind column 3 -> contract to count = 0 */
+  ok_stmt(hstmt, SQLBindCol(hstmt, 3, 0, NULL, 0, NULL));
+
+  ok_desc(ard, SQLGetDescField(ard, 0, SQL_DESC_COUNT, &count,
+                               SQL_IS_INTEGER, NULL));
+  is_num(count, 0);
+
+  /* bind column 2 -> expand to count = 2 */
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, buf, 10, NULL));
+
+  ok_desc(ard, SQLGetDescField(ard, 0, SQL_DESC_COUNT, &count,
+                               SQL_IS_INTEGER, NULL));
+  is_num(count, 2);
+
+  /* bind column 3 -> expand to count = 3 */
+  ok_stmt(hstmt, SQLBindCol(hstmt, 3, SQL_C_CHAR, buf, 10, NULL));
+
+  ok_desc(ard, SQLGetDescField(ard, 0, SQL_DESC_COUNT, &count,
+                               SQL_IS_INTEGER, NULL));
+  is_num(count, 3);
+
+  /* unbind column 3 -> contract to count = 2 */
+  ok_stmt(hstmt, SQLBindCol(hstmt, 3, 0, NULL, 0, NULL));
+
+  ok_desc(ard, SQLGetDescField(ard, 0, SQL_DESC_COUNT, &count,
+                               SQL_IS_INTEGER, NULL));
+  is_num(count, 2);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_desc_paramset)
   ADD_TEST(t_desc_set_error)
+  ADD_TEST(t_sqlbindcol_count_reset)
 END_TESTS
 
 

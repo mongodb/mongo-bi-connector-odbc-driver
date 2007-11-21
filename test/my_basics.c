@@ -448,7 +448,7 @@ DECLARE_TEST(t_bug30774)
 {
   SQLHDBC hdbc1;
   SQLHSTMT hstmt1;
-  SQLCHAR username[80]= {0};
+  SQLCHAR username[MAX_ROW_DATA_LEN+1]= {0};
 
   strcat((char *)username, (char *)myuid);
   strcat((char *)username, "!!!");

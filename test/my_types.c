@@ -70,62 +70,6 @@ DECLARE_TEST(t_longlong1)
 }
 
 
-/* This just proves we don't support SQL_C_NUMERIC. */
-DECLARE_TEST(t_numeric)
-{
-  SQL_NUMERIC_STRUCT num;
-  SQLINTEGER dummy;
-
-  ok_sql(hstmt, "DROP TABLE IF EXISTS t_decimal");
-  ok_sql(hstmt, "CREATE TABLE t_decimal (d1 DECIMAL(10,6))");
-  ok_sql(hstmt, "INSERT INTO t_decimal VALUES (10.2)");
-
-  ok_stmt(hstmt, SQLPrepare(hstmt,
-                            (SQLCHAR *)"INSERT INTO t_decimal VALUES (?)",
-                            SQL_NTS));
-
-  expect_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_NUMERIC,
-                                      SQL_DECIMAL, 10, 4, &num, 0, NULL),
-              SQL_ERROR);
-
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-
-  ok_stmt(hstmt, SQLPrepare(hstmt,
-                            (SQLCHAR *)"INSERT INTO t_decimal VALUES (?),(?)",
-                            SQL_NTS));
-  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_LONG,
-                                  SQL_DECIMAL, 10, 4, &dummy, 0, NULL));
-
-  expect_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_NUMERIC,
-                                      SQL_DECIMAL, 10, 4, &num, 0, NULL),
-              SQL_ERROR);
-
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
-
-  expect_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_NUMERIC, &num, 0, NULL),
-              SQL_ERROR);
-
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
-
-  ok_sql(hstmt, "SELECT * FROM t_decimal");
-
-  ok_stmt(hstmt, SQLFetch(hstmt));
-
-  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_NUMERIC, &num, 0, NULL),
-              SQL_ERROR);
-
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-
-  ok_sql(hstmt, "DROP TABLE IF EXISTS t_decimal");
-
-  return OK;
-}
-
-
 DECLARE_TEST(t_decimal)
 {
   SQLCHAR         str[20],s_data[]="189.4567";
@@ -507,7 +451,7 @@ DECLARE_TEST(t_bug27862_1)
   is_num(len, 4);
   ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_LENGTH, NULL, 0,
                                  NULL, &len));
-  is_num(len, 2);
+  is_num(len, 4);
   ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_OCTET_LENGTH, NULL, 0,
                                  NULL, &len));
   is_num(len, 5);
@@ -560,6 +504,7 @@ DECLARE_TEST(t_bug27862_2)
 DECLARE_TEST(decimal_scale)
 {
   SQLINTEGER fixed= SQL_FALSE;
+  SQLINTEGER prec, scale;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_decscale");
   ok_sql(hstmt, "CREATE TABLE t_decscale (a DECIMAL(5,3))");
@@ -568,8 +513,14 @@ DECLARE_TEST(decimal_scale)
 
   ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_FIXED_PREC_SCALE,
                                  NULL, 0, NULL, &fixed));
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_PRECISION,
+                                 NULL, 0, NULL, &prec));
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_SCALE,
+                                 NULL, 0, NULL, &scale));
 
   is_num(fixed, SQL_TRUE);
+  is_num(prec, 5);
+  is_num(scale, 3);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
@@ -788,9 +739,309 @@ DECLARE_TEST(sqlwchar)
 }
 
 
+/*
+   This is from the canonical example of retrieving a SQL_NUMERIC_STRUCT:
+   http://support.microsoft.com/default.aspx/kb/222831
+*/
+DECLARE_TEST(t_sqlnum_msdn)
+{
+  SQLHANDLE ard;
+  SQL_NUMERIC_STRUCT *sqlnum= malloc(sizeof(SQL_NUMERIC_STRUCT));
+  SQLCHAR exp_data[SQL_MAX_NUMERIC_LEN]=
+          {0x7c, 0x62, 0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+  sqlnum->sign= sqlnum->precision= sqlnum->scale= 128;
+
+  ok_sql(hstmt, "select 25.212");
+  ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_APP_ROW_DESC, &ard, 0, NULL));
+
+  ok_desc(ard, SQLSetDescField(ard, 1, SQL_DESC_TYPE,
+                               (SQLPOINTER) SQL_C_NUMERIC, SQL_IS_INTEGER));
+  ok_desc(ard, SQLSetDescField(ard, 1, SQL_DESC_SCALE,
+                               (SQLPOINTER) 3, SQL_IS_INTEGER));
+  ok_desc(ard, SQLSetDescField(ard, 1, SQL_DESC_DATA_PTR,
+                               sqlnum, SQL_IS_POINTER));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_num(sqlnum->sign, 1);
+  is_num(sqlnum->precision, 38);
+  is_num(sqlnum->scale, 3);
+  is(!memcmp(sqlnum->val, exp_data, SQL_MAX_NUMERIC_LEN));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  free(sqlnum);
+  return OK;
+}
+
+
+/**
+  Internal function to test retrieving a SQL_NUMERIC_STRUCT value.
+
+  @todo Printing some additional output (sqlnum->val as hex, dec)
+
+  @param[in]  hstmt       Statement handle
+  @param[in]  numstr      String to retrieve as SQL_NUMERIC_STRUCT
+  @param[in]  prec        Precision to retrieve
+  @param[in]  scale       Scale to retrieve
+  @param[in]  sign        Expected sign (1=+,0=-)
+  @param[in]  expdata     Expected byte array value (need this or expnum)
+  @param[in]  expnum      Expected numeric value (if it fits)
+  @param[in]  overflow    Whether to expect a retrieval failure (22003)
+  @return OK/FAIL just like a test.
+*/
+int sqlnum_test_from_str(SQLHANDLE hstmt,
+                         const char *numstr, SQLCHAR prec, SQLSCHAR scale,
+                         SQLCHAR sign, SQLCHAR *expdata, int expnum,
+                         int overflow)
+{
+  SQL_NUMERIC_STRUCT *sqlnum= malloc(sizeof(SQL_NUMERIC_STRUCT));
+  SQLCHAR buf[512];
+  SQLHANDLE ard;
+  unsigned long numval;
+
+  sprintf(buf, "select %s", numstr);
+  //ok_sql(hstmt, buf);
+  ok_stmt(hstmt, SQLExecDirect(hstmt, buf, SQL_NTS));
+
+  ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_APP_ROW_DESC, &ard, 0, NULL));
+
+  ok_desc(ard, SQLSetDescField(ard, 1, SQL_DESC_TYPE,
+                               (SQLPOINTER) SQL_C_NUMERIC, SQL_IS_INTEGER));
+  ok_desc(ard, SQLSetDescField(ard, 1, SQL_DESC_PRECISION,
+                               (SQLPOINTER)(SQLINTEGER) prec, SQL_IS_INTEGER));
+  ok_desc(ard, SQLSetDescField(ard, 1, SQL_DESC_SCALE,
+                               (SQLPOINTER)(SQLINTEGER) scale, SQL_IS_INTEGER));
+  ok_desc(ard, SQLSetDescField(ard, 1, SQL_DESC_DATA_PTR,
+                               sqlnum, SQL_IS_POINTER));
+
+  if (overflow)
+  {
+    expect_stmt(hstmt, SQLFetch(hstmt), SQL_ERROR);
+    return check_sqlstate(hstmt, "22003");
+  }
+  else
+    ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_num(sqlnum->precision, prec);
+  is_num(sqlnum->scale, scale);
+  is_num(sqlnum->sign, sign);
+  if (expdata)
+  {
+    is(!memcmp(sqlnum->val, expdata, SQL_MAX_NUMERIC_LEN));
+  }
+  else
+  {
+    /* only use this for <=32bit values */
+    int i;
+    numval= 0;
+    for (i= 0; i < 8; ++i)
+      numval += sqlnum->val[7 - i] << (8 * (7 - i));
+    is_num(numval, expnum);
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  free(sqlnum);
+  return OK;
+}
+
+
+/*
+   Testing of retrieving SQL_NUMERIC_STRUCT
+
+   Make sure to use little-endian in SQLCHAR arrays.
+*/
+DECLARE_TEST(t_sqlnum_from_str)
+{
+  SQLCHAR *num1= "25.212";
+  SQLCHAR *num2= "-101234.0010";
+  SQLCHAR *num3= "-101230.0010";
+
+  /* some basic tests including min-precision and scale changes */
+  is(sqlnum_test_from_str(hstmt, num1, 5, 3, 1, NULL, 25212, 0) == OK);
+  is(sqlnum_test_from_str(hstmt, num1, 4, 3, 1, NULL, 0, 1) == OK);
+  is(sqlnum_test_from_str(hstmt, num1, 4, 2, 1, NULL, 2521, 0) == OK);
+  is(sqlnum_test_from_str(hstmt, num1, 2, 0, 1, NULL, 25, 0) == OK);
+  is(sqlnum_test_from_str(hstmt, num1, 2, -1, 1, NULL, 0, 1) == OK);
+
+  /* more comprehensive testing of scale and precision */
+  {SQLCHAR expdata[]= {0x2a, 0x15, 0x57, 0x3c, 0,0,0,0,0,0,0,0,0,0,0,0};
+   is(sqlnum_test_from_str(hstmt, num2, 9, 4, 0, expdata, 0, 0) == OK);}
+  is(sqlnum_test_from_str(hstmt, num2, 9, 4, 0, NULL, 1012340010, 0) == OK);
+  is(sqlnum_test_from_str(hstmt, num2, 9, 3, 0, NULL, 101234001, 0) == OK);
+  is(sqlnum_test_from_str(hstmt, num2, 8, 3, 0, NULL, 0, 1) == OK);
+  is(sqlnum_test_from_str(hstmt, num2, 8, 2, 0, NULL, 10123400, 0) == OK);
+  is(sqlnum_test_from_str(hstmt, num2, 7, 2, 0, NULL, 10123400, 0) == OK);
+  is(sqlnum_test_from_str(hstmt, num2, 6, 2, 0, NULL, 10123400, 0) == OK);
+  is(sqlnum_test_from_str(hstmt, num2, 6, 1, 0, NULL, 1012340, 0) == OK);
+  is(sqlnum_test_from_str(hstmt, num2, 6, 0, 0, NULL, 101234, 0) == OK);
+  is(sqlnum_test_from_str(hstmt, num2, 6, -1, 0, NULL, 0, 1) == OK);
+
+  is(sqlnum_test_from_str(hstmt, num3, 6, -1, 0, NULL, 10123, 0) == OK);
+  is(sqlnum_test_from_str(hstmt, num3, 5, -1, 0, NULL, 10123, 0) == OK);
+
+  /* some larger numbers */
+  {SQLCHAR expdata[SQL_MAX_NUMERIC_LEN]= {0xD5, 0x50, 0x94, 0x49, 0,0,0,0,0,0,0,0,0,0,0,0};
+   is(OK == sqlnum_test_from_str(hstmt, "1234456789", 10, 0, 1, expdata, 0, 0));}
+  {SQLCHAR expdata[SQL_MAX_NUMERIC_LEN]= {0x7c, 0x62, 0,0, 0,0,0,0,0,0,0,0,0,0,0,0};
+   is(OK == sqlnum_test_from_str(hstmt, "25.212", 5, 3, 1, expdata, 0, 0));}
+  {SQLCHAR expdata[SQL_MAX_NUMERIC_LEN]= {0xaa, 0x86, 0x1, 0, 0,0,0,0,0,0,0,0,0,0,0,0};
+   is(OK == sqlnum_test_from_str(hstmt, "10.0010", 6, 4, 1, expdata, 0, 0));}
+  {SQLCHAR expdata[SQL_MAX_NUMERIC_LEN]= {0x2a, 0x15, 0x57, 0x3c, 0,0,0,0,0,0,0,0,0,0,0,0};
+   is(OK == sqlnum_test_from_str(hstmt, "-101234.0010", 10, 4, 0, expdata, 0, 0));}
+  {SQLCHAR expdata[SQL_MAX_NUMERIC_LEN]= {0x72, 0x8b, 0x1, 0, 0,0,0,0,0,0,0,0,0,0,0,0};
+   is(OK == sqlnum_test_from_str(hstmt, "101234", 6, 0, 1, expdata, 0, 0));}
+  {SQLCHAR expdata[SQL_MAX_NUMERIC_LEN]= {0x97, 0x03, 0x7C, 0xE3, 0x76, 0x5E, 0xF0, 0x00, 0x24, 0x1A, 0,0,0,0,0,0};
+   is(OK == sqlnum_test_from_str(hstmt, "123445678999123445678999", 24, 0, 1, expdata, 0, 0));}
+  {SQLCHAR expdata[SQL_MAX_NUMERIC_LEN]= {0x95, 0xFA, 0x0B, 0xF1, 0xED, 0x3C, 0x7C, 0xE4, 0x1B, 0x5F, 0x80, 0x1A, 0x16, 0x06, 0,0};
+   is(OK == sqlnum_test_from_str(hstmt, "123445678999123445678999543216789", 33, 0, 1, expdata, 0, 0));}
+  {SQLCHAR expdata[SQL_MAX_NUMERIC_LEN]= {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+   is(OK == sqlnum_test_from_str(hstmt, "12344567899912344567899954321678909876543212", 44, 0, 1, expdata, 0, 1));}
+  /* overflow with dec pt after the overflow */
+  {SQLCHAR expdata[SQL_MAX_NUMERIC_LEN]= {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+   is(OK == sqlnum_test_from_str(hstmt, "1234456789991234456789995432167890987654321.2", 44, 1, 1, expdata, 0, 1));}
+  {SQLCHAR expdata[SQL_MAX_NUMERIC_LEN]= {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
+   is(OK == sqlnum_test_from_str(hstmt, "340282366920938463463374607431768211455", 39, 0, 1, expdata, 0, 0)); /* MAX */}
+  {SQLCHAR expdata[SQL_MAX_NUMERIC_LEN]= {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+   is(OK == sqlnum_test_from_str(hstmt, "340282366920938463463374607431768211456", 39, 0, 1, expdata, 0, 1)); /* MAX+1 */}
+  {SQLCHAR expdata[SQL_MAX_NUMERIC_LEN]= {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+   is(OK == sqlnum_test_from_str(hstmt, "0", 1, 0, 1, expdata, 0, 0));}
+
+  return OK;
+}
+
+
+/*
+   Basic test of binding a SQL_NUMERIC_STRUCT as a query parameter
+*/
+DECLARE_TEST(t_bindsqlnum_basic)
+{
+  SQL_NUMERIC_STRUCT *sqlnum= malloc(sizeof(SQL_NUMERIC_STRUCT));
+  SQLCHAR outstr[20];
+  memset(sqlnum, 0, sizeof(SQL_NUMERIC_STRUCT));
+
+  sqlnum->sign= 1;
+  sqlnum->val[0]= 0x7c;
+  sqlnum->val[1]= 0x62;
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, "select ?", SQL_NTS));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_NUMERIC,
+                                  SQL_DECIMAL, 5, 3,
+                                  sqlnum, 0, NULL));
+
+  ok_stmt(hstmt, SQLExecute(hstmt));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outstr, 20, NULL));
+  is_str(outstr, "25.212", 6);
+  is_num(sqlnum->sign, 1);
+  is_num(sqlnum->precision, 5);
+  is_num(sqlnum->scale, 3);
+
+  return OK;
+}
+
+
+/**
+  Internal function to test sending a SQL_NUMERIC_STRUCT value.
+
+  @todo Printing some additional output (sqlnum->val as hex, dec)
+
+  @param[in]  hstmt       Statement handle
+  @param[in]  numdata     Numeric data
+  @param[in]  prec        Precision to send
+  @param[in]  scale       Scale to send
+  @param[in]  sign        Sign (1=+,0=-)
+  @param[in]  outstr      Expected result string
+  @param[in]  exptrunc    Expected truncation failure
+  @return OK/FAIL just like a test.
+*/
+int sqlnum_test_to_str(SQLHANDLE hstmt, SQLCHAR *numdata, SQLCHAR prec,
+                       SQLSCHAR scale, SQLCHAR sign, SQLCHAR *outstr,
+                       SQLCHAR *exptrunc)
+{
+  SQL_NUMERIC_STRUCT *sqlnum= malloc(sizeof(SQL_NUMERIC_STRUCT));
+  SQLCHAR obuf[30];
+  SQLRETURN exprc= SQL_SUCCESS;
+
+  /* TODO until sqlnum errors are supported */
+  /*
+  if (!strcmp("01S07", exptrunc))
+    exprc= SQL_SUCCESS_WITH_INFO;
+  else if (!strcmp("22003", exptrunc))
+    exprc= SQL_ERROR;
+  */
+
+  sqlnum->sign= sign;
+  memcpy(sqlnum->val, numdata, SQL_MAX_NUMERIC_LEN);
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_NUMERIC,
+                                  SQL_DECIMAL, prec, scale, sqlnum, 0, NULL));
+
+  ok_sql(hstmt, "select ?");
+
+  expect_stmt(hstmt, SQLFetch(hstmt), exprc);
+  if (exprc != SQL_SUCCESS)
+  {
+    is(check_sqlstate(hstmt, exptrunc) == OK);
+  }
+  if (exprc == SQL_ERROR)
+    return OK;
+  is_num(sqlnum->precision, prec);
+  is_num(sqlnum->scale, scale);
+  is_num(sqlnum->sign, sign);
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, obuf, sizeof(obuf), NULL));
+  is_str(obuf, outstr, strlen(outstr));
+  is(!memcmp(sqlnum->val, numdata, SQL_MAX_NUMERIC_LEN));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  free(sqlnum);
+  return OK;
+}
+
+
+/*
+   Testing of passing SQL_NUMERIC_STRUCT as query parameters
+*/
+DECLARE_TEST(t_sqlnum_to_str)
+{
+  {SQLCHAR numdata[]= {0xD5, 0x50, 0x94, 0x49, 0,0,0,0,0,0,0,0,0,0,0,0};
+   is(OK == sqlnum_test_to_str(hstmt, numdata, 10, 4, 1, "123445.6789", ""));}
+
+  /* fractional truncation */
+  {SQLCHAR numdata[]= {0xD5, 0x50, 0x94, 0x49, 0,0,0,0,0,0,0,0,0,0,0,0};
+   is(OK == sqlnum_test_to_str(hstmt, numdata, 9, 2, 1, "12344567.8", "01S07"));}
+  {SQLCHAR numdata[]= {0xD5, 0x50, 0x94, 0x49, 0,0,0,0,0,0,0,0,0,0,0,0};
+   is(OK == sqlnum_test_to_str(hstmt, numdata, 8, 2, 1, "12344567", "01S07"));}
+
+  /* whole number truncation - error */
+  /* TODO need err handling for this test
+  {SQLCHAR numdata[]= {0xD5, 0x50, 0x94, 0x49, 0,0,0,0,0,0,0,0,0,0,0,0};
+   is(OK == sqlnum_test_to_str(hstmt, numdata, 7, 2, 1, "1234456", "22003"));}
+  */
+
+  /* negative scale */
+  {SQLCHAR numdata[]= {0xD5, 0x50, 0x94, 0x49, 0,0,0,0,0,0,0,0,0,0,0,0};
+   is(OK == sqlnum_test_to_str(hstmt, numdata, 10, -2, 1, "123445678900", ""));}
+  {SQLCHAR numdata[]= {0xD5, 0x50, 0x94, 0x49, 0,0,0,0,0,0,0,0,0,0,0,0};
+   is(OK == sqlnum_test_to_str(hstmt, numdata, 10, -2, 0, "-123445678900", ""));}
+
+  /* scale > prec */
+  {SQLCHAR numdata[]= {0xD5, 0x50, 0x94, 0x49, 0,0,0,0,0,0,0,0,0,0,0,0};
+   is(OK == sqlnum_test_to_str(hstmt, numdata, 10, 11, 1, "0.01234456789", ""));}
+  {SQLCHAR numdata[]= {0xD5, 0x50, 0x94, 0x49, 0,0,0,0,0,0,0,0,0,0,0,0};
+   is(OK == sqlnum_test_to_str(hstmt, numdata, 10, 11, 0, "-0.01234456789", ""));}
+  {SQLCHAR numdata[]= {0xD5, 0x50, 0x94, 0x49, 0,0,0,0,0,0,0,0,0,0,0,0};
+   is(OK == sqlnum_test_to_str(hstmt, numdata, 10, 20, 1, "0.00000000001234456789", ""));}
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_longlong1)
-  ADD_TEST(t_numeric)
   ADD_TEST(t_decimal)
   ADD_TEST(t_bigint)
   ADD_TEST(t_enumset)
@@ -804,6 +1055,10 @@ BEGIN_TESTS
   ADD_TEST(bit)
   ADD_TEST(t_bug32171)
   ADD_TEST(sqlwchar)
+  ADD_TEST(t_sqlnum_msdn)
+  ADD_TEST(t_sqlnum_from_str)
+  ADD_TEST(t_bindsqlnum_basic)
+  ADD_TEST(t_sqlnum_to_str)
 END_TESTS
 
 

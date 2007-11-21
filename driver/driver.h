@@ -193,6 +193,9 @@ typedef enum { DESC_HDR, DESC_REC } fld_loc;
 #define SQL_IS_ULEN (-9)
 #define SQL_IS_LEN (-10)
 
+/* check if ARD record is a bound column */
+#define ARD_IS_BOUND(d) ((d)->data_ptr || (d)->octet_length_ptr)
+
 typedef struct {
   int perms;
   SQLSMALLINT data_type; /* SQL_IS_SMALLINT, etc */
@@ -281,7 +284,10 @@ typedef struct {
 
   /* row-specific */
   struct {
-    MYSQL_FIELD * field;
+    MYSQL_FIELD * field; /* Used *only* by IRD */
+    ulong datalen; /* actual length, maintained for *each* row */
+    /* TODO ugly, but easiest way to handle memory */
+    SQLCHAR type_name[40];
   } row;
 } DESCREC;
 
@@ -341,18 +347,6 @@ typedef struct tagDBC
 } DBC;
 
 
-/* Statement row binding handler */
-
-typedef struct st_bind
-{
-  MYSQL_FIELD * field;
-  SQLSMALLINT	fCType;
-  SQLPOINTER	rgbValue;
-  SQLINTEGER	cbValueMax;
-  SQLLEN *      pcbValue;
-} BIND;
-
-
 /* Statement states */
 
 enum MY_STATE { ST_UNKNOWN, ST_PREPARED, ST_PRE_EXECUTED, ST_EXECUTED };
@@ -391,7 +385,6 @@ typedef struct tagSTMT
   MYSQL_FIELD	*fields;
   MYSQL_ROW_OFFSET  end_of_set;
   DYNAMIC_ARRAY param_pos; /* param placeholder positions */
-  BIND		*bind;
   LIST		list;
   MYCURSOR	cursor;
   MYERROR	error;
@@ -406,7 +399,6 @@ typedef struct tagSTMT
   my_ulonglong	affected_rows;
   long		current_row;
   long		cursor_row;
-  ulong		*result_lengths;
   struct {
     uint column;      /* Which column is being used with SQLGetData() */
     char *source;     /* Our current position in the source. */
@@ -417,11 +409,9 @@ typedef struct tagSTMT
     ulong dst_bytes;  /* Length of data once it is all converted (in chars). */
     ulong dst_offset; /* Current offset into dest. (ulong)~0L when not set. */
   } getdata;
-  uint		*order,order_count,param_count,current_param,
-		rows_found_in_set,bound_columns;
+  uint		*order,order_count,param_count,current_param,rows_found_in_set;
   enum MY_STATE state;
   enum MY_DUMMY_STATE dummy_state;
-  SQLSMALLINT	*odbc_types;
 
   DESC *ard;
   DESC *ird;

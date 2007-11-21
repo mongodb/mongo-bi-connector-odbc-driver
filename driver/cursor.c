@@ -760,9 +760,9 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
     uint          ncol, ignore_count= 0;
     MYSQL_FIELD *field;
     MYSQL_RES   *result= stmt->result;
-    BIND        *bind;
     NET         *net=&stmt->dbc->mysql.net;
     SQLLEN      *pcbValue;
+    DESCREC *arrec, *irrec;
 
     dynstr_append_mem(dynQuery," SET ",5);
 
@@ -778,16 +778,20 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
     {
         SQLCHAR *to= net->buff;
         field= mysql_fetch_field_direct(result,ncol);
-        bind= stmt->bind+ncol;
+        arrec= desc_get_rec(stmt->ard, ncol, FALSE);
+        irrec= desc_get_rec(stmt->ird, ncol, FALSE);
+        assert(irrec);
+        assert(irrec->row.field);
 
-        if (!stmt->bind || (bind && !bind->field))
+        if (!arrec || !ARD_IS_BOUND(arrec) || !irrec->row.field)
         {
           ignore_count++;
           continue;
         }
-        pcbValue= bind->pcbValue ? bind->pcbValue + irow : 0;
-        if ( pcbValue )
+
+        if ( arrec->octet_length_ptr )
         {
+            pcbValue= arrec->octet_length_ptr + irow;
             /*
           If the pcbValue is SQL_COLUMN_IGNORE, then ignore the
           column in the SET clause
@@ -814,9 +818,9 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
         dynstr_append_mem(dynQuery,"=",1);
 
         iprec->concise_type= get_sql_data_type(stmt, field, NULL);
-        aprec->concise_type= bind->fCType;
-        aprec->data_ptr= (char *)bind->rgbValue+irow*bind->cbValueMax;
-        aprec->octet_length= bind->cbValueMax;
+        aprec->concise_type= irrec->concise_type;
+        aprec->data_ptr= (char *)arrec->data_ptr+irow*arrec->octet_length;
+        aprec->octet_length= arrec->octet_length;
         /*
             Check when SQL_LEN_DATA_AT_EXEC() macro was used instead of data length
         */
@@ -1100,9 +1104,6 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
     DESCREC aprec_, iprec_;
     DESCREC *aprec= &aprec_, *iprec= &iprec_;
 
-    desc_rec_init_apd(aprec);
-    desc_rec_init_ipd(iprec);
-
     /* determine the number of rows to insert when irow = 0 */
     if ( !irow && stmt->ard->array_size > 1 ) /* batch wise */
     {
@@ -1130,10 +1131,15 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
             for ( ncol= 0; ncol < result->field_count; ncol++ )
             {
                 MYSQL_FIELD *field= mysql_fetch_field_direct(result,ncol);
-                BIND        *bind= stmt->bind+ncol;
+                DESCREC     *arrec;
                 SQLINTEGER   binding_offset= 0;
                 SQLUINTEGER  element_size= 0;
-                SQLLEN       ind_or_len;
+                SQLLEN       ind_or_len= 0;
+
+                arrec= desc_get_rec(stmt->ard, ncol, FALSE);
+
+                desc_rec_init_apd(aprec);
+                desc_rec_init_ipd(iprec);
 
                 if (stmt->ard->bind_type != SQL_BIND_BY_COLUMN &&
                     stmt->ard->bind_offset_ptr)
@@ -1142,23 +1148,24 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
                 if (stmt->ard->bind_type != SQL_BIND_BY_COLUMN)
                   element_size= stmt->ard->bind_type;
 
-                if (bind->pcbValue)
-                  ind_or_len= *(SQLLEN *)((char *)bind->pcbValue +
-                                          binding_offset +
-                                          count * (element_size ?
-                                                   element_size :
-                                                   sizeof(SQLLEN)));
-                else
-                  ind_or_len= bind->cbValueMax;
+                if (arrec)
+                {
+                  if (arrec->octet_length_ptr)
+                    ind_or_len= *(SQLLEN *)((char *)arrec->octet_length_ptr +
+                                            binding_offset +
+                                            count * (element_size ?
+                                                     element_size :
+                                                     sizeof(SQLLEN)));
+                  else
+                    ind_or_len= arrec->octet_length;
 
-                iprec->concise_type= get_sql_data_type(stmt, field, NULL);
-                aprec->concise_type= bind->fCType;
-                aprec->data_ptr= (((char *)bind->rgbValue) +
-                                  binding_offset +
-                                  count * (element_size ?
-                                           element_size :
-                                           bind_length(bind->fCType,
-                                                       bind->cbValueMax)));
+                  iprec->concise_type= get_sql_data_type(stmt, field, NULL);
+                  aprec->concise_type= arrec->concise_type;
+                  aprec->data_ptr= (((char *)arrec->data_ptr) + binding_offset +
+                                    count * (element_size ?  element_size :
+                                             bind_length(arrec->concise_type,
+                                                         arrec->octet_length)));
+                }
 
                 switch (ind_or_len) {
                 case SQL_NTS:
@@ -1290,8 +1297,6 @@ static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLUSMALLINT irow, SQLUSM
                 reset_getdata_position(stmt);
                 if ( stmt->fix_fields )
                     stmt->current_values= (*stmt->fix_fields)(stmt,stmt->current_values);
-                else
-                    stmt->result_lengths= mysql_fetch_lengths(stmt->result);
                 /*
                  The call to mysql_fetch_row() moved stmt->result's internal
                  cursor, but we don't want that. We seek back to this row

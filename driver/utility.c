@@ -81,49 +81,149 @@ void mysql_link_fields(STMT *stmt, MYSQL_FIELD *fields, uint field_count)
 */
 void fix_result_types(STMT *stmt)
 {
-    uint i;
-    MYSQL_RES *result= stmt->result;
+  uint i;
+  MYSQL_RES *result= stmt->result;
+  DESCREC *irrec;
+  MYSQL_FIELD *field;
+  char typename[40];
 
-    stmt->state= ST_EXECUTED;  /* Mark set found */
-    if ( (stmt->odbc_types= (SQLSMALLINT*)
-          my_malloc(sizeof(SQLSMALLINT)*result->field_count, MYF(0))) )
-    {
-        for ( i= 0 ; i < result->field_count ; i++ )
-        {
-            MYSQL_FIELD *field= result->fields+i;
-            stmt->odbc_types[i]= (SQLSMALLINT) unireg_to_c_datatype(field);
-        }
-    }
-    /*
-      Fix default values for bound columns
-      Normally there isn't any bound columns at this stage !
-    */
-    if ( stmt->bind )
-    {
-        if ( stmt->bound_columns < result->field_count )
-        {
-            if ( !(stmt->bind= (BIND*) my_realloc((char*) stmt->bind,
-                                                  sizeof(BIND) * result->field_count,
-                                                  MYF(MY_FREE_ON_ERROR))) )
-            {
-                /* We should in principle give an error here */
-                stmt->bound_columns= 0;
-                return;
-            }
-            bzero((stmt->bind+stmt->bound_columns),
-                  (result->field_count -stmt->bound_columns)*sizeof(BIND));
-            stmt->bound_columns= result->field_count;
-        }
-        /* Fix default types and pointers to fields */
+  stmt->state= ST_EXECUTED;  /* Mark set found */
 
-        mysql_field_seek(result,0);
-        for ( i= 0; i < result->field_count ; i++ )
-        {
-            if ( stmt->bind[i].fCType == SQL_C_DEFAULT )
-                stmt->bind[i].fCType= stmt->odbc_types[i];
-            stmt->bind[i].field= mysql_fetch_field(result);
-        }
+  /* Populate the IRD records */
+  for (i= 0; i < result->field_count; ++i)
+  {
+    irrec= desc_get_rec(stmt->ird, i, TRUE);
+    field= result->fields + i;
+
+    irrec->row.field= field;
+    irrec->type= get_sql_data_type(stmt, field, NULL);
+    irrec->concise_type= get_sql_data_type(stmt, field, irrec->row.type_name);
+    switch (irrec->concise_type)
+    {
+    case SQL_DATE:
+    case SQL_TYPE_DATE:
+    case SQL_TIME:
+    case SQL_TYPE_TIME:
+    case SQL_TIMESTAMP:
+    case SQL_TYPE_TIMESTAMP:
+      irrec->type= SQL_DATETIME;
+      break;
+    default:
+      irrec->type= irrec->concise_type;
+      break;
     }
+    irrec->type_name= (SQLCHAR *) irrec->row.type_name;
+    irrec->length= get_column_size(stmt, field);
+    irrec->precision= irrec->length;
+    irrec->octet_length= get_transfer_octet_length(stmt, field) +
+                         test(field->charsetnr != BINARY_CHARSET_NUMBER);
+    if (stmt->dbc->flag & FLAG_COLUMN_SIZE_S32)
+    {
+      if (irrec->length > INT_MAX32)
+        irrec->length= INT_MAX32;
+      if (irrec->octet_length > INT_MAX32)
+        irrec->octet_length= INT_MAX32;
+    }
+    irrec->scale= max(0, get_decimal_digits(stmt, field));
+    if ((field->flags & NOT_NULL_FLAG) &&
+        !(field->flags & TIMESTAMP_FLAG) &&
+        !(field->flags & AUTO_INCREMENT_FLAG))
+      irrec->nullable= SQL_NO_NULLS;
+    else
+      irrec->nullable= SQL_NULLABLE;
+    irrec->table_name= field->table;
+    irrec->name= field->name;
+    irrec->label= field->name;
+    if (field->flags & AUTO_INCREMENT_FLAG)
+      irrec->auto_unique_value= SQL_TRUE;
+    else
+      irrec->auto_unique_value= SQL_FALSE;
+    /* We need support from server, when aliasing is there */
+    irrec->base_column_name= field->org_name;
+    irrec->base_table_name= field->org_table;
+    if (field->flags & BINARY_FLAG) /* TODO this doesn't cut it anymore */
+      irrec->case_sensitive= SQL_TRUE;
+    else
+      irrec->case_sensitive= SQL_FALSE;
+    if (field->db && *field->db)
+        irrec->catalog_name= field->db;
+    else
+        irrec->catalog_name= stmt->dbc->database;
+    irrec->display_size= get_display_size(stmt, field);
+    if (field->type == MYSQL_TYPE_DECIMAL ||
+        field->type == MYSQL_TYPE_NEWDECIMAL)
+      irrec->fixed_prec_scale= SQL_TRUE;
+    else
+      irrec->fixed_prec_scale= SQL_FALSE;
+    switch (field->type)
+    {
+    case MYSQL_TYPE_LONG_BLOB:
+    case MYSQL_TYPE_TINY_BLOB:
+    case MYSQL_TYPE_MEDIUM_BLOB:
+    case MYSQL_TYPE_BLOB:
+    case MYSQL_TYPE_VAR_STRING:
+    case MYSQL_TYPE_STRING:
+      if (field->charsetnr == BINARY_CHARSET_NUMBER)
+      {
+        irrec->literal_prefix= (SQLCHAR *) "0x";
+        irrec->literal_suffix= (SQLCHAR *) "";
+        break;
+      }
+      /* FALLTHROUGH */
+
+    case MYSQL_TYPE_DATE:
+    case MYSQL_TYPE_DATETIME:
+    case MYSQL_TYPE_NEWDATE:
+    case MYSQL_TYPE_TIMESTAMP:
+    case MYSQL_TYPE_TIME:
+    case MYSQL_TYPE_YEAR:
+      irrec->literal_prefix= (SQLCHAR *) "'";
+      irrec->literal_suffix= (SQLCHAR *) "'";
+      break;
+
+    default:
+      irrec->literal_prefix= (SQLCHAR *) "";
+      irrec->literal_suffix= (SQLCHAR *) "";
+    }
+    switch (field->type) {
+    case MYSQL_TYPE_SHORT:
+    case MYSQL_TYPE_LONG:
+    case MYSQL_TYPE_LONGLONG:
+    case MYSQL_TYPE_INT24:
+    case MYSQL_TYPE_TINY:
+    case MYSQL_TYPE_DECIMAL:
+      irrec->num_prec_radix= 10;
+      break;
+
+    /* overwrite irrec->precision set above */
+    case MYSQL_TYPE_FLOAT:
+      irrec->num_prec_radix= 2;
+      irrec->precision= 23;
+      break;
+
+    case MYSQL_TYPE_DOUBLE:
+      irrec->num_prec_radix= 2;
+      irrec->precision= 53;
+      break;
+
+    default:
+      irrec->num_prec_radix= 0;
+      break;
+    }
+    irrec->schema_name= (SQLCHAR *) "";
+    irrec->searchable= SQL_SEARCHABLE;
+    irrec->unnamed= SQL_NAMED;
+    if (field->flags & UNSIGNED_FLAG)
+      irrec->is_unsigned= SQL_TRUE;
+    else
+      irrec->is_unsigned= SQL_FALSE;
+    if (field->table && *field->table)
+      irrec->updatable= SQL_ATTR_READWRITE_UNKNOWN;
+    else
+      irrec->updatable= SQL_ATTR_READONLY;
+  }
+
+  stmt->ird->count= result->field_count;
 }
 
 
@@ -998,16 +1098,12 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 
   @param[in]  stmt
   @param[in]  field
-  @param[in]  actual  If true, field->max_length is used instead of
-                      field->length, to retrieve the actual length of
-                      data in the field
 
   @return  The column size of the field
 */
-SQLLEN get_column_size(STMT *stmt __attribute__((unused)), MYSQL_FIELD *field,
-                       my_bool actual)
+SQLLEN get_column_size(STMT *stmt __attribute__((unused)), MYSQL_FIELD *field)
 {
-  SQLLEN length= actual ? field->max_length : field->length;
+  SQLLEN length= field->length;
 
   switch (field->type) {
   case MYSQL_TYPE_TINY:
@@ -1115,6 +1211,10 @@ SQLLEN get_decimal_digits(STMT *stmt __attribute__((unused)),
       return 0;
 
   default:
+    /*
+       This value is only used in some catalog functions. It's co-erced
+       to zero for all descriptor use.
+    */
     return SQL_NO_TOTAL;
   }
 }
@@ -1129,8 +1229,7 @@ SQLLEN get_decimal_digits(STMT *stmt __attribute__((unused)),
 
   @return  The transfer octet length
 */
-SQLLEN get_transfer_octet_length(STMT *stmt __attribute__((unused)),
-                                 MYSQL_FIELD *field)
+SQLLEN get_transfer_octet_length(STMT *stmt, MYSQL_FIELD *field)
 {
   SQLLEN length= field->length;
 
@@ -1300,6 +1399,155 @@ SQLLEN get_display_size(STMT *stmt __attribute__((unused)),MYSQL_FIELD *field)
 
 
 /*
+   Map the concise type (value or param) to the correct datetime or
+   interval code.
+   See SQLSetDescField()/SQL_DESC_DATETIME_INTERVAL_CODE docs for details.
+*/
+SQLSMALLINT
+get_dticode_from_concise_type(SQLSMALLINT concise_type)
+{
+  /* figure out SQL_DESC_DATETIME_INTERVAL_CODE from SQL_DESC_CONCISE_TYPE */
+  switch (concise_type)
+  {
+  case SQL_C_TYPE_DATE:
+    return SQL_CODE_DATE;
+  case SQL_C_TYPE_TIME:
+    return SQL_CODE_TIME;
+  case SQL_C_TIMESTAMP:
+  case SQL_C_TYPE_TIMESTAMP:
+    return SQL_CODE_TIMESTAMP;
+  case SQL_C_INTERVAL_DAY:
+    return SQL_CODE_DAY;
+  case SQL_C_INTERVAL_DAY_TO_HOUR:
+    return SQL_CODE_DAY_TO_HOUR;
+  case SQL_C_INTERVAL_DAY_TO_MINUTE:
+    return SQL_CODE_DAY_TO_MINUTE;
+  case SQL_C_INTERVAL_DAY_TO_SECOND:
+    return SQL_CODE_DAY_TO_SECOND;
+  case SQL_C_INTERVAL_HOUR:
+    return SQL_CODE_HOUR;
+  case SQL_C_INTERVAL_HOUR_TO_MINUTE:
+    return SQL_CODE_HOUR_TO_MINUTE;
+  case SQL_C_INTERVAL_HOUR_TO_SECOND:
+    return SQL_CODE_HOUR_TO_SECOND;
+  case SQL_C_INTERVAL_MINUTE:
+    return SQL_CODE_MINUTE;
+  case SQL_C_INTERVAL_MINUTE_TO_SECOND:
+    return SQL_CODE_MINUTE_TO_SECOND;
+  case SQL_C_INTERVAL_MONTH:
+    return SQL_CODE_MONTH;
+  case SQL_C_INTERVAL_SECOND:
+    return SQL_CODE_SECOND;
+  case SQL_C_INTERVAL_YEAR:
+    return SQL_CODE_YEAR;
+  case SQL_C_INTERVAL_YEAR_TO_MONTH:
+    return SQL_CODE_YEAR_TO_MONTH;
+  default:
+    return 0;
+  }
+}
+
+
+/*
+   Map the SQL_DESC_DATETIME_INTERVAL_CODE to the SQL_DESC_CONCISE_TYPE
+   for datetime types.
+
+   Constant returned is valid for both param and value types.
+*/
+SQLSMALLINT get_concise_type_from_datetime_code(SQLSMALLINT dticode)
+{
+  switch (dticode)
+  {
+  case SQL_CODE_DATE:
+    return SQL_C_TYPE_DATE;
+  case SQL_CODE_TIME:
+    return SQL_C_TYPE_DATE;
+  case SQL_CODE_TIMESTAMP:
+    return SQL_C_TYPE_TIMESTAMP;
+  default:
+    return 0;
+  }
+}
+
+
+/*
+   Map the SQL_DESC_DATETIME_INTERVAL_CODE to the SQL_DESC_CONCISE_TYPE
+   for interval types.
+
+   Constant returned is valid for both param and value types.
+*/
+SQLSMALLINT get_concise_type_from_interval_code(SQLSMALLINT dticode)
+{
+  switch (dticode)
+  {
+  case SQL_CODE_DAY:
+    return SQL_C_INTERVAL_DAY;
+  case SQL_CODE_DAY_TO_HOUR:
+    return SQL_C_INTERVAL_DAY_TO_HOUR;
+  case SQL_CODE_DAY_TO_MINUTE:
+    return SQL_C_INTERVAL_DAY_TO_MINUTE;
+  case SQL_CODE_DAY_TO_SECOND:
+    return SQL_C_INTERVAL_DAY_TO_SECOND;
+  case SQL_CODE_HOUR:
+    return SQL_C_INTERVAL_HOUR;
+  case SQL_CODE_HOUR_TO_MINUTE:
+    return SQL_C_INTERVAL_HOUR_TO_MINUTE;
+  case SQL_CODE_HOUR_TO_SECOND:
+    return SQL_C_INTERVAL_HOUR_TO_SECOND;
+  case SQL_CODE_MINUTE:
+    return SQL_C_INTERVAL_MINUTE;
+  case SQL_CODE_MINUTE_TO_SECOND:
+    return SQL_C_INTERVAL_MINUTE_TO_SECOND;
+  case SQL_CODE_MONTH:
+    return SQL_C_INTERVAL_MONTH;
+  case SQL_CODE_SECOND:
+    return SQL_C_INTERVAL_SECOND;
+  case SQL_CODE_YEAR:
+    return SQL_C_INTERVAL_YEAR;
+  case SQL_CODE_YEAR_TO_MONTH:
+    return SQL_C_INTERVAL_YEAR_TO_MONTH;
+  default:
+    return 0;
+  }
+}
+
+
+/*
+   Map the concise type to a (possibly) more general type.
+*/
+SQLSMALLINT get_type_from_concise_type(SQLSMALLINT concise_type)
+{
+  /* set SQL_DESC_TYPE from SQL_DESC_CONCISE_TYPE */
+  switch (concise_type)
+  {
+  /* datetime data types */
+  case SQL_C_TYPE_DATE:
+  case SQL_C_TYPE_TIME:
+  case SQL_C_TYPE_TIMESTAMP:
+    return SQL_DATETIME;
+  /* interval data types */
+  case SQL_C_INTERVAL_YEAR:
+  case SQL_C_INTERVAL_MONTH:
+  case SQL_C_INTERVAL_DAY:
+  case SQL_C_INTERVAL_HOUR:
+  case SQL_C_INTERVAL_MINUTE:
+  case SQL_C_INTERVAL_SECOND:
+  case SQL_C_INTERVAL_YEAR_TO_MONTH:
+  case SQL_C_INTERVAL_DAY_TO_HOUR:
+  case SQL_C_INTERVAL_DAY_TO_MINUTE:
+  case SQL_C_INTERVAL_DAY_TO_SECOND:
+  case SQL_C_INTERVAL_HOUR_TO_MINUTE:
+  case SQL_C_INTERVAL_HOUR_TO_SECOND:
+  case SQL_C_INTERVAL_MINUTE_TO_SECOND:
+    return SQL_INTERVAL;
+  /* else, set same */
+  default:
+    return concise_type;
+  }
+}
+
+
+/*
   @type    : myodbc internal
   @purpose : returns internal type to C type
 */
@@ -1308,9 +1556,6 @@ int unireg_to_c_datatype(MYSQL_FIELD *field)
 {
     switch ( field->type )
     {
-        case MYSQL_TYPE_LONGLONG: /* Must be returned as char */
-        default:
-            return SQL_C_CHAR;
         case MYSQL_TYPE_BIT:
             /*
               MySQL's BIT type can have more than one bit, in which case we
@@ -1342,6 +1587,9 @@ int unireg_to_c_datatype(MYSQL_FIELD *field)
         case MYSQL_TYPE_MEDIUM_BLOB:
         case MYSQL_TYPE_LONG_BLOB:
             return SQL_C_BINARY;
+        case MYSQL_TYPE_LONGLONG: /* Must be returned as char */
+        default:
+            return SQL_C_CHAR;
     }
 }
 
@@ -1403,8 +1651,6 @@ ulong bind_length(int sql_data_type,ulong length)
 {
     switch ( sql_data_type )
     {
-        default:                  /* For CHAR, VARCHAR, BLOB...*/
-            return length;
         case SQL_C_BIT:
         case SQL_C_TINYINT:
         case SQL_C_STINYINT:
@@ -1434,6 +1680,10 @@ ulong bind_length(int sql_data_type,ulong length)
         case SQL_C_SBIGINT:
         case SQL_C_UBIGINT:
             return sizeof(longlong);
+        case SQL_C_NUMERIC:
+          return sizeof(SQL_NUMERIC_STRUCT);
+        default:                  /* For CHAR, VARCHAR, BLOB, DEFAULT...*/
+            return length;
     }
 }
 
@@ -1924,4 +2174,386 @@ ulong myodbc_escape_wildcard(MYSQL *mysql __attribute__((unused)),
   return overflow ? (ulong)~0 : (ulong) (to - to_start);
 }
 
+
+/**
+  Scale an int[] representing SQL_C_NUMERIC
+
+  @param[in] ary   Array in little endian form
+  @param[in] s     Scale
+*/
+static void sqlnum_scale(int *ary, int s)
+{
+  /* multiply out all pieces */
+  while (s--)
+  {
+    ary[0] *= 10;
+    ary[1] *= 10;
+    ary[2] *= 10;
+    ary[3] *= 10;
+    ary[4] *= 10;
+    ary[5] *= 10;
+    ary[6] *= 10;
+    ary[7] *= 10;
+  }
+}
+
+
+/**
+  Unscale an int[] representing SQL_C_NUMERIC. This
+  leaves the last element (0) with the value of the
+  last digit.
+
+  @param[in] ary   Array in little endian form
+*/
+static void sqlnum_unscale_le(int *ary)
+{
+  int i;
+  for (i= 7; i > 0; --i)
+  {
+    ary[i - 1] += (ary[i] % 10) << 16;
+    ary[i] /= 10;
+  }
+}
+
+
+/**
+  Unscale an int[] representing SQL_C_NUMERIC. This
+  leaves the last element (7) with the value of the
+  last digit.
+
+  @param[in] ary   Array in big endian form
+*/
+static void sqlnum_unscale_be(int *ary, int start)
+{
+  int i;
+  for (i= start; i < 7; ++i)
+  {
+    ary[i + 1] += (ary[i] % 10) << 16;
+    ary[i] /= 10;
+  }
+}
+
+
+/**
+  Perform the carry to get all elements below 2^16.
+  Should be called right after sqlnum_scale().
+
+  @param[in] ary   Array in little endian form
+*/
+static void sqlnum_carry(int *ary)
+{
+  int i;
+  /* carry over rest of structure */
+  for (i= 0; i < 7; ++i)
+  {
+    ary[i+1] += ary[i] >> 16;
+    ary[i] &= 0xffff;
+  }
+}
+
+
+/**
+  Retrieve a SQL_NUMERIC_STRUCT from a string. The requested scale
+  and precesion are first read from sqlnum, and then updated values
+  are written back at the end.
+
+  @param[in] numstr       String representation of number to convert
+  @param[in] sqlnum       Destination struct
+  @param[in] overflow_ptr Whether or not whole-number overflow occurred.
+                          This indicates failure, and the result of sqlnum
+                          is undefined.
+*/
+void sqlnum_from_str(const char *numstr, SQL_NUMERIC_STRUCT *sqlnum,
+                     int *overflow_ptr)
+{
+  /*
+     We use 16 bits of each integer to convert the
+     current segment of the number leaving extra bits
+     to multiply/carry
+  */
+  int build_up[8], tmp_prec_calc[8];
+  /* current segment as integer */
+  unsigned int curnum;
+  /* current segment digits copied for strtoul() */
+  char curdigs[5];
+  /* number of digits in current segment */
+  int usedig;
+  int i;
+  int len;
+  char *decpt= strchr(numstr, '.');
+  int overflow= 0;
+  SQLSCHAR reqscale= sqlnum->scale;
+  SQLCHAR reqprec= sqlnum->precision;
+
+  memset(&sqlnum->val, 0, sizeof(sqlnum->val));
+  memset(build_up, 0, sizeof(build_up));
+
+  /* handle sign */
+  if (!(sqlnum->sign= !(*numstr == '-')))
+    numstr++;
+
+  len= (int) strlen(numstr);
+  sqlnum->precision= len;
+  sqlnum->scale= 0;
+
+  /* process digits in groups of <=4 */
+  for (i= 0; i < len; i += usedig)
+  {
+    if (i + 4 < len)
+      usedig= 4;
+    else
+      usedig= len - i;
+    /*
+       if we have the decimal point, ignore it by setting it to the
+       last char (will be ignored by strtoul)
+    */
+    if (decpt && decpt > numstr + i && decpt < numstr + i + usedig)
+    {
+      usedig = (int) (decpt - (numstr + i) + 1);
+      sqlnum->scale= len - (i + usedig);
+      sqlnum->precision--;
+      decpt= NULL;
+    }
+    /* terminate prematurely if we can't do anything else */
+    /*if (overflow && !decpt)
+      break;
+    else */if (overflow)
+      /*continue;*/goto end;
+    /* grab just this piece, and convert to int */
+    memcpy(curdigs, numstr + i, usedig);
+    curdigs[usedig]= 0;
+    curnum= strtoul(curdigs, NULL, 10);
+    if (curdigs[usedig - 1] == '.')
+      sqlnum_scale(build_up, usedig - 1);
+    else
+      sqlnum_scale(build_up, usedig);
+    /* add the current number */
+    build_up[0] += curnum;
+    sqlnum_carry(build_up);
+    if (build_up[7] & ~0xffff)
+      overflow= 1;
+  }
+
+  /* scale up to SQL_DESC_SCALE */
+  if (reqscale > 0 && reqscale > sqlnum->scale)
+  {
+    while (reqscale > sqlnum->scale)
+    {
+      sqlnum_scale(build_up, 1);
+      sqlnum_carry(build_up);
+      sqlnum->scale++;
+    }
+  }
+  /* scale back, truncating decimals */
+  else if (reqscale < sqlnum->scale)
+  {
+    while (reqscale < sqlnum->scale && sqlnum->scale > 0)
+    {
+      sqlnum_unscale_le(build_up);
+      build_up[0] /= 10;
+      sqlnum->precision--;
+      sqlnum->scale--;
+    }
+  }
+
+  /* scale back whole numbers while there's no significant digits */
+  if (reqscale < 0)
+  {
+    memcpy(tmp_prec_calc, build_up, sizeof(build_up));
+    while (reqscale < sqlnum->scale)
+    {
+      sqlnum_unscale_le(tmp_prec_calc);
+      if (tmp_prec_calc[0] % 10)
+      {
+        overflow= 1;
+        goto end;
+      }
+      sqlnum_unscale_le(build_up);
+      tmp_prec_calc[0] /= 10;
+      build_up[0] /= 10;
+      sqlnum->precision--;
+      sqlnum->scale--;
+    }
+  }
+
+  /* calculate minimum precision */
+  memcpy(tmp_prec_calc, build_up, sizeof(build_up));
+
+  do
+  {
+    sqlnum_unscale_le(tmp_prec_calc);
+    i= tmp_prec_calc[0] % 10;
+    tmp_prec_calc[0] /= 10;
+    if (i == 0)
+      sqlnum->precision--;
+  } while (i == 0 && sqlnum->precision > 0);
+
+  /* detect precision overflow */
+  if (sqlnum->precision > reqprec)
+    overflow= 1;
+  else
+    sqlnum->precision= reqprec;
+
+  /* compress results into SQL_NUMERIC_STRUCT.val */
+  for (i= 0; i < 8; ++i)
+  {
+    int elem= 2 * i;
+    sqlnum->val[elem]= build_up[i] & 0xff;
+    sqlnum->val[elem+1]= build_up[i] >> 8;
+  }
+
+end:
+  if (overflow_ptr)
+    *overflow_ptr= overflow;
+}
+
+
+/**
+  Convert a SQL_NUMERIC_STRUCT to a string. Only val and sign are
+  read from the struct. precision and scale will be updated on the
+  struct with the final values used in the conversion.
+
+  @param[in] sqlnum       Source struct
+  @param[in] numstr       Buffer to convert into string. Note that you
+                          MUST use numbegin to read the result string.
+                          This should point to the LAST byte available.
+                          (We fill in digits backwards.)
+  @param[in] numbegin     String pointer that will be set to the start of
+                          the result string.
+  @param[in] reqprec      Requested precision
+  @param[in] reqscale     Requested scale
+  @param[in] truncptr     Pointer to set the truncation type encountered.
+                          If SQLNUM_TRUNC_WHOLE, this indicates a failure
+                          and the contents of numstr are undefined and
+                          numbegin will not be written to.
+*/
+void sqlnum_to_str(SQL_NUMERIC_STRUCT *sqlnum, SQLCHAR *numstr,
+                   SQLCHAR **numbegin, SQLCHAR reqprec, SQLSCHAR reqscale,
+                   int *truncptr)
+{
+  int expanded[8];
+  int i, j;
+  int max_space= 0;
+  int calcprec= 0;
+  int trunc= 0; /* truncation indicator */
+
+  *numstr--= 0;
+
+  /*
+     it's expected to have enough space
+     (~at least min(39, max(prec, scale+2)) + 3)
+  */
+
+  /*
+     expand the packed sqlnum->val so we have space to divide through
+     expansion happens into an array in big-endian form
+  */
+  for (i= 0; i < 8; ++i)
+    expanded[7 - i]= (sqlnum->val[(2 * i) + 1] << 8) | sqlnum->val[2 * i];
+
+  /* max digits = 39 = log_10(2^128)+1 */
+  for (j= 0; j < 39; ++j)
+  {
+    /* skip empty prefix */
+    while (!expanded[max_space])
+      max_space++;
+    /* if only the last piece has a value, it's the end */
+    if (max_space >= 7)
+    {
+      i= 7;
+      if (!expanded[7])
+      {
+        /* special case for zero, we'll end immediately */
+        if (!*(numstr + 1))
+        {
+          *numstr--= '0';
+          calcprec= 1;
+        }
+        break;
+      }
+    }
+    else
+    {
+      /* extract the next digit */
+      sqlnum_unscale_be(expanded, max_space);
+    }
+    *numstr--= '0' + (expanded[7] % 10);
+    expanded[7] /= 10;
+    calcprec++;
+    if (j == reqscale - 1)
+      *numstr--= '.';
+  }
+
+  sqlnum->scale= reqscale;
+
+  /* add <- dec pt */
+  if (calcprec < reqscale)
+  {
+    while (calcprec < reqscale)
+    {
+      *numstr--= '0';
+      reqscale--;
+    }
+    *numstr--= '.';
+    *numstr--= '0';
+  }
+
+  /* handle fractional truncation */
+  if (calcprec > reqprec && reqscale > 0)
+  {
+    char *end= numstr + strlen(numstr) - 1;
+    while (calcprec > reqprec && reqscale)
+    {
+      *end--= 0;
+      calcprec--;
+      reqscale--;
+    }
+    if (calcprec > reqprec && reqscale == 0)
+    {
+      trunc= SQLNUM_TRUNC_WHOLE;
+      goto end;
+    }
+    if (*end == '.')
+      *end--= 0;
+    else
+    {
+      /* move the dec pt-- ??? */
+      /*
+      char c2, c= numstr[calcprec - reqscale];
+      numstr[calcprec - reqscale]= '.';
+      while (reqscale)
+      {
+        c2= numstr[calcprec + 1 - reqscale];
+        numstr[calcprec + 1 - reqscale]= c;
+        c= c2;
+        reqscale--;
+      }
+      */
+    }
+    trunc= SQLNUM_TRUNC_FRAC;
+  }
+
+  /* add zeros for negative scale */
+  if (reqscale < 0)
+  {
+    int i;
+    reqscale *= -1;
+    for (i= 1; i <= calcprec; ++i)
+      *(numstr + i - reqscale)= *(numstr + i);
+    numstr -= reqscale;
+    memset(numstr + calcprec + 1, '0', reqscale);
+  }
+
+  sqlnum->precision= calcprec;
+
+  /* finish up, handle auxilary fix-ups */
+  if (!sqlnum->sign)
+    *numstr--= '-';
+  numstr++;
+  *numbegin= numstr;
+
+end:
+  if (truncptr)
+    *truncptr= trunc;
+}
 

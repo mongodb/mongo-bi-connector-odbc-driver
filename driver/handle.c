@@ -391,10 +391,7 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
 
     if (fOption == SQL_UNBIND)
     {
-        /* TODO something here for row descs */
-        x_free(stmt->bind);
-        stmt->bind= 0;
-        stmt->bound_columns= 0;
+        stmt->ard->count= 0;
         return SQL_SUCCESS;
     }
     /* free any allocated memory from SQLPutData() */
@@ -436,14 +433,11 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     x_free(stmt->fields);
     x_free(stmt->array);
     x_free(stmt->result_array);
-    x_free(stmt->odbc_types);
     stmt->result= 0;
     stmt->fake_result= 0;
-    stmt->result_lengths= 0;
     stmt->fields= 0;
     stmt->array= 0;
     stmt->result_array= 0;
-    stmt->odbc_types= 0;
     stmt->current_values= 0;   /* For SQLGetData */
     stmt->fix_fields= 0;
     stmt->affected_rows= 0;
@@ -493,7 +487,10 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     x_free(stmt->ird);
 
     x_free(stmt->cursor.name);
-    x_free(stmt->bind);
+
+    /* this tosses all column bindings */
+    stmt->ard->count= 0;
+
     delete_dynamic(&stmt->param_pos);
     stmt->dbc->statements= list_delete(stmt->dbc->statements,&stmt->list);
 #ifndef _UNIX_

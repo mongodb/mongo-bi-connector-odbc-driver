@@ -592,6 +592,12 @@ MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
             options->simulateCursor= (SQLUINTEGER)(SQLULEN)ValuePtr;
             break;
 
+        /* TODO add setting descriptor support */
+        /* only explicitely allocated descriptors can be set */
+        /* HY017
+         *  Invalid use of an automatically allocated descriptor handle
+         */
+
             /*
               3.x driver doesn't support any statement attributes
               at connection level, but to make sure all 2.x apps

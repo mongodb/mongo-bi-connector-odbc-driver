@@ -207,7 +207,6 @@ SQLRETURN SQL_API my_SQLBindParameter( SQLHSTMT     StatementHandle,
     DESCREC *aprec= desc_get_rec(stmt->apd, ParameterNumber - 1, TRUE);
     DESCREC *iprec= desc_get_rec(stmt->ipd, ParameterNumber - 1, TRUE);
     SQLRETURN rc;
-    SQLSMALLINT dtcode = 0; /* DATETIME_INTERVAL_CODE */
     /* TODO if this function fails, the SQL_DESC_COUNT should be unchanged in apd, ipd */
 
     CLEAR_STMT_ERROR(stmt);
@@ -215,13 +214,6 @@ SQLRETURN SQL_API my_SQLBindParameter( SQLHSTMT     StatementHandle,
     if (ParameterNumber < 1)
     {
         set_error(stmt,MYERR_S1093,NULL,0);
-        return SQL_ERROR;
-    }
-
-    if (ValueType == SQL_C_NUMERIC) /* We don't support this now */
-    {
-        set_error(stmt,MYERR_07006,
-                  "Restricted data type attribute violation(SQL_C_NUMERIC)",0);
         return SQL_ERROR;
     }
 
@@ -247,96 +239,15 @@ SQLRETURN SQL_API my_SQLBindParameter( SQLHSTMT     StatementHandle,
                                                  SQL_IS_SMALLINT)))
         return rc;
 
-    /* SQL_DESC_DATETIME_INTERVAL_CODE must be before SQL_DESC_TYPE */
-    if (ValueType == SQL_C_DATE || ValueType == SQL_C_TYPE_DATE)
-        dtcode= SQL_CODE_DATE;
-    else if (ValueType == SQL_C_TIME || ValueType == SQL_C_TYPE_TIME)
-        dtcode= SQL_CODE_TIME;
-    else if (ValueType == SQL_C_TIMESTAMP || ValueType == SQL_C_TYPE_TIMESTAMP)
-        dtcode= SQL_CODE_TIMESTAMP;
-    else if (ValueType == SQL_C_INTERVAL_DAY)
-        dtcode= SQL_CODE_DAY;
-    else if (ValueType == SQL_C_INTERVAL_DAY_TO_HOUR)
-        dtcode= SQL_CODE_DAY_TO_HOUR;
-    else if (ValueType == SQL_C_INTERVAL_DAY_TO_MINUTE)
-        dtcode= SQL_CODE_DAY_TO_MINUTE;
-    else if (ValueType == SQL_C_INTERVAL_DAY_TO_SECOND)
-        dtcode= SQL_CODE_DAY_TO_SECOND;
-    else if (ValueType == SQL_C_INTERVAL_HOUR)
-        dtcode= SQL_CODE_HOUR;
-    else if (ValueType == SQL_C_INTERVAL_HOUR_TO_MINUTE)
-        dtcode= SQL_CODE_HOUR_TO_MINUTE;
-    else if (ValueType == SQL_C_INTERVAL_HOUR_TO_SECOND)
-        dtcode= SQL_CODE_HOUR_TO_SECOND;
-    else if (ValueType == SQL_C_INTERVAL_MINUTE)
-        dtcode= SQL_CODE_MINUTE;
-    else if (ValueType == SQL_C_INTERVAL_MINUTE_TO_SECOND)
-        dtcode= SQL_CODE_MINUTE_TO_SECOND;
-    else if (ValueType == SQL_C_INTERVAL_MONTH)
-        dtcode= SQL_CODE_MONTH;
-    else if (ValueType == SQL_C_INTERVAL_SECOND)
-        dtcode= SQL_CODE_SECOND;
-    else if (ValueType == SQL_C_INTERVAL_YEAR)
-        dtcode= SQL_CODE_YEAR;
-    else if (ValueType == SQL_C_INTERVAL_YEAR_TO_MONTH)
-        dtcode= SQL_CODE_YEAR_TO_MONTH;
-
-    if (!SQL_SUCCEEDED(rc= stmt_SQLSetDescField(stmt, stmt->apd,
-                                                ParameterNumber,
-                                                SQL_DESC_DATETIME_INTERVAL_CODE,
-                                                (SQLPOINTER)(SQLINTEGER)dtcode,
-                                                SQL_IS_SMALLINT)))
-        return rc;
-
-    switch (ValueType)
-    {
-    /* datetime data types */
-    case SQL_C_DATE:
-    case SQL_C_TYPE_DATE:
-    case SQL_C_TIME:
-    case SQL_C_TYPE_TIME:
-    case SQL_C_TIMESTAMP:
-    case SQL_C_TYPE_TIMESTAMP:
-        rc= stmt_SQLSetDescField(stmt, stmt->apd, ParameterNumber,
-                                 SQL_DESC_TYPE, (SQLPOINTER)SQL_DATETIME,
-                                 SQL_IS_SMALLINT);
-        break;
-    /* interval data types */
-    case SQL_C_INTERVAL_YEAR:
-    case SQL_C_INTERVAL_MONTH:
-    case SQL_C_INTERVAL_DAY:
-    case SQL_C_INTERVAL_HOUR:
-    case SQL_C_INTERVAL_MINUTE:
-    case SQL_C_INTERVAL_SECOND:
-    case SQL_C_INTERVAL_YEAR_TO_MONTH:
-    case SQL_C_INTERVAL_DAY_TO_HOUR:
-    case SQL_C_INTERVAL_DAY_TO_MINUTE:
-    case SQL_C_INTERVAL_DAY_TO_SECOND:
-    case SQL_C_INTERVAL_HOUR_TO_MINUTE:
-    case SQL_C_INTERVAL_HOUR_TO_SECOND:
-    case SQL_C_INTERVAL_MINUTE_TO_SECOND:
-        rc= stmt_SQLSetDescField(stmt, stmt->apd, ParameterNumber,
-                                 SQL_DESC_TYPE, (SQLPOINTER)SQL_INTERVAL,
-                                 SQL_IS_SMALLINT);
-        break;
-    /* else, set same */
-    default:
-        rc= stmt_SQLSetDescField(stmt, stmt->apd, ParameterNumber, SQL_DESC_TYPE,
-                                 (SQLPOINTER)(SQLINTEGER)ValueType,
-                                 SQL_IS_SMALLINT);
-        break;
-    }
-    if (!SQL_SUCCEEDED(rc))
-        return rc;
-
-    if (!SQL_SUCCEEDED(rc= stmt_SQLSetDescField(stmt, stmt->apd, ParameterNumber,
-                                                SQL_DESC_DATA_PTR,
-                                                ParameterValuePtr, SQL_IS_POINTER)))
-        return rc;
     if (!SQL_SUCCEEDED(rc= stmt_SQLSetDescField(stmt, stmt->apd, ParameterNumber,
                                                 SQL_DESC_OCTET_LENGTH,
                                                 (SQLPOINTER)BufferLength,
                                                 SQL_IS_INTEGER)))
+        return rc;
+    /* these three *must* be the last APD params bound */
+    if (!SQL_SUCCEEDED(rc= stmt_SQLSetDescField(stmt, stmt->apd, ParameterNumber,
+                                                SQL_DESC_DATA_PTR,
+                                                ParameterValuePtr, SQL_IS_POINTER)))
         return rc;
     if (!SQL_SUCCEEDED(rc= stmt_SQLSetDescField(stmt, stmt->apd, ParameterNumber,
                                                 SQL_DESC_OCTET_LENGTH_PTR,
@@ -362,6 +273,7 @@ SQLRETURN SQL_API my_SQLBindParameter( SQLHSTMT     StatementHandle,
                                                 SQL_IS_SMALLINT)))
         return rc;
 
+    /* set fields from ColumnSize and DecimalDigits */
     switch (ParameterType)
     {
     case SQL_TYPE_TIME:
@@ -375,12 +287,32 @@ SQLRETURN SQL_API my_SQLBindParameter( SQLHSTMT     StatementHandle,
                                  (SQLPOINTER)(SQLINTEGER)DecimalDigits,
                                  SQL_IS_SMALLINT);
         break;
+    case SQL_CHAR:
+    case SQL_VARCHAR:
+    case SQL_LONGVARCHAR:
+    case SQL_BINARY:
+    case SQL_VARBINARY:
+    case SQL_LONGVARBINARY:
+        rc= stmt_SQLSetDescField(stmt, stmt->ipd, ParameterNumber,
+                                 SQL_DESC_LENGTH, (SQLPOINTER)ColumnSize,
+                                 SQL_IS_ULEN);
+        break;
     case SQL_NUMERIC:
     case SQL_DECIMAL:
         rc= stmt_SQLSetDescField(stmt, stmt->ipd, ParameterNumber,
                                  SQL_DESC_SCALE,
                                  (SQLPOINTER)(SQLINTEGER)DecimalDigits,
                                  SQL_IS_SMALLINT);
+        if (!SQL_SUCCEEDED(rc))
+            return rc;
+        /* fall through */
+    case SQL_FLOAT:
+    case SQL_REAL:
+    case SQL_DOUBLE:
+        rc= stmt_SQLSetDescField(stmt, stmt->ipd, ParameterNumber,
+                                 SQL_DESC_PRECISION,
+                                 (SQLPOINTER)ColumnSize,
+                                 SQL_IS_ULEN);
         break;
     default:
         rc= SQL_SUCCESS;
@@ -480,23 +412,43 @@ SQLRETURN SQL_API SQLDescribeParam( SQLHSTMT        hstmt,
 #ifdef USE_SQLPARAMOPTIONS_SQLULEN_PTR
 SQLRETURN SQL_API SQLParamOptions( SQLHSTMT     hstmt, 
                                    SQLULEN      crow,
-                                   SQLULEN      *pirow __attribute__((unused)) )
+                                   SQLULEN      *pirow )
+{
+  SQLINTEGER buflen= SQL_IS_ULEN;
 #else
 SQLRETURN SQL_API SQLParamOptions( SQLHSTMT     hstmt, 
                                    SQLUINTEGER  crow,
-                                   SQLUINTEGER *pirow __attribute__((unused)) )
-#endif
+                                   SQLUINTEGER *pirow )
 {
-    if (crow != 1)
+  SQLINTEGER buflen= SQL_IS_UINTEGER;
+#endif
+  SQLRETURN rc;
+  STMT *stmt= (STMT *)hstmt;
+  rc= stmt_SQLSetDescField(stmt, stmt->apd, 0, SQL_DESC_ARRAY_SIZE,
+                           (SQLPOINTER)crow, buflen);
+  if (!SQL_SUCCEEDED(rc))
+    return rc;
+  /* 
+     We make the assumption that if this is using the pointer to a 64-bit
+     value, then it is correct. However the SQL_DESC_ROWS_PROCESSED_PTR is a
+     pointer to a 32-bit value so we zero-out the unused half and save a
+     pointer to the 32-bits we'll actually use.
+     Some more discussion at
+        http://mail.easysoft.com/pipermail/unixodbc-dev/2005-July/000627.html
+  */
+#ifdef USE_SQLPARAMOPTIONS_SQLULEN_PTR
+  {
+    int x = 1;
+    if(*(char *)&x != 1)
     {
-        /*
-          Currently return warning for batch processing request,
-          but need to handle in the future..
-        */
-        return set_error(hstmt, MYERR_01S02,
-                         "Option value changed to default parameter size", 0);
+      *pirow= 0;
+      pirow= (SQLULEN *)((char *)pirow + 4);
     }
-    return SQL_SUCCESS;
+  }
+#endif
+  rc= stmt_SQLSetDescField(stmt, stmt->ipd, 0, SQL_DESC_ROWS_PROCESSED_PTR,
+                           pirow, SQL_IS_POINTER);
+  return rc;
 }
 
 

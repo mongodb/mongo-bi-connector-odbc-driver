@@ -2138,7 +2138,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug16817)
   ADD_TEST(bug6157)
   ADD_TEST(t_binary_collation)
-  ADD_TODO(t_bug29239)
+  ADD_TEST(t_bug29239)
   ADD_TEST(t_bug30958)
   ADD_TEST(t_bug30958_ansi)
   ADD_TEST(t_bug30958_wchar)

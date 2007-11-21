@@ -282,12 +282,30 @@ DECLARE_TEST(bind_invalidcol)
 
   /* test out of range column number */
   expect_stmt(hstmt, SQLBindCol(hstmt, 10, SQL_C_CHAR, "", 4, NULL), SQL_ERROR);
-  is(check_sqlstate(hstmt, "HY002") == OK);
+  is(check_sqlstate(hstmt, "07009") == OK);
 
   /* test (unsupported) bookmark column number */
   expect_stmt(hstmt, SQLBindCol(hstmt, 0, SQL_C_BOOKMARK, "", 4, NULL),
               SQL_ERROR);
-  is(check_sqlstate(hstmt, "HY002") == OK);
+  is(check_sqlstate(hstmt, "07009") == OK);
+
+  /* SQLDescribeCol() */
+  expect_stmt(hstmt, SQLDescribeCol(hstmt, 0, NULL, 0, NULL, NULL, NULL,
+                                    NULL, NULL), SQL_ERROR);
+  is(check_sqlstate(hstmt, "07009") == OK);
+
+  expect_stmt(hstmt, SQLDescribeCol(hstmt, 5, NULL, 0, NULL, NULL, NULL,
+                                    NULL, NULL), SQL_ERROR);
+  is(check_sqlstate(hstmt, "07009") == OK);
+
+  /* SQLColAttribute() */
+  expect_stmt(hstmt, SQLColAttribute(hstmt, 0, SQL_DESC_NAME, NULL, 0,
+                                     NULL, NULL), SQL_ERROR);
+  is(check_sqlstate(hstmt, "07009") == OK);
+
+  expect_stmt(hstmt, SQLColAttribute(hstmt, 7, SQL_DESC_NAME, NULL, 0,
+                                     NULL, NULL), SQL_ERROR);
+  is(check_sqlstate(hstmt, "07009") == OK);
 
   return OK;
 }

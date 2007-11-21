@@ -59,6 +59,10 @@
 #define BINARY_CHARSET_NUMBER 63
 #define UTF8_CHARSET_NUMBER   33
 
+/* truncation types in SQL_NUMERIC_STRUCT conversions */
+#define SQLNUM_TRUNC_FRAC 1
+#define SQLNUM_TRUNC_WHOLE 2
+
 /* Wrappers to hide differences in client library versions. */
 #if MYSQL_VERSION_ID >= 40100
 # define my_int2str(val, dst, radix, upcase) \
@@ -162,10 +166,14 @@ void set_mem_error(MYSQL *mysql);
 void translate_error(char *save_state,myodbc_errid errid,uint mysql_err);
 
 SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff);
-SQLLEN get_column_size(STMT *stmt, MYSQL_FIELD *field, my_bool actual);
+SQLLEN get_column_size(STMT *stmt, MYSQL_FIELD *field);
 SQLLEN get_decimal_digits(STMT *stmt, MYSQL_FIELD *field);
 SQLLEN get_transfer_octet_length(STMT *stmt, MYSQL_FIELD *field);
 SQLLEN get_display_size(STMT *stmt, MYSQL_FIELD *field);
+SQLSMALLINT get_dticode_from_concise_type(SQLSMALLINT concise_type);
+SQLSMALLINT get_concise_type_from_datetime_code(SQLSMALLINT dticode);
+SQLSMALLINT get_concise_type_from_interval_code(SQLSMALLINT dticode);
+SQLSMALLINT get_type_from_concise_type(SQLSMALLINT concise_type);
 
 #define is_char_sql_type(type) \
   ((type) == SQL_CHAR || (type) == SQL_VARCHAR || (type) == SQL_LONGVARCHAR)
@@ -245,7 +253,17 @@ void desc_rec_init_ipd(DESCREC *rec);
 SQLRETURN
 stmt_SQLSetDescField(STMT *stmt, DESC *desc, SQLSMALLINT recnum,
                      SQLSMALLINT fldid, SQLPOINTER val, SQLINTEGER buflen);
+SQLRETURN
+stmt_SQLGetDescField(STMT *stmt, DESC *desc, SQLSMALLINT recnum,
+                     SQLSMALLINT fldid, SQLPOINTER valptr,
+                     SQLINTEGER buflen, SQLINTEGER *strlen);
 SQLRETURN stmt_SQLCopyDesc(STMT *stmt, DESC *src, DESC *dest);
+
+void sqlnum_from_str(const char *numstr, SQL_NUMERIC_STRUCT *sqlnum,
+                     int *overflow_ptr);
+void sqlnum_to_str(SQL_NUMERIC_STRUCT *sqlnum, SQLCHAR *numstr,
+                   SQLCHAR **numbegin, SQLCHAR reqprec, SQLSCHAR reqscale,
+                   int *truncptr);
 
 /* Functions used when debugging */
 void query_print(FILE *log_file,char *query);

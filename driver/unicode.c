@@ -87,8 +87,7 @@ SQLColAttributeWImpl(SQLHSTMT hstmt, SQLUSMALLINT column,
 
   if (value)
   {
-    /* SQL_DESC_TYPE_NAME is the only one we need to clean up for now. */
-    my_bool free_value= (field == SQL_DESC_TYPE_NAME);
+    my_bool free_value= FALSE;
     wvalue= sqlchar_as_sqlwchar(stmt->dbc->cxn_charset_info, value,
                                 &len, &errors);
 

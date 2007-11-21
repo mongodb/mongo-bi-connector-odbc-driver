@@ -96,7 +96,7 @@ void desc_rec_init_apd(DESCREC *rec)
 
   /* internal */
   rec->par.alloced= FALSE;
-  rec->par.value = NULL;
+  rec->par.value= NULL;
 }
 
 
@@ -139,37 +139,20 @@ void desc_rec_init_ard(DESCREC *rec)
  */
 void desc_rec_init_ird(DESCREC *rec)
 {
+  memset(rec, 0, sizeof(DESCREC));
   /* ODBC defaults */
-  /* TODO get the right values here */
+  /* driver defaults */
   rec->auto_unique_value= SQL_FALSE;
-  rec->base_column_name= "";
-  rec->base_table_name= "";
   rec->case_sensitive= SQL_TRUE;
-  rec->catalog_name= "";
   rec->concise_type= SQL_VARCHAR;
-  rec->datetime_interval_code= 0;
-  rec->datetime_interval_precision= 0;
-  rec->display_size= 100;
+  rec->display_size= 100;/*?*/
   rec->fixed_prec_scale= SQL_TRUE;
-  rec->label= "";
-  rec->length= 100;
-  rec->literal_prefix= "";
-  rec->literal_suffix= "";
-  rec->local_type_name= "";
-  rec->name= "";
+  rec->length= 100;/*?*/
   rec->nullable= SQL_NULLABLE_UNKNOWN;
-  rec->num_prec_radix= 0; /* ? */
-  rec->octet_length= 0; /* ? */
-  rec->precision= 0; /* ? */
-  rec->scale= 0; /* ? */
-  rec->schema_name= ""; /* ? */
-  rec->searchable= 0; /* ? */
-  rec->table_name= ""; /* ? */
-  rec->type= SQL_VARCHAR; /* ? */
-  rec->type_name= "VARCHAR"; /* ? */
+  rec->type= SQL_VARCHAR;
+  rec->type_name= "VARCHAR";
   rec->unnamed= SQL_UNNAMED;
   rec->is_unsigned= SQL_FALSE;
-  rec->updatable= 0; /* ? */
 }
 
 
@@ -715,7 +698,63 @@ MySQLSetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
                             MYERR_S1092);
   }
 
+  /* We have to unbind the value if not setting a buffer */
+  switch (fldid)
+  {
+  case SQL_DESC_DATA_PTR:
+  case SQL_DESC_OCTET_LENGTH_PTR:
+  case SQL_DESC_INDICATOR_PTR:
+    break;
+  default:
+    if (fld->loc == DESC_REC)
+    {
+      DESCREC *rec= (DESCREC *) dest_struct;
+      rec->data_ptr= NULL;
+      rec->octet_length_ptr= NULL;
+      rec->indicator_ptr= NULL;
+    }
+  }
+
   apply_desc_val(dest, fld->data_type, val, buflen);
+
+  /* post-set responsibilities */
+  if (IS_ARD(desc) || IS_APD(desc))
+  {
+    DESCREC *rec= (DESCREC *) dest_struct;
+    switch (fldid)
+    {
+    case SQL_DESC_TYPE:
+      rec->concise_type= rec->type;
+      rec->datetime_interval_code= 0;
+      break;
+    case SQL_DESC_CONCISE_TYPE:
+      rec->type= get_type_from_concise_type(rec->concise_type);
+      rec->datetime_interval_code=
+        get_dticode_from_concise_type(rec->concise_type);
+      break;
+    case SQL_DESC_DATETIME_INTERVAL_CODE: /* TODO validation for this value? */
+      /* SQL_DESC_TYPE has to have already been set */
+      if (rec->type == SQL_DATETIME)
+        rec->concise_type=
+          get_concise_type_from_datetime_code(rec->datetime_interval_code);
+      else
+        rec->concise_type=
+          get_concise_type_from_interval_code(rec->datetime_interval_code);
+      break;
+    }
+
+    switch (fldid)
+    {
+    case SQL_DESC_TYPE:
+    case SQL_DESC_CONCISE_TYPE:
+      /* setup type specific defaults (TODO others besides SQL_C_NUMERIC)? */
+      if (IS_ARD(desc) && rec->type == SQL_C_NUMERIC)
+      {
+        rec->precision= 38;
+        rec->scale= 0;
+      }
+    }
+  }
 
   return SQL_SUCCESS;
 }
@@ -777,7 +816,6 @@ SQLRETURN MySQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandle)
  * Call SQLGetDescField in the "context" of a statement. This will copy
  * any error from the descriptor to the statement.
  */
-/* TODO UNUSED */
 SQLRETURN
 stmt_SQLGetDescField(STMT *stmt, DESC *desc, SQLSMALLINT recnum,
                      SQLSMALLINT fldid, SQLPOINTER valptr,
