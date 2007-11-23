@@ -23,6 +23,7 @@ Guffert TODO
 5.1.1
 
   Functionality added or changed:
+  * Disallow 'SET NAMES' in initial statement and in executed statements.
   * Replaced the internal library which handles creation and loading
     of DSN information. The new library, which was originally a part of
     Connector/ODBC 5.0, supports Unicode option values.

@@ -649,6 +649,10 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
         return set_error(pStmt, MYERR_S1010,
                          "No previous SQLPrepare done", 0);
 
+    if (is_set_names_statement(pStmt->query))
+      return set_error(pStmt, MYERR_42000,
+                       "SET NAMES not allowed by driver", 0);
+
     if ( (cursor_pos= check_if_positioned_cursor_exists(pStmt, &pStmtCursor)) )
     {
       /* Save a copy of the query, because we're about to modify it. */

@@ -133,6 +133,7 @@ SQLRETURN my_pos_update(STMT FAR *stmt,STMT FAR *stmtParam,
 char *check_if_positioned_cursor_exists(STMT FAR *stmt, STMT FAR **stmtNew);
 char *insert_param(DBC *dbc, char *to,DESCREC *aprec,DESCREC *iprec);
 char *add_to_buffer(NET *net,char *to,const char *from,ulong length);
+int is_set_names_statement(SQLCHAR *query);
 
 void reset_getdata_position(STMT *stmt);
 

@@ -592,6 +592,43 @@ DECLARE_TEST(t_driverconnect_outstring)
 }
 
 
+DECLARE_TEST(setnames)
+{
+  expect_sql(hstmt, "SET NAMES utf8", SQL_ERROR);
+  expect_sql(hstmt, "SeT NamES utf8", SQL_ERROR);
+  expect_sql(hstmt, "   set names utf8", SQL_ERROR);
+  expect_sql(hstmt, "	set names utf8", SQL_ERROR);
+  return OK;
+}
+
+
+DECLARE_TEST(setnames_conn)
+{
+  HDBC hdbc1;
+  SQLCHAR conn[256], conn_out[256];
+  SQLSMALLINT conn_out_len;
+
+  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;INITSTMT={set names utf8}",
+          mydsn, myuid, mypwd);
+  if (mysock != NULL)
+  {
+    strcat((char *)conn, ";SOCKET=");
+    strcat((char *)conn, (char *)mysock);
+  }
+
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+  expect_dbc(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), conn_out,
+                                     sizeof(conn_out), &conn_out_len,
+                                     SQL_DRIVER_NOPROMPT),
+             SQL_ERROR);
+
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -609,6 +646,8 @@ BEGIN_TESTS
   ADD_TEST(t_bug30983)
   /* TODO fix this test create a comparable output string */
   ADD_TODO(t_driverconnect_outstring)
+  ADD_TEST(setnames)
+  ADD_TEST(setnames_conn)
 END_TESTS
 
 

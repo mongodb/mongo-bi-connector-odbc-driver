@@ -181,8 +181,15 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
     mysql_options(mysql, MYSQL_READ_DEFAULT_GROUP, "odbc");
 
   if (ds->initstmt && ds->initstmt[0])
-    mysql_options(mysql, MYSQL_INIT_COMMAND,
-                  ds_get_utf8attr(ds->initstmt, &ds->initstmt8));
+  {
+    /* Check for SET NAMES */
+    if (is_set_names_statement(ds_get_utf8attr(ds->initstmt, &ds->initstmt8)))
+    {
+      return set_dbc_error(dbc, "HY000",
+                           "SET NAMES not allowed by driver", 0);
+    }
+    mysql_options(mysql, MYSQL_INIT_COMMAND, ds->initstmt8);
+  }
 
   if (dbc->login_timeout)
     mysql_options(mysql, MYSQL_OPT_CONNECT_TIMEOUT,
