@@ -395,7 +395,7 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
         return SQL_SUCCESS;
     }
     /* free any allocated memory from SQLPutData() */
-    for (i= 0; i < stmt->apd->count; i++)
+    for (i= 0; i < (uint) stmt->apd->count; i++)
     {
         DESCREC *aprec= desc_get_rec(stmt->apd, i, FALSE);
         if (aprec->par.alloced)
@@ -487,9 +487,6 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     x_free(stmt->ird);
 
     x_free(stmt->cursor.name);
-
-    /* this tosses all column bindings */
-    stmt->ard->count= 0;
 
     delete_dynamic(&stmt->param_pos);
     stmt->dbc->statements= list_delete(stmt->dbc->statements,&stmt->list);

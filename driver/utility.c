@@ -85,7 +85,6 @@ void fix_result_types(STMT *stmt)
   MYSQL_RES *result= stmt->result;
   DESCREC *irrec;
   MYSQL_FIELD *field;
-  char typename[40];
 
   stmt->state= ST_EXECUTED;  /* Mark set found */
 
@@ -114,7 +113,22 @@ void fix_result_types(STMT *stmt)
     }
     irrec->type_name= (SQLCHAR *) irrec->row.type_name;
     irrec->length= get_column_size(stmt, field);
-    irrec->precision= irrec->length;
+    irrec->precision= 0;
+    /* Set precision for all non-char/blob types */
+    switch (irrec->type)
+    {
+    case SQL_BINARY:
+    case SQL_BIT:
+    case SQL_CHAR:
+    case SQL_VARBINARY:
+    case SQL_VARCHAR:
+    case SQL_LONGVARBINARY:
+    case SQL_LONGVARCHAR:
+      break;
+    default:
+      irrec->precision= (SQLSMALLINT) irrec->length;
+      break;
+    }
     irrec->octet_length= get_transfer_octet_length(stmt, field) +
                          test(field->charsetnr != BINARY_CHARSET_NUMBER);
     if (stmt->dbc->flag & FLAG_COLUMN_SIZE_S32)
@@ -124,7 +138,7 @@ void fix_result_types(STMT *stmt)
       if (irrec->octet_length > INT_MAX32)
         irrec->octet_length= INT_MAX32;
     }
-    irrec->scale= max(0, get_decimal_digits(stmt, field));
+    irrec->scale= max(0, (SQLSMALLINT) get_decimal_digits(stmt, field));
     if ((field->flags & NOT_NULL_FLAG) &&
         !(field->flags & TIMESTAMP_FLAG) &&
         !(field->flags & AUTO_INCREMENT_FLAG))
