@@ -2579,5 +2579,5 @@ int is_set_names_statement(SQLCHAR *query)
   /* Skip leading spaces */
   while (query && isspace(*query))
     query++;
-  return strncasecmp(query, "SET NAMES", 9) == 0;
+  return myodbc_casecmp((char *)query, "SET NAMES", 9) == 0;
 }
