@@ -22,7 +22,7 @@ INCLUDES = -I$(top_srcdir) -I$(top_srcdir)/util
 
 bin_PROGRAMS = myodbc-installer
 myodbc_installer_SOURCES = myodbc3i.c
-myodbc_installer_LDADD        = ../util/libmyodbc3u.la @LTDL_LIB@ $(ODBC_DM_LIB)
+myodbc_installer_LDADD        = ../util/libmyodbc3u.la @LTDL_LIB@ @MYSQL_LIB@ $(ODBC_DM_LIB)
 myodbc_installer_DEPENDENCIES = ../util/libmyodbc3u.la
 
 # LDFLAGS=@EXTRA_LDFLAGS@

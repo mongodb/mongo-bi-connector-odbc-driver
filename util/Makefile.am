@@ -37,7 +37,7 @@ libmyodbc3u_la_SOURCES += \
 endif
 
 # libmysql lib deps
-libmyodbc3u_la_LIBADD         = $(LTLIBS_DEPS) @LTDL_LIB@ @MYSQL_LIB@
+libmyodbc3u_la_LIBADD         = $(LTLIBS_DEPS) @LTDL_LIB@
 libmyodbc3u_la_DEPENDENCIES   = $(LTLIBS_DEPS)
 
 EXTRA_DIST = \
