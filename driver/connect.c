@@ -789,7 +789,7 @@ connected:
     size_t copylen= min((size_t)cbConnStrOutMax, inlen);
     memcpy(szConnStrOut, szConnStrIn, copylen);
     if (pcbConnStrOut)
-      *pcbConnStrOut= copylen;
+      *pcbConnStrOut= copylen / sizeof(SQLWCHAR);
   }
 
   /* return SQL_SUCCESS_WITH_INFO if truncated output string */
@@ -821,7 +821,7 @@ connected:
 
     /* TODO set this even if cbConnStrOutMax == 0? */
     if (pcbConnStrOut)
-      *pcbConnStrOut= wcslen(szConnStrOut);
+      *pcbConnStrOut= sqlwcharlen(szConnStrOut);
   }
 #endif /* USE_LEGACY_ODBC_GUI */
 
