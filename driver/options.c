@@ -397,6 +397,10 @@ set_con_attr(SQLHDBC    hdbc,
             }
             break;
 
+        case SQL_ATTR_ENLIST_IN_DTC:
+            return set_dbc_error(dbc, "HYC00",
+                                 "Optional feature not supported", 0);
+
             /*
               3.x driver doesn't support any statement attributes
               at connection level, but to make sure all 2.x apps

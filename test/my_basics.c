@@ -486,6 +486,17 @@ DECLARE_TEST(t_bug30840)
 }
 
 
+/**
+ Bug #32727: Unable to abort distributed transactions enlisted in MSDTC
+*/
+DECLARE_TEST(t_bug32727)
+{
+  is(SQLSetConnectAttr(hdbc, SQL_ATTR_ENLIST_IN_DTC,
+                       (SQLPOINTER)1, SQL_IS_UINTEGER) == SQL_ERROR);
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -500,6 +511,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug7445)
   ADD_TEST(t_bug30774)
   ADD_TEST(t_bug30840)
+  ADD_TEST(t_bug32727)
 END_TESTS
 
 

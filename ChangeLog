@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * Allowed connections to be enlisted in distributed transactions, even
+    though the driver doesn't support them. (Bug #32727)
 
 ----
 
