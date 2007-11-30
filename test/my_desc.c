@@ -221,10 +221,43 @@ DECLARE_TEST(t_sqlbindcol_count_reset)
 }
 
 
+/*
+  Test that if no type is given to SQLSetDescField(), that the
+  correct default is used. See Bug#31720.
+*/
+DECLARE_TEST(t_desc_default_type)
+{
+  SQLHANDLE ard, apd;
+  SQLINTEGER inval= 20, outval= 0;
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, "select ?", SQL_NTS));
+  ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_APP_PARAM_DESC,
+                                &apd, 0, NULL));
+  ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_APP_ROW_DESC,
+                                &ard, 0, NULL));
+
+  ok_desc(apd, SQLSetDescField(apd, 1, SQL_DESC_CONCISE_TYPE,
+                               (SQLPOINTER) SQL_C_LONG, 0));
+  ok_desc(apd, SQLSetDescField(apd, 1, SQL_DESC_DATA_PTR, &inval, 0));
+
+  ok_desc(ard, SQLSetDescField(ard, 1, SQL_DESC_CONCISE_TYPE,
+                               (SQLPOINTER) SQL_C_LONG, 0));
+  ok_desc(ard, SQLSetDescField(ard, 1, SQL_DESC_DATA_PTR, &outval, 0));
+
+  ok_stmt(hstmt, SQLExecute(hstmt));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_num(outval, inval);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_desc_paramset)
   ADD_TEST(t_desc_set_error)
   ADD_TEST(t_sqlbindcol_count_reset)
+  ADD_TEST(t_desc_default_type)
 END_TESTS
 
 

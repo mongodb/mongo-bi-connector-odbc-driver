@@ -672,6 +672,10 @@ MySQLSetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
 
   dest= ((char *)dest_struct) + fld->offset;
 
+  /* some applications and even MSDN examples don't give a correct constant */
+  if (buflen == 0)
+    buflen= fld->data_type;
+
   /* TODO checks when strings? */
   if ((fld->data_type == SQL_IS_POINTER && buflen != SQL_IS_POINTER) ||
       (fld->data_type != SQL_IS_POINTER && buflen == SQL_IS_POINTER))
@@ -753,6 +757,23 @@ MySQLSetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
         rec->precision= 38;
         rec->scale= 0;
       }
+    }
+  }
+
+  /*
+    Set "real_param_done" for parameters if all fields needed to bind
+    a parameter are set.
+  */
+  if (IS_APD(desc) && val != NULL)
+  {
+    DESCREC *rec= (DESCREC *) dest_struct;
+    switch (fldid)
+    {
+    case SQL_DESC_DATA_PTR:
+    case SQL_DESC_OCTET_LENGTH_PTR:
+    case SQL_DESC_INDICATOR_PTR:
+      rec->par.real_param_done= TRUE;
+      break;
     }
   }
 
