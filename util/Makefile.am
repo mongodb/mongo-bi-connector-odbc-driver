@@ -36,6 +36,11 @@ libmyodbc3u_la_SOURCES += \
 	MYODBCUtilWriteDriver.c
 endif
 
+if ODBCINSTW
+libmyodbc3u_la_SOURCES += \
+	odbcinstw.c
+endif
+
 # libmysql lib deps
 libmyodbc3u_la_LIBADD         = $(LTLIBS_DEPS) @LTDL_LIB@
 libmyodbc3u_la_DEPENDENCIES   = $(LTLIBS_DEPS)

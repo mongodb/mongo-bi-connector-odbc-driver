@@ -808,6 +808,13 @@ AC_COMPILE_IFELSE(
   [ AC_MSG_RESULT([no]) ])
 ])
 
+dnl Check for SQLGetPrivateProfileStringW
+need_odbcinstw=yes
+if test "x$enable_odbcinstlink" != "xno" ; then
+  AC_CHECK_FUNC(SQLGetPrivateProfileStringW, [ need_odbcinstw=no ])
+fi
+AM_CONDITIONAL(ODBCINSTW, test "x$need_odbcinstw" != "xno")
+
 ###################################################################
 #                                                                 #
 # Generate Makefiles                                              #
