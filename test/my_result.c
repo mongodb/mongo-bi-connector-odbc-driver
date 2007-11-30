@@ -1845,7 +1845,7 @@ DECLARE_TEST(t_bug30958_ansi)
   SQLINTEGER outmax= 0;
 
   ok_sql(hstmt, "drop table if exists bug30958");
-  ok_sql(hstmt, "CREATE TABLE bug30958 (tt_textfield TEXT CHARACTER SET cp1251 NOT NULL)");
+  ok_sql(hstmt, "CREATE TABLE bug30958 (tt_textfield TEXT CHARACTER SET latin2 NOT NULL)");
   ok_sql(hstmt, "INSERT INTO bug30958 (tt_textfield) VALUES ('')");
 
   ok_sql(hstmt, "select tt_textfield from bug30958");
