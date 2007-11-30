@@ -46,6 +46,7 @@ Guffert TODO
   * Parse Password - Unable to Connect. (Bug #16178)
   * Binding of columns between calling prepare and execute causes
     statement execution. (Bug #29239)
+  * ADO can't open a recordset that has a Decimal field (Bug #31720)
   
   Includes changes from Connector/ODBC 3.51.21 and 3.51.22.
 
