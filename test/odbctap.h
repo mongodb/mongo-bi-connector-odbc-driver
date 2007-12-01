@@ -1031,6 +1031,28 @@ SQLWCHAR *dup_wchar_t_as_sqlwchar(wchar_t *from, size_t len)
 
 
 /**
+ Helper for converting a (char *) to a (SQLWCHAR *)
+*/
+#define WC(string) dup_char_as_sqlwchar((string))
+
+
+/**
+  Convert a char * to a SQLWCHAR *. New space is allocated and never freed.
+  Because this is used in short-lived test programs, this is okay, if not
+  ideal.
+*/
+SQLWCHAR *dup_char_as_sqlwchar(SQLCHAR *from)
+{
+  SQLWCHAR *to= malloc(strlen((char *)from) * sizeof(SQLWCHAR) + 1);
+  SQLWCHAR *out= to;
+  while (from && *from)
+    *(to++)= (SQLWCHAR)*(from++);
+  *to= 0;
+  return out;
+}
+
+
+/**
   Check if we are using a driver manager for testing.
 
   @param[in] hdbc  Connection handle

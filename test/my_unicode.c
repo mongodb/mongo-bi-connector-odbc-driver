@@ -31,9 +31,9 @@ DECLARE_TEST(sqlconnect)
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
   ok_con(hdbc1, SQLConnectW(hdbc1,
-                            W(L"myodbc3"), SQL_NTS,
-                            W(L"root"), SQL_NTS,
-                            W(L""), SQL_NTS));
+                            WC(mydsn), SQL_NTS,
+                            WC(myuid), SQL_NTS,
+                            WC(mypwd), SQL_NTS));
   ok_con(hdbc1, SQLDisconnect(hdbc1));
   ok_con(hdbc1, SQLFreeConnect(hdbc1));
 
@@ -50,9 +50,9 @@ DECLARE_TEST(sqlprepare)
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
   ok_con(hdbc1, SQLConnectW(hdbc1,
-                            W(L"myodbc3"), SQL_NTS,
-                            W(L"root"), SQL_NTS,
-                            W(L""), SQL_NTS));
+                            WC(mydsn), SQL_NTS,
+                            WC(myuid), SQL_NTS,
+                            WC(mypwd), SQL_NTS));
 
   ok_con(hdbc, SQLAllocStmt(hdbc1, &hstmt1));
 
@@ -172,9 +172,9 @@ DECLARE_TEST(sqlchar)
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
   ok_con(hdbc1, SQLConnectW(hdbc1,
-                            W(L"myodbc3"), SQL_NTS,
-                            W(L"root"), SQL_NTS,
-                            W(L""), SQL_NTS));
+                            WC(mydsn), SQL_NTS,
+                            WC(myuid), SQL_NTS,
+                            WC(mypwd), SQL_NTS));
   ok_con(hdbc, SQLAllocStmt(hdbc1, &hstmt1));
 
   ok_stmt(hstmt1, SQLPrepareW(hstmt1, W(L"SELECT ? FROM DUAL"), SQL_NTS));
@@ -270,9 +270,9 @@ DECLARE_TEST(sqlnativesql)
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
   ok_con(hdbc1, SQLConnectW(hdbc1,
-                            W(L"myodbc3"), SQL_NTS,
-                            W(L"root"), SQL_NTS,
-                            W(L""), SQL_NTS));
+                            WC(mydsn), SQL_NTS,
+                            WC(myuid), SQL_NTS,
+                            WC(mypwd), SQL_NTS));
 
   ok_con(hdbc1, SQLNativeSqlW(hdbc1, W(in), SQL_NTS, out, sizeof(out), &len));
   is_num(len, sizeof(in) / sizeof(wchar_t) - 1);
@@ -305,8 +305,8 @@ DECLARE_TEST(sqlsetcursorname)
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
-  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
-                            W(L""), SQL_NTS));
+  ok_con(hdbc1, SQLConnectW(hdbc1, WC(mydsn), SQL_NTS, WC(myuid), SQL_NTS,
+                            WC(mypwd), SQL_NTS));
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
@@ -401,8 +401,8 @@ DECLARE_TEST(sqlgetcursorname)
 
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
-  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
-                            W(L""), SQL_NTS));
+  ok_con(hdbc1, SQLConnectW(hdbc1, WC(mydsn), SQL_NTS, WC(myuid), SQL_NTS,
+                            WC(mypwd), SQL_NTS));
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt2));
@@ -462,8 +462,8 @@ DECLARE_TEST(sqlcolattribute)
   SQLSMALLINT len;
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
-  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
-                            W(L""), SQL_NTS));
+  ok_con(hdbc1, SQLConnectW(hdbc1, WC(mydsn), SQL_NTS, WC(myuid), SQL_NTS,
+                            WC(mypwd), SQL_NTS));
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
@@ -508,8 +508,8 @@ DECLARE_TEST(sqldescribecol)
   SQLSMALLINT len;
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
-  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
-                            W(L""), SQL_NTS));
+  ok_con(hdbc1, SQLConnectW(hdbc1, WC(mydsn), SQL_NTS, WC(myuid), SQL_NTS,
+                            WC(mypwd), SQL_NTS));
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
@@ -552,8 +552,8 @@ DECLARE_TEST(sqlgetconnectattr)
   SQLINTEGER len;
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
-  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
-                            W(L""), SQL_NTS));
+  ok_con(hdbc1, SQLConnectW(hdbc1, WC(mydsn), SQL_NTS, WC(myuid), SQL_NTS,
+                            WC(mypwd), SQL_NTS));
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
@@ -586,8 +586,8 @@ DECLARE_TEST(sqlgetdiagrec)
   HSTMT hstmt1;
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
-  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
-                            W(L""), SQL_NTS));
+  ok_con(hdbc1, SQLConnectW(hdbc1, WC(mydsn), SQL_NTS, WC(myuid), SQL_NTS,
+                            WC(mypwd), SQL_NTS));
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
@@ -636,8 +636,8 @@ DECLARE_TEST(sqlgetdiagfield)
   HSTMT hstmt1;
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
-  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
-                            W(L""), SQL_NTS));
+  ok_con(hdbc1, SQLConnectW(hdbc1, WC(mydsn), SQL_NTS, WC(myuid), SQL_NTS,
+                            WC(mypwd), SQL_NTS));
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
@@ -682,8 +682,8 @@ DECLARE_TEST(sqlcolumns)
   SQLWCHAR wbuff[MAX_ROW_DATA_LEN+1];
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
-  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
-                            W(L""), SQL_NTS));
+  ok_con(hdbc1, SQLConnectW(hdbc1, WC(mydsn), SQL_NTS, WC(myuid), SQL_NTS,
+                            WC(mypwd), SQL_NTS));
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
@@ -721,8 +721,8 @@ DECLARE_TEST(sqltables)
   SQLWCHAR wbuff[MAX_ROW_DATA_LEN+1];
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
-  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
-                            W(L""), SQL_NTS));
+  ok_con(hdbc1, SQLConnectW(hdbc1, WC(mydsn), SQL_NTS, WC(myuid), SQL_NTS,
+                            WC(mypwd), SQL_NTS));
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
@@ -764,8 +764,8 @@ DECLARE_TEST(sqlspecialcolumns)
   SQLWCHAR wbuff[MAX_ROW_DATA_LEN+1];
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
-  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
-                            W(L""), SQL_NTS));
+  ok_con(hdbc1, SQLConnectW(hdbc1, WC(mydsn), SQL_NTS, WC(myuid), SQL_NTS,
+                            WC(mypwd), SQL_NTS));
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
@@ -808,8 +808,8 @@ DECLARE_TEST(sqlforeignkeys)
     skip("can't test foreign keys with 5.1 or later yet");
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
-  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
-                            W(L""), SQL_NTS));
+  ok_con(hdbc1, SQLConnectW(hdbc1, WC(mydsn), SQL_NTS, WC(myuid), SQL_NTS,
+                            WC(mypwd), SQL_NTS));
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
@@ -865,8 +865,8 @@ DECLARE_TEST(sqlprimarykeys)
   SQLWCHAR wbuff[MAX_ROW_DATA_LEN+1];
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
-  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
-                            W(L""), SQL_NTS));
+  ok_con(hdbc1, SQLConnectW(hdbc1, WC(mydsn), SQL_NTS, WC(myuid), SQL_NTS,
+                            WC(mypwd), SQL_NTS));
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
@@ -906,8 +906,8 @@ DECLARE_TEST(sqlstatistics)
   SQLWCHAR wbuff[MAX_ROW_DATA_LEN+1];
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
-  ok_con(hdbc1, SQLConnectW(hdbc1, W(L"myodbc3"), SQL_NTS, W(L"root"), SQL_NTS,
-                            W(L""), SQL_NTS));
+  ok_con(hdbc1, SQLConnectW(hdbc1, WC(mydsn), SQL_NTS, WC(myuid), SQL_NTS,
+                            WC(mypwd), SQL_NTS));
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
