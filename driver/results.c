@@ -705,11 +705,15 @@ MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
   case SQL_DESC_UNNAMED:
   case SQL_DESC_UNSIGNED:
   case SQL_DESC_UPDATABLE:
+    error= stmt_SQLGetDescField(stmt, stmt->ird, column, attrib,
+                                num_attr, SQL_IS_INTEGER, NULL);
+    break;
+
   case SQL_DESC_DISPLAY_SIZE:
   case SQL_DESC_LENGTH:
   case SQL_DESC_OCTET_LENGTH:
     error= stmt_SQLGetDescField(stmt, stmt->ird, column, attrib,
-                                num_attr, SQL_IS_INTEGER, NULL);
+                                num_attr, SQL_IS_LEN, NULL);
     break;
 
   /* We need support from server, when aliasing is there */
