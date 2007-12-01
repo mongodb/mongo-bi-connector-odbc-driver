@@ -629,6 +629,73 @@ DECLARE_TEST(setnames_conn)
 }
 
 
+/**
+ Bug #15601: SQLCancel does not work to stop a query on the database server
+*/
+#ifdef WIN32
+DWORD WINAPI cancel_in_one_second(LPVOID arg)
+{
+  HSTMT hstmt= (HSTMT)arg;
+
+  Sleep(1000);
+
+  if (SQLCancel(hstmt) != SQL_SUCCESS)
+    printMessage("SQLCancel failed!");
+
+  return 0;
+}
+
+
+DECLARE_TEST(sqlcancel)
+{
+  HANDLE thread;
+  DWORD waitrc;
+
+  thread= CreateThread(NULL, 0, cancel_in_one_second, hstmt, 0, NULL);
+
+  /* SLEEP(n) returns 1 when it is killed. */
+  ok_sql(hstmt, "SELECT SLEEP(10)");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 1);
+
+  waitrc= WaitForSingleObject(thread, 10000);
+  is(!(waitrc == WAIT_TIMEOUT));
+
+  return OK;
+}
+#else
+void *cancel_in_one_second(void *arg)
+{
+  HSTMT *hstmt= arg;
+
+  sleep(1);
+
+  if (SQLCancel(hstmt) != SQL_SUCCESS)
+    printMessage("SQLCancel failed!");
+
+  return NULL;
+}
+
+#include <pthread.h>
+
+DECLARE_TEST(sqlcancel)
+{
+  pthread_t thread;
+
+  pthread_create(&thread, NULL, cancel_in_one_second, hstmt);
+
+  /* SLEEP(n) returns 1 when it is killed. */
+  ok_sql(hstmt, "SELECT SLEEP(10)");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 1);
+
+  pthread_join(&thread, NULL);
+
+  return OK;
+}
+#endif
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -648,6 +715,7 @@ BEGIN_TESTS
   ADD_TODO(t_driverconnect_outstring)
   ADD_TEST(setnames)
   ADD_TEST(setnames_conn)
+  ADD_TEST(sqlcancel)
 END_TESTS
 
 

@@ -328,7 +328,7 @@ typedef struct tagDBC
   MYERROR	error;
   FILE		*query_log;
   char		*dsn,*database,
-		*user,*password,*server;
+		*user,*password,*server,*socket;
   char		st_error_prefix[255];
   ulong		flag;
   SQLUINTEGER login_timeout;

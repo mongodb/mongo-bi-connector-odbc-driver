@@ -21,6 +21,7 @@ Guffert TODO
 5.1.1
 
   Functionality added or changed:
+  * Implemented support for SQLCancel(). (Bug #15601)
   * Add wrappers for missing ODBC driver manager installer functions.
     This makes it possible to use the driver with unixODBC 2.2.11, which
     is the version shipped with Debian and Ubuntu. (Bug #32685)

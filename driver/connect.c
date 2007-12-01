@@ -268,6 +268,9 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
   if (ds->database)
     dbc->database= my_strdup(ds_get_utf8attr(ds->database, &ds->database8),
                              MYF(MY_WME));
+  if (ds->socket)
+    dbc->socket= my_strdup(ds_get_utf8attr(ds->socket, &ds->socket8),
+                           MYF(MY_WME));
 
   dbc->port= ds->port;
   dbc->flag= options;

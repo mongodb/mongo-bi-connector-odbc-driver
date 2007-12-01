@@ -25,16 +25,6 @@
   @brief Statement execution functions.
 */
 
-/***************************************************************************
- * The following ODBC APIs are implemented in this file:		   *
- *									   *
- *   SQLExecute		 (ISO 92)					   *
- *   SQLParamData	 (ISO 92)					   *
- *   SQLPutData		 (ISO 92)					   *
- *   SQLCancel		 (ISO 92)					   *
- *									   *
- ****************************************************************************/
-
 #include "driver.h"
 #include <locale.h>
 
@@ -812,12 +802,63 @@ SQLRETURN SQL_API SQLPutData( SQLHSTMT      hstmt,
 }
 
 
-/*
-  @type    : ODBC 1.0 API
-  @purpose : cancels the processing on a statement
-*/
+/**
+  Cancel the query by opening another connection and using KILL when called
+  from another thread while the query lock is being held. Otherwise, treat as
+  SQLFreeStmt(hstmt, SQL_CLOSE).
 
+  @param[in]  hstmt  Statement handle
+
+  @return Standard ODBC result code
+*/
 SQLRETURN SQL_API SQLCancel(SQLHSTMT hstmt)
 {
-    return my_SQLFreeStmt(hstmt,SQL_CLOSE);
+  DBC *dbc= ((STMT *)hstmt)->dbc;
+  MYSQL *second= NULL;
+  int error;
+
+  error= pthread_mutex_trylock(&dbc->lock);
+
+  /* If there's no query going on, just close the statement. */
+  if (error == 0)
+  {
+    pthread_mutex_unlock(&dbc->lock);
+    return my_SQLFreeStmt(hstmt, SQL_CLOSE);
+  }
+
+  /* If we got a non-BUSY error, it's just an error. */
+  if (error != EBUSY)
+    return set_stmt_error((STMT *)hstmt, "HY000",
+                          "Unable to get connection mutex status", error);
+
+  /*
+    If the mutex was locked, we need to make a new connection and KILL the
+    ongoing query.
+  */
+  second= mysql_init(second);
+
+  /** @todo need to preserve and use ssl params */
+
+  if (!mysql_real_connect(second, dbc->server, dbc->user, dbc->password,
+                          NULL, dbc->port, dbc->socket, dbc->flag))
+  {
+    /* We do not set the SQLSTATE here, per the ODBC spec. */
+    return SQL_ERROR;
+  }
+
+  {
+    char buff[40];
+    /* buff is always big enough because max length of %lu is 15 */
+    sprintf(buff, "KILL /*!50000 QUERY */ %lu", mysql_thread_id(&dbc->mysql));
+    if (mysql_real_query(second, buff, strlen(buff)))
+    {
+      mysql_close(second);
+      /* We do not set the SQLSTATE here, per the ODBC spec. */
+      return SQL_ERROR;
+    }
+  }
+
+  mysql_close(second);
+
+  return SQL_SUCCESS;
 }

@@ -249,6 +249,7 @@ SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc)
     my_free(dbc->dsn,MYF(MY_ALLOW_ZERO_PTR));
     my_free(dbc->database,MYF(MY_ALLOW_ZERO_PTR));
     my_free(dbc->server,MYF(MY_ALLOW_ZERO_PTR));
+    my_free(dbc->socket,MYF(MY_ALLOW_ZERO_PTR));
     my_free(dbc->user,MYF(MY_ALLOW_ZERO_PTR));
     my_free(dbc->password,MYF(MY_ALLOW_ZERO_PTR));
     pthread_mutex_destroy(&dbc->lock);

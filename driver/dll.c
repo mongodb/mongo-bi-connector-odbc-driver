@@ -85,32 +85,30 @@ void myodbc_init(void)
 #endif
 }
 
+
 /*
   @type    : myodbc3 internal
   @purpose : clean all resources while unloading..
 */
-
 void myodbc_end()
 {
- if (!--myodbc_inited)
- {
-   my_free(decimal_point,MYF(0));
-   my_free(default_locale,MYF(0));
-   my_free(thousands_sep,MYF(0));
-#ifdef NOT_YET_USED
-   mysql_server_end();
-#endif
+  if (!--myodbc_inited)
+  {
+    my_free(decimal_point,MYF(0));
+    my_free(default_locale,MYF(0));
+    my_free(thousands_sep,MYF(0));
 #ifdef MY_DONT_FREE_DBUG
-   /* 
-      Function my_end() was changed to deallocate DBUG memory by default,
-      a flag MY_DONT_FREE_DBUG was added to disable this new behaviour
-   */
-   my_end(MY_DONT_FREE_DBUG);
+    /*
+     Function my_end() was changed to deallocate DBUG memory by default,
+     a flag MY_DONT_FREE_DBUG was added to disable this new behaviour
+    */
+    my_end(MY_DONT_FREE_DBUG);
 #else
-   my_end(0);
+    my_end(0);
 #endif
- }
+  }
 }
+
 
 /*
   @type    : myodbc3 internal
