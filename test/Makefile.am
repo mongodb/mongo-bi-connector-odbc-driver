@@ -65,6 +65,9 @@ my_use_result \
 my_bug13766
 
 noinst_PROGRAMS= $(tap_tests)
+# This is a cheat -- we use MYSQL_THREADSAFE_LIB only because we need the
+# threading library flags, not the MySQL client library itself
+LDADD= @MYSQL_THREADSAFE_LIB@
 
 test: make-test-ini $(tap_tests)
 	ODBCSYSINI=. \
