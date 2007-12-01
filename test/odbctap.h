@@ -614,6 +614,11 @@ static int my_print_dashes(SQLHSTMT hstmt, SQLSMALLINT nCol)
             disp_size = col_len;
         if (disp_size < 4 && nullable)
             disp_size = 4;
+        /*
+          We cap disp_size to avoid problems when we have problems with
+          it being very large, such as 64-bit issues in the driver.
+        */
+        disp_size= (disp_size > 512) ? 512 : disp_size;
         for (j=1; j < disp_size+3; j++)
           fprintf(stdout, "-");
         fprintf(stdout, "+");
@@ -645,6 +650,11 @@ static int my_print_data(SQLHSTMT hstmt, SQLUSMALLINT index,
         disp_size = col_len;
     if (disp_size < 4 && nullable)
         disp_size = 4;
+    /*
+      We cap disp_size to avoid problems when we have problems with
+      it being very large, such as 64-bit issues in the driver.
+    */
+    disp_size= (disp_size > 512) ? 512 : disp_size;
     if (length == SQL_NULL_DATA)
         fprintf(stdout, "%-*s  |", (int)disp_size, "NULL");
     else
@@ -710,7 +720,7 @@ SQLINTEGER myresult(SQLHSTMT hstmt)
     SQLUINTEGER nRowCount;
     SQLCHAR     ColName[MAX_NAME_LEN+1];
     SQLCHAR     Data[MAX_ROW_DATA_LEN+1];
-    SQLLEN      pcbLength, size;
+    SQLLEN      pcbLength;
     SQLUSMALLINT nIndex;
     SQLSMALLINT  ncol;
 
@@ -745,9 +755,6 @@ SQLINTEGER myresult(SQLHSTMT hstmt)
 
         for (nIndex=1; nIndex<= ncol; nIndex++)
         {
-            rc = SQLColAttribute(hstmt,nIndex,SQL_DESC_DISPLAY_SIZE,NULL,0,
-                                 NULL,&size);
-            mystmt(hstmt,rc);
             rc = SQLGetData(hstmt, nIndex, SQL_C_CHAR, Data,
                             MAX_ROW_DATA_LEN,&pcbLength);
             mystmt(hstmt,rc);
