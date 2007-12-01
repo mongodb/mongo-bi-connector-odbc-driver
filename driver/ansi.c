@@ -412,24 +412,21 @@ SQLError(SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt, SQLCHAR *sqlstate,
 
   if (hstmt)
   {
-    rc= SQLGetDiagRecImpl(SQL_HANDLE_STMT, hstmt, 1, sqlstate, native_error,
-                          message, message_max, message_len);
-    if (rc == SQL_SUCCESS)
-      CLEAR_STMT_ERROR(hstmt);
+    rc= SQLGetDiagRecImpl(SQL_HANDLE_STMT, hstmt, NEXT_STMT_ERROR(hstmt),
+                          sqlstate, native_error, message, message_max,
+                          message_len);
   }
   else if (hdbc)
   {
-    rc= SQLGetDiagRecImpl(SQL_HANDLE_DBC, hdbc, 1, sqlstate, native_error,
-                          message, message_max, message_len);
-    if (rc == SQL_SUCCESS)
-      CLEAR_DBC_ERROR(hdbc);
+    rc= SQLGetDiagRecImpl(SQL_HANDLE_DBC, hdbc, NEXT_DBC_ERROR(hdbc),
+                          sqlstate, native_error, message, message_max,
+                          message_len);
   }
   else if (henv)
   {
-    rc= SQLGetDiagRecImpl(SQL_HANDLE_ENV, henv, 1, sqlstate, native_error,
-                          message, message_max, message_len);
-    if (rc == SQL_SUCCESS)
-      CLEAR_ENV_ERROR(henv);
+    rc= SQLGetDiagRecImpl(SQL_HANDLE_ENV, henv, NEXT_ENV_ERROR(henv),
+                          sqlstate, native_error, message, message_max,
+                          message_len);
   }
 
   return rc;

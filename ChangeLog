@@ -48,6 +48,8 @@ Guffert TODO
   * Binding of columns between calling prepare and execute causes
     statement execution. (Bug #29239)
   * ADO can't open a recordset that has a Decimal field (Bug #31720)
+  * SQLError() incorrectly cleared the error information, making it
+    unavailable from subsequent calls to SQLGetDiagRec().
   
   Includes changes from Connector/ODBC 3.51.21 and 3.51.22.
 

@@ -50,19 +50,32 @@
   error handler structure
 */
 typedef struct tagERROR {
+  SQLRETURN   retcode;
+  char        current;
 
   char	   sqlstate[6];
   char	   message[SQL_MAX_MESSAGE_LENGTH+1];
   SQLINTEGER  native_error;
-  SQLRETURN   retcode;
 
 } MYERROR;
 
+#define CLEAR_ERROR(error) do {\
+  error.message[0]= '\0'; \
+  error.current= 0; \
+} while (0)
 
-#define CLEAR_ENV_ERROR(env)   (((ENV *)env)->error.message[0]='\0')
-#define CLEAR_DBC_ERROR(dbc)   (((DBC *)dbc)->error.message[0]='\0')
-#define CLEAR_STMT_ERROR(stmt) (((STMT *)stmt)->error.message[0]='\0')
-#define CLEAR_DESC_ERROR(desc) (((DESC *)desc)->error.message[0]='\0')
+#define CLEAR_ENV_ERROR(env)   CLEAR_ERROR(((ENV *)env)->error)
+#define CLEAR_DBC_ERROR(dbc)   CLEAR_ERROR(((DBC *)dbc)->error)
+#define CLEAR_STMT_ERROR(stmt) CLEAR_ERROR(((STMT *)stmt)->error)
+#define CLEAR_DESC_ERROR(desc) CLEAR_ERROR(((DESC *)desc)->error)
+
+#define NEXT_ERROR(error) \
+  (error.current ? 2 : (error.current= 1))
+
+#define NEXT_ENV_ERROR(env)   NEXT_ERROR(((ENV *)env)->error)
+#define NEXT_DBC_ERROR(dbc)   NEXT_ERROR(((DBC *)dbc)->error)
+#define NEXT_STMT_ERROR(stmt) NEXT_ERROR(((STMT *)stmt)->error)
+#define NEXT_DESC_ERROR(desc) NEXT_ERROR(((DESC *)desc)->error)
 
 /*
   list of MyODBC3 error codes

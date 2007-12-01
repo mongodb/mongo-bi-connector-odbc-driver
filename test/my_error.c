@@ -278,6 +278,7 @@ DECLARE_TEST(t_bug16224)
  */
 DECLARE_TEST(bind_invalidcol)
 {
+  SQLCHAR dummy[10];
   ok_sql(hstmt, "select 1,2,3,4");
 
   /* test out of range column number */
@@ -290,8 +291,8 @@ DECLARE_TEST(bind_invalidcol)
   is(check_sqlstate(hstmt, "07009") == OK);
 
   /* SQLDescribeCol() */
-  expect_stmt(hstmt, SQLDescribeCol(hstmt, 0, NULL, 0, NULL, NULL, NULL,
-                                    NULL, NULL), SQL_ERROR);
+  expect_stmt(hstmt, SQLDescribeCol(hstmt, 0, dummy, sizeof(dummy), NULL, NULL,
+                                    NULL, NULL, NULL), SQL_ERROR);
   is(check_sqlstate(hstmt, "07009") == OK);
 
   expect_stmt(hstmt, SQLDescribeCol(hstmt, 5, NULL, 0, NULL, NULL, NULL,
@@ -318,7 +319,7 @@ DECLARE_TEST(bind_invalidcol)
 DECLARE_TEST(bind_notenoughparam1)
 {
   SQLINTEGER i= 0;
-  ok_stmt(hstmt, SQLPrepare(hstmt, "select ?, ?", SQL_NTS));
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)"select ?, ?", SQL_NTS));
 
   ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_LONG,
                                   SQL_INTEGER, 0, 0, &i, 0, NULL));
@@ -336,7 +337,7 @@ DECLARE_TEST(bind_notenoughparam2)
 {
   SQLINTEGER i= 0;
   SQLSMALLINT cols= 0;
-  ok_stmt(hstmt, SQLPrepare(hstmt, "select ?, ?", SQL_NTS));
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)"select ?, ?", SQL_NTS));
 
   /* trigger pre-execute */
   ok_stmt(hstmt, SQLNumResultCols(hstmt, &cols));
@@ -401,6 +402,31 @@ DECLARE_TEST(t_handle_err)
 }
 
 
+DECLARE_TEST(sqlerror)
+{
+  SQLCHAR message[SQL_MAX_MESSAGE_LENGTH + 1];
+  SQLCHAR sqlstate[SQL_SQLSTATE_SIZE + 1];
+  SQLINTEGER error;
+  SQLSMALLINT len;
+
+  expect_sql(hstmt, "SELECT * FROM tabledoesnotexist", SQL_ERROR);
+
+  ok_stmt(hstmt, SQLError(henv, hdbc, hstmt, sqlstate, &error,
+                          message, sizeof(message), &len));
+
+  /* Message has been consumed. */
+  expect_stmt(hstmt, SQLError(henv, hdbc, hstmt, sqlstate, &error,
+                              message, sizeof(message), &len),
+              SQL_NO_DATA_FOUND);
+
+  /* But should still be available using SQLGetDiagRec. */
+  ok_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate, &error,
+                               message, sizeof(message), &len));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
 #ifndef NO_DRIVERMANAGER
   ADD_TEST(t_odbc2_error)
@@ -417,6 +443,7 @@ BEGIN_TESTS
   ADD_TEST(bind_notenoughparam2)
   ADD_TEST(getdata_need_nullind)
   ADD_TEST(t_handle_err)
+  ADD_TEST(sqlerror)
 END_TESTS
 
 RUN_TESTS
