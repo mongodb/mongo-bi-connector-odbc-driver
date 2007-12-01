@@ -855,16 +855,16 @@ DECLARE_TEST(t_bug14414)
   */
   ok_sql(hstmt, "SELECT * FROM t_bug14414");
 
-  ok_stmt(hstmt, SQLDescribeCol(hstmt, 1, NULL, 0, NULL, NULL, NULL, NULL,
-                                &nullable));
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 1, col, sizeof(col), NULL, NULL, NULL,
+                                NULL, &nullable));
   is_num(nullable, SQL_NULLABLE);
 
-  ok_stmt(hstmt, SQLDescribeCol(hstmt, 2, NULL, 0, NULL, NULL, NULL, NULL,
-                                &nullable));
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 2, col, sizeof(col), NULL, NULL, NULL,
+                                NULL, &nullable));
   is_num(nullable, SQL_NO_NULLS);
 
-  ok_stmt(hstmt, SQLDescribeCol(hstmt, 3, NULL, 0, NULL, NULL, NULL, NULL,
-                                &nullable));
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 3, col, sizeof(col), NULL, NULL, NULL,
+                                NULL, &nullable));
   is_num(nullable, SQL_NULLABLE);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));

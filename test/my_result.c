@@ -1771,6 +1771,8 @@ DECLARE_TEST(t_bug29239)
   is_num(xval, 44);
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
   ok_sql(hstmt, "drop table if exists bug29239");
   return OK;
 }
