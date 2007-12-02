@@ -26,15 +26,6 @@
 */
 
 #include "driver.h"
-
-#ifndef _UNIX_
-# ifdef USE_IODBC
-#  include <iodbcinst.h>
-# else
-#  include <odbcinst.h>
-# endif
-#endif
-
 #include "installer.h"
 #include "stringutil.h"
 #include "MYODBCUtil.h"

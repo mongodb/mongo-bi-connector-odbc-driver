@@ -35,4 +35,4 @@
 # include <odbcinst.h>
 #endif
 
-#endif
+#endif /* !MYODBC_ODBC_H */

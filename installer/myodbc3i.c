@@ -38,20 +38,11 @@
  */
 
 #include "MYODBC_MYSQL.h"
-#include "MYODBC_CONF.h"
 #include "installer.h"
 #include "stringutil.h"
 
-#ifdef _WIN32
-#   include <windows.h>
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <sql.h>
-#include <sqlext.h>
-#include <odbcinst.h>
 
 const char *usage =
 "+---                                                                   \n"
