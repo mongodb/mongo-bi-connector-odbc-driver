@@ -94,7 +94,7 @@ DECLARE_TEST(t_desc_paramset)
 
   ok_sql(hstmt, "drop table if exists t_paramset");
   ok_sql(hstmt, "create table t_paramset(x int, y int)");
-  ok_stmt(hstmt, SQLPrepare(hstmt, "insert into t_paramset "
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)"insert into t_paramset "
                             "values (?, ?)", SQL_NTS));
 
   ok_stmt(hstmt,
@@ -190,7 +190,7 @@ DECLARE_TEST(t_sqlbindcol_count_reset)
   is_num(count, 3);
 
   /* unbind column 3 -> contract to count = 0 */
-  ok_stmt(hstmt, SQLBindCol(hstmt, 3, 0, NULL, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 3, SQL_C_DEFAULT, NULL, 0, NULL));
 
   ok_desc(ard, SQLGetDescField(ard, 0, SQL_DESC_COUNT, &count,
                                SQL_IS_INTEGER, NULL));
@@ -211,7 +211,7 @@ DECLARE_TEST(t_sqlbindcol_count_reset)
   is_num(count, 3);
 
   /* unbind column 3 -> contract to count = 2 */
-  ok_stmt(hstmt, SQLBindCol(hstmt, 3, 0, NULL, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 3, SQL_C_DEFAULT, NULL, 0, NULL));
 
   ok_desc(ard, SQLGetDescField(ard, 0, SQL_DESC_COUNT, &count,
                                SQL_IS_INTEGER, NULL));
@@ -230,7 +230,7 @@ DECLARE_TEST(t_desc_default_type)
   SQLHANDLE ard, apd;
   SQLINTEGER inval= 20, outval= 0;
 
-  ok_stmt(hstmt, SQLPrepare(hstmt, "select ?", SQL_NTS));
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)"select ?", SQL_NTS));
   ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_APP_PARAM_DESC,
                                 &apd, 0, NULL));
   ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_APP_ROW_DESC,
