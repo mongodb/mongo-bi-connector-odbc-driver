@@ -800,8 +800,8 @@ int sqlnum_test_from_str(SQLHANDLE hstmt,
   SQLHANDLE ard;
   unsigned long numval;
 
-  sprintf(buf, "select %s", numstr);
-  //ok_sql(hstmt, buf);
+  sprintf((char *)buf, "select %s", numstr);
+  /* ok_sql(hstmt, buf); */
   ok_stmt(hstmt, SQLExecDirect(hstmt, buf, SQL_NTS));
 
   ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_APP_ROW_DESC, &ard, 0, NULL));
