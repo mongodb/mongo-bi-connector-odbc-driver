@@ -574,10 +574,7 @@ SQLGetConnectAttrImpl(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
       rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
 
     if (value && value_max > 1)
-    {
       strmake((char *)value, (char *)char_value, value_max - 1);
-      ((char *)value)[value_max - 1]= '\0';
-    }
 
     if (value_len)
       *value_len= len;
