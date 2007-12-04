@@ -652,7 +652,7 @@ DECLARE_TEST(t_bug32171)
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug32171");
   ok_sql(hstmt, "CREATE TABLE t_bug32171 (a INT UNSIGNED)");
 
-  sprintf((char *)buff, "INSERT INTO t_bug32171 VALUES ('%lu')", in);
+  sprintf((char *)buff, "INSERT INTO t_bug32171 VALUES ('%u')", in);
   ok_stmt(hstmt, SQLExecDirect(hstmt, buff, SQL_NTS));
 
   ok_sql(hstmt, "SELECT * FROM t_bug32171");

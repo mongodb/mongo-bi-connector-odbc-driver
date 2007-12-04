@@ -618,7 +618,7 @@ DECLARE_TEST(setnames_conn)
 
   ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
 
-  expect_dbc(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), conn_out,
+  expect_dbc(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, SQL_NTS, conn_out,
                                      sizeof(conn_out), &conn_out_len,
                                      SQL_DRIVER_NOPROMPT),
              SQL_ERROR);
