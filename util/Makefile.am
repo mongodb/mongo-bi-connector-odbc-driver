@@ -8,6 +8,7 @@ libmyodbc3u_la_SOURCES = \
 	stringutil.c \
 	installer.h \
 	installer.c \
+	odbcinstw.c \
 	unicode_transcode.c \
 	MYODBCUtil.h \
 	MYODBCUtilAllocDataSource.c \
@@ -34,11 +35,6 @@ libmyodbc3u_la_SOURCES += \
 	MYODBCUtilWriteDataSource.c \
 	MYODBCUtilWriteDataSourceStr.c \
 	MYODBCUtilWriteDriver.c
-endif
-
-if ODBCINSTW
-libmyodbc3u_la_SOURCES += \
-	odbcinstw.c
 endif
 
 # libmysql lib deps

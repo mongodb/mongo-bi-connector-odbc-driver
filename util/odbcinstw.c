@@ -32,8 +32,6 @@
  our version of SQLGetPrivateProfileStringW() will work around.
 */
 
-#include "MYODBC_CONF.h"
-
 #include "stringutil.h"
 
 #include <sql.h>
@@ -49,10 +47,11 @@ typedef const LPWSTR LPCWSTR;
 #endif
 
 
+#if !defined(HAVE_SQLGETPRIVATEPROFILESTRINGW) || defined(USE_UNIXODBC)
 int INSTAPI
-SQLGetPrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry,
-                            LPCWSTR lpszDefault, LPWSTR lpszRetBuffer,
-                            int cbRetBuffer, LPCWSTR lpszFilename)
+MySQLGetPrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry,
+                              LPCWSTR lpszDefault, LPWSTR lpszRetBuffer,
+                              int cbRetBuffer, LPCWSTR lpszFilename)
 {
   SQLINTEGER len;
   int rc;
@@ -80,10 +79,10 @@ SQLGetPrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry,
   {
     /*
      unixODBC 2.2.11 returns the wrong value from SQLGetPrivateProfileString
-     when getting the list of entries in a section, so we have to
+     when getting the list of sections or entries in a section, so we have to
      re-calculate the correct length by walking the list of values.
     */
-    if (!entry)
+    if (!entry || !section)
     {
       char *pos= ret;
       while (*pos && pos < ret + cbRetBuffer)
@@ -103,12 +102,24 @@ SQLGetPrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry,
 
   return rc;
 }
+#endif
+
+
+#ifndef HAVE_SQLGETPRIVATEPROFILESTRINGW
+int INSTAPI
+SQLGetPrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry,
+                            LPCWSTR lpszDefault, LPWSTR lpszRetBuffer,
+                            int cbRetBuffer, LPCWSTR lpszFilename)
+{
+  return MySQLGetPrivateProfileStringW(lpszSection, lpszEntry, lpszDefault,
+                                       lpszRetBuffer, cbRetBuffer,
+                                       lpszFilename);
+}
 
 
 /**
  @todo The rest of the replacement functions are not actually implemented.
 */
-
 
 BOOL INSTAPI
 SQLInstallDriverExW(LPCWSTR lpszDriver, LPCWSTR lpszPathIn, LPWSTR lpszPathOut,
@@ -160,3 +171,4 @@ SQLWritePrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry,
 {
   return FALSE;
 }
+#endif

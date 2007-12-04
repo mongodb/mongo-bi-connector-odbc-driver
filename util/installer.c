@@ -35,6 +35,16 @@
 #include "stringutil.h"
 #include "installer.h"
 
+
+/*
+   SQLGetPrivateProfileStringW is buggy in all releases of unixODBC
+   as of 2007-12-03, so always use our replacement.
+*/
+#if USE_UNIXODBC
+# define SQLGetPrivateProfileStringW MySQLGetPrivateProfileStringW
+#endif
+
+
 /* ODBC Installer Config Wrapper */
 
 /* a few constants */
