@@ -305,7 +305,7 @@ SQLErrorW(SQLHENV henv, SQLHDBC hdbc, SQLHSTMT hstmt, SQLWCHAR *sqlstate,
   }
   else if (hdbc)
   {
-    rc= SQLGetDiagRecWImpl(SQL_HANDLE_DBC, hdbc, NEXT_DBC_ERROR(hstmt),
+    rc= SQLGetDiagRecWImpl(SQL_HANDLE_DBC, hdbc, NEXT_DBC_ERROR(hdbc),
                            sqlstate, native_error, message, message_max,
                            message_len);
   }
