@@ -1043,7 +1043,7 @@ SQLWCHAR *dup_wchar_t_as_sqlwchar(wchar_t *from, size_t len)
 */
 SQLWCHAR *dup_char_as_sqlwchar(SQLCHAR *from)
 {
-  SQLWCHAR *to= malloc(strlen((char *)from) * sizeof(SQLWCHAR) + 1);
+  SQLWCHAR *to= malloc((strlen((char *)from) + 1) * sizeof(SQLWCHAR));
   SQLWCHAR *out= to;
   while (from && *from)
     *(to++)= (SQLWCHAR)*(from++);
