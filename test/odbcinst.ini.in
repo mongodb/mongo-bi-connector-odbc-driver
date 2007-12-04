@@ -5,7 +5,9 @@ MyODBC = Installed
 [MyODBC]
 Driver = @TEST_DRIVER@
 Description = Driver for connecting to MySQL database server
+Threading = 0
 
 [@TEST_DRIVER@]
 Driver = @TEST_DRIVER@
 Description = Driver for connecting to MySQL database server
+Threading = 0
