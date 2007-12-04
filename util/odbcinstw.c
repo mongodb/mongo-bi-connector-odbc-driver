@@ -33,17 +33,11 @@
 */
 
 #include "stringutil.h"
+#include "../MYODBC_CONF.h"
+#include "../MYODBC_ODBC.h"
 
 #include <sql.h>
 #include <wchar.h>
-
-/*
-   If SQLGetPrivateProfileString() is not defined, it's also an old version
-   of unixODBC that lacks a typedef for LPCWSTR.
-*/
-#if !defined(HAVE_SQLGETPRIVATEPROFILESTRINGW)
-typedef const LPWSTR LPCWSTR;
-#endif
 
 #define INSTAPI
 
@@ -54,22 +48,22 @@ typedef const LPWSTR LPCWSTR;
 
 #if !defined(HAVE_SQLGETPRIVATEPROFILESTRINGW) || defined(USE_UNIXODBC)
 int INSTAPI
-MySQLGetPrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry,
-                              LPCWSTR lpszDefault, LPWSTR lpszRetBuffer,
-                              int cbRetBuffer, LPCWSTR lpszFilename)
+MySQLGetPrivateProfileStringW(const LPWSTR lpszSection, const LPWSTR lpszEntry,
+                              const LPWSTR lpszDefault, LPWSTR lpszRetBuffer,
+                              int cbRetBuffer, const LPWSTR lpszFilename)
 {
   SQLINTEGER len;
   int rc;
   char *section, *entry, *def, *ret, *filename;
 
   len= SQL_NTS;
-  section= sqlwchar_as_utf8(lpszSection, &len);
+  section= (char *)sqlwchar_as_utf8(lpszSection, &len);
   len= SQL_NTS;
-  entry= sqlwchar_as_utf8(lpszEntry, &len);
+  entry= (char *)sqlwchar_as_utf8(lpszEntry, &len);
   len= SQL_NTS;
-  def= sqlwchar_as_utf8(lpszDefault, &len);
+  def= (char *)sqlwchar_as_utf8(lpszDefault, &len);
   len= SQL_NTS;
-  filename= sqlwchar_as_utf8(lpszFilename, &len);
+  filename= (char *)sqlwchar_as_utf8(lpszFilename, &len);
 
   if (lpszRetBuffer && cbRetBuffer)
     ret= malloc(cbRetBuffer + 1);
@@ -96,7 +90,7 @@ MySQLGetPrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry,
     }
 
     /** @todo error handling */
-    utf8_as_sqlwchar(lpszRetBuffer, cbRetBuffer, ret, rc);
+    utf8_as_sqlwchar(lpszRetBuffer, cbRetBuffer, (SQLCHAR *)ret, rc);
   }
 
   x_free(section);
@@ -112,9 +106,9 @@ MySQLGetPrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry,
 
 #ifndef HAVE_SQLGETPRIVATEPROFILESTRINGW
 int INSTAPI
-SQLGetPrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry,
-                            LPCWSTR lpszDefault, LPWSTR lpszRetBuffer,
-                            int cbRetBuffer, LPCWSTR lpszFilename)
+SQLGetPrivateProfileStringW(const LPWSTR lpszSection, const LPWSTR lpszEntry,
+                            const LPWSTR lpszDefault, LPWSTR lpszRetBuffer,
+                            int cbRetBuffer, const LPWSTR lpszFilename)
 {
   return MySQLGetPrivateProfileStringW(lpszSection, lpszEntry, lpszDefault,
                                        lpszRetBuffer, cbRetBuffer,
@@ -127,9 +121,9 @@ SQLGetPrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry,
 */
 
 BOOL INSTAPI
-SQLInstallDriverExW(LPCWSTR lpszDriver, LPCWSTR lpszPathIn, LPWSTR lpszPathOut,
-                    WORD cbPathOutMax, WORD *pcbPathOut, WORD fRequest,
-                    LPDWORD lpdwUsageCount)
+SQLInstallDriverExW(const LPWSTR lpszDriver, const LPWSTR lpszPathIn,
+                    LPWSTR lpszPathOut, WORD cbPathOutMax, WORD *pcbPathOut,
+                    WORD fRequest, LPDWORD lpdwUsageCount)
 {
   return FALSE;
 }
@@ -143,36 +137,38 @@ SQLPostInstallerErrorW(DWORD fErrorCode, LPWSTR szErrorMsg)
 
 
 BOOL INSTAPI
-SQLRemoveDSNFromIniW(LPCWSTR lpszDSN)
+SQLRemoveDSNFromIniW(const LPWSTR lpszDSN)
 {
   return FALSE;
 }
 
 
 BOOL INSTAPI
-SQLRemoveDriverW(LPCWSTR lpszDriver, BOOL fRemoveDSN, LPDWORD lpdwUsageCount)
+SQLRemoveDriverW(const LPWSTR lpszDriver, BOOL fRemoveDSN,
+                 LPDWORD lpdwUsageCount)
 {
   return FALSE;
 }
 
 
 BOOL INSTAPI
-SQLValidDSNW(LPCWSTR lpszDSN)
+SQLValidDSNW(const LPWSTR lpszDSN)
 {
   return FALSE;
 }
 
 
 BOOL INSTAPI
-SQLWriteDSNToIniW(LPCWSTR lpszDSN, LPCWSTR lpszDriver)
+SQLWriteDSNToIniW(const LPWSTR lpszDSN, const LPWSTR lpszDriver)
 {
   return FALSE;
 }
 
 
 BOOL INSTAPI
-SQLWritePrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry,
-                              LPCWSTR lpszString, LPCWSTR lpszFilename)
+SQLWritePrivateProfileStringW(const LPWSTR lpszSection, const LPWSTR lpszEntry,
+                              const LPWSTR lpszString,
+                              const LPWSTR lpszFilename)
 {
   return FALSE;
 }
