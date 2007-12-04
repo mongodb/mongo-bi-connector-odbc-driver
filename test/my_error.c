@@ -113,8 +113,8 @@ DECLARE_TEST(t_odbc2_error)
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
-  expect_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_FETCH_BOOKMARK_PTR,
-                                     (SQLPOINTER)NULL, 0),
+  expect_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_ENABLE_AUTO_IPD,
+                                     (SQLPOINTER)SQL_TRUE, 0),
               SQL_ERROR);
   if (check_sqlstate(hstmt1, "S1C00") != OK)
     return FAIL;
