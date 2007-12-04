@@ -37,8 +37,13 @@
 #include <sql.h>
 #include <wchar.h>
 
-
+/*
+   If SQLGetPrivateProfileString() is not defined, it's also an old version
+   of unixODBC that lacks a typedef for LPCWSTR.
+*/
+#if !defined(HAVE_SQLGETPRIVATEPROFILESTRINGW)
 typedef const LPWSTR LPCWSTR;
+#endif
 
 #define INSTAPI
 
