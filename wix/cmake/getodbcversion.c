@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 	fprintf(fp, "<?define odbc_ver_short=\"%d.%d\" ?>\n", v1, v2);
 	fprintf(fp, "<?define odbc_ver_long=\"%d.%d.%d\" ?>\n", v1, v2, v3);
 	fprintf(fp, "<?define odbc_ver_prev=\"%d.%d.%d\" ?>\n", v1, v2, v3-1);
-	fprintf(fp, "<?define odbc_ver_prev=\"%d.%d.%d\" ?>\n", v1, v2, v3+1);
+	fprintf(fp, "<?define odbc_ver_next=\"%d.%d.%d\" ?>\n", v1, v2, v3+1);
 
 	fclose(fp);
 

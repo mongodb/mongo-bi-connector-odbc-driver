@@ -24,7 +24,7 @@
             </Component>
             <Component Id="driver_32" Guid="83B6877B-3220-4C5F-A1B5-84787E9798DD" SharedDllRefCount="yes">
               <File Id="myodbc.dll" Name="myodbc5.dll" Checksum="yes" KeyPath="yes" DiskId="1" Source="x86\myodbc5.dll">
-	        <ODBCDriver Id="MySQL_ODBC_5.1_Driver" Name="MySQL ODBC 5.1 Driver" SetupFile="myodbc5S.dll32" />
+	        <ODBCDriver Id="MySQL_ODBC_5.1_Driver_32" Name="MySQL ODBC 5.1 Driver" SetupFile="myodbc5S.dll32" />
               </File>
               <?if $(var.license) = "commercial"?>
 	      <File Id="license32" Name="MYODBC5-LICENSE.TXT" DiskId="1" Source="doc\MYODBC5-LICENSE.TXT"/>
@@ -56,7 +56,7 @@
             </Component>
             <Component Id="driver_64" Guid="C1960400-BFC6-4E6E-AF30-4C19EF5A3F07" SharedDllRefCount="yes" Win64="yes">
               <File Id="myodbc5.dll" Name="myodbc5.dll" Checksum="yes" KeyPath="yes" DiskId="1" Source="x64\myodbc5.dll">
-                <ODBCDriver Id="MySQL_ODBC_5.1_Driver" Name="MySQL ODBC 5.1 Driver" SetupFile="myodbc5S.dll64" />
+                <ODBCDriver Id="MySQL_ODBC_5.1_Driver_64" Name="MySQL ODBC 5.1 Driver" SetupFile="myodbc5S.dll64" />
               </File>
               <?if $(var.license) = "commercial"?>
 	      <File Id="license64" Name="MYODBC5-LICENSE.TXT" DiskId="1" Source="doc\MYODBC5-LICENSE.TXT" />
@@ -69,10 +69,10 @@
               <File Id="myodbc5.hlp_64" Name="connector-odbc.chm" KeyPath="yes" DiskId="1" Source="doc\connector-odbc.chm"/>
             </Component>
             <Component Id="setup_64" Guid="3A92E95A-AF9C-4A4F-A36D-E0052405C278" SharedDllRefCount="yes" Win64="yes">
-              <File Id="myodbc5S.dll64" Name="myodbc5S.dll" KeyPath="yes" DiskId="1" Source="x64\myodb5S.dll" />
-              <File Id="myodbc5S.lib64" Name="myodbc5S.lib" DiskId="1" Source="x64\myodb5S.lib"/>
+              <File Id="myodbc5S.dll64" Name="myodbc5S.dll" KeyPath="yes" DiskId="1" Source="x64\myodbc5S.dll" />
+              <File Id="myodbc5S.lib64" Name="myodbc5S.lib" DiskId="1" Source="x64\myodbc5S.lib"/>
             </Component>
-            <Component Id="installer_64" Guid="75754F93-A6F5-4575-A6AA-C64CA053386F" SharedDllRefCount="yes" Win64="yes">
+	    <Component Id="installer_64" Guid="EB5E7FB3-F6DD-4424-A54A-DD07213E67ED" SharedDllRefCount="yes" Win64="yes">
               <File Id="installer_64" Name="myodbc-installer.exe" KeyPath="yes" DiskId="1" Source="x64\myodbc-installer.exe" />
             </Component>
           </Directory>

@@ -18,10 +18,16 @@
   <!-- 
     SetVersion updates: Id. Do not change it manually.
   -->
+    <?if $(var.odbc_64bit) = 1 ?>
+    <?define odbc_platform="x64" ?>
+    <?else ?>
+    <?define odbc_platform="Intel" ?>
+    <?endif ?>
 
     <Package Keywords="Installer,MSI,Database" 
       Description="MySQL Connector/ODBC" Manufacturer="MySQL AB"
-      InstallerVersion="200" Platforms="Intel" Languages="1033" SummaryCodepage="1252" Compressed='yes' />
+      InstallerVersion="200" Platforms="$(var.odbc_platform)"
+      Languages="1033" SummaryCodepage="1252" Compressed='yes' />
 
     <!-- *****************************************************************************************
       Custom Actions
@@ -35,7 +41,7 @@
 
     <Upgrade Id="FF073FBB-32E2-4052-B6B2-830C5ED4A809">
       <!-- !!!SetVersion updates: Minimum, Maximum -->
-      <UpgradeVersion Property="PREVIOUSVERSIONINSTALLED" Minimum="$(var.odbc_ver_short).0" Maximum="$(var.odbc_ver_prev)" IncludeMaximum="no"
+      <UpgradeVersion Property="PREVIOUSVERSIONINSTALLED" Minimum="5.0.999" Maximum="$(var.odbc_ver_prev)" IncludeMaximum="no"
         IncludeMinimum="yes"  />
       <!-- !!!SetVersion updates: Minimum, Maximum -->
       <UpgradeVersion Property="NEWERPRODUCTFOUND" Minimum="$(var.odbc_ver_short).0" Maximum="$(var.odbc_ver_short).999" OnlyDetect="yes" 
@@ -54,19 +60,19 @@
 
     <DirectoryRef Id="ProgramFilesFolder">
       <Component Id="RegKeys32" Guid="AECCA4A7-9405-466A-8393-4F0876DCD21A" DiskId="1">
-        <RegistryKey Id="MysqlKey" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
+        <RegistryKey Id="MysqlKey32" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
                   Action="createAndRemoveOnUninstall"/>
-	<RegistryValue Id="Version" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
+	<RegistryValue Id="Version32" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
 		  Name="Version" Type="string" Value="[ProductVersion]"/>
       </Component>
     </DirectoryRef>
 
     <?if $(var.odbc_64bit) = 1 ?>
     <DirectoryRef Id="ProgramFiles64Folder">
-      <Component Id="RegKeys64" Guid="AECCA4A7-9405-466A-8393-4F0876DCD21A" DiskId="1">
-        <RegistryKey Id="MysqlKey" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
+      <Component Id="RegKeys64" Guid="92FEC72B-EB44-4E4D-B301-A915C80D067B" DiskId="1" Win64="yes">
+        <RegistryKey Id="MysqlKey64" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
                   Action="createAndRemoveOnUninstall"/>
-	<RegistryValue Id="Version" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
+	<RegistryValue Id="Version64" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
 		  Name="Version" Type="string" Value="[ProductVersion]"/>
       </Component>
     </DirectoryRef>

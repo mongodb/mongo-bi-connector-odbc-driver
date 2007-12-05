@@ -70,6 +70,7 @@
         <Text>Setup has finished installing [ProductName]. Click Finish to exit the wizard.</Text>
         <Condition Action="show">NOT Installed And ACTION="INSTALL"</Condition>
       </Control>
+<!--	      
       <Control Id="InstallServiceCBox" Type="CheckBox" X="135" Y="88" Width="11" Height="11" 
         Property="ConfigureServer" Integer="yes" Hidden="yes">
         <Condition Action="show">NOT Installed And ACTION="INSTALL" And $ServerInstanceConfig=3</Condition>
@@ -82,6 +83,7 @@
         <Text>Use this option to generate an optimized MySQL config file, setup a Windows service running on a dedicated port and to set the password for the root account.</Text>
         <Condition Action="show">NOT Installed And ACTION="INSTALL" And $ServerInstanceConfig=3</Condition>
       </Control>
+-->
       <Control Id="DlgLine" Type="Line" X="0" Y="234" Width="378" Height="0" />
       <Control Id="TextLine1" Type="Text" X="135" Y="8" Width="225" Height="45" Transparent="yes">
         <Text>{&amp;TahomaBold10}Wizard Completed</Text>
