@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+ 
+    <!-- *****************************************************************************************
+      Icons
+    -->
+    <?include myodbc_version.xml ?>
+
+    <Icon Id="MySQLConnector.ico" SourceFile="$(var.odbc_resource)/MySQLConnector.ico" />
+
+  
+    <!-- *****************************************************************************************
+      Directories / Files
+    -->
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="MySQL32" Name="MySQL">
+          <Directory Id="Connector_ODBC_32" Name="Connector ODBC 5.1">
+            <Component Id="lib_32" Guid="FED572C6-4778-4C54-A713-8D67D4758043" SharedDllRefCount="yes">
+              <File Id="myodbc.lib32" Name="myodbc5.lib" KeyPath="yes" DiskId="1" Source="x86\myodbc5.lib"/>
+            </Component>
+            <Component Id="driver_32" Guid="83B6877B-3220-4C5F-A1B5-84787E9798DD" SharedDllRefCount="yes">
+              <File Id="myodbc.dll" Name="myodbc5.dll" Checksum="yes" KeyPath="yes" DiskId="1" Source="x86\myodbc5.dll">
+	        <ODBCDriver Id="MySQL_ODBC_5.1_Driver" Name="MySQL ODBC 5.1 Driver" SetupFile="myodbc5S.dll32" />
+              </File>
+              <?if $(var.license) = "commercial"?>
+	      <File Id="license32" Name="MYODBC5-LICENSE.TXT" DiskId="1" Source="doc\MYODBC5-LICENSE.TXT"/>
+              <?else?>
+	      <File Id="license32" Name="MYODBC5-LICENSE.TXT" DiskId="1" Source="doc\MYODBC5-LICENSE.TXT"/>
+	      <File Id="exceptions32" Name="MYODBC5-EXCEPTIONS.TXT" DiskId="1" Source="doc\MYODBC5-EXCEPTIONS.TXT" />
+              <?endif?>
+            </Component>
+            <Component Id="help_32" Guid="D29EE791-9763-4DBE-8EAE-67A60A98BEE7" SharedDllRefCount="yes">
+              <File Id="myodbc5.hlp32" Name="connector-odbc.chm" KeyPath="yes" DiskId="1" Source="doc\connector-odbc.chm"/>
+            </Component>
+            <Component Id="setup_32" Guid="428232BA-9D94-4DB5-87CD-C939D1347664" SharedDllRefCount="yes">
+              <File Id="myodbc5S.dll32" Name="myodbc5S.dll" KeyPath="yes" DiskId="1" Source="x86\myodbc5S.dll" />
+              <File Id="myodbc5S.lib32" Name="myodbc5S.lib" DiskId="1" Source="x86\myodbc5S.lib"/>
+            </Component>
+            <Component Id="installer_32" Guid="75754F93-A6F5-4575-A6AA-C64CA053386F" SharedDllRefCount="yes">
+              <File Id="installer_32" Name="myodbc-installer.exe" KeyPath="yes" DiskId="1" Source="x86\myodbc-installer.exe" />
+            </Component>
+          </Directory>
+        </Directory>
+      </Directory>
+
+    <?if $(var.odbc_64bit) = 1 ?>
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="MySQL64" Name="MySQL">
+          <Directory Id="Connector_ODBC_64" Name="Connector ODBC 5.1">
+            <Component Id="lib_64" Guid="22F054AC-F3F1-47E6-A03E-46423C467C79" SharedDllRefCount="yes" Win64="yes">
+              <File Id="myodbc.lib64" Name="myodbc5.lib" KeyPath="yes" DiskId="1" Source="x64\myodbc5.lib" />
+            </Component>
+            <Component Id="driver_64" Guid="C1960400-BFC6-4E6E-AF30-4C19EF5A3F07" SharedDllRefCount="yes" Win64="yes">
+              <File Id="myodbc5.dll" Name="myodbc5.dll" Checksum="yes" KeyPath="yes" DiskId="1" Source="x64\myodbc5.dll">
+                <ODBCDriver Id="MySQL_ODBC_5.1_Driver" Name="MySQL ODBC 5.1 Driver" SetupFile="myodbc5S.dll64" />
+              </File>
+              <?if $(var.license) = "commercial"?>
+	      <File Id="license64" Name="MYODBC5-LICENSE.TXT" DiskId="1" Source="doc\MYODBC5-LICENSE.TXT" />
+              <?else?>
+	      <File Id="license64" Name="MYODBC5-LICENSE.TXT" DiskId="1" Source="doc\MYODBC5-LICENSE.TXT" />
+		  <File Id="exceptions64" Name="MYODBC5-EXCEPTIONS.TXT" DiskId="1" Source="doc\MYODBC5-EXCEPTIONS.TXT" />
+              <?endif?>
+            </Component>
+            <Component Id="help_64" Guid="41D0A247-C698-4A5A-A3E7-CFF4E7537736" SharedDllRefCount="yes" Win64="yes">
+              <File Id="myodbc5.hlp_64" Name="connector-odbc.chm" KeyPath="yes" DiskId="1" Source="doc\connector-odbc.chm"/>
+            </Component>
+            <Component Id="setup_64" Guid="3A92E95A-AF9C-4A4F-A36D-E0052405C278" SharedDllRefCount="yes" Win64="yes">
+              <File Id="myodbc5S.dll64" Name="myodbc5S.dll" KeyPath="yes" DiskId="1" Source="x64\myodb5S.dll" />
+              <File Id="myodbc5S.lib64" Name="myodbc5S.lib" DiskId="1" Source="x64\myodb5S.lib"/>
+            </Component>
+            <Component Id="installer_64" Guid="75754F93-A6F5-4575-A6AA-C64CA053386F" SharedDllRefCount="yes" Win64="yes">
+              <File Id="installer_64" Name="myodbc-installer.exe" KeyPath="yes" DiskId="1" Source="x64\myodbc-installer.exe" />
+            </Component>
+          </Directory>
+        </Directory>
+      </Directory>
+    <?endif ?>
+    </Directory>
+  </Fragment>
+</Wix>

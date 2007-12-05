@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+  <?include myodbc_version.xml ?>
+  <!-- *****************************************************************************************
+    Product MySQL Server
+  -->
+  <!-- 
+    SetVersion updates: Name, Id, Version. Do not change them manually.
+  -->
+
+  <Product Id="29042B1C-0713-4575-B7CA-5C8E7B0899D4" UpgradeCode="FF073FBB-32E2-4052-B6B2-830C5ED4A809"
+    Name="MySQL Connector/ODBC $(var.odbc_ver_short)" Version="$(var.odbc_ver_long)" Language="1033" Manufacturer="MySQL AB">
+
+  <!-- *****************************************************************************************
+    Package
+  -->
+  <!-- 
+    SetVersion updates: Id. Do not change it manually.
+  -->
+
+    <Package Keywords="Installer,MSI,Database" 
+      Description="MySQL Connector/ODBC" Manufacturer="MySQL AB"
+      InstallerVersion="200" Platforms="Intel" Languages="1033" SummaryCodepage="1252" Compressed='yes' />
+
+    <!-- *****************************************************************************************
+      Custom Actions
+    -->
+
+    <CustomAction Id="NewerVersionInstalled" Error="A newer version of this product is already installed." />
+
+    <!-- *****************************************************************************************
+      Upgrade Information
+    -->
+
+    <Upgrade Id="FF073FBB-32E2-4052-B6B2-830C5ED4A809">
+      <!-- !!!SetVersion updates: Minimum, Maximum -->
+      <UpgradeVersion Property="PREVIOUSVERSIONINSTALLED" Minimum="$(var.odbc_ver_short).0" Maximum="$(var.odbc_ver_prev)" IncludeMaximum="no"
+        IncludeMinimum="yes"  />
+      <!-- !!!SetVersion updates: Minimum, Maximum -->
+      <UpgradeVersion Property="NEWERPRODUCTFOUND" Minimum="$(var.odbc_ver_short).0" Maximum="$(var.odbc_ver_short).999" OnlyDetect="yes" 
+        IncludeMinimum="no" />
+    </Upgrade>
+
+    <!-- *****************************************************************************************
+      CAB file
+    -->
+
+    <Media Id="1" Cabinet="product.cab" EmbedCab="yes" />
+
+    <!-- *****************************************************************************************
+      Registry entries
+    -->
+
+    <DirectoryRef Id="ProgramFilesFolder">
+      <Component Id="RegKeys32" Guid="AECCA4A7-9405-466A-8393-4F0876DCD21A" DiskId="1">
+        <RegistryKey Id="MysqlKey" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
+                  Action="createAndRemoveOnUninstall"/>
+	<RegistryValue Id="Version" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
+		  Name="Version" Type="string" Value="[ProductVersion]"/>
+      </Component>
+    </DirectoryRef>
+
+    <?if $(var.odbc_64bit) = 1 ?>
+    <DirectoryRef Id="ProgramFiles64Folder">
+      <Component Id="RegKeys64" Guid="AECCA4A7-9405-466A-8393-4F0876DCD21A" DiskId="1">
+        <RegistryKey Id="MysqlKey" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
+                  Action="createAndRemoveOnUninstall"/>
+	<RegistryValue Id="Version" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
+		  Name="Version" Type="string" Value="[ProductVersion]"/>
+      </Component>
+    </DirectoryRef>
+    <?endif ?>
+
+    <!-- *****************************************************************************************
+      Installation Features
+    -->
+
+    <!-- *****************************************************************************************
+      Product Feature
+    -->
+
+    <Feature Id="ODBC_32" Title="MySQL Connector/ODBC $(var.odbc_ver_long) 32-bit" Level="1" Description="Installs the MySQL ODBC $(var.odbc_ver_long) 32-bit driver.">
+      <ComponentRef Id="RegKeys32" />
+      <ComponentRef Id="lib_32" />
+      <ComponentRef Id="driver_32" />
+      <ComponentRef Id="setup_32" />
+      <ComponentRef Id="installer_32" />
+      <Feature Id="Help32" Title="MySQL Connector/ODBC $(var.odbc_ver_long) Help" Level="1" Description="Installs the MySQL ODBC driver help.">
+        <ComponentRef Id="help_32" />
+      </Feature>
+    </Feature>
+
+    <?if $(var.odbc_64bit) = 1 ?>
+    <Feature Id="ODBC_64" Title="MySQL Connector/ODBC $(var.odbc_ver_long) 64-bit" Level="1" Description="Installs the MySQL ODBC $(var.odbc_ver_long) 64-bit driver.">
+      <ComponentRef Id="RegKeys64" />
+      <ComponentRef Id="lib_64" />
+      <ComponentRef Id="driver_64" />
+      <ComponentRef Id="setup_64" />
+      <ComponentRef Id="installer_64" />
+      <Feature Id="Help64" Title="MySQL Connector/ODBC $(var.odbc_ver_long) Help" Level="1" Description="Installs the MySQL ODBC driver help.">
+        <ComponentRef Id="help_64" />
+      </Feature>
+    </Feature>
+    <?endif ?>
+    <!-- *****************************************************************************************
+      End of Feature
+    -->
+
+    <!-- *****************************************************************************************
+      Include UI
+    -->
+
+    <?include mysql_common_ui.xml ?>
+    
+    <!-- *****************************************************************************************
+      Properties
+    -->
+
+    <Property Id="_IsMaintenance">Change</Property>
+        
+    <Property Id="AgreeToLicense">No</Property>
+    <Property Id="ApplicationUsers">AllUsers</Property> 
+    <Property Id="ALLUSERS">1</Property> <!--per-machine installation -->   
+    <Property Id="ARPPRODUCTICON">MySQLConnector.ico</Property>
+    <Property Id="ARPURLUPDATEINFO">http://dev.mysql.com/</Property>    
+    <Property Id="ARPURLINFOABOUT">http://www.mysql.com</Property>
+       
+    <Property Id="INSTALLLEVEL">1</Property>    
+                     
+    <Property Id="ProgressType3">installs</Property>
+    <Property Id="ProgressType2">installed</Property>
+    <Property Id="ProgressType1">Installing</Property>
+    <Property Id="ProgressType0">install</Property>
+    
+    <Property Id="QualifiedProductName">MySQL Connector/ODBC 3.51.11</Property>
+    <Property Id="InstallationDirectory">MySQL Connector-ODBC</Property>
+    
+    <Property Id="ReinstallFileVersion">o</Property>
+    <Property Id="RebootYesNo">Yes</Property>
+    <Property Id="ReinstallModeText">omus</Property>
+    <Property Id="ReinstallRepair">r</Property>
+
+    <Property Id="SetupType">Typical</Property>
+    <Property Id="ConfigureServer">1</Property>
+
+    <!-- The Guid has to be the same as in the mysql_odbc_fragment.xml -->
+    <Property Id="SVRCNFWIZINSTALLED"><ComponentSearch Id="SvrCnfWizCompSearch"
+      Guid="782B3E4D-FCB1-42F4-BF45-06C159A49A0D" /></Property>
+
+    <!-- *****************************************************************************************
+      Admin UI Sequence
+    -->
+
+    <AdminUISequence>
+      <Show Dialog="SetupCompleteErrorDialog" OnExit="error" />
+      <Show Dialog="SetupInterruptedDialog" OnExit="cancel" />
+      <Show Dialog="SetupCompleteSuccessDialog" OnExit="success" />
+
+      <Show Dialog="SetupInitializationDialog" Before="CostInitialize" />
+      <Show Dialog="AdminWelcomeDialog" After="CostFinalize" />
+      <Show Dialog="SetupProgressDialog" After="AdminWelcomeDialog" />
+    </AdminUISequence>
+
+    <!-- *****************************************************************************************
+      Install Execute Sequence
+    -->
+
+    <InstallExecuteSequence>
+      <Custom Action="NewerVersionInstalled" After="FindRelatedProducts">NEWERPRODUCTFOUND</Custom> 
+
+      <RemoveExistingProducts After="InstallInitialize"/>
+    </InstallExecuteSequence>
+
+    <!-- *****************************************************************************************
+      Install UI Sequence
+    -->
+
+    <InstallUISequence>
+      <Show Dialog="SetupCompleteErrorDialog" OnExit="error" />
+      <Show Dialog="SetupInterruptedDialog" OnExit="cancel" />
+      <Show Dialog="SetupCompleteSuccessDialog" OnExit="success" />
+      
+      <Custom Action="NewerVersionInstalled" After="FindRelatedProducts">NEWERPRODUCTFOUND</Custom>                   
+      <Show Dialog="InstallWelcomeDialog" After="MigrateFeatureStates">Not Installed And (Not PATCH Or IS_MAJOR_UPGRADE)</Show>
+      <Show Dialog="SetupResumeDialog" After="InstallWelcomeDialog">Installed And (RESUME Or Preselected) And Not PATCH</Show>
+      <Show Dialog="MaintenanceWelcomeDialog" After="SetupResumeDialog">Installed And Not RESUME And Not Preselected And Not PATCH</Show>
+      <Show Dialog="SetupProgressDialog" After="MaintenanceWelcomeDialog" />  
+    </InstallUISequence>
+
+    <!-- *****************************************************************************************
+      Binary files
+    -->
+
+    <Binary Id="AdminBackground" SourceFile="$(var.odbc_resource)/ConnBackground.jpg" />
+    <Binary Id="AdminHeader" SourceFile="$(var.odbc_resource)/ConnHeader.jpg" />     
+    <Binary Id="SetupTypeComp" SourceFile="$(var.odbc_resource)/setup_type_complete.ico" />     
+    <Binary Id="SetupTypeCust" SourceFile="$(var.odbc_resource)/setup_type_custom.ico" />  
+    <Binary Id="SetupTypeTyp" SourceFile="$(var.odbc_resource)/setup_type_typical.ico" />  
+    <Binary Id="DestDirFolder" SourceFile="$(var.odbc_resource)/dest_dir_folder.ico" />
+
+    <Binary Id="NewBinary2" SourceFile="$(var.odbc_resource)/binary/binary2" />     
+    <Binary Id="NewBinary3" SourceFile="$(var.odbc_resource)/binary/binary3" />     
+    <Binary Id="NewBinary4" SourceFile="$(var.odbc_resource)/binary/binary4" />
+    <Binary Id="NewBinary6" SourceFile="$(var.odbc_resource)/binary/binary6" />
+    <Binary Id="NewBinary7" SourceFile="$(var.odbc_resource)/binary/binary7" />
+    <Binary Id="NewBinary8" SourceFile="$(var.odbc_resource)/binary/binary8" />
+    <Binary Id="NewBinary9" SourceFile="$(var.odbc_resource)/binary/binary9" />  
+    <Binary Id="NewBinary13" SourceFile="$(var.odbc_resource)/binary/binary13" />
+    <Binary Id="NewBinary14" SourceFile="$(var.odbc_resource)/binary/binary14" />    
+    <Binary Id="NewBinary16" SourceFile="$(var.odbc_resource)/binary/binary16" />
+    <Binary Id="NewBinary17" SourceFile="$(var.odbc_resource)/binary/binary17" />
+    <Binary Id="NewBinary18" SourceFile="$(var.odbc_resource)/binary/binary18" />
+  </Product>
+</Wix>
