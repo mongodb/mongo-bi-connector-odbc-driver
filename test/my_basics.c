@@ -697,6 +697,84 @@ DECLARE_TEST(sqlcancel)
 #endif
 
 
+/**
+Bug #32014: MyODBC / ADO Unable to open record set using dynamic cursor
+*/
+DECLARE_TEST(t_bug32014)
+{
+    SQLHENV     henv1;
+    SQLHDBC     hdbc1;
+    SQLHSTMT    hstmt1;
+    SQLUINTEGER info;
+    long        i=0;
+    SQLSMALLINT value_len;
+
+    long flags[]= { 0,
+                    (131072L << 4)   /*FLAG_FORWARD_CURSOR*/,
+                    32               /*FLAG_DYNAMIC_CURSOR*/,
+                    (131072L << 4) | 32,
+                    0 };
+
+    long expectedInfo[]= { SQL_SO_FORWARD_ONLY|SQL_SO_STATIC,
+                           SQL_SO_FORWARD_ONLY,
+                           SQL_SO_FORWARD_ONLY|SQL_SO_STATIC|SQL_SO_DYNAMIC,
+                           SQL_SO_FORWARD_ONLY };
+
+    long expectedCurType[][4]= {
+        {SQL_CURSOR_FORWARD_ONLY, SQL_CURSOR_STATIC,        SQL_CURSOR_STATIC,          SQL_CURSOR_STATIC},
+        {SQL_CURSOR_FORWARD_ONLY, SQL_CURSOR_FORWARD_ONLY,  SQL_CURSOR_FORWARD_ONLY,    SQL_CURSOR_FORWARD_ONLY},
+        {SQL_CURSOR_FORWARD_ONLY, SQL_CURSOR_STATIC,        SQL_CURSOR_DYNAMIC,         SQL_CURSOR_STATIC},
+        {SQL_CURSOR_FORWARD_ONLY, SQL_CURSOR_FORWARD_ONLY,  SQL_CURSOR_FORWARD_ONLY,    SQL_CURSOR_FORWARD_ONLY}};
+
+    do
+    {
+        SET_DSN_OPTION(flags[i]);
+        alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+        printMessage("checking %d (%d)", i, flags[i]);
+
+        /*Checking that correct info is returned*/
+
+        ok_stmt(hstmt1, SQLGetInfo(hdbc1, SQL_SCROLL_OPTIONS,
+                (SQLPOINTER) &info, sizeof(long), &value_len));
+        is_num(info, expectedInfo[i]);
+
+        /*Checking that correct cursor type is set*/
+
+        ok_stmt(hstmt1, SQLSetStmtOption(hstmt1, SQL_CURSOR_TYPE
+                , SQL_CURSOR_FORWARD_ONLY ));
+        ok_stmt(hstmt1, SQLGetStmtOption(hstmt1, SQL_CURSOR_TYPE,
+                (SQLPOINTER) &info));
+        is_num(info, expectedCurType[i][SQL_CURSOR_FORWARD_ONLY]);
+
+        ok_stmt(hstmt1, SQLSetStmtOption(hstmt1, SQL_CURSOR_TYPE,
+                SQL_CURSOR_KEYSET_DRIVEN ));
+        ok_stmt(hstmt1, SQLGetStmtOption(hstmt1, SQL_CURSOR_TYPE,
+                (SQLPOINTER) &info));
+        is_num(info, expectedCurType[i][SQL_CURSOR_KEYSET_DRIVEN]);
+
+        ok_stmt(hstmt1, SQLSetStmtOption(hstmt1, SQL_CURSOR_TYPE,
+                SQL_CURSOR_DYNAMIC ));
+        ok_stmt(hstmt1, SQLGetStmtOption(hstmt1, SQL_CURSOR_TYPE,
+                (SQLPOINTER) &info));
+        is_num(info, expectedCurType[i][SQL_CURSOR_DYNAMIC]);
+
+        ok_stmt(hstmt1, SQLSetStmtOption(hstmt1, SQL_CURSOR_TYPE,
+                SQL_CURSOR_STATIC ));
+        ok_stmt(hstmt1, SQLGetStmtOption(hstmt1, SQL_CURSOR_TYPE,
+                (SQLPOINTER) &info));
+        is_num(info, expectedCurType[i][SQL_CURSOR_STATIC]);
+
+        free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+    } while (flags[++i]);
+
+    SET_DSN_OPTION(0);
+
+    return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -717,6 +795,7 @@ BEGIN_TESTS
   ADD_TEST(setnames)
   ADD_TEST(setnames_conn)
   ADD_TEST(sqlcancel)
+  ADD_TEST(t_bug32014)
 END_TESTS
 
 

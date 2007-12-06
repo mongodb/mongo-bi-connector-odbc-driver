@@ -584,9 +584,8 @@ MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
 
   case SQL_SCROLL_OPTIONS:
     MYINFO_SET_ULONG(SQL_SO_FORWARD_ONLY |
-                     ((dbc->flag & FLAG_FORWARD_CURSOR) ?
-                      ((dbc->flag & FLAG_DYNAMIC_CURSOR) ? SQL_SO_DYNAMIC : 0) :
-                      SQL_SO_STATIC));
+                     ((dbc->flag & FLAG_FORWARD_CURSOR) ? 0 : SQL_SO_STATIC |
+                     ((dbc->flag & FLAG_DYNAMIC_CURSOR) ? SQL_SO_DYNAMIC : 0)));
 
   case SQL_SEARCH_PATTERN_ESCAPE:
     MYINFO_SET_STR("\\");
