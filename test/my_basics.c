@@ -689,7 +689,7 @@ DECLARE_TEST(sqlcancel)
   ok_stmt(hstmt, SQLFetch(hstmt));
   is_num(my_fetch_int(hstmt, 1), 1);
 
-  pthread_join(&thread, NULL);
+  pthread_join(thread, NULL);
 
   return OK;
 }
