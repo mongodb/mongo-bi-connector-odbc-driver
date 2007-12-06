@@ -55,30 +55,6 @@ then
   ac_cv_prog_gcc="no"
 fi
 
-# See if we need --std=c99 for \u escapes
-if test "$ac_cv_prog_gcc" = "yes"
-then
-  SAVE_CFLAGS="$CFLAGS"
-  CFLAGS="-Werror $CFLAGS"
-  AC_MSG_CHECKING([if --std=c99 is necessary])
-  AC_TRY_COMPILE([#include <wchar.h>],
-                 [wchar_t *test= L"\u00e3";],
-                 [
-                  AC_MSG_RESULT([no])
-                  CFLAGS="$SAVE_CFLAGS"
-                 ],
-                 [
-                  CFLAGS="--std=c99 $CFLAGS"
-                  AC_TRY_COMPILE([#include <wchar.h>],
-                                 [wchar_t *test= L"\u00e3";],
-                                 [
-                                  AC_MSG_RESULT([yes])
-                                  CFLAGS="--std=c99 $SAVE_CFLAGS"
-                                 ],
-                                 [AC_MSG_ERROR([still can't use \u escapes])])
-                 ])
-fi
-
 # Only build shared libraries by default
 AM_ENABLE_SHARED
 AM_DISABLE_STATIC
@@ -145,15 +121,6 @@ AC_ARG_ENABLE( myodbc-installer,
 #
 
 AM_CONDITIONAL(MYODBCINST, test "x$myodbc_installer" = "xtrue" )
-
-dnl Enable system-specific compiler flags
-case "$target_os" in
-  *aix*)
-    if test "$GCC" != "yes"; then
-      # We need to enable Unicode escape sequences (\u00e3) in strings
-      CFLAGS="$CFLAGS -qlanglvl=ucs"
-    fi
-esac
 
 AC_SUBST(CC)
 AC_SUBST(CFLAGS)

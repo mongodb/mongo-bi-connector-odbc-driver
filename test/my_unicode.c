@@ -57,7 +57,7 @@ DECLARE_TEST(sqlprepare)
   ok_con(hdbc, SQLAllocStmt(hdbc1, &hstmt1));
 
   ok_stmt(hstmt1, SQLPrepareW(hstmt1,
-                              W(L"SELECT '\u30a1' FROM DUAL WHERE 1 = ?"),
+                              W(L"SELECT '\x30a1' FROM DUAL WHERE 1 = ?"),
                               SQL_NTS));
 
   ok_stmt(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT, SQL_C_LONG,
@@ -74,7 +74,7 @@ DECLARE_TEST(sqlprepare)
 
   ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-  is_wstr(my_fetch_wstr(hstmt1, wbuff, 1), L"\u30a1", 1);
+  is_wstr(my_fetch_wstr(hstmt1, wbuff, 1), L"\x30a1", 1);
 
   expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
 
@@ -101,7 +101,7 @@ DECLARE_TEST(sqlprepare)
 
     ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-    is_wstr(my_fetch_wstr(hstmt1, wbuff, 1), L"\u00e3", 1);
+    is_wstr(my_fetch_wstr(hstmt1, wbuff, 1), L"\x00e3", 1);
 
     expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
   }
@@ -130,7 +130,7 @@ DECLARE_TEST(sqlprepare_ansi)
 
   /* Now try SQLPrepareW with an ANSI connection. */
   ok_stmt(hstmt, SQLPrepareW(hstmt,
-                             W(L"SELECT '\u00e3' FROM DUAL WHERE 1 = ?"),
+                             W(L"SELECT '\x00e3' FROM DUAL WHERE 1 = ?"),
                              SQL_NTS));
 
   ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_LONG,
@@ -145,7 +145,7 @@ DECLARE_TEST(sqlprepare_ansi)
 
   ok_stmt(hstmt, SQLFetch(hstmt));
 
-  is_wstr(my_fetch_wstr(hstmt, wbuff, 1), L"\u00e3", 1);
+  is_wstr(my_fetch_wstr(hstmt, wbuff, 1), L"\x00e3", 1);
 
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
@@ -153,7 +153,7 @@ DECLARE_TEST(sqlprepare_ansi)
 
   /* Now try SQLPrepareW with a character that doesn't translate. */
   expect_stmt(hstmt, SQLPrepareW(hstmt,
-                                 W(L"SELECT '\u30a1' FROM DUAL WHERE 1 = ?"),
+                                 W(L"SELECT '\x30a1' FROM DUAL WHERE 1 = ?"),
                                  SQL_NTS),
               SQL_ERROR);
   is(check_sqlstate(hstmt, "22018") == OK);
@@ -168,7 +168,7 @@ DECLARE_TEST(sqlchar)
   HSTMT hstmt1;
   SQLCHAR data[]= "S\xe3o Paolo", buff[30];
   SQLWCHAR wbuff[MAX_ROW_DATA_LEN+1];
-  wchar_t wcdata[]= L"S\u00e3o Paolo";
+  wchar_t wcdata[]= L"S\x00e3o Paolo";
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
   ok_con(hdbc1, SQLConnectW(hdbc1,
@@ -313,7 +313,7 @@ DECLARE_TEST(sqlsetcursorname)
   ok_stmt(hstmt1, SQLSetStmtAttrW(hstmt1, SQL_ATTR_CURSOR_TYPE,
                                   (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
 
-  ok_stmt(hstmt1, SQLSetCursorNameW(hstmt1, W(L"a\u00e3b"), SQL_NTS));
+  ok_stmt(hstmt1, SQLSetCursorNameW(hstmt1, W(L"a\x00e3b"), SQL_NTS));
 
   /* Open the resultset of table 'my_demo_cursor' */
   ok_sql(hstmt1, "SELECT * FROM my_demo_cursor");
@@ -328,7 +328,7 @@ DECLARE_TEST(sqlsetcursorname)
   ok_stmt(hstmt_pos,
           SQLExecDirectW(hstmt_pos,
                          W(L"UPDATE my_demo_cursor SET name='updated' "
-                           L"WHERE CURRENT OF a\u00e3b"), SQL_NTS));
+                           L"WHERE CURRENT OF a\x00e3b"), SQL_NTS));
 
   ok_stmt(hstmt_pos, SQLRowCount(hstmt_pos, &nRowCount));
   is_num(nRowCount, 1);
@@ -346,7 +346,7 @@ DECLARE_TEST(sqlsetcursorname)
   ok_stmt(hstmt_pos,
           SQLExecDirectW(hstmt_pos,
                          W(L"DELETE FROM my_demo_cursor "
-                           L"WHERE CURRENT OF a\u00e3b"), SQL_NTS));
+                           L"WHERE CURRENT OF a\x00e3b"), SQL_NTS));
 
   ok_stmt(hstmt_pos, SQLRowCount(hstmt_pos, &nRowCount));
   is_num(nRowCount, 1);
@@ -469,7 +469,7 @@ DECLARE_TEST(sqlcolattribute)
 
   ok_sql(hstmt1, "DROP TABLE IF EXISTS t_colattrib");
   ok_stmt(hstmt1, SQLExecDirectW(hstmt1,
-                                 W(L"CREATE TABLE t_colattrib (a\u00e3g INT)"),
+                                 W(L"CREATE TABLE t_colattrib (a\x00e3g INT)"),
                                  SQL_NTS));
 
   ok_sql(hstmt1, "SELECT * FROM t_colattrib AS b");
@@ -477,7 +477,7 @@ DECLARE_TEST(sqlcolattribute)
   ok_stmt(hstmt1, SQLColAttributeW(hstmt1, 1, SQL_DESC_NAME,
                                    wbuff, sizeof(wbuff), &len, NULL));
   is_num(len, 3 * sizeof(SQLWCHAR));
-  is_wstr(sqlwchar_to_wchar_t(wbuff), L"a\u00e3g", 4);
+  is_wstr(sqlwchar_to_wchar_t(wbuff), L"a\x00e3g", 4);
 
   expect_stmt(hstmt1, SQLColAttributeW(hstmt1, 1, SQL_DESC_BASE_TABLE_NAME,
                                        wbuff, 5 * sizeof(SQLWCHAR), &len, NULL),
@@ -515,7 +515,7 @@ DECLARE_TEST(sqldescribecol)
 
   ok_sql(hstmt1, "DROP TABLE IF EXISTS t_desc");
   ok_stmt(hstmt1, SQLExecDirectW(hstmt1,
-                                 W(L"CREATE TABLE t_desc (a\u00e3g INT)"),
+                                 W(L"CREATE TABLE t_desc (a\x00e3g INT)"),
                                  SQL_NTS));
 
   ok_sql(hstmt1, "SELECT * FROM t_desc");
@@ -524,13 +524,13 @@ DECLARE_TEST(sqldescribecol)
                                   sizeof(wbuff) / sizeof(wbuff[0]), &len,
                                   NULL, NULL, NULL, NULL));
   is_num(len, 3);
-  is_wstr(sqlwchar_to_wchar_t(wbuff), L"a\u00e3g", 4);
+  is_wstr(sqlwchar_to_wchar_t(wbuff), L"a\x00e3g", 4);
 
   expect_stmt(hstmt1, SQLDescribeColW(hstmt1, 1, wbuff, 3, &len,
                                       NULL, NULL, NULL, NULL),
               SQL_SUCCESS_WITH_INFO);
   is_num(len, 3);
-  is_wstr(sqlwchar_to_wchar_t(wbuff), L"a\u00e3", 3);
+  is_wstr(sqlwchar_to_wchar_t(wbuff), L"a\x00e3", 3);
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
@@ -689,16 +689,16 @@ DECLARE_TEST(sqlcolumns)
 
   ok_sql(hstmt1, "DROP TABLE IF EXISTS t_columns");
   ok_stmt(hstmt1, SQLExecDirectW(hstmt1,
-                                 W(L"CREATE TABLE t_columns (a\u00e3g INT)"),
+                                 W(L"CREATE TABLE t_columns (a\x00e3g INT)"),
                                  SQL_NTS));
 
   ok_stmt(hstmt1, SQLColumnsW(hstmt1, NULL, 0, NULL, 0,
                               W(L"t_columns"), SQL_NTS,
-                              W(L"a\u00e3g"), SQL_NTS));
+                              W(L"a\x00e3g"), SQL_NTS));
 
   ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-  is_wstr(my_fetch_wstr(hstmt1, wbuff, 4), L"a\u00e3g", 4);
+  is_wstr(my_fetch_wstr(hstmt1, wbuff, 4), L"a\x00e3g", 4);
 
   expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
 
@@ -727,26 +727,26 @@ DECLARE_TEST(sqltables)
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
   ok_stmt(hstmt1, SQLExecDirectW(hstmt1,
-                                 W(L"DROP TABLE IF EXISTS t_a\u00e3g"),
+                                 W(L"DROP TABLE IF EXISTS t_a\x00e3g"),
                                  SQL_NTS));
   ok_stmt(hstmt1, SQLExecDirectW(hstmt1,
-                                 W(L"CREATE TABLE t_a\u00e3g (a INT)"),
+                                 W(L"CREATE TABLE t_a\x00e3g (a INT)"),
                                  SQL_NTS));
 
   ok_stmt(hstmt1, SQLTablesW(hstmt1, NULL, 0, NULL, 0,
-                             W(L"t_a\u00e3g"), SQL_NTS,
+                             W(L"t_a\x00e3g"), SQL_NTS,
                              NULL, 0));
 
   ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-  is_wstr(my_fetch_wstr(hstmt1, wbuff, 3), L"t_a\u00e3g", 6);
+  is_wstr(my_fetch_wstr(hstmt1, wbuff, 3), L"t_a\x00e3g", 6);
 
   expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
   ok_stmt(hstmt1, SQLExecDirectW(hstmt1,
-                                 W(L"DROP TABLE IF EXISTS t_a\u00e3g"),
+                                 W(L"DROP TABLE IF EXISTS t_a\x00e3g"),
                                  SQL_NTS));
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
@@ -772,7 +772,7 @@ DECLARE_TEST(sqlspecialcolumns)
   ok_sql(hstmt1, "DROP TABLE IF EXISTS t_spec");
   ok_stmt(hstmt1,
           SQLExecDirectW(hstmt1,
-                         W(L"CREATE TABLE t_spec (a\u00e3g INT PRIMARY KEY)"),
+                         W(L"CREATE TABLE t_spec (a\x00e3g INT PRIMARY KEY)"),
                          SQL_NTS));
 
   ok_stmt(hstmt1, SQLSpecialColumnsW(hstmt1, SQL_BEST_ROWID, NULL, 0, NULL, 0,
@@ -781,7 +781,7 @@ DECLARE_TEST(sqlspecialcolumns)
 
   ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-  is_wstr(my_fetch_wstr(hstmt1, wbuff, 2), L"a\u00e3g", 4);
+  is_wstr(my_fetch_wstr(hstmt1, wbuff, 2), L"a\x00e3g", 4);
 
   expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
 
@@ -815,28 +815,28 @@ DECLARE_TEST(sqlforeignkeys)
 
   ok_stmt(hstmt1,
           SQLExecDirectW(hstmt1,
-                         W(L"DROP TABLE IF EXISTS t_fk_\u00e5, t_fk_\u00e3"),
+                         W(L"DROP TABLE IF EXISTS t_fk_\x00e5, t_fk_\u00e3"),
                          SQL_NTS));
   ok_stmt(hstmt1,
           SQLExecDirectW(hstmt1,
-                         W(L"CREATE TABLE t_fk_\u00e3 (a INT PRIMARY KEY) "
+                         W(L"CREATE TABLE t_fk_\x00e3 (a INT PRIMARY KEY) "
                            L"ENGINE=InnoDB"), SQL_NTS));
   ok_stmt(hstmt1,
           SQLExecDirectW(hstmt1,
-                         W(L"CREATE TABLE t_fk_\u00e5 (b INT, parent_id INT,"
+                         W(L"CREATE TABLE t_fk_\x00e5 (b INT, parent_id INT,"
                          L"                       FOREIGN KEY (parent_id)"
                          L"                        REFERENCES"
-                         L"                          t_fk_\u00e3(a)"
+                         L"                          t_fk_\x00e3(a)"
                          L"                        ON DELETE SET NULL)"
                          L" ENGINE=InnoDB"), SQL_NTS));
 
   ok_stmt(hstmt1, SQLForeignKeysW(hstmt1, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
-                                  NULL, 0, W(L"t_fk_\u00e5"), SQL_NTS));
+                                  NULL, 0, W(L"t_fk_\x00e5"), SQL_NTS));
 
   ok_stmt(hstmt1, SQLFetch(hstmt1));
-  is_wstr(my_fetch_wstr(hstmt1, wbuff, 3), L"t_fk_\u00e3", 7);
+  is_wstr(my_fetch_wstr(hstmt1, wbuff, 3), L"t_fk_\x00e3", 7);
   is_wstr(my_fetch_wstr(hstmt1, wbuff, 4), L"a", 2);
-  is_wstr(my_fetch_wstr(hstmt1, wbuff, 7), L"t_fk_\u00e5", 7);
+  is_wstr(my_fetch_wstr(hstmt1, wbuff, 7), L"t_fk_\x00e5", 7);
   is_wstr(my_fetch_wstr(hstmt1, wbuff, 8), L"parent_id", 10);
 
   expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
@@ -845,7 +845,7 @@ DECLARE_TEST(sqlforeignkeys)
 
   ok_stmt(hstmt1,
           SQLExecDirectW(hstmt1,
-                         W(L"DROP TABLE IF EXISTS t_fk_\u00e5, t_fk_\u00e3"),
+                         W(L"DROP TABLE IF EXISTS t_fk_\x00e5, t_fk_\u00e3"),
                          SQL_NTS));
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
@@ -870,25 +870,25 @@ DECLARE_TEST(sqlprimarykeys)
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
-  ok_stmt(hstmt1, SQLExecDirectW(hstmt1, W(L"DROP TABLE IF EXISTS t_a\u00e3g"),
+  ok_stmt(hstmt1, SQLExecDirectW(hstmt1, W(L"DROP TABLE IF EXISTS t_a\x00e3g"),
                                  SQL_NTS));
   ok_stmt(hstmt1,
           SQLExecDirectW(hstmt1,
-                         W(L"CREATE TABLE t_a\u00e3g (a INT PRIMARY KEY)"),
+                         W(L"CREATE TABLE t_a\x00e3g (a INT PRIMARY KEY)"),
                          SQL_NTS));
 
   ok_stmt(hstmt1, SQLPrimaryKeysW(hstmt1, NULL, 0, NULL, 0,
-                                  W(L"t_a\u00e3g"), SQL_NTS));
+                                  W(L"t_a\x00e3g"), SQL_NTS));
 
   ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-  is_wstr(my_fetch_wstr(hstmt1, wbuff, 3), L"t_a\u00e3g", 6);
+  is_wstr(my_fetch_wstr(hstmt1, wbuff, 3), L"t_a\x00e3g", 6);
 
   expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
-  ok_stmt(hstmt1, SQLExecDirectW(hstmt1, W(L"DROP TABLE IF EXISTS t_a\u00e3g"),
+  ok_stmt(hstmt1, SQLExecDirectW(hstmt1, W(L"DROP TABLE IF EXISTS t_a\x00e3g"),
                                  SQL_NTS));
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
@@ -912,27 +912,27 @@ DECLARE_TEST(sqlstatistics)
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
   ok_stmt(hstmt1, SQLExecDirectW(hstmt1,
-                                 W(L"DROP TABLE IF EXISTS t_a\u00e3g"),
+                                 W(L"DROP TABLE IF EXISTS t_a\x00e3g"),
                                  SQL_NTS));
   ok_stmt(hstmt1,
           SQLExecDirectW(hstmt1,
-                         W(L"CREATE TABLE t_a\u00e3g (a INT PRIMARY KEY)"),
+                         W(L"CREATE TABLE t_a\x00e3g (a INT PRIMARY KEY)"),
                          SQL_NTS));
 
   ok_stmt(hstmt1, SQLStatisticsW(hstmt1, NULL, 0, NULL, 0,
-                                 W(L"t_a\u00e3g"), SQL_NTS,
+                                 W(L"t_a\x00e3g"), SQL_NTS,
                                  SQL_INDEX_UNIQUE, SQL_QUICK));
 
   ok_stmt(hstmt1, SQLFetch(hstmt1));
 
-  is_wstr(my_fetch_wstr(hstmt1, wbuff, 3), L"t_a\u00e3g", 6);
+  is_wstr(my_fetch_wstr(hstmt1, wbuff, 3), L"t_a\x00e3g", 6);
 
   expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
   ok_stmt(hstmt1, SQLExecDirectW(hstmt1,
-                                 W(L"DROP TABLE IF EXISTS t_a\u00e3g"),
+                                 W(L"DROP TABLE IF EXISTS t_a\x00e3g"),
                                  SQL_NTS));
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
