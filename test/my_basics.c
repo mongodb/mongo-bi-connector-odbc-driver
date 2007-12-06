@@ -524,17 +524,17 @@ DECLARE_TEST(t_bug30983)
 {
   SQLCHAR buf[(80 * 1024) + 100]; /* ~80k */
   SQLCHAR *bufp = buf;
-  SQLINTEGER buflen;
+  SQLLEN buflen;
   int i, j;
 
-  bufp += sprintf(bufp, "select '");
+  bufp+= sprintf((char *)bufp, "select '");
 
   /* fill 1k of each value */
   for (i= 0; i < 80; ++i)
     for (j= 0; j < 512; ++j, bufp += 2)
-      sprintf(bufp, "%02x", i);
+      sprintf((char *)bufp, "%02x", i);
 
-  sprintf(bufp, "' as val");
+  sprintf((char *)bufp, "' as val");
 
   ok_stmt(hstmt, SQLExecDirect(hstmt, buf, SQL_NTS));
   ok_stmt(hstmt, SQLFetch(hstmt));
@@ -574,7 +574,8 @@ DECLARE_TEST(t_driverconnect_outstring)
   }
   strcat((char *)exp_out, ";DATABASE=");
   ok_con(hdbc1, SQLGetConnectAttr(hdbc1, SQL_ATTR_CURRENT_CATALOG,
-                                  exp_out + strlen(exp_out), 100, NULL));
+                                  exp_out + strlen((char *)exp_out), 100,
+                                  NULL));
 
   if (mysock != NULL)
   {
@@ -585,7 +586,7 @@ DECLARE_TEST(t_driverconnect_outstring)
 
   printMessage("Output connection string: %s", conn_out);
   printMessage("Expected output   string: %s", exp_out);
-  is_str(conn_out, exp_out, strlen(conn_out));
+  is_str(conn_out, exp_out, strlen((char *)conn_out));
   ok_con(hdbc1, SQLDisconnect(hdbc1));
   ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
   return OK;
