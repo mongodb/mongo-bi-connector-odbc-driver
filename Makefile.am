@@ -108,6 +108,7 @@ EXTRA_DIST = \
 	CMakeLists.txt \
 	cmake \
 	setupgui \
+	wix \
 	doc
 
 
