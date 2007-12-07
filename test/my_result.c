@@ -2071,9 +2071,7 @@ DECLARE_TEST(t_bug13776_auto)
   SQLCHAR     szFileToLoad[255];
 
   /** @todo get the full path to the library using getenv */
-  env_path= getenv("CommonProgramFiles(x86)");
-  if (!env_path)
-    env_path= getenv("CommonProgramFiles");
+  env_path= getenv("CommonProgramFiles");
 
   if (!env_path)
   {
