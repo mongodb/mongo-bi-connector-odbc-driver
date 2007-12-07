@@ -504,6 +504,8 @@ MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
     SQLRETURN result= SQL_SUCCESS;
     STMT_OPTIONS *options= &stmt->stmt_options;
 
+    CLEAR_STMT_ERROR(stmt);
+
     switch (Attribute)
     {
         case SQL_ATTR_CURSOR_SCROLLABLE:
