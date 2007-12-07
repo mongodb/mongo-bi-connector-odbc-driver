@@ -40,7 +40,7 @@
 #include <commdlg.h>
 #include <shlobj.h>
 #include <xstring>
-
+#include <shellapi.h>
 #include <winsock2.h>
 
 #include "../setupgui.h"
@@ -396,10 +396,8 @@ void btnTest_Click (HWND hwnd)
 
 void btnHelp_Click (HWND hwnd)
 {
-	if(gHelpButtonPressedCallback)
-	{
-		(*gHelpButtonPressedCallback)( hwnd );
-	}
+  if ( ShellExecute( NULL, NULL, L"help/myodbc.chm", NULL, NULL, SW_SHOWNORMAL ) == (HINSTANCE)ERROR_FILE_NOT_FOUND )
+    ShellExecute(NULL, L"open", L"http://dev.mysql.com/doc/refman/6.0/en/myodbc-configuration-dsn-windows.html" , NULL, NULL, SW_SHOWNORMAL);
 }
 
 void chooseFile( HWND parent, int hostCtlId )
