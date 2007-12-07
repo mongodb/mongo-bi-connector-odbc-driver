@@ -679,6 +679,11 @@ esac
 #                                                                 #
 ###################################################################
 
+dnl Check for SQLGetPrivateProfileStringW
+if test "x$enable_odbcinstlink" != "xno" ; then
+  AC_CHECK_FUNCS(SQLGetPrivateProfileStringW)
+fi
+
 # Function SQLParamOptions() is deprecated in ODBC 3
 AC_MSG_CHECKING([if SQLParamOptions() 2nd and 3rd arg is compatible with SQLULEN])
 AC_COMPILE_IFELSE(
@@ -774,11 +779,6 @@ AC_COMPILE_IFELSE(
   ],
   [ AC_MSG_RESULT([no]) ])
 ])
-
-dnl Check for SQLGetPrivateProfileStringW
-if test "x$enable_odbcinstlink" != "xno" ; then
-  AC_CHECK_FUNCS(SQLGetPrivateProfileStringW)
-fi
 
 ###################################################################
 #                                                                 #
