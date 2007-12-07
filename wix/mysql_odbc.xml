@@ -92,9 +92,6 @@
       <ComponentRef Id="driver_32" />
       <ComponentRef Id="setup_32" />
       <ComponentRef Id="installer_32" />
-      <Feature Id="Help32" Title="MySQL Connector/ODBC $(var.odbc_ver_long) Help" Level="1" Description="Installs the MySQL ODBC driver help.">
-        <ComponentRef Id="help_32" />
-      </Feature>
     </Feature>
 
     <?if $(var.odbc_64bit) = 1 ?>
@@ -104,9 +101,10 @@
       <ComponentRef Id="driver_64" />
       <ComponentRef Id="setup_64" />
       <ComponentRef Id="installer_64" />
-      <Feature Id="Help64" Title="MySQL Connector/ODBC $(var.odbc_ver_long) Help" Level="1" Description="Installs the MySQL ODBC driver help.">
-        <ComponentRef Id="help_64" />
-      </Feature>
+    </Feature>
+
+    <Feature Id="Help" Title="MySQL Connector/ODBC $(var.odbc_ver_long) Documentation" Level="1" Description="Installs the MySQL ODBC driver help.">
+        <ComponentRef Id="help" />
     </Feature>
     <?endif ?>
     <!-- *****************************************************************************************

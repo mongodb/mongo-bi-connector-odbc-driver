@@ -33,9 +33,6 @@
 	      <File Id="exceptions32" Name="MYODBC5-EXCEPTIONS.TXT" DiskId="1" Source="doc\MYODBC5-EXCEPTIONS.TXT" />
               <?endif?>
             </Component>
-            <Component Id="help_32" Guid="D29EE791-9763-4DBE-8EAE-67A60A98BEE7" SharedDllRefCount="yes">
-              <File Id="myodbc5.hlp32" Name="connector-odbc.chm" KeyPath="yes" DiskId="1" Source="doc\connector-odbc.chm"/>
-            </Component>
             <Component Id="setup_32" Guid="428232BA-9D94-4DB5-87CD-C939D1347664" SharedDllRefCount="yes">
               <File Id="myodbc5S.dll32" Name="myodbc5S.dll" KeyPath="yes" DiskId="1" Source="x86\myodbc5S.dll" />
               <File Id="myodbc5S.lib32" Name="myodbc5S.lib" DiskId="1" Source="x86\myodbc5S.lib"/>
@@ -47,7 +44,7 @@
         </Directory>
       </Directory>
 
-    <?if $(var.odbc_64bit) = 1 ?>
+      <?if $(var.odbc_64bit) = 1 ?>
       <Directory Id="ProgramFiles64Folder">
         <Directory Id="MySQL64" Name="MySQL">
           <Directory Id="Connector_ODBC_64" Name="Connector ODBC 5.1">
@@ -65,9 +62,6 @@
 		  <File Id="exceptions64" Name="MYODBC5-EXCEPTIONS.TXT" DiskId="1" Source="doc\MYODBC5-EXCEPTIONS.TXT" />
               <?endif?>
             </Component>
-            <Component Id="help_64" Guid="41D0A247-C698-4A5A-A3E7-CFF4E7537736" SharedDllRefCount="yes" Win64="yes">
-              <File Id="myodbc5.hlp_64" Name="connector-odbc.chm" KeyPath="yes" DiskId="1" Source="doc\connector-odbc.chm"/>
-            </Component>
             <Component Id="setup_64" Guid="3A92E95A-AF9C-4A4F-A36D-E0052405C278" SharedDllRefCount="yes" Win64="yes">
               <File Id="myodbc5S.dll64" Name="myodbc5S.dll" KeyPath="yes" DiskId="1" Source="x64\myodbc5S.dll" />
               <File Id="myodbc5S.lib64" Name="myodbc5S.lib" DiskId="1" Source="x64\myodbc5S.lib"/>
@@ -78,7 +72,16 @@
           </Directory>
         </Directory>
       </Directory>
-    <?endif ?>
+      <?endif ?>
+
+      <Directory Id="WindowsFolder">
+        <Directory Id="Help" Name="Help">
+          <Component Id="help" Guid="D29EE791-9763-4DBE-8EAE-67A60A98BEE7" SharedDllRefCount="yes">
+            <File Id="myodbc5_hlp" Name="myodbc.chm" KeyPath="yes" DiskId="1" Source="doc\connector-odbc.chm"/>
+          </Component>
+        </Directory>
+      </Directory>
+
     </Directory>
   </Fragment>
 </Wix>

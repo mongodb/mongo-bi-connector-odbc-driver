@@ -23,7 +23,9 @@
 
 
 #-------------- FIND MYSQL_INCLUDE_DIR ------------------
-SET(WIX_DIR "$ENV{WIX_DIR}")
+IF(DEFINED $ENV{WIX_DIR})
+  SET(WIX_DIR "$ENV{WIX_DIR}")
+ENDIF(DEFINED $ENV{WIX_DIR})
 FIND_PATH(WIX_DIR candle.exe
 	$ENV{WIX_DIR}/bin
 	$ENV{ProgramFiles}/wix/bin
