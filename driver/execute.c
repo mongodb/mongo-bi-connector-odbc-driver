@@ -260,7 +260,7 @@ char *insert_param(DBC *dbc, char *to, DESCREC *aprec, DESCREC *iprec)
         else /* TODO this is stupid, check condition above, shouldn't we be checking only octet_length, not ptr? */
           length= strlen(data);
 
-        if (!aprec->octet_length_ptr && aprec->octet_length &&
+        if (!aprec->octet_length_ptr && aprec->octet_length > 0 &&
             aprec->octet_length != SQL_SETPARAM_VALUE_MAX)
           length= min(length, aprec->octet_length);
       }
