@@ -1736,7 +1736,7 @@ DECLARE_TEST(t_binary_collation)
       (!strncmp("5.1", server_version, 3) &&
         mysql_min_version(hdbc, "5.1.22", 6)))
   {
-    is_num(data_type, SQL_VARCHAR);
+    is_num(data_type, SQL_WVARCHAR);
   }
   else
   {
