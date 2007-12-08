@@ -222,6 +222,15 @@ DECLARE_TEST(t_bug19823)
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
 
+  /*
+   This first connect/disconnect is just to work around a bug in iODBC's
+   implementation of SQLSetConnectAttr. It is fixed in 3.52.6, but
+   Debian/Ubuntu still ships 3.52.5 as of 2007-12-06.
+  */
+  ok_con(hdbc1, SQLConnect(hdbc1, mydsn, SQL_NTS, myuid, SQL_NTS,
+                           mypwd, SQL_NTS));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+
   ok_con(hdbc1, SQLSetConnectAttr(hdbc1, SQL_ATTR_LOGIN_TIMEOUT,
                                   (SQLPOINTER)17, 0));
   ok_con(hdbc1, SQLSetConnectAttr(hdbc1, SQL_ATTR_CONNECTION_TIMEOUT,
