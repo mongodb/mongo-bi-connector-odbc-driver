@@ -293,7 +293,9 @@ DECLARE_TEST(bind_invalidcol)
   /* SQLDescribeCol() */
   expect_stmt(hstmt, SQLDescribeCol(hstmt, 0, dummy, sizeof(dummy), NULL, NULL,
                                     NULL, NULL, NULL), SQL_ERROR);
-  is(check_sqlstate(hstmt, "07009") == OK);
+  /* Older versions of iODBC return the wrong result (S1002) here. */
+  is(check_sqlstate(hstmt, "07009") == OK ||
+     check_sqlstate(hstmt, "S1002") == OK);
 
   expect_stmt(hstmt, SQLDescribeCol(hstmt, 5, NULL, 0, NULL, NULL, NULL,
                                     NULL, NULL), SQL_ERROR);
