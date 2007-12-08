@@ -20,13 +20,7 @@
 
 AUTOMAKE_OPTIONS=foreign
 
-if SEPARATE_THREAD_SAFE_DRIVER
-  TS_DRIVER=libmyodbc5_r.la
-else
-  TS_DRIVER=
-endif
-
-lib_LTLIBRARIES=libmyodbc5.la $(TS_DRIVER)
+lib_LTLIBRARIES=libmyodbc5.la
 
 INCLUDES=-I$(top_srcdir)/util -I$(top_srcdir)
 
@@ -56,8 +50,6 @@ unicode.c \
 utility.c \
 driver.h
 
-libmyodbc5_r_la_SOURCES     = $(libmyodbc5_la_SOURCES)
-
 ###################################################################
 #                                                                 #
 # Linker and preprocessor options                                 #
@@ -65,11 +57,9 @@ libmyodbc5_r_la_SOURCES     = $(libmyodbc5_la_SOURCES)
 ###################################################################
 if WITH_DEBUG
 libmyodbc5_la_CPPFLAGS       = -DMYODBC_DBG
-libmyodbc5_r_la_CPPFLAGS     = -DMYODBC_DBG
 endif
 
 libmyodbc5_la_LDFLAGS       = -release @NUMERIC_VERSION@ -module 
-libmyodbc5_r_la_LDFLAGS     = -release @NUMERIC_VERSION@ -module 
 
 if WITH_DEBUG
 LTLIBS_DEPS = $(LTLIBS_DEBUG_DEPS)
@@ -81,9 +71,6 @@ LTLIBS_DEBUG_DEPS = \
 
 libmyodbc5_la_LIBADD         = $(LTLIBS_DEPS) @LTDL_LIB@ @MYSQL_LIB@
 libmyodbc5_la_DEPENDENCIES   = $(LTLIBS_DEPS)
-
-libmyodbc5_r_la_LIBADD       = $(LTLIBS_DEPS) @LTDL_LIB@ @MYSQL_THREADSAFE_LIB@
-libmyodbc5_r_la_DEPENDENCIES = $(LTLIBS_DEPS)
 
 LDFLAGS=@EXTRA_LDFLAGS@ 
 

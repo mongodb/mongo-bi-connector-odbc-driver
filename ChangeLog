@@ -14,6 +14,8 @@
   * Replaced myodbc3i (now myodbc-installer) with Connector/ODBC 5.0
     version.
   * Added support for SQL_NUMERIC_STRUCT (Bug #3028, #24920).
+  * Removed non-threadsafe configuration of the driver. The driver is
+    now always built against the threadsafe version of libmysql.
 
   Bugs fixed:
   * SQL statements were limited to 64k. (Bug #30983)
