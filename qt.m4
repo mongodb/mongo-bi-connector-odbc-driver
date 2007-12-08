@@ -227,15 +227,11 @@ AC_DEFUN([FUN_QT_LIBRARIES],
     done
   fi  
 
-  # Use QTVERSION and gotthread to set libs we need...
+  # Use QTVERSION to set libs we need...
   if expr "$QTVERSION" '>=' "040000" > /dev/null ; then
     qt_libs="-lQtGui -lQtCore"
   else
-    if test "x$gotthread" = "xyes" ; then
-      qt_libs="-lqt-mt"
-    else
-      qt_libs="-lqt"
-    fi
+    qt_libs="-lqt-mt"
   fi
 
   # Return...
