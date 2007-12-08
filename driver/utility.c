@@ -1047,7 +1047,9 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
     if (buff)
       (void)strmov(buff, field_is_binary ? "binary" : "char");
 
-    return field_is_binary ? SQL_BINARY : SQL_CHAR;
+    return field_is_binary ? SQL_BINARY : 
+      (field->charsetnr != stmt->dbc->ansi_charset_info->number ?
+        SQL_WCHAR : SQL_CHAR);
 
   /*
     MYSQL_TYPE_VARCHAR is never actually sent, this just silences
@@ -1058,31 +1060,41 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
     if (buff)
       (void)strmov(buff, field_is_binary ? "varbinary" : "varchar");
 
-    return field_is_binary ? SQL_VARBINARY : SQL_VARCHAR;
+    return field_is_binary ? SQL_VARBINARY : 
+      (field->charsetnr != stmt->dbc->ansi_charset_info->number ?
+        SQL_WVARCHAR : SQL_VARCHAR);
 
   case MYSQL_TYPE_TINY_BLOB:
     if (buff)
       (void)strmov(buff, field_is_binary ? "tinyblob" : "tinytext");
 
-    return field_is_binary ? SQL_LONGVARBINARY : SQL_LONGVARCHAR;
+    return field_is_binary ? SQL_LONGVARBINARY : 
+      (field->charsetnr != stmt->dbc->ansi_charset_info->number ?
+        SQL_WLONGVARCHAR : SQL_LONGVARCHAR);
 
   case MYSQL_TYPE_BLOB:
     if (buff)
       (void)strmov(buff, field_is_binary ? "blob" : "text");
 
-    return field_is_binary ? SQL_LONGVARBINARY : SQL_LONGVARCHAR;
+    return field_is_binary ? SQL_LONGVARBINARY :
+      (field->charsetnr != stmt->dbc->ansi_charset_info->number ?
+        SQL_WLONGVARCHAR : SQL_LONGVARCHAR);
 
   case MYSQL_TYPE_MEDIUM_BLOB:
     if (buff)
       (void)strmov(buff, field_is_binary ? "mediumblob" : "mediumtext");
 
-    return field_is_binary ? SQL_LONGVARBINARY : SQL_LONGVARCHAR;
+    return field_is_binary ? SQL_LONGVARBINARY :
+      (field->charsetnr != stmt->dbc->ansi_charset_info->number ?
+        SQL_WLONGVARCHAR : SQL_LONGVARCHAR);
 
   case MYSQL_TYPE_LONG_BLOB:
     if (buff)
       (void)strmov(buff, field_is_binary ? "longblob" : "longtext");
 
-    return field_is_binary ? SQL_LONGVARBINARY : SQL_LONGVARCHAR;
+    return field_is_binary ? SQL_LONGVARBINARY :
+      (field->charsetnr != stmt->dbc->ansi_charset_info->number ?
+        SQL_WLONGVARCHAR : SQL_LONGVARCHAR);
 
   case MYSQL_TYPE_ENUM:
     if (buff)

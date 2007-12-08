@@ -33,7 +33,9 @@
   * ADO was unable to open record set using dynamic cursor. (Bug #32014)
   * SQLSetConnectAttr() did not clear previous errors, possibly confusing
     SQLError().
-  
+  * SQLDescribeColW returned UTF-8 column as SQL_VARCHAR instead of 
+    SQL_WVARCHAR. (Bug #32161)
+
   Includes changes from Connector/ODBC 3.51.21 and 3.51.22.
 
 ----

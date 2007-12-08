@@ -943,6 +943,79 @@ DECLARE_TEST(sqlstatistics)
 }
 
 
+DECLARE_TEST(t_bug32161)
+{
+  HDBC hdbc1;
+  HSTMT hstmt1;
+  SQLWCHAR wbuff[MAX_ROW_DATA_LEN+1];
+  SQLSMALLINT nlen;
+  SQLSMALLINT ctype;
+  SQLLEN csize;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug32161");
+  ok_sql(hstmt, "CREATE TABLE t_bug32161 ("
+                 "col1 varchar(32),"
+                 "col2 char(32),"
+                 "col3 tinytext,"
+                 "col4 mediumtext,"
+                 "col5 text,"
+                 "col6 longtext"
+                 ")Engine=InnoDB DEFAULT CHARSET=utf8");
+
+  /* Greek word PSARO - FISH */
+  ok_stmt(hstmt,
+          SQLExecDirectW(hstmt,
+                         W(L"INSERT INTO t_bug32161 VALUES ("
+                         L"\"\x03A8\x0391\x03A1\x039F 1\","
+                         L"\"\x03A8\x0391\x03A1\x039F 2\","
+                         L"\"\x03A8\x0391\x03A1\x039F 3\","
+                         L"\"\x03A8\x0391\x03A1\x039F 4\","
+                         L"\"\x03A8\x0391\x03A1\x039F 5\","
+                         L"\"\x03A8\x0391\x03A1\x039F 6\")"),
+                         SQL_NTS));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "SELECT * FROM t_bug32161");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  
+  is_wstr(my_fetch_wstr(hstmt, wbuff, 1), L"\x03A8\x0391\x03A1\x039F 1", 4);
+  ok_stmt(hstmt, SQLDescribeColW(hstmt, 1, wbuff, MAX_ROW_DATA_LEN, &nlen, 
+                                 &ctype, NULL, NULL, NULL));
+  is_num(ctype, SQL_WVARCHAR);
+
+  is_wstr(my_fetch_wstr(hstmt, wbuff, 2), L"\x03A8\x0391\x03A1\x039F 2", 4);
+  ok_stmt(hstmt, SQLDescribeColW(hstmt, 2, wbuff, MAX_ROW_DATA_LEN, &nlen, 
+                                 &ctype, NULL, NULL, NULL));
+  is_num(ctype, SQL_WCHAR);
+
+  /* All further calls of SQLDescribeColW should return SQL_WLONGVARCHAR */
+  is_wstr(my_fetch_wstr(hstmt, wbuff, 3), L"\x03A8\x0391\x03A1\x039F 3", 4);
+  ok_stmt(hstmt, SQLDescribeColW(hstmt, 3, wbuff, MAX_ROW_DATA_LEN, &nlen, 
+                                 &ctype, NULL, NULL, NULL));
+  is_num(ctype, SQL_WLONGVARCHAR);
+
+  is_wstr(my_fetch_wstr(hstmt, wbuff, 4), L"\x03A8\x0391\x03A1\x039F 4", 4);
+  ok_stmt(hstmt, SQLDescribeColW(hstmt, 4, wbuff, MAX_ROW_DATA_LEN, &nlen, 
+                                 &ctype, NULL, NULL, NULL));
+  is_num(ctype, SQL_WLONGVARCHAR);
+
+  is_wstr(my_fetch_wstr(hstmt, wbuff, 5), L"\x03A8\x0391\x03A1\x039F 5", 4);
+  ok_stmt(hstmt, SQLDescribeColW(hstmt, 5, wbuff, MAX_ROW_DATA_LEN, &nlen, 
+                                 &ctype, NULL, NULL, NULL));
+  is_num(ctype, SQL_WLONGVARCHAR);
+
+  is_wstr(my_fetch_wstr(hstmt, wbuff, 6), L"\x03A8\x0391\x03A1\x039F 6", 4);
+  ok_stmt(hstmt, SQLDescribeColW(hstmt, 6, wbuff, MAX_ROW_DATA_LEN, &nlen, 
+                                 &ctype, NULL, NULL, NULL));
+  is_num(ctype, SQL_WLONGVARCHAR);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug32161");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlconnect)
   ADD_TEST(sqlprepare)
@@ -963,6 +1036,7 @@ BEGIN_TESTS
   ADD_TEST(sqlforeignkeys)
   ADD_TEST(sqlprimarykeys)
   ADD_TEST(sqlstatistics)
+  ADD_TEST(t_bug32161)
 END_TESTS
 
 
