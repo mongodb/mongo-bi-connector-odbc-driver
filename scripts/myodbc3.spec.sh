@@ -162,7 +162,6 @@ myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodb
 %{_bindir}/myodbc-installer
 %{_libdir}/libmyodbc5.*
 %{_libdir}/libmyodbc5-*
-%{_libdir}/libmyodbc5_*
 %doc ChangeLog README README.debug INSTALL
 %if %{com_lic}
 %doc LICENSE.commercial
