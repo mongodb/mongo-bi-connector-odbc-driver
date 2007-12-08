@@ -490,18 +490,12 @@ DECLARE_TEST(t_bug30774)
 */
 DECLARE_TEST(t_bug30840)
 {
-#ifdef WIN32
-  skip("test does not work on Windows");
-#else
   HDBC hdbc1;
   SQLCHAR   conn[256], conn_out[256];
   SQLSMALLINT conn_out_len;
 
-  /* Windows DM checks if we try to prompt with an invalid
-   * window handle */
-#ifdef _WIN32
-  return OK;
-#endif
+  if (using_dm(hdbc))
+    skip("test does not work with all driver managers");
 
   sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;OPTION=16",
           mydsn, myuid, mypwd);
@@ -522,7 +516,6 @@ DECLARE_TEST(t_bug30840)
   ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
 
   return OK;
-#endif
 }
 
 
