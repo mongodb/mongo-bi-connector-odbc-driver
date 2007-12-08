@@ -142,12 +142,11 @@ MYSQL_PATH_ARG=""
 if test "$mysql_path" != ""
 then
   MYSQL_PATH_ARG="--with-mysql-path=$mysql_path"
-  if test -f $mysql_path/libmysql/libmysqlclient.la
+  if test -f $mysql_path/libmysql_r/libmysqlclient_r.la
   then
     building_against_source="true"
     CFLAGS="-I$mysql_path/include"
-    MYSQL_LIB="$mysql_path/libmysql/libmysqlclient.la"
-    MYSQL_THREADSAFE_LIB="$mysql_path/libmysql_r/libmysqlclient_r.la"
+    MYSQL_LIB="$mysql_path/libmysql_r/libmysqlclient_r.la"
   else
     mysql_config="$mysql_path/bin/mysql_config"
     if test ! -x $mysql_config
@@ -209,7 +208,6 @@ then
 fi
 
 AC_SUBST(MYSQL_LIB)
-AC_SUBST(MYSQL_THREADSAFE_LIB)
 
 dm_type=
 dm_prefix="/usr"		dnl Default to /usr
