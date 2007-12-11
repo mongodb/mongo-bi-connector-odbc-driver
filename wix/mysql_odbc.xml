@@ -102,11 +102,12 @@
       <ComponentRef Id="setup_64" />
       <ComponentRef Id="installer_64" />
     </Feature>
+    <?endif ?>
 
     <Feature Id="Help" Title="MySQL Connector/ODBC $(var.odbc_ver_long) Documentation" Level="1" Description="Installs the MySQL ODBC driver help.">
         <ComponentRef Id="help" />
     </Feature>
-    <?endif ?>
+
     <!-- *****************************************************************************************
       End of Feature
     -->
