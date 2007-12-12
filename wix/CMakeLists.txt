@@ -45,18 +45,23 @@ IF(WIN32)
   IF(NOT WIX_RESOURCE)
 	  MESSAGE(ERROR "Can't find binary MySQL resource files. Please specify WIX_RESOURCE")
   ENDIF(NOT WIX_RESOURCE)
-  MESSAGE(STATUS "Wix resources found in${WIX_RESOURCE}")
+  MESSAGE(STATUS "Wix resources found in ${WIX_RESOURCE}")
   # --------------------------------------------------
 
   # -------------- add wix variables --- -------------
   WRITE_FILE("myodbc_version.xml" "<?define odbc_resource=\"${WIX_RESOURCE}\" ?>" APPEND)
   IF(${MSI_64})
      WRITE_FILE("myodbc_version.xml" "<?define odbc_64bit=1 ?>" APPEND)
-     SET(MSI_VERSION "x64")
+     SET(MSI_VERSION "winx64")
   ELSE(${MSI_64})
      WRITE_FILE("myodbc_version.xml" "<?define odbc_64bit=0 ?>" APPEND)
-     SET(MSI_VERSION "x86")
+     SET(MSI_VERSION "win32")
   ENDIF(${MSI_64})
+  IF(${PDB})
+     WRITE_FILE("myodbc_version.xml" "<?define odbc_pdb=1 ?>" APPEND)
+  ELSE(${PDB})
+     WRITE_FILE("myodbc_version.xml" "<?define odbc_pdb=0 ?>" APPEND)
+  ENDIF(${PDB})
   IF(${LICENSE})
      WRITE_FILE("myodbc_version.xml" "<?define license=\"commercial\" ?>" APPEND)
   ELSE(${LICENSE})
@@ -67,17 +72,19 @@ IF(WIN32)
   # --------------------------------------------------
   INCLUDE(${CMAKE_SOURCE_DIR}/myodbc_version.cmake)
 
+  SET(MSI_PACKAGE "mysql-connector-odbc-${ODBC_VERSION}-${MSI_VERSION}.msi")
+
 ENDIF(WIN32)
 #-----------------------------------------------------
 ADD_CUSTOM_TARGET(
 	MSI_INSTALLER ALL
-	DEPENDS mysql_odbc_${ODBC_VERSION}_${MSI_VERSION}.msi)
+	DEPENDS ${MSI_PACKAGE})
 
 ADD_CUSTOM_COMMAND(
-	OUTPUT mysql_odbc_${ODBC_VERSION}_${MSI_VERSION}.msi
+	OUTPUT ${MSI_PACKAGE}
 	DEPENDS mysql_odbc.wixobj
                 mysql_odbc_fragment.wixobj
-	COMMAND ${WIX_DIR}/light.exe mysql_odbc.wixobj mysql_odbc_fragment.wixobj -o mysql_odbc_${ODBC_VERSION}_${MSI_VERSION}.msi)
+	COMMAND ${WIX_DIR}/light.exe mysql_odbc.wixobj mysql_odbc_fragment.wixobj -o ${MSI_PACKAGE})
 
 ADD_CUSTOM_COMMAND(
 	OUTPUT mysql_odbc_fragment.wixobj
@@ -89,5 +96,3 @@ ADD_CUSTOM_COMMAND(
 	DEPENDS mysql_odbc.xml
                 mysql_common_ui.xml
 	COMMAND ${WIX_DIR}/candle.exe mysql_odbc.xml -o mysql_odbc.wixobj)
-
-
