@@ -1,6 +1,7 @@
 5.1.1
 
   Functionality added or changed:
+  * Added MSI installer for Windows 64-bit (Bug #31510)
   * Implemented support for SQLCancel(). (Bug #15601)
   * Added wrappers for missing ODBC driver manager installer functions.
     This makes it possible to use the driver with unixODBC 2.2.11, which
