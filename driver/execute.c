@@ -201,7 +201,7 @@ char *insert_params(STMT FAR *stmt)
         if ( !(to= add_to_buffer(net,to,query,length)) )
             goto error;
         query= pos+1;  /* Skip '?' */
-        if ( !(to= insert_param(stmt->dbc,to,aprec,iprec)) )
+        if ( !(to= insert_param(stmt,to,aprec,iprec,0)) )
             goto error;
     }
     length= (uint) (stmt->query_end - query);
@@ -243,16 +243,35 @@ char *insert_params(STMT FAR *stmt)
   @param[in]      aprec The APD record of the parameter
   @param[in]      iprec The IPD record of the parameter
 */
-char *insert_param(DBC *dbc, char *to, DESCREC *aprec, DESCREC *iprec)
+char *insert_param(STMT *stmt, char *to, DESCREC *aprec, DESCREC *iprec,
+                   SQLULEN row)
 {
     int length;
-    char buff[128], *data;
+    char buff[128], *data= NULL;
     my_bool convert= FALSE, free_data= FALSE;
+    DBC *dbc= stmt->dbc;
     NET *net= &dbc->mysql.net;
+    SQLLEN *octet_length_ptr= NULL;
 
-    if (!aprec->octet_length_ptr || *aprec->octet_length_ptr == SQL_NTS)
+    if (aprec->octet_length_ptr)
     {
-      data= aprec->data_ptr;
+      octet_length_ptr= ptr_offset_adjust(aprec->octet_length_ptr,
+                                          stmt->apd->bind_offset_ptr,
+                                          stmt->apd->bind_type,
+                                          sizeof(SQLLEN), row);
+      length= *octet_length_ptr;
+    }
+
+    if (aprec->data_ptr)
+    {
+      SQLINTEGER default_size= bind_length(aprec->concise_type,
+                                           aprec->octet_length);
+      data= ptr_offset_adjust(aprec->data_ptr, stmt->apd->bind_offset_ptr,
+                              stmt->apd->bind_type, default_size, row);
+    }
+
+    if (!octet_length_ptr || *octet_length_ptr == SQL_NTS)
+    {
       if (data)
       {
         if (aprec->concise_type == SQL_C_WCHAR)
@@ -260,7 +279,7 @@ char *insert_param(DBC *dbc, char *to, DESCREC *aprec, DESCREC *iprec)
         else /* TODO this is stupid, check condition above, shouldn't we be checking only octet_length, not ptr? */
           length= strlen(data);
 
-        if (!aprec->octet_length_ptr && aprec->octet_length > 0 &&
+        if (!octet_length_ptr && aprec->octet_length > 0 &&
             aprec->octet_length != SQL_SETPARAM_VALUE_MAX)
           length= min(length, aprec->octet_length);
       }
@@ -269,7 +288,7 @@ char *insert_param(DBC *dbc, char *to, DESCREC *aprec, DESCREC *iprec)
         length= 0;     /* TODO? This is actually an error */
       }
     }
-    else if ( *(aprec->octet_length_ptr) == SQL_NULL_DATA )
+    else if ( *octet_length_ptr == SQL_NULL_DATA )
     {
         return add_to_buffer(net,to,"NULL",4);
     }
@@ -281,9 +300,9 @@ char *insert_param(DBC *dbc, char *to, DESCREC *aprec, DESCREC *iprec)
       In case there are less parameters than result columns we have to
       insert NULL or DEFAULT.
     */
-    else if (*(aprec->octet_length_ptr) == SQL_COLUMN_IGNORE ||
+    else if (*octet_length_ptr == SQL_COLUMN_IGNORE ||
              /* empty values mean it's an unbound column */
-             (*(aprec->octet_length_ptr) == 0 &&
+             (*octet_length_ptr == 0 &&
               aprec->concise_type == SQL_C_DEFAULT &&
               aprec->par.value == NULL))
     {
@@ -292,17 +311,11 @@ char *insert_param(DBC *dbc, char *to, DESCREC *aprec, DESCREC *iprec)
       else
         return add_to_buffer(net,to,"NULL",4);
     }
-    else if ( *aprec->octet_length_ptr == SQL_DATA_AT_EXEC ||
-              *aprec->octet_length_ptr <= SQL_LEN_DATA_AT_EXEC_OFFSET )
+    else if (IS_DATA_AT_EXEC(octet_length_ptr))
     {
         length= aprec->par.value_length;
         if ( !(data= aprec->par.value) )
             return add_to_buffer(net,to,"NULL",4);
-    }
-    else
-    {
-        data= aprec->data_ptr;
-        length= *aprec->octet_length_ptr;
     }
 
     switch ( aprec->concise_type )
@@ -450,9 +463,10 @@ char *insert_param(DBC *dbc, char *to, DESCREC *aprec, DESCREC *iprec)
         case SQL_C_NUMERIC:
             {
               int trunc;
-              SQL_NUMERIC_STRUCT *sqlnum= (SQL_NUMERIC_STRUCT *) aprec->data_ptr;
+              SQL_NUMERIC_STRUCT *sqlnum= (SQL_NUMERIC_STRUCT *) data;
               sqlnum_to_str(sqlnum, buff + sizeof(buff) - 1, (SQLCHAR **) &data,
-                            iprec->precision, iprec->scale, &trunc);
+                            (SQLCHAR) iprec->precision,
+                            (SQLSCHAR) iprec->scale, &trunc);
               length= strlen(data);
               /* TODO no way to return an error here? */
               if (trunc == SQLNUM_TRUNC_FRAC)
@@ -683,10 +697,15 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
         for ( i= 0; i < pStmt->param_count; i++ )
         {
             DESCREC *aprec= desc_get_rec(pStmt->apd, i, FALSE);
+            SQLLEN *octet_length_ptr;
             assert(aprec);
-            if ( aprec->octet_length_ptr &&
-                 (*aprec->octet_length_ptr == (long) SQL_DATA_AT_EXEC ||
-                  *aprec->octet_length_ptr <= SQL_LEN_DATA_AT_EXEC_OFFSET) )
+
+            octet_length_ptr= ptr_offset_adjust(aprec->octet_length_ptr,
+                                                pStmt->apd->bind_offset_ptr,
+                                                pStmt->apd->bind_type,
+                                                sizeof(SQLLEN), /*row*/0);
+
+            if (IS_DATA_AT_EXEC(octet_length_ptr))
             {
                 pStmt->current_param= i;
                 aprec->par.value= NULL;
@@ -718,13 +737,20 @@ SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER FAR *prbgValue)
     for ( i= stmt->current_param; i < stmt->param_count; i++ )
     {
         DESCREC *aprec= desc_get_rec(stmt->apd, i, FALSE);
-        if ( aprec->octet_length_ptr &&
-             (*aprec->octet_length_ptr == (long) SQL_DATA_AT_EXEC ||
-              *aprec->octet_length_ptr <= SQL_LEN_DATA_AT_EXEC_OFFSET) )
+        SQLLEN *octet_length_ptr= ptr_offset_adjust(aprec->octet_length_ptr,
+                                                    stmt->apd->bind_offset_ptr,
+                                                    stmt->apd->bind_type,
+                                                    sizeof(SQLLEN), 0);
+        if (IS_DATA_AT_EXEC(octet_length_ptr))
         {
+            SQLINTEGER default_size= bind_length(aprec->concise_type,
+                                                 aprec->octet_length);
             stmt->current_param= i+1;
             if ( prbgValue )
-                *prbgValue= aprec->data_ptr;
+                *prbgValue= ptr_offset_adjust(aprec->data_ptr,
+                                              stmt->apd->bind_offset_ptr,
+                                              stmt->apd->bind_type,
+                                              default_size, 0);
             aprec->par.value= NULL;
             aprec->par.alloced= FALSE;
             return SQL_NEED_DATA;

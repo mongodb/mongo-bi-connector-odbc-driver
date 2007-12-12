@@ -488,7 +488,7 @@ int check_sqlstate_ex(SQLHANDLE hnd, SQLSMALLINT hndtype, char *sqlstate)
 static void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
 		       const char *text, const char *file, int line)
 {
-  if (!SQL_SUCCEEDED(rc))
+  if (rc != SQL_SUCCESS)
   {
     SQLCHAR     sqlstate[6], message[SQL_MAX_MESSAGE_LENGTH];
     SQLINTEGER  native_error;

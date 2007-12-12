@@ -525,7 +525,7 @@ MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
                                  "Optional feature not implemented",0);
             break;
 
-        case SQL_ATTR_PARAM_BIND_OFFSET_PTR: /* need to support this ....*/
+        case SQL_ATTR_PARAM_BIND_OFFSET_PTR:
             return stmt_SQLSetDescField(stmt, stmt->apd, 0,
                                         SQL_DESC_BIND_OFFSET_PTR,
                                         ValuePtr, SQL_IS_POINTER);
@@ -648,7 +648,7 @@ MySQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
             *(SQLUINTEGER *)ValuePtr= SQL_FALSE;
             break;
 
-        case SQL_ATTR_PARAM_BIND_OFFSET_PTR: /* need to support this ....*/
+        case SQL_ATTR_PARAM_BIND_OFFSET_PTR:
             *(SQLPOINTER *)ValuePtr= stmt->apd->bind_offset_ptr;
             break;
 

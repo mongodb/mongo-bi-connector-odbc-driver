@@ -426,7 +426,7 @@ static SQLRETURN copy_rowdata(STMT FAR *stmt, DESCREC *aprec,
     if ( !(*to= (SQLCHAR *) extend_buffer(*net,(char*) *to,length)) )
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
-    if ( !(*to= (SQLCHAR*) insert_param(stmt->dbc, (char*) *to, aprec, iprec)) )
+    if ( !(*to= (SQLCHAR*) insert_param(stmt, (char*) *to, aprec, iprec, 0)) )
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
     /* We have to remove zero bytes or we have problems! */
@@ -472,7 +472,7 @@ static SQLRETURN exec_stmt_query(STMT FAR *stmt,char *query,
 static SQLRETURN copy_field_data(STMT FAR *stmt, DESCREC *aprec,
                                  DESCREC *iprec, NET **net, SQLCHAR **to)
 {
-    if (!(*to= (SQLCHAR*) insert_param(stmt->dbc, (char*) *to, aprec, iprec)))
+    if (!(*to= (SQLCHAR*) insert_param(stmt, (char*) *to, aprec, iprec, 0)))
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
     if (!(*to= add_to_buffer(*net, *to, " AND ", 5)))
@@ -598,8 +598,7 @@ static SQLRETURN insert_pk_fields(STMT FAR *stmt, DYNAMIC_STRING *dynQuery)
   @purpose : generate a WHERE clause based on the fields in the result set
 */
 
-static SQLRETURN append_all_fields(STMT FAR *stmt,
-                                   DYNAMIC_STRING *dynQuery)
+static SQLRETURN append_all_fields(STMT FAR *stmt, DYNAMIC_STRING *dynQuery)
 {
   MYSQL_RES    *result= stmt->result;
   MYSQL_RES    *presultAllColumns;
@@ -751,17 +750,16 @@ static SQLRETURN build_where_clause( STMT FAR *       pStmt,
   @purpose : set clause building..
 */
 
-static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
+static SQLRETURN build_set_clause(STMT FAR *stmt, SQLULEN irow,
                                   DYNAMIC_STRING *dynQuery)
 {
     DESCREC aprec_, iprec_;
     DESCREC *aprec= &aprec_, *iprec= &iprec_;
-    SQLLEN        length;
+    SQLLEN        length= 0;
     uint          ncol, ignore_count= 0;
     MYSQL_FIELD *field;
     MYSQL_RES   *result= stmt->result;
     NET         *net=&stmt->dbc->mysql.net;
-    SQLLEN      *pcbValue;
     DESCREC *arrec, *irrec;
 
     dynstr_append_mem(dynQuery," SET ",5);
@@ -776,6 +774,7 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
     irow= irow ? irow-1: 0;
     for ( ncol= 0; ncol < stmt->result->field_count; ncol++ )
     {
+        SQLLEN *pcbValue;
         SQLCHAR *to= net->buff;
         field= mysql_fetch_field_direct(result,ncol);
         arrec= desc_get_rec(stmt->ard, ncol, FALSE);
@@ -791,26 +790,33 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
 
         if ( arrec->octet_length_ptr )
         {
-            pcbValue= arrec->octet_length_ptr + irow;
+            pcbValue= ptr_offset_adjust(arrec->octet_length_ptr,
+                                        stmt->ard->bind_offset_ptr,
+                                        stmt->ard->bind_type,
+                                        sizeof(SQLLEN), irow);
             /*
-          If the pcbValue is SQL_COLUMN_IGNORE, then ignore the
-          column in the SET clause
+              If the pcbValue is SQL_COLUMN_IGNORE, then ignore the
+              column in the SET clause
             */
             if ( *pcbValue == SQL_COLUMN_IGNORE )
             {
                 ignore_count++;
                 continue;
             }
-            /*
-          Take care of SQL_NTS in pcbValue
-            */
-            else if ( *pcbValue == SQL_NTS )
-                length= SQL_NTS;
-            else
-                length= *pcbValue;
+            length= *pcbValue;
         }
         else
-            length= SQL_NTS;
+        {
+            /* set SQL_NTS only if its a string */
+            switch (arrec->concise_type)
+            {
+                case SQL_CHAR:
+                case SQL_VARCHAR:
+                case SQL_LONGVARCHAR:
+                    length= SQL_NTS;
+                    break;
+            }
+        }
 
         /* TODO : handle ..SQL_DATA_AT_EXEC here....*/
 
@@ -818,14 +824,17 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLUINTEGER irow,
         dynstr_append_mem(dynQuery,"=",1);
 
         iprec->concise_type= get_sql_data_type(stmt, field, NULL);
-        aprec->concise_type= irrec->concise_type;
-        aprec->data_ptr= (char *)arrec->data_ptr+irow*arrec->octet_length;
+        aprec->concise_type= arrec->concise_type;
+        aprec->data_ptr= ptr_offset_adjust(arrec->data_ptr,
+                                           stmt->ard->bind_offset_ptr,
+                                           stmt->ard->bind_type,
+                                           bind_length(arrec->concise_type,
+                                                       arrec->octet_length),
+                                           irow);
         aprec->octet_length= arrec->octet_length;
-        /*
-            Check when SQL_LEN_DATA_AT_EXEC() macro was used instead of data length
-        */
         if (length == SQL_NTS)
             length= strlen(aprec->data_ptr);
+        /* TODO Check if SQL_LEN_DATA_AT_EXEC() macro was used */
         else if (length <= SQL_LEN_DATA_AT_EXEC_OFFSET)
             length= -(length - SQL_LEN_DATA_AT_EXEC_OFFSET);
 
@@ -1089,18 +1098,18 @@ static SQLRETURN setpos_update(STMT FAR *stmt, SQLUSMALLINT irow,
     \retval SQL_SUCCESS     Success!
 */
 
-static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING *ext_query )
+static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext_query )
 {
-    MYSQL_RES    *result= stmt->result;     /* result set we are working with                               */
-    SQLUINTEGER  insert_count= 1;           /* num rows to insert - will be real value when row is 0 (all)  */
-    SQLUINTEGER  count= 0;                  /* current row                                                  */
+    MYSQL_RES    *result= stmt->result;     /* result set we are working with */
+    SQLULEN      insert_count= 1;           /* num rows to insert - will be real value when row is 0 (all)  */
+    SQLULEN      count= 0;                  /* current row */
     SQLLEN       length;
     NET         *net= &stmt->dbc->mysql.net;
     SQLUSMALLINT ncol;
     SQLCHAR      *to;
     ulong        query_length= 0;           /* our original query len so we can reset pos if break_insert   */
-    my_bool      break_insert= FALSE;       /* true if we are to exceed max data size for transmission      
-                                               but this seems to be misused                                 */
+    my_bool      break_insert= FALSE;       /* true if we are to exceed max data size for transmission
+                                               but this seems to be misused */
     DESCREC aprec_, iprec_;
     DESCREC *aprec= &aprec_, *iprec= &iprec_;
 
@@ -1132,8 +1141,6 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
             {
                 MYSQL_FIELD *field= mysql_fetch_field_direct(result,ncol);
                 DESCREC     *arrec;
-                SQLINTEGER   binding_offset= 0;
-                SQLUINTEGER  element_size= 0;
                 SQLLEN       ind_or_len= 0;
 
                 arrec= desc_get_rec(stmt->ard, ncol, FALSE);
@@ -1141,30 +1148,26 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
                 desc_rec_init_apd(aprec);
                 desc_rec_init_ipd(iprec);
 
-                if (stmt->ard->bind_type != SQL_BIND_BY_COLUMN &&
-                    stmt->ard->bind_offset_ptr)
-                  binding_offset= *(stmt->ard->bind_offset_ptr);
-
-                if (stmt->ard->bind_type != SQL_BIND_BY_COLUMN)
-                  element_size= stmt->ard->bind_type;
-
                 if (arrec)
                 {
                   if (arrec->octet_length_ptr)
-                    ind_or_len= *(SQLLEN *)((char *)arrec->octet_length_ptr +
-                                            binding_offset +
-                                            count * (element_size ?
-                                                     element_size :
-                                                     sizeof(SQLLEN)));
+                    ind_or_len= *(SQLLEN *)
+                                ptr_offset_adjust(arrec->octet_length_ptr,
+                                                  stmt->ard->bind_offset_ptr,
+                                                  stmt->ard->bind_type,
+                                                  sizeof(SQLLEN), count);
                   else
                     ind_or_len= arrec->octet_length;
 
                   iprec->concise_type= get_sql_data_type(stmt, field, NULL);
                   aprec->concise_type= arrec->concise_type;
-                  aprec->data_ptr= (((char *)arrec->data_ptr) + binding_offset +
-                                    count * (element_size ?  element_size :
-                                             bind_length(arrec->concise_type,
-                                                         arrec->octet_length)));
+
+                  aprec->data_ptr= ptr_offset_adjust(arrec->data_ptr,
+                                                     stmt->ard->bind_offset_ptr,
+                                                     stmt->ard->bind_type,
+                                                     bind_length(arrec->concise_type,
+                                                                 arrec->octet_length),
+                                                     count);
                 }
 
                 switch (ind_or_len) {
@@ -1253,7 +1256,7 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLUSMALLINT irow, DYNAMIC_STRING
 static const char *alloc_error= "Driver Failed to set the internal dynamic result";
 
 
-static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLUSMALLINT irow, SQLUSMALLINT fOption, SQLUSMALLINT fLock )
+static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLSETPOSIROW irow, SQLUSMALLINT fOption, SQLUSMALLINT fLock )
 {
     STMT FAR  *stmt= (STMT FAR*) hstmt;
     SQLRETURN sqlRet= SQL_SUCCESS;
@@ -1324,6 +1327,8 @@ static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLUSMALLINT irow, SQLUSM
 
                 sqlRet = setpos_delete( stmt, irow, &dynQuery );
                 dynstr_free(&dynQuery);
+                /* since we've deleted the current row, cursor pos gets fixed */
+                stmt->current_row--;
                 break;
             }
 

@@ -131,7 +131,8 @@ SQLRETURN my_pos_delete(STMT FAR *stmt,STMT FAR *stmtParam,
 SQLRETURN my_pos_update(STMT FAR *stmt,STMT FAR *stmtParam,
 			SQLUSMALLINT irow,DYNAMIC_STRING *dynStr);
 char *check_if_positioned_cursor_exists(STMT FAR *stmt, STMT FAR **stmtNew);
-char *insert_param(DBC *dbc, char *to,DESCREC *aprec,DESCREC *iprec);
+char *insert_param(STMT *stmt, char *to,DESCREC *aprec,DESCREC *iprec,
+                   SQLULEN row);
 char *add_to_buffer(NET *net,char *to,const char *from,ulong length);
 int is_set_names_statement(SQLCHAR *query);
 
@@ -265,6 +266,9 @@ void sqlnum_from_str(const char *numstr, SQL_NUMERIC_STRUCT *sqlnum,
 void sqlnum_to_str(SQL_NUMERIC_STRUCT *sqlnum, SQLCHAR *numstr,
                    SQLCHAR **numbegin, SQLCHAR reqprec, SQLSCHAR reqscale,
                    int *truncptr);
+void *ptr_offset_adjust(void *ptr, SQLULEN *bind_offset,
+                        SQLINTEGER bind_type, SQLINTEGER default_size,
+                        SQLULEN row);
 
 /* Functions used when debugging */
 void query_print(FILE *log_file,char *query);
@@ -276,5 +280,13 @@ void end_query_log(FILE *query_log);
 #else
 #define cmp_database(A,B) strcmp((A),(B))
 #endif
+
+/*
+  Check if an octet_length_ptr is a data-at-exec field.
+  WARNING: This macro evaluates the argument multiple times.
+*/
+#define IS_DATA_AT_EXEC(X) ((X) && \
+                            (*(X) == SQL_DATA_AT_EXEC || \
+                             *(X) <= SQL_LEN_DATA_AT_EXEC_OFFSET))
 
 #endif /* __MYUTIL_H__ */

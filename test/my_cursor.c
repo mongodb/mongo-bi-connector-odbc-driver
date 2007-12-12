@@ -2587,6 +2587,177 @@ DECLARE_TEST(t_chunk)
 }
 
 
+/*
+  Test that the ARD (bound) type is used for the update and not
+  the IRD (server-given) type.
+*/
+DECLARE_TEST(t_update_type)
+{
+  SQLUSMALLINT *val= malloc(sizeof(SQLUSMALLINT));
+
+  ok_sql(hstmt, "drop table if exists t_update_no_strlen");
+  ok_sql(hstmt, "create table t_update_no_strlen (x int not null)");
+  ok_sql(hstmt, "insert into t_update_no_strlen values (0xaaaa)");
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
+  ok_sql(hstmt, "select * from t_update_no_strlen");
+  /* server will use SQL_C_LONG, but we use short */
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_USHORT, val, 0, NULL));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(*val, 0xaaaa);
+
+  *val= 0xcccc;
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* verify the right value was updated */
+  *val= 0;
+  ok_sql(hstmt, "select * from t_update_no_strlen");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(*val, 0xcccc);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists t_update_no_strlen");
+
+  return OK;
+}
+
+
+/*
+  Test bind offset ptr and bind type for cursor update operations.
+*/
+DECLARE_TEST(t_update_offsets)
+{
+  SQLINTEGER rowcnt= 3;
+  SQLINTEGER row_offset1= 5;
+  /*
+    TODO we should prob allow changing SQL_ATTR_ROW_BIND_OFFSET_PTR
+    between SQLFetch() and SQLSetPos(). Setting a different value
+    here will fail. (must be lower than row_offset1 anyways)
+  */
+  SQLINTEGER row_offset2= 5;
+  struct {
+    SQLINTEGER id;
+    SQLCHAR name[24];
+    SQLLEN namelen;
+  } rows[8];
+  size_t row_size= sizeof(rows[0]);
+  SQLLEN bind_offset= -100000;
+  SQLINTEGER i;
+  SQLCHAR buf[50];
+
+  ok_sql(hstmt, "drop table if exists t_update_offsets");
+  ok_sql(hstmt, "create table t_update_offsets (id int not null, "
+                "name varchar(50), primary key (id))");
+  ok_sql(hstmt, "insert into t_update_offsets values "
+                "(0, 'name0'),(1,'name1'),(2,'name2')");
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE,
+                                (SQLPOINTER)rowcnt, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_BIND_TYPE,
+                                (SQLPOINTER)row_size, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_BIND_OFFSET_PTR,
+                                &bind_offset, 0));
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &rows[0].id, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR,
+                            &rows[0].name, 24, &rows[0].namelen));
+
+  /* get the first block and verify it */
+  ok_sql(hstmt, "select id,name from t_update_offsets order by id");
+
+  bind_offset= row_size * row_offset1;
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  for (i= 0; i < rowcnt; ++i)
+  {
+    sprintf(buf, "name%d", i);
+    is_num(rows[row_offset1+i].id, i);
+    is_str(rows[row_offset1+i].name, buf, strlen(buf) + 1);
+    is_num(rows[row_offset1+i].namelen, strlen(buf));
+
+    /* change the values here */
+    rows[row_offset2+i].id= i * 10;
+    sprintf(rows[row_offset2+i].name, "name_%d_%d", i, i * 10);
+    rows[row_offset2+i].namelen= strlen(rows[row_offset2+i].name);
+  }
+
+  /* update all rows */
+  bind_offset= row_size * row_offset2;
+  ok_stmt(hstmt, SQLSetPos(hstmt, 0, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* verify updates */
+  memset(rows, 0, sizeof(rows));
+  is_num(rows[0].id, 0);
+  ok_sql(hstmt, "select id,name from t_update_offsets order by id");
+
+  bind_offset= row_size;
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  for (i= 0; i < rowcnt; ++i)
+  {
+    sprintf(buf, "name_%d_%d", i, i * 10);
+    is_num(rows[i+1].id, i * 10);
+    is_str(rows[i+1].name, buf, strlen(buf) + 1);
+    is_num(rows[i+1].namelen, strlen(buf));
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists t_update_offsets");
+
+  return OK;
+}
+
+
+/*
+  Bug#29765 SQLSetPos w/SQL_DELETE advances dynamic cursor incorrectly
+*/
+DECLARE_TEST(t_bug29765)
+{
+  SQLINTEGER x;
+  SQLHANDLE henv1, hdbc1, hstmt1;
+  SET_DSN_OPTION(32);
+  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  ok_sql(hstmt1, "drop table if exists t_bug29765");
+  ok_sql(hstmt1, "create table t_bug29765 (x int)");
+  ok_sql(hstmt1, "insert into t_bug29765 values (1),(2),(3),(4)");
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
+                                 (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
+
+  ok_stmt(hstmt1, SQLBindCol(hstmt1, 1, SQL_C_LONG, &x, 0, NULL));
+  ok_sql(hstmt1, "select x from t_bug29765 order by 1");
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+
+  is_num(x, 1);
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+
+  /* delete x = 2 */
+  ok_stmt(hstmt1, SQLSetPos(hstmt1, 1, SQL_DELETE, SQL_LOCK_NO_CHANGE));
+
+  /* next row should be 3 */
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  is_num(x, 3);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_sql(hstmt1, "drop table if exists t_bug29765");
+  SET_DSN_OPTION(0);
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_positioned_cursor)
   ADD_TEST(my_setpos_cursor)
@@ -2627,6 +2798,9 @@ BEGIN_TESTS
   ADD_TEST(bug10563)
   ADD_TEST(bug6741)
   ADD_TEST(t_chunk)
+  ADD_TEST(t_update_type)
+  ADD_TEST(t_update_offsets)
+  ADD_TEST(t_bug29765)
 END_TESTS
 
 

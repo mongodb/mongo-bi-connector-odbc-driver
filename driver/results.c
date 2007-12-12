@@ -87,8 +87,8 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
     SQL_NUMERIC_STRUCT *sqlnum= (SQL_NUMERIC_STRUCT *) rgbValue;
     if (arrec) /* normally set via ard */
     {
-      sqlnum->precision= arrec->precision;
-      sqlnum->scale= arrec->scale;
+      sqlnum->precision= (SQLSCHAR) arrec->precision;
+      sqlnum->scale= (SQLCHAR) arrec->scale;
     }
     else /* just take the defaults */
     {
@@ -1112,7 +1112,8 @@ static SQLRETURN
 fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
 {
   SQLRETURN res= SQL_SUCCESS, tmp_res;
-  uint i, length= 0;
+  int i;
+  uint length= 0;
   DESCREC *irrec, *arrec;
 
   for (i= 0; i < min(stmt->ird->count, stmt->ard->count); ++i, ++values)
@@ -1289,7 +1290,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     if ( !stmt->result_array && !if_forward_cache(stmt) )
     {
         /*
-          If Dynamic, it looses the stmt->end_of_set, so
+          If Dynamic, it loses the stmt->end_of_set, so
           seek to desired row, might have new data or
           might be deleted
         */
@@ -1370,16 +1371,9 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
             stmt->ird->array_status_ptr[i]= SQL_ROW_NOROW;
 
     if ( !stmt->result_array && !if_forward_cache(stmt) )
-    {
-        /* read data from first row */
+        /* reset result position */
         stmt->end_of_set= mysql_row_seek(stmt->result,save_position);
-        if ( i > 1 )
-        {
-            stmt->current_values= mysql_fetch_row(stmt->result);
-            if ( stmt->fix_fields )
-                stmt->current_values= (*stmt->fix_fields)(stmt,stmt->current_values);
-        }
-    }
+
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
         setlocale(LC_NUMERIC,default_locale);
 

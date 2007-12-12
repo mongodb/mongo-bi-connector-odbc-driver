@@ -332,12 +332,67 @@ DECLARE_TEST(tmysql_fix)
 }
 
 
+/*
+  Test basic handling of SQL_ATTR_PARAM_BIND_OFFSET_PTR
+*/
+DECLARE_TEST(t_param_offset)
+{
+  const SQLINTEGER rowcnt= 5;
+  SQLINTEGER i;
+  struct {
+    SQLINTEGER id;
+    SQLINTEGER x;
+  } rows[25];
+  size_t row_size= (sizeof(rows) / 25);
+  SQLINTEGER out_id, out_x;
+  SQLULEN bind_offset= 20 * row_size;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_param_offset");
+  ok_sql(hstmt, "CREATE TABLE t_param_offset (id int not null, x int)");
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAM_BIND_OFFSET_PTR,
+                                &bind_offset, 0));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_LONG,
+                                  SQL_INTEGER, 0, 0, &rows[0].id, 0, NULL));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_LONG,
+                                  SQL_INTEGER, 0, 0, &rows[0].x, 0, NULL));
+
+  for (i= 0; i < rowcnt; ++i)
+  {
+    rows[20+i].id= i * 10;
+    rows[20+i].x= (i * 1000) % 97;
+    ok_sql(hstmt, "insert into t_param_offset values (?,?)");
+    bind_offset+= row_size;
+  }
+
+  /* verify the data */
+
+  ok_sql(hstmt, "select id, x from t_param_offset order by 1");
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &out_id, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_LONG, &out_x, 0, NULL));
+
+  for (i= 0; i < rowcnt; ++i)
+  {
+    ok_stmt(hstmt, SQLFetch(hstmt));
+    is_num(out_id, rows[20+i].id);
+    is_num(out_id, i * 10);
+    is_num(out_x, rows[20+i].x);
+    is_num(out_x, (i * 1000) % 97);
+  }
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_init_table)
   ADD_TEST(my_param_insert)
   ADD_TEST(my_param_update)
   ADD_TEST(my_param_delete)
   ADD_TEST(tmysql_fix)
+  ADD_TEST(t_param_offset)
 END_TESTS
 
 

@@ -2428,7 +2428,7 @@ void sqlnum_from_str(const char *numstr, SQL_NUMERIC_STRUCT *sqlnum,
   {
     int elem= 2 * i;
     sqlnum->val[elem]= build_up[i] & 0xff;
-    sqlnum->val[elem+1]= build_up[i] >> 8;
+    sqlnum->val[elem+1]= (build_up[i] >> 8) & 0xff;
   }
 
 end:
@@ -2586,6 +2586,7 @@ end:
     *truncptr= trunc;
 }
 
+
 /**
  Detect if a statement is a SET NAMES statement.
 */
@@ -2596,3 +2597,37 @@ int is_set_names_statement(SQLCHAR *query)
     query++;
   return myodbc_casecmp((char *)query, "SET NAMES", 9) == 0;
 }
+
+
+/**
+  Adjust a pointer based on bind offset and bind type.
+
+  @param[in] ptr The base pointer
+  @param[in] bind_offset_ptr The bind offset ptr (can be NULL).
+             (SQL_ATTR_PARAM_BIND_OFFSET_PTR, SQL_ATTR_ROW_BIND_OFFSET_PTR,
+              SQL_DESC_BIND_OFFSET_PTR)
+  @param[in] bind_type The bind type. Should be SQL_BIND_BY_COLUMN (0) or
+             the length of a row for row-wise binding. (SQL_ATTR_PARAM_BIND_TYPE,
+             SQL_ATTR_ROW_BIND_TYPE, SQL_DESC_BIND_TYPE)
+  @param[in] default_size The column size if bind type = SQL_BIND_BY_COLUMN.
+  @param[in] row The row number.
+
+  @return The base pointer with the offset added. If the base pointer is
+          NULL, NULL is returned.
+ */
+void *ptr_offset_adjust(void *ptr, SQLULEN *bind_offset_ptr,
+                        SQLINTEGER bind_type, SQLINTEGER default_size,
+                        SQLULEN row)
+{
+  size_t offset= 0;
+  if (bind_offset_ptr)
+    offset= (size_t) *bind_offset_ptr;
+
+  if (bind_type == SQL_BIND_BY_COLUMN)
+    offset+= default_size * row;
+  else
+    offset+= bind_type * row;
+
+  return ptr ? ((SQLCHAR *) ptr) + offset : NULL;
+}
+

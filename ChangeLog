@@ -37,6 +37,12 @@
     SQLError().
   * SQLDescribeColW returned UTF-8 column as SQL_VARCHAR instead of 
     SQL_WVARCHAR. (Bug #32161)
+  * Fixed SQL_ATTR_PARAM_BIND_OFFSET, and fixed row offsets to work
+    with updatable cursors.
+  * SQLSetPos w/SQL_DELETE advances dynamic cursor incorrectly. (Bug #29765)
+  * Recordset Update() fails in 5.1 ODBC connector when using adUseClient
+    cursor. (Bug #26985)
+  * MyODBC 5/ ADO Not possible to update a client side cursor. (Bug #27961)
 
   Includes changes from Connector/ODBC 3.51.21 and 3.51.22.
 
