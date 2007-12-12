@@ -120,10 +120,13 @@ void fix_result_types(STMT *stmt)
     case SQL_BINARY:
     case SQL_BIT:
     case SQL_CHAR:
+    case SQL_WCHAR:
     case SQL_VARBINARY:
     case SQL_VARCHAR:
+    case SQL_WVARCHAR:
     case SQL_LONGVARBINARY:
     case SQL_LONGVARCHAR:
+    case SQL_WLONGVARCHAR:
       break;
     default:
       irrec->precision= (SQLSMALLINT) irrec->length;

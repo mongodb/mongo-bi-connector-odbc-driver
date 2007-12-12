@@ -212,7 +212,8 @@ DECLARE_TEST(t_convert_type)
       mystmt(hstmt,rc);
 
       printMessage("CAST(MAX(col1) AS CHAR): %d", SqlType);
-      myassert(SqlType == SQL_VARCHAR || SqlType == SQL_LONGVARCHAR);
+      myassert(SqlType == SQL_VARCHAR || SqlType == SQL_LONGVARCHAR ||
+               SqlType == SQL_WVARCHAR || SqlType == SQL_WLONGVARCHAR);
 
       SQLFreeStmt(hstmt,SQL_CLOSE);
     }
