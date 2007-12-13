@@ -1,4 +1,4 @@
-5.1.1
+5.1.1 (12-Dec-2007)
 
   Functionality added or changed:
   * Added MSI installer for Windows 64-bit (Bug #31510)
@@ -46,6 +46,8 @@
   * MyODBC 5/ ADO Not possible to update a client side cursor. (Bug #27961)
 
   Includes changes from Connector/ODBC 3.51.21 and 3.51.22.
+
+  Built using MySQL 5.0.52.
 
 ----
 
