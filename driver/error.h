@@ -112,6 +112,7 @@ typedef enum myodbc_errid
     MYERR_S1013,
     MYERR_S1015,
     MYERR_S1016,
+    MYERR_S1017,
     MYERR_S1024,
     MYERR_S1090,
     MYERR_S1091,

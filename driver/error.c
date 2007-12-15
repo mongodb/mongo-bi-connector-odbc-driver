@@ -71,6 +71,7 @@ static MYODBC3_ERR_STR myodbc3_errors[]=
   {"HY013","Memory management error", SQL_ERROR},
   {"HY015","No cursor name available", SQL_ERROR},
   {"HY016","Cannot modify an implementation row descriptor", SQL_ERROR},
+  {"HY017","Invalid use of an automatically allocated descriptor handle", SQL_ERROR},
   {"HY024","Invalid attribute value", SQL_ERROR},
   {"HY090","Invalid string or buffer length", SQL_ERROR},
   {"HY091","Invalid descriptor field identifier", SQL_ERROR},
