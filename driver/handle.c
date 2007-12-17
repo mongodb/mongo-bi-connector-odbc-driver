@@ -326,14 +326,10 @@ SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
 
     return SQL_SUCCESS;
 error:
-    if (stmt->ard)
-      my_free((char *)stmt->ard, MYF(0));
-    if (stmt->ard)
-      my_free((char *)stmt->ard, MYF(0));
-    if (stmt->ard)
-      my_free((char *)stmt->ard, MYF(0));
-    if (stmt->ard)
-      my_free((char *)stmt->ard, MYF(0));
+	x_free(stmt->ard);
+	x_free(stmt->ird);
+	x_free(stmt->apd);
+	x_free(stmt->ipd);
     return set_dbc_error(dbc, "HY001", "Memory allocation error", MYERR_S1001);
 }
 
