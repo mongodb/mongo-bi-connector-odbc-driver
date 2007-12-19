@@ -820,7 +820,7 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLULEN irow,
 
         /* TODO : handle ..SQL_DATA_AT_EXEC here....*/
 
-        dynstr_append_quoted_name(dynQuery,field->name);
+        dynstr_append_quoted_name(dynQuery,field->org_name);
         dynstr_append_mem(dynQuery,"=",1);
 
         iprec->concise_type= get_sql_data_type(stmt, field, NULL);
@@ -1375,7 +1375,7 @@ static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLSETPOSIROW irow, SQLUS
                 for (nCol= 0; nCol < result->field_count; nCol++)
                 {
                     MYSQL_FIELD *field= mysql_fetch_field_direct(result, nCol);
-                    dynstr_append_quoted_name(&dynQuery, field->name);
+                    dynstr_append_quoted_name(&dynQuery, field->org_name);
                     dynstr_append_mem(&dynQuery, ",", 1);
                 }
                 dynQuery.length--;        /* Remove last ',' */

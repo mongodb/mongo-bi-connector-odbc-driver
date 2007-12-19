@@ -2758,6 +2758,51 @@ DECLARE_TEST(t_bug29765)
 }
 
 
+/**
+ Bug #6157: BUG in the alias use with ADO's Object
+*/
+DECLARE_TEST(t_bug6157)
+{
+  SQLINTEGER data;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug6157");
+  ok_sql(hstmt, "CREATE TABLE t_bug6157(a INT)");
+  ok_sql(hstmt, "INSERT INTO t_bug6157 VALUES (1)");
+
+  ok_sql(hstmt, "SELECT a AS b FROM t_bug6157");
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &data, 0, NULL));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  data= 6157;
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
+
+  data= 9999;
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_ADD, SQL_LOCK_NO_CHANGE));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "SELECT a FROM t_bug6157 ORDER BY a");
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &data, 0, NULL));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(data, 6157);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(data, 9999);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug6157");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_positioned_cursor)
   ADD_TEST(my_setpos_cursor)
@@ -2801,6 +2846,7 @@ BEGIN_TESTS
   ADD_TEST(t_update_type)
   ADD_TEST(t_update_offsets)
   ADD_TEST(t_bug29765)
+  ADD_TEST(t_bug6157)
 END_TESTS
 
 
