@@ -7,6 +7,8 @@
     though the driver doesn't support them. (Bug #32727)
   * Disabled possible delay in environment handle cleanup in multithreaded
     environments. (Bug #32366)
+  * Fixed thread synchronization bug in SQLAllocStmt()/SQLFreeStmt()
+    functions. (Bug #32857)
 
 ----
 
