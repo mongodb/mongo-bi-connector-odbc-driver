@@ -9,6 +9,8 @@
     environments. (Bug #32366)
   * Fixed thread synchronization bug in SQLAllocStmt()/SQLFreeStmt()
     functions. (Bug #32857)
+  * Fixed SQLExtendedFetch() ignoring SQL_ROWSET_SIZE attribute if Don't cache
+    result option is set. (Bug #324020)
 
 ----
 
