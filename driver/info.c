@@ -367,6 +367,11 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
     /* break; will never reach */
 
   case SQL_DATABASE_NAME:
+    if (reget_current_catalog(dbc))
+        return set_dbc_error(dbc, "HY000",
+                             "SQLGetInfo() failed to return current catalog.",
+                             0);
+
     MYINFO_SET_STR(rgbInfoValue, cbInfoValueMax, pcbInfoValue, dbc->database);
     /* break; will never reach */
 

@@ -67,6 +67,7 @@ void printMessage(char *fmt, ...) {
 #define MAX_ROW_DATA_LEN 1000
 #define MYSQL_NAME_LEN 64
 
+SQLCHAR *mydriver= (SQLCHAR *)"{MySQL ODBC 3.51 Driver}";
 SQLCHAR *mydsn= (SQLCHAR *)"test";
 SQLCHAR *myuid= (SQLCHAR *)"root";
 SQLCHAR *mypwd= (SQLCHAR *)"";

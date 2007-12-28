@@ -2613,9 +2613,9 @@ DECLARE_TEST(t_bug32420)
   SQLUINTEGER row_count;
 
   /* Don't cache result option in the connection string */
-  sprintf(conn, "DRIVER={MySQL ODBC 3.51 Driver};USER=%s;PASSWORD=%s;"
+  sprintf(conn, "DRIVER=%s;USER=%s;PASSWORD=%s;"
                 "DATABASE=%s;SERVER=%s;OPTION=1048576",
-          myuid, mypwd, mydb, myserver);
+          mydriver, myuid, mypwd, mydb, myserver);
 
   if (mysock != NULL)
   {
@@ -2706,9 +2706,9 @@ DECLARE_TEST(t_bug32420)
      Result cache is enabled. Need to check that cached results are not
      broken
   */
-  sprintf(conn,"DRIVER={MySQL ODBC 3.51 Driver};USER=%s;PASSWORD=%s;"
+  sprintf(conn,"DRIVER=%s;USER=%s;PASSWORD=%s;"
                "DATABASE=%s;SERVER=%s",
-          myuid, mypwd, mydb, myserver);
+          mydriver, myuid, mypwd, mydb, myserver);
 
   if (mysock != NULL)
   {

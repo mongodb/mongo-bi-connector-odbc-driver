@@ -10,7 +10,9 @@
   * Fixed thread synchronization bug in SQLAllocStmt()/SQLFreeStmt()
     functions. (Bug #32857)
   * Fixed SQLExtendedFetch() ignoring SQL_ROWSET_SIZE attribute if Don't cache
-    result option is set. (Bug #324020)
+    result option is set. (Bug #32420)
+  * SQLGetInfo() returns the "null" string as database name if no database
+    was selected. (Bug #3780)
 
 ----
 

@@ -122,9 +122,9 @@ DECLARE_TEST(t_driver_connect)
     rc = SQLAllocConnect(henv1,&hdbc1);
     myenv(henv1,rc);
 
-    sprintf(conn_in,"DRIVER={MySQL ODBC 3.51 Driver};USER=%s;PASSWORD=%s;"
+    sprintf(conn_in,"DRIVER=%s;USER=%s;PASSWORD=%s;"
                     "DATABASE=%s;SERVER=%s;OPTION=3;STMT=use mysql",
-            myuid, mypwd, mydb, myserver);
+            mydriver, myuid, mypwd, mydb, myserver);
     if (mysock != NULL)
     {
       strcat(conn_in, ";SOCKET=");
