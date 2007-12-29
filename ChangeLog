@@ -1,18 +1,16 @@
-3.51.23
-
-  Functionality added or changed:
+3.51.23 (28-Dec-2007)
 
   Bugs fixed:
   * Allowed connections to be enlisted in distributed transactions, even
     though the driver doesn't support them. (Bug #32727)
-  * Disabled possible delay in environment handle cleanup in multithreaded
-    environments. (Bug #32366)
-  * Fixed thread synchronization bug in SQLAllocStmt()/SQLFreeStmt()
-    functions. (Bug #32857)
-  * Fixed SQLExtendedFetch() ignoring SQL_ROWSET_SIZE attribute if Don't cache
-    result option is set. (Bug #32420)
-  * SQLGetInfo() returns the "null" string as database name if no database
-    was selected. (Bug #3780)
+  * Cleaning up environment handles in multithread environments could result
+    in a five (or more) second delay. (Bug #32366)
+  * SQLAllocStmt() and SQLFreeStmt() did not synchronize access to the
+    list of statements associated with a connection. (Bug #32857)
+  * SQLExtendedFetch() and SQLFetchScroll() ignored the rowset size if
+    the "Don't cache result" DSN option was set. (Bug #32420)
+  * SQLGetInfo() returned the wrong value for SQL_DATABASE_NAME when no
+    database was selected. (Bug #3780)
 
 ----
 
