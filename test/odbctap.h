@@ -123,9 +123,20 @@ typedef struct {
 } my_test;
 
 #ifdef WIN32
-#define ENABLE_ALARMS
-#define RUN_TESTS_SIGNAL
-#define RUN_TESTS_ALARM
+void test_timeout(int signum);
+HANDLE halarm= NULL;
+DWORD WINAPI win32_alarm(LPVOID arg)
+{
+  DWORD timeout= ((DWORD) arg) * 1000;
+  while (WaitForSingleObject(halarm, timeout) == WAIT_OBJECT_0);
+  test_timeout(0);
+  return 0;
+}
+#define ENABLE_ALARMS    int do_alarms= !getenv("DISABLE_TIMEOUT")
+#define RUN_TESTS_SIGNAL halarm= CreateEvent(NULL, FALSE, FALSE, NULL); \
+                         if (do_alarms) \
+                           CreateThread(NULL, 0, win32_alarm, (LPVOID) 10, 0, NULL)
+#define RUN_TESTS_ALARM (void) SetEvent(halarm)
 #else
 #define ENABLE_ALARMS    int do_alarms= !getenv("DISABLE_TIMEOUT")
 #define RUN_TESTS_SIGNAL (void)signal(SIGALRM, test_timeout)
