@@ -135,7 +135,7 @@ DWORD WINAPI win32_alarm(LPVOID arg)
 #define ENABLE_ALARMS    int do_alarms= !getenv("DISABLE_TIMEOUT")
 #define RUN_TESTS_SIGNAL halarm= CreateEvent(NULL, FALSE, FALSE, NULL); \
                          if (do_alarms) \
-                           CreateThread(NULL, 0, win32_alarm, (LPVOID) 10, 0, NULL)
+                           CreateThread(NULL, 0, win32_alarm, (LPVOID) 30, 0, NULL)
 #define RUN_TESTS_ALARM (void) SetEvent(halarm)
 #else
 #define ENABLE_ALARMS    int do_alarms= !getenv("DISABLE_TIMEOUT")
