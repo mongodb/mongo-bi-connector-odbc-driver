@@ -7,8 +7,6 @@
     in a five (or more) second delay. (Bug #32366)
   * SQLAllocStmt() and SQLFreeStmt() did not synchronize access to the
     list of statements associated with a connection. (Bug #32857)
-  * SQLExtendedFetch() and SQLFetchScroll() ignored the rowset size if
-    the "Don't cache result" DSN option was set. (Bug #32420)
   * SQLGetInfo() returned the wrong value for SQL_DATABASE_NAME when no
     database was selected. (Bug #3780)
 

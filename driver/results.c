@@ -1221,7 +1221,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                                        bool                 upd_status )
 {
     ulong rows_to_fetch;
-    long cur_row, max_row= 0;
+    long cur_row, max_row;
     uint i;
     SQLRETURN res,tmp_res;
     STMT FAR *stmt= (STMT FAR*) hstmt;
@@ -1244,13 +1244,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
 
         if ((stmt->dbc->flag & FLAG_NO_CACHE))
         {
-          if (stmt->stmt_options.rows_in_set)
-            /*
-            we don't know the size of the resultset in case of not cached
-            results, so we guess it is at least current_row + rows_in_set
-            */
-            max_row= stmt->stmt_options.rows_in_set + stmt->current_row;
-          else if (stmt->result_array)
+          if (stmt->result_array)
             values= stmt->result_array + (cur_row * stmt->result->field_count);
           else
             values= mysql_fetch_row(stmt->result);
@@ -1264,7 +1258,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     if ( !pcrow )
         pcrow= &dummy_pcrow;
 
-    max_row= max_row ? max_row : (long) mysql_num_rows(stmt->result);
+    max_row= (long) mysql_num_rows(stmt->result);
     stmt->last_getdata_col= (uint)  ~0;
     stmt->current_values= 0;          /* For SQLGetData */
 
@@ -1272,7 +1266,8 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     {
         
         case SQL_FETCH_NEXT:
-            /* cur_row is already set to the proper position from STMT */
+            cur_row= (stmt->current_row < 0 ? 0 :
+                      stmt->current_row+stmt->rows_found_in_set);
             break;
         case SQL_FETCH_PRIOR:
             cur_row= (stmt->current_row <= 0 ? -1 :
@@ -1370,14 +1365,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                     save_position= mysql_row_tell(stmt->result);
                 if ( !(values= mysql_fetch_row(stmt->result)) )
                     break;
-            } 
-            else if (stmt->stmt_options.rows_in_set)
-            {
-              values= mysql_fetch_row(stmt->result);
-              if (!values)
-                goto nodata;
             }
-            
             if ( stmt->fix_fields )
                 values= (*stmt->fix_fields)(stmt,values);
             else
@@ -1448,11 +1436,8 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                     lengths++;
             }
         }
-        stmt->current_row++;
         cur_row++;
     }
-
-nodata:
     stmt->rows_found_in_set= i;
     *pcrow= i;
 
