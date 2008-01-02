@@ -54,6 +54,8 @@
   * Recordset Update() fails in 5.1 ODBC connector when using adUseClient
     cursor. (Bug #26985)
   * MyODBC 5/ ADO Not possible to update a client side cursor. (Bug #27961)
+  * Intermixing of SQLGetData() using SQL_C_CHAR and SQL_C_WCHAR on the same
+    field value was incorrect. (Bug #28617)
 
   Includes changes from Connector/ODBC 3.51.21 and 3.51.22.
 

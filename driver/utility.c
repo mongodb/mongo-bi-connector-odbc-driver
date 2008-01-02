@@ -801,7 +801,8 @@ convert_to_out:
           continue;
       }
 
-      stmt->getdata.source+= cnvres;
+      if (result)
+        stmt->getdata.source+= cnvres;
     }
     else if (stmt->getdata.latest_bytes == MY_CS_ILUNI && wc != '?')
     {

@@ -2120,6 +2120,33 @@ DECLARE_TEST(t_bug13776_auto)
 }
 
 
+/*
+  Bug#28617 Gibberish when reading utf8 TEXT column through ADO
+*/
+DECLARE_TEST(t_bug28617)
+{
+  SQLWCHAR outbuf[100];
+  SQLLEN outlen;
+
+  ok_sql(hstmt, "select 'qwertyuiop'");
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, outbuf, 0, &outlen),
+              SQL_SUCCESS_WITH_INFO);
+  is_num(outlen, 10);
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_WCHAR, outbuf, 0, &outlen),
+              SQL_SUCCESS_WITH_INFO);
+  is_num(outlen, 20);
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_WCHAR, outbuf, 100, &outlen));
+
+  is_num(outlen, 20);
+  is_wstr(outbuf, W(L"qwertyuiop"), 11);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -2149,6 +2176,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug31246)
   ADD_TEST(t_bug13776)
   ADD_TEST(t_bug13776_auto)
+  ADD_TEST(t_bug28617)
 END_TESTS
 
 
