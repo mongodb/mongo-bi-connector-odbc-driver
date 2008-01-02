@@ -879,11 +879,11 @@ SQLRETURN SQL_API SQLDisconnect(SQLHDBC hdbc)
      my_SQLFreeStmt((SQLHSTMT)list_element->data, SQL_DROP);
   }
   mysql_close(&dbc->mysql);
-  my_free(dbc->dsn, MYF(0));
-  my_free(dbc->database, MYF(0));
-  my_free(dbc->server, MYF(0));
-  my_free(dbc->user, MYF(0));
-  my_free(dbc->password, MYF(0));
+  x_free(dbc->dsn);
+  x_free(dbc->database);
+  x_free(dbc->server);
+  x_free(dbc->user);
+  x_free(dbc->password);
   dbc->dsn= dbc->database= dbc->server= dbc->user= dbc->password= 0;
 
   if (dbc->flag & FLAG_LOG_QUERY)
