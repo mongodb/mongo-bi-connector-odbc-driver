@@ -223,6 +223,7 @@ DECLARE_TEST(t_bug3780)
   SQLSMALLINT conn_out_len;
   SQLCHAR   rgbValue[MAX_NAME_LEN];
   SQLSMALLINT pcbInfo;
+  SQLINTEGER len;
 
   /* The connection string must not include DATABASE. */
   sprintf((char *)conn, "DRIVER=%s;SERVER=localhost;" \
@@ -247,10 +248,10 @@ DECLARE_TEST(t_bug3780)
   is_str(rgbValue, "null", pcbInfo);
 
   ok_con(hdbc1, SQLGetConnectAttr(hdbc1, SQL_ATTR_CURRENT_CATALOG,
-                                  rgbValue, MAX_NAME_LEN, &pcbInfo));
+                                  rgbValue, MAX_NAME_LEN, &len));
 
   is_num(pcbInfo, 4);
-  is_str(rgbValue, "null", pcbInfo);
+  is_str(rgbValue, "null", len);
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
   ok_con(hdbc1, SQLDisconnect(hdbc1));
