@@ -2137,10 +2137,10 @@ DECLARE_TEST(t_bug28617)
   is_num(outlen, 10);
   expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_WCHAR, outbuf, 0, &outlen),
               SQL_SUCCESS_WITH_INFO);
-  is_num(outlen, 20);
+  is_num(outlen, 10 * sizeof(SQLWCHAR));
   ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_WCHAR, outbuf, 100, &outlen));
 
-  is_num(outlen, 20);
+  is_num(outlen, 10 * sizeof(SQLWCHAR));
   is_wstr(outbuf, W(L"qwertyuiop"), 11);
 
   return OK;
