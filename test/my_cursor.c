@@ -2610,7 +2610,7 @@ DECLARE_TEST(t_bug32420)
   SQLUSMALLINT rgfRowStatus[4];
   SQLCHAR   conn[256], conn_out[256];
   SQLSMALLINT conn_out_len;
-  SQLUINTEGER row_count;
+  SQLULEN row_count;
 
   /* Don't cache result option in the connection string */
   sprintf(conn, "DRIVER=%s;USER=%s;PASSWORD=%s;"
