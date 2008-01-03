@@ -309,7 +309,7 @@ SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
     stmt->state= ST_UNKNOWN;
     stmt->dummy_state= ST_DUMMY_UNKNOWN;
     strmov(stmt->error.sqlstate, "00000");
-    init_dynamic_array(&stmt->param_pos, sizeof(char *), 0, 0);
+    my_init_dynamic_array(&stmt->param_pos, sizeof(char *), 0, 0);
 
     if (!(stmt->ard= desc_alloc(stmt, SQL_DESC_ALLOC_AUTO,
                                 DESC_APP, DESC_ROW)))
