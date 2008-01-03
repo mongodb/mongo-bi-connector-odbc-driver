@@ -717,7 +717,7 @@ SQLNativeSqlW(SQLHDBC hdbc, SQLWCHAR *in, SQLINTEGER in_len,
   if (in_len == SQL_NTS)
     in_len= sqlwcharlen(in);
 
-  if (out)
+  if (out_len)
     *out_len= in_len;
 
   if (in_len > out_max)
@@ -732,7 +732,7 @@ SQLNativeSqlW(SQLHDBC hdbc, SQLWCHAR *in, SQLINTEGER in_len,
     out[in_len]= 0;
   }
 
-  return SQL_SUCCESS;
+  return rc;
 }
 
 

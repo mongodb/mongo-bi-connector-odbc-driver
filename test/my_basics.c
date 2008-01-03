@@ -777,6 +777,28 @@ DECLARE_TEST(t_bug32014)
 }
 
 
+/*
+  Bug #10128 Error in evaluating simple mathematical expression
+  ADO calls SQLNativeSql with a NULL pointer for the result length,
+  but passes a non-NULL result buffer.
+*/
+DECLARE_TEST(t_bug10128)
+{
+  SQLCHAR *query= (SQLCHAR *) "select 1,2,3,4";
+  SQLCHAR nativesql[1000];
+  SQLINTEGER nativelen;
+  SQLINTEGER querylen= (SQLINTEGER) strlen(query);
+
+  ok_con(hdbc, SQLNativeSql(hdbc, query, SQL_NTS, NULL, 0, &nativelen));
+  is_num(nativelen, querylen);
+
+  ok_con(hdbc, SQLNativeSql(hdbc, query, SQL_NTS, nativesql, 1000, NULL));
+  is_str(nativesql, query, querylen + 1);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -798,6 +820,7 @@ BEGIN_TESTS
   ADD_TEST(setnames_conn)
   ADD_TEST(sqlcancel)
   ADD_TEST(t_bug32014)
+  ADD_TEST(t_bug10128)
 END_TESTS
 
 

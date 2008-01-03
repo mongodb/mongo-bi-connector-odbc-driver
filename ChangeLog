@@ -58,6 +58,8 @@
   * MyODBC 5/ ADO Not possible to update a client side cursor. (Bug #27961)
   * Intermixing of SQLGetData() using SQL_C_CHAR and SQL_C_WCHAR on the same
     field value was incorrect. (Bug #28617)
+  * SQLNativeSql() didn't properly handle the output length pointer.
+    (Bug #10128 & Bug #31049)
 
   Includes changes from Connector/ODBC 3.51.21 and 3.51.22.
 

@@ -857,7 +857,7 @@ SQLNativeSql(SQLHDBC hdbc, SQLCHAR *in, SQLINTEGER in_len,
   if (in_len == SQL_NTS)
     in_len= strlen((char *)in);
 
-  if (out)
+  if (out_len)
     *out_len= in_len;
 
   (void)strncpy((char *)out, (const char *)in, out_max);
