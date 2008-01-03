@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * SQLGetInfo() reported characters for SQL_SPECIAL_CHARACTERS that were
+    not encoded correctly. (Bug #33130)
   * Adding or updating a row using SQLSetPos() on a result set with aliased
     columns would fail. (Bug #6157)
 
