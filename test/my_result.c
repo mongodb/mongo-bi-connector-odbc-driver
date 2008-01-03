@@ -2141,7 +2141,7 @@ DECLARE_TEST(t_bug28617)
   ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_WCHAR, outbuf, 100, &outlen));
 
   is_num(outlen, 10 * sizeof(SQLWCHAR));
-  is_wstr(outbuf, W(L"qwertyuiop"), 11);
+  is(!memcmp(outbuf, W(L"qwertyuiop"), 11 * sizeof(SQLWCHAR)));
 
   return OK;
 }
