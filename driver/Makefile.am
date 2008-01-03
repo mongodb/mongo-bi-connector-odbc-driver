@@ -70,10 +70,7 @@ libmyodbc3_r_la_SOURCES     = $(libmyodbc3_la_SOURCES)
 # Linker and preprocessor options                                 #
 #                                                                 #
 ###################################################################
-if WITH_DEBUG
-libmyodbc3_la_CPPFLAGS       = -DMYODBC_DBG
-libmyodbc3_r_la_CPPFLAGS     = -DMYODBC_DBG
-endif
+libmyodbc3_la_CPPFLAGS       = -DNONTHREADSAFE
 
 libmyodbc3_la_LDFLAGS       = -release @myodbc_version@ -module 
 libmyodbc3_r_la_LDFLAGS     = -release @myodbc_version@ -module 

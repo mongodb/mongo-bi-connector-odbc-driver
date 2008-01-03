@@ -95,8 +95,9 @@ void myodbc_end()
     my_free(thousands_sep,MYF(0));
 
     /* my_thread_end_wait_time was added in 5.1.14 and 5.0.32 */
-#if defined(THREAD) && (MYSQL_VERSION_ID >= 50114 || \
-                        (MYSQL_VERSION_ID >= 50032 && MYSQL_VERSION_ID < 50100))
+#if !defined(NONTHREADSAFE) && \
+    (MYSQL_VERSION_ID >= 50114 || \
+     (MYSQL_VERSION_ID >= 50032 && MYSQL_VERSION_ID < 50100))
     /*
        This eliminates the delay when my_end() is called and other threads
        have been initialized but not ended.
