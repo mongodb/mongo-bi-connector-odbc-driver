@@ -96,12 +96,24 @@ SQLWCHAR *sqlchar_as_sqlwchar(CHARSET_INFO *charset_info, SQLCHAR *str,
   {
     if (sizeof(SQLWCHAR) == 4)
     {
-      pos+= utf8toutf32(pos, (UTF32 *)(out + i++));
+      int consumed= utf8toutf32(pos, (UTF32 *)(out + i++));
+      pos+= consumed;
+      if (!consumed)
+      {
+        *errors+= 1;
+        break;
+      }
     }
     else
     {
       UTF32 u32;
-      pos+= utf8toutf32(pos, &u32);
+      int consumed= utf8toutf32(pos, &u32);
+      pos+= consumed;
+      if (!consumed)
+      {
+        *errors+= 1;
+        break;
+      }
       i+= utf32toutf16(u32, (UTF16 *)(out + i));
     }
   }
@@ -168,7 +180,13 @@ SQLCHAR *sqlwchar_as_sqlchar(CHARSET_INFO *charset_info, SQLWCHAR *str,
     else
     {
       UTF32 u32;
-      str+= utf16toutf32((UTF16 *)str, &u32);
+      int consumed= utf16toutf32((UTF16 *)str, &u32);
+      str+= consumed;
+      if (!consumed)
+      {
+        *errors+= 1;
+        break;
+      }
       u8_len= utf32toutf8(u32, u8);
     }
 
@@ -226,7 +244,10 @@ SQLCHAR *sqlwchar_as_utf8(SQLWCHAR *str, SQLINTEGER *len)
     for (i= 0; str < str_end; )
     {
       UTF32 u32;
-      str+= utf16toutf32((UTF16 *)str, &u32);
+      int consumed= utf16toutf32((UTF16 *)str, &u32);
+      str+= consumed;
+      if (!consumed)
+        break;
       i+= utf32toutf8(u32, u8 + i);
     }
   }
@@ -256,11 +277,19 @@ SQLSMALLINT utf8_as_sqlwchar(SQLWCHAR *out, SQLINTEGER out_max, SQLCHAR *in,
   for (i= 0, pos= out, out_end= out + out_max; i < in_len && pos < out_end; )
   {
     if (sizeof(SQLWCHAR) == 4)
-      i+= utf8toutf32(in + i, (UTF32 *)pos++);
+    {
+      int consumed= utf8toutf32(in + i, (UTF32 *)pos++);
+      i+= consumed;
+      if (!consumed)
+        break;
+    }
     else
     {
       UTF32 u32;
-      i+= utf8toutf32(in + i, &u32);
+      int consumed= utf8toutf32(in + i, &u32);
+      i+= consumed;
+      if (!consumed)
+        break;
       pos+= utf32toutf16(u32, (UTF16 *)pos);
     }
   }
@@ -311,7 +340,7 @@ SQLCHAR *sqlchar_as_sqlchar(CHARSET_INFO *from_charset,
   return conv;
 }
 
- 
+
 /**
   Convert a SQLWCHAR to a SQLCHAR in the specified character set. This
   variation uses a pre-allocated buffer.
@@ -352,7 +381,13 @@ SQLINTEGER sqlwchar_as_sqlchar_buf(CHARSET_INFO *charset_info,
     else
     {
       UTF32 u32;
-      str+= utf16toutf32((UTF16 *)str, &u32);
+      int consumed= utf16toutf32((UTF16 *)str, &u32);
+      str+= consumed;
+      if (!consumed)
+      {
+        *errors+= 1;
+        break;
+      }
       u8_len= utf32toutf8(u32, u8);
     }
 
@@ -362,24 +397,6 @@ SQLINTEGER sqlwchar_as_sqlchar_buf(CHARSET_INFO *charset_info,
   }
 
   out[i]= '\0';
-
-  for (i= 0; str < str_end; )
-  {
-    if (sizeof(SQLWCHAR) == 4)
-    {
-      u8_len= utf32toutf8((UTF32)*str++, u8);
-    }
-    else
-    {
-      UTF32 u32;
-      str+= utf16toutf32((UTF16 *)str, &u32);
-      u8_len= utf32toutf8(u32, u8);
-    }
-
-    i+= copy_and_convert((char *)out + i, out_bytes - i, charset_info,
-                         (char *)u8, u8_len, utf8_charset_info, &used_bytes,
-                         &used_chars, errors);
-  }
 
   return i;
 }
