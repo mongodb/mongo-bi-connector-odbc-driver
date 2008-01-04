@@ -1715,9 +1715,131 @@ MySQLForeignKeys(SQLHSTMT hstmt,
     CLEAR_STMT_ERROR(hstmt);
     my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
-    if ( is_minimum_version(stmt->dbc->mysql.server_version,"3.23",4) )
+    /* For 5.0 and later, use INFORMATION_SCHEMA. */
+    if (is_minimum_version(stmt->dbc->mysql.server_version, "5.0", 3))
     {
-        STMT FAR  *stmt=(STMT FAR*) hstmt;
+      MYSQL *mysql= &stmt->dbc->mysql;
+      char query[2048], *buff; /* This should be big enough. */
+      char *update_rule, *delete_rule, *ref_constraints_join;
+      SQLRETURN rc;
+
+      /*
+         With 5.1, we can use REFERENTIAL_CONSTRAINTS to get even more info.
+      */
+      if (is_minimum_version(stmt->dbc->mysql.server_version, "5.1", 3))
+      {
+        update_rule= "CASE"
+                     " WHEN R.UPDATE_RULE = 'CASCADE' THEN 0"
+                     " WHEN R.UPDATE_RULE = 'SET NULL' THEN 2"
+                     " WHEN R.UPDATE_RULE = 'SET DEFAULT' THEN 4"
+                     " WHEN R.UPDATE_RULE = 'SET RESTRICT' THEN 1"
+                     " WHEN R.UPDATE_RULE = 'SET NO ACTION' THEN 3"
+                     " ELSE "
+                     " END";
+        delete_rule= "CASE"
+                     " WHEN R.DELETE_RULE = 'CASCADE' THEN 0"
+                     " WHEN R.DELETE_RULE = 'SET NULL' THEN 2"
+                     " WHEN R.DELETE_RULE = 'SET DEFAULT' THEN 4"
+                     " WHEN R.DELETE_RULE = 'SET RESTRICT' THEN 1"
+                     " WHEN R.DELETE_RULE = 'SET NO ACTION' THEN 3"
+                     " ELSE "
+                     " END";
+
+        ref_constraints_join=
+          " JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R"
+          " ON (R.CONSTRAINT_NAME = B.CONSTRAINT_NAME"
+          " AND R.TABLE_NAME = B.TABLE_NAME"
+          " AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA)";
+      }
+      else
+      {
+        /* Just return '1' to be compatible with pre-I_S version. */
+        update_rule= delete_rule= "1";
+        ref_constraints_join= "";
+      }
+
+      /* This is a big, ugly query. But it works! */
+      buff= strxmov(query,
+                    "SELECT A.REFERENCED_TABLE_SCHEMA AS PKTABLE_CAT,"
+                    "NULL AS PKTABLE_SCHEM,"
+                    "A.REFERENCED_TABLE_NAME AS PKTABLE_NAME,"
+                    "A.REFERENCED_COLUMN_NAME AS PKCOLUMN_NAME,"
+                    "A.TABLE_SCHEMA AS FKTABLE_CAT, NULL AS FKTABLE_SCHEM,"
+                    "A.TABLE_NAME AS FKTABLE_NAME,"
+                    "A.COLUMN_NAME AS FKCOLUMN_NAME,"
+                    "A.ORDINAL_POSITION AS KEY_SEQ,",
+                    update_rule, " AS UPDATE_RULE,",
+                    delete_rule, " AS DELETE_RULE,"
+                    "A.CONSTRAINT_NAME AS FK_NAME,"
+                    "(SELECT CONSTRAINT_NAME FROM"
+                    " INFORMATION_SCHEMA.TABLE_CONSTRAINTS"
+                    " WHERE TABLE_SCHEMA = REFERENCED_TABLE_SCHEMA AND"
+                    " TABLE_NAME = REFERENCED_TABLE_NAME AND"
+                    " CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1)"
+                    " AS PK_NAME,"
+                    "7 AS DEFERRABILITY"
+                    " FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE A"
+                    " JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B"
+                    " USING (CONSTRAINT_NAME,TABLE_NAME)",
+                    ref_constraints_join,
+                    " WHERE B.CONSTRAINT_TYPE = 'FOREIGN KEY' ",
+                    NullS);
+
+      if (szPkTableName && szPkTableName[0])
+      {
+        buff= strmov(buff, "AND A.REFERENCED_TABLE_SCHEMA = ");
+        if (szPkCatalogName && szPkCatalogName[0])
+        {
+          if (cbPkCatalogName == SQL_NTS)
+            cbPkCatalogName= strlen((char *)szPkCatalogName);
+          buff= strmov(buff, "'");
+          buff+= mysql_real_escape_string(mysql, buff, (char *)szPkCatalogName,
+                                          cbPkCatalogName);
+          buff= strmov(buff, "' ");
+        }
+        else
+          buff= strmov(buff, "DATABASE() ");
+        buff= strmov(buff, "AND A.REFERENCED_TABLE_NAME = '");
+        if (cbPkTableName == SQL_NTS)
+          cbPkTableName= strlen((char *)szPkTableName);
+        buff+= mysql_real_escape_string(mysql, buff, (char *)szPkTableName,
+                                        cbPkTableName);
+        buff= strmov(buff, "' ");
+      }
+
+      if (szFkTableName && szFkTableName[0])
+      {
+        buff= strmov(buff, "AND A.TABLE_SCHEMA = ");
+        if (szFkCatalogName && szFkCatalogName[0])
+        {
+          if (cbFkCatalogName == SQL_NTS)
+            cbFkCatalogName= strlen((char *)szFkCatalogName);
+          buff= strmov(buff, "'");
+          buff+= mysql_real_escape_string(mysql, buff, (char *)szFkCatalogName,
+                                          cbFkCatalogName);
+          buff= strmov(buff, "' ");
+        }
+        else
+          buff= strmov(buff, "DATABASE() ");
+        buff= strmov(buff, "AND A.TABLE_NAME = '");
+        if (cbFkTableName == SQL_NTS)
+          cbFkTableName= strlen((char *)szFkTableName);
+        buff+= mysql_real_escape_string(mysql, buff, (char *)szFkTableName,
+                                        cbFkTableName);
+        buff= strmov(buff, "' ");
+      }
+
+      strmov(buff, "ORDER BY FKTABLE_CAT, FKTABLE_NAME, KEY_SEQ");
+
+      rc= MySQLPrepare(hstmt, (SQLCHAR *)query, SQL_NTS, FALSE);
+      if (!SQL_SUCCEEDED(rc))
+        return rc;
+
+      return my_SQLExecute(hstmt);
+    }
+    /* For 3.23 and later, use comment in SHOW TABLE STATUS (yuck). */
+    else if (is_minimum_version(stmt->dbc->mysql.server_version,"3.23",4))
+    {
         MEM_ROOT  *alloc;
         MYSQL_ROW row;
         char      **data;
@@ -1760,8 +1882,8 @@ MySQLForeignKeys(SQLHSTMT hstmt,
 
         /* Convert mysql fields to data that odbc wants */
         alloc= &stmt->result->field_alloc;
-        data= tempdata;    
-        comment_id= stmt->result->field_count-1;
+        data= tempdata;
+        comment_id= stmt->result->field_count - 1;
 
         while ( (row= mysql_fetch_row(stmt->result)) )
         {
@@ -1775,11 +1897,12 @@ MySQLForeignKeys(SQLHSTMT hstmt,
                 if ( !(comment_token= strchr(row[comment_id],';')) )
                     continue; /* MySQL 4.1 and above, the comment field is '15' */
 
-                do 
+                do
                 {
-                    /*       
-                      Found reference information in comment field from InnoDB type, 
-                      and parse the same to get the FK information .. 
+                    /*
+                      Found reference information in comment field from
+                      InnoDB type, and parse the same to get the FK
+                      information ..
                     */
                     key_seq= 1;
 
@@ -1793,7 +1916,7 @@ MySQLForeignKeys(SQLHSTMT hstmt,
 
                     if ( !(token= my_next_token(token+8,&comment_token,ref_token,'/')) )
                         continue;
- 
+
                     data[0]= strdup_root(alloc,ref_token); /* PKTABLE_CAT */
 
                     if (!(token= my_next_token(token, &comment_token,
@@ -1811,7 +1934,7 @@ MySQLForeignKeys(SQLHSTMT hstmt,
                         continue;
                     pk_length= (uint)((token-2)-pk_cols_start);
 
-                    data[1]= "";                           /* PKTABLE_SCHEM */
+                    data[1]= NULL;                         /* PKTABLE_SCHEM */
 
                     /**
                       @todo clean this up when current database tracking is
@@ -1824,26 +1947,21 @@ MySQLForeignKeys(SQLHSTMT hstmt,
                     data[4]= (szFkCatalogName ?
                               strdup_root(alloc, (char *)szFkCatalogName) :
                               strdup_root(alloc, stmt->dbc->database));
-                    data[5]= "";                           /* FKTABLE_SCHEM */
+                    data[5]= NULL;                         /* FKTABLE_SCHEM */
                     data[6]= row[0];                       /* FKTABLE_TABLE */
 
-                    /* 
-                       TODO : FIX both UPDATE_RULE and DELETE_RULE after 
-                       3.23.52 is released, which supports this feature in 
-                       server by updating the 'comment' field as well as 
-                       from SHOW CREATE TABLE defination..
-          
-                       right now return only SQL_CASCADE as the DELETE/UPDATE 
-                       rule
-                    */ 
-
-                    data[9]=  "1"; /*SQL_CASCADE*/        /* UPDATE_RULE */ 
-                    data[10]= "1"; /*SQL_CASCADE*/        /* DELETE_RULE */ 
-                    data[11]= "NULL";                     /* FK_NAME */
-                    data[12]= "NULL";                     /* PK_NAME */
+                    /*
+                       We could figure out UPDATE_RULE and DELETE_RULE by
+                       parsing the comment field. For now, we just return
+                       SQL_CASCADE>
+                    */
+                    data[9]=  "1"; /*SQL_CASCADE*/        /* UPDATE_RULE */
+                    data[10]= "1"; /*SQL_CASCADE*/        /* DELETE_RULE */
+                    data[11]= NULL;                       /* FK_NAME */
+                    data[12]= NULL;                       /* PK_NAME */
                     data[13]= "7"; /*SQL_NOT_DEFERRABLE*/ /* DEFERRABILITY */
 
-                    token = fkcomment = (char *)fk_cols_start; 
+                    token = fkcomment = (char *)fk_cols_start;
                     pktoken = pkcomment = (char *)pk_cols_start;
                     fkcomment[fk_length]= '\0';
                     pkcomment[pk_length]= '\0';
@@ -1861,8 +1979,8 @@ MySQLForeignKeys(SQLHSTMT hstmt,
                         row_count++;
                         for ( fk_length= SQLFORE_KEYS_FIELDS; fk_length--; )
                             data[fk_length]= prev_data[fk_length];
-                    }                
-                    data[7]= strdup_root(alloc,fkcomment);      /* FKTABLE_COLUMN */ 
+                    }
+                    data[7]= strdup_root(alloc,fkcomment);      /* FKTABLE_COLUMN */
                     data[3]= strdup_root(alloc,pkcomment);      /* PKTABLE_COLUMN */
                     sprintf(ref_token,"%d",key_seq);
                     data[8]= strdup_root(alloc,ref_token);      /* KEY_SEQ */
@@ -1887,10 +2005,11 @@ MySQLForeignKeys(SQLHSTMT hstmt,
           return handle_connection_error(stmt);
         }
     }
-    else /* NO FOREIGN KEY support from SERVER */
+    /* Versions older than 3.23 don't support foreign keys at all. */
+    else
     {
       goto empty_set;
-    }  
+    }
     stmt->result->row_count= row_count;
     mysql_link_fields(stmt,SQLFORE_KEYS_fields,SQLFORE_KEYS_FIELDS);
     return SQL_SUCCESS;

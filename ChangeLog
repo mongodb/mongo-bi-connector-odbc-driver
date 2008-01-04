@@ -1,8 +1,12 @@
 5.1.2
 
   Functionality added or changed:
+  * SQLForeignKeys uses INFORMATION_SCHEMA when it is available on the server,
+    which allows more complete information to be returned.
 
   Bugs fixed:
+  * SQLForeignKeys returned an empty string for the schema columns instead of
+    a NULL. (Bug #19923)
   * SQLGetInfo() reported characters for SQL_SPECIAL_CHARACTERS that were
     not encoded correctly. (Bug #33130)
   * Adding or updating a row using SQLSetPos() on a result set with aliased

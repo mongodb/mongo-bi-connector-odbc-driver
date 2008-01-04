@@ -80,24 +80,24 @@ typedef char * DYNAMIC_ELEMENT;
 
 #if MYSQL_VERSION_ID >= 50100
 # define MYODBC_FIELD_STRING(name, len, flags) \
-  {(name), NullS, NullS, NullS, NullS, NullS, NullS, (len), 0, 0, 0, 0, 0, 0, \
+  {(name), (name), NullS, NullS, NullS, NullS, NullS, (len), 0, 0, 0, 0, 0, 0, \
     0, 0, (flags), 0, UTF8_CHARSET_NUMBER, MYSQL_TYPE_VAR_STRING, NULL}
 # define MYODBC_FIELD_SHORT(name, flags) \
-  {(name), NullS, NullS, NullS, NullS, NullS, NullS, 5, 5, 0, 0, 0, 0, 0, 0, \
+  {(name), (name), NullS, NullS, NullS, NullS, NullS, 5, 5, 0, 0, 0, 0, 0, 0, \
     0, (flags), 0, 0, MYSQL_TYPE_SHORT, NULL}
 # define MYODBC_FIELD_LONG(name, flags) \
-  {(name), NullS, NullS, NullS, NullS, NullS, NullS, 11, 11, 0, 0, 0, 0, 0, 0, \
-    0, (flags), 0, 0, MYSQL_TYPE_LONG, NULL}
+  {(name), (name), NullS, NullS, NullS, NullS, NullS, 11, 11, 0, 0, 0, 0, 0, \
+    0, 0, (flags), 0, 0, MYSQL_TYPE_LONG, NULL}
 #elif MYSQL_VERSION_ID >= 40100
 # define MYODBC_FIELD_STRING(name, len, flags) \
-  {(name), NullS, NullS, NullS, NullS, NullS, NullS, (len), 0, 0, 0, 0, 0, 0, \
+  {(name), (name), NullS, NullS, NullS, NullS, NullS, (len), 0, 0, 0, 0, 0, 0, \
     0, 0, (flags), 0, UTF8_CHARSET_NUMBER, MYSQL_TYPE_VAR_STRING}
 # define MYODBC_FIELD_SHORT(name, flags) \
-  {(name), NullS, NullS, NullS, NullS, NullS, NullS, 5, 5, 0, 0, 0, 0, 0, 0, \
+  {(name), (name), NullS, NullS, NullS, NullS, NullS, 5, 5, 0, 0, 0, 0, 0, 0, \
     0, (flags), 0, 0, MYSQL_TYPE_SHORT}
 # define MYODBC_FIELD_LONG(name, flags) \
-  {(name), NullS, NullS, NullS, NullS, NullS, NullS, 11, 11, 0, 0, 0, 0, 0, 0, \
-    0, (flags), 0, 0, MYSQL_TYPE_LONG}
+  {(name), (name), NullS, NullS, NullS, NullS, NullS, 11, 11, 0, 0, 0, 0, 0, \
+    0, 0, (flags), 0, 0, MYSQL_TYPE_LONG}
 #else
 # define MYODBC_FIELD_STRING(name, len, flags) \
   {(name), NullS, NullS, NullS, NullS, (len), 0, (flags), 0, \

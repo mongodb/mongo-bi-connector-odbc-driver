@@ -222,7 +222,7 @@ DECLARE_TEST(my_foreign_keys)
                         NULL, SQL_NTS,                /*FK SCHEMA*/
                         NULL, SQL_NTS);               /*FK TABLE*/
     mystmt(hstmt,rc);
-/*    myassert(9 == myresult(hstmt)); */
+    myassert(9 == myresult(hstmt));
 
     printMessage("\n WITH ONLY FK OPTION");
     rc = SQLForeignKeys(hstmt,
@@ -244,7 +244,7 @@ DECLARE_TEST(my_foreign_keys)
                         NULL, SQL_NTS,
                         "test_fkey_c1", SQL_NTS);
     mystmt(hstmt,rc);
-    /* myassert(15 == myresult(hstmt)); */
+    myassert(15 == myresult(hstmt));
 
     printMessage("\n WITH ONLY FK OPTION");
     rc = SQLForeignKeys(hstmt,
@@ -255,7 +255,7 @@ DECLARE_TEST(my_foreign_keys)
                         NULL, SQL_NTS,
                         "test_fkey2", SQL_NTS);
     mystmt(hstmt,rc);
-    /* myassert(3 == myresult(hstmt)); */
+    myassert(3 == myresult(hstmt));
 
     printMessage("\n WITH ONLY PK OPTION");
     rc = SQLForeignKeys(hstmt,
@@ -266,7 +266,7 @@ DECLARE_TEST(my_foreign_keys)
                         NULL, SQL_NTS,
                         NULL, SQL_NTS);
     mystmt(hstmt,rc);
-    /* myassert(11 == myresult(hstmt)); */
+    myassert(11 == myresult(hstmt));
 
     printMessage("\n WITH ONLY PK OPTION");
     rc = SQLForeignKeys(hstmt,
@@ -288,7 +288,7 @@ DECLARE_TEST(my_foreign_keys)
                         NULL, SQL_NTS,
                         NULL, SQL_NTS);
     mystmt(hstmt,rc);
-    /* myassert(2 == myresult(hstmt)); */
+    myassert(2 == myresult(hstmt));
 
     printMessage("\n WITH ONLY PK OPTION");
     rc = SQLForeignKeys(hstmt,
@@ -299,7 +299,7 @@ DECLARE_TEST(my_foreign_keys)
                         NULL, SQL_NTS,
                         NULL, SQL_NTS);
     mystmt(hstmt,rc);
-    /* myassert(9 == myresult(hstmt)); */
+    myassert(9 == myresult(hstmt));
 
     printMessage("\n WITH ONLY FK OPTION");
     rc = SQLForeignKeys(hstmt,
@@ -310,7 +310,7 @@ DECLARE_TEST(my_foreign_keys)
                         NULL, SQL_NTS,
                         "test_fkey3", SQL_NTS);
     mystmt(hstmt,rc);
-    /* myassert(4 == myresult(hstmt)); */
+    myassert(4 == myresult(hstmt));
 
     printMessage("\n WITH BOTH PK and FK OPTION");
     rc = SQLForeignKeys(hstmt,
@@ -321,7 +321,7 @@ DECLARE_TEST(my_foreign_keys)
                         NULL, SQL_NTS,
                         "test_fkey3", SQL_NTS);
     mystmt(hstmt,rc);
-    /* myassert(3 == myresult(hstmt)); */
+    myassert(3 == myresult(hstmt));
 
     printMessage("\n WITH BOTH PK and FK OPTION");
     rc = SQLForeignKeys(hstmt,
@@ -332,7 +332,7 @@ DECLARE_TEST(my_foreign_keys)
                         NULL, SQL_NTS,
                         "test_fkey_c1", SQL_NTS);
     mystmt(hstmt,rc);
-    /* myassert(11 == myresult(hstmt)); */
+    myassert(11 == myresult(hstmt));
 
     printMessage("\n WITH BOTH PK and FK OPTION");
     rc = SQLForeignKeys(hstmt,
@@ -343,7 +343,7 @@ DECLARE_TEST(my_foreign_keys)
                         NULL, SQL_NTS,
                         "test_fkey2", SQL_NTS);
     mystmt(hstmt,rc);
-    /* myassert(3 == myresult(hstmt)); */
+    myassert(3 == myresult(hstmt));
 
     printMessage("\n WITH BOTH PK and FK OPTION");
     rc = SQLForeignKeys(hstmt,
@@ -388,7 +388,7 @@ DECLARE_TEST(my_foreign_keys)
                         NULL, SQL_NTS,
                         "test_fkey2",10);
     mystmt(hstmt,rc);
-    /* assert(3 == myresult(hstmt)); */
+    myassert(3 == myresult(hstmt));
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
     printMessage("\n WITH NON-EXISTANT TABLES");
@@ -400,7 +400,7 @@ DECLARE_TEST(my_foreign_keys)
                         NULL, SQL_NTS,
                         "test_fkey_junk", SQL_NTS);
     mystmt(hstmt,rc);
-    myassert(0 == myresult(hstmt));  
+    myassert(0 == myresult(hstmt));
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
     printMessage("\n WITH COMMENT FIELD");
@@ -412,7 +412,7 @@ DECLARE_TEST(my_foreign_keys)
                         NULL, SQL_NTS,
                         "test_fkey_comment_f", SQL_NTS);
     mystmt(hstmt,rc);
-    /* myassert(1 == myresult(hstmt)); */
+    myassert(1 == myresult(hstmt));
 
     {
         char buff[255];

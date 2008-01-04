@@ -764,16 +764,13 @@ DECLARE_TEST(t_sqltables)
  Bug #4518: SQLForeignKeys returns too many foreign key
  Bug #27723: SQLForeignKeys does not escape _ and % in the table name arguments
 
- The original test case was extended to have a table that would inadvertantly
+ The original test case was extended to have a table that would inadvertently
  get included because of the poor escaping.
 */
 DECLARE_TEST(t_bug4518)
 {
   SQLCHAR buff[255];
-
-  /** @todo re-enable this test when I_S based SQLForeignKeys is done. */
-  if (mysql_min_version(hdbc, "5.1", 3))
-    skip("can't test foreign keys with 5.1 or later yet");
+  SQLLEN len;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug4518_c, t_bug4518_c2, t_bug4518ac, "
                 "                     t_bug4518_p");
@@ -788,13 +785,15 @@ DECLARE_TEST(t_bug4518)
                 "                           FOREIGN KEY (parent_id)"
                 "                            REFERENCES"
                 "                              t_bug4518_p(id)"
-                "                            ON DELETE SET NULL)"
+                "                          )"
                 " ENGINE=InnoDB");
   ok_sql(hstmt, "CREATE TABLE t_bug4518ac (id INT, parent_id INT,"
                 "                          FOREIGN KEY (parent_id)"
                 "                           REFERENCES"
                 "                             t_bug4518_p(id)"
-                "                           ON DELETE SET NULL)"
+                "                            ON DELETE CASCADE"
+                "                            ON UPDATE NO ACTION"
+                "                          )"
                 " ENGINE=InnoDB");
 
   ok_stmt(hstmt, SQLForeignKeys(hstmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
@@ -805,10 +804,42 @@ DECLARE_TEST(t_bug4518)
   is_str(my_fetch_str(hstmt, buff, 4), "id", 2);
   is_str(my_fetch_str(hstmt, buff, 7), "t_bug4518_c", 11);
   is_str(my_fetch_str(hstmt, buff, 8), "parent_id", 9);
+  if (mysql_min_version(hdbc, "5.1", 3))
+  {
+    is_num(my_fetch_int(hstmt, 10), SQL_RESTRICT);
+    is_num(my_fetch_int(hstmt, 11), SQL_SET_NULL);
+  }
+  else
+  {
+    is_num(my_fetch_int(hstmt, 10), SQL_RESTRICT);
+    is_num(my_fetch_int(hstmt, 11), SQL_RESTRICT);
+  }
+
+  /* For Bug #19923: Test that schema columns are NULL. */
+  ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_CHAR, buff, sizeof(buff), &len));
+  is_num(len, SQL_NULL_DATA);
+  ok_stmt(hstmt, SQLGetData(hstmt, 6, SQL_C_CHAR, buff, sizeof(buff), &len));
+  is_num(len, SQL_NULL_DATA);
 
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
-  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLForeignKeys(hstmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
+                                NULL, 0, (SQLCHAR *)"t_bug4518ac", SQL_NTS));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buff, 3), "t_bug4518_p", 11);
+  is_str(my_fetch_str(hstmt, buff, 4), "id", 2);
+  is_str(my_fetch_str(hstmt, buff, 7), "t_bug4518ac", 11);
+  is_str(my_fetch_str(hstmt, buff, 8), "parent_id", 9);
+  if (mysql_min_version(hdbc, "5.1", 3))
+  {
+    is_num(my_fetch_int(hstmt, 10), SQL_CASCADE);
+    is_num(my_fetch_int(hstmt, 11), SQL_NO_ACTION);
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_sql(hstmt,
          "DROP TABLE t_bug4518_c, t_bug4518_c2, t_bug4518ac, t_bug4518_p");
@@ -1118,6 +1149,50 @@ DECLARE_TEST(t_bug14407)
 }
 
 
+/**
+ Bug #19923: MyODBC Foreign key retrieval broken in multiple ways
+ Two issues to test: schema columns should be NULL, not just an empty string,
+ and more than one constraint should be returned.
+*/
+DECLARE_TEST(t_bug19923)
+{
+  SQLCHAR buff[255];
+  SQLLEN len;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug19923c, t_bug19923b, t_bug19923a");
+  ok_sql(hstmt, "CREATE TABLE t_bug19923a (a INT PRIMARY KEY) ENGINE=InnoDB");
+  ok_sql(hstmt, "CREATE TABLE t_bug19923b (b INT PRIMARY KEY) ENGINE=InnoDB");
+  ok_sql(hstmt, "CREATE TABLE t_bug19923c (a INT, b INT, UNIQUE(a), UNIQUE(b), CONSTRAINT `first_constraint` FOREIGN KEY (`b`) REFERENCES `t_bug19923b` (`b`), CONSTRAINT `second_constraint` FOREIGN KEY (`a`) REFERENCES `t_bug19923a` (`a`)) ENGINE=InnoDB");
+
+
+  ok_stmt(hstmt, SQLForeignKeys(hstmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
+                                NULL, 0, (SQLCHAR *)"t_bug19923c", SQL_NTS));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buff, 3), "t_bug19923b", 10);
+  is_str(my_fetch_str(hstmt, buff, 4), "b", 1);
+  is_str(my_fetch_str(hstmt, buff, 7), "t_bug19923c", 10);
+  is_str(my_fetch_str(hstmt, buff, 8), "b", 1);
+  is_str(my_fetch_str(hstmt, buff, 12), "first_constraint", 16);
+  ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_CHAR, buff, sizeof(buff), &len));
+  is_num(len, SQL_NULL_DATA);
+  ok_stmt(hstmt, SQLGetData(hstmt, 6, SQL_C_CHAR, buff, sizeof(buff), &len));
+  is_num(len, SQL_NULL_DATA);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buff, 3), "t_bug19923a", 10);
+  is_str(my_fetch_str(hstmt, buff, 4), "a", 1);
+  is_str(my_fetch_str(hstmt, buff, 7), "t_bug19923c", 10);
+  is_str(my_fetch_str(hstmt, buff, 8), "a", 1);
+  is_str(my_fetch_str(hstmt, buff, 12), "second_constraint", 17);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug19923c, t_bug19923b, t_bug19923a");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -1140,6 +1215,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug26934)
   ADD_TEST(t_bug29888)
   ADD_TEST(t_bug14407)
+  ADD_TEST(t_bug19923)
 END_TESTS
 
 
