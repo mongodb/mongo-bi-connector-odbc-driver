@@ -297,8 +297,8 @@ DECLARE_TEST(bind_invalidcol)
   is(check_sqlstate(hstmt, "07009") == OK ||
      check_sqlstate(hstmt, "S1002") == OK);
 
-  expect_stmt(hstmt, SQLDescribeCol(hstmt, 5, NULL, 0, NULL, NULL, NULL,
-                                    NULL, NULL), SQL_ERROR);
+  expect_stmt(hstmt, SQLDescribeCol(hstmt, 5, dummy, sizeof(dummy), NULL,
+                                    NULL, NULL, NULL, NULL), SQL_ERROR);
   is(check_sqlstate(hstmt, "07009") == OK);
 
   /* SQLColAttribute() */
