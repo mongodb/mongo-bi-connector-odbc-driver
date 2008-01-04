@@ -1188,6 +1188,8 @@ DECLARE_TEST(t_bug19923)
 
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug19923c, t_bug19923b, t_bug19923a");
   return OK;
 }
