@@ -1718,15 +1718,35 @@ DECLARE_TEST(t_binary_collation)
   SQLSMALLINT name_length, data_type, decimal_digits, nullable;
   SQLCHAR column_name[SQL_MAX_COLUMN_NAME_LEN];
   SQLULEN column_size;
+  SQLCHAR server_version[MYSQL_NAME_LEN+1];
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_binary_collation");
   ok_sql(hstmt, "CREATE TABLE t_binary_collation (id INT)");
   ok_sql(hstmt, "SHOW CREATE TABLE t_binary_collation");
 
+  ok_con(hdbc, SQLGetInfo(hdbc, SQL_DBMS_VER, server_version,
+                          MYSQL_NAME_LEN, NULL));
+
   ok_stmt(hstmt, SQLDescribeCol(hstmt, 1, column_name, sizeof(column_name),
                                 &name_length, &data_type, &column_size,
                                 &decimal_digits, &nullable));
-  is_num(data_type, SQL_VARCHAR);
+  if (mysql_min_version(hdbc, "5.2", 3) ||
+      /*
+        5.0.46 or later in 5.0 series based on ChangeLog, even though
+        Bug#10491 says its pushed only in 5.0.48
+      */
+      (!strncmp("5.0", server_version, 3) &&
+        mysql_min_version(hdbc, "5.0.46", 6)) ||
+      /* 5.1.22 or later in 5.1 series */
+      (!strncmp("5.1", server_version, 3) &&
+        mysql_min_version(hdbc, "5.1.22", 6)))
+  {
+    is_num(data_type, SQL_WVARCHAR);
+  }
+  else
+  {
+    is_num(data_type, SQL_VARBINARY);
+  }
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_binary_collation");
   return OK;
 }
