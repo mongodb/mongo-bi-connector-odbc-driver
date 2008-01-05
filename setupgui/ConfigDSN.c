@@ -75,6 +75,7 @@ BOOL INSTAPI ConfigDSNW(HWND hWnd, WORD nRequest, LPCWSTR pszDriver,
   DataSource *ds= ds_new();
   BOOL rc= TRUE;
   Driver *driver= NULL;
+  SQLWCHAR *origdsn= NULL;
 
   if (pszAttributes && *pszAttributes)
   {
@@ -91,6 +92,7 @@ BOOL INSTAPI ConfigDSNW(HWND hWnd, WORD nRequest, LPCWSTR pszDriver,
       rc= FALSE;
       goto exitConfigDSN;
     }
+    origdsn= sqlwchardup(ds->name, SQL_NTS);
   }
 
   switch (nRequest)
@@ -111,6 +113,10 @@ BOOL INSTAPI ConfigDSNW(HWND hWnd, WORD nRequest, LPCWSTR pszDriver,
       /* save datasource */
       if (ds_add(ds))
         rc= FALSE;
+      /* if the name is changed, remove the old dsn */
+      if (origdsn && memcmp(origdsn, ds->name,
+                            (sqlwcharlen(origdsn) + 1) * sizeof(SQLWCHAR)))
+        SQLRemoveDSNFromIni(origdsn);
     }
     break;
   case ODBC_REMOVE_DSN:
@@ -120,6 +126,7 @@ BOOL INSTAPI ConfigDSNW(HWND hWnd, WORD nRequest, LPCWSTR pszDriver,
   }
 
 exitConfigDSN:
+  x_free(origdsn);
   ds_delete(ds);
   if (driver)
     driver_delete(driver);

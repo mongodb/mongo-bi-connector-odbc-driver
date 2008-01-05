@@ -11,6 +11,9 @@
     not encoded correctly. (Bug #33130)
   * Adding or updating a row using SQLSetPos() on a result set with aliased
     columns would fail. (Bug #6157)
+  * Changing the DSN name when editing a DSN left behind the DSN
+    under the old name in addition to creating the new entry. Fixed for
+    native Windows GUI. (Bug #31165)
 
 ----
 
