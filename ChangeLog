@@ -9,6 +9,8 @@
     list of statements associated with a connection. (Bug #32857)
   * SQLGetInfo() returned the wrong value for SQL_DATABASE_NAME when no
     database was selected. (Bug #3780)
+  * Changing the DSN name when editing a DSN left behind the DSN
+    under the old name in addition to creating the new entry. (Bug #31165)
 
 ----
 
