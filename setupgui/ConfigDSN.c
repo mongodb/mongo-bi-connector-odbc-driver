@@ -48,13 +48,17 @@ BOOL Driver_Prompt(HWND hWnd, SQLWCHAR *instr, SQLUSMALLINT completion,
   /* Show the dialog and handle result */
   if (ShowOdbcParamsDialog(ds, hWnd, TRUE) == 1)
   {
+    int len;
     /* serialize to outstr */
-    if ((*outlen= ds_to_kvpair(ds, outstr, outmax, (SQLWCHAR)';')) == -1)
+    if ((len= ds_to_kvpair(ds, outstr, outmax, (SQLWCHAR)';')) == -1)
     {
       /* truncated, up to caller to see outmax < *outlen */
-      *outlen= ds_to_kvpair_len(ds);
+      if (outlen)
+        *outlen= ds_to_kvpair_len(ds);
       outstr[outmax]= 0;
     }
+    else if (outlen)
+      *outlen= len;
     rc= TRUE;
   }
 
