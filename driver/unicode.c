@@ -850,8 +850,12 @@ SQLSetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute,
   if (attribute == SQL_ATTR_CURRENT_CATALOG)
   {
     uint errors= 0;
-    value= sqlwchar_as_sqlchar(dbc->cxn_charset_info,
-                               value, &value_len, &errors);
+    if (is_connected(dbc))
+      value= sqlwchar_as_sqlchar(dbc->cxn_charset_info,
+                                 value, &value_len, &errors);
+    else
+      value= sqlwchar_as_sqlchar(default_charset_info,
+                                 value, &value_len, &errors);
     free_value= TRUE;
   }
 
