@@ -806,7 +806,7 @@ DECLARE_TEST(t_bug4518)
   is_str(my_fetch_str(hstmt, buff, 8), "parent_id", 9);
   if (mysql_min_version(hdbc, "5.1", 3))
   {
-    is_num(my_fetch_int(hstmt, 10), SQL_RESTRICT);
+    is_num(my_fetch_int(hstmt, 10), SQL_NO_ACTION);
     is_num(my_fetch_int(hstmt, 11), SQL_SET_NULL);
   }
   else
@@ -835,8 +835,8 @@ DECLARE_TEST(t_bug4518)
   is_str(my_fetch_str(hstmt, buff, 8), "parent_id", 9);
   if (mysql_min_version(hdbc, "5.1", 3))
   {
-    is_num(my_fetch_int(hstmt, 10), SQL_CASCADE);
-    is_num(my_fetch_int(hstmt, 11), SQL_NO_ACTION);
+    is_num(my_fetch_int(hstmt, 10), SQL_NO_ACTION);
+    is_num(my_fetch_int(hstmt, 11), SQL_CASCADE);
   }
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
@@ -1163,7 +1163,6 @@ DECLARE_TEST(t_bug19923)
   ok_sql(hstmt, "CREATE TABLE t_bug19923a (a INT PRIMARY KEY) ENGINE=InnoDB");
   ok_sql(hstmt, "CREATE TABLE t_bug19923b (b INT PRIMARY KEY) ENGINE=InnoDB");
   ok_sql(hstmt, "CREATE TABLE t_bug19923c (a INT, b INT, UNIQUE(a), UNIQUE(b), CONSTRAINT `first_constraint` FOREIGN KEY (`b`) REFERENCES `t_bug19923b` (`b`), CONSTRAINT `second_constraint` FOREIGN KEY (`a`) REFERENCES `t_bug19923a` (`a`)) ENGINE=InnoDB");
-
 
   ok_stmt(hstmt, SQLForeignKeys(hstmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
                                 NULL, 0, (SQLCHAR *)"t_bug19923c", SQL_NTS));

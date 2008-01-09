@@ -1734,7 +1734,7 @@ MySQLForeignKeys(SQLHSTMT hstmt,
                      " WHEN R.UPDATE_RULE = 'SET DEFAULT' THEN 4"
                      " WHEN R.UPDATE_RULE = 'SET RESTRICT' THEN 1"
                      " WHEN R.UPDATE_RULE = 'SET NO ACTION' THEN 3"
-                     " ELSE "
+                     " ELSE 3"
                      " END";
         delete_rule= "CASE"
                      " WHEN R.DELETE_RULE = 'CASCADE' THEN 0"
@@ -1742,7 +1742,7 @@ MySQLForeignKeys(SQLHSTMT hstmt,
                      " WHEN R.DELETE_RULE = 'SET DEFAULT' THEN 4"
                      " WHEN R.DELETE_RULE = 'SET RESTRICT' THEN 1"
                      " WHEN R.DELETE_RULE = 'SET NO ACTION' THEN 3"
-                     " ELSE "
+                     " ELSE 3"
                      " END";
 
         ref_constraints_join=
@@ -1774,7 +1774,7 @@ MySQLForeignKeys(SQLHSTMT hstmt,
                     "(SELECT CONSTRAINT_NAME FROM"
                     " INFORMATION_SCHEMA.TABLE_CONSTRAINTS"
                     " WHERE TABLE_SCHEMA = REFERENCED_TABLE_SCHEMA AND"
-                    " TABLE_NAME = REFERENCED_TABLE_NAME AND"
+                    " TABLE_NAME = A.REFERENCED_TABLE_NAME AND"
                     " CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1)"
                     " AS PK_NAME,"
                     "7 AS DEFERRABILITY"
