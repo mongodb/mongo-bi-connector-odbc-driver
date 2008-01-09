@@ -1934,7 +1934,7 @@ DECLARE_TEST(t_bug30958_wchar)
   is(check_sqlstate(hstmt, "01004") == OK);
 
   /* now provide a space to read the data */
-  outmax= 2;
+  outmax= sizeof(SQLWCHAR);
   ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_WCHAR, outbuf, outmax, &outlen));
   is_num(outbuf[0], 0);
   is_num(outlen, 0);
@@ -1943,7 +1943,7 @@ DECLARE_TEST(t_bug30958_wchar)
   outmax= 0;
   expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_WCHAR, outbuf, outmax,
                                 &outlen), SQL_NO_DATA);
-  outmax= 1;
+  outmax= sizeof(SQLWCHAR);
   expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_WCHAR, outbuf, outmax,
                                 &outlen), SQL_NO_DATA);
 
