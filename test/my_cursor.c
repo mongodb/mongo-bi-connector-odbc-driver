@@ -2552,41 +2552,6 @@ DECLARE_TEST(bug6741)
 }
 
 
-/** Test SQL_POSITION */
-DECLARE_TEST(t_chunk)
-{
-  SQLCHAR   txt[100];
-  SQLLEN    len;
-
-  if (!driver_supports_setpos(hdbc))
-    skip("driver doesn't support setpos");
-
-  ok_sql(hstmt, "DROP TABLE IF EXISTS t_chunk");
-  ok_sql(hstmt, "CREATE TABLE t_chunk (id int not null primary key,"
-         "description varchar(50), txt text)");
-  ok_sql(hstmt, "INSERT INTO t_chunk VALUES (1,'venu','Developer, MySQL AB'),"
-         "(2,'monty','Michael Monty Widenius - main MySQL developer'),"
-         "(3,'mysql','MySQL AB- Speed, Power and Precision')");
-
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-
-  ok_sql(hstmt, "SELECT * from t_chunk");
-
-  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 1));
-
-  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
-
-  ok_stmt(hstmt, SQLGetData(hstmt, 3, SQL_C_CHAR, txt, 100, &len));
-  is_str(txt, "Developer, MySQL AB", 19);
-
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-
-  ok_sql(hstmt, "DROP TABLE IF EXISTS t_chunk");
-
-  return OK;
-}
-
-
 /*
   Test that the ARD (bound) type is used for the update and not
   the IRD (server-given) type.
