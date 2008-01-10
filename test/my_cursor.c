@@ -2807,7 +2807,6 @@ BEGIN_TESTS
   ADD_TEST(t_bug28255)
   ADD_TEST(bug10563)
   ADD_TEST(bug6741)
-  ADD_TEST(t_chunk)
   ADD_TEST(t_update_type)
   ADD_TEST(t_update_offsets)
   ADD_TEST(t_bug29765)
