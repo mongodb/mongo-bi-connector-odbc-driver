@@ -1943,7 +1943,7 @@ DECLARE_TEST(t_bug30958_wchar)
   outmax= 0;
   expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_WCHAR, outbuf, outmax,
                                 &outlen), SQL_NO_DATA);
-  outmax= sizeof(SQLWCHAR);
+  outmax= 1; /* outmax greater than 0, but less than sizeof(SQLWCHAR) */
   expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_WCHAR, outbuf, outmax,
                                 &outlen), SQL_NO_DATA);
 
