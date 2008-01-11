@@ -1731,14 +1731,14 @@ DECLARE_TEST(t_binary_collation)
                                 &name_length, &data_type, &column_size,
                                 &decimal_digits, &nullable));
   if (mysql_min_version(hdbc, "5.2", 3) ||
-      /* 5.0.48 or later in 5.0 series */
+      /* 5.0.46 or later in 5.0 series */
       (!strncmp("5.0", server_version, 3) &&
-        mysql_min_version(hdbc, "5.0.48", 6)) ||
+        mysql_min_version(hdbc, "5.0.46", 6)) ||
       /* 5.1.22 or later in 5.1 series */
       (!strncmp("5.1", server_version, 3) &&
         mysql_min_version(hdbc, "5.1.22", 6)))
   {
-    is_num(data_type, SQL_WVARCHAR);
+    is_num(data_type, SQL_VARCHAR);
   }
   else
   {
