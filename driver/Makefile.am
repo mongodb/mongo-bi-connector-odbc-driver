@@ -55,9 +55,7 @@ driver.h
 # Linker and preprocessor options                                 #
 #                                                                 #
 ###################################################################
-if WITH_DEBUG
-libmyodbc5_la_CPPFLAGS       = -DMYODBC_DBG
-endif
+libmyodbc5_la_CPPFLAGS       = -DNONTHREADSAFE
 
 libmyodbc5_la_LDFLAGS       = -release @NUMERIC_VERSION@ -module 
 

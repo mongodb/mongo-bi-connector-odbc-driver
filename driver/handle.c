@@ -303,7 +303,9 @@ SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
 
     stmt= (STMT FAR*) *phstmt;
     stmt->dbc= dbc;
+    pthread_mutex_lock(&stmt->dbc->lock);
     dbc->statements= list_add(dbc->statements,&stmt->list);
+    pthread_mutex_unlock(&stmt->dbc->lock);
     stmt->list.data= stmt;
     stmt->stmt_options= dbc->stmt_options;
     stmt->state= ST_UNKNOWN;
@@ -486,7 +488,9 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     x_free(stmt->cursor.name);
 
     delete_dynamic(&stmt->param_pos);
+    pthread_mutex_lock(&stmt->dbc->lock);
     stmt->dbc->statements= list_delete(stmt->dbc->statements,&stmt->list);
+    pthread_mutex_unlock(&stmt->dbc->lock);
 #ifndef _UNIX_
     GlobalUnlock(GlobalHandle ((HGLOBAL) hstmt));
     GlobalFree(GlobalHandle((HGLOBAL) hstmt));

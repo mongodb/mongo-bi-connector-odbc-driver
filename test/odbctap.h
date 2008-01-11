@@ -78,7 +78,7 @@ void printMessage(char *fmt, ...) {
 #define MAX_ROW_DATA_LEN 1000
 #define MYSQL_NAME_LEN 64
 
-SQLCHAR *mydriver= (SQLCHAR *)"MyODBC";
+SQLCHAR *mydriver= (SQLCHAR *)"{MySQL ODBC 5.1 Driver}";
 SQLCHAR *mydsn= (SQLCHAR *)"test";
 SQLCHAR *myuid= (SQLCHAR *)"root";
 SQLCHAR *mypwd= (SQLCHAR *)"";
@@ -134,9 +134,20 @@ typedef struct {
 } my_test;
 
 #ifdef WIN32
-#define ENABLE_ALARMS
-#define RUN_TESTS_SIGNAL
-#define RUN_TESTS_ALARM
+void test_timeout(int signum);
+HANDLE halarm= NULL;
+DWORD WINAPI win32_alarm(LPVOID arg)
+{
+  DWORD timeout= ((DWORD) arg) * 1000;
+  while (WaitForSingleObject(halarm, timeout) == WAIT_OBJECT_0);
+  test_timeout(0);
+  return 0;
+}
+#define ENABLE_ALARMS    int do_alarms= !getenv("DISABLE_TIMEOUT")
+#define RUN_TESTS_SIGNAL halarm= CreateEvent(NULL, FALSE, FALSE, NULL); \
+                         if (do_alarms) \
+                           CreateThread(NULL, 0, win32_alarm, (LPVOID) 30, 0, NULL)
+#define RUN_TESTS_ALARM (void) SetEvent(halarm)
 #else
 #define ENABLE_ALARMS    int do_alarms= !getenv("DISABLE_TIMEOUT")
 #define RUN_TESTS_SIGNAL (void)signal(SIGALRM, test_timeout)
@@ -178,8 +189,8 @@ int main(int argc, char **argv) \
   /* Set from environment, possibly overrided by command line */ \
   if (getenv("TEST_DSN")) \
     mydsn=  (SQLCHAR *)getenv("TEST_DSN"); \
-    if (getenv("TEST_DRIVER")) \
-      mydriver=  (SQLCHAR *)getenv("TEST_DRIVER"); \
+  if (getenv("TEST_DRIVER")) \
+    mydriver=  (SQLCHAR *)getenv("TEST_DRIVER"); \
   if (getenv("TEST_UID")) \
     myuid=  (SQLCHAR *)getenv("TEST_UID"); \
   if (getenv("TEST_PASSWORD")) \

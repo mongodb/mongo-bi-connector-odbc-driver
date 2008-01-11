@@ -97,10 +97,22 @@ void myodbc_end()
     my_free(decimal_point,MYF(0));
     my_free(default_locale,MYF(0));
     my_free(thousands_sep,MYF(0));
+
+    /* my_thread_end_wait_time was added in 5.1.14 and 5.0.32 */
+#if !defined(NONTHREADSAFE) && \
+    (MYSQL_VERSION_ID >= 50114 || \
+     (MYSQL_VERSION_ID >= 50032 && MYSQL_VERSION_ID < 50100))
+    /*
+       This eliminates the delay when my_end() is called and other threads
+       have been initialized but not ended.
+    */
+    my_thread_end_wait_time= 0;
+#endif
+
 #ifdef MY_DONT_FREE_DBUG
     /*
-     Function my_end() was changed to deallocate DBUG memory by default,
-     a flag MY_DONT_FREE_DBUG was added to disable this new behaviour
+       Function my_end() was changed to deallocate DBUG memory by default,
+       a flag MY_DONT_FREE_DBUG was added to disable this new behaviour
     */
     my_end(MY_DONT_FREE_DBUG);
 #else
@@ -116,49 +128,42 @@ void myodbc_end()
 */
 
 #ifdef _WIN32
-static int inited=0,threads=0;
-static DWORD main_thread;
-HINSTANCE NEAR s_hModule; /* Saved module handle */
-int APIENTRY LibMain(HANDLE hInst,DWORD ul_reason_being_called,
+static int inited= 0;
+int APIENTRY LibMain(HANDLE hInst, DWORD ul_reason_being_called,
 		     LPVOID lpReserved)
 {
   switch (ul_reason_being_called) {
   case DLL_PROCESS_ATTACH:  /* case of libentry call in win 3.x */
-  if (!inited++)
-  {
-    s_hModule=hInst;
-    myodbc_init();
-    main_thread=GetCurrentThreadId();
-  }
-  break;
-  case DLL_THREAD_ATTACH:
-    threads++;
-#ifdef THREAD
-    my_thread_init();
-#endif
+    if (!inited++)
+      myodbc_init();
     break;
   case DLL_PROCESS_DETACH:  /* case of wep call in win 3.x */
     if (!--inited)
       myodbc_end();
     break;
+
+  /*
+     We don't explicitly call my_thread_init() to avoid initialization in
+     threads that may not even make ODBC calls. my_thread_init() will be
+     called implicitly when mysys calls are made from the thread.
+  */
+  case DLL_THREAD_ATTACH:
+    break;
   case DLL_THREAD_DETACH:
 #ifdef THREAD
-    /* Main thread will free by my_end() */
-    threads--;
-    if (main_thread != GetCurrentThreadId())
-      my_thread_end();
-#else
-    --threads;
+    my_thread_end();
 #endif
     break;
+
   default:
     break;
-  } /* switch */
+  }
 
   return TRUE;
 
   UNREFERENCED_PARAMETER(lpReserved);
-} /* LibMain */
+}
+
 
 /*
   @type    : myodbc3 internal
@@ -183,7 +188,6 @@ int __stdcall DllMain(HANDLE hInst,DWORD ul_reason_being_called,
 int _export FAR PASCAL libmain(HANDLE hModule,short cbHeapSize,
 	     SQLCHAR FAR *lszCmdLine)
 {
-  s_hModule = hModule;
   myodbc_init();
   return TRUE;
 }

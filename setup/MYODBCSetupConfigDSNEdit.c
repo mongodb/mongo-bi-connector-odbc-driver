@@ -28,6 +28,8 @@
 */    
 BOOL MYODBCSetupConfigDSNEdit( HWND hWnd, MYODBCUTIL_DATASOURCE *pDataSource )
 {
+    char *origdsn= NULL;
+
     pDataSource->nMode = MYODBCUTIL_DATASOURCE_MODE_DSN_EDIT;
 
     /*!
@@ -81,6 +83,8 @@ BOOL MYODBCSetupConfigDSNEdit( HWND hWnd, MYODBCUTIL_DATASOURCE *pDataSource )
     /* merge in any missing attributes we can find in the system information */
     MYODBCUtilReadDataSource( pDataSource, pDataSource->pszDSN );
 
+    origdsn= strdup(pDataSource->pszDSN);
+
     /*!
         ODBC RULE
 
@@ -97,12 +101,15 @@ BOOL MYODBCSetupConfigDSNEdit( HWND hWnd, MYODBCUTIL_DATASOURCE *pDataSource )
         }
     }
 
-    /*!
-        ODBC RULE
-
-        If the data source name was not changed, ConfigDSN calls 
-        SQLWritePrivateProfileString in the installer DLL to make any other changes.
+    /*
+      If the data source name changed, delete the old entry.
     */
+    if (strcmp(origdsn, pDataSource->pszDSN))
+    {
+        SQLRemoveDSNFromIni(origdsn);
+    }
+    free(origdsn);
+
     /*!
         MYODBC RULE
 

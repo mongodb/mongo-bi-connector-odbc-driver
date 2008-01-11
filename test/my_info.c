@@ -211,6 +211,56 @@ DECLARE_TEST(t_bug31055)
 }
 
 
+/*
+   Bug 3780, reading or setting ADODB.Connection.DefaultDatabase 
+   is not supported
+*/
+DECLARE_TEST(t_bug3780)
+{
+  HDBC hdbc1;
+  HSTMT hstmt1;
+  SQLCHAR   conn[256], conn_out[256];
+  SQLSMALLINT conn_out_len;
+  SQLCHAR   rgbValue[MAX_NAME_LEN];
+  SQLSMALLINT pcbInfo;
+  SQLINTEGER len;
+
+  /* The connection string must not include DATABASE. */
+  sprintf((char *)conn, "DRIVER=%s;SERVER=localhost;" \
+                        "UID=%s;PASSWORD=%s", mydriver, myuid, mypwd);
+  if (mysock != NULL)
+  {
+    strcat((char *)conn, ";SOCKET=");
+    strcat((char *)conn, (char *)mysock);
+  }
+
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), conn_out,
+                                 sizeof(conn_out), &conn_out_len,
+                                 SQL_DRIVER_NOPROMPT));
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_con(hdbc1, SQLGetInfo(hdbc1, SQL_DATABASE_NAME, rgbValue, 
+                           MAX_NAME_LEN, &pcbInfo));
+
+  is_num(pcbInfo, 4);
+  is_str(rgbValue, "null", pcbInfo);
+
+  ok_con(hdbc1, SQLGetConnectAttr(hdbc1, SQL_ATTR_CURRENT_CATALOG,
+                                  rgbValue, MAX_NAME_LEN, &len));
+
+  is_num(pcbInfo, 4);
+  is_str(rgbValue, "null", len);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlgetinfo)
   ADD_TEST(t_gettypeinfo)
@@ -220,6 +270,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug28657)
   ADD_TEST(t_bug14639)
   ADD_TEST(t_bug31055)
+  ADD_TEST(t_bug3780)
 END_TESTS
 
 
