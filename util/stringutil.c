@@ -570,26 +570,21 @@ SQLWCHAR *sqlwchardup(const SQLWCHAR *wstr, size_t charlen)
  * @return The integer result of the conversion or 0 if the
  *         string could not be parsed.
  */
-unsigned long sqlwchartoul(const SQLWCHAR *wstr, SQLWCHAR **endptr)
+unsigned long sqlwchartoul(const SQLWCHAR *wstr)
 {
-  unsigned long res= 0;
+  const SQLWCHAR *end= wstr + sqlwcharlen(wstr) - 1;
   SQLWCHAR c;
-
+  int pten= 1;
+  unsigned long res= 0;
   if (!wstr)
     return 0;
-
-  while (c= *wstr)
+  for (; end >= wstr; pten *= 10, end--)
   {
+    c= *end;
     if (c < '0' || c > '9')
-      break;
-    res*= 10;
-    res+= c - '0';
-    wstr++;
+      return 0;
+    res += (c - '0') * pten;
   }
-
-  if (endptr)
-    *endptr= wstr;
-
   return res;
 }
 

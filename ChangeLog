@@ -14,7 +14,6 @@
   * Changing the DSN name when editing a DSN left behind the DSN
     under the old name in addition to creating the new entry. Fixed for
     native Windows GUI. (Bug #31165)
-  * MyODBC 5.1 failed to connect with non-standard port. (Bug #33822)
 
   Includes changes from Connector/ODBC 3.51.23.
 

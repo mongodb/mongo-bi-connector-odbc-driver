@@ -31,7 +31,7 @@ extern SQLWCHAR **errorMsgs;
 
 void DecompileOptions(DataSource *params)
 {
-  ulong nOptions= sqlwchartoul(params->option, NULL);
+  ulong nOptions= sqlwchartoul(params->option);
 
   params->dont_optimize_column_width=           (nOptions & FLAG_FIELD_LENGTH) > 0;
   params->return_matching_rows=                 (nOptions & FLAG_FOUND_ROWS) > 0;  /* 2 */
