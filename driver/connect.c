@@ -144,7 +144,7 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
   /* Use 'int' and fill all bits to avoid alignment Bug#25920 */
   unsigned int opt_ssl_verify_server_cert = ~0;
 
-  options= sqlwchartoul(ds->option);
+  options= sqlwchartoul(ds->option, NULL);
 
 #ifdef WIN32
   /*
@@ -486,7 +486,7 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
   /* If FLAG_NO_PROMPT is no set, force prompting off. */
   if (ds->option)
   {
-    options= sqlwchartoul(ds->option);
+    options= sqlwchartoul(ds->option, NULL);
     if (options & FLAG_NO_PROMPT)
       fDriverCompletion= SQL_DRIVER_NOPROMPT;
   }

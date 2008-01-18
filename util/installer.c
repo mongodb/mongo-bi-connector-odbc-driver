@@ -641,7 +641,7 @@ int ds_lookup(DataSource *ds)
     else if (dest && !*dest)
       ds_set_strattr(dest, val);
     else if (intdest)
-      *intdest= sqlwchartoul(val);
+      *intdest= sqlwchartoul(val, NULL);
 
     entries += sqlwcharlen(entries) + 1;
   }
@@ -695,7 +695,7 @@ int ds_from_kvpair(DataSource *ds, const SQLWCHAR *attrs, SQLWCHAR delim)
     else if (intdest)
     {
       /* we know we have a ; or NULL at the end so we just let it go */
-      *intdest= sqlwchartoul(split);
+      *intdest= sqlwchartoul(split, NULL);
     }
 
     attrs= end;
