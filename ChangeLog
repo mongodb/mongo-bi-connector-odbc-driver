@@ -3,6 +3,8 @@
   Functionality added or changed:
   * SQLForeignKeys uses INFORMATION_SCHEMA when it is available on the server,
     which allows more complete information to be returned.
+  * Disable setting option MYSQL_OPT_SSL_VERIFY_SERVER_CERT when using an SSL
+    connection.
 
   Bugs fixed:
   * SQLForeignKeys returned an empty string for the schema columns instead of

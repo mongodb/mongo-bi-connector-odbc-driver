@@ -193,8 +193,11 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
                 ds_get_utf8attr(ds->sslca,     &ds->sslca8),
                 ds_get_utf8attr(ds->sslcapath, &ds->sslcapath8),
                 ds_get_utf8attr(ds->sslcipher, &ds->sslcipher8));
+  /* TODO enable this via DSN option / gui, see bug#34020 */
+  /*
   mysql_options(mysql, MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
                 (const char *)&opt_ssl_verify_server_cert);
+  */
 
   {
     /*
