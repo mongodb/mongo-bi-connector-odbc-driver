@@ -999,6 +999,10 @@ static SQLRETURN setpos_delete(STMT FAR *stmt, SQLUSMALLINT irow,
     if ( nReturn == SQL_SUCCESS )
         nReturn= update_setpos_status(stmt,irow,affected_rows,SQL_ROW_DELETED);
 
+    /* fix-up so fetching next rowset is correct */
+    if (if_dynamic_cursor(stmt))
+      stmt->rows_found_in_set-= (uint) affected_rows;
+
     return nReturn;
 }
 
@@ -1327,8 +1331,6 @@ static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLSETPOSIROW irow, SQLUS
 
                 sqlRet = setpos_delete( stmt, irow, &dynQuery );
                 dynstr_free(&dynQuery);
-                /* since we've deleted the current row, cursor pos gets fixed */
-                stmt->current_row--;
                 break;
             }
 

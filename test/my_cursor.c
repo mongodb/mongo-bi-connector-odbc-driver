@@ -2683,46 +2683,6 @@ DECLARE_TEST(t_update_offsets)
 }
 
 
-/*
-  Bug#29765 SQLSetPos w/SQL_DELETE advances dynamic cursor incorrectly
-*/
-DECLARE_TEST(t_bug29765)
-{
-  SQLINTEGER x;
-  SQLHANDLE henv1, hdbc1, hstmt1;
-  SET_DSN_OPTION(32);
-  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
-
-  ok_sql(hstmt1, "drop table if exists t_bug29765");
-  ok_sql(hstmt1, "create table t_bug29765 (x int)");
-  ok_sql(hstmt1, "insert into t_bug29765 values (1),(2),(3),(4)");
-  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
-
-  ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
-                                 (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
-
-  ok_stmt(hstmt1, SQLBindCol(hstmt1, 1, SQL_C_LONG, &x, 0, NULL));
-  ok_sql(hstmt1, "select x from t_bug29765 order by 1");
-  ok_stmt(hstmt1, SQLFetch(hstmt1));
-
-  is_num(x, 1);
-  ok_stmt(hstmt1, SQLFetch(hstmt1));
-
-  /* delete x = 2 */
-  ok_stmt(hstmt1, SQLSetPos(hstmt1, 1, SQL_DELETE, SQL_LOCK_NO_CHANGE));
-
-  /* next row should be 3 */
-  ok_stmt(hstmt1, SQLFetch(hstmt1));
-  is_num(x, 3);
-
-  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
-
-  ok_sql(hstmt1, "drop table if exists t_bug29765");
-  SET_DSN_OPTION(0);
-  return OK;
-}
-
-
 /**
  Bug #6157: BUG in the alias use with ADO's Object
 */
@@ -2895,7 +2855,7 @@ DECLARE_TEST(t_bug32420)
                                  SQL_DRIVER_NOPROMPT));
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
   ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
-                                 SQL_CURSOR_DYNAMIC, 0));
+                                 (SQLPOINTER) SQL_CURSOR_DYNAMIC, 0));
   ok_sql(hstmt1, "drop table if exists bug32420");
   ok_sql(hstmt1, "CREATE TABLE bug32420 ("\
                 "tt_int INT PRIMARY KEY auto_increment,"\
@@ -3026,6 +2986,121 @@ DECLARE_TEST(t_bug32420)
 }
 
 
+/*
+  Shared between t_cursor_pos_static and t_cursor_pos_dynamic.
+  Tests all the cursor position handling.
+  Cursor type is setup by caller.
+*/
+int t_cursor_pos(SQLHANDLE hstmt)
+{
+  SQLINTEGER i;
+  SQLINTEGER x[3];
+  SQLINTEGER y[3];
+  SQLINTEGER remaining_rows[]= {1, 5, 6, 7, 8};
+  SQLINTEGER remaining_row_count= 5;
+
+  ok_sql(hstmt, "drop table if exists t_cursor_pos");
+  ok_sql(hstmt, "create table t_cursor_pos (x int not null, "
+                "y int, primary key (x))");
+  ok_sql(hstmt, "insert into t_cursor_pos values (0,0),(1,1),"
+                "(2,2),(3,3),(4,4),  (5,5),(6,6),(7,7),  (8,8)");
+
+  ok_sql(hstmt, "select x,y from t_cursor_pos order by 1");
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, x, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_LONG, y, 0, NULL));
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0));
+
+  /* this covers bug#29765 and bug#33388 */
+  is_num(x[0], 0);
+  ok_stmt(hstmt, SQLSetPos(hstmt, 0, SQL_DELETE, SQL_LOCK_NO_CHANGE));
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0));
+  is_num(x[0], 1);
+
+  y[0]++;
+  ok_stmt(hstmt, SQLSetPos(hstmt, 0, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0));
+  is_num(x[0], 2);
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_PRIOR, 0));
+  is_num(x[0], 1);
+
+  /* and rowset tests */
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE,
+                                (SQLPOINTER)3, 0));
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0));
+  for (i= 0; i < 3; ++i)
+    is_num(x[i], 2 + i);
+
+  /* delete 2,3,4 */
+  ok_stmt(hstmt, SQLSetPos(hstmt, 0, SQL_DELETE, SQL_LOCK_NO_CHANGE));
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0));
+  for (i= 0; i < 3; ++i)
+  {
+    is_num(x[i], 5 + i);
+    y[i]++;
+  }
+
+  /* update 5,6,7 */
+  ok_stmt(hstmt, SQLSetPos(hstmt, 0, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
+
+  /* set rowset_size back to 1 */
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE,
+                                (SQLPOINTER)1, 0));
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0));
+  is_num(x[0], 8);
+  y[0]++;
+  ok_stmt(hstmt, SQLSetPos(hstmt, 0, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
+
+  /* check all rows were updated correctly */
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "select x,y from t_cursor_pos order by 1");
+  for (i= 0; i < remaining_row_count; ++i)
+  {
+    ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0));
+    is_num(x[0], remaining_rows[i]);
+    is_num(y[0], x[0] + 1);
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists t_cursor_pos");
+  return OK;
+}
+
+
+/*
+  Wrapper for t_cursor_pos using static cursor.
+*/
+DECLARE_TEST(t_cursor_pos_static)
+{
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+  return t_cursor_pos(hstmt);
+}
+
+
+/*
+  Wrapper for t_cursor_pos using dynamic cursor.
+*/
+DECLARE_TEST(t_cursor_pos_dynamic)
+{
+  SQLHANDLE henv1, hdbc1, hstmt1;
+  SET_DSN_OPTION(32);
+  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+  ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
+                                 (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
+  is(t_cursor_pos(hstmt1) == OK);
+  (void) free_basic_handles(&henv1, &hdbc1, &hstmt1);
+  SET_DSN_OPTION(0);
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_positioned_cursor)
   ADD_TEST(my_setpos_cursor)
@@ -3067,9 +3142,10 @@ BEGIN_TESTS
   ADD_TEST(bug6741)
   ADD_TEST(t_update_type)
   ADD_TEST(t_update_offsets)
-  ADD_TEST(t_bug29765)
   ADD_TEST(t_bug6157)
   ADD_TODO(t_bug32420)
+  ADD_TEST(t_cursor_pos_static)
+  ADD_TEST(t_cursor_pos_dynamic)
 END_TESTS
 
 
