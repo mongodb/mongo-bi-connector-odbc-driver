@@ -254,7 +254,7 @@ void syncTabsData(HWND hwnd, DataSource &params)
     getStrFieldData(&params.sslcert     , 5, IDC_EDIT_sslcert);
     getStrFieldData(&params.sslca       , 5, IDC_EDIT_sslca);
     getStrFieldData(&params.sslcapath   , 5, IDC_EDIT_sslcapath);
-    getStrFieldData(&params.sslcipher   , 5, IDC_EDIT_sslkey);
+    getStrFieldData(&params.sslcipher   , 5, IDC_EDIT_sslcipher);
 }
 
 void syncTabs(HWND hwnd, DataSource &params)

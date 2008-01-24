@@ -17,6 +17,8 @@
     under the old name in addition to creating the new entry. Fixed for
     native Windows GUI. (Bug #31165)
   * MyODBC 5.1 failed to connect with non-standard port. (Bug #33822)
+  * ODBC Driver 5.1.1 Beta fails to connect using SSL when SSL-Key set on
+    Windows ODBC Dialog. (Bug #33897)
 
   Includes changes from Connector/ODBC 3.51.23.
 
