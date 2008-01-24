@@ -1168,22 +1168,22 @@ DECLARE_TEST(t_bug19923)
                                 NULL, 0, (SQLCHAR *)"t_bug19923c", SQL_NTS));
 
   ok_stmt(hstmt, SQLFetch(hstmt));
-  is_str(my_fetch_str(hstmt, buff, 3), "t_bug19923b", 10);
+  is_str(my_fetch_str(hstmt, buff, 3), "t_bug19923a", 11);
+  is_str(my_fetch_str(hstmt, buff, 4), "a", 1);
+  is_str(my_fetch_str(hstmt, buff, 7), "t_bug19923c", 11);
+  is_str(my_fetch_str(hstmt, buff, 8), "a", 1);
+  is_str(my_fetch_str(hstmt, buff, 12), "second_constraint", 17);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buff, 3), "t_bug19923b", 11);
   is_str(my_fetch_str(hstmt, buff, 4), "b", 1);
-  is_str(my_fetch_str(hstmt, buff, 7), "t_bug19923c", 10);
+  is_str(my_fetch_str(hstmt, buff, 7), "t_bug19923c", 11);
   is_str(my_fetch_str(hstmt, buff, 8), "b", 1);
   is_str(my_fetch_str(hstmt, buff, 12), "first_constraint", 16);
   ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_CHAR, buff, sizeof(buff), &len));
   is_num(len, SQL_NULL_DATA);
   ok_stmt(hstmt, SQLGetData(hstmt, 6, SQL_C_CHAR, buff, sizeof(buff), &len));
   is_num(len, SQL_NULL_DATA);
-
-  ok_stmt(hstmt, SQLFetch(hstmt));
-  is_str(my_fetch_str(hstmt, buff, 3), "t_bug19923a", 10);
-  is_str(my_fetch_str(hstmt, buff, 4), "a", 1);
-  is_str(my_fetch_str(hstmt, buff, 7), "t_bug19923c", 10);
-  is_str(my_fetch_str(hstmt, buff, 8), "a", 1);
-  is_str(my_fetch_str(hstmt, buff, 12), "second_constraint", 17);
 
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 

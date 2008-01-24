@@ -1639,7 +1639,7 @@ MySQLPrimaryKeys(SQLHSTMT hstmt,
 
 /*
 ****************************************************************************
-SQLForeignJeys
+SQLForeignKeys
 ****************************************************************************
 */
 MYSQL_FIELD SQLFORE_KEYS_fields[]=
@@ -1805,6 +1805,9 @@ MySQLForeignKeys(SQLHSTMT hstmt,
         buff+= mysql_real_escape_string(mysql, buff, (char *)szPkTableName,
                                         cbPkTableName);
         buff= strmov(buff, "' ");
+
+        strmov(buff, "ORDER BY PKTABLE_CAT, PKTABLE_NAME, "
+                     "KEY_SEQ, FKTABLE_NAME");
       }
 
       if (szFkTableName && szFkTableName[0])
@@ -1827,9 +1830,10 @@ MySQLForeignKeys(SQLHSTMT hstmt,
         buff+= mysql_real_escape_string(mysql, buff, (char *)szFkTableName,
                                         cbFkTableName);
         buff= strmov(buff, "' ");
-      }
 
-      strmov(buff, "ORDER BY FKTABLE_CAT, FKTABLE_NAME, KEY_SEQ");
+        strmov(buff, "ORDER BY FKTABLE_CAT, FKTABLE_NAME, "
+                     "KEY_SEQ, PKTABLE_NAME");
+      }
 
       rc= MySQLPrepare(hstmt, (SQLCHAR *)query, SQL_NTS, FALSE);
       if (!SQL_SUCCEEDED(rc))
