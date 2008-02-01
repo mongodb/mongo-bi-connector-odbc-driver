@@ -77,7 +77,41 @@ DESC *desc_alloc(STMT *stmt, SQLSMALLINT alloc_type,
   desc->bind_type= SQL_BIND_BY_COLUMN;
   desc->count= 0;
   desc->rows_processed_ptr= NULL;
+  desc->exp.stmts= NULL;
   return desc;
+}
+
+
+/*
+  Free a descriptor.
+*/
+void desc_free(DESC *desc)
+{
+  assert(desc);
+  if (IS_APD(desc))
+    desc_free_paramdata(desc);
+  delete_dynamic(&desc->records);
+  x_free(desc);
+}
+
+
+/*
+  Free any memory allocated for SQLPutData(). This is only useful
+  for APDs.
+*/
+void desc_free_paramdata(DESC *desc)
+{
+  SQLLEN i;
+  for (i= 0; i < desc->count; i++)
+  {
+    DESCREC *aprec= desc_get_rec(desc, i, FALSE);
+    assert(aprec);
+    if (aprec->par.alloced)
+    {
+      aprec->par.alloced= FALSE;
+      my_free(aprec->par.value, MYF(0));
+    }
+  }
 }
 
 
@@ -208,6 +242,33 @@ DESCREC *desc_get_rec(DESC *desc, int recnum, my_bool expand)
   if (expand)
     assert(rec);
   return rec;
+}
+
+
+/*
+ * Disassociate a statement from an explicitly allocated
+ * descriptor.
+ *
+ * @param desc The descriptor
+ * @param stmt The statement
+ */
+void desc_remove_stmt(DESC *desc, STMT *stmt)
+{
+  LIST *lstmt;
+
+  if (desc->alloc_type != SQL_DESC_ALLOC_USER)
+    return;
+
+  for (lstmt= desc->exp.stmts; lstmt; lstmt= lstmt->next)
+  {
+    if (lstmt->data == stmt)
+    {
+      desc->exp.stmts= list_delete(desc->exp.stmts, lstmt);
+      return;
+    }
+  }
+
+  assert(!"Statement was not associated with descriptor");
 }
 
 
@@ -424,7 +485,7 @@ getfield(SQLSMALLINT fldid)
  */
 SQLRETURN
 MySQLGetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
-                  SQLPOINTER valptr, SQLINTEGER buflen, SQLINTEGER *strlen)
+                  SQLPOINTER valptr, SQLINTEGER buflen, SQLINTEGER *outlen)
 {
   desc_field *fld= getfield(fldid);
   DESC *desc= (DESC *)hdesc;
@@ -722,7 +783,7 @@ MySQLSetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
   apply_desc_val(dest, fld->data_type, val, buflen);
 
   /* post-set responsibilities */
-  if (IS_ARD(desc) || IS_APD(desc))
+  if ((IS_ARD(desc) || IS_APD(desc)) && fld->loc == DESC_REC)
   {
     DESCREC *rec= (DESCREC *) dest_struct;
     switch (fldid)
@@ -764,7 +825,7 @@ MySQLSetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
     Set "real_param_done" for parameters if all fields needed to bind
     a parameter are set.
   */
-  if (IS_APD(desc) && val != NULL)
+  if (IS_APD(desc) && val != NULL && fld->loc == DESC_REC)
   {
     DESCREC *rec= (DESCREC *) dest_struct;
     switch (fldid)
@@ -783,15 +844,13 @@ MySQLSetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
 
 /*
   @type    : ODBC 3.0 API
-  @purpose : Set a field of a descriptor.
+  @purpose : Copy descriptor information from one descriptor to another.
              Errors are placed in the TargetDescHandle.
  */
 SQLRETURN MySQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandle)
 {
   DESC *src= (DESC *)SourceDescHandle;
   DESC *dest= (DESC *)TargetDescHandle;
-  SQLSMALLINT alloc_type;
-  STMT *stmt;
 
   CLEAR_DESC_ERROR(dest);
 
@@ -800,18 +859,13 @@ SQLRETURN MySQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandle)
                           "Cannot modify an implementation row descriptor",
                           MYERR_S1016);
 
-  /* we save these because they shouldn't be overwritten */
-  alloc_type= dest->alloc_type;
-  stmt= dest->stmt;
-
   if (IS_IRD(src) && src->stmt->state < ST_PREPARED)
     return set_desc_error(dest, "HY007",
               "Associated statement is not prepared",
               MYERR_S1007);
 
-  memcpy(dest, src, sizeof(DESC));
-
   /* copy the records */
+  delete_dynamic(&dest->records);
   if (my_init_dynamic_array(&dest->records, sizeof(DESCREC),
                             src->records.max_element,
                             src->records.alloc_increment))
@@ -823,9 +877,14 @@ SQLRETURN MySQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandle)
   memcpy(dest->records.buffer, src->records.buffer,
          src->records.max_element * src->records.size_of_element);
 
-  /* restore needed fields */
-  dest->alloc_type= alloc_type;
-  dest->stmt= stmt;
+  /* copy all fields */
+  dest->array_size= src->array_size;
+  dest->array_status_ptr= src->array_status_ptr;
+  dest->bind_offset_ptr= src->bind_offset_ptr;
+  dest->bind_type= src->bind_type;
+  dest->count= src->count;
+  dest->rows_processed_ptr= src->rows_processed_ptr;
+  memcpy(&dest->error, &src->error, sizeof(MYERROR));
 
   /* TODO consistency check on target, if needed (apd) */
 
@@ -840,11 +899,11 @@ SQLRETURN MySQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandle)
 SQLRETURN
 stmt_SQLGetDescField(STMT *stmt, DESC *desc, SQLSMALLINT recnum,
                      SQLSMALLINT fldid, SQLPOINTER valptr,
-                     SQLINTEGER buflen, SQLINTEGER *strlen)
+                     SQLINTEGER buflen, SQLINTEGER *outlen)
 {
   SQLRETURN rc;
   if ((rc= MySQLGetDescField((SQLHANDLE)desc, recnum, fldid,
-                             valptr, buflen, strlen)) != SQL_SUCCESS)
+                             valptr, buflen, outlen)) != SQL_SUCCESS)
     memcpy(&stmt->error, &desc->error, sizeof(MYERROR));
   return rc;
 }

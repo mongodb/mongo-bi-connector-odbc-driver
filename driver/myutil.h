@@ -250,8 +250,11 @@ DESCREC *desc_get_rec(DESC *desc, int recnum, my_bool expand);
 
 DESC *desc_alloc(STMT *stmt, SQLSMALLINT alloc_type,
                  desc_ref_type ref_type, desc_desc_type desc_type);
+void desc_free_paramdata(DESC *desc);
+void desc_free(DESC *desc);
 void desc_rec_init_apd(DESCREC *rec);
 void desc_rec_init_ipd(DESCREC *rec);
+void desc_remove_stmt(DESC *desc, STMT *stmt);
 SQLRETURN
 stmt_SQLSetDescField(STMT *stmt, DESC *desc, SQLSMALLINT recnum,
                      SQLSMALLINT fldid, SQLPOINTER val, SQLINTEGER buflen);

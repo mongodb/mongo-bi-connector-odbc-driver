@@ -359,7 +359,7 @@ MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
             /*
               3.x driver doesn't support any statement attributes
               at connection level, but to make sure all 2.x apps
-              works fine...lets support it..nothing to loose..
+              works fine...lets support it..nothing to lose..
             */
         default:
             return set_constmt_attr(2, dbc, &dbc->stmt_options, Attribute,
@@ -522,12 +522,87 @@ MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
                 options->cursor_type= SQL_CURSOR_STATIC;
             break;
 
+        case SQL_ATTR_APP_PARAM_DESC:
+        case SQL_ATTR_APP_ROW_DESC:
+            {
+              DESC *desc= (DESC *) ValuePtr;
+              DESC **dest= NULL;
+              desc_desc_type desc_type;
+
+              /* reset to implicit if null */
+              if (desc == SQL_NULL_HANDLE)
+              {
+                if (Attribute == SQL_ATTR_APP_PARAM_DESC)
+                  stmt->apd= stmt->imp_apd;
+                else if (Attribute == SQL_ATTR_APP_ROW_DESC)
+                  stmt->ard= stmt->imp_ard;
+                break;
+              }
+
+              if (desc->alloc_type == SQL_DESC_ALLOC_AUTO &&
+                  desc->stmt != stmt)
+                return set_error(hstmt,MYERR_S1017,
+                                 "Invalid use of an automatically allocated "
+                                 "descriptor handle",0);
+
+              if (desc->alloc_type == SQL_DESC_ALLOC_USER &&
+                  stmt->dbc != desc->exp.dbc)
+                return set_error(hstmt,MYERR_S1024,
+                                 "Invalid attribute value",0);
+
+              if (Attribute == SQL_ATTR_APP_PARAM_DESC)
+              {
+                dest= &stmt->apd;
+                desc_type= DESC_PARAM;
+              }
+              else if (Attribute == SQL_ATTR_APP_ROW_DESC)
+              {
+                dest= &stmt->ard;
+                desc_type= DESC_ROW;
+              }
+
+              if (desc->desc_type != DESC_UNKNOWN &&
+                  desc->desc_type != desc_type)
+              {
+                return set_error(hstmt,MYERR_S1024,
+                                 "Descriptor type mismatch",0);
+              }
+
+              assert(desc);
+              assert(dest);
+
+              if (desc->alloc_type == SQL_DESC_ALLOC_AUTO &&
+                  (*dest)->alloc_type == SQL_DESC_ALLOC_USER)
+                /*
+                  If we're setting back the original implicit
+                  descriptor, we must disassociate this statement
+                  from the explicit descriptor.
+                */
+                desc_remove_stmt(*dest, stmt);
+              else if (desc->alloc_type == SQL_DESC_ALLOC_USER)
+              {
+                /* otherwise, associate this statement with the desc */
+                LIST *e= (LIST *) my_malloc(sizeof(LIST), MYF(0));
+                e->data= stmt;
+                desc->exp.stmts= list_add(desc->exp.stmts, e);
+              }
+
+              desc->desc_type= desc_type;
+              *dest= desc;
+            }
+            break;
+
         case SQL_ATTR_AUTO_IPD:
         case SQL_ATTR_ENABLE_AUTO_IPD:
             if (ValuePtr != (SQLPOINTER)SQL_FALSE)
                 return set_error(hstmt,MYERR_S1C00,
                                  "Optional feature not implemented",0);
             break;
+
+        case SQL_ATTR_IMP_PARAM_DESC:
+        case SQL_ATTR_IMP_ROW_DESC:
+            return set_error(hstmt,MYERR_S1024,
+                             "Invalid attribute/option identifier",0);
 
         case SQL_ATTR_PARAM_BIND_OFFSET_PTR:
             return stmt_SQLSetDescField(stmt, stmt->apd, 0,
@@ -555,9 +630,13 @@ MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
                                         ValuePtr, SQL_IS_POINTER);
 
         case SQL_ATTR_PARAMSET_SIZE:
+            return set_error(hstmt,MYERR_01S02,
+                             "Param arrays not supported",0);
+#if ALLOW_SETTING_DESC_ARRAY_SIZE
             return stmt_SQLSetDescField(stmt, stmt->apd, 0,
                                         SQL_DESC_ARRAY_SIZE,
                                         ValuePtr, SQL_IS_ULEN);
+#endif
 
         case SQL_ATTR_ROW_ARRAY_SIZE:
         case SQL_ROWSET_SIZE:
@@ -598,16 +677,10 @@ MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
             options->simulateCursor= (SQLUINTEGER)(SQLULEN)ValuePtr;
             break;
 
-        /* TODO add setting descriptor support */
-        /* only explicitely allocated descriptors can be set */
-        /* HY017
-         *  Invalid use of an automatically allocated descriptor handle
-         */
-
             /*
               3.x driver doesn't support any statement attributes
               at connection level, but to make sure all 2.x apps
-              works fine...lets support it..nothing to loose..
+              works fine...lets support it..nothing to lose..
             */
         default:
             result= set_constmt_attr(3,hstmt,options,
@@ -732,7 +805,7 @@ MySQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
             /*
               3.x driver doesn't support any statement attributes
               at connection level, but to make sure all 2.x apps
-              works fine...lets support it..nothing to loose..
+              works fine...lets support it..nothing to lose..
             */
         default:
             result= get_constmt_attr(3,hstmt,options,

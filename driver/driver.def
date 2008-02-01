@@ -43,6 +43,7 @@ SQLBindCol
 SQLCancel
 SQLColAttributes
 SQLConnect
+SQLCopyDesc
 SQLDescribeCol
 SQLDisconnect
 SQLError

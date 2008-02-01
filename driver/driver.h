@@ -159,7 +159,7 @@ extern "C"
 typedef enum { DESC_IMP, DESC_APP } desc_ref_type;
 
 /* parameter or row descriptor? */
-typedef enum { DESC_PARAM, DESC_ROW } desc_desc_type;
+typedef enum { DESC_PARAM, DESC_ROW, DESC_UNKNOWN } desc_desc_type;
 
 /* header or record field? (location in descriptor) */
 typedef enum { DESC_HDR, DESC_REC } fld_loc;
@@ -196,6 +196,10 @@ typedef enum { DESC_HDR, DESC_REC } fld_loc;
 /* check if ARD record is a bound column */
 #define ARD_IS_BOUND(d) ((d)->data_ptr || (d)->octet_length_ptr)
 
+/* get the dbc from a descriptor */
+#define DESC_GET_DBC(X) (((X)->alloc_type == SQL_DESC_ALLOC_USER) ? \
+                         (X)->exp.dbc : (X)->stmt->dbc)
+
 typedef struct {
   int perms;
   SQLSMALLINT data_type; /* SQL_IS_SMALLINT, etc */
@@ -205,6 +209,7 @@ typedef struct {
 
 /* descriptor */
 struct tagSTMT;
+struct tagDBC;
 typedef struct {
   /* header fields */
   SQLSMALLINT   alloc_type;
@@ -228,6 +233,17 @@ typedef struct {
   DYNAMIC_ARRAY   records;
   MYERROR         error;
   struct tagSTMT *stmt;
+
+  /* SQL_DESC_ALLOC_USER-specific */
+  struct {
+    /*
+      We keep a list of all statements we've been set on because we need
+      to put the implicit descriptor back if this one is freed.
+    */
+    LIST *stmts;
+    /* connection we were allocated on */
+    struct tagDBC *dbc;
+  } exp;
 } DESC;
 
 /* descriptor record */
@@ -322,7 +338,7 @@ typedef struct tagDBC
   ENV		*env;
   MYSQL		mysql;
   LIST		*statements;
-  LIST		*descriptors;
+  LIST		*exp_desc; /* explicit descriptors */
   LIST		list;
   STMT_OPTIONS	stmt_options;
   MYERROR	error;
@@ -417,6 +433,9 @@ typedef struct tagSTMT
   DESC *ird;
   DESC *apd;
   DESC *ipd;
+  /* implicit descriptors */
+  DESC *imp_ard;
+  DESC *imp_apd;
 } STMT;
 
 

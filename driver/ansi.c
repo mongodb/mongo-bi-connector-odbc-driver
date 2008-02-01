@@ -658,7 +658,7 @@ SQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle,
     dbc= ((STMT *)handle)->dbc;
     break;
   case SQL_HANDLE_DESC:
-    dbc= ((DESC *)handle)->stmt->dbc;
+    dbc= DESC_GET_DBC((DESC *)handle);
     break;
   case SQL_HANDLE_ENV:
   default:
@@ -729,7 +729,7 @@ SQLGetDiagRecImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
     dbc= ((STMT *)handle)->dbc;
     break;
   case SQL_HANDLE_DESC:
-    dbc= ((DESC *)handle)->stmt->dbc;
+    dbc= DESC_GET_DBC((DESC *)handle);
     break;
   case SQL_HANDLE_ENV:
   default:

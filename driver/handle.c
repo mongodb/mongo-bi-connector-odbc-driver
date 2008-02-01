@@ -215,6 +215,7 @@ SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc)
     dbc->list.data= dbc;
     dbc->unicode= 0;
     dbc->ansi_charset_info= dbc->cxn_charset_info= NULL;
+    dbc->exp_desc= NULL;
     pthread_mutex_init(&dbc->lock,NULL);
     pthread_mutex_lock(&dbc->lock);
     myodbc_ov_init(penv->odbc_ver); /* Initialize based on ODBC version */
@@ -244,6 +245,8 @@ SQLRETURN SQL_API SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc)
 SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc)
 {
     DBC FAR *dbc= (DBC FAR*) hdbc;
+    LIST *ldesc;
+    LIST *next;
 
     dbc->env->connections= list_delete(dbc->env->connections,&dbc->list);
     my_free(dbc->dsn,MYF(MY_ALLOW_ZERO_PTR));
@@ -253,6 +256,14 @@ SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc)
     my_free(dbc->user,MYF(MY_ALLOW_ZERO_PTR));
     my_free(dbc->password,MYF(MY_ALLOW_ZERO_PTR));
     pthread_mutex_destroy(&dbc->lock);
+
+    /* free any remaining explicitly allocated descriptors */
+    for (ldesc= dbc->exp_desc; ldesc; ldesc= next)
+    {
+      next= ldesc->next;
+      desc_free((DESC *) ldesc->data);
+      x_free(ldesc);
+    }
 
 #ifndef _UNIX_
     GlobalUnlock(GlobalHandle((HGLOBAL) hdbc));
@@ -325,13 +336,15 @@ SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
     if (!(stmt->ipd= desc_alloc(stmt, SQL_DESC_ALLOC_AUTO,
                                 DESC_IMP, DESC_PARAM)))
         goto error;
+    stmt->imp_ard= stmt->ard;
+    stmt->imp_apd= stmt->apd;
 
     return SQL_SUCCESS;
 error:
-	x_free(stmt->ard);
-	x_free(stmt->ird);
-	x_free(stmt->apd);
-	x_free(stmt->ipd);
+    x_free(stmt->ard);
+    x_free(stmt->ird);
+    x_free(stmt->apd);
+    x_free(stmt->ipd);
     return set_dbc_error(dbc, "HY001", "Memory allocation error", MYERR_S1001);
 }
 
@@ -393,16 +406,9 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
         stmt->ard->count= 0;
         return SQL_SUCCESS;
     }
-    /* free any allocated memory from SQLPutData() */
-    for (i= 0; i < (uint) stmt->apd->count; i++)
-    {
-        DESCREC *aprec= desc_get_rec(stmt->apd, i, FALSE);
-        if (aprec->par.alloced)
-        {
-            aprec->par.alloced= FALSE;
-            my_free(aprec->par.value,MYF(0));
-        }
-    }
+
+    desc_free_paramdata(stmt->apd);
+
     if (fOption == SQL_RESET_PARAMS)
     {
         /* remove all params and reset count to 0 (per spec) */
@@ -465,9 +471,6 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     stmt->query= stmt->orig_query= 0;
     stmt->param_count= 0;
 
-    if (fOption == MYSQL_RESET)
-        return SQL_SUCCESS;
-
     reset_ptr(stmt->apd->rows_processed_ptr);
     reset_ptr(stmt->ard->rows_processed_ptr);
     reset_ptr(stmt->ipd->array_status_ptr);
@@ -475,15 +478,17 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     reset_ptr(stmt->apd->array_status_ptr);
     reset_ptr(stmt->ard->array_status_ptr);
     reset_ptr(stmt->stmt_options.rowStatusPtr_ex);
-    /* TODO what else to reset? */
-    delete_dynamic(&stmt->apd->records);
-    delete_dynamic(&stmt->ipd->records);
-    delete_dynamic(&stmt->ard->records);
-    delete_dynamic(&stmt->ird->records);
-    x_free(stmt->apd);
-    x_free(stmt->ard);
-    x_free(stmt->ipd);
-    x_free(stmt->ird);
+
+    if (fOption == MYSQL_RESET)
+        return SQL_SUCCESS;
+
+    /* explicitly allocated descriptors are affected up until this point */
+    desc_remove_stmt(stmt->apd, stmt);
+    desc_remove_stmt(stmt->ard, stmt);
+    desc_free(stmt->imp_apd);
+    desc_free(stmt->imp_ard);
+    desc_free(stmt->ipd);
+    desc_free(stmt->ird);
 
     x_free(stmt->cursor.name);
 
@@ -498,6 +503,76 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     my_free((char*) hstmt,MYF(0));
 #endif /* _UNIX_*/
     return SQL_SUCCESS;
+}
+
+
+/*
+  Explicitly allocate a descriptor.
+*/
+SQLRETURN my_SQLAllocDesc(SQLHDBC hdbc, SQLHANDLE *pdesc)
+{
+  DBC *dbc= (DBC *) hdbc;
+  DESC *desc= desc_alloc(NULL, SQL_DESC_ALLOC_USER, DESC_APP, DESC_UNKNOWN);
+  LIST *e;
+
+  if (!desc)
+    return set_dbc_error(dbc, "HY001", "Memory allocation error", MYERR_S1001);
+
+  desc->exp.dbc= dbc;
+
+  /* add to this connection's list of explicit descriptors */
+  e= (LIST *) my_malloc(sizeof(LIST), MYF(0));
+  e->data= desc;
+  dbc->exp_desc= list_add(dbc->exp_desc, e);
+
+  *pdesc= desc;
+  return SQL_SUCCESS;
+}
+
+
+/*
+  Free an explicitly allocated descriptor. This resets all statements
+  that it was associated with to their implicitly allocated descriptors.
+*/
+SQLRETURN my_SQLFreeDesc(SQLHANDLE hdesc)
+{
+  DESC *desc= (DESC *) hdesc;
+  DBC *dbc= desc->exp.dbc;
+  LIST *lstmt;
+  LIST *ldesc;
+  LIST *next;
+
+  if (!desc)
+    return SQL_ERROR;
+  if (desc->alloc_type != SQL_DESC_ALLOC_USER)
+    return set_desc_error(desc, "HY017", "Invalid use of an automatically "
+                          "allocated descriptor handle.", MYERR_S1017);
+
+  /* remove from DBC */
+  for (ldesc= dbc->exp_desc; ldesc; ldesc= ldesc->next)
+  {
+    if (ldesc->data == desc)
+    {
+      dbc->exp_desc= list_delete(dbc->exp_desc, ldesc);
+      x_free(ldesc);
+      break;
+    }
+  }
+
+  /* reset all stmts it was on - to their implicit desc */
+  for (lstmt= desc->exp.stmts; lstmt; lstmt= next)
+  {
+    STMT *stmt= lstmt->data;
+    next= lstmt->next;
+    if (IS_APD(desc))
+      stmt->apd= stmt->imp_apd;
+    else if (IS_ARD(desc))
+      stmt->ard= stmt->imp_ard;
+    x_free(lstmt);
+  }
+
+  desc_free(desc);
+  return SQL_SUCCESS;
 }
 
 
@@ -525,6 +600,10 @@ SQLRETURN SQL_API SQLAllocHandle(SQLSMALLINT HandleType,
 
         case SQL_HANDLE_STMT:
             error= my_SQLAllocStmt(InputHandle,OutputHandlePtr);
+            break;
+
+        case SQL_HANDLE_DESC:
+            error= my_SQLAllocDesc(InputHandle, OutputHandlePtr);
             break;
 
         default:
@@ -559,6 +638,12 @@ SQLRETURN SQL_API SQLFreeHandle(SQLSMALLINT HandleType,
         case SQL_HANDLE_STMT:
             error= my_SQLFreeStmt((STMT *)Handle, SQL_DROP);
             break;
+
+        case SQL_HANDLE_DESC:
+            error= my_SQLFreeDesc((DESC *) Handle);
+            break;
+
+
         default:
             break;
     }

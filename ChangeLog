@@ -5,6 +5,9 @@
     which allows more complete information to be returned.
   * Disable setting option MYSQL_OPT_SSL_VERIFY_SERVER_CERT when using an SSL
     connection.
+  * Explicit descriptors are implemented.
+  * Changed SQL_ATTR_PARAMSET_SIZE to return an error until support for it
+    is implemented.
 
   Bugs fixed:
   * SQLForeignKeys returned an empty string for the schema columns instead of
@@ -21,6 +24,7 @@
     Windows ODBC Dialog. (Bug #33897)
   * MyODBC 5.1 / ADO unable to delete from a static server side cursor.
     (Bug #33388)
+  * MyODBC Recordset will not open if it contains a text field. (Bug #32064)
 
   Includes changes from Connector/ODBC 3.51.23.
 

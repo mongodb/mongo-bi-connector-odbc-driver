@@ -253,13 +253,286 @@ DECLARE_TEST(t_desc_default_type)
 }
 
 
+/*
+  Basic use of explicitly allocated descriptor
+*/
+DECLARE_TEST(t_basic_explicit)
+{
+  SQLHANDLE expapd;
+  SQLINTEGER result;
+  SQLINTEGER impparam= 2;
+  SQLINTEGER expparam= 999;
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *) "select ?", SQL_NTS));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &result, 0, NULL));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_LONG,
+                                  SQL_INTEGER, 0, 0, &impparam, 0, NULL));
+
+  ok_stmt(hstmt, SQLExecute(hstmt));
+
+  result= 0;
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(result, impparam);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* setup a new descriptor */
+  ok_con(hdbc, SQLAllocHandle(SQL_HANDLE_DESC, hdbc, &expapd));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_APP_PARAM_DESC, expapd, 0));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_LONG,
+                                  SQL_INTEGER, 0, 0, &expparam, 0, NULL));
+
+  ok_stmt(hstmt, SQLExecute(hstmt));
+
+  result= 0;
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(result, expparam);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* free the descriptor, will set apd back to original on hstmt */
+  ok_desc(expapd, SQLFreeHandle(SQL_HANDLE_DESC, expapd));
+
+  ok_stmt(hstmt, SQLExecute(hstmt));
+
+  result= 0;
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(result, impparam);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  return OK;
+}
+
+
+/*
+  Test the various error scenarios possible with
+  explicitly allocated descriptors
+*/
+DECLARE_TEST(t_explicit_error)
+{
+  SQLHANDLE desc1, desc2;
+  SQLHANDLE expapd;
+  SQLHANDLE hdbc2;
+  SQLHANDLE hstmt2;
+
+  /* TODO using an exp from a different dbc */
+
+  ok_con(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt2));
+  ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_APP_ROW_DESC,
+                                &desc1, 0, NULL));
+  ok_stmt(hstmt2, SQLGetStmtAttr(hstmt2, SQL_ATTR_APP_ROW_DESC,
+                                 &desc2, 0, NULL));
+
+  /* can't set implicit ard from a different statement */
+  expect_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_APP_ROW_DESC,
+                                    desc2, 0), SQL_ERROR);
+  is(check_sqlstate(hstmt, "HY017") == OK);
+
+  /* can set it to the same statement */
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_APP_ROW_DESC, desc1, 0));
+
+  /* can't set implementation descriptors */
+  expect_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_IMP_ROW_DESC,
+                                    desc1, 0), SQL_ERROR);
+  is(check_sqlstate(hstmt, "HY024") == OK ||
+     check_sqlstate(hstmt, "HY017") == OK);
+
+  /* can't free implicit descriptors */
+  expect_desc(desc1, SQLFreeHandle(SQL_HANDLE_DESC, desc1), SQL_ERROR);
+  is(check_sqlstate_ex(desc1, SQL_HANDLE_DESC, "HY017") == OK);
+
+  /* can't set apd as ard (and vice-versa) */
+  ok_con(hdbc, SQLAllocHandle(SQL_HANDLE_DESC, hdbc, &expapd));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_APP_PARAM_DESC,
+                                expapd, 0)); /* this makes expapd an apd */
+
+  expect_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_APP_ROW_DESC,
+                                    expapd, 0), SQL_ERROR);
+  is(check_sqlstate(hstmt, "HY024") == OK);
+
+  /*
+    this exposes a bug in unixODBC (2.2.12 and current as of 2007-12-14).
+    Even though the above call failed, unixODBC saved this value internally
+    and returns it. desc1 should *not* be the same as the explicit apd
+  */
+  ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_APP_ROW_DESC,
+                                &desc1, 0, NULL));
+  printMessage("explicit apd: %x, stmt's ard: %x", expapd, desc1);
+
+  return OK;
+}
+
+
+/*
+  Test that statements are handled correctly when freeing an
+  explicit descriptor associated with multiple statements.
+*/
+DECLARE_TEST(t_mult_stmt_free)
+{
+#define mult_count 3
+  SQLHANDLE expard, expapd, desc;
+  SQLHANDLE stmt[mult_count];
+  SQLINTEGER i;
+  SQLINTEGER imp_params[mult_count];
+  SQLINTEGER imp_results[mult_count];
+  SQLINTEGER exp_param;
+  SQLINTEGER exp_result;
+
+  ok_con(hdbc, SQLAllocHandle(SQL_HANDLE_DESC, hdbc, &expapd));
+  ok_con(hdbc, SQLAllocHandle(SQL_HANDLE_DESC, hdbc, &expard));
+
+  for (i= 0; i < mult_count; ++i)
+  {
+    ok_con(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &stmt[i]));
+    /* we bind these now, but use at the end */
+    imp_params[i]= 900 + i;
+    ok_stmt(stmt[i], SQLBindParameter(stmt[i], 1, SQL_PARAM_INPUT, SQL_INTEGER,
+                                      SQL_C_LONG, 0, 0, &imp_params[i], 0, NULL));
+    ok_stmt(stmt[i], SQLBindCol(stmt[i], 1, SQL_C_LONG, &imp_results[i], 0, NULL));
+    ok_stmt(stmt[i], SQLSetStmtAttr(stmt[i], SQL_ATTR_APP_ROW_DESC, expard, 0));
+    ok_stmt(stmt[i], SQLSetStmtAttr(stmt[i], SQL_ATTR_APP_PARAM_DESC, expapd, 0));
+  }
+
+  /* this will work for all */
+  ok_stmt(stmt[0], SQLBindParameter(stmt[0], 1, SQL_PARAM_INPUT, SQL_INTEGER,
+                                    SQL_C_LONG, 0, 0, &exp_param, 0, NULL));
+  ok_stmt(stmt[0], SQLBindCol(stmt[0], 1, SQL_C_LONG, &exp_result, 0, NULL));
+
+  /* check that the explicit ard and apd are working */
+  for (i= 0; i < mult_count; ++i)
+  {
+    exp_param= 200 + i;
+    ok_stmt(stmt[i], SQLExecDirect(stmt[i], "select ?", SQL_NTS));
+    ok_stmt(stmt[i], SQLFetch(stmt[i]));
+    is_num(exp_result, exp_param);
+    ok_stmt(stmt[i], SQLFreeStmt(stmt[i], SQL_CLOSE));
+  }
+
+  /*
+    Windows ODBC DM has a bug that crashes when using a statement
+    after free-ing an explicitly allocated that was associated with
+    it. (This exact test was run against SQL Server and crashed in
+    the exact same spot.) Tested on Windows 2003 x86 and
+    Windows XP x64 both w/MDAC 2.8.
+   */
+#ifndef _WIN32
+  /*
+    now free the explicit apd+ard and the stmts should go back to
+    their implicit descriptors
+  */
+  ok_desc(expard, SQLFreeHandle(SQL_HANDLE_DESC, expard));
+  ok_desc(expapd, SQLFreeHandle(SQL_HANDLE_DESC, expapd));
+
+  /* check that the original values worked */
+  for (i= 0; i < mult_count; ++i)
+  {
+    ok_stmt(stmt[i], SQLExecDirect(stmt[i], "select ?", SQL_NTS));
+    ok_stmt(stmt[i], SQLFetch(stmt[i]));
+    ok_stmt(stmt[i], SQLFreeStmt(stmt[i], SQL_CLOSE));
+  }
+
+  for (i= 0; i < mult_count; ++i)
+  {
+    is_num(imp_results[i], imp_params[i]);
+  }
+
+  /*
+    bug in unixODBC - it still returns the explicit descriptor
+    These should *not* be the same
+  */
+  ok_stmt(hstmt, SQLGetStmtAttr(stmt[0], SQL_ATTR_APP_ROW_DESC,
+                                &desc, SQL_IS_POINTER, NULL));
+  printMessage("explicit ard = %x, stmt[0]'s implicit ard = %x", expard, desc);
+#endif
+
+  return OK;
+#undef mult_count
+}
+
+
+/*
+  Test that when we set a stmt's ard from an explicit descriptor to
+  null, it uses the implicit descriptor again. Also the statement
+  will disassociate itself from the explicit descriptor.
+*/
+DECLARE_TEST(t_set_null_use_implicit)
+{
+  SQLHANDLE expard, hstmt1;
+  SQLINTEGER imp_result= 0, exp_result= 0;
+
+  /*
+    we use a separate statement handle to test that it correctly
+    disassociates itself from the descriptor
+  */
+  ok_con(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt1));
+
+  ok_con(hdbc, SQLAllocHandle(SQL_HANDLE_DESC, hdbc, &expard));
+
+  /* this affects the implicit ard */
+  ok_stmt(hstmt1, SQLBindCol(hstmt1, 1, SQL_C_LONG, &imp_result, 0, NULL));
+
+  /* set the explicit ard */
+  ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_APP_ROW_DESC, expard, 0));
+
+  /* this affects the expard */
+  ok_stmt(hstmt1, SQLBindCol(hstmt1, 1, SQL_C_LONG, &exp_result, 0, NULL));
+
+  /* set it to null, getting rid of the expard */
+  ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_APP_ROW_DESC,
+                                SQL_NULL_HANDLE, 0));
+
+  ok_sql(hstmt1, "select 1");
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+
+  is_num(exp_result, 0);
+  is_num(imp_result, 1);
+
+  ok_stmt(hstmt1, SQLFreeHandle(SQL_HANDLE_STMT, hstmt1));
+
+  /* if stmt disassociation failed, this will crash */
+  ok_desc(expard, SQLFreeHandle(SQL_HANDLE_DESC, expard));
+
+  return OK;
+}
+
+
+/*
+  Test free-ing a statement that has an explicitely allocated
+  descriptor associated with it. If this test fails, it will
+  crash due to the statement not being disassociated with the
+  descriptor correctly.
+*/
+DECLARE_TEST(t_free_stmt_with_exp_desc)
+{
+  SQLHANDLE expard, hstmt1;
+  SQLINTEGER imp_result= 0, exp_result= 0;
+
+  ok_con(hdbc, SQLAllocHandle(SQL_HANDLE_DESC, hdbc, &expard));
+  ok_con(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt1));
+
+  /* set the explicit ard */
+  ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_APP_ROW_DESC, expard, 0));
+
+  /* free the statement, THEN the descriptors */
+  ok_stmt(hstmt1, SQLFreeHandle(SQL_HANDLE_STMT, hstmt1));
+  ok_desc(expard, SQLFreeHandle(SQL_HANDLE_DESC, expard));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
-  ADD_TEST(t_desc_paramset)
+  ADD_TODO(t_desc_paramset)
   ADD_TEST(t_desc_set_error)
   ADD_TEST(t_sqlbindcol_count_reset)
   ADD_TEST(t_desc_default_type)
+  ADD_TEST(t_basic_explicit)
+  ADD_TEST(t_explicit_error)
+  ADD_TEST(t_mult_stmt_free)
+  ADD_TEST(t_set_null_use_implicit)
+  ADD_TEST(t_free_stmt_with_exp_desc)
 END_TESTS
 
 
 RUN_TESTS
+
 
