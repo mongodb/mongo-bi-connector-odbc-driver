@@ -415,7 +415,7 @@ MySQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attrib, SQLCHAR **char_attr,
     break;
 
   case SQL_ATTR_CURRENT_CATALOG:
-    if (reget_current_catalog(dbc))
+    if (is_connected(dbc) && reget_current_catalog(dbc))
       return set_handle_error(SQL_HANDLE_DBC, hdbc, MYERR_S1000,
                               "Unable to get current catalog", 0);
     else

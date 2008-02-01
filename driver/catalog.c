@@ -2027,7 +2027,7 @@ empty_set:
 
 /*
 ****************************************************************************
-SQLProcesures and SQLProcedureColumns
+SQLProcedures and SQLProcedureColumns
 ****************************************************************************
 */
 
