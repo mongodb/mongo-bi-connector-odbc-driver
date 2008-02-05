@@ -752,17 +752,6 @@ convert_to_out:
         if (result)
           result++;
         used_chars+= 1;
-
-        if (result && result == result_end)
-        {
-          if (stmt->getdata.dst_bytes != (ulong)~0L)
-          {
-            stmt->getdata.source+= cnvres;
-            break;
-          }
-          *result= 0;
-          result= NULL;
-        }
       }
       else
       {
@@ -795,6 +784,17 @@ convert_to_out:
         }
         else if (chars > 1)
           continue;
+      }
+
+      if (result && result == result_end)
+      {
+        if (stmt->getdata.dst_bytes != (ulong)~0L)
+        {
+          stmt->getdata.source+= cnvres;
+          break;
+        }
+        *result= 0;
+        result= NULL;
       }
 
       if (result)

@@ -29,6 +29,7 @@
     (Bug #11846)
   * Wrong field type for longtext is returned to Visual Foxpro, data are
     truncated. (Bug #30890)
+  * ODBC driver crashes in SQLGetData with SQL_C_WCHAR. (Bug #32684)
 
   Includes changes from Connector/ODBC 3.51.23.
 

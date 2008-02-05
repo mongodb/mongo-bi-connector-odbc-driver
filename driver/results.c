@@ -186,7 +186,8 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
 
     case SQL_C_WCHAR:
       return copy_wchar_result(stmt,
-                               (SQLWCHAR *)rgbValue, cbValueMax, pcbValue,
+                               (SQLWCHAR *)rgbValue,
+                               cbValueMax / sizeof(SQLWCHAR), pcbValue,
                                field, value, length);
 
     case SQL_C_BIT:

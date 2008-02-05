@@ -2153,6 +2153,36 @@ DECLARE_TEST(t_bug28617)
 }
 
 
+/*
+  Bug#32684 - chunked retrieval of SQL_C_WCHAR fails
+*/
+DECLARE_TEST(t_bug32684)
+{
+  SQLWCHAR wbuf[20];
+  SQLCHAR abuf[20];
+  SQLINTEGER wlen;
+  SQLINTEGER alen;
+  ok_sql(hstmt, "select repeat('x', 100), repeat('y', 100)");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  do
+  {
+    ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, abuf,
+                              20, &alen));
+    printMessage("data= %s, len=%d\n", abuf, alen);
+  } while(alen > 20);
+
+  do
+  {
+    ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_WCHAR, wbuf,
+                              20 * sizeof(SQLWCHAR), &wlen));
+    printMessage("data= %ls, len=%d\n", wbuf, wlen);
+  } while(wlen > 20 * sizeof(SQLWCHAR));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -2183,6 +2213,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug13776)
   ADD_TEST(t_bug13776_auto)
   ADD_TEST(t_bug28617)
+  ADD_TEST(t_bug32684)
 END_TESTS
 
 
