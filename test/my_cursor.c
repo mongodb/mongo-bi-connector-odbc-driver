@@ -3101,6 +3101,34 @@ DECLARE_TEST(t_cursor_pos_dynamic)
 }
 
 
+/*
+  Bug#11846 - DIAG [S1T00] Driver Failed to set the internal dynamic result
+  Dynamic cursors on statements with parameters wasn't supported.
+*/
+DECLARE_TEST(t_bug11846)
+{
+  SQLINTEGER val_in= 4, val_out= 99;
+  SQLHANDLE henv1, hdbc1, hstmt1;
+  SET_DSN_OPTION(32);
+  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
+                                 (SQLPOINTER)SQL_CURSOR_DYNAMIC,0));
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT, SQL_C_LONG,
+                                   SQL_INTEGER, 0, 0, &val_in, 0, NULL));
+  ok_sql(hstmt1, "select ?");
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+
+  ok_stmt(hstmt1, SQLGetData(hstmt1, 1, SQL_C_LONG, &val_out, 0, NULL));
+  is_num(val_out, val_in);
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+  SET_DSN_OPTION(0);
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_positioned_cursor)
   ADD_TEST(my_setpos_cursor)
@@ -3146,6 +3174,7 @@ BEGIN_TESTS
   ADD_TODO(t_bug32420)
   ADD_TEST(t_cursor_pos_static)
   ADD_TEST(t_cursor_pos_dynamic)
+  ADD_TEST(t_bug11846)
 END_TESTS
 
 

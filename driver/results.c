@@ -869,29 +869,19 @@ SQLRETURN SQL_API SQLBindCol(SQLHSTMT      StatementHandle,
 
 my_bool set_dynamic_result(STMT FAR *stmt)
 {
-    if ( odbc_stmt(stmt->dbc, stmt->query) != SQL_SUCCESS )
-        return 1;
+  SQLRETURN rc;
+  long row= stmt->current_row;
+  uint rows= stmt->rows_found_in_set;
 
-    pthread_mutex_lock(&stmt->dbc->lock);
-    if (!stmt->fake_result)
-      mysql_free_result(stmt->result);
-    else
-      x_free(stmt->result);
-    stmt->result= 0;
-    stmt->fake_result= 0;
-    stmt->cursor_row= 0;
-    stmt->result= mysql_store_result(&stmt->dbc->mysql);
-    if ( !stmt->result )
-    {
-        set_error(stmt,MYERR_S1000,mysql_error(&stmt->dbc->mysql),
-                  mysql_errno(&stmt->dbc->mysql));
-        pthread_mutex_unlock(&stmt->dbc->lock);
-        return 1;
-    }
-    fix_result_types(stmt);
+  rc= my_SQLExecute(stmt);
+
+  stmt->current_row= row;
+  stmt->rows_found_in_set= rows;
+
+  if (SQL_SUCCEEDED(rc))
     set_current_cursor_data(stmt,0);
-    pthread_mutex_unlock(&stmt->dbc->lock);
-    return 0;
+
+  return rc;
 }
 
 
