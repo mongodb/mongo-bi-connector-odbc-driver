@@ -226,8 +226,8 @@ DECLARE_TEST(t_bug3780)
   SQLINTEGER len;
 
   /* The connection string must not include DATABASE. */
-  sprintf((char *)conn, "DRIVER=%s;SERVER=localhost;" \
-                        "UID=%s;PASSWORD=%s", mydriver, myuid, mypwd);
+  sprintf((char *)conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s",
+          mydriver, myserver, myuid, mypwd);
   if (mysock != NULL)
   {
     strcat((char *)conn, ";SOCKET=");
