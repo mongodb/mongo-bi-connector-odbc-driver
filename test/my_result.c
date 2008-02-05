@@ -2022,6 +2022,7 @@ DECLARE_TEST(t_bug13776)
   SQLULEN     pcColSz;
   SQLCHAR     szColName[MAX_NAME_LEN];
   SQLSMALLINT pfSqlType, pcbScale, pfNullable;
+  SQLLEN display_size, octet_length;
 
   SET_DSN_OPTION(1 << 27);
 
@@ -2037,6 +2038,14 @@ DECLARE_TEST(t_bug13776)
 
   /* Size of LONGTEXT should have been capped to 1 << 31. */
   is_num(pcColSz, 2147483647L);
+
+  /* also, check display size and octet length (see bug#30890) */
+  ok_stmt(hstmt1, SQLColAttribute(hstmt1, 1, SQL_DESC_DISPLAY_SIZE, NULL,
+                                  0, NULL, &display_size));
+  ok_stmt(hstmt1, SQLColAttribute(hstmt1, 1, SQL_DESC_OCTET_LENGTH, NULL,
+                                  0, NULL, &octet_length));
+  is_num(display_size, 2147483647L);
+  is_num(octet_length, 2147483647L);
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 

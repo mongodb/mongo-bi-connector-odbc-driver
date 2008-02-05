@@ -27,6 +27,8 @@
   * MyODBC Recordset will not open if it contains a text field. (Bug #32064)
   * DIAG [S1T00] Driver Failed to set the internal dynamic result.
     (Bug #11846)
+  * Wrong field type for longtext is returned to Visual Foxpro, data are
+    truncated. (Bug #30890)
 
   Includes changes from Connector/ODBC 3.51.23.
 

@@ -85,6 +85,7 @@ void fix_result_types(STMT *stmt)
   MYSQL_RES *result= stmt->result;
   DESCREC *irrec;
   MYSQL_FIELD *field;
+  int capint32= stmt->dbc->flag & FLAG_COLUMN_SIZE_S32 ? 1 : 0;
 
   stmt->state= ST_EXECUTED;  /* Mark set found */
 
@@ -113,6 +114,11 @@ void fix_result_types(STMT *stmt)
     }
     irrec->type_name= (SQLCHAR *) irrec->row.type_name;
     irrec->length= get_column_size(stmt, field);
+    irrec->octet_length= get_transfer_octet_length(stmt, field);
+    irrec->display_size= get_display_size(stmt, field);
+    /* prevent overflowing */
+    if (!capint32 || irrec->octet_length < INT_MAX32)
+      irrec->octet_length+= test(field->charsetnr != BINARY_CHARSET_NUMBER);
     irrec->precision= 0;
     /* Set precision for all non-char/blob types */
     switch (irrec->type)
@@ -131,15 +137,6 @@ void fix_result_types(STMT *stmt)
     default:
       irrec->precision= (SQLSMALLINT) irrec->length;
       break;
-    }
-    irrec->octet_length= get_transfer_octet_length(stmt, field) +
-                         test(field->charsetnr != BINARY_CHARSET_NUMBER);
-    if (stmt->dbc->flag & FLAG_COLUMN_SIZE_S32)
-    {
-      if (irrec->length > INT_MAX32)
-        irrec->length= INT_MAX32;
-      if (irrec->octet_length > INT_MAX32)
-        irrec->octet_length= INT_MAX32;
     }
     irrec->scale= max(0, (SQLSMALLINT) get_decimal_digits(stmt, field));
     if ((field->flags & NOT_NULL_FLAG) &&
@@ -166,7 +163,6 @@ void fix_result_types(STMT *stmt)
         irrec->catalog_name= field->db;
     else
         irrec->catalog_name= stmt->dbc->database;
-    irrec->display_size= get_display_size(stmt, field);
     if (field->type == MYSQL_TYPE_DECIMAL ||
         field->type == MYSQL_TYPE_NEWDECIMAL)
       irrec->fixed_prec_scale= SQL_TRUE;
@@ -1133,7 +1129,10 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 */
 SQLLEN get_column_size(STMT *stmt __attribute__((unused)), MYSQL_FIELD *field)
 {
+  int capint32= stmt->dbc->flag & FLAG_COLUMN_SIZE_S32 ? 1 : 0;
   SQLLEN length= field->length;
+  if (capint32 && field->length > INT_MAX32)
+    length= INT_MAX32;
 
   switch (field->type) {
   case MYSQL_TYPE_TINY:
@@ -1261,7 +1260,13 @@ SQLLEN get_decimal_digits(STMT *stmt __attribute__((unused)),
 */
 SQLLEN get_transfer_octet_length(STMT *stmt, MYSQL_FIELD *field)
 {
-  SQLLEN length= field->length;
+  int capint32= stmt->dbc->flag & FLAG_COLUMN_SIZE_S32 ? 1 : 0;
+  SQLLEN length;
+  /* cap at INT_MAX32 due to signed value */
+  if (field->length > INT_MAX32)
+    length= INT_MAX32;
+  else
+    length= field->length;
 
   switch (field->type) {
   case MYSQL_TYPE_TINY:
@@ -1330,10 +1335,11 @@ SQLLEN get_transfer_octet_length(STMT *stmt, MYSQL_FIELD *field)
   case MYSQL_TYPE_LONG_BLOB:
   case MYSQL_TYPE_BLOB:
   case MYSQL_TYPE_GEOMETRY:
-    if (field->charsetnr == BINARY_CHARSET_NUMBER)
-      return length;
-    if (field->charsetnr != stmt->dbc->ansi_charset_info->number)
-      return length * stmt->dbc->ansi_charset_info->mbmaxlen;
+    if (field->charsetnr != stmt->dbc->ansi_charset_info->number &&
+        field->charsetnr != BINARY_CHARSET_NUMBER)
+      length *= stmt->dbc->ansi_charset_info->mbmaxlen;
+    if (capint32 && length > INT_MAX32)
+      length= INT_MAX32;
     return length;
   }
 
@@ -1352,6 +1358,7 @@ SQLLEN get_transfer_octet_length(STMT *stmt, MYSQL_FIELD *field)
 */
 SQLLEN get_display_size(STMT *stmt __attribute__((unused)),MYSQL_FIELD *field)
 {
+  int capint32= stmt->dbc->flag & FLAG_COLUMN_SIZE_S32 ? 1 : 0;
   CHARSET_INFO *charset= get_charset(field->charsetnr, MYF(0));
   unsigned int mbmaxlen= charset ? charset->mbmaxlen : 1;
 
@@ -1418,10 +1425,16 @@ SQLLEN get_display_size(STMT *stmt __attribute__((unused)),MYSQL_FIELD *field)
   case MYSQL_TYPE_LONG_BLOB:
   case MYSQL_TYPE_BLOB:
   case MYSQL_TYPE_GEOMETRY:
-    if (field->charsetnr == BINARY_CHARSET_NUMBER)
-      return field->length * 2;
-    else
-      return field->length / mbmaxlen;
+    {
+      unsigned long length;
+      if (field->charsetnr == BINARY_CHARSET_NUMBER)
+        length= field->length * 2;
+      else
+        length= field->length / mbmaxlen;
+      if (capint32 && length > INT_MAX32)
+        length= INT_MAX32;
+      return length;
+    }
   }
 
   return SQL_NO_TOTAL;
