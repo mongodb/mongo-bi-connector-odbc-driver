@@ -2160,8 +2160,7 @@ DECLARE_TEST(t_bug32684)
 {
   SQLWCHAR wbuf[20];
   SQLCHAR abuf[20];
-  SQLINTEGER wlen;
-  SQLINTEGER alen;
+  SQLLEN wlen, alen;
   ok_sql(hstmt, "select repeat('x', 100), repeat('y', 100)");
   ok_stmt(hstmt, SQLFetch(hstmt));
 
