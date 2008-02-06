@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * Static cursor was unable to be used through ADO when dynamic cursors
+    were enabled. (Bug #27351)
 
 ----
 

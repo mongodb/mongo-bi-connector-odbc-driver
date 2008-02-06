@@ -512,9 +512,8 @@ SQLRETURN SQL_API SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
     break;
 
   case SQL_GETDATA_EXTENSIONS:
-    *((SQLUINTEGER *)rgbInfoValue)= (SQL_GD_ANY_COLUMN |
-                                     SQL_GD_ANY_ORDER |
-                                     SQL_GD_BOUND);
+    *((SQLUINTEGER *)rgbInfoValue)= (SQL_GD_ANY_COLUMN | SQL_GD_BLOCK |
+                                     SQL_GD_ANY_ORDER | SQL_GD_BOUND);
     *pcbInfoValue= sizeof(SQLUINTEGER);
     break;
 
