@@ -80,9 +80,14 @@ LIST *mygetdatabases(HWND hwnd, DataSource* params)
   SQLRETURN   nReturn;
   SQLWCHAR    szCatalog[MYODBC_DB_NAME_MAX];
   SQLLEN      nCatalog;
-  LIST *dbs= NULL;
+  LIST        *dbs= NULL;
+  SQLWCHAR    *preserve= params->database;
+
+  params->database= NULL;
 
   nReturn= Connect(&hDbc, &hEnv, params);
+
+  params->database= preserve;
 
   if (nReturn != SQL_SUCCESS)
     ShowDiagnostics(nReturn, SQL_HANDLE_DBC, hDbc);
