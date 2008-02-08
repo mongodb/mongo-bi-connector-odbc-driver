@@ -1129,6 +1129,55 @@ DECLARE_TEST(t_bug14407)
 }
 
 
+/**
+ Bug #12805: ADO failed to retrieve the length of LONGBLOB columns
+*/
+DECLARE_TEST(t_bug12805)
+{
+  SQLHENV    henv1;
+  SQLHDBC    hdbc1;
+  SQLHSTMT   hstmt1;
+  SQLULEN    length;  
+
+  SET_DSN_OPTION(1 << 27);
+
+  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS bug12805");
+  ok_sql(hstmt1, "CREATE TABLE bug12805("\
+                 "id INT PRIMARY KEY auto_increment,"\
+                 "longimagedata LONGBLOB NULL)");
+
+  ok_stmt(hstmt1, SQLColumns(hstmt1, NULL, 0, NULL, 0,
+                             (SQLCHAR *)"bug12805", SQL_NTS,
+                             (SQLCHAR *)"longimagedata", SQL_NTS));
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  ok_stmt(hstmt1, SQLGetData(hstmt1, 7, SQL_C_ULONG, &length,
+                             sizeof(SQLULEN), NULL));
+  is_num(length, 2147483647);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  /* Check without the 32-bit signed flag */
+  ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0,
+                            (SQLCHAR *)"bug12805", SQL_NTS,
+                            (SQLCHAR *)"longimagedata", SQL_NTS));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  ok_stmt(hstmt, SQLGetData(hstmt, 7, SQL_C_ULONG, &length,
+                             sizeof(SQLULEN), NULL));
+  is_num(length, 4294967295);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "DROP TABLE bug12805");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)

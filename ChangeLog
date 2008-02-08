@@ -5,6 +5,7 @@
   Bugs fixed:
   * Static cursor was unable to be used through ADO when dynamic cursors
     were enabled. (Bug #27351)
+  * ADO failed to retrieve the length of LONGBLOB columns. (Bug #12805)
 
 ----
 
