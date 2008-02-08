@@ -1,4 +1,4 @@
-5.1.2 (February 5, 2008)
+5.1.2 (February 7, 2008)
 
   Functionality added or changed:
   * SQLForeignKeys uses INFORMATION_SCHEMA when it is available on the server,
@@ -9,6 +9,8 @@
     is implemented.
 
   Bugs fixed:
+  * Tried to use the already-entered database when connecting to get list of
+    databases in Windows setup library. (Bug #33615)
   * SQLForeignKeys returned an empty string for the schema columns instead of
     a NULL. (Bug #19923)
   * SQLGetInfo() reported characters for SQL_SPECIAL_CHARACTERS that were
