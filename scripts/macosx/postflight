@@ -73,7 +73,7 @@ fi
 # ----------------------------------------------------------------------
 # REGISTER THE DRIVER
 # ----------------------------------------------------------------------
-echo "Registring driver..."
+echo "Registering driver..."
 $bindir/myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "Driver=$libdir/libmyodbc5.so;Setup=$libdir/libmyodbc3S.so;"
 
 # ----------------------------------------------------------------------

@@ -303,6 +303,7 @@ int remove_driver(Driver *driver)
 int handle_driver_action()
 {
   int rc= 0;
+  UWORD config_mode= config_set(scope);
   Driver *driver= driver_new();
 
   /* check name is given if needed */
@@ -347,6 +348,7 @@ int handle_driver_action()
 
 end:
   driver_delete(driver);
+  config_set(config_mode);
   return rc;
 }
 
