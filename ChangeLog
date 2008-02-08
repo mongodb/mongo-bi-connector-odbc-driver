@@ -32,8 +32,6 @@
     FoxPro. (Bug #30890)
   * Retrieving SQL_C_WCHAR data with SQLGetData() could crash due to
     incorrect handling of the buffer length. (Bug #32684)
-  * Non-existent database name in setup dialog field resulted in empty database
-    list. (Bug #33615)
 
   Includes changes from Connector/ODBC 3.51.23.
 
