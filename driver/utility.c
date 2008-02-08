@@ -571,7 +571,7 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 
   @return  The column size of the field
 */
-SQLLEN get_column_size(STMT *stmt, MYSQL_FIELD *field,
+SQLLEN get_column_size(STMT *stmt __attribute__((unused)), MYSQL_FIELD *field,
                        my_bool actual)
 {
   CHARSET_INFO *charset= get_charset(field->charsetnr, MYF(0));
@@ -643,8 +643,7 @@ SQLLEN get_column_size(STMT *stmt, MYSQL_FIELD *field,
   case MYSQL_TYPE_BLOB:
   case MYSQL_TYPE_GEOMETRY:
     if (field->charsetnr == 63)
-      return (stmt->dbc->flag && FLAG_COLUMN_SIZE_S32) ?
-              (length > INT_MAX32 ? INT_MAX32 : length) : length;
+      return length;
     else
       return length / mbmaxlen;
   }
