@@ -115,9 +115,9 @@ SQLGetPrivateProfileStringW(const LPWSTR lpszSection, const LPWSTR lpszEntry,
                                        lpszFilename);
 }
 
-
 /**
- @todo The rest of the replacement functions are not actually implemented.
+ The version of iODBC that shipped with Mac OS X 10.4 does not implement
+ SQLInstallDriverExW(), and we need it for myodbc-installer.
 */
 
 BOOL INSTAPI
@@ -125,9 +125,46 @@ SQLInstallDriverExW(const LPWSTR lpszDriver, const LPWSTR lpszPathIn,
                     LPWSTR lpszPathOut, WORD cbPathOutMax, WORD *pcbPathOut,
                     WORD fRequest, LPDWORD lpdwUsageCount)
 {
-  return FALSE;
+  LPWSTR pos;
+  SQLINTEGER len;
+  BOOL rc;
+  char *driver, *pathin, *pathout;
+  WORD out;
+
+  if (!pcbPathOut)
+    pcbPathOut= &out;
+
+  /* Calculate length of double-\0 terminated string */
+  pos= lpszDriver;
+  while (*pos)
+    pos+= sqlwcharlen(pos) + 1;
+  len= pos - lpszDriver + 1;
+  driver= (char *)sqlwchar_as_utf8(lpszDriver, &len);
+
+  len= SQL_NTS;
+  pathin= (char *)sqlwchar_as_utf8(lpszPathIn, &len);
+
+  if (cbPathOutMax > 0)
+    pathout= (char *)malloc(cbPathOutMax * 4 + 1); /* 4 = max utf8 charlen */
+
+  rc= SQLInstallDriverEx(driver, pathin, pathout, cbPathOutMax * 4,
+                         pcbPathOut, fRequest, lpdwUsageCount);
+
+  if (rc == TRUE && cbPathOutMax)
+    *pcbPathOut= utf8_as_sqlwchar(lpszPathOut, cbPathOutMax,
+                                  (SQLCHAR *)pathout, *pcbPathOut);
+
+  x_free(driver);
+  x_free(pathin);
+  x_free(pathout);
+
+  return rc;
 }
 
+
+/**
+ @todo The rest of the replacement functions are not actually implemented.
+*/
 
 RETCODE INSTAPI
 SQLPostInstallerErrorW(DWORD fErrorCode, LPWSTR szErrorMsg)
