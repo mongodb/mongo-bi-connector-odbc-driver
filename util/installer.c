@@ -30,7 +30,7 @@
  *    Initialize/destroy them in ds_new/ds_delete
  *    Print the field in myodbc3i.c
  *    Add to the configuration GUIs
- *    
+ *
  */
 #include "stringutil.h"
 #include "installer.h"
@@ -42,6 +42,20 @@
 */
 #if USE_UNIXODBC
 # define SQLGetPrivateProfileStringW MySQLGetPrivateProfileStringW
+#endif
+
+
+/*
+   Most of the installer API functions in iODBC incorrectly reset the
+   config mode, so we need to save and restore it whenever we call those
+   functions. These macros reduce the clutter a little bit.
+*/
+#if USE_IODBC
+# define SAVE_MODE() UWORD config_mode= config_get()
+# define RESTORE_MODE() config_set(config_mode)
+#else
+# define SAVE_MODE()
+# define RESTORE_MODE()
 #endif
 
 
@@ -237,28 +251,35 @@ int driver_lookup_name(Driver *driver)
   SQLWCHAR driverinfo[1024];
   int len;
   short slen; /* WORD needed for windows */
+  SAVE_MODE();
 
   /* get list of drivers */
 #ifdef _WIN32
   if (!SQLGetInstalledDriversW(pdrv, 1023, &slen) || !(len= slen))
 #else
-  if (!(len= SQLGetPrivateProfileStringW(NULL, NULL, W_EMPTY, pdrv,
-                                         1023, W_ODBCINST_INI)))
+  if (!(len = SQLGetPrivateProfileStringW(NULL, NULL, W_EMPTY, pdrv, 1023,
+                                          W_ODBCINST_INI)))
 #endif
     return -1;
+
+  RESTORE_MODE();
 
   /* check the lib of each driver for one that matches the given lib name */
   while (len > 0)
   {
-    if (!SQLGetPrivateProfileStringW(pdrv, W_DRIVER, W_EMPTY, driverinfo,
-                                     1023, W_ODBCINST_INI))
-      continue;
-
-    if (!sqlwcharcasecmp(driverinfo, driver->lib))
+    if (SQLGetPrivateProfileStringW(pdrv, W_DRIVER, W_EMPTY, driverinfo,
+                                    1023, W_ODBCINST_INI))
     {
-      sqlwcharncpy(driver->name, pdrv, ODBCDRIVER_STRLEN);
-      return 0;
+      RESTORE_MODE();
+
+      if (!sqlwcharcasecmp(driverinfo, driver->lib))
+      {
+        sqlwcharncpy(driver->name, pdrv, ODBCDRIVER_STRLEN);
+        return 0;
+      }
     }
+
+    RESTORE_MODE();
 
     len -= sqlwcharlen(pdrv) + 1;
     pdrv += sqlwcharlen(pdrv) + 1;
@@ -279,6 +300,7 @@ int driver_lookup(Driver *driver)
   SQLWCHAR buf[4096];
   SQLWCHAR *entries= buf;
   SQLWCHAR *dest;
+  SAVE_MODE();
 
   /* if only the filename is given, we must get the driver's name */
   if (!*driver->name && *driver->lib)
@@ -295,6 +317,8 @@ int driver_lookup(Driver *driver)
     return -1;
   }
 
+  RESTORE_MODE();
+
   /* read the needed driver attributes */
   while (*entries)
   {
@@ -310,7 +334,12 @@ int driver_lookup(Driver *driver)
     if (dest && SQLGetPrivateProfileStringW(driver->name, entries, W_EMPTY,
                                             dest, ODBCDRIVER_STRLEN,
                                             W_ODBCINST_INI) < 1)
+    {
+      RESTORE_MODE();
       return 1;
+    }
+
+    RESTORE_MODE();
 
     entries += sqlwcharlen(entries) + 1;
   }
@@ -516,7 +545,7 @@ int ds_set_strnattr(SQLWCHAR **attr, const SQLWCHAR *val, size_t charcount)
  * string (SQLWCHAR *) or int parameters.
  */
 void ds_map_param(DataSource *ds, const SQLWCHAR *param,
-                  SQLWCHAR ***strdest, int **intdest)
+                  SQLWCHAR ***strdest, unsigned int **intdest)
 {
   *strdest= NULL;
   *intdest= NULL;
@@ -583,7 +612,8 @@ int ds_lookup(DataSource *ds)
   int size;
   int rc= 0;
   UWORD config_mode= config_get();
-  int *intdest;
+  unsigned int *intdest;
+  /* No need for SAVE_MODE() because we always call config_get() above. */
 
   /* get entries and check if data source exists */
   if ((size= SQLGetPrivateProfileStringW(ds->name, NULL, W_EMPTY,
@@ -592,6 +622,8 @@ int ds_lookup(DataSource *ds)
     rc= -1;
     goto end;
   }
+
+  RESTORE_MODE();
 
   /* Debug code to print the entries returned, char by char */
 #ifdef DEBUG_MYODBC_DS_LOOKUP
@@ -643,6 +675,8 @@ int ds_lookup(DataSource *ds)
     else if (intdest)
       *intdest= sqlwchartoul(val, NULL);
 
+    RESTORE_MODE();
+
     entries += sqlwcharlen(entries) + 1;
   }
 
@@ -662,7 +696,7 @@ int ds_from_kvpair(DataSource *ds, const SQLWCHAR *attrs, SQLWCHAR delim)
   const SQLWCHAR *end;
   SQLWCHAR **dest;
   SQLWCHAR attribute[100];
-  int *intdest;
+  unsigned int *intdest;
 
   while (*attrs)
   {
@@ -719,7 +753,7 @@ int ds_to_kvpair(DataSource *ds, SQLWCHAR *attrs, size_t attrslen,
 {
   int i;
   SQLWCHAR **strval;
-  int *intval;
+  unsigned int *intval;
   int origchars= attrslen;
   SQLWCHAR numbuf[21];
 
@@ -780,7 +814,7 @@ size_t ds_to_kvpair_len(DataSource *ds)
   size_t len= 0;
   int i;
   SQLWCHAR **strval;
-  int *intval;
+  unsigned int *intval;
   SQLWCHAR numbuf[21];
 
   for (i= 0; i < dsnparamcnt; ++i)
@@ -826,8 +860,15 @@ int ds_add_strprop(const SQLWCHAR *name, const SQLWCHAR *propname,
 {
   /* don't write if its null or empty string */
   if (propval && *propval)
-    return !SQLWritePrivateProfileStringW(name, propname, propval,
-                                          W_ODBC_INI);
+  {
+    BOOL rc;
+    SAVE_MODE();
+    rc= SQLWritePrivateProfileStringW(name, propname, propval, W_ODBC_INI);
+    if (rc)
+      RESTORE_MODE();
+    return !rc;
+  }
+
   return 0;
 }
 
@@ -852,15 +893,20 @@ int ds_add(DataSource *ds)
 {
   Driver *driver= NULL;
   int rc= 1;
+  SAVE_MODE();
 
   /* Validate data source name */
   if (!SQLValidDSNW(ds->name))
     goto error;
 
+  RESTORE_MODE();
+
   /* remove if exists, FYI SQLRemoveDSNFromIni returns true
    * even if the dsn isnt found, false only if there is a failure */
   if (!SQLRemoveDSNFromIniW(ds->name))
     goto error;
+
+  RESTORE_MODE();
 
   /* Get the actual driver name (not just file name) */
   driver= driver_new();
@@ -876,6 +922,8 @@ int ds_add(DataSource *ds)
   /* "Create" section for data source */
   if (!SQLWriteDSNToIniW(ds->name, driver->name))
     goto error;
+
+  RESTORE_MODE();
 
   /* write all fields (util method takes care of skipping blank fields) */
   if (ds_add_strprop(ds->name, W_DRIVER     , ds->driver     )) goto error;
@@ -914,10 +962,13 @@ error:
 int ds_exists(SQLWCHAR *name)
 {
   SQLWCHAR buf[100];
+  SAVE_MODE();
 
   /* get entries and check if data source exists */
   if (SQLGetPrivateProfileStringW(name, NULL, W_EMPTY, buf, 100, W_ODBC_INI))
     return 0;
+
+  RESTORE_MODE();
 
   return 1;
 }
@@ -943,7 +994,7 @@ SQLCHAR *ds_get_utf8attr(SQLWCHAR *attrw, SQLCHAR **attr8)
  */
 int ds_setattr_from_utf8(SQLWCHAR **attr, SQLCHAR *val8)
 {
-  size_t len= strlen(val8);
+  size_t len= strlen((char *)val8);
   x_free(*attr);
   if (!(*attr= (SQLWCHAR *)my_malloc((len + 1) * sizeof(SQLWCHAR), MYF(0))))
     return -1;
