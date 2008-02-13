@@ -116,8 +116,9 @@ SQLGetPrivateProfileStringW(const LPWSTR lpszSection, const LPWSTR lpszEntry,
 }
 
 /**
- The version of iODBC that shipped with Mac OS X 10.4 does not implement
- SQLInstallDriverExW(), and we need it for myodbc-installer.
+  The version of iODBC that shipped with Mac OS X 10.4 does not implement
+  the Unicode versions of various installer API functions, so we have to
+  do it ourselves.
 */
 
 BOOL INSTAPI
@@ -162,21 +163,73 @@ SQLInstallDriverExW(const LPWSTR lpszDriver, const LPWSTR lpszPathIn,
 }
 
 
-/**
- @todo The rest of the replacement functions are not actually implemented.
-*/
-
-RETCODE INSTAPI
-SQLPostInstallerErrorW(DWORD fErrorCode, LPWSTR szErrorMsg)
+BOOL INSTAPI
+SQLValidDSNW(const LPWSTR lpszDSN)
 {
-  return SQL_ERROR;
+  BOOL ret;
+  SQLINTEGER len= SQL_NTS;
+  char *dsn= (char *)sqlwchar_as_utf8(lpszDSN, &len);
+
+  ret= SQLValidDSN(dsn);
+
+  x_free(dsn);
+
+  return ret;
 }
 
 
 BOOL INSTAPI
 SQLRemoveDSNFromIniW(const LPWSTR lpszDSN)
 {
-  return FALSE;
+  BOOL ret;
+  SQLINTEGER len= SQL_NTS;
+  char *dsn= (char *)sqlwchar_as_utf8(lpszDSN, &len);
+
+  ret= SQLRemoveDSNFromIni(dsn);
+
+  x_free(dsn);
+
+  return ret;
+}
+
+
+BOOL INSTAPI
+SQLWriteDSNToIniW(const LPWSTR lpszDSN, const LPWSTR lpszDriver)
+{
+  BOOL ret;
+  SQLINTEGER len;
+  char *dsn= NULL, *driver= NULL;
+
+  len= SQL_NTS;
+  dsn= (char *)sqlwchar_as_utf8(lpszDSN, &len),
+
+  len= SQL_NTS;
+  driver= (char *)sqlwchar_as_utf8(lpszDriver, &len);
+
+  ret= SQLWriteDSNToIni(dsn, driver);
+
+  x_free(dsn);
+  x_free(driver);
+
+  return ret;
+}
+
+
+RETCODE INSTAPI
+SQLPostInstallerErrorW(DWORD fErrorCode, LPWSTR szErrorMsg)
+{
+  RETCODE ret;
+  SQLINTEGER len= SQL_NTS;
+  char *msg= (char *)sqlwchar_as_utf8(szErrorMsg, &len);
+
+  ret= SQLPostInstallerError(fErrorCode, msg);
+
+  /*
+    We have to leak memory here, because iODBC does not make a
+    copy of the message.
+  */
+
+  return ret;
 }
 
 
@@ -184,21 +237,15 @@ BOOL INSTAPI
 SQLRemoveDriverW(const LPWSTR lpszDriver, BOOL fRemoveDSN,
                  LPDWORD lpdwUsageCount)
 {
-  return FALSE;
-}
+  BOOL ret;
+  SQLINTEGER len= SQL_NTS;
+  char *driver= (char *)sqlwchar_as_utf8(lpszDriver, &len);
 
+  ret= SQLRemoveDriver(driver, fRemoveDSN, lpdwUsageCount);
 
-BOOL INSTAPI
-SQLValidDSNW(const LPWSTR lpszDSN)
-{
-  return FALSE;
-}
+  x_free(driver);
 
-
-BOOL INSTAPI
-SQLWriteDSNToIniW(const LPWSTR lpszDSN, const LPWSTR lpszDriver)
-{
-  return FALSE;
+  return ret;
 }
 
 
@@ -207,6 +254,26 @@ SQLWritePrivateProfileStringW(const LPWSTR lpszSection, const LPWSTR lpszEntry,
                               const LPWSTR lpszString,
                               const LPWSTR lpszFilename)
 {
-  return FALSE;
+  BOOL ret;
+  SQLINTEGER len;
+  char *section= NULL, *entry= NULL, *string= NULL, *filename= NULL;
+
+  len= SQL_NTS;
+  section= (char *)sqlwchar_as_utf8(lpszSection, &len),
+  len= SQL_NTS;
+  entry= (char *)sqlwchar_as_utf8(lpszEntry, &len),
+  len= SQL_NTS;
+  string= (char *)sqlwchar_as_utf8(lpszString, &len),
+  len= SQL_NTS;
+  filename= (char *)sqlwchar_as_utf8(lpszFilename, &len),
+
+  ret= SQLWritePrivateProfileString(section, entry, string, filename);
+
+  x_free(section);
+  x_free(entry);
+  x_free(string);
+  x_free(filename);
+
+  return ret;
 }
 #endif
