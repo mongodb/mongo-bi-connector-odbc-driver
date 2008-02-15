@@ -3,6 +3,7 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * ConfigDSN() returned FALSE when the dialog was cancelled by the user.
   * Static cursor was unable to be used through ADO when dynamic cursors
     were enabled. (Bug #27351)
 
