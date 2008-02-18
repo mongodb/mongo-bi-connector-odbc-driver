@@ -1129,6 +1129,30 @@ DECLARE_TEST(t_bug14407)
 }
 
 
+/*
+  Bug #32864 MyODBC /Crystal Reports truncated table names,
+             lost fields when names > 21chars
+*/
+DECLARE_TEST(t_bug32864)
+{
+  SQLLEN dispsize= 0;
+  SQLLEN colsize= 0;
+
+  ok_stmt(hstmt, SQLTables(hstmt, "%", SQL_NTS, NULL, 0, NULL, 0, NULL, 0));
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 3, SQL_COLUMN_DISPLAY_SIZE, NULL, 0,
+                                 NULL, &dispsize));
+
+  is_num(dispsize, 64);
+
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 3, NULL, 0, NULL, NULL,
+                                &colsize, NULL, NULL));
+
+  is_num(colsize, 64);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -1151,6 +1175,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug26934)
   ADD_TEST(t_bug29888)
   ADD_TEST(t_bug14407)
+  ADD_TEST(t_bug32864)
 END_TESTS
 
 

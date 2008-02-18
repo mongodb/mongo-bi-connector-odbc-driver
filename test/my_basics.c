@@ -505,6 +505,35 @@ DECLARE_TEST(t_bug32727)
 }
 
 
+/*
+  Bug #28220: Varchar Field length is reported as larger than actual
+*/
+DECLARE_TEST(t_bug28220)
+{
+  SQLULEN length;
+  SQLSMALLINT i;
+
+  ok_sql(hstmt, "drop table if exists t_bug28220");
+  ok_sql(hstmt, "create table t_bug28220 ("
+                "x varchar(90) character set latin1,"
+                "y varchar(90) character set big5,"
+                "z varchar(90) character set utf8)");
+
+  ok_sql(hstmt, "select x,y,z from t_bug28220");
+
+  for (i= 0; i < 3; ++i)
+  {
+    length= 0;
+    ok_stmt(hstmt, SQLDescribeCol(hstmt, i+1, NULL, 0, NULL,
+                                  NULL, &length, NULL, NULL));
+    is_num(length, 90);
+  }
+
+  ok_sql(hstmt, "drop table if exists t_bug28220");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -520,6 +549,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug30774)
   ADD_TEST(t_bug30840)
   ADD_TEST(t_bug32727)
+  ADD_TEST(t_bug28220)
 END_TESTS
 
 

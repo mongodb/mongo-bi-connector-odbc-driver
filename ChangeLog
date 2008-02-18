@@ -8,6 +8,8 @@
     were enabled. (Bug #27351)
   * Driver would crash when requesting the current catalog before connecting.
     (Bug #16653)
+  * Catalog data was truncated due to NAME_LEN only allocating a single byte
+    for characters. (Bug #32864)
 
 ----
 

@@ -83,8 +83,9 @@ typedef char * DYNAMIC_ELEMENT;
   {(name), NullS, NullS, NullS, NullS, NullS, NullS, 11, 11, 0, 0, 0, 0, 0, 0, \
     0, (flags), 0, 0, MYSQL_TYPE_LONG, NULL}
 #elif MYSQL_VERSION_ID >= 40100
+/* we use 3 here as SYSTEM_CHARSET_MBMAXLEN is not defined in v5.0 mysql_com.h */
 # define MYODBC_FIELD_STRING(name, len, flags) \
-  {(name), NullS, NullS, NullS, NullS, NullS, NullS, (len), 0, 0, 0, 0, 0, 0, \
+  {(name), NullS, NullS, NullS, NullS, NullS, NullS, (len) * 3, 0, 0, 0, 0, 0, 0, \
     0, 0, (flags), 0, UTF8_CHARSET_NUMBER, MYSQL_TYPE_VAR_STRING}
 # define MYODBC_FIELD_SHORT(name, flags) \
   {(name), NullS, NullS, NullS, NullS, NullS, NullS, 5, 5, 0, 0, 0, 0, 0, 0, \

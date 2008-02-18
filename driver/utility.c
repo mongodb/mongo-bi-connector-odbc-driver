@@ -637,6 +637,9 @@ SQLLEN get_column_size(STMT *stmt __attribute__((unused)), MYSQL_FIELD *field,
   case MYSQL_TYPE_VARCHAR:
   case MYSQL_TYPE_VAR_STRING:
   case MYSQL_TYPE_STRING:
+    if (field->charsetnr != 63)
+      return get_display_size(stmt, field);
+
   case MYSQL_TYPE_TINY_BLOB:
   case MYSQL_TYPE_MEDIUM_BLOB:
   case MYSQL_TYPE_LONG_BLOB:
