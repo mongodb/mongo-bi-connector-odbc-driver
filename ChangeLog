@@ -6,6 +6,8 @@
   * ConfigDSN() returned FALSE when the dialog was cancelled by the user.
   * Static cursor was unable to be used through ADO when dynamic cursors
     were enabled. (Bug #27351)
+  * Driver would crash when requesting the current catalog before connecting.
+    (Bug #16653)
 
 ----
 

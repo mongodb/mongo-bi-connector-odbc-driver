@@ -223,7 +223,7 @@ DECLARE_TEST(t_bug3780)
   SQLSMALLINT conn_out_len;
   SQLCHAR   rgbValue[MAX_NAME_LEN];
   SQLSMALLINT pcbInfo;
-  SQLINTEGER len;
+  SQLINTEGER attrlen;
 
   /* The connection string must not include DATABASE. */
   sprintf((char *)conn, "DRIVER=%s;SERVER=localhost;" \
@@ -248,13 +248,34 @@ DECLARE_TEST(t_bug3780)
   is_str(rgbValue, "null", pcbInfo);
 
   ok_con(hdbc1, SQLGetConnectAttr(hdbc1, SQL_ATTR_CURRENT_CATALOG,
-                                  rgbValue, MAX_NAME_LEN, &len));
+                                  rgbValue, MAX_NAME_LEN, &attrlen));
 
-  is_num(pcbInfo, 4);
-  is_str(rgbValue, "null", len);
+  is_num(attrlen, 4);
+  is_str(rgbValue, "null", attrlen);
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
   ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+
+  return OK;
+}
+
+
+/*
+  Bug#16653
+  MyODBC 3 / truncated UID when performing Data Import in MS Excel
+*/
+DECLARE_TEST(t_bug16653)
+{
+  SQLHANDLE hdbc1;
+  SQLCHAR buf[50];
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+  /* this would cause a crash if we arent connected */
+  ok_con(hdbc1, SQLGetConnectAttr(hdbc1, SQL_ATTR_CURRENT_CATALOG,
+                                  buf, 50, NULL));
+  is_str(buf, "null", 1);
+
   ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
 
   return OK;
@@ -271,6 +292,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug14639)
   ADD_TEST(t_bug31055)
   ADD_TEST(t_bug3780)
+  ADD_TEST(t_bug16653)
 END_TESTS
 
 

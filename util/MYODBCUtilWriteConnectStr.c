@@ -37,155 +37,157 @@ BOOL MYODBCUtilWriteConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, char *pszStr
             return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszDATABASE, nMaxLen, &nIndex ) )
             return FALSE;
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
+            return FALSE;
     }
 
     if ( pDataSource->pszDESCRIPTION )
     {
-        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
-            return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, "DESCRIPTION=", nMaxLen, &nIndex ) )
             return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszDESCRIPTION, nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
             return FALSE;
     }
 
     if ( pDataSource->pszDRIVER && pDataSource->nConnect == MYODBCUTIL_DATASOURCE_CONNECT_DRIVER )
     {
-        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
-            return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, "DRIVER=", nMaxLen, &nIndex ) )
             return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszDRIVER, nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
             return FALSE;
     }
 
     if ( pDataSource->pszDSN && pDataSource->nConnect == MYODBCUTIL_DATASOURCE_CONNECT_DSN )
     {
-        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
-            return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, "DSN=", nMaxLen, &nIndex ) )
             return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszDSN, nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
             return FALSE;
     }
 
     if ( pDataSource->pszOPTION )
     {
-        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
-            return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, "OPTION=", nMaxLen, &nIndex ) )
             return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszOPTION, nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
             return FALSE;
     }
 
     if ( pDataSource->pszPASSWORD )
     {
-        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
-            return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, "PWD=", nMaxLen, &nIndex ) )
             return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszPASSWORD, nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
             return FALSE;
     }
 
     if ( pDataSource->pszPORT )
     {
-        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
-            return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, "PORT=", nMaxLen, &nIndex ) )
             return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszPORT, nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
             return FALSE;
     }
 
     if ( pDataSource->pszSERVER )
     {
-        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
-            return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, "SERVER=", nMaxLen, &nIndex ) )
             return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSERVER, nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
             return FALSE;
     }
 
     if ( pDataSource->pszSOCKET )
     {
-        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
-            return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, "SOCKET=", nMaxLen, &nIndex ) )
             return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSOCKET, nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
             return FALSE;
     }
 
     if ( pDataSource->pszSTMT )
     {
-        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
-            return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, "STMT=", nMaxLen, &nIndex ) )
             return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSTMT, nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
             return FALSE;
     }
 
     if ( pDataSource->pszUSER )
     {
-        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
-            return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, "UID=", nMaxLen, &nIndex ) )
             return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszUSER, nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
             return FALSE;
     }
 
     if ( pDataSource->pszSSLCA )
     {
-        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
-            return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, "SSLCA=", nMaxLen, &nIndex ) )
             return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSSLCA, nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
             return FALSE;
     }
 
     if ( pDataSource->pszSSLCAPATH )
     {
-        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
-            return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, "SSLCAPATH=", nMaxLen, &nIndex ) )
             return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSSLCAPATH, nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
             return FALSE;
     }
 
     if ( pDataSource->pszSSLCERT )
     {
-        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
-            return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, "SSLCERT=", nMaxLen, &nIndex ) )
             return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSSLCERT, nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
             return FALSE;
     }
 
     if ( pDataSource->pszSSLCIPHER )
     {
-        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
-            return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, "SSLCIPHER=", nMaxLen, &nIndex ) )
             return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSSLCIPHER, nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
             return FALSE;
     }
 
     if ( pDataSource->pszSSLKEY )
     {
-        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
-            return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, "SSLKEY=", nMaxLen, &nIndex ) )
             return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSSLKEY, nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
             return FALSE;
     }
 
@@ -197,6 +199,8 @@ BOOL MYODBCUtilWriteConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, char *pszStr
         return FALSE;
       if (!MYODBCUtilInsertStr(pszStr, pDataSource->pszCHARSET, nMaxLen,
                                &nIndex))
+        return FALSE;
+      if (nIndex && !MYODBCUtilInsertStr(pszStr, ";", nMaxLen, &nIndex))
         return FALSE;
     }
 
