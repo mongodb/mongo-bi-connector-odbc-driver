@@ -85,6 +85,9 @@ BOOL MYODBCUtilWriteDataSource( MYODBCUTIL_DATASOURCE *pDataSource )
     if ( pDataSource->pszSSLKEY &&
          !SQLWritePrivateProfileString( pDataSource->pszDSN, "SSLKEY", pDataSource->pszSSLKEY, "odbc.ini" ) )
         return FALSE;
+    if ( pDataSource->pszSSLVERIFY &&
+         !SQLWritePrivateProfileString( pDataSource->pszDSN, "SSLVERIFY", pDataSource->pszSSLVERIFY, "odbc.ini" ) )
+        return FALSE;
     if (pDataSource->pszCHARSET &&
         !SQLWritePrivateProfileString(pDataSource->pszDSN, "CHARSET",
                                       pDataSource->pszCHARSET, "odbc.ini"))
@@ -92,5 +95,6 @@ BOOL MYODBCUtilWriteDataSource( MYODBCUTIL_DATASOURCE *pDataSource )
 
     return TRUE;
 }
+
 
 

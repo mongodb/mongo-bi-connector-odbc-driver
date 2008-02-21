@@ -31,6 +31,7 @@
 #include "MYODBCSetup.h"
 #include "MYODBCSetupLineEdit.h"
 #include "MYODBCSetupComboBoxDatabases.h"
+#include "MYODBCSetupCheckBox.h"
 
 class MYODBCSetupDataSourceDialog;
 
@@ -49,7 +50,8 @@ public:
                                QString stringSSLCert,
                                QString stringSSLCA,
                                QString stringSSLCAPath,
-                               QString stringSSLCipher );
+                               QString stringSSLCipher,
+                               QString stringSSLVerify );
 
     MYODBCSetupDataSourceTab2( QWidget *pwidgetParent );
 
@@ -62,6 +64,7 @@ public:
     void setSSLCA( const QString &stringSSLCA );
     void setSSLCAPath( const QString &stringSSLCApath );
     void setSSLCipher( const QString &stringSSLCipher );
+    void setSSLVerify( const QString &stringSSLVerify );
 
     QString getPort();
     QString getSocket();
@@ -72,6 +75,7 @@ public:
     QString getSSLCA();
     QString getSSLCAPath();
     QString getSSLCipher();
+    QString getSSLVerify();
 
 signals:
     void signalRequestCharsetNames();
@@ -86,10 +90,12 @@ protected:
     MYODBCSetupLineEdit *            plineeditSSLCA;
     MYODBCSetupLineEdit *            plineeditSSLCAPath;
     MYODBCSetupLineEdit *            plineeditSSLCipher;
+    MYODBCSetupCheckBox *            pcheckboxSSLVerify;
 
     void doInit();
 };
 
 #endif
+
 
 

@@ -10,6 +10,8 @@
     (Bug #16653)
   * Catalog data was truncated due to NAME_LEN only allocating a single byte
     for characters. (Bug #32864)
+  * SSL connections could not be established properly. Added the server
+    certificate verification flag. (Bug #29955)
 
 ----
 

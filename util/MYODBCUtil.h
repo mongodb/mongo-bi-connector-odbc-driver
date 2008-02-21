@@ -181,6 +181,7 @@ typedef struct tMYODBCUTIL_DATASOURCE
     char *pszSSLCA;             /* pathname to SSL certificate authority file                                                                  */
     char *pszSSLCAPATH;         /* pathname to a directory that contains SSL ceritificate authority files                                      */
     char *pszSSLCIPHER;         /* pathname to a list of allowable ciphers                                                                    */
+    char *pszSSLVERIFY;         /* verify server certificate (see --ssl-verify-server-cert                                      */
     char *pszCHARSET;           /* default charset to use for connection */
 
     MYODBCUTIL_DATASOURCE_MODE      nMode;      /* ConfigDSN mode or SQLDriverConnect mode.                                     */
@@ -250,5 +251,6 @@ BOOL                    MYODBCUtilInsertStr( char *pszStr, LPCSTR pszStrIn, SQLS
 #endif
 
 #endif
+
 
 

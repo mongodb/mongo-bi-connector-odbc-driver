@@ -191,6 +191,16 @@ BOOL MYODBCUtilWriteConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, char *pszStr
             return FALSE;
     }
 
+    if ( pDataSource->pszSSLVERIFY )
+    {
+        if ( !MYODBCUtilInsertStr( pszStr, "SSLVERIFY=", nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSSLVERIFY, nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
+            return FALSE;
+    }
+
     if (pDataSource->pszCHARSET)
     {
       if (nIndex && !MYODBCUtilInsertStr(pszStr, ";", nMaxLen, &nIndex))
@@ -206,5 +216,6 @@ BOOL MYODBCUtilWriteConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, char *pszStr
 
     return TRUE;
 }
+
 
 

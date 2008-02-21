@@ -212,6 +212,16 @@ BOOL MYODBCUtilWriteDataSourceStr( MYODBCUTIL_DATASOURCE *pDataSource, MYODBCUTI
             return FALSE;
     }
 
+    if ( pDataSource->pszSSLVERIFY )
+    {
+        MYODBCUTILWRITEDATASOURCESTR_DELIM;
+
+        if ( !MYODBCUtilInsertStr( pszStr, "SSLVERIFY=", nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszSSLVERIFY, nMaxLen, &nIndex ) )
+            return FALSE;
+    }
+
     if (pDataSource->pszCHARSET)
     {
       MYODBCUTILWRITEDATASOURCESTR_DELIM;
@@ -231,5 +241,6 @@ BOOL MYODBCUtilWriteDataSourceStr( MYODBCUTIL_DATASOURCE *pDataSource, MYODBCUTI
 
     return TRUE;
 }
+
 
 

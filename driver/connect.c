@@ -146,8 +146,9 @@ SQLRETURN myodbc_do_connect(DBC *dbc, MYODBCUTIL_DATASOURCE *ds)
   /* set SSL parameters */
   mysql_ssl_set(mysql, ds->pszSSLKEY, ds->pszSSLCERT, ds->pszSSLCA,
                 ds->pszSSLCAPATH, ds->pszSSLCIPHER);
-  mysql_options(mysql, MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
-                (const char *)&opt_ssl_verify_server_cert);
+  if (ds->pszSSLVERIFY)
+    mysql_options(mysql, MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
+                  (const char *)&opt_ssl_verify_server_cert);
 
   if (!mysql_real_connect(mysql, ds->pszSERVER, ds->pszUSER, ds->pszPASSWORD,
                           ds->pszDATABASE, port, ds->pszSOCKET, flags))
@@ -691,4 +692,5 @@ SQLRETURN SQL_API SQLDisconnect(SQLHDBC hdbc)
 
   return SQL_SUCCESS;
 }
+
 

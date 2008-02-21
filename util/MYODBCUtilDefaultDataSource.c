@@ -90,6 +90,11 @@ BOOL MYODBCUtilDefaultDataSource( MYODBCUTIL_DATASOURCE *pDataSource )
 		_global_free (pDataSource->pszSSLKEY);
 		pDataSource->pszSSLKEY = NULL;
 	}
+    if( pDataSource->pszSSLVERIFY && !pDataSource->pszSSLVERIFY[0] )
+    {
+        _global_free (pDataSource->pszSSLVERIFY);
+        pDataSource->pszSSLVERIFY = NULL;
+    }
 	if (pDataSource->pszCHARSET && !pDataSource->pszCHARSET[0] )
 	{
           _global_free(pDataSource->pszCHARSET);
@@ -107,4 +112,5 @@ BOOL MYODBCUtilDefaultDataSource( MYODBCUTIL_DATASOURCE *pDataSource )
 
     return TRUE;
 }
+
 

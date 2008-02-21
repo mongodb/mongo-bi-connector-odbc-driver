@@ -197,6 +197,11 @@ BOOL MYODBCUtilReadConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszStr
                             if ( !pDataSource->pszSSLKEY )
                                 pDataSource->pszSSLKEY = (char *)_global_strndup( pAnchorChar, pScanChar - pAnchorChar );
                         }
+                        else if ( strcasecmp( pszName, "SSLVERIFY" ) == 0 )
+                        {    
+                            if ( !pDataSource->pszSSLVERIFY )
+                                pDataSource->pszSSLVERIFY = (char *)_global_strndup( pAnchorChar, pScanChar - pAnchorChar );
+                        }
                         else if (strcasecmp(pszName, "CHARSET") == 0)
                         {
                           if (!pDataSource->pszCHARSET)
@@ -241,5 +246,6 @@ BOOL MYODBCUtilReadConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszStr
 
     return TRUE;
 }
+
 
 
