@@ -118,11 +118,13 @@ SQLBulkOperations
 ;SQLGetDescField
 ;SQLGetDescRec
 SQLCloseCursor
+SQLSetParam
 ;
 DllMain
 LoadByOrdinal
 ;_DllMainCRTStartup
 ;
+
 
 
 

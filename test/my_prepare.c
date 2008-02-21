@@ -1062,6 +1062,10 @@ DECLARE_TEST(t_bug29871)
   ok_stmt(hstmt, SQLSetParam(hstmt, 1, SQL_C_CHAR, SQL_INTEGER, 10, 0,
                              param, 0));
   ok_sql(hstmt, "SELECT * FROM t_bug29871 WHERE a=?");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 1);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
   ok_sql(hstmt, "DROP TABLE t_bug29871");
   return OK;
 }

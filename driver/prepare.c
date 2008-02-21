@@ -292,6 +292,37 @@ SQLRETURN SQL_API SQLSetParam(SQLHSTMT        hstmt,
 }
 
 
+/**
+  Deprecated function, for more details see SQLBindParamater. 
+
+  @param[in] stmt           Handle to statement
+  @param[in] ipar           Parameter number
+  @param[in] fCType         Value type
+  @param[in] fSqlType       Parameter type
+  @param[in] cbColDef       Column size
+  @param[in] ibScale        Decimal digits
+  @param[in] rgbValue       Parameter value pointer
+  @param[in] pcbValue       String length or index pointer
+
+  @return SQL_SUCCESS or SQL_ERROR (and diag is set)
+
+*/
+
+SQLRETURN SQL_API SQLSetParam(SQLHSTMT        hstmt,
+                              SQLUSMALLINT    ipar, 
+                              SQLSMALLINT     fCType, 
+                              SQLSMALLINT     fSqlType,
+                              SQLULEN         cbColDef, 
+                              SQLSMALLINT     ibScale,
+                              SQLPOINTER      rgbValue, 
+                              SQLLEN *        pcbValue)
+{
+  return my_SQLBindParameter(hstmt, ipar, SQL_PARAM_INPUT_OUTPUT, fCType, 
+                             fSqlType, cbColDef, ibScale, rgbValue, 
+                             SQL_SETPARAM_VALUE_MAX, pcbValue);
+}
+
+
 /*
   @type    : ODBC 2.0 API
   @purpose : binds a buffer to a parameter marker in an SQL statement.

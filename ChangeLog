@@ -12,6 +12,7 @@
     for characters. (Bug #32864)
   * SSL connections could not be established properly. Added the server
     certificate verification flag. (Bug #29955)
+  * Added deprecated SQLSetParam function. (Bug #29871)
 
 ----
 
