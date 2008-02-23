@@ -25,7 +25,7 @@
 
 DECLARE_TEST(t_longlong1)
 {
-#if SQLBIGINT_MADE_PORTABLE
+#if SQLBIGINT_MADE_PORTABLE || defined(_WIN32)
   SQLBIGINT session_id, ctn;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_longlong");
@@ -64,7 +64,7 @@ DECLARE_TEST(t_longlong1)
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_longlong");
-#endif
+#endif /* SQLBIGINT_MADE_PORTABLE || defined(_WIN32) */
 
   return OK;
 }
@@ -223,7 +223,7 @@ DECLARE_TEST(t_decimal)
 
 DECLARE_TEST(t_bigint)
 {
-#if SQLBIGINT_MADE_PORTABLE
+#if SQLBIGINT_MADE_PORTABLE || defined(_WIN32)
     SQLRETURN rc;
     SQLLEN nlen = 4;
     union {                    /* An union to get 4 byte alignment */
@@ -338,7 +338,7 @@ DECLARE_TEST(t_bigint)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-#endif
+#endif /* SQLBIGINT_MADE_PORTABLE || defined(_WIN32) */
   return OK;
 }
 
