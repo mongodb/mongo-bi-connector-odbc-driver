@@ -224,7 +224,20 @@ void fix_result_types(STMT *stmt)
       break;
     }
     irrec->schema_name= (SQLCHAR *) "";
-    irrec->searchable= SQL_SEARCHABLE;
+    /*
+      We limit BLOB/TEXT types to SQL_PRED_CHAR due an oversight in ADO
+      causing problems with updatable cursors.
+    */
+    switch (irrec->concise_type)
+    {
+      case SQL_LONGVARBINARY:
+      case SQL_LONGVARCHAR:
+        irrec->searchable= SQL_PRED_CHAR;
+        break;
+      default:
+        irrec->searchable= SQL_SEARCHABLE;
+        break;
+    }
     irrec->unnamed= SQL_NAMED;
     if (field->flags & UNSIGNED_FLAG)
       irrec->is_unsigned= SQL_TRUE;

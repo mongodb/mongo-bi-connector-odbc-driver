@@ -3,6 +3,7 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * Recordset-based update fails if blob field is queried. (Bug #19065)
 
 ----
 
