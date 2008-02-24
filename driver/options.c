@@ -383,13 +383,13 @@ set_con_attr(SQLHDBC    hdbc,
                 char buff[80];
                 const char *level= NULL;
 
-                if ((SQLINTEGER)ValuePtr == SQL_TXN_SERIALIZABLE)
+                if ((SQLLEN)ValuePtr == SQL_TXN_SERIALIZABLE)
                     level="SERIALIZABLE";
-                else if ((SQLINTEGER)ValuePtr == SQL_TXN_REPEATABLE_READ)
+                else if ((SQLLEN)ValuePtr == SQL_TXN_REPEATABLE_READ)
                     level="REPEATABLE READ";
-                else if ((SQLINTEGER)ValuePtr == SQL_TXN_READ_COMMITTED)
+                else if ((SQLLEN)ValuePtr == SQL_TXN_READ_COMMITTED)
                     level="READ COMMITTED";
-                else if ((SQLINTEGER)ValuePtr == SQL_TXN_READ_UNCOMMITTED)
+                else if ((SQLLEN)ValuePtr == SQL_TXN_READ_UNCOMMITTED)
                     level="READ UNCOMMITTED";
 
                 if (level)
