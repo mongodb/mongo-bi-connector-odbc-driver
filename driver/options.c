@@ -488,16 +488,18 @@ static SQLRETURN get_con_attr(SQLHDBC    hdbc,
 
         case SQL_ATTR_CURRENT_CATALOG:
 
-            if (reget_current_catalog(dbc))
+            if (is_connected(dbc) && reget_current_catalog(dbc))
             {
                 result= SQL_ERROR;
             }
             else
             {
-                *StringLengthPtr= (SQLSMALLINT) (strmake((char*)ValuePtr,dbc->database,
-                                                         BufferLength) -
-                                                 (char*) ValuePtr);
-            }
+                char *end= strmake((char*)ValuePtr,
+                                   dbc->database ? dbc->database : "null",
+                                   BufferLength);
+                *StringLengthPtr= (SQLSMALLINT) (end - (char*) ValuePtr);
+             }
+
             break;
 
         case SQL_ATTR_LOGIN_TIMEOUT:
