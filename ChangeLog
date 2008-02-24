@@ -13,6 +13,7 @@
   * SSL connections could not be established properly. Added the server
     certificate verification flag. (Bug #29955)
   * Added deprecated SQLSetParam function. (Bug #29871)
+  * Recordset-based update fails if blob field is queried. (Bug #19065)
 
 ----
 

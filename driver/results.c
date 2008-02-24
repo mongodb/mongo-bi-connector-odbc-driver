@@ -569,7 +569,7 @@ SQLRETURN SQL_API SQLDescribeCol( SQLHSTMT          hstmt,
 
 /*
   @type    : myodbc3 internal
-  @purpose : rerunrs column atribute values
+  @purpose : returns column attribute values
 */
 
 SQLRETURN SQL_API
@@ -786,8 +786,23 @@ get_col_attr(SQLHSTMT     StatementHandle,
                                  BufferLength,StringLengthPtr, "");
 
         case SQL_DESC_SEARCHABLE:
+          /*
+            We limit BLOB/TEXT types to SQL_PRED_CHAR due an oversight in ADO
+            causing problems with updatable cursors.
+          */
+          switch (field->type)
+          {
+          case MYSQL_TYPE_TINY_BLOB:
+          case MYSQL_TYPE_BLOB:
+          case MYSQL_TYPE_MEDIUM_BLOB:
+          case MYSQL_TYPE_LONG_BLOB:
+            *(SQLINTEGER *)NumericAttributePtr= SQL_PRED_CHAR;
+            break;
+          default:
             *(SQLINTEGER *)NumericAttributePtr= SQL_SEARCHABLE;
             break;
+          }
+          break;
 
         case SQL_DESC_TYPE:
           {
