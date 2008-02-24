@@ -381,19 +381,31 @@ set_con_attr(SQLHDBC    hdbc,
             if (trans_supported(dbc))
             {
                 char buff[80];
-                const char *level;
+                const char *level= NULL;
 
-                if ((SQLINTEGER)(SQLLEN)ValuePtr & SQL_TXN_SERIALIZABLE)
+                if ((SQLINTEGER)ValuePtr == SQL_TXN_SERIALIZABLE)
                     level="SERIALIZABLE";
-                else if ((SQLINTEGER)(SQLLEN)ValuePtr & SQL_TXN_REPEATABLE_READ)
+                else if ((SQLINTEGER)ValuePtr == SQL_TXN_REPEATABLE_READ)
                     level="REPEATABLE READ";
-                else if ((SQLINTEGER)(SQLLEN)ValuePtr & SQL_TXN_REPEATABLE_READ)
+                else if ((SQLINTEGER)ValuePtr == SQL_TXN_READ_COMMITTED)
                     level="READ COMMITTED";
-                else
+                else if ((SQLINTEGER)ValuePtr == SQL_TXN_READ_UNCOMMITTED)
                     level="READ UNCOMMITTED";
-                sprintf(buff,"SET SESSION TRANSACTION ISOLATION LEVEL %s",level);
-                if (odbc_stmt(dbc,buff) == SQL_SUCCESS)
-                    dbc->txn_isolation= (SQLINTEGER)(SQLLEN)ValuePtr;
+
+                if (level)
+                {
+                  SQLRETURN rc;
+                  sprintf(buff,"SET SESSION TRANSACTION ISOLATION LEVEL %s",
+                          level);
+                  if (SQL_SUCCEEDED(rc = odbc_stmt(dbc,buff)))
+                      dbc->txn_isolation= (SQLINTEGER)ValuePtr;
+                  return rc;
+                }
+                else
+                {
+                  return set_dbc_error(dbc, "HY024",
+                                       "Invalid attribute value", 0);
+                }
             }
             break;
 

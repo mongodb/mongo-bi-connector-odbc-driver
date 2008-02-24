@@ -14,6 +14,8 @@
     certificate verification flag. (Bug #29955)
   * Added deprecated SQLSetParam function. (Bug #29871)
   * Recordset-based update fails if blob field is queried. (Bug #19065)
+  * Allows dirty reading with SQL_TXN_READ_COMMITTED isolation through ODBC
+    (Bug #31959)
 
 ----
 

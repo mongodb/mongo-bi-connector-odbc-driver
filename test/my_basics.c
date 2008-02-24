@@ -506,20 +506,20 @@ DECLARE_TEST(t_bug32727)
 
 
 /*
-  Bug #28220: Varchar Field length is reported as larger than actual
+  Bug #28820: Varchar Field length is reported as larger than actual
 */
-DECLARE_TEST(t_bug28220)
+DECLARE_TEST(t_bug28820)
 {
   SQLULEN length;
   SQLSMALLINT i;
 
-  ok_sql(hstmt, "drop table if exists t_bug28220");
-  ok_sql(hstmt, "create table t_bug28220 ("
+  ok_sql(hstmt, "drop table if exists t_bug28820");
+  ok_sql(hstmt, "create table t_bug28820 ("
                 "x varchar(90) character set latin1,"
                 "y varchar(90) character set big5,"
                 "z varchar(90) character set utf8)");
 
-  ok_sql(hstmt, "select x,y,z from t_bug28220");
+  ok_sql(hstmt, "select x,y,z from t_bug28820");
 
   for (i= 0; i < 3; ++i)
   {
@@ -529,7 +529,55 @@ DECLARE_TEST(t_bug28220)
     is_num(length, 90);
   }
 
-  ok_sql(hstmt, "drop table if exists t_bug28220");
+  ok_sql(hstmt, "drop table if exists t_bug28820");
+  return OK;
+}
+
+
+/*
+  Bug #31959 - Allows dirty reading with SQL_TXN_READ_COMMITTED
+               isolation through ODBC
+*/
+DECLARE_TEST(t_bug31959)
+{
+  SQLCHAR level[50] = "uninitialized";
+  SQLINTEGER i;
+  SQLINTEGER levelid[] = {SQL_TXN_SERIALIZABLE, SQL_TXN_REPEATABLE_READ,
+                          SQL_TXN_READ_COMMITTED, SQL_TXN_READ_UNCOMMITTED};
+  SQLCHAR *levelname[] = {"SERIALIZABLE", "REPEATABLE-READ",
+                          "READ-COMMITTED", "READ-UNCOMMITTED"};
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, "select @@tx_isolation", SQL_NTS));
+
+  /* check all 4 valid isolation levels */
+  for(i = 3; i >= 0; --i)
+  {
+    ok_con(hdbc, SQLSetConnectAttr(hdbc, SQL_ATTR_TXN_ISOLATION,
+                                   (SQLPOINTER)levelid[i], 0));
+    ok_stmt(hstmt, SQLExecute(hstmt));
+    ok_stmt(hstmt, SQLFetch(hstmt));
+    ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, level, 50, NULL));
+    is_str(level, levelname[i], strlen(levelname[i]));
+    printMessage("Level = %s\n", level);
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  }
+
+  /* check invalid value (and corresponding SQL state) */
+  is(SQLSetConnectAttr(hdbc, SQL_ATTR_TXN_ISOLATION, (SQLPOINTER)999, 0) ==
+     SQL_ERROR);
+  {
+  SQLCHAR     sql_state[6];
+  SQLINTEGER  err_code= 0;
+  SQLCHAR     err_msg[SQL_MAX_MESSAGE_LENGTH]= {0};
+  SQLSMALLINT err_len= 0;
+
+  memset(err_msg, 'C', SQL_MAX_MESSAGE_LENGTH);
+  SQLGetDiagRec(SQL_HANDLE_DBC, hdbc, 1, sql_state, &err_code, err_msg,
+                SQL_MAX_MESSAGE_LENGTH - 1, &err_len);
+
+  is_str(sql_state, (SQLCHAR *)"HY024", 5);
+  }
+
   return OK;
 }
 
@@ -549,7 +597,8 @@ BEGIN_TESTS
   ADD_TEST(t_bug30774)
   ADD_TEST(t_bug30840)
   ADD_TEST(t_bug32727)
-  ADD_TEST(t_bug28220)
+  ADD_TEST(t_bug28820)
+  ADD_TEST(t_bug31959)
 END_TESTS
 
 
