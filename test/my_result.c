@@ -2182,6 +2182,42 @@ DECLARE_TEST(t_bug32684)
 }
 
 
+/*
+  Bug #34271 - C/ODBC 5.1 does not list table fields in MSQRY32
+*/
+DECLARE_TEST(t_bug34271)
+{
+  SQLINTEGER x1= 0, x2= 0;
+
+  /* execute the query, but bind only the first column */
+  ok_sql(hstmt, "select 1,2");
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &x1, 0, NULL));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_num(x1, 1);
+  is_num(x2, 0);
+  x1= 0;
+
+  /* unbind */
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+
+  /* execute the query, but bind only the second column */
+  ok_sql(hstmt, "select 1,2");
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_LONG, &x2, 0, NULL));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_num(x1, 0);
+  is_num(x2, 2);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -2213,6 +2249,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug13776_auto)
   ADD_TEST(t_bug28617)
   ADD_TEST(t_bug32684)
+  ADD_TEST(t_bug34271)
 END_TESTS
 
 

@@ -403,8 +403,9 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
 
     if (fOption == SQL_UNBIND)
     {
-        stmt->ard->count= 0;
-        return SQL_SUCCESS;
+      stmt->ard->records.elements= 0;
+      stmt->ard->count= 0;
+      return SQL_SUCCESS;
     }
 
     desc_free_paramdata(stmt->apd);
@@ -650,4 +651,5 @@ SQLRETURN SQL_API SQLFreeHandle(SQLSMALLINT HandleType,
 
     return error;
 }
+
 
