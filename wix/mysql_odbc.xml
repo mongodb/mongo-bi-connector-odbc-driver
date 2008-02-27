@@ -138,7 +138,7 @@
     <Property Id="ProgressType1">Installing</Property>
     <Property Id="ProgressType0">install</Property>
     
-    <Property Id="QualifiedProductName">MySQL Connector/ODBC 3.51.11</Property>
+    <Property Id="QualifiedProductName">MySQL Connector/ODBC $(var.odbc_ver_long)</Property>
     <Property Id="InstallationDirectory">MySQL Connector-ODBC</Property>
     
     <Property Id="ReinstallFileVersion">o</Property>
