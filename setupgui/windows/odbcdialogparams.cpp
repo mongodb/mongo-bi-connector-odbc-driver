@@ -465,13 +465,49 @@ void choosePath( HWND parent, int hostCtlId )
 	}
 }
 
+#ifndef MAX_VISIBLE_CB_ITEMS
+#define MAX_VISIBLE_CB_ITEMS 20
+#endif
 
+
+/**
+   Adjusting height of dropped list of cbHwnd combobox to fit
+   itemsCount items, but not more than MAX_VISIBLE_CB_ITEMS
+   ComboBox_SetMinVisible not used because it was introduced in XP.
+*/
+int adjustDropdownHeight(HWND cbHwnd, unsigned int itemsCount)
+{
+  COMBOBOXINFO  dbcbinfo;
+  RECT          ddRect;
+  int           newHeight = 0;
+
+  dbcbinfo.cbSize= sizeof(COMBOBOXINFO);
+  ComboBox_GetDroppedControlRect(cbHwnd, &ddRect);
+  newHeight= ddRect.bottom - ddRect.top;
+
+  if ( GetComboBoxInfo(cbHwnd, &dbcbinfo) )
+  {
+    itemsCount= itemsCount < 1 ? 1 : (itemsCount > MAX_VISIBLE_CB_ITEMS
+                                      ? MAX_VISIBLE_CB_ITEMS
+                                      : itemsCount );
+
+    /* + (itemsCount - 1) - 1 pixel spaces between list items */
+    newHeight= itemsCount*ComboBox_GetItemHeight(cbHwnd) + (itemsCount - 1);
+    MoveWindow(dbcbinfo.hwndList, ddRect.left, ddRect.top, ddRect.right-ddRect.left, newHeight, FALSE);
+  }
+
+  return newHeight;
+}
+
+
+/**
+   Processing commands for dbname combobox (hwndCtl).
+*/
 void processDbCombobox(HWND hwnd, HWND hwndCtl, UINT codeNotify)
 {
-  /* Loading list and adjust its height if button clicked and on user input */
-
   switch(codeNotify)
   {
+    /* Loading list and adjust its height if button clicked and on user input */
     case(CBN_DROPDOWN):
     {
       FillParameters(hwnd, *pParams);
@@ -479,6 +515,8 @@ void processDbCombobox(HWND hwnd, HWND hwndCtl, UINT codeNotify)
       LIST *dbtmp= dbs;
 
       ComboBox_ResetContent(hwndCtl);
+
+      adjustDropdownHeight(hwndCtl,list_length(dbs));
 
       for (; dbtmp; dbtmp= list_rest(dbtmp))
         ComboBox_AddString(hwndCtl, (SQLWCHAR *)dbtmp->data);
