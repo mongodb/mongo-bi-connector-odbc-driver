@@ -229,6 +229,8 @@ void MYODBCSetupDataSourceDialog::slotOk()
             pDataSource->pszSSLCAPATH = _global_strdup( ptab2->getSSLCAPath().toAscii() );
         if ( !ptab2->getSSLCipher().isEmpty() )
             pDataSource->pszSSLCIPHER = _global_strdup( ptab2->getSSLCipher().toAscii() );
+        if ( !ptab2->getSSLVerify().isEmpty() )
+            pDataSource->pszSSLVERIFY = _global_strdup( ptab2->getSSLVerify().toAscii() );
 
 #else
         if ( !ptab1->getDataSourceName().isEmpty() )
@@ -262,6 +264,8 @@ void MYODBCSetupDataSourceDialog::slotOk()
             pDataSource->pszSSLCAPATH = _global_strdup( ptab2->getSSLCAPath().ascii() );
         if ( !ptab2->getSSLCipher().isEmpty() )
             pDataSource->pszSSLCIPHER = _global_strdup( ptab2->getSSLCipher().ascii() );
+        if ( !ptab2->getSSLVerify().isEmpty() )
+            pDataSource->pszSSLVERIFY = _global_strdup( ptab2->getSSLVerify().ascii() );
 #endif
 
         unsigned int nFlags = ptab3->getFlags();
@@ -397,6 +401,7 @@ void MYODBCSetupDataSourceDialog::doInit()
     ptab2->setSSLCA( pDataSource->pszSSLCA );
     ptab2->setSSLCAPath( pDataSource->pszSSLCAPATH );
     ptab2->setSSLCipher( pDataSource->pszSSLCIPHER );
+    ptab2->setSSLVerify( pDataSource->pszSSLVERIFY );
     ptab1->setUser( pDataSource->pszUSER );
 
     if ( pDataSource->pszOPTION )
@@ -454,6 +459,7 @@ void MYODBCSetupDataSourceDialog::doInit()
     connect( ptab2->plineeditSSLCA, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab2->plineeditSSLCAPath, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab2->plineeditSSLCipher, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
+    connect( ptab2->pcheckboxSSLVerify, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3a->pcheckboxReturnMatchingRows, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3a->pcheckboxAllowBigResults, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3a->pcheckboxUseCompressedProtocol, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
@@ -690,6 +696,8 @@ QString MYODBCSetupDataSourceDialog::buildConnectString()
 	  stringConnectIn+= ";SSLCAPATH=" + ptab2->getSSLCAPath();
   if (!ptab2->getSSLCipher().isEmpty())
 	  stringConnectIn+= ";SSLCIPHER=" + ptab2->getSSLCipher();
+  if (!ptab2->getSSLVerify().isEmpty())
+    stringConnectIn+= ";SSLVERIFY=" + ptab2->getSSLVerify();
 
   return stringConnectIn;
 }
@@ -1064,6 +1072,7 @@ void MYODBCSetupDataSourceDialog::slotLoadCharsetNames()
   else
     doLoadCharsetNamesUsingDriverManager();
 }
+
 
 
 

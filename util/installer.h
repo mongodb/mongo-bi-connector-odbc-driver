@@ -130,7 +130,8 @@ typedef struct {
   BOOL limit_column_size;
   /* debug */
   BOOL save_queries;
-
+  /* SSL */
+  BOOL sslverify;
 } DataSource;
 
 DataSource *ds_new();

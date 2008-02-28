@@ -104,6 +104,11 @@ void MYODBCUtilClearDataSource( MYODBCUTIL_DATASOURCE *pDataSource )
 		_global_free (pDataSource->pszSSLCIPHER);
 		pDataSource->pszSSLCIPHER = NULL;
 	}
+    if( pDataSource->pszSSLVERIFY)
+    {
+        _global_free (pDataSource->pszSSLVERIFY);
+        pDataSource->pszSSLVERIFY = NULL;
+    }
 	if( pDataSource->pszSSLKEY)
 	{
 		_global_free (pDataSource->pszSSLKEY);

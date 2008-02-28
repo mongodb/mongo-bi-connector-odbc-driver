@@ -63,7 +63,7 @@ BOOL MYODBCUtilReadConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszStr
                       /* To prevent a memory leak when use such connection strings UID=root;PWD=;SERVER=localhost;... */
                         if( pszName )
                             free( pszName );
-                        pszName = myodbc_strndup( pAnchorChar, pScanChar - pAnchorChar );
+                        pszName = sqlwchardup( pAnchorChar, pScanChar - pAnchorChar );
 
                         if ( *pScanChar == '=' )
                             nState = MYODBCUTIL_ATTR_PARSE_STATE_VALUE_START;
@@ -197,6 +197,11 @@ BOOL MYODBCUtilReadConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszStr
                             if ( !pDataSource->pszSSLKEY )
                                 pDataSource->pszSSLKEY = (char *)_global_strndup( pAnchorChar, pScanChar - pAnchorChar );
                         }
+                        else if ( strcasecmp( pszName, "SSLVERIFY" ) == 0 )
+                        {    
+                            if ( !pDataSource->pszSSLVERIFY )
+                                pDataSource->pszSSLVERIFY = (char *)_global_strndup( pAnchorChar, pScanChar - pAnchorChar );
+                        }
                         else if (strcasecmp(pszName, "CHARSET") == 0)
                         {
                           if (!pDataSource->pszCHARSET)
@@ -241,5 +246,3 @@ BOOL MYODBCUtilReadConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszStr
 
     return TRUE;
 }
-
-

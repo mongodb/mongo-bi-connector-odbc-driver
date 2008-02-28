@@ -29,7 +29,8 @@ MYODBCSetupDataSourceTab2::MYODBCSetupDataSourceTab2( QWidget *pwidgetParent,
                                                       QString stringSSLCert,
                                                       QString stringSSLCA,
                                                       QString stringSSLCAPath,
-                                                      QString stringSSLCipher )
+                                                      QString stringSSLCipher,
+                                                      QString stringSSLVerify )
 
     : QWidget( pwidgetParent )
 {
@@ -43,6 +44,7 @@ MYODBCSetupDataSourceTab2::MYODBCSetupDataSourceTab2( QWidget *pwidgetParent,
     plineeditSSLCA->setText( stringSSLCA );
     plineeditSSLCAPath->setText( stringSSLCAPath );
     plineeditSSLCipher->setText( stringSSLCipher );
+    pcheckboxSSLVerify->setChecked( stringSSLVerify == "1" ? TRUE : FALSE );
 }
 
 MYODBCSetupDataSourceTab2::MYODBCSetupDataSourceTab2( QWidget *pwidgetParent )
@@ -96,6 +98,11 @@ void MYODBCSetupDataSourceTab2::setSSLCipher( const QString &stringSSLCipher )
     plineeditSSLCipher->setText( stringSSLCipher );
 }
 
+void MYODBCSetupDataSourceTab2::setSSLVerify( const QString &stringSSLVerify )
+{
+    pcheckboxSSLVerify->setChecked( stringSSLVerify == "1" ? TRUE : FALSE );
+}
+
 QString MYODBCSetupDataSourceTab2::getPort()
 {
     return plineeditPort->text();
@@ -141,6 +148,11 @@ QString MYODBCSetupDataSourceTab2::getSSLCipher()
     return plineeditSSLCipher->text();
 }
 
+QString MYODBCSetupDataSourceTab2::getSSLVerify()
+{
+    return pcheckboxSSLVerify->isChecked() ? "1" : "";
+}
+
 void MYODBCSetupDataSourceTab2::doInit()
 {
     QString         stringPort( tr("The TCP/IP port to use if server is not localhost.\nOptional: Yes (silently uses default)\nDefault: 3306") );
@@ -152,6 +164,7 @@ void MYODBCSetupDataSourceTab2::doInit()
     QString         stringSSLCA( tr("The path to a file that contains a list of \ntrusted SSL CAs.\nOptional: Yes") );
     QString         stringSSLCAPath( tr("The path to a directory that contains \ntrusted SSL CA certificates in PEM format.\nOptional: Yes") );
     QString         stringSSLCipher( tr("A list of allowable ciphers to use for SSL encryption.\nExample: ALL:-AES:-EXP\nOptional: Yes") );
+    QString         stringSSLVerify( tr("The option causes the server's Common Name value in its certificate to be verified against the hostname used when connecting to the server, and the connection is rejected if there is a mismatch\nDefault: disabled") );
 #if QT_VERSION >= 0x040000
     QGridLayout *   playoutFields = new QGridLayout();
     setLayout( playoutFields );
@@ -276,7 +289,18 @@ void MYODBCSetupDataSourceTab2::doInit()
     QToolTip::add( plineeditSSLCipher, stringSSLCipher );
 #endif
     nRow++;
+
+    pcheckboxSSLVerify = new MYODBCSetupCheckBox( "Verify SSL Certificate", this );
+    pcheckboxSSLVerify->setAssistText( stringSSLVerify );
+    playoutFields->addWidget( pcheckboxSSLVerify, nRow, nColField );
+#if QT_VERSION >= 0x040000
+    pcheckboxSSLVerify->setToolTip( stringSSLVerify );
+#else
+    QToolTip::add( pcheckboxSSLVerify, stringSSLVerify );
+#endif
+    nRow++;
 }
+
 
 
 

@@ -92,6 +92,8 @@ static SQLWCHAR W_SSLCAPATH[]=
   {'S', 'S', 'L', 'C', 'A', 'P', 'A', 'T', 'H', 0};
 static SQLWCHAR W_SSLCIPHER[]=
   {'S', 'S', 'L', 'C', 'I', 'P', 'H', 'E', 'R', 0};
+static SQLWCHAR W_SSLVERIFY[]=
+  {'S', 'S', 'L', 'V', 'E', 'R', 'I', 'F', 'Y', 0};
 static SQLWCHAR W_PORT[]= {'P', 'O', 'R', 'T', 0};
 static SQLWCHAR W_SETUP[]= {'S', 'E', 'T', 'U', 'P', 0};
 /* DS_PARAM */
@@ -109,7 +111,8 @@ static const
 SQLWCHAR *dsnparams[]= {W_DSN, W_DRIVER, W_DESCRIPTION, W_SERVER,
                         W_UID, W_PWD, W_DATABASE, W_SOCKET, W_INITSTMT,
                         W_PORT, W_OPTION, W_CHARSET, W_SSLKEY,
-                        W_SSLCERT, W_SSLCA, W_SSLCAPATH, W_SSLCIPHER};
+                        W_SSLCERT, W_SSLCA, W_SSLCAPATH, W_SSLCIPHER,
+                        W_SSLVERIFY};
 static const
 int dsnparamcnt= sizeof(dsnparams) / sizeof(SQLWCHAR *);
 /* DS_PARAM */
@@ -591,6 +594,9 @@ void ds_map_param(DataSource *ds, const SQLWCHAR *param,
 
   else if (!sqlwcharcasecmp(W_PORT, param))
     *intdest= &ds->port;
+  else if (!sqlwcharcasecmp(W_SSLVERIFY, param))
+    *intdest= &ds->sslverify;
+
   /* DS_PARAM */
 }
 
@@ -943,6 +949,7 @@ int ds_add(DataSource *ds)
   if (ds_add_strprop(ds->name, W_SSLCIPHER  , ds->sslcipher  )) goto error;
 
   if (ds_add_intprop(ds->name, W_PORT       , ds->port       )) goto error;
+  if (ds_add_intprop(ds->name, W_SSLVERIFY  , ds->sslverify  )) goto error;
 
   /* DS_PARAM */
 

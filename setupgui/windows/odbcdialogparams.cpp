@@ -250,11 +250,12 @@ void syncTabsData(HWND hwnd, DataSource &params)
     GET_BOOL(4,save_queries);
 
     /* ssl settings */
-    getStrFieldData(&params.sslkey      , 5, IDC_EDIT_sslkey);
-    getStrFieldData(&params.sslcert     , 5, IDC_EDIT_sslcert);
-    getStrFieldData(&params.sslca       , 5, IDC_EDIT_sslca);
-    getStrFieldData(&params.sslcapath   , 5, IDC_EDIT_sslcapath);
-    getStrFieldData(&params.sslcipher   , 5, IDC_EDIT_sslcipher);
+    getStrFieldData(&params.sslkey      , SSL_TAB, IDC_EDIT_sslkey);
+    getStrFieldData(&params.sslcert     , SSL_TAB, IDC_EDIT_sslcert);
+    getStrFieldData(&params.sslca       , SSL_TAB, IDC_EDIT_sslca);
+    getStrFieldData(&params.sslcapath   , SSL_TAB, IDC_EDIT_sslcapath);
+    getStrFieldData(&params.sslcipher   , SSL_TAB, IDC_EDIT_sslcipher);
+    GET_BOOL(SSL_TAB,sslverify);
 }
 
 void syncTabs(HWND hwnd, DataSource &params)
@@ -297,6 +298,7 @@ void syncTabs(HWND hwnd, DataSource &params)
         Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslca)      , params.sslca);
         Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslcapath)  , params.sslcapath);
         Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslcipher)  , params.sslcipher);
+        SET_BOOL(SSL_TAB, sslverify);
     }
 
 }
@@ -463,51 +465,70 @@ void choosePath( HWND parent, int hostCtlId )
 	}
 }
 
+
+void processDbCombobox(HWND hwnd, HWND hwndCtl, UINT codeNotify)
+{
+  /* Loading list and adjust its height if button clicked and on user input */
+
+  switch(codeNotify)
+  {
+    case(CBN_DROPDOWN):
+    {
+      FillParameters(hwnd, *pParams);
+      LIST *dbs= mygetdatabases(hwnd, pParams);
+      LIST *dbtmp= dbs;
+
+      ComboBox_ResetContent(hwndCtl);
+
+      for (; dbtmp; dbtmp= list_rest(dbtmp))
+        ComboBox_AddString(hwndCtl, (SQLWCHAR *)dbtmp->data);
+
+      list_free(dbs, 1);
+
+      ComboBox_SetText(hwndCtl,pParams->database);
+
+      break;
+    }
+  }
+}
+
+
 void FormMain_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
-	switch (id)
-	{
-		case IDOK:
-			btnOk_Click (hwnd); break;
-		case IDCANCEL:
-			btnCancel_Click (hwnd); break;
-		case IDC_BUTTON_DETAILS:
-			btnDetails_Click (hwnd); break;
-		case IDC_BUTTON_HELP:
-			btnHelp_Click (hwnd); break;
-		case IDC_BUTTON_TEST:
-			btnTest_Click (hwnd); break;
-		case IDC_SSLKEYCHOOSER:
-			chooseFile( hwnd, IDC_EDIT_sslkey ); break;
-		case IDC_SSLCERTCHOOSER:
-			chooseFile( hwnd, IDC_EDIT_sslcert ); break;
-		case IDC_SSLCACHOOSER:
-			chooseFile( hwnd, IDC_EDIT_sslca ); break;
-		case IDC_SSLCAPATHCHOOSER:
-			choosePath( hwnd, IDC_EDIT_sslcapath ); break;
-		case IDC_EDIT_name:
-		{
-			if (codeNotify==EN_CHANGE) {
-				int len = Edit_GetTextLength(GetDlgItem(hwnd,IDC_EDIT_name));
-				Button_Enable(GetDlgItem(hwnd,IDOK), len > 0);
-				Button_Enable(GetDlgItem(hwnd,IDC_BUTTON_TEST), len > 0);
-				RedrawWindow(hwnd,NULL,NULL,RDW_INVALIDATE);	
-			}
-			break;
-		}
+  switch (id)
+  {
+    case IDOK:
+      btnOk_Click (hwnd); break;
+    case IDCANCEL:
+      btnCancel_Click (hwnd); break;
+    case IDC_BUTTON_DETAILS:
+      btnDetails_Click (hwnd); break;
+    case IDC_BUTTON_HELP:
+      btnHelp_Click (hwnd); break;
+    case IDC_BUTTON_TEST:
+      btnTest_Click (hwnd); break;
+    case IDC_SSLKEYCHOOSER:
+      chooseFile( hwnd, IDC_EDIT_sslkey ); break;
+    case IDC_SSLCERTCHOOSER:
+      chooseFile( hwnd, IDC_EDIT_sslcert ); break;
+    case IDC_SSLCACHOOSER:
+      chooseFile( hwnd, IDC_EDIT_sslca ); break;
+    case IDC_SSLCAPATHCHOOSER:
+      choosePath( hwnd, IDC_EDIT_sslcapath ); break;
+    case IDC_EDIT_name:
+    {
+      if (codeNotify==EN_CHANGE)
+      {
+        int len = Edit_GetTextLength(GetDlgItem(hwnd,IDC_EDIT_name));
+        Button_Enable(GetDlgItem(hwnd,IDOK), len > 0);
+        Button_Enable(GetDlgItem(hwnd,IDC_BUTTON_TEST), len > 0);
+        RedrawWindow(hwnd,NULL,NULL,RDW_INVALIDATE);
+      }
+      break;
+    }
 
-		case IDC_EDIT_dbname:
-		{
-			if(codeNotify==CBN_DROPDOWN) {
-				FillParameters(hwnd, *pParams);
-				LIST *dbs= mygetdatabases(hwnd, pParams);
-        LIST *dbtmp= dbs;
-        ComboBox_ResetContent(hwndCtl);
-        for (; dbtmp; dbtmp= list_rest(dbtmp))
-          ComboBox_AddString(hwndCtl, (SQLWCHAR *)dbtmp->data);
-        list_free(dbs, 1);
-			}
-		}
+    case IDC_EDIT_dbname:
+      processDbCombobox(hwnd, hwndCtl, codeNotify);
 	}
 
 	return;

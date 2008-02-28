@@ -193,11 +193,11 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
                 ds_get_utf8attr(ds->sslca,     &ds->sslca8),
                 ds_get_utf8attr(ds->sslcapath, &ds->sslcapath8),
                 ds_get_utf8attr(ds->sslcipher, &ds->sslcipher8));
-  /* TODO enable this via DSN option / gui, see bug#34020 */
-  /*
-  mysql_options(mysql, MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
+
+  if (ds->sslverify)
+    mysql_options(mysql, MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
                 (const char *)&opt_ssl_verify_server_cert);
-  */
+
 
   {
     /*
@@ -730,8 +730,12 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
       oldds->pszSSLCIPHER=   _global_strdup(ds_get_utf8attr(ds->sslcipher, &ds->sslcipher8));
     if (ds->charset)
       oldds->pszCHARSET=     _global_strdup(ds_get_utf8attr(ds->charset, &ds->charset8));
+
     oldds->pszPORT= _global_strdup("        ");
     sprintf(oldds->pszPORT, "%d", ds->port);
+
+    oldds->pszSSL= _global_strdup(" ");
+    sprintf(oldds->pszSSLVERIFY,"%d", ds->sslverify);
 
     /* Prompt. Function returns false if user cancels.  */
     if (!pFunc(hdbc, hwnd, oldds))
@@ -770,6 +774,9 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
       ds_setattr_from_utf8(&ds->charset, oldds->pszCHARSET);
     if (oldds->pszPORT)
       ds->port= strtoul(oldds->pszPORT, NULL, 10);
+    if (oldds->pszSSLVERIFY)
+      ds->sslverify= strtoul(oldds->pszSSLVERIFY, NULL, 10);
+
 #endif /* USE_LEGACY_ODBC_GUI */
   }
 

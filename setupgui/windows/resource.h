@@ -54,6 +54,7 @@
 #define IDC_SSLCERTCHOOSER              1025
 #define IDC_SSLCACHOOSER                1026
 #define IDC_SSLCAPATHCHOOSER            1027
+#define IDC_CHECK_sslverify             1028
 #define IDC_EDIT_drvname                10000
 #define IDC_EDIT_name                   10000
 #define IDC_EDIT_drvdesc                10001
@@ -110,7 +111,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        137
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1024
+#define _APS_NEXT_CONTROL_VALUE         1029
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif
