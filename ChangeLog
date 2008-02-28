@@ -1,6 +1,8 @@
 5.1.3
 
   Functionality added or changed:
+  * Added SSLVERIFY connection option to verify server certificate. By default
+    certificate is not verified now. (Bug #34648) 
 
   Bugs fixed:
   * Recordset-based update fails if blob field is queried. (Bug #19065)
