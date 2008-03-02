@@ -2003,6 +2003,61 @@ DECLARE_TEST(t_bug13776_auto)
 }
 
 
+/*
+  Bug #32420 - Don't cache results and SQLExtendedFetch work badly together
+*/
+DECLARE_TEST(t_bug32420)
+{
+  SQLHANDLE henv1, hdbc1, hstmt1;
+  SQLINTEGER nData[4];
+  SQLCHAR szData[4][16];
+  SQLUSMALLINT rgfRowStatus[4];
+
+  SET_DSN_OPTION(1048576);
+
+  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  ok_sql(hstmt1, "drop table if exists bug32420");
+  ok_sql(hstmt1, "CREATE TABLE bug32420 ("\
+                "tt_int INT PRIMARY KEY auto_increment,"\
+                "tt_varchar VARCHAR(128) NOT NULL)");
+  ok_sql(hstmt1, "INSERT INTO bug32420 VALUES "\
+                "(100, 'string 1'),"\
+                "(200, 'string 2'),"\
+                "(300, 'string 3'),"\
+                "(400, 'string 4')");
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_stmt(hstmt1, SQLSetStmtOption(hstmt1, SQL_ROWSET_SIZE, 4));
+
+  ok_sql(hstmt1, "select * from bug32420 order by 1");
+  ok_stmt(hstmt1, SQLBindCol(hstmt1, 1, SQL_C_LONG, nData, 0, NULL));
+  ok_stmt(hstmt1, SQLBindCol(hstmt1, 2, SQL_C_CHAR, szData, sizeof(szData[0]),
+                            NULL));
+  ok_stmt(hstmt1, SQLExtendedFetch(hstmt1, SQL_FETCH_NEXT, 0, NULL, 
+                                   rgfRowStatus));
+
+  is_num(nData[0], 100);
+  is_str(szData[0], "string 1", 8);
+  is_num(nData[1], 200);
+  is_str(szData[1], "string 2", 8);
+  is_num(nData[2], 300);
+  is_str(szData[2], "string 3", 8);
+  is_num(nData[3], 400);
+  is_str(szData[3], "string 4", 8);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+  ok_sql(hstmt1, "drop table if exists bug32420");
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  SET_DSN_OPTION(1048576);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -2030,6 +2085,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug31246)
   ADD_TEST(t_bug13776)
   ADD_TEST(t_bug13776_auto)
+  ADD_TEST(t_bug32420)
 END_TESTS
 
 

@@ -1256,14 +1256,6 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
         if ( fFetchType != SQL_FETCH_NEXT && !(stmt->dbc->flag & FLAG_SAFE) )
             return  set_error(stmt,MYERR_S1106,
                               "Wrong fetchtype with FORWARD ONLY cursor", 0);
-
-        if ((stmt->dbc->flag & FLAG_NO_CACHE))
-        {
-          if (stmt->result_array)
-            values= stmt->result_array + (cur_row * stmt->result->field_count);
-          else
-            values= mysql_fetch_row(stmt->result);
-        }
     }
 
     if ( if_dynamic_cursor(stmt) && set_dynamic_result(stmt) )
@@ -1337,7 +1329,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     if ( !stmt->result_array && !if_forward_cache(stmt) )
     {
         /*
-          If Dynamic, it looses the stmt->end_of_set, so
+          If Dynamic, it loses the stmt->end_of_set, so
           seek to desired row, might have new data or
           might be deleted
         */
@@ -1350,7 +1342,10 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     }
     stmt->current_row= cur_row;
 
-    rows_to_fetch= min(max_row-cur_row, (long)stmt->stmt_options.rows_in_set);
+    if (if_forward_cache(stmt) && !stmt->result_array)
+      rows_to_fetch= stmt->stmt_options.rows_in_set;
+    else
+      rows_to_fetch= min(max_row-cur_row, (long)stmt->stmt_options.rows_in_set);
     if ( !rows_to_fetch )
     {
         *pcrow= 0;
@@ -1373,14 +1368,11 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
         }
         else
         {
-            if ( !if_forward_cache(stmt) )
-            {
-                /* This code will ensure that values is alway set */
-                if ( i == 0 )
-                    save_position= mysql_row_tell(stmt->result);
-                if ( !(values= mysql_fetch_row(stmt->result)) )
-                    break;
-            }
+            /* This code will ensure that values is always set */
+            if ( i == 0 )
+                save_position= mysql_row_tell(stmt->result);
+            if ( !(values= mysql_fetch_row(stmt->result)) )
+                break;
             if ( stmt->fix_fields )
                 values= (*stmt->fix_fields)(stmt,values);
             else
@@ -1485,6 +1477,9 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     }
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
         setlocale(LC_NUMERIC,default_locale);
+
+    if (SQL_SUCCEEDED(res) && stmt->rows_found_in_set == 0)
+      return SQL_NO_DATA_FOUND;
 
     return res;
 }
