@@ -18,6 +18,8 @@
     (Bug #31959)
   * Don't cache results and SQLExtendedFetch work badly together.
     (Bug #32420)
+  * SQLFetch or SQLFetchScroll returns negative data length using SQL_C_WCHAR.
+    (Bug #31220)
 
 ----
 

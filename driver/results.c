@@ -341,6 +341,11 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
           *((ulonglong *)rgbValue)= (ulonglong)strtoull(value, NULL, 10);
       *pcbValue= sizeof(ulonglong);
       break;
+
+    default:
+      return set_error(stmt,MYERR_07006,
+                       "Restricted data type attribute violation",0);
+      break;
     }
   }
 
@@ -1399,7 +1404,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                 if ( bind->rgbValue || bind->pcbValue )
                 {
                     SQLLEN offset,pcb_offset;
-                    SQLLEN pcbValue;
+                    SQLLEN pcbValue= 0;
 
                     if ( stmt->stmt_options.bind_type == SQL_BIND_BY_COLUMN )
                     {
@@ -1436,7 +1441,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                         else
                             res= SQL_ERROR;
                     }
-                    if (bind->pcbValue)
+                    else if (bind->pcbValue)
                       *(bind->pcbValue + (pcb_offset / sizeof(SQLLEN))) = pcbValue;
                 }
                 if ( lengths )

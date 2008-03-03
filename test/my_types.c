@@ -721,6 +721,23 @@ DECLARE_TEST(t_bug32171)
 }
 
 
+/*
+  Bug #31220 - SQLFetch or SQLFetchScroll returns negative data length
+               when using SQL_C_WCHAR
+*/
+DECLARE_TEST(t_bug31220)
+{
+  SQLLEN outlen= 999;
+  SQLWCHAR outbuf[5];
+  ok_sql(hstmt, "select 1");
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_WCHAR, outbuf, 5, &outlen));
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_ERROR);
+  is(check_sqlstate(hstmt, "07006") == OK);
+  is_num(outlen, 999);
+  return OK;  
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_longlong1)
   ADD_TEST(t_numeric)
@@ -736,6 +753,7 @@ BEGIN_TESTS
   ADD_TEST(float_scale)
   ADD_TEST(bit)
   ADD_TEST(t_bug32171)
+  ADD_TEST(t_bug31220)
 END_TESTS
 
 
