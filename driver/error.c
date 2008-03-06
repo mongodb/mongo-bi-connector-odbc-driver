@@ -225,6 +225,9 @@ void translate_error(char *save_state,myodbc_errid errid,uint mysql_err)
             state= "3D000";
             break;
         case ER_PARSE_ERROR:
+#ifdef ER_SP_DOES_NOT_EXIST
+        case ER_SP_DOES_NOT_EXIST:
+#endif
             state= myodbc3_errors[MYERR_42000].sqlstate;
             break;
         case ER_TABLE_EXISTS_ERROR:

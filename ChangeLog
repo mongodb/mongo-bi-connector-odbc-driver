@@ -20,6 +20,9 @@
     (Bug #32420)
   * SQLFetch or SQLFetchScroll returns negative data length using SQL_C_WCHAR.
     (Bug #31220)
+  * An SQLSTATE of HY000 was returned when a stored procedure was not found,
+    instead of 42000. This caused problems with ADO's adCmdUnknown option.
+    (Bug #27158)
 
 ----
 
