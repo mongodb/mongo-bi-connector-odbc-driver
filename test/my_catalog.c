@@ -1153,6 +1153,31 @@ DECLARE_TEST(t_bug32864)
 }
 
 
+/*
+  Bug #32989 - Crystal Reports fails if a field has a single quote
+*/
+DECLARE_TEST(t_bug32989)
+{
+  SQLCHAR name[20];
+  SQLLEN len;
+
+  ok_sql(hstmt, "drop table if exists t_bug32989");
+  ok_sql(hstmt, "create table t_bug32989 (`doesn't work` int)");
+
+  ok_stmt(hstmt, SQLColumns(hstmt, "test", SQL_NTS, NULL, 0,
+                            "t_bug32989", SQL_NTS, NULL, 0));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 4, SQL_C_CHAR, name, 20, &len));
+  is_num(len, 12);
+  is_str(name, "doesn't work", 13);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "drop table if exists t_bug32989");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -1176,6 +1201,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug29888)
   ADD_TEST(t_bug14407)
   ADD_TEST(t_bug32864)
+  ADD_TEST(t_bug32989)
 END_TESTS
 
 

@@ -23,6 +23,8 @@
   * An SQLSTATE of HY000 was returned when a stored procedure was not found,
     instead of 42000. This caused problems with ADO's adCmdUnknown option.
     (Bug #27158)
+  * MyODBC Crystal Reports can't connect to a tbl if a field name has a
+    single quote. (Bug #32989)
 
 ----
 
