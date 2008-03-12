@@ -25,6 +25,10 @@
     (Bug #27158)
   * MyODBC Crystal Reports can't connect to a tbl if a field name has a
     single quote. (Bug #32989)
+  * Worked around bug in iODBC installer library that made it impossible
+    to create a system DSN, particularly on Mac OS X, where the installer
+    created the /Library/ODBC/*.ini files with insufficient permissions.
+    (Bug #31495)
 
 ----
 

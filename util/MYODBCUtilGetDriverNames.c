@@ -38,6 +38,7 @@
 BOOL MYODBCUtilGetDriverNames( char *pszBuffer, int nBuffer )
 {
     int     nChars = 0;
+    SAVE_MODE();
 
     /*
         sanity check
@@ -49,9 +50,7 @@ BOOL MYODBCUtilGetDriverNames( char *pszBuffer, int nBuffer )
     }
 
 
-#if defined(__APPLE__) && 0
-    nChars = GetPrivateProfileString( NULL, NULL, "", pszBuffer, nBuffer - 1, "ODBCINST.INI" );
-#elif defined(WIN32)
+#if defined(WIN32)
     nChars = ( SQLGetInstalledDrivers( pszBuffer, nBuffer - 1, NULL ) ? 1 : 0 );
 #else
     nChars = SQLGetPrivateProfileString( NULL, NULL, "", pszBuffer, nBuffer - 1, "ODBCINST.INI" );
@@ -61,6 +60,8 @@ BOOL MYODBCUtilGetDriverNames( char *pszBuffer, int nBuffer )
         fprintf( stderr, "[%s][%d][INFO] Call returned no data. Could be an error or just no data to return.\n", __FILE__, __LINE__ );
         return FALSE;
     }
+
+    RESTORE_MODE();
 
     return TRUE;
 }

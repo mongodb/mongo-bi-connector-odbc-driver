@@ -31,21 +31,29 @@
             the driver registration.
 
   \note     If section pDriver->pszName does not exist it will be created
-            otherwise it is updated.            
-*/  
+            otherwise it is updated.
+*/
 BOOL MYODBCUtilWriteDriver( MYODBCUTIL_DRIVER *pDriver )
 {
-    if ( pDriver->pszName && 
+    SAVE_MODE();
+    if ( pDriver->pszName &&
          !SQLWritePrivateProfileString( pDriver->pszName, NULL, NULL, "ODBCINST.INI" ) )
-        return FALSE;
+    {
+      return FALSE;
+    }
+    RESTORE_MODE();
     if ( pDriver->pszDRIVER &&
          !SQLWritePrivateProfileString( pDriver->pszName, "DRIVER", pDriver->pszDRIVER, "ODBCINST.INI" ) )
-        return FALSE;
+    {
+      return FALSE;
+    }
+    RESTORE_MODE();
     if ( pDriver->pszSETUP &&
          !SQLWritePrivateProfileString( pDriver->pszName, "SETUP", pDriver->pszSETUP, "ODBCINST.INI" ) )
-        return FALSE;
+    {
+      return FALSE;
+    }
+    RESTORE_MODE();
 
     return TRUE;
 }
-
-

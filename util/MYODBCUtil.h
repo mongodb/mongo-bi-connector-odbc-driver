@@ -61,6 +61,21 @@
 #define min( a, b ) (((a) < (b)) ? (a) : (b))
 #endif
 
+
+/*
+   Most of the installer API functions in iODBC incorrectly reset the
+   config mode, so we need to save and restore it whenever we call those
+   functions. These macros reduce the clutter a little bit.
+*/
+#if USE_IODBC
+# define SAVE_MODE() UWORD config_mode; (void)SQLGetConfigMode(&config_mode)
+# define RESTORE_MODE() (void)SQLSetConfigMode(config_mode)
+#else
+# define SAVE_MODE()
+# define RESTORE_MODE()
+#endif
+
+
 /* Could use DRIVER_NAME but trying to keep dependency upon driver specific code to a min */
 #define MYODBCINST_DRIVER_NAME "MySQL ODBC 3.51 Driver"
 
