@@ -9,6 +9,8 @@
   * Recordset-based update fails if blob field is queried. (Bug #19065)
   * Descriptor records were not cleared correctly when calling
     SQLFreeStmt(SQL_UNBIND). (Bug #34271)
+  * The driver incorrectly reported that the SQL standard CAST() and
+    CONVERT() functions were supported. (Bug #33808)
 
 ----
 
