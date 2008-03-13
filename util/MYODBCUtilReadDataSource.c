@@ -46,10 +46,12 @@ BOOL MYODBCUtilReadDataSource( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszDSN
     char *  pszEntryName;
     char    szValue[4096];
     int     nChars;
-    SAVE_MODE();
-#if defined(WIN32)
+#ifdef _WIN32
     UWORD   nMode   = ODBC_BOTH_DSN;
+#endif
+    SAVE_MODE();
 
+#ifdef _WIN32
     if ( !SQLGetConfigMode( &nMode ) )
     {
         fprintf( stderr, "[%s][%d][ERROR] SQLGetConfigMode failed!\n", __FILE__, __LINE__ );
