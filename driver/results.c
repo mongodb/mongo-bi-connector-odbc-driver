@@ -1441,7 +1441,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                         else
                             res= SQL_ERROR;
                     }
-                    else if (bind->pcbValue)
+                    if (bind->pcbValue && SQL_SUCCEEDED(tmp_res))
                       *(bind->pcbValue + (pcb_offset / sizeof(SQLLEN))) = pcbValue;
                 }
                 if ( lengths )
