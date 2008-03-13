@@ -540,7 +540,7 @@ SQLRETURN SQL_API SQLDescribeCol( SQLHSTMT          hstmt,
       *pnColumnSize= size;
     }
     if (pibScale)
-      *pibScale= (SQLSMALLINT)max(0, get_decimal_digits(stmt, field));
+      *pibScale= (SQLSMALLINT)myodbc_max(0, get_decimal_digits(stmt, field));
     if (pfNullable)
     {
       if ((field->flags & NOT_NULL_FLAG) &&
@@ -782,8 +782,9 @@ get_col_attr(SQLHSTMT     StatementHandle,
 
         case SQL_COLUMN_SCALE:
         case SQL_DESC_SCALE:
-          *(SQLINTEGER *)NumericAttributePtr= max(0, get_decimal_digits(stmt,
-                                                                        field));
+          *(SQLINTEGER *)NumericAttributePtr= myodbc_max(0,
+                                                         get_decimal_digits(stmt,
+                                                                            field));
           break;
 
         case SQL_DESC_SCHEMA_NAME:
@@ -1350,7 +1351,9 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     if (if_forward_cache(stmt) && !stmt->result_array)
       rows_to_fetch= stmt->stmt_options.rows_in_set;
     else
-      rows_to_fetch= min(max_row-cur_row, (long)stmt->stmt_options.rows_in_set);
+      rows_to_fetch= myodbc_min(max_row-cur_row,
+                                (long)stmt->stmt_options.rows_in_set);
+
     if ( !rows_to_fetch )
     {
         *pcrow= 0;

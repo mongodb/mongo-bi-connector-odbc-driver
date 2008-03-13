@@ -205,7 +205,7 @@ SQLRETURN copy_str_data(SQLSMALLINT HandleType, SQLHANDLE Handle,
     if ( rgbValue )
         strmake((char*) rgbValue, src, cbValueMax);
 
-    if ( min(*pcbValue , cbValueMax) != *pcbValue )
+    if ( myodbc_min(*pcbValue , cbValueMax) != *pcbValue )
         return SQL_SUCCESS_WITH_INFO;
     return SQL_SUCCESS;
 }
@@ -282,7 +282,7 @@ copy_lresult(SQLSMALLINT HandleType, SQLHANDLE Handle,
       fill_length-= *offset;
     }
 
-    length= min(fill_length, cbValueMax);
+    length= myodbc_min(fill_length, cbValueMax);
     (*offset)+= length;        /* Fix for next call */
     if ( pcbValue )
         *pcbValue= fill_length;
@@ -338,7 +338,7 @@ SQLRETURN copy_binary_result( SQLSMALLINT   HandleType,
     src+= *offset;
     src_length-= *offset;
     length= cbValueMax ? (ulong)(cbValueMax-1)/2 : 0;
-    length= min(src_length,length);
+    length= myodbc_min(src_length,length);
     (*offset)+= length;     /* Fix for next call */
     if ( pcbValue )
         *pcbValue= src_length*2;

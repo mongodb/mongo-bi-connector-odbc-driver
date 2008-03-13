@@ -117,12 +117,12 @@ char *szSyntax =
 
 #define MAX_DATA_WIDTH 300
 
-#ifndef max
-#define max( a, b ) (((a) > (b)) ? (a) : (b))
+#ifndef myodbc_max
+#define myodbc_max( a, b ) (((a) > (b)) ? (a) : (b))
 #endif
 
-#ifndef min
-#define min( a, b ) (((a) < (b)) ? (a) : (b))
+#ifndef myodbc_min
+#define myodbc_min( a, b ) (((a) < (b)) ? (a) : (b))
 #endif
 
 int OpenEnvironment( SQLHENV *phEnv );

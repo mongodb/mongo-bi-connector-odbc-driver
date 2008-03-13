@@ -56,9 +56,9 @@
 #define TRUE 1
 #endif
 
-#ifndef max
-#define max( a, b ) (((a) > (b)) ? (a) : (b))
-#define min( a, b ) (((a) < (b)) ? (a) : (b))
+#ifndef myodbc_max
+#define myodbc_max( a, b ) (((a) > (b)) ? (a) : (b))
+#define myodbc_min( a, b ) (((a) < (b)) ? (a) : (b))
 #endif
 
 

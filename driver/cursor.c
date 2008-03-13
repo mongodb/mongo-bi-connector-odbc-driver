@@ -1478,7 +1478,7 @@ SQLRETURN SQL_API SQLGetCursorName(SQLHSTMT hstmt, SQLCHAR FAR *szCursor,
     if ( szCursor && cbCursorMax > 0 )
         strmake((char*) szCursor, stmt->cursor.name, cbCursorMax);
 
-    nLength= min(*pcbCursor , cbCursorMax);
+    nLength= myodbc_min(*pcbCursor , cbCursorMax);
 
     if ( nLength != *pcbCursor )
         return set_error(stmt,MYERR_01004,NULL,0);

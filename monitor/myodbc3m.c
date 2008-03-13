@@ -292,10 +292,10 @@ SQLUINTEGER OptimalDisplayWidth( SQLHSTMT hStmt, SQLUSMALLINT nCol, SQLUINTEGER 
     SQLColAttribute( hStmt, nCol, SQL_DESC_LABEL, szColumnName, sizeof(szColumnName), NULL, NULL );
     nLabelWidth = strlen((char*) szColumnName );
 
-    nOptimalDisplayWidth = max( nLabelWidth, nDataWidth );
+    nOptimalDisplayWidth = myodbc_max( nLabelWidth, nDataWidth );
 
     if ( nUserWidth > 0 )
-        nOptimalDisplayWidth = min( nOptimalDisplayWidth, nUserWidth );
+        nOptimalDisplayWidth = myodbc_min( nOptimalDisplayWidth, nUserWidth );
 
     if ( nOptimalDisplayWidth > MAX_DATA_WIDTH )
         nOptimalDisplayWidth = MAX_DATA_WIDTH;

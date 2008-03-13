@@ -42,6 +42,11 @@
 #define WIN32	/* Hack for rc files */
 #endif
 
+#ifndef myodbc_max
+#define myodbc_max( a, b ) (((a) > (b)) ? (a) : (b))
+#define myodbc_min( a, b ) (((a) < (b)) ? (a) : (b))
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {

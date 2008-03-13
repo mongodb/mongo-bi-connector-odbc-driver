@@ -29,7 +29,7 @@ char *myodbc_strndup( const char *s, size_t n )
     if ( !s )
         return 0;
 
-    nAvail = min( strlen(s) + 1, n + 1 );
+    nAvail = myodbc_min( strlen(s) + 1, n + 1 );
 
     if ( nAvail < 1 )
         return 0;
@@ -63,7 +63,7 @@ char *strnglobaldup( const char *s, size_t n )
     if ( !s )
         return 0;
 
-    nAvail = min( strlen(s) + 1, n + 1 );
+    nAvail = myodbc_min( strlen(s) + 1, n + 1 );
 
     if ( nAvail < 1 )
         return 0;
