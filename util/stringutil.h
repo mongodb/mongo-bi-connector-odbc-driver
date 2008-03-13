@@ -42,6 +42,9 @@ extern "C" {
 #define x_free(A) { void *tmp= (A); if (tmp) my_free((char *) tmp,MYF(MY_WME+MY_FAE)); }
 #endif
 
+#define myodbc_min(a, b) ((a) < (b) ? (a) : (b))
+#define myodbc_max(a, b) ((a) > (b) ? (a) : (b))
+
 #define MAX_BYTES_PER_UTF8_CP 4 /* max 4 bytes per utf8 codepoint */
 
 /* Unicode transcoding */

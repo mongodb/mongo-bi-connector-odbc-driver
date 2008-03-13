@@ -790,7 +790,7 @@ connected:
   if (!bPrompt)
   {
     size_t inlen= (sqlwcharlen(szConnStrIn) + 1) * sizeof(SQLWCHAR);
-    size_t copylen= min((size_t)cbConnStrOutMax, inlen);
+    size_t copylen= myodbc_min((size_t)cbConnStrOutMax, inlen);
     memcpy(szConnStrOut, szConnStrIn, copylen);
     if (pcbConnStrOut)
       *pcbConnStrOut= copylen / sizeof(SQLWCHAR);

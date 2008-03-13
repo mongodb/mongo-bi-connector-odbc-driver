@@ -11,6 +11,8 @@
     SQLFreeStmt(SQL_UNBIND). (Bug #34271)
   * The driver incorrectly reported that the SQL standard CAST() and
     CONVERT() functions were supported. (Bug #33808)
+  * Unresolved symbols "min" and "max" in libmyodbc3.so w/gcc 4.2. 
+    (Bug #34256)
 
 ----
 

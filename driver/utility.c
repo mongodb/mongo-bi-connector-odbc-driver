@@ -138,7 +138,7 @@ void fix_result_types(STMT *stmt)
       irrec->precision= (SQLSMALLINT) irrec->length;
       break;
     }
-    irrec->scale= max(0, (SQLSMALLINT) get_decimal_digits(stmt, field));
+    irrec->scale= myodbc_max(0, (SQLSMALLINT) get_decimal_digits(stmt, field));
     if ((field->flags & NOT_NULL_FLAG) &&
         !(field->flags & TIMESTAMP_FLAG) &&
         !(field->flags & AUTO_INCREMENT_FLAG))
@@ -327,7 +327,7 @@ SQLRETURN copy_str_data(SQLSMALLINT HandleType, SQLHANDLE Handle,
     if ( rgbValue )
         strmake((char*) rgbValue, src, cbValueMax);
 
-    if ( min(*pcbValue , cbValueMax) != *pcbValue )
+    if ( myodbc_min(*pcbValue , cbValueMax) != *pcbValue )
         return SQL_SUCCESS_WITH_INFO;
     return SQL_SUCCESS;
 }
@@ -377,7 +377,7 @@ copy_binary_result(STMT *stmt,
       return SQL_NO_DATA_FOUND;
   }
 
-  copy_bytes= min((unsigned long)result_bytes, src_bytes);
+  copy_bytes= myodbc_min((unsigned long)result_bytes, src_bytes);
 
   if (result)
     memcpy(result, src, copy_bytes);
@@ -452,7 +452,7 @@ copy_ansi_result(STMT *stmt,
                            field, src, src_bytes);
 
     if (SQL_SUCCEEDED(rc) && result)
-      result[min(*avail_bytes, result_bytes)]= '\0';
+      result[myodbc_min(*avail_bytes, result_bytes)]= '\0';
 
     return rc;
   }
@@ -491,8 +491,9 @@ copy_ansi_result(STMT *stmt,
   */
   if (stmt->getdata.latest_bytes)
   {
-    int new_bytes= min(stmt->getdata.latest_bytes - stmt->getdata.latest_used,
-                       result_end - result);
+    int new_bytes= myodbc_min(stmt->getdata.latest_bytes -
+                              stmt->getdata.latest_used,
+                              result_end - result);
     memcpy(result, stmt->getdata.latest + stmt->getdata.latest_used, new_bytes);
     if (new_bytes + stmt->getdata.latest_used == stmt->getdata.latest_bytes)
       stmt->getdata.latest_bytes= 0;
@@ -582,8 +583,8 @@ convert_to_out:
                                            stmt->getdata.latest +
                                            sizeof(stmt->getdata.latest));
 
-      stmt->getdata.latest_used= min(stmt->getdata.latest_bytes,
-                                     result_end - result);
+      stmt->getdata.latest_used= myodbc_min(stmt->getdata.latest_bytes,
+                                            result_end - result);
       memcpy(result, stmt->getdata.latest, stmt->getdata.latest_used);
       result+= stmt->getdata.latest_used;
       *result= '\0';
@@ -624,8 +625,9 @@ convert_to_out:
       *avail_bytes= used_bytes;
   }
 
-  stmt->getdata.dst_offset+= min((ulong)(result_bytes ? result_bytes - 1 : 0),
-                                 used_bytes);
+  stmt->getdata.dst_offset+= myodbc_min((ulong)(result_bytes ?
+                                                result_bytes - 1 : 0),
+                                        used_bytes);
 
   /* Did we truncate the data? */
   if (!result_bytes || stmt->getdata.dst_bytes > stmt->getdata.dst_offset)
@@ -842,8 +844,9 @@ convert_to_out:
       *avail_bytes= used_chars * sizeof(SQLWCHAR);
   }
 
-  stmt->getdata.dst_offset+= min((ulong)(result_len ? result_len - 1 : 0),
-                                 used_chars) * sizeof(SQLWCHAR);
+  stmt->getdata.dst_offset+= myodbc_min((ulong)(result_len ?
+                                                result_len - 1 : 0),
+                                        used_chars) * sizeof(SQLWCHAR);
 
   /* Did we truncate the data? */
   if (!result_len || stmt->getdata.dst_bytes > stmt->getdata.dst_offset)
@@ -898,7 +901,7 @@ SQLRETURN copy_binhex_result(STMT *stmt,
     src+= *offset;
     src_length-= *offset;
     length= cbValueMax ? (ulong)(cbValueMax-1)/2 : 0;
-    length= min(src_length,length);
+    length= myodbc_min(src_length,length);
     (*offset)+= length;     /* Fix for next call */
     if ( pcbValue )
         *pcbValue= src_length*2;

@@ -1107,7 +1107,7 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
   uint length= 0;
   DESCREC *irrec, *arrec;
 
-  for (i= 0; i < min(stmt->ird->count, stmt->ard->count); ++i, ++values)
+  for (i= 0; i < myodbc_min(stmt->ird->count, stmt->ard->count); ++i, ++values)
   {
     irrec= desc_get_rec(stmt->ird, i, FALSE);
     arrec= desc_get_rec(stmt->ard, i, FALSE);
@@ -1294,7 +1294,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     }
     stmt->current_row= cur_row;
 
-    rows_to_fetch= min(max_row-cur_row, (long)stmt->ard->array_size);
+    rows_to_fetch= myodbc_min(max_row-cur_row, (long)stmt->ard->array_size);
     if ( !rows_to_fetch )
     {
         *pcrow= 0;

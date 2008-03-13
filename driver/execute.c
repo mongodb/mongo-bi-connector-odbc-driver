@@ -281,7 +281,7 @@ char *insert_param(STMT *stmt, char *to, DESCREC *aprec, DESCREC *iprec,
 
         if (!octet_length_ptr && aprec->octet_length > 0 &&
             aprec->octet_length != SQL_SETPARAM_VALUE_MAX)
-          length= min(length, aprec->octet_length);
+          length= myodbc_min(length, aprec->octet_length);
       }
       else
       {

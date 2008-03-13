@@ -102,7 +102,7 @@ SQLColAttributeWImpl(SQLHSTMT hstmt, SQLUSMALLINT column,
 
     if (char_attr_max > 0)
     {
-      len= min(len, char_attr_max - 1);
+      len= myodbc_min(len, char_attr_max - 1);
       (void)memcpy((char *)char_attr, (const char *)wvalue,
                    len * sizeof(SQLWCHAR));
       ((SQLWCHAR *)char_attr)[len]= 0;
@@ -275,7 +275,7 @@ SQLDescribeColW(SQLHSTMT hstmt, SQLUSMALLINT column,
 
     if (name_max > 0)
     {
-      len= min(len, name_max - 1);
+      len= myodbc_min(len, name_max - 1);
       (void)memcpy((char *)name, (const char *)wvalue,
                    len * sizeof(SQLWCHAR));
       ((SQLWCHAR *)name)[len]= 0;
@@ -432,7 +432,7 @@ SQLGetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
 
     if (value_max > 0)
     {
-      len= min(len, value_max - 1);
+      len= myodbc_min(len, value_max - 1);
       (void)memcpy((char *)value, (const char *)wvalue,
                    len * sizeof(SQLWCHAR));
       ((SQLWCHAR *)value)[len]= 0;
@@ -481,7 +481,7 @@ SQLGetCursorNameW(SQLHSTMT hstmt, SQLWCHAR *cursor, SQLSMALLINT cursor_max,
 
   if (cursor_max > 0)
   {
-    len= min(len, cursor_max - 1);
+    len= myodbc_min(len, cursor_max - 1);
     (void)memcpy((char *)cursor, (const char *)name, len * sizeof(SQLWCHAR));
     cursor[len]= 0;
   }
@@ -539,7 +539,7 @@ SQLGetDiagFieldW(SQLSMALLINT handle_type, SQLHANDLE handle,
 
     if (info_max > 0)
     {
-      len= min(len, info_max - 1);
+      len= myodbc_min(len, info_max - 1);
       (void)memcpy((char *)info, (const char *)wvalue,
                    len * sizeof(SQLWCHAR));
       ((SQLWCHAR *)info)[len]= 0;
@@ -611,7 +611,7 @@ SQLGetDiagRecWImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
 
     if (message_max > 0)
     {
-      len= min(len, message_max - 1);
+      len= myodbc_min(len, message_max - 1);
       (void)memcpy((char *)message, (const char *)wvalue,
                    len * sizeof(SQLWCHAR));
       ((SQLWCHAR *)message)[len]= 0;
@@ -679,7 +679,7 @@ SQLGetInfoW(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
 
     if (value && value_max > 0)
     {
-      len= min(len, value_max - 1);
+      len= myodbc_min(len, value_max - 1);
       (void)memcpy((char *)value, (const char *)wvalue,
                    len * sizeof(SQLWCHAR));
       ((SQLWCHAR *)value)[len]= 0;
