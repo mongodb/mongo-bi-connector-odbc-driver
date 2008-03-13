@@ -31,6 +31,8 @@
     (Bug #31495)
   * Unresolved symbols "min" and "max" in libmyodbc3.so w/gcc 4.2. 
     (Bug #34256)
+  * Fixed some incorrect information returned by SQLGetTypeInfo().
+    (Bug #30918)
 
 ----
 
