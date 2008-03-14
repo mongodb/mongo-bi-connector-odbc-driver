@@ -2097,6 +2097,45 @@ SQLRETURN SQL_API SQLProcedures(SQLHSTMT     hstmt,
 
 
 /*
+****************************************************************************
+SQLProcedure Columns
+****************************************************************************
+*/
+
+char *SQLPROCEDURECOLUMNS_values[]= {
+       "", "", NullS, NullS, "", "", "",
+       "", "", "", "10", "",
+       "MySQL column", "", "", NullS, "",
+       NullS, ""
+};
+
+MYSQL_FIELD SQLPROCEDURECOLUMNS_fields[]=
+{
+  MYODBC_FIELD_STRING("PROCEDURE_CAT",     NAME_LEN, 0),
+  MYODBC_FIELD_STRING("PROCEDURE_SCHEM",   NAME_LEN, 0),
+  MYODBC_FIELD_STRING("PROCEDURE_NAME",    NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("COLUMN_NAME",       NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT ("COLUMN_TYPE",       NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT ("DATA_TYPE",         NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("TYPE_NAME",         20,       NOT_NULL_FLAG),
+  MYODBC_FIELD_LONG  ("COLUMN_SIZE",       0),
+  MYODBC_FIELD_LONG  ("BUFFER_LENGTH",     0),
+  MYODBC_FIELD_SHORT ("DECIMAL_DIGITS",    0),
+  MYODBC_FIELD_SHORT ("NUM_PREC_RADIX",    0),
+  MYODBC_FIELD_SHORT ("NULLABLE",          NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("REMARKS",           NAME_LEN, 0),
+  MYODBC_FIELD_STRING("COLUMN_DEF",        NAME_LEN, 0),
+  MYODBC_FIELD_SHORT ("SQL_DATA_TYPE",     NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT ("SQL_DATETIME_SUB",  0),
+  MYODBC_FIELD_LONG  ("CHAR_OCTET_LENGTH", 0),
+  MYODBC_FIELD_LONG  ("ORDINAL_POSITION",  NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("IS_NULLABLE",       3,        0),
+};
+
+const uint SQLPROCEDURECOLUMNS_FIELDS=
+             array_elements(SQLPROCEDURECOLUMNS_fields);
+
+/*
   @type    : ODBC 1.0 API
   @purpose : returns the list of input and output parameters, as well as
   the columns that make up the result set for the specified
@@ -2115,6 +2154,12 @@ SQLProcedureColumns(SQLHSTMT hstmt,
                     SQLCHAR FAR *szColumnName __attribute__((unused)),
                     SQLSMALLINT cbColumnName __attribute__((unused)))
 {
-    return set_error(hstmt, MYERR_S1000,
-                     "Driver doesn't support this yet", 4000);
+  create_empty_fake_resultset(hstmt, SQLPROCEDURECOLUMNS_values,
+                              sizeof(SQLPROCEDURECOLUMNS_values),
+                              SQLPROCEDURECOLUMNS_fields,
+                              SQLPROCEDURECOLUMNS_FIELDS);
+
+  return set_error(hstmt, MYERR_01000,
+                   "MySQL server does not provide the requested information",
+                   4000);
 }

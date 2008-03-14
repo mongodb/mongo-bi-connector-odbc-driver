@@ -35,6 +35,8 @@
     (Bug #30918)
   * Values bound using the SQL_C_CHAR value type but with numeric
     parameter type were not correctly escaped. (Bug #34575)
+  * The driver reported that it does not support SQLProcedureColumns(),
+    which causes problems for ADO. (Bug #33298)
 
 ----
 

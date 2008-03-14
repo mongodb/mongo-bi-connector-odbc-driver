@@ -117,18 +117,6 @@ DECLARE_TEST(t_msdev_bug)
 
 
 /**
-  Bug #27591: SQLProcedureColumns ]Driver doesn't support this yet
-*/
-DECLARE_TEST(t_bug27591)
-{
-  SQLUSMALLINT supported= SQL_TRUE;
-  ok_con(hdbc, SQLGetFunctions(hdbc, SQL_API_SQLPROCEDURECOLUMNS, &supported));
-  is_num(supported, SQL_FALSE);
-  return OK;
-}
-
-
-/**
   Bug #28657: ODBC Connector returns FALSE on SQLGetTypeInfo with DATETIME (wxWindows latest)
 */
 DECLARE_TEST(t_bug28657)
@@ -301,7 +289,6 @@ BEGIN_TESTS
   ADD_TEST(t_gettypeinfo)
   ADD_TEST(t_stmt_attr_status)
   ADD_TEST(t_msdev_bug)
-  ADD_TEST(t_bug27591)
   ADD_TEST(t_bug28657)
   ADD_TEST(t_bug14639)
   ADD_TEST(t_bug31055)

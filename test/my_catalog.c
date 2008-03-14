@@ -1184,6 +1184,27 @@ DECLARE_TEST(t_bug32989)
 }
 
 
+/**
+ Bug #33298: ADO returns wrong parameter count in the query (always 0)
+*/
+DECLARE_TEST(t_bug33298)
+{
+  SQLRETURN rc= 0;
+  expect_stmt(hstmt, SQLProcedureColumns(hstmt, 0, NULL, 0, NULL,
+                                         0, NULL, 0, NULL),
+                                         SQL_SUCCESS_WITH_INFO);
+  rc= SQLFetch(hstmt);
+  /**
+    SQL_NO_DATA is ok for the current implementation,
+    SQL_SUCCESS should be ok for when SQLProcedureColumns is implemented
+  */
+  if (rc == SQL_ERROR)
+    return FAIL;
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -1208,6 +1229,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug14407)
   ADD_TEST(t_bug32864)
   ADD_TEST(t_bug32989)
+  ADD_TEST(t_bug33298)
 END_TESTS
 
 
