@@ -424,13 +424,7 @@ static SQLRETURN copy_rowdata(STMT FAR *stmt, PARAM_BIND  param,
     /* We have to remove zero bytes or we have problems! */
     while ( (*to > orig_to) && (*((*to) - 1) == (SQLCHAR) 0) ) (*to)--;
 
-    /* insert "," */
-    param.SqlType= SQL_INTEGER;
-    param.CType= SQL_C_CHAR;
-    param.buffer= ",";
-    *param.actual_len= 1;
-
-    if ( !(*to= (SQLCHAR*) insert_param(stmt->dbc,(char*) *to, &param)) )
+    if (!(*to= (SQLCHAR *)add_to_buffer(*net, (char *)*to, ",", 1)))
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
     return(SQL_SUCCESS);
@@ -469,8 +463,6 @@ static SQLRETURN exec_stmt_query(STMT FAR *stmt,char *query,
 static SQLRETURN copy_field_data(STMT FAR *stmt, PARAM_BIND *param,
                                  NET **net, SQLCHAR **to)
 {
-    PARAM_BIND dummy;
-    SQLLEN     dummy_len= 5; /* sizeof(" AND ") */
     SQLUINTEGER length= *(param->actual_len)+5;
 
     if ( !(*to= (SQLCHAR*) extend_buffer(*net, (char*) *to,length)) )
@@ -480,12 +472,7 @@ static SQLRETURN copy_field_data(STMT FAR *stmt, PARAM_BIND *param,
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
     /* Insert " AND ", where clause with multiple search */
-    dummy.SqlType= SQL_INTEGER;
-    dummy.CType= SQL_C_CHAR;
-    dummy.buffer= " AND ";
-    dummy.actual_len= &dummy_len;
-
-    if ( !(*to= (SQLCHAR*) insert_param(stmt->dbc, (char*) *to, &dummy)) )
+    if (!(*to= (SQLCHAR *)add_to_buffer(*net, (char *)*to, " AND ", 5)))
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
     return SQL_SUCCESS;

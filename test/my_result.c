@@ -2058,6 +2058,47 @@ DECLARE_TEST(t_bug32420)
 }
 
 
+/**
+ Bug #34575: SQL_C_CHAR value type and numeric parameter type causes trouble
+*/
+DECLARE_TEST(t_bug34575)
+{
+  SQLCHAR buff[10];
+  SQLLEN len= 0;
+  SQLSMALLINT namelen, type, digits, nullable;
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *) "SELECT ?", SQL_NTS));
+  strcpy((char *)buff, "2.0");
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                  SQL_DECIMAL, 10, 0, buff, sizeof(buff),
+                                  &len));
+
+  /* Note: buff has '2.0', but len is still 0! */
+  ok_stmt(hstmt, SQLExecute(hstmt));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buff, 1), "", 1);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  strcpy((char *)buff, "2.0");
+  len= 3;
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLExecute(hstmt));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buff, 1), "2.0", 4);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -2086,6 +2127,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug13776)
   ADD_TEST(t_bug13776_auto)
   ADD_TEST(t_bug32420)
+  ADD_TEST(t_bug34575)
 END_TESTS
 
 

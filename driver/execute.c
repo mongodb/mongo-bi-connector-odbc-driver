@@ -417,6 +417,7 @@ char *insert_param(DBC *dbc, char *to,PARAM_BIND *param)
                 break;
             }
     }
+
     switch ( param->SqlType )
     {
         case SQL_DATE:
@@ -425,7 +426,7 @@ char *insert_param(DBC *dbc, char *to,PARAM_BIND *param)
         case SQL_TIMESTAMP:
             if ( data[0] == '{' )       /* Of type {d date } */
                 return add_to_buffer(net,to,data,length);
-            /* else threat as a string */
+            /* else treat as a string */
         case SQL_CHAR:
         case SQL_VARCHAR:
         case SQL_LONGVARCHAR:
@@ -435,15 +436,8 @@ char *insert_param(DBC *dbc, char *to,PARAM_BIND *param)
         case SQL_WCHAR:
         case SQL_WVARCHAR:
         case SQL_WLONGVARCHAR:
-            {
-              to= add_to_buffer(net,to,"'",1);
-              /* Make sure we have room for a fully-escaped string. */
-              if (!(to= extend_buffer(net, to, length * 2)))
-                return 0;
-              to+= mysql_real_escape_string(&dbc->mysql, to, data, length);
-              to= add_to_buffer(net, to, "'", 1);
-              return to;
-            }
+            break;
+
         case SQL_TIME:
         case SQL_TYPE_TIME:
             if ( param->CType == SQL_C_TIMESTAMP ||
@@ -485,11 +479,23 @@ char *insert_param(DBC *dbc, char *to,PARAM_BIND *param)
                 if ( to == buff )
                     *to++='0';    /* Fix for empty strings */
                 data= buff; length= (uint) (to-buff);
+
+                convert= 0;
+
             }
             /* Fall through */
         default:
+          if (!convert)
             return add_to_buffer(net,to,data,length);
     }
+
+    to= add_to_buffer(net,to,"'",1);
+    /* Make sure we have room for a fully-escaped string. */
+    if (!(to= extend_buffer(net, to, length * 2)))
+      return 0;
+    to+= mysql_real_escape_string(&dbc->mysql, to, data, length);
+    to= add_to_buffer(net, to, "'", 1);
+    return to;
 }
 
 

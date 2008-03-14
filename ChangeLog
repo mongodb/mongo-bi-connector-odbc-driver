@@ -33,6 +33,8 @@
     (Bug #34256)
   * Fixed some incorrect information returned by SQLGetTypeInfo().
     (Bug #30918)
+  * Values bound using the SQL_C_CHAR value type but with numeric
+    parameter type were not correctly escaped. (Bug #34575)
 
 ----
 
