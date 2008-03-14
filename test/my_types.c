@@ -729,8 +729,14 @@ DECLARE_TEST(t_bug31220)
 {
   SQLLEN outlen= 999;
   SQLWCHAR outbuf[5];
+
+  /* the call sequence of this test is not allowed under a driver manager */
+  if (using_dm(hdbc))
+    return OK;
+
   ok_sql(hstmt, "select 1");
-  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_WCHAR, outbuf, 5, &outlen));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, 999 /* unknown type */,
+                            outbuf, 5, &outlen));
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_ERROR);
   is(check_sqlstate(hstmt, "07006") == OK);
   is_num(outlen, 999);
