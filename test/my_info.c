@@ -275,6 +275,14 @@ DECLARE_TEST(t_bug16653)
 {
   SQLHANDLE hdbc1;
   SQLCHAR buf[50];
+
+  /*
+    Driver managers handle SQLGetConnectAttr before connection in
+    inconsistent ways.
+  */
+  if (using_dm(hdbc))
+    return OK;
+
   ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
 
   /* this would cause a crash if we arent connected */
