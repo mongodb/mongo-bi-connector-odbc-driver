@@ -944,6 +944,12 @@ DECLARE_TEST(bug15713)
     strcat((char *)conn, ";SOCKET=");
     strcat((char *)conn, (char *)mysock);
   }
+  if (myport)
+  {
+    char pbuff[20];
+    sprintf(pbuff, ";PORT=%d", myport);
+    strcat((char *)conn, pbuff);
+  }
 
   ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
 

@@ -72,7 +72,7 @@ SQLCHAR *mydsn= (SQLCHAR *)"test";
 SQLCHAR *myuid= (SQLCHAR *)"root";
 SQLCHAR *mypwd= (SQLCHAR *)"";
 SQLCHAR *mysock= NULL;
-int      myoption= 0;
+int      myoption= 0, myport= 0;
 SQLCHAR *myserver= (SQLCHAR *)"localhost";
 SQLCHAR *mydb= (SQLCHAR *)"test";
 SQLCHAR *test_db= (SQLCHAR *)"client_odbc_test";
@@ -172,6 +172,8 @@ int main(int argc, char **argv) \
     mypwd=  (SQLCHAR *)getenv("TEST_PASSWORD"); \
   if (getenv("TEST_SOCKET")) \
     mysock= (SQLCHAR *)getenv("TEST_SOCKET"); \
+  if (getenv("TEST_PORT")) \
+    myport= atoi(getenv("TEST_PORT")); \
 \
   if (argc > 1) \
     mydsn= (SQLCHAR *)argv[1]; \
@@ -878,6 +880,12 @@ int alloc_basic_handles(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt)
   {
     strcat((char *)connIn, ";SOCKET=");
     strcat((char *)connIn, (char *)mysock);
+  }
+  if (myport)
+  {
+    char buff[20];
+    sprintf(buff, ";PORT=%d", myport);
+    strcat((char *)connIn, buff);
   }
 
   ok_con(*hdbc, SQLDriverConnect(*hdbc, NULL, connIn, SQL_NTS, connOut,

@@ -793,6 +793,12 @@ DECLARE_TEST(t_cache_bug)
     strcat((char *)conn, ";SOCKET=");
     strcat((char *)conn, (char *)mysock);
   }
+  if (myport)
+  {
+    char pbuff[20];
+    sprintf(pbuff, ";PORT=%d", myport);
+    strcat((char *)conn, pbuff);
+  }
   is(mydrvconnect(&henv1, &hdbc1, &hstmt1, conn) == OK);
 
   ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,

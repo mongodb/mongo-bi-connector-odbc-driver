@@ -130,6 +130,12 @@ DECLARE_TEST(t_driver_connect)
       strcat(conn_in, ";SOCKET=");
       strcat(conn_in, mysock);
     }
+    if (myport)
+    {
+      char pbuff[20];
+      sprintf(pbuff, ";PORT=%d", myport);
+      strcat((char *)conn_in, pbuff);
+    }
     rc = SQLDriverConnect(hdbc1, (SQLHWND)0, conn_in, sizeof(conn_in),
                           conn_out, sizeof(conn_out), &conn_out_len,
                           SQL_DRIVER_NOPROMPT);

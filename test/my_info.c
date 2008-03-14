@@ -226,12 +226,18 @@ DECLARE_TEST(t_bug3780)
   SQLINTEGER attrlen;
 
   /* The connection string must not include DATABASE. */
-  sprintf((char *)conn, "DRIVER=%s;SERVER=localhost;" \
-                        "UID=%s;PASSWORD=%s", mydriver, myuid, mypwd);
+  sprintf((char *)conn, "DRIVER=%s;SERVER=%s;" \
+                        "UID=%s;PASSWORD=%s", mydriver, myserver, myuid, mypwd);
   if (mysock != NULL)
   {
     strcat((char *)conn, ";SOCKET=");
     strcat((char *)conn, (char *)mysock);
+  }
+  if (myport)
+  {
+    char pbuff[20];
+    sprintf(pbuff, ";PORT=%d", myport);
+    strcat((char *)conn, pbuff);
   }
 
   ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
