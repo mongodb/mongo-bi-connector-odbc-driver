@@ -1,6 +1,4 @@
-3.51.24
-
-  Functionality added or changed:
+3.51.24 (14-Mar-2007)
 
   Bugs fixed:
   * ConfigDSN() returned FALSE when the dialog was cancelled by the user.
@@ -23,8 +21,7 @@
   * An SQLSTATE of HY000 was returned when a stored procedure was not found,
     instead of 42000. This caused problems with ADO's adCmdUnknown option.
     (Bug #27158)
-  * MyODBC Crystal Reports can't connect to a tbl if a field name has a
-    single quote. (Bug #32989)
+  * Identifiers were quoted incorrectly by SQLColumns(). (Bug #32989)
   * Worked around bug in iODBC installer library that made it impossible
     to create a system DSN, particularly on Mac OS X, where the installer
     created the /Library/ODBC/*.ini files with insufficient permissions.
