@@ -46,7 +46,7 @@ BEGIN
             VALUE "FileDescription", "MySQL ODBC 3.51 Driver\0"
             VALUE "FileVersion", MYODBC_STRFILEVER
             VALUE "InternalName", "myodbc3\0"
-            VALUE "LegalCopyright", "Copyright © MySQL AB 1995-2006\0"
+            VALUE "LegalCopyright", "Copyright © MySQL AB 1995-2008\0"
             VALUE "LegalTrademarks", "MySQL, MyODBC, Connector/ODBC are trademarks of MySQL AB\0"
             VALUE "OriginalFilename", "myodbc3.dll\0"
             VALUE "PrivateBuild", "Production\0"
