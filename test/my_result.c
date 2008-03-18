@@ -2218,6 +2218,52 @@ DECLARE_TEST(t_bug34271)
 }
 
 
+/*
+  Bug #34429 - SQLGetData gives incorrect data
+*/
+DECLARE_TEST(t_bug34429)
+{
+  SQLWCHAR buf[32];
+  SQLLEN reslen;
+
+  ok_sql(hstmt, "drop table if exists t_bug34429");
+  ok_sql(hstmt, "create table t_bug34429 (x varchar(200))");
+  ok_sql(hstmt, "insert into t_bug34429 values "
+                "(concat(repeat('x',32),repeat('y',32),repeat('z',16)))");
+  ok_sql(hstmt, "select x from t_bug34429");
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  /* first chunk */
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_WCHAR, buf, sizeof(buf),
+                                &reslen), SQL_SUCCESS_WITH_INFO);
+  printMessage("Chunk 1, len=%d, data=%ls", reslen, buf);
+  is_num(reslen, 80 * sizeof(SQLWCHAR));
+  is(!memcmp(buf, W(L"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"),
+             32 * sizeof(SQLWCHAR)));
+
+  /* second chunk */
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_WCHAR, buf, sizeof(buf),
+                                &reslen), SQL_SUCCESS_WITH_INFO);
+  printMessage("Chunk 2, len=%d, data=%ls", reslen, buf);
+  is_num(reslen, 49 * sizeof(SQLWCHAR));
+  is(!memcmp(buf, W(L"xyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"),
+             32 * sizeof(SQLWCHAR)));
+
+  /* third chunk */
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_WCHAR, buf, sizeof(buf), &reslen));
+  printMessage("Chunk 3, len=%d, data=%ls", reslen, buf);
+  is_num(reslen, 18 * sizeof(SQLWCHAR));
+  is(!memcmp(buf, W(L"yyzzzzzzzzzzzzzzzz"), 18 * sizeof(SQLWCHAR)));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "drop table if exists t_bug34429");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -2250,6 +2296,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug28617)
   ADD_TEST(t_bug32684)
   ADD_TEST(t_bug34271)
+  ADD_TEST(t_bug34429)
 END_TESTS
 
 

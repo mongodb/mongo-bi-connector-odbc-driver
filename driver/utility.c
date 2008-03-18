@@ -652,8 +652,9 @@ convert_to_out:
 
   @param[in]     stmt        Pointer to statement
   @param[out]    result      Buffer for result
-  @param[in]     avail_bytes Size of result buffer (in characters)
-  @param[out]    used_len    Pointer to buffer for storing amount of buffer used
+  @param[in]     result_len  Size of result buffer (in characters)
+  @param[out]    avail_bytes Pointer to buffer for storing amount of data
+                             available before this call
   @param[in]     field       Field being stored
   @param[in]     src         Source data for result
   @param[in]     src_bytes   Length of source data (in bytes)
@@ -716,7 +717,6 @@ copy_wchar_result(STMT *stmt,
     used_chars+= 1;
     stmt->getdata.latest_bytes= 0;
   }
-
 
   while (src < src_end)
   {
@@ -801,19 +801,14 @@ convert_to_out:
           continue;
       }
 
+      if (result)
+        stmt->getdata.source+= cnvres;
+
       if (result && result == result_end)
       {
-        if (stmt->getdata.dst_bytes != (ulong)~0L)
-        {
-          stmt->getdata.source+= cnvres;
-          break;
-        }
         *result= 0;
         result= NULL;
       }
-
-      if (result)
-        stmt->getdata.source+= cnvres;
     }
     else if (stmt->getdata.latest_bytes == MY_CS_ILUNI && wc != '?')
     {
