@@ -153,6 +153,10 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
   */
   if (GetModuleHandle("msado15.dll") != NULL)
     options|= FLAG_COLUMN_SIZE_S32;
+
+  /* Detect another problem specific to MS Access */
+  if (GetModuleHandle("msaccess.exe") != NULL)
+    options|= FLAG_DFLT_BIGINT_BIND_STR;
 #endif
 
   mysql_init(mysql);
