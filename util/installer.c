@@ -739,7 +739,7 @@ int ds_from_kvpair(DataSource *ds, const SQLWCHAR *attrs, SQLWCHAR delim)
     }
 
     attrs= end;
-    if (*end)
+    if (*end || *end == delim)
       attrs++;
   }
 

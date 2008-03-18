@@ -15,6 +15,8 @@
     (Bug #34256)
   * Notorious #DELETED problem when linking tables in Access and BIGINT PK
     (Bug #24535)
+  * MyODBC 51/Access unable to use DBEngine.RegisterDatabase to create a DSN
+    (Bug #33825)
 
 ----
 

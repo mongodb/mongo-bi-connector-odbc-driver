@@ -83,14 +83,20 @@ BOOL INSTAPI ConfigDSNW(HWND hWnd, WORD nRequest, LPCWSTR pszDriver,
 
   if (pszAttributes && *pszAttributes)
   {
-    if (ds_from_kvpair(ds, pszAttributes, (SQLWCHAR)';'))
+    SQLWCHAR delim= ';';
+
+    /* if there's no ;, then it's most likely null-delimited */
+    if (!sqlwcharchr(pszAttributes, delim))
+      delim= 0;
+
+    if (ds_from_kvpair(ds, pszAttributes, delim))
     {
       SQLPostInstallerError(ODBC_ERROR_INVALID_KEYWORD_VALUE,
                             W_INVALID_ATTR_STR);
       rc= FALSE;
       goto exitConfigDSN;
     }
-    if (ds_lookup(ds))
+    if (ds_lookup(ds) && nRequest != ODBC_ADD_DSN)
     {
       /* ds_lookup() will already set SQLInstallerError */
       rc= FALSE;
@@ -112,7 +118,15 @@ BOOL INSTAPI ConfigDSNW(HWND hWnd, WORD nRequest, LPCWSTR pszDriver,
     }
     ds_set_strattr(&ds->driver, driver->lib);
   case ODBC_CONFIG_DSN:
+#ifdef _WIN32
+    /*
+      for windows, if hWnd is NULL, we try to add the dsn
+      with what information was given
+    */
+    if (!hWnd || ShowOdbcParamsDialog(ds, hWnd, FALSE) == 1)
+#elif
     if (ShowOdbcParamsDialog(ds, hWnd, FALSE) == 1)
+#endif
     {
       /* save datasource */
       if (ds_add(ds))
