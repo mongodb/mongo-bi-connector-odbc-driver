@@ -797,6 +797,18 @@ SQLPrimaryKeysW(SQLHSTMT hstmt,
 
 
 SQLRETURN SQL_API
+SQLProcedureColumnsW(SQLHSTMT hstmt,
+                     SQLWCHAR *catalog, SQLSMALLINT catalog_len,
+                     SQLWCHAR *schema, SQLSMALLINT schema_len,
+                     SQLWCHAR *proc, SQLSMALLINT proc_len,
+                     SQLWCHAR *column, SQLSMALLINT column_len)
+{
+  /* TODO: do conversions when MySQLProcedureColumns is implemented. */
+  return MySQLProcedureColumns(hstmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0);
+}
+
+
+SQLRETURN SQL_API
 SQLProceduresW(SQLHSTMT hstmt,
                SQLWCHAR *catalog, SQLSMALLINT catalog_len,
                SQLWCHAR *schema, SQLSMALLINT schema_len,

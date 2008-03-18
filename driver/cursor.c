@@ -434,7 +434,7 @@ static SQLRETURN copy_rowdata(STMT FAR *stmt, DESCREC *aprec,
     while ( (*to > orig_to) && (*((*to) - 1) == (SQLCHAR) 0) ) (*to)--;
 
     /* insert "," */
-    if (!(*to= add_to_buffer(&stmt->dbc->mysql.net,*to,",",1)))
+    if (!(*to= (SQLCHAR *)add_to_buffer(*net, (char *)*to, ",", 1)))
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
     return(SQL_SUCCESS);

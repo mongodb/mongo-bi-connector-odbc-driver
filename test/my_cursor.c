@@ -3171,7 +3171,6 @@ BEGIN_TESTS
   ADD_TEST(t_update_type)
   ADD_TEST(t_update_offsets)
   ADD_TEST(t_bug6157)
-  ADD_TODO(t_bug32420)
   ADD_TEST(t_cursor_pos_static)
   ADD_TEST(t_cursor_pos_dynamic)
   ADD_TEST(t_bug11846)

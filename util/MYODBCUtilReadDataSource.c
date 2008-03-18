@@ -46,9 +46,12 @@ BOOL MYODBCUtilReadDataSource( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszDSN
     char *  pszEntryName;
     char    szValue[4096];
     int     nChars;
-#if defined(WIN32)
+#ifdef _WIN32
     UWORD   nMode   = ODBC_BOTH_DSN;
+#endif
+    SAVE_MODE();
 
+#ifdef _WIN32
     if ( !SQLGetConfigMode( &nMode ) )
     {
         fprintf( stderr, "[%s][%d][ERROR] SQLGetConfigMode failed!\n", __FILE__, __LINE__ );
@@ -62,10 +65,13 @@ BOOL MYODBCUtilReadDataSource( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszDSN
     *szEntryNames = '\0';
 
     /* Get the list of key names for the DSN's section. */
-    if ( ( nChars = SQLGetPrivateProfileString( pszDSN, NULL, "", szEntryNames, sizeof( szEntryNames ) - 1, "ODBC.INI" ) ) < 1 )
-    {
-        return FALSE;
-    }
+    nChars= SQLGetPrivateProfileString(pszDSN, NULL, "",
+                                       szEntryNames, sizeof(szEntryNames) - 1,
+                                       "ODBC.INI");
+    if (nChars < 1)
+      return FALSE;
+
+    RESTORE_MODE();
 
 #if defined(WIN32)
     {
@@ -239,6 +245,8 @@ BOOL MYODBCUtilReadDataSource( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszDSN
             */    
         }
 
+        RESTORE_MODE();
+
         pszEntryName += strlen( pszEntryName ) + 1;
     } /* while */
 
@@ -248,8 +256,10 @@ BOOL MYODBCUtilReadDataSource( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszDSN
     {
         if ( SQLGetPrivateProfileString( MYODBCUTIL_ODBCINI_HEADER_SECTION, "", "", szEntryNames, sizeof( szEntryNames ) - 1, "ODBC.INI" ) < 1 )
         {
-            return FALSE;
+          return FALSE;
         }
+
+        RESTORE_MODE();
 
         pszEntryName = szEntryNames;
         while ( *pszEntryName )
@@ -262,6 +272,7 @@ BOOL MYODBCUtilReadDataSource( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszDSN
                     pDataSource->pszDRIVER = _global_strdup( szValue );
                 }
             }
+            RESTORE_MODE();
             pszEntryName += strlen( pszEntryName ) + 1;
         }
     }

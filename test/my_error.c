@@ -430,6 +430,16 @@ DECLARE_TEST(sqlerror)
 }
 
 
+/**
+ Bug #27158: MyODBC 3.51/ ADO cmd option adCmdUnknown won't work for tables - regression
+*/
+DECLARE_TEST(t_bug27158)
+{
+  expect_sql(hstmt, "{ CALL test.does_not_exist }", SQL_ERROR);
+  return check_sqlstate(hstmt, "42000");
+}
+
+
 BEGIN_TESTS
 #ifndef NO_DRIVERMANAGER
   ADD_TEST(t_odbc2_error)
@@ -447,6 +457,7 @@ BEGIN_TESTS
   ADD_TEST(getdata_need_nullind)
   ADD_TEST(t_handle_err)
   ADD_TEST(sqlerror)
+  ADD_TEST(t_bug27158)
 END_TESTS
 
 RUN_TESTS

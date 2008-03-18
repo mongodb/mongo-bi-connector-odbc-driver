@@ -75,9 +75,7 @@ BOOL MYODBCUtilGetDataSourceNames( char *pszBuffer, int nBuffer, UWORD nScope )
             return FALSE;
     }
 
-#if defined(__APPLE__) && 0
-    nChars = GetPrivateProfileString( NULL, NULL, "", pszBuffer, nBuffer - 1, "ODBC.INI" );
-#elif defined(WIN32)
+#if defined(WIN32)
     /* 
         This returns no data as does having a NULL for 1st arg!?
 

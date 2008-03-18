@@ -2127,18 +2127,19 @@ my_bool is_minimum_version(const char *server_version,const char *version,
 /**
  Escapes a string that may contain wildcard characters (%, _) and other
  problematic characters (", ', \n, etc). Like mysql_real_escape_string() but
- also including % and _.
+ also including % and _. Can be used with an identified by passing escape_id.
 
  @param[in]   mysql         Pointer to MYSQL structure
  @param[out]  to            Buffer for escaped string
  @param[in]   to_length     Length of destination buffer, or 0 for "big enough"
  @param[in]   from          The string to escape
  @param[in]   length        The length of the string to escape
+ @param[in]   escape_id     Escaping an identified that will be quoted
 
 */
-ulong myodbc_escape_wildcard(MYSQL *mysql __attribute__((unused)),
-                             char *to, ulong to_length,
-                             const char *from, ulong length)
+ulong myodbc_escape_string(MYSQL *mysql __attribute__((unused)),
+                           char *to, ulong to_length,
+                           const char *from, ulong length, int escape_id)
 {
   const char *to_start= to;
   const char *end, *to_end=to_start + (to_length ? to_length-1 : 2*length);
@@ -2157,7 +2158,7 @@ ulong myodbc_escape_wildcard(MYSQL *mysql __attribute__((unused)),
         break;
       }
       while (tmp_length--)
-	*to++= *from++;
+        *to++= *from++;
       from--;
       continue;
     }
@@ -2176,33 +2177,33 @@ ulong myodbc_escape_wildcard(MYSQL *mysql __attribute__((unused)),
       escape= *from;
     else
     switch (*from) {
-    case 0:				/* Must be escaped for 'mysql' */
+    case 0:         /* Must be escaped for 'mysql' */
       escape= '0';
       break;
-    case '\n':				/* Must be escaped for logs */
+    case '\n':      /* Must be escaped for logs */
       escape= 'n';
       break;
     case '\r':
       escape= 'r';
       break;
     case '\\':
-      escape= '\\';
-      break;
     case '\'':
-      escape= '\'';
-      break;
-    case '"':				/* Better safe than sorry */
-      escape= '"';
-      break;
+    case '"':       /* Better safe than sorry */
     case '_':
-      escape= '_';
-      break;
     case '%':
-      escape= '%';
+      escape= *from;
       break;
-    case '\032':			/* This gives problems on Win32 */
+    case '\032':    /* This gives problems on Win32 */
       escape= 'Z';
       break;
+    }
+    /* if escaping an id, only handle back-tick */
+    if (escape_id)
+    {
+      if (*from == '`')
+        escape= *from;
+      else
+        escape= 0;
     }
     if (escape)
     {

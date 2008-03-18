@@ -37,6 +37,7 @@ BOOL MYODBCUtilReadDriver( MYODBCUTIL_DRIVER *pDriver, LPCSTR pszName, LPCSTR ps
     char    szEntryNames[SQL_MAX_DSN_LENGTH * MYODBCUTIL_MAX_DSN_NAMES];
     char *  pszEntryName    = NULL;
     char    szValue[4096];
+    SAVE_MODE();
 
     /*
      * Ensure that we have the friendly name of the driver...
@@ -60,8 +61,10 @@ BOOL MYODBCUtilReadDriver( MYODBCUTIL_DRIVER *pDriver, LPCSTR pszName, LPCSTR ps
     else if ( pszFileName && *pszFileName )
     {
         /* get list of sections (friendly driver names)... */
-        if ( !MYODBCUtilGetDriverNames( szSectionNames, sizeof(szSectionNames) ) )
-            return FALSE;
+        if (!MYODBCUtilGetDriverNames(szSectionNames, sizeof(szSectionNames)))
+          return FALSE;
+
+        RESTORE_MODE();
 
         /* get value of DRIVER entry... */
         pszSectionName = szSectionNames;
@@ -69,10 +72,14 @@ BOOL MYODBCUtilReadDriver( MYODBCUTIL_DRIVER *pDriver, LPCSTR pszName, LPCSTR ps
         {
             if ( SQLGetPrivateProfileString( pszSectionName, "DRIVER", "", szValue, sizeof( szValue ) - 1, "ODBCINST.INI" ) > 0 )
             {
+                RESTORE_MODE();
+
                 if ( strcmp( szValue, pszFileName ) == 0 )
                     break;
             }
-    
+
+            RESTORE_MODE();
+
             pszSectionName += strlen( pszSectionName ) + 1;
         } /* while */
     }
@@ -92,6 +99,8 @@ BOOL MYODBCUtilReadDriver( MYODBCUTIL_DRIVER *pDriver, LPCSTR pszName, LPCSTR ps
     {
         return FALSE;
     }
+
+    RESTORE_MODE();
 
     pszEntryName = szEntryNames;
     while ( *pszEntryName )
@@ -115,6 +124,9 @@ BOOL MYODBCUtilReadDriver( MYODBCUTIL_DRIVER *pDriver, LPCSTR pszName, LPCSTR ps
                 /* What the ? */
             }
         }
+
+        RESTORE_MODE();
+
         pszEntryName += strlen( pszEntryName ) + 1;
     } /* while */
 

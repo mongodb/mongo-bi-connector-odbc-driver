@@ -20,78 +20,60 @@
 
 #include "MYODBCUtil.h"
 
+
 /*!
   \brief    Creates/replaces the given data source.
 
             The use of SQLWriteDSNToIni() means this function
             does not really update an existing DSN so much as
             replaces it.
-*/  
+*/
 BOOL MYODBCUtilWriteDataSource( MYODBCUTIL_DATASOURCE *pDataSource )
 {
-    /* 
+    SAVE_MODE();
+
+    /*
         SQLWriteDSNToIni is *supposed* to replace any existing DSN
         with same name but fails (at least on unixODBC) to do so.
         So we ensure that any existing DSN with same name is removed
         with the following call.
-    */     
+    */
     if ( !SQLRemoveDSNFromIni( pDataSource->pszDSN ) )
         return FALSE;
+
+    RESTORE_MODE();
 
     /* create/replace data source name */
     if ( !SQLWriteDSNToIni( pDataSource->pszDSN, pDataSource->pszDRIVER ) )
         return FALSE;
 
+    RESTORE_MODE();
+
+    /* A little helper to avoid duplicated code. */
+#define WRITE_VALUE(field, name) \
+    if (pDataSource->psz##field && \
+        !SQLWritePrivateProfileString(pDataSource->pszDSN, name, \
+                                      pDataSource->psz##field, "odbc.ini")) \
+      return FALSE; \
+    RESTORE_MODE()
+
     /* add details */
-    if ( pDataSource->pszDATABASE && 
-         !SQLWritePrivateProfileString( pDataSource->pszDSN, "DATABASE", pDataSource->pszDATABASE, "odbc.ini" ) )
-        return FALSE;
-    if ( pDataSource->pszDESCRIPTION &&
-         !SQLWritePrivateProfileString( pDataSource->pszDSN, "DESCRIPTION", pDataSource->pszDESCRIPTION, "odbc.ini" ) )
-        return FALSE;
-    if ( pDataSource->pszOPTION &&
-         !SQLWritePrivateProfileString( pDataSource->pszDSN, "OPTION", pDataSource->pszOPTION, "odbc.ini" ) )
-        return FALSE;
-    if ( pDataSource->pszPASSWORD &&
-         !SQLWritePrivateProfileString( pDataSource->pszDSN, "PWD", pDataSource->pszPASSWORD, "odbc.ini" ) )
-        return FALSE;
-    if ( pDataSource->pszPORT &&
-         !SQLWritePrivateProfileString( pDataSource->pszDSN, "PORT", pDataSource->pszPORT, "odbc.ini" ) )
-        return FALSE;
-    if ( pDataSource->pszSERVER &&
-         !SQLWritePrivateProfileString( pDataSource->pszDSN, "SERVER", pDataSource->pszSERVER, "odbc.ini" ) )
-        return FALSE;
-    if ( pDataSource->pszSOCKET &&
-         !SQLWritePrivateProfileString( pDataSource->pszDSN, "SOCKET", pDataSource->pszSOCKET, "odbc.ini" ) )
-        return FALSE;
-    if ( pDataSource->pszSTMT && 
-         !SQLWritePrivateProfileString( pDataSource->pszDSN, "STMT", pDataSource->pszSTMT, "odbc.ini" ) )
-        return FALSE;
-    if ( pDataSource->pszUSER &&
-         !SQLWritePrivateProfileString( pDataSource->pszDSN, "UID", pDataSource->pszUSER, "odbc.ini" ) )
-        return FALSE;
-    if ( pDataSource->pszSSLCA &&
-         !SQLWritePrivateProfileString( pDataSource->pszDSN, "SSLCA", pDataSource->pszSSLCA, "odbc.ini" ) )
-        return FALSE;
-    if ( pDataSource->pszSSLCAPATH &&
-         !SQLWritePrivateProfileString( pDataSource->pszDSN, "SSLCAPATH", pDataSource->pszSSLCAPATH, "odbc.ini" ) )
-        return FALSE;
-    if ( pDataSource->pszSSLCERT &&
-         !SQLWritePrivateProfileString( pDataSource->pszDSN, "SSLCERT", pDataSource->pszSSLCERT, "odbc.ini" ) )
-        return FALSE;
-    if ( pDataSource->pszSSLCIPHER &&
-         !SQLWritePrivateProfileString( pDataSource->pszDSN, "SSLCIPHER", pDataSource->pszSSLCIPHER, "odbc.ini" ) )
-        return FALSE;
-    if ( pDataSource->pszSSLKEY &&
-         !SQLWritePrivateProfileString( pDataSource->pszDSN, "SSLKEY", pDataSource->pszSSLKEY, "odbc.ini" ) )
-        return FALSE;
-    if ( pDataSource->pszSSLVERIFY &&
-         !SQLWritePrivateProfileString( pDataSource->pszDSN, "SSLVERIFY", pDataSource->pszSSLVERIFY, "odbc.ini" ) )
-        return FALSE;
-    if (pDataSource->pszCHARSET &&
-        !SQLWritePrivateProfileString(pDataSource->pszDSN, "CHARSET",
-                                      pDataSource->pszCHARSET, "odbc.ini"))
-      return FALSE;
+    WRITE_VALUE(DATABASE, "DATABASE");
+    WRITE_VALUE(DESCRIPTION, "DESCRIPTION");
+    WRITE_VALUE(OPTION, "OPTION");
+    WRITE_VALUE(PASSWORD, "PWD");
+    WRITE_VALUE(PORT, "PORT");
+    WRITE_VALUE(SERVER, "SERVER");
+    WRITE_VALUE(SOCKET, "SOCKET");
+    WRITE_VALUE(STMT, "STMT");
+    WRITE_VALUE(USER, "UID");
+    WRITE_VALUE(SSLCA, "SSLCA");
+    WRITE_VALUE(SSLCAPATH, "SSLCAPATH");
+    WRITE_VALUE(SSLCERT, "SSLCERT");
+    WRITE_VALUE(SSLCIPHER, "SSLCIPHER");
+    WRITE_VALUE(SSLKEY, "SSLKEY");
+    WRITE_VALUE(SSLVERIFY, "SSLVERIFY");
+    WRITE_VALUE(CHARSET, "CHARSET");
 
     return TRUE;
 }

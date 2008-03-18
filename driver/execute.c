@@ -523,12 +523,6 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESCREC *aprec, DESCREC *iprec,
                 to= add_to_buffer(net, to, dbc->ansi_charset_info->csname,
                                   strlen(dbc->ansi_charset_info->csname));
               }
-              to= add_to_buffer(net,to,"'",1);
-              /* Make sure we have room for a fully-escaped string. */
-              if (!(to= extend_buffer(net, to, length * 2)))
-                goto memerror;
-              to+= mysql_real_escape_string(&dbc->mysql, to, data, length);
-              to= add_to_buffer(net, to, "'", 1);
               break;
             }
         case SQL_TIME:
@@ -573,12 +567,27 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESCREC *aprec, DESCREC *iprec,
                 if ( to == buff )
                     *to++='0';    /* Fix for empty strings */
                 data= buff; length= (uint) (to-buff);
+
+                convert= 0;
+
             }
             /* Fall through */
         default:
+          if (!convert)
+          {
             to= add_to_buffer(net, to, data, length);
+            goto out;
+          }
     }
 
+    to= add_to_buffer(net,to,"'",1);
+    /* Make sure we have room for a fully-escaped string. */
+    if (!(to= extend_buffer(net, to, length * 2)))
+      return 0;
+    to+= mysql_real_escape_string(&dbc->mysql, to, data, length);
+    to= add_to_buffer(net, to, "'", 1);
+
+out:
     if (free_data)
       my_free(data, MYF(0));
 

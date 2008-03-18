@@ -30,6 +30,7 @@ BOOL MYODBCUtilDSNExists( char *pszDataSourceName )
 {
     char    szSectionNames[SQL_MAX_DSN_LENGTH * MYODBCUTIL_MAX_DSN_NAMES];
     char *  pszSectionName;
+    SAVE_MODE();
 
     if ( !pszDataSourceName || !(*pszDataSourceName) )
         return FALSE;
@@ -52,26 +53,19 @@ BOOL MYODBCUtilDSNExists( char *pszDataSourceName )
     if ( SQLGetPrivateProfileString( pszDataSourceName, NULL, "", szSectionNames, sizeof( szSectionNames ) - 1, "ODBC.INI" ) > 0 )
         return TRUE;
     else
-#elif defined(__APPLE__) && 0    
-    /*!
-        \note   OSX
-
-                SQLGetPrivateProfileString is the proper call and is available - but
-                at this time it appears utterly broken. So we call an alternative
-                instead. 
-    */
-    if ( GetPrivateProfileString( NULL, NULL, NULL, szSectionNames, sizeof( szSectionNames ) - 1, "ODBC.INI" ) < 1 )
 #else
     if ( SQLGetPrivateProfileString( NULL, NULL, "", szSectionNames, sizeof( szSectionNames ) - 1, "ODBC.INI" ) < 1 )
 #endif
     {
-        /*! oops - we take easy way out and just say we did not find it */
-        return FALSE; 
+      /*! oops - we take easy way out and just say we did not find it */
+      return FALSE;
     }
+
+    RESTORE_MODE();
 
     /*!
         Scan result and return TRUE if we find a match.
-    */    
+    */
     pszSectionName = szSectionNames;
     while( *pszSectionName )
     {

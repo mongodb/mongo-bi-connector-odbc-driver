@@ -97,7 +97,7 @@ BOOL MYODBCSetupConfigDSNEdit( HWND hWnd, MYODBCUTIL_DATASOURCE *pDataSource )
     {
         if ( !MYODBCSetupDataSourceConfig( hWnd, pDataSource ) )
         {
-            return FALSE; /* user cancelled */
+            return TRUE; /* user cancelled */
         }
     }
 

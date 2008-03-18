@@ -960,6 +960,12 @@ DECLARE_TEST(bug15713)
     strcat((char *)conn, ";SOCKET=");
     strcat((char *)conn, (char *)mysock);
   }
+  if (myport)
+  {
+    char pbuff[20];
+    sprintf(pbuff, ";PORT=%d", myport);
+    strcat((char *)conn, pbuff);
+  }
 
   ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
 
@@ -1194,6 +1200,77 @@ DECLARE_TEST(t_bug19923)
 }
 
 
+/*
+  Bug #32864 MyODBC /Crystal Reports truncated table names,
+             lost fields when names > 21chars
+*/
+DECLARE_TEST(t_bug32864)
+{
+  SQLLEN dispsize= 0;
+  SQLLEN colsize= 0;
+  SQLCHAR dummy[20];
+
+  ok_stmt(hstmt, SQLTables(hstmt, "%", SQL_NTS, NULL, 0, NULL, 0, NULL, 0));
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 3, SQL_COLUMN_DISPLAY_SIZE, NULL, 0,
+                                 NULL, &dispsize));
+
+  is_num(dispsize, 64);
+
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 3, dummy, sizeof(dummy), NULL, NULL,
+                                &colsize, NULL, NULL));
+
+  is_num(colsize, 64);
+
+  return OK;
+}
+
+
+/*
+  Bug #32989 - Crystal Reports fails if a field has a single quote
+*/
+DECLARE_TEST(t_bug32989)
+{
+  SQLCHAR name[20];
+  SQLLEN len;
+
+  ok_sql(hstmt, "drop table if exists t_bug32989");
+  ok_sql(hstmt, "create table t_bug32989 (`doesn't work` int)");
+
+  ok_stmt(hstmt, SQLColumns(hstmt, "test", SQL_NTS, NULL, 0,
+                            "t_bug32989", SQL_NTS, NULL, 0));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 4, SQL_C_CHAR, name, 20, &len));
+  is_num(len, 12);
+  is_str(name, "doesn't work", 13);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "drop table if exists t_bug32989");
+  return OK;
+}
+
+
+/**
+ Bug #33298: ADO returns wrong parameter count in the query (always 0)
+*/
+DECLARE_TEST(t_bug33298)
+{
+  SQLRETURN rc= 0;
+  expect_stmt(hstmt, SQLProcedureColumns(hstmt, 0, NULL, 0, NULL,
+                                         0, NULL, 0, NULL),
+                                         SQL_SUCCESS_WITH_INFO);
+  rc= SQLFetch(hstmt);
+  /**
+    SQL_NO_DATA is ok for the current implementation,
+    SQL_SUCCESS should be ok for when SQLProcedureColumns is implemented
+  */
+  if (rc == SQL_ERROR)
+    return FAIL;
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -1217,6 +1294,9 @@ BEGIN_TESTS
   ADD_TEST(t_bug29888)
   ADD_TEST(t_bug14407)
   ADD_TEST(t_bug19923)
+  ADD_TEST(t_bug32864)
+  ADD_TEST(t_bug32989)
+  ADD_TEST(t_bug33298)
 END_TESTS
 
 

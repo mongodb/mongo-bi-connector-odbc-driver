@@ -28,13 +28,7 @@
 */
 BOOL MYODBCSetupConfigDSNAdd( HWND hWnd, MYODBCUTIL_DATASOURCE *pDataSource )
 {
-    /*
-      Hang on to the configuration mode, our setup dialog (or maybe just iODBC)
-      sometimes does things that cause it to be changed.
-    */
-    UWORD configMode;
-    if (!SQLGetConfigMode(&configMode))
-      return FALSE;
+    SAVE_MODE();
 
     pDataSource->nMode = MYODBCUTIL_DATASOURCE_MODE_DSN_ADD;
 
@@ -82,9 +76,12 @@ BOOL MYODBCSetupConfigDSNAdd( HWND hWnd, MYODBCUTIL_DATASOURCE *pDataSource )
         */
         if ( !SQLValidDSN( pDataSource->pszDSN ) )
         {
+            RESTORE_MODE();
             SQLPostInstallerError( ODBC_ERROR_REQUEST_FAILED, "DSN contains illegal characters or length does not make sense." );
             return FALSE;
         }
+
+        RESTORE_MODE();
     }
 
     /*!
@@ -105,7 +102,7 @@ BOOL MYODBCSetupConfigDSNAdd( HWND hWnd, MYODBCUTIL_DATASOURCE *pDataSource )
     if ( hWnd )
     {
         if ( !MYODBCSetupDataSourceConfig( hWnd, pDataSource ) )
-            return FALSE;
+            return TRUE; /* user cancelled */
     }
 
     /*!
@@ -130,10 +127,6 @@ BOOL MYODBCSetupConfigDSNAdd( HWND hWnd, MYODBCUTIL_DATASOURCE *pDataSource )
         SQLPostInstallerError( ODBC_ERROR_INVALID_KEYWORD_VALUE, "Missing DSN attribute value." );
         return FALSE;
     }
-
-    /* Restore the configuration mode before we write the DSN. */
-    if (!SQLSetConfigMode(configMode))
-      return FALSE;
 
     /*!
         ODBC RULE

@@ -264,7 +264,8 @@ static MYSQL_RES *mysql_table_status(STMT        *stmt,
   if (catalog && *catalog)
   {
     to= strmov(to, "FROM `");
-    to+= mysql_real_escape_string(mysql, to, (char *)catalog, catalog_length);
+    to+= myodbc_escape_string(mysql, to, sizeof(buff) - (to - buff),
+                              (char *)catalog, catalog_length, 1);
     to= strmov(to, "` ");
   }
 
@@ -282,8 +283,8 @@ static MYSQL_RES *mysql_table_status(STMT        *stmt,
     if (wildcard)
       to+= mysql_real_escape_string(mysql, to, (char *)table, table_length);
     else
-      to+= myodbc_escape_wildcard(mysql, to, sizeof(buff) - (to - buff),
-                                  (char *)table, table_length);
+      to+= myodbc_escape_string(mysql, to, sizeof(buff) - (to - buff),
+                                (char *)table, table_length, 0);
     to= strmov(to, "'");
   }
 
@@ -592,17 +593,20 @@ MYSQL_RES *mysql_list_dbcolumns(STMT *stmt,
   {
     char buff[255];
     char *select, *to;
+    size_t select_len;
     unsigned long *lengths;
 
     /* Get a list of column names that match our criteria. */
     to= strmov(buff, "SHOW COLUMNS FROM `");
     if (cbCatalog)
     {
-      to+= mysql_real_escape_string(mysql, to, (char *)szCatalog, cbCatalog);
+      to+= myodbc_escape_string(mysql, to, sizeof(buff) - (to - buff),
+                                (char *)szCatalog, cbCatalog, 1);
       to= strmov(to, "`.`");
     }
 
-    to+= mysql_real_escape_string(mysql, to, (char *)szTable, cbTable);
+    to+= myodbc_escape_string(mysql, to, sizeof(buff) - (to - buff),
+                              (char *)szTable, cbTable, 1);
     to= strmov(to, "`");
 
     if (cbColumn)
@@ -624,9 +628,8 @@ MYSQL_RES *mysql_list_dbcolumns(STMT *stmt,
     pthread_mutex_unlock(&dbc->lock);
 
     /* Build a SELECT ... LIMIT 0 to get the field metadata. */
-    if (!(select= (char *)my_malloc(sizeof(char) * (ulong)result->row_count *
-                                    (NAME_LEN + 1) + NAME_LEN * 2,
-                                    MYF(0))))
+    select_len = (ulong)result->row_count * (NAME_LEN + 1) + NAME_LEN * 2;
+    if (!(select= (char *)my_malloc(select_len, MYF(0))))
     {
       set_mem_error(mysql);
       return NULL;
@@ -637,7 +640,8 @@ MYSQL_RES *mysql_list_dbcolumns(STMT *stmt,
     {
       to= strmov(to, "`");
       lengths= mysql_fetch_lengths(result);
-      to+= mysql_real_escape_string(mysql, to, row[0], lengths[0]);
+      to+= myodbc_escape_string(mysql, to, select_len - (to - select),
+                                (char *)row[0], lengths[0], 1);
       to= strmov(to, "`,");
     }
     *(--to)= '\0';
@@ -645,11 +649,13 @@ MYSQL_RES *mysql_list_dbcolumns(STMT *stmt,
     to= strmov(to, " FROM `");
     if (cbCatalog)
     {
-      to+= mysql_real_escape_string(mysql, to, (char *)szCatalog, cbCatalog);
+      to+= myodbc_escape_string(mysql, to, select_len - (to - select),
+                                (char *)szCatalog, cbCatalog, 1);
       to= strmov(to, "`.`");
     }
 
-    to+= mysql_real_escape_string(mysql, to, (char *)szTable, cbTable);
+    to+= myodbc_escape_string(mysql, to, select_len - (to - select),
+                              (char *)szTable, cbTable, 1);
     to= strmov(to, "` LIMIT 0");
 
     mysql_free_result(result);
@@ -2156,6 +2162,45 @@ MySQLProcedures(SQLHSTMT hstmt,
 
 
 /*
+****************************************************************************
+SQLProcedure Columns
+****************************************************************************
+*/
+
+char *SQLPROCEDURECOLUMNS_values[]= {
+       "", "", NullS, NullS, "", "", "",
+       "", "", "", "10", "",
+       "MySQL column", "", "", NullS, "",
+       NullS, ""
+};
+
+MYSQL_FIELD SQLPROCEDURECOLUMNS_fields[]=
+{
+  MYODBC_FIELD_STRING("PROCEDURE_CAT",     NAME_LEN, 0),
+  MYODBC_FIELD_STRING("PROCEDURE_SCHEM",   NAME_LEN, 0),
+  MYODBC_FIELD_STRING("PROCEDURE_NAME",    NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("COLUMN_NAME",       NAME_LEN, NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT ("COLUMN_TYPE",       NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT ("DATA_TYPE",         NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("TYPE_NAME",         20,       NOT_NULL_FLAG),
+  MYODBC_FIELD_LONG  ("COLUMN_SIZE",       0),
+  MYODBC_FIELD_LONG  ("BUFFER_LENGTH",     0),
+  MYODBC_FIELD_SHORT ("DECIMAL_DIGITS",    0),
+  MYODBC_FIELD_SHORT ("NUM_PREC_RADIX",    0),
+  MYODBC_FIELD_SHORT ("NULLABLE",          NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("REMARKS",           NAME_LEN, 0),
+  MYODBC_FIELD_STRING("COLUMN_DEF",        NAME_LEN, 0),
+  MYODBC_FIELD_SHORT ("SQL_DATA_TYPE",     NOT_NULL_FLAG),
+  MYODBC_FIELD_SHORT ("SQL_DATETIME_SUB",  0),
+  MYODBC_FIELD_LONG  ("CHAR_OCTET_LENGTH", 0),
+  MYODBC_FIELD_LONG  ("ORDINAL_POSITION",  NOT_NULL_FLAG),
+  MYODBC_FIELD_STRING("IS_NULLABLE",       3,        0),
+};
+
+const uint SQLPROCEDURECOLUMNS_FIELDS=
+             array_elements(SQLPROCEDURECOLUMNS_fields);
+
+/*
   @type    : ODBC 1.0 API
   @purpose : returns the list of input and output parameters, as well as
   the columns that make up the result set for the specified
@@ -2164,7 +2209,7 @@ MySQLProcedures(SQLHSTMT hstmt,
 */
 
 SQLRETURN SQL_API
-SQLProcedureColumns(SQLHSTMT hstmt,
+MySQLProcedureColumns(SQLHSTMT hstmt,
                     SQLCHAR FAR *szProcQualifier __attribute__((unused)),
                     SQLSMALLINT cbProcQualifier __attribute__((unused)),
                     SQLCHAR FAR *szProcOwner __attribute__((unused)),
@@ -2174,6 +2219,12 @@ SQLProcedureColumns(SQLHSTMT hstmt,
                     SQLCHAR FAR *szColumnName __attribute__((unused)),
                     SQLSMALLINT cbColumnName __attribute__((unused)))
 {
-    return set_error(hstmt, MYERR_S1000,
-                     "Driver doesn't support this yet", 4000);
+  create_empty_fake_resultset(hstmt, SQLPROCEDURECOLUMNS_values,
+                              sizeof(SQLPROCEDURECOLUMNS_values),
+                              SQLPROCEDURECOLUMNS_fields,
+                              SQLPROCEDURECOLUMNS_FIELDS);
+
+  return set_error(hstmt, MYERR_01000,
+                   "MySQL server does not provide the requested information",
+                   4000);
 }

@@ -89,9 +89,10 @@ typedef char * DYNAMIC_ELEMENT;
   {(name), (name), NullS, NullS, NullS, NullS, NullS, 11, 11, 0, 0, 0, 0, 0, \
     0, 0, (flags), 0, 0, MYSQL_TYPE_LONG, NULL}
 #elif MYSQL_VERSION_ID >= 40100
+/* we use 3 here as SYSTEM_CHARSET_MBMAXLEN is not defined in v5.0 mysql_com.h */
 # define MYODBC_FIELD_STRING(name, len, flags) \
-  {(name), (name), NullS, NullS, NullS, NullS, NullS, (len), 0, 0, 0, 0, 0, 0, \
-    0, 0, (flags), 0, UTF8_CHARSET_NUMBER, MYSQL_TYPE_VAR_STRING}
+  {(name), (name), NullS, NullS, NullS, NullS, NullS, (len) * 3, 0, 0, 0, 0, \
+    0, 0, 0, 0, (flags), 0, UTF8_CHARSET_NUMBER, MYSQL_TYPE_VAR_STRING}
 # define MYODBC_FIELD_SHORT(name, flags) \
   {(name), (name), NullS, NullS, NullS, NullS, NullS, 5, 5, 0, 0, 0, 0, 0, 0, \
     0, (flags), 0, 0, MYSQL_TYPE_SHORT}
@@ -243,8 +244,8 @@ int myodbc_strcasecmp(const char *s, const char *t);
 int myodbc_casecmp(const char *s, const char *t, uint len);
 my_bool reget_current_catalog(DBC FAR *dbc);
 
-ulong myodbc_escape_wildcard(MYSQL *mysql, char *to, ulong to_length,
-                             const char *from, ulong length);
+ulong myodbc_escape_string(MYSQL *mysql, char *to, ulong to_length,
+                           const char *from, ulong length, int escape_id);
 
 DESCREC *desc_get_rec(DESC *desc, int recnum, my_bool expand);
 

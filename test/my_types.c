@@ -25,7 +25,7 @@
 
 DECLARE_TEST(t_longlong1)
 {
-#if SQLBIGINT_MADE_PORTABLE
+#if SQLBIGINT_MADE_PORTABLE || defined(_WIN32)
   SQLBIGINT session_id, ctn;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_longlong");
@@ -64,7 +64,7 @@ DECLARE_TEST(t_longlong1)
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_longlong");
-#endif
+#endif /* SQLBIGINT_MADE_PORTABLE || defined(_WIN32) */
 
   return OK;
 }
@@ -167,7 +167,7 @@ DECLARE_TEST(t_decimal)
 
 DECLARE_TEST(t_bigint)
 {
-#if SQLBIGINT_MADE_PORTABLE
+#if SQLBIGINT_MADE_PORTABLE || defined(_WIN32)
     SQLRETURN rc;
     SQLLEN nlen = 4;
     union {                    /* An union to get 4 byte alignment */
@@ -282,7 +282,7 @@ DECLARE_TEST(t_bigint)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-#endif
+#endif /* SQLBIGINT_MADE_PORTABLE || defined(_WIN32) */
   return OK;
 }
 
@@ -1039,6 +1039,29 @@ DECLARE_TEST(t_sqlnum_to_str)
 }
 
 
+/*
+  Bug #31220 - SQLFetch or SQLFetchScroll returns negative data length
+               when using SQL_C_WCHAR
+*/
+DECLARE_TEST(t_bug31220)
+{
+  SQLLEN outlen= 999;
+  SQLWCHAR outbuf[5];
+
+  /* the call sequence of this test is not allowed under a driver manager */
+  if (using_dm(hdbc))
+    return OK;
+
+  ok_sql(hstmt, "select 1");
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, 999 /* unknown type */,
+                            outbuf, 5, &outlen));
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_ERROR);
+  is(check_sqlstate(hstmt, "07006") == OK);
+  is_num(outlen, 999);
+  return OK;  
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_longlong1)
   ADD_TEST(t_decimal)
@@ -1058,6 +1081,7 @@ BEGIN_TESTS
   ADD_TEST(t_sqlnum_from_str)
   ADD_TEST(t_bindsqlnum_basic)
   ADD_TEST(t_sqlnum_to_str)
+  ADD_TEST(t_bug31220)
 END_TESTS
 
 

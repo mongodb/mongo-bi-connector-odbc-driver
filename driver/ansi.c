@@ -969,6 +969,20 @@ SQLPrimaryKeys(SQLHSTMT hstmt,
 
 
 SQLRETURN SQL_API
+SQLProcedureColumns(SQLHSTMT hstmt,
+                    SQLCHAR *catalog, SQLSMALLINT catalog_len,
+                    SQLCHAR *schema, SQLSMALLINT schema_len,
+                    SQLCHAR *proc, SQLSMALLINT proc_len,
+                    SQLCHAR *column, SQLSMALLINT column_len)
+{
+  /* TODO: do conversions when MySQLProcedureColumns is implemented. */
+  return MySQLProcedureColumns(hstmt, catalog, catalog_len,
+                               schema, schema_len, proc, proc_len,
+                               column, column_len);
+}
+
+
+SQLRETURN SQL_API
 SQLProcedures(SQLHSTMT hstmt,
               SQLCHAR *catalog, SQLSMALLINT catalog_len,
               SQLCHAR *schema, SQLSMALLINT schema_len,
@@ -1392,17 +1406,6 @@ SQLBrowseConnect(SQLHDBC hdbc, SQLCHAR *in, SQLSMALLINT in_len,
 
 
 //SQLDrivers
-
-
-SQLRETURN SQL_API
-SQLProcedureColumns(SQLHSTMT hstmt,
-                    SQLCHAR *catalog, SQLSMALLINT catalog_len,
-                    SQLCHAR *schema, SQLSMALLINT schema_len,
-                    SQLCHAR *proc, SQLSMALLINT proc_len,
-                    SQLCHAR *column, SQLSMALLINT column_len)
-{
-  NOT_IMPLEMENTED;
-}
 
 
 #endif

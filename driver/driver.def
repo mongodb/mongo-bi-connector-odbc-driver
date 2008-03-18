@@ -112,6 +112,7 @@ SQLColAttributesW
 SQLColumnPrivilegesW
 SQLColumnsW
 SQLCloseCursor
+SQLSetParam
 SQLConnectW
 SQLDescribeColW
 SQLDriverConnectW

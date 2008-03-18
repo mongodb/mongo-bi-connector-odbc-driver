@@ -20,6 +20,10 @@
   * Unable to use surrogate pairs into with unicode column. (Bug #34672)
   * SQLGetData w/SQL_C_WCHAR gives incorrect data. (Bug #34429)
 
+  Includes changes from Connector/ODBC 3.51.24.
+
+  Built using MySQL 5.0.52.
+
 ----
 
 5.1.2 (February 12, 2008)
@@ -126,6 +130,45 @@
   * Added support for SQL_C_WCHAR.
   * Added support for Unicode functions (SQLConnectW, etc).
   * Added descriptor support (SQLGetDescField, SQLGetDescRec, etc)
+
+----
+
+3.51.24 (14-Mar-2007)
+
+  Bugs fixed:
+  * ConfigDSN() returned FALSE when the dialog was cancelled by the user.
+  * Static cursor was unable to be used through ADO when dynamic cursors
+    were enabled. (Bug #27351)
+  * Driver would crash when requesting the current catalog before connecting.
+    (Bug #16653)
+  * Catalog data was truncated due to NAME_LEN only allocating a single byte
+    for characters. (Bug #32864)
+  * SSL connections could not be established properly. Added the server
+    certificate verification flag. (Bug #29955)
+  * Added deprecated SQLSetParam function. (Bug #29871)
+  * Recordset-based update fails if blob field is queried. (Bug #19065)
+  * Allows dirty reading with SQL_TXN_READ_COMMITTED isolation through ODBC
+    (Bug #31959)
+  * Don't cache results and SQLExtendedFetch work badly together.
+    (Bug #32420)
+  * SQLFetch or SQLFetchScroll returns negative data length using SQL_C_WCHAR.
+    (Bug #31220)
+  * An SQLSTATE of HY000 was returned when a stored procedure was not found,
+    instead of 42000. This caused problems with ADO's adCmdUnknown option.
+    (Bug #27158)
+  * Identifiers were quoted incorrectly by SQLColumns(). (Bug #32989)
+  * Worked around bug in iODBC installer library that made it impossible
+    to create a system DSN, particularly on Mac OS X, where the installer
+    created the /Library/ODBC/*.ini files with insufficient permissions.
+    (Bug #31495)
+  * Unresolved symbols "min" and "max" in libmyodbc3.so w/gcc 4.2. 
+    (Bug #34256)
+  * Fixed some incorrect information returned by SQLGetTypeInfo().
+    (Bug #30918)
+  * Values bound using the SQL_C_CHAR value type but with numeric
+    parameter type were not correctly escaped. (Bug #34575)
+  * The driver reported that it does not support SQLProcedureColumns(),
+    which causes problems for ADO. (Bug #33298)
 
 ----
 
