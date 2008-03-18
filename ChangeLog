@@ -17,6 +17,7 @@
     (Bug #24535)
   * MyODBC 51/Access unable to use DBEngine.RegisterDatabase to create a DSN
     (Bug #33825)
+  * Unable to use surrogate pairs into with unicode column. (Bug #34672)
 
 ----
 

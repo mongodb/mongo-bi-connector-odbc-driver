@@ -120,7 +120,7 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,
                     SQLUSMALLINT fOption, uint clearAllResults);
 SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt);
 SQLRETURN do_query(STMT FAR *stmt,char *query);
-char *insert_params(STMT FAR *stmt);
+SQLRETURN insert_params(STMT FAR *stmt, char **finalquery);
 SQLRETURN odbc_stmt(DBC FAR *dbc, const char *query);
 void mysql_link_fields(STMT *stmt,MYSQL_FIELD *fields,uint field_count);
 void fix_result_types(STMT *stmt);
@@ -131,8 +131,8 @@ SQLRETURN my_pos_delete(STMT FAR *stmt,STMT FAR *stmtParam,
 SQLRETURN my_pos_update(STMT FAR *stmt,STMT FAR *stmtParam,
 			SQLUSMALLINT irow,DYNAMIC_STRING *dynStr);
 char *check_if_positioned_cursor_exists(STMT FAR *stmt, STMT FAR **stmtNew);
-char *insert_param(STMT *stmt, char *to,DESCREC *aprec,DESCREC *iprec,
-                   SQLULEN row);
+SQLRETURN insert_param(STMT *stmt, char **to,DESCREC *aprec,DESCREC *iprec,
+                       SQLULEN row);
 char *add_to_buffer(NET *net,char *to,const char *from,ulong length);
 int is_set_names_statement(SQLCHAR *query);
 

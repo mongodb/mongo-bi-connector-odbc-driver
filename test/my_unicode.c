@@ -1029,6 +1029,55 @@ DECLARE_TEST(t_bug32161)
 }
 
 
+/*
+  Bug#34672 - Unable to insert surrogate pairs into or fetch surrogate pairs
+              from unicode column
+*/
+DECLARE_TEST(t_bug34672)
+{
+  SQLWCHAR chars[3];
+  SQLINTEGER inchars, i;
+  SQLWCHAR result[3];
+  SQLLEN reslen;
+
+  if (sizeof(SQLWCHAR) == 2)
+  {
+    chars[0]= 0xd802;
+    chars[1]= 0xdc60;
+    inchars= 2;
+  }
+  else
+  {
+    chars[0]= (SQLWCHAR) 0x10860;
+    inchars= 1;
+  }
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_WCHAR,
+                                  SQL_WCHAR, 0, 0, chars,
+                                  inchars * sizeof(SQLWCHAR), NULL));
+
+  if (mysql_min_version(hdbc, "6.0.4", 5))
+  {
+    ok_stmt(hstmt, SQLExecDirect(hstmt, (SQLCHAR *) "select ?", SQL_NTS));
+    ok_stmt(hstmt, SQLFetch(hstmt));
+    ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_WCHAR, result,
+                              sizeof(result), &reslen));
+    is_num(result[2], 0);
+    for (i= 0; i < inchars; ++i)
+      is_num(result[i], chars[i]);
+    is_num(reslen, inchars * sizeof(SQLWCHAR));
+  }
+  else
+  {
+    expect_stmt(hstmt, SQLExecDirect(hstmt, (SQLCHAR *) "select ?", SQL_NTS),
+                SQL_ERROR);
+    return check_sqlstate(hstmt, "HY000");
+  }
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlconnect)
   ADD_TEST(sqlprepare)
@@ -1050,8 +1099,10 @@ BEGIN_TESTS
   ADD_TEST(sqlprimarykeys)
   ADD_TEST(sqlstatistics)
   ADD_TEST(t_bug32161)
+  ADD_TEST(t_bug34672)
 END_TESTS
 
 
 RUN_TESTS
+
 

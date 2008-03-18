@@ -168,11 +168,12 @@ char *add_to_buffer(NET *net,char *to,const char *from,ulong length)
   @purpose : insert sql params at parameter positions
 */
 
-char *insert_params(STMT FAR *stmt)
+SQLRETURN insert_params(STMT FAR *stmt, char **finalquery)
 {
     char *query= stmt->query,*to;
     uint i,length;
     NET *net;
+    SQLRETURN rc= SQL_SUCCESS;
 
     pthread_mutex_lock(&stmt->dbc->lock);
     net= &stmt->dbc->mysql.net;
@@ -190,32 +191,23 @@ char *insert_params(STMT FAR *stmt)
         if (stmt->dummy_state != ST_DUMMY_PREPARED &&
             !aprec->par.real_param_done)
         {
-            if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
-                setlocale(LC_NUMERIC,default_locale);
-            set_error(stmt,MYERR_07001,NULL,0);
-            pthread_mutex_unlock(&stmt->dbc->lock);
-            return 0;
+            rc= set_error(stmt,MYERR_07001,NULL,0);
+            goto error;
         }
         get_dynamic(&stmt->param_pos, (void *)&pos, i);
         length= (uint) (pos-query);
         if ( !(to= add_to_buffer(net,to,query,length)) )
-            goto error;
+            goto memerror;
         query= pos+1;  /* Skip '?' */
-        if ( !(to= insert_param(stmt,to,aprec,iprec,0)) )
+        if (!SQL_SUCCEEDED(rc= insert_param(stmt,&to,aprec,iprec,0)))
             goto error;
     }
     length= (uint) (stmt->query_end - query);
     if ( !(to= add_to_buffer(net,to,query,length+1)) )
-        goto error;
+        goto memerror;
     if ( !(to= (char*) my_memdup((char*) net->buff,
                                  (uint) (to - (char*) net->buff),MYF(0))) )
-    {
-        if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
-            setlocale(LC_NUMERIC,default_locale);
-        set_error(stmt,MYERR_S1001,NULL,4001);
-        pthread_mutex_unlock(&stmt->dbc->lock);
-        return 0;
-    }
+        goto memerror;
 
     /* TODO We don't *yet* support PARAMSET */
     if ( stmt->apd->rows_processed_ptr )
@@ -224,14 +216,16 @@ char *insert_params(STMT FAR *stmt)
     pthread_mutex_unlock(&stmt->dbc->lock);
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
         setlocale(LC_NUMERIC,default_locale);
-    return to;
+    *finalquery= to;
+    return rc;
 
-    error:      /* Too much data */
+memerror:      /* Too much data */
+    rc= set_error(stmt,MYERR_S1001,NULL,4001);
+error:
     pthread_mutex_unlock(&stmt->dbc->lock);
     if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
         setlocale(LC_NUMERIC,default_locale);
-    set_error(stmt,MYERR_S1001,NULL,4001);
-    return 0;
+    return rc;
 }
 
 
@@ -239,12 +233,12 @@ char *insert_params(STMT FAR *stmt)
   Add the value of parameter to a string buffer.
 
   @param[in]      mysql
-  @param[in,out]  to
+  @param[in,out]  toptr
   @param[in]      aprec The APD record of the parameter
   @param[in]      iprec The IPD record of the parameter
 */
-char *insert_param(STMT *stmt, char *to, DESCREC *aprec, DESCREC *iprec,
-                   SQLULEN row)
+SQLRETURN insert_param(STMT *stmt, char **toptr, DESCREC *aprec, DESCREC *iprec,
+                       SQLULEN row)
 {
     int length;
     char buff[128], *data= NULL;
@@ -252,6 +246,7 @@ char *insert_param(STMT *stmt, char *to, DESCREC *aprec, DESCREC *iprec,
     DBC *dbc= stmt->dbc;
     NET *net= &dbc->mysql.net;
     SQLLEN *octet_length_ptr= NULL;
+    char *to= *toptr;
 
     if (aprec->octet_length_ptr)
     {
@@ -290,7 +285,8 @@ char *insert_param(STMT *stmt, char *to, DESCREC *aprec, DESCREC *iprec,
     }
     else if ( *octet_length_ptr == SQL_NULL_DATA )
     {
-        return add_to_buffer(net,to,"NULL",4);
+        *toptr= add_to_buffer(net,*toptr,"NULL",4);
+        return SQL_SUCCESS;
     }
     /*
       We may see SQL_COLUMN_IGNORE from bulk INSERT operations, where we
@@ -307,15 +303,19 @@ char *insert_param(STMT *stmt, char *to, DESCREC *aprec, DESCREC *iprec,
               aprec->par.value == NULL))
     {
       if (is_minimum_version(dbc->mysql.server_version, "4.0.3", 5))
-        return add_to_buffer(net,to,"DEFAULT",7);
+        *toptr= add_to_buffer(net,*toptr,"DEFAULT",7);
       else
-        return add_to_buffer(net,to,"NULL",4);
+        *toptr= add_to_buffer(net,*toptr,"NULL",4);
+      return SQL_SUCCESS;
     }
     else if (IS_DATA_AT_EXEC(octet_length_ptr))
     {
         length= aprec->par.value_length;
         if ( !(data= aprec->par.value) )
-            return add_to_buffer(net,to,"NULL",4);
+        {
+            *toptr= add_to_buffer(net,*toptr,"NULL",4);
+            return SQL_SUCCESS;
+        }
     }
 
     switch ( aprec->concise_type )
@@ -330,6 +330,7 @@ char *insert_param(STMT *stmt, char *to, DESCREC *aprec, DESCREC *iprec,
             /* Convert SQL_C_WCHAR (utf-16 or utf-32) to utf-8. */
             char *to;
             int i= 0;
+            int utf8len, has_utf8_maxlen4= 0;
 
             /* length is in bytes, we want chars */
             length= length / sizeof(SQLWCHAR);
@@ -340,7 +341,7 @@ char *insert_param(STMT *stmt, char *to, DESCREC *aprec, DESCREC *iprec,
             else
             {
               if (!(to= (char *)my_malloc(length * 4, MYF(0))))
-                return 0;
+                goto memerror;
               free_data= TRUE;
             }
 
@@ -349,7 +350,11 @@ char *insert_param(STMT *stmt, char *to, DESCREC *aprec, DESCREC *iprec,
               UTF32 *in= (UTF32 *)data;
               data= to;
               while (i < length)
-                to+= utf32toutf8(in[i++], (UTF8 *)to);
+              {
+                to+= (utf8len= utf32toutf8(in[i++], (UTF8 *)to));
+                if (utf8len == 4)
+                  has_utf8_maxlen4= 1;
+              }
             }
             else
             {
@@ -359,9 +364,17 @@ char *insert_param(STMT *stmt, char *to, DESCREC *aprec, DESCREC *iprec,
               {
                 UTF32 c;
                 i+= utf16toutf32(in + i, &c);
-                to+= utf32toutf8(c, (UTF8 *)to);
+                to+= (utf8len= utf32toutf8(c, (UTF8 *)to));
+                if (utf8len == 4)
+                  has_utf8_maxlen4= 1;
               }
             }
+
+            if (has_utf8_maxlen4 &&
+                !is_minimum_version(dbc->mysql.server_version, "6.0.4", 5))
+              return set_stmt_error(stmt, "HY000",
+                                    "Server does not support 4-byte encoded "
+                                    "UTF8 characters.", 0);
 
             length= to - data;
 
@@ -473,7 +486,7 @@ char *insert_param(STMT *stmt, char *to, DESCREC *aprec, DESCREC *iprec,
               {/* 01S07 SQL_SUCCESS_WITH_INFO */}
               else if (trunc == SQLNUM_TRUNC_WHOLE)
               {/* 22003 SQL_ERROR */
-                return NULL;
+                return SQL_ERROR;
               }
             }
     }
@@ -513,7 +526,7 @@ char *insert_param(STMT *stmt, char *to, DESCREC *aprec, DESCREC *iprec,
               to= add_to_buffer(net,to,"'",1);
               /* Make sure we have room for a fully-escaped string. */
               if (!(to= extend_buffer(net, to, length * 2)))
-                return 0;
+                goto memerror;
               to+= mysql_real_escape_string(&dbc->mysql, to, data, length);
               to= add_to_buffer(net, to, "'", 1);
               break;
@@ -569,7 +582,11 @@ char *insert_param(STMT *stmt, char *to, DESCREC *aprec, DESCREC *iprec,
     if (free_data)
       my_free(data, MYF(0));
 
-    return to;
+    *toptr= to;
+    return SQL_SUCCESS;
+
+memerror:
+    return set_error(stmt, MYERR_S1001, NULL, 4001);
 }
 
 
@@ -692,7 +709,7 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
     {
         /*
          * If any parameters are required at execution time, cannot perform the
-         * statement. It will be done throught SQLPutData() and SQLParamData().
+         * statement. It will be done through SQLPutData() and SQLParamData().
          */
         for ( i= 0; i < pStmt->param_count; i++ )
         {
@@ -713,7 +730,8 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
                 return SQL_NEED_DATA;
             }
         }
-        query= insert_params(pStmt);     /* Checked in do_query */
+        if (!SQL_SUCCEEDED(rc= insert_params(pStmt, &query)))
+            return rc;
     }
 
     rc= do_query(pStmt, query);
@@ -733,6 +751,8 @@ SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER FAR *prbgValue)
 {
     STMT FAR *stmt= (STMT FAR*) hstmt;
     uint i;
+    SQLRETURN rc;
+    char *query;
 
     for ( i= stmt->current_param; i < stmt->param_count; i++ )
     {
@@ -756,7 +776,9 @@ SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER FAR *prbgValue)
             return SQL_NEED_DATA;
         }
     }
-    return do_query(stmt,insert_params(stmt));
+    if (!SQL_SUCCEEDED(rc= insert_params(stmt, &query)))
+        return rc;
+    return do_query(stmt, query);
 }
 
 

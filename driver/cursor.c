@@ -418,6 +418,7 @@ static SQLRETURN update_setpos_status(STMT FAR *stmt, SQLINTEGER irow,
 static SQLRETURN copy_rowdata(STMT FAR *stmt, DESCREC *aprec,
                               DESCREC *iprec, NET **net, SQLCHAR **to)
 {
+    SQLRETURN rc;
     SQLCHAR *orig_to= *to;
     /* Negative length means either NULL or DEFAULT, so we need 7 chars. */
     SQLUINTEGER length= (*aprec->octet_length_ptr > 0 ?
@@ -426,8 +427,8 @@ static SQLRETURN copy_rowdata(STMT FAR *stmt, DESCREC *aprec,
     if ( !(*to= (SQLCHAR *) extend_buffer(*net,(char*) *to,length)) )
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
-    if ( !(*to= (SQLCHAR*) insert_param(stmt, (char*) *to, aprec, iprec, 0)) )
-        return set_error(stmt,MYERR_S1001,NULL,4001);
+    if (!(SQL_SUCCEEDED(rc= insert_param(stmt, (char**) to, aprec, iprec, 0))))
+        return rc;
 
     /* We have to remove zero bytes or we have problems! */
     while ( (*to > orig_to) && (*((*to) - 1) == (SQLCHAR) 0) ) (*to)--;
@@ -472,8 +473,9 @@ static SQLRETURN exec_stmt_query(STMT FAR *stmt,char *query,
 static SQLRETURN copy_field_data(STMT FAR *stmt, DESCREC *aprec,
                                  DESCREC *iprec, NET **net, SQLCHAR **to)
 {
-    if (!(*to= (SQLCHAR*) insert_param(stmt, (char*) *to, aprec, iprec, 0)))
-        return set_error(stmt,MYERR_S1001,NULL,4001);
+    SQLRETURN rc;
+    if (!(SQL_SUCCEEDED(rc= insert_param(stmt, (char**) to, aprec, iprec, 0))))
+        return rc;
 
     if (!(*to= add_to_buffer(*net, *to, " AND ", 5)))
         return set_error(stmt,MYERR_S1001,NULL,4001);

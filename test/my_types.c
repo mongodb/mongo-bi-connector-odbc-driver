@@ -694,8 +694,7 @@ DECLARE_TEST(sqlwchar)
 
   ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_WCHAR,
                                   SQL_WVARCHAR, 0, 0, W(wcdata),
-                                  sizeof(wcdata) * sizeof(SQLWCHAR),
-                                  NULL));
+                                  sizeof(wcdata), NULL));
   ok_stmt(hstmt, SQLExecute(hstmt));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
