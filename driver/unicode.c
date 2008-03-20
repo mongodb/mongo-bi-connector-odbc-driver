@@ -1124,16 +1124,5 @@ SQLBrowseConnectW(SQLHDBC hdbc, SQLWCHAR *in, SQLSMALLINT in_len,
 //SQLDriversW
 
 
-SQLRETURN SQL_API
-SQLProcedureColumnsW(SQLHSTMT hstmt,
-                     SQLWCHAR *catalog, SQLSMALLINT catalog_len,
-                     SQLWCHAR *schema, SQLSMALLINT schema_len,
-                     SQLWCHAR *proc, SQLSMALLINT proc_len,
-                     SQLWCHAR *column, SQLSMALLINT column_len)
-{
-  NOT_IMPLEMENTED;
-}
-
-
 #endif
 

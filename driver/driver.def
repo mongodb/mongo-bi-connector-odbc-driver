@@ -132,6 +132,7 @@ SQLGetTypeInfoW
 SQLNativeSqlW
 SQLPrepareW
 SQLPrimaryKeysW
+SQLProcedureColumnsW
 SQLProceduresW
 SQLSetConnectAttrW
 SQLSetConnectOptionW

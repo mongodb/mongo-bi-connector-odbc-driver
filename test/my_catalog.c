@@ -1256,8 +1256,8 @@ DECLARE_TEST(t_bug32989)
 DECLARE_TEST(t_bug33298)
 {
   SQLRETURN rc= 0;
-  expect_stmt(hstmt, SQLProcedureColumns(hstmt, 0, NULL, 0, NULL,
-                                         0, NULL, 0, NULL),
+  expect_stmt(hstmt, SQLProcedureColumns(hstmt, NULL, 0, NULL, 0,
+                                         NULL, 0, NULL, 0),
                                          SQL_SUCCESS_WITH_INFO);
   rc= SQLFetch(hstmt);
   /**
