@@ -1204,6 +1204,15 @@ SQLLEN get_column_size(STMT *stmt __attribute__((unused)), MYSQL_FIELD *field)
   case MYSQL_TYPE_VARCHAR:
   case MYSQL_TYPE_VAR_STRING:
   case MYSQL_TYPE_STRING:
+    if (field->charsetnr == BINARY_CHARSET_NUMBER)
+      return length;
+    else
+    {
+      CHARSET_INFO *charset= get_charset(field->charsetnr, MYF(0));
+      unsigned int mbmaxlen= charset ? charset->mbmaxlen : 1;
+      return length / mbmaxlen;
+    }
+
   case MYSQL_TYPE_TINY_BLOB:
   case MYSQL_TYPE_MEDIUM_BLOB:
   case MYSQL_TYPE_LONG_BLOB:
