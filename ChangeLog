@@ -1,4 +1,4 @@
-5.1.3
+5.1.3 (26-Mar-2008)
 
   Functionality added or changed:
   * Added SSLVERIFY connection option to verify server certificate. By default
@@ -26,7 +26,7 @@
 
 ----
 
-5.1.2 (February 12, 2008)
+5.1.2 (12-Feb-2008)
 
   Functionality added or changed:
   * SQLForeignKeys uses INFORMATION_SCHEMA when it is available on the server,
