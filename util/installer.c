@@ -249,7 +249,7 @@ void driver_delete(Driver *driver)
  */
 int driver_lookup_name(Driver *driver)
 {
-  SQLWCHAR drivers[1024];
+  SQLWCHAR drivers[16384];
   SQLWCHAR *pdrv= drivers;
   SQLWCHAR driverinfo[1024];
   int len;
@@ -258,9 +258,9 @@ int driver_lookup_name(Driver *driver)
 
   /* get list of drivers */
 #ifdef _WIN32
-  if (!SQLGetInstalledDriversW(pdrv, 1023, &slen) || !(len= slen))
+  if (!SQLGetInstalledDriversW(pdrv, 16383, &slen) || !(len= slen))
 #else
-  if (!(len = SQLGetPrivateProfileStringW(NULL, NULL, W_EMPTY, pdrv, 1023,
+  if (!(len = SQLGetPrivateProfileStringW(NULL, NULL, W_EMPTY, pdrv, 16383,
                                           W_ODBCINST_INI)))
 #endif
     return -1;
