@@ -6,7 +6,7 @@
 
 ----
 
-3.51.24 (14-Mar-2007)
+3.51.24 (14-Mar-2008)
 
   Bugs fixed:
   * ConfigDSN() returned FALSE when the dialog was cancelled by the user.
