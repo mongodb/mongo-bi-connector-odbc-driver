@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * SQL_DESC_FIXED_PREC_SCALE was possibly being reported as true, but it's
+    never supported. (Bug #35581)
 
 ----
 

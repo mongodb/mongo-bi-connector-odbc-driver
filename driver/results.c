@@ -686,11 +686,8 @@ get_col_attr(SQLHSTMT     StatementHandle,
             break;
 
         case SQL_DESC_FIXED_PREC_SCALE:
-            if (field->type == MYSQL_TYPE_DECIMAL ||
-                field->type == MYSQL_TYPE_NEWDECIMAL)
-              *(SQLINTEGER *)NumericAttributePtr= SQL_TRUE;
-            else
-              *(SQLINTEGER *)NumericAttributePtr= SQL_FALSE;
+            /* We don't support any fixed-precision type, such as MONEY */
+            *(SQLINTEGER *)NumericAttributePtr= SQL_FALSE;
             break;
 
         case SQL_DESC_LENGTH:
