@@ -434,7 +434,7 @@ MySQLGetDiagRec(SQLSMALLINT handle_type, SQLHANDLE handle, SQLSMALLINT record,
   else
     return SQL_INVALID_HANDLE;
 
-  if (!error->message)
+  if (!error->message || !error->message[0])
   {
     *message= (SQLCHAR *)"";
     *sqlstate= (SQLCHAR *)"00000";

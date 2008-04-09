@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * SQLGetDiagRec() sometimes returned SQL_SUCCESS but no error
+    message. (Bug #33910)
   * Driver installer (myodbc-installer.exe) fails to create a new DSN
     (Bug #35776)
 
