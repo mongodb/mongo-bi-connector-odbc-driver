@@ -145,7 +145,7 @@ void set_mem_error(MYSQL *mysql);
 void translate_error(char *save_state,myodbc_errid errid,uint mysql_err);
 
 SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff);
-SQLLEN get_column_size(STMT *stmt, MYSQL_FIELD *field, my_bool actual);
+SQLULEN get_column_size(STMT *stmt, MYSQL_FIELD *field, my_bool actual);
 SQLLEN get_decimal_digits(STMT *stmt, MYSQL_FIELD *field);
 SQLLEN get_transfer_octet_length(STMT *stmt, MYSQL_FIELD *field);
 SQLLEN get_display_size(STMT *stmt, MYSQL_FIELD *field);

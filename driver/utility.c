@@ -560,6 +560,25 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 
 
 /**
+  Fill the column size buffer accordingly to size of SQLULEN
+  @param[in,out]  buff
+  @param[in]      stmt
+  @param[in]      field
+  @param[in]      actual  If true, field->max_length is used instead of
+                          field->length, to retrieve the actual length of
+                          data in the field
+
+  @return  void
+*/
+void fill_column_size_buff(char *buff, STMT *stmt, MYSQL_FIELD *field,
+                       my_bool actual)
+{
+	sprintf(buff, (sizeof(SQLULEN) == 4 ? "%ld" : "%llu"), 
+		    get_column_size(stmt, field, actual));
+}
+
+
+/**
   Get the column size (in characters) of a field, as defined at:
     http://msdn2.microsoft.com/en-us/library/ms711786.aspx
 
@@ -571,12 +590,12 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 
   @return  The column size of the field
 */
-SQLLEN get_column_size(STMT *stmt __attribute__((unused)), MYSQL_FIELD *field,
+SQLULEN get_column_size(STMT *stmt, MYSQL_FIELD *field,
                        my_bool actual)
 {
   CHARSET_INFO *charset= get_charset(field->charsetnr, MYF(0));
   unsigned int mbmaxlen= charset ? charset->mbmaxlen : 1;
-  SQLLEN length= actual ? field->max_length : field->length;
+  SQLULEN length= actual ? field->max_length : field->length;
 
   switch (field->type) {
   case MYSQL_TYPE_TINY:
@@ -642,10 +661,11 @@ SQLLEN get_column_size(STMT *stmt __attribute__((unused)), MYSQL_FIELD *field,
   case MYSQL_TYPE_LONG_BLOB:
   case MYSQL_TYPE_BLOB:
   case MYSQL_TYPE_GEOMETRY:
-    if (field->charsetnr == 63)
-      return length;
-    else
-      return length / mbmaxlen;
+    if (field->charsetnr != 63)
+      length= length / mbmaxlen;
+
+    return (stmt->dbc->flag & FLAG_COLUMN_SIZE_S32) ?
+            (length > INT_MAX32 ? INT_MAX32 : length) : length;
   }
 
   return SQL_NO_TOTAL;

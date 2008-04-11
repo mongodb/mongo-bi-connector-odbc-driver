@@ -533,12 +533,8 @@ SQLRETURN SQL_API SQLDescribeCol( SQLHSTMT          hstmt,
     if (pfSqlType)
       *pfSqlType= get_sql_data_type(stmt, field, NULL);
     if (pnColumnSize)
-    {
-      SQLULEN size= get_column_size(stmt, field, FALSE);
-      if ((stmt->dbc->flag & FLAG_COLUMN_SIZE_S32) && size > INT_MAX32)
-        size= INT_MAX32;
-      *pnColumnSize= size;
-    }
+      *pnColumnSize= get_column_size(stmt, field, FALSE);
+
     if (pibScale)
       *pibScale= (SQLSMALLINT)myodbc_max(0, get_decimal_digits(stmt, field));
     if (pfNullable)
@@ -691,7 +687,16 @@ get_col_attr(SQLHSTMT     StatementHandle,
             break;
 
         case SQL_DESC_LENGTH:
-          *NumericAttributePtr= get_column_size(stmt, field, TRUE);
+          {
+            /* 
+                Always return signed length value to keep the compatibility with
+                unixODBC and iODBC
+            */
+            SQLULEN col_len;
+            col_len= get_column_size(stmt, field, TRUE);
+            *NumericAttributePtr= (sizeof(SQLLEN) == 4) && 
+                                    (col_len > INT_MAX32) ? INT_MAX32 : col_len;
+          }
           break;
 
         case SQL_COLUMN_LENGTH:
@@ -773,8 +778,15 @@ get_col_attr(SQLHSTMT     StatementHandle,
 
         case SQL_COLUMN_PRECISION:
         case SQL_DESC_PRECISION:
-          *(SQLINTEGER *)NumericAttributePtr= get_column_size(stmt, field,
-                                                              FALSE);
+          {
+            /* 
+                Always return signed length value to keep the compatibility with
+                unixODBC and iODBC
+            */
+            SQLULEN col_len= get_column_size(stmt, field, FALSE);
+            *(SQLLEN *)NumericAttributePtr= (sizeof(SQLLEN) == 4) && 
+                                    (col_len > INT_MAX32) ? INT_MAX32 : col_len;
+          }
           break;
 
         case SQL_COLUMN_SCALE:

@@ -824,7 +824,7 @@ SQLRETURN SQL_API SQLColumns(SQLHSTMT hstmt,
       }
 
       /* COLUMN_SIZE */
-      sprintf(buff, "%ld", get_column_size(stmt, field, FALSE));
+      fill_column_size_buff(buff, stmt, field, FALSE);
       row[6]= strdup_root(alloc, buff);
 
       /* BUFFER_LENGTH */
@@ -1496,7 +1496,7 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
             row[3]= strdup_root(alloc,buff);
             sprintf(buff,"%d",type);
             row[2]= strdup_root(alloc,buff);
-            sprintf(buff, "%ld", get_column_size(stmt, field, FALSE));
+            fill_column_size_buff(buff, stmt, field, FALSE);
             row[4]= strdup_root(alloc,buff);
             sprintf(buff, "%ld", get_transfer_octet_length(stmt, field));
             row[5]= strdup_root(alloc,buff);
@@ -1572,7 +1572,7 @@ SQLRETURN SQL_API SQLSpecialColumns(SQLHSTMT hstmt,
         row[3]= strdup_root(alloc,buff);
         sprintf(buff,"%d",type);
         row[2]= strdup_root(alloc,buff);
-        sprintf(buff,"%ld", get_column_size(stmt, field, FALSE));
+        fill_column_size_buff(buff, stmt, field, FALSE);
         row[4]= strdup_root(alloc,buff);
         sprintf(buff,"%ld", get_transfer_octet_length(stmt, field));
         row[5]= strdup_root(alloc,buff);
