@@ -569,7 +569,7 @@ DECLARE_TEST(decimal_scale)
   ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_FIXED_PREC_SCALE,
                                  NULL, 0, NULL, &fixed));
 
-  is_num(fixed, SQL_TRUE);
+  is_num(fixed, SQL_FALSE);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
