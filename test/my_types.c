@@ -518,7 +518,7 @@ DECLARE_TEST(decimal_scale)
   ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_SCALE,
                                  NULL, 0, NULL, &scale));
 
-  is_num(fixed, SQL_TRUE);
+  is_num(fixed, SQL_FALSE);
   is_num(prec, 5);
   is_num(scale, 3);
 

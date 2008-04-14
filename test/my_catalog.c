@@ -1271,6 +1271,82 @@ DECLARE_TEST(t_bug33298)
 }
 
 
+/**
+ Bug #12805: ADO failed to retrieve the length of LONGBLOB columns
+*/
+DECLARE_TEST(t_bug12805)
+{
+  SQLHENV    henv1;
+  SQLHDBC    hdbc1;
+  SQLHSTMT   hstmt1;
+  SQLCHAR    dummy[10];
+  SQLULEN    length;
+
+  SET_DSN_OPTION(1 << 27);
+
+  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS bug12805");
+  ok_sql(hstmt1, "CREATE TABLE bug12805("\
+                 "id INT PRIMARY KEY auto_increment,"\
+                 "longimagedata LONGBLOB NULL)");
+
+  ok_stmt(hstmt1, SQLColumns(hstmt1, NULL, 0, NULL, 0,
+                             (SQLCHAR *)"bug12805", SQL_NTS,
+                             (SQLCHAR *)"longimagedata", SQL_NTS));
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  ok_stmt(hstmt1, SQLGetData(hstmt1, 7, SQL_C_ULONG, &length,
+                             sizeof(SQLULEN), NULL));
+  is_num(length, 2147483647);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  length= 0;
+  ok_sql(hstmt1, "SELECT * FROM bug12805");
+  ok_stmt(hstmt1, SQLDescribeCol(hstmt1, 2, dummy, sizeof(dummy) - 1, NULL,
+                                 NULL, &length, NULL, NULL));
+  is_num(length, 2147483647);
+
+  length= 0;
+  ok_stmt(hstmt1, SQLColAttribute(hstmt1, 2, SQL_DESC_PRECISION, NULL, 0,
+                                 NULL, &length));
+
+  is_num(length, 2147483647);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  /* Check without the 32-bit signed flag */
+  ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0,
+                            (SQLCHAR *)"bug12805", SQL_NTS,
+                            (SQLCHAR *)"longimagedata", SQL_NTS));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  ok_stmt(hstmt, SQLGetData(hstmt, 7, SQL_C_ULONG, &length,
+                             sizeof(SQLULEN), NULL));
+  is_num(length, 4294967295);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  length= 0;
+  ok_sql(hstmt, "SELECT * FROM bug12805");
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 2, NULL, NULL, NULL, NULL,
+                                 &length, NULL, NULL));
+  is_num(length, 4294967295);
+
+  length= 0;
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 2, SQL_DESC_PRECISION, NULL, 0,
+                                 NULL, &length));
+  
+  /* This length is always 2G */
+  is_num(length, 2147483647);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "DROP TABLE bug12805");
+
+  SET_DSN_OPTION(0);
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -1297,6 +1373,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug32864)
   ADD_TEST(t_bug32989)
   ADD_TEST(t_bug33298)
+  ADD_TEST(t_bug12805)
 END_TESTS
 
 

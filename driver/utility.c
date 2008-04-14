@@ -163,11 +163,7 @@ void fix_result_types(STMT *stmt)
         irrec->catalog_name= field->db;
     else
         irrec->catalog_name= stmt->dbc->database;
-    if (field->type == MYSQL_TYPE_DECIMAL ||
-        field->type == MYSQL_TYPE_NEWDECIMAL)
-      irrec->fixed_prec_scale= SQL_TRUE;
-    else
-      irrec->fixed_prec_scale= SQL_FALSE;
+    irrec->fixed_prec_scale= SQL_FALSE;
     switch (field->type)
     {
     case MYSQL_TYPE_LONG_BLOB:
@@ -1130,6 +1126,21 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 
 
 /**
+  Fill the column size buffer accordingly to size of SQLULEN
+  @param[in,out]  buff
+  @param[in]      stmt
+  @param[in]      field
+
+  @return  void
+*/
+void fill_column_size_buff(char *buff, STMT *stmt, MYSQL_FIELD *field)
+{
+	sprintf(buff, (sizeof(SQLULEN) == 4 ? "%ld" : "%llu"),
+                get_column_size(stmt, field));
+}
+
+
+/**
   Get the column size (in characters) of a field, as defined at:
     http://msdn2.microsoft.com/en-us/library/ms711786.aspx
 
@@ -1138,10 +1149,10 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 
   @return  The column size of the field
 */
-SQLLEN get_column_size(STMT *stmt __attribute__((unused)), MYSQL_FIELD *field)
+SQLULEN get_column_size(STMT *stmt, MYSQL_FIELD *field)
 {
   int capint32= stmt->dbc->flag & FLAG_COLUMN_SIZE_S32 ? 1 : 0;
-  SQLLEN length= field->length;
+  SQLULEN length= field->length;
   if (capint32 && field->length > INT_MAX32)
     length= INT_MAX32;
 

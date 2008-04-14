@@ -805,7 +805,7 @@ MySQLColumns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
       }
 
       /* COLUMN_SIZE */
-      sprintf(buff, "%ld", get_column_size(stmt, field));
+      fill_column_size_buff(buff, stmt, field);
       row[6]= strdup_root(alloc, buff);
 
       /* BUFFER_LENGTH */
@@ -1451,7 +1451,7 @@ MySQLSpecialColumns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
             row[3]= strdup_root(alloc,buff);
             sprintf(buff,"%d",type);
             row[2]= strdup_root(alloc,buff);
-            sprintf(buff, "%ld", get_column_size(stmt, field));
+            fill_column_size_buff(buff, stmt, field);
             row[4]= strdup_root(alloc,buff);
             sprintf(buff, "%ld", get_transfer_octet_length(stmt, field));
             row[5]= strdup_root(alloc,buff);
@@ -1527,7 +1527,7 @@ MySQLSpecialColumns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
         row[3]= strdup_root(alloc,buff);
         sprintf(buff,"%d",type);
         row[2]= strdup_root(alloc,buff);
-        sprintf(buff,"%ld", get_column_size(stmt, field));
+        fill_column_size_buff(buff, stmt, field);
         row[4]= strdup_root(alloc,buff);
         sprintf(buff,"%ld", get_transfer_octet_length(stmt, field));
         row[5]= strdup_root(alloc,buff);

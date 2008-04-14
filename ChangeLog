@@ -145,7 +145,16 @@
 
 ----
 
-3.51.24 (14-Mar-2007)
+3.51.25 (11-Apr-2008)
+
+  Bugs fixed:
+  * SQL_DESC_FIXED_PREC_SCALE was possibly being reported as true, but it's
+    never supported. (Bug #35581)
+  * ADO failed to retrieve the length of LONGBLOB columns. (Bug #12805)
+
+----
+
+3.51.24 (14-Mar-2008)
 
   Bugs fixed:
   * ConfigDSN() returned FALSE when the dialog was cancelled by the user.
