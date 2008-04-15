@@ -2383,7 +2383,7 @@ void sqlnum_from_str(const char *numstr, SQL_NUMERIC_STRUCT *sqlnum,
        if we have the decimal point, ignore it by setting it to the
        last char (will be ignored by strtoul)
     */
-    if (decpt && decpt > numstr + i && decpt < numstr + i + usedig)
+    if (decpt && decpt >= numstr + i && decpt < numstr + i + usedig)
     {
       usedig = (int) (decpt - (numstr + i) + 1);
       sqlnum->scale= len - (i + usedig);

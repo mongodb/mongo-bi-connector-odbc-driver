@@ -878,6 +878,10 @@ DECLARE_TEST(t_sqlnum_from_str)
   is(sqlnum_test_from_str(hstmt, num3, 6, -1, 0, NULL, 10123, 0) == OK);
   is(sqlnum_test_from_str(hstmt, num3, 5, -1, 0, NULL, 10123, 0) == OK);
 
+  /* Bug#35920 */
+  is(sqlnum_test_from_str(hstmt, "8000.00", 30, 2, 1, NULL, 800000, 0) == OK);
+  is(sqlnum_test_from_str(hstmt, "1234567.00", 30, 2, 1, NULL, 123456700, 0) == OK);
+
   /* some larger numbers */
   {SQLCHAR expdata[SQL_MAX_NUMERIC_LEN]= {0xD5, 0x50, 0x94, 0x49, 0,0,0,0,0,0,0,0,0,0,0,0};
    is(OK == sqlnum_test_from_str(hstmt, "1234456789", 10, 0, 1, expdata, 0, 0));}
