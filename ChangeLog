@@ -1,6 +1,4 @@
-5.1.4
-
-  Functionality added or changed:
+5.1.4 (15-Apr-2008)
 
   Bugs fixed:
   * SQLGetDiagRec() sometimes returned SQL_SUCCESS but no error
