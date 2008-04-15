@@ -313,7 +313,9 @@ DECLARE_TEST(t_relative2)
 
   ok_sql(hstmt, "create table t_relative2(id int)");
 
-  ok_sql(hstmt, "insert into t_relative2 values(?)");
+  ok_stmt(hstmt, SQLPrepare(hstmt,
+                            (SQLCHAR *) "insert into t_relative2 values(?)",
+                            SQL_NTS));
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT, SQL_C_ULONG,
                           SQL_INTEGER,0,0,&i,0,NULL);

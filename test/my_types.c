@@ -123,7 +123,7 @@ DECLARE_TEST(t_decimal)
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,&str,19,NULL);
     mystmt(hstmt,rc);
     fprintf(stdout,"decimal(SQL_C_DOUBLE) : %s\n",str);
-    is_str(str, "189.4567", 9);
+    is_str(str, "189.456700", 11);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
@@ -131,7 +131,7 @@ DECLARE_TEST(t_decimal)
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,&str,19,NULL);
     mystmt(hstmt,rc);
     fprintf(stdout,"decimal(SQL_C_INTEGER): %s\n",str);
-    is_str(str,"189.0000",9);
+    is_str(str,"189.000000",11);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
@@ -139,7 +139,7 @@ DECLARE_TEST(t_decimal)
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,&str,19,NULL);
     mystmt(hstmt,rc);
     fprintf(stdout,"decimal(SQL_C_CHAR)   : %s\n",str);
-    is_str(str,"189.4567",9);
+    is_str(str,"189.456700",11);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
@@ -147,7 +147,7 @@ DECLARE_TEST(t_decimal)
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,&str,19,NULL);
     mystmt(hstmt,rc);
     fprintf(stdout,"decimal(SQL_C_LONG)   : %s\n",str);
-    is_str(str, "-23.00", 7);
+    is_str(str, "-23.000000", 11);
 
     rc = SQLFetch(hstmt);
     my_assert(rc == SQL_NO_DATA_FOUND);
@@ -311,7 +311,8 @@ DECLARE_TEST(t_enumset)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    ok_sql(hstmt, "insert into t_enumset values(?,?)");
+    ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)
+                              "insert into t_enumset values(?,?)", SQL_NTS));
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_CHAR,SQL_CHAR,0,0,&szEnum,sizeof(szEnum),NULL);
     mystmt(hstmt,rc);

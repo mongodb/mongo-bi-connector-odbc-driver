@@ -469,7 +469,7 @@ DECLARE_TEST(my_zero_irow_update)
     char      szData[15][15]={0};
     SQLINTEGER nData[15];
 
-    ok_sql(hstmt, "drop table my_zero_irow");
+    ok_sql(hstmt, "drop table if exists my_zero_irow");
     ok_sql(hstmt, "create table my_zero_irow(col1 int, col2 varchar(30))");
 
     ok_sql(hstmt, "insert into my_zero_irow values(1,'MySQL1')");
@@ -526,9 +526,9 @@ DECLARE_TEST(my_zero_irow_update)
     is_num(nData[0], 888);
     is_str(szData[0], "updatex", 8);
     is_num(nData[1], 3);
-    is_str(szData[0], "updatey", 8);
-    is_num(nData[1], 1000);
-    is_str(szData[0], "updatez", 8);
+    is_str(szData[1], "updatey", 8);
+    is_num(nData[2], 1000);
+    is_str(szData[2], "updatez", 8);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
@@ -600,10 +600,10 @@ DECLARE_TEST(my_zero_irow_delete)
 
     is_num(nData[0], 1);
     is_str(szData[0], "MySQL1", 7);
-    is_num(nData[0], 5);
-    is_str(szData[0], "MySQL5", 7);
-    is_num(nData[0], 6);
-    is_str(szData[0], "MySQL6", 7);
+    is_num(nData[1], 5);
+    is_str(szData[1], "MySQL5", 7);
+    is_num(nData[2], 6);
+    is_str(szData[2], "MySQL6", 7);
 
     rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,1);
     mystmt_err(hstmt,rc==SQL_NO_DATA_FOUND,rc);
