@@ -161,6 +161,7 @@ SQLRETURN copy_wchar_result(STMT *stmt,
                             long src_length);
 
 SQLRETURN set_dbc_error(DBC FAR *dbc, char *state,const char *message,uint errcode);
+#define set_stmt_error myodbc_set_stmt_error
 SQLRETURN set_stmt_error(STMT *stmt, char *state,const char *message,uint errcode);
 SQLRETURN set_desc_error(DESC *desc, char *state,
                          const char *message, uint errcode);
