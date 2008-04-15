@@ -1289,11 +1289,11 @@ DECLARE_TEST(t_bug12805)
   ok_sql(hstmt1, "DROP TABLE IF EXISTS bug12805");
   ok_sql(hstmt1, "CREATE TABLE bug12805("\
                  "id INT PRIMARY KEY auto_increment,"\
-                 "longimagedata LONGBLOB NULL)");
+                 "longdata LONGBLOB NULL)");
 
   ok_stmt(hstmt1, SQLColumns(hstmt1, NULL, 0, NULL, 0,
                              (SQLCHAR *)"bug12805", SQL_NTS,
-                             (SQLCHAR *)"longimagedata", SQL_NTS));
+                             (SQLCHAR *)"longdata", SQL_NTS));
 
   ok_stmt(hstmt1, SQLFetch(hstmt1));
   ok_stmt(hstmt1, SQLGetData(hstmt1, 7, SQL_C_ULONG, &length,
@@ -1307,18 +1307,13 @@ DECLARE_TEST(t_bug12805)
                                  NULL, &length, NULL, NULL));
   is_num(length, 2147483647);
 
-  length= 0;
-  ok_stmt(hstmt1, SQLColAttribute(hstmt1, 2, SQL_DESC_PRECISION, NULL, 0,
-                                 NULL, &length));
-
-  is_num(length, 2147483647);
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
   free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   /* Check without the 32-bit signed flag */
   ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0,
                             (SQLCHAR *)"bug12805", SQL_NTS,
-                            (SQLCHAR *)"longimagedata", SQL_NTS));
+                            (SQLCHAR *)"longdata", SQL_NTS));
 
   ok_stmt(hstmt, SQLFetch(hstmt));
   ok_stmt(hstmt, SQLGetData(hstmt, 7, SQL_C_ULONG, &length,
@@ -1333,12 +1328,6 @@ DECLARE_TEST(t_bug12805)
                                  &length, NULL, NULL));
   is_num(length, 4294967295);
 
-  length= 0;
-  ok_stmt(hstmt, SQLColAttribute(hstmt, 2, SQL_DESC_PRECISION, NULL, 0,
-                                 NULL, &length));
-  
-  /* This length is always 2G */
-  is_num(length, 2147483647);
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
   ok_sql(hstmt, "DROP TABLE bug12805");
 
