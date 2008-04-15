@@ -1324,7 +1324,7 @@ DECLARE_TEST(t_bug12805)
 
   length= 0;
   ok_sql(hstmt, "SELECT * FROM bug12805");
-  ok_stmt(hstmt, SQLDescribeCol(hstmt, 2, NULL, NULL, NULL, NULL,
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 2, dummy, sizeof(dummy), NULL, NULL,
                                  &length, NULL, NULL));
   is_num(length, 4294967295);
 
