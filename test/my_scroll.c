@@ -130,10 +130,9 @@ DECLARE_TEST(t_array_relative_10)
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_array_relative_10");
 
-    rc = SQLExecDirect(hstmt,"create table t_array_relative_10(id int,name char(20))",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "create table t_array_relative_10(id int,name char(20))");
 
-    rc = SQLPrepare(hstmt,"insert into t_array_relative_10 values(?,?)",SQL_NTS);
+    rc = SQLPrepare(hstmt,(SQLCHAR *)"insert into t_array_relative_10 values(?,?)",SQL_NTS);
     mystmt(hstmt,rc);
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT, SQL_C_ULONG,
@@ -165,8 +164,7 @@ DECLARE_TEST(t_array_relative_10)
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROWS_FETCHED_PTR,&nrows,0);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"select * from t_array_relative_10",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "select * from t_array_relative_10");
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,iarray,0,NULL);
     mystmt(hstmt,rc);
@@ -276,10 +274,9 @@ DECLARE_TEST(t_relative_1)
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_relative_1");
 
-    rc = SQLExecDirect(hstmt,"create table t_relative_1(id int)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "create table t_relative_1(id int)");
 
-    rc = SQLPrepare(hstmt,"insert into t_relative_1 values(?)",SQL_NTS);
+    rc = SQLPrepare(hstmt, (SQLCHAR *)"insert into t_relative_1 values(?)",SQL_NTS);
     mystmt(hstmt,rc);
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT, SQL_C_ULONG,
@@ -305,8 +302,7 @@ DECLARE_TEST(t_relative_1)
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROWS_FETCHED_PTR,&nrows,0);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"select * from t_relative_1",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "select * from t_relative_1");
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&i,0,NULL);
     mystmt(hstmt,rc);
@@ -488,10 +484,9 @@ DECLARE_TEST(t_array_relative_2)
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_array_relative_2");
 
-    rc = SQLExecDirect(hstmt,"create table t_array_relative_2(id int)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt,"create table t_array_relative_2(id int)");
 
-    rc = SQLPrepare(hstmt,"insert into t_array_relative_2 values(?)",SQL_NTS);
+    rc = SQLPrepare(hstmt, (SQLCHAR *)"insert into t_array_relative_2 values(?)",SQL_NTS);
     mystmt(hstmt,rc);
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT, SQL_C_ULONG,
@@ -517,8 +512,7 @@ DECLARE_TEST(t_array_relative_2)
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROWS_FETCHED_PTR,&nrows,0);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"select * from t_array_relative_2",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "select * from t_array_relative_2");
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,iarray,0,NULL);
     mystmt(hstmt,rc);
@@ -724,7 +718,7 @@ DECLARE_TEST(t_array_relative_2)
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROWS_FETCHED_PTR,&nrows,0);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"select * from t_array_relative_2",SQL_NTS);
+    ok_sql(hstmt, "select * from t_array_relative_2");
     mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,iarray,0,NULL);
@@ -801,10 +795,9 @@ DECLARE_TEST(t_absolute_1)
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_absolute_1");
 
-    rc = SQLExecDirect(hstmt,"create table t_absolute_1(id int)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "create table t_absolute_1(id int)");
 
-    rc = SQLPrepare(hstmt,"insert into t_absolute_1 values(?)",SQL_NTS);
+    rc = SQLPrepare(hstmt, (SQLCHAR *)"insert into t_absolute_1 values(?)",SQL_NTS);
     mystmt(hstmt,rc);
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT, SQL_C_ULONG,
@@ -830,8 +823,7 @@ DECLARE_TEST(t_absolute_1)
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROWS_FETCHED_PTR,&nrows,0);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"select * from t_absolute_1",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "select * from t_absolute_1");
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&i,0,NULL);
     mystmt(hstmt,rc);
@@ -988,10 +980,9 @@ DECLARE_TEST(t_absolute_2)
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_absolute_2");
 
-    rc = SQLExecDirect(hstmt,"create table t_absolute_2(id int)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "create table t_absolute_2(id int)");
 
-    rc = SQLPrepare(hstmt,"insert into t_absolute_2 values(?)",SQL_NTS);
+    rc = SQLPrepare(hstmt, (SQLCHAR *)"insert into t_absolute_2 values(?)",SQL_NTS);
     mystmt(hstmt,rc);
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT, SQL_C_ULONG,
@@ -1017,7 +1008,7 @@ DECLARE_TEST(t_absolute_2)
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROWS_FETCHED_PTR,&nrows,0);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"select * from t_absolute_2",SQL_NTS);
+    ok_sql(hstmt, "select * from t_absolute_2");
     mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,iarray,0,NULL);
@@ -1184,7 +1175,7 @@ DECLARE_TEST(t_absolute_2)
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROWS_FETCHED_PTR,&nrows,0);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"select * from t_absolute_2",SQL_NTS);
+    ok_sql(hstmt, "select * from t_absolute_2");
     mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,iarray,0,NULL);

@@ -32,19 +32,12 @@ DECLARE_TEST(my_dynamic_pos_cursor)
     SQLCHAR     szData[255]={0};
 
     /* initialize data */
-    SQLExecDirect(hstmt,"drop table my_dynamic_cursor",SQL_NTS);
+    ok_sql(hstmt, "drop table if exists my_dynamic_cursor");
 
-    rc = SQLExecDirect(hstmt,"create table my_dynamic_cursor(id int, name varchar(30))",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "create table my_dynamic_cursor(id int, name varchar(30))");
 
-    rc = SQLExecDirect(hstmt,"insert into my_dynamic_cursor values(100,'venu')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into my_dynamic_cursor values(200,'monty')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+    ok_sql(hstmt, "insert into my_dynamic_cursor values(100,'venu')");
+    ok_sql(hstmt, "insert into my_dynamic_cursor values(200,'monty')");
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
@@ -54,7 +47,7 @@ DECLARE_TEST(my_dynamic_pos_cursor)
     mycon(hdbc, rc);
 
     /* set the cursor name as 'mysqlcur' on hstmt */
-    rc = SQLSetCursorName(hstmt, "mysqlcur", SQL_NTS);
+    rc = SQLSetCursorName(hstmt, (SQLCHAR *)"mysqlcur", SQL_NTS);
     mystmt(hstmt, rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,NULL);
@@ -73,7 +66,7 @@ DECLARE_TEST(my_dynamic_pos_cursor)
     mystmt(hstmt, rc);
 
     /* Open the resultset of table 'my_demo_cursor' */
-    rc = SQLExecDirect(hstmt,"SELECT * FROM my_dynamic_cursor",SQL_NTS);
+    ok_sql(hstmt, "SELECT * FROM my_dynamic_cursor");
     mystmt(hstmt,rc);
 
     /* goto the last row */
@@ -81,8 +74,7 @@ DECLARE_TEST(my_dynamic_pos_cursor)
     mystmt(hstmt,rc);
 
     /* now update the name field to 'update' using positioned cursor */
-    rc = SQLExecDirect(hstmt_pos, "UPDATE my_dynamic_cursor SET id=300, name='updated' WHERE CURRENT OF mysqlcur", SQL_NTS);
-    mystmt(hstmt_pos, rc);
+    ok_sql(hstmt_pos, "UPDATE my_dynamic_cursor SET id=300, name='updated' WHERE CURRENT OF mysqlcur");
 
     rc = SQLRowCount(hstmt_pos, &nRowCount);
     mystmt(hstmt_pos, rc);
@@ -128,21 +120,18 @@ DECLARE_TEST(my_dynamic_pos_cursor)
     mystmt(hstmt_pos,rc);
 
     /* Now fetch and verify the data */
-    rc = SQLExecDirect(hstmt, "SELECT * FROM my_dynamic_cursor",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "SELECT * FROM my_dynamic_cursor");
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     rc = SQLGetData(hstmt,1,SQL_C_LONG,&nData,0,NULL);
     mystmt(hstmt,rc);
-    printMessage("\n nData :%d",nData);
-    myassert(nData == 100);
+    is(nData == 100);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,50,NULL);
     mystmt(hstmt,rc);
-    printMessage("\n szData:%s\n",szData);
-    myassert(strcmp(szData,"venu") == 0);
+    is_str(szData,"venu", 5);
 
     rc = SQLFetch(hstmt);
     mystmt_err(hstmt,rc==SQL_NO_DATA_FOUND,rc);
@@ -167,36 +156,21 @@ DECLARE_TEST(my_dynamic_pos_cursor1)
     char        data[30],szData[15][10]={0};
 
     /* initialize data */
-    SQLExecDirect(hstmt,"drop table my_dynamic_cursor",SQL_NTS);
+    ok_sql(hstmt, "drop table if exists my_dynamic_cursor");
 
-    rc = SQLExecDirect(hstmt,"create table my_dynamic_cursor(id int, name varchar(30))",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into my_dynamic_cursor values(1,'MySQL1')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_dynamic_cursor values(2,'MySQL2')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_dynamic_cursor values(3,'MySQL3')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_dynamic_cursor values(4,'MySQL4')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_dynamic_cursor values(5,'MySQL5')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_dynamic_cursor values(6,'MySQL6')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_dynamic_cursor values(7,'MySQL7')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_dynamic_cursor values(8,'MySQL8')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_dynamic_cursor values(9,'MySQL9')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_dynamic_cursor values(10,'MySQL10')",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "create table my_dynamic_cursor(id int, name varchar(30))");
+    ok_sql(hstmt, "insert into my_dynamic_cursor values(1,'MySQL1')");
+    ok_sql(hstmt, "insert into my_dynamic_cursor values(2,'MySQL2')");
+    ok_sql(hstmt, "insert into my_dynamic_cursor values(3,'MySQL3')");
+    ok_sql(hstmt, "insert into my_dynamic_cursor values(4,'MySQL4')");
+    ok_sql(hstmt, "insert into my_dynamic_cursor values(5,'MySQL5')");
+    ok_sql(hstmt, "insert into my_dynamic_cursor values(6,'MySQL6')");
+    ok_sql(hstmt, "insert into my_dynamic_cursor values(7,'MySQL7')");
+    ok_sql(hstmt, "insert into my_dynamic_cursor values(8,'MySQL8')");
+    ok_sql(hstmt, "insert into my_dynamic_cursor values(9,'MySQL9')");
+    ok_sql(hstmt, "insert into my_dynamic_cursor values(10,'MySQL10')");
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
-
-    rc = SQLEndTran(SQL_HANDLE_DBC,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
 
     /* create new statement handle */
     rc = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt_pos);
@@ -207,7 +181,7 @@ DECLARE_TEST(my_dynamic_pos_cursor1)
                                   (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
     /* set the cursor name as 'mysqlcur' on hstmt */
-    rc = SQLSetCursorName(hstmt, "mysqlcur", SQL_NTS);
+    rc = SQLSetCursorName(hstmt, (SQLCHAR *)"mysqlcur", SQL_NTS);
     mystmt(hstmt, rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,NULL);
@@ -220,8 +194,7 @@ DECLARE_TEST(my_dynamic_pos_cursor1)
     mystmt(hstmt,rc);
 
     /* Open the resultset of table 'my_demo_cursor' */
-    rc = SQLExecDirect(hstmt,"SELECT * FROM my_dynamic_cursor",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "SELECT * FROM my_dynamic_cursor");
 
     /* goto the last row */
     rc = SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 5L);
@@ -231,8 +204,7 @@ DECLARE_TEST(my_dynamic_pos_cursor1)
     mystmt(hstmt,rc); */
 
     /* now update the name field to 'update' using positioned cursor */
-    rc = SQLExecDirect(hstmt_pos, "UPDATE my_dynamic_cursor SET id=999, name='updated' WHERE CURRENT OF mysqlcur", SQL_NTS);
-    mystmt(hstmt_pos, rc);
+    ok_sql(hstmt_pos, "UPDATE my_dynamic_cursor SET id=999, name='updated' WHERE CURRENT OF mysqlcur");
 
     rc = SQLRowCount(hstmt_pos, &nRowCount);
     mystmt(hstmt_pos, rc);
@@ -276,8 +248,7 @@ DECLARE_TEST(my_dynamic_pos_cursor1)
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROW_ARRAY_SIZE,(SQLPOINTER)1,0);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt, "SELECT * FROM my_dynamic_cursor",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "SELECT * FROM my_dynamic_cursor");
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&i,0,NULL);
     mystmt(hstmt,rc);
@@ -288,21 +259,20 @@ DECLARE_TEST(my_dynamic_pos_cursor1)
     rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,4L);
     mystmt(hstmt,rc);
 
-    printMessage("\n data1 :%d,%s",i,data);
-    myassert(i == 4);
-    myassert(strcmp(data,"MySQL4") == 0);
+    is_num(i, 4);
+    is_str(data,"MySQL4", 7);
 
     rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,1L);
     mystmt(hstmt,rc);
-    printMessage("\n data1 :%d,%s",i,data);
-    myassert(i == 999);
-    myassert(strcmp(data,"updated") == 0);
+
+    is_num(i, 999);
+    is_str(data, "updated", 8);
 
     rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,1L);
     mystmt(hstmt,rc);
-    printMessage("\n data1 :%d,%s",i,data);
-    myassert(i == 7);
-    myassert(strcmp(data,"MySQL7") == 0);
+
+    is_num(i, 7);
+    is_str(data, "MySQL7", 7);
 
     rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,10L);
     mystmt_err(hstmt,rc==SQL_NO_DATA_FOUND,rc);
@@ -326,21 +296,13 @@ DECLARE_TEST(my_position)
     SQLINTEGER nData;
     SQLLEN    nrow;
 
-    SQLExecDirect(hstmt,"drop table my_position",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"create table my_position(col1 int, col2 varchar(30))",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "drop table if exists my_position");
+    ok_sql(hstmt, "create table my_position(col1 int, col2 varchar(30))");
 
-    rc = SQLExecDirect(hstmt,"insert into my_position values(100,'MySQL1')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_position values(200,'MySQL2')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_position values(300,'MySQL3')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_position values(400,'MySQL4')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+    ok_sql(hstmt, "insert into my_position values(100,'MySQL1')");
+    ok_sql(hstmt, "insert into my_position values(200,'MySQL2')");
+    ok_sql(hstmt, "insert into my_position values(300,'MySQL3')");
+    ok_sql(hstmt, "insert into my_position values(400,'MySQL4')");
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
@@ -354,8 +316,7 @@ DECLARE_TEST(my_position)
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)1 , 0);
     mystmt(hstmt, rc);
 
-    rc = SQLExecDirect(hstmt,"select * from my_position",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"select * from my_position");
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,&nrow);
     mystmt(hstmt,rc);
@@ -379,7 +340,7 @@ DECLARE_TEST(my_position)
     mystmt(hstmt,rc);
 
     printMessage(" rows affected:%d\n",nlen);
-    myassert(nlen == 1);
+    is(nlen == 1);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
@@ -387,7 +348,7 @@ DECLARE_TEST(my_position)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"select * from my_position",SQL_NTS);
+    ok_sql(hstmt, "select * from my_position");
     mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
@@ -403,9 +364,8 @@ DECLARE_TEST(my_position)
     mystmt(hstmt,rc);
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,10,NULL);
     mystmt(hstmt,rc);
-    printMessage("\n updated data:%d,%s",nData,szData);
-    myassert(nData == 300);
-    myassert(strcmp(szData,"update")== 0);
+    is_num(nData, 300);
+    is_str(szData, "update", 7);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
@@ -509,25 +469,15 @@ DECLARE_TEST(my_zero_irow_update)
     char      szData[15][15]={0};
     SQLINTEGER nData[15];
 
-    SQLExecDirect(hstmt,"drop table my_zero_irow",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"create table my_zero_irow(col1 int, col2 varchar(30))",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "drop table my_zero_irow");
+    ok_sql(hstmt, "create table my_zero_irow(col1 int, col2 varchar(30))");
 
-    rc = SQLExecDirect(hstmt,"insert into my_zero_irow values(1,'MySQL1')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_zero_irow values(2,'MySQL2')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_zero_irow values(3,'MySQL3')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_zero_irow values(4,'MySQL4')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_zero_irow values(5,'MySQL5')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_zero_irow values(6,'MySQL6')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+    ok_sql(hstmt, "insert into my_zero_irow values(1,'MySQL1')");
+    ok_sql(hstmt, "insert into my_zero_irow values(2,'MySQL2')");
+    ok_sql(hstmt, "insert into my_zero_irow values(3,'MySQL3')");
+    ok_sql(hstmt, "insert into my_zero_irow values(4,'MySQL4')");
+    ok_sql(hstmt, "insert into my_zero_irow values(5,'MySQL5')");
+    ok_sql(hstmt, "insert into my_zero_irow values(6,'MySQL6')");
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
@@ -541,7 +491,7 @@ DECLARE_TEST(my_zero_irow_update)
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)3 , 0);
     mystmt(hstmt, rc);
 
-    rc = SQLExecDirect(hstmt,"select * from my_zero_irow",SQL_NTS);
+    ok_sql(hstmt, "select * from my_zero_irow");
     mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,nrow);
@@ -567,18 +517,18 @@ DECLARE_TEST(my_zero_irow_update)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"select * from my_zero_irow",SQL_NTS);
+    ok_sql(hstmt, "select * from my_zero_irow");
     mystmt(hstmt,rc);
 
     rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,2);
     mystmt(hstmt,rc);
 
-    printMessage("\n updated data1:%d,%s",nData[0],szData[0]);
-    printMessage("\n updated data2:%d,%s",nData[1],szData[1]);
-    printMessage("\n updated data3:%d,%s",nData[2],szData[2]);
-    myassert(nData[0] == 888);myassert(strcmp(szData[0],"updatex")== 0);
-    myassert(nData[1] == 3);myassert(strcmp(szData[1],"updatey")== 0);
-    myassert(nData[2] == 1000);myassert(strcmp(szData[2],"updatez")== 0);
+    is_num(nData[0], 888);
+    is_str(szData[0], "updatex", 8);
+    is_num(nData[1], 3);
+    is_str(szData[0], "updatey", 8);
+    is_num(nData[1], 1000);
+    is_str(szData[0], "updatez", 8);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
@@ -603,25 +553,15 @@ DECLARE_TEST(my_zero_irow_delete)
     char      szData[15][15]={0};
     SQLINTEGER nData[15];
 
-    SQLExecDirect(hstmt,"drop table my_zero_irow",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"create table my_zero_irow(col1 int, col2 varchar(30))",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "drop table if exists my_zero_irow");
+    ok_sql(hstmt, "create table my_zero_irow(col1 int, col2 varchar(30))");
+    ok_sql(hstmt, "insert into my_zero_irow values(1,'MySQL1')");
+    ok_sql(hstmt, "insert into my_zero_irow values(2,'MySQL2')");
+    ok_sql(hstmt, "insert into my_zero_irow values(3,'MySQL3')");
+    ok_sql(hstmt, "insert into my_zero_irow values(4,'MySQL4')");
+    ok_sql(hstmt, "insert into my_zero_irow values(5,'MySQL5')");
+    ok_sql(hstmt, "insert into my_zero_irow values(6,'MySQL6')");
 
-    rc = SQLExecDirect(hstmt,"insert into my_zero_irow values(1,'MySQL1')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_zero_irow values(2,'MySQL2')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_zero_irow values(3,'MySQL3')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_zero_irow values(4,'MySQL4')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_zero_irow values(5,'MySQL5')",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_zero_irow values(6,'MySQL6')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
@@ -635,7 +575,7 @@ DECLARE_TEST(my_zero_irow_delete)
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE  ,(SQLPOINTER)3 , 0);
     mystmt(hstmt, rc);
 
-    rc = SQLExecDirect(hstmt,"select * from my_zero_irow",SQL_NTS);
+    ok_sql(hstmt,"select * from my_zero_irow");
     mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,nrow);
@@ -653,18 +593,17 @@ DECLARE_TEST(my_zero_irow_delete)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"select * from my_zero_irow",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "select * from my_zero_irow");
 
     rc = SQLFetchScroll(hstmt,SQL_FETCH_ABSOLUTE,1);
     mystmt(hstmt,rc);
 
-    printMessage("\n updated data1:%d,%s",nData[0],szData[0]);
-    printMessage("\n updated data2:%d,%s",nData[1],szData[1]);
-    printMessage("\n updated data3:%d,%s",nData[2],szData[2]);
-    myassert(nData[0] == 1);myassert(strcmp(szData[0],"MySQL1")== 0);
-    myassert(nData[1] == 5);myassert(strcmp(szData[1],"MySQL5")== 0);
-    myassert(nData[2] == 6);myassert(strcmp(szData[2],"MySQL6")== 0);
+    is_num(nData[0], 1);
+    is_str(szData[0], "MySQL1", 7);
+    is_num(nData[0], 5);
+    is_str(szData[0], "MySQL5", 7);
+    is_num(nData[0], 6);
+    is_str(szData[0], "MySQL6", 7);
 
     rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,1);
     mystmt_err(hstmt,rc==SQL_NO_DATA_FOUND,rc);
@@ -688,24 +627,16 @@ DECLARE_TEST(my_zero_irow_delete)
 DECLARE_TEST(my_dynamic_cursor)
 {
     SQLRETURN rc;
-    SQLROWCOUNT nlen;
+    SQLLEN nlen;
     SQLINTEGER nData = 500;
     SQLCHAR szData[255]={0};
 
     /* initialize data */
-    SQLExecDirect(hstmt,"drop table my_dynamic_cursor",SQL_NTS);
+    ok_sql(hstmt, "drop table if exists my_dynamic_cursor");
 
-    rc = SQLExecDirect(hstmt,"create table my_dynamic_cursor(col1 int, col2 varchar(30))",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into my_dynamic_cursor values(100,'venu')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into my_dynamic_cursor values(200,'monty')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+    ok_sql(hstmt, "create table my_dynamic_cursor(col1 int, col2 varchar(30))");
+    ok_sql(hstmt, "insert into my_dynamic_cursor values(100,'venu')");
+    ok_sql(hstmt, "insert into my_dynamic_cursor values(200,'monty')");
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
@@ -717,7 +648,7 @@ DECLARE_TEST(my_dynamic_cursor)
     mystmt(hstmt, rc);
 
     /* Now, add a row of data */
-    rc = SQLExecDirect(hstmt,"select * from my_dynamic_cursor",SQL_NTS);
+    ok_sql(hstmt, "select * from my_dynamic_cursor");
     mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,NULL);
@@ -772,10 +703,10 @@ DECLARE_TEST(my_dynamic_cursor)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"select * from my_dynamic_cursor",SQL_NTS);
+    ok_sql(hstmt, "select * from my_dynamic_cursor");
     mystmt(hstmt,rc);
 
-    myassert(6 == myresult(hstmt));
+    is(6 == myresult(hstmt));
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);

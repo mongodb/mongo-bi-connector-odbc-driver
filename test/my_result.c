@@ -319,11 +319,11 @@ DECLARE_TEST(t_desc_col)
   is(desc_col_check(hstmt, 15, "c15", SQL_LONGVARCHAR, 255, 255, 0,  SQL_NULLABLE) == OK);
   is(desc_col_check(hstmt, 16, "c16", SQL_LONGVARCHAR, 65535, 65535, 0,  SQL_NULLABLE) == OK);
   is(desc_col_check(hstmt, 17, "c17", SQL_LONGVARCHAR, 16777215, 16777215, 0,  SQL_NULLABLE) == OK);
-  is(desc_col_check(hstmt, 18, "c18", SQL_LONGVARCHAR, 4294967295 , 16777215 , 0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 18, "c18", SQL_LONGVARCHAR, 4294967295UL, 16777215 , 0,  SQL_NULLABLE) == OK);
   is(desc_col_check(hstmt, 19, "c19", SQL_LONGVARBINARY, 255, 255, 0,  SQL_NULLABLE) == OK);
   is(desc_col_check(hstmt, 20, "c20", SQL_LONGVARBINARY, 65535, 65535, 0,  SQL_NULLABLE) == OK);
   is(desc_col_check(hstmt, 21, "c21", SQL_LONGVARBINARY, 16777215, 16777215, 0,  SQL_NULLABLE) == OK);
-  is(desc_col_check(hstmt, 22, "c22", SQL_LONGVARBINARY, 4294967295 , 16777215 , 0,  SQL_NULLABLE) == OK);
+  is(desc_col_check(hstmt, 22, "c22", SQL_LONGVARBINARY, 4294967295UL, 16777215 , 0,  SQL_NULLABLE) == OK);
   is(desc_col_check(hstmt, 23, "c23", SQL_LONGVARBINARY, 255, 5, 0,  SQL_NULLABLE) == OK);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
@@ -1734,10 +1734,10 @@ DECLARE_TEST(t_binary_collation)
                                 &decimal_digits, &nullable));
   if (mysql_min_version(hdbc, "5.2", 3) ||
       /* 5.0.46 or later in 5.0 series */
-      (!strncmp("5.0", server_version, 3) &&
+      (!strncmp("5.0", (char *)server_version, 3) &&
         mysql_min_version(hdbc, "5.0.46", 6)) ||
       /* 5.1.22 or later in 5.1 series */
-      (!strncmp("5.1", server_version, 3) &&
+      (!strncmp("5.1", (char *)server_version, 3) &&
         mysql_min_version(hdbc, "5.1.22", 6)))
   {
     is_num(data_type, SQL_WVARCHAR);
@@ -2005,7 +2005,7 @@ DECLARE_TEST(t_bug31246)
           sizeof(field3), NULL));
   ok_stmt(hstmt, SQLFetch(hstmt));
 
-  is_str(field1, buf, strlen(buf) + 1);
+  is_str(field1, buf, strlen((char *)buf) + 1);
   is_num(field2, 10);
   is_str(field3, "Default Text", 13);
 

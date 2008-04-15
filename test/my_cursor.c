@@ -686,14 +686,13 @@ DECLARE_TEST(t_pos_datetime_delete1)
     SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER) SQL_CURSOR_DYNAMIC, 0);
     SQLSetStmtOption(hstmt1,SQL_SIMULATE_CURSOR,SQL_SC_NON_UNIQUE);
 
-    rc = SQLSetCursorName(hstmt,"venu_cur",8);
+    rc = SQLSetCursorName(hstmt, (SQLCHAR *)"venu_cur",8);
     mystmt(hstmt,rc);
 
     rc = SQLGetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, &cur_type, 0, NULL);
     mystmt(hstmt,rc);
 
-    rc = tmysql_exec(hstmt,"select * from t_pos_delete");
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"select * from t_pos_delete");
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&int_data,0,NULL);
     mystmt(hstmt,rc);
@@ -706,8 +705,7 @@ DECLARE_TEST(t_pos_datetime_delete1)
     rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt1,"DELETE FROM t_pos_delete WHERE CURRENT OF venu_cur",SQL_NTS);
-    mystmt(hstmt1,rc);
+    ok_sql(hstmt1,"DELETE FROM t_pos_delete WHERE CURRENT OF venu_cur");
 
     rc = SQLRowCount(hstmt1,&row_count);
     mystmt(hstmt1,rc);
@@ -728,8 +726,7 @@ DECLARE_TEST(t_pos_datetime_delete1)
     rc = SQLSetPos(hstmt,1,SQL_POSITION,SQL_LOCK_NO_CHANGE);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt1,"DELETE FROM t_pos_delete WHERE CURRENT OF venu_cur",SQL_NTS);
-    mystmt(hstmt1,rc);
+    ok_sql(hstmt1,"DELETE FROM t_pos_delete WHERE CURRENT OF venu_cur");
 
     rc = SQLRowCount(hstmt1,&row_count);
     mystmt(hstmt1,rc);
@@ -778,8 +775,8 @@ DECLARE_TEST(t_getcursor)
     if (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
     {
       fprintf(stdout,"default cursor name  : %s(%d)\n",curname,nlen);
-      myassert(nlen == 8);
-      myassert(!strcmp(curname,"SQL_CUR0"));
+      is_num(nlen, 8);
+      is_str(curname,"SQL_CUR0", 9);
 
       rc = SQLGetCursorName(hstmt3,curname,50,&nlen);
       mystmt(hstmt1,rc);
@@ -799,23 +796,22 @@ DECLARE_TEST(t_getcursor)
       expect_stmt(hstmt1, SQLGetCursorName(hstmt1, curname, 8, &nlen),
                   SQL_SUCCESS_WITH_INFO);
       fprintf(stdout,"truncated cursor name: %s(%d)\n",curname,nlen);
-      myassert(nlen == 8);
-      myassert(!strcmp(curname,"SQL_CUR"));
+      is_num(nlen, 8);
+      is_str(curname, "SQL_CUR", 8);
 
       rc = SQLGetCursorName(hstmt1,curname,9,&nlen);
       fprintf(stdout,"full cursor name     : %s(%d)\n",curname,nlen);
-      myassert(nlen == 8);
-      myassert(!strcmp(curname,"SQL_CUR0"));
+      is_num(nlen, 8);
+      is_str(curname, "SQL_CUR0", 9);
     }
 
-    rc = SQLSetCursorName(hstmt1,"venucur123",7);
+    rc = SQLSetCursorName(hstmt1, (SQLCHAR *)"venucur123",7);
     mystmt(hstmt1,rc);
 
     rc = SQLGetCursorName(hstmt1,curname,8,&nlen);
     mystmt(hstmt1,rc);
-    fprintf(stdout,"full setcursor name  : %s(%d)\n",curname,nlen);
-    myassert(nlen == 7);
-    myassert(!strcmp(curname,"venucur"));
+    is_num(nlen, 7);
+    is_str(curname, "venucur", 8);
 
     rc = SQLFreeHandle(SQL_HANDLE_STMT,hstmt1);
     mystmt(hstmt1,rc);
@@ -1069,11 +1065,9 @@ DECLARE_TEST(tmysql_setpos_upd)
     ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                   (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);
+    rc = SQLSetCursorName(hstmt, (SQLCHAR *)"venu",SQL_NTS);
 
-    rc = tmysql_exec(hstmt,"select * from tmysql_setpos");
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"select * from tmysql_setpos");
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
     mystmt(hstmt,rc);
@@ -1119,8 +1113,7 @@ DECLARE_TEST(tmysql_setpos_upd)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"DELETE FROM tmysql_setpos WHERE col2 = 'updated'",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"DELETE FROM tmysql_setpos WHERE col2 = 'updated'");
 
     rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
@@ -1171,11 +1164,9 @@ DECLARE_TEST(tmysql_setpos_add)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
-    mystmt(hstmt,rc);
+    rc = SQLSetCursorName(hstmt, (SQLCHAR *)"venu",SQL_NTS);
 
-    rc = tmysql_exec(hstmt,"select * from tmysql_setpos_add");
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"select * from tmysql_setpos_add");
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
     mystmt(hstmt,rc);
@@ -1431,9 +1422,9 @@ DECLARE_TEST(tmysql_pos_update_ex)
 DECLARE_TEST(tmysql_pos_update_ex1)
 {
   SQLHSTMT hstmt1;
-  SQLROWSETSIZE pcrow;
-  SQLLEN      rows;
-  SQLSMALLINT rgfRowStatus;
+  SQLULEN pcrow;
+  SQLLEN rows;
+  SQLUSMALLINT rgfRowStatus;
   SQLCHAR cursor[30], sql[100], data[]= "tmysql_pos_update_ex1";
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_updex1");
@@ -1672,12 +1663,11 @@ DECLARE_TEST(tmysql_mtab_setpos_del)
     ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                   (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
+    rc = SQLSetCursorName(hstmt, (SQLCHAR *)"venu",SQL_NTS);
     mystmt(hstmt,rc);
 
     /* FULL JOIN */
-    rc = tmysql_exec(hstmt,"select tmysql_t1.*,tmysql_t2.* from tmysql_t1,tmysql_t2");
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"select tmysql_t1.*,tmysql_t2.* from tmysql_t1,tmysql_t2");
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
     mystmt(hstmt,rc);
@@ -1741,11 +1731,10 @@ DECLARE_TEST(tmysql_setpos_pkdel)
     ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                   (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
+    rc = SQLSetCursorName(hstmt, (SQLCHAR *)"venu",SQL_NTS);
     mystmt(hstmt,rc);
 
-    rc = tmysql_exec(hstmt,"select * from tmysql_setpos1");
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"select * from tmysql_setpos1");
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
     mystmt(hstmt,rc);
@@ -1818,7 +1807,7 @@ DECLARE_TEST(t_alias_setpos_pkdel)
   ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                 (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-  ok_stmt(hstmt, SQLSetCursorName(hstmt, "venu", SQL_NTS));
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"venu", SQL_NTS));
 
   ok_sql(hstmt,"SELECT col1 AS id, col2 AS name FROM t_alias_setpos_pkdel");
 
@@ -1879,7 +1868,7 @@ DECLARE_TEST(t_alias_setpos_del)
   ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                 (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-  ok_stmt(hstmt, SQLSetCursorName(hstmt, "venu", SQL_NTS));
+  ok_stmt(hstmt, SQLSetCursorName(hstmt, (SQLCHAR *)"venu", SQL_NTS));
 
   ok_sql(hstmt,"SELECT col1 AS id, col2 AS name FROM t_alias_setpos_del");
 
@@ -2069,8 +2058,7 @@ DECLARE_TEST(t_setpos_upd_bug1)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"DELETE FROM t_setpos_upd_bug1 WHERE fname = 'update'",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"DELETE FROM t_setpos_upd_bug1 WHERE fname = 'update'");
 
     rc = SQLRowCount(hstmt,&len);
     mystmt(hstmt,rc);
@@ -2123,11 +2111,10 @@ DECLARE_TEST(my_setpos_upd_pk_order)
     ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                   (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
-    rc = SQLSetCursorName(hstmt,"venu",SQL_NTS);
+    rc = SQLSetCursorName(hstmt, (SQLCHAR *)"venu",SQL_NTS);
     mystmt(hstmt,rc);
 
-    rc = tmysql_exec(hstmt,"select * from my_setpos_upd_pk_order");
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"select * from my_setpos_upd_pk_order");
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,0,NULL);
     mystmt(hstmt,rc);
@@ -2165,8 +2152,7 @@ DECLARE_TEST(my_setpos_upd_pk_order)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"DELETE FROM my_setpos_upd_pk_order WHERE col2 = 'updated'",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "DELETE FROM my_setpos_upd_pk_order WHERE col2 = 'updated'");
 
     rc = SQLRowCount(hstmt,&nlen);
     mystmt(hstmt,rc);
@@ -2644,15 +2630,15 @@ DECLARE_TEST(t_update_offsets)
 
   for (i= 0; i < rowcnt; ++i)
   {
-    sprintf(buf, "name%d", i);
+    sprintf((char *)buf, "name%d", i);
     is_num(rows[row_offset1+i].id, i);
-    is_str(rows[row_offset1+i].name, buf, strlen(buf) + 1);
-    is_num(rows[row_offset1+i].namelen, strlen(buf));
+    is_str(rows[row_offset1+i].name, buf, strlen((char *)buf) + 1);
+    is_num(rows[row_offset1+i].namelen, strlen((char *)buf));
 
     /* change the values here */
     rows[row_offset2+i].id= i * 10;
-    sprintf(rows[row_offset2+i].name, "name_%d_%d", i, i * 10);
-    rows[row_offset2+i].namelen= strlen(rows[row_offset2+i].name);
+    sprintf((char *)rows[row_offset2+i].name, "name_%d_%d", i, i * 10);
+    rows[row_offset2+i].namelen= strlen((char *)rows[row_offset2+i].name);
   }
 
   /* update all rows */
@@ -2670,10 +2656,10 @@ DECLARE_TEST(t_update_offsets)
 
   for (i= 0; i < rowcnt; ++i)
   {
-    sprintf(buf, "name_%d_%d", i, i * 10);
+    sprintf((char *)buf, "name_%d_%d", i, i * 10);
     is_num(rows[i+1].id, i * 10);
-    is_str(rows[i+1].name, buf, strlen(buf) + 1);
-    is_num(rows[i+1].namelen, strlen(buf));
+    is_str(rows[i+1].name, buf, strlen((char *)buf) + 1);
+    is_num(rows[i+1].namelen, strlen((char *)buf));
   }
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
@@ -2745,8 +2731,8 @@ DECLARE_TEST(t_bug32420)
   SQLULEN row_count;
 
   /* Don't cache result option in the connection string */
-  sprintf(conn, "DRIVER=%s;USER=%s;PASSWORD=%s;"
-                "DATABASE=%s;SERVER=%s;OPTION=1048576",
+  sprintf((char *)conn, "DRIVER=%s;USER=%s;PASSWORD=%s;"
+          "DATABASE=%s;SERVER=%s;OPTION=1048576",
           mydriver, myuid, mypwd, mydb, myserver);
 
   if (mysock != NULL)
@@ -2838,8 +2824,8 @@ DECLARE_TEST(t_bug32420)
      Result cache is enabled. Need to check that cached results are not
      broken
   */
-  sprintf(conn,"DRIVER=%s;USER=%s;PASSWORD=%s;"
-               "DATABASE=%s;SERVER=%s",
+  sprintf((char *)conn,"DRIVER=%s;USER=%s;PASSWORD=%s;"
+          "DATABASE=%s;SERVER=%s",
           mydriver, myuid, mypwd, mydb, myserver);
 
   if (mysock != NULL)

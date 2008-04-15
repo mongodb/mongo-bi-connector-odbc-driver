@@ -25,26 +25,20 @@
 DECLARE_TEST(my_pcbvalue)
 {
     SQLRETURN   rc;
-    SQLROWCOUNT nRowCount;
+    SQLLEN      nRowCount;
     SQLINTEGER  nData= 500;
     SQLLEN      int_pcbValue, pcbValue, pcbValue1, pcbValue2;
     SQLCHAR     szData[255]={0};
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS my_pcbValue");
 
-    rc = SQLExecDirect(hstmt,"create table my_pcbValue(id int, name varchar(30),\
+  ok_sql(hstmt, "create table my_pcbValue(id int, name varchar(30),\
                                                        name1 varchar(30),\
-                                                       name2 varchar(30))",SQL_NTS);
-    mystmt(hstmt,rc);
+                                                       name2 varchar(30))");
 
-    rc = SQLExecDirect(hstmt,"insert into my_pcbValue(id,name) values(100,'venu')",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "insert into my_pcbValue(id,name) values(100,'venu')");
 
-    rc = SQLExecDirect(hstmt,"insert into my_pcbValue(id,name) values(200,'monty')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "insert into my_pcbValue(id,name) values(200,'monty')");
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
@@ -71,8 +65,7 @@ DECLARE_TEST(my_pcbvalue)
     mystmt(hstmt, rc);
 
     /* Open the resultset of table 'my_demo_cursor' */
-    rc = SQLExecDirect(hstmt,"SELECT * FROM my_pcbValue",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "SELECT * FROM my_pcbValue");
 
     /* goto the last row */
     rc = SQLFetchScroll(hstmt, SQL_FETCH_LAST, 1L);
@@ -108,8 +101,7 @@ DECLARE_TEST(my_pcbvalue)
     mycon(hdbc,rc);
 
     /* Now fetch and verify the data */
-    rc = SQLExecDirect(hstmt, "SELECT * FROM my_pcbValue",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "SELECT * FROM my_pcbValue");
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
@@ -119,23 +111,19 @@ DECLARE_TEST(my_pcbvalue)
 
     rc = SQLGetData(hstmt,1,SQL_C_LONG,&nData,0,NULL);
     mystmt(hstmt,rc);
-    printMessage("\n nData :%d",nData);
-    myassert(nData == 99999);
+    is_num(nData, 99999);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,50,NULL);
     mystmt(hstmt,rc);
-    printMessage("\n szData:%s\n",szData);
-    myassert(strcmp(szData,"upd") == 0);
+    is_str(szData, "upd", 4);
 
     rc = SQLGetData(hstmt,3,SQL_C_CHAR,szData,50,NULL);
     mystmt(hstmt,rc);
-    printMessage("\n szData:%s\n",szData);
-    myassert(strcmp(szData,"updated") == 0);
+    is_str(szData, "updated", 8);
 
     rc = SQLGetData(hstmt,4,SQL_C_CHAR,szData,50,NULL);
     mystmt(hstmt,rc);
-    printMessage("\n szData:%s\n",szData);
-    myassert(strcmp(szData,"updated") == 0);
+    is_str(szData, "updated", 8);
 
     expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
@@ -153,26 +141,20 @@ DECLARE_TEST(my_pcbvalue)
 DECLARE_TEST(my_pcbvalue_add)
 {
     SQLRETURN   rc;
-    SQLROWCOUNT nRowCount;
+    SQLLEN      nRowCount;
     SQLINTEGER  nData= 500;
     SQLLEN      int_pcbValue, pcbValue, pcbValue1, pcbValue2;
     SQLCHAR     szData[255]={0};
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS my_pcbValue_add");
 
-    rc = SQLExecDirect(hstmt,"create table my_pcbValue_add(id int, name varchar(30),\
+  ok_sql(hstmt, "create table my_pcbValue_add(id int, name varchar(30),\
                                                        name1 varchar(30),\
-                                                       name2 varchar(30))",SQL_NTS);
-    mystmt(hstmt,rc);
+                                                       name2 varchar(30))");
 
-    rc = SQLExecDirect(hstmt,"insert into my_pcbValue_add(id,name) values(100,'venu')",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt,"insert into my_pcbValue_add(id,name) values(100,'venu')");
 
-    rc = SQLExecDirect(hstmt,"insert into my_pcbValue_add(id,name) values(200,'monty')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_sql(hstmt,"insert into my_pcbValue_add(id,name) values(200,'monty')");
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
@@ -199,7 +181,7 @@ DECLARE_TEST(my_pcbvalue_add)
     mystmt(hstmt, rc);
 
     /* Open the resultset of table 'my_pcbValue_add' */
-    rc = SQLExecDirect(hstmt,"SELECT * FROM my_pcbValue_add",SQL_NTS);
+    ok_sql(hstmt, "SELECT * FROM my_pcbValue_add");
     mystmt(hstmt,rc);
 
     /* goto the last row */
@@ -236,7 +218,7 @@ DECLARE_TEST(my_pcbvalue_add)
     mycon(hdbc,rc);
 
     /* Now fetch and verify the data */
-    rc = SQLExecDirect(hstmt, "SELECT * FROM my_pcbValue_add",SQL_NTS);
+    ok_sql(hstmt, "SELECT * FROM my_pcbValue_add");
     mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
@@ -250,23 +232,19 @@ DECLARE_TEST(my_pcbvalue_add)
 
     rc = SQLGetData(hstmt,1,SQL_C_LONG,&nData,0,NULL);
     mystmt(hstmt,rc);
-    printMessage("\n nData :%d",nData);
-    myassert(nData == 99999);
+    is_num(nData, 99999);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,50,NULL);
     mystmt(hstmt,rc);
-    printMessage("\n szData:%s\n",szData);
-    myassert(strcmp(szData,"ins") == 0);
+    is_str(szData, "ins", 4);
 
     rc = SQLGetData(hstmt,3,SQL_C_CHAR,szData,50,NULL);
     mystmt(hstmt,rc);
-    printMessage("\n szData:%s\n",szData);
-    myassert(strcmp(szData,"insert") == 0);
+    is_str(szData, "insert", 7);
 
     rc = SQLGetData(hstmt,4,SQL_C_CHAR,szData,50,NULL);
     mystmt(hstmt,rc);
-    printMessage("\n szData:%s\n",szData);
-    myassert(strcmp(szData,"inserted") == 0);
+    is_str(szData, "inserted", 9);
 
     rc = SQLFetch(hstmt);
     mystmt_err(hstmt,rc==SQL_NO_DATA_FOUND,rc);
@@ -288,38 +266,25 @@ DECLARE_TEST(my_columnspace)
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS TestColNames");
 
-    rc = SQLExecDirect(hstmt,"CREATE TABLE `TestColNames`(`Value One` text,\
-                                                           `Value Two` text,\
-                                                           `Value Three` text)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "CREATE TABLE `TestColNames`(`Value One` text, `Value Two` text,`Value Three` text)");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "INSERT INTO TestColNames VALUES ('venu','anuganti','mysql ab')");
 
-    rc = SQLExecDirect(hstmt,"INSERT INTO TestColNames VALUES ('venu','anuganti','mysql ab')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"INSERT INTO TestColNames VALUES ('monty','widenius','mysql ab')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "INSERT INTO TestColNames VALUES ('monty','widenius','mysql ab')");
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"SELECT * FROM `TestColNames`",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM `TestColNames`");
 
-    myassert(2 == my_print_non_format_result(hstmt));
+  is(2 == my_print_non_format_result(hstmt));
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"SELECT `Value One`,`Value Two`,`Value Three`  FROM `TestColNames`",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT `Value One`,`Value Two`,`Value Three` FROM `TestColNames`");
 
-    myassert(2 == my_print_non_format_result(hstmt));
+  is(2 == my_print_non_format_result(hstmt));
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
@@ -339,28 +304,22 @@ DECLARE_TEST(my_empty_string)
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS my_empty_string");
 
-    rc = SQLExecDirect(hstmt,"create table my_empty_string(name varchar(30))",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "create table my_empty_string(name varchar(30))");
 
-    rc = SQLExecDirect(hstmt,"insert into my_empty_string values('')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "insert into my_empty_string values('')");
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
     /* Now fetch and verify the data */
-    rc = SQLExecDirect(hstmt, "SELECT * FROM my_empty_string",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "SELECT * FROM my_empty_string");
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,szData,50,&pcbValue);
     mystmt(hstmt,rc);
-    printMessage("\n szData:%s(%d)\n",szData,pcbValue);
+    printMessage("szData:%s(%d)\n",szData,pcbValue);
 
     rc = SQLFetch(hstmt);
     mystmt_err(hstmt,rc==SQL_NO_DATA_FOUND,rc);

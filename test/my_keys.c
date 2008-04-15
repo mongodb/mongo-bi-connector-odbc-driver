@@ -30,23 +30,15 @@ DECLARE_TEST(my_no_keys)
     SQLINTEGER nData;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS my_no_keys");
-    rc = SQLExecDirect(hstmt,"create table my_no_keys(col1 int,\
+  ok_sql(hstmt, "create table my_no_keys(col1 int,\
                                                       col2 varchar(30),\
                                                       col3 int,\
-                                                      col4 int)",SQL_NTS);
-    mystmt(hstmt,rc);
+                                                      col4 int)");
 
-    rc = SQLExecDirect(hstmt,"insert into my_no_keys values(100,'MySQL1',1,3000)",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc = SQLExecDirect(hstmt,"insert into my_no_keys values(200,'MySQL2',2,3000)",SQL_NTS);
-    mystmt(hstmt,rc);  
-    rc = SQLExecDirect(hstmt,"insert into my_no_keys values(300,'MySQL3',3,3000)",SQL_NTS);
-    mystmt(hstmt,rc);  
-    rc = SQLExecDirect(hstmt,"insert into my_no_keys values(400,'MySQL4',4,3000)",SQL_NTS);
-    mystmt(hstmt,rc);  
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "insert into my_no_keys values(100,'MySQL1',1,3000)");
+  ok_sql(hstmt, "insert into my_no_keys values(200,'MySQL1',2,3000)");
+  ok_sql(hstmt, "insert into my_no_keys values(300,'MySQL1',3,3000)");
+  ok_sql(hstmt, "insert into my_no_keys values(400,'MySQL1',4,3000)");
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);     
@@ -61,7 +53,7 @@ DECLARE_TEST(my_no_keys)
     mystmt(hstmt, rc);  
 
     /* UPDATE ROW[2]COL[4] */
-    rc = SQLExecDirect(hstmt,"select col4 from my_no_keys",SQL_NTS);
+    ok_sql(hstmt, "select col4 from my_no_keys");
     mystmt(hstmt,rc);    
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&nData,100,NULL);
@@ -78,28 +70,26 @@ DECLARE_TEST(my_no_keys)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"select * from my_no_keys",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"select * from my_no_keys");
 
-    myassert(4 == myresult(hstmt));
+    is(4 == myresult(hstmt));
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"select * from my_no_keys",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"select * from my_no_keys");
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
-    myassert(3000 == my_fetch_int(hstmt,4));
+    is(3000 == my_fetch_int(hstmt,4));
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
-    myassert(3000 == my_fetch_int(hstmt,4));
+    is(3000 == my_fetch_int(hstmt,4));
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
-    myassert(3000 == my_fetch_int(hstmt,4));
+    is(3000 == my_fetch_int(hstmt,4));
 
     SQLFreeStmt(hstmt,SQL_UNBIND);
     SQLFreeStmt(hstmt,SQL_CLOSE);
@@ -113,27 +103,26 @@ DECLARE_TEST(my_no_keys)
 DECLARE_TEST(my_foreign_keys)
 {
     SQLRETURN   rc=0;
-    char        dbc[255];
+    SQLCHAR     dbc[255];
 
-    SQLExecDirect(hstmt,"DROP DATABASE test_odbc_fk",SQL_NTS);
-    SQLExecDirect(hstmt,"CREATE DATABASE test_odbc_fk",SQL_NTS);
-    SQLExecDirect(hstmt,"use test_odbc_fk",SQL_NTS);
+    ok_sql(hstmt,"DROP DATABASE IF EXISTS test_odbc_fk");
+    ok_sql(hstmt,"CREATE DATABASE test_odbc_fk");
+    ok_sql(hstmt,"use test_odbc_fk");
 
-    rc = SQLExecDirect(hstmt,"DROP TABLE test_fkey_c1",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"DROP TABLE test_fkey3",SQL_NTS);    
-    rc = SQLExecDirect(hstmt,"DROP TABLE test_fkey2",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"DROP TABLE test_fkey1",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"DROP TABLE test_fkey_p1",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"DROP TABLE test_fkey_comment_f",SQL_NTS);
-    rc = SQLExecDirect(hstmt,"DROP TABLE test_fkey_comment_p",SQL_NTS);
+    ok_sql(hstmt,"DROP TABLE IF EXISTS test_fkey_c1");
+    ok_sql(hstmt,"DROP TABLE IF EXISTS test_fkey_3");
+    ok_sql(hstmt,"DROP TABLE IF EXISTS test_fkey_2");
+    ok_sql(hstmt,"DROP TABLE IF EXISTS test_fkey_1");
+    ok_sql(hstmt,"DROP TABLE IF EXISTS test_fkey_p1");
+    ok_sql(hstmt,"DROP TABLE IF EXISTS test_fkey_comment_f");
+    ok_sql(hstmt,"DROP TABLE IF EXISTS test_fkey_comment_p");
 
-    rc = SQLExecDirect(hstmt,
+    ok_sql(hstmt,
                        "CREATE TABLE test_fkey1(\
                  A INTEGER NOT NULL,B INTEGER NOT NULL,C INTEGER NOT NULL,\
-                 D INTEGER,PRIMARY KEY (C,B,A))TYPE=InnoDB;",SQL_NTS);
-    mystmt(hstmt,rc);
+                 D INTEGER,PRIMARY KEY (C,B,A))TYPE=InnoDB;");
 
-    rc = SQLExecDirect(hstmt,
+    ok_sql(hstmt,
                        "CREATE TABLE test_fkey_p1(\
                  A INTEGER NOT NULL,B INTEGER NOT NULL,C INTEGER NOT NULL,\
                  D INTEGER NOT NULL,E INTEGER NOT NULL,F INTEGER NOT NULL,\
@@ -141,17 +130,15 @@ DECLARE_TEST(my_foreign_keys)
                  J INTEGER NOT NULL,K INTEGER NOT NULL,L INTEGER NOT NULL,\
                  M INTEGER NOT NULL,N INTEGER NOT NULL,O INTEGER NOT NULL,\
                  P INTEGER NOT NULL,Q INTEGER NOT NULL,R INTEGER NOT NULL,\
-                 PRIMARY KEY (D,F,G,H,I,J,K,L,M,N,O))TYPE=InnoDB;",SQL_NTS);
-    mystmt(hstmt,rc);
-    rc  = SQLExecDirect(hstmt,
+                 PRIMARY KEY (D,F,G,H,I,J,K,L,M,N,O))TYPE=InnoDB;");
+    ok_sql(hstmt,
                         "CREATE TABLE test_fkey2 (\
                  E INTEGER NOT NULL,C INTEGER NOT NULL,B INTEGER NOT NULL,\
                  A INTEGER NOT NULL,PRIMARY KEY (E),\
                  INDEX test_fkey2_ind(C,B,A),\
-                 FOREIGN KEY (C,B,A) REFERENCES test_fkey1(C,B,A))TYPE=InnoDB;",SQL_NTS);
-    mystmt(hstmt,rc);
+                 FOREIGN KEY (C,B,A) REFERENCES test_fkey1(C,B,A))TYPE=InnoDB;");
 
-    rc  = SQLExecDirect(hstmt,
+    ok_sql(hstmt,
                         "CREATE TABLE test_fkey3 (\
                  F INTEGER NOT NULL,C INTEGER NOT NULL,E INTEGER NOT NULL,\
                  G INTEGER, A INTEGER NOT NULL, B INTEGER NOT NULL,\
@@ -159,10 +146,9 @@ DECLARE_TEST(my_foreign_keys)
                  INDEX test_fkey3_ind(C,B,A),\
                  INDEX test_fkey3_ind3(E),\
                  FOREIGN KEY (C,B,A) REFERENCES test_fkey1(C,B,A),\
-                 FOREIGN KEY (E) REFERENCES test_fkey2(E))TYPE=InnoDB;", SQL_NTS);
-    mystmt(hstmt,rc);
+                 FOREIGN KEY (E) REFERENCES test_fkey2(E))TYPE=InnoDB;");
 
-    rc = SQLExecDirect(hstmt,
+    ok_sql(hstmt,
                        "CREATE TABLE test_fkey_c1(\
                  A INTEGER NOT NULL,B INTEGER NOT NULL,C INTEGER NOT NULL,\
                  D INTEGER NOT NULL,E INTEGER NOT NULL,F INTEGER NOT NULL,\
@@ -177,10 +163,9 @@ DECLARE_TEST(my_foreign_keys)
                  FOREIGN KEY (D,F,G,H,I,J,K,L,M,N,O) REFERENCES \
                    test_fkey_p1(D,F,G,H,I,J,K,L,M,N,O),\
                  FOREIGN KEY (C,B,A) REFERENCES test_fkey1(C,B,A),\
-                 FOREIGN KEY (E) REFERENCES test_fkey2(E))TYPE=InnoDB;",SQL_NTS);
-    mystmt(hstmt,rc);
+                 FOREIGN KEY (E) REFERENCES test_fkey2(E))TYPE=InnoDB;");
 
-    rc = SQLExecDirect(hstmt,    
+    ok_sql(hstmt,
                        "CREATE TABLE test_fkey_comment_p ( \
                 ISP_ID SMALLINT NOT NULL, \
 	              CUSTOMER_ID VARCHAR(10), \
@@ -190,10 +175,9 @@ DECLARE_TEST(my_foreign_keys)
 	              PRIMARY KEY PL_ISP_PK (ISP_ID), \
 	              UNIQUE INDEX PL_ISP_CUSTOMER_ID_UK (CUSTOMER_ID), \
 	              UNIQUE INDEX PL_ISP_ABBR_UK (ABBREVIATION) \
-              ) TYPE = InnoDB COMMENT ='Holds the information of (customers)'",SQL_NTS);
-    mystmt(hstmt,rc);
+              ) TYPE = InnoDB COMMENT ='Holds the information of (customers)'");
 
-    rc = SQLExecDirect(hstmt,    
+    ok_sql(hstmt,
                        "CREATE TABLE test_fkey_comment_f ( \
 	              CAMPAIGN_ID INT NOT NULL , \
 	              ISP_ID SMALLINT NOT NULL, \
@@ -206,23 +190,22 @@ DECLARE_TEST(my_foreign_keys)
 	              UNIQUE INDEX PL_ISP_CAMPAIGN_BT_UK (BILLING_TYPE), \
 	              INDEX PL_ISP_CAMPAIGN_ISP_ID_IX (ISP_ID), \
 	              FOREIGN KEY (ISP_ID) REFERENCES test_fkey_comment_p(ISP_ID) \
-              ) TYPE = InnoDB COMMENT ='List of campaigns (test comment)'",SQL_NTS);
-    mystmt(hstmt,rc);
+              ) TYPE = InnoDB COMMENT ='List of campaigns (test comment)'");
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    strcpy(dbc, "test_odbc_fk");
+    strcpy((char *)dbc, "test_odbc_fk");
 
     printMessage("\n WITH ONLY PK OPTION");
     rc = SQLForeignKeys(hstmt,
                         dbc, SQL_NTS,               /*PK CATALOG*/
                         NULL, SQL_NTS,                /*PK SCHEMA*/
-                        "test_fkey1", SQL_NTS,  /*PK TABLE*/
+                        (SQLCHAR *)"test_fkey1", SQL_NTS,  /*PK TABLE*/
                         dbc, SQL_NTS,               /*FK CATALOG*/
                         NULL, SQL_NTS,                /*FK SCHEMA*/
                         NULL, SQL_NTS);               /*FK TABLE*/
     mystmt(hstmt,rc);
-    myassert(9 == myresult(hstmt));
+    is(9 == myresult(hstmt));
 
     printMessage("\n WITH ONLY FK OPTION");
     rc = SQLForeignKeys(hstmt,
@@ -231,9 +214,9 @@ DECLARE_TEST(my_foreign_keys)
                         NULL, SQL_NTS,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey1", SQL_NTS);
+                        (SQLCHAR *)"test_fkey1", SQL_NTS);
     mystmt(hstmt,rc);
-    myassert(0 == myresult(hstmt));
+    is(0 == myresult(hstmt));
 
     printMessage("\n WITH ONLY FK OPTION");
     rc = SQLForeignKeys(hstmt,
@@ -242,9 +225,9 @@ DECLARE_TEST(my_foreign_keys)
                         NULL, SQL_NTS,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey_c1", SQL_NTS);
+                        (SQLCHAR *)"test_fkey_c1", SQL_NTS);
     mystmt(hstmt,rc);
-    myassert(15 == myresult(hstmt));
+    is(15 == myresult(hstmt));
 
     printMessage("\n WITH ONLY FK OPTION");
     rc = SQLForeignKeys(hstmt,
@@ -253,53 +236,53 @@ DECLARE_TEST(my_foreign_keys)
                         NULL, SQL_NTS,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey2", SQL_NTS);
+                        (SQLCHAR *)"test_fkey2", SQL_NTS);
     mystmt(hstmt,rc);
-    myassert(3 == myresult(hstmt));
+    is(3 == myresult(hstmt));
 
     printMessage("\n WITH ONLY PK OPTION");
     rc = SQLForeignKeys(hstmt,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey_p1", SQL_NTS,
+                        (SQLCHAR *)"test_fkey_p1", SQL_NTS,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
                         NULL, SQL_NTS);
     mystmt(hstmt,rc);
-    myassert(11 == myresult(hstmt));
+    is(11 == myresult(hstmt));
 
     printMessage("\n WITH ONLY PK OPTION");
     rc = SQLForeignKeys(hstmt,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey3", SQL_NTS,
+                        (SQLCHAR *)"test_fkey3", SQL_NTS,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
                         NULL, SQL_NTS);
     mystmt(hstmt,rc);
-    myassert(0 == myresult(hstmt));
+    is(0 == myresult(hstmt));
 
     printMessage("\n WITH ONLY PK OPTION");
     rc = SQLForeignKeys(hstmt,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey2", SQL_NTS,
+                        (SQLCHAR *)"test_fkey2", SQL_NTS,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
                         NULL, SQL_NTS);
     mystmt(hstmt,rc);
-    myassert(2 == myresult(hstmt));
+    is(2 == myresult(hstmt));
 
     printMessage("\n WITH ONLY PK OPTION");
     rc = SQLForeignKeys(hstmt,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey1", SQL_NTS,
+                        (SQLCHAR *)"test_fkey1", SQL_NTS,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
                         NULL, SQL_NTS);
     mystmt(hstmt,rc);
-    myassert(9 == myresult(hstmt));
+    is(9 == myresult(hstmt));
 
     printMessage("\n WITH ONLY FK OPTION");
     rc = SQLForeignKeys(hstmt,
@@ -308,119 +291,117 @@ DECLARE_TEST(my_foreign_keys)
                         NULL, SQL_NTS,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey3", SQL_NTS);
+                        (SQLCHAR *)"test_fkey3", SQL_NTS);
     mystmt(hstmt,rc);
-    myassert(4 == myresult(hstmt));
+    is(4 == myresult(hstmt));
 
     printMessage("\n WITH BOTH PK and FK OPTION");
     rc = SQLForeignKeys(hstmt,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey1",SQL_NTS,
+                        (SQLCHAR *)"test_fkey1",SQL_NTS,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey3", SQL_NTS);
+                        (SQLCHAR *)"test_fkey3", SQL_NTS);
     mystmt(hstmt,rc);
-    myassert(3 == myresult(hstmt));
+    is(3 == myresult(hstmt));
 
     printMessage("\n WITH BOTH PK and FK OPTION");
     rc = SQLForeignKeys(hstmt,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey_p1",SQL_NTS,
+                        (SQLCHAR *)"test_fkey_p1",SQL_NTS,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey_c1", SQL_NTS);
+                        (SQLCHAR *)"test_fkey_c1", SQL_NTS);
     mystmt(hstmt,rc);
-    myassert(11 == myresult(hstmt));
+    is(11 == myresult(hstmt));
 
     printMessage("\n WITH BOTH PK and FK OPTION");
     rc = SQLForeignKeys(hstmt,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey1",SQL_NTS,
+                        (SQLCHAR *)"test_fkey1",SQL_NTS,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey2", SQL_NTS);
+                        (SQLCHAR *)"test_fkey2", SQL_NTS);
     mystmt(hstmt,rc);
-    myassert(3 == myresult(hstmt));
+    is(3 == myresult(hstmt));
 
     printMessage("\n WITH BOTH PK and FK OPTION");
     rc = SQLForeignKeys(hstmt,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey_p1",SQL_NTS,
+                        (SQLCHAR *)"test_fkey_p1",SQL_NTS,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey2", SQL_NTS);
+                        (SQLCHAR *)"test_fkey2", SQL_NTS);
     mystmt(hstmt,rc);
-    myassert(0 == myresult(hstmt));
+    is(0 == myresult(hstmt));
 
     printMessage("\n WITH BOTH PK and FK OPTION");
     rc = SQLForeignKeys(hstmt,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey3", SQL_NTS,
+                        (SQLCHAR *)"test_fkey3", SQL_NTS,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey1", SQL_NTS);
+                        (SQLCHAR *)"test_fkey1", SQL_NTS);
     mystmt(hstmt,rc);
-    myassert(0 == myresult(hstmt));
+    is(0 == myresult(hstmt));
 
     printMessage("\n WITH BOTH PK and FK OPTION");
     rc = SQLForeignKeys(hstmt,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey2", SQL_NTS,
+                        (SQLCHAR *)"test_fkey2", SQL_NTS,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey1", SQL_NTS);
+                        (SQLCHAR *)"test_fkey1", SQL_NTS);
     mystmt(hstmt,rc);
-    myassert(0 == myresult(hstmt));
-
+    is(0 == myresult(hstmt));
 
     printMessage("\n WITH ACTUAL LENGTH INSTEAD OF SQL_NTS");
     rc = SQLForeignKeys(hstmt,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey1",10,
+                        (SQLCHAR *)"test_fkey1",10,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey2",10);
+                        (SQLCHAR *)"test_fkey2",10);
     mystmt(hstmt,rc);
-    myassert(3 == myresult(hstmt));
+    is(3 == myresult(hstmt));
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
     printMessage("\n WITH NON-EXISTANT TABLES");
     rc = SQLForeignKeys(hstmt,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey_junk", SQL_NTS,
+                        (SQLCHAR *)"test_fkey_junk", SQL_NTS,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey_junk", SQL_NTS);
+                        (SQLCHAR *)"test_fkey_junk", SQL_NTS);
     mystmt(hstmt,rc);
-    myassert(0 == myresult(hstmt));
+    is(0 == myresult(hstmt));
     SQLFreeStmt(hstmt,SQL_CLOSE);
 
     printMessage("\n WITH COMMENT FIELD");
     rc = SQLForeignKeys(hstmt,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey_comment_p", SQL_NTS,
+                        (SQLCHAR *)"test_fkey_comment_p", SQL_NTS,
                         dbc, SQL_NTS,
                         NULL, SQL_NTS,
-                        "test_fkey_comment_f", SQL_NTS);
+                        (SQLCHAR *)"test_fkey_comment_f", SQL_NTS);
     mystmt(hstmt,rc);
-    myassert(1 == myresult(hstmt));
+    is(1 == myresult(hstmt));
 
     {
         char buff[255];
         sprintf(buff,"use %s",mydb);
-        rc = SQLExecDirect(hstmt, "DROP DATABASE test_odbc_fk", SQL_NTS);
-        mystmt(hstmt, rc);
+        ok_sql(hstmt, "DROP DATABASE test_odbc_fk");
         SQLFreeStmt(hstmt, SQL_CLOSE);
-        SQLExecDirect(hstmt, buff, SQL_NTS);
+        SQLExecDirect(hstmt, (SQLCHAR *)buff, SQL_NTS);
         SQLFreeStmt(hstmt, SQL_CLOSE);
     }
 

@@ -29,27 +29,18 @@ DECLARE_TEST(my_init_table)
 {
     SQLRETURN   rc;
 
-    /* drop table 'my_demo_param' if it already exists */
-    printMessage(" creating table 'my_demo_param'\n");
-
-    rc = SQLExecDirect(hstmt,"DROP TABLE if exists my_demo_param",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "DROP TABLE if exists my_demo_param");
 
     /* commit the transaction */
     rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
     mycon(hdbc,rc);
 
     /* create the table 'my_demo_param' */
-    rc = SQLExecDirect(hstmt,"CREATE TABLE my_demo_param(\
+    ok_sql(hstmt, "CREATE TABLE my_demo_param(\
                               id   int,\
                               auto int primary key auto_increment,\
                               name varchar(20),\
-                              timestamp timestamp(14))",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    /* commit the transaction*/
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
-    mycon(hdbc,rc);
+                              timestamp timestamp(14))");
 
   return OK;
 }
@@ -62,7 +53,7 @@ DECLARE_TEST(my_param_insert)
     char        name[50];
 
     /* prepare the insert statement with parameters */
-    rc = SQLPrepare(hstmt,"INSERT INTO my_demo_param(id,name) VALUES(?,?)",SQL_NTS);
+    rc = SQLPrepare(hstmt, (SQLCHAR *)"INSERT INTO my_demo_param(id,name) VALUES(?,?)",SQL_NTS);
     mystmt(hstmt,rc);
 
     /* now supply data to parameter 1 and 2 */
@@ -98,8 +89,7 @@ DECLARE_TEST(my_param_insert)
     mycon(hdbc,rc);
 
     /* Now fetch and verify the data */
-    rc = SQLExecDirect(hstmt, "SELECT * FROM my_demo_param",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "SELECT * FROM my_demo_param");
 
     is(10 == myresult(hstmt));
 
@@ -110,12 +100,12 @@ DECLARE_TEST(my_param_insert)
 DECLARE_TEST(my_param_update)
 {
     SQLRETURN  rc;
-    SQLROWCOUNT nRowCount;
+    SQLLEN nRowCount;
     SQLINTEGER id=9;
     char name[]="update";
 
     /* prepare the insert statement with parameters */
-    rc = SQLPrepare(hstmt,"UPDATE my_demo_param set name = ? WHERE id = ?",SQL_NTS);
+    rc = SQLPrepare(hstmt, (SQLCHAR *)"UPDATE my_demo_param set name = ? WHERE id = ?",SQL_NTS);
     mystmt(hstmt,rc);
 
     /* now supply data to parameter 1 and 2 */
@@ -152,7 +142,7 @@ DECLARE_TEST(my_param_update)
     mycon(hdbc,rc);
 
     /* Now fetch and verify the data */
-    rc = SQLExecDirect(hstmt, "SELECT * FROM my_demo_param",SQL_NTS);
+    ok_sql(hstmt, "SELECT * FROM my_demo_param");
     mystmt(hstmt,rc);
 
     is(10 == myresult(hstmt));
@@ -165,7 +155,7 @@ DECLARE_TEST(my_param_delete)
 {
     SQLRETURN  rc;
     SQLINTEGER id;
-    SQLROWCOUNT nRowCount;
+    SQLLEN nRowCount;
 
     /* supply data to parameter 1 */
     rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT,
@@ -175,8 +165,7 @@ DECLARE_TEST(my_param_delete)
 
     /* execute the DELETE STATEMENT to delete 5th row  */
     id = 5;
-    rc = SQLExecDirect(hstmt,"DELETE FROM my_demo_param WHERE id = ?",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"DELETE FROM my_demo_param WHERE id = ?");
 
     /* check the rows affected by the update statement */
     rc = SQLRowCount(hstmt, &nRowCount);
@@ -194,8 +183,7 @@ DECLARE_TEST(my_param_delete)
     mystmt(hstmt,rc);
 
     id = 8;
-    rc = SQLExecDirect(hstmt,"DELETE FROM my_demo_param WHERE id = ?",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"DELETE FROM my_demo_param WHERE id = ?");
 
     /* check the rows affected by the update statement */
     rc = SQLRowCount(hstmt, &nRowCount);
@@ -216,17 +204,12 @@ DECLARE_TEST(my_param_delete)
     mycon(hdbc,rc);
 
     /* Now fetch and verify the data */
-    rc = SQLExecDirect(hstmt, "SELECT * FROM my_demo_param",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "SELECT * FROM my_demo_param");
 
     is(8 == myresult(hstmt));
 
     /* drop the table */
-    rc = SQLExecDirect(hstmt,"DROP TABLE my_demo_param",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
-    mycon(hdbc,rc);
+    ok_sql(hstmt,"DROP TABLE my_demo_param");
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
@@ -241,7 +224,7 @@ DECLARE_TEST(tmysql_fix)
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_err");
 
-    rc = tmysql_exec(hstmt,"CREATE TABLE tmysql_err (\
+  ok_sql(hstmt,"CREATE TABLE tmysql_err (\
                   td date NOT NULL default '0000-00-00',\
                   node varchar(8) NOT NULL default '',\
                   tag varchar(10) NOT NULL default '',\
@@ -250,9 +233,8 @@ DECLARE_TEST(tmysql_fix)
                   sql_err varchar(255) default NULL,\
                   prog_err varchar(100) default NULL\
                 ) TYPE=MyISAM");
-    mystmt(hstmt,rc);
 
-    rc = tmysql_exec(hstmt,"INSERT INTO tmysql_err VALUES\
+  ok_sql(hstmt,"INSERT INTO tmysql_err VALUES\
                   ('0000-00-00','0','0','0','0','0','0'),\
                   ('2001-08-29','FIX','SQLT2','ins1',\
                   NULL,NULL, 'Error.  SQL cmd %s is not terminated or too long.'),\
@@ -287,7 +269,7 @@ DECLARE_TEST(tmysql_fix)
         SQLULEN     pcbParamDef;
 
         SQLFreeStmt(hstmt,SQL_CLOSE);
-        rc = SQLPrepare(hstmt,"insert into tmysql_err (TD, NODE, TAG, SQLNAME, SQL_ERR, FIX_ERR, PROG_ERR)\
+        rc = SQLPrepare(hstmt, (SQLCHAR *)"insert into tmysql_err (TD, NODE, TAG, SQLNAME, SQL_ERR, FIX_ERR, PROG_ERR)\
                          values (?, ?, ?, ?, ?, ?, ?)",200);
         mystmt(hstmt,rc);
 

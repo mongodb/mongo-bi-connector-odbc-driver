@@ -84,7 +84,7 @@ DECLARE_TEST(t_decimal)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = SQLPrepare(hstmt,"insert into t_decimal values (?),(?),(?),(?)",SQL_NTS);
+    rc = SQLPrepare(hstmt, (SQLCHAR *)"insert into t_decimal values (?),(?),(?),(?)",SQL_NTS);
     mystmt(hstmt,rc);
 
     rc = SQLBindParameter( hstmt, 1, SQL_PARAM_INPUT, SQL_C_DOUBLE,
@@ -115,8 +115,7 @@ DECLARE_TEST(t_decimal)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = SQLExecDirect(hstmt,"select d1 from t_decimal",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "select d1 from t_decimal");
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
@@ -124,7 +123,7 @@ DECLARE_TEST(t_decimal)
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,&str,19,NULL);
     mystmt(hstmt,rc);
     fprintf(stdout,"decimal(SQL_C_DOUBLE) : %s\n",str);
-    my_assert(strncmp(str,"189.4567",8)==0);
+    is_str(str, "189.4567", 9);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
@@ -132,7 +131,7 @@ DECLARE_TEST(t_decimal)
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,&str,19,NULL);
     mystmt(hstmt,rc);
     fprintf(stdout,"decimal(SQL_C_INTEGER): %s\n",str);
-    my_assert(strncmp(str,"189.0000",5)==0);
+    is_str(str,"189.0000",9);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
@@ -140,7 +139,7 @@ DECLARE_TEST(t_decimal)
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,&str,19,NULL);
     mystmt(hstmt,rc);
     fprintf(stdout,"decimal(SQL_C_CHAR)   : %s\n",str);
-    my_assert(strncmp(str,"189.4567",8)==0);
+    is_str(str,"189.4567",9);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
@@ -148,7 +147,7 @@ DECLARE_TEST(t_decimal)
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,&str,19,NULL);
     mystmt(hstmt,rc);
     fprintf(stdout,"decimal(SQL_C_LONG)   : %s\n",str);
-    my_assert(strncmp(str,"-23.00",6)==0);
+    is_str(str, "-23.00", 7);
 
     rc = SQLFetch(hstmt);
     my_assert(rc == SQL_NO_DATA_FOUND);
@@ -307,14 +306,12 @@ DECLARE_TEST(t_enumset)
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"insert into t_enumset values('MYSQL_E2','TWO,THREE')",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "insert into t_enumset values('MYSQL_E2','TWO,THREE')");
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLPrepare(hstmt,"insert into t_enumset values(?,?)",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "insert into t_enumset values(?,?)");
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_CHAR,SQL_CHAR,0,0,&szEnum,sizeof(szEnum),NULL);
     mystmt(hstmt,rc);
@@ -646,7 +643,7 @@ DECLARE_TEST(bit)
 */
 DECLARE_TEST(t_bug32171)
 {
-  SQLUINTEGER in= 4255080020, out;
+  SQLUINTEGER in= 4255080020UL, out;
   SQLCHAR buff[128];
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug32171");
@@ -853,9 +850,9 @@ int sqlnum_test_from_str(SQLHANDLE hstmt,
 */
 DECLARE_TEST(t_sqlnum_from_str)
 {
-  SQLCHAR *num1= "25.212";
-  SQLCHAR *num2= "-101234.0010";
-  SQLCHAR *num3= "-101230.0010";
+  char *num1= "25.212";
+  char *num2= "-101234.0010";
+  char *num3= "-101230.0010";
 
   /* some basic tests including min-precision and scale changes */
   is(sqlnum_test_from_str(hstmt, num1, 5, 3, 1, NULL, 25212, 0) == OK);
@@ -924,7 +921,7 @@ DECLARE_TEST(t_bindsqlnum_basic)
   sqlnum->val[0]= 0x7c;
   sqlnum->val[1]= 0x62;
 
-  ok_stmt(hstmt, SQLPrepare(hstmt, "select ?", SQL_NTS));
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)"select ?", SQL_NTS));
 
   ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_NUMERIC,
                                   SQL_DECIMAL, 5, 3,
@@ -957,8 +954,8 @@ DECLARE_TEST(t_bindsqlnum_basic)
   @return OK/FAIL just like a test.
 */
 int sqlnum_test_to_str(SQLHANDLE hstmt, SQLCHAR *numdata, SQLCHAR prec,
-                       SQLSCHAR scale, SQLCHAR sign, SQLCHAR *outstr,
-                       SQLCHAR *exptrunc)
+                       SQLSCHAR scale, SQLCHAR sign, char *outstr,
+                       char *exptrunc)
 {
   SQL_NUMERIC_STRUCT *sqlnum= malloc(sizeof(SQL_NUMERIC_STRUCT));
   SQLCHAR obuf[30];
@@ -983,7 +980,7 @@ int sqlnum_test_to_str(SQLHANDLE hstmt, SQLCHAR *numdata, SQLCHAR prec,
   expect_stmt(hstmt, SQLFetch(hstmt), exprc);
   if (exprc != SQL_SUCCESS)
   {
-    is(check_sqlstate(hstmt, exptrunc) == OK);
+    is(check_sqlstate(hstmt, (char *)exptrunc) == OK);
   }
   if (exprc == SQL_ERROR)
     return OK;
@@ -991,7 +988,7 @@ int sqlnum_test_to_str(SQLHANDLE hstmt, SQLCHAR *numdata, SQLCHAR prec,
   is_num(sqlnum->scale, scale);
   is_num(sqlnum->sign, sign);
   ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, obuf, sizeof(obuf), NULL));
-  is_str(obuf, outstr, strlen(outstr));
+  is_str(obuf, outstr, strlen((char *)outstr));
   is(!memcmp(sqlnum->val, numdata, SQL_MAX_NUMERIC_LEN));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));

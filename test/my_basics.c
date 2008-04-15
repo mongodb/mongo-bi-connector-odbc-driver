@@ -26,7 +26,7 @@ DECLARE_TEST(my_basics)
 {
   SQLLEN nRowCount;
 
-  ok_sql(hstmt, "DROP TABLE IF EXISTS t_basic");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_basic, t_basic_2");
 
   /* create the table 'myodbc3_demo_result' */
   ok_sql(hstmt,
@@ -805,7 +805,7 @@ DECLARE_TEST(t_bug10128)
   SQLCHAR *query= (SQLCHAR *) "select 1,2,3,4";
   SQLCHAR nativesql[1000];
   SQLINTEGER nativelen;
-  SQLINTEGER querylen= (SQLINTEGER) strlen(query);
+  SQLINTEGER querylen= (SQLINTEGER) strlen((char *)query);
 
   ok_con(hdbc, SQLNativeSql(hdbc, query, SQL_NTS, NULL, 0, &nativelen));
   is_num(nativelen, querylen);
@@ -868,10 +868,13 @@ DECLARE_TEST(t_bug31959)
   SQLINTEGER i;
   SQLINTEGER levelid[] = {SQL_TXN_SERIALIZABLE, SQL_TXN_REPEATABLE_READ,
                           SQL_TXN_READ_COMMITTED, SQL_TXN_READ_UNCOMMITTED};
-  SQLCHAR *levelname[] = {"SERIALIZABLE", "REPEATABLE-READ",
-                          "READ-COMMITTED", "READ-UNCOMMITTED"};
+  SQLCHAR *levelname[] = {(SQLCHAR *)"SERIALIZABLE",
+                          (SQLCHAR *)"REPEATABLE-READ",
+                          (SQLCHAR *)"READ-COMMITTED",
+                          (SQLCHAR *)"READ-UNCOMMITTED"};
 
-  ok_stmt(hstmt, SQLPrepare(hstmt, "select @@tx_isolation", SQL_NTS));
+  ok_stmt(hstmt, SQLPrepare(hstmt,
+                            (SQLCHAR *)"select @@tx_isolation", SQL_NTS));
 
   /* check all 4 valid isolation levels */
   for(i = 3; i >= 0; --i)
@@ -881,7 +884,7 @@ DECLARE_TEST(t_bug31959)
     ok_stmt(hstmt, SQLExecute(hstmt));
     ok_stmt(hstmt, SQLFetch(hstmt));
     ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, level, 50, NULL));
-    is_str(level, levelname[i], strlen(levelname[i]));
+    is_str(level, levelname[i], strlen((char *)levelname[i]));
     printMessage("Level = %s\n", level);
     ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
   }

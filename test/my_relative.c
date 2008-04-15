@@ -311,11 +311,9 @@ DECLARE_TEST(t_relative2)
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_relative2");
 
-    rc = SQLExecDirect(hstmt,"create table t_relative2(id int)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "create table t_relative2(id int)");
 
-    rc = SQLPrepare(hstmt,"insert into t_relative2 values(?)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "insert into t_relative2 values(?)");
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT, SQL_C_ULONG,
                           SQL_INTEGER,0,0,&i,0,NULL);
@@ -340,7 +338,7 @@ DECLARE_TEST(t_relative2)
     rc = SQLSetStmtAttr(hstmt,SQL_ATTR_ROWS_FETCHED_PTR,&nrows,0);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt,"select * from t_relative2",SQL_NTS);
+    ok_sql(hstmt, "select * from t_relative2");
     mystmt(hstmt,rc);
 
     rc = SQLBindCol(hstmt,1,SQL_C_LONG,&iarray,0,NULL);
@@ -555,26 +553,14 @@ DECLARE_TEST(t_rows_fetched_ptr)
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_rows_fetched_ptr");
 
-    rc = SQLExecDirect(hstmt,"create table t_rows_fetched_ptr(a int)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt,"create table t_rows_fetched_ptr(a int)");
 
-    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(0)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(1)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(2)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(3)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(4)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(5)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt,"insert into t_rows_fetched_ptr values(0)");
+  ok_sql(hstmt,"insert into t_rows_fetched_ptr values(1)");
+  ok_sql(hstmt,"insert into t_rows_fetched_ptr values(2)");
+  ok_sql(hstmt,"insert into t_rows_fetched_ptr values(3)");
+  ok_sql(hstmt,"insert into t_rows_fetched_ptr values(4)");
+  ok_sql(hstmt,"insert into t_rows_fetched_ptr values(5)");
 
     rowsSize= 1;
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)rowsSize, 0);
@@ -583,8 +569,7 @@ DECLARE_TEST(t_rows_fetched_ptr)
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, &rowsFetched, 0);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt, "SELECT * FROM t_rows_fetched_ptr",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "SELECT * FROM t_rows_fetched_ptr");
 
     i= 0;
     rc = SQLFetchScroll(hstmt,SQL_FETCH_NEXT,0);
@@ -605,7 +590,7 @@ DECLARE_TEST(t_rows_fetched_ptr)
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, &rowsFetched, 0);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt, "SELECT * FROM t_rows_fetched_ptr",SQL_NTS);
+    ok_sql(hstmt, "SELECT * FROM t_rows_fetched_ptr");
     mystmt(hstmt,rc);
 
     i= 0;
@@ -627,7 +612,7 @@ DECLARE_TEST(t_rows_fetched_ptr)
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, &rowsFetched, 0);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt, "SELECT * FROM t_rows_fetched_ptr",SQL_NTS);
+    ok_sql(hstmt, "SELECT * FROM t_rows_fetched_ptr");
     mystmt(hstmt,rc);
 
     i= 0;
@@ -649,7 +634,7 @@ DECLARE_TEST(t_rows_fetched_ptr)
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, &rowsFetched, 0);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt, "SELECT * FROM t_rows_fetched_ptr",SQL_NTS);
+    ok_sql(hstmt, "SELECT * FROM t_rows_fetched_ptr");
     mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
@@ -689,26 +674,13 @@ DECLARE_TEST(t_rows_fetched_ptr1)
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_rows_fetched_ptr");
 
-    rc = SQLExecDirect(hstmt,"create table t_rows_fetched_ptr(a int)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(0)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(1)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(2)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(3)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(4)",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into t_rows_fetched_ptr values(5)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "create table t_rows_fetched_ptr(a int)");
+  ok_sql(hstmt, "insert into t_rows_fetched_ptr values(0)");
+  ok_sql(hstmt, "insert into t_rows_fetched_ptr values(1)");
+  ok_sql(hstmt, "insert into t_rows_fetched_ptr values(2)");
+  ok_sql(hstmt, "insert into t_rows_fetched_ptr values(3)");
+  ok_sql(hstmt, "insert into t_rows_fetched_ptr values(4)");
+  ok_sql(hstmt, "insert into t_rows_fetched_ptr values(5)");
 
     rowsSize= 1;
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE, (SQLPOINTER)rowsSize, 0);
@@ -717,7 +689,7 @@ DECLARE_TEST(t_rows_fetched_ptr1)
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, &rowsFetched, 0);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt, "SELECT * FROM t_rows_fetched_ptr",SQL_NTS);
+    ok_sql(hstmt, "SELECT * FROM t_rows_fetched_ptr");
     mystmt(hstmt,rc);
 
     i= 0;
@@ -739,7 +711,7 @@ DECLARE_TEST(t_rows_fetched_ptr1)
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, &rowsFetched, 0);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt, "SELECT * FROM t_rows_fetched_ptr",SQL_NTS);
+    ok_sql(hstmt, "SELECT * FROM t_rows_fetched_ptr");
     mystmt(hstmt,rc);
 
     i= 0;
@@ -761,7 +733,7 @@ DECLARE_TEST(t_rows_fetched_ptr1)
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, &rowsFetched, 0);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt, "SELECT * FROM t_rows_fetched_ptr",SQL_NTS);
+    ok_sql(hstmt, "SELECT * FROM t_rows_fetched_ptr");
     mystmt(hstmt,rc);
 
     i= 0;
@@ -783,7 +755,7 @@ DECLARE_TEST(t_rows_fetched_ptr1)
     rc = SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR, &rowsFetched, 0);
     mystmt(hstmt,rc);
 
-    rc = SQLExecDirect(hstmt, "SELECT * FROM t_rows_fetched_ptr",SQL_NTS);
+    ok_sql(hstmt, "SELECT * FROM t_rows_fetched_ptr");
     mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);

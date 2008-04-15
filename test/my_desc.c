@@ -401,7 +401,7 @@ DECLARE_TEST(t_mult_stmt_free)
   for (i= 0; i < mult_count; ++i)
   {
     exp_param= 200 + i;
-    ok_stmt(stmt[i], SQLExecDirect(stmt[i], "select ?", SQL_NTS));
+    ok_stmt(stmt[i], SQLExecDirect(stmt[i], (SQLCHAR *)"select ?", SQL_NTS));
     ok_stmt(stmt[i], SQLFetch(stmt[i]));
     is_num(exp_result, exp_param);
     ok_stmt(stmt[i], SQLFreeStmt(stmt[i], SQL_CLOSE));
@@ -425,7 +425,7 @@ DECLARE_TEST(t_mult_stmt_free)
   /* check that the original values worked */
   for (i= 0; i < mult_count; ++i)
   {
-    ok_stmt(stmt[i], SQLExecDirect(stmt[i], "select ?", SQL_NTS));
+    ok_stmt(stmt[i], SQLExecDirect(stmt[i], (SQLCHAR *)"select ?", SQL_NTS));
     ok_stmt(stmt[i], SQLFetch(stmt[i]));
     ok_stmt(stmt[i], SQLFreeStmt(stmt[i], SQL_CLOSE));
   }

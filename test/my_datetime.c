@@ -145,7 +145,7 @@ DECLARE_TEST(t_tstotime)
     mystmt(hstmt,rc);
 
     /* TIMESTAMP TO DATE, TIME and TS CONVERSION */
-    rc = SQLPrepare(hstmt,"insert into t_tstotime(col1,col2,col3) values(?,?,?)",SQL_NTS);
+    rc = SQLPrepare(hstmt, (SQLCHAR *)"insert into t_tstotime(col1,col2,col3) values(?,?,?)",SQL_NTS);
     mystmt(hstmt,rc);   
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
@@ -202,7 +202,7 @@ DECLARE_TEST(t_tstotime1)
 
   /* TIMESTAMP TO DATE, TIME and TS CONVERSION */
   ok_stmt(hstmt, SQLPrepare(hstmt,
-                            "INSERT INTO t_tstotime1  VALUES (?,?,?)",
+                            (SQLCHAR *)"INSERT INTO t_tstotime1 VALUES (?,?,?)",
                             SQL_NTS));
 
   ok_stmt(hstmt, SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_CHAR,
@@ -290,8 +290,9 @@ DECLARE_TEST(t_time)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = SQLPrepare(hstmt,"insert into t_time values (?,?)",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLPrepare(hstmt,
+                              (SQLCHAR *)"insert into t_time values (?,?)",
+                              SQL_NTS));
 
     rc = SQLBindParameter( hstmt, 1, SQL_PARAM_INPUT, SQL_C_TIME,
                            SQL_TIME, 0, 0, &tm, 0, NULL );
@@ -317,16 +318,14 @@ DECLARE_TEST(t_time)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = SQLExecDirect(hstmt,"select tm from t_time",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "select tm from t_time");
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,&str,100,NULL);
     mystmt(hstmt,rc);
-    fprintf(stdout,"time:%s\n",str);
-    my_assert(strcmp(str,"20:59:45")==0);
+    is_str(str, "20:59:45", 9);
 
     rc = SQLFetch(hstmt);
     my_assert(rc == SQL_NO_DATA_FOUND);
@@ -352,11 +351,11 @@ DECLARE_TEST(t_time1)
   SQLLEN          length;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_time");
-    rc = SQLExecDirect(hstmt,"create table t_time(t time, t1 timestamp, t2 datetime, t3 date)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_sql(hstmt, "create table t_time(t time, t1 timestamp, t2 datetime, t3 date)");
 
-    rc = SQLPrepare(hstmt,"insert into t_time(t) values(?)",SQL_NTS);
-    mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLPrepare(hstmt,
+                            (SQLCHAR *)"insert into t_time(t) values(?)",
+                            SQL_NTS));
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_TYPE_TIME,
                           SQL_TIME,0,0,&tt,0,NULL);
@@ -435,99 +434,87 @@ DECLARE_TEST(t_time1)
     SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
     SQLFreeStmt(hstmt, SQL_CLOSE);
 
-    rc = SQLExecDirect(hstmt,"select t from t_time",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "select t from t_time");
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     rc = SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
     mystmt(hstmt,rc);
-    fprintf(stdout,"time: %s(%d)\n", data, length);
-    myassert(strcmp(data,"00:00:03")==0);
-    myassert(length == 8);
+    is_num(length, 8);
+    is_str(data, "00:00:03", 9);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     rc = SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
     mystmt(hstmt,rc);
-    fprintf(stdout,"time: %s(%d)\n", data, length);
-    myassert(strcmp(data,"01:00:00")==0);
-    myassert(length == 8);
+    is_num(length, 8);
+    is_str(data, "01:00:00", 9);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     rc = SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
     mystmt(hstmt,rc);
-    fprintf(stdout,"time: %s(%d)\n", data, length);
-    myassert(strcmp(data,"19:00:00")==0);
-    myassert(length == 8);
+    is_num(length, 8);
+    is_str(data, "19:00:00", 9);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     rc = SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
     mystmt(hstmt,rc);
-    fprintf(stdout,"time: %s(%d)\n", data, length);
-    myassert(strcmp(data,"01:01:00")==0);
-    myassert(length == 8);
+    is_num(length, 8);
+    is_str(data, "01:01:00", 9);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     rc = SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
     mystmt(hstmt,rc);
-    fprintf(stdout,"time: %s(%d)\n", data, length);
-    myassert(strcmp(data,"01:00:01")==0);
-    myassert(length == 8);
+    is_num(length, 8);
+    is_str(data, "01:00:01", 9);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     rc = SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
     mystmt(hstmt,rc);
-    fprintf(stdout,"time: %s(%d)\n", data, length);
-    myassert(strcmp(data,"00:01:00")==0);
-    myassert(length == 8);
+    is_num(length, 8);
+    is_str(data, "00:01:00", 9);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     rc = SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
     mystmt(hstmt,rc);
-    fprintf(stdout,"time: %s(%d)\n", data, length);
-    myassert(strcmp(data,"00:11:12")==0);
-    myassert(length == 8);
+    is_num(length, 8);
+    is_str(data, "00:11:12", 9);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     rc = SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
     mystmt(hstmt,rc);
-    fprintf(stdout,"time: %s(%d)\n", data, length);
-    myassert(strcmp(data,"01:01:01")==0);
-    myassert(length == 8);
+    is_num(length, 8);
+    is_str(data, "01:01:01", 9);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     rc = SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
     mystmt(hstmt,rc);
-    fprintf(stdout,"time: %s(%d)\n", data, length);
-
-    myassert(strcmp(data,"00:00:00")==0);
-    myassert(length == 8);
+    is_num(length, 8);
+    is_str(data, "00:00:00", 9);
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     rc = SQLGetData(hstmt, 1, SQL_C_CHAR, data, sizeof(data), &length);
     mystmt(hstmt,rc);
-    fprintf(stdout,"time: %s(%d)\n", data, length);
-    myassert(strcmp(data,"10:11:12")==0);
-    myassert(length == 8);
+    is_num(length, 8);
+    is_str(data, "10:11:12", 9);
 
     rc = SQLFetch(hstmt);
     myassert(rc == SQL_NO_DATA);
@@ -535,24 +522,19 @@ DECLARE_TEST(t_time1)
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
 
-    rc = SQLExecDirect(hstmt,"delete from t_time",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"delete from t_time");
 
-    rc = SQLExecDirect(hstmt,"insert into t_time(t1) values('2003-05-12 10:11:12')",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "insert into t_time(t1) values('2003-05-12 10:11:12')");
 
-    rc = SQLExecDirect(hstmt,"select t1 from t_time", SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt, "select t1 from t_time");
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     rc = SQLGetData(hstmt, 1, SQL_C_TIME, &tt, sizeof(tt), &length);
     mystmt(hstmt,rc);
-    fprintf(stdout,"time: %d:%d:%d(%d)\n", tt.hour, tt.minute, tt.second, length);
-
-    myassert(tt.hour == 10 && tt.minute == 11 && tt.second == 12);
-    myassert(length == sizeof(SQL_TIME_STRUCT));
+    is(tt.hour == 10 && tt.minute == 11 && tt.second == 12);
+    is(length == sizeof(SQL_TIME_STRUCT));
 
     rc = SQLFetch(hstmt);
     myassert(rc == SQL_NO_DATA);
@@ -560,23 +542,17 @@ DECLARE_TEST(t_time1)
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
 
-    rc = SQLExecDirect(hstmt,"delete from t_time",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"insert into t_time(t2) values('03-12-28 05:59:59')",SQL_NTS);
-    mystmt(hstmt,rc);
-
-    rc = SQLExecDirect(hstmt,"select t2 from t_time", SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"delete from t_time");
+    ok_sql(hstmt,"insert into t_time(t2) values('03-12-28 05:59:59')");
+    ok_sql(hstmt,"select t2 from t_time");
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     rc = SQLGetData(hstmt, 1, SQL_C_TIME, &tt, sizeof(tt), &length);
     mystmt(hstmt,rc);
-    fprintf(stdout,"time: %d:%d:%d(%d)\n", tt.hour, tt.minute, tt.second, length);
-    myassert(tt.hour == 05 && tt.minute == 59 && tt.second == 59);
-    myassert(length == sizeof(SQL_TIME_STRUCT));
+    is(tt.hour == 05 && tt.minute == 59 && tt.second == 59);
+    is(length == sizeof(SQL_TIME_STRUCT));
 
     rc = SQLFetch(hstmt);
     myassert(rc == SQL_NO_DATA);
@@ -584,23 +560,19 @@ DECLARE_TEST(t_time1)
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
 
-    rc = SQLExecDirect(hstmt,"delete from t_time",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"delete from t_time");
 
-    rc = SQLExecDirect(hstmt,"insert into t_time(t3) values('2003-05-12 10:11:12')",SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"insert into t_time(t3) values('2003-05-12 10:11:12')");
 
-    rc = SQLExecDirect(hstmt,"select t3 from t_time", SQL_NTS);
-    mystmt(hstmt,rc);
+    ok_sql(hstmt,"select t3 from t_time");
 
     rc = SQLFetch(hstmt);
     mystmt(hstmt,rc);
 
     rc = SQLGetData(hstmt, 1, SQL_C_TIME, &tt, sizeof(tt), &length);
     mystmt(hstmt,rc);
-    fprintf(stdout,"time: %d:%d:%d(%d)\n", tt.hour, tt.minute, tt.second, length);
-    myassert(tt.hour == 00 || tt.minute == 00 || tt.second == 00);
-    myassert(length == sizeof(SQL_TIME_STRUCT));
+    is(tt.hour == 00 || tt.minute == 00 || tt.second == 00);
+    is(length == sizeof(SQL_TIME_STRUCT));
 
     rc = SQLFetch(hstmt);
     myassert(rc == SQL_NO_DATA);
