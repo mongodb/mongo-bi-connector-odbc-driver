@@ -178,7 +178,8 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
   if (ds->initstmt && ds->initstmt[0])
   {
     /* Check for SET NAMES */
-    if (is_set_names_statement(ds_get_utf8attr(ds->initstmt, &ds->initstmt8)))
+    if (is_set_names_statement((SQLCHAR *)ds_get_utf8attr(ds->initstmt,
+                                                          &ds->initstmt8)))
     {
       return set_dbc_error(dbc, "HY000",
                            "SET NAMES not allowed by driver", 0);

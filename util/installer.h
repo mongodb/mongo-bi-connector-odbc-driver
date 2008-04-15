@@ -131,7 +131,7 @@ typedef struct {
   /* debug */
   BOOL save_queries;
   /* SSL */
-  BOOL sslverify;
+  unsigned int sslverify;
 } DataSource;
 
 DataSource *ds_new();
@@ -145,7 +145,7 @@ int ds_to_kvpair(DataSource *ds, SQLWCHAR *attrs, size_t attrslen,
 size_t ds_to_kvpair_len(DataSource *ds);
 int ds_add(DataSource *ds);
 int ds_exists(SQLWCHAR *name);
-SQLCHAR *ds_get_utf8attr(SQLWCHAR *attrw, SQLCHAR **attr8);
+char *ds_get_utf8attr(SQLWCHAR *attrw, SQLCHAR **attr8);
 int ds_setattr_from_utf8(SQLWCHAR **attr, SQLCHAR *val8);
 
 extern const SQLWCHAR W_DRIVER_PARAM[];

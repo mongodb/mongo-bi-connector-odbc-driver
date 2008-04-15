@@ -985,14 +985,14 @@ int ds_exists(SQLWCHAR *name)
  * Get a copy of an attribute in UTF-8. You can use the attr8 style
  * pointer and it will be freed when the data source is deleted.
  *
- * ex. SQLCHAR *username= ds_get_utf8attr(ds->uid, &ds->uid8);
+ * ex. char *username= ds_get_utf8attr(ds->uid, &ds->uid8);
  */
-SQLCHAR *ds_get_utf8attr(SQLWCHAR *attrw, SQLCHAR **attr8)
+char *ds_get_utf8attr(SQLWCHAR *attrw, SQLCHAR **attr8)
 {
   SQLINTEGER len= SQL_NTS;
   x_free(*attr8);
   *attr8= sqlwchar_as_utf8(attrw, &len);
-  return *attr8;
+  return (char *)*attr8;
 }
 
 

@@ -142,14 +142,14 @@ void desc_rec_init_ipd(DESCREC *rec)
   memset(rec, 0, sizeof(DESCREC));
   /* ODBC defaults */
   rec->fixed_prec_scale= SQL_TRUE;
-  rec->local_type_name= "";
+  rec->local_type_name= (SQLCHAR *)"";
   rec->nullable= SQL_NULLABLE;
   rec->parameter_type= SQL_PARAM_INPUT;
-  rec->type_name= "VARCHAR";
+  rec->type_name= (SQLCHAR *)"VARCHAR";
   rec->is_unsigned= SQL_FALSE;
 
   /* driver defaults */
-  rec->name= "";
+  rec->name= (SQLCHAR *)"";
 }
 
 
@@ -184,7 +184,7 @@ void desc_rec_init_ird(DESCREC *rec)
   rec->length= 100;/*?*/
   rec->nullable= SQL_NULLABLE_UNKNOWN;
   rec->type= SQL_VARCHAR;
-  rec->type_name= "VARCHAR";
+  rec->type_name= (SQLCHAR *)"VARCHAR";
   rec->unnamed= SQL_UNNAMED;
   rec->is_unsigned= SQL_FALSE;
 }

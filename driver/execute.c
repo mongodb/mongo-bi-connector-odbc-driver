@@ -477,7 +477,8 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESCREC *aprec, DESCREC *iprec,
             {
               int trunc;
               SQL_NUMERIC_STRUCT *sqlnum= (SQL_NUMERIC_STRUCT *) data;
-              sqlnum_to_str(sqlnum, buff + sizeof(buff) - 1, (SQLCHAR **) &data,
+              sqlnum_to_str(sqlnum, (SQLCHAR *)(buff + sizeof(buff) - 1),
+                            (SQLCHAR **) &data,
                             (SQLCHAR) iprec->precision,
                             (SQLSCHAR) iprec->scale, &trunc);
               length= strlen(data);
@@ -679,7 +680,7 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
         return set_error(pStmt, MYERR_S1010,
                          "No previous SQLPrepare done", 0);
 
-    if (is_set_names_statement(pStmt->query))
+    if (is_set_names_statement((SQLCHAR *)pStmt->query))
       return set_error(pStmt, MYERR_42000,
                        "SET NAMES not allowed by driver", 0);
 

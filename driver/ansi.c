@@ -345,7 +345,7 @@ SQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd, SQLCHAR *in, SQLSMALLINT in_len,
   SQLSMALLINT outw_max, dummy_out;
 
   if (in_len == SQL_NTS)
-    in_len= strlen(in);
+    in_len= strlen((char *)in);
   if (!out_len)
     out_len= &dummy_out;
 

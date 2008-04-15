@@ -471,13 +471,13 @@ static SQLRETURN exec_stmt_query(STMT FAR *stmt,char *query,
 */
 
 static SQLRETURN copy_field_data(STMT FAR *stmt, DESCREC *aprec,
-                                 DESCREC *iprec, NET **net, SQLCHAR **to)
+                                 DESCREC *iprec, NET **net, unsigned char **to)
 {
     SQLRETURN rc;
     if (!(SQL_SUCCEEDED(rc= insert_param(stmt, (char**) to, aprec, iprec, 0))))
         return rc;
 
-    if (!(*to= add_to_buffer(*net, *to, " AND ", 5)))
+    if (!(*to= (unsigned char *)add_to_buffer(*net, (char *)*to, " AND ", 5)))
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
     return SQL_SUCCESS;
@@ -498,7 +498,7 @@ static my_bool insert_field(STMT FAR *stmt, MYSQL_RES *result,
     MYSQL_FIELD *field= mysql_fetch_field_direct(result,nSrcCol);
     MYSQL_ROW   row_data= result->data_cursor->data + nSrcCol;
     NET         *net=&stmt->dbc->mysql.net;
-    SQLCHAR     *to= net->buff;
+    unsigned char *to= net->buff;
     SQLLEN      length;
 
     desc_rec_init_apd(aprec);

@@ -145,7 +145,7 @@ then
   if test -f $mysql_path/libmysql_r/libmysqlclient_r.la
   then
     building_against_source="true"
-    CFLAGS="-I$mysql_path/include"
+    CFLAGS="$CFLAGS -I$mysql_path/include"
     MYSQL_LIB="$mysql_path/libmysql_r/libmysqlclient_r.la"
   else
     mysql_config="$mysql_path/bin/mysql_config"
@@ -216,14 +216,18 @@ AC_ARG_WITH(iODBC,
             [  --with-iODBC[=DIR]        Use iODBC located in DIR],
             [
               dm_type="iODBC"
-              dm_prefix="$withval"
+              if test "x$withval" != "xyes"; then
+                dm_prefix="$withval"
+              fi
             ])
 
 AC_ARG_WITH(unixODBC,
             [  --with-unixODBC[=DIR]     Use unixODBC located in DIR],
             [
               dm_type="unixODBC"
-              dm_prefix="$withval"
+              if test "x$withval" != "xyes"; then
+                dm_prefix="$withval"
+              fi
             ])
 
 if test "x$dm_type" = "x"
@@ -429,7 +433,7 @@ AM_CONDITIONAL(WITH_DEBUG, test "x$with_debug" != xno)
 
 if test "$with_debug" = "yes" || test "$with_debug" = "full"
 then
- CFLAGS="$DEBUG_CFLAGS -DDBUG_ON $CFLAGS"
+  CFLAGS="$DEBUG_CFLAGS -DDBUG_ON $CFLAGS"
 else
   # Optimized version. No debug
   CFLAGS="$OPTIMIZE_CFLAGS -DDBUG_OFF $CFLAGS"

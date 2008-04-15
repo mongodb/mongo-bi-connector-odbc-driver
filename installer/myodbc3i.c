@@ -155,7 +155,7 @@ void print_installer_error()
 {
   int msgno;
   DWORD errcode;
-  SQLCHAR errmsg[256];
+  char errmsg[256];
   for(msgno= 1; msgno < 9; ++msgno)
   {
     if (SQLInstallerError(msgno, &errcode, errmsg, 256, NULL) != SQL_SUCCESS)
@@ -170,8 +170,8 @@ void print_installer_error()
  */
 void print_odbc_error(SQLHANDLE hnd, SQLSMALLINT type)
 {
-  char sqlstate[20];
-  char errmsg[1000];
+  SQLCHAR sqlstate[20];
+  SQLCHAR errmsg[1000];
   SQLINTEGER nativeerr;
 
   fprintf(stderr, "[ERROR] ODBC error");
@@ -220,8 +220,8 @@ int list_driver_details(Driver *driver)
  */
 int list_drivers()
 {
-  SQLCHAR buf[50000];
-  SQLCHAR *drivers= buf;
+  char buf[50000];
+  char *drivers= buf;
 
   if (!SQLGetInstalledDrivers(buf, 50000, NULL))
   {
@@ -706,7 +706,7 @@ int main(int argc, char **argv)
   /* convert to SQLWCHAR for installer API */
   convlen= SQL_NTS;
   if (name && !(wname= sqlchar_as_sqlwchar(default_charset_info,
-                                           name, &convlen, NULL)))
+                                           (SQLCHAR *)name, &convlen, NULL)))
   {
     fprintf(stderr, "[ERROR] Name is invalid\n");
     return 1;
@@ -714,7 +714,8 @@ int main(int argc, char **argv)
 
   convlen= SQL_NTS;
   if (attrstr && !(wattrs= sqlchar_as_sqlwchar(default_charset_info,
-                                               attrstr, &convlen, NULL)))
+                                               (SQLCHAR *)attrstr, &convlen,
+                                               NULL)))
   {
     fprintf(stderr, "[ERROR] Attribute string is invalid\n");
     return 1;

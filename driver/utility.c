@@ -97,7 +97,8 @@ void fix_result_types(STMT *stmt)
 
     irrec->row.field= field;
     irrec->type= get_sql_data_type(stmt, field, NULL);
-    irrec->concise_type= get_sql_data_type(stmt, field, irrec->row.type_name);
+    irrec->concise_type= get_sql_data_type(stmt, field,
+                                           (char *)irrec->row.type_name);
     switch (irrec->concise_type)
     {
     case SQL_DATE:
@@ -145,24 +146,24 @@ void fix_result_types(STMT *stmt)
       irrec->nullable= SQL_NO_NULLS;
     else
       irrec->nullable= SQL_NULLABLE;
-    irrec->table_name= field->table;
-    irrec->name= field->name;
-    irrec->label= field->name;
+    irrec->table_name= (SQLCHAR *)field->table;
+    irrec->name= (SQLCHAR *)field->name;
+    irrec->label= (SQLCHAR *)field->name;
     if (field->flags & AUTO_INCREMENT_FLAG)
       irrec->auto_unique_value= SQL_TRUE;
     else
       irrec->auto_unique_value= SQL_FALSE;
     /* We need support from server, when aliasing is there */
-    irrec->base_column_name= field->org_name;
-    irrec->base_table_name= field->org_table;
+    irrec->base_column_name= (SQLCHAR *)field->org_name;
+    irrec->base_table_name= (SQLCHAR *)field->org_table;
     if (field->flags & BINARY_FLAG) /* TODO this doesn't cut it anymore */
       irrec->case_sensitive= SQL_TRUE;
     else
       irrec->case_sensitive= SQL_FALSE;
     if (field->db && *field->db)
-        irrec->catalog_name= field->db;
+        irrec->catalog_name= (SQLCHAR *)field->db;
     else
-        irrec->catalog_name= stmt->dbc->database;
+        irrec->catalog_name= (SQLCHAR *)stmt->dbc->database;
     irrec->fixed_prec_scale= SQL_FALSE;
     switch (field->type)
     {
@@ -2576,7 +2577,7 @@ void sqlnum_to_str(SQL_NUMERIC_STRUCT *sqlnum, SQLCHAR *numstr,
   /* handle fractional truncation */
   if (calcprec > reqprec && reqscale > 0)
   {
-    char *end= numstr + strlen(numstr) - 1;
+    SQLCHAR *end= numstr + strlen((char *)numstr) - 1;
     while (calcprec > reqprec && reqscale)
     {
       *end--= 0;

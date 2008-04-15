@@ -596,7 +596,8 @@ MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
 
   if ((stmt->dbc->flag & FLAG_FULL_COLUMN_NAMES) && irrec->table_name)
   {
-    char *tmp= my_malloc(strlen(irrec->name) + strlen(irrec->table_name) + 2,
+    char *tmp= my_malloc(strlen((char *)irrec->name) +
+                         strlen((char *)irrec->table_name) + 2,
                          MYF(0));
     if (!tmp)
     {
@@ -605,7 +606,7 @@ MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
     }
     else
     {
-      strxmov(tmp, irrec->table_name, ".", irrec->name, NullS);
+      strxmov(tmp, (char *)irrec->table_name, ".", (char *)irrec->name, NullS);
       *name= (SQLCHAR *)tmp;
       *need_free= 1;
     }

@@ -166,7 +166,7 @@ SQLRETURN my_SQLPrepare(SQLHSTMT hstmt, SQLCHAR *szSqlStr, SQLINTEGER cbSqlStr,
         DESCREC *aprec= desc_get_rec(stmt->apd, param_count, TRUE);
         DESCREC *iprec= desc_get_rec(stmt->ipd, param_count, TRUE);
         if (aprec == NULL || iprec == NULL ||
-            set_dynamic(&stmt->param_pos, (char *)&pos, param_count))
+            set_dynamic(&stmt->param_pos, (SQLCHAR *)&pos, param_count))
           return set_error(stmt, MYERR_S1001, NULL, 4001);
         param_count++;
       }
