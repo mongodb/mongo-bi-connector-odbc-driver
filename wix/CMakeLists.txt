@@ -66,13 +66,16 @@ IF(WIN32)
      WRITE_FILE("myodbc_version.xml" "<?define license=\"commercial\" ?>" APPEND)
   ELSE(${LICENSE})
      WRITE_FILE("myodbc_version.xml" "<?define license=\"community\" ?>" APPEND)
-  ELSE(${LICENSE})
   ENDIF(${LICENSE})
   WRITE_FILE("myodbc_version.xml" "</Include>" APPEND)
   # --------------------------------------------------
   INCLUDE(${CMAKE_SOURCE_DIR}/myodbc_version.cmake)
 
-  SET(MSI_PACKAGE "mysql-connector-odbc-${ODBC_VERSION}-${MSI_VERSION}.msi")
+  IF(${LICENSE})
+    SET(MSI_PACKAGE "mysql-connector-odbc-commercial-${ODBC_VERSION}-${MSI_VERSION}.msi")
+  ELSE(${LICENSE})
+    SET(MSI_PACKAGE "mysql-connector-odbc-${ODBC_VERSION}-${MSI_VERSION}.msi")
+  ENDIF(${LICENSE})
 
 ENDIF(WIN32)
 #-----------------------------------------------------
