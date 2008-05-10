@@ -6,7 +6,7 @@
 </head>
 <body>
 
-<font face="Arial,Helvetica">
+<font face="Helvetica">
 
 <table border=0 cellspacing=5 cellpadding=0 width="100%">
   <tr>
@@ -15,7 +15,7 @@
     </td>
     <td>
       <b>
-	MySQL Connctor/ODBC
+	MySQL Connector/ODBC
 	<br>
 	@VERSION@
       </b>
@@ -24,16 +24,11 @@
 </table>
 
 <p>
-  This is the installer for the MySQL Connector/ODBC.
-  MySQL Connector/ODBC allows your ODBC enabled applications to work with
-  MySQL servers.
+  This is the installer for MySQL Connector/ODBC, which allows applications
+  to work with MySQL servers by using the cross-platform, database-agnostic
+  ODBC interface.
 </p>
  
-<p>
-  MySQL Connector/ODBC also allows software developers to create data access
-  code which is portable across platforms and across databases. 
-</p>
-
 <br>
 
 <p>

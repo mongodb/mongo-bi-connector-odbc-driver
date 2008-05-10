@@ -6,7 +6,7 @@
 </head>
 <body>
 
-<font face="Arial,Helvetica">
+<font face="Helvetica">
 
 <table border=0 cellspacing=5 cellpadding=0 width="100%">
   <tr>
@@ -30,12 +30,12 @@
 <p>
   This package does not require anything special to be installed
   on your machine - not even other MySQL software. Mac OS X 10.4
-  and up comes bundled with an ODBC manager, iODBC.
+  and later include the iODBC driver manager.
 </p>
 
 <p>
-  Once this install is complete you can use the following program
-  to help manage your ODBC connections;
+  When the installation is complete you can use the following program
+  to help manage your ODBC connections:
 </p>
 
 <pre>
@@ -43,11 +43,11 @@
 </pre>
 
 <p>
-  The purpose of this install is to;
+  This installer will:
   <ol>
     <li>Copy the ODBC driver and setup libraries to <code>/usr/local/lib/</code>.</li>
     <li>Copy command-line utilities to <code>/usr/local/bin/</code>.</li>
-    <li>Register the driver and setup libraries with ODBC.</li>
+    <li>Register the driver and setup libraries with the iODBC driver manager.</li>
   </ol>
 </p>
 
