@@ -1269,6 +1269,46 @@ DECLARE_TEST(t_bug12805)
 }
 
 
+/**
+ Bug #30770: Access Violation in myodbc3.dll
+*/
+DECLARE_TEST(t_bug30770)
+{
+  SQLCHAR    buff[512];
+  SQLHENV    henv1;
+  SQLHDBC    hdbc1;
+  SQLHSTMT   hstmt1;
+  SQLCHAR    conn[MAX_NAME_LEN];
+
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS bug30770");
+  ok_sql(hstmt, "CREATE TABLE bug30770 (a INT)");
+
+  /* Connect with no default daabase */
+  sprintf((char *)conn, "DRIVER=%s;SERVER=%s;" \
+                        "UID=%s;PASSWORD=%s", mydriver, myserver, myuid, mypwd);
+  is(mydrvconnect(&henv1, &hdbc1, &hstmt1, conn) == OK);
+
+  sprintf((char *)buff, "USE %s;", mydb);
+  ok_stmt(hstmt1, SQLExecDirect(hstmt1, buff, SQL_NTS));
+
+  /* Get the info from just one table.  */
+  ok_stmt(hstmt1, SQLColumns(hstmt1, NULL, SQL_NTS, NULL, SQL_NTS, "bug30770",
+                            SQL_NTS, NULL, 0));
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+
+  is_str(my_fetch_str(hstmt1, buff, 3), "bug30770", 9);
+  is_str(my_fetch_str(hstmt1, buff, 4), "a", 1);
+
+  expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  ok_sql(hstmt, "DROP TABLE bug30770");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -1295,6 +1335,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug32989)
   ADD_TEST(t_bug33298)
   ADD_TEST(t_bug12805)
+  ADD_TEST(t_bug30770)
 END_TESTS
 
 
