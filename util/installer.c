@@ -615,11 +615,16 @@ int ds_lookup(DataSource *ds)
   SQLWCHAR *entries= buf;
   SQLWCHAR **dest;
   SQLWCHAR val[256];
-  int size;
+  int size, used;
   int rc= 0;
   UWORD config_mode= config_get();
   unsigned int *intdest;
   /* No need for SAVE_MODE() because we always call config_get() above. */
+
+#ifdef _WIN32
+  /* We must do this to detect the WinXP bug mentioned below */
+  memset(buf, 0xff, sizeof(buf));
+#endif
 
   /* get entries and check if data source exists */
   if ((size= SQLGetPrivateProfileStringW(ds->name, NULL, W_EMPTY,
@@ -635,8 +640,15 @@ int ds_lookup(DataSource *ds)
 #ifdef DEBUG_MYODBC_DS_LOOKUP
   {
   int i;
+  char dbuf[100];
+  OutputDebugString("Dumping SQLGetPrivateProfileStringW result");
   for (i= 0; i < size; ++i)
-    printf("%wc - 0x%x\n", entries[i], entries[i]);
+  {
+    sprintf(dbuf, "[%d] = %wc - 0x%x\n", i,
+            (entries[i] < 0x7f && isalpha(entries[i]) ? entries[i] : 'X'),
+            entries[i]);
+    OutputDebugString(dbuf);
+  }
   }
 #endif
 
@@ -648,6 +660,7 @@ int ds_lookup(DataSource *ds)
    * system dsn but return a corrupt list of attributes. 
    *
    * See debug code above to print the exact data returned.
+   * See also: http://support.microsoft.com/kb/909122/
    */
   if (config_mode == ODBC_BOTH_DSN &&
       /* two null chars or a null and some bogus character */
@@ -657,12 +670,17 @@ int ds_lookup(DataSource *ds)
   {
     /* revert to system mode and try again */
     config_set(ODBC_SYSTEM_DSN);
-    SQLGetPrivateProfileStringW(ds->name, NULL, W_EMPTY,
-                                buf, 8192, W_ODBC_INI);
+    if ((size= SQLGetPrivateProfileStringW(ds->name, NULL, W_EMPTY,
+                                           buf, 8192, W_ODBC_INI)) < 1)
+    {
+      rc= -1;
+      goto end;
+    }
   }
 #endif
 
-  while (*entries)
+  for (used= 0; used < size; used += sqlwcharlen(entries) + 1,
+                             entries += sqlwcharlen(entries) + 1)
   {
     ds_map_param(ds, entries, &dest, &intdest);
 
@@ -677,13 +695,11 @@ int ds_lookup(DataSource *ds)
     else if (!size)
       /* skip blanks */;
     else if (dest && !*dest)
-      ds_set_strattr(dest, val);
+      ds_set_strnattr(dest, val, size);
     else if (intdest)
       *intdest= sqlwchartoul(val, NULL);
 
     RESTORE_MODE();
-
-    entries += sqlwcharlen(entries) + 1;
   }
 
 end:

@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * System DSN lookup (using ODBC_BOTH_DSN) fails on Windows XP.
+    (Bug #36203)
 
 ----
 
