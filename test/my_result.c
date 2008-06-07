@@ -2366,6 +2366,27 @@ DECLARE_TEST(t_bug34575)
 }
 
 
+/*
+  Bug #36069 - SQLProcedures followed by a SQLFreeStmt causes a crash
+ */
+DECLARE_TEST(t_bug36069)
+{
+  SQLSMALLINT size;
+
+  ok_stmt(hstmt, SQLProcedures(hstmt, NULL, 0, NULL, 0,
+                               "non-existing", SQL_NTS));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
+  ok_stmt(hstmt, SQLNumResultCols(hstmt, &size));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, "select ?", SQL_NTS));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
+  ok_stmt(hstmt, SQLNumResultCols(hstmt, &size));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -2401,6 +2422,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug34429)
   ADD_TEST(t_bug32420)
   ADD_TEST(t_bug34575)
+  ADD_TEST(t_bug36069)
 END_TESTS
 
 

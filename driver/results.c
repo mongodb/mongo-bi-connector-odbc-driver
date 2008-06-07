@@ -505,7 +505,7 @@ SQLRETURN do_dummy_parambind(SQLHSTMT hstmt)
 
     for ( nparam= 0; nparam < stmt->param_count; nparam++ )
     {
-        DESCREC *aprec= desc_get_rec(stmt->apd, nparam, FALSE);
+        DESCREC *aprec= desc_get_rec(stmt->apd, nparam, TRUE);
         if (!aprec->par.real_param_done)
         {
             /* do the dummy bind temporarily to get the result set
