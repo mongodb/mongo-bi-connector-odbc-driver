@@ -682,20 +682,21 @@ int ds_lookup(DataSource *ds)
   for (used= 0; used < size; used += sqlwcharlen(entries) + 1,
                              entries += sqlwcharlen(entries) + 1)
   {
+    int valsize;
     ds_map_param(ds, entries, &dest, &intdest);
 
     if ((dest || intdest) &&
-      (size= SQLGetPrivateProfileStringW(ds->name, entries, W_EMPTY,
+      (valsize= SQLGetPrivateProfileStringW(ds->name, entries, W_EMPTY,
                                          val, ODBCDATASOURCE_STRLEN,
                                          W_ODBC_INI)) < 0)
     {
       rc= 1;
       goto end;
     }
-    else if (!size)
+    else if (!valsize)
       /* skip blanks */;
     else if (dest && !*dest)
-      ds_set_strnattr(dest, val, size);
+      ds_set_strnattr(dest, val, valsize);
     else if (intdest)
       *intdest= sqlwchartoul(val, NULL);
 
