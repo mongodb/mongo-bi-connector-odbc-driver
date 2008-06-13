@@ -694,7 +694,7 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
                szConnStrOut, cbConnStrOutMax, pcbConnStrOut))
     {
       set_dbc_error(hdbc, "HY000", "User cancelled.", 0);
-      rc= SQL_ERROR;
+      rc= SQL_NO_DATA;
       goto error;
     }
 
@@ -750,7 +750,7 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
     if (!pFunc(hdbc, hwnd, oldds))
     {
       set_dbc_error(hdbc, "HY000", "User cancelled.", 0);
-      rc= SQL_ERROR;
+      rc= SQL_NO_DATA;
       goto error;
     }
 

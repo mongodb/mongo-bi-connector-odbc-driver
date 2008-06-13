@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * SQLDriverConnect() returned SQL_ERROR when the user cancelled
+    the dialog box instead of SQL_NO_DATA. (Bug #36293)
   * System DSN lookup (using ODBC_BOTH_DSN) fails on Windows XP.
     (Bug #36203)
   * A SQLProcedures followed by a SQLFreeStmt causes a crash
