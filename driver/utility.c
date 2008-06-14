@@ -229,6 +229,7 @@ void fix_result_types(STMT *stmt)
     {
       case SQL_LONGVARBINARY:
       case SQL_LONGVARCHAR:
+      case SQL_WLONGVARCHAR:
         irrec->searchable= SQL_PRED_CHAR;
         break;
       default:
