@@ -1011,9 +1011,12 @@ void myodbc_ov_init(SQLINTEGER odbc_version)
 {
   if (odbc_version == SQL_OV_ODBC2)
   {
+    /* Windows ODBC DM maps these to ODBCv3 types for a v3 Driver */
+#if !defined(_WIN32) || defined(SUPPORT_ONLY_ODBCV2_DATE_TYPES)
     my_int2str(SQL_TIMESTAMP,sql_timestamp,-10,0);
     my_int2str(SQL_DATE,sql_date,-10,0);
     my_int2str(SQL_TIME,sql_time,-10,0);
+#endif
     myodbc_sqlstate2_init();
     myodbc_ov2_inited= 1;
   }
