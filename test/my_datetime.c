@@ -897,6 +897,65 @@ DECLARE_TEST(t_bug31009)
 }
 
 
+/**
+ Bug #37342: ODBC TIMESTAMP string format not handled properly by ODBC driver
+*/
+DECLARE_TEST(t_bug37342)
+{
+  SQLCHAR *date= (SQLCHAR *)"{dt '2007-01-13'}";
+  SQLCHAR *time= (SQLCHAR *)"194759";
+  SQLCHAR out[30];
+  TIMESTAMP_STRUCT ts;
+  SQLINTEGER len= SQL_NTS;
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                  SQL_TIMESTAMP, 0, 0, date, 0, &len));
+
+  ok_sql(hstmt, "SELECT ? AS foo");
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_str(my_fetch_str(hstmt, out, 1), "2007-01-13", 11);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                  SQL_TYPE_TIME, 0, 0, time, 0, &len));
+
+  ok_sql(hstmt, "SELECT ? AS foo");
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_str(my_fetch_str(hstmt, out, 1), "19:47:59", 9);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_TIMESTAMP,
+                                  SQL_TYPE_TIME, 0, 0, &ts, sizeof(ts), NULL));
+
+  ts.hour= 19;
+  ts.minute= 47;
+  ts.second= 59;
+  ts.fraction= 4;
+
+  ok_sql(hstmt, "SELECT ? AS foo");
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_str(my_fetch_str(hstmt, out, 1), "19:47:59", 9);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_ts)
   ADD_TEST(t_tstotime)
@@ -912,6 +971,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug14414)
   ADD_TEST(t_bug30939)
   ADD_TEST(t_bug31009)
+  ADD_TEST(t_bug37342)
 END_TESTS
 
 

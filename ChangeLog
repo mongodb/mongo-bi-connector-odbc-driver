@@ -7,10 +7,12 @@
     the dialog box instead of SQL_NO_DATA. (Bug #36293)
   * System DSN lookup (using ODBC_BOTH_DSN) fails on Windows XP.
     (Bug #36203)
-  * A SQLProcedures followed by a SQLFreeStmt causes a crash
-    (Bug #36069)
+  * SQLProcedures() followed by SQLFreeStmt() crashes (Bug #36069)
   * ADO adUseServer cursor is lost after updating adLongVarWChar field
     (Bug #26950)
+  * SQL_TYPE_TIMESTAMP and SQL_TYPE_TIME parameters were incorrectly
+    included when parameters were expanded. (Bug #37342)
+
 ----
 
 5.1.4 (15-Apr-2008)

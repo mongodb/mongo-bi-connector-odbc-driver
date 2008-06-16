@@ -500,7 +500,7 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESCREC *aprec, DESCREC *iprec,
             if (data[0] == '{')       /* Of type {d date } */
             {
               to= add_to_buffer(net, to, data, length);
-              break;
+              goto out;
             }
             /* else treat as a string */
         case SQL_CHAR:
@@ -524,6 +524,7 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESCREC *aprec, DESCREC *iprec,
                 to= add_to_buffer(net, to, dbc->ansi_charset_info->csname,
                                   strlen(dbc->ansi_charset_info->csname));
               }
+              /* We have only added the introducer, data is added below. */
               break;
             }
         case SQL_TIME:
@@ -544,7 +545,7 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESCREC *aprec, DESCREC *iprec,
                         (int) time%100);
                 to= add_to_buffer(net, to, buff, 10);
             }
-            break;
+            goto out;
         case SQL_FLOAT:
         case SQL_REAL:
         case SQL_DOUBLE:
