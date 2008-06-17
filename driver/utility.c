@@ -595,7 +595,9 @@ SQLULEN get_column_size(STMT *stmt, MYSQL_FIELD *field,
 {
   CHARSET_INFO *charset= get_charset(field->charsetnr, MYF(0));
   unsigned int mbmaxlen= charset ? charset->mbmaxlen : 1;
-  SQLULEN length= actual ? field->max_length : field->length;
+  SQLULEN length= (actual || field->max_length > field->length )
+                  ? field->max_length
+                  : field->length;
 
   switch (field->type) {
   case MYSQL_TYPE_TINY:

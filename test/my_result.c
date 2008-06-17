@@ -2104,6 +2104,60 @@ DECLARE_TEST(t_bug34575)
   return OK;
 }
 
+/*
+Bug #24131 SHOW CREATE TABLE result truncated with mysql 3.23 and ODBC driver 3.51.12.00
+*/
+DECLARE_TEST(t_bug24131)
+{
+  SQLCHAR buff[1024];
+  SQLLEN boundLen= 0;
+  SQLULEN count;
+  UWORD status;
+  SQLUINTEGER colSize;
+  SQLRETURN rc;
+
+  ok_sql(hstmt, "drop table if exists bug24131");
+
+  /* Table definition should be long enough. */
+  ok_sql(hstmt, "CREATE TABLE `bug24131` (" \
+    "`Codigo` int(10) unsigned NOT NULL auto_increment," \
+    "`Nombre` varchar(255) default NULL," \
+    "`Telefono` varchar(255) default NULL," \
+    "`Observaciones` longtext," \
+    "`Direccion` varchar(255) default NULL," \
+    "`Dni` varchar(255) default NULL," \
+    "`CP` int(11) default NULL," \
+    "`Provincia` varchar(255) default NULL," \
+    "`Poblacion` varchar(255) default NULL," \
+    "PRIMARY KEY  (`Codigo`)"\
+    ") ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=utf8");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)"show create table bug24131", SQL_NTS));
+
+  rc= SQLDescribeCol(hstmt, 2, NULL, 0, NULL, NULL, &colSize, NULL, NULL);
+
+  if (rc != SQL_SUCCESS && rc != SQL_SUCCESS_WITH_INFO)
+  {
+    printMessage("SQLDescribeCol returned %d", rc);
+    return FAIL;
+  }
+
+  ok_stmt(hstmt, SQLBindCol(hstmt,2,SQL_C_BINARY, buff, 1024, &boundLen));
+
+  /* Note: buff has '2.0', but len is still 0! */
+  ok_stmt(hstmt, SQLExecute(hstmt));
+
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, &count, &status));
+
+  is_num(colSize, boundLen);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists bug24131");
+
+  return OK;
+}
+
 
 BEGIN_TESTS
   ADD_TEST(my_resultset)
@@ -2134,6 +2188,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug13776_auto)
   ADD_TEST(t_bug32420)
   ADD_TEST(t_bug34575)
+  ADD_TEST(t_bug24131)
 END_TESTS
 
 
