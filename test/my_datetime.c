@@ -906,7 +906,7 @@ DECLARE_TEST(t_bug37342)
   SQLCHAR *time= (SQLCHAR *)"194759";
   SQLCHAR out[30];
   TIMESTAMP_STRUCT ts;
-  SQLINTEGER len= SQL_NTS;
+  SQLLEN len= SQL_NTS;
 
   ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
                                   SQL_TIMESTAMP, 0, 0, date, 0, &len));
