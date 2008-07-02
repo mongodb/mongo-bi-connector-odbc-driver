@@ -3,6 +3,8 @@
   Bugs fixed:
   * Access Violation in myodbc3.dll (Bug #30770)
   * Truncation of "SHOW CREATE TABLE" result (Bug #24131)
+  * Added a new connection option FLAG_NO_BINARY_RESULT. Fixed
+    field type charset 63 problem. (Bug #29402)
 
 ----
 

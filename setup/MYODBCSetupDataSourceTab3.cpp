@@ -98,6 +98,8 @@ unsigned int MYODBCSetupDataSourceTab3::getFlags()
         nFlags |= 1 << 26;
     if ( ptab3c->pcheckboxCapColumnSize->isChecked() )
         nFlags |= 1 << 27;
+    if ( ptab3a->pcheckboxDisableBinaryResult->isChecked() )
+        nFlags |= 1 << 28;
 
     return nFlags;
 }

@@ -744,6 +744,45 @@ DECLARE_TEST(t_bug31220)
 }
 
 
+/**
+  Bug #29402: field type charset 63 problem
+*/
+DECLARE_TEST(t_bug29402)
+{
+  SQLSMALLINT name_length, data_type, decimal_digits, nullable;
+  SQLCHAR column_name[SQL_MAX_COLUMN_NAME_LEN];
+  SQLULEN column_size;
+  SQLHENV    henv1;
+  SQLHDBC    hdbc1;
+  SQLHSTMT   hstmt1;
+
+  /* First check how the option FLAG_NO_BINARY_RESULT works */
+  SET_DSN_OPTION(1 << 28);
+
+  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  ok_sql(hstmt1, "SELECT CONCAT('ABCDEFG', 20) concated");
+
+  ok_stmt(hstmt1, SQLDescribeCol(hstmt1, 1, column_name, sizeof(column_name),
+                                &name_length, &data_type, &column_size,
+                                &decimal_digits, &nullable));
+
+  is_num(data_type, SQL_VARCHAR);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  /* Check without FLAG_NO_BINARY_RESULT */
+  ok_sql(hstmt, "SELECT CONCAT('ABCDEFG', 20) concated");
+
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 1, column_name, sizeof(column_name),
+                                &name_length, &data_type, &column_size,
+                                &decimal_digits, &nullable));
+
+  is_num(data_type, SQL_VARBINARY);
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_longlong1)
   ADD_TEST(t_numeric)
@@ -760,6 +799,7 @@ BEGIN_TESTS
   ADD_TEST(bit)
   ADD_TEST(t_bug32171)
   ADD_TEST(t_bug31220)
+  ADD_TEST(t_bug29402)
 END_TESTS
 
 

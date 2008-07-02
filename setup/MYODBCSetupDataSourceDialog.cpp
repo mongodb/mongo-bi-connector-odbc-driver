@@ -431,6 +431,7 @@ void MYODBCSetupDataSourceDialog::doInit()
         ptab3->ptab3a->pcheckboxAutoIncrementIsNull->setChecked( nOptions & (1 << 23) ? TRUE : FALSE );
         ptab3->ptab3c->pcheckboxMultiStatements->setChecked( nOptions & (1 << 26) ? TRUE : FALSE );
         ptab3->ptab3c->pcheckboxCapColumnSize->setChecked( nOptions & (1 << 27) ? TRUE : FALSE );
+        ptab3->ptab3a->pcheckboxDisableBinaryResult->setChecked( nOptions & (1 << 28) ? TRUE : FALSE );
     }
 
     connect( ppushbuttonTest, SIGNAL(clicked()), SLOT(slotTest()) );
@@ -467,6 +468,7 @@ void MYODBCSetupDataSourceDialog::doInit()
     connect( ptab3->ptab3a->pcheckboxSafe, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3a->pcheckboxEnableReconnect, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3a->pcheckboxAutoIncrementIsNull, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
+    connect( ptab3->ptab3a->pcheckboxDisableBinaryResult, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3b->pcheckboxDontPromptOnConnect, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3b->pcheckboxEnableDynamicCursor, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3b->pcheckboxIgnorePoundInTable, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );

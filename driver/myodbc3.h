@@ -161,6 +161,7 @@ extern "C"
 #define FLAG_MIN_DATE_TO_ZERO (1 << 25) /* Convert ODBC min date to 0000-00-00 on query */
 #define FLAG_MULTI_STATEMENTS (1 << 26) /* Allow multiple statements in a query */
 #define FLAG_COLUMN_SIZE_S32 (1 << 27) /* Limit column size to a signed 32-bit value (automatically set for ADO) */
+#define FLAG_NO_BINARY_RESULT (1 << 28) /* Disables charset 63 for columns with empty org_table */
 
 /* We don't make any assumption about what the default may be. */
 #ifndef DEFAULT_TXN_ISOLATION

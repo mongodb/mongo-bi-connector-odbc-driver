@@ -371,7 +371,9 @@ SQLRETURN copy_binary_result( SQLSMALLINT   HandleType,
 */
 SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 {
-  my_bool field_is_binary= test(field->charsetnr == 63);
+  my_bool field_is_binary= test(field->charsetnr == 63) &&
+                           (test(field->org_table_length > 0) ||
+                            ((stmt->dbc->flag & FLAG_NO_BINARY_RESULT) == 0));
 
   switch (field->type) {
   case MYSQL_TYPE_BIT:
