@@ -2119,17 +2119,17 @@ DECLARE_TEST(t_bug24131)
   ok_sql(hstmt, "drop table if exists bug24131");
 
   /* Table definition should be long enough. */
-  ok_sql(hstmt, "CREATE TABLE `bug24131` (" \
-    "`Codigo` int(10) unsigned NOT NULL auto_increment," \
-    "`Nombre` varchar(255) default NULL," \
-    "`Telefono` varchar(255) default NULL," \
-    "`Observaciones` longtext," \
-    "`Direccion` varchar(255) default NULL," \
-    "`Dni` varchar(255) default NULL," \
-    "`CP` int(11) default NULL," \
-    "`Provincia` varchar(255) default NULL," \
-    "`Poblacion` varchar(255) default NULL," \
-    "PRIMARY KEY  (`Codigo`)"\
+  ok_sql(hstmt, "CREATE TABLE `bug24131` ("
+    "`Codigo` int(10) unsigned NOT NULL auto_increment,"
+    "`Nombre` varchar(255) default NULL,"
+    "`Telefono` varchar(255) default NULL,"
+    "`Observaciones` longtext,"
+    "`Direccion` varchar(255) default NULL,"
+    "`Dni` varchar(255) default NULL,"
+    "`CP` int(11) default NULL,"
+    "`Provincia` varchar(255) default NULL,"
+    "`Poblacion` varchar(255) default NULL,"
+    "PRIMARY KEY  (`Codigo`)"
     ") ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=utf8");
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
@@ -2150,7 +2150,7 @@ DECLARE_TEST(t_bug24131)
 
   ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, &count, &status));
 
-  is_num(colSize, boundLen);
+  is(colSize >= boundLen);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
   ok_sql(hstmt, "drop table if exists bug24131");
