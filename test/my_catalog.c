@@ -1287,6 +1287,17 @@ DECLARE_TEST(t_bug30770)
   /* Connect with no default daabase */
   sprintf((char *)conn, "DRIVER=%s;SERVER=%s;" \
                         "UID=%s;PASSWORD=%s", mydriver, myserver, myuid, mypwd);
+  if (mysock != NULL)
+  {
+    strcat((char *)conn, ";SOCKET=");
+    strcat((char *)conn, (char *)mysock);
+  }
+  if (myport)
+  {
+    char pbuff[20];
+    sprintf(pbuff, ";PORT=%d", myport);
+    strcat((char *)conn, pbuff);
+  }
   is(mydrvconnect(&henv1, &hdbc1, &hstmt1, conn) == OK);
 
   sprintf((char *)buff, "USE %s;", mydb);
