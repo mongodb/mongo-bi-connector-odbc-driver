@@ -30,6 +30,7 @@ MYODBCSetupDataSourceTab3a::MYODBCSetupDataSourceTab3a( QWidget *pwidgetParent )
     QString         stringSafe( tr("Add some extra safety checks (should not be needed but...).") );
     QString         stringEnableReconnect( tr("Enables automatic reconnect. Attention: it is strongly not recommended to set this flag for transactional operations!") );
     QString         stringAutoIncrementIsNull( tr("Turns on/off the handling of searching for the last inserted row with WHERE auto_increment_column IS NULL") );
+    QString         stringDisableBinaryResult( tr("Always handle binary function results as character data") );
 #if QT_VERSION >= 0x040000
     QVBoxLayout *   playoutFields = new QVBoxLayout;
     setLayout( playoutFields );
@@ -101,6 +102,15 @@ MYODBCSetupDataSourceTab3a::MYODBCSetupDataSourceTab3a( QWidget *pwidgetParent )
     pcheckboxAutoIncrementIsNull->setToolTip( stringAutoIncrementIsNull );
 #else
     QToolTip::add( pcheckboxAutoIncrementIsNull, stringAutoIncrementIsNull );
+#endif
+
+    pcheckboxDisableBinaryResult = new MYODBCSetupCheckBox( tr("Always handle binary function results as character data"), this );
+    pcheckboxDisableBinaryResult->setAssistText( stringDisableBinaryResult );
+    playoutFields->addWidget( pcheckboxDisableBinaryResult );
+#if QT_VERSION >= 0x040000
+    pcheckboxDisableBinaryResult->setToolTip( stringDisableBinaryResult );
+#else
+    QToolTip::add( pcheckboxDisableBinaryResult, stringDisableBinaryResult );
 #endif
 
     playoutFields->addStretch( 10 );

@@ -2365,6 +2365,56 @@ DECLARE_TEST(t_bug34575)
   return OK;
 }
 
+/*
+Bug #24131 SHOW CREATE TABLE result truncated with mysql 3.23 and ODBC driver 3.51.12.00
+*/
+DECLARE_TEST(t_bug24131)
+{
+  SQLCHAR buff[1024];
+  SQLLEN boundLen= 0;
+  SQLULEN count;
+  UWORD status;
+  SQLUINTEGER colSize;
+  SQLRETURN rc;
+
+  ok_sql(hstmt, "drop table if exists bug24131");
+
+  /* Table definition should be long enough. */
+  ok_sql(hstmt, "CREATE TABLE `bug24131` ("
+    "`Codigo` int(10) unsigned NOT NULL auto_increment,"
+    "`Nombre` varchar(255) default NULL,"
+    "`Telefono` varchar(255) default NULL,"
+    "`Observaciones` longtext,"
+    "`Direccion` varchar(255) default NULL,"
+    "`Dni` varchar(255) default NULL,"
+    "`CP` int(11) default NULL,"
+    "`Provincia` varchar(255) default NULL,"
+    "`Poblacion` varchar(255) default NULL,"
+    "PRIMARY KEY  (`Codigo`)"
+    ") ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=utf8");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)"show create table bug24131", SQL_NTS));
+
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 2, buff, sizeof(buff), NULL, NULL,
+                                &colSize, NULL, NULL));
+
+  ok_stmt(hstmt, SQLBindCol(hstmt,2,SQL_C_BINARY, buff, 1024, &boundLen));
+
+  /* Note: buff has '2.0', but len is still 0! */
+  ok_stmt(hstmt, SQLExecute(hstmt));
+
+  ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, &count, &status));
+
+  printMessage("colSize: %ld, boundLen: %ld", colSize, boundLen);
+  is(colSize >= boundLen);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists bug24131");
+
+  return OK;
+}
+
 
 /*
   Bug #36069 - SQLProcedures followed by a SQLFreeStmt causes a crash
@@ -2374,12 +2424,12 @@ DECLARE_TEST(t_bug36069)
   SQLSMALLINT size;
 
   ok_stmt(hstmt, SQLProcedures(hstmt, NULL, 0, NULL, 0,
-                               "non-existing", SQL_NTS));
+                               (SQLCHAR *)"non-existing", SQL_NTS));
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
   ok_stmt(hstmt, SQLNumResultCols(hstmt, &size));
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-  ok_stmt(hstmt, SQLPrepare(hstmt, "select ?", SQL_NTS));
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)"select ?", SQL_NTS));
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
   ok_stmt(hstmt, SQLNumResultCols(hstmt, &size));
 
@@ -2422,6 +2472,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug34429)
   ADD_TEST(t_bug32420)
   ADD_TEST(t_bug34575)
+  ADD_TEST(t_bug24131)
   ADD_TEST(t_bug36069)
 END_TESTS
 

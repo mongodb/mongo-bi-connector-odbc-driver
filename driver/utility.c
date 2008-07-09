@@ -927,7 +927,9 @@ SQLRETURN copy_binhex_result(STMT *stmt,
 */
 SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 {
-  my_bool field_is_binary= test(field->charsetnr == BINARY_CHARSET_NUMBER);
+  my_bool field_is_binary= test(field->charsetnr == BINARY_CHARSET_NUMBER) &&
+                           (test(field->org_table_length > 0) ||
+                            ((stmt->dbc->flag & FLAG_NO_BINARY_RESULT) == 0));
 
   switch (field->type) {
   case MYSQL_TYPE_BIT:
@@ -1155,6 +1157,9 @@ SQLULEN get_column_size(STMT *stmt, MYSQL_FIELD *field)
 {
   int capint32= stmt->dbc->flag & FLAG_COLUMN_SIZE_S32 ? 1 : 0;
   SQLULEN length= field->length;
+  /* Work around a bug in some versions of the server. */
+  if (field->max_length > field->length)
+    length= field->max_length;
   if (capint32 && field->length > INT_MAX32)
     length= INT_MAX32;
 

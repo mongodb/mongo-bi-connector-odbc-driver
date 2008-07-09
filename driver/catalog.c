@@ -736,7 +736,8 @@ MySQLColumns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
 
   if (!option_flag(stmt, FLAG_NO_CATALOG))
     db= (is_default_db(stmt->dbc->mysql.db, (char *)szCatalog) ?
-         stmt->dbc->mysql.db : strdup_root(alloc, (char *)szCatalog));
+        stmt->dbc->mysql.db : 
+        (szCatalog ? strdup_root(alloc, (char *)szCatalog) : NULL));
 
   if (cbCatalog == SQL_NTS)
     cbCatalog= szCatalog ? strlen((char *)szCatalog) : 0;

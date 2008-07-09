@@ -49,6 +49,7 @@ protected:
     MYODBCSetupCheckBox *pcheckboxSafe;
     MYODBCSetupCheckBox *pcheckboxEnableReconnect;
     MYODBCSetupCheckBox *pcheckboxAutoIncrementIsNull;
+    MYODBCSetupCheckBox *pcheckboxDisableBinaryResult;
 };
 
 #endif
