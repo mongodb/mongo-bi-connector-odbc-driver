@@ -84,7 +84,7 @@ DECLARE_TEST(my_table_dbs)
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLTables(hstmt,(SQLCHAR *)"SQL_ALL_CATALOGS",SQL_NTS,NULL,0,NULL,0,
+    rc = SQLTables(hstmt,(SQLCHAR *)SQL_ALL_CATALOGS,SQL_NTS,NULL,0,NULL,0,
                    NULL,0);
     mystmt(hstmt,rc);
 
@@ -158,7 +158,7 @@ DECLARE_TEST(my_table_dbs)
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLTables(hstmt,(SQLCHAR *)"SQL_ALL_CATALOGS", SQL_NTS,
+    rc = SQLTables(hstmt,(SQLCHAR *)SQL_ALL_CATALOGS, SQL_NTS,
                    NULL, 0, NULL, 0, NULL, 0);
     mystmt(hstmt,rc);
 
@@ -178,7 +178,7 @@ DECLARE_TEST(my_table_dbs)
                    NULL, 0, NULL, 0, NULL, 0);
     mystmt(hstmt,rc);
 
-    is(0 == my_print_non_format_result(hstmt));
+    is(4 == my_print_non_format_result(hstmt));
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
@@ -211,6 +211,7 @@ DECLARE_TEST(my_colpriv)
   ok_sql(hstmt, "CREATE TABLE test_colprev3(a INT,b INT,c INT, d INT)");
 
   (void)SQLExecDirect(hstmt, (SQLCHAR *)"DROP USER my_colpriv", SQL_NTS);
+  ok_sql(hstmt, "CREATE USER my_colpriv");
 
   ok_sql(hstmt, "GRANT SELECT(a,b),INSERT(d),UPDATE(c) ON test_colprev1 TO my_colpriv");
   ok_sql(hstmt, "GRANT SELECT(c,a),UPDATE(a,b) ON test_colprev3 TO my_colpriv");
@@ -222,7 +223,7 @@ DECLARE_TEST(my_colpriv)
   ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
                                      NULL, SQL_NTS, NULL, SQL_NTS,
                                      (SQLCHAR *)"test_colprev1", SQL_NTS,
-                                     NULL, SQL_NTS));
+                                     (SQLCHAR *)"%", SQL_NTS));
 
   is(4 == my_print_non_format_result(hstmt));
 
@@ -240,7 +241,7 @@ DECLARE_TEST(my_colpriv)
   ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
                                      NULL, SQL_NTS, NULL, SQL_NTS,
                                      (SQLCHAR *)"test_colprev2", SQL_NTS,
-                                     NULL, SQL_NTS));
+                                     (SQLCHAR *)"%", SQL_NTS));
   is(0 == my_print_non_format_result(hstmt));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
@@ -248,7 +249,7 @@ DECLARE_TEST(my_colpriv)
   ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
                                      NULL, SQL_NTS, NULL, SQL_NTS,
                                      (SQLCHAR *)"test_colprev3", SQL_NTS,
-                                     NULL, SQL_NTS));
+                                     (SQLCHAR *)"%", SQL_NTS));
 
   is(4 == my_print_non_format_result(hstmt));
 
@@ -257,18 +258,9 @@ DECLARE_TEST(my_colpriv)
   ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
                                      NULL, SQL_NTS, NULL, SQL_NTS,
                                      (SQLCHAR *)"test_%", SQL_NTS,
-                                     NULL, SQL_NTS));
+                                     (SQLCHAR *)"%", SQL_NTS));
 
-  my_print_non_format_result(hstmt);
-
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-
-  ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
-                                     NULL, SQL_NTS, NULL, SQL_NTS,
-                                     (SQLCHAR *)"test_colprev%", SQL_NTS,
-                                     NULL, SQL_NTS));
-
-  is(8 == my_print_non_format_result(hstmt));
+  is(0 == my_print_non_format_result(hstmt));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
@@ -1266,7 +1258,6 @@ DECLARE_TEST(t_bug33298)
   return OK;
 }
 
-
 /**
  Bug #12805: ADO failed to retrieve the length of LONGBLOB columns
 */
@@ -1368,8 +1359,8 @@ DECLARE_TEST(t_bug30770)
   ok_stmt(hstmt1, SQLExecDirect(hstmt1, buff, SQL_NTS));
 
   /* Get the info from just one table.  */
-  ok_stmt(hstmt1, SQLColumns(hstmt1, NULL, SQL_NTS, NULL, SQL_NTS, "bug30770",
-                            SQL_NTS, NULL, 0));
+  ok_stmt(hstmt1, SQLColumns(hstmt1, NULL, SQL_NTS, NULL, SQL_NTS,
+                             (SQLCHAR *)"bug30770", SQL_NTS, NULL, 0));
 
   ok_stmt(hstmt1, SQLFetch(hstmt1));
 
@@ -1380,6 +1371,33 @@ DECLARE_TEST(t_bug30770)
   free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   ok_sql(hstmt, "DROP TABLE bug30770");
+  return OK;
+}
+
+
+/**
+ Bug #36275: SQLTables buffer overrun
+*/
+DECLARE_TEST(t_bug36275)
+{
+  ok_stmt(hstmt, SQLTables(hstmt, NULL, 0, NULL, 0, NULL, 0,
+                           (SQLCHAR *)
+/* Just a really long literal to blow out the buffer. */
+"0123456789012345678901234567890123456789012345678901234567890123456789"
+"0123456789012345678901234567890123456789012345678901234567890123456789"
+"0123456789012345678901234567890123456789012345678901234567890123456789"
+"0123456789012345678901234567890123456789012345678901234567890123456789"
+"0123456789012345678901234567890123456789012345678901234567890123456789"
+"0123456789012345678901234567890123456789012345678901234567890123456789"
+"0123456789012345678901234567890123456789012345678901234567890123456789"
+"0123456789012345678901234567890123456789012345678901234567890123456789"
+"0123456789012345678901234567890123456789012345678901234567890123456789"
+"0123456789012345678901234567890123456789012345678901234567890123456789"
+"0123456789012345678901234567890123456789012345678901234567890123456789"
+"0123456789012345678901234567890123456789012345678901234567890123456789"
+"0123456789012345678901234567890123456789012345678901234567890123456789",
+                           SQL_NTS));
+
   return OK;
 }
 
@@ -1412,6 +1430,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug33298)
   ADD_TEST(t_bug12805)
   ADD_TEST(t_bug30770)
+  ADD_TEST(t_bug36275)
 END_TESTS
 
 

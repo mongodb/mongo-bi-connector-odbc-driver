@@ -27,9 +27,6 @@
 
 #include "driver.h"
 
-#define valid_input_parameter(A) ((A) && A[0])
-#define escape_input_parameter(A,B) if (B && B[0]) myodbc_remove_escape(A,B)
-
 /*
   @type    : internal
   @purpose : returns the next token
@@ -57,69 +54,12 @@ static const char *my_next_token(const char *prev_token,
     return 0;
 }
 
-/*
-  @type    : internal
-  @purpose : gets valid input buffer
-*/
-
-static char *myodbc_get_valid_buffer(char *to, SQLCHAR *from, int length)
-{
-    if ( !from )
-        return "\0";
-    if ( length == SQL_NTS )
-        length= strlen( (char *)from );
-    strmake( to, (char *)from, length );
-    return to;
-}
-
-/*
-  @type    : internal
-  @purpose : appends wild card to the query
-*/
-
-static char *my_append_wild(char *to, char *end, const char *wild)
-{
-    end-= 5;         /* Some extra */
-    to= strmov(to," like '");
-
-    if ( wild )
-    {
-        while ( *wild && to < end )
-        {
-            if ( *wild == '\\' || *wild == '\'' )
-                *to++= '\\';
-            *to++= *wild++;
-        }
-    }
-    *to++= '%';        /* Nicer this way */
-    *to++= '\'';
-    *to= '\0';
-
-    return to;
-}
-
-
-/*
-  @type    : internal
-  @purpose : returns current qualifier name
-*/
-my_bool is_default_db(char *def_db, char *user_db)
-{
-    /* Fix this to return a valid qualifier for all APIs */
-    if ( !valid_input_parameter(def_db) ||
-         (valid_input_parameter(user_db) &&
-          !strchr(user_db,'%') &&
-          cmp_database(def_db, user_db)) )
-        return FALSE;
-    return TRUE;
-}
-
 
 /*
   @type    : internal
   @purpose : validate for give table type from the list
 */
-static my_bool check_table_type(const char *TableType, 
+static my_bool check_table_type(const SQLCHAR *TableType, 
                                 const char *req_type, 
                                 uint       len)
 {
@@ -326,43 +266,39 @@ const uint SQLTABLES_FIELDS= array_elements(SQLTABLES_values);
 
 SQLRETURN SQL_API
 MySQLTables(SQLHSTMT hstmt,
-            SQLCHAR *szTableQualifier, SQLSMALLINT cbTableQualifier,
-            SQLCHAR *szTableOwner, SQLSMALLINT cbTableOwner,
-            SQLCHAR *szTableName, SQLSMALLINT cbTableName,
-            SQLCHAR *szTableType, SQLSMALLINT cbTableType)
+            SQLCHAR *catalog, SQLSMALLINT catalog_len,
+            SQLCHAR *schema, SQLSMALLINT schema_len,
+            SQLCHAR *table, SQLSMALLINT table_len,
+            SQLCHAR *type, SQLSMALLINT type_len)
 {
-    char Qualifier_buff[NAME_LEN+1],
-         Owner_buff[NAME_LEN+1],
-         Name_buff[NAME_LEN+1],
-         Type_buff[NAME_LEN+1],
-         *TableQualifier,
-         *TableOwner,
-         *TableName,
-         *TableType;
-    STMT FAR  *stmt= (STMT FAR*) hstmt;
-    my_bool   all_dbs= 1, user_tables, views;
+    STMT *stmt= (STMT *)hstmt;
+    my_bool all_dbs= 1, user_tables, views;
 
     CLEAR_STMT_ERROR(hstmt);
-    my_SQLFreeStmt(hstmt,MYSQL_RESET);
+    my_SQLFreeStmt(hstmt, MYSQL_RESET);
 
-    TableQualifier= myodbc_get_valid_buffer( Qualifier_buff, szTableQualifier, cbTableQualifier );
-    TableOwner=     myodbc_get_valid_buffer( Owner_buff, szTableOwner, cbTableOwner );
-    TableName=      myodbc_get_valid_buffer( Name_buff, szTableName, cbTableName );
+    if (catalog_len == SQL_NTS)
+      catalog_len= catalog ? strlen((char *)catalog) : 0;
+    if (schema_len == SQL_NTS)
+      schema_len= schema ? strlen((char *)schema) : 0;
+    if (table_len == SQL_NTS)
+      table_len= table ? strlen((char *)table) : 0;
+    if (type_len == SQL_NTS)
+      type_len= type ? strlen((char *)type) : 0;
 
-    escape_input_parameter(&stmt->dbc->mysql, TableQualifier);
-    escape_input_parameter(&stmt->dbc->mysql, TableOwner);
-    escape_input_parameter(&stmt->dbc->mysql, TableName);
-
-    if ( (!strcmp(TableQualifier,"%") || 
-          !(all_dbs= myodbc_casecmp(TableQualifier,"SQL_ALL_CATALOGS",16))) &&
-         !TableOwner[0] && !TableName[0] )
+    if (catalog && !schema_len && !table_len)
     {
-        /* Return set of allowed qualifiers */
-        if ( !all_dbs )
-            TableQualifier= "%";
-
         pthread_mutex_lock(&stmt->dbc->lock);
-        stmt->result= mysql_list_dbs(&stmt->dbc->mysql,TableQualifier);
+        {
+          char buff[32 + NAME_LEN], *to;
+          to= strmov(buff, "SHOW DATABASES LIKE '");
+          to+= mysql_real_escape_string(&stmt->dbc->mysql, to,
+                                        (char *)catalog, catalog_len);
+          to= strmov(to, "'");
+          MYLOG_QUERY(stmt, buff);
+          if (!mysql_query(&stmt->dbc->mysql, buff))
+            stmt->result= mysql_store_result(&stmt->dbc->mysql);
+        }
         pthread_mutex_unlock(&stmt->dbc->lock);
 
         if (!stmt->result)
@@ -385,21 +321,18 @@ MySQLTables(SQLHSTMT hstmt,
         return SQL_SUCCESS;
     }
 
-    if ( !TableQualifier[0] && (!strcmp(TableOwner,"%") ||
-                                !myodbc_casecmp(TableOwner,"SQL_ALL_SCHEMAS",15)) && 
-         !TableName[0] )
+    if (!catalog_len &&
+        schema_len &&
+        !table_len)
     {
-        /* Return set of allowed Table owners */
+        /* Return set of allowed schemas (none) */
         return create_fake_resultset(stmt, SQLTABLES_owner_values,
                                      sizeof(SQLTABLES_owner_values),
                                      1, SQLTABLES_fields, SQLTABLES_FIELDS);
     }
 
-    TableType=   myodbc_get_valid_buffer( Type_buff, szTableType, cbTableType );
-
-    if ( !TableQualifier[0] && !TableOwner[0] && !TableName[0] &&
-         (!strcmp(TableType,"%") ||
-          !myodbc_casecmp(TableType,"SQL_ALL_TABLE_TYPES",19)) )
+    if (!catalog_len && !schema_len && !table_len && type &&
+        !strncmp((char *)type, "%", 2))
     {
         /* Return set of TableType qualifiers */
         return create_fake_resultset(stmt, (MYSQL_ROW)SQLTABLES_type_values,
@@ -409,24 +342,23 @@ MySQLTables(SQLHSTMT hstmt,
                                      SQLTABLES_fields, SQLTABLES_FIELDS);
     }
 
-    escape_input_parameter(&stmt->dbc->mysql, TableType);
-
-    user_tables= check_table_type(TableType, "TABLE", 5);
-    views= check_table_type(TableType, "VIEW", 4);
+    user_tables= check_table_type(type, "TABLE", 5);
+    views= check_table_type(type, "VIEW", 4);
 
     /* If no types specified, we want tables and views. */
     if (!user_tables && !views)
     {
-      if (!szTableType || !cbTableType)
+      if (!type_len)
         user_tables= views= 1;
     }
 
-    if ((TableType[0] && !views && !user_tables) ||
-        (TableQualifier[0] && strcmp(TableQualifier,"%") &&
-         TableOwner[0] && strcmp(TableOwner,"%") &&
-         strcmp(TableOwner, stmt->dbc->database)))
+    if ((type_len && !views && !user_tables) ||
+        (schema_len && strncmp((char *)schema, "%", 2)))
     {
-      /* Return empty set if unknown TableType or if Owner is used  */
+      /*
+        Return empty set if unknown TableType or
+        if schema is used and not '%'
+      */
       goto empty_set;
     }
 
@@ -434,8 +366,8 @@ MySQLTables(SQLHSTMT hstmt,
     if (user_tables || views)
     {
       pthread_mutex_lock(&stmt->dbc->lock);
-      stmt->result= mysql_table_status(stmt, szTableQualifier, cbTableQualifier,
-                                       szTableName, cbTableName, TRUE);
+      stmt->result= mysql_table_status(stmt, catalog, catalog_len,
+                                       table, table_len, TRUE);
 
       if (!stmt->result && mysql_errno(&stmt->dbc->mysql))
       {
@@ -461,7 +393,7 @@ MySQLTables(SQLHSTMT hstmt,
     /* assemble final result set */
     {
       MYSQL_ROW    data= 0, row;
-      char         *db;
+      char         *db= "";
       my_ulonglong row_count= stmt->result->row_count;
 
       if (!row_count)
@@ -481,12 +413,9 @@ MySQLTables(SQLHSTMT hstmt,
 
       data= stmt->result_array;
 
-      if (option_flag(stmt, FLAG_NO_CATALOG))
-        db= "";
-      else
-        db= (is_default_db(stmt->dbc->mysql.db, TableQualifier) ?
-             stmt->dbc->mysql.db : strdup_root(&stmt->result->field_alloc,
-                                               TableQualifier));
+      if (!option_flag(stmt, FLAG_NO_CATALOG))
+        db= strmake_root(&stmt->result->field_alloc,
+                         (char *)catalog, catalog_len);
 
       while ((row= mysql_fetch_row(stmt->result)))
       {
@@ -734,15 +663,13 @@ MySQLColumns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
   stmt->result= res;
   alloc= &res->field_alloc;
 
-  if (!option_flag(stmt, FLAG_NO_CATALOG))
-    db= (is_default_db(stmt->dbc->mysql.db, (char *)szCatalog) ?
-        stmt->dbc->mysql.db : 
-        (szCatalog ? strdup_root(alloc, (char *)szCatalog) : NULL));
-
   if (cbCatalog == SQL_NTS)
     cbCatalog= szCatalog ? strlen((char *)szCatalog) : 0;
   if (cbColumn == SQL_NTS)
     cbColumn= szColumn ? strlen((char *)szColumn) : 0;
+
+  if (!option_flag(stmt, FLAG_NO_CATALOG))
+    db= strmake_root(alloc, (char *)szCatalog, cbCatalog);
 
   while ((table_row= mysql_fetch_row(res)))
   {
@@ -939,17 +866,25 @@ const uint SQLSTAT_FIELDS= array_elements(SQLSTAT_fields);
   @type    : internal
   @purpose : returns columns from a particular table, NULL on error
 */
-static MYSQL_RES *mysql_list_dbkeys(DBC FAR    *dbc, 
-                                    const char *db,
-                                    const char *table) 
+static MYSQL_RES *mysql_list_dbkeys(DBC *dbc,
+                                    SQLCHAR *catalog,
+                                    SQLSMALLINT catalog_len,
+                                    SQLCHAR *table,
+                                    SQLSMALLINT table_len)
 {
-    MYSQL FAR *mysql= &dbc->mysql;
-    char      buff[255];
+    MYSQL *mysql= &dbc->mysql;
+    char  buff[255], *to;
 
-    if (valid_input_parameter(db))
-        strxmov(buff,"SHOW KEYS FROM ",db,".`",table,"`",NullS);
-    else
-        strxmov(buff,"SHOW KEYS FROM `",table,"`",NullS);
+    to= strmov(buff, "SHOW KEYS FROM `");
+    if (catalog_len)
+    {
+      to+= myodbc_escape_string(mysql, to, sizeof(buff) - (to - buff),
+                                (char *)catalog, catalog_len, 1);
+      to= strmov(to, "`.`");
+    }
+    to+= myodbc_escape_string(mysql, to, sizeof(buff) - (to - buff),
+                              (char *)table, table_len, 1);
+    to= strmov(to, "`");
 
     MYLOG_DBC_QUERY(dbc, buff);
     if (mysql_query(mysql,buff))
@@ -967,34 +902,31 @@ static MYSQL_RES *mysql_list_dbkeys(DBC FAR    *dbc,
 
 SQLRETURN SQL_API
 MySQLStatistics(SQLHSTMT hstmt,
-                SQLCHAR *szTableQualifier, SQLSMALLINT cbTableQualifier,
-                SQLCHAR *szTableOwner __attribute__((unused)),
-                SQLSMALLINT cbTableOwner __attribute__((unused)),
-                SQLCHAR *szTableName, SQLSMALLINT cbTableName,
+                SQLCHAR *catalog, SQLSMALLINT catalog_len,
+                SQLCHAR *schema __attribute__((unused)),
+                SQLSMALLINT schema_len __attribute__((unused)),
+                SQLCHAR *table, SQLSMALLINT table_len,
                 SQLUSMALLINT fUnique,
                 SQLUSMALLINT fAccuracy __attribute__((unused)))
 {
-    STMT FAR  *stmt= (STMT FAR*) hstmt;
-    MYSQL FAR *mysql= &stmt->dbc->mysql;
-    DBC FAR   *dbc= stmt->dbc;
-    char      Qualifier_buff[NAME_LEN+1],
-    Table_buff[NAME_LEN+1], 
-    *TableQualifier, *TableName;
-
-    TableQualifier= myodbc_get_valid_buffer( Qualifier_buff, szTableQualifier, cbTableQualifier );
-    TableName=      myodbc_get_valid_buffer( Table_buff, szTableName, cbTableName );
+    STMT *stmt= (STMT *)hstmt;
+    MYSQL *mysql= &stmt->dbc->mysql;
+    DBC *dbc= stmt->dbc;
 
     CLEAR_STMT_ERROR(hstmt);
     my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
-    if ( !valid_input_parameter(TableName) )
+    if (catalog_len == SQL_NTS)
+      catalog_len= catalog ? strlen((char *)catalog) : 0;
+    if (table_len == SQL_NTS)
+      table_len= table ? strlen((char *)table) : 0;
+
+    if (!table_len)
         goto empty_set;
 
-    escape_input_parameter(mysql, TableQualifier);
-    escape_input_parameter(mysql, TableName);
-
     pthread_mutex_lock(&dbc->lock);
-    stmt->result= mysql_list_dbkeys(stmt->dbc,TableQualifier,TableName);
+    stmt->result= mysql_list_dbkeys(stmt->dbc, catalog, catalog_len,
+                                    table, table_len);
     if (!stmt->result)
     {
       SQLRETURN rc= handle_connection_error(stmt);
@@ -1014,12 +946,11 @@ MySQLStatistics(SQLHSTMT hstmt,
       return handle_connection_error(stmt);
     }
 
-    if ( option_flag(stmt, FLAG_NO_CATALOG) )
-        stmt->array[0]= "";
+    if (option_flag(stmt, FLAG_NO_CATALOG))
+      stmt->array[0]= "";
     else
-        stmt->array[0]= is_default_db(mysql->db,TableQualifier) ?
-                        mysql->db : 
-                        strdup_root(&stmt->result->field_alloc,TableQualifier);
+      stmt->array[0]= strmake_root(&stmt->result->field_alloc,
+                                   (char *)catalog, catalog_len);
 
     if ( fUnique == SQL_INDEX_UNIQUE )
     {
@@ -1085,26 +1016,40 @@ static my_bool is_grantable(char *grant_list)
   @type    : internal
   @purpose : returns a table privileges result, NULL on error
 */
-static MYSQL_RES *mysql_list_table_priv(DBC FAR *dbc, 
-                                        const char *qualifier, 
-                                        const char *table)
+static MYSQL_RES *mysql_list_table_priv(DBC *dbc,
+                                        SQLCHAR *catalog,
+                                        SQLSMALLINT catalog_len,
+                                        SQLCHAR *table,
+                                        SQLSMALLINT table_len)
 {
-    MYSQL FAR *mysql= &dbc->mysql;
-    char      buff[255+2*NAME_LEN+1], *pos;
+  MYSQL *mysql= &dbc->mysql;
+  char   buff[255+2*NAME_LEN+1], *pos;
 
-    pos= my_append_wild(strmov(buff,
-                               "SELECT Db,User,Table_name,Grantor,Table_priv "
-                               "FROM mysql.tables_priv WHERE Table_name"),
-                        buff + sizeof(buff), table);
-    pos= strxmov(pos, " AND Db", NullS);
-    pos= my_append_wild(pos, buff + sizeof(buff), qualifier);
-    pos= strxmov(pos, " ORDER BY Db,Table_name,Table_priv,User", NullS);
+  pos= strxmov(buff,
+               "SELECT Db,User,Table_name,Grantor,Table_priv ",
+               "FROM mysql.tables_priv WHERE Table_name LIKE '",
+               NullS);
+  pos+= mysql_real_escape_string(mysql, pos, (char *)table, table_len);
 
-    MYLOG_DBC_QUERY(dbc, buff);
-    if (mysql_query(mysql,buff))
-        return NULL;
-    return mysql_store_result(mysql);
+  pos= strxmov(pos, "' AND Db = ", NullS);
+  if (catalog_len)
+  {
+    pos= strmov(pos, "'");
+    pos+= mysql_real_escape_string(mysql, pos, (char *)catalog, catalog_len);
+    pos= strmov(pos, "'");
+  }
+  else
+    pos= strmov(pos, "DATABASE()");
+
+  pos= strxmov(pos, " ORDER BY Db, Table_name, Table_priv, User", NullS);
+
+  MYLOG_DBC_QUERY(dbc, buff);
+  if (mysql_query(mysql,buff))
+    return NULL;
+
+  return mysql_store_result(mysql);
 }
+
 
 #define MY_MAX_TABPRIV_COUNT 21
 #define MY_MAX_COLPRIV_COUNT 3
@@ -1136,29 +1081,22 @@ const uint SQLTABLES_PRIV_FIELDS= array_elements(SQLTABLES_priv_values);
 
 SQLRETURN SQL_API
 MySQLTablePrivileges(SQLHSTMT hstmt,
-                     SQLCHAR *szTableQualifier, SQLSMALLINT cbTableQualifier,
-                     SQLCHAR *szTableOwner __attribute__((unused)),
-                     SQLSMALLINT cbTableOwner __attribute__((unused)),
-                     SQLCHAR *szTableName, SQLSMALLINT cbTableName)
+                     SQLCHAR *catalog, SQLSMALLINT catalog_len,
+                     SQLCHAR *schema __attribute__((unused)),
+                     SQLSMALLINT schema_len __attribute__((unused)),
+                     SQLCHAR *table, SQLSMALLINT table_len)
 {
-    char     Qualifier_buff[NAME_LEN+1],Name_buff[NAME_LEN+1],
-    *TableQualifier,*TableName;
     char     **data, **row;
     MEM_ROOT *alloc;
-    STMT FAR *stmt= (STMT FAR*) hstmt;
+    STMT     *stmt= (STMT *)hstmt;
     uint     row_count;
-
-    TableQualifier= myodbc_get_valid_buffer( Qualifier_buff, szTableQualifier, cbTableQualifier );
-    TableName= myodbc_get_valid_buffer( Name_buff, szTableName, cbTableName );
-
-    escape_input_parameter(&stmt->dbc->mysql, TableQualifier);
-    escape_input_parameter(&stmt->dbc->mysql, TableName);
 
     CLEAR_STMT_ERROR(hstmt);
     my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
     pthread_mutex_lock(&stmt->dbc->lock);
-    stmt->result= mysql_list_table_priv(stmt->dbc, TableQualifier,TableName);
+    stmt->result= mysql_list_table_priv(stmt->dbc, catalog, catalog_len,
+                                        table, table_len);
     if (!stmt->result)
     {
       SQLRETURN rc= handle_connection_error(stmt);
@@ -1188,25 +1126,25 @@ MySQLTablePrivileges(SQLHSTMT hstmt,
 
         for ( ;; )
         {
-            data[0]= row[0];         
-            data[1]= "";         
+            data[0]= row[0];
+            data[1]= "";
             data[2]= row[2];
-            data[3]= row[3];   
+            data[3]= row[3];
             data[4]= row[1];
-            data[6]= is_grantable(row[4]) ? "YES":"NO";    
+            data[6]= is_grantable(row[4]) ? "YES" : "NO";
             row_count++;
 
             if ( !(grant= my_next_token(grant,&grants,token,',')) )
             {
                 /* End of grants .. */
                 data[5]= strdup_root(alloc,grants);
-                data+= SQLTABLES_PRIV_FIELDS; 
+                data+= SQLTABLES_PRIV_FIELDS;
                 break;
             }
-            data[5]= strdup_root(alloc,token);    
-            data+= SQLTABLES_PRIV_FIELDS;      
-        } 
-    }  
+            data[5]= strdup_root(alloc,token);
+            data+= SQLTABLES_PRIV_FIELDS;
+        }
+    }
     stmt->result->row_count= row_count;
     mysql_link_fields(stmt,SQLTABLES_priv_fields,SQLTABLES_PRIV_FIELDS);
     return SQL_SUCCESS;
@@ -1219,34 +1157,46 @@ MySQLTablePrivileges(SQLHSTMT hstmt,
   @purpose : returns a column privileges result, NULL on error
 */
 static MYSQL_RES *mysql_list_column_priv(MYSQL *mysql,
-                                         const char *qualifier,
-                                         const char *table,
-                                         const char *column)
+                                         SQLCHAR *catalog,
+                                         SQLSMALLINT catalog_len,
+                                         SQLCHAR *table, SQLSMALLINT table_len,
+                                         SQLCHAR *column,
+                                         SQLSMALLINT column_len)
 {
   char buff[255+3*NAME_LEN+1], *pos;
 
-  pos= my_append_wild(strmov(buff,
-                             "SELECT c.Db, c.User,c.Table_name,c.Column_name,"
-                             "t.Grantor,c.Column_priv,t.Table_priv "
-                             "FROM mysql.columns_priv as c,"
-                             "mysql.tables_priv as t WHERE c.Table_name"),
-                      buff + sizeof(buff), table);
-  pos= strxmov(pos, " AND c.Db", NullS);
-  pos= my_append_wild(pos, buff + sizeof(buff), qualifier);
-  pos= strxmov(pos, " AND c.Column_name", NullS);
-  pos= my_append_wild(pos, buff + sizeof(buff), column);
-  pos= strxmov(pos, " AND c.Table_name=t.Table_name",
-               " ORDER BY c.Db,c.Table_name,c.Column_name,c.Column_priv",
-               NullS);
+  pos= strmov(buff,
+              "SELECT c.Db, c.User, c.Table_name, c.Column_name,"
+              "t.Grantor, c.Column_priv, t.Table_priv "
+              "FROM mysql.columns_priv AS c, mysql.tables_priv AS t "
+              "WHERE c.Table_name = '");
+  pos+= mysql_real_escape_string(mysql, pos, (char *)table, table_len);
+
+  pos= strmov(pos, "' AND c.Db = ");
+  if (catalog_len)
+  {
+    pos= strmov(pos, "'");
+    pos+= mysql_real_escape_string(mysql, pos, (char *)catalog, catalog_len);
+    pos= strmov(pos, "'");
+  }
+  else
+    pos= strmov(pos, "DATABASE()");
+
+  pos= strmov(pos, "AND c.Column_name LIKE '");
+  pos+= mysql_real_escape_string(mysql, pos, (char *)column, column_len);
+
+  pos= strmov(pos,
+              "' AND c.Table_name = t.Table_name "
+              "ORDER BY c.Db, c.Table_name, c.Column_name, c.Column_priv");
 
   if (mysql_query(mysql, buff))
-      return NULL;
+    return NULL;
 
   return mysql_store_result(mysql);
 }
 
 
-char *SQLCOLUMNS_priv_values[]= 
+char *SQLCOLUMNS_priv_values[]=
 {
     NULL,"",NULL,NULL,NULL,NULL,NULL,NULL
 };
@@ -1269,34 +1219,32 @@ const uint SQLCOLUMNS_PRIV_FIELDS= array_elements(SQLCOLUMNS_priv_values);
 
 SQLRETURN SQL_API
 MySQLColumnPrivileges(SQLHSTMT hstmt,
-                      SQLCHAR *szTableQualifier, SQLSMALLINT cbTableQualifier,
-                      SQLCHAR *szTableOwner __attribute__((unused)),
-                      SQLSMALLINT cbTableOwner __attribute__((unused)),
-                      SQLCHAR *szTableName, SQLSMALLINT cbTableName,
-                      SQLCHAR *szColumnName, SQLSMALLINT cbColumnName)
+                      SQLCHAR *catalog, SQLSMALLINT catalog_len,
+                      SQLCHAR *schema __attribute__((unused)),
+                      SQLSMALLINT schema_len __attribute__((unused)),
+                      SQLCHAR *table, SQLSMALLINT table_len,
+                      SQLCHAR *column, SQLSMALLINT column_len)
 {
     STMT *stmt=(STMT *) hstmt;
-    char     Qualifier_buff[NAME_LEN+1],Table_buff[NAME_LEN+1],
-    Column_buff[NAME_LEN+1],
-    *TableQualifier,*TableName, *ColumnName;
     char     **row, **data;
     MEM_ROOT *alloc;
     uint     row_count;
 
-    TableQualifier=myodbc_get_valid_buffer( Qualifier_buff, szTableQualifier, cbTableQualifier );
-    TableName=   myodbc_get_valid_buffer( Table_buff, szTableName, cbTableName );
-    ColumnName=  myodbc_get_valid_buffer( Column_buff, szColumnName, cbColumnName );
-
-    escape_input_parameter(&stmt->dbc->mysql, TableQualifier);
-    escape_input_parameter(&stmt->dbc->mysql, TableName);
-    escape_input_parameter(&stmt->dbc->mysql, ColumnName);
-
     CLEAR_STMT_ERROR(hstmt);
     my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
+    if (catalog_len == SQL_NTS)
+      catalog_len= catalog ? strlen((char *)catalog) : 0;
+    if (table_len == SQL_NTS)
+      table_len= table ? strlen((char *)table) : 0;
+    if (column_len == SQL_NTS)
+      column_len= column ? strlen((char *)column) : 0;
+
     pthread_mutex_lock(&stmt->dbc->lock);
-    stmt->result= mysql_list_column_priv(&stmt->dbc->mysql, TableQualifier,
-                                         TableName,ColumnName);
+    stmt->result= mysql_list_column_priv(&stmt->dbc->mysql,
+                                         catalog, catalog_len,
+                                         table, table_len,
+                                         column, column_len);
     if (!stmt->result)
     {
       SQLRETURN rc= handle_connection_error(stmt);
@@ -1304,8 +1252,12 @@ MySQLColumnPrivileges(SQLHSTMT hstmt,
       return rc;
     }
     pthread_mutex_unlock(&stmt->dbc->lock);
-    stmt->result_array= (char**) my_malloc(sizeof(char*)*SQLCOLUMNS_PRIV_FIELDS*
-                                           (ulong) stmt->result->row_count *MY_MAX_COLPRIV_COUNT, MYF(MY_ZEROFILL));
+
+    stmt->result_array= (char **)my_malloc(sizeof(char *) *
+                                           SQLCOLUMNS_PRIV_FIELDS *
+                                           (ulong) stmt->result->row_count *
+                                           MY_MAX_COLPRIV_COUNT,
+                                           MYF(MY_ZEROFILL));
     if (!stmt->result_array)
     {
       set_mem_error(&stmt->dbc->mysql);
@@ -1584,10 +1536,10 @@ char *SQLPRIM_KEYS_values[]= {
 
 SQLRETURN SQL_API
 MySQLPrimaryKeys(SQLHSTMT hstmt,
-                 SQLCHAR *szTableQualifier, SQLSMALLINT cbTableQualifier,
-                 SQLCHAR *szTableOwner __attribute__((unused)),
-                 SQLSMALLINT cbTableOwner __attribute__((unused)),
-                 SQLCHAR *szTableName, SQLSMALLINT cbTableName)
+                 SQLCHAR *catalog, SQLSMALLINT catalog_len,
+                 SQLCHAR *schema __attribute__((unused)),
+                 SQLSMALLINT schema_len __attribute__((unused)),
+                 SQLCHAR *table, SQLSMALLINT table_len)
 {
     char      Qualifier_buff[NAME_LEN+1],Table_buff[NAME_LEN+1],
     *TableQualifier,*TableName;
@@ -1596,17 +1548,17 @@ MySQLPrimaryKeys(SQLHSTMT hstmt,
     char      **data;
     uint      row_count;
 
-    TableQualifier= myodbc_get_valid_buffer( Qualifier_buff, szTableQualifier, cbTableQualifier );
-    TableName=      myodbc_get_valid_buffer( Table_buff, szTableName, cbTableName );
-
-    escape_input_parameter(&stmt->dbc->mysql, TableQualifier);
-    escape_input_parameter(&stmt->dbc->mysql, TableName);
-
     CLEAR_STMT_ERROR(hstmt);
     my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
+    if (catalog_len == SQL_NTS)
+      catalog_len= catalog ? strlen((char *)catalog) : 0;
+    if (table_len == SQL_NTS)
+      table_len= table ? strlen((char *)table) : 0;
+
     pthread_mutex_lock(&stmt->dbc->lock);
-    if (!(stmt->result= mysql_list_dbkeys(stmt->dbc,TableQualifier,TableName)))
+    if (!(stmt->result= mysql_list_dbkeys(stmt->dbc, catalog, catalog_len,
+                                          table, table_len)))
     {
       SQLRETURN rc= handle_connection_error(stmt);
       pthread_mutex_unlock(&stmt->dbc->lock);

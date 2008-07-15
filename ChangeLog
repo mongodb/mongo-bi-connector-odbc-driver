@@ -3,6 +3,9 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * Some catalog functions used fixed-sized buffers for handling
+    arguments that could be overrun, and misinterpreted some arguments
+    as patterns when they should be treated as identifiers. (Bug #36275)
   * SQLDriverConnect() returned SQL_ERROR when the user cancelled
     the dialog box instead of SQL_NO_DATA. (Bug #36293)
   * System DSN lookup (using ODBC_BOTH_DSN) fails on Windows XP.
