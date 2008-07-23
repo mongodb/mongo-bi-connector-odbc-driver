@@ -286,7 +286,7 @@ MySQLTables(SQLHSTMT hstmt,
     if (type_len == SQL_NTS)
       type_len= type ? strlen((char *)type) : 0;
 
-    if (catalog && !schema_len && !table_len)
+    if (catalog_len && !schema_len && !table_len)
     {
         pthread_mutex_lock(&stmt->dbc->lock);
         {
