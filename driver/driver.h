@@ -151,7 +151,7 @@ extern "C"
   When binding SQL_BIGINT as SQL_C_DEFAULT, treat it as a string
   (automatically set for MS Access) see bug#24535
 */
-#define FLAG_DFLT_BIGINT_BIND_STR (1 << 28)
+#define FLAG_DFLT_BIGINT_BIND_STR (1 << 29)
 
 /* We don't make any assumption about what the default may be. */
 #ifndef DEFAULT_TXN_ISOLATION
