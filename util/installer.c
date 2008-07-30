@@ -807,7 +807,8 @@ int ds_to_kvpair(DataSource *ds, SQLWCHAR *attrs, size_t attrslen,
         attrs+= sqlwcharncat2(attrs, *strval, &attrslen);
       APPEND_SQLWCHAR(attrs, attrslen, delim);
     }
-    else if (intval)
+    /* only write out int values if they're non-zero */
+    else if (intval && *intval)
     {
       attrs+= sqlwcharncat2(attrs, dsnparams[i], &attrslen);
       APPEND_SQLWCHAR(attrs, attrslen, '=');
@@ -931,11 +932,11 @@ int ds_add(DataSource *ds)
 
   RESTORE_MODE();
 
-  /* Get the actual driver name (not just file name) */
+  /* Get the actual driver info (not just name) */
   driver= driver_new();
-  memcpy(driver->lib, ds->driver,
+  memcpy(driver->name, ds->driver,
          (sqlwcharlen(ds->driver) + 1) * sizeof(SQLWCHAR));
-  if (driver_lookup_name(driver))
+  if (driver_lookup(driver))
   {
     SQLPostInstallerErrorW(ODBC_ERROR_INVALID_KEYWORD_VALUE,
                            W_CANNOT_FIND_DRIVER);
@@ -949,7 +950,7 @@ int ds_add(DataSource *ds)
   RESTORE_MODE();
 
   /* write all fields (util method takes care of skipping blank fields) */
-  if (ds_add_strprop(ds->name, W_DRIVER     , ds->driver     )) goto error;
+  if (ds_add_strprop(ds->name, W_DRIVER     , driver->lib    )) goto error;
   if (ds_add_strprop(ds->name, W_DESCRIPTION, ds->description)) goto error;
   if (ds_add_strprop(ds->name, W_SERVER     , ds->server     )) goto error;
   if (ds_add_strprop(ds->name, W_UID        , ds->uid        )) goto error;

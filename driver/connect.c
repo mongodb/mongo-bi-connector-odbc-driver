@@ -602,14 +602,13 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
       goto error;
     }
 
-    /*
-     At this point we should have a driver name (friendly name) either
-     loaded from DSN or provided in connection string. So lets determine
-     the setup library file name (better to not assume name). We read from
-     ODBC system info. This allows someone configure for a custom setup
-     interface.
-    */
-    sqlwcharncpy(pDriver->lib, ds->driver, ODBCDRIVER_STRLEN);
+    /* if given a named DSN, we will have the path in the DRIVER field */
+    if (ds->name)
+        sqlwcharncpy(pDriver->lib, ds->driver, ODBCDRIVER_STRLEN);
+    /* otherwise, it's the driver name */
+    else
+        sqlwcharncpy(pDriver->name, ds->driver, ODBCDRIVER_STRLEN);
+
     if (driver_lookup(pDriver))
     {
       char sz[1024];

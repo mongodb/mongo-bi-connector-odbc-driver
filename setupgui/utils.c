@@ -83,7 +83,6 @@ SQLRETURN Connect(SQLHDBC *hDbc, SQLHENV *hEnv, DataSource *params)
 {
   SQLRETURN   nReturn;
   SQLWCHAR      stringConnectIn[1024];
-  Driver *driver;
   size_t inlen= 1024;
 
   assert(params->driver && *params->driver);
@@ -97,20 +96,6 @@ SQLRETURN Connect(SQLHDBC *hDbc, SQLHENV *hEnv, DataSource *params)
       return SQL_ERROR;
   }
   inlen-= sqlwcharlen(stringConnectIn);
-
-  /* Add driver name (not file) to connect string */
-  driver= driver_new();
-  memcpy(driver->lib, params->driver,
-         (sqlwcharlen(params->driver) + 1) * sizeof(SQLWCHAR));
-  if (driver_lookup_name(driver))
-  {
-    driver_delete(driver);
-    /* TODO error message */
-    return SQL_ERROR;
-  }
-  sqlwcharncat2(stringConnectIn, W_DRIVER_PARAM, &inlen);
-  sqlwcharncat2(stringConnectIn, driver->name, &inlen);
-  driver_delete(driver);
 
   if (hDBC == SQL_NULL_HDBC)
   {

@@ -645,6 +645,13 @@ BOOL FormMain_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
   {
     EnableWindow(GetDlgItem(hwnd, IDC_EDIT_name), FALSE);
     EnableWindow(GetDlgItem(hwnd, IDC_EDIT_description), FALSE);
+    /* if prompting without DSN, don't disable OK button */
+    if (!pParams->name)
+    {
+      Button_Enable(GetDlgItem(hwnd,IDOK), 1);
+      Button_Enable(GetDlgItem(hwnd,IDC_BUTTON_TEST), 1);
+      RedrawWindow(hwnd,NULL,NULL,RDW_INVALIDATE);
+    }
   }
 
 	BOOL b = DoCreateDialogTooltip();
@@ -687,6 +694,27 @@ int ShowOdbcParamsDialog(DataSource* params, HWND ParentWnd, BOOL isPrompt)
 	pCaption= L"MySQL Connector/ODBC Data Source Configuration";
   g_isPrompt= isPrompt;
 
+  /*
+     If prompting (with a DSN name), or not prompting (add/edit DSN),
+     we translate the lib path to the actual driver name.
+  */
+  if (params->name || !isPrompt)
+  {
+    Driver *driver= driver_new();
+    memcpy(driver->lib, params->driver,
+           (sqlwcharlen(params->driver) + 1) * sizeof(SQLWCHAR));
+    if (driver_lookup_name(driver))
+    {
+      wchar_t msg[256];
+      swprintf(msg, L"Failure to lookup driver entry at path '%ls'",
+               driver->lib);
+      MessageBox(ParentWnd, msg, L"Cannot find driver entry", MB_OK);
+      driver_delete(driver);
+      return 0;
+    }
+    ds_set_strattr(&params->driver, driver->name);
+    driver_delete(driver);
+  }
   DialogBox(ghInstance, MAKEINTRESOURCE(IDD_DIALOG1), ParentWnd,
             (DLGPROC)FormMain_DlgProc);
 
