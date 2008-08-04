@@ -75,6 +75,8 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,87,105,10
     CONTROL         "Enable SQL_AUTO_IS_NULL",IDC_CHECK_enable_auto_increment_null_search,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,102,105,10
+    CONTROL         "Always handle binary function results as character data",IDC_CHECK_handle_binary_as_char,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,117,194,10
 END
 
 IDD_TAB2 DIALOGEX 0, 0, 209, 151

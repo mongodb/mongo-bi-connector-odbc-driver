@@ -58,6 +58,7 @@ void DecompileOptions(DataSource *params)
   params->limit_column_size=                    (nOptions & FLAG_COLUMN_SIZE_S32) > 0;
   params->enable_auto_reconnect=                (nOptions & FLAG_AUTO_RECONNECT) > 0;
   params->enable_auto_increment_null_search=    (nOptions & FLAG_AUTO_IS_NULL) > 0;
+  params->handle_binary_as_char=                (nOptions & FLAG_NO_BINARY_RESULT) > 0;
 }
 
 
@@ -246,6 +247,8 @@ unsigned long CompileOptions(DataSource * params)
     nFlags|= FLAG_AUTO_RECONNECT;
   if (params->enable_auto_increment_null_search)
     nFlags|= FLAG_AUTO_IS_NULL;
+  if (params->handle_binary_as_char)
+    nFlags|= FLAG_NO_BINARY_RESULT;
 
   return nFlags;
 }

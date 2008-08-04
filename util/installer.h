@@ -110,6 +110,7 @@ typedef struct {
   BOOL safe;
   BOOL enable_auto_reconnect;
   BOOL enable_auto_increment_null_search;
+  BOOL handle_binary_as_char;
   /* flags 2 */
   BOOL dont_prompt_upon_connect;
   BOOL enable_dynamic_cursor;

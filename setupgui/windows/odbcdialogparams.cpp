@@ -228,6 +228,7 @@ void syncTabsData(HWND hwnd, DataSource &params)
     GET_BOOL(1,safe);
     GET_BOOL(1,enable_auto_reconnect);
     GET_BOOL(1,enable_auto_increment_null_search);
+    GET_BOOL(1,handle_binary_as_char);
     /* flags 2*/
     GET_BOOL(2,dont_prompt_upon_connect);
     GET_BOOL(2,enable_dynamic_cursor);
@@ -267,6 +268,7 @@ void syncTabs(HWND hwnd, DataSource &params)
     SET_BOOL(1,safe);
     SET_BOOL(1,enable_auto_reconnect);
     SET_BOOL(1,enable_auto_increment_null_search);
+    SET_BOOL(1,handle_binary_as_char);
     /* flags 2*/
     SET_BOOL(2,dont_prompt_upon_connect);
     SET_BOOL(2,enable_dynamic_cursor);

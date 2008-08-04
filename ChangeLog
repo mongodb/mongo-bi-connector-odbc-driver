@@ -1,6 +1,8 @@
 5.1.5
 
   Functionality added or changed:
+  * Added FLAG_NO_BINARY_RESUL connection option to always handle
+    binary function results as character data. (Bug #29402)
 
   Bugs fixed:
   * Some catalog functions used fixed-sized buffers for handling
