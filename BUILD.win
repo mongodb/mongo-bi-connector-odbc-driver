@@ -97,7 +97,7 @@ This produces Visual Studio project, you can use the Visual Studio
 IDE or from the command line one of
 
   devenv.com MySQL_Connector_ODBC.sln /build Release
-  devenv.com MySQL_Connector_ODBC.sln /build RelWithDbgInfo
+  devenv.com MySQL_Connector_ODBC.sln /build RelWithDebInfo
   devenv.com MySQL_Connector_ODBC.sln /build Debug
 
 Upon completion; you will find the executables in the target sub
