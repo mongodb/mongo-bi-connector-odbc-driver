@@ -55,7 +55,7 @@ This produces a project file that you can open with Visual Studio or
 build from the command line with either of:
 
   devenv.com MySQL_Connector_ODBC.sln /build Release
-  devenv.com MySQL_Connector_ODBC.sln /build RelWithDbgInfo
+  devenv.com MySQL_Connector_ODBC.sln /build RelWithDebInfo
 
 To compile the "Debug" build, you must run set the cmake build type so
 the correct version of the MySQL client libraries are used:
