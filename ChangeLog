@@ -1,7 +1,7 @@
-5.1.5
+5.1.5 (7-Aug-2008)
 
   Functionality added or changed:
-  * Added FLAG_NO_BINARY_RESUL connection option to always handle
+  * Added FLAG_NO_BINARY_RESULT connection option to always handle
     binary function results as character data. (Bug #29402)
 
   Bugs fixed:
@@ -22,7 +22,7 @@
 
   Includes changes from Connector/ODBC 3.51.26.
 
-  Built using MySQL 5.0.56sp1.
+  Built using MySQL 5.0.60sp1.
 
 ----
 
