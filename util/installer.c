@@ -911,7 +911,8 @@ int ds_add_intprop(const SQLWCHAR *name, const SQLWCHAR *propname, int propval)
 
 /*
  * Add the given datasource to system. Call SQLInstallerError() to get
- * further error details if non-zero is returned.
+ * further error details if non-zero is returned. ds->driver should be
+ * the driver name.
  */
 int ds_add(DataSource *ds)
 {

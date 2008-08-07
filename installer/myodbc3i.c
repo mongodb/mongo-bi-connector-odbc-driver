@@ -463,34 +463,20 @@ int list_datasources()
  */
 int add_datasource(DataSource *ds, const SQLWCHAR *attrs)
 {
-  Driver *driver= NULL;
-  int rc= 1;
-
   /* read datasource object from attributes */
   if (ds_from_kvpair(ds, attrs, ';'))
   {
     fprintf(stderr,
             "[ERROR] Could not parse key-value pair attribute string\n");
-    goto end;
+    return 1;
   }
 
   /* validate */
   if (!ds->driver)
   {
     fprintf(stderr, "[ERROR] Driver must be specified for a data source\n");
-    goto end;
+    return 1;
   }
-
-  /* Lookup driver filename and add to DataSource */
-  driver= driver_new();
-  memcpy(driver->name, ds->driver,
-         (sqlwcharlen(ds->driver) + 1) * sizeof(SQLWCHAR));
-  if (driver_lookup(driver))
-  {
-    fprintf(stderr, "[ERROR] Cannot locate driver\n");
-    goto end;
-  }
-  ds_set_strattr(&ds->driver, driver->lib);
 
   /* Add it */
   if (ds_add(ds))
@@ -498,15 +484,11 @@ int add_datasource(DataSource *ds, const SQLWCHAR *attrs)
     print_installer_error();
     fprintf(stderr,
             "[ERROR] Data source entry failed, remove or try again\n");
-    goto end;
+    return 1;
   }
 
   printf("Success\n");
-  rc= 0;
-
-end:
-  x_free(driver);
-  return rc;
+  return 0;
 }
 
 
