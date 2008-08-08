@@ -239,6 +239,66 @@ void driver_delete(Driver *driver)
 }
 
 
+#ifdef _WIN32
+/*
+ * Utility function to duplicate path and remove "(x86)" chars.
+ */
+SQLWCHAR *remove_x86(SQLWCHAR *path, SQLWCHAR *loc)
+{
+  /* Program Files (x86)
+   *           13^   19^
+   */
+  size_t chars = sqlwcharlen(loc) - 18 /* need +1 for sqlwcharncat2() */;
+  SQLWCHAR *news= sqlwchardup(path, SQL_NTS);
+  news[(loc-path)+13] = 0;
+  sqlwcharncat2(news, loc + 19, &chars);
+  return news;
+}
+
+
+/*
+ * Compare two library paths taking into account different
+ * locations of "Program Files" for 32 and 64 bit applications
+ * on Windows. This is done by removing the "(x86)" from "Program
+ * Files" if present in either path.
+ *
+ * Note: wcs* functions are used as this only needs to support
+ *       Windows where SQLWCHAR is wchar_t.
+ */
+int Win64CompareLibs(SQLWCHAR *lib1, SQLWCHAR *lib2)
+{
+  int free1= 0, free2= 0;
+  int rc;
+  SQLWCHAR *llib1, *llib2;
+
+  /* perform necessary transformations */
+  if (llib1= wcsstr(lib1, L"Program Files (x86)"))
+  {
+    llib1= remove_x86(lib1, llib1);
+    free1= 1;
+  }
+  else
+    llib1= lib1;
+  if (llib2= wcsstr(lib2, L"Program Files (x86)"))
+  {
+    llib2= remove_x86(lib2, llib2);
+    free2= 1;
+  }
+  else
+    llib2= lib2;
+
+  /* perform the comparison */
+  rc= sqlwcharcasecmp(llib1, llib2);
+
+  if (free1)
+    free(llib1);
+  if (free2)
+    free(llib2);
+  return rc;
+}
+#endif /* _WIN32 */
+
+
 /*
  * Lookup a driver given only the filename of the driver. This is used:
  *
@@ -275,7 +335,11 @@ int driver_lookup_name(Driver *driver)
     {
       RESTORE_MODE();
 
+#ifdef _WIN32
+      if (!Win64CompareLibs(driverinfo, driver->lib))
+#elif
       if (!sqlwcharcasecmp(driverinfo, driver->lib))
+#endif
       {
         sqlwcharncpy(driver->name, pdrv, ODBCDRIVER_STRLEN);
         return 0;
