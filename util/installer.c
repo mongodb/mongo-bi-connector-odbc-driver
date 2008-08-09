@@ -337,7 +337,7 @@ int driver_lookup_name(Driver *driver)
 
 #ifdef _WIN32
       if (!Win64CompareLibs(driverinfo, driver->lib))
-#elif
+#else
       if (!sqlwcharcasecmp(driverinfo, driver->lib))
 #endif
       {
