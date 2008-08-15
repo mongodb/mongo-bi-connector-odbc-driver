@@ -146,11 +146,9 @@ SQLRETURN myodbc_do_connect(DBC *dbc, MYODBCUTIL_DATASOURCE *ds)
   /* set SSL parameters */
   mysql_ssl_set(mysql, ds->pszSSLKEY, ds->pszSSLCERT, ds->pszSSLCA,
                 ds->pszSSLCAPATH, ds->pszSSLCIPHER);
-#ifdef MYSQL_OPT_SSL_VERIFY_SERVER_CERT /* disabled if not in build headers */
   if (ds->pszSSLVERIFY)
     mysql_options(mysql, MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
                   (const char *)&opt_ssl_verify_server_cert);
-#endif /* MYSQL_OPT_SSL_VERIFY_SERVER_CERT */
 
   if (!mysql_real_connect(mysql, ds->pszSERVER, ds->pszUSER, ds->pszPASSWORD,
                           ds->pszDATABASE, port, ds->pszSOCKET, flags))
@@ -200,14 +198,12 @@ SQLRETURN myodbc_do_connect(DBC *dbc, MYODBCUTIL_DATASOURCE *ds)
   strxmov(dbc->st_error_prefix, MYODBC3_ERROR_PREFIX, "[mysqld-",
           mysql->server_version, "]", NullS);
 
-#ifdef MYSQL_OPT_RECONNECT /* disabled if not included in build header */
   /* This needs to be set after connection, or it doesn't stick.  */
   if (options & FLAG_AUTO_RECONNECT)
   {
     my_bool reconnect= 1;
     mysql_options(mysql, MYSQL_OPT_RECONNECT, (char *)&reconnect);
   }
-#endif /* MYSQL_OPT_RECONNECT */
 
   /* Make sure autocommit is set as configured. */
   if (dbc->commit_flag == CHECK_AUTOCOMMIT_OFF)
