@@ -44,7 +44,7 @@
       <UpgradeVersion Property="PREVIOUSVERSIONINSTALLED" Minimum="5.0.999" Maximum="$(var.odbc_ver_prev)" IncludeMaximum="no"
         IncludeMinimum="yes"  />
       <!-- !!!SetVersion updates: Minimum, Maximum -->
-      <UpgradeVersion Property="NEWERPRODUCTFOUND" Minimum="$(var.odbc_ver_short).0" Maximum="$(var.odbc_ver_short).999" OnlyDetect="yes" 
+      <UpgradeVersion Property="NEWERPRODUCTFOUND" Minimum="$(var.odbc_ver_long)" Maximum="$(var.odbc_ver_short).999" OnlyDetect="yes" 
         IncludeMinimum="no" />
     </Upgrade>
 
