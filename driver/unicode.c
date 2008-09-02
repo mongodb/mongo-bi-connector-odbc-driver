@@ -273,7 +273,7 @@ SQLDescribeColW(SQLHSTMT hstmt, SQLUSMALLINT column,
     if (name_len)
       *name_len= (SQLSMALLINT)len;
 
-    if (name_max > 0)
+    if (name && name_max > 0)
     {
       len= myodbc_min(len, name_max - 1);
       (void)memcpy((char *)name, (const char *)wvalue,
