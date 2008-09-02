@@ -52,7 +52,7 @@ SQLWCHAR *sqlchar_as_sqlwchar(CHARSET_INFO *charset_info, SQLCHAR *str,
   SQLINTEGER i, out_bytes;
   my_bool free_str= FALSE;
 
-  if (*len == SQL_NTS)
+  if (str && *len == SQL_NTS)
     *len= strlen((char *)str);
 
   if (!str || *len == 0)
