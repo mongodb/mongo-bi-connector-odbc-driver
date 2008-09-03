@@ -3115,6 +3115,108 @@ DECLARE_TEST(t_bug11846)
 }
 
 
+/*
+  Basic test of data-at-exec with SQLSetPos() insert.
+*/
+DECLARE_TEST(t_dae_setpos_insert)
+{
+  SQLINTEGER x= 20;
+  SQLINTEGER z= 40;
+  SQLCHAR *yval= (SQLCHAR *) "1234567890";
+  SQLCHAR yout[11];
+  SQLLEN ylen= SQL_LEN_DATA_AT_EXEC(10);
+  SQLPOINTER holder= (SQLPOINTER) 0xcfcdcecc;
+  SQLPOINTER paramptr;
+  ok_sql(hstmt, "drop table if exists t_dae");
+  ok_sql(hstmt, "create table t_dae (x int not null, y varchar(5000), z int, "
+                "primary key (x) )");
+  ok_sql(hstmt, "select x, y, z from t_dae");
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &x, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_BINARY, holder, 10, &ylen));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 3, SQL_C_LONG, &z, 0, NULL));
+
+  expect_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0), SQL_NO_DATA);
+
+  expect_stmt(hstmt, SQLSetPos(hstmt, 0, SQL_ADD, SQL_LOCK_NO_CHANGE),
+              SQL_NEED_DATA);
+  expect_stmt(hstmt, SQLParamData(hstmt, &paramptr), SQL_NEED_DATA);
+  is(paramptr == holder);
+  ok_stmt(hstmt, SQLPutData(hstmt, yval, 10));
+  ok_stmt(hstmt, SQLParamData(hstmt, &paramptr));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  x= 0;
+  z= 0;
+  ylen= 0;
+  ok_sql(hstmt, "select x, y, z from t_dae");
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, yout, 11, &ylen));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_num(20, x);
+  is_num(40, z);
+  is_str(yval, yout, 11);
+  is_num(10, ylen);
+  
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists t_dae");
+  return OK;
+}
+
+
+/*
+  Basic test of data-at-exec with SQLSetPos() update.
+*/
+DECLARE_TEST(t_dae_setpos_update)
+{
+  SQLINTEGER x= 20;
+  SQLINTEGER z= 40;
+  SQLCHAR *yval= (SQLCHAR *) "1234567890";
+  SQLCHAR yout[11];
+  SQLLEN ylen= SQL_LEN_DATA_AT_EXEC(10);
+  SQLPOINTER holder= (SQLPOINTER) 0xcfcdcecc;
+  SQLPOINTER paramptr;
+  ok_sql(hstmt, "drop table if exists t_dae");
+  ok_sql(hstmt, "create table t_dae (x int not null, y varchar(5000), z int, "
+                "primary key (x) )");
+  ok_sql(hstmt, "insert into t_dae values (10, '9876', 30)");
+  ok_sql(hstmt, "select x, y, z from t_dae");
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0));
+  
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &x, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_BINARY, holder, 10, &ylen));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 3, SQL_C_LONG, &z, 0, NULL));
+  
+  expect_stmt(hstmt, SQLSetPos(hstmt, 0, SQL_UPDATE, SQL_LOCK_NO_CHANGE),
+              SQL_NEED_DATA);
+  expect_stmt(hstmt, SQLParamData(hstmt, &paramptr), SQL_NEED_DATA);
+  is(paramptr == holder);
+  ok_stmt(hstmt, SQLPutData(hstmt, yval, 10));
+  ok_stmt(hstmt, SQLParamData(hstmt, &paramptr));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  x= 0;
+  z= 0;
+  ylen= 0;
+  ok_sql(hstmt, "select x, y, z from t_dae");
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, yout, 11, &ylen));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_num(20, x);
+  is_num(40, z);
+  is_str(yval, yout, 11);
+  is_num(10, ylen);
+  
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists t_dae");
+  return OK;
+}
+  
 BEGIN_TESTS
   ADD_TEST(my_positioned_cursor)
   ADD_TEST(my_setpos_cursor)
@@ -3160,6 +3262,8 @@ BEGIN_TESTS
   ADD_TEST(t_cursor_pos_static)
   ADD_TEST(t_cursor_pos_dynamic)
   ADD_TEST(t_bug11846)
+  ADD_TEST(t_dae_setpos_insert)
+  ADD_TEST(t_dae_setpos_update)
 END_TESTS
 
 
