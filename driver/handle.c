@@ -461,6 +461,9 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     stmt->table_name= 0;
     stmt->dummy_state= ST_DUMMY_UNKNOWN;
     stmt->cursor.pk_validated= FALSE;
+    if (stmt->setpos_apd)
+      desc_free(stmt->setpos_apd);
+    stmt->setpos_apd= NULL;
 
     for (i= stmt->cursor.pk_count; i--;)
         stmt->cursor.pkcol[i].bind_done= 0;
