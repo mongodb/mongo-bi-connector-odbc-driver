@@ -306,6 +306,13 @@ typedef struct {
      * at exec parameters */
     char *value;
     SQLINTEGER value_length;
+    /*
+      this parameter is data-at-exec. this is needed as cursor updates
+      in ADO change the bind_offset_ptr between SQLSetPos() and the
+      final call to SQLParamData() which makes it impossible for us to
+      know any longer it was a data-at-exec param.
+    */
+    char is_dae;
     my_bool alloced;
     /* Whether this parameter has been bound by the application
      * (if not, was created by dummy execution) */

@@ -797,6 +797,7 @@ SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER FAR *prbgValue)
                                               default_size, 0);
             aprec->par.value= NULL;
             aprec->par.alloced= FALSE;
+            aprec->par.is_dae= 1;
             return SQL_NEED_DATA;
         }
     }

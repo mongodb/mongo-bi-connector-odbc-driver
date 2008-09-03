@@ -1166,7 +1166,9 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext
                 
                 if (arrec)
                 {
-                  if (arrec->octet_length_ptr)
+                  if (aprec->par.is_dae)
+                    ind_or_len= aprec->par.value_length;
+                  else if (arrec->octet_length_ptr)
                     ind_or_len= *(SQLLEN *)
                                 ptr_offset_adjust(arrec->octet_length_ptr,
                                                   stmt->ard->bind_offset_ptr,
@@ -1178,8 +1180,8 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext
                   iprec->concise_type= get_sql_data_type(stmt, field, NULL);
                   aprec->concise_type= arrec->concise_type;
 
-                  if (stmt->dae_type && IS_DATA_AT_EXEC(&ind_or_len))
-                    /* arrays are not supported for data-at-exec */
+                  if (stmt->dae_type && aprec->par.is_dae)
+                    /* arrays or offsets are not supported for data-at-exec */
                     aprec->data_ptr= aprec->par.value;
                   else
                     aprec->data_ptr= ptr_offset_adjust(arrec->data_ptr,
@@ -1407,8 +1409,9 @@ SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
                     return set_error(stmt,MYERR_S1107,NULL,0);
 
                 /* IF dynamic cursor THEN rerun query to refresh resultset */
-                if ( if_dynamic_cursor(stmt) && set_dynamic_result(stmt) )
-                    return set_error(stmt,MYERR_S1000, alloc_error, 0);
+                if (!stmt->dae_type && if_dynamic_cursor(stmt) &&
+                    set_dynamic_result(stmt))
+                  return set_error(stmt,MYERR_S1000, alloc_error, 0);
 
                 if (rc= setpos_dae_check_and_init(stmt, irow, fLock,
                                                   DAE_SETPOS_UPDATE))
@@ -1428,8 +1431,9 @@ SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
                 DYNAMIC_STRING  dynQuery;
                 SQLUSMALLINT    nCol        = 0;
 
-                if ( if_dynamic_cursor(stmt) && set_dynamic_result(stmt) )
-                    return set_error(stmt,MYERR_S1000, alloc_error, 0);
+                if (!stmt->dae_type && if_dynamic_cursor(stmt) &&
+                    set_dynamic_result(stmt))
+                  return set_error(stmt,MYERR_S1000, alloc_error, 0);
                 result= stmt->result;
 
                 if ( !(table_name= find_used_table(stmt)) )
