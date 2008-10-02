@@ -1313,6 +1313,8 @@ SQLTables(SQLHSTMT hstmt,
     {
       catalog= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
                                   catalog, &len, &errors);
+      if (!len)
+        catalog= "";
       catalog_len= (SQLSMALLINT)len;
       len= SQL_NTS;
     }
@@ -1321,6 +1323,8 @@ SQLTables(SQLHSTMT hstmt,
     {
       schema= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
                                  schema, &len, &errors);
+      if (!len)
+        schema= "";
       schema_len= (SQLSMALLINT)len;
       len= SQL_NTS;
     }
@@ -1329,6 +1333,8 @@ SQLTables(SQLHSTMT hstmt,
     {
       table= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
                                 table, &len, &errors);
+      if (!len)
+        table= "";
       table_len= (SQLSMALLINT)len;
       len= SQL_NTS;
     }
@@ -1347,9 +1353,12 @@ SQLTables(SQLHSTMT hstmt,
 
   if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
   {
-    x_free(catalog);
-    x_free(schema);
-    x_free(table);
+    if (catalog_len)
+      x_free(catalog);
+    if (schema_len)
+      x_free(schema);
+    if (table_len)
+      x_free(table);
     x_free(type);
   }
 

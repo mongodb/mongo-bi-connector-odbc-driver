@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * SQLTables() doesn't properly handle empty strings to list catalogs
+    and tables. (Bug #39561)
 
 ----
 
