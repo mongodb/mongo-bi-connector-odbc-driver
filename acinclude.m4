@@ -117,7 +117,7 @@ then
   save_LDFLAGS="$LDFLAGS"
   LDFLAGS="-L$check_iobc_lib_path $LDFLAGS"
 
-  if test "x$enable_odbcinstlink" = "yes" ; then
+  if test "x$enable_odbcinstlink" = "xyes" ; then
     AC_CHECK_LIB(iodbcinst,SQLGetPrivateProfileString,
     [AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING,1,[Define if SQLGetPrivateProfileString is defined])
      LIBS="$LIBS -L$check_iobc_lib_path -liodbcinst" ; have_iodbcinst=yes], [])
@@ -171,7 +171,7 @@ then
   save_LDFLAGS="$LDFLAGS"
   LDFLAGS="-L$check_iobc_lib_path $LDFLAGS"
 
-  if test "x$enable_odbcinstlink" = "yes" ; then
+  if test "x$enable_odbcinstlink" = "xyes" ; then
     AC_CHECK_LIB(odbcinst,SQLGetPrivateProfileString,
     [AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING,1,[Define if SQLGetPrivateProfileString is defined])
     LIBS="$LIBS -L$check_iobc_lib_path -lodbcinst" ; have_odbcinst=yes], [])
