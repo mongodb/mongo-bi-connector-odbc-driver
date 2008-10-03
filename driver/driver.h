@@ -47,7 +47,7 @@ extern "C"
 #define stdin
 #endif
 
-/* Misc definations for AIX .. */
+/* Misc definitions for AIX .. */
 #ifndef crid_t
  typedef int crid_t;
 #endif
@@ -207,6 +207,13 @@ typedef enum { DESC_HDR, DESC_REC } fld_loc;
 #define DESC_GET_DBC(X) (((X)->alloc_type == SQL_DESC_ALLOC_USER) ? \
                          (X)->exp.dbc : (X)->stmt->dbc)
 
+/* data-at-exec type */
+#define DAE_NORMAL 1 /* normal SQLExecute() */
+#define DAE_SETPOS_INSERT 2 /* SQLSetPos() insert */
+#define DAE_SETPOS_UPDATE 3 /* SQLSetPos() update */
+/* data-at-exec handling done for current SQLSetPos() call */
+#define DAE_SETPOS_DONE 10
+
 typedef struct {
   int perms;
   SQLSMALLINT data_type; /* SQL_IS_SMALLINT, etc */
@@ -299,6 +306,13 @@ typedef struct {
      * at exec parameters */
     char *value;
     SQLINTEGER value_length;
+    /*
+      this parameter is data-at-exec. this is needed as cursor updates
+      in ADO change the bind_offset_ptr between SQLSetPos() and the
+      final call to SQLParamData() which makes it impossible for us to
+      know any longer it was a data-at-exec param.
+    */
+    char is_dae;
     my_bool alloced;
     /* Whether this parameter has been bound by the application
      * (if not, was created by dummy execution) */
@@ -422,6 +436,7 @@ typedef struct tagSTMT
   my_ulonglong	affected_rows;
   long		current_row;
   long		cursor_row;
+  char          dae_type; /* data-at-exec type */
   struct {
     uint column;      /* Which column is being used with SQLGetData() */
     char *source;     /* Our current position in the source. */
@@ -443,6 +458,10 @@ typedef struct tagSTMT
   /* implicit descriptors */
   DESC *imp_ard;
   DESC *imp_apd;
+  /* APD for data-at-exec on SQLSetPos() */
+  DESC *setpos_apd;
+  SQLSETPOSIROW setpos_row;
+  SQLUSMALLINT setpos_lock;
 } STMT;
 
 

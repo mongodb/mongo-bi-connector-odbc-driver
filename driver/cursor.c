@@ -427,7 +427,8 @@ static SQLRETURN copy_rowdata(STMT FAR *stmt, DESCREC *aprec,
     if ( !(*to= (SQLCHAR *) extend_buffer(*net,(char*) *to,length)) )
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
-    if (!(SQL_SUCCEEDED(rc= insert_param(stmt, (char**) to, aprec, iprec, 0))))
+    rc= insert_param(stmt, (char**) to, stmt->apd, aprec, iprec, 0);
+    if (!SQL_SUCCEEDED(rc))
         return rc;
 
     /* We have to remove zero bytes or we have problems! */
@@ -474,7 +475,8 @@ static SQLRETURN copy_field_data(STMT FAR *stmt, DESCREC *aprec,
                                  DESCREC *iprec, NET **net, unsigned char **to)
 {
     SQLRETURN rc;
-    if (!(SQL_SUCCEEDED(rc= insert_param(stmt, (char**) to, aprec, iprec, 0))))
+    rc= insert_param(stmt, (char **) to, stmt->apd, aprec, iprec, 0);
+    if (!SQL_SUCCEEDED(rc))
         return rc;
 
     if (!(*to= (unsigned char *)add_to_buffer(*net, (char *)*to, " AND ", 5)))
@@ -784,6 +786,9 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLULEN irow,
         assert(irrec);
         assert(irrec->row.field);
 
+        if (stmt->setpos_apd)
+          aprec= desc_get_rec(stmt->setpos_apd, ncol, FALSE);
+
         if (!arrec || !ARD_IS_BOUND(arrec) || !irrec->row.field)
         {
           ignore_count++;
@@ -820,24 +825,24 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLULEN irow,
             }
         }
 
-        /* TODO : handle ..SQL_DATA_AT_EXEC here....*/
-
         dynstr_append_quoted_name(dynQuery,field->org_name);
         dynstr_append_mem(dynQuery,"=",1);
 
         iprec->concise_type= get_sql_data_type(stmt, field, NULL);
         aprec->concise_type= arrec->concise_type;
-        aprec->data_ptr= ptr_offset_adjust(arrec->data_ptr,
-                                           stmt->ard->bind_offset_ptr,
-                                           stmt->ard->bind_type,
-                                           bind_length(arrec->concise_type,
-                                                       arrec->octet_length),
-                                           irow);
+        if (stmt->dae_type && IS_DATA_AT_EXEC(&length))
+          aprec->data_ptr= aprec->par.value;
+        else
+          aprec->data_ptr= ptr_offset_adjust(arrec->data_ptr,
+                                             stmt->ard->bind_offset_ptr,
+                                             stmt->ard->bind_type,
+                                             bind_length(arrec->concise_type,
+                                                         arrec->octet_length),
+                                             irow);
         aprec->octet_length= arrec->octet_length;
         if (length == SQL_NTS)
             length= strlen(aprec->data_ptr);
-        /* TODO Check if SQL_LEN_DATA_AT_EXEC() macro was used */
-        else if (length <= SQL_LEN_DATA_AT_EXEC_OFFSET)
+        else if (IS_DATA_AT_EXEC(&length))
             length= -(length - SQL_LEN_DATA_AT_EXEC_OFFSET);
 
         aprec->octet_length_ptr= &length;
@@ -943,6 +948,7 @@ SQLRETURN my_pos_update( STMT FAR *         pStmtCursor,
       if (my_SQLPrepare(pStmt, (SQLCHAR *)dynQuery->str, dynQuery->length,
                         FALSE) != SQL_SUCCESS)
         return SQL_ERROR;
+      pStmt->dae_type= DAE_NORMAL;
     }
 
     my_SQLFreeStmt( pStmtTemp, SQL_DROP );
@@ -1119,6 +1125,8 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext
     DESCREC aprec_, iprec_;
     DESCREC *aprec= &aprec_, *iprec= &iprec_;
 
+    desc_rec_init_ipd(iprec);
+
     /* determine the number of rows to insert when irow = 0 */
     if ( !irow && stmt->ard->array_size > 1 ) /* batch wise */
     {
@@ -1150,13 +1158,17 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext
                 SQLLEN       ind_or_len= 0;
 
                 arrec= desc_get_rec(stmt->ard, ncol, FALSE);
-
-                desc_rec_init_apd(aprec);
-                desc_rec_init_ipd(iprec);
-
+                /* if there's a separate APD for this (dae), use it */
+                if (stmt->setpos_apd)
+                  aprec= desc_get_rec(stmt->setpos_apd, ncol, FALSE);
+                else
+                  desc_rec_init_apd(aprec);
+                
                 if (arrec)
                 {
-                  if (arrec->octet_length_ptr)
+                  if (aprec->par.is_dae)
+                    ind_or_len= aprec->par.value_length;
+                  else if (arrec->octet_length_ptr)
                     ind_or_len= *(SQLLEN *)
                                 ptr_offset_adjust(arrec->octet_length_ptr,
                                                   stmt->ard->bind_offset_ptr,
@@ -1168,12 +1180,16 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext
                   iprec->concise_type= get_sql_data_type(stmt, field, NULL);
                   aprec->concise_type= arrec->concise_type;
 
-                  aprec->data_ptr= ptr_offset_adjust(arrec->data_ptr,
-                                                     stmt->ard->bind_offset_ptr,
-                                                     stmt->ard->bind_type,
-                                                     bind_length(arrec->concise_type,
-                                                                 arrec->octet_length),
-                                                     count);
+                  if (stmt->dae_type && aprec->par.is_dae)
+                    /* arrays or offsets are not supported for data-at-exec */
+                    aprec->data_ptr= aprec->par.value;
+                  else
+                    aprec->data_ptr= ptr_offset_adjust(arrec->data_ptr,
+                                                       stmt->ard->bind_offset_ptr,
+                                                       stmt->ard->bind_type,
+                                                       bind_length(arrec->concise_type,
+                                                                   arrec->octet_length),
+                                                       count);
                 }
 
                 switch (ind_or_len) {
@@ -1181,6 +1197,12 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext
                   if (aprec->data_ptr)
                     length= strlen(aprec->data_ptr);
                   break;
+                default:
+                  if (IS_DATA_AT_EXEC(&ind_or_len))
+                  {
+                    length= aprec->par.value_length;
+                    break;
+                  }
                 /*
                   We pass through SQL_COLUMN_IGNORE and SQL_NULL_DATA,
                   because the insert_data() that is eventually called knows
@@ -1188,7 +1210,6 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext
                 */
                 case SQL_COLUMN_IGNORE:
                 case SQL_NULL_DATA:
-                default:
                   length= ind_or_len;
                 }
 
@@ -1242,6 +1263,48 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext
 }
 
 
+/*
+  Setup a data-at-execution for SQLSetPos() on the current
+  statement.
+*/
+static SQLRETURN setpos_dae_check_and_init(STMT *stmt, SQLSETPOSIROW irow,
+                                           SQLSMALLINT fLock, char dae_type)
+{
+  int dae_rec;
+  SQLRETURN rc;
+  
+  /*
+    If this statement hasn't already had the dae params set,
+    check if there are any and begin the SQLParamData() sequence.
+  */
+  if (stmt->dae_type != DAE_SETPOS_DONE &&
+      (dae_rec= desc_find_dae_rec(stmt->ard)) > -1)
+  {
+    if (!irow && stmt->ard->array_size > 1)
+      return set_stmt_error(stmt, "HYC00", "Multiple row insert "
+                            "with data at execution not supported",
+                            0);
+    
+    /* create APD, and copy ARD to it */
+    stmt->setpos_apd= desc_alloc(stmt, SQL_DESC_ALLOC_AUTO,
+                                 DESC_APP, DESC_PARAM);
+    if (!stmt->setpos_apd)
+      return set_stmt_error(stmt, "S1001", "Not enough memory",
+                            4001);
+    if(rc= stmt_SQLCopyDesc(stmt, stmt->ard, stmt->setpos_apd))
+      return rc;
+                  
+    stmt->current_param= dae_rec;
+    stmt->dae_type= dae_type;
+    stmt->setpos_row= irow;
+    stmt->setpos_lock= fLock;
+    return SQL_NEED_DATA;
+  }
+
+  return SQL_SUCCESS;
+}
+
+
 /*!
     \brief  Shadow function for SQLSetPos.
     
@@ -1262,11 +1325,13 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext
 static const char *alloc_error= "Driver Failed to set the internal dynamic result";
 
 
-static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLSETPOSIROW irow, SQLUSMALLINT fOption, SQLUSMALLINT fLock )
+SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
+                               SQLUSMALLINT fOption, SQLUSMALLINT fLock)
 {
     STMT FAR  *stmt= (STMT FAR*) hstmt;
     SQLRETURN sqlRet= SQL_SUCCESS;
     MYSQL_RES *result= stmt->result;
+    SQLRETURN rc;
 
     CLEAR_STMT_ERROR(stmt);
 
@@ -1344,8 +1409,13 @@ static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLSETPOSIROW irow, SQLUS
                     return set_error(stmt,MYERR_S1107,NULL,0);
 
                 /* IF dynamic cursor THEN rerun query to refresh resultset */
-                if ( if_dynamic_cursor(stmt) && set_dynamic_result(stmt) )
-                    return set_error(stmt,MYERR_S1000, alloc_error, 0);
+                if (!stmt->dae_type && if_dynamic_cursor(stmt) &&
+                    set_dynamic_result(stmt))
+                  return set_error(stmt,MYERR_S1000, alloc_error, 0);
+
+                if (rc= setpos_dae_check_and_init(stmt, irow, fLock,
+                                                  DAE_SETPOS_UPDATE))
+                  return rc;
 
                 if ( init_dynamic_string(&dynQuery, "UPDATE ", 1024, 1024) )
                     return set_error(stmt,MYERR_S1001,NULL,4001);
@@ -1361,12 +1431,17 @@ static SQLRETURN SQL_API my_SQLSetPos( SQLHSTMT hstmt, SQLSETPOSIROW irow, SQLUS
                 DYNAMIC_STRING  dynQuery;
                 SQLUSMALLINT    nCol        = 0;
 
-                if ( if_dynamic_cursor(stmt) && set_dynamic_result(stmt) )
-                    return set_error(stmt,MYERR_S1000, alloc_error, 0);
+                if (!stmt->dae_type && if_dynamic_cursor(stmt) &&
+                    set_dynamic_result(stmt))
+                  return set_error(stmt,MYERR_S1000, alloc_error, 0);
                 result= stmt->result;
 
                 if ( !(table_name= find_used_table(stmt)) )
                     return SQL_ERROR;
+
+                if (rc= setpos_dae_check_and_init(stmt, irow, fLock,
+                                                  DAE_SETPOS_INSERT))
+                  return rc;
 
                 if ( init_dynamic_string(&dynQuery, "INSERT INTO ", 1024,1024) )
                     return set_stmt_error(stmt, "S1001", "Not enough memory",

@@ -409,6 +409,8 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     }
 
     desc_free_paramdata(stmt->apd);
+    /* reset data-at-exec state */
+    stmt->dae_type= 0;
 
     if (fOption == SQL_RESET_PARAMS)
     {
@@ -448,6 +450,7 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     stmt->fix_fields= 0;
     stmt->affected_rows= 0;
     stmt->current_row= stmt->cursor_row= stmt->rows_found_in_set= 0;
+    stmt->dae_type= 0;
 
     if (fOption == MYSQL_RESET_BUFFERS)
         return SQL_SUCCESS;
@@ -458,6 +461,9 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     stmt->table_name= 0;
     stmt->dummy_state= ST_DUMMY_UNKNOWN;
     stmt->cursor.pk_validated= FALSE;
+    if (stmt->setpos_apd)
+      desc_free(stmt->setpos_apd);
+    stmt->setpos_apd= NULL;
 
     for (i= stmt->cursor.pk_count; i--;)
         stmt->cursor.pkcol[i].bind_done= 0;

@@ -132,8 +132,8 @@ SQLRETURN my_pos_delete(STMT FAR *stmt,STMT FAR *stmtParam,
 SQLRETURN my_pos_update(STMT FAR *stmt,STMT FAR *stmtParam,
 			SQLUSMALLINT irow,DYNAMIC_STRING *dynStr);
 char *check_if_positioned_cursor_exists(STMT FAR *stmt, STMT FAR **stmtNew);
-SQLRETURN insert_param(STMT *stmt, char **to,DESCREC *aprec,DESCREC *iprec,
-                       SQLULEN row);
+SQLRETURN insert_param(STMT *stmt, char **to, DESC *apd,
+                       DESCREC *aprec, DESCREC *iprec, SQLULEN row);
 char *add_to_buffer(NET *net,char *to,const char *from,ulong length);
 int is_set_names_statement(SQLCHAR *query);
 
@@ -205,6 +205,8 @@ SQLRETURN SQL_API my_SQLBindParameter(SQLHSTMT hstmt,SQLUSMALLINT ipar,
 SQLRETURN SQL_API my_SQLExtendedFetch(SQLHSTMT hstmt, SQLUSMALLINT fFetchType,
 				      SQLROWOFFSET irow, SQLULEN *pcrow,
 				      SQLUSMALLINT FAR *rgfRowStatus, bool upd_status);
+SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
+                               SQLUSMALLINT fOption, SQLUSMALLINT fLock);
 SQLRETURN copy_stmt_error(STMT FAR *src, STMT FAR *dst);
 int unireg_to_c_datatype(MYSQL_FIELD *field);
 int default_c_type(int sql_data_type);
@@ -258,6 +260,7 @@ void desc_free(DESC *desc);
 void desc_rec_init_apd(DESCREC *rec);
 void desc_rec_init_ipd(DESCREC *rec);
 void desc_remove_stmt(DESC *desc, STMT *stmt);
+int desc_find_dae_rec(DESC *desc);
 SQLRETURN
 stmt_SQLSetDescField(STMT *stmt, DESC *desc, SQLSMALLINT recnum,
                      SQLSMALLINT fldid, SQLPOINTER val, SQLINTEGER buflen);

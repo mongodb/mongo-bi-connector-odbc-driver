@@ -273,6 +273,30 @@ void desc_remove_stmt(DESC *desc, STMT *stmt)
 
 
 /*
+ * Check with the given descriptor contains any data-at-exec
+ * records. Return the record number or -1 if none are found.
+ */
+int desc_find_dae_rec(DESC *desc)
+{
+  int i;
+  DESCREC *rec;
+  SQLLEN *octet_length_ptr;
+  for (i= 0; i < desc->count; ++i)
+  {
+    rec= desc_get_rec(desc, i, FALSE);
+    assert(rec);
+    octet_length_ptr= ptr_offset_adjust(rec->octet_length_ptr,
+                                        desc->bind_offset_ptr,
+                                        desc->bind_type,
+                                        sizeof(SQLLEN), /*row*/0);
+    if (IS_DATA_AT_EXEC(octet_length_ptr))
+      return i;
+  }
+  return -1;
+}
+
+
+/*
  * Apply the actual value to the descriptor field.
  *
  * @param dest Pointer to descriptor field to be set.
