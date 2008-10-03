@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * Add support for data-at-execution with positioned insert/update
+    (Bug #37649)
 
 ----
 
