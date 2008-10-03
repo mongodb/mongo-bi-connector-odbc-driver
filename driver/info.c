@@ -115,7 +115,7 @@ MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
     MYINFO_SET_STR((dbc->flag & FLAG_NO_CATALOG) ? "" : "database");
 
   case SQL_CATALOG_USAGE:
-    MYINFO_SET_ULONG((dbc->flag & FLAG_NO_CATALOG) ?
+    MYINFO_SET_ULONG(!(dbc->flag & FLAG_NO_CATALOG) ?
                      (SQL_CU_DML_STATEMENTS | SQL_CU_PROCEDURE_INVOCATION |
                       SQL_CU_TABLE_DEFINITION | SQL_CU_INDEX_DEFINITION |
                       SQL_CU_PRIVILEGE_DEFINITION) :
