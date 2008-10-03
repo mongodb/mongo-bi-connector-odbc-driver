@@ -889,7 +889,7 @@ int ds_to_kvpair(DataSource *ds, SQLWCHAR *attrs, size_t attrslen,
   /* always ends in delimiter, so overwrite it */
   *(attrs - 1)= 0;
 
-  return (origchars - attrslen) / sizeof(SQLWCHAR);
+  return origchars - attrslen;
 }
 
 
