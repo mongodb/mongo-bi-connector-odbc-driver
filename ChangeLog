@@ -5,6 +5,8 @@
   Bugs fixed:
   * Add support for data-at-execution with positioned insert/update
     (Bug #37649)
+  * Output string length from SQLDriverConnect includes NULL-term
+    (Bug #38949)
 
 ----
 

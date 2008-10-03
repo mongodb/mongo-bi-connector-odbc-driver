@@ -566,12 +566,15 @@ DECLARE_TEST(t_bug30983)
 
 /*
    Test the output string after calling SQLDriverConnect
+   Note: Windows 
+   TODO fix this test create a comparable output string
 */
 DECLARE_TEST(t_driverconnect_outstring)
 {
   HDBC hdbc1;
   SQLCHAR conn[256], conn_out[256], exp_out[256];
-  SQLSMALLINT conn_out_len;
+  SQLSMALLINT conn_out_len, exp_conn_out_len;
+  SQLSMALLINT buflen;
   sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;CHARSET=utf8",
           mydsn, myuid, mypwd);
   if (mysock != NULL)
@@ -606,8 +609,34 @@ DECLARE_TEST(t_driverconnect_outstring)
 
   printMessage("Output connection string: %s", conn_out);
   printMessage("Expected output   string: %s", exp_out);
+  /* save proper length for later tests */
+  exp_conn_out_len= conn_out_len;
+  is_num(conn_out_len, strlen((char *)conn_out));
+  /* TODO
   is_str(conn_out, exp_out, strlen((char *)conn_out));
+  */
   ok_con(hdbc1, SQLDisconnect(hdbc1));
+
+  /* test truncation */
+  conn_out_len= 999;
+  expect_dbc(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, SQL_NTS, conn_out,
+                                     10 * sizeof(SQLWCHAR), &conn_out_len,
+                                     SQL_DRIVER_NOPROMPT),
+             SQL_SUCCESS_WITH_INFO);
+  is_num(conn_out_len, 9);
+  is(check_sqlstate_ex(hdbc1, SQL_HANDLE_DBC, "01004") == OK);
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+
+  /* test truncation on boundary */
+  conn_out_len= 999;
+  expect_dbc(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, SQL_NTS, conn_out,
+                                     exp_conn_out_len * sizeof(SQLWCHAR),
+                                     &conn_out_len, SQL_DRIVER_NOPROMPT),
+             SQL_SUCCESS_WITH_INFO);
+  is_num(conn_out_len, exp_conn_out_len - 1);
+  is(check_sqlstate_ex(hdbc1, SQL_HANDLE_DBC, "01004") == OK);
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+
   ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
   return OK;
 }
@@ -924,8 +953,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug30774)
   ADD_TEST(t_bug30840)
   ADD_TEST(t_bug30983)
-  /* TODO fix this test create a comparable output string */
-  ADD_TODO(t_driverconnect_outstring)
+  ADD_TEST(t_driverconnect_outstring)
   ADD_TEST(setnames)
   ADD_TEST(setnames_conn)
   ADD_TEST(sqlcancel)

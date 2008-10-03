@@ -800,12 +800,15 @@ connected:
     size_t inlen= (sqlwcharlen(szConnStrIn) + 1) * sizeof(SQLWCHAR);
     size_t copylen= myodbc_min((size_t)cbConnStrOutMax, inlen);
     memcpy(szConnStrOut, szConnStrIn, copylen);
+    /* term needed if possibly truncated */
+    szConnStrOut[(copylen / sizeof(SQLWCHAR)) - 1] = 0;
     if (pcbConnStrOut)
-      *pcbConnStrOut= copylen / sizeof(SQLWCHAR);
+      *pcbConnStrOut= (copylen / sizeof(SQLWCHAR)) - 1;
   }
 
   /* return SQL_SUCCESS_WITH_INFO if truncated output string */
-  if (pcbConnStrOut && cbConnStrOutMax < *pcbConnStrOut)
+  if (pcbConnStrOut &&
+      cbConnStrOutMax - sizeof(SQLWCHAR) == *pcbConnStrOut * sizeof(SQLWCHAR))
   {
     set_dbc_error(hdbc, "01004", "String data, right truncated.", 0);
     rc= SQL_SUCCESS_WITH_INFO;
