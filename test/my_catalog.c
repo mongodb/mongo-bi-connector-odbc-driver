@@ -78,13 +78,13 @@ DECLARE_TEST(my_table_dbs)
   ok_sql(hstmt, "DROP DATABASE IF EXISTS my_all_db_test3");
   ok_sql(hstmt, "DROP DATABASE IF EXISTS my_all_db_test4");
 
-  ok_stmt(hstmt, SQLTables(hstmt,(SQLCHAR *)"%",1,NULL,0,NULL,0,NULL,0));
+  ok_stmt(hstmt, SQLTables(hstmt,(SQLCHAR *)"%",1,"",0,"",0,NULL,0));
 
     nrows = my_print_non_format_result(hstmt);
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLTables(hstmt,(SQLCHAR *)SQL_ALL_CATALOGS,SQL_NTS,NULL,0,NULL,0,
+    rc = SQLTables(hstmt,(SQLCHAR *)SQL_ALL_CATALOGS,SQL_NTS,"",0,"",0,
                    NULL,0);
     mystmt(hstmt,rc);
 
@@ -107,7 +107,7 @@ DECLARE_TEST(my_table_dbs)
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
-    rc = SQLTables(hstmt,(SQLCHAR *)"%",1,NULL,0,NULL,0,NULL,0);
+    rc = SQLTables(hstmt,(SQLCHAR *)"%",1,"",0,"",0,NULL,0);
     mystmt(hstmt,rc);
 
     rc = SQLFetch(hstmt);
@@ -150,7 +150,7 @@ DECLARE_TEST(my_table_dbs)
     ok_sql(hstmt, "CREATE DATABASE my_all_db_test3");
     ok_sql(hstmt, "CREATE DATABASE my_all_db_test4");
 
-    rc = SQLTables(hstmt, (SQLCHAR *)"%", 1, NULL, 0, NULL, 0, NULL, 0);
+    rc = SQLTables(hstmt, (SQLCHAR *)"%", 1, "", 0, "", 0, "", 0);
     mystmt(hstmt,rc);
 
     nrows += 4;
@@ -159,7 +159,7 @@ DECLARE_TEST(my_table_dbs)
     mystmt(hstmt,rc);
 
     rc = SQLTables(hstmt,(SQLCHAR *)SQL_ALL_CATALOGS, SQL_NTS,
-                   NULL, 0, NULL, 0, NULL, 0);
+                   "", 0, "", 0, "", 0);
     mystmt(hstmt,rc);
 
     is(nrows == my_print_non_format_result(hstmt));
@@ -167,7 +167,7 @@ DECLARE_TEST(my_table_dbs)
     mystmt(hstmt,rc);
 
     rc = SQLTables(hstmt, (SQLCHAR *)"my_all_db_test", SQL_NTS,
-                   NULL, 0, NULL, 0, NULL, 0);
+                   "", 0, "", 0, "", 0);
     mystmt(hstmt,rc);
 
     is(0 == my_print_non_format_result(hstmt));
@@ -175,7 +175,7 @@ DECLARE_TEST(my_table_dbs)
     mystmt(hstmt,rc);
 
     rc = SQLTables(hstmt, (SQLCHAR *)"my_all_db_test%", SQL_NTS,
-                   NULL, 0, NULL, 0, NULL, 0);
+                   "", 0, "", 0, NULL, 0);
     mystmt(hstmt,rc);
 
     is(4 == my_print_non_format_result(hstmt));
@@ -681,6 +681,7 @@ DECLARE_TEST(tmysql_showkeys)
 DECLARE_TEST(t_sqltables)
 {
     SQLRETURN r;
+    SQLINTEGER rows;
 
     ok_stmt(hstmt, SQLTables(hstmt,NULL,0,NULL,0,NULL,0,NULL,0));
 
@@ -733,10 +734,11 @@ DECLARE_TEST(t_sqltables)
     r = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,r);
 
-    r = SQLTables(hstmt, NULL, 0, NULL, 0, NULL, 0, (SQLCHAR *)"%", SQL_NTS);
+    r = SQLTables(hstmt, "", 0, "", 0, "", 0, (SQLCHAR *)"%", SQL_NTS);
     mystmt(hstmt,r);
 
-    is_num(myresult(hstmt), 3);
+    rows= myresult(hstmt);
+    is_num(rows, 3);
 
     r = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,r);

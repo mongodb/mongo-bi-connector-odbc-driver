@@ -96,7 +96,7 @@ extern "C"
 #endif
 
 /*
-   Internal driver definations
+   Internal driver definitions
 */
 #define MYSQL_RESET_BUFFERS 1000  /* param to SQLFreeStmt */
 #define MYSQL_RESET 1001	  /* param to SQLFreeStmt */

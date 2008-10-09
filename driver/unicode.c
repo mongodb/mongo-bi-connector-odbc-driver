@@ -1045,16 +1045,24 @@ SQLTablesW(SQLHSTMT hstmt,
   SQLINTEGER len;
   uint errors= 0;
 
+  /* we must preserve NULL/blank strings for SQLTables() semantics */
+
   len= catalog_len;
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
+  if (catalog && !len)
+    catalog8= "";
   catalog_len= (SQLSMALLINT)len;
 
   len= schema_len;
   schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, schema, &len, &errors);
+  if (schema && !len)
+    schema8= "";
   schema_len= (SQLSMALLINT)len;
 
   len= table_len;
   table8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, table, &len, &errors);
+  if (table && !len)
+    table8= "";
   table_len= (SQLSMALLINT)len;
 
   len= type_len;
@@ -1064,9 +1072,12 @@ SQLTablesW(SQLHSTMT hstmt,
   rc= MySQLTables(hstmt, catalog8, catalog_len, schema8, schema_len,
                   table8, table_len, type8, type_len);
 
-  x_free(catalog8);
-  x_free(schema8);
-  x_free(table8);
+  if (catalog_len)
+    x_free(catalog8);
+  if (schema_len)
+    x_free(schema8);
+  if (table_len)
+    x_free(table8);
   x_free(type8);
 
   return rc;

@@ -10,6 +10,8 @@
   * SQLGetInfo() returns 0 for SQL_CATALOG_USAGE info (Bug #39560)
   * SQLDriverConnect() may truncate output string erroneously
     (Bug #37278)
+  * SQLTables() doesn't properly handle empty strings to list catalogs
+    and tables. (Bug #39561)
 
 ----
 

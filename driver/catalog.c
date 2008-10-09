@@ -286,7 +286,8 @@ MySQLTables(SQLHSTMT hstmt,
     if (type_len == SQL_NTS)
       type_len= type ? strlen((char *)type) : 0;
 
-    if (catalog_len && !schema_len && !table_len)
+    /* empty (but non-NULL) schema and table returns catalog list */
+    if (catalog_len && !schema_len && schema && !table_len && table)
     {
         pthread_mutex_lock(&stmt->dbc->lock);
         {
@@ -321,9 +322,7 @@ MySQLTables(SQLHSTMT hstmt,
         return SQL_SUCCESS;
     }
 
-    if (!catalog_len &&
-        schema_len &&
-        !table_len)
+    if (!catalog_len && catalog && schema_len && !table_len && table)
     {
         /* Return set of allowed schemas (none) */
         return create_fake_resultset(stmt, SQLTABLES_owner_values,
@@ -331,8 +330,8 @@ MySQLTables(SQLHSTMT hstmt,
                                      1, SQLTABLES_fields, SQLTABLES_FIELDS);
     }
 
-    if (!catalog_len && !schema_len && !table_len && type &&
-        !strncmp((char *)type, "%", 2))
+    if (!catalog_len && catalog && !schema_len && schema &&
+        !table_len && table && type && !strncmp((char *)type, "%", 2))
     {
         /* Return set of TableType qualifiers */
         return create_fake_resultset(stmt, (MYSQL_ROW)SQLTABLES_type_values,
