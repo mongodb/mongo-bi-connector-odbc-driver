@@ -860,6 +860,18 @@ DECLARE_TEST(empty_set)
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
+  /* SQLTables(): empty catalog with existing table */
+  ok_sql(hstmt, "drop table if exists t_sqltables_empty");
+  ok_sql(hstmt, "create table t_sqltables_empty (x int)");
+  ok_stmt(hstmt, SQLTables(hstmt, "", SQL_NTS, NULL, 0,
+			   (SQLCHAR *) "t_sqltables_empty", SQL_NTS,
+			   NULL, SQL_NTS));
+  ok_stmt(hstmt, SQLNumResultCols(hstmt, &columns));
+  is_num(columns, 5);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists t_sqltables_empty");
+
   return OK;
 }
 
@@ -1404,6 +1416,27 @@ DECLARE_TEST(t_bug36275)
 }
 
 
+/*
+  Bug #39957 - NULL catalog did not return correct catalog in result
+*/
+DECLARE_TEST(t_bug39957)
+{
+  SQLCHAR buf[50];
+  ok_sql(hstmt, "drop table if exists t_bug39957");
+  ok_sql(hstmt, "create table t_bug39957 (x int)");
+  ok_stmt(hstmt, SQLTables(hstmt, NULL, 0, NULL, 0,
+			   (SQLCHAR *)"t_bug39957", SQL_NTS, NULL, 0));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buf, 1), "test", 5);
+  is_str(my_fetch_str(hstmt, buf, 3), "t_bug39957", 11);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists t_bug39957");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -1433,6 +1466,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug12805)
   ADD_TEST(t_bug30770)
   ADD_TEST(t_bug36275)
+  ADD_TEST(t_bug39957)
 END_TESTS
 
 

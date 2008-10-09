@@ -341,6 +341,10 @@ MySQLTables(SQLHSTMT hstmt,
                                      SQLTABLES_fields, SQLTABLES_FIELDS);
     }
 
+    /* any other use of catalog="" returns an empty result */
+    if (catalog && !catalog_len)
+      goto empty_set;
+
     user_tables= check_table_type(type, "TABLE", 5);
     views= check_table_type(type, "VIEW", 4);
 
@@ -413,8 +417,14 @@ MySQLTables(SQLHSTMT hstmt,
       data= stmt->result_array;
 
       if (!option_flag(stmt, FLAG_NO_CATALOG))
-        db= strmake_root(&stmt->result->field_alloc,
-                         (char *)catalog, catalog_len);
+      {
+        if (!catalog && !reget_current_catalog(stmt->dbc))
+          db= strmake_root(&stmt->result->field_alloc,
+                           stmt->dbc->database, strlen(stmt->dbc->database));
+        else
+          db= strmake_root(&stmt->result->field_alloc,
+                           (char *)catalog, catalog_len);
+      }
 
       while ((row= mysql_fetch_row(stmt->result)))
       {

@@ -1,6 +1,8 @@
 5.1.6
 
   Functionality added or changed:
+  * Providing an empty string as the catalog argument to SQLTables()
+    will return an empty result set as a catalog must have a name.
 
   Bugs fixed:
   * Add support for data-at-execution with positioned insert/update
@@ -12,6 +14,8 @@
     (Bug #37278)
   * SQLTables() doesn't properly handle empty strings to list catalogs
     and tables. (Bug #39561)
+  * SQLTables() doesn't return the catalog name if the table is given
+    and the catalog argument is NULL. (Bug #39957)
 
 ----
 
