@@ -12,6 +12,8 @@
     (Bug #37278)
   * SQLTables() doesn't properly handle empty strings to list catalogs
     and tables. (Bug #39561)
+  * Positioned update with SQL_C_NUMERIC loses prec/scale values
+    (Bug #39961)
 
 ----
 

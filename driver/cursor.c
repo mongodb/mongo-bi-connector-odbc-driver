@@ -830,6 +830,9 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLULEN irow,
 
         iprec->concise_type= get_sql_data_type(stmt, field, NULL);
         aprec->concise_type= arrec->concise_type;
+	/* copy prec and scale - needed for SQL_NUMERIC values */
+	iprec->precision= arrec->precision;
+	iprec->scale= arrec->scale;
         if (stmt->dae_type && IS_DATA_AT_EXEC(&length))
           aprec->data_ptr= aprec->par.value;
         else
@@ -1179,6 +1182,9 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext
 
                   iprec->concise_type= get_sql_data_type(stmt, field, NULL);
                   aprec->concise_type= arrec->concise_type;
+		  /* copy prec and scale - needed for SQL_NUMERIC values */
+		  iprec->precision= arrec->precision;
+		  iprec->scale= arrec->scale;
 
                   if (stmt->dae_type && aprec->par.is_dae)
                     /* arrays or offsets are not supported for data-at-exec */
