@@ -12,6 +12,8 @@
     (Bug #37278)
   * SQLTables() doesn't properly handle empty strings to list catalogs
     and tables. (Bug #39561)
+  * SQLGetTypeInfo() doesn't return any rows SQL_TIMESTAMP on an ODBC v2
+    connection. (Bug #30626)
 
 ----
 

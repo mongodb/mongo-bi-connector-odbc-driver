@@ -934,6 +934,23 @@ SQLRETURN SQL_API MySQLGetTypeInfo(SQLHSTMT hstmt, SQLSMALLINT fSqlType)
 
   my_SQLFreeStmt(hstmt, MYSQL_RESET);
 
+  /* use ODBC2 types if called with ODBC3 types on an ODBC2 handle */
+  if (stmt->dbc->env->odbc_ver == SQL_OV_ODBC2)
+  {
+    switch (fSqlType)
+    {
+    case SQL_TYPE_DATE:
+      fSqlType= SQL_DATE;
+      break;
+    case SQL_TYPE_TIME:
+      fSqlType= SQL_TIME;
+      break;
+    case SQL_TYPE_TIMESTAMP:
+      fSqlType= SQL_TIMESTAMP;
+      break;
+    }
+  }
+
   /* Set up result Data dictionary. */
   stmt->result= (MYSQL_RES *)my_malloc(sizeof(MYSQL_RES), MYF(MY_ZEROFILL));
   stmt->fake_result= 1;
@@ -1011,12 +1028,9 @@ void myodbc_ov_init(SQLINTEGER odbc_version)
 {
   if (odbc_version == SQL_OV_ODBC2)
   {
-    /* Windows ODBC DM maps these to ODBCv3 types for a v3 Driver */
-#if !defined(_WIN32) || defined(SUPPORT_ONLY_ODBCV2_DATE_TYPES)
     my_int2str(SQL_TIMESTAMP,sql_timestamp,-10,0);
     my_int2str(SQL_DATE,sql_date,-10,0);
     my_int2str(SQL_TIME,sql_time,-10,0);
-#endif
     myodbc_sqlstate2_init();
     myodbc_ov2_inited= 1;
   }
