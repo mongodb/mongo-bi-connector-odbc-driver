@@ -1184,7 +1184,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                                        SQLROWOFFSET         irow,
                                        SQLULEN             *pcrow,
                                        SQLUSMALLINT FAR    *rgfRowStatus,
-                                       bool                 upd_status )
+                                       my_bool              upd_status )
 {
     ulong rows_to_fetch;
     long cur_row, max_row;
