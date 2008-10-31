@@ -12,6 +12,8 @@
     (Bug #37278)
   * SQLTables() doesn't properly handle empty strings to list catalogs
     and tables. (Bug #39561)
+  * Calling SQLDriverConnect() with no output buffer will crash if not
+    prompting. (Bug #40316)
 
 ----
 

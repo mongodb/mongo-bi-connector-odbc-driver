@@ -795,7 +795,7 @@ connected:
 
 #ifndef USE_LEGACY_ODBC_GUI
   /* copy input to output if connected without prompting */
-  if (!bPrompt)
+  if (!bPrompt && szConnStrOut && cbConnStrOutMax)
   {
     size_t inlen= (sqlwcharlen(szConnStrIn) + 1) * sizeof(SQLWCHAR);
     size_t copylen= myodbc_min((size_t)cbConnStrOutMax, inlen);
