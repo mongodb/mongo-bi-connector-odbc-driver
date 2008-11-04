@@ -143,6 +143,18 @@ SQLRETURN myodbc_do_connect(DBC *dbc, MYODBCUTIL_DATASOURCE *ds)
     mysql_options(mysql, MYSQL_OPT_CONNECT_TIMEOUT,
                   (char *)&dbc->login_timeout);
 
+  if (ds->pszREADTIMEOUT)
+  {
+    unsigned int to= strtoul(ds->pszREADTIMEOUT, NULL, 10);
+    mysql_options(mysql, MYSQL_OPT_READ_TIMEOUT, (const char *) &to);
+  }
+
+  if (ds->pszWRITETIMEOUT)
+  {
+    unsigned int to= strtoul(ds->pszWRITETIMEOUT, NULL, 10);
+    mysql_options(mysql, MYSQL_OPT_WRITE_TIMEOUT, (const char *) &to);
+  }
+
   /* set SSL parameters */
   mysql_ssl_set(mysql, ds->pszSSLKEY, ds->pszSSLCERT, ds->pszSSLCA,
                 ds->pszSSLCAPATH, ds->pszSSLCIPHER);

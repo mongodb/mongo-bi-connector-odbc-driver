@@ -198,6 +198,8 @@ typedef struct tMYODBCUTIL_DATASOURCE
     char *pszSSLCIPHER;         /* pathname to a list of allowable ciphers                                                                    */
     char *pszSSLVERIFY;         /* verify server certificate (see --ssl-verify-server-cert                                      */
     char *pszCHARSET;           /* default charset to use for connection */
+    char *pszREADTIMEOUT;       /* connection read timeout (see mysql_options / MYSQL_OPT_READ_TIMEOUT */
+    char *pszWRITETIMEOUT;      /* connection write timeout (see mysql_options / MYSQL_OPT_WRITE_TIMEOUT */
 
     MYODBCUTIL_DATASOURCE_MODE      nMode;      /* ConfigDSN mode or SQLDriverConnect mode.                                     */
     MYODBCUTIL_DATASOURCE_CONNECT   nConnect;   /* SQLDriverConnect() using a DSN or a DRIVER to connect.                       */

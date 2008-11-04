@@ -83,6 +83,16 @@ void MYODBCUtilClearDataSource( MYODBCUTIL_DATASOURCE *pDataSource )
         _global_free( pDataSource->pszUSER );
         pDataSource->pszUSER = NULL;
     }
+    if ( pDataSource->pszREADTIMEOUT )
+    {
+        _global_free( pDataSource->pszREADTIMEOUT );
+        pDataSource->pszREADTIMEOUT = NULL;
+    }
+    if ( pDataSource->pszWRITETIMEOUT )
+    {
+        _global_free( pDataSource->pszWRITETIMEOUT );
+        pDataSource->pszWRITETIMEOUT = NULL;
+    }
 
 	if( pDataSource->pszSSLCA)
 	{

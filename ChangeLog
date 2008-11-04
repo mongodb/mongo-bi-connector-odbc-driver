@@ -1,6 +1,7 @@
 3.51.27
   Bugs fixed:
   * Enable auto reconnect doesn't work (Bug #37179)
+  * Add read and write timeouts on the connection (Bug #40407)
 
 ----
 

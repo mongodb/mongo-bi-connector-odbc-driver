@@ -295,6 +295,22 @@ BOOL MYODBCUtilReadDataSourceStr( MYODBCUTIL_DATASOURCE *pDataSource, MYODBCUTIL
                                                         pScanChar -
                                                         pAnchorChar);
                         }
+                        else if (strcasecmp(pszName, "READTIMEOUT") == 0)
+                        {
+                          if (!pDataSource->pszREADTIMEOUT)
+                              pDataSource->pszREADTIMEOUT=
+                                (char *)_global_strndup(pAnchorChar,
+                                                        pScanChar -
+                                                        pAnchorChar);
+                        }
+                        else if (strcasecmp(pszName, "WRITETIMEOUT") == 0)
+                        {
+                          if (!pDataSource->pszWRITETIMEOUT)
+                              pDataSource->pszWRITETIMEOUT=
+                                (char *)_global_strndup(pAnchorChar,
+                                                        pScanChar -
+                                                        pAnchorChar);
+                        }
                         else
                         {
                             fprintf( stderr, "[%s][%d][ERROR] Unhandled attribute (%s).\n", __FILE__, __LINE__, pszName );

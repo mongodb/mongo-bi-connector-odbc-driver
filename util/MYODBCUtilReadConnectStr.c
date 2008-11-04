@@ -209,6 +209,20 @@ BOOL MYODBCUtilReadConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszStr
                               (char *)_global_strndup(pAnchorChar,
                                                       pScanChar - pAnchorChar);
                         }
+                        else if (strcasecmp(pszName, "READTIMEOUT") == 0)
+                        {
+                          if (!pDataSource->pszREADTIMEOUT)
+                            pDataSource->pszREADTIMEOUT=
+                              (char *)_global_strndup(pAnchorChar,
+                                                      pScanChar - pAnchorChar);
+                        }
+                        else if (strcasecmp(pszName, "WRITETIMEOUT") == 0)
+                        {
+                          if (!pDataSource->pszWRITETIMEOUT)
+                            pDataSource->pszWRITETIMEOUT=
+                              (char *)_global_strndup(pAnchorChar,
+                                                      pScanChar - pAnchorChar);
+                        }
                         else if ( strcasecmp( pszName, "SAVEFILE" ) == 0 )
                         {
                           pDataSource->bSaveFileDSN = TRUE;
