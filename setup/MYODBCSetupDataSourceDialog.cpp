@@ -691,7 +691,7 @@ QString MYODBCSetupDataSourceDialog::buildConnectString()
   if (!ptab2->getSSLKey().isEmpty())
 	  stringConnectIn+= ";SSLKEY=" + ptab2->getSSLKey();
   if (!ptab2->getSSLCert().isEmpty())
-	  stringConnectIn+= ";SSLERT=" + ptab2->getSSLCert();
+	  stringConnectIn+= ";SSLCERT=" + ptab2->getSSLCert();
   if (!ptab2->getSSLCA().isEmpty())
 	  stringConnectIn+= ";SSLCA=" + ptab2->getSSLCA();
   if (!ptab2->getSSLCAPath().isEmpty())
