@@ -20,6 +20,8 @@
     and the catalog argument is NULL. (Bug #39957)
   * Driver crashes when attempting to retrieve data in a character set
     not compiled into libmysql. (Bug #39831)
+  * SQLGetTypeInfo() doesn't return any rows SQL_TIMESTAMP on an ODBC v2
+    connection. (Bug #30626)
 
 ----
 

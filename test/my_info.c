@@ -139,6 +139,7 @@ DECLARE_TEST(t_bug28657)
 #endif
 }
 
+
 DECLARE_TEST(t_bug14639)
 {
   SQLINTEGER connection_id;
@@ -284,6 +285,73 @@ DECLARE_TEST(t_bug16653)
 }
 
 
+/*
+  Bug #30626 - No result record for SQLGetTypeInfo for TIMESTAMP
+*/
+DECLARE_TEST(t_bug30626)
+{
+  SQLHANDLE henv1;
+  SQLHANDLE hdbc1;
+  SQLHANDLE hstmt1;
+  SQLCHAR conn[256];
+  
+  /* odbc 3 */
+  ok_stmt(hstmt, SQLGetTypeInfo(hstmt, SQL_TYPE_TIMESTAMP));
+  is(myresult(hstmt) == 2);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLGetTypeInfo(hstmt, SQL_TYPE_TIME));
+  is(myresult(hstmt) == 1);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLGetTypeInfo(hstmt, SQL_TYPE_DATE));
+  is(myresult(hstmt) == 1);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* odbc 2 */
+  sprintf((char *)conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s",
+          mydriver, myserver, myuid, mypwd);
+  if (mysock != NULL)
+  {
+    strcat((char *)conn, ";SOCKET=");
+    strcat((char *)conn, (char *)mysock);
+  }
+  if (myport)
+  {
+    char pbuff[20];
+    sprintf(pbuff, ";PORT=%d", myport);
+    strcat((char *)conn, pbuff);
+  }
+
+  ok_env(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
+  ok_env(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
+			      (SQLPOINTER) SQL_OV_ODBC2, SQL_IS_INTEGER));
+  ok_env(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &hdbc1));
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, strlen(conn), NULL, 0,
+				 NULL, SQL_DRIVER_NOPROMPT));
+  ok_con(hdbc1, SQLAllocHandle(SQL_HANDLE_STMT, hdbc1, &hstmt1));
+  
+  ok_stmt(hstmt1, SQLGetTypeInfo(hstmt1, SQL_TIMESTAMP));
+  is(myresult(hstmt1) == 2);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_stmt(hstmt1, SQLGetTypeInfo(hstmt1, SQL_TIME));
+  is(myresult(hstmt1) == 1);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_stmt(hstmt1, SQLGetTypeInfo(hstmt1, SQL_DATE));
+  is(myresult(hstmt1) == 4);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_stmt(hstmt1, SQLFreeHandle(SQL_HANDLE_STMT, hstmt1));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+  ok_env(henv1, SQLFreeHandle(SQL_HANDLE_ENV, henv1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlgetinfo)
   ADD_TEST(t_gettypeinfo)
@@ -294,6 +362,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug31055)
   ADD_TEST(t_bug3780)
   ADD_TEST(t_bug16653)
+  ADD_TEST(t_bug30626)
 END_TESTS
 
 
