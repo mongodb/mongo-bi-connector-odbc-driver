@@ -426,6 +426,10 @@ copy_ansi_result(STMT *stmt,
   if (!result_bytes)
     result= 0;       /* Don't copy anything! */
 
+  if (!from_cs)
+    return set_stmt_error(stmt, "07006", "Source character set not "
+                          "supported by client", 0);
+
   /*
    If we don't have to do any charset conversion, we can just use
    copy_binary_result() and NUL-terminate the buffer here.
