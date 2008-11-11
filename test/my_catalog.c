@@ -1214,6 +1214,7 @@ DECLARE_TEST(t_bug12805)
   SQLHDBC    hdbc1;
   SQLHSTMT   hstmt1;
   SQLULEN    length;  
+  SQLINTEGER len2;
 
   SET_DSN_OPTION(1 << 27);
 
@@ -1229,9 +1230,9 @@ DECLARE_TEST(t_bug12805)
                              (SQLCHAR *)"longdata", SQL_NTS));
 
   ok_stmt(hstmt1, SQLFetch(hstmt1));
-  ok_stmt(hstmt1, SQLGetData(hstmt1, 7, SQL_C_ULONG, &length,
-                             sizeof(SQLULEN), NULL));
-  is_num(length, 2147483647);
+  ok_stmt(hstmt1, SQLGetData(hstmt1, 7, SQL_C_ULONG, &len2,
+                             0, NULL));
+  is_num(len2, 2147483647);
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
   length= 0;
