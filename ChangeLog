@@ -1,6 +1,8 @@
 5.1.6
 
   Functionality added or changed:
+  * Providing an empty string as the catalog argument to SQLTables()
+    will return an empty result set. A catalog must have a name.
 
   Bugs fixed:
   * Add support for data-at-execution with positioned insert/update
@@ -14,6 +16,8 @@
     and tables. (Bug #39561)
   * Calling SQLDriverConnect() with no output buffer will crash if not
     prompting. (Bug #40316)
+  * SQLTables() doesn't return the catalog name if the table is given
+    and the catalog argument is NULL. (Bug #39957)
 
 ----
 
