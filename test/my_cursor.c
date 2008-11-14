@@ -3225,7 +3225,61 @@ DECLARE_TEST(t_dae_setpos_update)
   ok_sql(hstmt, "drop table if exists t_dae");
   return OK;
 }
+
+
+/*
+  Bug #39951 - Positioned update with SQL_C_NUMERIC loses prec/scale values
+*/
+DECLARE_TEST(t_bug39961)
+{
+  SQL_NUMERIC_STRUCT num;
+  SQLHANDLE ard;
+  SQLCHAR buf[10];
+  SQLINTEGER id;
+
+  ok_sql(hstmt, "drop table if exists t_bug39961");
+  ok_sql(hstmt, "create table t_bug39961(id int not null, m1 decimal(19, 4), "
+	 "primary key (id))");
+  ok_sql(hstmt, "insert into t_bug39961 values (1, 987)");
+  ok_sql(hstmt, "select id, m1 from t_bug39961");
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &id, 0, NULL));
+  ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_APP_ROW_DESC, &ard, 0, NULL));
+  ok_stmt(hstmt, SQLSetDescField(ard, 2, SQL_DESC_CONCISE_TYPE,
+				 (SQLPOINTER) SQL_C_NUMERIC, SQL_IS_INTEGER));
+  ok_stmt(hstmt, SQLSetDescField(ard, 2, SQL_DESC_PRECISION, (SQLPOINTER) 19,
+				 SQL_IS_INTEGER));
+  ok_stmt(hstmt, SQLSetDescField(ard, 2, SQL_DESC_SCALE, (SQLPOINTER) 2,
+				 SQL_IS_INTEGER));
+  ok_stmt(hstmt, SQLSetDescField(ard, 2, SQL_DESC_DATA_PTR, &num,
+				 SQL_IS_POINTER));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  /* set value to .1 */
+  num.val[0]= 10;
+  num.val[1]= 0;
+  num.val[2]= 0;
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
+
+  /* add a new row */
+  id++;
+  ok_stmt(hstmt, SQLBulkOperations(hstmt, SQL_ADD));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* fetch both rows, they should have the same decimal value */
+  ok_sql(hstmt, "select m1 from t_bug39961");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buf, 1), "0.1000", 4);
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buf, 1), "0.1000", 4);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
   
+  ok_sql(hstmt, "drop table if exists t_bug39961");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_positioned_cursor)
   ADD_TEST(my_setpos_cursor)
@@ -3273,6 +3327,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug11846)
   ADD_TEST(t_dae_setpos_insert)
   ADD_TEST(t_dae_setpos_update)
+  ADD_TEST(t_bug39961)
 END_TESTS
 
 

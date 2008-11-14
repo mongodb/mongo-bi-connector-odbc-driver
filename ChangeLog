@@ -22,6 +22,8 @@
     not compiled into libmysql. (Bug #39831)
   * SQLGetTypeInfo() doesn't return any rows SQL_TIMESTAMP on an ODBC v2
     connection. (Bug #30626)
+  * Positioned update with SQL_C_NUMERIC loses prec/scale values
+    (Bug #39961)
 
 ----
 
