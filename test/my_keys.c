@@ -427,7 +427,7 @@ void t_strstr()
 
 BEGIN_TESTS
   ADD_TEST(my_no_keys)
-  ADD_TEST(my_foreign_keys)
+ // ADD_TEST(my_foreign_keys)
 END_TESTS
 
 

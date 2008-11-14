@@ -115,6 +115,11 @@ void fix_result_types(STMT *stmt)
     }
     irrec->type_name= (SQLCHAR *) irrec->row.type_name;
     irrec->length= get_column_size(stmt, field);
+    /* prevent overflowing of result when ADO multiplies the length
+       by sizeof(SQLWCHAR) */
+    if (capint32 && irrec->length == INT_MAX32 &&
+        irrec->concise_type == SQL_WLONGVARCHAR)
+      irrec->length /= sizeof(SQL_WCHAR);
     irrec->octet_length= get_transfer_octet_length(stmt, field);
     irrec->display_size= get_display_size(stmt, field);
     /* prevent overflowing */
