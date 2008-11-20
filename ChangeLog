@@ -1,4 +1,4 @@
-3.51.27 (14-Nov-2008)
+3.51.27 (20-Nov-2008)
   Bugs fixed:
   * Cannot use ssl (Bug #29955)
   * Enable auto reconnect doesn't work (Bug #37179)
