@@ -83,6 +83,8 @@ typedef struct {
   SQLWCHAR *sslcipher;
 
   unsigned int port;
+  unsigned int readtimeout;
+  unsigned int writetimeout;
 
   SQLCHAR *name8;
   SQLCHAR *driver8;

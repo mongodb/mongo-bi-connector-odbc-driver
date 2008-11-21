@@ -227,6 +227,16 @@ BOOL MYODBCUtilReadDataSource( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszDSN
               if (!pDataSource->pszCHARSET)
                 pDataSource->pszCHARSET= _global_strdup(szValue);
             }
+            else if (strcasecmp(pszEntryName, "READTIMEOUT") == 0)
+            {
+              if (!pDataSource->pszREADTIMEOUT)
+                pDataSource->pszREADTIMEOUT= _global_strdup(szValue);
+            }
+            else if (strcasecmp(pszEntryName, "WRITETIMEOUT") == 0)
+            {
+              if (!pDataSource->pszWRITETIMEOUT)
+                pDataSource->pszWRITETIMEOUT= _global_strdup(szValue);
+            }
             else
             {
                 /* What the ? */

@@ -32,7 +32,7 @@ VERSION 05.01.0006
 ;DATA PRELOAD
 ;HEAPSIZE 10000
 ; 
-; Export definations
+; Export definitions
 EXPORTS
 ;
 SQLAllocConnect

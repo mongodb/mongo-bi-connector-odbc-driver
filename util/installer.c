@@ -96,6 +96,10 @@ static SQLWCHAR W_SSLVERIFY[]=
   {'S', 'S', 'L', 'V', 'E', 'R', 'I', 'F', 'Y', 0};
 static SQLWCHAR W_PORT[]= {'P', 'O', 'R', 'T', 0};
 static SQLWCHAR W_SETUP[]= {'S', 'E', 'T', 'U', 'P', 0};
+static SQLWCHAR W_READTIMEOUT[]=
+  {'R','E','A','D','T','I','M','E','O','U','T',0};
+static SQLWCHAR W_WRITETIMEOUT[]=
+  {'W','R','I','T','E','T','I','M','E','O','U','T',0};
 /* DS_PARAM */
 /* externally used strings */
 const SQLWCHAR W_DRIVER_PARAM[]= {';', 'D', 'R', 'I', 'V', 'E', 'R', '=', 0};
@@ -112,7 +116,7 @@ SQLWCHAR *dsnparams[]= {W_DSN, W_DRIVER, W_DESCRIPTION, W_SERVER,
                         W_UID, W_PWD, W_DATABASE, W_SOCKET, W_INITSTMT,
                         W_PORT, W_OPTION, W_CHARSET, W_SSLKEY,
                         W_SSLCERT, W_SSLCA, W_SSLCAPATH, W_SSLCIPHER,
-                        W_SSLVERIFY};
+                        W_SSLVERIFY, W_READTIMEOUT, W_WRITETIMEOUT};
 static const
 int dsnparamcnt= sizeof(dsnparams) / sizeof(SQLWCHAR *);
 /* DS_PARAM */
@@ -660,6 +664,10 @@ void ds_map_param(DataSource *ds, const SQLWCHAR *param,
     *intdest= &ds->port;
   else if (!sqlwcharcasecmp(W_SSLVERIFY, param))
     *intdest= &ds->sslverify;
+  else if (!sqlwcharcasecmp(W_READTIMEOUT, param))
+    *intdest= &ds->readtimeout;
+  else if (!sqlwcharcasecmp(W_WRITETIMEOUT, param))
+    *intdest= &ds->writetimeout;
 
   /* DS_PARAM */
 }
@@ -1032,7 +1040,8 @@ int ds_add(DataSource *ds)
   if (ds_add_strprop(ds->name, W_SSLCIPHER  , ds->sslcipher  )) goto error;
 
   if (ds_add_intprop(ds->name, W_PORT       , ds->port       )) goto error;
-  if (ds_add_intprop(ds->name, W_SSLVERIFY  , ds->sslverify  )) goto error;
+  if (ds_add_intprop(ds->name, W_READTIMEOUT, ds->readtimeout)) goto error;
+  if (ds_add_intprop(ds->name, W_WRITETIMEOUT, ds->writetimeout)) goto error;
 
   /* DS_PARAM */
 

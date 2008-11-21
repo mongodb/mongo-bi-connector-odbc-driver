@@ -117,12 +117,13 @@ then
   save_LDFLAGS="$LDFLAGS"
   LDFLAGS="-L$check_iobc_lib_path $LDFLAGS"
 
-  AC_CHECK_LIB(iodbcinst,SQLGetPrivateProfileString,
-  [AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING,1,[Define if SQLGetPrivateProfileString is defined])
-   LIBS="$LIBS -L$check_iobc_lib_path -liodbcinst" ; have_iodbcinst=yes], [])
+  if test "x$enable_odbcinstlink" = "xyes" ; then
+    AC_CHECK_LIB(iodbcinst,SQLGetPrivateProfileString,
+    [AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING,1,[Define if SQLGetPrivateProfileString is defined])
+     LIBS="$LIBS -L$check_iobc_lib_path -liodbcinst" ; have_iodbcinst=yes], [])
+  fi
 
   LDFLAGS="$save_LDFLAGS"
-
 fi
 ])
 
@@ -170,11 +171,13 @@ then
   save_LDFLAGS="$LDFLAGS"
   LDFLAGS="-L$check_iobc_lib_path $LDFLAGS"
 
-  AC_CHECK_LIB(odbcinst,SQLGetPrivateProfileString,
-  [AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING,1,[Define if SQLGetPrivateProfileString is defined])
-  LIBS="$LIBS -L$check_iobc_lib_path -lodbcinst" ; have_odbcinst=yes], [])
-  LDFLAGS="$save_LDFLAGS"
+  if test "x$enable_odbcinstlink" = "xyes" ; then
+    AC_CHECK_LIB(odbcinst,SQLGetPrivateProfileString,
+    [AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING,1,[Define if SQLGetPrivateProfileString is defined])
+    LIBS="$LIBS -L$check_iobc_lib_path -lodbcinst" ; have_odbcinst=yes], [])
+  fi
 
+  LDFLAGS="$save_LDFLAGS"
 fi   
 ])
 

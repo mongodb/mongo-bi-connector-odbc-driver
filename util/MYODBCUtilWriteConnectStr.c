@@ -203,11 +203,31 @@ BOOL MYODBCUtilWriteConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, char *pszStr
 
     if (pDataSource->pszCHARSET)
     {
-      if (nIndex && !MYODBCUtilInsertStr(pszStr, ";", nMaxLen, &nIndex))
-        return FALSE;
       if (!MYODBCUtilInsertStr(pszStr, "CHARSET=", nMaxLen, &nIndex))
         return FALSE;
       if (!MYODBCUtilInsertStr(pszStr, pDataSource->pszCHARSET, nMaxLen,
+                               &nIndex))
+        return FALSE;
+      if (nIndex && !MYODBCUtilInsertStr(pszStr, ";", nMaxLen, &nIndex))
+        return FALSE;
+    }
+
+    if (pDataSource->pszREADTIMEOUT)
+    {
+      if (!MYODBCUtilInsertStr(pszStr, "READTIMEOUT=", nMaxLen, &nIndex))
+        return FALSE;
+      if (!MYODBCUtilInsertStr(pszStr, pDataSource->pszREADTIMEOUT, nMaxLen,
+                               &nIndex))
+        return FALSE;
+      if (nIndex && !MYODBCUtilInsertStr(pszStr, ";", nMaxLen, &nIndex))
+        return FALSE;
+    }
+
+    if (pDataSource->pszWRITETIMEOUT)
+    {
+      if (!MYODBCUtilInsertStr(pszStr, "WRITETIMEOUT=", nMaxLen, &nIndex))
+        return FALSE;
+      if (!MYODBCUtilInsertStr(pszStr, pDataSource->pszWRITETIMEOUT, nMaxLen,
                                &nIndex))
         return FALSE;
       if (nIndex && !MYODBCUtilInsertStr(pszStr, ";", nMaxLen, &nIndex))

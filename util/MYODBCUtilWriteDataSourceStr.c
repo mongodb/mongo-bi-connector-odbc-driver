@@ -233,6 +233,28 @@ BOOL MYODBCUtilWriteDataSourceStr( MYODBCUTIL_DATASOURCE *pDataSource, MYODBCUTI
         return FALSE;
     }
 
+    if (pDataSource->pszREADTIMEOUT)
+    {
+      MYODBCUTILWRITEDATASOURCESTR_DELIM;
+
+      if (!MYODBCUtilInsertStr(pszStr, "READTIMEOUT=", nMaxLen, &nIndex))
+        return FALSE;
+      if (!MYODBCUtilInsertStr(pszStr, pDataSource->pszREADTIMEOUT, nMaxLen,
+                               &nIndex))
+        return FALSE;
+    }
+
+    if (pDataSource->pszWRITETIMEOUT)
+    {
+      MYODBCUTILWRITEDATASOURCESTR_DELIM;
+
+      if (!MYODBCUtilInsertStr(pszStr, "WRITETIMEOUT=", nMaxLen, &nIndex))
+        return FALSE;
+      if (!MYODBCUtilInsertStr(pszStr, pDataSource->pszWRITETIMEOUT, nMaxLen,
+                               &nIndex))
+        return FALSE;
+    }
+
     if ( nDelim == MYODBCUTIL_DELIM_NULL )
     {
         MYODBCUTILWRITEDATASOURCESTR_DELIM;

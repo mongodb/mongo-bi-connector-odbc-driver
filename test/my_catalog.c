@@ -1281,8 +1281,8 @@ DECLARE_TEST(t_bug12805)
   SQLHDBC    hdbc1;
   SQLHSTMT   hstmt1;
   SQLCHAR    dummy[10];
-  SQLULEN    length;
-  SQLUINTEGER data;
+  SQLULEN    length;  
+  SQLUINTEGER len2;
 
   SET_DSN_OPTION(1 << 27);
 
@@ -1298,9 +1298,9 @@ DECLARE_TEST(t_bug12805)
                              (SQLCHAR *)"longdata", SQL_NTS));
 
   ok_stmt(hstmt1, SQLFetch(hstmt1));
-  ok_stmt(hstmt1, SQLGetData(hstmt1, 7, SQL_C_ULONG, &data,
-                             sizeof(SQLUINTEGER), NULL));
-  is_num(data, 2147483647);
+  ok_stmt(hstmt1, SQLGetData(hstmt1, 7, SQL_C_ULONG, &len2,
+                             0, NULL));
+  is_num(len2, 2147483647);
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
   length= 0;
@@ -1318,9 +1318,9 @@ DECLARE_TEST(t_bug12805)
                             (SQLCHAR *)"longdata", SQL_NTS));
 
   ok_stmt(hstmt, SQLFetch(hstmt));
-  ok_stmt(hstmt, SQLGetData(hstmt, 7, SQL_C_ULONG, &length,
-                             sizeof(SQLULEN), NULL));
-  is_num(length, 4294967295UL);
+  ok_stmt(hstmt, SQLGetData(hstmt, 7, SQL_C_ULONG, &len2,
+                            0, NULL));
+  is_num(len2, 4294967295);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
