@@ -804,7 +804,7 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLULEN irow,
 	/* copy prec and scale - needed for SQL_NUMERIC values */
 	iprec->precision= arrec->precision;
 	iprec->scale= arrec->scale;
-        if (stmt->dae_type && IS_DATA_AT_EXEC(&length))
+        if (stmt->dae_type && aprec->par.is_dae)
           aprec->data_ptr= aprec->par.value;
         else
           aprec->data_ptr= ptr_offset_adjust(arrec->data_ptr,
@@ -816,8 +816,6 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLULEN irow,
         aprec->octet_length= arrec->octet_length;
         if (length == SQL_NTS)
             length= strlen(aprec->data_ptr);
-        else if (IS_DATA_AT_EXEC(&length))
-            length= -(length - SQL_LEN_DATA_AT_EXEC_OFFSET);
 
         aprec->octet_length_ptr= &length;
         aprec->indicator_ptr= &length;
@@ -1154,9 +1152,9 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext
 
                   iprec->concise_type= get_sql_data_type(stmt, field, NULL);
                   aprec->concise_type= arrec->concise_type;
-		  /* copy prec and scale - needed for SQL_NUMERIC values */
-		  iprec->precision= arrec->precision;
-		  iprec->scale= arrec->scale;
+                  /* copy prec and scale - needed for SQL_NUMERIC values */
+                  iprec->precision= arrec->precision;
+                  iprec->scale= arrec->scale;
 
                   if (stmt->dae_type && aprec->par.is_dae)
                     /* arrays or offsets are not supported for data-at-exec */
@@ -1175,12 +1173,7 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext
                   if (aprec->data_ptr)
                     length= strlen(aprec->data_ptr);
                   break;
-                default:
-                  if (IS_DATA_AT_EXEC(&ind_or_len))
-                  {
-                    length= aprec->par.value_length;
-                    break;
-                  }
+
                 /*
                   We pass through SQL_COLUMN_IGNORE and SQL_NULL_DATA,
                   because the insert_data() that is eventually called knows
@@ -1188,6 +1181,7 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext
                 */
                 case SQL_COLUMN_IGNORE:
                 case SQL_NULL_DATA:
+                default:
                   length= ind_or_len;
                 }
 

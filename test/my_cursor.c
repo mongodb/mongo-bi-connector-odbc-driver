@@ -3187,18 +3187,22 @@ DECLARE_TEST(t_dae_setpos_update)
   SQLLEN ylen= SQL_LEN_DATA_AT_EXEC(10);
   SQLPOINTER holder= (SQLPOINTER) 0xcfcdcecc;
   SQLPOINTER paramptr;
+  /* setup */
   ok_sql(hstmt, "drop table if exists t_dae");
   ok_sql(hstmt, "create table t_dae (x int not null, y varchar(5000), z int, "
                 "primary key (x) )");
   ok_sql(hstmt, "insert into t_dae values (10, '9876', 30)");
+  /* create cursor and get first row */
   ok_sql(hstmt, "select x, y, z from t_dae");
 
   ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0));
-  
+
+  /* bind values for positioned update */
   ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &x, 0, NULL));
   ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_BINARY, holder, 10, &ylen));
   ok_stmt(hstmt, SQLBindCol(hstmt, 3, SQL_C_LONG, &z, 0, NULL));
-  
+
+  /* perform update and provide data */
   expect_stmt(hstmt, SQLSetPos(hstmt, 0, SQL_UPDATE, SQL_LOCK_NO_CHANGE),
               SQL_NEED_DATA);
   expect_stmt(hstmt, SQLParamData(hstmt, &paramptr), SQL_NEED_DATA);
