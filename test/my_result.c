@@ -1473,7 +1473,7 @@ DECLARE_TEST(tmysql_rowstatus)
 {
     SQLRETURN rc;
     SQLHSTMT hstmt1;
-    SQLROWSETSIZE pcrow[4];
+    SQLULEN pcrow[4];
     SQLUSMALLINT rgfRowStatus[6];
     SQLINTEGER nData= 555;
     SQLCHAR szData[255] = "setpos-update";

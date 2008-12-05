@@ -203,7 +203,7 @@ SQLRETURN SQL_API my_SQLBindParameter(SQLHSTMT hstmt,SQLUSMALLINT ipar,
 				      SQLLEN cbValueMax,
 				      SQLLEN *pcbValue);
 SQLRETURN SQL_API my_SQLExtendedFetch(SQLHSTMT hstmt, SQLUSMALLINT fFetchType,
-				      SQLROWOFFSET irow, SQLULEN *pcrow,
+				      SQLLEN irow, SQLULEN *pcrow,
 				      SQLUSMALLINT FAR *rgfRowStatus, my_bool upd_status);
 SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
                                SQLUSMALLINT fOption, SQLUSMALLINT fLock);

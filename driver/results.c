@@ -1181,7 +1181,7 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
 */
 SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                                        SQLUSMALLINT         fFetchType,
-                                       SQLROWOFFSET         irow,
+                                       SQLLEN               irow,
                                        SQLULEN             *pcrow,
                                        SQLUSMALLINT FAR    *rgfRowStatus,
                                        my_bool              upd_status )
@@ -1384,8 +1384,8 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
 
 SQLRETURN SQL_API SQLExtendedFetch( SQLHSTMT        hstmt,
                                     SQLUSMALLINT    fFetchType,
-                                    SQLROWOFFSET    irow,
-                                    SQLROWSETSIZE  *pcrow,
+                                    SQLLEN          irow,
+                                    SQLULEN        *pcrow,
                                     SQLUSMALLINT FAR *rgfRowStatus )
 {
     SQLRETURN rc;
@@ -1396,7 +1396,7 @@ SQLRETURN SQL_API SQLExtendedFetch( SQLHSTMT        hstmt,
 
     rc= my_SQLExtendedFetch(hstmt, fFetchType, irow, &rows, rgfRowStatus, 1);
     if (pcrow)
-      *pcrow= (SQLROWSETSIZE)rows;
+      *pcrow= (SQLULEN) rows;
 
     return rc;
 }

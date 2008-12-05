@@ -3,6 +3,9 @@
   Functionality added or changed:
   * Providing an empty string as the catalog argument to SQLTables()
     will return an empty result set. A catalog must have a name.
+  * Remove use of "old" SQLLEN/SQLULEN types aliases. They are not
+    supported in unixODBC 2.2.13 and later 64-bit builds. Removed
+    SQLROWCOUNT, SQLROWSETSIZE, SQLTRANSID, SQLROWOFFSET.
 
   Bugs fixed:
   * Add support for data-at-execution with positioned insert/update

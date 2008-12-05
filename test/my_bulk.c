@@ -91,7 +91,7 @@ DECLARE_TEST(t_mul_pkdel)
 {
   SQLINTEGER nData;
   SQLLEN nlen;
-  SQLROWSETSIZE pcrow;
+  SQLULEN pcrow;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_mul_pkdel");
   ok_sql(hstmt, "CREATE TABLE t_mul_pkdel (a INT NOT NULL, b INT,"
