@@ -1,11 +1,6 @@
 #ifndef MYODBC_MYSQL_H
 #define MYODBC_MYSQL_H
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 #define DONT_DEFINE_VOID
 #include <my_global.h>
 #include <my_sys.h>
@@ -13,6 +8,11 @@ extern "C"
 #include <my_list.h>
 #include <m_string.h>
 #include <mysqld_error.h>
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 #define MIN_MYSQL_VERSION 40100L
 #if MYSQL_VERSION_ID < MIN_MYSQL_VERSION
