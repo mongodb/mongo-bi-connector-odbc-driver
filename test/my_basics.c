@@ -938,6 +938,35 @@ DECLARE_TEST(t_bug31959)
 }
 
 
+/*
+  Bug #41256 - NULL parameters don't work correctly with ADO.
+  The null indicator pointer can be set separately through the
+  descriptor field. This wasn't being checked separately.
+*/
+DECLARE_TEST(t_bug41256)
+{
+  SQLHANDLE apd;
+  SQLINTEGER val= 40;
+  SQLLEN vallen= 19283;
+  SQLINTEGER ind= SQL_NULL_DATA;
+  SQLINTEGER reslen= 40;
+  ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_APP_PARAM_DESC,
+                                &apd, SQL_IS_POINTER, NULL));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_INTEGER,
+                                  SQL_C_LONG, 0, 0, &val, 0, &vallen));
+  ok_desc(apd, SQLSetDescField(apd, 1, SQL_DESC_INDICATOR_PTR,
+                               &ind, SQL_IS_POINTER));
+  ok_sql(hstmt, "select ?");
+  val= 80;
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_LONG, &val, 0, &reslen));
+  is_num(SQL_NULL_DATA, reslen);
+  is_num(80, val);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -962,6 +991,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug32727)
   ADD_TEST(t_bug28820)
   ADD_TEST(t_bug31959)
+  ADD_TEST(t_bug41256)
 END_TESTS
 
 

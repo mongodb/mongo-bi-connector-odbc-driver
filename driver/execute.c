@@ -247,6 +247,7 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
     DBC *dbc= stmt->dbc;
     NET *net= &dbc->mysql.net;
     SQLLEN *octet_length_ptr= NULL;
+    SQLINTEGER *indicator_ptr= NULL;
     char *to= *toptr;
 
     if (aprec->octet_length_ptr)
@@ -257,6 +258,10 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
                                           sizeof(SQLLEN), row);
       length= *octet_length_ptr;
     }
+    indicator_ptr= ptr_offset_adjust(aprec->indicator_ptr,
+                                     apd->bind_offset_ptr,
+                                     apd->bind_type,
+                                     sizeof(SQLLEN), row);
 
     if (aprec->data_ptr)
     {
@@ -266,7 +271,12 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
                               apd->bind_type, default_size, row);
     }
 
-    if (!octet_length_ptr || *octet_length_ptr == SQL_NTS)
+    if (indicator_ptr && *indicator_ptr == SQL_NULL_DATA)
+    {
+      *toptr= add_to_buffer(net,*toptr,"NULL",4);
+      return SQL_SUCCESS;
+    }
+    else if (!octet_length_ptr || *octet_length_ptr == SQL_NTS)
     {
       if (data)
       {
@@ -283,11 +293,6 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
       {
         length= 0;     /* TODO? This is actually an error */
       }
-    }
-    else if ( *octet_length_ptr == SQL_NULL_DATA )
-    {
-        *toptr= add_to_buffer(net,*toptr,"NULL",4);
-        return SQL_SUCCESS;
     }
     /*
       We may see SQL_COLUMN_IGNORE from bulk INSERT operations, where we

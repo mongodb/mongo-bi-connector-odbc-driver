@@ -496,6 +496,7 @@ static my_bool insert_field(STMT FAR *stmt, MYSQL_RES *result,
         length= strlen(*row_data);
 
         aprec->octet_length_ptr= &length;
+        aprec->indicator_ptr= &length;
 
         if (!SQL_SUCCEEDED(insert_param(stmt, (char **) &to, stmt->apd,
                                         aprec, iprec, 0)))
@@ -819,6 +820,7 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLULEN irow,
             length= -(length - SQL_LEN_DATA_AT_EXEC_OFFSET);
 
         aprec->octet_length_ptr= &length;
+        aprec->indicator_ptr= &length;
 
         if ( copy_rowdata(stmt,aprec,iprec,&net,&to) != SQL_SUCCESS )
             return(SQL_ERROR);
@@ -1190,6 +1192,7 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext
                 }
 
                 aprec->octet_length_ptr= &length;
+                aprec->indicator_ptr= &length;
 
                 if (copy_rowdata(stmt, aprec, iprec, &net, &to) != SQL_SUCCESS)
                   return SQL_ERROR;
