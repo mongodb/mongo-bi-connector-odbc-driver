@@ -468,26 +468,6 @@ static SQLRETURN exec_stmt_query(STMT FAR *stmt,char *query,
 
 /*
   @type    : myodbc3 internal
-  @purpose : copy row buffers to statement
-*/
-
-static SQLRETURN copy_field_data(STMT FAR *stmt, DESCREC *aprec,
-                                 DESCREC *iprec, NET **net, unsigned char **to)
-{
-    SQLRETURN rc;
-    rc= insert_param(stmt, (char **) to, stmt->apd, aprec, iprec, 0);
-    if (!SQL_SUCCEEDED(rc))
-        return rc;
-
-    if (!(*to= (unsigned char *)add_to_buffer(*net, (char *)*to, " AND ", 5)))
-        return set_error(stmt,MYERR_S1001,NULL,4001);
-
-    return SQL_SUCCESS;
-}
-
-
-/*
-  @type    : myodbc3 internal
   @purpose : copies field data to statement
 */
 
@@ -517,8 +497,11 @@ static my_bool insert_field(STMT FAR *stmt, MYSQL_RES *result,
 
         aprec->octet_length_ptr= &length;
 
-        if ( copy_field_data(stmt,aprec,iprec,&net,&to) != SQL_SUCCESS )
-            return 1;
+        if (!SQL_SUCCEEDED(insert_param(stmt, (char **) &to, stmt->apd,
+                                        aprec, iprec, 0)))
+          return 1;
+        if (!(to= (unsigned char *) add_to_buffer(net, (char *) to, " AND ", 5)))
+          return set_error(stmt, MYERR_S1001, NULL, 4001);
 
         length= (uint) ((char *)to - (char*) net->buff);
         dynstr_append_mem(dynQuery, (char*) net->buff, length);
@@ -527,23 +510,6 @@ static my_bool insert_field(STMT FAR *stmt, MYSQL_RES *result,
     {
         dynQuery->length--;
         dynstr_append_mem(dynQuery, " IS NULL AND ",13);
-    }
-    return 0;
-}
-
-
-/*
-  @type    : myodbc3 internal
-  @purpose : checks for the float comparision in where clause
-*/
-static my_bool if_float_field(STMT FAR *stmt, MYSQL_FIELD *field)
-{
-    if ( field->type == MYSQL_TYPE_FLOAT || field->type == MYSQL_TYPE_DOUBLE ||
-         field->type == MYSQL_TYPE_DECIMAL )
-    {
-        set_error(stmt,MYERR_S1000,
-                  "Invalid use of floating point comparision in positioned operations",0);
-        return 1;
     }
     return 0;
 }
@@ -658,8 +624,12 @@ static SQLRETURN append_all_fields(STMT FAR *stmt, DYNAMIC_STRING *dynQuery)
       We also can't handle floating-point fields because their comparison
       is inexact.
     */
-    if (if_float_field(stmt, table_field))
+    if (table_field->type == MYSQL_TYPE_FLOAT ||
+        table_field->type == MYSQL_TYPE_DOUBLE ||
+        table_field->type == MYSQL_TYPE_DECIMAL)
     {
+      set_error(stmt,MYERR_S1000,
+                "Invalid use of floating point comparision in positioned operations",0);
       mysql_free_result(presultAllColumns);
       return SQL_ERROR;
     }
