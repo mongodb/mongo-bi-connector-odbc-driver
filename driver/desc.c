@@ -799,8 +799,6 @@ MySQLSetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
     {
       DESCREC *rec= (DESCREC *) dest_struct;
       rec->data_ptr= NULL;
-      rec->octet_length_ptr= NULL;
-      rec->indicator_ptr= NULL;
     }
   }
 

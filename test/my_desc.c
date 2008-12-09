@@ -535,6 +535,36 @@ DECLARE_TEST(t_free_stmt_with_exp_desc)
 }
 
 
+/*
+  Bug #41081, Unable to retreive null SQL_NUMERIC with ADO.
+  It's setting SQL_DESC_PRECISION after SQLBindCol(). We were
+  "unbinding" incorrectly, by not only clearing data_ptr, but
+  also octet_length_ptr and indicator_ptr.
+*/
+DECLARE_TEST(t_bug41081)
+{
+  SQLHANDLE ard;
+  SQLINTEGER res;
+  SQLLEN ind;
+  SQLPOINTER data_ptr, octet_length_ptr;
+  ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_APP_ROW_DESC,
+                                &ard, SQL_IS_POINTER, NULL));
+  ok_sql(hstmt, "select 1");
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &res, 0, &ind));
+  /* cause to unbind */
+  ok_desc(ard, SQLSetDescField(ard, 1, SQL_DESC_PRECISION, (SQLPOINTER) 10,
+                               SQL_IS_SMALLINT));
+  /* check proper unbinding */
+  ok_desc(ard, SQLGetDescField(ard, 1, SQL_DESC_DATA_PTR,
+                               &data_ptr, SQL_IS_POINTER, NULL));
+  ok_desc(ard, SQLGetDescField(ard, 1, SQL_DESC_OCTET_LENGTH_PTR,
+                               &octet_length_ptr, SQL_IS_POINTER, NULL));
+  is(data_ptr == NULL);
+  is(octet_length_ptr == &ind);
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TODO(t_desc_paramset)
   ADD_TEST(t_desc_set_error)
@@ -545,6 +575,7 @@ BEGIN_TESTS
   ADD_TEST(t_mult_stmt_free)
   ADD_TEST(t_set_null_use_implicit)
   ADD_TEST(t_free_stmt_with_exp_desc)
+  ADD_TEST(t_bug41081)
 END_TESTS
 
 
