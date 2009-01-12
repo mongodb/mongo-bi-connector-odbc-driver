@@ -229,6 +229,7 @@ DECLARE_TEST(sqldriverconnect)
   wcscat(conn_in, dummy);
   wcscat(conn_in, L";PWD=");
   mbstowcs(dummy, (char *)mypwd, sizeof(dummy));
+  wcscat(conn_in, dummy);
   wcscat(conn_in, L";DATABASE=");
   mbstowcs(dummy, (char *)mydb, sizeof(dummy));
   wcscat(conn_in, dummy);
