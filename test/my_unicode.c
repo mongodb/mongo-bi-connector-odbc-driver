@@ -242,6 +242,13 @@ DECLARE_TEST(sqldriverconnect)
     mbstowcs(dummy, (char *)mysock, sizeof(dummy));
     wcscat(conn_in, dummy);
   }
+  if (myport)
+  {
+    char pbuff[20];
+    sprintf(pbuff, ";PORT=%d", myport);
+    mbstowcs(dummy, (char *)pbuff, sizeof(dummy));
+    wcscat(conn_in, dummy);
+  }
 
   ok_con(hdbc1, SQLDriverConnectW(hdbc1, NULL, WL(conn_in, wcslen(conn_in)),
                                   wcslen(conn_in), conn_out, sizeof(conn_out),
