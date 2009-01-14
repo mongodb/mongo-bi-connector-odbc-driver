@@ -336,6 +336,21 @@ DECLARE_TEST(t_explicit_error)
   is(check_sqlstate(hstmt, "HY024") == OK ||
      check_sqlstate(hstmt, "HY017") == OK);
 
+  /*
+    can't free implicit descriptors
+    This crashes unixODBC 2.2.11, as it improperly frees the descriptor,
+    and again tries to when freeing the statement handle.
+  */
+  if (using_unixodbc_version(henv, "2.2.11"))
+  {
+    printMessage("free explicit descriptor test skipped under unixODBC 2.2.11");
+  }
+  else
+  {
+    expect_desc(desc1, SQLFreeHandle(SQL_HANDLE_DESC, desc1), SQL_ERROR);
+    is(check_sqlstate_ex(desc1, SQL_HANDLE_DESC, "HY017") == OK);
+  }
+
   /* can't set apd as ard (and vice-versa) */
   ok_con(hdbc, SQLAllocHandle(SQL_HANDLE_DESC, hdbc, &expapd));
   ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_APP_PARAM_DESC,
@@ -353,25 +368,6 @@ DECLARE_TEST(t_explicit_error)
   ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_APP_ROW_DESC,
                                 &desc1, 0, NULL));
   printMessage("explicit apd: %x, stmt's ard: %x", expapd, desc1);
-
-  /*
-    can't free implicit descriptors
-    This crashes unixODBC 2.2.11, as it improperly frees the descriptor,
-    and again tries to when freeing the statement handle.
-  */
-#ifdef SQL_ATTR_UNIXODBC_VERSION
-  {
-    char buf[10];
-    ok_env(henv, SQLGetEnvAttr(henv, SQL_ATTR_UNIXODBC_VERSION, buf, 10, NULL));
-    if(!strcmp(buf, "2.2.11"))
-    {
-      printMessage("free explicit descriptor test skipped under unixODBC 2.2.11");
-      return OK;
-    }
-  }
-#endif /* SQL_ATTR_UNIXODBC_VERSION */
-  expect_desc(desc1, SQLFreeHandle(SQL_HANDLE_DESC, desc1), SQL_ERROR);
-  is(check_sqlstate_ex(desc1, SQL_HANDLE_DESC, "HY017") == OK);
 
   return OK;
 }
@@ -473,6 +469,10 @@ DECLARE_TEST(t_set_null_use_implicit)
 {
   SQLHANDLE expard, hstmt1;
   SQLINTEGER imp_result= 0, exp_result= 0;
+
+  if(using_unixodbc_version(henv, "2.2.11"))
+    skip("unixODBC 2.2.11 doesn't handle resetting statement "
+         "descriptors correctly");
 
   /*
     we use a separate statement handle to test that it correctly

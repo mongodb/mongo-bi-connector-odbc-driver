@@ -1088,3 +1088,18 @@ int using_dm(HDBC hdbc)
 
   return 1;
 }
+
+/*
+  Check if we are using the unixODBC version specified
+*/
+int using_unixodbc_version(SQLHANDLE henv, SQLCHAR *ver)
+{
+  SQLCHAR buf[10];
+#ifdef SQL_ATTR_UNIXODBC_VERSION
+  if(SQLGetEnvAttr(henv, SQL_ATTR_UNIXODBC_VERSION, buf, 10, NULL) != SQL_SUCCESS)
+    return 0;
+  if(!strcmp(buf, ver))
+    return 1;
+#endif /* SQL_ATTR_UNIXODBC_VERSION */
+  return 0;
+}
