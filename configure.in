@@ -84,7 +84,7 @@ AC_ARG_WITH(ltdl-path,
   else
    LTDL_LIB="-L$withval/lib -lltdl"
   fi
-], [LTDL_LIB="-L/usr/lib -lltdl"])
+], [LTDL_LIB="-lltdl"])
 AC_SUBST(LTDL_LIB)
 
 dnl AC_CHECK_LIB(ltdl, lt_dlinit, [],
