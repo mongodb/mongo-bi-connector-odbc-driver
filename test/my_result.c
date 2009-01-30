@@ -2437,6 +2437,21 @@ DECLARE_TEST(t_bug36069)
 }
 
 
+/*
+  Bug #41942 - SQLDescribeCol() segfault with non-zero name length
+  and null buffer
+*/
+DECLARE_TEST(t_bug41942)
+{
+  SQLSMALLINT len;
+  ok_sql(hstmt, "select 1 as name");
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 1, NULL, 10, &len,
+                                NULL, NULL, NULL, NULL));
+  is_num(len, 4);
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -2474,6 +2489,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug34575)
   ADD_TEST(t_bug24131)
   ADD_TEST(t_bug36069)
+  ADD_TEST(t_bug41942)
 END_TESTS
 
 
