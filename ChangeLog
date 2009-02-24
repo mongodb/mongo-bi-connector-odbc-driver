@@ -29,6 +29,8 @@
     (Bug #39961)
   * ADO adUseServer cursor is lost after updating adLongVarWChar field
     (Bug #26950)
+  * Calling SQLDescribeCol() with a NULL buffer and non-zero buffer
+    length causes a crash. (Bug #41942)
 
   Includes changes from Connector/ODBC 3.51.27.
 
