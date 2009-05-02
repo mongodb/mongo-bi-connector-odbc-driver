@@ -270,7 +270,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
         if (!rgbValue)
           rgbValue= (char *)&tmp_date;
         if (!str_to_date((SQL_DATE_STRUCT *)rgbValue, value,
-                         length, stmt->dbc->flag & FLAG_ZERO_DATE_TO_MIN))
+                         length, stmt->dbc->ds->zero_date_to_min))
           *pcbValue= sizeof(SQL_DATE_STRUCT);
         else
           *pcbValue= SQL_NULL_DATA;  /* ODBC can't handle 0000-00-00 dates */
@@ -283,7 +283,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
           field->type == MYSQL_TYPE_DATETIME)
       {
         SQL_TIMESTAMP_STRUCT ts;
-        if (str_to_ts(&ts, value, stmt->dbc->flag & FLAG_ZERO_DATE_TO_MIN))
+        if (str_to_ts(&ts, value, stmt->dbc->ds->zero_date_to_min))
           *pcbValue= SQL_NULL_DATA;
         else
         {
@@ -359,7 +359,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
       else
       {
         if (str_to_ts((SQL_TIMESTAMP_STRUCT *)rgbValue, value,
-                      stmt->dbc->flag & FLAG_ZERO_DATE_TO_MIN))
+                      stmt->dbc->ds->zero_date_to_min))
           *pcbValue= SQL_NULL_DATA;
         else
           *pcbValue= sizeof(SQL_TIMESTAMP_STRUCT);
@@ -594,7 +594,7 @@ MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
 
   *need_free= 0;
 
-  if ((stmt->dbc->flag & FLAG_FULL_COLUMN_NAMES) && irrec->table_name)
+  if (stmt->dbc->ds->return_table_names_for_SqlDescribeCol && irrec->table_name)
   {
     char *tmp= my_malloc(strlen((char *)irrec->name) +
                          strlen((char *)irrec->table_name) + 2,
@@ -938,7 +938,7 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
     if (!length && stmt->current_values[ColumnNumber])
       length= strlen(stmt->current_values[ColumnNumber]);
 
-    if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
+    if (!stmt->dbc->ds->dont_use_set_locale)
       setlocale(LC_NUMERIC, "C");
 
     result= sql_get_data(stmt, TargetType, irrec->row.field,
@@ -946,7 +946,7 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
                          stmt->current_values[ColumnNumber], length,
                          desc_get_rec(stmt->ard, ColumnNumber, FALSE));
 
-    if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
+    if (!stmt->dbc->ds->dont_use_set_locale)
         setlocale(LC_NUMERIC,default_locale);
 
     return result;
@@ -1204,7 +1204,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
 
     if ( stmt->stmt_options.cursor_type == SQL_CURSOR_FORWARD_ONLY )
     {
-        if ( fFetchType != SQL_FETCH_NEXT && !(stmt->dbc->flag & FLAG_SAFE) )
+        if ( fFetchType != SQL_FETCH_NEXT && !stmt->dbc->ds->safe )
             return  set_error(stmt,MYERR_S1106,
                               "Wrong fetchtype with FORWARD ONLY cursor", 0);
     }
@@ -1307,7 +1307,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
         return SQL_NO_DATA_FOUND;
     }
 
-    if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
+    if (!stmt->dbc->ds->dont_use_set_locale)
       setlocale(LC_NUMERIC, "C");
     res= SQL_SUCCESS;
     for ( i= 0 ; i < rows_to_fetch ; i++ )
@@ -1365,7 +1365,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
         /* reset result position */
         stmt->end_of_set= mysql_row_seek(stmt->result,save_position);
 
-    if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
+    if (!stmt->dbc->ds->dont_use_set_locale)
         setlocale(LC_NUMERIC,default_locale);
 
     if (SQL_SUCCEEDED(res) && stmt->rows_found_in_set == 0)

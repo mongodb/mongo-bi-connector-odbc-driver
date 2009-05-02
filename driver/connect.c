@@ -48,19 +48,19 @@ typedef BOOL (*PromptFunc)(SQLHDBC, SQLHWND, MYODBCUTIL_DATASOURCE *);
 
   @return Client flags suitable for @c mysql_real_connect().
 */
-unsigned long get_client_flags(unsigned long options)
+unsigned long get_client_flags(DataSource *ds)
 {
   unsigned long flags= CLIENT_MULTI_RESULTS;
 
-  if (options & (FLAG_FOUND_ROWS | FLAG_SAFE))
+  if (ds->safe || ds->return_matching_rows)
     flags|= CLIENT_FOUND_ROWS;
-  if (options & FLAG_NO_SCHEMA)
+  if (ds->no_catalog)
     flags|= CLIENT_NO_SCHEMA;
-  if (options & FLAG_COMPRESSED_PROTO)
+  if (ds->use_compressed_protocol)
     flags|= CLIENT_COMPRESS;
-  if (options & FLAG_IGNORE_SPACE)
+  if (ds->ignore_space_after_function_names)
     flags|= CLIENT_IGNORE_SPACE;
-  if (options & FLAG_MULTI_STATEMENTS)
+  if (ds->allow_multiple_statements)
     flags|= CLIENT_MULTI_STATEMENTS;
 
   return flags;
@@ -140,11 +140,9 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
 {
   SQLRETURN rc= SQL_SUCCESS;
   MYSQL *mysql= &dbc->mysql;
-  unsigned long options, flags;
+  unsigned long flags;
   /* Use 'int' and fill all bits to avoid alignment Bug#25920 */
   unsigned int opt_ssl_verify_server_cert = ~0;
-
-  options= sqlwchartoul(ds->option, NULL);
 
 #ifdef WIN32
   /*
@@ -152,27 +150,27 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
    FLAG_COLUMN_SIZE_S32 option if we are.
   */
   if (GetModuleHandle("msado15.dll") != NULL)
-    options|= FLAG_COLUMN_SIZE_S32;
+    ds->limit_column_size= 1;
 
   /* Detect another problem specific to MS Access */
   if (GetModuleHandle("msaccess.exe") != NULL)
-    options|= FLAG_DFLT_BIGINT_BIND_STR;
+    ds->default_bigint_bind_str= 1;
 #endif
 
   mysql_init(mysql);
 
-  flags= get_client_flags(options);
+  flags= get_client_flags(ds);
 
   /* Set other connection options */
 
-  if (options & (FLAG_BIG_PACKETS | FLAG_SAFE))
+  if (ds->allow_big_results || ds->safe)
     /* max_allowed_packet is a magical mysql macro. */
     max_allowed_packet= ~0L;
 
-  if (options & FLAG_NAMED_PIPE)
+  if (ds->force_use_of_named_pipes)
     mysql_options(mysql, MYSQL_OPT_NAMED_PIPE, NullS);
 
-  if (options & FLAG_USE_MYCNF)
+  if (ds->read_options_from_mycnf)
     mysql_options(mysql, MYSQL_READ_DEFAULT_GROUP, "odbc");
 
   if (ds->initstmt && ds->initstmt[0])
@@ -254,34 +252,25 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
     unfortunately enabled by default. We have to turn it off, or it causes
     other problems.
   */
-  if (!(options & FLAG_AUTO_IS_NULL) &&
+  if (!ds->auto_increment_null_search &&
       odbc_stmt(dbc, "SET SQL_AUTO_IS_NULL = 0") != SQL_SUCCESS)
   {
     /** @todo set error reason */
     goto error;
   }
 
-  /* TODO why cant the dbc just keep a copy of the DataSource */
-  if (ds->name)
-    dbc->dsn= my_strdup(ds_get_utf8attr(ds->name, &ds->name8), MYF(MY_WME));
-  if (ds->server)
-    dbc->server= my_strdup(ds_get_utf8attr(ds->server, &ds->server8),
-                           MYF(MY_WME));
-  if (ds->uid)
-    dbc->user= my_strdup(ds_get_utf8attr(ds->uid, &ds->uid8), MYF(MY_WME));
-  if (ds->pwd)
-    dbc->password= my_strdup(ds_get_utf8attr(ds->pwd, &ds->pwd8), MYF(MY_WME));
+  dbc->ds= ds;
+  /* init all needed UTF-8 strings */
+  ds_get_utf8attr(ds->name, &ds->name8);
+  ds_get_utf8attr(ds->server, &ds->server8);
+  ds_get_utf8attr(ds->uid, &ds->uid8);
+  ds_get_utf8attr(ds->pwd, &ds->pwd8);
+  ds_get_utf8attr(ds->socket, &ds->socket8);
   if (ds->database)
     dbc->database= my_strdup(ds_get_utf8attr(ds->database, &ds->database8),
                              MYF(MY_WME));
-  if (ds->socket)
-    dbc->socket= my_strdup(ds_get_utf8attr(ds->socket, &ds->socket8),
-                           MYF(MY_WME));
-
-  dbc->port= ds->port;
-  dbc->flag= options;
-
-  if (options & FLAG_LOG_QUERY && !dbc->query_log)
+  
+  if (ds->save_queries && !dbc->query_log)
     dbc->query_log= init_query_log();
 
   /* Set the statement error prefix based on the server version. */
@@ -289,7 +278,7 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
           mysql->server_version, "]", NullS);
 
   /* This needs to be set after connection, or it doesn't stick.  */
-  if (options & FLAG_AUTO_RECONNECT)
+  if (ds->auto_reconnect)
   {
     my_bool reconnect= 1;
     mysql_options(mysql, MYSQL_OPT_RECONNECT, (char *)&reconnect);
@@ -298,7 +287,7 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
   /* Make sure autocommit is set as configured. */
   if (dbc->commit_flag == CHECK_AUTOCOMMIT_OFF)
   {
-    if (!trans_supported(dbc) || (options & FLAG_NO_TRANSACTIONS))
+    if (!trans_supported(dbc) || ds->disable_transactions)
     {
       rc= SQL_SUCCESS_WITH_INFO;
       dbc->commit_flag= CHECK_AUTOCOMMIT_ON;
@@ -417,7 +406,8 @@ SQLRETURN SQL_API MySQLConnect(SQLHDBC   hdbc,
 
   rc= myodbc_do_connect(dbc, ds);
 
-  ds_delete(ds);
+  if (!dbc->ds)
+    ds_delete(ds);
   return rc;
 #endif
 }
@@ -498,13 +488,9 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
     ds_lookup(ds);
 #endif
 
-  /* If FLAG_NO_PROMPT is no set, force prompting off. */
-  if (ds->option)
-  {
-    options= sqlwchartoul(ds->option, NULL);
-    if (options & FLAG_NO_PROMPT)
-      fDriverCompletion= SQL_DRIVER_NOPROMPT;
-  }
+  /* If FLAG_NO_PROMPT is not set, force prompting off. */
+  if (ds->dont_prompt_upon_connect)
+    fDriverCompletion= SQL_DRIVER_NOPROMPT;
 
   /*
     We only prompt if we need to.
@@ -727,8 +713,11 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
       oldds->pszSOCKET=      _global_strdup(ds_get_utf8attr(ds->socket, &ds->socket8));
     if (ds->initstmt)
       oldds->pszSTMT=        _global_strdup(ds_get_utf8attr(ds->initstmt, &ds->initstmt8));
-    if (ds->option)
-      oldds->pszOPTION=      _global_strdup(ds_get_utf8attr(ds->option, &ds->option8));
+    if (ds_get_options(ds))
+    {
+      oldds->pszOPTION=      _global_alloc(20);
+      sprintf(oldds->pszOPTION, "%ul", ds_get_options(ds));
+    }
     if (ds->sslkey)
       oldds->pszSSLKEY=      _global_strdup(ds_get_utf8attr(ds->sslkey, &ds->sslkey8));
     if (ds->sslcert)
@@ -770,7 +759,7 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
     if (oldds->pszSTMT)
       ds_setattr_from_utf8(&ds->initstmt, oldds->pszSTMT);
     if (oldds->pszOPTION)
-      ds_setattr_from_utf8(&ds->option, oldds->pszOPTION);
+      ds_set_options(ds, strtoul(oldds->pszOPTION));
     if (oldds->pszSSLKEY)
       ds_setattr_from_utf8(&ds->sslkey, oldds->pszSSLKEY);
     if (oldds->pszSSLCERT)
@@ -850,7 +839,9 @@ error:
     x_free(szConnStrIn);
 
   driver_delete(pDriver);
-  ds_delete(ds);
+  /* delete data source unless connected */
+  if (!dbc->ds)
+    ds_delete(ds);
 #ifndef USE_LEGACY_ODBC_GUI
   x_free(prompt_instr);
 #else /* USE_LEGACY_ODBC_GUI */
@@ -903,15 +894,14 @@ SQLRETURN SQL_API SQLDisconnect(SQLHDBC hdbc)
      my_SQLFreeStmt((SQLHSTMT)list_element->data, SQL_DROP);
   }
   mysql_close(&dbc->mysql);
-  x_free(dbc->dsn);
-  x_free(dbc->database);
-  x_free(dbc->server);
-  x_free(dbc->user);
-  x_free(dbc->password);
-  dbc->dsn= dbc->database= dbc->server= dbc->user= dbc->password= 0;
 
-  if (dbc->flag & FLAG_LOG_QUERY)
+  if (dbc->ds->save_queries)
     end_query_log(dbc->query_log);
+
+  x_free(dbc->database);
+  assert(dbc->ds);
+  ds_delete(dbc->ds);
+  dbc->ds= dbc->database= NULL;
 
   return SQL_SUCCESS;
 }

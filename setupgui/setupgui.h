@@ -42,8 +42,6 @@ void ShowDiagnostics(SQLRETURN nReturn, SQLSMALLINT nHandleType, SQLHANDLE h);
 void FreeEnvHandle(SQLHENV hEnv);
 SQLRETURN Connect(SQLHDBC *hDbc, SQLHENV *hEnv, DataSource *params);
 void Disconnect(SQLHDBC hDbc, SQLHENV hEnv);
-unsigned long CompileOptions(DataSource *params);
-void DecompileOptions(DataSource *src);
 
 /* Max DB name len, used when retrieving database list */
 #define MYODBC_DB_NAME_MAX 255

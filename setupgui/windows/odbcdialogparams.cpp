@@ -226,19 +226,19 @@ void syncTabsData(HWND hwnd, DataSource &params)
     GET_BOOL(1,use_compressed_protocol);
     GET_BOOL(1,change_bigint_columns_to_int);
     GET_BOOL(1,safe);
-    GET_BOOL(1,enable_auto_reconnect);
-    GET_BOOL(1,enable_auto_increment_null_search);
+    GET_BOOL(1,auto_reconnect);
+    GET_BOOL(1,auto_increment_null_search);
     GET_BOOL(1,handle_binary_as_char);
     /* flags 2*/
     GET_BOOL(2,dont_prompt_upon_connect);
-    GET_BOOL(2,enable_dynamic_cursor);
+    GET_BOOL(2,dynamic_cursor);
     GET_BOOL(2,ignore_N_in_name_table);
     GET_BOOL(2,user_manager_cursor);
     GET_BOOL(2,dont_use_set_locale);
     GET_BOOL(2,pad_char_to_full_length);
     GET_BOOL(2,dont_cache_result);
     /* flags 3 */
-    GET_BOOL(3,return_table_names_for_SqlDesribeCol);
+    GET_BOOL(3,return_table_names_for_SqlDescribeCol);
     GET_BOOL(3,ignore_space_after_function_names);
     GET_BOOL(3,force_use_of_named_pipes);
     GET_BOOL(3,no_catalog);
@@ -266,19 +266,19 @@ void syncTabs(HWND hwnd, DataSource &params)
     SET_BOOL(1,use_compressed_protocol);
     SET_BOOL(1,change_bigint_columns_to_int);
     SET_BOOL(1,safe);
-    SET_BOOL(1,enable_auto_reconnect);
-    SET_BOOL(1,enable_auto_increment_null_search);
+    SET_BOOL(1,auto_reconnect);
+    SET_BOOL(1,auto_increment_null_search);
     SET_BOOL(1,handle_binary_as_char);
     /* flags 2*/
     SET_BOOL(2,dont_prompt_upon_connect);
-    SET_BOOL(2,enable_dynamic_cursor);
+    SET_BOOL(2,dynamic_cursor);
     SET_BOOL(2,ignore_N_in_name_table);
     SET_BOOL(2,user_manager_cursor);
     SET_BOOL(2,dont_use_set_locale);
     SET_BOOL(2,pad_char_to_full_length);
     SET_BOOL(2,dont_cache_result);
     /* flags 3 */
-    SET_BOOL(3,return_table_names_for_SqlDesribeCol);
+    SET_BOOL(3,return_table_names_for_SqlDescribeCol);
     SET_BOOL(3,ignore_space_after_function_names);
     SET_BOOL(3,force_use_of_named_pipes);
     SET_BOOL(3,no_catalog);
@@ -311,12 +311,6 @@ void FillParameters(HWND hwnd, DataSource & params)
 
 	if( TabCtrl_1.hTab )
 		syncTabsData(hwnd, params);
-
-  /* pack option values into bitmap */
-  unsigned long opts= CompileOptions(pParams);
-  SQLWCHAR optstr[15];
-  sqlwcharfromul(optstr, opts);
-  ds_set_strattr(&pParams->option, optstr);
 }
 
 void OnDialogClose();
@@ -639,7 +633,6 @@ BOOL FormMain_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 	//Get the initial Width and height of the dialog
 	//in order to fix the minimum size of dialog
 
-    DecompileOptions( pParams );
 	syncForm(hwnd,*pParams);
 
   /* Disable fields if in prompt mode */

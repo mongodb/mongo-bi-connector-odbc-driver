@@ -203,7 +203,6 @@ SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc)
 
     dbc= (DBC FAR*) *phdbc;
     dbc->mysql.net.vio= 0;     /* Marker if open */
-    dbc->flag= 0;
     dbc->commit_flag= 0;
     dbc->stmt_options.max_rows= dbc->stmt_options.max_length= 0L;
     dbc->stmt_options.cursor_type= SQL_CURSOR_FORWARD_ONLY;  /* ODBC default */
@@ -249,12 +248,9 @@ SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc)
     LIST *next;
 
     dbc->env->connections= list_delete(dbc->env->connections,&dbc->list);
-    my_free(dbc->dsn,MYF(MY_ALLOW_ZERO_PTR));
     my_free(dbc->database,MYF(MY_ALLOW_ZERO_PTR));
-    my_free(dbc->server,MYF(MY_ALLOW_ZERO_PTR));
-    my_free(dbc->socket,MYF(MY_ALLOW_ZERO_PTR));
-    my_free(dbc->user,MYF(MY_ALLOW_ZERO_PTR));
-    my_free(dbc->password,MYF(MY_ALLOW_ZERO_PTR));
+    if (dbc->ds)
+      ds_delete(dbc->ds);
     pthread_mutex_destroy(&dbc->lock);
 
     /* free any remaining explicitly allocated descriptors */

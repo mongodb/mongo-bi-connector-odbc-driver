@@ -178,7 +178,7 @@ SQLRETURN insert_params(STMT FAR *stmt, char **finalquery)
     pthread_mutex_lock(&stmt->dbc->lock);
     net= &stmt->dbc->mysql.net;
     to= (char*) net->buff;
-    if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
+    if (!stmt->dbc->ds->dont_use_set_locale)
       setlocale(LC_NUMERIC, "C");  /* force use of '.' as decimal point */
     for ( i= 0; i < stmt->param_count; i++ )
     {
@@ -214,7 +214,7 @@ SQLRETURN insert_params(STMT FAR *stmt, char **finalquery)
         *stmt->apd->rows_processed_ptr= 1;
 
     pthread_mutex_unlock(&stmt->dbc->lock);
-    if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
+    if (!stmt->dbc->ds->dont_use_set_locale)
         setlocale(LC_NUMERIC,default_locale);
     *finalquery= to;
     return rc;
@@ -223,7 +223,7 @@ memerror:      /* Too much data */
     rc= set_error(stmt,MYERR_S1001,NULL,4001);
 error:
     pthread_mutex_unlock(&stmt->dbc->lock);
-    if ( !(stmt->dbc->flag & FLAG_NO_LOCALE) )
+    if (!stmt->dbc->ds->dont_use_set_locale)
         setlocale(LC_NUMERIC,default_locale);
     return rc;
 }
@@ -443,7 +443,7 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
         case SQL_C_TYPE_DATE:
             {
                 DATE_STRUCT *date= (DATE_STRUCT*) data;
-                if ((dbc->flag & FLAG_MIN_DATE_TO_ZERO) &&
+                if (dbc->ds->min_date_to_zero &&
                     !date->year && (date->month == date->day == 1))
                   sprintf(buff, "0000-00-00");
                 else
@@ -467,7 +467,7 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
         case SQL_C_TYPE_TIMESTAMP:
             {
                 TIMESTAMP_STRUCT *time= (TIMESTAMP_STRUCT*) data;
-                if ((dbc->flag & FLAG_MIN_DATE_TO_ZERO) &&
+                if (dbc->ds->min_date_to_zero &&
                     !time->year && (time->month == time->day == 1))
                   sprintf(buff, "0000-00-00 %02d:%02d:%02d",
                           time->hour, time->minute, time->second);
@@ -932,8 +932,9 @@ SQLRETURN SQL_API SQLCancel(SQLHSTMT hstmt)
 
   /** @todo need to preserve and use ssl params */
 
-  if (!mysql_real_connect(second, dbc->server, dbc->user, dbc->password,
-                          NULL, dbc->port, dbc->socket, dbc->flag))
+  if (!mysql_real_connect(second, dbc->ds->server8, dbc->ds->uid8,
+                          dbc->ds->pwd8, NULL, dbc->ds->port,
+                          dbc->ds->socket8, 0))
   {
     /* We do not set the SQLSTATE here, per the ODBC spec. */
     return SQL_ERROR;

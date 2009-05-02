@@ -100,6 +100,62 @@ static SQLWCHAR W_READTIMEOUT[]=
   {'R','E','A','D','T','I','M','E','O','U','T',0};
 static SQLWCHAR W_WRITETIMEOUT[]=
   {'W','R','I','T','E','T','I','M','E','O','U','T',0};
+static SQLWCHAR W_FOUND_ROWS[]=
+  {'F','O','U','N','D','_','R','O','W','S',0};
+static SQLWCHAR W_BIG_PACKETS[]=
+  {'B','I','G','_','P','A','C','K','E','T','S',0};
+static SQLWCHAR W_NO_PROMPT[]=
+  {'N','O','_','P','R','O','M','P','T',0};
+static SQLWCHAR W_DYNAMIC_CURSOR[]=
+  {'D','Y','N','A','M','I','C','_','C','U','R','S','O','R',0};
+static SQLWCHAR W_NO_SCHEMA[]=
+  {'N','O','_','S','C','H','E','M','A',0};
+static SQLWCHAR W_NO_DEFAULT_CURSOR[]=
+  {'N','O','_','D','E','F','A','U','L','T','_','C','U','R','S','O','R',0};
+static SQLWCHAR W_NO_LOCALE[]=
+  {'N','O','_','L','O','C','A','L','E',0};
+static SQLWCHAR W_PAD_SPACE[]=
+  {'P','A','D','_','S','P','A','C','E',0};
+static SQLWCHAR W_FULL_COLUMN_NAMES[]=
+  {'F','U','L','L','_','C','O','L','U','M','N','_','N','A','M','E','S',0};
+static SQLWCHAR W_COMPRESSED_PROTO[]=
+  {'C','O','M','P','R','E','S','S','E','D','_','P','R','O','T','O',0};
+static SQLWCHAR W_IGNORE_SPACE[]=
+  {'I','G','N','O','R','E','_','S','P','A','C','E',0};
+static SQLWCHAR W_NAMED_PIPE[]=
+  {'N','A','M','E','D','_','P','I','P','E',0};
+static SQLWCHAR W_NO_BIGINT[]=
+  {'N','O','_','B','I','G','I','N','T',0};
+static SQLWCHAR W_NO_CATALOG[]=
+  {'N','O','_','C','A','T','A','L','O','G',0};
+static SQLWCHAR W_USE_MYCNF[]=
+  {'U','S','E','_','M','Y','C','N','F',0};
+static SQLWCHAR W_SAFE[]=
+  {'S','A','F','E',0};
+static SQLWCHAR W_NO_TRANSACTIONS[]=
+  {'N','O','_','T','R','A','N','S','A','C','T','I','O','N','S',0};
+static SQLWCHAR W_LOG_QUERY[]=
+  {'L','O','G','_','Q','U','E','R','Y',0};
+static SQLWCHAR W_NO_CACHE[]=
+  {'N','O','_','C','A','C','H','E',0};
+static SQLWCHAR W_FORWARD_CURSOR[]=
+  {'F','O','R','W','A','R','D','_','C','U','R','S','O','R',0};
+static SQLWCHAR W_AUTO_RECONNECT[]=
+  {'A','U','T','O','_','R','E','C','O','N','N','E','C','T',0};
+static SQLWCHAR W_AUTO_IS_NULL[]=
+  {'A','U','T','O','_','I','S','_','N','U','L','L',0};
+static SQLWCHAR W_ZERO_DATE_TO_MIN[]=
+  {'Z','E','R','O','_','D','A','T','E','_','T','O','_','M','I','N',0};
+static SQLWCHAR W_MIN_DATE_TO_ZERO[]=
+  {'M','I','N','_','D','A','T','E','_','T','O','_','Z','E','R','O',0};
+static SQLWCHAR W_MULTI_STATEMENTS[]=
+  {'M','U','L','T','I','_','S','T','A','T','E','M','E','N','T','S',0};
+static SQLWCHAR W_COLUMN_SIZE_S32[]=
+  {'C','O','L','U','M','N','_','S','I','Z','E','_','S','3','2',0};
+static SQLWCHAR W_NO_BINARY_RESULT[]=
+  {'N','O','_','B','I','N','A','R','Y','_','R','E','S','U','L','T',0};
+static SQLWCHAR W_DFLT_BIGINT_BIND_STR[]=
+  {'D','F','L','T','_','B','I','G','I','N','T','_','B','I','N','D','_','S','T','R',0};
 /* DS_PARAM */
 /* externally used strings */
 const SQLWCHAR W_DRIVER_PARAM[]= {';', 'D', 'R', 'I', 'V', 'E', 'R', '=', 0};
@@ -116,7 +172,17 @@ SQLWCHAR *dsnparams[]= {W_DSN, W_DRIVER, W_DESCRIPTION, W_SERVER,
                         W_UID, W_PWD, W_DATABASE, W_SOCKET, W_INITSTMT,
                         W_PORT, W_OPTION, W_CHARSET, W_SSLKEY,
                         W_SSLCERT, W_SSLCA, W_SSLCAPATH, W_SSLCIPHER,
-                        W_SSLVERIFY, W_READTIMEOUT, W_WRITETIMEOUT};
+                        W_SSLVERIFY, W_READTIMEOUT, W_WRITETIMEOUT,
+                        W_FOUND_ROWS, W_BIG_PACKETS, W_NO_PROMPT,
+                        W_DYNAMIC_CURSOR, W_NO_SCHEMA, W_NO_DEFAULT_CURSOR,
+                        W_NO_LOCALE, W_PAD_SPACE, W_FULL_COLUMN_NAMES,
+                        W_COMPRESSED_PROTO, W_IGNORE_SPACE, W_NAMED_PIPE,
+                        W_NO_BIGINT, W_NO_CATALOG, W_USE_MYCNF, W_SAFE,
+                        W_NO_TRANSACTIONS, W_LOG_QUERY, W_NO_CACHE,
+                        W_FORWARD_CURSOR, W_AUTO_RECONNECT, W_AUTO_IS_NULL,
+                        W_ZERO_DATE_TO_MIN, W_MIN_DATE_TO_ZERO,
+                        W_MULTI_STATEMENTS, W_COLUMN_SIZE_S32,
+                        W_NO_BINARY_RESULT, W_DFLT_BIGINT_BIND_STR};
 static const
 int dsnparamcnt= sizeof(dsnparams) / sizeof(SQLWCHAR *);
 /* DS_PARAM */
@@ -540,7 +606,6 @@ void ds_delete(DataSource *ds)
   x_free(ds->database);
   x_free(ds->socket);
   x_free(ds->initstmt);
-  x_free(ds->option);
   x_free(ds->charset);
   x_free(ds->sslkey);
   x_free(ds->sslcert);
@@ -557,7 +622,6 @@ void ds_delete(DataSource *ds)
   x_free(ds->database8);
   x_free(ds->socket8);
   x_free(ds->initstmt8);
-  x_free(ds->option8);
   x_free(ds->charset8);
   x_free(ds->sslkey8);
   x_free(ds->sslcert8);
@@ -616,10 +680,12 @@ int ds_set_strnattr(SQLWCHAR **attr, const SQLWCHAR *val, size_t charcount)
  * string (SQLWCHAR *) or int parameters.
  */
 void ds_map_param(DataSource *ds, const SQLWCHAR *param,
-                  SQLWCHAR ***strdest, unsigned int **intdest)
+                  SQLWCHAR ***strdest, unsigned int **intdest,
+                  BOOL **booldest)
 {
   *strdest= NULL;
   *intdest= NULL;
+  *booldest= NULL;
   /* parameter aliases can be used here, see W_UID, W_USER */
   if (!sqlwcharcasecmp(W_DSN, param))
     *strdest= &ds->name;
@@ -645,8 +711,6 @@ void ds_map_param(DataSource *ds, const SQLWCHAR *param,
     *strdest= &ds->socket;
   else if (!sqlwcharcasecmp(W_INITSTMT, param))
     *strdest= &ds->initstmt;
-  else if (!sqlwcharcasecmp(W_OPTION, param))
-    *strdest= &ds->option;
   else if (!sqlwcharcasecmp(W_CHARSET, param))
     *strdest= &ds->charset;
   else if (!sqlwcharcasecmp(W_SSLKEY, param))
@@ -668,6 +732,63 @@ void ds_map_param(DataSource *ds, const SQLWCHAR *param,
     *intdest= &ds->readtimeout;
   else if (!sqlwcharcasecmp(W_WRITETIMEOUT, param))
     *intdest= &ds->writetimeout;
+
+  else if (!sqlwcharcasecmp(W_FOUND_ROWS, param))
+    *booldest= &ds->return_matching_rows;
+  else if (!sqlwcharcasecmp(W_BIG_PACKETS, param))
+    *booldest= &ds->allow_big_results;
+  else if (!sqlwcharcasecmp(W_NO_PROMPT, param))
+    *booldest= &ds->dont_prompt_upon_connect;
+  else if (!sqlwcharcasecmp(W_DYNAMIC_CURSOR, param))
+    *booldest= &ds->dynamic_cursor;
+  else if (!sqlwcharcasecmp(W_NO_SCHEMA, param))
+    *booldest= &ds->ignore_N_in_name_table;
+  else if (!sqlwcharcasecmp(W_NO_DEFAULT_CURSOR, param))
+    *booldest= &ds->user_manager_cursor;
+  else if (!sqlwcharcasecmp(W_NO_LOCALE, param))
+    *booldest= &ds->dont_use_set_locale;
+  else if (!sqlwcharcasecmp(W_PAD_SPACE, param))
+    *booldest= &ds->pad_char_to_full_length;
+  else if (!sqlwcharcasecmp(W_FULL_COLUMN_NAMES, param))
+    *booldest= &ds->return_table_names_for_SqlDescribeCol;
+  else if (!sqlwcharcasecmp(W_COMPRESSED_PROTO, param))
+    *booldest= &ds->use_compressed_protocol;
+  else if (!sqlwcharcasecmp(W_IGNORE_SPACE, param))
+    *booldest= &ds->ignore_space_after_function_names;
+  else if (!sqlwcharcasecmp(W_NAMED_PIPE, param))
+    *booldest= &ds->force_use_of_named_pipes;
+  else if (!sqlwcharcasecmp(W_NO_BIGINT, param))
+    *booldest= &ds->change_bigint_columns_to_int;
+  else if (!sqlwcharcasecmp(W_NO_CATALOG, param))
+    *booldest= &ds->no_catalog;
+  else if (!sqlwcharcasecmp(W_USE_MYCNF, param))
+    *booldest= &ds->read_options_from_mycnf;
+  else if (!sqlwcharcasecmp(W_SAFE, param))
+    *booldest= &ds->safe;
+  else if (!sqlwcharcasecmp(W_NO_TRANSACTIONS, param))
+    *booldest= &ds->disable_transactions;
+  else if (!sqlwcharcasecmp(W_LOG_QUERY, param))
+    *booldest= &ds->save_queries;
+  else if (!sqlwcharcasecmp(W_NO_CACHE, param))
+    *booldest= &ds->dont_cache_result;
+  else if (!sqlwcharcasecmp(W_FORWARD_CURSOR, param))
+    *booldest= &ds->force_use_of_forward_only_cursors;
+  else if (!sqlwcharcasecmp(W_AUTO_RECONNECT, param))
+    *booldest= &ds->auto_reconnect;
+  else if (!sqlwcharcasecmp(W_AUTO_IS_NULL, param))
+    *booldest= &ds->auto_increment_null_search;
+  else if (!sqlwcharcasecmp(W_ZERO_DATE_TO_MIN, param))
+    *booldest= &ds->zero_date_to_min;
+  else if (!sqlwcharcasecmp(W_MIN_DATE_TO_ZERO, param))
+    *booldest= &ds->min_date_to_zero;
+  else if (!sqlwcharcasecmp(W_MULTI_STATEMENTS, param))
+    *booldest= &ds->allow_multiple_statements;
+  else if (!sqlwcharcasecmp(W_COLUMN_SIZE_S32, param))
+    *booldest= &ds->limit_column_size;
+  else if (!sqlwcharcasecmp(W_NO_BINARY_RESULT, param))
+    *booldest= &ds->handle_binary_as_char;
+  else if (!sqlwcharcasecmp(W_DFLT_BIGINT_BIND_STR, param))
+    *booldest= &ds->default_bigint_bind_str;
 
   /* DS_PARAM */
 }
@@ -691,6 +812,7 @@ int ds_lookup(DataSource *ds)
   int rc= 0;
   UWORD config_mode= config_get();
   unsigned int *intdest;
+  BOOL *booldest;
   /* No need for SAVE_MODE() because we always call config_get() above. */
 
 #ifdef _WIN32
@@ -755,12 +877,11 @@ int ds_lookup(DataSource *ds)
                              entries += sqlwcharlen(entries) + 1)
   {
     int valsize;
-    ds_map_param(ds, entries, &dest, &intdest);
+    ds_map_param(ds, entries, &dest, &intdest, &booldest);
 
-    if ((dest || intdest) &&
-      (valsize= SQLGetPrivateProfileStringW(ds->name, entries, W_EMPTY,
-                                         val, ODBCDATASOURCE_STRLEN,
-                                         W_ODBC_INI)) < 0)
+    if ((valsize= SQLGetPrivateProfileStringW(ds->name, entries, W_EMPTY,
+                                              val, ODBCDATASOURCE_STRLEN,
+                                              W_ODBC_INI)) < 0)
     {
       rc= 1;
       goto end;
@@ -771,6 +892,10 @@ int ds_lookup(DataSource *ds)
       ds_set_strnattr(dest, val, valsize);
     else if (intdest)
       *intdest= sqlwchartoul(val, NULL);
+    else if (booldest)
+      *booldest= sqlwchartoul(val, NULL) > 0;
+    else if (!sqlwcharcasecmp(W_OPTION, entries))
+      ds_set_options(ds, ds_get_options(ds) | sqlwchartoul(val, NULL));
 
     RESTORE_MODE();
   }
@@ -792,6 +917,7 @@ int ds_from_kvpair(DataSource *ds, const SQLWCHAR *attrs, SQLWCHAR delim)
   SQLWCHAR **dest;
   SQLWCHAR attribute[100];
   unsigned int *intdest;
+  BOOL *booldest;
 
   while (*attrs)
   {
@@ -809,22 +935,34 @@ int ds_from_kvpair(DataSource *ds, const SQLWCHAR *attrs, SQLWCHAR delim)
       /* otherwise, take the rest of the string */
       end= attrs + sqlwcharlen(attrs);
 
-    ds_map_param(ds, attribute, &dest, &intdest);
-
-    if (dest)
+    /* handle deprecated options as an exception */
+    if (!sqlwcharcasecmp(W_OPTION, attribute))
     {
-      if (*split == '{' && *end == '}')
-      {
-        ds_set_strnattr(dest, split + 1, end - split - 1);
-        end++;
-      }
-      else
-        ds_set_strnattr(dest, split, end - split);
+      ds_set_options(ds, sqlwchartoul(split, NULL));
     }
-    else if (intdest)
+    else
     {
-      /* we know we have a ; or NULL at the end so we just let it go */
-      *intdest= sqlwchartoul(split, NULL);
+      ds_map_param(ds, attribute, &dest, &intdest, &booldest);
+
+      if (dest)
+      {
+        if (*split == '{' && *end == '}')
+        {
+          ds_set_strnattr(dest, split + 1, end - split - 1);
+          end++;
+        }
+        else
+          ds_set_strnattr(dest, split, end - split);
+      }
+      else if (intdest)
+      {
+        /* we know we have a ; or NULL at the end so we just let it go */
+        *intdest= sqlwchartoul(split, NULL);
+      }
+      else if (booldest)
+      {
+        *booldest= sqlwchartoul(split, NULL) > 0;
+      }
     }
 
     attrs= end;
@@ -849,6 +987,7 @@ int ds_to_kvpair(DataSource *ds, SQLWCHAR *attrs, size_t attrslen,
   int i;
   SQLWCHAR **strval;
   unsigned int *intval;
+  BOOL *boolval;
   int origchars= attrslen;
   SQLWCHAR numbuf[21];
 
@@ -859,7 +998,7 @@ int ds_to_kvpair(DataSource *ds, SQLWCHAR *attrs, size_t attrslen,
 
   for (i= 0; i < dsnparamcnt; ++i)
   {
-    ds_map_param(ds, dsnparams[i], &strval, &intval);
+    ds_map_param(ds, dsnparams[i], &strval, &intval, &boolval);
 
     /* We skip the driver if dsn name is given */
     if (!sqlwcharcasecmp(W_DRIVER, dsnparams[i]) && ds->name && *ds->name)
@@ -888,6 +1027,13 @@ int ds_to_kvpair(DataSource *ds, SQLWCHAR *attrs, size_t attrslen,
       attrs+= sqlwcharncat2(attrs, numbuf, &attrslen);
       APPEND_SQLWCHAR(attrs, attrslen, delim);
     }
+    else if (boolval && *boolval)
+    {
+      attrs+= sqlwcharncat2(attrs, dsnparams[i], &attrslen);
+      APPEND_SQLWCHAR(attrs, attrslen, '=');
+      APPEND_SQLWCHAR(attrs, attrslen, '1');
+      APPEND_SQLWCHAR(attrs, attrslen, delim);
+    }
 
     if (!attrslen)
       /* we don't have enough room */
@@ -911,11 +1057,12 @@ size_t ds_to_kvpair_len(DataSource *ds)
   int i;
   SQLWCHAR **strval;
   unsigned int *intval;
+  BOOL *boolval;
   SQLWCHAR numbuf[21];
 
   for (i= 0; i < dsnparamcnt; ++i)
   {
-    ds_map_param(ds, dsnparams[i], &strval, &intval);
+    ds_map_param(ds, dsnparams[i], &strval, &intval, &boolval);
 
     /* We skip the driver if dsn name is given */
     if (!sqlwcharcasecmp(W_DRIVER, dsnparams[i]) && ds->name && *ds->name)
@@ -929,12 +1076,17 @@ size_t ds_to_kvpair_len(DataSource *ds)
         len += 2; /* for escape braces */
       len+= 2; /* for = and delimiter */
     }
-    else if (intval)
+    else if (intval && *intval)
     {
       len+= sqlwcharlen(dsnparams[i]);
       sqlwcharfromul(numbuf, *intval);
       len+= sqlwcharlen(numbuf);
       len+= 2; /* for = and delimiter */
+    }
+    else if (boolval && *boolval)
+    {
+      len+= sqlwcharlen(dsnparams[i]);
+      len+= 3; /* for = and delimiter and '1' */
     }
   }
 
@@ -1031,7 +1183,6 @@ int ds_add(DataSource *ds)
   if (ds_add_strprop(ds->name, W_DATABASE   , ds->database   )) goto error;
   if (ds_add_strprop(ds->name, W_SOCKET     , ds->socket     )) goto error;
   if (ds_add_strprop(ds->name, W_INITSTMT   , ds->initstmt   )) goto error;
-  if (ds_add_strprop(ds->name, W_OPTION     , ds->option     )) goto error;
   if (ds_add_strprop(ds->name, W_CHARSET    , ds->charset    )) goto error;
   if (ds_add_strprop(ds->name, W_SSLKEY     , ds->sslkey     )) goto error;
   if (ds_add_strprop(ds->name, W_SSLCERT    , ds->sslcert    )) goto error;
@@ -1043,6 +1194,35 @@ int ds_add(DataSource *ds)
   if (ds_add_intprop(ds->name, W_PORT       , ds->port       )) goto error;
   if (ds_add_intprop(ds->name, W_READTIMEOUT, ds->readtimeout)) goto error;
   if (ds_add_intprop(ds->name, W_WRITETIMEOUT, ds->writetimeout)) goto error;
+
+  if (ds_add_intprop(ds->name, W_FOUND_ROWS, ds->return_matching_rows)) goto error;
+  if (ds_add_intprop(ds->name, W_BIG_PACKETS, ds->allow_big_results)) goto error;
+  if (ds_add_intprop(ds->name, W_NO_PROMPT, ds->dont_prompt_upon_connect)) goto error;
+  if (ds_add_intprop(ds->name, W_DYNAMIC_CURSOR, ds->dynamic_cursor)) goto error;
+  if (ds_add_intprop(ds->name, W_NO_SCHEMA, ds->ignore_N_in_name_table)) goto error;
+  if (ds_add_intprop(ds->name, W_NO_DEFAULT_CURSOR, ds->user_manager_cursor)) goto error;
+  if (ds_add_intprop(ds->name, W_NO_LOCALE, ds->dont_use_set_locale)) goto error;
+  if (ds_add_intprop(ds->name, W_PAD_SPACE, ds->pad_char_to_full_length)) goto error;
+  if (ds_add_intprop(ds->name, W_FULL_COLUMN_NAMES, ds->return_table_names_for_SqlDescribeCol)) goto error;
+  if (ds_add_intprop(ds->name, W_COMPRESSED_PROTO, ds->use_compressed_protocol)) goto error;
+  if (ds_add_intprop(ds->name, W_IGNORE_SPACE, ds->ignore_space_after_function_names)) goto error;
+  if (ds_add_intprop(ds->name, W_NAMED_PIPE, ds->force_use_of_named_pipes)) goto error;
+  if (ds_add_intprop(ds->name, W_NO_BIGINT, ds->change_bigint_columns_to_int)) goto error;
+  if (ds_add_intprop(ds->name, W_NO_CATALOG, ds->no_catalog)) goto error;
+  if (ds_add_intprop(ds->name, W_USE_MYCNF, ds->read_options_from_mycnf)) goto error;
+  if (ds_add_intprop(ds->name, W_SAFE, ds->safe)) goto error;
+  if (ds_add_intprop(ds->name, W_NO_TRANSACTIONS, ds->disable_transactions)) goto error;
+  if (ds_add_intprop(ds->name, W_LOG_QUERY, ds->save_queries)) goto error;
+  if (ds_add_intprop(ds->name, W_NO_CACHE, ds->dont_cache_result)) goto error;
+  if (ds_add_intprop(ds->name, W_FORWARD_CURSOR, ds->force_use_of_forward_only_cursors)) goto error;
+  if (ds_add_intprop(ds->name, W_AUTO_RECONNECT, ds->auto_reconnect)) goto error;
+  if (ds_add_intprop(ds->name, W_AUTO_IS_NULL, ds->auto_increment_null_search)) goto error;
+  if (ds_add_intprop(ds->name, W_ZERO_DATE_TO_MIN, ds->zero_date_to_min)) goto error;
+  if (ds_add_intprop(ds->name, W_MIN_DATE_TO_ZERO, ds->min_date_to_zero)) goto error;
+  if (ds_add_intprop(ds->name, W_MULTI_STATEMENTS, ds->allow_multiple_statements)) goto error;
+  if (ds_add_intprop(ds->name, W_COLUMN_SIZE_S32, ds->limit_column_size)) goto error;
+  if (ds_add_intprop(ds->name, W_NO_BINARY_RESULT, ds->handle_binary_as_char)) goto error;
+  if (ds_add_intprop(ds->name, W_DFLT_BIGINT_BIND_STR, ds->default_bigint_bind_str)) goto error;
 
   /* DS_PARAM */
 
@@ -1102,3 +1282,106 @@ int ds_setattr_from_utf8(SQLWCHAR **attr, SQLCHAR *val8)
   return 0;
 }
 
+
+/*
+ * Set DataSource member flags from deprecated options value.
+ */
+void ds_set_options(DataSource *ds, ulong options)
+{
+  ds->return_matching_rows=                 (options & FLAG_FOUND_ROWS) > 0;
+  ds->allow_big_results=                    (options & FLAG_BIG_PACKETS) > 0;
+  ds->dont_prompt_upon_connect=             (options & FLAG_NO_PROMPT) > 0;
+  ds->dynamic_cursor=                       (options & FLAG_DYNAMIC_CURSOR) > 0;
+  ds->ignore_N_in_name_table=               (options & FLAG_NO_SCHEMA) > 0;
+  ds->user_manager_cursor=                  (options & FLAG_NO_DEFAULT_CURSOR) > 0;
+  ds->dont_use_set_locale=                  (options & FLAG_NO_LOCALE) > 0;
+  ds->pad_char_to_full_length=              (options & FLAG_PAD_SPACE) > 0;
+  ds->return_table_names_for_SqlDescribeCol=(options & FLAG_FULL_COLUMN_NAMES) > 0;
+  ds->use_compressed_protocol=              (options & FLAG_COMPRESSED_PROTO) > 0;
+  ds->ignore_space_after_function_names=    (options & FLAG_IGNORE_SPACE) > 0;
+  ds->force_use_of_named_pipes=             (options & FLAG_NAMED_PIPE) > 0;
+  ds->change_bigint_columns_to_int=         (options & FLAG_NO_BIGINT) > 0;
+  ds->no_catalog=                           (options & FLAG_NO_CATALOG) > 0;
+  ds->read_options_from_mycnf=              (options & FLAG_USE_MYCNF) > 0;
+  ds->safe=                                 (options & FLAG_SAFE) > 0;
+  ds->disable_transactions=                 (options & FLAG_NO_TRANSACTIONS) > 0;
+  ds->save_queries=                         (options & FLAG_LOG_QUERY) > 0;
+  ds->dont_cache_result=                    (options & FLAG_NO_CACHE) > 0;
+  ds->force_use_of_forward_only_cursors=    (options & FLAG_FORWARD_CURSOR) > 0;
+  ds->auto_reconnect=                       (options & FLAG_AUTO_RECONNECT) > 0;
+  ds->auto_increment_null_search=           (options & FLAG_AUTO_IS_NULL) > 0;
+  ds->zero_date_to_min=                     (options & FLAG_ZERO_DATE_TO_MIN) > 0;
+  ds->min_date_to_zero=                     (options & FLAG_MIN_DATE_TO_ZERO) > 0;
+  ds->allow_multiple_statements=            (options & FLAG_MULTI_STATEMENTS) > 0;
+  ds->limit_column_size=                    (options & FLAG_COLUMN_SIZE_S32) > 0;
+  ds->handle_binary_as_char=                (options & FLAG_NO_BINARY_RESULT) > 0;
+  ds->default_bigint_bind_str=              (options & FLAG_DFLT_BIGINT_BIND_STR) > 0;
+}
+
+
+/*
+ * Get deprecated options value from DataSource member flags.
+ */
+ulong ds_get_options(DataSource *ds)
+{
+  ulong options= 0;
+
+  if (ds->return_matching_rows)
+    options|= FLAG_FOUND_ROWS;
+  if (ds->allow_big_results)
+    options|= FLAG_BIG_PACKETS;
+  if (ds->dont_prompt_upon_connect)
+    options|= FLAG_NO_PROMPT;
+  if (ds->dynamic_cursor)
+    options|= FLAG_DYNAMIC_CURSOR;
+  if (ds->ignore_N_in_name_table)
+    options|= FLAG_NO_SCHEMA;
+  if (ds->user_manager_cursor)
+    options|= FLAG_NO_DEFAULT_CURSOR;
+  if (ds->dont_use_set_locale)
+    options|= FLAG_NO_LOCALE;
+  if (ds->pad_char_to_full_length)
+    options|= FLAG_PAD_SPACE;
+  if (ds->return_table_names_for_SqlDescribeCol)
+    options|= FLAG_FULL_COLUMN_NAMES;
+  if (ds->use_compressed_protocol)
+    options|= FLAG_COMPRESSED_PROTO;
+  if (ds->ignore_space_after_function_names)
+    options|= FLAG_IGNORE_SPACE;
+  if (ds->force_use_of_named_pipes)
+    options|= FLAG_NAMED_PIPE;
+  if (ds->change_bigint_columns_to_int)
+    options|= FLAG_NO_BIGINT;
+  if (ds->no_catalog)
+    options|= FLAG_NO_CATALOG;
+  if (ds->read_options_from_mycnf)
+    options|= FLAG_USE_MYCNF;
+  if (ds->safe)
+    options|= FLAG_SAFE;
+  if (ds->disable_transactions)
+    options|= FLAG_NO_TRANSACTIONS;
+  if (ds->save_queries)
+    options|= FLAG_LOG_QUERY;
+  if (ds->dont_cache_result)
+    options|= FLAG_NO_CACHE;
+  if (ds->force_use_of_forward_only_cursors)
+    options|= FLAG_FORWARD_CURSOR;
+  if (ds->auto_reconnect)
+    options|= FLAG_AUTO_RECONNECT;
+  if (ds->auto_increment_null_search)
+    options|= FLAG_AUTO_IS_NULL;
+  if (ds->zero_date_to_min)
+    options|= FLAG_ZERO_DATE_TO_MIN;
+  if (ds->min_date_to_zero)
+    options|= FLAG_MIN_DATE_TO_ZERO;
+  if (ds->allow_multiple_statements)
+    options|= FLAG_MULTI_STATEMENTS;
+  if (ds->limit_column_size)
+    options|= FLAG_COLUMN_SIZE_S32;
+  if (ds->handle_binary_as_char)
+    options|= FLAG_NO_BINARY_RESULT;
+  if (ds->default_bigint_bind_str)
+    options|= FLAG_DFLT_BIGINT_BIND_STR;
+
+  return options;
+}

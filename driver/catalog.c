@@ -416,7 +416,7 @@ MySQLTables(SQLHSTMT hstmt,
 
       data= stmt->result_array;
 
-      if (!option_flag(stmt, FLAG_NO_CATALOG))
+      if (!stmt->dbc->ds->no_catalog)
       {
         if (!catalog && !reget_current_catalog(stmt->dbc))
           db= strmake_root(&stmt->result->field_alloc,
@@ -677,7 +677,7 @@ MySQLColumns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
   if (cbColumn == SQL_NTS)
     cbColumn= szColumn ? strlen((char *)szColumn) : 0;
 
-  if (!option_flag(stmt, FLAG_NO_CATALOG))
+  if (!stmt->dbc->ds->no_catalog)
     db= strmake_root(alloc, (char *)szCatalog, cbCatalog);
 
   while ((table_row= mysql_fetch_row(res)))
@@ -955,7 +955,7 @@ MySQLStatistics(SQLHSTMT hstmt,
       return handle_connection_error(stmt);
     }
 
-    if (option_flag(stmt, FLAG_NO_CATALOG))
+    if (stmt->dbc->ds->no_catalog)
       stmt->array[0]= "";
     else
       stmt->array[0]= strmake_root(&stmt->result->field_alloc,

@@ -39,19 +39,17 @@
 
 #define if_dynamic_cursor(st) ((st)->stmt_options.cursor_type == SQL_CURSOR_DYNAMIC)
 #define if_forward_cache(st) ((st)->stmt_options.cursor_type == SQL_CURSOR_FORWARD_ONLY && \
-			     (st)->dbc->flag & FLAG_NO_CACHE )
+			     (st)->dbc->ds->dont_cache_result)
 #define is_connected(dbc)    ((dbc)->mysql.net.vio)
 #define trans_supported(db) ((db)->mysql.server_capabilities & CLIENT_TRANSACTIONS)
 #define autocommit_on(db) ((db)->mysql.server_status & SERVER_STATUS_AUTOCOMMIT)
-#define true_dynamic(flag) (!(flag &FLAG_FORWARD_CURSOR ) && (flag & FLAG_DYNAMIC_CURSOR))
 #define reset_ptr(x) {if (x) x= 0;}
 #define digit(A) ((int) (A - '0'))
-#define option_flag(A,B) ((A)->dbc->flag & B)
 
-#define MYLOG_QUERY(A,B) {if ((A)->dbc->flag & FLAG_LOG_QUERY) \
+#define MYLOG_QUERY(A,B) {if ((A)->dbc->ds->save_queries) \
                query_print((A)->dbc->query_log,(char*) B);}
 
-#define MYLOG_DBC_QUERY(A,B) {if((A)->flag & FLAG_LOG_QUERY) \
+#define MYLOG_DBC_QUERY(A,B) {if((A)->ds->save_queries) \
                query_print((A)->query_log,(char*) B);}
 
 /* A few character sets we care about. */

@@ -237,8 +237,7 @@ SQLRETURN SQL_API my_SQLBindParameter( SQLHSTMT     StatementHandle,
         Access treats BIGINT as a string on linked tables.
         The value is read correctly, but bound as a string.
       */
-      if (ParameterType == SQL_BIGINT &&
-          (stmt->dbc->flag & FLAG_DFLT_BIGINT_BIND_STR))
+      if (ParameterType == SQL_BIGINT && stmt->dbc->ds->default_bigint_bind_str)
         ValueType= SQL_C_CHAR;
     }
     if (!SQL_SUCCEEDED(rc = stmt_SQLSetDescField(stmt, stmt->apd,
@@ -405,7 +404,7 @@ SQLRETURN SQL_API SQLDescribeParam( SQLHSTMT        hstmt,
     if (pfSqlType)
         *pfSqlType= SQL_VARCHAR;
     if (pcbColDef)
-        *pcbColDef= (stmt->dbc->flag & FLAG_BIG_PACKETS ? 24*1024*1024L : 255);
+        *pcbColDef= (stmt->dbc->ds->allow_big_results ? 24*1024*1024L : 255);
     if (pfNullable)
         *pfNullable= SQL_NULLABLE_UNKNOWN;
 

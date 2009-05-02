@@ -85,7 +85,7 @@ void fix_result_types(STMT *stmt)
   MYSQL_RES *result= stmt->result;
   DESCREC *irrec;
   MYSQL_FIELD *field;
-  int capint32= stmt->dbc->flag & FLAG_COLUMN_SIZE_S32 ? 1 : 0;
+  int capint32= stmt->dbc->ds->limit_column_size ? 1 : 0;
 
   stmt->state= ST_EXECUTED;  /* Mark set found */
 
@@ -938,7 +938,7 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 {
   my_bool field_is_binary= test(field->charsetnr == BINARY_CHARSET_NUMBER) &&
                            (test(field->org_table_length > 0) ||
-                            ((stmt->dbc->flag & FLAG_NO_BINARY_RESULT) == 0));
+                            !stmt->dbc->ds->handle_binary_as_char);
 
   switch (field->type) {
   case MYSQL_TYPE_BIT:
@@ -1001,7 +1001,7 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
         (void)strmov(buff, " unsigned");
     }
 
-    if (stmt->dbc->flag & FLAG_NO_BIGINT)
+    if (stmt->dbc->ds->change_bigint_columns_to_int)
       return SQL_INTEGER;
 
     return SQL_BIGINT;
@@ -1164,7 +1164,7 @@ void fill_column_size_buff(char *buff, STMT *stmt, MYSQL_FIELD *field)
 */
 SQLULEN get_column_size(STMT *stmt, MYSQL_FIELD *field)
 {
-  int capint32= stmt->dbc->flag & FLAG_COLUMN_SIZE_S32 ? 1 : 0;
+  int capint32= stmt->dbc->ds->limit_column_size ? 1 : 0;
   SQLULEN length= field->length;
   /* Work around a bug in some versions of the server. */
   if (field->max_length > field->length)
@@ -1307,7 +1307,7 @@ SQLLEN get_decimal_digits(STMT *stmt __attribute__((unused)),
 */
 SQLLEN get_transfer_octet_length(STMT *stmt, MYSQL_FIELD *field)
 {
-  int capint32= stmt->dbc->flag & FLAG_COLUMN_SIZE_S32 ? 1 : 0;
+  int capint32= stmt->dbc->ds->limit_column_size ? 1 : 0;
   SQLLEN length;
   /* cap at INT_MAX32 due to signed value */
   if (field->length > INT_MAX32)
@@ -1369,7 +1369,7 @@ SQLLEN get_transfer_octet_length(STMT *stmt, MYSQL_FIELD *field)
     return (field->length + 7) / 8;
 
   case MYSQL_TYPE_STRING:
-    if (stmt->dbc->flag & FLAG_PAD_SPACE)
+    if (stmt->dbc->ds->pad_char_to_full_length)
       length= field->max_length;
     /* FALLTHROUGH */
 
@@ -1405,7 +1405,7 @@ SQLLEN get_transfer_octet_length(STMT *stmt, MYSQL_FIELD *field)
 */
 SQLLEN get_display_size(STMT *stmt __attribute__((unused)),MYSQL_FIELD *field)
 {
-  int capint32= stmt->dbc->flag & FLAG_COLUMN_SIZE_S32 ? 1 : 0;
+  int capint32= stmt->dbc->ds->limit_column_size ? 1 : 0;
   CHARSET_INFO *charset= get_charset(field->charsetnr, MYF(0));
   unsigned int mbmaxlen= charset ? charset->mbmaxlen : 1;
 

@@ -573,19 +573,24 @@ MySQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle, SQLSMALLINT record,
     return SQL_SUCCESS;
 
   case SQL_DIAG_CONNECTION_NAME:
+  {
+    DataSource *ds;
     if (record <= 0)
       return SQL_ERROR;
 
     if (handle_type == SQL_HANDLE_DESC)
-      *char_value= (SQLCHAR *)(desc->stmt->dbc->dsn ?
-                               desc->stmt->dbc->dsn : "");
+      ds= desc->stmt->dbc->ds;
     else if (handle_type == SQL_HANDLE_STMT)
-      *char_value= (SQLCHAR *)(stmt->dbc->dsn ? stmt->dbc->dsn : "");
+      ds= stmt->dbc->ds;
     else if (handle_type == SQL_HANDLE_DBC)
-      *char_value= (SQLCHAR *)(dbc->dsn ? dbc->dsn : "");
+      ds= dbc->ds;
     else
       *char_value= (SQLCHAR *)"";
+    
+    if (ds)
+      *char_value= (SQLCHAR *)ds->name8;
     return SQL_SUCCESS;
+  }
 
   case SQL_DIAG_MESSAGE_TEXT:
     if (record <= 0)
@@ -606,18 +611,24 @@ MySQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle, SQLSMALLINT record,
     return SQL_SUCCESS;
 
   case SQL_DIAG_SERVER_NAME:
+  {
+    DataSource *ds;
     if (record <= 0)
       return SQL_ERROR;
     if (handle_type == SQL_HANDLE_DESC)
-      *char_value= (SQLCHAR *)(desc->stmt->dbc->server ?
-                               desc->stmt->dbc->server : "");
+      ds= desc->stmt->dbc->ds;
     else if (handle_type == SQL_HANDLE_STMT)
-      *char_value= (SQLCHAR *)(stmt->dbc->server ? stmt->dbc->server : "");
+      ds= stmt->dbc->ds;
     else if (handle_type == SQL_HANDLE_DBC)
-      *char_value= (SQLCHAR *)(dbc->server ? dbc->server : "");
+      ds= dbc->ds;
     else
       *char_value= (SQLCHAR *)"";
+
+    if (ds)
+      *char_value= (SQLCHAR *)ds->server8;
+    
     return SQL_SUCCESS;
+  }
 
   case SQL_DIAG_SQLSTATE:
     if (record <= 0)

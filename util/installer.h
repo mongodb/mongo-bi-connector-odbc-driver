@@ -74,7 +74,6 @@ typedef struct {
   SQLWCHAR *database;
   SQLWCHAR *socket;
   SQLWCHAR *initstmt;
-  SQLWCHAR *option;
   SQLWCHAR *charset;
   SQLWCHAR *sslkey;
   SQLWCHAR *sslcert;
@@ -95,7 +94,6 @@ typedef struct {
   SQLCHAR *database8;
   SQLCHAR *socket8;
   SQLCHAR *initstmt8;
-  SQLCHAR *option8;
   SQLCHAR *charset8;
   SQLCHAR *sslkey8;
   SQLCHAR *sslcert8;
@@ -104,25 +102,24 @@ typedef struct {
   SQLCHAR *sslcipher8;
 
   /* flags 1 */
-  BOOL dont_optimize_column_width;
   BOOL return_matching_rows;
   BOOL allow_big_results;
   BOOL use_compressed_protocol;
   BOOL change_bigint_columns_to_int;
   BOOL safe;
-  BOOL enable_auto_reconnect;
-  BOOL enable_auto_increment_null_search;
+  BOOL auto_reconnect;
+  BOOL auto_increment_null_search;
   BOOL handle_binary_as_char;
   /* flags 2 */
   BOOL dont_prompt_upon_connect;
-  BOOL enable_dynamic_cursor;
+  BOOL dynamic_cursor;
   BOOL ignore_N_in_name_table;
   BOOL user_manager_cursor;
   BOOL dont_use_set_locale;
   BOOL pad_char_to_full_length;
   BOOL dont_cache_result;
   /* flags 3 */
-  BOOL return_table_names_for_SqlDesribeCol;
+  BOOL return_table_names_for_SqlDescribeCol;
   BOOL ignore_space_after_function_names;
   BOOL force_use_of_named_pipes;
   BOOL no_catalog;
@@ -131,6 +128,10 @@ typedef struct {
   BOOL force_use_of_forward_only_cursors;
   BOOL allow_multiple_statements;
   BOOL limit_column_size;
+
+  BOOL min_date_to_zero;
+  BOOL zero_date_to_min;
+  BOOL default_bigint_bind_str;
   /* debug */
   BOOL save_queries;
   /* SSL */
@@ -150,10 +151,52 @@ int ds_add(DataSource *ds);
 int ds_exists(SQLWCHAR *name);
 char *ds_get_utf8attr(SQLWCHAR *attrw, SQLCHAR **attr8);
 int ds_setattr_from_utf8(SQLWCHAR **attr, SQLCHAR *val8);
+void ds_set_options(DataSource *ds, ulong options);
+ulong ds_get_options(DataSource *ds);
 
 extern const SQLWCHAR W_DRIVER_PARAM[];
 extern const SQLWCHAR W_DRIVER_NAME[];
 extern const SQLWCHAR W_INVALID_ATTR_STR[];
+
+/*
+ * Deprecated connection parameters
+ */
+#define FLAG_FOUND_ROWS		2   /* Access can't handle affected_rows */
+#define FLAG_BIG_PACKETS	8   /* Allow BIG packets. */
+#define FLAG_NO_PROMPT		16  /* Don't prompt on connection */
+#define FLAG_DYNAMIC_CURSOR	32  /* Enables the dynamic cursor */
+#define FLAG_NO_SCHEMA		64  /* Ignore the schema defination */
+#define FLAG_NO_DEFAULT_CURSOR	128 /* No default cursor */
+#define FLAG_NO_LOCALE		256  /* No locale specification */
+#define FLAG_PAD_SPACE		512  /* Pad CHAR:s with space to max length */
+#define FLAG_FULL_COLUMN_NAMES	1024 /* Extends SQLDescribeCol */
+#define FLAG_COMPRESSED_PROTO	2048 /* Use compressed protocol */
+#define FLAG_IGNORE_SPACE	4096 /* Ignore spaces after function names */
+#define FLAG_NAMED_PIPE		8192 /* Force use of named pipes */
+#define FLAG_NO_BIGINT		16384	/* Change BIGINT to INT */
+#define FLAG_NO_CATALOG		32768	/* No catalog support */
+#define FLAG_USE_MYCNF		65536L	/* Read my.cnf at start */
+#define FLAG_SAFE		131072L /* Try to be as safe as possible */
+#define FLAG_NO_TRANSACTIONS  (FLAG_SAFE << 1) /* Disable transactions */
+#define FLAG_LOG_QUERY	      (FLAG_SAFE << 2) /* Query logging, debug */
+#define FLAG_NO_CACHE	      (FLAG_SAFE << 3) /* Don't cache the resultset */
+ /* Force use of forward-only cursors */
+#define FLAG_FORWARD_CURSOR   (FLAG_SAFE << 4)
+ /* Force auto-reconnect */
+#define FLAG_AUTO_RECONNECT   (FLAG_SAFE << 5)
+#define FLAG_AUTO_IS_NULL     (FLAG_SAFE << 6) /* 8388608 Enables SQL_AUTO_IS_NULL */
+#define FLAG_ZERO_DATE_TO_MIN (1 << 24) /* Convert XXXX-00-00 date to ODBC min date on results */
+#define FLAG_MIN_DATE_TO_ZERO (1 << 25) /* Convert ODBC min date to 0000-00-00 on query */
+#define FLAG_MULTI_STATEMENTS (1 << 26) /* Allow multiple statements in a query */
+#define FLAG_COLUMN_SIZE_S32 (1 << 27) /* Limit column size to a signed 32-bit value (automatically set for ADO) */
+#define FLAG_NO_BINARY_RESULT (1 << 28) /* Disables charset 63 for columns with empty org_table */
+
+/*
+  When binding SQL_BIGINT as SQL_C_DEFAULT, treat it as a string
+  (automatically set for MS Access) see bug#24535
+*/
+#define FLAG_DFLT_BIGINT_BIND_STR (1 << 29)
+
 
 #ifdef __cplusplus
 }
