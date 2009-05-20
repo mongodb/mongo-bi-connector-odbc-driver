@@ -1039,6 +1039,7 @@ int ds_add(DataSource *ds)
   if (ds_add_strprop(ds->name, W_SSLCAPATH  , ds->sslcapath  )) goto error;
   if (ds_add_strprop(ds->name, W_SSLCIPHER  , ds->sslcipher  )) goto error;
 
+  if (ds_add_intprop(ds->name, W_SSLVERIFY  , ds->sslverify  )) goto error;
   if (ds_add_intprop(ds->name, W_PORT       , ds->port       )) goto error;
   if (ds_add_intprop(ds->name, W_READTIMEOUT, ds->readtimeout)) goto error;
   if (ds_add_intprop(ds->name, W_WRITETIMEOUT, ds->writetimeout)) goto error;

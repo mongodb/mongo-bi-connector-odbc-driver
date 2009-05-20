@@ -484,21 +484,24 @@ static void ResetTabPageMessageLoop (HWND hwnd)
 
 BOOL OnSelChanged(void)
 {
-  /*
-   A tab has been pressed (TCN_SELCHANGE) Using GWL_USERDATA of the tab
-   control to keep the current visible child of the tab control
-  */
-  HWND hVisible= (HWND)GetWindowLongPtr(This->hTab, GWLP_USERDATA);
-  int iSel= TabCtrl_GetCurSel(This->hTab);
+  if (This->hTabPages)
+  {
+    /*
+     A tab has been pressed (TCN_SELCHANGE) Using GWL_USERDATA of the tab
+     control to keep the current visible child of the tab control
+    */
+    HWND hVisible= (HWND)GetWindowLongPtr(This->hTab, GWLP_USERDATA);
+    int iSel= TabCtrl_GetCurSel(This->hTab);
 
-  // Hide the current child dialog box, if any.
-  ShowWindow(hVisible, FALSE);
+    // Hide the current child dialog box, if any.
+    ShowWindow(hVisible, FALSE);
 
-  // Show the new child dialog box.
-  ShowWindow(This->hTabPages[iSel], TRUE);
+    // Show the new child dialog box.
+    ShowWindow(This->hTabPages[iSel], TRUE);
 
-  // Save the current child
-  SetWindowLongPtr(This->hTab, GWLP_USERDATA, (LONG_PTR)This->hTabPages[iSel]);
+    // Save the current child
+    SetWindowLongPtr(This->hTab, GWLP_USERDATA, (LONG_PTR)This->hTabPages[iSel]);
+  }
 
   return TRUE;
 }
