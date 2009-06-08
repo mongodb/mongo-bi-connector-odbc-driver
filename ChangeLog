@@ -6,6 +6,8 @@
   * Remove use of "old" SQLLEN/SQLULEN types aliases. They are not
     supported in unixODBC 2.2.13 and later 64-bit builds. Removed
     SQLROWCOUNT, SQLROWSETSIZE, SQLTRANSID, SQLROWOFFSET.
+  * Connection parameters can be specified individually instead of
+    using OPTIONS bitflags. (See connection parameters documentation)
 
   Bugs fixed:
   * Add support for data-at-execution with positioned insert/update
