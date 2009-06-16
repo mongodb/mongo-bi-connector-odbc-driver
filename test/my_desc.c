@@ -343,7 +343,7 @@ DECLARE_TEST(t_explicit_error)
   */
   if (using_unixodbc_version(henv, "2.2.11"))
   {
-    printMessage("free explicit descriptor test skipped under unixODBC 2.2.11");
+    printMessage("free implicit descriptor test skipped under unixODBC 2.2.11");
   }
   else
   {
