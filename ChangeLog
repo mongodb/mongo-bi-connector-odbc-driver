@@ -38,6 +38,9 @@
   * Fix positioned update using data-at-execution, bind offsets and
     row-wise binding. (Bug #36071)
   * SQLConfigDataSource may fail with: Cannot find driver (Bug #41796)
+  * FLAG_NO_BIGINT still returns bigint for SQLDescribeCol()
+    (Bug #17679)
+
 
   Includes changes from Connector/ODBC 3.51.27.
 
