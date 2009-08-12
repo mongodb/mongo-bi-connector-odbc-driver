@@ -996,7 +996,7 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
   case MYSQL_TYPE_LONGLONG:
     if (buff)
     {
-      if (stmt->dbc->flag & FLAG_NO_BIGINT)
+      if (stmt->dbc->ds->change_bigint_columns_to_int)
         buff= strmov(buff, "int");
       else
         buff= strmov(buff, "bigint");
@@ -1196,7 +1196,7 @@ SQLULEN get_column_size(STMT *stmt, MYSQL_FIELD *field)
     return 0;
 
   case MYSQL_TYPE_LONGLONG:
-    if (stmt->dbc->flag & FLAG_NO_BIGINT)
+    if (stmt->dbc->ds->change_bigint_columns_to_int)
       return 10; /* same as MYSQL_TYPE_LONG */
     else
       return (field->flags & UNSIGNED_FLAG) ? 20 : 19;
