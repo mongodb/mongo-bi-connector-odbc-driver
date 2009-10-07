@@ -29,6 +29,7 @@
 
 #define DEBUG_TAB   4
 #define SSL_TAB     5
+#define MISC_TAB    6
 
 #include <windows.h>
 #include <windowsx.h>
@@ -189,6 +190,9 @@ bool getBoolFieldData(unsigned int framenum, int idc)
 #define SET_STRING(name) \
     Edit_SetText(GetDlgItem(hwnd,IDC_EDIT_##name), params.name)
 
+#define SET_CSTRING(name) \
+    ComboBox_SetText(GetDlgItem(hwnd,IDC_EDIT_##name), params.name)
+
 #define GET_UNSIGNED(name)  getUnsignedFieldData(hwnd,params.name,IDC_EDIT_##name)
 #define SET_UNSIGNED(name)  setUnsignedFieldData(hwnd,params.name,IDC_EDIT_##name)
 
@@ -257,6 +261,9 @@ void syncTabsData(HWND hwnd, DataSource &params)
     getStrFieldData(&params.sslcapath   , SSL_TAB, IDC_EDIT_sslcapath);
     getStrFieldData(&params.sslcipher   , SSL_TAB, IDC_EDIT_sslcipher);
     GET_BOOL(SSL_TAB,sslverify);
+
+    getStrFieldData(&params.charset     , MISC_TAB, IDC_EDIT_charset);
+    getStrFieldData(&params.initstmt    , MISC_TAB, IDC_EDIT_initstmt);
 }
 
 void syncTabs(HWND hwnd, DataSource &params)
@@ -303,6 +310,14 @@ void syncTabs(HWND hwnd, DataSource &params)
         SET_BOOL(SSL_TAB, sslverify);
     }
 
+    if ( TabCtrl_1.hTabPages[MISC_TAB-1])
+    {
+        HWND tabHwndMisc = TabCtrl_1.hTabPages[MISC_TAB-1];
+        HWND charsetCtrl = GetDlgItem(tabHwndMisc,IDC_EDIT_charset);
+        ComboBox_SetText(charsetCtrl, params.charset);
+        Edit_SetText( GetDlgItem( tabHwndMisc, IDC_EDIT_initstmt), params.initstmt);
+    }
+
 }
 
 void FillParameters(HWND hwnd, DataSource & params)
@@ -345,12 +360,13 @@ void btnDetails_Click (HWND hwnd)
 
 	if(!flag && mod==1)
 	{
-		static PWSTR tabnames[]= {L"Flags 1", L"Flags 2", L"Flags 3", L"Debug", L"SSL Settings", 0};
+		static PWSTR tabnames[]= {L"Flags 1", L"Flags 2", L"Flags 3", L"Debug", L"SSL Settings", L"Misc Options", 0};
 		static PWSTR dlgnames[]= {MAKEINTRESOURCE(IDD_TAB1),
 							  	  MAKEINTRESOURCE(IDD_TAB2),
 							  	  MAKEINTRESOURCE(IDD_TAB3),
 							  	  MAKEINTRESOURCE(IDD_TAB4),
-								  MAKEINTRESOURCE(IDD_TAB5),0};
+								    MAKEINTRESOURCE(IDD_TAB5),
+                    MAKEINTRESOURCE(IDD_TAB6),0};
 
 		New_TabControl( &TabCtrl_1, // address of TabControl struct
 					GetDlgItem(hwnd, IDC_TAB1), // handle to tab control
@@ -527,6 +543,37 @@ void processDbCombobox(HWND hwnd, HWND hwndCtl, UINT codeNotify)
 }
 
 
+/**
+Processing commands for charset combobox (hwndCtl).
+*/
+void processCharsetCombobox(HWND hwnd, HWND hwndCtl, UINT codeNotify)
+{
+  switch(codeNotify)
+  {
+    /* Loading list and adjust its height if button clicked and on user input */
+    case(CBN_DROPDOWN):
+    {
+      //FillParameters(hwnd, *pParams);
+      LIST *csl= mygetcharsets(hwnd, pParams);
+      LIST *cstmp= csl;
+
+      ComboBox_ResetContent(hwndCtl);
+
+      adjustDropdownHeight(hwndCtl,list_length(csl));
+
+      for (; cstmp; cstmp= list_rest(cstmp))
+      ComboBox_AddString(hwndCtl, (SQLWCHAR *)cstmp->data);
+
+      list_free(csl, 1);
+
+      ComboBox_SetText(hwndCtl,pParams->charset);
+
+      break;
+    }
+  }
+}
+
+
 void FormMain_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
   switch (id)
@@ -563,6 +610,10 @@ void FormMain_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 
     case IDC_EDIT_dbname:
       processDbCombobox(hwnd, hwndCtl, codeNotify);
+    break;
+
+    case IDC_EDIT_charset:
+      processCharsetCombobox(hwnd, hwndCtl, codeNotify);
 	}
 
 	return;

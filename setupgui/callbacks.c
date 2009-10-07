@@ -81,13 +81,16 @@ LIST *mygetdatabases(HWND hwnd, DataSource* params)
   SQLWCHAR    szCatalog[MYODBC_DB_NAME_MAX];
   SQLLEN      nCatalog;
   LIST        *dbs= NULL;
-  SQLWCHAR    *preserve= params->database;
+  SQLWCHAR    *preservedDatabase= params->database;
+  BOOL        preservedNoCatalog= params->no_catalog;
 
   params->database= NULL;
+  params->no_catalog= FALSE;
 
   nReturn= Connect(&hDbc, &hEnv, params);
 
-  params->database= preserve;
+  params->database= preservedDatabase;
+  params->no_catalog= preservedNoCatalog;
 
   if (nReturn != SQL_SUCCESS)
     ShowDiagnostics(nReturn, SQL_HANDLE_DBC, hDbc);
@@ -139,4 +142,75 @@ LIST *mygetdatabases(HWND hwnd, DataSource* params)
   Disconnect(hDbc, hEnv);
 
   return list_reverse(dbs);
+}
+
+
+LIST *mygetcharsets(HWND hwnd, DataSource* params)
+{
+  SQLHENV     hEnv= SQL_NULL_HENV;
+  SQLHDBC     hDbc= hDBC;
+  SQLHSTMT    hStmt;
+  SQLRETURN   nReturn;
+  SQLWCHAR    szCharset[MYODBC_DB_NAME_MAX];
+  SQLLEN      nCharset;
+  LIST        *csl= NULL;
+  SQLWCHAR    *preservedDatabase= params->database;
+  BOOL        preservedNoCatalog= params->no_catalog;
+
+  params->database= NULL;
+  params->no_catalog= FALSE;
+
+  nReturn= Connect(&hDbc, &hEnv, params);
+
+  params->database= preservedDatabase;
+  params->no_catalog= preservedNoCatalog;
+
+  if (nReturn != SQL_SUCCESS)
+    ShowDiagnostics(nReturn, SQL_HANDLE_DBC, hDbc);
+  if (!SQL_SUCCEEDED(nReturn))
+  {
+    Disconnect(hDbc,hEnv);
+    return NULL;
+  }
+
+  nReturn= SQLAllocHandle(SQL_HANDLE_STMT, hDbc, &hStmt);
+  if (nReturn != SQL_SUCCESS)
+    ShowDiagnostics(nReturn, SQL_HANDLE_DBC, hDbc);
+  if (!SQL_SUCCEEDED(nReturn))
+  {
+    Disconnect(hDbc,hEnv);
+    return NULL;
+  }
+
+
+  nReturn = SQLExecDirectW( hStmt, L"SHOW CHARACTER SET", SQL_NTS);
+  if (nReturn != SQL_SUCCESS)
+    ShowDiagnostics(nReturn, SQL_HANDLE_STMT, hStmt);
+  if (!SQL_SUCCEEDED(nReturn))
+  {
+    SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+    Disconnect(hDbc, hEnv);
+    return NULL;
+  }
+
+  nReturn= SQLBindCol(hStmt, 1, SQL_C_WCHAR, szCharset, MYODBC_DB_NAME_MAX,
+                      &nCharset);
+  while (TRUE)
+  {
+    nReturn= SQLFetch(hStmt);
+
+    if (nReturn == SQL_NO_DATA)
+      break;
+    else if (nReturn != SQL_SUCCESS)
+      ShowDiagnostics(nReturn, SQL_HANDLE_STMT, hStmt);
+    if (SQL_SUCCEEDED(nReturn))
+      csl= list_cons(sqlwchardup(szCharset, SQL_NTS), csl);
+    else
+      break;
+  }
+
+  SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+  Disconnect(hDbc, hEnv);
+
+  return list_reverse(csl);
 }

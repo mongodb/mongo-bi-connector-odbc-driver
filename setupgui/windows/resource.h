@@ -22,6 +22,7 @@
 #define IDD_TAB3                        133
 #define IDD_TAB4                        134
 #define IDD_TAB5                        136
+#define IDD_TAB6                        137
 #define IDC_LOGO                        1000
 #define IDC_EDIT_DRVNAME                1004
 #define IDC_EDIT_DRVDESC                1005
@@ -52,6 +53,8 @@
 #define IDC_EDIT_pwd                    10005
 #define IDC_EDIT_dbname                 10006
 #define IDC_EDIT_database               10006
+#define IDC_EDIT_charset                10038
+#define IDC_EDIT_initstmt               10039
 #define IDC_CHECK_dont_optimize_column_width 10007
 #define IDC_CHECK_return_matching_rows  10008
 #define IDC_CHECK_allow_big_results     10009

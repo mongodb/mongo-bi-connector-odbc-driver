@@ -152,6 +152,16 @@ BEGIN
 END
 
 
+IDD_TAB6 DIALOGEX 0, 0, 209, 151
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    RTEXT           "Character Set:",IDC_STATIC,12,14,67,8
+    RTEXT           "Initial Statement:",IDC_STATIC,12,32,67,8
+    COMBOBOX        IDC_EDIT_charset,90,12,97,8,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_EDIT_initstmt,90,32,97,12,ES_AUTOHSCROLL
+END
+
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
 //

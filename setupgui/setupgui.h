@@ -50,6 +50,7 @@ void Disconnect(SQLHDBC hDbc, SQLHENV hEnv);
 wchar_t *mytest(HWND hwnd, DataSource *params);
 BOOL mytestaccept(HWND hwnd, DataSource *params);
 LIST *mygetdatabases(HWND hwnd, DataSource *params);
+LIST *mygetcharsets(HWND hwnd, DataSource *params);
 
 /**
   This is the function implemented by the platform-specific code.
