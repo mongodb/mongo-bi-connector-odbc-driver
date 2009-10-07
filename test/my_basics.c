@@ -959,8 +959,8 @@ DECLARE_TEST(t_bug41256)
   SQLHANDLE apd;
   SQLINTEGER val= 40;
   SQLLEN vallen= 19283;
-  SQLINTEGER ind= SQL_NULL_DATA;
-  SQLINTEGER reslen= 40;
+  SQLLEN ind= SQL_NULL_DATA;
+  SQLLEN reslen= 40;
   ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_APP_PARAM_DESC,
                                 &apd, SQL_IS_POINTER, NULL));
   ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_INTEGER,

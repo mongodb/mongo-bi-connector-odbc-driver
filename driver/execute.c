@@ -247,7 +247,7 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
     DBC *dbc= stmt->dbc;
     NET *net= &dbc->mysql.net;
     SQLLEN *octet_length_ptr= NULL;
-    SQLINTEGER *indicator_ptr= NULL;
+    SQLLEN *indicator_ptr= NULL;
     char *to= *toptr;
 
     if (aprec->octet_length_ptr)

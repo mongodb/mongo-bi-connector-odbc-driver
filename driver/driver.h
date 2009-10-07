@@ -235,7 +235,7 @@ typedef struct {
   SQLINTEGER  datetime_interval_precision;
   SQLLEN      display_size; /* row only */
   SQLSMALLINT fixed_prec_scale;
-  SQLINTEGER *indicator_ptr;
+  SQLLEN  *   indicator_ptr;
   SQLCHAR *   label; /* row only */
   SQLULEN     length;
   SQLCHAR *   literal_prefix; /* row only */

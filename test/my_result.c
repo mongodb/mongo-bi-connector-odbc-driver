@@ -2374,7 +2374,7 @@ DECLARE_TEST(t_bug24131)
   SQLLEN boundLen= 0;
   SQLULEN count;
   UWORD status;
-  SQLUINTEGER colSize;
+  SQLULEN colSize;
   SQLRETURN rc;
 
   ok_sql(hstmt, "drop table if exists bug24131");
