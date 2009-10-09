@@ -858,20 +858,26 @@ SQLSetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute,
   SQLRETURN rc;
   DBC *dbc= (DBC *)hdbc;
   my_bool free_value= FALSE;
+  /* Let's make it for windows only so far */
+#ifdef _WIN32
+  SQLINTEGER len= value_len == SQL_NTS ? SQL_NTS : value_len / sizeof(SQLWCHAR);
+#else
+  SQLINTEGER len= value_len == SQL_NTS ? SQL_NTS : value_len;
+#endif
 
   if (attribute == SQL_ATTR_CURRENT_CATALOG)
   {
     uint errors= 0;
     if (is_connected(dbc))
       value= sqlwchar_as_sqlchar(dbc->cxn_charset_info,
-                                 value, &value_len, &errors);
+                                 value, &len, &errors);
     else
       value= sqlwchar_as_sqlchar(default_charset_info,
-                                 value, &value_len, &errors);
+                                 value, &len, &errors);
     free_value= TRUE;
   }
 
-  rc= MySQLSetConnectAttr(hdbc, attribute, value, value_len);
+  rc= MySQLSetConnectAttr(hdbc, attribute, value, len);
 
   if (free_value)
     x_free(value);

@@ -585,7 +585,7 @@ DECLARE_TEST(t_driverconnect_outstring)
   HDBC hdbc1;
   SQLCHAR conn[256], conn_out[256], exp_out[256];
   SQLSMALLINT conn_out_len, exp_conn_out_len;
-  SQLSMALLINT buflen;
+
   sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;CHARSET=utf8",
           mydsn, myuid, mypwd);
   if (mysock != NULL)
@@ -978,6 +978,16 @@ DECLARE_TEST(t_bug41256)
 }
 
 
+DECLARE_TEST(t_bug44971)
+{
+/*  ok_sql(hstmt, "drop database if exists bug44971");
+  ok_sql(hstmt, "create database bug44971");
+  ok_con(hdbc, SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, "bug44971xxx", 8));
+  ok_sql(hstmt, "drop database if exists bug44971");*/
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -1003,6 +1013,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug28820)
   ADD_TEST(t_bug31959)
   ADD_TEST(t_bug41256)
+  ADD_TEST(t_bug44971)
 END_TESTS
 
 
