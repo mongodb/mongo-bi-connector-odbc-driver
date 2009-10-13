@@ -42,6 +42,8 @@
   * SQLConfigDataSource may fail with: Cannot find driver (Bug #41796)
   * FLAG_NO_BIGINT still returns bigint for SQLDescribeCol()
     (Bug #17679)
+  * Random access violation exceptions (0xC0000005) in ASP scripts in the
+    SQLSetConnectAttrW. (Bug #44971)
 
 
   Includes changes from Connector/ODBC 3.51.27.
