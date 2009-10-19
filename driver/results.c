@@ -193,7 +193,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
     case SQL_C_BIT:
       if (rgbValue)
       {
-        if (value[0] == 1 || !atoi(value))
+        if (value[0] && value[0] != '0')
           *((char *)rgbValue)= 1;
         else
           *((char *)rgbValue)= 0;

@@ -2452,6 +2452,47 @@ DECLARE_TEST(t_bug41942)
 }
 
 
+/*
+  Bug 39644 - Binding SQL_C_BIT to an integer column is not working
+ */
+DECLARE_TEST(t_bug39644)
+{
+  char col1 = 0x3f;
+  char col2 = 0xff;
+  char col3 = 0x0;
+  char col4 = 0x1;
+
+  ok_sql(hstmt, "drop table if exists t_bug39644");
+  ok_sql(hstmt, "create table t_bug39644(col1 INT, col2 INT,"\
+	            "col3 BIT, col4 BIT)");
+
+  ok_sql(hstmt, "insert into t_bug39644 VALUES (5, 0, 1, 0)");
+
+  /* Do SELECT */
+  ok_sql(hstmt, "SELECT * from t_bug39644");
+
+  /* Now bind buffers */
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_BIT, &col1, sizeof(char), 0));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_BIT, &col2, sizeof(char), 0));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 3, SQL_C_BIT, &col3, sizeof(char), 0));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 4, SQL_C_BIT, &col4, sizeof(char), 0));
+
+  /* Fetch and check results */
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is( col1 == 1 );
+  is( col2 == 0 );
+  is( col3 == 1 );
+  is( col4 == 0 );
+
+  /* Clean-up */
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table t_bug39644");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -2490,6 +2531,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug24131)
   ADD_TEST(t_bug36069)
   ADD_TEST(t_bug41942)
+  ADD_TEST(t_bug39644)
 END_TESTS
 
 
