@@ -9,6 +9,7 @@
   * Connection parameters can be specified individually instead of
     using OPTIONS bitflags. (See connection parameters documentation)
   * Edit controls for INITSTMT and CHARSET DSN options are added to the native
+    Windows GUI. (Bug #40932)
   * Length/Indicator pointer is now stored and used internally as pointer to
     SQLLEN and not to SQLINTEGER. Using SQLINTEGER pointers as
     StrLen_or_IndPtr parameter of SQLBindParameter/SQLBindCol may cause crash
