@@ -14,6 +14,7 @@
     SQLLEN and not to SQLINTEGER. Using SQLINTEGER pointers as
     StrLen_or_IndPtr parameter of SQLBindParameter/SQLBindCol may cause crash
     on 64bit platforms.
+  * Query log is not overwritten, but appended instead. (Bug #44965)
 
   Bugs fixed:
   * Add support for data-at-execution with positioned insert/update
