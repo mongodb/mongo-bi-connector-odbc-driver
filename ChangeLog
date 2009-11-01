@@ -49,6 +49,8 @@
   * Random access violation exceptions (0xC0000005) in ASP scripts in the
     SQLSetConnectAttrW. (Bug #44971)
   * Binding SQL_C_BIT to an integer column didn't work. (Bug #39644)
+  * Inserting a new record using SQLSetPos if the table is from different than
+    current catalog. (Bug #41946)
 
 
   Includes changes from Connector/ODBC 3.51.27.

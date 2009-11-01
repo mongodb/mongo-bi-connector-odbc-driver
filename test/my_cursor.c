@@ -3284,6 +3284,55 @@ DECLARE_TEST(t_bug39961)
 }
 
 
+/*
+Bug #41946: Inserting a row using SQLSetPos does not correspond to
+DB name in SELECT
+*/
+DECLARE_TEST(t_bug41946)
+{
+	SQLRETURN rc;
+
+	SQLINTEGER nData= 500;
+	SQLCHAR szData[255]={0};
+
+	ok_sql(hstmt, "DROP DATABASE IF EXISTS other_test_db");
+	ok_sql(hstmt, "CREATE DATABASE other_test_db");
+
+	ok_sql(hstmt, "CREATE TABLE other_test_db.t_41946(Id int NOT NULL,\
+				  Name varchar(32),\
+				  PRIMARY KEY  (Id))");
+
+	ok_sql(hstmt, "select * from other_test_db.t_41946");
+
+	ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &nData, 5, NULL));
+
+	ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szData, 11, NULL));
+
+	expect_stmt(hstmt, SQLFetchScroll(hstmt,SQL_FETCH_NEXT,1), SQL_NO_DATA);
+
+	nData= 33;
+	strcpy((char *)szData , "insert-new");
+
+	ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_ADD, SQL_LOCK_NO_CHANGE));
+
+	nData= 0;
+	strcpy((char *)szData , "something else");
+
+	ok_sql(hstmt, "select * from other_test_db.t_41946");
+
+	ok_stmt(hstmt, SQLFetch(hstmt));
+
+	is_num(nData, 33);
+	is_str(szData, "insert-new", 11);
+
+	ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+	ok_sql(hstmt, "DROP DATABASE IF EXISTS other_test_db");
+
+	return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_positioned_cursor)
   ADD_TEST(my_setpos_cursor)
@@ -3332,6 +3381,7 @@ BEGIN_TESTS
   ADD_TEST(t_dae_setpos_insert)
   ADD_TEST(t_dae_setpos_update)
   ADD_TEST(t_bug39961)
+  ADD_TEST(t_bug41946)
 END_TESTS
 
 

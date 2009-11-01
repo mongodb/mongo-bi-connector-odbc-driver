@@ -1420,6 +1420,13 @@ SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
                     return set_stmt_error(stmt, "S1001", "Not enough memory",
                                           4001);
 
+				/* Append the table's DB name if exists */
+				if(result->fields && result->fields[0].db_length)
+				{
+					dynstr_append_quoted_name(&dynQuery, result->fields[0].db);
+					dynstr_append_mem(&dynQuery,".",1);
+				}
+
                 dynstr_append_quoted_name(&dynQuery,table_name);
                 dynstr_append_mem(&dynQuery,"(",1);
 
