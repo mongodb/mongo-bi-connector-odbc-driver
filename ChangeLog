@@ -15,6 +15,7 @@
     StrLen_or_IndPtr parameter of SQLBindParameter/SQLBindCol may cause crash
     on 64bit platforms.
   * Query log is not overwritten, but appended instead. (Bug #44965)
+  * Fixed tab order in Windows datasource config dialog. (Bug #42905)
 
   Bugs fixed:
   * Add support for data-at-execution with positioned insert/update
