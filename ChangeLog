@@ -1,6 +1,6 @@
 5.1.7
 
-5.1.6
+5.1.6 (09-Nov-2009)
 
   Functionality added or changed:
   * Providing an empty string as the catalog argument to SQLTables()
