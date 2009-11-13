@@ -57,7 +57,7 @@ The following, key, files are provided by Connector/ODBC (the MS
 Windows names are included for reference but the file names for 
 other platforms would be similar).
 
-Driver (myodbc3.dll or myodbc5.dll)
+Driver (myodbc5.dll or myodbc3.dll)
 
         The most important part of Connector/ODBC is the driver.
         Application developers can link directly to the driver but 
@@ -67,14 +67,14 @@ Driver (myodbc3.dll or myodbc5.dll)
         Many options can be provided to the driver to adjust its
         behaviour. 
 
-Setup Library (myodbc3S.dll or myodbc3S.dll)
+Setup Library (myodbc5S.dll or myodbc3S.dll)
 
         The setup library provides a graphical user interface needed
         during certian activities provided by the driver. For example;
         it provides the GUI when you use the ODBC Administrator to
         create/edit a Data Source Name (DSN).
 
-Installer (myodbc3i.exe)
+Installer (myodbc-installer.exe or myodbc3i.exe)
 
         This command-line utility program can be used to manage ODBC
         system information. For example it can be used to register
@@ -83,7 +83,7 @@ Installer (myodbc3i.exe)
         and portability layer within Connector/ODBC but is also useful
         for installing and uninstalling Conector/ODBC.
 
-        Invoke myodbc3i, in a command shell and without options, to 
+        Invoke installer, in a command shell and without options, to 
         get help on its use.
 
 Library Loading Tester (dltest.exe)
