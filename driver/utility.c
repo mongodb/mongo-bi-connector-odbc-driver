@@ -428,12 +428,14 @@ copy_ansi_result(STMT *stmt,
                                      UTF8_CHARSET_NUMBER,
                                      MYF(0));
 
+  if (!from_cs)
+    return set_stmt_error(stmt, "07006", "Source character set not "
+    "supported by client", 0);
+
   if (!result_bytes)
     result= 0;       /* Don't copy anything! */
 
-  if (!from_cs)
-    return set_stmt_error(stmt, "07006", "Source character set not "
-                          "supported by client", 0);
+
 
   /*
    If we don't have to do any charset conversion, we can just use
@@ -680,6 +682,10 @@ copy_wchar_result(STMT *stmt,
   CHARSET_INFO *from_cs= get_charset(field->charsetnr ? field->charsetnr :
                                      UTF8_CHARSET_NUMBER,
                                      MYF(0));
+
+  if (!from_cs)
+    return set_stmt_error(stmt, "07006", "Source character set not "
+    "supported by client", 0);
 
   if (!result_len)
     result= NULL; /* Don't copy anything! */
