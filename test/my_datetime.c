@@ -702,6 +702,9 @@ DECLARE_TEST(t_bug9927)
 */
 DECLARE_TEST(t_bug30081)
 {
+  if (!mysql_min_version(hdbc, "5.1.23", 6))
+    skip("necessary feature added in MySQL 5.1.23");
+
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug30081");
   ok_sql(hstmt,
          "CREATE TABLE t_bug30081 (a TIMESTAMP DEFAULT 0,"
@@ -966,7 +969,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug12520)
   ADD_TEST(t_bug15773)
   ADD_TEST(t_bug9927)
-  ADD_TODO(t_bug30081)
+  ADD_TEST(t_bug30081)
   ADD_TEST(t_datecolumns)
   ADD_TEST(t_bug14414)
   ADD_TEST(t_bug30939)

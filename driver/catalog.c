@@ -1399,6 +1399,10 @@ MySQLSpecialColumns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
             SQLSMALLINT type;
             if ((field->type != MYSQL_TYPE_TIMESTAMP))
               continue;
+#ifdef ON_UPDATE_NOW_FLAG
+            if (!(field->flags & ON_UPDATE_NOW_FLAG))
+              continue;
+#else
             /*
               TIMESTAMP_FLAG is only set on fields that are auto-set or
               auto-updated. We really only want auto-updated, but we can't
@@ -1406,6 +1410,7 @@ MySQLSpecialColumns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
             */
             if (!(field->flags & TIMESTAMP_FLAG))
               continue;
+#endif
             field_count++;
             row[0]= NULL;
             row[1]= field->name;
