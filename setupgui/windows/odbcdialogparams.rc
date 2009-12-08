@@ -40,7 +40,6 @@ BEGIN
     EDITTEXT        IDC_EDIT_port,212,121,28,14,ES_AUTOHSCROLL | ES_NUMBER
     EDITTEXT        IDC_EDIT_uid,98,140,85,14,ES_AUTOHSCROLL
     EDITTEXT        IDC_EDIT_pwd,98,158,85,14,ES_PASSWORD | ES_AUTOHSCROLL
-    COMBOBOX        IDC_EDIT_database,98,176,85,42,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Data Source Name:",IDC_STATIC,23,72,67,8
     RTEXT           "Description:",IDC_STATIC,23,92,67,8
     RTEXT           "Server:",IDC_STATIC,23,123,67,8
@@ -49,77 +48,74 @@ BEGIN
     RTEXT           "Password:",IDC_STATIC,23,162,67,8
     RTEXT           "Database:",IDC_STATIC,23,179,67,8
     CONTROL         "",IDC_TAB1,"SysTabControl32",WS_TABSTOP,17,214,249,154
-    PUSHBUTTON      "&Test",IDC_BUTTON_TEST,199,175,41,14
-    PUSHBUTTON      "&Details >>",IDC_BUTTON_DETAILS,17,376,50,14
     DEFPUSHBUTTON   "OK",IDOK,111,375,50,15
     PUSHBUTTON      "&Cancel",IDCANCEL,165,375,50,15
+    PUSHBUTTON      "&Test",IDC_BUTTON_TEST,199,175,41,14
+    PUSHBUTTON      "&Details >>",IDC_BUTTON_DETAILS,17,376,50,14
     PUSHBUTTON      "&Help",IDC_BUTTON_HELP,217,375,49,15
     CONTROL         130,IDC_STATIC,"Static",SS_BITMAP,0,0,279,39
+    COMBOBOX        IDC_EDIT_database,98,176,85,42,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_TAB1 DIALOGEX 0, 0, 209, 151
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "Return matched rows instead of affected rows",IDC_CHECK_return_matching_rows,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,12,165,10
     CONTROL         "Allow big result sets",IDC_CHECK_allow_big_results,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,27,79,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,12,79,10
     CONTROL         "Use compression",IDC_CHECK_use_compressed_protocol,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,42,69,10
-    CONTROL         "Treat BIGINT columns as INT columns",IDC_CHECK_change_bigint_columns_to_int,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,57,135,10
-    CONTROL         "Enable safe options (see documentation)",IDC_CHECK_safe,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,72,147,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,27,69,10
     CONTROL         "Enable automatic reconnect",IDC_CHECK_auto_reconnect,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,87,105,10
-    CONTROL         "Enable SQL_AUTO_IS_NULL",IDC_CHECK_auto_increment_null_search,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,102,105,10
-    CONTROL         "Always handle binary function results as character data",IDC_CHECK_handle_binary_as_char,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,117,194,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,42,105,10
+    CONTROL         "Don't prompt when connecting",IDC_CHECK_dont_prompt_upon_connect,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,57,113,10
+    CONTROL         "Force use of named pipes",IDC_CHECK_force_use_of_named_pipes,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,72,98,10
+    CONTROL         "Allow multiple statements",IDC_CHECK_allow_multiple_statements,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,87,97,10
+    RTEXT           "Character Set:",IDC_STATIC,12,102,67,8
+    COMBOBOX        IDC_EDIT_charset,90,102,97,8,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Initial Statement:",IDC_STATIC,12,117,67,8
+    EDITTEXT        IDC_EDIT_initstmt,90,117,97,12,ES_AUTOHSCROLL
 END
 
 IDD_TAB2 DIALOGEX 0, 0, 209, 151
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "Don't prompt when connecting",IDC_CHECK_dont_prompt_upon_connect,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,12,113,10
-    CONTROL         "Enable dynamic cursors",IDC_CHECK_dynamic_cursor,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,27,91,10
+    CONTROL         "Treat BIGINT columns as INT columns",IDC_CHECK_change_bigint_columns_to_int,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,12,135,10
+    CONTROL         "Always handle binary function results as character data",IDC_CHECK_handle_binary_as_char,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,27,194,10
     CONTROL         "Ignore schema in column specifications",IDC_CHECK_ignore_N_in_name_table,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,42,139,10
-    CONTROL         "Disable driver-provided cursor support",IDC_CHECK_user_manager_cursor,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,57,139,10
-    CONTROL         "Don't use setlocale()",IDC_CHECK_dont_use_set_locale,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,72,81,10
-    CONTROL         "Pad CHAR to full length with space",IDC_CHECK_pad_char_to_full_length,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,87,127,10
-    CONTROL         "Don't cache results of forward-only cursors",IDC_CHECK_dont_cache_result,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,102,154,10
+    CONTROL         "Include table name in SQLDescribeCol()",IDC_CHECK_return_table_names_for_SqlDescribeCol,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,57,141,10
+    CONTROL         "Disable catalog support",IDC_CHECK_no_catalog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,72,91,10
+    CONTROL         "Limit column size to signed 32-bit range",IDC_CHECK_limit_column_size,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,87,141,10
+
 END
 
 IDD_TAB3 DIALOGEX 0, 0, 209, 151
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "Include table name in SQLDescribeCol()",IDC_CHECK_return_table_names_for_SqlDescribeCol,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,12,141,10
-    CONTROL         "Ignore space after function names",IDC_CHECK_ignore_space_after_function_names,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,26,127,10
-    CONTROL         "Force use of named pipes",IDC_CHECK_force_use_of_named_pipes,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,40,98,10
-    CONTROL         "Disable catalog support",IDC_CHECK_no_catalog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,54,91,10
-    CONTROL         "Read options from my.cnf",IDC_CHECK_read_options_from_mycnf,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,68,99,10
-    CONTROL         "Disable transaction support",IDC_CHECK_disable_transactions,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,82,103,10
+    CONTROL         "Enable dynamic cursors",IDC_CHECK_dynamic_cursor,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,12,91,10
+    CONTROL         "Disable driver-provided cursor support",IDC_CHECK_user_manager_cursor,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,27,139,10
+    CONTROL         "Don't cache results of forward-only cursors",IDC_CHECK_dont_cache_result,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,42,154,10
     CONTROL         "Force use of forward-only cursors",IDC_CHECK_force_use_of_forward_only_cursors,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,96,125,10
-    CONTROL         "Allow multiple statements",IDC_CHECK_allow_multiple_statements,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,110,97,10
-    CONTROL         "Limit column size to signed 32-bit range",IDC_CHECK_limit_column_size,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,124,141,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,57,125,10
+
+    CONTROL         "Return matched rows instead of affected rows",IDC_CHECK_return_matching_rows,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,75,165,10
+    CONTROL         "Enable SQL_AUTO_IS_NULL",IDC_CHECK_auto_increment_null_search,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,90,105,10
+    CONTROL         "Pad CHAR to full length with space",IDC_CHECK_pad_char_to_full_length,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,105,127,10
 END
 
 IDD_TAB4 DIALOGEX 0, 0, 209, 151
@@ -156,10 +152,16 @@ IDD_TAB6 DIALOGEX 0, 0, 209, 151
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    RTEXT           "Character Set:",IDC_STATIC,12,14,67,8
-    RTEXT           "Initial Statement:",IDC_STATIC,12,32,67,8
-    COMBOBOX        IDC_EDIT_charset,90,12,97,8,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    EDITTEXT        IDC_EDIT_initstmt,90,32,97,12,ES_AUTOHSCROLL
+    CONTROL         "Enable safe options (see documentation)",IDC_CHECK_safe,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,12,147,10
+    CONTROL         "Don't use setlocale()",IDC_CHECK_dont_use_set_locale,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,27,81,10
+    CONTROL         "Ignore space after function names",IDC_CHECK_ignore_space_after_function_names,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,42,127,10
+    CONTROL         "Read options from my.cnf",IDC_CHECK_read_options_from_mycnf,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,57,99,10
+    CONTROL         "Disable transaction support",IDC_CHECK_disable_transactions,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,72,103,10
 END
 
 #ifdef APSTUDIO_INVOKED

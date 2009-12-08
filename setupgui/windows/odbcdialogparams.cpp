@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2007 MySQL AB
+  Copyright 2007 - 2008 MySQL AB, 2008 - 2009 Sun Microsystems, Inc.  All rights reserved.
 
   This program is free software; you can redistribute it and/or modify
   it under the terms of version 2 of the GNU General Public License as
@@ -27,9 +27,12 @@
 
 #define WIN32_LEAN_AND_MEAN
 
-#define DEBUG_TAB   4
-#define SSL_TAB     5
-#define MISC_TAB    6
+#define CONNECTION_TAB  1
+#define METADATA_TAB    2
+#define CURSORS_TAB     3
+#define DEBUG_TAB       4
+#define SSL_TAB         5
+#define MISC_TAB        6
 
 #include <windows.h>
 #include <windowsx.h>
@@ -128,61 +131,61 @@ void getStrFieldData(HWND hwnd, SQLWCHAR **param, int idc)
   x_free(*param);
   *param= NULL;
 
-    int len = Edit_GetTextLength(GetDlgItem(hwnd,idc));
+  int len = Edit_GetTextLength(GetDlgItem(hwnd,idc));
 
-    if (len>0)
-    {
-      *param= (SQLWCHAR *)my_malloc((len + 1) * sizeof(SQLWCHAR), MYF(0));
-      if (*param)
-        Edit_GetText(GetDlgItem(hwnd,idc), *param, len+1);
-    }
+  if (len>0)
+  {
+    *param= (SQLWCHAR *)my_malloc((len + 1) * sizeof(SQLWCHAR), MYF(0));
+    if (*param)
+      Edit_GetText(GetDlgItem(hwnd,idc), *param, len+1);
+  }
 }
 
 void getStrFieldData(SQLWCHAR **param, unsigned int framenum, int idc )
 {
-    assert(TabCtrl_1.hTabPages);
-    HWND tab = TabCtrl_1.hTabPages[framenum-1];
+  assert(TabCtrl_1.hTabPages);
+  HWND tab = TabCtrl_1.hTabPages[framenum-1];
 
-    assert(tab);
+  assert(tab);
 
-    getStrFieldData(tab, param, idc );
+  getStrFieldData(tab, param, idc );
 }
 
 void setUnsignedFieldData(HWND hwnd, unsigned int & param, int idc )
 {
-    wchar_t buf[20];
-    _itow( param, (wchar_t*)buf, 10 );
-    Edit_SetText(GetDlgItem(hwnd,idc), buf);
+  wchar_t buf[20];
+  _itow( param, (wchar_t*)buf, 10 );
+  Edit_SetText(GetDlgItem(hwnd,idc), buf);
 }
 
 void getUnsignedFieldData( HWND hwnd, unsigned int & param, int idc )
 {
-    param = 0U;
-    int len = Edit_GetTextLength(GetDlgItem(hwnd,idc));
+  param = 0U;
+  int len = Edit_GetTextLength(GetDlgItem(hwnd,idc));
 
-    if(len>0)
+  if(len>0)
+  {
+    SQLWCHAR *tmp1= (SQLWCHAR *)my_malloc((len + 1) * sizeof(SQLWCHAR),
+                                         MYF(0));
+    if (tmp1)
     {
-        SQLWCHAR *tmp1= (SQLWCHAR *)my_malloc((len + 1) * sizeof(SQLWCHAR),
-                                             MYF(0));
-        if (tmp1)
-        {
-            Edit_GetText(GetDlgItem(hwnd,idc), tmp1, len+1);
-            param = _wtol(tmp1);
-            x_free(tmp1);
-        }
+      Edit_GetText(GetDlgItem(hwnd,idc), tmp1, len+1);
+      param = _wtol(tmp1);
+      x_free(tmp1);
     }
+  }
 }
 
 bool getBoolFieldData(unsigned int framenum, int idc)
 {
-    assert(TabCtrl_1.hTabPages);
-    HWND checkbox = GetDlgItem(TabCtrl_1.hTabPages[framenum-1], idc);
+  assert(TabCtrl_1.hTabPages);
+  HWND checkbox = GetDlgItem(TabCtrl_1.hTabPages[framenum-1], idc);
 
-    assert(checkbox);
-    if (checkbox)
-        return !!Button_GetCheck(checkbox);
+  assert(checkbox);
+  if (checkbox)
+      return !!Button_GetCheck(checkbox);
 
-    return false;
+  return false;
 }
 
 #define GET_STRING(name)    getStrFieldData(hwnd,&params.name,IDC_EDIT_##name)
@@ -204,120 +207,130 @@ bool getBoolFieldData(unsigned int framenum, int idc)
 
 void syncData(HWND hwnd, DataSource &params)
 {
-    GET_STRING(name);
-    GET_STRING(description);
-    GET_STRING(server);
-    GET_UNSIGNED(port);
-    GET_STRING(uid);
-    GET_STRING(pwd);
-    GET_STRING(database);
+  GET_STRING(name);
+  GET_STRING(description);
+  GET_STRING(server);
+  GET_UNSIGNED(port);
+  GET_STRING(uid);
+  GET_STRING(pwd);
+  GET_STRING(database);
 }
 
 void syncForm(HWND hwnd, DataSource &params)
 {
-    SET_STRING(name);
-    SET_STRING(description);
-    SET_STRING(server);
-    SET_UNSIGNED(port);
-    SET_STRING(uid);
-    SET_STRING(pwd);
-    SET_STRING(database);
+  SET_STRING(name);
+  SET_STRING(description);
+  SET_STRING(server);
+  SET_UNSIGNED(port);
+  SET_STRING(uid);
+  SET_STRING(pwd);
+  SET_STRING(database);
 }
 void syncTabsData(HWND hwnd, DataSource &params)
-{
-    GET_BOOL(1,return_matching_rows);
-    GET_BOOL(1,allow_big_results);
-    GET_BOOL(1,use_compressed_protocol);
-    GET_BOOL(1,change_bigint_columns_to_int);
-    GET_BOOL(1,safe);
-    GET_BOOL(1,auto_reconnect);
-    GET_BOOL(1,auto_increment_null_search);
-    GET_BOOL(1,handle_binary_as_char);
-    /* flags 2*/
-    GET_BOOL(2,dont_prompt_upon_connect);
-    GET_BOOL(2,dynamic_cursor);
-    GET_BOOL(2,ignore_N_in_name_table);
-    GET_BOOL(2,user_manager_cursor);
-    GET_BOOL(2,dont_use_set_locale);
-    GET_BOOL(2,pad_char_to_full_length);
-    GET_BOOL(2,dont_cache_result);
-    /* flags 3 */
-    GET_BOOL(3,return_table_names_for_SqlDescribeCol);
-    GET_BOOL(3,ignore_space_after_function_names);
-    GET_BOOL(3,force_use_of_named_pipes);
-    GET_BOOL(3,no_catalog);
-    GET_BOOL(3,read_options_from_mycnf);
-    GET_BOOL(3,disable_transactions);
-    GET_BOOL(3,force_use_of_forward_only_cursors);
-    GET_BOOL(3,allow_multiple_statements);
-    GET_BOOL(3,limit_column_size);
-    /* debug*/
-    GET_BOOL(4,save_queries);
+{  /* 1 - Connection */
+  GET_BOOL(CONNECTION_TAB, allow_big_results);
+  GET_BOOL(CONNECTION_TAB, use_compressed_protocol);
+  GET_BOOL(CONNECTION_TAB, dont_prompt_upon_connect);
+  GET_BOOL(CONNECTION_TAB, auto_reconnect);
+  GET_BOOL(CONNECTION_TAB, force_use_of_named_pipes);
+  GET_BOOL(CONNECTION_TAB, allow_multiple_statements);
 
-    /* ssl settings */
-    getStrFieldData(&params.sslkey      , SSL_TAB, IDC_EDIT_sslkey);
-    getStrFieldData(&params.sslcert     , SSL_TAB, IDC_EDIT_sslcert);
-    getStrFieldData(&params.sslca       , SSL_TAB, IDC_EDIT_sslca);
-    getStrFieldData(&params.sslcapath   , SSL_TAB, IDC_EDIT_sslcapath);
-    getStrFieldData(&params.sslcipher   , SSL_TAB, IDC_EDIT_sslcipher);
-    GET_BOOL(SSL_TAB,sslverify);
+  getStrFieldData(&params.charset , CONNECTION_TAB, IDC_EDIT_charset);
+  getStrFieldData(&params.initstmt, CONNECTION_TAB, IDC_EDIT_initstmt);
 
-    getStrFieldData(&params.charset     , MISC_TAB, IDC_EDIT_charset);
-    getStrFieldData(&params.initstmt    , MISC_TAB, IDC_EDIT_initstmt);
+  /* 2 - Metadata*/
+  GET_BOOL(METADATA_TAB,   change_bigint_columns_to_int);
+  GET_BOOL(METADATA_TAB,   handle_binary_as_char);
+  GET_BOOL(METADATA_TAB,   return_table_names_for_SqlDescribeCol);
+  GET_BOOL(METADATA_TAB,   ignore_N_in_name_table);
+  GET_BOOL(METADATA_TAB,   no_catalog);
+  GET_BOOL(METADATA_TAB,   limit_column_size);
+
+  /* 3 - Cursors/Results */
+  GET_BOOL(CURSORS_TAB,    return_matching_rows);
+  GET_BOOL(CURSORS_TAB,    auto_increment_null_search);
+  GET_BOOL(CURSORS_TAB,    dynamic_cursor);
+  GET_BOOL(CURSORS_TAB,    user_manager_cursor);
+  GET_BOOL(CURSORS_TAB,    pad_char_to_full_length);
+  GET_BOOL(CURSORS_TAB,    dont_cache_result);
+  GET_BOOL(CURSORS_TAB,    force_use_of_forward_only_cursors);
+
+  /* 4 - debug*/
+  GET_BOOL(DEBUG_TAB,save_queries);
+
+  /* 5 - ssl related */
+  getStrFieldData(&params.sslkey      , SSL_TAB, IDC_EDIT_sslkey);
+  getStrFieldData(&params.sslcert     , SSL_TAB, IDC_EDIT_sslcert);
+  getStrFieldData(&params.sslca       , SSL_TAB, IDC_EDIT_sslca);
+  getStrFieldData(&params.sslcapath   , SSL_TAB, IDC_EDIT_sslcapath);
+  getStrFieldData(&params.sslcipher   , SSL_TAB, IDC_EDIT_sslcipher);
+  GET_BOOL(SSL_TAB,sslverify);
+
+  /* 6 - Misc*/
+  GET_BOOL(MISC_TAB,       safe);
+  GET_BOOL(MISC_TAB,       dont_use_set_locale);
+  GET_BOOL(MISC_TAB,       ignore_space_after_function_names);
+  GET_BOOL(MISC_TAB,       read_options_from_mycnf);
+  GET_BOOL(MISC_TAB,       disable_transactions);
 }
 
 void syncTabs(HWND hwnd, DataSource &params)
 {
-    SET_BOOL(1,return_matching_rows);
-    SET_BOOL(1,allow_big_results);
-    SET_BOOL(1,use_compressed_protocol);
-    SET_BOOL(1,change_bigint_columns_to_int);
-    SET_BOOL(1,safe);
-    SET_BOOL(1,auto_reconnect);
-    SET_BOOL(1,auto_increment_null_search);
-    SET_BOOL(1,handle_binary_as_char);
-    /* flags 2*/
-    SET_BOOL(2,dont_prompt_upon_connect);
-    SET_BOOL(2,dynamic_cursor);
-    SET_BOOL(2,ignore_N_in_name_table);
-    SET_BOOL(2,user_manager_cursor);
-    SET_BOOL(2,dont_use_set_locale);
-    SET_BOOL(2,pad_char_to_full_length);
-    SET_BOOL(2,dont_cache_result);
-    /* flags 3 */
-    SET_BOOL(3,return_table_names_for_SqlDescribeCol);
-    SET_BOOL(3,ignore_space_after_function_names);
-    SET_BOOL(3,force_use_of_named_pipes);
-    SET_BOOL(3,no_catalog);
-    SET_BOOL(3,read_options_from_mycnf);
-    SET_BOOL(3,disable_transactions);
-    SET_BOOL(3,force_use_of_forward_only_cursors);
-    SET_BOOL(3,allow_multiple_statements);
-    SET_BOOL(3,limit_column_size);
-    /* debug*/
-    SET_BOOL(DEBUG_TAB,save_queries);
+  /* 1 - Connection */
+  SET_BOOL(CONNECTION_TAB, allow_big_results);
+  SET_BOOL(CONNECTION_TAB, use_compressed_protocol);
+  SET_BOOL(CONNECTION_TAB, dont_prompt_upon_connect);
+  SET_BOOL(CONNECTION_TAB, auto_reconnect);
+  SET_BOOL(CONNECTION_TAB, force_use_of_named_pipes);
+  SET_BOOL(CONNECTION_TAB, allow_multiple_statements);
 
-    /* ssl related */
-    if ( TabCtrl_1.hTabPages[SSL_TAB-1])
-    {
-        HWND tabHwnd = TabCtrl_1.hTabPages[SSL_TAB-1];
+  if ( TabCtrl_1.hTabPages[CONNECTION_TAB-1])
+  {
+    HWND tabHwndMisc = TabCtrl_1.hTabPages[CONNECTION_TAB-1];
+    HWND charsetCtrl = GetDlgItem(tabHwndMisc,IDC_EDIT_charset);
+    ComboBox_SetText(charsetCtrl, params.charset);
+    Edit_SetText( GetDlgItem( tabHwndMisc, IDC_EDIT_initstmt), params.initstmt);
+  }
 
-        Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslkey)     , params.sslkey);
-        Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslcert)    , params.sslcert);
-        Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslca)      , params.sslca);
-        Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslcapath)  , params.sslcapath);
-        Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslcipher)  , params.sslcipher);
-        SET_BOOL(SSL_TAB, sslverify);
-    }
+  /* 2 - Metadata*/
+  SET_BOOL(METADATA_TAB,   change_bigint_columns_to_int);
+  SET_BOOL(METADATA_TAB,   handle_binary_as_char);
+  SET_BOOL(METADATA_TAB,   return_table_names_for_SqlDescribeCol);
+  SET_BOOL(METADATA_TAB,   ignore_N_in_name_table);
+  SET_BOOL(METADATA_TAB,   no_catalog);
+  SET_BOOL(METADATA_TAB,   limit_column_size);
 
-    if ( TabCtrl_1.hTabPages[MISC_TAB-1])
-    {
-        HWND tabHwndMisc = TabCtrl_1.hTabPages[MISC_TAB-1];
-        HWND charsetCtrl = GetDlgItem(tabHwndMisc,IDC_EDIT_charset);
-        ComboBox_SetText(charsetCtrl, params.charset);
-        Edit_SetText( GetDlgItem( tabHwndMisc, IDC_EDIT_initstmt), params.initstmt);
-    }
+  /* 3 - Cursors/Results */
+  SET_BOOL(CURSORS_TAB,    return_matching_rows);
+  SET_BOOL(CURSORS_TAB,    auto_increment_null_search);
+  SET_BOOL(CURSORS_TAB,    dynamic_cursor);
+  SET_BOOL(CURSORS_TAB,    user_manager_cursor);
+  SET_BOOL(CURSORS_TAB,    pad_char_to_full_length);
+  SET_BOOL(CURSORS_TAB,    dont_cache_result);
+  SET_BOOL(CURSORS_TAB,    force_use_of_forward_only_cursors);
 
+  /* 4 - debug*/
+  SET_BOOL(DEBUG_TAB,save_queries);
+
+  /* 5 - ssl related */
+  if ( TabCtrl_1.hTabPages[SSL_TAB-1])
+  {
+    HWND tabHwnd = TabCtrl_1.hTabPages[SSL_TAB-1];
+
+    Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslkey)     , params.sslkey);
+    Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslcert)    , params.sslcert);
+    Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslca)      , params.sslca);
+    Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslcapath)  , params.sslcapath);
+    Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslcipher)  , params.sslcipher);
+    SET_BOOL(SSL_TAB, sslverify);
+  }
+
+  /* 6 - Misc*/
+  SET_BOOL(MISC_TAB,       safe);
+  SET_BOOL(MISC_TAB,       dont_use_set_locale);
+  SET_BOOL(MISC_TAB,       ignore_space_after_function_names);
+  SET_BOOL(MISC_TAB,       read_options_from_mycnf);
+  SET_BOOL(MISC_TAB,       disable_transactions);
 }
 
 void FillParameters(HWND hwnd, DataSource & params)
@@ -334,7 +347,7 @@ void FormMain_OnClose(HWND hwnd)
 {
 	//PostQuitMessage(0);// turn off message loop
     //Unhooks hook(s) :)
-    OnDialogClose();
+  OnDialogClose();
 
 	TabControl_Destroy(&TabCtrl_1);
   EndDialog(hwnd, NULL);
@@ -360,7 +373,7 @@ void btnDetails_Click (HWND hwnd)
 
 	if(!flag && mod==1)
 	{
-		static PWSTR tabnames[]= {L"Flags 1", L"Flags 2", L"Flags 3", L"Debug", L"SSL Settings", L"Misc Options", 0};
+    static PWSTR tabnames[]= {L"Connection", L"Metadata", L"Cursors/Results", L"Debug", L"SSL", L"Misc", 0};
 		static PWSTR dlgnames[]= {MAKEINTRESOURCE(IDD_TAB1),
 							  	  MAKEINTRESOURCE(IDD_TAB2),
 							  	  MAKEINTRESOURCE(IDD_TAB3),
@@ -368,13 +381,13 @@ void btnDetails_Click (HWND hwnd)
 								    MAKEINTRESOURCE(IDD_TAB5),
                     MAKEINTRESOURCE(IDD_TAB6),0};
 
-		New_TabControl( &TabCtrl_1, // address of TabControl struct
-					GetDlgItem(hwnd, IDC_TAB1), // handle to tab control
-					tabnames, // text for each tab
-					dlgnames, // dialog id's of each tab page dialog
-					&FormMain_DlgProc, // address of main windows proc
-					NULL, // address of size function
-					TRUE); // stretch tab page to fit tab ctrl
+		New_TabControl( &TabCtrl_1,                 // address of TabControl struct
+					          GetDlgItem(hwnd, IDC_TAB1), // handle to tab control
+					          tabnames,                   // text for each tab
+					          dlgnames,                   // dialog id's of each tab page dialog
+					          &FormMain_DlgProc,          // address of main windows proc
+					          NULL,                       // address of size function
+					          TRUE);                      // stretch tab page to fit tab ctrl
 		flag = true;		
 
 		syncTabs(hwnd, *pParams);
