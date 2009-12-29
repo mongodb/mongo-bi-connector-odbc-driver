@@ -3,6 +3,12 @@
   Functionality added or changed:
   * Options in the Windows GUI are groupped on named tabs.
 
+  Bugs fixed:
+  * If NO_BACKSLASH_ESCAPES mode is used on a server, escaping binary data
+    can lead to server query parsing errors. (Bug #49029)
+
+----
+
 5.1.6 (09-Nov-2009)
 
   Functionality added or changed:

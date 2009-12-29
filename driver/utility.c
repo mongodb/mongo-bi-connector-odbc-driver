@@ -2705,4 +2705,3 @@ void *ptr_offset_adjust(void *ptr, SQLULEN *bind_offset_ptr,
 
   return ptr ? ((SQLCHAR *) ptr) + offset : NULL;
 }
-

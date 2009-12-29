@@ -368,6 +368,29 @@ DECLARE_TEST(t_param_offset)
 }
 
 
+/*
+  Bug #49029 - Server with sql mode NO_BACKSLASHES_ESCAPE obviously
+  can work incorrectly (at least) with binary parameters
+*/
+DECLARE_TEST(t_bug49029)
+{
+  const SQLCHAR bData[6]= "\x01\x80\x00\x80\x01", buff[6];
+  SQLULEN len= 5;
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "set @@session.sql_mode='NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,NO_BACKSLASH_ESCAPES'", SQL_NTS));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_BINARY, SQL_BINARY,
+    0, 0, bData, 0, &len));
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "select ?", SQL_NTS));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_BINARY, (SQLPOINTER)buff, 6, &len));
+
+  is(memcmp((const void*) buff, (const void*)bData, 5)==0);
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_init_table)
   ADD_TEST(my_param_insert)
@@ -375,6 +398,7 @@ BEGIN_TESTS
   ADD_TEST(my_param_delete)
   ADD_TEST(tmysql_fix)
   ADD_TEST(t_param_offset)
+  ADD_TEST(t_bug49029)
 END_TESTS
 
 

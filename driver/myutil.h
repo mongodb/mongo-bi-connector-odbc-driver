@@ -43,6 +43,7 @@
 #define is_connected(dbc)    ((dbc)->mysql.net.vio)
 #define trans_supported(db) ((db)->mysql.server_capabilities & CLIENT_TRANSACTIONS)
 #define autocommit_on(db) ((db)->mysql.server_status & SERVER_STATUS_AUTOCOMMIT)
+#define is_no_backslashes_escape_mode(db) ((db)->mysql.server_status & SERVER_STATUS_NO_BACKSLASH_ESCAPES)
 #define reset_ptr(x) {if (x) x= 0;}
 #define digit(A) ((int) (A - '0'))
 

@@ -508,13 +508,23 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
               to= add_to_buffer(net, to, data, length);
               goto out;
             }
-            /* else treat as a string */
+            /* else _binary introducer for binary data */
+         case SQL_BINARY:
+         case SQL_VARBINARY:
+         case SQL_LONGVARBINARY:
+           {
+             if (dbc->cxn_charset_info->number !=
+               dbc->ansi_charset_info->number)
+             {
+               to= add_to_buffer(net, to, "_binary", 7);
+             }
+             /* We have only added the introducer, data is added below. */
+             break;
+           }
+           /* else treat as a string */
         case SQL_CHAR:
         case SQL_VARCHAR:
         case SQL_LONGVARCHAR:
-        case SQL_BINARY:
-        case SQL_VARBINARY:
-        case SQL_LONGVARBINARY:
         case SQL_WCHAR:
         case SQL_WVARCHAR:
         case SQL_WLONGVARCHAR:
@@ -588,12 +598,31 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
           }
     }
 
-    to= add_to_buffer(net,to,"'",1);
-    /* Make sure we have room for a fully-escaped string. */
-    if (!(to= extend_buffer(net, to, length * 2)))
-      return 0;
-    to+= mysql_real_escape_string(&dbc->mysql, to, data, length);
-    to= add_to_buffer(net, to, "'", 1);
+    /* Convert binary data to hex sequence */
+    if(is_no_backslashes_escape_mode(stmt->dbc) && 
+       (iprec->concise_type == SQL_BINARY || 
+       iprec->concise_type == SQL_VARBINARY || 
+       iprec->concise_type == SQL_LONGVARBINARY))
+    {
+      SQLINTEGER transformed_len = 0;
+      to= add_to_buffer(net,to," 0x",3);
+      /* Make sure we have room for a fully-escaped string. */
+      if (!(to= extend_buffer(net, to, length * 2)))
+        return 0;
+      
+      copy_binhex_result(stmt, to, length * 2 + 1, &transformed_len, 0, data, length);
+      to += transformed_len;
+    }
+    else
+    {
+      to= add_to_buffer(net,to,"'",1);
+      /* Make sure we have room for a fully-escaped string. */
+      if (!(to= extend_buffer(net, to, length * 2)))
+        return 0;
+      
+      to+= mysql_real_escape_string(&dbc->mysql, to, data, length);
+      to= add_to_buffer(net, to, "'", 1);
+    }
 
 out:
     if (free_data)
