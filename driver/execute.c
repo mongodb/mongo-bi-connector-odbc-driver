@@ -600,9 +600,7 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
 
     /* Convert binary data to hex sequence */
     if(is_no_backslashes_escape_mode(stmt->dbc) && 
-       (iprec->concise_type == SQL_BINARY || 
-       iprec->concise_type == SQL_VARBINARY || 
-       iprec->concise_type == SQL_LONGVARBINARY))
+       is_binary_sql_type(iprec->concise_type))
     {
       SQLINTEGER transformed_len = 0;
       to= add_to_buffer(net,to," 0x",3);
