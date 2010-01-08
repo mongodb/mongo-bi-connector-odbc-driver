@@ -1,7 +1,7 @@
 5.1.7
 
   Functionality added or changed:
-  * Options in the Windows GUI are groupped on named tabs.
+  * Options in the Windows GUI are grouped on named tabs.
 
   Bugs fixed:
   * If NO_BACKSLASH_ESCAPES mode is used on a server, escaping binary data
@@ -91,7 +91,7 @@
     (Bug #26950)
   * SQL_TYPE_TIMESTAMP and SQL_TYPE_TIME parameters were incorrectly
     included when parameters were expanded. (Bug #37342)
-  * DSN-less connection prompting cannot lookup driver entry
+  * DSN-less connection prompting cannot look up driver entry
     (Bug #37254)
 
   Includes changes from Connector/ODBC 3.51.26.
@@ -187,7 +187,7 @@
 5.1.1 (12-Dec-2007)
 
   Functionality added or changed:
-  * Added MSI installer for Windows 64-bit (Bug #31510)
+  * Added MSI installer for Windows 64-bit. (Bug #31510)
   * Implemented support for SQLCancel(). (Bug #15601)
   * Added wrappers for missing ODBC driver manager installer functions.
     This makes it possible to use the driver with unixODBC 2.2.11, which
@@ -196,7 +196,7 @@
   * Replaced the internal library which handles creation and loading
     of DSN information. The new library, which was originally a part of
     Connector/ODBC 5.0, supports Unicode option values.
-  * Implemented native Windows setup library
+  * Implemented native Windows setup library.
   * Removed monitor (myodbc3m) and dsn-editor (myodbc3c).
   * Replaced myodbc3i (now myodbc-installer) with Connector/ODBC 5.0
     version.
@@ -210,7 +210,7 @@
     environment handles.
   * SQLCopyDesc() did not correctly copy all records.
   * Freeing a statement resulted in a memory leak due to descriptor
-    records not being freed.. (Bug #31115)
+    records not being freed. (Bug #31115)
   * SQL_ODBC_SQL_CONFORMANCE was not handled by SQLGetInfo().
   * NULL pointers passed to SQLGetInfo() could result in a crash.
   * Passwords with ';' were not handled correctly. (Bug #16178)
@@ -246,13 +246,13 @@
   Functionality added or changed:
   * Added support for SQL_C_WCHAR.
   * Added support for Unicode functions (SQLConnectW, etc).
-  * Added descriptor support (SQLGetDescField, SQLGetDescRec, etc)
+  * Added descriptor support (SQLGetDescField, SQLGetDescRec, etc).
 
 ----
 
 3.51.27 (20-Nov-2008)
   Bugs fixed:
-  * Cannot use ssl (Bug #29955)
+  * Cannot use SSL (Bug #29955)
   * Enable auto reconnect doesn't work (Bug #37179)
   * Add read and write timeouts on the connection (Bug #40407)
 
