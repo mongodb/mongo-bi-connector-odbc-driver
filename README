@@ -14,15 +14,13 @@ Open Database Connectivity (ODBC) is a widely accepted standard
 for reading/writing data. ODBC is designed in a similar manner
 to the MS Windows printing system in that it has a Driver Manager
 and Drivers. Connector/ODBC is a driver for the ODBC system which
-allows applications to communicate with the MySQL server using
+allows applications to communicate with the MySQL Server using
 the ODBC standard. ODBC implementations exist on all popular
-platforms and Connector/ODBC is also available on those 
+platforms and MySQL Connector/ODBC is also available on those 
 platforms. 
 
 MySQL, the most popular Open Source SQL database, is 
-provided by MySQL AB. MySQL AB is a commercial company 
-that builds its business providing services around the 
-MySQL database.
+provided by the MySQL engineering team at Sun Microsystems, Inc. 
 
 MySQL provides the support for ODBC by means of Connector/ODBC 
 driver and programs. Connector/ODBC is the ODBC driver 
@@ -36,8 +34,27 @@ or above.
 LICENSE
 ---------------------------------------------------------------
 
-Please see the license file for information about licensing
+Please see the license file for information about licensing 
 and use restrictions of this software.
+
+THIRD-PARTY SOFTWARE
+---------------------------------------------------------------
+
+DO NOT TRANSLATE OR LOCALIZE
+
+%%The following software may be included in this product:
+Trolltech Qt Libraries
+
+For the avoidance of doubt, with respect to the QT library software,
+Sun elects to use the Lesser General Public License version 2.1
+(LGPLv2.1) at this time, and hereby exercises its right under the 
+terms of LGPLv2.1 to apply the General Public License version 2 
+(GPLv2) to Sun's distribution of the QT library software, and Sun
+elects to use only LGPLv2.1 and GPLv2 for any software where a
+choice of LGPL or GPL license versions is made available with the
+language indicating that any later version may be used, or where a
+choice of which version of the LGPL or GPL is applied is otherwise
+unspecified.
  
 BUILDING SOURCE
 ---------------------------------------------------------------
@@ -57,7 +74,7 @@ The following, key, files are provided by Connector/ODBC (the MS
 Windows names are included for reference but the file names for 
 other platforms would be similar).
 
-Driver (myodbc5.dll or myodbc3.dll)
+Driver (myodbc5.dll)
 
         The most important part of Connector/ODBC is the driver.
         Application developers can link directly to the driver but 
@@ -67,29 +84,29 @@ Driver (myodbc5.dll or myodbc3.dll)
         Many options can be provided to the driver to adjust its
         behaviour. 
 
-Setup Library (myodbc5S.dll or myodbc3S.dll)
+Setup Library (myodbc3S.dll)
 
         The setup library provides a graphical user interface needed
         during certian activities provided by the driver. For example;
         it provides the GUI when you use the ODBC Administrator to
         create/edit a Data Source Name (DSN).
 
-Installer (myodbc-installer.exe or myodbc3i.exe)
+Installer (myodbc-installer.exe)
 
         This command-line utility program can be used to manage ODBC
         system information. For example it can be used to register
         or deregister a driver. It can also manage data source names.
-        This was created to test the ODBC system information abstraction
-        and portability layer within Connector/ODBC but is also useful
-        for installing and uninstalling Conector/ODBC.
+        This was created to test the ODBC system information
+        abstraction and portability layer within Connector/ODBC but 
+        is also useful for installing and uninstalling Conector/ODBC.
 
-        Invoke installer, in a command shell and without options, to 
-        get help on its use.
+        Invoke myodbc-installer, in a command shell and without
+        options, to get help on its use.
 
 Library Loading Tester (dltest.exe)
 
-        This command-line utility is useful fo debugging problems related
-        to loading a library and resolving symbols in it.
+        This command-line utility is useful fo debugging problems
+        related to loading a library and resolving symbols in it.
 
 Connector/ODBC SDK
 ---------------------------------------------------------------
@@ -106,7 +123,8 @@ RESOURCES
 ---------------------------------------------------------------
 
 MySQL, MyODBC, MyODBC 5.1 is brought to you by the MySQL 
-team at MySQL AB, and MySQL is the trademark of MySQL AB.
+team at Sun Microsystems, Inc. and MySQL is the trademark of 
+Sun Microsystems, Inc.
 
 For more information about MySQL, see
 http://www.mysql.com
