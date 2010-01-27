@@ -11,6 +11,12 @@
 %{?_with_commercial:%define com_lic 1}
 %{!?_with_commercial:%define com_lic 0}
 
+%if %{com_lic}
+%define lic_type Commercial
+%else
+%define lic_type GPL
+%endif
+
 %define no_odbc_gui 0
 
 ##############################################################################
@@ -29,15 +35,11 @@ Group:      Applications/Databases
 Version:    @NUMERIC_VERSION@
 Release:    0
 Provides:   mysqlodbcrpmpack
-%if %{com_lic}
-Copyright:  Commercial
-%else
-Copyright:  GPL
-%endif
+License:    Copyright 2000-2008 MySQL AB, 2009-2010 %{mysql_vendor}  All rights reserved.  Use is subject to license terms.  Under %{lic_type} license as shown in the Description field.
 Source0:    %{name}-@VERSION@.tar.gz
 URL:        http://www.mysql.com/
-Vendor:     MySQL AB
-Packager:   MySQL Production Engineering Team <build@mysql.com>
+Vendor:     Sun Microsystems, Inc.
+Packager:   Sun Microsystems, Inc. Production Engineering Team <build@mysql.com>
 
 BuildRoot:  %{_tmppath}/%{name}-@VERSION@-build
 
@@ -59,11 +61,23 @@ Requires:   mysqlodbcrpmpack
 mysql-connector-odbc is an ODBC (3.50) level 0 (with level 1 and level
 2 features) driver for connecting an ODBC-aware application to MySQL.
 mysql-connector-odbc  works on Windows NT/2000/XP/2003, and most Unix
-platforms (incl. OSX and Linux).
+platforms (incl. OSX and Linux). MySQL is a trademark of
+%{mysql_vendor}
 
 mysql-connector-odbc 5.1 is an enhanced version of MyODBC 2.50 to meet
 ODBC 3.5 specification. The driver is commonly referred to as
 'MySQL ODBC 5.1 Driver'.
+
+The MySQL software has Dual Licensing, which means you can use the MySQL
+software free of charge under the GNU General Public License
+(http://www.gnu.org/licenses/). You can also purchase commercial MySQL
+licenses from %{mysql_vendor} if you do not wish to be bound by the terms of
+the GPL. See the chapter "Licensing and Support" in the manual for
+further info.
+
+The MySQL web site (http://www.mysql.com/) provides the latest
+news and information about the MySQL software. Also please see the
+documentation and the manual for more information.
 
 %description setup
 The setup library for the MySQL ODBC package, handles the optional GUI
@@ -76,7 +90,7 @@ dialog for configuring the driver.
 ##############################################################################
 
 %prep
-%setup -n %{name}-@VERSION@
+%setup
 
 %define ODBC_DM_PATH_ARG @ODBC_DM_PATH_ARG@
 %define MYSQL_PATH_ARG   @MYSQL_PATH_ARG@
