@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2005 MySQL AB
+/* Copyright 2004-2008 MySQL AB, 2008 Sun Microsystems, Inc.
 
    The MySQL Connector/ODBC is licensed under the terms of the
    GPL, like most MySQL Connectors. There are special exceptions
