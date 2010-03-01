@@ -1,4 +1,4 @@
-/* Copyright 2004-2008 MySQL AB, 2008 Sun Microsystems, Inc.
+/* Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
 
    The MySQL Connector/ODBC is licensed under the terms of the
    GPL, like most MySQL Connectors. There are special exceptions
@@ -81,6 +81,14 @@ BOOL MYODBCUtilWriteConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, char *pszStr
         if ( !MYODBCUtilInsertStr( pszStr, "OPTION=", nMaxLen, &nIndex ) )
             return FALSE;
         if ( !MYODBCUtilInsertStr( pszStr, pDataSource->pszOPTION, nMaxLen, &nIndex ) )
+            return FALSE;
+        if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
+            return FALSE;
+    }
+
+    if ( pDataSource->bINTERACTIVE )
+    {
+        if ( !MYODBCUtilInsertStr( pszStr, "INTERACTIVE=1", nMaxLen, &nIndex ) )
             return FALSE;
         if ( nIndex && !MYODBCUtilInsertStr( pszStr, ";", nMaxLen, &nIndex ) )
             return FALSE;

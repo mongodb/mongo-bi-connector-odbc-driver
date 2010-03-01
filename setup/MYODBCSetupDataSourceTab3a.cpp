@@ -1,4 +1,4 @@
-/* Copyright 2004-2008 MySQL AB
+/* Copyright (©) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
 
    The MySQL Connector/ODBC is licensed under the terms of the
    GPL, like most MySQL Connectors. There are special exceptions
@@ -36,6 +36,7 @@ MYODBCSetupDataSourceTab3a::MYODBCSetupDataSourceTab3a( QWidget *pwidgetParent )
     QString         stringEnableReconnect( tr("Enables automatic reconnect. Attention: it is strongly not recommended to set this flag for transactional operations!") );
     QString         stringAutoIncrementIsNull( tr("Turns on/off the handling of searching for the last inserted row with WHERE auto_increment_column IS NULL") );
     QString         stringDisableBinaryResult( tr("Always handle binary function results as character data") );
+    QString         stringInteractive( tr("Tells server to use longer wait timeout for the connection(interactive timeout)") );
 #if QT_VERSION >= 0x040000
     QVBoxLayout *   playoutFields = new QVBoxLayout;
     setLayout( playoutFields );
@@ -117,6 +118,11 @@ MYODBCSetupDataSourceTab3a::MYODBCSetupDataSourceTab3a( QWidget *pwidgetParent )
 #else
     QToolTip::add( pcheckboxDisableBinaryResult, stringDisableBinaryResult );
 #endif
+
+    pcheckboxInteractive = new MYODBCSetupCheckBox( tr("Interactive client"), this );
+    pcheckboxInteractive->setAssistText( stringInteractive );
+    playoutFields->addWidget( pcheckboxInteractive );
+    MYODBC_ADD_TOOLTIP(pcheckboxInteractive, stringInteractive);
 
     playoutFields->addStretch( 10 );
 }

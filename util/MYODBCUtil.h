@@ -1,4 +1,4 @@
-/* Copyright 2004-2008 MySQL AB, 2008 Sun Microsystems, Inc.
+/* Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
 
    The MySQL Connector/ODBC is licensed under the terms of the
    GPL, like most MySQL Connectors. There are special exceptions
@@ -196,6 +196,7 @@ typedef struct tMYODBCUTIL_DATASOURCE
     char *pszSOCKET;            /* Unix socket file or Windows named pipe to connect to.                                        */ 
     char *pszSTMT;              /* Statement that will be exec when connecting to MySQL.                                        */ 
     char *pszOPTION;            /* Options that specify how MyODBC should work.                                                 */
+    BOOL  bINTERACTIVE;         /* ODBC option for client_interactive connection option                                                         */
 
     char *pszSSLKEY;            /* pathname to SSL key file                                                                     */
     char *pszSSLCERT;           /* pathname to SSL certificate file                                                             */

@@ -1,4 +1,4 @@
-/* Copyright 2004-2008 MySQL AB, 2008 Sun Microsystems, Inc.
+/* Copyright (©) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
 
    The MySQL Connector/ODBC is licensed under the terms of the
    GPL, like most MySQL Connectors. There are special exceptions
@@ -280,6 +280,8 @@ void MYODBCSetupDataSourceDialog::slotOk()
             pDataSource->pszOPTION = (char*)_global_alloc(50);
             sprintf( pDataSource->pszOPTION, "%d", nFlags );
         }
+
+        pDataSource->bINTERACTIVE= ptab3->getInteractiveFlag();
     }
 
     // exit 
@@ -439,6 +441,8 @@ void MYODBCSetupDataSourceDialog::doInit()
         ptab3->ptab3a->pcheckboxDisableBinaryResult->setChecked( nOptions & (1 << 28) ? TRUE : FALSE );
     }
 
+    ptab3->ptab3a->pcheckboxInteractive->setChecked(pDataSource->bINTERACTIVE);
+
     connect( ppushbuttonTest, SIGNAL(clicked()), SLOT(slotTest()) );
     connect( ppushbuttonDiagnostics, SIGNAL(toggled(bool)), SLOT(slotToggleGuru(bool)) );
     connect( ppushbuttonHelp, SIGNAL(clicked()), SLOT(slotHelp()) );
@@ -474,6 +478,7 @@ void MYODBCSetupDataSourceDialog::doInit()
     connect( ptab3->ptab3a->pcheckboxEnableReconnect, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3a->pcheckboxAutoIncrementIsNull, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3a->pcheckboxDisableBinaryResult, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
+    connect( ptab3->ptab3a->pcheckboxInteractive, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3b->pcheckboxDontPromptOnConnect, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3b->pcheckboxEnableDynamicCursor, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3b->pcheckboxIgnorePoundInTable, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );

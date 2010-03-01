@@ -1,5 +1,5 @@
 /*
-  Copyright 2007-2008 MySQL AB, 2008-2009 Sun Microsystems, Inc.
+  Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the
   GPL, like most MySQL Connectors. There are special exceptions
@@ -162,6 +162,9 @@ static SQLWCHAR W_NO_BINARY_RESULT[]=
   {'N','O','_','B','I','N','A','R','Y','_','R','E','S','U','L','T',0};
 static SQLWCHAR W_DFLT_BIGINT_BIND_STR[]=
   {'D','F','L','T','_','B','I','G','I','N','T','_','B','I','N','D','_','S','T','R',0};
+static SQLWCHAR W_CLIENT_INTERACTIVE[]=
+  {'I','N','T','E','R','A','C','T','I','V','E',0};
+
 /* DS_PARAM */
 /* externally used strings */
 const SQLWCHAR W_DRIVER_PARAM[]= {';', 'D', 'R', 'I', 'V', 'E', 'R', '=', 0};
@@ -188,7 +191,8 @@ SQLWCHAR *dsnparams[]= {W_DSN, W_DRIVER, W_DESCRIPTION, W_SERVER,
                         W_FORWARD_CURSOR, W_AUTO_RECONNECT, W_AUTO_IS_NULL,
                         W_ZERO_DATE_TO_MIN, W_MIN_DATE_TO_ZERO,
                         W_MULTI_STATEMENTS, W_COLUMN_SIZE_S32,
-                        W_NO_BINARY_RESULT, W_DFLT_BIGINT_BIND_STR};
+                        W_NO_BINARY_RESULT, W_DFLT_BIGINT_BIND_STR,
+                        W_CLIENT_INTERACTIVE};
 static const
 int dsnparamcnt= sizeof(dsnparams) / sizeof(SQLWCHAR *);
 /* DS_PARAM */
@@ -738,6 +742,8 @@ void ds_map_param(DataSource *ds, const SQLWCHAR *param,
     *intdest= &ds->readtimeout;
   else if (!sqlwcharcasecmp(W_WRITETIMEOUT, param))
     *intdest= &ds->writetimeout;
+  else if (!sqlwcharcasecmp(W_CLIENT_INTERACTIVE, param))
+    *intdest= &ds->clientinteractive;
 
   else if (!sqlwcharcasecmp(W_FOUND_ROWS, param))
     *booldest= &ds->return_matching_rows;
@@ -1200,6 +1206,7 @@ int ds_add(DataSource *ds)
   if (ds_add_intprop(ds->name, W_PORT       , ds->port       )) goto error;
   if (ds_add_intprop(ds->name, W_READTIMEOUT, ds->readtimeout)) goto error;
   if (ds_add_intprop(ds->name, W_WRITETIMEOUT, ds->writetimeout)) goto error;
+  if (ds_add_intprop(ds->name, W_CLIENT_INTERACTIVE, ds->clientinteractive)) goto error;
 
   if (ds_add_intprop(ds->name, W_FOUND_ROWS, ds->return_matching_rows)) goto error;
   if (ds_add_intprop(ds->name, W_BIG_PACKETS, ds->allow_big_results)) goto error;

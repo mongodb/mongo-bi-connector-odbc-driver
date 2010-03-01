@@ -1,5 +1,5 @@
 /*
-  Copyright 2000-2008 MySQL AB, 2008-2009 Sun Microsystems, Inc.
+  Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the
   GPL, like most MySQL Connectors. There are special exceptions
@@ -68,6 +68,8 @@ unsigned long get_client_flags(DataSource *ds)
     flags|= CLIENT_IGNORE_SPACE;
   if (ds->allow_multiple_statements)
     flags|= CLIENT_MULTI_STATEMENTS;
+  if (ds->clientinteractive)
+    flags|= CLIENT_INTERACTIVE;
 
   return flags;
 }
@@ -725,6 +727,8 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
       oldds->pszOPTION=      _global_alloc(20);
       sprintf(oldds->pszOPTION, "%ul", ds_get_options(ds));
     }
+    oldds->bINTERACTIVE=    (ds->clientinteractive != 0);
+
     if (ds->sslkey)
       oldds->pszSSLKEY=      _global_strdup(ds_get_utf8attr(ds->sslkey, &ds->sslkey8));
     if (ds->sslcert)
@@ -741,7 +745,7 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
     oldds->pszPORT= _global_strdup("        ");
     sprintf(oldds->pszPORT, "%d", ds->port);
 
-    oldds->pszSSL= _global_strdup(" ");
+    oldds->pszSSLVERIFY= _global_strdup(" ");
     sprintf(oldds->pszSSLVERIFY,"%d", ds->sslverify);
 
     /* Prompt. Function returns false if user cancels.  */
@@ -766,7 +770,13 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
     if (oldds->pszSTMT)
       ds_setattr_from_utf8(&ds->initstmt, oldds->pszSTMT);
     if (oldds->pszOPTION)
+#ifdef _WIN32
+      ds_set_options(ds, strtoul(oldds->pszOPTION, NULL, 10));
+#else
       ds_set_options(ds, strtoul(oldds->pszOPTION));
+#endif
+    ds->clientinteractive= oldds->bINTERACTIVE;
+
     if (oldds->pszSSLKEY)
       ds_setattr_from_utf8(&ds->sslkey, oldds->pszSSLKEY);
     if (oldds->pszSSLCERT)

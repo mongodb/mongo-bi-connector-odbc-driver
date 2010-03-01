@@ -1,4 +1,4 @@
-/* Copyright 2004-2008 MySQL AB
+/* Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
 
    The MySQL Connector/ODBC is licensed under the terms of the
    GPL, like most MySQL Connectors. There are special exceptions
@@ -79,6 +79,9 @@ BOOL MYODBCUtilWriteDataSource( MYODBCUTIL_DATASOURCE *pDataSource )
     WRITE_VALUE(SSLKEY, "SSLKEY");
     WRITE_VALUE(SSLVERIFY, "SSLVERIFY");
     WRITE_VALUE(CHARSET, "CHARSET");
+    if (pDataSource->bINTERACTIVE
+      && !SQLWritePrivateProfileString(pDataSource->pszDSN, "INTERACTIVE", "1", "odbc.ini"))
+      return FALSE;
 
     return TRUE;
 }

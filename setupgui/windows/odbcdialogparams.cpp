@@ -1,5 +1,5 @@
 /*
-  Copyright 2007-2008 MySQL AB, 2009 Sun Microsystems, Inc.
+  Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the
   GPL, like most MySQL Connectors. There are special exceptions
@@ -240,6 +240,7 @@ void syncTabsData(HWND hwnd, DataSource &params)
   GET_BOOL(CONNECTION_TAB, auto_reconnect);
   GET_BOOL(CONNECTION_TAB, force_use_of_named_pipes);
   GET_BOOL(CONNECTION_TAB, allow_multiple_statements);
+  GET_BOOL(CONNECTION_TAB, clientinteractive);
 
   getStrFieldData(&params.charset , CONNECTION_TAB, IDC_EDIT_charset);
   getStrFieldData(&params.initstmt, CONNECTION_TAB, IDC_EDIT_initstmt);
@@ -289,6 +290,7 @@ void syncTabs(HWND hwnd, DataSource &params)
   SET_BOOL(CONNECTION_TAB, auto_reconnect);
   SET_BOOL(CONNECTION_TAB, force_use_of_named_pipes);
   SET_BOOL(CONNECTION_TAB, allow_multiple_statements);
+  SET_BOOL(CONNECTION_TAB, clientinteractive);
 
   if ( TabCtrl_1.hTabPages[CONNECTION_TAB-1])
   {

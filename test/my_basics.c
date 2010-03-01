@@ -1,5 +1,5 @@
 /*
-  Copyright 2003-2008 MySQL AB, 2008-2009 Sun Microsystems, Inc.
+  Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the
   GPL, like most MySQL Connectors. There are special exceptions
@@ -994,6 +994,83 @@ DECLARE_TEST(t_bug44971)
 }
 
 
+DECLARE_TEST(t_bug48603)
+{
+  SQLINTEGER timeout, interactive, diff= 1000;
+  SQLSMALLINT conn_out_len;
+  HDBC hdbc1;
+  HSTMT hstmt1;
+  SQLCHAR conn[256], conn_out[256], query[53];
+  int result= OK;
+
+  ok_sql(hstmt, "select @@wait_timeout, @@interactive_timeout");
+  ok_stmt(hstmt,SQLFetch(hstmt));
+  timeout= my_fetch_int(hstmt, 1);
+  interactive= my_fetch_int(hstmt, 2);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  if (timeout == interactive)
+  {
+    /* Changing globally interactive timeout to be able to test
+       if INTERACTIVE option works */
+    SQLRETURN rc;
+    sprintf((char *)query, "set GLOBAL interactive_timeout=%d", timeout + diff);
+    rc= SQLExecDirect(hstmt, query, SQL_NTS);
+
+    if (!SQL_SUCCEEDED(rc))
+    {
+      printMessage("Don't have rights to change interactive timeout globally - so can't really test if option INTERACTIVE works");
+      //return FAIL;
+    }
+
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  }
+  else
+    diff= interactive - timeout;
+
+  /* INITSTMT={set @@wait_timeout=%d} */
+  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;CHARSET=utf8;INITSTMT={set @@interactive_timeout=%d};INTERACTIVE=1",
+    mydsn, myuid, mypwd, timeout+diff);
+
+  if (mysock != NULL)
+  {
+    strcat((char *)conn, ";SOCKET=");
+    strcat((char *)conn, (char *)mysock);
+  }
+  if (myport)
+  {
+    char pbuff[20];
+    sprintf(pbuff, ";PORT=%d", myport);
+    strcat((char *)conn, pbuff);
+  }
+
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), conn_out,
+    sizeof(conn_out), &conn_out_len,
+    SQL_DRIVER_NOPROMPT));
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+  ok_sql(hstmt1, "select @@wait_timeout");
+  ok_stmt(hstmt1,SQLFetch(hstmt1));
+
+  if ((timeout+diff) != my_fetch_int(hstmt1, 1))
+    result= FAIL;
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+
+  if (timeout == interactive)
+  {
+    /* setting global interactive timeout back if we changed it */
+    sprintf((char *)query, "set GLOBAL interactive_timeout=%d", timeout);
+    ok_stmt(hstmt, SQLExecDirect(hstmt, query, SQL_NTS));
+  }
+
+  return result;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -1020,6 +1097,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug31959)
   ADD_TEST(t_bug41256)
   ADD_TEST(t_bug44971)
+  ADD_TEST(t_bug48603)
 END_TESTS
 
 

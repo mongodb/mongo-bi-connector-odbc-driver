@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////
-// Copyright 2007-2008 MySQL AB, 2009 Sun Microsystems Inc.
+// Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
 //
 // The MySQL Connector/ODBC is licensed under the terms of the
 // GPL, like most MySQL Connectors. There are special exceptions
@@ -104,6 +104,11 @@ BEGIN
     COMBOBOX        IDC_EDIT_charset,90,102,97,8,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Initial Statement:",IDC_STATIC,12,117,67,8
     EDITTEXT        IDC_EDIT_initstmt,90,117,97,12,ES_AUTOHSCROLL
+
+// Second Column
+    CONTROL         "Interactive Client",IDC_CHECK_clientinteractive,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,130,12,79,10
+
 END
 
 IDD_TAB2 DIALOGEX 0, 0, 209, 151

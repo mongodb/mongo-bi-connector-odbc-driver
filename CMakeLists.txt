@@ -1,4 +1,5 @@
-# Copyright 2007 MySQL AB, 2008 Sun Microsystems, Inc.
+
+# Copyright (©) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the
 # GPL, like most MySQL Connectors. There are special exceptions
@@ -143,6 +144,8 @@ IF(WIN32)
 			#MESSAGE("New       CMAKE_${TYPE}_FLAGS${CFG}: ${CMAKE_${TYPE}_FLAGS${CFG}}")
 		ENDFOREACH(CFG)
 	ENDFOREACH(TYPE)
+ELSE(WIN32)
+  ADD_DEFINITIONS(-D_UNIX_)
 ENDIF(WIN32)
 #-----------------------------------------------------
 

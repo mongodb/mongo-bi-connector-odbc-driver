@@ -1,4 +1,4 @@
-/* Copyright 2005-2008 MySQL AB
+/* Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
 
    The MySQL Connector/ODBC is licensed under the terms of the
    GPL, like most MySQL Connectors. There are special exceptions
@@ -105,6 +105,8 @@ BOOL MYODBCUtilDefaultDataSource( MYODBCUTIL_DATASOURCE *pDataSource )
           _global_free(pDataSource->pszCHARSET);
           pDataSource->pszCHARSET= NULL;
 	}
+
+  pDataSource->bINTERACTIVE= FALSE;
 
 #ifndef _UNIX_
     /* Here we actually unset socket for non-UNIX as it does not apply. */

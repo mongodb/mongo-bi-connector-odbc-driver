@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////
-// Copyright 2006-2008 MySQL AB, 2009 Sun Microsystems Inc.
+// Copyright (c) 2006, 2010, Oracle and/or its affiliates. All rights reserved.
 //
 // The MySQL Connector/ODBC is licensed under the terms of the
 // GPL, like most MySQL Connectors. There are special exceptions
@@ -113,6 +113,7 @@
 #define IDC_EDIT_sslcipher              10035
 #define IDC_CHECK_handle_binary_as_char 10036
 #define IDC_CHECK_save_queries          10037
+#define IDC_CHECK_clientinteractive     10040
 #define IDC_BUTTON_TEST                 11014
 #define IDC_BUTTON_HELP                 11015
 #define IDC_STATIC                      -1

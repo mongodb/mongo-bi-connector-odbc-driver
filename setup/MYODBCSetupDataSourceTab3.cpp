@@ -1,4 +1,4 @@
-/* Copyright 2004-2008 MySQL AB
+/* Copyright (©) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
 
    The MySQL Connector/ODBC is licensed under the terms of the
    GPL, like most MySQL Connectors. There are special exceptions
@@ -109,3 +109,8 @@ unsigned int MYODBCSetupDataSourceTab3::getFlags()
     return nFlags;
 }
 
+
+bool MYODBCSetupDataSourceTab3::getInteractiveFlag()
+{
+  return ptab3a->pcheckboxInteractive->isChecked();
+}

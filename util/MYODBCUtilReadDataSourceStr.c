@@ -1,4 +1,4 @@
-/* Copyright 2004-2008 MySQL AB, 2008 Sun Microsystems, Inc.
+/* Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
 
    The MySQL Connector/ODBC is licensed under the terms of the
    GPL, like most MySQL Connectors. There are special exceptions
@@ -221,6 +221,13 @@ BOOL MYODBCUtilReadDataSourceStr( MYODBCUTIL_DATASOURCE *pDataSource, MYODBCUTIL
                         {
                             if ( !pDataSource->pszOPTION )
                                 pDataSource->pszOPTION = (char *)_global_strndup( pAnchorChar, pScanChar - pAnchorChar );
+                        }
+                        else if ( strcasecmp( pszName, "INTERACTIVE" ) == 0 )
+                        {
+                          char tmp= *pScanChar;
+                          *pScanChar= '\0';
+                          pDataSource->bINTERACTIVE= (atol(pAnchorChar) != 0);
+                          *pScanChar= tmp;
                         }
                         /*
                             MYODBC RULE

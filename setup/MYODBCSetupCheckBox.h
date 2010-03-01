@@ -1,4 +1,4 @@
-/* Copyright 2004-2007 MySQL AB
+/* Copyright (©) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
 
    The MySQL Connector/ODBC is licensed under the terms of the
    GPL, like most MySQL Connectors. There are special exceptions
@@ -29,6 +29,16 @@
 #include <qcheckbox.h>
 #include <qevent.h>
 
+
+#ifndef MYODBC_ADD_TOOLTIP
+
+#if QT_VERSION >= 0x040000
+#    define MYODBC_ADD_TOOLTIP(control, tooltipStr) control->setToolTip(tooltipStr);
+#else
+#    define MYODBC_ADD_TOOLTIP(control, tooltipStr) QToolTip::add(control, tooltipStr);
+#endif
+
+#endif
 class MYODBCSetupCheckBox : public QCheckBox
 {
     Q_OBJECT
