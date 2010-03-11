@@ -358,6 +358,36 @@ DECLARE_TEST(t_bug30626)
 }
 
 
+/*
+  Bug #43855 - conversion flags not complete
+*/
+DECLARE_TEST(t_bug43855)
+{
+  SQLUINTEGER convFlags;
+  SQLSMALLINT pcbInfo;
+
+  /* 
+    TODO: add other convert checks, we are only interested in CHAR now 
+  */
+  ok_con(hdbc, SQLGetInfo(hdbc, SQL_CONVERT_CHAR, &convFlags,
+                          sizeof(convFlags), &pcbInfo));
+
+  is_num(pcbInfo, 4);
+  is((convFlags & SQL_CVT_CHAR) && (convFlags & SQL_CVT_NUMERIC) &&
+     (convFlags & SQL_CVT_DECIMAL) && (convFlags & SQL_CVT_INTEGER) &&
+     (convFlags & SQL_CVT_SMALLINT) && (convFlags & SQL_CVT_FLOAT) &&
+     (convFlags & SQL_CVT_REAL) && (convFlags & SQL_CVT_DOUBLE) &&
+     (convFlags & SQL_CVT_VARCHAR) && (convFlags & SQL_CVT_LONGVARCHAR) &&
+     (convFlags & SQL_CVT_BIT) && (convFlags & SQL_CVT_TINYINT) &&
+     (convFlags & SQL_CVT_BIGINT) && (convFlags & SQL_CVT_DATE) &&
+     (convFlags & SQL_CVT_TIME) && (convFlags & SQL_CVT_TIMESTAMP) &&
+     (convFlags & SQL_CVT_WCHAR) && (convFlags &SQL_CVT_WVARCHAR) &&
+     (convFlags & SQL_CVT_WLONGVARCHAR));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlgetinfo)
   ADD_TEST(t_gettypeinfo)
@@ -369,6 +399,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug3780)
   ADD_TEST(t_bug16653)
   ADD_TEST(t_bug30626)
+  ADD_TEST(t_bug43855)
 END_TESTS
 
 

@@ -12,6 +12,7 @@
   * Error if unsupported client character set is encountered(for wchar data).
     (Bug #36996)
   * Binding bit field to a numeric types doesn't work. (Bug #32821)
+  * Conversion flags are not complete. (Bug #43855)
 
 ----
 

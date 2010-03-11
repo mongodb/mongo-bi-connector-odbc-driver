@@ -160,7 +160,8 @@ MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
                      SQL_CVT_REAL | SQL_CVT_DOUBLE | SQL_CVT_VARCHAR |
                      SQL_CVT_LONGVARCHAR | SQL_CVT_BIT | SQL_CVT_TINYINT |
                      SQL_CVT_BIGINT | SQL_CVT_DATE | SQL_CVT_TIME |
-                     SQL_CVT_TIMESTAMP);
+                     SQL_CVT_TIMESTAMP | SQL_CVT_WCHAR | SQL_CVT_WVARCHAR |
+                     SQL_CVT_WLONGVARCHAR);
 
   case SQL_CONVERT_BINARY:
   case SQL_CONVERT_VARBINARY:
