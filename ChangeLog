@@ -9,6 +9,9 @@
   Bugs fixed:
   * If NO_BACKSLASH_ESCAPES mode is used on a server, escaping binary data
     can lead to server query parsing errors. (Bug #49029)
+  * Error if unsupported client character set is encountered(for wchar data).
+    (Bug #36996)
+  * Binding bit field to a numeric types doesn't work. (Bug #32821)
 
 ----
 

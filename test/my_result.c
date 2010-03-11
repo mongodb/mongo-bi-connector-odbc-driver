@@ -2499,6 +2499,94 @@ DECLARE_TEST(t_bug39644)
 }
 
 
+/*
+Bug#32821(it might be duplicate though): Wrong value if bit field is bound to
+other than SQL_C_BIT variable
+*/
+DECLARE_TEST(t_bug32821)
+{
+  SQLRETURN     rc;
+  SQLUINTEGER   b;
+  SQLUSMALLINT  c;
+  SQLINTEGER    a_ind, b_ind, c_ind, i, j, k;
+  unsigned char a;
+
+  SQL_NUMERIC_STRUCT b_numeric;
+
+  SQLUINTEGER   par=  sizeof(SQLUSMALLINT)*8+1;
+  SQLUINTEGER   beoyndShortBit= 1<<(par-1);
+  SQLINTEGER    sPar= sizeof(SQLUINTEGER);
+
+  /* 131071 = 0x1ffff - all 1 for field c*/
+  SQLCHAR * insStmt= "insert into t_bug32821 values (0,0,0),(1,1,1)\
+                      ,(1,255,131071),(1,258,?)";
+  const unsigned char expected_a[]= {'\0', '\1', '\1', '\1'};
+  const SQLUINTEGER    expected_b[]= {0L, 1L, 255L, 258L};
+  const SQLUSMALLINT  expected_c[]= {0, 1, 65535, 0};
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug32821");
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, "CREATE TABLE t_bug32821 (a BIT(1), b BIT(16)\
+                                   , c BIT(?))", SQL_NTS));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_ULONG
+    , SQL_INTEGER, 0, 0, &par, 0, &sPar ));
+  ok_stmt(hstmt, SQLExecute(hstmt));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, insStmt, SQL_NTS));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_ULONG
+    , SQL_INTEGER, 0, 0, &beoyndShortBit, 0
+    , &sPar ));
+  ok_stmt(hstmt, SQLExecute(hstmt));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "SELECT a,b,c FROM t_bug32821");
+
+  ok_stmt( hstmt, SQLBindCol( hstmt, 1, SQL_C_BIT,    &a, 0, &a_ind ) );
+  ok_stmt( hstmt, SQLBindCol( hstmt, 2, SQL_C_ULONG,  &b, 0, &b_ind ) );
+  /*ok_stmt( hstmt, SQLBindCol( hstmt, 1, SQL_C_TYPE_DATE,  &d, 0, &b_ind ) );*/
+  ok_stmt( hstmt, SQLBindCol( hstmt, 3, SQL_C_USHORT, &c, 0, &c_ind ) );
+
+  i= 0;
+  while( (rc= SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0)) != SQL_NO_DATA_FOUND)
+  {
+    /*printMessage("testing row #%d", i+1);*/
+    is_num(a, expected_a[i]);
+    is_num(b, expected_b[i]);
+    is_num(c, expected_c[i]);
+
+    /* Test of binding to numeric - added later so a bit messy */
+    for (k= 1; k < 3; ++k)
+    {
+      b_ind= sizeof(SQL_NUMERIC_STRUCT);
+      SQLGetData(hstmt, (SQLUSMALLINT)k, SQL_C_NUMERIC, &b_numeric, 0, &b_ind);
+
+      b= 0;
+      for(j= 0; j < b_numeric.precision; ++j)
+      {
+        b+= (0xff & b_numeric.val[j]) << 8*j;
+      }
+
+      switch (k)
+      {
+      case 1: is_num(b, expected_a[i]); break;
+      case 2: is_num(b, expected_b[i]); break;
+      }
+      
+    }
+ 
+    ++i;
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug32821");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -2538,6 +2626,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug36069)
   ADD_TEST(t_bug41942)
   ADD_TEST(t_bug39644)
+  ADD_TEST(t_bug32821)
 END_TESTS
 
 

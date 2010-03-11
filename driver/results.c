@@ -50,6 +50,104 @@ void reset_getdata_position(STMT *stmt)
 }
 
 
+/* Verifies if C type is suitable for copying SQL_BINARY data
+   http://msdn.microsoft.com/en-us/library/ms713559%28VS.85%29.aspx */
+my_bool is_binary_ctype( SQLSMALLINT cType)
+{
+  return (cType == SQL_C_CHAR
+       || cType == SQL_C_BINARY
+       || cType == SQL_C_WCHAR);
+}
+
+
+/* Converts binary(currently used for bit field only) to long long number.*/
+void binary2numeric(long long *dst, char *src, uint srcLen)
+{
+  *dst= 0;
+
+  while (srcLen)
+  {
+    /* if source binary data is longer than 8 bytes(size of long long)
+       we consider only minor 8 bytes */
+    if (srcLen > sizeof(long long))
+          continue;
+    *dst+= (0xff & *src++) << (--srcLen)*8;
+  }
+}
+
+
+/* Function that verifies if conversion from given sql type to c type supported.
+   Based on http://msdn.microsoft.com/en-us/library/ms709280%28VS.85%29.aspx
+   and underlying pages.
+   Currently checks conversions for MySQL BIT(n) field(SQL_BIT or SQL_BINARY)
+*/
+my_bool odbc_supported_conversion(SQLSMALLINT sqlType, SQLSMALLINT cType)
+{
+  switch (sqlType)
+  {
+  case SQL_BIT:
+    {
+      switch (cType)
+      {
+      case SQL_C_DATE:
+      case SQL_C_TYPE_DATE:
+      case SQL_C_TIME:
+      case SQL_C_TYPE_TIME:
+      case SQL_C_TIMESTAMP:
+      case SQL_C_TYPE_TIMESTAMP:
+        return FALSE;
+      }
+    }
+  case SQL_BINARY:
+    {
+      return is_binary_ctype(cType);
+    }
+  }
+
+  return TRUE;
+}
+
+
+ /* Conversion supported by driver as exception to odbc specs
+    (i.e. to odbc_supported_conversion() results).
+    e.g. we map bit(n>1) to SQL_BINARY, but provide its conversion to numeric
+    types */
+ my_bool driver_supported_conversion(MYSQL_FIELD * field, SQLSMALLINT cType)
+ {
+   switch(field->type)
+   {
+   case MYSQL_TYPE_BIT:
+     {
+       switch (cType)
+       {
+       case SQL_C_BIT:
+       case SQL_C_TINYINT:
+       case SQL_C_STINYINT:
+       case SQL_C_UTINYINT:
+       case SQL_C_SHORT:
+       case SQL_C_SSHORT:
+       case SQL_C_USHORT:
+       case SQL_C_LONG:
+       case SQL_C_SLONG:
+       case SQL_C_ULONG:
+       case SQL_C_FLOAT:
+       case SQL_C_DOUBLE:
+       case SQL_C_SBIGINT:
+       case SQL_C_UBIGINT:
+         return TRUE;
+
+       /* SQL_BIT should be converted SQL_C_NUMERIC, while SQL_BINARY should not
+          Tempted not convert to it at all */
+       case SQL_C_NUMERIC:
+         return TRUE;
+       }
+     }
+   }
+
+   return FALSE;
+ }
+
+
 /**
   Retrieve the data from a field as a specified ODBC C type.
 
@@ -71,7 +169,9 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
              SQLPOINTER rgbValue, SQLLEN cbValueMax, SQLLEN *pcbValue,
              char *value, uint length, DESCREC *arrec)
 {
-  SQLLEN tmp;
+  SQLLEN    tmp;
+  long long numericValue;
+  my_bool   convert= 1;
 
   /* get the exact type if we don't already have it */
   if (fCType == SQL_C_DEFAULT)
@@ -114,8 +214,28 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
   }
   else
   {
+    if (!odbc_supported_conversion(get_sql_data_type(stmt, field, 0), fCType)
+     && !driver_supported_conversion(field,fCType))
+    {
+      return set_stmt_error(stmt, "07009", "Conversion is not possible", 0);
+    }
+
     if (!pcbValue)
       pcbValue= &tmp; /* Easier code */
+
+    if (field->type == MYSQL_TYPE_BIT)
+    {
+      if (is_binary_ctype(fCType))
+      {
+        return copy_binary_result(stmt, (SQLCHAR *)rgbValue, cbValueMax
+          , pcbValue, field , value , length);
+      }
+      else
+      {
+        binary2numeric(&numericValue, value, length);
+        convert= 0;
+      }
+    }
 
     switch (fCType) {
     case SQL_C_CHAR:
@@ -182,6 +302,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
           length= 19;
         }
 
+        /* Looks like this if and its "else" part are not needed here */
         if (fCType == SQL_C_BINARY)
           return copy_binary_result(stmt, (SQLCHAR *)rgbValue, cbValueMax,
                                     pcbValue, field, value, length);
@@ -199,10 +320,12 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
     case SQL_C_BIT:
       if (rgbValue)
       {
-        if (value[0] && value[0] != '0')
-          *((char *)rgbValue)= 1;
+        /* for MySQL bit(n>1) 1st byte may be '\0'. So testing already converted
+           to a number value or atoi for other types. */
+        if (!convert)
+          *((char *)rgbValue)= numericValue > 0 ? '\1' : '\0';
         else
-          *((char *)rgbValue)= 0;
+          *((char *)rgbValue)= atoi(value) > 0 ? '\1' : '\0';
       }
       *pcbValue= 1;
       break;
@@ -210,26 +333,34 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
     case SQL_C_TINYINT:
     case SQL_C_STINYINT:
       if (rgbValue)
-        *((SQLSCHAR *)rgbValue)= (SQLSCHAR)atoi(value);
+        *((SQLSCHAR *)rgbValue)= (SQLSCHAR)(convert
+                                            ? atoi(value)
+                                            : (numericValue & (SQLSCHAR)(-1)));
       *pcbValue= 1;
       break;
 
     case SQL_C_UTINYINT:
       if (rgbValue)
-        *((SQLCHAR *)rgbValue)= (SQLCHAR)(unsigned int)atoi(value);
+        *((SQLCHAR *)rgbValue)= (SQLCHAR)(unsigned int)(convert
+                                             ? atoi(value)
+                                             : (numericValue & (SQLCHAR)(-1)));
       *pcbValue= 1;
       break;
 
     case SQL_C_SHORT:
     case SQL_C_SSHORT:
       if (rgbValue)
-        *((SQLSMALLINT *)rgbValue)= (SQLSMALLINT)atoi(value);
+        *((SQLSMALLINT *)rgbValue)= (SQLSMALLINT)(convert
+                                         ? atoi(value)
+                                         : (numericValue & (SQLUSMALLINT)(-1)));
       *pcbValue= sizeof(SQLSMALLINT);
       break;
 
     case SQL_C_USHORT:
       if (rgbValue)
-        *((SQLUSMALLINT *)rgbValue)= (SQLUSMALLINT)(uint)atol(value);
+        *((SQLUSMALLINT *)rgbValue)= (SQLUSMALLINT)(uint)(convert
+                                          ? atol(value)
+                                          : (numericValue & (SQLUSMALLINT)(-1)));
       *pcbValue= sizeof(SQLUSMALLINT);
       break;
 
@@ -238,34 +369,42 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
       if (rgbValue)
       {
         /* Check if it could be a date...... :) */
-        if (length >= 10 && value[4] == '-' && value[7] == '-' &&
-             (!value[10] || value[10] == ' '))
-        {
-          *((SQLINTEGER *)rgbValue)= ((SQLINTEGER) atol(value) * 10000L +
-                                      (SQLINTEGER) atol(value + 5) * 100L +
-                                      (SQLINTEGER) atol(value + 8));
-        }
+        if (convert)
+          if (length >= 10 && value[4] == '-' && value[7] == '-' &&
+               (!value[10] || value[10] == ' '))
+          {
+            *((SQLINTEGER *)rgbValue)= ((SQLINTEGER) atol(value) * 10000L +
+                                        (SQLINTEGER) atol(value + 5) * 100L +
+                                        (SQLINTEGER) atol(value + 8));
+          }
+          else
+            *((SQLINTEGER *)rgbValue)= (SQLINTEGER) atol(value);
         else
-          *((SQLINTEGER *)rgbValue)= (SQLINTEGER) atol(value);
+          *((SQLINTEGER *)rgbValue)= (SQLINTEGER)(numericValue
+                                                  & (SQLUINTEGER)(-1));
       }
       *pcbValue= sizeof(SQLINTEGER);
       break;
 
     case SQL_C_ULONG:
       if (rgbValue)
-        *((SQLUINTEGER *)rgbValue)= (SQLUINTEGER)strtoul(value, NULL, 10);
+        *((SQLUINTEGER *)rgbValue)= (SQLUINTEGER)(convert
+                                            ? strtoul(value, NULL, 10)
+                                            : numericValue & (SQLUINTEGER)(-1));
       *pcbValue= sizeof(SQLUINTEGER);
       break;
 
     case SQL_C_FLOAT:
       if (rgbValue)
-        *((float *)rgbValue)= (float)atof(value);
+        *((float *)rgbValue)= (float)(convert ? atof(value)
+                                              : numericValue & (int)(-1));
       *pcbValue= sizeof(float);
       break;
 
     case SQL_C_DOUBLE:
       if (rgbValue)
-        *((double *)rgbValue)= (double)strtod(value, NULL);
+        *((double *)rgbValue)= (double)(convert ? strtod(value, NULL)
+                                                : numericValue);
       *pcbValue= sizeof(double);
       break;
 
@@ -375,14 +514,17 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
     case SQL_C_SBIGINT:
       /** @todo This is not right. SQLBIGINT is not always longlong. */
       if (rgbValue)
-        *((longlong *)rgbValue)= (longlong)strtoll(value, NULL, 10);
+        *((longlong *)rgbValue)= (longlong)(convert ? strtoll(value, NULL, 10)
+                                                    : numericValue);
       *pcbValue= sizeof(longlong);
       break;
 
     case SQL_C_UBIGINT:
       /** @todo This is not right. SQLUBIGINT is not always ulonglong.  */
       if (rgbValue)
-          *((ulonglong *)rgbValue)= (ulonglong)strtoull(value, NULL, 10);
+          *((ulonglong *)rgbValue)= (ulonglong)(convert
+                                                ? strtoull(value, NULL, 10)
+                                                : numericValue);
       *pcbValue= sizeof(ulonglong);
       break;
 
@@ -391,7 +533,21 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
         int overflow= 0;
         SQL_NUMERIC_STRUCT *sqlnum= (SQL_NUMERIC_STRUCT *) rgbValue;
         if (rgbValue)
-          sqlnum_from_str(value, sqlnum, &overflow);
+        {
+          if (convert)
+            sqlnum_from_str(value, sqlnum, &overflow);
+          else /* bit field */
+          {
+            /* Lazy way - converting number we have to a string.
+               If it couldn't happen we have to scale/unscale number - we would
+               just reverse binary data */
+            char _value[21]; /* max string length of 64bit number */
+            sprintf(_value, "%llu", numericValue);
+
+            sqlnum_from_str(_value, sqlnum, &overflow);
+          }
+
+        }
         *pcbValue= sizeof(ulonglong);
         if (overflow)
           return set_stmt_error(stmt, "22003",
