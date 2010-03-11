@@ -2681,6 +2681,18 @@ int is_set_names_statement(SQLCHAR *query)
 
 
 /**
+Detect if a statement is a SELECT statement.
+*/
+int is_select_statement(SQLCHAR *query)
+{
+  /* Skip leading spaces */
+  while (query && isspace(*query))
+    query++;
+  return myodbc_casecmp((char *)query, "SELECT", 6) == 0;
+}
+
+
+/**
   Adjust a pointer based on bind offset and bind type.
 
   @param[in] ptr The base pointer

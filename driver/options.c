@@ -648,13 +648,10 @@ MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
                                         ValuePtr, SQL_IS_POINTER);
 
         case SQL_ATTR_PARAMSET_SIZE:
-            return set_error(hstmt,MYERR_01S02,
-                             "Param arrays not supported",0);
-#if ALLOW_SETTING_DESC_ARRAY_SIZE
             return stmt_SQLSetDescField(stmt, stmt->apd, 0,
                                         SQL_DESC_ARRAY_SIZE,
                                         ValuePtr, SQL_IS_ULEN);
-#endif
+
 
         case SQL_ATTR_ROW_ARRAY_SIZE:
         case SQL_ROWSET_SIZE:

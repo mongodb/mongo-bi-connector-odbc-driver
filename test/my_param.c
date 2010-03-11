@@ -375,6 +375,374 @@ DECLARE_TEST(t_param_offset)
 
 
 /*
+Bug 48310 - parameters array support request.
+Binding by row test
+*/
+DECLARE_TEST(paramarray_by_row)
+{
+#define ROWS_TO_INSERT 3
+#define STR_FIELD_LENGTH 255
+  typedef struct DataBinding
+  {
+    SQLCHAR     bData[5];
+    SQLINTEGER  intField;
+    SQLCHAR     strField[STR_FIELD_LENGTH];
+    SQLINTEGER  indBin;
+    SQLINTEGER  indInt;
+    SQLINTEGER  indStr;
+  } DATA_BINDING;
+
+   const SQLCHAR *str[]= {"nothing for 1st", "longest string for row 2", "shortest"  };
+
+  SQLCHAR       buff[50];
+  DATA_BINDING  dataBinding[ROWS_TO_INSERT];
+  SQLUSMALLINT  paramStatusArray[ROWS_TO_INSERT];
+  SQLULEN       paramsProcessed, i, nLen;
+  SQLLEN        rowsCount;
+
+  //ok_stmt(hstmt, SQLExecDirect(hstmt, "set @@session.sql_mode='NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,NO_BACKSLASH_ESCAPES'", SQL_NTS));
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "DROP TABLE IF EXISTS t_bug48310", SQL_NTS));
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "CREATE TABLE t_bug48310 (id int primary key auto_increment,"\
+    "bData binary(5) NULL, intField int not null, strField varchar(255) not null)", SQL_NTS));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAM_BIND_TYPE, (SQLPOINTER)sizeof(DATA_BINDING), 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)ROWS_TO_INSERT, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAM_STATUS_PTR, paramStatusArray, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAMS_PROCESSED_PTR, &paramsProcessed, 0));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_BINARY, SQL_BINARY,
+    0, 0, dataBinding[0].bData, 0, &dataBinding[0].indBin));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER,
+    0, 0, &dataBinding[0].intField, 0, &dataBinding[0].indInt));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 3, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR,
+    0, 0, dataBinding[0].strField, 0, &dataBinding[0].indStr ));
+
+  memcpy(dataBinding[0].bData, "\x01\x80\x00\x80\x00", 5);
+  dataBinding[0].intField= 1;
+ 
+  memcpy(dataBinding[1].bData, "\x02\x80\x00\x80", 4);
+  dataBinding[1].intField= 0;
+ 
+  memcpy(dataBinding[2].bData, "\x03\x80\x00", 3);
+  dataBinding[2].intField= 223322;
+ 
+  for (i= 0; i < ROWS_TO_INSERT; ++i)
+  {
+    strcpy(dataBinding[i].strField, str[i]);
+    dataBinding[i].indBin= 5 - i;
+    dataBinding[i].indInt= 0;
+    dataBinding[i].indStr= SQL_NTS;
+  }
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "INSERT INTO t_bug48310 (bData, intField, strField) " \
+    "VALUES (?,?,?)", SQL_NTS));
+
+  is_num(paramsProcessed, ROWS_TO_INSERT);
+
+  ok_stmt(hstmt, SQLRowCount(hstmt, &rowsCount));
+  is_num(rowsCount, ROWS_TO_INSERT);
+
+  for (i= 0; i < paramsProcessed; ++i)
+    if ( paramStatusArray[i] != SQL_PARAM_SUCCESS
+      && paramStatusArray[i] != SQL_PARAM_SUCCESS_WITH_INFO )
+    {
+      printMessage("Parameter #%u status isn't successful(0x%X)", i+1, paramStatusArray[i]);
+      return FAIL;
+    }
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)1, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAMS_PROCESSED_PTR, NULL, 0));
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "SELECT bData, intField, strField\
+                                      FROM t_bug48310\
+                                      ORDER BY id", SQL_NTS));
+
+  /* Just to make sure RowCount isn't broken */
+  ok_stmt(hstmt, SQLRowCount(hstmt, &rowsCount));
+  is_num(rowsCount, ROWS_TO_INSERT);
+
+  for (i= 0; i < paramsProcessed; ++i)
+  {
+    ok_stmt(hstmt, SQLFetch(hstmt));
+
+    ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_BINARY, (SQLPOINTER)buff, 50, &nLen));
+    is(memcmp((const void*) buff, (const void*)dataBinding[i].bData, 5 - i)==0);
+    is_num(my_fetch_int(hstmt, 2), dataBinding[i].intField);
+    is_str(my_fetch_str(hstmt, buff, 3), dataBinding[i].strField, strlen(str[i]));
+  }
+
+  expect_stmt(hstmt,SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  /* One more check that RowCount isn't broken. check may get broken if input data
+     changes */
+  ok_sql(hstmt, "update t_bug48310 set strField='changed' where intField > 1");
+  ok_stmt(hstmt, SQLRowCount(hstmt, &rowsCount));
+  is_num(rowsCount, 1);
+
+  /* Clean-up */
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "DROP TABLE IF EXISTS bug48310", SQL_NTS));
+
+  return OK;
+
+#undef ROWS_TO_INSERT
+#undef STR_FIELD_LENGTH
+}
+
+
+/*
+Bug 48310 - parameters array support request.
+Binding by column test
+*/
+DECLARE_TEST(paramarray_by_column)
+{
+#define ROWS_TO_INSERT 3
+#define STR_FIELD_LENGTH 5
+  SQLCHAR       buff[50];
+
+  SQLCHAR       bData[ROWS_TO_INSERT][STR_FIELD_LENGTH]={{0x01, 0x80, 0x00, 0x80, 0x03},
+                                          {0x02, 0x80, 0x00, 0x02},
+                                          {0x03, 0x80, 0x01}};
+  SQLLEN        bInd[ROWS_TO_INSERT]= {5,4,3};
+
+  const SQLCHAR strField[ROWS_TO_INSERT][STR_FIELD_LENGTH]= {{'\0'}, {'x','\0'}, {'x','x','x','\0'} };
+  SQLLEN        strInd[ROWS_TO_INSERT]= {SQL_NTS, SQL_NTS, SQL_NTS};
+
+  SQLINTEGER    intField[ROWS_TO_INSERT] = {123321, 1, 0};
+  SQLLEN        intInd[ROWS_TO_INSERT]= {5,4,3};
+
+  SQLUSMALLINT  paramStatusArray[ROWS_TO_INSERT];
+  SQLULEN       paramsProcessed, i, nLen;
+
+  //ok_stmt(hstmt, SQLExecDirect(hstmt, "set @@session.sql_mode='NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,NO_BACKSLASH_ESCAPES'", SQL_NTS));
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "DROP TABLE IF EXISTS t_bug48310", SQL_NTS));
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "CREATE TABLE t_bug48310 (id int primary key auto_increment,"\
+    "bData binary(5) NULL, intField int not null, strField varchar(255) not null)", SQL_NTS));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAM_BIND_TYPE, SQL_PARAM_BIND_BY_COLUMN, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)ROWS_TO_INSERT, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAM_STATUS_PTR, paramStatusArray, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAMS_PROCESSED_PTR, &paramsProcessed, 0));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_BINARY, SQL_BINARY,
+    0, 0, bData, 5, bInd));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER,
+    0, 0, intField, 0, intInd));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 3, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR,
+    0, 0, (SQLPOINTER)strField, 5, strInd ));
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "INSERT INTO t_bug48310 (bData, intField, strField) " \
+    "VALUES (?,?,?)", SQL_NTS));
+
+  is_num(paramsProcessed, ROWS_TO_INSERT);
+
+  for (i= 0; i < paramsProcessed; ++i)
+    if ( paramStatusArray[i] != SQL_PARAM_SUCCESS
+      && paramStatusArray[i] != SQL_PARAM_SUCCESS_WITH_INFO )
+    {
+      printMessage("Parameter #%u status isn't successful(0x%X)", i+1, paramStatusArray[i]);
+      return FAIL;
+    }
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)1, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAMS_PROCESSED_PTR, NULL, 0));
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "SELECT bData, intField, strField\
+                                       FROM t_bug48310\
+                                       ORDER BY id", SQL_NTS));
+
+  for (i= 0; i < paramsProcessed; ++i)
+  {
+    ok_stmt(hstmt, SQLFetch(hstmt));
+
+    ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_BINARY, (SQLPOINTER)buff, 50, &nLen));
+    if (memcmp((const void*) buff, bData[i], 5 - i)!=0)
+    {
+      printMessage("Bin data inserted wrongly. Read: 0x%02X%02X%02X%02X%02X Had to be: 0x%02X%02X%02X%02X%02X"
+        , buff[0], buff[1], buff[2], buff[3], buff[4]
+        , bData[i][0], bData[i][1], bData[i][2], bData[i][3], bData[i][4]);
+      return FAIL;
+    }
+    is_num(my_fetch_int(hstmt, 2), intField[i]);
+    is_str(my_fetch_str(hstmt, buff, 3), strField[i], strlen(strField[i]));
+  }
+
+  /* Clean-up */
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  //ok_stmt(hstmt, SQLExecDirect(hstmt, "DROP TABLE IF EXISTS bug48310", SQL_NTS));
+
+  return OK;
+
+#undef ROWS_TO_INSERT
+#undef STR_FIELD_LENGTH
+}
+
+
+/*
+Bug 48310 - parameters array support request.
+Ignore paramset test
+*/
+DECLARE_TEST(paramarray_ignore_paramset)
+{
+#define ROWS_TO_INSERT 4
+#define STR_FIELD_LENGTH 5
+  SQLCHAR       buff[50];
+
+  SQLCHAR       bData[ROWS_TO_INSERT][STR_FIELD_LENGTH]={{0x01, 0x80, 0x00, 0x80, 0x03},
+                                                        {0x02, 0x80, 0x00, 0x02},
+                                                        {0x03, 0x80, 0x01}};
+  SQLLEN        bInd[ROWS_TO_INSERT]= {5,4,3};
+
+  const SQLCHAR strField[ROWS_TO_INSERT][STR_FIELD_LENGTH]= {{'\0'}, {'x','\0'}, {'x','x','x','\0'} };
+  SQLLEN        strInd[ROWS_TO_INSERT]= {SQL_NTS, SQL_NTS, SQL_NTS};
+
+  SQLINTEGER    intField[ROWS_TO_INSERT] = {123321, 1, 0};
+  SQLLEN        intInd[ROWS_TO_INSERT]= {5,4,3};
+
+  SQLUSMALLINT  paramOperationArr[ROWS_TO_INSERT]={0,SQL_PARAM_IGNORE,0,SQL_PARAM_IGNORE};
+  SQLUSMALLINT  paramStatusArr[ROWS_TO_INSERT];
+  SQLULEN       paramsProcessed, i, nLen, rowsInserted= 0;
+
+  //ok_stmt(hstmt, SQLExecDirect(hstmt, "set @@session.sql_mode='NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,NO_BACKSLASH_ESCAPES'", SQL_NTS));
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "DROP TABLE IF EXISTS t_bug48310", SQL_NTS));
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "CREATE TABLE t_bug48310 (id int primary key auto_increment,"\
+    "bData binary(5) NULL, intField int not null, strField varchar(255) not null)", SQL_NTS));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAM_BIND_TYPE, SQL_PARAM_BIND_BY_COLUMN, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)ROWS_TO_INSERT, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAM_STATUS_PTR, paramStatusArr, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAM_OPERATION_PTR, paramOperationArr, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAMS_PROCESSED_PTR, &paramsProcessed, 0));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_BINARY, SQL_BINARY,
+    0, 0, bData, 5, bInd));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER,
+    0, 0, intField, 0, intInd));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 3, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR,
+    0, 0, (SQLPOINTER)strField, 5, strInd ));
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "INSERT INTO t_bug48310 (bData, intField, strField) " \
+    "VALUES (?,?,?)", SQL_NTS));
+
+  is_num(paramsProcessed, ROWS_TO_INSERT);
+
+  for (i= 0; i < paramsProcessed; ++i)
+  {
+    if (paramOperationArr[i] == SQL_PARAM_IGNORE)
+    {
+      is_num(paramStatusArr[i], SQL_PARAM_UNUSED);
+    }
+    else if ( paramStatusArr[i] != SQL_PARAM_SUCCESS
+      && paramStatusArr[i] != SQL_PARAM_SUCCESS_WITH_INFO )
+    {
+      printMessage("Parameter #%u status isn't successful(0x%X)", i+1, paramStatusArr[i]);
+      return FAIL;
+    }
+  }
+
+  /* Resetting statements attributes */
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)1, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAMS_PROCESSED_PTR, NULL, 0));
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "SELECT bData, intField, strField\
+                                      FROM t_bug48310\
+                                      ORDER BY id", SQL_NTS));
+
+  i= 0;
+  while(i < paramsProcessed)
+  {
+    if (paramStatusArr[i] == SQL_PARAM_UNUSED)
+    {
+      ++i;
+      continue;
+    }
+
+    ok_stmt(hstmt, SQLFetch(hstmt));
+
+    ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_BINARY, (SQLPOINTER)buff, 50, &nLen));
+
+    if (memcmp((const void*) buff, bData[i], 5 - i)!=0)
+    {
+      printMessage("Bin data inserted wrongly. Read: 0x%02X%02X%02X%02X%02X Had to be: 0x%02X%02X%02X%02X%02X"
+        , buff[0], buff[1], buff[2], buff[3], buff[4]
+      , bData[i][0], bData[i][1], bData[i][2], bData[i][3], bData[i][4]);
+      return FAIL;
+    }
+    is_num(my_fetch_int(hstmt, 2), intField[i]);
+    is_str(my_fetch_str(hstmt, buff, 3), strField[i], strlen(strField[i]));
+
+    ++rowsInserted;
+    ++i;
+  }
+
+  /* Making sure that there is nothing else to fetch ... */
+  expect_stmt(hstmt,SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  /* ... and that inserted was less than SQL_ATTR_PARAMSET_SIZE rows */
+  is( rowsInserted < ROWS_TO_INSERT);
+  
+  /* Clean-up */
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  //ok_stmt(hstmt, SQLExecDirect(hstmt, "DROP TABLE IF EXISTS bug48310", SQL_NTS));
+
+  return OK;
+
+#undef ROWS_TO_INSERT
+#undef STR_FIELD_LENGTH
+}
+
+
+/*
+  Bug 48310 - parameters array support request.
+  Select statement.
+*/
+DECLARE_TEST(paramarray_select)
+{
+#define STMTS_TO_EXEC 3
+
+  SQLINTEGER    intField[STMTS_TO_EXEC] = {3, 1, 2};
+  SQLLEN        intInd[STMTS_TO_EXEC]= {5,4,3};
+
+  SQLUSMALLINT  paramStatusArray[STMTS_TO_EXEC];
+  SQLULEN       paramsProcessed, i;
+
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAM_BIND_TYPE, SQL_PARAM_BIND_BY_COLUMN, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)STMTS_TO_EXEC, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAM_STATUS_PTR, paramStatusArray, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_PARAMS_PROCESSED_PTR, &paramsProcessed, 0));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER,
+    0, 0, intField, 0, intInd));
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "SELect ?,'So what'", SQL_NTS));
+
+  is_num(paramsProcessed, STMTS_TO_EXEC);
+
+  for (i= 0; i < paramsProcessed; ++i)
+  {
+    if ( paramStatusArray[i] != SQL_PARAM_SUCCESS
+      && paramStatusArray[i] != SQL_PARAM_SUCCESS_WITH_INFO )
+    {
+      printMessage("Parameter #%u status isn't successful(0x%X)", i+1, paramStatusArray[i]);
+      return FAIL;
+    }
+
+    ok_stmt(hstmt, SQLFetch(hstmt));
+
+    is_num(my_fetch_int(hstmt, 1), intField[i]);
+  }
+
+  /* Clean-up */
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  return OK;
+
+#undef STMTS_TO_EXEC
+}
+
+
+/*
   Bug #49029 - Server with sql mode NO_BACKSLASHES_ESCAPE obviously
   can work incorrectly (at least) with binary parameters
 */
@@ -394,6 +762,8 @@ DECLARE_TEST(t_bug49029)
   ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_BINARY, (SQLPOINTER)buff, 6, &len));
 
   is(memcmp((const void*) buff, (const void*)bData, 5)==0);
+
+  return OK;
 }
 
 
@@ -404,6 +774,10 @@ BEGIN_TESTS
   ADD_TEST(my_param_delete)
   ADD_TEST(tmysql_fix)
   ADD_TEST(t_param_offset)
+  ADD_TEST(paramarray_by_row)
+  ADD_TEST(paramarray_by_column)
+  ADD_TEST(paramarray_ignore_paramset)
+  ADD_TEST(paramarray_select)
   ADD_TEST(t_bug49029)
 END_TESTS
 

@@ -561,7 +561,7 @@ MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
     MYINFO_SET_ULONG(SQL_PARC_NO_BATCH);
 
   case SQL_PARAM_ARRAY_SELECTS:
-    MYINFO_SET_ULONG(SQL_PAS_NO_SELECT);
+    MYINFO_SET_ULONG(SQL_PAS_NO_BATCH);
 
   case SQL_PROCEDURE_TERM:
     if (is_minimum_version(dbc->mysql.server_version, "5.0", 3))
