@@ -35,6 +35,7 @@
 #include "errmsg.h"
 #include <ctype.h>
 
+const SQLULEN sql_select_unlimited= (SQLULEN)-1;
 
 /**
   Execute a SQL statement.
@@ -2722,4 +2723,39 @@ void *ptr_offset_adjust(void *ptr, SQLULEN *bind_offset_ptr,
     offset+= bind_type * row;
 
   return ptr ? ((SQLCHAR *) ptr) + offset : NULL;
+}
+
+
+/**
+  Sets the value of @@sql_select_limit
+
+  @param[in]  dbc         dbc handler
+  @param[in]  new_value   Value to set @@sql_select_limit.
+
+  Returns new_value if operation was successful, -1 otherwise
+ */
+SQLRETURN set_sql_select_limit(DBC *dbc, SQLULEN new_value)
+{
+  char query[44];
+  SQLRETURN rc;
+
+  /* Both 0 and max(SQLULEN) value mean no limit and sql_select_limit to DEFAULT */
+  if (new_value == dbc->sql_select_limit
+   || new_value == sql_select_unlimited && dbc->sql_select_limit == 0)
+    return SQL_SUCCESS;
+
+  if (new_value > 0 && new_value < sql_select_unlimited)
+    sprintf(query, "set @@sql_select_limit=%lu", (unsigned long)new_value);
+  else
+  {
+    strcpy(query, "set @@sql_select_limit=DEFAULT");
+    new_value= 0;
+  }
+
+  if (SQL_SUCCEEDED(rc= odbc_stmt(dbc, query)))
+  {
+    dbc->sql_select_limit= new_value;
+  }
+
+  return rc;
 }

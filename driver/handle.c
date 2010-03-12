@@ -221,6 +221,7 @@ SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc)
     dbc->unicode= 0;
     dbc->ansi_charset_info= dbc->cxn_charset_info= NULL;
     dbc->exp_desc= NULL;
+    dbc->sql_select_limit= (SQLULEN) -1;
     pthread_mutex_init(&dbc->lock,NULL);
     pthread_mutex_lock(&dbc->lock);
     myodbc_ov_init(penv->odbc_ver); /* Initialize based on ODBC version */

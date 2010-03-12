@@ -47,30 +47,15 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
     if ( !query )
         return error;       /* Probably error from insert_param */
 
+    if(!SQL_SUCCEEDED(set_sql_select_limit(stmt->dbc, stmt->stmt_options.max_rows)))
+    {
+      /* if setting sql_select_limit fails, the query will probably fail anyway too */
+      return error;
+    }
+
     if (query_length == 0)
       query_length= strlen(query);
 
-    if (stmt->stmt_options.max_rows &&
-        stmt->stmt_options.max_rows != (SQLULEN)~0L)
-    {
-        /* Add limit to select statement */
-        char *pos,*tmp_buffer;
-        for ( pos= query; isspace(*pos) ; pos++ ) ;
-        if ( !myodbc_casecmp(pos,"select",6) )
-        {
-            uint length= strlen(pos);
-            if ( (tmp_buffer= my_malloc(length+30,MYF(0))) )
-            {
-                memcpy(tmp_buffer,pos,length);
-                sprintf(tmp_buffer+length, " limit %lu",
-                        (unsigned long)stmt->stmt_options.max_rows);
-                if ( query != stmt->query )
-                    my_free(query,MYF(0));
-                query= tmp_buffer;
-                query_length=length + strlen(tmp_buffer+length);
-            }
-        }
-    }
     MYLOG_QUERY(stmt, query);
     pthread_mutex_lock(&stmt->dbc->lock);
     if ( check_if_server_is_alive( stmt->dbc ) )

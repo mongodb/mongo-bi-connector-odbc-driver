@@ -146,6 +146,8 @@ int is_select_statement(SQLCHAR *query);
 
 void reset_getdata_position(STMT *stmt);
 
+SQLRETURN set_sql_select_limit(DBC *dbc, SQLULEN new_value);
+
 uint32
 copy_and_convert(char *to, uint32 to_length, CHARSET_INFO *to_cs,
                  const char *from, uint32 from_length, CHARSET_INFO *from_cs,

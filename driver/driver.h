@@ -323,30 +323,32 @@ typedef struct	tagENV
 
 typedef struct tagDBC
 {
-  ENV		*env;
-  MYSQL		mysql;
-  LIST		*statements;
-  LIST		*exp_desc; /* explicit descriptors */
-  LIST		list;
-  STMT_OPTIONS	stmt_options;
-  MYERROR	error;
-  FILE		*query_log;
-  char		st_error_prefix[255];
+  ENV           *env;
+  MYSQL         mysql;
+  LIST          *statements;
+  LIST          *exp_desc; /* explicit descriptors */
+  LIST          list;
+  STMT_OPTIONS  stmt_options;
+  MYERROR       error;
+  FILE          *query_log;
+  char          st_error_prefix[255];
   char          *database;
-  SQLUINTEGER login_timeout;
-  time_t	last_query_time;
-  int		txn_isolation;
-  uint		port;
-  uint		cursor_count;
-  uint		commit_flag;
+  SQLUINTEGER   login_timeout;
+  time_t        last_query_time;
+  int           txn_isolation;
+  uint          port;
+  uint          cursor_count;
+  uint          commit_flag;
 #ifdef THREAD
   pthread_mutex_t lock;
 #endif
 
-  my_bool       unicode;             /* Whether SQL*ConnectW was used */
-  CHARSET_INFO *ansi_charset_info,   /* 'ANSI' charset (SQL_C_CHAR) */
-               *cxn_charset_info;    /* Connection charset ('ANSI' or utf-8) */
-  DataSource *ds;                    /* data source used to connect (parsed or stored) */
+  my_bool       unicode;            /* Whether SQL*ConnectW was used */
+  CHARSET_INFO  *ansi_charset_info, /* 'ANSI' charset (SQL_C_CHAR) */
+                *cxn_charset_info;  /* Connection charset ('ANSI' or utf-8) */
+  DataSource    *ds;                /* data source used to connect (parsed or stored) */
+  SQLULEN       sql_select_limit;   /* value of the sql_select_limit currently set for a session
+                                       (SQLULEN)(-1) if wasn't set */
 } DBC;
 
 
