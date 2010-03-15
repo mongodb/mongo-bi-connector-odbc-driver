@@ -842,7 +842,7 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
         {
           if (pStmt->apd->array_size > 1)
           {
-            rc= set_stmt_error(pStmt, "HYC00", "Parameter arrays"
+            rc= set_stmt_error(pStmt, "HYC00", "Parameter arrays "
                                 "with data at execution are not supported", 0);
             lastError= param_status_ptr;
 

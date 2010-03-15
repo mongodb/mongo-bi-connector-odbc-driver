@@ -387,9 +387,9 @@ DECLARE_TEST(paramarray_by_row)
     SQLCHAR     bData[5];
     SQLINTEGER  intField;
     SQLCHAR     strField[STR_FIELD_LENGTH];
-    SQLINTEGER  indBin;
-    SQLINTEGER  indInt;
-    SQLINTEGER  indStr;
+    SQLLEN      indBin;
+    SQLLEN      indInt;
+    SQLLEN      indStr;
   } DATA_BINDING;
 
    const SQLCHAR *str[]= {"nothing for 1st", "longest string for row 2", "shortest"  };
