@@ -41,13 +41,13 @@
  */
 DECLARE_TEST(t_desc_paramset)
 {
-  SQLUINTEGER parsetsize= 4;
-  SQLUSMALLINT parstatus[4];
-  SQLUSMALLINT parop[4]; /* operation */
-  SQLUINTEGER pardone; /* processed */
-  SQLHANDLE ipd, apd;
-  SQLINTEGER params1[4];
-  SQLINTEGER params2[4];
+  SQLUINTEGER   parsetsize= 4;
+  SQLUSMALLINT  parstatus[4];
+  SQLUSMALLINT  parop[4]; /* operation */
+  SQLULEN       pardone; /* processed */
+  SQLHANDLE     ipd, apd;
+  SQLINTEGER    params1[4];
+  SQLINTEGER    params2[4];
 
   parop[0]= SQL_PARAM_PROCEED;
   parop[1]= SQL_PARAM_IGNORE;
@@ -317,7 +317,6 @@ DECLARE_TEST(t_explicit_error)
 {
   SQLHANDLE desc1, desc2;
   SQLHANDLE expapd;
-  SQLHANDLE hdbc2;
   SQLHANDLE hstmt2;
 
   /* TODO using an exp from a different dbc */
@@ -386,7 +385,7 @@ DECLARE_TEST(t_explicit_error)
 DECLARE_TEST(t_mult_stmt_free)
 {
 #define mult_count 3
-  SQLHANDLE expard, expapd, desc;
+  SQLHANDLE expard, expapd,desc;
   SQLHANDLE stmt[mult_count];
   SQLINTEGER i;
   SQLINTEGER imp_params[mult_count];
