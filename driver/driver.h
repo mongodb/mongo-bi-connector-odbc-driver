@@ -206,7 +206,10 @@ typedef struct {
   SQLULEN      *bind_offset_ptr;
   SQLINTEGER    bind_type;
   SQLLEN        count;
-  SQLUINTEGER  *rows_processed_ptr;
+  /* Everywhere(http://msdn.microsoft.com/en-us/library/ms713560(VS.85).aspx
+     http://msdn.microsoft.com/en-us/library/ms712631(VS.85).aspx) I found 
+     it's referred as SQLULEN* */
+  SQLULEN      *rows_processed_ptr;
 
   /* internal fields */
   desc_desc_type  desc_type;
