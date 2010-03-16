@@ -2338,7 +2338,6 @@ DECLARE_TEST(t_bug34575)
 {
   SQLCHAR buff[10];
   SQLLEN len= 0;
-  SQLSMALLINT namelen, type, digits, nullable;
 
   ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *) "SELECT ?", SQL_NTS));
   strcpy((char *)buff, "2.0");
@@ -2381,7 +2380,6 @@ DECLARE_TEST(t_bug24131)
   SQLULEN count;
   UWORD status;
   SQLULEN colSize;
-  SQLRETURN rc;
 
   ok_sql(hstmt, "drop table if exists bug24131");
 
@@ -2552,7 +2550,7 @@ DECLARE_TEST(t_bug32821)
   i= 0;
   while( (rc= SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0)) != SQL_NO_DATA_FOUND)
   {
-    /*printMessage("testing row #%d", i+1);*/
+    printMessage("testing row #%d", i+1);
     is_num(a, expected_a[i]);
     is_num(b, expected_b[i]);
     is_num(c, expected_c[i]);
