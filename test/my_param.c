@@ -400,7 +400,6 @@ DECLARE_TEST(paramarray_by_row)
   SQLULEN       paramsProcessed, i, nLen;
   SQLLEN        rowsCount;
 
-  //ok_stmt(hstmt, SQLExecDirect(hstmt, "set @@session.sql_mode='NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,NO_BACKSLASH_ESCAPES'", SQL_NTS));
   ok_stmt(hstmt, SQLExecDirect(hstmt, "DROP TABLE IF EXISTS t_bug48310", SQL_NTS));
   ok_stmt(hstmt, SQLExecDirect(hstmt, "CREATE TABLE t_bug48310 (id int primary key auto_increment,"\
     "bData binary(5) NULL, intField int not null, strField varchar(255) not null)", SQL_NTS));
@@ -472,6 +471,7 @@ DECLARE_TEST(paramarray_by_row)
   }
 
   expect_stmt(hstmt,SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   /* One more check that RowCount isn't broken. check may get broken if input data
      changes */
@@ -514,7 +514,6 @@ DECLARE_TEST(paramarray_by_column)
   SQLUSMALLINT  paramStatusArray[ROWS_TO_INSERT];
   SQLULEN       paramsProcessed, i, nLen;
 
-  //ok_stmt(hstmt, SQLExecDirect(hstmt, "set @@session.sql_mode='NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,NO_BACKSLASH_ESCAPES'", SQL_NTS));
   ok_stmt(hstmt, SQLExecDirect(hstmt, "DROP TABLE IF EXISTS t_bug48310", SQL_NTS));
   ok_stmt(hstmt, SQLExecDirect(hstmt, "CREATE TABLE t_bug48310 (id int primary key auto_increment,"\
     "bData binary(5) NULL, intField int not null, strField varchar(255) not null)", SQL_NTS));
@@ -569,7 +568,7 @@ DECLARE_TEST(paramarray_by_column)
 
   /* Clean-up */
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-  //ok_stmt(hstmt, SQLExecDirect(hstmt, "DROP TABLE IF EXISTS bug48310", SQL_NTS));
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "DROP TABLE IF EXISTS bug48310", SQL_NTS));
 
   return OK;
 
@@ -603,7 +602,6 @@ DECLARE_TEST(paramarray_ignore_paramset)
   SQLUSMALLINT  paramStatusArr[ROWS_TO_INSERT];
   SQLULEN       paramsProcessed, i, nLen, rowsInserted= 0;
 
-  //ok_stmt(hstmt, SQLExecDirect(hstmt, "set @@session.sql_mode='NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,NO_BACKSLASH_ESCAPES'", SQL_NTS));
   ok_stmt(hstmt, SQLExecDirect(hstmt, "DROP TABLE IF EXISTS t_bug48310", SQL_NTS));
   ok_stmt(hstmt, SQLExecDirect(hstmt, "CREATE TABLE t_bug48310 (id int primary key auto_increment,"\
     "bData binary(5) NULL, intField int not null, strField varchar(255) not null)", SQL_NTS));
@@ -683,7 +681,7 @@ DECLARE_TEST(paramarray_ignore_paramset)
   
   /* Clean-up */
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-  //ok_stmt(hstmt, SQLExecDirect(hstmt, "DROP TABLE IF EXISTS bug48310", SQL_NTS));
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "DROP TABLE IF EXISTS bug48310", SQL_NTS));
 
   return OK;
 
@@ -754,7 +752,7 @@ DECLARE_TEST(t_bug49029)
   ok_stmt(hstmt, SQLExecDirect(hstmt, "set @@session.sql_mode='NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,NO_BACKSLASH_ESCAPES'", SQL_NTS));
 
   ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_BINARY, SQL_BINARY,
-    0, 0, bData, 0, &len));
+    0, 0, (SQLCHAR*)bData, 0, &len));
 
   ok_stmt(hstmt, SQLExecDirect(hstmt, "select ?", SQL_NTS));
 
