@@ -746,13 +746,14 @@ DECLARE_TEST(paramarray_select)
 */
 DECLARE_TEST(t_bug49029)
 {
-  const SQLCHAR bData[6]= "\x01\x80\x00\x80\x01", buff[6];
+  const SQLCHAR bData[6]= "\x01\x80\x00\x80\x01";
+  SQLCHAR buff[6];
   SQLULEN len= 5;
 
   ok_stmt(hstmt, SQLExecDirect(hstmt, "set @@session.sql_mode='NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,NO_BACKSLASH_ESCAPES'", SQL_NTS));
 
   ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_BINARY, SQL_BINARY,
-    0, 0, (SQLCHAR*)bData, 0, &len));
+    0, 0, (SQLPOINTER)bData, 0, &len));
 
   ok_stmt(hstmt, SQLExecDirect(hstmt, "select ?", SQL_NTS));
 

@@ -2187,7 +2187,7 @@ DECLARE_TEST(t_bug32684)
   {
     ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_WCHAR, wbuf,
                               20 * sizeof(SQLWCHAR), &wlen));
-    printMessage("data= %ls, len=%d\n", wbuf, wlen);
+    wprintf(L"# data= %s, len=%d\n\n", wbuf, wlen);
   } while(wlen > 20 * sizeof(SQLWCHAR));
 
   return OK;
@@ -2506,20 +2506,20 @@ DECLARE_TEST(t_bug32821)
   SQLRETURN     rc;
   SQLUINTEGER   b;
   SQLUSMALLINT  c;
-  SQLINTEGER    a_ind, b_ind, c_ind, i, j, k;
+  SQLLEN        a_ind, b_ind, c_ind, i, j, k;
   unsigned char a;
 
   SQL_NUMERIC_STRUCT b_numeric;
 
-  SQLUINTEGER   par=  sizeof(SQLUSMALLINT)*8+1;
-  SQLUINTEGER   beoyndShortBit= 1<<(par-1);
-  SQLINTEGER    sPar= sizeof(SQLUINTEGER);
+  SQLUINTEGER par=  sizeof(SQLUSMALLINT)*8+1;
+  SQLUINTEGER beoyndShortBit= 1<<(par-1);
+  SQLLEN      sPar= sizeof(SQLUINTEGER);
 
   /* 131071 = 0x1ffff - all 1 for field c*/
   SQLCHAR * insStmt= "insert into t_bug32821 values (0,0,0),(1,1,1)\
                       ,(1,255,131071),(1,258,?)";
   const unsigned char expected_a[]= {'\0', '\1', '\1', '\1'};
-  const SQLUINTEGER    expected_b[]= {0L, 1L, 255L, 258L};
+  const SQLUINTEGER   expected_b[]= {0L, 1L, 255L, 258L};
   const SQLUSMALLINT  expected_c[]= {0, 1, 65535, 0};
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug32821");
@@ -2615,8 +2615,6 @@ BEGIN_TESTS
   ADD_TEST(t_bug13776)
   ADD_TEST(t_bug13776_auto)
   ADD_TEST(t_bug28617)
-  ADD_TEST(t_bug32684)
-  ADD_TEST(t_bug34271)
   ADD_TEST(t_bug34429)
   ADD_TEST(t_bug32420)
   ADD_TEST(t_bug34575)
@@ -2625,7 +2623,9 @@ BEGIN_TESTS
   ADD_TEST(t_bug41942)
   ADD_TEST(t_bug39644)
   ADD_TEST(t_bug32821)
-END_TESTS
+  ADD_TEST(t_bug34271)
+  ADD_TEST(t_bug32684)
+  END_TESTS
 
 
 RUN_TESTS
