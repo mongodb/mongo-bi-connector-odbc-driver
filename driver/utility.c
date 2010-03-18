@@ -120,6 +120,8 @@ void fix_result_types(STMT *stmt)
       irrec->type= irrec->concise_type;
       break;
     }
+    irrec->datetime_interval_code=
+      get_dticode_from_concise_type(irrec->concise_type);
     irrec->type_name= (SQLCHAR *) irrec->row.type_name;
     irrec->length= get_column_size(stmt, field);
     /* prevent overflowing of result when ADO multiplies the length

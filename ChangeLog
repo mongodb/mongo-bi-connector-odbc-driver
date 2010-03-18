@@ -14,6 +14,7 @@
   * Binding bit field to a numeric types doesn't work. (Bug #32821)
   * Conversion flags are not complete. (Bug #43855)
   * SQL_ATTR_MAX_ROWS make some SELECT statement invalid. (Bug #49726)
+  * Certain column attributes aren't correct for date columns. (Bug #44576)
 
 ----
 

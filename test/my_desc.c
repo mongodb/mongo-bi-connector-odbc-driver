@@ -570,6 +570,26 @@ DECLARE_TEST(t_bug41081)
 }
 
 
+/*
+  Bug #44576 - SQL_DESC_DATETIME_INTERVAL_CODE not set on descriptor
+*/
+DECLARE_TEST(t_bug44576)
+{
+  SQLSMALLINT interval_code;
+  SQLSMALLINT concise_type;
+  SQLHANDLE ird;
+  ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_IMP_ROW_DESC, &ird, 0, NULL));
+  ok_sql(hstmt, "select cast('2000-10-10' as date)");
+  ok_desc(ird, SQLGetDescField(ird, 1, SQL_DESC_CONCISE_TYPE, &concise_type,
+                               SQL_IS_SMALLINT, NULL));
+  ok_desc(ird, SQLGetDescField(ird, 1, SQL_DESC_DATETIME_INTERVAL_CODE,
+                               &interval_code, SQL_IS_SMALLINT, NULL));
+  is_num(concise_type, SQL_TYPE_DATE);
+  is_num(interval_code, SQL_CODE_DATE);
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TODO(t_desc_paramset)
   ADD_TEST(t_desc_set_error)
@@ -581,6 +601,7 @@ BEGIN_TESTS
   ADD_TEST(t_set_null_use_implicit)
   ADD_TEST(t_free_stmt_with_exp_desc)
   ADD_TEST(t_bug41081)
+  ADD_TEST(t_bug44576)
 END_TESTS
 
 
