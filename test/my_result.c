@@ -399,6 +399,7 @@ DECLARE_TEST(t_max_rows)
 {
   SQLRETURN rc;
   SQLUINTEGER i;
+  SQLSMALLINT cc;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_max_rows");
 
@@ -464,6 +465,27 @@ DECLARE_TEST(t_max_rows)
     rc = tmysql_exec(hstmt,"select * from t_max_rows");
     mystmt(hstmt,rc);
     myassert( 10 == myrowcount(hstmt));
+
+    SQLFreeStmt(hstmt,SQL_CLOSE);
+
+    /* Patch for Bug#46411 uses SQL_ATTR_MAX_ROWS attribute to minimize number of
+       rows to pre-fetch(sets to 1). Following fragment ensures that attribute's
+       value is preserved and works. */
+    rc = SQLSetStmtAttr(hstmt,SQL_ATTR_MAX_ROWS,(SQLPOINTER)3,0);
+    mystmt(hstmt,rc);
+
+    rc = tmysql_prepare(hstmt,"select * from t_max_rows where id > ?");
+    mystmt(hstmt,rc);
+    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_ULONG,SQL_INTEGER,0,0,&i,0,NULL);
+    mystmt(hstmt,rc);
+    i= 6;
+
+    ok_stmt(hstmt, SQLNumResultCols(hstmt, &cc));
+
+    rc = SQLExecute(hstmt);
+    mystmt(hstmt,rc);
+
+    myassert( 3 == myrowcount(hstmt));
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
 

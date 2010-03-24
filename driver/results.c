@@ -616,7 +616,9 @@ BOOL isStatementForRead( STMT FAR *stmt )
 
     szToken[n] = '\0';
 
-    if ( strcmp( szToken, "SELECT" ) == 0 || strcmp( szToken, "SHOW" ) == 0 )
+    /* Took from Jess' "ssps rsmd" patch - "CALL" was missing here */
+    if (!strcmp(szToken, "SELECT") || !strcmp(szToken, "SHOW") ||
+        !strcmp(szToken, "CALL"))
         return TRUE;
 
     return FALSE;
@@ -641,8 +643,12 @@ static SQLRETURN check_result(STMT FAR *stmt )
         case ST_PREPARED:
             if ( isStatementForRead( stmt ) )
             {
+                SQLULEN real_max_rows= stmt->stmt_options.max_rows;
+                stmt->stmt_options.max_rows= 1;
+                /* select limit will be restored back to max_rows before real execution */
                 if ( (error= my_SQLExecute(stmt)) == SQL_SUCCESS )
                     stmt->state= ST_PRE_EXECUTED;  /* mark for execute */
+                stmt->stmt_options.max_rows= real_max_rows;
             }
             else
                 error = SQL_SUCCESS;
@@ -1050,7 +1056,7 @@ my_bool set_dynamic_result(STMT FAR *stmt)
   if (SQL_SUCCEEDED(rc))
     set_current_cursor_data(stmt,0);
 
-  return rc;
+  return rc != 0;
 }
 
 
