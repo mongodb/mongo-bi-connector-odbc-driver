@@ -315,10 +315,7 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
               aprec->concise_type == SQL_C_DEFAULT &&
               aprec->par.value == NULL))
     {
-      if (is_minimum_version(dbc->mysql.server_version, "4.0.3", 5))
-        *toptr= add_to_buffer(net,*toptr,"DEFAULT",7);
-      else
-        *toptr= add_to_buffer(net,*toptr,"NULL",4);
+      *toptr= add_to_buffer(net,*toptr,"DEFAULT",7);
       return SQL_SUCCESS;
     }
     else if (IS_DATA_AT_EXEC(octet_length_ptr))
@@ -383,6 +380,7 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
               }
             }
 
+            /* TODO need to check if it was merged to other versions already */
             if (has_utf8_maxlen4 &&
                 !is_minimum_version(dbc->mysql.server_version, "6.0.4", 5))
               return set_stmt_error(stmt, "HY000",

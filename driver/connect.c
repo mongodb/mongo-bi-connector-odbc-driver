@@ -247,6 +247,13 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
     return SQL_ERROR;
   }
 
+  if (!is_minimum_version(dbc->mysql.server_version, "4.1.1", 5))
+  {
+    mysql_close(mysql);
+    set_dbc_error(dbc, "08001", "Driver does not support server versions under 4.1.1", 0);
+    return SQL_ERROR;
+  }
+
   rc= myodbc_set_initial_character_set(dbc, ds_get_utf8attr(ds->charset,
                                                             &ds->charset8));
   if (!SQL_SUCCEEDED(rc))

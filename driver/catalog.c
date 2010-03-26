@@ -1821,7 +1821,7 @@ MySQLForeignKeys(SQLHSTMT hstmt,
       return my_SQLExecute(hstmt);
     }
     /* For 3.23 and later, use comment in SHOW TABLE STATUS (yuck). */
-    else if (is_minimum_version(stmt->dbc->mysql.server_version,"3.23",4))
+    else /* We wouldn't get here if we had server version under 3.23 */
     {
         MEM_ROOT  *alloc;
         MYSQL_ROW row;
@@ -1988,11 +1988,7 @@ MySQLForeignKeys(SQLHSTMT hstmt,
           return handle_connection_error(stmt);
         }
     }
-    /* Versions older than 3.23 don't support foreign keys at all. */
-    else
-    {
-      goto empty_set;
-    }
+
     stmt->result->row_count= row_count;
     mysql_link_fields(stmt,SQLFORE_KEYS_fields,SQLFORE_KEYS_FIELDS);
     return SQL_SUCCESS;
