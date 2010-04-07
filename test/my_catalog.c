@@ -1443,6 +1443,40 @@ DECLARE_TEST(t_bug39957)
 }
 
 
+/*
+  Bug #37621 - SQLDescribeCol returns incorrect values of SQLTables data
+*/
+DECLARE_TEST(t_bug37621)
+{
+  SQLCHAR buf[50], szColName[128];
+  SQLSMALLINT iName, iType, iScale, iNullable;
+  SQLUINTEGER uiDef;
+
+  ok_sql(hstmt, "drop table if exists t_bug37621");
+  ok_sql(hstmt, "create table t_bug37621 (x int)");
+  ok_stmt(hstmt, SQLTables(hstmt, NULL, 0, NULL, 0,
+			   (SQLCHAR *)"t_bug37621", SQL_NTS, NULL, 0));
+/*
+  Check column properties for the REMARKS column
+*/
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 5, szColName, sizeof(szColName), 
+          &iName, &iType, &uiDef, &iScale, &iNullable));
+
+  is_str(szColName, "REMARKS", 7);
+  is_num(iName, 7);
+  if (iType != SQL_VARCHAR && iType != SQL_WVARCHAR)
+    return FAIL;
+  is_num(uiDef, 80);
+  is_num(iScale, 0);
+  is_num(iNullable, 1);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists t_bug37621");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -1473,6 +1507,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug30770)
   ADD_TEST(t_bug36275)
   ADD_TEST(t_bug39957)
+  ADD_TEST(t_bug37621)
 END_TESTS
 
 
