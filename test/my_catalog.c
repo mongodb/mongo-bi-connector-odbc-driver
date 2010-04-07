@@ -1477,6 +1477,42 @@ DECLARE_TEST(t_bug37621)
 }
 
 
+/*
+Bug #34272 - SQLColumns returned wrong values for (some) TYPE_NAME
+and (some) IS_NULLABLE
+*/
+DECLARE_TEST(t_bug34272)
+{
+  SQLCHAR dummy[20];
+  SQLULEN col6, col18, length;
+
+  ok_sql(hstmt, "drop table if exists t_bug34272");
+  ok_sql(hstmt, "create table t_bug34272 (x int unsigned)");
+
+  ok_stmt(hstmt, SQLColumns(hstmt, NULL, SQL_NTS, NULL, SQL_NTS,
+    (SQLCHAR *)"t_bug34272", SQL_NTS, NULL, 0));
+
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 6, dummy, sizeof(dummy), NULL, NULL,
+    &col6, NULL, NULL));
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 18, dummy, sizeof(dummy), NULL, NULL,
+    &col18, NULL, NULL));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 6, SQL_C_CHAR, dummy, col6+1, &length));
+  is_num(length,16);
+  is_str(dummy, "integer unsigned", length+1);
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 18, SQL_C_CHAR, dummy, col18+1, &length));
+  is_num(length,3);
+  is_str(dummy, "YES", length+1);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists t_bug34272");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -1508,6 +1544,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug36275)
   ADD_TEST(t_bug39957)
   ADD_TEST(t_bug37621)
+  ADD_TEST(t_bug34272)
 END_TESTS
 
 
