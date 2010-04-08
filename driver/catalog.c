@@ -1564,8 +1564,6 @@ MySQLPrimaryKeys(SQLHSTMT hstmt,
                  SQLSMALLINT schema_len __attribute__((unused)),
                  SQLCHAR *table, SQLSMALLINT table_len)
 {
-    char      Qualifier_buff[NAME_LEN+1],Table_buff[NAME_LEN+1],
-    *TableQualifier,*TableName;
     STMT FAR  *stmt= (STMT FAR*) hstmt;
     MYSQL_ROW row;
     char      **data;
@@ -1729,9 +1727,9 @@ MySQLForeignKeys(SQLHSTMT hstmt,
 
         ref_constraints_join=
           " JOIN INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS R"
-          " ON (R.CONSTRAINT_NAME = B.CONSTRAINT_NAME"
-          " AND R.TABLE_NAME = B.TABLE_NAME"
-          " AND R.CONSTRAINT_SCHEMA = B.TABLE_SCHEMA)";
+          " ON (R.CONSTRAINT_NAME = A.CONSTRAINT_NAME"
+          " AND R.TABLE_NAME = A.TABLE_NAME"
+          " AND R.CONSTRAINT_SCHEMA = A.TABLE_SCHEMA)";
       }
       else
       {
@@ -1753,18 +1751,14 @@ MySQLForeignKeys(SQLHSTMT hstmt,
                     update_rule, " AS UPDATE_RULE,",
                     delete_rule, " AS DELETE_RULE,"
                     "A.CONSTRAINT_NAME AS FK_NAME,"
-                    "(SELECT CONSTRAINT_NAME FROM"
-                    " INFORMATION_SCHEMA.TABLE_CONSTRAINTS"
-                    " WHERE TABLE_SCHEMA = REFERENCED_TABLE_SCHEMA AND"
-                    " TABLE_NAME = A.REFERENCED_TABLE_NAME AND"
-                    " CONSTRAINT_TYPE IN ('UNIQUE','PRIMARY KEY') LIMIT 1)"
-                    " AS PK_NAME,"
+                    "'PRIMARY' AS PK_NAME,"
                     "7 AS DEFERRABILITY"
                     " FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE A"
-                    " JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS B"
-                    " USING (CONSTRAINT_NAME,TABLE_NAME)",
+                    " JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE D"
+                    " ON (D.TABLE_SCHEMA=A.REFERENCED_TABLE_SCHEMA AND D.TABLE_NAME=A.REFERENCED_TABLE_NAME"
+                        " AND D.COLUMN_NAME=A.REFERENCED_COLUMN_NAME)",
                     ref_constraints_join,
-                    " WHERE B.CONSTRAINT_TYPE = 'FOREIGN KEY' ",
+                    " WHERE D.CONSTRAINT_NAME='PRIMARY' ",
                     NullS);
 
       if (szPkTableName && szPkTableName[0])

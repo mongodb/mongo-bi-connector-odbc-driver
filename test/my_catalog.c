@@ -1432,8 +1432,6 @@ DECLARE_TEST(t_bug39957)
   ok_sql(hstmt, "create table t_bug39957 (x int)");
   ok_stmt(hstmt, SQLTables(hstmt, NULL, 0, NULL, 0,
 			   (SQLCHAR *)"t_bug39957", SQL_NTS, NULL, 0));
-  ok_stmt(hstmt, SQLFetch(hstmt));
-  is_str(my_fetch_str(hstmt, buf, 1), "test", 5);
   is_str(my_fetch_str(hstmt, buf, 3), "t_bug39957", 11);
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
@@ -1513,6 +1511,69 @@ DECLARE_TEST(t_bug34272)
 }
 
 
+/*
+  Bug #49660 - constraints with same name for tables with same name but in different db led
+  to doubling of results of SQLForeignKeys
+*/
+DECLARE_TEST(t_bug49660)
+{
+  SQLLEN rowsCount;
+  
+  ok_sql(hstmt, "drop database if exists bug49660");
+  ok_sql(hstmt, "drop table if exists t_bug49660");
+  ok_sql(hstmt, "drop table if exists t_bug49660_r");
+
+  ok_sql(hstmt, "create database bug49660");
+  ok_sql(hstmt, "create table bug49660.t_bug49660_r (id int unsigned not null primary key, name varchar(10) not null)");
+  ok_sql(hstmt, "create table bug49660.t_bug49660 (id int unsigned not null primary key, refid int unsigned not null,"
+                "foreign key t_bug49660fk (id) references bug49660.t_bug49660_r (id))");
+
+  ok_sql(hstmt, "create table t_bug49660_r (id int unsigned not null primary key, name varchar(10) not null)");
+  ok_sql(hstmt, "create table t_bug49660 (id int unsigned not null primary key, refid int unsigned not null,"
+                "foreign key t_bug49660fk (id) references t_bug49660_r (id))");
+
+  ok_stmt(hstmt, SQLForeignKeys(hstmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
+                                NULL, 0, (SQLCHAR *)"t_bug49660", SQL_NTS));
+
+  ok_stmt(hstmt, SQLRowCount(hstmt, &rowsCount));
+  is_num(rowsCount, 1);
+
+  ok_sql(hstmt, "drop database if exists bug49660");
+  ok_sql(hstmt, "drop table if exists t_bug49660");
+  ok_sql(hstmt, "drop table if exists t_bug49660_r");
+
+  return OK;
+}
+
+
+/*
+  Bug #51422 - SQLForeignKeys returned keys pointing to unique fields
+*/
+DECLARE_TEST(t_bug51422)
+{
+  SQLLEN rowsCount;
+  
+  ok_sql(hstmt, "drop table if exists t_bug51422");
+  ok_sql(hstmt, "drop table if exists t_bug51422_r");
+
+  ok_sql(hstmt, "create table t_bug51422_r (id int unsigned not null primary key, ukey int unsigned not null,"
+                "name varchar(10) not null, UNIQUE KEY uk(ukey))");
+  ok_sql(hstmt, "create table t_bug51422 (id int unsigned not null primary key, refid int unsigned not null,"
+                "foreign key t_bug51422fk (id) references t_bug51422_r (ukey))");
+
+  ok_stmt(hstmt, SQLForeignKeys(hstmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
+                                NULL, 0, (SQLCHAR *)"t_bug51422", SQL_NTS));
+
+  ok_stmt(hstmt, SQLRowCount(hstmt, &rowsCount));
+  is_num(rowsCount, 0);
+
+  ok_sql(hstmt, "drop table if exists t_bug51422");
+  ok_sql(hstmt, "drop table if exists t_bug51422_r");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -1545,6 +1606,8 @@ BEGIN_TESTS
   ADD_TEST(t_bug39957)
   ADD_TEST(t_bug37621)
   ADD_TEST(t_bug34272)
+  ADD_TEST(t_bug49660)
+  ADD_TEST(t_bug51422)
 END_TESTS
 
 
