@@ -36,7 +36,7 @@ MYODBCSetupDataSourceTab3a::MYODBCSetupDataSourceTab3a( QWidget *pwidgetParent )
     QString         stringEnableReconnect( tr("Enables automatic reconnect. Attention: it is strongly not recommended to set this flag for transactional operations!") );
     QString         stringAutoIncrementIsNull( tr("Turns on/off the handling of searching for the last inserted row with WHERE auto_increment_column IS NULL") );
     QString         stringDisableBinaryResult( tr("Always handle binary function results as character data") );
-    QString         stringInteractive( tr("Tells server to use longer wait timeout for the connection(interactive timeout)") );
+    QString         stringInteractive( tr("Identify connection as an interactive session") );
 #if QT_VERSION >= 0x040000
     QVBoxLayout *   playoutFields = new QVBoxLayout;
     setLayout( playoutFields );
