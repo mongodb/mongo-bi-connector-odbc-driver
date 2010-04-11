@@ -35,6 +35,18 @@
 
 /*
   @type    : internal
+  @purpose : checks if server supports I_S
+*/
+my_bool server_has_i_s(DBC FAR *dbc)
+{
+  /*
+    According to the server ChangeLog INFORMATION_SCHEMA was introduced
+    in the 5.0.2
+  */
+  return is_minimum_version(dbc->mysql.server_version, "5.0.2", 5);
+}
+/*
+  @type    : internal
   @purpose : returns the next token
 */
 
@@ -178,7 +190,7 @@ create_empty_fake_resultset(STMT *stmt, MYSQL_ROW rowval, size_t rowsize,
 
 
 /**
-  Get the table status for a table or tables.
+  Get the table status for a table or tables using Information_Schema DB.
 
   @param[in] stmt           Handle to statement
   @param[in] catalog        Catalog (database) of table, @c NULL for current
@@ -190,12 +202,105 @@ create_empty_fake_resultset(STMT *stmt, MYSQL_ROW rowval, size_t rowsize,
   @return Result of SHOW TABLE STATUS, or NULL if there is an error
           or empty result (check mysql_errno(&stmt->dbc->mysql) != 0)
 */
-static MYSQL_RES *mysql_table_status(STMT        *stmt,
-                                     SQLCHAR     *catalog,
-                                     SQLSMALLINT  catalog_length,
-                                     SQLCHAR     *table,
-                                     SQLSMALLINT  table_length,
-                                     my_bool      wildcard)
+static MYSQL_RES *mysql_table_status_i_s(STMT        *stmt,
+                                         SQLCHAR     *catalog,
+                                         SQLSMALLINT  catalog_length,
+                                         SQLCHAR     *table,
+                                         SQLSMALLINT  table_length,
+                                         my_bool      wildcard,
+                                         my_bool      show_tables,
+                                         my_bool      show_views)
+{
+  MYSQL *mysql= &stmt->dbc->mysql;
+  /** @todo determine real size for buffer */
+  char buff[255], *to;
+  my_bool clause_added= FALSE;
+
+  if (table_length == SQL_NTS && table)
+    table_length= strlen((char *)table);
+  if (catalog_length == SQL_NTS && catalog)
+    catalog_length= strlen((char *)catalog);
+
+  to= strmov(buff, "SELECT TABLE_NAME, TABLE_COMMENT, TABLE_TYPE FROM INFORMATION_SCHEMA.TABLES WHERE ");
+
+  if (catalog && *catalog)
+  {
+    to= strmov(to, "TABLE_SCHEMA LIKE '");
+    to+= myodbc_escape_string(mysql, to, sizeof(buff) - (to - buff),
+                              (char *)catalog, catalog_length, 1);
+    to= strmov(to, "' ");
+    clause_added= TRUE;
+  }
+  else
+  {
+    to= strmov(to, "TABLE_SCHEMA = DATABASE()");
+  }
+
+  if (show_tables)
+  {
+    to= strmov(to, "AND ");
+    if (show_views)
+      to= strmov(to, "( ");
+    to= strmov(to, "TABLE_TYPE='BASE TABLE' ");
+  }
+
+  if (show_views)
+  {
+    if (show_tables)
+      to= strmov(to, "OR ");
+    else
+      to= strmov(to, "AND ");
+
+    to= strmov(to, "TABLE_TYPE='VIEW' ");
+    if (show_tables)
+      to= strmov(to, ") ");
+  }
+
+  /*
+    As a pattern-value argument, an empty string needs to be treated
+    literally. (It's not the same as NULL, which is the same as '%'.)
+    But it will never match anything, so bail out now.
+  */
+  if (table && wildcard && !*table)
+    return NULL;
+
+  if (table && *table)
+  {
+    to= strmov(to, "AND TABLE_NAME LIKE '");
+    if (wildcard)
+      to+= mysql_real_escape_string(mysql, to, (char *)table, table_length);
+    else
+      to+= myodbc_escape_string(mysql, to, sizeof(buff) - (to - buff),
+                                (char *)table, table_length, 0);
+    to= strmov(to, "'");
+  }
+
+  MYLOG_QUERY(stmt, buff);
+  if (mysql_query(mysql,buff))
+    return NULL;
+
+  return mysql_store_result(mysql);
+}
+
+/**
+  Get the table status for a table or tables using SHOW TABLE STATUS.
+
+  @param[in] stmt           Handle to statement
+  @param[in] catalog        Catalog (database) of table, @c NULL for current
+  @param[in] catalog_length Length of catalog name, or @c SQL_NTS
+  @param[in] table          Name of table
+  @param[in] table_length   Length of table name, or @c SQL_NTS
+  @param[in] wildcard       Whether the table name is a wildcard
+
+  @return Result of SHOW TABLE STATUS, or NULL if there is an error
+          or empty result (check mysql_errno(&stmt->dbc->mysql) != 0)
+*/
+static MYSQL_RES *mysql_table_status_show(STMT        *stmt,
+                                          SQLCHAR     *catalog,
+                                          SQLSMALLINT  catalog_length,
+                                          SQLCHAR     *table,
+                                          SQLSMALLINT  table_length,
+                                          my_bool      wildcard)
 {
   MYSQL *mysql= &stmt->dbc->mysql;
   /** @todo determine real size for buffer */
@@ -239,6 +344,38 @@ static MYSQL_RES *mysql_table_status(STMT        *stmt,
     return NULL;
 
   return mysql_store_result(mysql);
+}
+
+
+/**
+  Get the table status for a table or tables
+
+  @param[in] stmt           Handle to statement
+  @param[in] catalog        Catalog (database) of table, @c NULL for current
+  @param[in] catalog_length Length of catalog name, or @c SQL_NTS
+  @param[in] table          Name of table
+  @param[in] table_length   Length of table name, or @c SQL_NTS
+  @param[in] wildcard       Whether the table name is a wildcard
+
+  @return Result of SHOW TABLE STATUS, or NULL if there is an error
+          or empty result (check mysql_errno(&stmt->dbc->mysql) != 0)
+*/
+static MYSQL_RES *mysql_table_status(STMT        *stmt,
+                                     SQLCHAR     *catalog,
+                                     SQLSMALLINT  catalog_length,
+                                     SQLCHAR     *table,
+                                     SQLSMALLINT  table_length,
+                                     my_bool      wildcard,
+                                     my_bool      show_tables,
+                                     my_bool      show_views)
+{
+      if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
+        return mysql_table_status_i_s(stmt, catalog, catalog_length,
+                                             table, table_length, wildcard,
+                                             show_tables, show_views);
+      else
+        return mysql_table_status_show(stmt, catalog, catalog_length,
+                                             table, table_length, wildcard);
 }
 
 
@@ -379,7 +516,8 @@ MySQLTables(SQLHSTMT hstmt,
     {
       pthread_mutex_lock(&stmt->dbc->lock);
       stmt->result= mysql_table_status(stmt, catalog, catalog_len,
-                                       table, table_len, TRUE);
+                                       table, table_len, TRUE,
+                                       user_tables, views);
 
       if (!stmt->result && mysql_errno(&stmt->dbc->mysql))
       {
@@ -437,13 +575,18 @@ MySQLTables(SQLHSTMT hstmt,
 
       while ((row= mysql_fetch_row(stmt->result)))
       {
-        int comment_index= (stmt->result->field_count == 18) ? 17 : 15;
-        my_bool view= (!row[1] &&
-                       myodbc_casecmp(row[comment_index], "view", 4) == 0);
+        int type_index= 2;
+        int comment_index= 1;
+        my_bool view;
+        if (stmt->dbc->ds->no_information_schema
+          || !server_has_i_s(stmt->dbc))
+          type_index= comment_index= (stmt->result->field_count == 18) ? 17 : 15;
+
+        view= (myodbc_casecmp(row[type_index], "VIEW", 4) == 0);
 
         if ((view && !views) || (!view && !user_tables))
         {
-          row_count--;
+          --row_count;
           continue;
         }
 
@@ -663,7 +806,8 @@ MySQLColumns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
 
   /* Get the list of tables that match szCatalog and szTable */
   pthread_mutex_lock(&stmt->dbc->lock);
-  res= mysql_table_status(stmt, szCatalog, cbCatalog, szTable, cbTable, TRUE);
+  res= mysql_table_status(stmt, szCatalog, cbCatalog, szTable, cbTable, TRUE,
+                          TRUE, TRUE);
 
   if (!res && mysql_errno(&stmt->dbc->mysql))
   {
@@ -1695,8 +1839,7 @@ MySQLForeignKeys(SQLHSTMT hstmt,
     CLEAR_STMT_ERROR(hstmt);
     my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
-    /* For 5.0 and later, use INFORMATION_SCHEMA. */
-    if (is_minimum_version(stmt->dbc->mysql.server_version, "5.0", 3))
+    if (server_has_i_s(stmt->dbc))
     {
       MYSQL *mysql= &stmt->dbc->mysql;
       char query[2048], *buff; /* This should be big enough. */
@@ -1832,10 +1975,13 @@ MySQLForeignKeys(SQLHSTMT hstmt,
           cbPkTableName= strlen((char *)szPkTableName);
 
         pthread_mutex_lock(&stmt->dbc->lock);
-        if (!(stmt->result= mysql_table_status(stmt,
-                                               szFkCatalogName, cbFkCatalogName,
-                                               szFkTableName, cbFkTableName,
-                                               FALSE)))
+
+        stmt->result= mysql_table_status_show(stmt,
+                                         szFkCatalogName, cbFkCatalogName,
+                                         szFkTableName, cbFkTableName,
+                                         FALSE);
+
+        if (!stmt->result)
         {
           if (mysql_errno(&stmt->dbc->mysql))
           {
@@ -2030,7 +2176,7 @@ MySQLProcedures(SQLHSTMT hstmt,
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
   /* If earlier than 5.0, the server doesn't even support stored procs. */
-  if (!is_minimum_version(stmt->dbc->mysql.server_version, "5.0", 3))
+  if (!server_has_i_s(stmt->dbc))
   {
     /*
       We use the server to generate a fake result with no rows, but

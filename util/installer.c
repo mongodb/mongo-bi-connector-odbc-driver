@@ -1328,6 +1328,7 @@ void ds_set_options(DataSource *ds, ulong options)
   ds->allow_multiple_statements=            (options & FLAG_MULTI_STATEMENTS) > 0;
   ds->limit_column_size=                    (options & FLAG_COLUMN_SIZE_S32) > 0;
   ds->handle_binary_as_char=                (options & FLAG_NO_BINARY_RESULT) > 0;
+  ds->no_information_schema=                (options & FLAG_NO_INFORMATION_SCHEMA) > 0;
   ds->default_bigint_bind_str=              (options & FLAG_DFLT_BIGINT_BIND_STR) > 0;
 }
 
@@ -1377,6 +1378,8 @@ ulong ds_get_options(DataSource *ds)
     options|= FLAG_LOG_QUERY;
   if (ds->dont_cache_result)
     options|= FLAG_NO_CACHE;
+  if (ds->no_information_schema)
+    options|= FLAG_NO_INFORMATION_SCHEMA;
   if (ds->force_use_of_forward_only_cursors)
     options|= FLAG_FORWARD_CURSOR;
   if (ds->auto_reconnect)

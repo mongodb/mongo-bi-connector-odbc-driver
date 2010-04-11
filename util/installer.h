@@ -141,6 +141,7 @@ typedef struct {
   BOOL default_bigint_bind_str;
   /* debug */
   BOOL save_queries;
+  BOOL no_information_schema;
   /* SSL */
   unsigned int sslverify;
 } DataSource;
@@ -197,12 +198,15 @@ extern const SQLWCHAR W_INVALID_ATTR_STR[];
 #define FLAG_MULTI_STATEMENTS (1 << 26) /* Allow multiple statements in a query */
 #define FLAG_COLUMN_SIZE_S32 (1 << 27) /* Limit column size to a signed 32-bit value (automatically set for ADO) */
 #define FLAG_NO_BINARY_RESULT (1 << 28) /* Disables charset 63 for columns with empty org_table */
-
 /*
   When binding SQL_BIGINT as SQL_C_DEFAULT, treat it as a string
   (automatically set for MS Access) see bug#24535
 */
 #define FLAG_DFLT_BIGINT_BIND_STR (1 << 29)
+/*
+  Use SHOW TABLE STATUS instead Information_Schema DB for table metadata
+*/
+#define FLAG_NO_INFORMATION_SCHEMA (1 << 30)
 
 
 #ifdef __cplusplus

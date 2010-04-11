@@ -252,6 +252,8 @@ void syncTabsData(HWND hwnd, DataSource &params)
   GET_BOOL(METADATA_TAB,   ignore_N_in_name_table);
   GET_BOOL(METADATA_TAB,   no_catalog);
   GET_BOOL(METADATA_TAB,   limit_column_size);
+  GET_BOOL(METADATA_TAB,   no_information_schema);
+  SET_BOOL(METADATA_TAB,   no_information_schema);
 
   /* 3 - Cursors/Results */
   GET_BOOL(CURSORS_TAB,    return_matching_rows);
@@ -266,11 +268,11 @@ void syncTabsData(HWND hwnd, DataSource &params)
   GET_BOOL(DEBUG_TAB,save_queries);
 
   /* 5 - ssl related */
-  getStrFieldData(&params.sslkey      , SSL_TAB, IDC_EDIT_sslkey);
-  getStrFieldData(&params.sslcert     , SSL_TAB, IDC_EDIT_sslcert);
-  getStrFieldData(&params.sslca       , SSL_TAB, IDC_EDIT_sslca);
-  getStrFieldData(&params.sslcapath   , SSL_TAB, IDC_EDIT_sslcapath);
-  getStrFieldData(&params.sslcipher   , SSL_TAB, IDC_EDIT_sslcipher);
+  getStrFieldData(&params.sslkey   , SSL_TAB, IDC_EDIT_sslkey);
+  getStrFieldData(&params.sslcert  , SSL_TAB, IDC_EDIT_sslcert);
+  getStrFieldData(&params.sslca    , SSL_TAB, IDC_EDIT_sslca);
+  getStrFieldData(&params.sslcapath, SSL_TAB, IDC_EDIT_sslcapath);
+  getStrFieldData(&params.sslcipher, SSL_TAB, IDC_EDIT_sslcipher);
   GET_BOOL(SSL_TAB,sslverify);
 
   /* 6 - Misc*/
@@ -788,4 +790,3 @@ int ShowOdbcParamsDialog(DataSource* params, HWND ParentWnd, BOOL isPrompt)
 	BusyIndicator= false;
 	return OkPressed;
 }
-

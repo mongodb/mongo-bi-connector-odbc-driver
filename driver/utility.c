@@ -2736,7 +2736,7 @@ void *ptr_offset_adjust(void *ptr, SQLULEN *bind_offset_ptr,
 
   Returns new_value if operation was successful, -1 otherwise
  */
-SQLRETURN set_sql_select_limit(DBC *dbc, SQLULEN new_value)
+SQLRETURN set_sql_select_limit(DBC FAR *dbc, SQLULEN new_value)
 {
   char query[44];
   SQLRETURN rc;

@@ -570,7 +570,7 @@ DECLARE_TEST(t_tables_bug)
    ok_stmt(hstmt, SQLNumResultCols(hstmt, &ColumnCount));
    is_num(ColumnCount, 5);
 
-   for (i= 1; i <= ColumnCount; i++)
+   for (i= 1; i <= ColumnCount; ++i)
    {
      ok_stmt(hstmt, SQLDescribeCol(hstmt, (SQLUSMALLINT)i, szColName,
                                    MAX_NAME_LEN, &pcbColName, &pfSqlType,
@@ -748,6 +748,65 @@ DECLARE_TEST(t_sqltables)
 
     r = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,r);
+
+  return OK;
+}
+
+
+DECLARE_TEST(my_information_schema)
+{
+  SQLCHAR   conn[256], conn_out[256];
+  HDBC hdbc1;
+  HSTMT hstmt1;
+  SQLSMALLINT conn_out_len;
+  SQLRETURN rc;
+
+  ok_sql(hstmt, "DROP DATABASE IF EXISTS istest__");
+  ok_sql(hstmt, "DROP DATABASE IF EXISTS istest_1");
+  ok_sql(hstmt, "DROP DATABASE IF EXISTS istest_2");
+
+  ok_sql(hstmt, "CREATE DATABASE istest__");
+  ok_sql(hstmt, "CREATE DATABASE istest_1");
+  ok_sql(hstmt, "CREATE DATABASE istest_2");
+
+  ok_sql(hstmt, "CREATE TABLE istest__.istab_(a INT,b INT,c INT, d INT)");
+  ok_sql(hstmt, "CREATE TABLE istest_1.istab1(a INT,b INT,c INT, d INT)");
+  ok_sql(hstmt, "CREATE TABLE istest_2.istab2(a INT,b INT,c INT, d INT)");
+
+  /* We need to have istest__ as the default DB */
+  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;DATABASE=istest__;OPTION=0", mydsn, myuid, mypwd);
+  if (mysock != NULL)
+  {
+    strcat((char *)conn, ";SOCKET=");
+    strcat((char *)conn, (char *)mysock);
+  }
+  if (myport)
+  {
+    char pbuff[20];
+    sprintf(pbuff, ";PORT=%d", myport);
+    strcat((char *)conn, pbuff);
+  }
+
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), conn_out,
+                                 sizeof(conn_out), &conn_out_len,
+                                 SQL_DRIVER_NOPROMPT));
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  rc = SQLTables(hstmt1, "istest__", SQL_NTS, "", 0, "istab%", SQL_NTS, NULL, 0);
+  mystmt(hstmt1,rc);
+
+  /* all tables from all databases should be displayed */
+  is(3 == my_print_non_format_result(hstmt1));
+  rc = SQLFreeStmt(hstmt1, SQL_CLOSE);
+
+  rc = SQLTables(hstmt1, NULL, 0, NULL, 0, "istab%", SQL_NTS, NULL, 0);
+  mystmt(hstmt1,rc);
+
+  is(1 == my_print_non_format_result(hstmt1));
+  rc = SQLFreeStmt(hstmt1, SQL_CLOSE);
+  mystmt(hstmt1,rc);
 
   return OK;
 }
@@ -1432,6 +1491,7 @@ DECLARE_TEST(t_bug39957)
   ok_sql(hstmt, "create table t_bug39957 (x int)");
   ok_stmt(hstmt, SQLTables(hstmt, NULL, 0, NULL, 0,
 			   (SQLCHAR *)"t_bug39957", SQL_NTS, NULL, 0));
+  ok_stmt(hstmt, SQLFetch(hstmt));
   is_str(my_fetch_str(hstmt, buf, 3), "t_bug39957", 11);
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
@@ -1587,6 +1647,7 @@ BEGIN_TESTS
   ADD_TEST(t_current_catalog)
   ADD_TEST(tmysql_showkeys)
   ADD_TEST(t_sqltables)
+  ADD_TEST(my_information_schema)
   ADD_TEST(t_bug4518)
   ADD_TEST(empty_set)
   ADD_TEST(t_bug23031)

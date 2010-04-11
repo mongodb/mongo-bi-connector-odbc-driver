@@ -114,6 +114,7 @@
 #define IDC_CHECK_handle_binary_as_char 10036
 #define IDC_CHECK_save_queries          10037
 #define IDC_CHECK_clientinteractive     10040
+#define IDC_CHECK_no_information_schema 10041
 #define IDC_BUTTON_TEST                 11014
 #define IDC_BUTTON_HELP                 11015
 #define IDC_STATIC                      -1
