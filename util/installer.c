@@ -164,6 +164,7 @@ static SQLWCHAR W_DFLT_BIGINT_BIND_STR[]=
   {'D','F','L','T','_','B','I','G','I','N','T','_','B','I','N','D','_','S','T','R',0};
 static SQLWCHAR W_CLIENT_INTERACTIVE[]=
   {'I','N','T','E','R','A','C','T','I','V','E',0};
+static SQLWCHAR W_NO_I_S[]= {'N','O','_','I','_','S',0};
 
 /* DS_PARAM */
 /* externally used strings */
@@ -192,7 +193,7 @@ SQLWCHAR *dsnparams[]= {W_DSN, W_DRIVER, W_DESCRIPTION, W_SERVER,
                         W_ZERO_DATE_TO_MIN, W_MIN_DATE_TO_ZERO,
                         W_MULTI_STATEMENTS, W_COLUMN_SIZE_S32,
                         W_NO_BINARY_RESULT, W_DFLT_BIGINT_BIND_STR,
-                        W_CLIENT_INTERACTIVE};
+                        W_CLIENT_INTERACTIVE, W_NO_I_S};
 static const
 int dsnparamcnt= sizeof(dsnparams) / sizeof(SQLWCHAR *);
 /* DS_PARAM */
@@ -801,6 +802,8 @@ void ds_map_param(DataSource *ds, const SQLWCHAR *param,
     *booldest= &ds->handle_binary_as_char;
   else if (!sqlwcharcasecmp(W_DFLT_BIGINT_BIND_STR, param))
     *booldest= &ds->default_bigint_bind_str;
+  else if (!sqlwcharcasecmp(W_NO_I_S, param))
+    *booldest= &ds->no_information_schema;
 
   /* DS_PARAM */
 }
@@ -1236,6 +1239,7 @@ int ds_add(DataSource *ds)
   if (ds_add_intprop(ds->name, W_COLUMN_SIZE_S32, ds->limit_column_size)) goto error;
   if (ds_add_intprop(ds->name, W_NO_BINARY_RESULT, ds->handle_binary_as_char)) goto error;
   if (ds_add_intprop(ds->name, W_DFLT_BIGINT_BIND_STR, ds->default_bigint_bind_str)) goto error;
+  if (ds_add_intprop(ds->name, W_NO_I_S, ds->no_information_schema)) goto error;
 
   /* DS_PARAM */
 

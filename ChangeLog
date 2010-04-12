@@ -5,6 +5,8 @@
   * Added connection option INTERACTIVE that tells driver that client is
     ineractive and interactive_timeout has to be used. (Bug #48603)
   * Added parameters arrays support. (Bug #48310)
+  * SQLTables uses now INFORMATION_SCHEMA. Added connection option to use old code.
+    (Bug #43644)
 
   Bugs fixed:
   * If NO_BACKSLASH_ESCAPES mode is used on a server, escaping binary data

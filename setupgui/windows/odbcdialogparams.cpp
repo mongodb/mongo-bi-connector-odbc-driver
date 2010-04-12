@@ -253,7 +253,6 @@ void syncTabsData(HWND hwnd, DataSource &params)
   GET_BOOL(METADATA_TAB,   no_catalog);
   GET_BOOL(METADATA_TAB,   limit_column_size);
   GET_BOOL(METADATA_TAB,   no_information_schema);
-  SET_BOOL(METADATA_TAB,   no_information_schema);
 
   /* 3 - Cursors/Results */
   GET_BOOL(CURSORS_TAB,    return_matching_rows);
@@ -309,6 +308,7 @@ void syncTabs(HWND hwnd, DataSource &params)
   SET_BOOL(METADATA_TAB,   ignore_N_in_name_table);
   SET_BOOL(METADATA_TAB,   no_catalog);
   SET_BOOL(METADATA_TAB,   limit_column_size);
+  SET_BOOL(METADATA_TAB,   no_information_schema);
 
   /* 3 - Cursors/Results */
   SET_BOOL(CURSORS_TAB,    return_matching_rows);
@@ -775,7 +775,7 @@ int ShowOdbcParamsDialog(DataSource* params, HWND ParentWnd, BOOL isPrompt)
     if (driver_lookup_name(driver))
     {
       wchar_t msg[256];
-      swprintf(msg, L"Failure to lookup driver entry at path '%ls'",
+      swprintf(msg, 256, L"Failure to lookup driver entry at path '%ls'",
                driver->lib);
       MessageBox(ParentWnd, msg, L"Cannot find driver entry", MB_OK);
       driver_delete(driver);
