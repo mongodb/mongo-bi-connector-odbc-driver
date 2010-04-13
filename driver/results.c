@@ -1507,8 +1507,23 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
           stmt->ird->array_status_ptr[i]= SQL_ROW_SUCCESS;
 
         if (!stmt->fix_fields)
-          fill_ird_data_lengths(stmt->ird, mysql_fetch_lengths(stmt->result),
-                                stmt->result->field_count);
+        {
+          /* lengths contains lengths for all rows. Alternate use could be
+             filling ird buffers in the (fix_fields) function. In this case
+             lengths could contain just one array with rules for lengths
+             calculating(it can work out in many cases like in catalog functions
+             there some fields from results of auxiliary query are simply mixed
+             somehow and constant fields added ).
+             Another approach could be using of "array" and "order" arrays
+             and special fix_fields callback, that will fix array and set
+             lengths in ird*/
+          if (stmt->lengths)
+            fill_ird_data_lengths(stmt->ird, stmt->lengths + cur_row*stmt->result->field_count,
+                                  stmt->result->field_count);
+          else
+            fill_ird_data_lengths(stmt->ird, mysql_fetch_lengths(stmt->result),
+                                  stmt->result->field_count);
+        }
         res= fill_fetch_buffers(stmt, values, i);
         cur_row++;
     }

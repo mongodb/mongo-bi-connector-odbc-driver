@@ -25,6 +25,7 @@
     schemas in query about one of those tables. (Bug #49660)
   * SQLForeignKeys included in results rows for foreign keys pointing to unique fields
     (Bug #51422)
+  * SQLPrimaryKeys returns mangled strings. (Bug #36441)
 
 ----
 

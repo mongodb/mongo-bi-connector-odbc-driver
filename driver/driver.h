@@ -399,6 +399,8 @@ typedef struct tagSTMT
   STMT_OPTIONS	stmt_options;
   char		*table_name;
   char		*query,*query_end;
+  unsigned long *lengths; /* used to set lengths if we shuffle field values
+                             of the resultset of auxiliary query or if we fix_fields. */
   /*
     We save a copy of the original query before we modify it for 'WHERE
     CURRENT OF' cursor handling.

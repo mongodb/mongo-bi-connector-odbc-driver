@@ -82,6 +82,39 @@ void mysql_link_fields(STMT *stmt, MYSQL_FIELD *fields, uint field_count)
 
 
 /**
+Fills STMT's lengths array for given row. Makes use of mysql_link_fields a bit
+less terrible.
+
+@param[in,out] stmt     The statement to modify
+@param[in] fix_rules    Describes how to calculate lengths. For each element value
+                        N > 0 - length is taken of field #N from original results
+                                (counting from 1)
+                        N <=0 - constant length (-N)
+@param[in] row          Row for which to fix lengths
+@param[in] field_count  The number of fields
+*/
+void fix_row_lengths(STMT *stmt, const long* fix_rules, uint row, uint field_count)
+{
+  unsigned long* orig_lengths, *row_lengths;
+  uint i;
+
+  if (stmt->lengths == NULL)
+    return;
+
+  row_lengths=  stmt->lengths + row*field_count;
+  orig_lengths= mysql_fetch_lengths(stmt->result);
+
+  for (i= 0; i < field_count; ++i)
+  {
+    if (fix_rules[i] > 0)
+      row_lengths[i]= orig_lengths[fix_rules[i] - 1];
+    else
+      row_lengths[i]= -fix_rules[i];
+  }
+}
+
+
+/**
   Figure out the ODBC result types for each column in the result set.
 
   @param[in] stmt The statement with result types to be fixed.

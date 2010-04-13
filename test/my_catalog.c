@@ -346,7 +346,7 @@ DECLARE_TEST(t_catalog)
 
     ok_sql(hstmt, "drop table if exists t_catalog");
 
-    ok_sql(hstmt,"create table t_catalog(a tinyint, b char(4))");
+    ok_sql(hstmt,"create table t_catalog(abc tinyint, bcdefghijklmno char(4), uifield int unsigned not null)");
 
     ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0,
                               (SQLCHAR *)"t_catalog", 9, NULL, 0));
@@ -356,7 +356,7 @@ DECLARE_TEST(t_catalog)
 
     printMessage("total columns: %d", ncols);
     myassert(ncols == 18);
-    myassert(myresult(hstmt) == 2);
+    myassert(myresult(hstmt) == 3);
 
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
@@ -1634,7 +1634,62 @@ DECLARE_TEST(t_bug51422)
 }
 
 
+/*
+  Bug #36441 - SQLPrimaryKeys returns mangled strings 
+*/
+DECLARE_TEST(t_bug36441)
+{
+#define BUF_LEN 24
+
+  const SQLCHAR key_column_name[][14]= {"pk_for_table1", "c1_for_table1"};
+
+  SQLCHAR     catalog[BUF_LEN], schema[BUF_LEN], table[BUF_LEN], column[BUF_LEN];
+  SQLINTEGER  catalog_len, schema_len, table_len, column_len;
+  SQLCHAR     keyname[BUF_LEN];
+  SQLSMALLINT key_seq, i;
+  SQLINTEGER  keyname_len, key_seq_len;
+
+  ok_sql(hstmt, "drop table if exists t_bug36441_0123456789");
+  ok_sql(hstmt, "create table t_bug36441_0123456789("
+	              "pk_for_table1 integer not null auto_increment,"
+	              "c1_for_table1 varchar(128) not null unique,"
+	              "c2_for_table1 binary(32) null,"
+                "unique_key int unsigned not null unique,"
+	              "primary key(pk_for_table1, c1_for_table1))");
+
+  ok_stmt(hstmt, SQLPrimaryKeys(hstmt, NULL, SQL_NTS, NULL, SQL_NTS, "t_bug36441_0123456789", SQL_NTS));
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR , catalog, sizeof(catalog), &catalog_len));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR , schema , sizeof(schema) , &schema_len));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 3, SQL_C_CHAR , table  , sizeof(table)  , &table_len));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 4, SQL_C_CHAR , column , sizeof(column) , &column_len));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 5, SQL_C_SHORT,&key_seq, sizeof(key_seq), &key_seq_len));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 6, SQL_C_CHAR , keyname, sizeof(keyname), &keyname_len));
+
+  for(i=0; i < 2; ++i)
+  {
+    ok_stmt(hstmt, SQLFetch(hstmt));
+
+    is_num(catalog_len, SQL_NULL_DATA);
+    is_num(schema_len, SQL_NULL_DATA);
+    is_str(table, "t_bug36441_0123456789", 3);
+    is_str(column, key_column_name[i], 4);
+    is_num(key_seq, i+1);
+    is_str(keyname, "PRIMARY", 6);
+  }
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  ok_sql(hstmt, "drop table if exists t_bug36441_0123456789");
+
+  return OK;
+
+#undef BUF_LEN
+}
+
+
 BEGIN_TESTS
+  
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
   ADD_TEST(my_table_dbs)
@@ -1669,6 +1724,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug34272)
   ADD_TEST(t_bug49660)
   ADD_TEST(t_bug51422)
+  ADD_TEST(t_bug36441)
 END_TESTS
 
 

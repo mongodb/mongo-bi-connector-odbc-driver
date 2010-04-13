@@ -1100,8 +1100,8 @@ int using_dm(HDBC hdbc)
 */
 int using_unixodbc_version(SQLHANDLE henv, SQLCHAR *ver)
 {
-  SQLCHAR buf[10];
 #ifdef SQL_ATTR_UNIXODBC_VERSION
+  SQLCHAR buf[10];
   if(SQLGetEnvAttr(henv, SQL_ATTR_UNIXODBC_VERSION, buf, 10, NULL) != SQL_SUCCESS)
     return 0;
   if(!strcmp(buf, ver))

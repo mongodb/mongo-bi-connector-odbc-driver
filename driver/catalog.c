@@ -985,6 +985,7 @@ MySQLColumns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
 
   stmt->result->row_count= rows;
   mysql_link_fields(stmt, SQLCOLUMNS_fields, SQLCOLUMNS_FIELDS);
+
   return SQL_SUCCESS;
 
 empty_set:
@@ -1689,6 +1690,8 @@ MYSQL_FIELD SQLPRIM_KEYS_fields[]=
 
 const uint SQLPRIM_KEYS_FIELDS= array_elements(SQLPRIM_KEYS_fields);
 
+const long SQLPRIM_LENGTHS[]= {0, 0, 1, 5, 4, -7};
+
 char *SQLPRIM_KEYS_values[]= {
     NULL,"",NULL,NULL,0,NULL
 };
@@ -1731,13 +1734,23 @@ MySQLPrimaryKeys(SQLHSTMT hstmt,
     }
     pthread_mutex_unlock(&stmt->dbc->lock);
     stmt->result_array= (char**) my_malloc(sizeof(char*)*SQLPRIM_KEYS_FIELDS*
-                                           (ulong) stmt->result->row_count,
-                                           MYF(MY_ZEROFILL));
+                                            (ulong) stmt->result->row_count,
+                                            MYF(MY_ZEROFILL));
     if (!stmt->result_array)
     {
       set_mem_error(&stmt->dbc->mysql);
       return handle_connection_error(stmt);
     }
+
+    stmt->lengths= (unsigned long*) my_malloc( sizeof(long)*SQLPRIM_KEYS_FIELDS*
+                                            (ulong) stmt->result->row_count,
+                                            MYF(MY_ZEROFILL));
+    if (!stmt->lengths)
+    {
+      set_mem_error(&stmt->dbc->mysql);
+      return handle_connection_error(stmt);
+    }
+
     row_count= 0;
     data= stmt->result_array;
     while ( (row= mysql_fetch_row(stmt->result)) )
@@ -1745,8 +1758,11 @@ MySQLPrimaryKeys(SQLHSTMT hstmt,
         if ( row[1][0] == '0' )     /* If unique index */
         {
             if ( row_count && !strcmp(row[3],"1") )
-                break;    /* Allready found unique key */
-            row_count++;
+                break;    /* Already found unique key */
+
+            fix_row_lengths(stmt, SQLPRIM_LENGTHS, row_count, SQLPRIM_KEYS_FIELDS);
+
+            ++row_count;
             data[0]= data[1]=0;
             data[2]= row[0];
             data[3]= row[4];
@@ -1758,6 +1774,7 @@ MySQLPrimaryKeys(SQLHSTMT hstmt,
     stmt->result->row_count= row_count;
 
     mysql_link_fields(stmt,SQLPRIM_KEYS_fields,SQLPRIM_KEYS_FIELDS);
+
     return SQL_SUCCESS;
 }
 
