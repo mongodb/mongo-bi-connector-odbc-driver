@@ -246,22 +246,23 @@ void syncTabsData(HWND hwnd, DataSource &params)
   getStrFieldData(&params.initstmt, CONNECTION_TAB, IDC_EDIT_initstmt);
 
   /* 2 - Metadata*/
-  GET_BOOL(METADATA_TAB,   change_bigint_columns_to_int);
-  GET_BOOL(METADATA_TAB,   handle_binary_as_char);
-  GET_BOOL(METADATA_TAB,   return_table_names_for_SqlDescribeCol);
-  GET_BOOL(METADATA_TAB,   ignore_N_in_name_table);
-  GET_BOOL(METADATA_TAB,   no_catalog);
-  GET_BOOL(METADATA_TAB,   limit_column_size);
-  GET_BOOL(METADATA_TAB,   no_information_schema);
+  GET_BOOL(METADATA_TAB, change_bigint_columns_to_int);
+  GET_BOOL(METADATA_TAB, handle_binary_as_char);
+  GET_BOOL(METADATA_TAB, return_table_names_for_SqlDescribeCol);
+  GET_BOOL(METADATA_TAB, ignore_N_in_name_table);
+  GET_BOOL(METADATA_TAB, no_catalog);
+  GET_BOOL(METADATA_TAB, limit_column_size);
+  GET_BOOL(METADATA_TAB, no_information_schema);
 
   /* 3 - Cursors/Results */
-  GET_BOOL(CURSORS_TAB,    return_matching_rows);
-  GET_BOOL(CURSORS_TAB,    auto_increment_null_search);
-  GET_BOOL(CURSORS_TAB,    dynamic_cursor);
-  GET_BOOL(CURSORS_TAB,    user_manager_cursor);
-  GET_BOOL(CURSORS_TAB,    pad_char_to_full_length);
-  GET_BOOL(CURSORS_TAB,    dont_cache_result);
-  GET_BOOL(CURSORS_TAB,    force_use_of_forward_only_cursors);
+  GET_BOOL(CURSORS_TAB, return_matching_rows);
+  GET_BOOL(CURSORS_TAB, auto_increment_null_search);
+  GET_BOOL(CURSORS_TAB, dynamic_cursor);
+  GET_BOOL(CURSORS_TAB, user_manager_cursor);
+  GET_BOOL(CURSORS_TAB, pad_char_to_full_length);
+  GET_BOOL(CURSORS_TAB, dont_cache_result);
+  GET_BOOL(CURSORS_TAB, force_use_of_forward_only_cursors);
+  GET_BOOL(CURSORS_TAB, zero_date_to_min);
 
   /* 4 - debug*/
   GET_BOOL(DEBUG_TAB,save_queries);
@@ -275,11 +276,12 @@ void syncTabsData(HWND hwnd, DataSource &params)
   GET_BOOL(SSL_TAB,sslverify);
 
   /* 6 - Misc*/
-  GET_BOOL(MISC_TAB,       safe);
-  GET_BOOL(MISC_TAB,       dont_use_set_locale);
-  GET_BOOL(MISC_TAB,       ignore_space_after_function_names);
-  GET_BOOL(MISC_TAB,       read_options_from_mycnf);
-  GET_BOOL(MISC_TAB,       disable_transactions);
+  GET_BOOL(MISC_TAB, safe);
+  GET_BOOL(MISC_TAB, dont_use_set_locale);
+  GET_BOOL(MISC_TAB, ignore_space_after_function_names);
+  GET_BOOL(MISC_TAB, read_options_from_mycnf);
+  GET_BOOL(MISC_TAB, disable_transactions);
+  GET_BOOL(MISC_TAB, min_date_to_zero);
 }
 
 void syncTabs(HWND hwnd, DataSource &params)
@@ -302,22 +304,23 @@ void syncTabs(HWND hwnd, DataSource &params)
   }
 
   /* 2 - Metadata*/
-  SET_BOOL(METADATA_TAB,   change_bigint_columns_to_int);
-  SET_BOOL(METADATA_TAB,   handle_binary_as_char);
-  SET_BOOL(METADATA_TAB,   return_table_names_for_SqlDescribeCol);
-  SET_BOOL(METADATA_TAB,   ignore_N_in_name_table);
-  SET_BOOL(METADATA_TAB,   no_catalog);
-  SET_BOOL(METADATA_TAB,   limit_column_size);
-  SET_BOOL(METADATA_TAB,   no_information_schema);
+  SET_BOOL(METADATA_TAB, change_bigint_columns_to_int);
+  SET_BOOL(METADATA_TAB, handle_binary_as_char);
+  SET_BOOL(METADATA_TAB, return_table_names_for_SqlDescribeCol);
+  SET_BOOL(METADATA_TAB, ignore_N_in_name_table);
+  SET_BOOL(METADATA_TAB, no_catalog);
+  SET_BOOL(METADATA_TAB, limit_column_size);
+  SET_BOOL(METADATA_TAB, no_information_schema);
 
   /* 3 - Cursors/Results */
-  SET_BOOL(CURSORS_TAB,    return_matching_rows);
-  SET_BOOL(CURSORS_TAB,    auto_increment_null_search);
-  SET_BOOL(CURSORS_TAB,    dynamic_cursor);
-  SET_BOOL(CURSORS_TAB,    user_manager_cursor);
-  SET_BOOL(CURSORS_TAB,    pad_char_to_full_length);
-  SET_BOOL(CURSORS_TAB,    dont_cache_result);
-  SET_BOOL(CURSORS_TAB,    force_use_of_forward_only_cursors);
+  SET_BOOL(CURSORS_TAB, return_matching_rows);
+  SET_BOOL(CURSORS_TAB, auto_increment_null_search);
+  SET_BOOL(CURSORS_TAB, dynamic_cursor);
+  SET_BOOL(CURSORS_TAB, user_manager_cursor);
+  SET_BOOL(CURSORS_TAB, pad_char_to_full_length);
+  SET_BOOL(CURSORS_TAB, dont_cache_result);
+  SET_BOOL(CURSORS_TAB, force_use_of_forward_only_cursors);
+  SET_BOOL(CURSORS_TAB, zero_date_to_min);
 
   /* 4 - debug*/
   SET_BOOL(DEBUG_TAB,save_queries);
@@ -336,11 +339,12 @@ void syncTabs(HWND hwnd, DataSource &params)
   }
 
   /* 6 - Misc*/
-  SET_BOOL(MISC_TAB,       safe);
-  SET_BOOL(MISC_TAB,       dont_use_set_locale);
-  SET_BOOL(MISC_TAB,       ignore_space_after_function_names);
-  SET_BOOL(MISC_TAB,       read_options_from_mycnf);
-  SET_BOOL(MISC_TAB,       disable_transactions);
+  SET_BOOL(MISC_TAB, safe);
+  SET_BOOL(MISC_TAB, dont_use_set_locale);
+  SET_BOOL(MISC_TAB, ignore_space_after_function_names);
+  SET_BOOL(MISC_TAB, read_options_from_mycnf);
+  SET_BOOL(MISC_TAB, disable_transactions);
+  SET_BOOL(MISC_TAB, min_date_to_zero);
 }
 
 void FillParameters(HWND hwnd, DataSource & params)

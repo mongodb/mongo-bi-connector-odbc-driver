@@ -150,6 +150,8 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,90,105,10
     CONTROL         "Pad CHAR to full length with space",IDC_CHECK_pad_char_to_full_length,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,105,127,10
+    CONTROL         "Return SQL_NULL_DATA for zero date",IDC_CHECK_zero_date_to_min,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,120,138,10
 END
 
 IDD_TAB4 DIALOGEX 0, 0, 209, 151
@@ -196,6 +198,8 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,57,99,10
     CONTROL         "Disable transaction support",IDC_CHECK_disable_transactions,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,72,103,10
+    CONTROL         "Bind minimal date as zero date",IDC_CHECK_min_date_to_zero,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,87,138,10
 END
 
 #ifdef APSTUDIO_INVOKED
