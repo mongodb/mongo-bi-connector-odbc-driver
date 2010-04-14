@@ -1,4 +1,4 @@
-/* Copyright (©) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
+/* Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
 
    The MySQL Connector/ODBC is licensed under the terms of the
    GPL, like most MySQL Connectors. There are special exceptions
@@ -99,12 +99,18 @@ unsigned int MYODBCSetupDataSourceTab3::getFlags()
         nFlags |= 1 << 22;
     if ( ptab3a->pcheckboxAutoIncrementIsNull->isChecked() )
         nFlags |= 1 << 23;
+    if ( ptab3b->pcheckboxZeroDate2Min->isChecked() )
+        nFlags |= 1 << 24;
+    if ( ptab3b->pcheckboxMinDate2Zero->isChecked() )
+      nFlags |= 1 << 25;
     if ( ptab3c->pcheckboxMultiStatements->isChecked() )
         nFlags |= 1 << 26;
     if ( ptab3c->pcheckboxCapColumnSize->isChecked() )
         nFlags |= 1 << 27;
     if ( ptab3a->pcheckboxDisableBinaryResult->isChecked() )
         nFlags |= 1 << 28;
+    if ( ptab3b->pcheckboxNoI_S->isChecked() )
+        nFlags |= 1 << 30;
 
     return nFlags;
 }

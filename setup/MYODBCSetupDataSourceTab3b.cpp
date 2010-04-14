@@ -1,4 +1,4 @@
-/* Copyright 2004-2007 MySQL AB
+/* Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
 
    The MySQL Connector/ODBC is licensed under the terms of the
    GPL, like most MySQL Connectors. There are special exceptions
@@ -35,6 +35,10 @@ MYODBCSetupDataSourceTab3b::MYODBCSetupDataSourceTab3b( QWidget *pwidgetParent )
     QString         stringDontUseSetLocale( tr("Disable the use of extended fetch (experimental).") );
     QString         stringPadCharToFullLen( tr("Pad CHAR columns to full column length.") );
     QString         stringDontCacheResults( tr("Do not cache the results locally in the driver, instead read from server (mysql_use_result()). This works only for forward-only cursors. This option is very important in dealing with large tables when you don't want the driver to cache the entire result set.") );
+    QString         stringNoI_S( tr("Switch functions(catalog mostly) to use legacy algorythms") );
+    QString         stringZeroDate2Min( tr("Return SQL_NULL_DATA for zero date.") );
+    QString         stringMinDate2Zero( tr("Bind minimal date as zero date.") );
+
 #if QT_VERSION >= 0x040000
     QVBoxLayout *   playoutFields = new QVBoxLayout();
     setLayout( playoutFields );
@@ -108,6 +112,21 @@ MYODBCSetupDataSourceTab3b::MYODBCSetupDataSourceTab3b( QWidget *pwidgetParent )
 #else
     QToolTip::add( pcheckboxDontCacheResults, stringDontCacheResults );
 #endif
+
+    pcheckboxNoI_S = new MYODBCSetupCheckBox( tr("Do not use INFORMATION_SCHEMA for metadata"), this );
+    pcheckboxNoI_S->setAssistText( stringNoI_S );
+    playoutFields->addWidget( pcheckboxNoI_S );
+    MYODBC_ADD_TOOLTIP(pcheckboxNoI_S, stringNoI_S);
+
+    pcheckboxZeroDate2Min = new MYODBCSetupCheckBox( tr("Return SQL_NULL_DATA for zero date"), this );
+    pcheckboxZeroDate2Min->setAssistText( stringZeroDate2Min );
+    playoutFields->addWidget( pcheckboxZeroDate2Min );
+    MYODBC_ADD_TOOLTIP(pcheckboxZeroDate2Min, stringZeroDate2Min);
+
+    pcheckboxMinDate2Zero = new MYODBCSetupCheckBox( tr("Bind minimal date as zero date"), this );
+    pcheckboxMinDate2Zero->setAssistText( stringMinDate2Zero );
+    playoutFields->addWidget( pcheckboxMinDate2Zero );
+    MYODBC_ADD_TOOLTIP(pcheckboxMinDate2Zero, stringMinDate2Zero);
 
     playoutFields->addStretch( 10 );
 }

@@ -1,4 +1,4 @@
-/* Copyright (©) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
+/* Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
 
    The MySQL Connector/ODBC is licensed under the terms of the
    GPL, like most MySQL Connectors. There are special exceptions
@@ -67,7 +67,7 @@ void MYODBCSetupDataSourceDialog::slotHelp()
 #if QT_VERSION >= 0x040000
     // Qt v4
     QProcess  * pprocess    = new QProcess( this );
-    QString     stringURL   = "http://dev.mysql.com/doc/mysql/en/ODBC_Connector.html";
+    QString     stringURL   = "http://dev.mysql.com/doc/refman/5.1/en/connector-odbc.html";
 
 #if defined( Q_WS_WIN )
     if ( pprocess->startDetached( "c:\\program files\\internet explorer\\IEXPLORE.EXE", QStringList() << stringURL ) )
@@ -96,7 +96,7 @@ void MYODBCSetupDataSourceDialog::slotHelp()
 #else
     // Qt v3
     QProcess  * pprocess    = new QProcess( this );
-    QString     stringURL   = "http://dev.mysql.com/doc/mysql/en/ODBC_Connector.html";
+    QString     stringURL   = "http://dev.mysql.com/doc/refman/5.1/en/connector-odbc.html";
 
 #if defined( Q_WS_WIN )
     pprocess->addArgument( "c:\\program files\\internet explorer\\IEXPLORE.EXE" );
@@ -439,6 +439,9 @@ void MYODBCSetupDataSourceDialog::doInit()
         ptab3->ptab3c->pcheckboxMultiStatements->setChecked( nOptions & (1 << 26) ? TRUE : FALSE );
         ptab3->ptab3c->pcheckboxCapColumnSize->setChecked( nOptions & (1 << 27) ? TRUE : FALSE );
         ptab3->ptab3a->pcheckboxDisableBinaryResult->setChecked( nOptions & (1 << 28) ? TRUE : FALSE );
+        ptab3->ptab3b->pcheckboxNoI_S->setChecked(nOptions & (1 << 30) ? TRUE : FALSE);
+        ptab3->ptab3b->pcheckboxZeroDate2Min->setChecked(nOptions & (1 << 24) ? TRUE : FALSE);
+        ptab3->ptab3b->pcheckboxMinDate2Zero->setChecked(nOptions & (1 << 25) ? TRUE : FALSE);
     }
 
     ptab3->ptab3a->pcheckboxInteractive->setChecked(pDataSource->bINTERACTIVE);
@@ -486,6 +489,9 @@ void MYODBCSetupDataSourceDialog::doInit()
     connect( ptab3->ptab3b->pcheckboxDontUseSetLocale, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3b->pcheckboxPadCharToFullLen, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3b->pcheckboxDontCacheResults, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
+    connect( ptab3->ptab3b->pcheckboxNoI_S, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
+    connect( ptab3->ptab3b->pcheckboxZeroDate2Min, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
+    connect( ptab3->ptab3b->pcheckboxMinDate2Zero, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3c->pcheckboxReturnTableNamesSQLDescribeCol, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3c->pcheckboxIgnoreSpaceAfterFunctionNames, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
     connect( ptab3->ptab3c->pcheckboxForceUseOfNamedPipes, SIGNAL(signalAssistText(const QString&)), ptextbrowserAssist, SLOT(setHtml(const QString&)) );
