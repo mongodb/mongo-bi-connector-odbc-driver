@@ -61,27 +61,30 @@ CAPTION "Dialog"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     GROUPBOX        "Connection Parameters",IDC_STATIC,18,53,248,148
-    EDITTEXT        IDC_EDIT_name,98,69,143,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT_description,98,89,143,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT_server,98,121,85,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT_port,212,121,28,14,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        IDC_EDIT_uid,98,140,85,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT_pwd,98,158,85,14,ES_PASSWORD | ES_AUTOHSCROLL
-    RTEXT           "Data Source Name:",IDC_STATIC,23,72,67,8
-    RTEXT           "Description:",IDC_STATIC,23,92,67,8
-    RTEXT           "Server:",IDC_STATIC,23,123,67,8
-    RTEXT           "Port:",IDC_STATIC,187,123,19,8
+    EDITTEXT        IDC_EDIT_name,98,64,143,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_description,98,83,143,14,ES_AUTOHSCROLL
+    GROUPBOX        "",IDC_STATIC,31,105,59,26,NOT WS_VISIBLE
+    CONTROL         "TCP/IP Server:",IDC_RADIO_tcp,"Button",BS_AUTORADIOBUTTON | BS_RIGHT,32,105,60,13
+    CONTROL         "Named Pipe:",IDC_RADIO_pipe,"Button",BS_AUTORADIOBUTTON | BS_RIGHT,32,122,60,13
+    EDITTEXT        IDC_EDIT_server,98,104,85,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_port,212,104,28,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_EDIT_socket,98,123,85,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_uid,98,142,85,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_pwd,98,161,85,14,ES_PASSWORD | ES_AUTOHSCROLL
+    RTEXT           "Data Source Name:",IDC_STATIC,23,68,67,8
+    RTEXT           "Description:",IDC_STATIC,23,87,67,8
+    RTEXT           "Port:",IDC_STATIC,187,107,19,8
     RTEXT           "User:",IDC_STATIC,23,143,67,8
-    RTEXT           "Password:",IDC_STATIC,23,162,67,8
-    RTEXT           "Database:",IDC_STATIC,23,179,67,8
+    RTEXT           "Password:",IDC_STATIC,23,164,67,8
+    RTEXT           "Database:",IDC_STATIC,23,182,67,8
+    COMBOBOX        IDC_EDIT_database,98,180,85,42,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     CONTROL         "",IDC_TAB1,"SysTabControl32",WS_TABSTOP,17,214,249,154
     DEFPUSHBUTTON   "OK",IDOK,111,375,50,15
     PUSHBUTTON      "&Cancel",IDCANCEL,165,375,50,15
-    PUSHBUTTON      "&Test",IDC_BUTTON_TEST,199,175,41,14
+    PUSHBUTTON      "&Test",IDC_BUTTON_TEST,199,179,41,14
     PUSHBUTTON      "&Details >>",IDC_BUTTON_DETAILS,17,376,50,14
     PUSHBUTTON      "&Help",IDC_BUTTON_HELP,217,375,49,15
     CONTROL         130,IDC_STATIC,"Static",SS_BITMAP,0,0,279,39
-    COMBOBOX        IDC_EDIT_database,98,176,85,42,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_TAB1 DIALOGEX 0, 0, 209, 151
@@ -96,18 +99,18 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,42,105,10
     CONTROL         "Don't prompt when connecting",IDC_CHECK_dont_prompt_upon_connect,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,57,113,10
-    CONTROL         "Force use of named pipes",IDC_CHECK_force_use_of_named_pipes,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,72,98,10
     CONTROL         "Allow multiple statements",IDC_CHECK_allow_multiple_statements,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,87,97,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,72,97,10
+    CONTROL         "Interactive Client",IDC_CHECK_clientinteractive,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,87,79,10
     RTEXT           "Character Set:",IDC_STATIC,12,102,67,8
     COMBOBOX        IDC_EDIT_charset,90,102,97,8,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Initial Statement:",IDC_STATIC,12,117,67,8
     EDITTEXT        IDC_EDIT_initstmt,90,117,97,12,ES_AUTOHSCROLL
 
 // Second Column
-    CONTROL         "Interactive Client",IDC_CHECK_clientinteractive,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,130,12,79,10
+//    CONTROL         "Interactive Client",IDC_CHECK_clientinteractive,
+//                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,130,12,79,10
 
 END
 

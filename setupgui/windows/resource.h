@@ -100,7 +100,7 @@
 #define IDC_CHECK_pad_char_to_full_length2 10022
 #define IDC_CHECK_zero_date_to_min      10022
 #define IDC_CHECK_ignore_space_after_function_names 10023
-#define IDC_CHECK_force_use_of_named_pipes 10024
+//#define IDC_CHECK_force_use_of_named_pipes 10024
 #define IDC_CHECK_no_catalog            10025
 #define IDC_CHECK_read_options_from_mycnf 10026
 #define IDC_CHECK_disable_transactions  10027
@@ -118,6 +118,9 @@
 #define IDC_EDIT_initstmt               10039
 #define IDC_CHECK_clientinteractive     10040
 #define IDC_CHECK_no_information_schema 10041
+#define IDC_EDIT_socket                 10042
+#define IDC_RADIO_tcp                   10043
+#define IDC_RADIO_pipe                  10044
 #define IDC_BUTTON_TEST                 11014
 #define IDC_BUTTON_HELP                 11015
 #define IDC_STATIC                      -1

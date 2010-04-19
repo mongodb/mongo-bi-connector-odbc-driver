@@ -61,37 +61,89 @@
 
 extern HINSTANCE ghInstance;
 
-static DataSource* pParams = NULL;
-static PWCHAR pCaption = NULL;
-static int OkPressed = 0;
+static DataSource* pParams= NULL;
+static PWCHAR      pCaption= NULL;
+static int         OkPressed= 0;
 
-static int mod = 1;
-static bool flag = false;
-static bool  BusyIndicator = false;
+static int         mod= 1;
+static bool        flag= false;
+static bool        BusyIndicator= false;
 
-static TABCTRL TabCtrl_1;
+static TABCTRL     TabCtrl_1;
 /* Whether we are in SQLDriverConnect() prompt mode (used to disable fields) */
-static BOOL g_isPrompt;
+static BOOL        g_isPrompt;
+/* Variable to keep IDC of control where default value were put. It's reset if
+   user changes value. Used to verify if we can reset that control's value.
+   It won't work if for more than 1 field, but we have only one in visible future. */
+static long        controlWithDefValue= 0;
 
 HelpButtonPressedCallbackType* gHelpButtonPressedCallback = NULL;
 
+
+/* Function that enables/disables groups of controls */
+#define SWITCHED_GROUPS 2
+#define MAX_GROUP_COTROLS 2
+void SwitchTcpOrPipe(HWND hwnd, BOOL usePipe)
+{
+  /* groups of fields to enable/disable*/
+  const int switchedFields[SWITCHED_GROUPS][MAX_GROUP_COTROLS]=
+                                    {{IDC_EDIT_server, IDC_EDIT_port},
+                                     {IDC_EDIT_socket, 0}};
+
+  /* Default value for enabled empty field */
+  const LPCWSTR defaultValues[SWITCHED_GROUPS][MAX_GROUP_COTROLS]=
+                                    {{NULL, NULL}, {L"MySQL", NULL}};
+  /* Can't be sure that usePipe contains 1 as TRUE*/
+  long activeIndex= usePipe ? 1L : 0L;
+
+  for (long i= 0; i < SWITCHED_GROUPS; ++i)
+    for (long j= 0; j < MAX_GROUP_COTROLS && switchedFields[i][j] != 0; ++j)
+    {
+      HWND control= GetDlgItem(hwnd, switchedFields[i][j]);
+      EnableWindow(control, i == activeIndex);
+
+      if (defaultValues[i][j] != NULL)
+      {
+        if (i == activeIndex)
+        {
+          if (Edit_GetTextLength(control) == 0)
+          {
+            /* remember that we set that value */
+            Edit_SetText(control, defaultValues[i][j]);
+            controlWithDefValue= switchedFields[i][j];
+          }
+        }
+        else if (controlWithDefValue == switchedFields[i][j])
+        {
+          /* we don't want to store the value we set instead of user */
+          Edit_SetText(control,L"");
+        }
+      }
+    }
+}
+#undef SWITCHED_GROUPS
+#undef MAX_GROUP_COTROLS
+
+
 void InitStaticValues()
 {
-	BusyIndicator	= true;
-	pParams			= NULL;
-	pCaption		= NULL;
-	OkPressed		= 0;
+	BusyIndicator= true;
+	pParams      = NULL;
+	pCaption     = NULL;
+	OkPressed    = 0;
 
-	mod				= 1;
-	flag			= false;
-	BusyIndicator	= false;
+	mod          = 1;
+	flag         = false;
+	BusyIndicator= false;
 
-	gHelpButtonPressedCallback	= NULL;
+	gHelpButtonPressedCallback= NULL;
 }
+
 
 #define Refresh(A) RedrawWindow(A,NULL,NULL,RDW_ERASE|RDW_INVALIDATE|RDW_ALLCHILDREN|RDW_UPDATENOW);
 
 BOOL FormMain_DlgProc (HWND, UINT, WPARAM, LPARAM);
+
 
 void DoEvents (void)
 {
@@ -103,34 +155,36 @@ void DoEvents (void)
 	}
 }
 
+
 VOID OnWMNotify(WPARAM wParam, LPARAM lParam);
+
 
 static BOOL FormMain_OnNotify (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
 	OnWMNotify(wParam, lParam);
 	int id = (int)wParam;
 
-    switch(id)
-	{
-		case IDC_TAB1:
-		{
-			TabControl_Select(&TabCtrl_1); //update internal "this" pointer
-			LPNMHDR nm = (LPNMHDR)lParam;
-			switch (nm->code)
-			{
-				case TCN_KEYDOWN:
-					TabCtrl_1.OnKeyDown(lParam);
+  switch(id)
+  {
+    case IDC_TAB1:
+    {
+      TabControl_Select(&TabCtrl_1); //update internal "this" pointer
+      LPNMHDR nm = (LPNMHDR)lParam;
+      switch (nm->code)
+      {
+        case TCN_KEYDOWN:
+          TabCtrl_1.OnKeyDown(lParam);
 
-				case TCN_SELCHANGE:
-					TabCtrl_1.OnSelChanged();
-			}
-		}
-		break;
-	}
-
+        case TCN_SELCHANGE:
+          TabCtrl_1.OnSelChanged();
+      }
+    }
+    break;
+  }
 
 	return FALSE;
 }
+
 
 void getStrFieldData(HWND hwnd, SQLWCHAR **param, int idc)
 {
@@ -147,6 +201,7 @@ void getStrFieldData(HWND hwnd, SQLWCHAR **param, int idc)
   }
 }
 
+
 void getStrFieldData(SQLWCHAR **param, unsigned int framenum, int idc )
 {
   assert(TabCtrl_1.hTabPages);
@@ -157,12 +212,14 @@ void getStrFieldData(SQLWCHAR **param, unsigned int framenum, int idc )
   getStrFieldData(tab, param, idc );
 }
 
+
 void setUnsignedFieldData(HWND hwnd, unsigned int & param, int idc )
 {
   wchar_t buf[20];
   _itow( param, (wchar_t*)buf, 10 );
   Edit_SetText(GetDlgItem(hwnd,idc), buf);
 }
+
 
 void getUnsignedFieldData( HWND hwnd, unsigned int & param, int idc )
 {
@@ -182,6 +239,7 @@ void getUnsignedFieldData( HWND hwnd, unsigned int & param, int idc )
   }
 }
 
+
 bool getBoolFieldData(unsigned int framenum, int idc)
 {
   assert(TabCtrl_1.hTabPages);
@@ -193,6 +251,7 @@ bool getBoolFieldData(unsigned int framenum, int idc)
 
   return false;
 }
+
 
 #define GET_STRING(name)    getStrFieldData(hwnd,&params.name,IDC_EDIT_##name)
 
@@ -211,6 +270,7 @@ bool getBoolFieldData(unsigned int framenum, int idc)
 #define SET_BOOL(framenum,name) \
     Button_SetCheck(GetDlgItem(TabCtrl_1.hTabPages[framenum-1],IDC_CHECK_##name), params.name)
 
+
 void syncData(HWND hwnd, DataSource &params)
 {
   GET_STRING(name);
@@ -220,7 +280,10 @@ void syncData(HWND hwnd, DataSource &params)
   GET_STRING(uid);
   GET_STRING(pwd);
   GET_STRING(database);
+  GET_STRING(socket);
+  params.force_use_of_named_pipes = !!Button_GetCheck(GetDlgItem(hwnd, IDC_RADIO_pipe));
 }
+
 
 void syncForm(HWND hwnd, DataSource &params)
 {
@@ -231,14 +294,23 @@ void syncForm(HWND hwnd, DataSource &params)
   SET_STRING(uid);
   SET_STRING(pwd);
   SET_STRING(database);
+  SET_STRING(socket);
+
+  if (params.force_use_of_named_pipes)
+    Button_SetCheck(GetDlgItem(hwnd,IDC_RADIO_pipe), TRUE);
+  else
+    Button_SetCheck(GetDlgItem(hwnd,IDC_RADIO_tcp), TRUE);
+  SwitchTcpOrPipe(hwnd, pParams->force_use_of_named_pipes);
 }
+
+
 void syncTabsData(HWND hwnd, DataSource &params)
 {  /* 1 - Connection */
   GET_BOOL(CONNECTION_TAB, allow_big_results);
   GET_BOOL(CONNECTION_TAB, use_compressed_protocol);
   GET_BOOL(CONNECTION_TAB, dont_prompt_upon_connect);
   GET_BOOL(CONNECTION_TAB, auto_reconnect);
-  GET_BOOL(CONNECTION_TAB, force_use_of_named_pipes);
+//  GET_BOOL(CONNECTION_TAB, force_use_of_named_pipes);
   GET_BOOL(CONNECTION_TAB, allow_multiple_statements);
   GET_BOOL(CONNECTION_TAB, clientinteractive);
 
@@ -284,6 +356,7 @@ void syncTabsData(HWND hwnd, DataSource &params)
   GET_BOOL(MISC_TAB, min_date_to_zero);
 }
 
+
 void syncTabs(HWND hwnd, DataSource &params)
 {
   /* 1 - Connection */
@@ -291,7 +364,7 @@ void syncTabs(HWND hwnd, DataSource &params)
   SET_BOOL(CONNECTION_TAB, use_compressed_protocol);
   SET_BOOL(CONNECTION_TAB, dont_prompt_upon_connect);
   SET_BOOL(CONNECTION_TAB, auto_reconnect);
-  SET_BOOL(CONNECTION_TAB, force_use_of_named_pipes);
+//  SET_BOOL(CONNECTION_TAB, force_use_of_named_pipes);
   SET_BOOL(CONNECTION_TAB, allow_multiple_statements);
   SET_BOOL(CONNECTION_TAB, clientinteractive);
 
@@ -347,6 +420,7 @@ void syncTabs(HWND hwnd, DataSource &params)
   SET_BOOL(MISC_TAB, min_date_to_zero);
 }
 
+
 void FillParameters(HWND hwnd, DataSource & params)
 {
 	syncData(hwnd, params );
@@ -355,7 +429,9 @@ void FillParameters(HWND hwnd, DataSource & params)
 		syncTabsData(hwnd, params);
 }
 
+
 void OnDialogClose();
+
 
 void FormMain_OnClose(HWND hwnd)
 {
@@ -367,6 +443,7 @@ void FormMain_OnClose(HWND hwnd)
   EndDialog(hwnd, NULL);
 }
 
+
 /****************************************************************************
  *                                                                          *
  * Functions: FormMain_OnCommand related event code                         *
@@ -377,7 +454,6 @@ void FormMain_OnClose(HWND hwnd)
  *           00/00/00  Created                                              *
  *                                                                          *
  ****************************************************************************/
-
 void btnDetails_Click (HWND hwnd)
 {
 	RECT rect;
@@ -409,6 +485,7 @@ void btnDetails_Click (HWND hwnd)
 	MoveWindow( hwnd, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top + 280*mod, TRUE );
 }
 
+
 void btnOk_Click (HWND hwnd)
 {
   FillParameters(hwnd, *pParams);
@@ -421,10 +498,12 @@ void btnOk_Click (HWND hwnd)
   }
 }
 
+
 void btnCancel_Click (HWND hwnd)
 {
   PostMessage(hwnd, WM_CLOSE, NULL, NULL);
 }
+
 
 void btnTest_Click (HWND hwnd)
 {
@@ -440,6 +519,7 @@ void btnHelp_Click (HWND hwnd)
   if ( ShellExecute( NULL, NULL, L"help/myodbc.chm", NULL, NULL, SW_SHOWNORMAL ) == (HINSTANCE)ERROR_FILE_NOT_FOUND )
     ShellExecute(NULL, L"open", L"http://dev.mysql.com/doc/refman/6.0/en/myodbc-configuration-dsn-windows.html" , NULL, NULL, SW_SHOWNORMAL);
 }
+
 
 void chooseFile( HWND parent, int hostCtlId )
 {
@@ -471,6 +551,7 @@ void chooseFile( HWND parent, int hostCtlId )
 		Edit_SetText( hostControl, dialog.lpstrFile );
 	}
 }
+
 
 void choosePath( HWND parent, int hostCtlId )
 {
@@ -603,26 +684,34 @@ void processCharsetCombobox(HWND hwnd, HWND hwndCtl, UINT codeNotify)
 
 void FormMain_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
+  if (controlWithDefValue != 0 && id == controlWithDefValue
+    && codeNotify==EN_CHANGE)
+    controlWithDefValue= 0;
+
   switch (id)
   {
     case IDOK:
-      btnOk_Click (hwnd); break;
+      btnOk_Click(hwnd); break;
     case IDCANCEL:
-      btnCancel_Click (hwnd); break;
+      btnCancel_Click(hwnd); break;
     case IDC_BUTTON_DETAILS:
-      btnDetails_Click (hwnd); break;
+      btnDetails_Click(hwnd); break;
     case IDC_BUTTON_HELP:
-      btnHelp_Click (hwnd); break;
+      btnHelp_Click(hwnd); break;
     case IDC_BUTTON_TEST:
-      btnTest_Click (hwnd); break;
+      btnTest_Click(hwnd); break;
     case IDC_SSLKEYCHOOSER:
-      chooseFile( hwnd, IDC_EDIT_sslkey ); break;
+      chooseFile(hwnd, IDC_EDIT_sslkey); break;
     case IDC_SSLCERTCHOOSER:
-      chooseFile( hwnd, IDC_EDIT_sslcert ); break;
+      chooseFile(hwnd, IDC_EDIT_sslcert); break;
     case IDC_SSLCACHOOSER:
-      chooseFile( hwnd, IDC_EDIT_sslca ); break;
+      chooseFile(hwnd, IDC_EDIT_sslca); break;
     case IDC_SSLCAPATHCHOOSER:
-      choosePath( hwnd, IDC_EDIT_sslcapath ); break;
+      choosePath(hwnd, IDC_EDIT_sslcapath); break;
+    case IDC_RADIO_tcp:
+    case IDC_RADIO_pipe:
+      SwitchTcpOrPipe(hwnd, !!Button_GetCheck(GetDlgItem(hwnd, IDC_RADIO_pipe)));
+      break;
     case IDC_EDIT_name:
     {
       if (codeNotify==EN_CHANGE)
@@ -646,13 +735,16 @@ void FormMain_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 	return;
 }
 
+
 void AlignWindowToBottom(HWND hwnd, int dY);
 void AdjustLayout(HWND hwnd);
+
 
 void FormMain_OnSize(HWND hwnd, UINT state, int cx, int cy)
 {
 	AdjustLayout(hwnd);
 }
+
 
 void AdjustLayout(HWND hwnd)
 {
@@ -678,6 +770,7 @@ void AdjustLayout(HWND hwnd)
 	Refresh(hwnd);
 }
 
+
 void AlignWindowToBottom(HWND hwnd, int dY)
 {
 	if(!hwnd)
@@ -698,8 +791,10 @@ void AlignWindowToBottom(HWND hwnd, int dY)
 	MoveWindow(hwnd, rect.left, rc.top -dY-h,w,h,FALSE);
 }
 
+
 HWND g_hwndDlg;
 BOOL DoCreateDialogTooltip(void);
+
 
 BOOL FormMain_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 {
@@ -718,13 +813,17 @@ BOOL FormMain_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
   {
     EnableWindow(GetDlgItem(hwnd, IDC_EDIT_name), FALSE);
     EnableWindow(GetDlgItem(hwnd, IDC_EDIT_description), FALSE);
-    /* if prompting without DSN, don't disable OK button */
-    if (!pParams->name)
-    {
-      Button_Enable(GetDlgItem(hwnd,IDOK), 1);
-      Button_Enable(GetDlgItem(hwnd,IDC_BUTTON_TEST), 1);
-      RedrawWindow(hwnd,NULL,NULL,RDW_INVALIDATE);
-    }
+  }
+
+  /* if prompting without DSN, don't disable OK button */
+  /* preserved here old logic + enabled OK if data source
+     name is not NULL when not prompting. I don't know why it should be disabled
+     when prompting and name is not NULL. */
+  if (g_isPrompt == (pParams->name==NULL))
+  {
+    Button_Enable(GetDlgItem(hwnd,IDOK), 1);
+    Button_Enable(GetDlgItem(hwnd,IDC_BUTTON_TEST), 1);
+    RedrawWindow(hwnd,NULL,NULL,RDW_INVALIDATE);
   }
 
 	BOOL b = DoCreateDialogTooltip();
