@@ -1,4 +1,4 @@
-# Copyright 2007 MySQL AB
+# Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the
 # GPL, like most MySQL Connectors. There are special exceptions
@@ -45,15 +45,12 @@ SET(setup_SRCS
 			MYODBCSetupDataSourceTab3b.cpp
 			MYODBCSetupDataSourceTab3c.cpp
 			MYODBCSetupDataSourceTab3d.cpp
+			MYODBCSetupDataSourceTab3e.cpp
 			MYODBCSetupDriverConnect.c
 			MYODBCSetupDriverConnectPrompt.cpp
 			MYODBCSetupHandleInstallerError.c 
 			MYODBCSetupLineEdit.cpp
       myodbc3S.rc)
-
-IF(WIN32)
-	SET(setup_SRCS ${setup_SRCS} myodbc3S.def)
-ENDIF(WIN32)
 
 SET(MOC_SRCS
     MYODBCSetupAssistText.h
@@ -68,7 +65,13 @@ SET(MOC_SRCS
     MYODBCSetupDataSourceTab3b.h
     MYODBCSetupDataSourceTab3c.h
     MYODBCSetupDataSourceTab3d.h
+    MYODBCSetupDataSourceTab3e.h
     MYODBCSetupLineEdit.h)
+
+IF(WIN32)
+  # Adding here header files too - that is convenient if one uses VS
+	SET(setup_SRCS ${setup_SRCS} ${MOC_SRCS} myodbc3S.def)
+ENDIF(WIN32)
 
 IF(QT_WRAP_CPP)
   QT_WRAP_CPP(myodbc3S setup_SRCS ${MOC_SRCS})

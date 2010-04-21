@@ -1,4 +1,4 @@
-/* Copyright 2004-2007 MySQL AB
+/* Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
 
    The MySQL Connector/ODBC is licensed under the terms of the
    GPL, like most MySQL Connectors. There are special exceptions
@@ -46,15 +46,15 @@ public:
     MYODBCSetupDataSourceTab3c( QWidget *pwidgetParent );
 
 protected:
-    MYODBCSetupCheckBox *pcheckboxReturnTableNamesSQLDescribeCol;
-    MYODBCSetupCheckBox *pcheckboxIgnoreSpaceAfterFunctionNames;
-    MYODBCSetupCheckBox *pcheckboxForceUseOfNamedPipes;         
-    MYODBCSetupCheckBox *pcheckboxNoCatalog;                    
-    MYODBCSetupCheckBox *pcheckboxReadOptionsFromMyCnf;         
-    MYODBCSetupCheckBox *pcheckboxDisableTransactions;          
+    MYODBCSetupCheckBox *pcheckboxEnableDynamicCursor;
+    MYODBCSetupCheckBox *pcheckboxUseManagerCursors;
+    MYODBCSetupCheckBox *pcheckboxDontCacheResults;
     MYODBCSetupCheckBox *pcheckboxForceUseOfForwardOnlyCursors;
-    MYODBCSetupCheckBox *pcheckboxMultiStatements;
-    MYODBCSetupCheckBox *pcheckboxCapColumnSize;
+
+    MYODBCSetupCheckBox *pcheckboxReturnMatchingRows;
+    MYODBCSetupCheckBox *pcheckboxAutoIncrementIsNull;
+    MYODBCSetupCheckBox *pcheckboxPadCharToFullLen;
+    MYODBCSetupCheckBox *pcheckboxZeroDate2Min;
 };
 
 #endif

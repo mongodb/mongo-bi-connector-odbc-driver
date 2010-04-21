@@ -1,4 +1,4 @@
-# Copyright 2007 MySQL AB
+# Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the
 # GPL, like most MySQL Connectors. There are special exceptions
@@ -35,7 +35,8 @@ SET(DRIVER_SRCS
 INCLUDE_DIRECTORIES(../util)
 
 IF(WIN32)
-	SET(DRIVER_SRCS ${DRIVER_SRCS} driver.def driver.rc)
+  # Headers added for convenience of VS users
+	SET(DRIVER_SRCS ${DRIVER_SRCS} driver.def driver.rc driver.h error.h myutil.h)
 ENDIF(WIN32)
 
 ADD_LIBRARY(myodbc5 SHARED ${DRIVER_SRCS})

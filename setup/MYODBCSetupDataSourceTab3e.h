@@ -1,4 +1,4 @@
-/* Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
+/* Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
 
    The MySQL Connector/ODBC is licensed under the terms of the
    GPL, like most MySQL Connectors. There are special exceptions
@@ -23,13 +23,12 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA */
 
-#ifndef MYODBCUTIL_DATASOURCETAB3A_H
-#define MYODBCUTIL_DATASOURCETAB3A_H
+#ifndef MYODBCUTIL_DATASOURCETAB3E_H
+#define MYODBCUTIL_DATASOURCETAB3E_H
 
 #include <qobject.h>
 #include <qstring.h>
 #include <qlayout.h>
-#include <qmessagebox.h>
 #include <qtooltip.h>
 
 #include "MYODBCSetupCheckBox.h"
@@ -37,24 +36,22 @@
 class MYODBCSetupDataSourceDialog;
 class MYODBCSetupDataSourceTab3;
 
-class MYODBCSetupDataSourceTab3a : public QWidget
+class MYODBCSetupDataSourceTab3e : public QWidget
 {
-    Q_OBJECT
+  Q_OBJECT
 
-    friend class MYODBCSetupDataSourceDialog;
-    friend class MYODBCSetupDataSourceTab3;
+  friend class MYODBCSetupDataSourceDialog;
+  friend class MYODBCSetupDataSourceTab3;
 public:
-    MYODBCSetupDataSourceTab3a( QWidget *pwidgetParent );
+  MYODBCSetupDataSourceTab3e( QWidget *pwidgetParent );
 
 protected:
-
-    MYODBCSetupCheckBox *pcheckboxAllowBigResults;
-    MYODBCSetupCheckBox *pcheckboxUseCompressedProtocol;
-    MYODBCSetupCheckBox *pcheckboxEnableReconnect;
-    MYODBCSetupCheckBox *pcheckboxDontPromptOnConnect;
-    MYODBCSetupCheckBox *pcheckboxForceUseOfNamedPipes;
-    MYODBCSetupCheckBox *pcheckboxMultiStatements;
-    MYODBCSetupCheckBox *pcheckboxInteractive;
+  MYODBCSetupCheckBox *pcheckboxSafe;
+  MYODBCSetupCheckBox *pcheckboxDontUseSetLocale;
+  MYODBCSetupCheckBox *pcheckboxIgnoreSpaceAfterFunctionNames;
+  MYODBCSetupCheckBox *pcheckboxReadOptionsFromMyCnf;
+  MYODBCSetupCheckBox *pcheckboxDisableTransactions;
+  MYODBCSetupCheckBox *pcheckboxMinDate2Zero;
 };
 
 #endif

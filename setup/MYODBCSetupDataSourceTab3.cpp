@@ -40,76 +40,77 @@ MYODBCSetupDataSourceTab3::MYODBCSetupDataSourceTab3( QWidget *pwidgetParent )
     ptabwidget = new QTabWidget( this );
     playoutFields->addWidget( ptabwidget );
 
-    ptab3a = new MYODBCSetupDataSourceTab3a( ptabwidget );
-    ptabwidget->addTab( ptab3a, tr("Flags 1") ); 
-    ptab3b = new MYODBCSetupDataSourceTab3b( ptabwidget );
-    ptabwidget->addTab( ptab3b, tr("Flags 2") ); 
-    ptab3c = new MYODBCSetupDataSourceTab3c( ptabwidget );
-    ptabwidget->addTab( ptab3c, tr("Flags 3") ); 
-    ptab3d = new MYODBCSetupDataSourceTab3d( ptabwidget );
-    ptabwidget->addTab( ptab3d, tr("Debug") ); 
-
+    ptab3connection = new MYODBCSetupDataSourceTab3a( ptabwidget );
+    ptabwidget->addTab( ptab3connection, tr("Connection") ); 
+    ptab3metadata = new MYODBCSetupDataSourceTab3b( ptabwidget );
+    ptabwidget->addTab( ptab3metadata, tr("Metadata") ); 
+    ptab3results = new MYODBCSetupDataSourceTab3c( ptabwidget );
+    ptabwidget->addTab( ptab3results, tr("Cursor/Result") ); 
+    ptab3debug = new MYODBCSetupDataSourceTab3d( ptabwidget );
+    ptabwidget->addTab( ptab3debug, tr("Dbg") );
+    ptab3misc = new MYODBCSetupDataSourceTab3e( ptabwidget );
+    ptabwidget->addTab( ptab3misc, tr("Misc") );
 }
 
 unsigned int MYODBCSetupDataSourceTab3::getFlags()
 {
     unsigned int nFlags = 0;
 
-    if ( ptab3a->pcheckboxReturnMatchingRows->isChecked() )
+    if ( ptab3results->pcheckboxReturnMatchingRows->isChecked() )
         nFlags |= 1 << 1;
-    if ( ptab3a->pcheckboxAllowBigResults->isChecked() )
+    if ( ptab3connection->pcheckboxAllowBigResults->isChecked() )
         nFlags |= 1 << 3;
-    if ( ptab3b->pcheckboxDontPromptOnConnect->isChecked() )
+    if ( ptab3connection->pcheckboxDontPromptOnConnect->isChecked() )
         nFlags |= 1 << 4;
-    if ( ptab3b->pcheckboxEnableDynamicCursor->isChecked() )
+    if ( ptab3results->pcheckboxEnableDynamicCursor->isChecked() )
         nFlags |= 1 << 5;
-    if ( ptab3b->pcheckboxIgnorePoundInTable->isChecked() )
+    if ( ptab3metadata->pcheckboxIgnorePoundInTable->isChecked() )
         nFlags |= 1 << 6;
-    if ( ptab3b->pcheckboxUseManagerCursors->isChecked() )
+    if ( ptab3results->pcheckboxUseManagerCursors->isChecked() )
         nFlags |= 1 << 7;
-    if ( ptab3b->pcheckboxDontUseSetLocale->isChecked() )
+    if ( ptab3misc->pcheckboxDontUseSetLocale->isChecked() )
         nFlags |= 1 << 8;
-    if ( ptab3b->pcheckboxPadCharToFullLen->isChecked() )
+    if ( ptab3results->pcheckboxPadCharToFullLen->isChecked() )
         nFlags |= 1 << 9;
-    if ( ptab3c->pcheckboxReturnTableNamesSQLDescribeCol->isChecked() )
+    if ( ptab3metadata->pcheckboxReturnTableNamesSQLDescribeCol->isChecked() )
         nFlags |= 1 << 10;
-    if ( ptab3a->pcheckboxUseCompressedProtocol->isChecked() )
+    if ( ptab3connection->pcheckboxUseCompressedProtocol->isChecked() )
         nFlags |= 1 << 11;
-    if ( ptab3c->pcheckboxIgnoreSpaceAfterFunctionNames->isChecked() ) 
+    if ( ptab3misc->pcheckboxIgnoreSpaceAfterFunctionNames->isChecked() ) 
         nFlags |= 1 << 12;
-    if ( ptab3c->pcheckboxForceUseOfNamedPipes->isChecked() )          
+    if ( ptab3connection->pcheckboxForceUseOfNamedPipes->isChecked() )          
         nFlags |= 1 << 13;
-    if ( ptab3a->pcheckboxChangeBIGINTColumnsToInt->isChecked() )
+    if ( ptab3metadata->pcheckboxChangeBIGINTColumnsToInt->isChecked() )
         nFlags |= 1 << 14;
-    if ( ptab3c->pcheckboxNoCatalog->isChecked() )
+    if ( ptab3metadata->pcheckboxNoCatalog->isChecked() )
         nFlags |= 1 << 15;
-    if ( ptab3c->pcheckboxReadOptionsFromMyCnf->isChecked() )          
+    if ( ptab3misc->pcheckboxReadOptionsFromMyCnf->isChecked() )          
         nFlags |= 1 << 16;
-    if ( ptab3a->pcheckboxSafe->isChecked() )
+    if ( ptab3misc->pcheckboxSafe->isChecked() )
         nFlags |= 1 << 17;
-    if ( ptab3c->pcheckboxDisableTransactions->isChecked() )           
+    if ( ptab3misc->pcheckboxDisableTransactions->isChecked() )           
         nFlags |= 1 << 18;
-    if ( ptab3d->pcheckboxSaveQueries->isChecked() )
+    if ( ptab3debug->pcheckboxSaveQueries->isChecked() )
         nFlags |= 1 << 19;
-    if ( ptab3b->pcheckboxDontCacheResults->isChecked() )
+    if ( ptab3results->pcheckboxDontCacheResults->isChecked() )
         nFlags |= 1 << 20;
-    if ( ptab3c->pcheckboxForceUseOfForwardOnlyCursors->isChecked() )  
+    if ( ptab3results->pcheckboxForceUseOfForwardOnlyCursors->isChecked() )  
         nFlags |= 1 << 21;
-    if ( ptab3a->pcheckboxEnableReconnect->isChecked() )
+    if ( ptab3connection->pcheckboxEnableReconnect->isChecked() )
         nFlags |= 1 << 22;
-    if ( ptab3a->pcheckboxAutoIncrementIsNull->isChecked() )
+    if ( ptab3results->pcheckboxAutoIncrementIsNull->isChecked() )
         nFlags |= 1 << 23;
-    if ( ptab3b->pcheckboxZeroDate2Min->isChecked() )
+    if ( ptab3results->pcheckboxZeroDate2Min->isChecked() )
         nFlags |= 1 << 24;
-    if ( ptab3b->pcheckboxMinDate2Zero->isChecked() )
+    if ( ptab3misc->pcheckboxMinDate2Zero->isChecked() )
       nFlags |= 1 << 25;
-    if ( ptab3c->pcheckboxMultiStatements->isChecked() )
+    if ( ptab3connection->pcheckboxMultiStatements->isChecked() )
         nFlags |= 1 << 26;
-    if ( ptab3c->pcheckboxCapColumnSize->isChecked() )
+    if ( ptab3metadata->pcheckboxCapColumnSize->isChecked() )
         nFlags |= 1 << 27;
-    if ( ptab3a->pcheckboxDisableBinaryResult->isChecked() )
+    if ( ptab3metadata->pcheckboxDisableBinaryResult->isChecked() )
         nFlags |= 1 << 28;
-    if ( ptab3b->pcheckboxNoI_S->isChecked() )
+    if ( ptab3metadata->pcheckboxNoI_S->isChecked() )
         nFlags |= 1 << 30;
 
     return nFlags;
@@ -118,5 +119,5 @@ unsigned int MYODBCSetupDataSourceTab3::getFlags()
 
 bool MYODBCSetupDataSourceTab3::getInteractiveFlag()
 {
-  return ptab3a->pcheckboxInteractive->isChecked();
+  return ptab3connection->pcheckboxInteractive->isChecked();
 }

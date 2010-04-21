@@ -28,16 +28,13 @@
 MYODBCSetupDataSourceTab3b::MYODBCSetupDataSourceTab3b( QWidget *pwidgetParent )
     : QWidget( pwidgetParent )
 {
-    QString         stringDontPromptOnConnect( tr("Don't prompt for questions even if driver would like to prompt.") );
-    QString         stringEnableDynamicCursor( tr("Enable or disable the dynamic cursor support. (Not allowed in MyODBC 2.50.)") );
+    QString         stringChangeBIGINTColumnsToInt( tr("Change LONGLONG columns to INT columns (some applications can't handle LONGLONG).") );
+    QString         stringDisableBinaryResult( tr("Always handle binary function results as character data") );
     QString         stringIgnorePoundInTable( tr("Ignore use of database name in db_name.tbl_name.col_name.") );
-    QString         stringUseManagerCursors( tr("Force use of ODBC manager cursors (experimental).") );
-    QString         stringDontUseSetLocale( tr("Disable the use of extended fetch (experimental).") );
-    QString         stringPadCharToFullLen( tr("Pad CHAR columns to full column length.") );
-    QString         stringDontCacheResults( tr("Do not cache the results locally in the driver, instead read from server (mysql_use_result()). This works only for forward-only cursors. This option is very important in dealing with large tables when you don't want the driver to cache the entire result set.") );
-    QString         stringNoI_S( tr("Switch functions(catalog mostly) to use legacy algorythms") );
-    QString         stringZeroDate2Min( tr("Return SQL_NULL_DATA for zero date.") );
-    QString         stringMinDate2Zero( tr("Bind minimal date as zero date.") );
+    QString         stringReturnTableNamesSQLDescribeCol( tr("SQLDescribeCol() will return fully qualified column names.") );
+    QString         stringNoCatalog( tr("Return 'user' as Table_qualifier and Table_owner from SQLTables (experimental).") );
+    QString         stringCapColumnSize( tr("Limit reported column size to signed 32-bit integer (possible workaround for some applications, automatically enabled for applications using ADO)") );
+    QString         stringNoI_S( tr("Do not use INFORMATION_SCHEMA for catalog data") );
 
 #if QT_VERSION >= 0x040000
     QVBoxLayout *   playoutFields = new QVBoxLayout();
@@ -50,22 +47,22 @@ MYODBCSetupDataSourceTab3b::MYODBCSetupDataSourceTab3b( QWidget *pwidgetParent )
     playoutFields->setSpacing( 5 );
     playoutFields->addStretch( 10 );
 
-    pcheckboxDontPromptOnConnect = new MYODBCSetupCheckBox( tr("Don't Prompt Upon Connect"), this );
-    pcheckboxDontPromptOnConnect->setAssistText( stringDontPromptOnConnect );
-    playoutFields->addWidget( pcheckboxDontPromptOnConnect );
+    pcheckboxChangeBIGINTColumnsToInt = new MYODBCSetupCheckBox( tr("Change BIGINT Columns To Int"), this );
+    pcheckboxChangeBIGINTColumnsToInt->setAssistText( stringChangeBIGINTColumnsToInt );
+    playoutFields->addWidget( pcheckboxChangeBIGINTColumnsToInt );
 #if QT_VERSION >= 0x040000
-    pcheckboxDontPromptOnConnect->setToolTip( stringDontPromptOnConnect );
+    pcheckboxChangeBIGINTColumnsToInt->setToolTip( stringChangeBIGINTColumnsToInt );
 #else
-    QToolTip::add( pcheckboxDontPromptOnConnect, stringDontPromptOnConnect );
+    QToolTip::add( pcheckboxChangeBIGINTColumnsToInt, stringChangeBIGINTColumnsToInt );
 #endif
 
-    pcheckboxEnableDynamicCursor = new MYODBCSetupCheckBox( tr("Enable Dynamic Cursor"), this );
-    pcheckboxEnableDynamicCursor->setAssistText( stringEnableDynamicCursor );
-    playoutFields->addWidget( pcheckboxEnableDynamicCursor );
+    pcheckboxDisableBinaryResult = new MYODBCSetupCheckBox( tr("Always handle binary function results as character data"), this );
+    pcheckboxDisableBinaryResult->setAssistText( stringDisableBinaryResult );
+    playoutFields->addWidget( pcheckboxDisableBinaryResult );
 #if QT_VERSION >= 0x040000
-    pcheckboxEnableDynamicCursor->setToolTip( stringEnableDynamicCursor );
+    pcheckboxDisableBinaryResult->setToolTip( stringDisableBinaryResult );
 #else
-    QToolTip::add( pcheckboxEnableDynamicCursor, stringEnableDynamicCursor );
+    QToolTip::add( pcheckboxDisableBinaryResult, stringDisableBinaryResult );
 #endif
 
     pcheckboxIgnorePoundInTable = new MYODBCSetupCheckBox( tr("Ignore # In Table Name"), this );
@@ -77,56 +74,37 @@ MYODBCSetupDataSourceTab3b::MYODBCSetupDataSourceTab3b( QWidget *pwidgetParent )
     QToolTip::add( pcheckboxIgnorePoundInTable, stringIgnorePoundInTable );
 #endif
 
-    pcheckboxUseManagerCursors = new MYODBCSetupCheckBox( tr("User Manager Cursors"), this );
-    pcheckboxUseManagerCursors->setAssistText( stringUseManagerCursors );
-    playoutFields->addWidget( pcheckboxUseManagerCursors );
+    pcheckboxReturnTableNamesSQLDescribeCol = new MYODBCSetupCheckBox( tr("Return Table Names For SQLDescribeCol"), this );
+    pcheckboxReturnTableNamesSQLDescribeCol->setAssistText( stringReturnTableNamesSQLDescribeCol );
+    playoutFields->addWidget( pcheckboxReturnTableNamesSQLDescribeCol );
 #if QT_VERSION >= 0x040000
-    pcheckboxUseManagerCursors->setToolTip( stringUseManagerCursors );
+    pcheckboxReturnTableNamesSQLDescribeCol->setToolTip( stringReturnTableNamesSQLDescribeCol );
 #else
-    QToolTip::add( pcheckboxUseManagerCursors, stringUseManagerCursors );
+    QToolTip::add( pcheckboxReturnTableNamesSQLDescribeCol, stringReturnTableNamesSQLDescribeCol );
 #endif
 
-    pcheckboxDontUseSetLocale = new MYODBCSetupCheckBox( tr("Don't Use Set Locale"), this );
-    pcheckboxDontUseSetLocale->setAssistText( stringDontUseSetLocale );
-    playoutFields->addWidget( pcheckboxDontUseSetLocale );
+    pcheckboxNoCatalog = new MYODBCSetupCheckBox( tr("No Catalog (exp)"), this );
+    pcheckboxNoCatalog->setAssistText( stringNoCatalog );
+    playoutFields->addWidget( pcheckboxNoCatalog );
 #if QT_VERSION >= 0x040000
-    pcheckboxDontUseSetLocale->setToolTip( stringDontUseSetLocale );
+    pcheckboxNoCatalog->setToolTip( stringNoCatalog );
 #else
-    QToolTip::add( pcheckboxDontUseSetLocale, stringDontUseSetLocale );
+    QToolTip::add( pcheckboxNoCatalog, stringNoCatalog );
 #endif
 
-    pcheckboxPadCharToFullLen = new MYODBCSetupCheckBox( tr("Pad Char To Full Length"), this );
-    pcheckboxPadCharToFullLen->setAssistText( stringPadCharToFullLen );
-    playoutFields->addWidget( pcheckboxPadCharToFullLen );
+    pcheckboxCapColumnSize = new MYODBCSetupCheckBox( tr("Limit column size to signed 32-bit range"), this );
+    pcheckboxCapColumnSize->setAssistText( stringCapColumnSize );
+    playoutFields->addWidget( pcheckboxCapColumnSize );
 #if QT_VERSION >= 0x040000
-    pcheckboxPadCharToFullLen->setToolTip( stringPadCharToFullLen );
+    pcheckboxCapColumnSize->setToolTip( stringCapColumnSize );
 #else
-    QToolTip::add( pcheckboxPadCharToFullLen, stringPadCharToFullLen );
-#endif
-
-    pcheckboxDontCacheResults = new MYODBCSetupCheckBox( tr("Don't Cache Result (forward only cursors)"), this );
-    pcheckboxDontCacheResults->setAssistText( stringDontCacheResults );
-    playoutFields->addWidget( pcheckboxDontCacheResults );
-#if QT_VERSION >= 0x040000
-    pcheckboxDontCacheResults->setToolTip( stringDontCacheResults );
-#else
-    QToolTip::add( pcheckboxDontCacheResults, stringDontCacheResults );
+    QToolTip::add( pcheckboxCapColumnSize, stringCapColumnSize );
 #endif
 
     pcheckboxNoI_S = new MYODBCSetupCheckBox( tr("Do not use INFORMATION_SCHEMA for metadata"), this );
     pcheckboxNoI_S->setAssistText( stringNoI_S );
     playoutFields->addWidget( pcheckboxNoI_S );
     MYODBC_ADD_TOOLTIP(pcheckboxNoI_S, stringNoI_S);
-
-    pcheckboxZeroDate2Min = new MYODBCSetupCheckBox( tr("Return SQL_NULL_DATA for zero date"), this );
-    pcheckboxZeroDate2Min->setAssistText( stringZeroDate2Min );
-    playoutFields->addWidget( pcheckboxZeroDate2Min );
-    MYODBC_ADD_TOOLTIP(pcheckboxZeroDate2Min, stringZeroDate2Min);
-
-    pcheckboxMinDate2Zero = new MYODBCSetupCheckBox( tr("Bind minimal date as zero date"), this );
-    pcheckboxMinDate2Zero->setAssistText( stringMinDate2Zero );
-    playoutFields->addWidget( pcheckboxMinDate2Zero );
-    MYODBC_ADD_TOOLTIP(pcheckboxMinDate2Zero, stringMinDate2Zero);
 
     playoutFields->addStretch( 10 );
 }

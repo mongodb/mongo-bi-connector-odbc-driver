@@ -1,4 +1,4 @@
-/* Copyright (©) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
+/* Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.
 
    The MySQL Connector/ODBC is licensed under the terms of the
    GPL, like most MySQL Connectors. There are special exceptions
@@ -32,6 +32,7 @@
 #include "MYODBCSetupDataSourceTab3b.h"
 #include "MYODBCSetupDataSourceTab3c.h"
 #include "MYODBCSetupDataSourceTab3d.h"
+#include "MYODBCSetupDataSourceTab3e.h"
 
 class MYODBCSetupDataSourceDialog;
 
@@ -46,10 +47,11 @@ public:
 protected:
     QVBoxLayout *                playoutTop;
     QTabWidget *                 ptabwidget;
-    MYODBCSetupDataSourceTab3a * ptab3a;
-    MYODBCSetupDataSourceTab3b * ptab3b;
-    MYODBCSetupDataSourceTab3c * ptab3c;
-    MYODBCSetupDataSourceTab3d * ptab3d;
+    MYODBCSetupDataSourceTab3a * ptab3connection;
+    MYODBCSetupDataSourceTab3b * ptab3metadata;
+    MYODBCSetupDataSourceTab3c * ptab3results;
+    MYODBCSetupDataSourceTab3d * ptab3debug;
+    MYODBCSetupDataSourceTab3e * ptab3misc;
 
     unsigned int  getFlags();
     bool          getInteractiveFlag();

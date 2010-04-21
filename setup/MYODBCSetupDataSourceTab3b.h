@@ -47,16 +47,14 @@ public:
     MYODBCSetupDataSourceTab3b( QWidget *pwidgetParent );
 
 protected:
-    MYODBCSetupCheckBox *pcheckboxDontPromptOnConnect;
-    MYODBCSetupCheckBox *pcheckboxEnableDynamicCursor;
+    MYODBCSetupCheckBox *pcheckboxChangeBIGINTColumnsToInt;
+    MYODBCSetupCheckBox *pcheckboxDisableBinaryResult;
     MYODBCSetupCheckBox *pcheckboxIgnorePoundInTable;
-    MYODBCSetupCheckBox *pcheckboxUseManagerCursors;
-    MYODBCSetupCheckBox *pcheckboxDontUseSetLocale;
-    MYODBCSetupCheckBox *pcheckboxPadCharToFullLen;
-    MYODBCSetupCheckBox *pcheckboxDontCacheResults;
+    MYODBCSetupCheckBox *pcheckboxReturnTableNamesSQLDescribeCol;
+    MYODBCSetupCheckBox *pcheckboxNoCatalog;
+    MYODBCSetupCheckBox *pcheckboxCapColumnSize;
     MYODBCSetupCheckBox *pcheckboxNoI_S;
-    MYODBCSetupCheckBox *pcheckboxZeroDate2Min;
-    MYODBCSetupCheckBox *pcheckboxMinDate2Zero;
+
 };
 
 #endif

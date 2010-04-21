@@ -1,7 +1,7 @@
 5.1.7
 
   Functionality added or changed:
-  * Options in the Windows GUI are groupped on named tabs.
+  * Options in the GUI are groupped on named tabs.
   * Added connection option INTERACTIVE that tells driver that client is
     ineractive and interactive_timeout has to be used. (Bug #48603)
   * Added parameters arrays support. (Bug #48310)

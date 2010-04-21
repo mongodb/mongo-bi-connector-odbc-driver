@@ -28,15 +28,15 @@
 MYODBCSetupDataSourceTab3a::MYODBCSetupDataSourceTab3a( QWidget *pwidgetParent )
     : QWidget( pwidgetParent )
 {
-    QString         stringReturnMatchingRows( tr("The client can't handle that MySQL returns the true value of affected rows. If this flag is set, MySQL returns ``found rows'' instead. You must have MySQL 3.21.14 or newer to get this to work.") );
+
     QString         stringAllowBigResults( tr("Don't set any packet limit for results and parameters.") );
     QString         stringUseCompressedProtocol( tr("Use the compressed client/server protocol.") );
-    QString         stringChangeBIGINTColumnsToInt( tr("Change LONGLONG columns to INT columns (some applications can't handle LONGLONG).") );
-    QString         stringSafe( tr("Add some extra safety checks (should not be needed but...).") );
     QString         stringEnableReconnect( tr("Enables automatic reconnect. Attention: it is strongly not recommended to set this flag for transactional operations!") );
-    QString         stringAutoIncrementIsNull( tr("Turns on/off the handling of searching for the last inserted row with WHERE auto_increment_column IS NULL") );
-    QString         stringDisableBinaryResult( tr("Always handle binary function results as character data") );
+    QString         stringDontPromptOnConnect( tr("Don't prompt for questions even if driver would like to prompt.") );
+    QString         stringForceUseOfNamedPipes( tr("Connect with named pipes to a mysqld server running on NT.") );
+    QString         stringMultiStatements( tr("Allow multiple statements in a single query.") );
     QString         stringInteractive( tr("Identify connection as an interactive session") );
+
 #if QT_VERSION >= 0x040000
     QVBoxLayout *   playoutFields = new QVBoxLayout;
     setLayout( playoutFields );
@@ -46,15 +46,6 @@ MYODBCSetupDataSourceTab3a::MYODBCSetupDataSourceTab3a( QWidget *pwidgetParent )
     playoutFields->setMargin( 20 );
     playoutFields->setSpacing( 5 );
     playoutFields->addStretch( 10 );
-
-    pcheckboxReturnMatchingRows = new MYODBCSetupCheckBox( tr("Return Matching Rows"), this );
-    pcheckboxReturnMatchingRows->setAssistText( stringReturnMatchingRows );
-    playoutFields->addWidget( pcheckboxReturnMatchingRows );
-#if QT_VERSION >= 0x040000
-    pcheckboxReturnMatchingRows->setToolTip( stringReturnMatchingRows );
-#else
-    QToolTip::add( pcheckboxReturnMatchingRows, stringReturnMatchingRows );
-#endif
 
     pcheckboxAllowBigResults = new MYODBCSetupCheckBox( tr("Allow Big Results"), this );
     pcheckboxAllowBigResults->setAssistText( stringAllowBigResults );
@@ -74,24 +65,6 @@ MYODBCSetupDataSourceTab3a::MYODBCSetupDataSourceTab3a( QWidget *pwidgetParent )
     QToolTip::add( pcheckboxUseCompressedProtocol, stringUseCompressedProtocol );
 #endif
 
-    pcheckboxChangeBIGINTColumnsToInt = new MYODBCSetupCheckBox( tr("Change BIGINT Columns To Int"), this );
-    pcheckboxChangeBIGINTColumnsToInt->setAssistText( stringChangeBIGINTColumnsToInt );
-    playoutFields->addWidget( pcheckboxChangeBIGINTColumnsToInt );
-#if QT_VERSION >= 0x040000
-    pcheckboxChangeBIGINTColumnsToInt->setToolTip( stringChangeBIGINTColumnsToInt );
-#else
-    QToolTip::add( pcheckboxChangeBIGINTColumnsToInt, stringChangeBIGINTColumnsToInt );
-#endif
-
-    pcheckboxSafe = new MYODBCSetupCheckBox( tr("Safe"), this );
-    pcheckboxSafe->setAssistText( stringSafe );
-    playoutFields->addWidget( pcheckboxSafe );
-#if QT_VERSION >= 0x040000
-    pcheckboxSafe->setToolTip( stringSafe );
-#else
-    QToolTip::add( pcheckboxSafe, stringSafe );
-#endif
-
     pcheckboxEnableReconnect = new MYODBCSetupCheckBox( tr("Enable Auto Reconnect"), this );
     pcheckboxEnableReconnect->setAssistText( stringEnableReconnect );
     playoutFields->addWidget( pcheckboxEnableReconnect );
@@ -101,22 +74,31 @@ MYODBCSetupDataSourceTab3a::MYODBCSetupDataSourceTab3a( QWidget *pwidgetParent )
     QToolTip::add( pcheckboxEnableReconnect, stringEnableReconnect );
 #endif
 
-    pcheckboxAutoIncrementIsNull = new MYODBCSetupCheckBox( tr("Enable auto_increment NULL search"), this );
-    pcheckboxAutoIncrementIsNull->setAssistText( stringAutoIncrementIsNull );
-    playoutFields->addWidget( pcheckboxAutoIncrementIsNull );
+    pcheckboxDontPromptOnConnect = new MYODBCSetupCheckBox( tr("Don't Prompt Upon Connect"), this );
+    pcheckboxDontPromptOnConnect->setAssistText( stringDontPromptOnConnect );
+    playoutFields->addWidget( pcheckboxDontPromptOnConnect );
 #if QT_VERSION >= 0x040000
-    pcheckboxAutoIncrementIsNull->setToolTip( stringAutoIncrementIsNull );
+    pcheckboxDontPromptOnConnect->setToolTip( stringDontPromptOnConnect );
 #else
-    QToolTip::add( pcheckboxAutoIncrementIsNull, stringAutoIncrementIsNull );
+    QToolTip::add( pcheckboxDontPromptOnConnect, stringDontPromptOnConnect );
 #endif
 
-    pcheckboxDisableBinaryResult = new MYODBCSetupCheckBox( tr("Always handle binary function results as character data"), this );
-    pcheckboxDisableBinaryResult->setAssistText( stringDisableBinaryResult );
-    playoutFields->addWidget( pcheckboxDisableBinaryResult );
+    pcheckboxForceUseOfNamedPipes = new MYODBCSetupCheckBox( tr("Force Use Of Named Pipes"), this );
+    pcheckboxForceUseOfNamedPipes->setAssistText( stringForceUseOfNamedPipes );
+    playoutFields->addWidget( pcheckboxForceUseOfNamedPipes );
 #if QT_VERSION >= 0x040000
-    pcheckboxDisableBinaryResult->setToolTip( stringDisableBinaryResult );
+    pcheckboxForceUseOfNamedPipes->setToolTip( stringForceUseOfNamedPipes );
 #else
-    QToolTip::add( pcheckboxDisableBinaryResult, stringDisableBinaryResult );
+    QToolTip::add( pcheckboxForceUseOfNamedPipes, stringForceUseOfNamedPipes );
+#endif
+
+    pcheckboxMultiStatements = new MYODBCSetupCheckBox( tr("Allow multiple statements"), this );
+    pcheckboxMultiStatements->setAssistText( stringMultiStatements );
+    playoutFields->addWidget( pcheckboxMultiStatements );
+#if QT_VERSION >= 0x040000
+    pcheckboxMultiStatements->setToolTip( stringMultiStatements );
+#else
+    QToolTip::add( pcheckboxMultiStatements, stringMultiStatements );
 #endif
 
     pcheckboxInteractive = new MYODBCSetupCheckBox( tr("Interactive client"), this );

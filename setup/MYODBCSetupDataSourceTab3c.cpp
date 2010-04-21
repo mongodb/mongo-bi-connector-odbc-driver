@@ -28,15 +28,14 @@
 MYODBCSetupDataSourceTab3c::MYODBCSetupDataSourceTab3c( QWidget *pwidgetParent )
     : QWidget( pwidgetParent )
 {
-    QString         stringReturnTableNamesSQLDescribeCol( tr("SQLDescribeCol() will return fully qualified column names.") );
-    QString         stringIgnoreSpaceAfterFunctionNames( tr("Tell server to ignore space after function name and before `(' (needed by PowerBuilder). This will make all function names keywords.") );
-    QString         stringForceUseOfNamedPipes( tr("Connect with named pipes to a mysqld server running on NT.") );
-    QString         stringNoCatalog( tr("Return 'user' as Table_qualifier and Table_owner from SQLTables (experimental).") );
-    QString         stringReadOptionsFromMyCnf( tr("Read parameters from the [client] and [odbc] groups from `my.cnf'.") );
-    QString         stringDisableTransactions( tr("Disable transactions.") );
-    QString         stringForceUseOfForwardOnlyCursors( tr("Force the use of Forward-only cursor type. In case of applications setting the default static/dynamic cursor type, and one wants driver to use non-cache result sets, then this option will ensure the forward-only cursor behavior.") );
-    QString         stringMultiStatements( tr("Allow multiple statements in a single query.") );
-    QString         stringCapColumnSize( tr("Limit reported column size to signed 32-bit integer (possible workaround for some applications, automatically enabled for applications using ADO)") );
+    QString      stringEnableDynamicCursor( tr("Enable or disable the dynamic cursor support. (Not allowed in MyODBC 2.50.)") );
+    QString      stringUseManagerCursors( tr("Force use of ODBC manager cursors (experimental).") );
+    QString      stringDontCacheResults( tr("Do not cache the results locally in the driver, instead read from server (mysql_use_result()). This works only for forward-only cursors. This option is very important in dealing with large tables when you don't want the driver to cache the entire result set.") );
+    QString      stringForceUseOfForwardOnlyCursors( tr("Force the use of Forward-only cursor type. In case of applications setting the default static/dynamic cursor type, and one wants driver to use non-cache result sets, then this option will ensure the forward-only cursor behavior.") );
+    QString      stringReturnMatchingRows( tr("The client can't handle that MySQL returns the true value of affected rows. If this flag is set, MySQL returns ``found rows'' instead. You must have MySQL 3.21.14 or newer to get this to work.") );
+    QString      stringAutoIncrementIsNull( tr("Turns on/off the handling of searching for the last inserted row with WHERE auto_increment_column IS NULL") );
+    QString      stringPadCharToFullLen( tr("Pad CHAR columns to full column length.") );
+    QString      stringZeroDate2Min( tr("Return SQL_NULL_DATA for zero date.") );
 
 #if QT_VERSION >= 0x040000
     QVBoxLayout *playoutFields = new QVBoxLayout;
@@ -49,58 +48,31 @@ MYODBCSetupDataSourceTab3c::MYODBCSetupDataSourceTab3c( QWidget *pwidgetParent )
     playoutFields->setSpacing( 5 );
     playoutFields->addStretch( 10 );
 
-    pcheckboxReturnTableNamesSQLDescribeCol = new MYODBCSetupCheckBox( tr("Return Table Names For SQLDescribeCol"), this );
-    pcheckboxReturnTableNamesSQLDescribeCol->setAssistText( stringReturnTableNamesSQLDescribeCol );
-    playoutFields->addWidget( pcheckboxReturnTableNamesSQLDescribeCol );
+    pcheckboxEnableDynamicCursor = new MYODBCSetupCheckBox( tr("Enable Dynamic Cursor"), this );
+    pcheckboxEnableDynamicCursor->setAssistText( stringEnableDynamicCursor );
+    playoutFields->addWidget( pcheckboxEnableDynamicCursor );
 #if QT_VERSION >= 0x040000
-    pcheckboxReturnTableNamesSQLDescribeCol->setToolTip( stringReturnTableNamesSQLDescribeCol );
+    pcheckboxEnableDynamicCursor->setToolTip( stringEnableDynamicCursor );
 #else
-    QToolTip::add( pcheckboxReturnTableNamesSQLDescribeCol, stringReturnTableNamesSQLDescribeCol );
+    QToolTip::add( pcheckboxEnableDynamicCursor, stringEnableDynamicCursor );
 #endif
 
-    pcheckboxIgnoreSpaceAfterFunctionNames = new MYODBCSetupCheckBox( tr("Ignore Space After Function Names"), this );
-    pcheckboxIgnoreSpaceAfterFunctionNames->setAssistText( stringIgnoreSpaceAfterFunctionNames );
-    playoutFields->addWidget( pcheckboxIgnoreSpaceAfterFunctionNames );
+    pcheckboxUseManagerCursors = new MYODBCSetupCheckBox( tr("Use Manager Cursors"), this );
+    pcheckboxUseManagerCursors->setAssistText( stringUseManagerCursors );
+    playoutFields->addWidget( pcheckboxUseManagerCursors );
 #if QT_VERSION >= 0x040000
-    pcheckboxIgnoreSpaceAfterFunctionNames->setToolTip( stringIgnoreSpaceAfterFunctionNames );
+    pcheckboxUseManagerCursors->setToolTip( stringUseManagerCursors );
 #else
-    QToolTip::add( pcheckboxIgnoreSpaceAfterFunctionNames, stringIgnoreSpaceAfterFunctionNames );
+    QToolTip::add( pcheckboxUseManagerCursors, stringUseManagerCursors );
 #endif
 
-    pcheckboxForceUseOfNamedPipes = new MYODBCSetupCheckBox( tr("Force Use Of Named Pipes"), this );
-    pcheckboxForceUseOfNamedPipes->setAssistText( stringForceUseOfNamedPipes );
-    playoutFields->addWidget( pcheckboxForceUseOfNamedPipes );
+    pcheckboxDontCacheResults = new MYODBCSetupCheckBox( tr("Don't Cache Result (forward only cursors)"), this );
+    pcheckboxDontCacheResults->setAssistText( stringDontCacheResults );
+    playoutFields->addWidget( pcheckboxDontCacheResults );
 #if QT_VERSION >= 0x040000
-    pcheckboxForceUseOfNamedPipes->setToolTip( stringForceUseOfNamedPipes );
+    pcheckboxDontCacheResults->setToolTip( stringDontCacheResults );
 #else
-    QToolTip::add( pcheckboxForceUseOfNamedPipes, stringForceUseOfNamedPipes );
-#endif
-
-    pcheckboxNoCatalog = new MYODBCSetupCheckBox( tr("No Catalog (exp)"), this );
-    pcheckboxNoCatalog->setAssistText( stringNoCatalog );
-    playoutFields->addWidget( pcheckboxNoCatalog );
-#if QT_VERSION >= 0x040000
-    pcheckboxNoCatalog->setToolTip( stringNoCatalog );
-#else
-    QToolTip::add( pcheckboxNoCatalog, stringNoCatalog );
-#endif
-
-    pcheckboxReadOptionsFromMyCnf = new MYODBCSetupCheckBox( tr("Read Options From my.cnf"), this );
-    pcheckboxReadOptionsFromMyCnf->setAssistText( stringReadOptionsFromMyCnf );
-    playoutFields->addWidget( pcheckboxReadOptionsFromMyCnf );
-#if QT_VERSION >= 0x040000
-    pcheckboxReadOptionsFromMyCnf->setToolTip( stringReadOptionsFromMyCnf );
-#else
-    QToolTip::add( pcheckboxReadOptionsFromMyCnf, stringReadOptionsFromMyCnf );
-#endif
-
-    pcheckboxDisableTransactions = new MYODBCSetupCheckBox( tr("Disable Transactions"), this );
-    pcheckboxDisableTransactions->setAssistText( stringDisableTransactions );
-    playoutFields->addWidget( pcheckboxDisableTransactions );
-#if QT_VERSION >= 0x040000
-    pcheckboxDisableTransactions->setToolTip( stringDisableTransactions );
-#else
-    QToolTip::add( pcheckboxDisableTransactions, stringDisableTransactions );
+    QToolTip::add( pcheckboxDontCacheResults, stringDontCacheResults );
 #endif
 
     pcheckboxForceUseOfForwardOnlyCursors = new MYODBCSetupCheckBox( tr("Force Use Of Forward Only Cursors"), this );
@@ -112,23 +84,37 @@ MYODBCSetupDataSourceTab3c::MYODBCSetupDataSourceTab3c( QWidget *pwidgetParent )
     QToolTip::add( pcheckboxForceUseOfForwardOnlyCursors, stringForceUseOfForwardOnlyCursors );
 #endif
 
-    pcheckboxMultiStatements = new MYODBCSetupCheckBox( tr("Allow multiple statements"), this );
-    pcheckboxMultiStatements->setAssistText( stringMultiStatements );
-    playoutFields->addWidget( pcheckboxMultiStatements );
+    pcheckboxReturnMatchingRows = new MYODBCSetupCheckBox( tr("Return Matching Rows"), this );
+    pcheckboxReturnMatchingRows->setAssistText( stringReturnMatchingRows );
+    playoutFields->addWidget( pcheckboxReturnMatchingRows );
 #if QT_VERSION >= 0x040000
-    pcheckboxMultiStatements->setToolTip( stringMultiStatements );
+    pcheckboxReturnMatchingRows->setToolTip( stringReturnMatchingRows );
 #else
-    QToolTip::add( pcheckboxMultiStatements, stringMultiStatements );
+    QToolTip::add( pcheckboxReturnMatchingRows, stringReturnMatchingRows );
 #endif
 
-    pcheckboxCapColumnSize = new MYODBCSetupCheckBox( tr("Limit column size to signed 32-bit range"), this );
-    pcheckboxCapColumnSize->setAssistText( stringCapColumnSize );
-    playoutFields->addWidget( pcheckboxCapColumnSize );
+    pcheckboxAutoIncrementIsNull = new MYODBCSetupCheckBox( tr("Enable auto_increment NULL search"), this );
+    pcheckboxAutoIncrementIsNull->setAssistText( stringAutoIncrementIsNull );
+    playoutFields->addWidget( pcheckboxAutoIncrementIsNull );
 #if QT_VERSION >= 0x040000
-    pcheckboxCapColumnSize->setToolTip( stringCapColumnSize );
+    pcheckboxAutoIncrementIsNull->setToolTip( stringAutoIncrementIsNull );
 #else
-    QToolTip::add( pcheckboxCapColumnSize, stringCapColumnSize );
+    QToolTip::add( pcheckboxAutoIncrementIsNull, stringAutoIncrementIsNull );
 #endif
+
+    pcheckboxPadCharToFullLen = new MYODBCSetupCheckBox( tr("Pad Char To Full Length"), this );
+    pcheckboxPadCharToFullLen->setAssistText( stringPadCharToFullLen );
+    playoutFields->addWidget( pcheckboxPadCharToFullLen );
+#if QT_VERSION >= 0x040000
+    pcheckboxPadCharToFullLen->setToolTip( stringPadCharToFullLen );
+#else
+    QToolTip::add( pcheckboxPadCharToFullLen, stringPadCharToFullLen );
+#endif
+
+    pcheckboxZeroDate2Min = new MYODBCSetupCheckBox( tr("Return SQL_NULL_DATA for zero date"), this );
+    pcheckboxZeroDate2Min->setAssistText( stringZeroDate2Min );
+    playoutFields->addWidget( pcheckboxZeroDate2Min );
+    MYODBC_ADD_TOOLTIP(pcheckboxZeroDate2Min, stringZeroDate2Min);
 
     playoutFields->addStretch( 10 );
 }
