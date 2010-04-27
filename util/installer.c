@@ -931,6 +931,7 @@ int ds_from_kvpair(DataSource *ds, const SQLWCHAR *attrs, SQLWCHAR delim)
   const SQLWCHAR *end;
   SQLWCHAR **dest;
   SQLWCHAR attribute[100];
+  int len;
   unsigned int *intdest;
   BOOL *booldest;
 
@@ -939,9 +940,24 @@ int ds_from_kvpair(DataSource *ds, const SQLWCHAR *attrs, SQLWCHAR delim)
     if ((split= sqlwcharchr(attrs, (SQLWCHAR)'=')) == NULL)
       return 1;
 
-    memcpy(attribute, attrs, (split - attrs) * sizeof(SQLWCHAR));
-    attribute[split - attrs]= 0;
+    /* remove leading spaces on attribute */
+    while (*attrs == ' ')
+      attrs++;
+    len = split - attrs;
+    memcpy(attribute, attrs, len * sizeof(SQLWCHAR));
+    attribute[len]= 0;
+    /* remove trailing spaces on attribute */
+    --len;
+    while (attribute[len] == ' ')
+    {
+      attribute[len] = 0;
+      --len;
+    }
+
     split++;
+    /* remove leading and trailing spaces on value */
+    while (*split == ' ')
+      split++;
 
     /* check for an "escaped" value */
     if ((*split == '{' && (end= sqlwcharchr(attrs, '}')) == NULL) ||
@@ -949,6 +965,14 @@ int ds_from_kvpair(DataSource *ds, const SQLWCHAR *attrs, SQLWCHAR delim)
         (*split != '{' && (end= sqlwcharchr(attrs, delim)) == NULL))
       /* otherwise, take the rest of the string */
       end= attrs + sqlwcharlen(attrs);
+
+    /* remove trailing spaces on value (not escaped part) */
+    len = end - split - 1;
+    while (end > split && split[len] == ' ' && split[len+1] != '}')
+    {
+      --len;
+      --end;
+    }
 
     /* handle deprecated options as an exception */
     if (!sqlwcharcasecmp(W_OPTION, attribute))
@@ -981,7 +1005,7 @@ int ds_from_kvpair(DataSource *ds, const SQLWCHAR *attrs, SQLWCHAR delim)
     }
 
     attrs= end;
-    if (*end || *end == delim)
+    while (*attrs == delim || *attrs == ' ')
       attrs++;
   }
 

@@ -1071,6 +1071,35 @@ DECLARE_TEST(t_bug48603)
 }
 
 
+/*
+  Bug#45378 - spaces in connection string aren't removed
+*/
+DECLARE_TEST(t_bug45378)
+{
+  HDBC hdbc1;
+  SQLCHAR conn[256], conn_out[256];
+  SQLSMALLINT conn_out_len;
+
+  sprintf((char *)conn, "DSN=%s; UID = {%s} ;PWD= %s ",
+          mydsn, myuid, mypwd);
+  if (mysock != NULL)
+  {
+    strcat((char *)conn, ";SOCKET=");
+    strcat((char *)conn, (char *)mysock);
+  }
+
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, SQL_NTS, conn_out,
+                                 sizeof(conn_out), &conn_out_len,
+                                 SQL_DRIVER_NOPROMPT));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -1098,6 +1127,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug41256)
   ADD_TEST(t_bug44971)
   ADD_TEST(t_bug48603)
+  ADD_TEST(t_bug45378)
 END_TESTS
 
 
