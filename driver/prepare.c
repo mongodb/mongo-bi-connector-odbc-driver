@@ -112,7 +112,7 @@ SQLRETURN my_SQLPrepare(SQLHSTMT hstmt, SQLCHAR *szSqlStr, SQLINTEGER cbSqlStr,
   if (use_mb(charset_info))
     end= strend(stmt->query);
 
-  for (pos= stmt->query; *pos ; pos++)
+  for (pos= stmt->query; *pos ; ++pos)
   {
     if (use_mb(charset_info))
     {
@@ -132,7 +132,7 @@ SQLRETURN my_SQLPrepare(SQLHSTMT hstmt, SQLCHAR *szSqlStr, SQLINTEGER cbSqlStr,
         bPerhapsEmbraced = 0;
         bEmbraced= 1;
         *pos=  ' ';
-        pos++;
+        ++pos;
         continue;
       }
       else if (!isspace(*pos))
@@ -145,7 +145,7 @@ SQLRETURN my_SQLPrepare(SQLHSTMT hstmt, SQLCHAR *szSqlStr, SQLINTEGER cbSqlStr,
     if (*pos == '\\' && pos[1]) /* Next char is escaped */
     {
       /** @todo not multibyte aware */
-      pos++;
+      ++pos;
       continue;
     }
 
@@ -153,7 +153,7 @@ SQLRETURN my_SQLPrepare(SQLHSTMT hstmt, SQLCHAR *szSqlStr, SQLINTEGER cbSqlStr,
     if (*pos == in_string)
     {
       if (pos[1] == in_string)      /* Two quotes is ok */
-        pos++;
+        ++pos;
       else
         in_string= 0;
       continue;
@@ -174,7 +174,7 @@ SQLRETURN my_SQLPrepare(SQLHSTMT hstmt, SQLCHAR *szSqlStr, SQLINTEGER cbSqlStr,
         if (aprec == NULL || iprec == NULL ||
             set_dynamic(&stmt->param_pos, (SQLCHAR *)&pos, param_count))
           return set_error(stmt, MYERR_S1001, NULL, 4001);
-        param_count++;
+        ++param_count;
       }
     }
   }

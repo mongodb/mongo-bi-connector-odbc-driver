@@ -181,7 +181,7 @@ SQLRETURN insert_params(STMT FAR *stmt, SQLULEN row, char **finalquery,
     to= (char*) net->buff + (finalquery_length!= NULL ? *finalquery_length : 0);
     if (!stmt->dbc->ds->dont_use_set_locale)
       setlocale(LC_NUMERIC, "C");  /* force use of '.' as decimal point */
-    for ( i= 0; i < stmt->param_count; i++ )
+    for ( i= 0; i < stmt->param_count; ++i )
     {
         DESCREC *aprec= desc_get_rec(stmt->apd, i, FALSE);
         DESCREC *iprec= desc_get_rec(stmt->ipd, i, FALSE);
@@ -656,7 +656,7 @@ SQLRETURN do_my_pos_cursor( STMT FAR *pStmt, STMT FAR *pStmtCursor )
     }
 
     while ( isspace( *pszQuery ) )
-        pszQuery++;
+        ++pszQuery;
 
     if ( init_dynamic_string( &dynQuery, pszQuery, 1024, 1024 ) )
         return set_error( pStmt, MYERR_S1001, NULL, 4001 );
@@ -965,7 +965,7 @@ SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER FAR *prbgValue)
                             "Invalid data at exec state", 0);
     }
 
-    for ( i= stmt->current_param; i < param_count; i++ )
+    for ( i= stmt->current_param; i < param_count; ++i )
     {
         DESCREC *aprec= desc_get_rec(apd, i, FALSE);
         SQLLEN *octet_length_ptr;

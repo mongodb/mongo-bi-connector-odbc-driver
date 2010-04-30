@@ -1,5 +1,5 @@
 /*
-  Copyright 2001-2008 MySQL AB, 2008-2009 Sun Microsystems, Inc.
+  Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the
   GPL, like most MySQL Connectors. There are special exceptions
@@ -62,7 +62,7 @@ static const char *find_used_table(STMT *stmt)
 
     table_name= 0;
     for ( field= result->fields, end= field+ result->field_count;
-        field < end ; field++ )
+        field < end ; ++field )
     {
 
 #if MYSQL_VERSION_ID >= 40100
@@ -115,7 +115,7 @@ static const char *mystr_get_prev_token(CHARSET_INFO *charset,
   {
     if (pos == start)
       return (*query = start);     /* Return start of string */
-    pos--;
+    --pos;
   } while (*pos < 0 || !my_isspace(charset, *pos)) ;
 
   *query= pos;      /* Remember pos to space */
@@ -207,7 +207,7 @@ static my_bool have_field_in_result(const char *name, MYSQL_RES *result)
   MYSQL_FIELD  *field;
   unsigned int ncol;
 
-  for (ncol= 0; ncol < result->field_count; ncol++)
+  for (ncol= 0; ncol < result->field_count; ++ncol)
   {
     field= result->fields + ncol;
     if (myodbc_strcasecmp(name,
@@ -325,7 +325,7 @@ void set_current_cursor_data(STMT FAR *stmt,SQLUINTEGER irow)
     row_pos= irow ? (long) (stmt->current_row+irow-1) : stmt->current_row;
     if ( stmt->cursor_row != row_pos )
     {
-        for ( nrow= 0; nrow < row_pos; nrow++ )
+        for ( nrow= 0; nrow < row_pos; ++nrow )
             dcursor= dcursor->next;
 
         stmt->cursor_row= row_pos;
@@ -370,7 +370,7 @@ static SQLRETURN update_status(STMT FAR *stmt, SQLUSMALLINT status)
         SQLUSMALLINT *ptr= stmt->ird->array_status_ptr+stmt->current_row;
         SQLUSMALLINT *end= ptr+stmt->affected_rows;
 
-        for ( ; ptr != end ; ptr++ )
+        for ( ; ptr != end ; ++ptr )
             *ptr= status;
     }
     return SQL_SUCCESS;
@@ -399,7 +399,7 @@ static SQLRETURN update_setpos_status(STMT FAR *stmt, SQLINTEGER irow,
     SQLUSMALLINT *ptr= stmt->ird->array_status_ptr;
     SQLUSMALLINT *end= ptr+rows;
 
-    for ( ; ptr != end; ptr++)
+    for ( ; ptr != end; ++ptr)
         *ptr= status;
   }
 
@@ -408,7 +408,7 @@ static SQLRETURN update_setpos_status(STMT FAR *stmt, SQLINTEGER irow,
     SQLUSMALLINT *ptr= stmt->stmt_options.rowStatusPtr_ex;
     SQLUSMALLINT *end= ptr+rows;
 
-    for ( ; ptr != end; ptr++)
+    for ( ; ptr != end; ++ptr)
         *ptr= status;
   }
 
@@ -438,7 +438,7 @@ static SQLRETURN copy_rowdata(STMT FAR *stmt, DESCREC *aprec,
         return rc;
 
     /* We have to remove zero bytes or we have problems! */
-    while ( (*to > orig_to) && (*((*to) - 1) == (SQLCHAR) 0) ) (*to)--;
+    while ( (*to > orig_to) && (*((*to) - 1) == (SQLCHAR) 0) ) --(*to);
 
     /* insert "," */
     if (!(*to= (SQLCHAR *)add_to_buffer(*net, (char *)*to, ",", 1)))
@@ -515,7 +515,7 @@ static my_bool insert_field(STMT FAR *stmt, MYSQL_RES *result,
     }
     else
     {
-        dynQuery->length--;
+        --dynQuery->length;
         dynstr_append_mem(dynQuery, " IS NULL AND ",13);
     }
     return 0;
@@ -538,10 +538,10 @@ static SQLRETURN insert_pk_fields(STMT FAR *stmt, DYNAMIC_STRING *dynQuery)
     SQLUINTEGER  pk_count= 0;
 
     /* Look for primary key columns in the current result set, */
-    for (ncol= 0; ncol < result->field_count; ncol++)
+    for (ncol= 0; ncol < result->field_count; ++ncol)
     {
       field= result->fields+ncol;
-      for (index= 0; index < cursor->pk_count; index++)
+      for (index= 0; index < cursor->pk_count; ++index)
       {
         if (!myodbc_strcasecmp(cursor->pkcol[index].name, field->org_name))
         {
@@ -551,7 +551,7 @@ static SQLRETURN insert_pk_fields(STMT FAR *stmt, DYNAMIC_STRING *dynQuery)
           if (insert_field(stmt, result, dynQuery, ncol))
             return SQL_ERROR;
           cursor->pkcol[index].bind_done= TRUE;
-          pk_count++;
+          ++pk_count;
           break;
         }
       }
@@ -623,7 +623,7 @@ static SQLRETURN append_all_fields(STMT FAR *stmt, DYNAMIC_STRING *dynQuery)
     appending them to the query along with the value from the row at the
     current cursor position.
   */
-  for (i= 0; i < presultAllColumns->field_count; i++)
+  for (i= 0; i < presultAllColumns->field_count; ++i)
   {
     MYSQL_FIELD *table_field= presultAllColumns->fields + i;
 
@@ -642,7 +642,7 @@ static SQLRETURN append_all_fields(STMT FAR *stmt, DYNAMIC_STRING *dynQuery)
     }
 
     found_field= FALSE;
-    for (j= 0; j < result->field_count; j++)
+    for (j= 0; j < result->field_count; ++j)
     {
       MYSQL_FIELD *cursor_field= result->fields + j;
       if (cursor_field->org_name &&
@@ -753,7 +753,7 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLULEN irow,
       current rowset..
     */
     irow= irow ? irow-1: 0;
-    for ( ncol= 0; ncol < stmt->result->field_count; ncol++ )
+    for ( ncol= 0; ncol < stmt->result->field_count; ++ncol )
     {
         SQLLEN *pcbValue;
         SQLCHAR *to= net->buff;
@@ -768,7 +768,7 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLULEN irow,
 
         if (!arrec || !ARD_IS_BOUND(arrec) || !irrec->row.field)
         {
-          ignore_count++;
+          ++ignore_count;
           continue;
         }
 
@@ -784,7 +784,7 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLULEN irow,
             */
             if ( *pcbValue == SQL_COLUMN_IGNORE )
             {
-                ignore_count++;
+                ++ignore_count;
                 continue;
             }
             length= *pcbValue;
@@ -1130,7 +1130,7 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext
 
             /* Append values for each column. */
             dynstr_append_mem(ext_query,"(", 1);
-            for ( ncol= 0; ncol < result->field_count; ncol++ )
+            for ( ncol= 0; ncol < result->field_count; ++ncol )
             {
                 MYSQL_FIELD *field= mysql_fetch_field_direct(result,ncol);
                 DESCREC     *arrec;
@@ -1197,12 +1197,12 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext
                 if (copy_rowdata(stmt, aprec, iprec, &net, &to) != SQL_SUCCESS)
                   return SQL_ERROR;
 
-            } /* END OF for (ncol= 0; ncol < result->field_count; ncol++) */
+            } /* END OF for (ncol= 0; ncol < result->field_count; ++ncol) */
 
             length= (uint) ((char *)to - (char*) net->buff);
             dynstr_append_mem(ext_query, (char*) net->buff, length-1);
             dynstr_append_mem(ext_query, "),", 2);
-            count++;
+            ++count;
 
             /*
               We have a limited capacity to shove data across the wire, but
@@ -1342,7 +1342,7 @@ SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
                 }
 
                 pthread_mutex_lock(&stmt->dbc->lock);
-                irow--;
+                --irow;
                 sqlRet= SQL_SUCCESS;
                 stmt->cursor_row= (long)(stmt->current_row+irow);
                 mysql_data_seek(stmt->result,(my_ulonglong)stmt->cursor_row);
@@ -1437,13 +1437,13 @@ SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
                 dynstr_append_mem(&dynQuery,"(",1);
 
                 /* build list of column names */
-                for (nCol= 0; nCol < result->field_count; nCol++)
+                for (nCol= 0; nCol < result->field_count; ++nCol)
                 {
                     MYSQL_FIELD *field= mysql_fetch_field_direct(result, nCol);
                     dynstr_append_quoted_name(&dynQuery, field->org_name);
                     dynstr_append_mem(&dynQuery, ",", 1);
                 }
-                dynQuery.length--;        /* Remove last ',' */
+                --dynQuery.length;        /* Remove last ',' */
                 dynstr_append_mem(&dynQuery,") VALUES ",9);
 
                 /* process row(s) using our INSERT as base */

@@ -108,7 +108,7 @@ void desc_free(DESC *desc)
 void desc_free_paramdata(DESC *desc)
 {
   SQLLEN i;
-  for (i= 0; i < desc->count; i++)
+  for (i= 0; i < desc->count; ++i)
   {
     DESCREC *aprec= desc_get_rec(desc, i, FALSE);
     assert(aprec);
@@ -230,7 +230,7 @@ DESCREC *desc_get_rec(DESC *desc, int recnum, my_bool expand)
           return NULL;
       }
       memset(rec, 0, sizeof(DESCREC));
-      desc->count++;
+      ++desc->count;
 
       /* record initialization */
       if (IS_APD(desc))

@@ -522,7 +522,7 @@ int driver_from_kvpair_semicolon(Driver *driver, const SQLWCHAR *attrs)
     /* pull out the attribute name */
     memcpy(attribute, attrs, (split - attrs) * sizeof(SQLWCHAR));
     attribute[split - attrs]= 0; /* add null term */
-    split++;
+    ++split;
 
     /* if its one we want, copy it over */
     if (!sqlwcharcasecmp(W_DRIVER, attribute))
@@ -541,7 +541,7 @@ int driver_from_kvpair_semicolon(Driver *driver, const SQLWCHAR *attrs)
     /* advanced to next attribute */
     attrs= end;
     if (*end)
-      attrs++;
+      ++attrs;
   }
 
   return 0;
@@ -942,7 +942,7 @@ int ds_from_kvpair(DataSource *ds, const SQLWCHAR *attrs, SQLWCHAR delim)
 
     /* remove leading spaces on attribute */
     while (*attrs == ' ')
-      attrs++;
+      ++attrs;
     len = split - attrs;
     memcpy(attribute, attrs, len * sizeof(SQLWCHAR));
     attribute[len]= 0;
@@ -954,10 +954,8 @@ int ds_from_kvpair(DataSource *ds, const SQLWCHAR *attrs, SQLWCHAR delim)
       --len;
     }
 
-    split++;
     /* remove leading and trailing spaces on value */
-    while (*split == ' ')
-      split++;
+    while (*(++split) == ' ');
 
     /* check for an "escaped" value */
     if ((*split == '{' && (end= sqlwcharchr(attrs, '}')) == NULL) ||
@@ -988,7 +986,7 @@ int ds_from_kvpair(DataSource *ds, const SQLWCHAR *attrs, SQLWCHAR delim)
         if (*split == '{' && *end == '}')
         {
           ds_set_strnattr(dest, split + 1, end - split - 1);
-          end++;
+          ++end;
         }
         else
           ds_set_strnattr(dest, split, end - split);
@@ -1006,7 +1004,7 @@ int ds_from_kvpair(DataSource *ds, const SQLWCHAR *attrs, SQLWCHAR delim)
 
     attrs= end;
     while (*attrs == delim || *attrs == ' ')
-      attrs++;
+      ++attrs;
   }
 
   return 0;

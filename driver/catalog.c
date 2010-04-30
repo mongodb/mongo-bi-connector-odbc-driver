@@ -103,7 +103,7 @@ static my_bool check_table_type(const SQLCHAR *TableType,
     sprintf(req_type_quoted1,"`%s`",req_type);
     while ( type )
     {
-        while ( isspace(*(table_type)) ) table_type++;
+        while ( isspace(*(table_type)) ) ++table_type;
         if ( !myodbc_casecmp(table_type,req_type,len) || 
              !myodbc_casecmp(table_type,req_type_quoted,len+2) || 
              !myodbc_casecmp(table_type,req_type_quoted1,len+2) )
@@ -116,7 +116,7 @@ static my_bool check_table_type(const SQLCHAR *TableType,
     }
     if ( !found )
     {
-        while ( isspace(*(table_type)) ) table_type++;
+        while ( isspace(*(table_type)) ) ++table_type;
         if ( !myodbc_casecmp(table_type,req_type,len) || 
              !myodbc_casecmp(table_type,req_type_quoted,len+2) ||
              !myodbc_casecmp(table_type,req_type_quoted1,len+2) )
@@ -129,7 +129,7 @@ static my_bool check_table_type(const SQLCHAR *TableType,
 static MYSQL_ROW fix_fields_copy(STMT FAR *stmt,MYSQL_ROW row)
 {
     uint i;
-    for ( i=0 ; i < stmt->order_count; i++ )
+    for ( i=0 ; i < stmt->order_count; ++i )
         stmt->array[stmt->order[i]]= row[i];
     return stmt->array;
 }
@@ -1128,7 +1128,7 @@ MySQLStatistics(SQLHSTMT hstmt,
                 prev= &pos->next;
             }
             else
-                stmt->result->row_count--;
+                --stmt->result->row_count;
         }
         (*prev)= 0;
         mysql_data_seek(stmt->result,0);  /* Restore pointer */
@@ -1295,7 +1295,7 @@ MySQLTablePrivileges(SQLHSTMT hstmt,
             data[3]= row[3];
             data[4]= row[1];
             data[6]= is_grantable(row[4]) ? "YES" : "NO";
-            row_count++;
+            ++row_count;
 
             if ( !(grant= my_next_token(grant,&grants,token,',')) )
             {
@@ -1444,7 +1444,7 @@ MySQLColumnPrivileges(SQLHSTMT hstmt,
             data[4]= row[4];
             data[5]= row[1];
             data[7]= is_grantable(row[6]) ? "YES":"NO";
-            row_count++;
+            ++row_count;
 
             if ( !(grant= my_next_token(grant,&grants,token,',')) )
             {
@@ -1565,7 +1565,7 @@ MySQLSpecialColumns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
             if (!(field->flags & TIMESTAMP_FLAG))
               continue;
 #endif
-            field_count++;
+            ++field_count;
             row[0]= NULL;
             row[1]= field->name;
             type= get_sql_data_type(stmt, field, buff);
@@ -1640,7 +1640,7 @@ MySQLSpecialColumns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
         if ( !primary_key )
             continue;
 #endif
-        field_count++;
+        ++field_count;
         sprintf(buff,"%d",SQL_SCOPE_SESSION);
         row[0]= strdup_root(alloc,buff);
         row[1]= field->name;
@@ -2119,7 +2119,7 @@ MySQLForeignKeys(SQLHSTMT hstmt,
                         sprintf(ref_token,"%d",key_seq++);
                         data[8]= strdup_root(alloc,ref_token);    /* KEY_SEQ */
                         data+= SQLFORE_KEYS_FIELDS;
-                        row_count++;
+                        ++row_count;
                         for ( fk_length= SQLFORE_KEYS_FIELDS; fk_length--; )
                             data[fk_length]= prev_data[fk_length];
                     }
@@ -2129,7 +2129,7 @@ MySQLForeignKeys(SQLHSTMT hstmt,
                     data[8]= strdup_root(alloc,ref_token);      /* KEY_SEQ */
 
                     data+= SQLFORE_KEYS_FIELDS;
-                    row_count++;
+                    ++row_count;
 
                 } while ( (comment_token = strchr(comment_token,';')) );/* multi table ref */
             }

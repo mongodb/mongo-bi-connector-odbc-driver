@@ -1,5 +1,5 @@
 /*
-  Copyright 2007-2008 MySQL AB
+  Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the
   GPL, like most MySQL Connectors. There are special exceptions
@@ -453,8 +453,8 @@ copy_and_convert(char *to, uint32 to_length, CHARSET_INFO *to_cs,
       from+= from_cnvres;
     else if (from_cnvres == MY_CS_ILSEQ)
     {
-      error_count++;
-      from++;
+      ++error_count;
+      ++from;
       wc= '?';
     }
     else if (from_cnvres > MY_CS_TOOSMALL)
@@ -463,7 +463,7 @@ copy_and_convert(char *to, uint32 to_length, CHARSET_INFO *to_cs,
         A correct multibyte sequence detected
         But it doesn't have Unicode mapping.
       */
-      error_count++;
+      ++error_count;
       from+= (-from_cnvres);
       wc= '?';
     }
@@ -475,7 +475,7 @@ outp:
       to+= to_cnvres;
     else if (to_cnvres == MY_CS_ILUNI && wc != '?')
     {
-      error_count++;
+      ++error_count;
       wc= '?';
       goto outp;
     }
@@ -514,8 +514,8 @@ int sqlwcharcasecmp(const SQLWCHAR *s1, const SQLWCHAR *s2)
       c2 -= ('a' - 'A');
     if (c1 != c2)
       return 1;
-    s1++;
-    s2++;
+    ++s1;
+    ++s2;
   }
 
   /* one will be null, so both must be */
@@ -547,7 +547,7 @@ size_t sqlwcharlen(const SQLWCHAR *wstr)
 {
   size_t len= 0;
   while (wstr && *wstr++)
-    len++;
+    ++len;
   return len;
 }
 
@@ -576,8 +576,7 @@ SQLWCHAR *sqlwchardup(const SQLWCHAR *wstr, size_t charlen)
  * @return The integer result of the conversion or 0 if the
  *         string could not be parsed.
  */
-unsigned long sqlwchartoul(const SQLWCHAR *wstr, const SQLWCHAR **endptr)
-{
+unsigned long sqlwchartoul(const SQLWCHAR *wstr, const SQLWCHAR **endptr){
   unsigned long res= 0;
   SQLWCHAR c;
 
@@ -590,7 +589,7 @@ unsigned long sqlwchartoul(const SQLWCHAR *wstr, const SQLWCHAR **endptr)
       break;
     res*= 10;
     res+= c - '0';
-    wstr++;
+    ++wstr;
   }
 
   if (endptr)
@@ -607,7 +606,7 @@ void sqlwcharfromul(SQLWCHAR *wstr, unsigned long v)
 {
   int chars;
   unsigned long v1;
-  for(chars= 0, v1= v; v1 > 0; chars++, v1 /= 10);
+  for(chars= 0, v1= v; v1 > 0; ++chars, v1 /= 10);
   wstr[chars]= (SQLWCHAR)0;
   for(v1= v; v1 > 0; v1 /= 10)
     wstr[--chars]= (SQLWCHAR)('0' + (v1 % 10));

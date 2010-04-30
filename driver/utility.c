@@ -497,7 +497,7 @@ copy_ansi_result(STMT *stmt,
     }
 
     if (result_bytes)
-      result_bytes--;
+      --result_bytes;
 
     rc= copy_binary_result(stmt, result, result_bytes, avail_bytes,
                            field, src, src_bytes);
@@ -575,13 +575,13 @@ copy_ansi_result(STMT *stmt,
     int cnvres= (*mb_wc)(from_cs, &wc, (uchar *)src, (uchar *)src_end);
     if (cnvres == MY_CS_ILSEQ)
     {
-      error_count++;
+      ++error_count;
       cnvres= 1;
       wc= '?';
     }
     else if (cnvres < 0 && cnvres > MY_CS_TOOSMALL)
     {
-      error_count++;
+      ++error_count;
       cnvres= abs(cnvres);
       wc= '?';
     }
@@ -649,7 +649,7 @@ convert_to_out:
     }
     else if (stmt->getdata.latest_bytes == MY_CS_ILUNI && wc != '?')
     {
-      error_count++;
+      ++error_count;
       wc= '?';
       goto convert_to_out;
     }
@@ -761,7 +761,7 @@ copy_wchar_result(STMT *stmt,
   if (stmt->getdata.latest_bytes)
   {
     memcpy(result, stmt->getdata.latest, sizeof(SQLWCHAR));
-    result++;
+    ++result;
 
     if (result == result_end)
     {
@@ -788,13 +788,13 @@ copy_wchar_result(STMT *stmt,
     int cnvres= (*mb_wc)(from_cs, &wc, (uchar *)src, (uchar *)src_end);
     if (cnvres == MY_CS_ILSEQ)
     {
-      error_count++;
+      ++error_count;
       cnvres= 1;
       wc= '?';
     }
     else if (cnvres < 0 && cnvres > MY_CS_TOOSMALL)
     {
-      error_count++;
+      ++error_count;
       cnvres= abs(cnvres);
       wc= '?';
     }
@@ -820,7 +820,7 @@ convert_to_out:
       {
         utf8toutf32(u8, (UTF32 *)(result ? result : dummy));
         if (result)
-          result++;
+          ++result;
         used_chars+= 1;
       }
       else
@@ -867,7 +867,7 @@ convert_to_out:
     }
     else if (stmt->getdata.latest_bytes == MY_CS_ILUNI && wc != '?')
     {
-      error_count++;
+      ++error_count;
       wc= '?';
       goto convert_to_out;
     }
@@ -958,7 +958,7 @@ SQLRETURN copy_binhex_result(STMT *stmt,
     if ( dst )  /* Bind allows null pointers */
     {
         ulong i;
-        for ( i= 0 ; i < length ; i++ )
+        for ( i= 0 ; i < length ; ++i )
         {
             *dst++= _dig_vec[(uchar) *src >> 4];
             *dst++= _dig_vec[(uchar) *src++ & 15];
@@ -1846,7 +1846,7 @@ my_bool str_to_ts(SQL_TIMESTAMP_STRUCT *ts, const char *str, int zeroToMin)
     if ( !ts )
         ts= (SQL_TIMESTAMP_STRUCT *) &tmp_timestamp;
 
-    for ( to= buff ; *str && to < buff+sizeof(buff)-1 ; str++ )
+    for ( to= buff ; *str && to < buff+sizeof(buff)-1 ; ++str )
     {
         if ( isdigit(*str) )
             *to++= *str;
@@ -1913,7 +1913,7 @@ my_bool str_to_time_st(SQL_TIME_STRUCT *ts, const char *str)
     if ( !ts )
         ts= (SQL_TIME_STRUCT *) &tmp_time;
 
-    for ( to= buff ; *str && to < buff+sizeof(buff)-1 ; str++ )
+    for ( to= buff ; *str && to < buff+sizeof(buff)-1 ; ++str )
     {
         if ( isdigit(*str) )
             *to++= *str;
@@ -1938,28 +1938,28 @@ my_bool str_to_date(SQL_DATE_STRUCT *rgbValue, const char *str,
     uint field_length,year_length,digits,i,date[3];
     const char *pos;
     const char *end= str+length;
-    for ( ; !isdigit(*str) && str != end ; str++ ) ;
+    for ( ; !isdigit(*str) && str != end ; ++str ) ;
     /*
       Calculate first number of digits.
       If length= 4, 8 or >= 14 then year is of format YYYY
       (YYYY-MM-DD,  YYYYMMDD)
     */
-    for ( pos= str; pos != end && isdigit(*pos) ; pos++ ) ;
+    for ( pos= str; pos != end && isdigit(*pos) ; ++pos ) ;
     digits= (uint) (pos-str);
     year_length= (digits == 4 || digits == 8 || digits >= 14) ? 4 : 2;
     field_length= year_length-1;
 
-    for ( i= 0 ; i < 3 && str != end; i++ )
+    for ( i= 0 ; i < 3 && str != end; ++i )
     {
         uint tmp_value= (uint) (uchar) (*str++ - '0');
         while ( str != end && isdigit(str[0]) && field_length-- )
         {
             tmp_value= tmp_value*10 + (uint) (uchar) (*str - '0');
-            str++;
+            ++str;
         }
         date[i]= tmp_value;
         while ( str != end && !isdigit(*str) )
-            str++;
+            ++str;
         field_length= 1;   /* Rest fields can only be 2 */
     }
     if (i <= 1 || (i > 1 && !date[1]) || (i > 2 && !date[2]))
@@ -2000,24 +2000,24 @@ ulong str_to_time_as_long(const char *str,uint length)
     if ( length == 0 )
         return 0;
 
-    for ( ; !isdigit(*str) && str != end ; str++ ) length--;
+    for ( ; !isdigit(*str) && str != end ; ++str ) --length;
 
-    for ( i= 0 ; i < 3 && str != end; i++ )
+    for ( i= 0 ; i < 3 && str != end; ++i )
     {
         uint tmp_value= (uint) (uchar) (*str++ - '0');
-        length--;
+        --length;
 
         while ( str != end && isdigit(str[0]) )
         {
             tmp_value= tmp_value*10 + (uint) (uchar) (*str - '0');
-            str++; 
-            length--;
+            ++str; 
+            --length;
         }
         date[i]= tmp_value;
         while ( str != end && !isdigit(*str) )
         {
-            str++;
-            length--;
+            ++str;
+            --length;
         }
     }
     if ( length && str != end )
@@ -2237,7 +2237,7 @@ ulong myodbc_escape_string(MYSQL *mysql __attribute__((unused)),
   my_bool overflow= FALSE;
   CHARSET_INFO *charset_info= mysql->charset;
   my_bool use_mb_flag= use_mb(charset_info);
-  for (end= from + length; from < end; from++)
+  for (end= from + length; from < end; ++from)
   {
     char escape= 0;
     int tmp_length;
@@ -2250,7 +2250,7 @@ ulong myodbc_escape_string(MYSQL *mysql __attribute__((unused)),
       }
       while (tmp_length--)
         *to++= *from++;
-      from--;
+      --from;
       continue;
     }
     /*
@@ -2436,7 +2436,7 @@ void sqlnum_from_str(const char *numstr, SQL_NUMERIC_STRUCT *sqlnum,
 
   /* handle sign */
   if (!(sqlnum->sign= !(*numstr == '-')))
-    numstr++;
+    ++numstr;
 
   len= (int) strlen(numstr);
   sqlnum->precision= len;
@@ -2457,7 +2457,7 @@ void sqlnum_from_str(const char *numstr, SQL_NUMERIC_STRUCT *sqlnum,
     {
       usedig = (int) (decpt - (numstr + i) + 1);
       sqlnum->scale= len - (i + usedig);
-      sqlnum->precision--;
+      --sqlnum->precision;
       decpt= NULL;
     }
     /* terminate prematurely if we can't do anything else */
@@ -2487,7 +2487,7 @@ void sqlnum_from_str(const char *numstr, SQL_NUMERIC_STRUCT *sqlnum,
     {
       sqlnum_scale(build_up, 1);
       sqlnum_carry(build_up);
-      sqlnum->scale++;
+      ++sqlnum->scale;
     }
   }
   /* scale back, truncating decimals */
@@ -2497,8 +2497,8 @@ void sqlnum_from_str(const char *numstr, SQL_NUMERIC_STRUCT *sqlnum,
     {
       sqlnum_unscale_le(build_up);
       build_up[0] /= 10;
-      sqlnum->precision--;
-      sqlnum->scale--;
+      --sqlnum->precision;
+      --sqlnum->scale;
     }
   }
 
@@ -2517,8 +2517,8 @@ void sqlnum_from_str(const char *numstr, SQL_NUMERIC_STRUCT *sqlnum,
       sqlnum_unscale_le(build_up);
       tmp_prec_calc[0] /= 10;
       build_up[0] /= 10;
-      sqlnum->precision--;
-      sqlnum->scale--;
+      --sqlnum->precision;
+      --sqlnum->scale;
     }
   }
 
@@ -2531,7 +2531,7 @@ void sqlnum_from_str(const char *numstr, SQL_NUMERIC_STRUCT *sqlnum,
     i= tmp_prec_calc[0] % 10;
     tmp_prec_calc[0] /= 10;
     if (i == 0)
-      sqlnum->precision--;
+      --sqlnum->precision;
   } while (i == 0 && sqlnum->precision > 0);
 
   /* detect precision overflow */
@@ -2602,7 +2602,7 @@ void sqlnum_to_str(SQL_NUMERIC_STRUCT *sqlnum, SQLCHAR *numstr,
   {
     /* skip empty prefix */
     while (!expanded[max_space])
-      max_space++;
+      ++max_space;
     /* if only the last piece has a value, it's the end */
     if (max_space >= 7)
     {
@@ -2625,7 +2625,7 @@ void sqlnum_to_str(SQL_NUMERIC_STRUCT *sqlnum, SQLCHAR *numstr,
     }
     *numstr--= '0' + (expanded[7] % 10);
     expanded[7] /= 10;
-    calcprec++;
+    ++calcprec;
     if (j == reqscale - 1)
       *numstr--= '.';
   }
@@ -2638,7 +2638,7 @@ void sqlnum_to_str(SQL_NUMERIC_STRUCT *sqlnum, SQLCHAR *numstr,
     while (calcprec < reqscale)
     {
       *numstr--= '0';
-      reqscale--;
+      --reqscale;
     }
     *numstr--= '.';
     *numstr--= '0';
@@ -2651,8 +2651,8 @@ void sqlnum_to_str(SQL_NUMERIC_STRUCT *sqlnum, SQLCHAR *numstr,
     while (calcprec > reqprec && reqscale)
     {
       *end--= 0;
-      calcprec--;
-      reqscale--;
+      --calcprec;
+      --reqscale;
     }
     if (calcprec > reqprec && reqscale == 0)
     {
@@ -2672,7 +2672,7 @@ void sqlnum_to_str(SQL_NUMERIC_STRUCT *sqlnum, SQLCHAR *numstr,
         c2= numstr[calcprec + 1 - reqscale];
         numstr[calcprec + 1 - reqscale]= c;
         c= c2;
-        reqscale--;
+        --reqscale;
       }
       */
     }
@@ -2695,7 +2695,7 @@ void sqlnum_to_str(SQL_NUMERIC_STRUCT *sqlnum, SQLCHAR *numstr,
   /* finish up, handle auxilary fix-ups */
   if (!sqlnum->sign)
     *numstr--= '-';
-  numstr++;
+  ++numstr;
   *numbegin= numstr;
 
 end:
@@ -2711,7 +2711,7 @@ int is_set_names_statement(SQLCHAR *query)
 {
   /* Skip leading spaces */
   while (query && isspace(*query))
-    query++;
+    ++query;
   return myodbc_casecmp((char *)query, "SET NAMES", 9) == 0;
 }
 
@@ -2723,7 +2723,7 @@ int is_select_statement(SQLCHAR *query)
 {
   /* Skip leading spaces */
   while (query && isspace(*query))
-    query++;
+    ++query;
   return myodbc_casecmp((char *)query, "SELECT", 6) == 0;
 }
 

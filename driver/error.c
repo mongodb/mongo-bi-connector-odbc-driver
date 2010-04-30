@@ -114,7 +114,7 @@ void myodbc_sqlstate2_init(void)
       in set_error/set_conn_error
     */
     uint  i;
-    for ( i= MYERR_S1000; i <= MYERR_S1C00; i++ )
+    for ( i= MYERR_S1000; i <= MYERR_S1C00; ++i )
     {
         myodbc3_errors[i].sqlstate[0]= 'S';
         myodbc3_errors[i].sqlstate[1]= '1';
@@ -138,7 +138,7 @@ void myodbc_sqlstate3_init(void)
 {
     uint i;
 
-    for ( i= MYERR_S1000; i <= MYERR_S1C00; i++ )
+    for ( i= MYERR_S1000; i <= MYERR_S1C00; ++i )
     {
         myodbc3_errors[i].sqlstate[0]= 'H';
         myodbc3_errors[i].sqlstate[1]= 'Y';
@@ -469,7 +469,7 @@ my_bool is_odbc3_subclass(char *sqlstate)
   if (!sqlstate)
     return FALSE;
 
-  for (i= 0; i < sizeof(states) / sizeof(states[0]); i++)
+  for (i= 0; i < sizeof(states) / sizeof(states[0]); ++i)
     if (memcmp(states[i], sqlstate, 5) == 0)
       return TRUE;
 

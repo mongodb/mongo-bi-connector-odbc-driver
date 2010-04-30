@@ -71,7 +71,8 @@ void binary2numeric(long long *dst, char *src, uint srcLen)
        we consider only minor 8 bytes */
     if (srcLen > sizeof(long long))
           continue;
-    *dst+= (0xff & *src++) << (--srcLen)*8;
+    *dst+= (0xff & *src) << (--srcLen)*8;
+    ++src;
   }
 }
 
@@ -286,13 +287,13 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
           }
           pos= buff+5;
           length&= 30;  /* Ensure that length is ok */
-          for (i= 1, length-= 2; (int)length > 0; length-= 2, i++)
+          for (i= 1, length-= 2; (int)length > 0; length-= 2, ++i)
           {
             *pos++= *value++;
             *pos++= *value++;
             *pos++= i < 2 ? '-' : (i == 2) ? ' ' : ':';
           }
-          for ( ; pos != buff + 20; i++)
+          for ( ; pos != buff + 20; ++i)
           {
             *pos++= '0';
             *pos++= '0';
@@ -603,15 +604,15 @@ BOOL isStatementForRead( STMT FAR *stmt )
     /* eat up any space */
     for ( pCursor = stmt->query; pCursor != stmt->query_end && isspace( *pCursor ); )
     {
-        pCursor++; 
+        ++pCursor; 
     }
 
     /* continue while alpha-numeric */
     for ( ; pCursor != stmt->query_end && !isspace( *pCursor ) && n < 50; )
     {
         szToken[n] = toupper( *pCursor );
-        pCursor++; 
-        n++;
+        ++pCursor; 
+        ++n;
     }
 
     szToken[n] = '\0';
@@ -671,7 +672,7 @@ SQLRETURN do_dummy_parambind(SQLHSTMT hstmt)
     STMT FAR *stmt= (STMT FAR *)hstmt;
     uint     nparam;
 
-    for ( nparam= 0; nparam < stmt->param_count; nparam++ )
+    for ( nparam= 0; nparam < stmt->param_count; ++nparam )
     {
         DESCREC *aprec= desc_get_rec(stmt->apd, nparam, TRUE);
         if (!aprec->par.real_param_done)
@@ -978,14 +979,14 @@ SQLRETURN SQL_API SQLBindCol(SQLHSTMT      StatementHandle,
     if (ColumnNumber == stmt->ard->count)
     {
       int i;
-      stmt->ard->count--;
+      --stmt->ard->count;
       for (i= stmt->ard->count - 1; i >= 0; --i)
       {
         arrec= desc_get_rec(stmt->ard, i, FALSE);
         if (ARD_IS_BOUND(arrec))
           break;
         else
-          stmt->ard->count--;
+          --stmt->ard->count;
       }
     }
     else
@@ -1090,7 +1091,7 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
       return set_stmt_error(stmt, "07009", "Invalid descriptor index",
                             MYERR_07009);
     }
-    ColumnNumber--;     /* Easier code if start from 0 */
+    --ColumnNumber;     /* Easier code if start from 0 */
     if (ColumnNumber != stmt->getdata.column)
     {
       /* New column. Reset old offset */
@@ -1478,7 +1479,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     if (!stmt->dbc->ds->dont_use_set_locale)
       setlocale(LC_NUMERIC, "C");
     res= SQL_SUCCESS;
-    for ( i= 0 ; i < rows_to_fetch ; i++ )
+    for ( i= 0 ; i < rows_to_fetch ; ++i )
     {
         if ( stmt->result_array )
         {
@@ -1525,7 +1526,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                                   stmt->result->field_count);
         }
         res= fill_fetch_buffers(stmt, values, i);
-        cur_row++;
+        ++cur_row;
     }
     stmt->rows_found_in_set= i;
     *pcrow= i;
@@ -1534,14 +1535,14 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
         *stmt->ird->rows_processed_ptr= i;
 
     if ( rgfRowStatus )
-        for ( ; i < stmt->ard->array_size ; i++ )
+        for ( ; i < stmt->ard->array_size ; ++i )
             rgfRowStatus[i]= SQL_ROW_NOROW;
 
     /*
       No need to update rowStatusPtr_ex, it's the same as rgfRowStatus.
     */
     if ( upd_status && stmt->ird->array_status_ptr )
-        for ( ; i < stmt->ard->array_size ; i++ )
+        for ( ; i < stmt->ard->array_size ; ++i )
             stmt->ird->array_status_ptr[i]= SQL_ROW_NOROW;
 
     if ( !stmt->result_array && !if_forward_cache(stmt) )
