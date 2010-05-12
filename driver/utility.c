@@ -1411,9 +1411,7 @@ SQLLEN get_transfer_octet_length(STMT *stmt, MYSQL_FIELD *field)
 
   case MYSQL_TYPE_DECIMAL:
   case MYSQL_TYPE_NEWDECIMAL:
-    return (field->length -
-            test(!(field->flags & UNSIGNED_FLAG)) - /* sign? */
-            test(field->decimals));                 /* decimal point? */
+    return field->length;
 
   case MYSQL_TYPE_BIT:
     /*

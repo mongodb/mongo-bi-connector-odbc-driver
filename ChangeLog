@@ -27,6 +27,7 @@
     (Bug #51422)
   * SQLPrimaryKeys returns mangled strings. (Bug #36441)
   * Spaces in connection string aren't removed (Bug #45378)
+  * SQLColumns returns wrong transfer octet length. (Bug #53235)
 
 ----
 

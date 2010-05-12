@@ -1688,6 +1688,34 @@ DECLARE_TEST(t_bug36441)
 }
 
 
+/*
+  Bug #53235 - SQLColumns returns wrong transfer octet length
+*/
+DECLARE_TEST(t_bug53235)
+{
+  SQLCHAR buf[50];
+  int col_size, buf_len, dec_digits;
+
+  ok_sql(hstmt, "drop table if exists t_bug53235");
+  ok_sql(hstmt, "create table t_bug53235 (x decimal(10,3))");
+  ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0,
+			   (SQLCHAR *)"t_bug53235", SQL_NTS, NULL, 0));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  col_size= my_fetch_int(hstmt, 7);
+  buf_len= my_fetch_int(hstmt, 8);
+
+  is_num(col_size, 10);
+  is_num(buf_len, 12);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists t_bug53235");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   
   ADD_TEST(my_columns_null)
@@ -1725,6 +1753,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug49660)
   ADD_TEST(t_bug51422)
   ADD_TEST(t_bug36441)
+  ADD_TEST(t_bug53235)
 END_TESTS
 
 
