@@ -388,6 +388,46 @@ DECLARE_TEST(t_bug43855)
 }
 
 
+/*
+Bug#46910
+MyODBC 5 - calling SQLGetConnectAttr before getting all results of "CALL ..." statement
+*/
+DECLARE_TEST(t_bug46910)
+{
+	SQLCHAR     catalog[30];
+	SQLINTEGER  len, i;
+
+	SQLCHAR * initStmt[]= {"DROP PROCEDURE IF EXISTS `spbug46910_1`",
+		"CREATE PROCEDURE `spbug46910_1`()\
+		BEGIN\
+		SELECT 1 AS ret;\
+		END"};
+
+	SQLCHAR * clenUpStmt= "DROP PROCEDURE IF EXISTS `spbug46910_1`;";
+
+	for (i= 0; i < 2; ++i)
+		ok_stmt(hstmt, SQLExecDirect(hstmt, initStmt[i], SQL_NTS));
+
+	SQLExecDirect(hstmt, "CALL spbug46910_1()", SQL_NTS);
+	/*
+	SQLRowCount(hstmt, &i);
+	SQLNumResultCols(hstmt, &i);*/
+
+	SQLGetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, catalog,
+		sizeof(catalog), &len);
+	//is_num(len, 4);
+	//is_str(catalog, "test", 4);
+
+	/*ok_con(hdbc, */
+	SQLGetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, catalog,
+		sizeof(catalog), &len);
+
+	ok_stmt(hstmt, SQLExecDirect(hstmt, clenUpStmt, SQL_NTS));
+
+	return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlgetinfo)
   ADD_TEST(t_gettypeinfo)
@@ -400,6 +440,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug16653)
   ADD_TEST(t_bug30626)
   ADD_TEST(t_bug43855)
+  ADD_TEST(t_bug46910)
 END_TESTS
 
 

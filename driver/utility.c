@@ -2097,6 +2097,8 @@ my_bool dynstr_append_quoted_name(DYNAMIC_STRING *str, const char *name)
 my_bool reget_current_catalog(DBC FAR *dbc)
 {
     my_free(dbc->database,MYF(0));
+    dbc->database= NULL;
+
     if ( odbc_stmt(dbc, "select database()") )
     {
         return 1;
