@@ -1856,7 +1856,7 @@ MySQLForeignKeys(SQLHSTMT hstmt,
     CLEAR_STMT_ERROR(hstmt);
     my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
-    if (server_has_i_s(stmt->dbc))
+    if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
     {
       MYSQL *mysql= &stmt->dbc->mysql;
       char query[2048], *buff; /* This should be big enough. */

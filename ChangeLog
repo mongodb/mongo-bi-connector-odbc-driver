@@ -31,6 +31,7 @@
   * Retrieving of current catalog at the moment when connection is not ready for
     that(broken, not all pending results processed) leads to application crash.
     (Bug #46910)
+  * SQLForeignKeys unacceptable performance getting imported FK. (Bug #39562)
 
 ----
 
