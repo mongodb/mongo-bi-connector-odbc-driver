@@ -1,5 +1,5 @@
 /*
-  Copyright 2003-2008 MySQL AB, 2008 Sun Microsystems, Inc.
+  Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the
   GPL, like most MySQL Connectors. There are special exceptions
@@ -509,6 +509,8 @@ DECLARE_TEST(t_columns)
 
     ok_stmt(hstmt, SQLFetch(hstmt));
 
+	/* if you get -8 for col1 here - that's fine. depends on setup. the test probably needs
+	   to be changed accordingly */
     is_num(DataType,   Values[i][0][0]);
     is_num(cbDataType, Values[i][0][1]);
 
@@ -1269,6 +1271,8 @@ DECLARE_TEST(t_bug19923)
 /*
   Bug #32864 MyODBC /Crystal Reports truncated table names,
              lost fields when names > 21chars
+  Fails if built with c/c and probably >=5.5 (with everything
+  where SYSTEM_CHARSET_MBMAXLEN != mbmaxlen of UTF8_CHARSET_NUMBER charset)
 */
 DECLARE_TEST(t_bug32864)
 {
@@ -1508,7 +1512,7 @@ DECLARE_TEST(t_bug37621)
 {
   SQLCHAR buf[50], szColName[128];
   SQLSMALLINT iName, iType, iScale, iNullable;
-  SQLUINTEGER uiDef;
+  SQLULEN uiDef;
 
   ok_sql(hstmt, "drop table if exists t_bug37621");
   ok_sql(hstmt, "create table t_bug37621 (x int)");
@@ -1524,6 +1528,7 @@ DECLARE_TEST(t_bug37621)
   is_num(iName, 7);
   if (iType != SQL_VARCHAR && iType != SQL_WVARCHAR)
     return FAIL;
+  /* This can fail for the same reason as t_bug32864 */
   is_num(uiDef, 80);
   is_num(iScale, 0);
   is_num(iNullable, 1);
@@ -1644,10 +1649,10 @@ DECLARE_TEST(t_bug36441)
   const SQLCHAR key_column_name[][14]= {"pk_for_table1", "c1_for_table1"};
 
   SQLCHAR     catalog[BUF_LEN], schema[BUF_LEN], table[BUF_LEN], column[BUF_LEN];
-  SQLINTEGER  catalog_len, schema_len, table_len, column_len;
+  SQLLEN  catalog_len, schema_len, table_len, column_len;
   SQLCHAR     keyname[BUF_LEN];
   SQLSMALLINT key_seq, i;
-  SQLINTEGER  keyname_len, key_seq_len;
+  SQLLEN  keyname_len, key_seq_len;
 
   ok_sql(hstmt, "drop table if exists t_bug36441_0123456789");
   ok_sql(hstmt, "create table t_bug36441_0123456789("
@@ -1716,6 +1721,60 @@ DECLARE_TEST(t_bug53235)
 }
 
 
+/*
+  Bug #50195 - SQLTablePrivileges requires select priveleges
+*/
+DECLARE_TEST(t_bug50195)
+{
+  SQLHDBC     hdbc1;
+  SQLHSTMT    hstmt1;
+  const char  expected_privs[][12]= {"ALTER", "CREATE", "CREATE VIEW", "DELETE", "DROP", "INDEX",
+                                    "INSERT", "REFERENCES", "SHOW VIEW", "TRIGGER", "UPDATE"};
+  int         i;
+  SQLCHAR     priv[12];
+  SQLLEN      len;
+
+  (void)SQLExecDirect(hstmt, (SQLCHAR *)"DROP USER bug50195@localhost", SQL_NTS);
+
+  ok_sql(hstmt, "grant all on *.* to bug50195@localhost IDENTIFIED BY 'a'");
+  ok_sql(hstmt, "revoke select on *.* from bug50195@localhost");
+
+  /* revoking "global" select is enough, but revoking smth from mysql.tables_priv
+     to have not empty result of SQLTablePrivileges */
+  ok_sql(hstmt, "grant all on mysql.tables_priv to bug50195@localhost");
+  ok_sql(hstmt, "revoke select on mysql.tables_priv from bug50195@localhost");
+
+  ok_sql(hstmt, "FLUSH PRIVILEGES");
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+
+  ok_con(hdbc1, SQLConnect(hdbc1, mydsn, SQL_NTS, "bug50195", SQL_NTS, "a", SQL_NTS));
+
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_stmt(hstmt1, SQLTablePrivileges(hstmt1, "mysql", SQL_NTS, 0, 0, "tables_priv", SQL_NTS));
+
+  /* Testing SQLTablePrivileges a bit, as we don't have separate test of it */
+
+  for(i= 0; i < 11; ++i)
+  {
+    ok_stmt(hstmt1, SQLFetch(hstmt1));
+    ok_stmt(hstmt1, SQLGetData(hstmt1, 6, SQL_C_CHAR, priv, sizeof(priv), &len));
+    is_str(priv, expected_privs[i], len);
+  }
+  
+  expect_stmt(hstmt1, SQLFetch(hstmt1),100);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  ok_sql(hstmt, "DROP USER bug50195@localhost");
+  
+  return OK;
+}
+
+
 BEGIN_TESTS
   
   ADD_TEST(my_columns_null)
@@ -1754,6 +1813,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug51422)
   ADD_TEST(t_bug36441)
   ADD_TEST(t_bug53235)
+  ADD_TEST(t_bug50195)
 END_TESTS
 
 

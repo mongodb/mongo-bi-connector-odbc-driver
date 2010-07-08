@@ -607,7 +607,7 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
     if(is_no_backslashes_escape_mode(stmt->dbc) && 
        is_binary_sql_type(iprec->concise_type))
     {
-      SQLINTEGER transformed_len = 0;
+      SQLLEN transformed_len = 0;
       to= add_to_buffer(net,to," 0x",3);
       /* Make sure we have room for a fully-escaped string. */
       if (!(to= extend_buffer(net, to, length * 2)))
