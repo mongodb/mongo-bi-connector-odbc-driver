@@ -981,10 +981,58 @@ SQLProcedureColumns(SQLHSTMT hstmt,
                     SQLCHAR *proc, SQLSMALLINT proc_len,
                     SQLCHAR *column, SQLSMALLINT column_len)
 {
-  /* TODO: do conversions when MySQLProcedureColumns is implemented. */
-  return MySQLProcedureColumns(hstmt, catalog, catalog_len,
-                               schema, schema_len, proc, proc_len,
-                               column, column_len);
+  SQLRETURN rc;
+  DBC *dbc= ((STMT *)hstmt)->dbc;
+
+  if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+  {
+    SQLINTEGER len= SQL_NTS;
+    uint errors= 0;
+
+    if (catalog)
+    {
+      catalog= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                  catalog, &len, &errors);
+      catalog_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (schema)
+    {
+      schema= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                 schema, &len, &errors);
+      schema_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (proc)
+    {
+      proc= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                               proc, &len, &errors);
+      proc_len= (SQLSMALLINT)len;
+      len= SQL_NTS;
+    }
+
+    if (column)
+    {
+      column= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
+                                 column, &len, &errors);
+      column_len= (SQLSMALLINT)len;
+    }
+  }
+
+  rc= MySQLProcedureColumns(hstmt, catalog, catalog_len,
+                            schema, schema_len, proc, proc_len,
+                            column, column_len);
+
+  if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+  {
+    x_free(catalog);
+    x_free(schema);
+    x_free(proc);
+  }
+
+  return rc;
 }
 
 

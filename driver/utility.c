@@ -164,9 +164,10 @@ void fix_result_types(STMT *stmt)
       irrec->length /= sizeof(SQL_WCHAR);
     irrec->octet_length= get_transfer_octet_length(stmt, field);
     irrec->display_size= get_display_size(stmt, field);
-    /* prevent overflowing */
-    if (!capint32 || irrec->octet_length < INT_MAX32)
-      irrec->octet_length+= test(field->charsetnr != BINARY_CHARSET_NUMBER);
+    /* According ODBC specs(http://msdn.microsoft.com/en-us/library/ms713558%28v=VS.85%29.aspx) 
+      "SQL_DESC_OCTET_LENGTH ... For variable-length character or binary types,
+      this is the maximum length in bytes. This value does not include the null
+      terminator" Thus there is no need to add 1 to octet_length for char types */
     irrec->precision= 0;
     /* Set precision for all non-char/blob types */
     switch (irrec->type)
@@ -186,7 +187,7 @@ void fix_result_types(STMT *stmt)
       irrec->precision= (SQLSMALLINT) irrec->length;
       break;
     }
-    irrec->scale= myodbc_max(0, (SQLSMALLINT) get_decimal_digits(stmt, field));
+    irrec->scale= myodbc_max(0, get_decimal_digits(stmt, field));
     if ((field->flags & NOT_NULL_FLAG) &&
         !(field->flags & TIMESTAMP_FLAG) &&
         !(field->flags & AUTO_INCREMENT_FLAG))
@@ -1190,6 +1191,53 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 }
 
 
+void sqlulen_to_str(char *buff, SQLULEN value)
+{
+
+}
+
+
+/**
+  Fill the display size buffer accordingly to size of SQLLEN
+  @param[in,out]  buff
+  @param[in]      stmt
+  @param[in]      field
+
+  @return  void
+*/
+SQLLEN fill_display_size_buff(char *buff, STMT *stmt, MYSQL_FIELD *field)
+{
+  /* See comment for fill_transfer_oct_len_buff()*/
+  SQLLEN size= get_display_size(stmt, field);
+  sprintf(buff,size == SQL_NO_TOTAL ? "%d" : (sizeof(SQLLEN) == 4 ? "%lu" : "%lld"), size);
+
+  return size;
+}
+
+
+/**
+  Fill the transfer octet length buffer accordingly to size of SQLLEN
+  @param[in,out]  buff
+  @param[in]      stmt
+  @param[in]      field
+
+  @return  void
+*/
+SQLLEN fill_transfer_oct_len_buff(char *buff, STMT *stmt, MYSQL_FIELD *field)
+{
+  /* The only possible negative value get_transfer_octet_length can return is SQL_NO_TOTAL
+     But it can return value which is greater that biggest signed integer(%ld).
+     Thus for other values we use %lu. %lld should fit
+     all (currently) possible in mysql values.
+  */
+  SQLLEN len= get_transfer_octet_length(stmt, field);
+
+  sprintf(buff, len == SQL_NO_TOTAL ? "%d" : (sizeof(SQLLEN) == 4 ? "%lu" : "%lld"), len );
+
+  return len;
+}
+
+
 /**
   Fill the column size buffer accordingly to size of SQLULEN
   @param[in,out]  buff
@@ -1198,12 +1246,25 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 
   @return  void
 */
-void fill_column_size_buff(char *buff, STMT *stmt, MYSQL_FIELD *field)
+SQLULEN fill_column_size_buff(char *buff, STMT *stmt, MYSQL_FIELD *field)
 {
-	sprintf(buff, (sizeof(SQLULEN) == 4 ? "%ld" : "%llu"),
-                get_column_size(stmt, field));
+  SQLULEN size= get_column_size(stmt, field);
+  sprintf(buff, (size== SQL_NO_TOTAL ? "%d" :
+      (sizeof(SQLULEN) == 4 ? "%lu" : "%llu")), size);
+  return size;
 }
 
+
+/**
+  Capping length value if connection option is set
+*/
+static SQLLEN cap_length(STMT *stmt, unsigned long real_length)
+{
+  if (stmt->dbc->ds->limit_column_size != 0 && real_length > INT_MAX32)
+    return INT_MAX32;
+
+  return real_length;
+}
 
 /**
   Get the column size (in characters) of a field, as defined at:
@@ -1216,13 +1277,12 @@ void fill_column_size_buff(char *buff, STMT *stmt, MYSQL_FIELD *field)
 */
 SQLULEN get_column_size(STMT *stmt, MYSQL_FIELD *field)
 {
-  int capint32= stmt->dbc->ds->limit_column_size ? 1 : 0;
   SQLULEN length= field->length;
   /* Work around a bug in some versions of the server. */
   if (field->max_length > field->length)
     length= field->max_length;
-  if (capint32 && field->length > INT_MAX32)
-    length= INT_MAX32;
+
+  length= cap_length(stmt, length);
 
   switch (field->type) {
   case MYSQL_TYPE_TINY:
@@ -1290,9 +1350,8 @@ SQLULEN get_column_size(STMT *stmt, MYSQL_FIELD *field)
       return length;
     else
     {
-      CHARSET_INFO *charset= get_charset(field->charsetnr, MYF(0));
-      unsigned int mbmaxlen= charset ? charset->mbmaxlen : 1;
-      return length / mbmaxlen;
+      CHARSET_INFO *charset=  get_charset(field->charsetnr, MYF(0));
+      return length / (charset ? charset->mbmaxlen : 1);
     }
 
   case MYSQL_TYPE_TINY_BLOB:
@@ -1315,8 +1374,11 @@ SQLULEN get_column_size(STMT *stmt, MYSQL_FIELD *field)
   @param[in]  field
 
   @return  The decimal digits, or @c SQL_NO_TOTAL where it makes no sense
+
+  The function has to return SQLSMALLINT, since it corresponds to SQL_DESC_SCALE
+  or SQL_DESC_PRECISION for some data types.
 */
-SQLLEN get_decimal_digits(STMT *stmt __attribute__((unused)),
+SQLSMALLINT get_decimal_digits(STMT *stmt __attribute__((unused)),
                           MYSQL_FIELD *field)
 {
   switch (field->type) {
@@ -2793,4 +2855,564 @@ SQLRETURN set_sql_select_limit(DBC FAR *dbc, SQLULEN new_value)
   }
 
   return rc;
+}
+
+
+/**
+  Detects the parameter type.
+
+  @param[in]  proc        procedure parameter string
+  @param[in]  len         param string length
+  @param[out] ptype       pointer where to write the param type
+
+  Returns position in the param string after parameter type
+*/
+SQLCHAR *proc_get_param_type(SQLCHAR *proc, int len, SQLSMALLINT *ptype)
+{
+  while (isspace(*proc) && (len--))
+    ++proc;
+
+  if (len >= 6 && !myodbc_casecmp(proc, "INOUT ", 6))
+  {
+    *ptype= (SQLSMALLINT) SQL_PARAM_INPUT_OUTPUT;
+    return proc + 6;
+  }
+
+  if (len >= 4 && !myodbc_casecmp(proc, "OUT ", 4))
+  {
+    *ptype= (SQLSMALLINT) SQL_PARAM_OUTPUT;
+    return proc + 4;
+  }
+
+  if (len >= 3 && !myodbc_casecmp(proc, "IN ", 3))
+  {
+    *ptype= (SQLSMALLINT) SQL_PARAM_INPUT;
+    return proc + 3;
+  }
+
+  *ptype= (SQLSMALLINT)SQL_PARAM_INPUT;
+  return proc;
+}
+
+
+/**
+  Detects the parameter name
+
+  @param[in]  proc        procedure parameter string
+  @param[in]  len         param string length
+  @param[out] cname       pointer where to write the param name
+
+  Returns position in the param string after parameter name
+*/
+SQLCHAR* proc_get_param_name(SQLCHAR *proc, int len, SQLCHAR *cname)
+{
+  char quote_symbol= '\0';
+
+  while (isspace(*proc) && (len--))
+    ++proc;
+
+  /* can be '"' if ANSI_QUOTE is enabled */
+  if (*proc == '`' || *proc == '"')
+  {
+    quote_symbol= *proc;
+    ++proc;
+  }
+
+  while ((len--) && (quote_symbol != '\0' ? *proc != quote_symbol : !isspace(*proc)))
+    *(cname++)= *(proc++);
+  
+  return quote_symbol ? proc + 1 : proc;
+}
+
+
+/**
+  Detects the parameter data type
+
+  @param[in]  proc        procedure parameter string
+  @param[in]  len         param string length
+  @param[out] cname       pointer where to write the param type name
+
+  Returns position in the param string after parameter type name
+*/
+SQLCHAR* proc_get_param_dbtype(SQLCHAR *proc, int len, SQLCHAR *ptype)
+{
+  char *trim_str, *start_pos= ptype;
+
+  while (isspace(*proc) && (len--))
+    ++proc;
+
+  while (*proc && (len--) )
+    *(ptype++)= *(proc++);
+
+  /* remove the character set definition */
+  if (trim_str= strstr( myodbc_strlwr(start_pos, 0),
+                        " charset "))
+  {
+    ptype= trim_str;
+    (*ptype)= 0;
+  }
+  
+  /* trim spaces from the end */
+  ptype-=1;
+  while (isspace(*(ptype)))
+  {
+    *ptype= 0;
+    --ptype;
+  }
+
+  return proc;
+}
+
+SQLTypeMap SQL_TYPE_MAP_values[TYPE_MAP_SIZE]=
+{
+  /* SQL_BIT= -7 */
+  {"bit", 3, SQL_BIT, MYSQL_TYPE_BIT, 1, 1},
+  {"bool", 4, SQL_BIT, MYSQL_TYPE_BIT, 1, 1},
+
+  /* SQL_TINY= -6 */
+  {"tinyint", 7, SQL_TINYINT, MYSQL_TYPE_TINY, 1, 1},
+
+  /* SQL_BIGINT= -5 */
+  {"bigint", 6, SQL_BIGINT, MYSQL_TYPE_LONGLONG, 20, 1},
+
+  /* SQL_LONGVARBINARY= -4 */
+  {"long varbinary", 14, SQL_LONGVARBINARY, MYSQL_TYPE_MEDIUM_BLOB, 16777215, 1},
+  {"blob", 4, SQL_LONGVARBINARY, MYSQL_TYPE_BLOB, 65535, 1},
+  {"longblob", 8, SQL_LONGVARBINARY, MYSQL_TYPE_LONG_BLOB, 4294967295UL, 1},
+  {"tinyblob", 8, SQL_LONGVARBINARY, MYSQL_TYPE_TINY_BLOB, 255, 1},
+  {"mediumblob", 10, SQL_LONGVARBINARY, MYSQL_TYPE_MEDIUM_BLOB, 16777215,1 },
+
+  /* SQL_VARBINARY= -3 */
+  {"varbinary", 9, SQL_VARBINARY, MYSQL_TYPE_VAR_STRING, 0, 1},
+
+  /* SQL_BINARY= -2 */
+  {"binary", 6, SQL_BINARY, MYSQL_TYPE_STRING, 0, 1},
+
+  /* SQL_LONGVARCHAR= -1 */
+  {"long varchar", 12, SQL_LONGVARCHAR, MYSQL_TYPE_MEDIUM_BLOB, 16777215, 0},
+  {"text", 4, SQL_LONGVARCHAR, MYSQL_TYPE_BLOB, 65535, 0},
+  {"mediumtext", 10, SQL_LONGVARCHAR, MYSQL_TYPE_MEDIUM_BLOB, 16777215, 0},
+  {"longtext", 8, SQL_LONGVARCHAR, MYSQL_TYPE_LONG_BLOB, 4294967295UL, 0},
+  {"tinytext", 8, SQL_LONGVARCHAR, MYSQL_TYPE_TINY_BLOB, 255, 0},
+
+  /* SQL_CHAR= 1 */
+  {"char", 4, SQL_CHAR, MYSQL_TYPE_STRING, 0, 0},
+  {"enum", 4, SQL_CHAR, MYSQL_TYPE_STRING, 0, 0},
+  {"set", 3, SQL_CHAR, MYSQL_TYPE_STRING, 0, 0},
+
+  /* SQL_NUMERIC= 2 */
+  {"numeric", 7, SQL_NUMERIC, MYSQL_TYPE_DECIMAL, 0, 1},
+
+  /* SQL_DECIMAL= 3 */
+  {"decimal", 7, SQL_DECIMAL, MYSQL_TYPE_DECIMAL, 0, 1},
+
+  /* SQL_INTEGER= 4 */
+  {"int", 3, SQL_INTEGER, MYSQL_TYPE_LONG, 10, 1},
+  {"mediumint", 9, SQL_INTEGER, MYSQL_TYPE_INT24, 8, 1},
+
+  /* SQL_SMALLINT= 5 */
+  {"smallint", 8, SQL_SMALLINT, MYSQL_TYPE_SHORT, 5, 1},
+
+  /* SQL_REAL= 7 */
+  {"float", 5, SQL_REAL, MYSQL_TYPE_FLOAT, 7, 1},
+
+  /* SQL_DOUBLE= 8 */
+  {"double", 6, SQL_DOUBLE, MYSQL_TYPE_DOUBLE, 15, 1},
+
+  /* SQL_DATETIME= 9 */
+  {"datetime", 8, SQL_TYPE_TIMESTAMP, MYSQL_TYPE_DATETIME, 19, 1},
+
+  /* SQL_VARCHAR= 12 */
+  {"varchar", 7, SQL_VARCHAR, MYSQL_TYPE_VARCHAR, 0, 0},
+
+  /* SQL_TYPE_DATE= 91 */
+  {"date", 4, SQL_TYPE_DATE, MYSQL_TYPE_DATE, 10, 1},
+
+  /* YEAR - SQL_SMALLINT */
+  {"year", 4, SQL_SMALLINT, MYSQL_TYPE_YEAR, 2, 1},
+
+  /* SQL_TYPE_TIMESTAMP= 93 */
+  {"timestamp", 9, SQL_TYPE_TIMESTAMP, MYSQL_TYPE_TIMESTAMP, 19, 1},
+
+  /* SQL_TYPE_TIME= 92 */
+  {"time", 4, SQL_TYPE_TIME, MYSQL_TYPE_TIME, 8, 1}
+
+};
+
+/**
+  Gets the parameter index in the type map array
+
+  @param[in]  ptype       procedure parameter type name
+  @param[in]  len         param string length
+
+  Returns position in the param string after parameter type name
+*/
+int proc_get_param_sql_type_index(SQLCHAR *ptype, int len)
+{
+  int i;
+  for (i= 0; i < TYPE_MAP_SIZE; ++i)
+  {
+    if (len >= SQL_TYPE_MAP_values[i].name_length &&
+        (!myodbc_casecmp(ptype, SQL_TYPE_MAP_values[i].type_name,
+         SQL_TYPE_MAP_values[i].name_length)))
+      return i;
+  }
+
+  return 16; /* "char" */
+}
+
+
+/**
+  Gets the parameter info array from the map using index
+
+  @param[in]  index       index in the param info array
+
+  Pointer to the structure that contains parameter info
+*/
+SQLTypeMap *proc_get_param_map_by_index(int index)
+{
+  return &SQL_TYPE_MAP_values[index];
+}
+
+
+/**
+  Parses parameter size and decimal digits
+
+  @param[in]  ptype       parameter type name
+  @param[in]  len         type string length
+  @param[out] dec         pointer where to write decimal digits
+
+  Returns parsed size
+*/
+SQLUINTEGER proc_parse_sizes(SQLCHAR *ptype, int len, SQLSMALLINT *dec)
+{
+  int parsed= 0;
+  SQLUINTEGER param_size= 0;
+  
+  if (ptype == NULL)
+  {
+    /* That shouldn't happen though */
+    return 0;
+  }
+
+  while ((len > 0) && (*ptype!= ')') && (parsed < 2))
+  {
+    int n_index= 0;
+    SQLCHAR number_to_parse[16]= "\0";
+
+    /* skip all non-digit characters */
+    while (!isdigit(*ptype) && (len-- >= 0) && (*ptype!= ')'))
+      ++ptype;
+
+    /* add digit characters to the buffer for parsing */
+    while (isdigit(*ptype) && (len-- >= 0))
+    {
+      number_to_parse[n_index++]= *ptype;
+      ++ptype;
+    }
+
+    /* 1st number is column size, 2nd is decimal digits */
+    if (!parsed) 
+      param_size= atoi(number_to_parse);
+    else
+      *dec= (SQLSMALLINT)atoi(number_to_parse);
+
+    ++parsed;
+  }
+
+  return param_size;
+}
+
+
+/**
+  Determines the length of ENUM/SET
+
+  @param[in]  ptype       parameter type name
+  @param[in]  len         type string length
+  @param[in]  is_enum     flag to treat string as ENUM
+                          instead of SET
+
+  Returns size of ENUM/SET
+*/
+SQLUINTEGER proc_parse_enum_set(SQLCHAR *ptype, int len, BOOL is_enum)
+{
+  SQLUINTEGER total_len= 0, elem_num= 0, max_len= 0, cur_len= 0;
+  char quote_symbol= '\0';
+  
+  /* theoretically ')' can be inside quotes as part of enum value */
+  while ((len > 0) && (quote_symbol != '\0' || *ptype!= ')'))
+  {
+    if (*ptype == quote_symbol)
+    {
+      quote_symbol= '\0';
+      max_len= max(cur_len, max_len);
+    }
+    else if (*ptype == '\'' || *ptype == '"')
+    {
+      quote_symbol= *ptype;
+      cur_len= 0;
+      ++elem_num;
+    }
+    else if (quote_symbol)
+    {
+      ++cur_len;
+      ++total_len;
+    }
+
+    ++ptype;
+    --len;
+  }
+
+  return is_enum ? max_len : total_len + elem_num - 1;
+}
+
+
+/**
+  Returns parameter size and decimal digits
+
+  @param[in]  ptype          parameter type name
+  @param[in]  len            type string length
+  @param[in]  sql_type_index index in the param info array
+  @param[out] dec            pointer where to write decimal digits
+
+  Returns parameter size
+*/
+SQLUINTEGER proc_get_param_size(SQLCHAR *ptype, int len, int sql_type_index, SQLSMALLINT *dec)
+{
+  SQLUINTEGER param_size= SQL_TYPE_MAP_values[sql_type_index].type_length;
+  SQLCHAR *start_pos= strchr(ptype, '(');
+  SQLCHAR *end_pos= strrchr(ptype, ')');
+  
+  /* no decimal digits by default */
+  *dec= SQL_NO_TOTAL;
+  
+  switch (SQL_TYPE_MAP_values[sql_type_index].mysql_type)
+  {
+    /* these type sizes need to be parsed */
+    case MYSQL_TYPE_DECIMAL:
+      param_size= proc_parse_sizes(start_pos, end_pos - start_pos, dec);
+      if(!param_size)
+        param_size= 10; /* by default */
+      break;
+
+    case MYSQL_TYPE_YEAR:
+      *dec= 0;
+      param_size= proc_parse_sizes(start_pos, end_pos - start_pos, dec);
+      if(!param_size)
+        param_size= 4; /* by default */
+      break;
+
+    case MYSQL_TYPE_VARCHAR:
+    case MYSQL_TYPE_VAR_STRING:
+    case MYSQL_TYPE_STRING:
+      if (!myodbc_strcasecmp(SQL_TYPE_MAP_values[sql_type_index].type_name, "set"))
+      {
+        param_size= proc_parse_enum_set(start_pos, end_pos - start_pos, FALSE);
+      }
+      else if (!myodbc_strcasecmp(SQL_TYPE_MAP_values[sql_type_index].type_name, "enum"))
+      {
+        param_size= proc_parse_enum_set(start_pos, end_pos - start_pos, TRUE);
+      }
+      else /* just normal character type */
+      {
+        param_size= proc_parse_sizes(start_pos, end_pos - start_pos, dec);
+        if (param_size == 0 && 
+            SQL_TYPE_MAP_values[sql_type_index].sql_type == SQL_BINARY)
+           param_size= 1;
+      }
+
+      break;
+
+    case MYSQL_TYPE_DATETIME:
+    case MYSQL_TYPE_BIT:
+    case MYSQL_TYPE_TINY:
+    case MYSQL_TYPE_SHORT:
+    case MYSQL_TYPE_INT24:
+    case MYSQL_TYPE_LONG:
+    case MYSQL_TYPE_LONGLONG:
+      *dec= 0;
+      break;
+
+  }
+
+  return param_size;
+}
+
+
+/**
+Gets parameter columns size
+
+@param[in]  stmt           statement
+@param[in]  sql_type_index index in the param info array
+@param[in]  col_size       parameter size
+@param[in]  decimal_digits write decimal digits
+@param[in]  flags          field flags
+
+Returns parameter octet length
+*/
+SQLLEN proc_get_param_col_len(STMT *stmt, int sql_type_index, unsigned long col_size, 
+                              SQLSMALLINT decimal_digits, unsigned int flags, char * str_buff)
+{
+  MYSQL_FIELD temp_fld;
+
+  temp_fld.length= col_size + 
+    (SQL_TYPE_MAP_values[sql_type_index].mysql_type == MYSQL_TYPE_DECIMAL ?
+    1 + (flags & UNSIGNED_FLAG ? 0 : 1) : 0); /* add 1for sign, if needed, and 1 for decimal point */
+
+  temp_fld.max_length= col_size;
+  temp_fld.decimals= decimal_digits;
+  temp_fld.flags= flags;
+  temp_fld.charsetnr= stmt->dbc->ansi_charset_info->number;
+  temp_fld.type= SQL_TYPE_MAP_values[sql_type_index].mysql_type;
+
+  if (str_buff != NULL)
+  {
+    return fill_column_size_buff(str_buff, stmt, &temp_fld);
+  }
+  else
+  {
+    return get_column_size( stmt, &temp_fld);
+  }
+}
+
+
+/**
+  Gets parameter octet length
+
+  @param[in]  stmt           statement
+  @param[in]  sql_type_index index in the param info array
+  @param[in]  col_size       parameter size
+  @param[in]  decimal_digits write decimal digits
+  @param[in]  flags          field flags
+
+  Returns parameter octet length
+*/
+SQLLEN proc_get_param_octet_len(STMT *stmt, int sql_type_index, unsigned long col_size, 
+                                SQLSMALLINT decimal_digits, unsigned int flags, char * str_buff)
+{
+  MYSQL_FIELD temp_fld;
+
+  temp_fld.length= col_size + 
+    (SQL_TYPE_MAP_values[sql_type_index].mysql_type == MYSQL_TYPE_DECIMAL ?
+    1 + (flags & UNSIGNED_FLAG ? 0 : 1) : 0); /* add 1for sign, if needed, and 1 for decimal point */
+
+  temp_fld.max_length= col_size;
+  temp_fld.decimals= decimal_digits;
+  temp_fld.flags= flags;
+  temp_fld.charsetnr= stmt->dbc->ansi_charset_info->number;
+  temp_fld.type= SQL_TYPE_MAP_values[sql_type_index].mysql_type;
+
+  if (str_buff != NULL)
+  {
+    return fill_transfer_oct_len_buff(str_buff, stmt, &temp_fld);
+  }
+  else
+  {
+    return get_transfer_octet_length(stmt, &temp_fld);
+  }
+}
+
+
+/**
+  tokenize the string by putting \0 bytes to separate params
+
+  @param[in]  str        parameters string
+  @param[out] params_num number of detected parameters
+
+  Returns pointer to the first param
+*/
+char *proc_param_tokenize(char *str, int *params_num)
+{
+  BOOL bracket_open= 0;
+  char *str_begin= str, quote_symbol='\0';
+  int len= strlen(str);
+
+  *params_num= 0;
+
+  /* if no params at all */
+  while (len > 0 && isspace(*str))
+  {
+    ++str;
+    --len;
+  }
+  
+  if (len && *str && *str != ')')
+    *params_num= 1;
+
+  while (len > 0)
+  {
+    /* Making sure that a bracket is not inside quotes. that's possible for SET
+       or ENUM values */
+    if (quote_symbol == '\0')
+    {
+      if (!bracket_open && *str == ',')
+      {
+        *str= '\0';
+        ++(*params_num);
+      }
+      else if (*str == '(')
+      {
+        bracket_open= 1;
+      }
+      else if (*str == ')')
+      {
+        bracket_open= 0;
+      }
+      else if (*str == '"' || *str == '\'')
+      {
+        quote_symbol= *str;
+      }
+    }
+    else if( *str == quote_symbol)
+    {
+      quote_symbol= '\0';
+    }
+
+
+    ++str;
+    --len;
+  }
+  return str_begin;
+}
+
+
+/**
+  goes to the next token in \0-terminated string sequence
+
+  @param[in]  str        parameters string
+  @param[in]  str_end    end of the sequence
+
+  Returns pointer to the next token in sequence
+*/
+char *proc_param_next_token(char *str, char *str_end)
+{
+  int end_token= strlen(str);
+  
+  /* return the next string after \0 byte */
+  if (str + end_token + 1 < str_end)
+    return (char*)(str + end_token + 1);
+
+  return 0;
+}
+
+
+/**
+  deletes the list element and moves the pointer forward
+
+  @param[in]  elem   item to delete
+
+  Returns pointer to the next list element
+*/
+LIST *list_delete_forward(LIST *elem)
+{
+  if(elem->prev)
+    elem->prev->next= elem->next;
+
+  if(elem->next)
+  {
+    elem->next->prev= elem->prev;
+    elem= elem->next;
+  }
+
+  return elem;
 }

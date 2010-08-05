@@ -479,7 +479,6 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
 #endif /* USE_LEGACY_ODBC_GUI */
   BOOL bPrompt= FALSE;
   HMODULE hModule= NULL;
-  unsigned long options;
 
   if (cbConnStrIn != SQL_NTS)
     szConnStrIn= sqlwchardup(szConnStrIn, cbConnStrIn);
@@ -925,7 +924,8 @@ SQLRETURN SQL_API SQLDisconnect(SQLHDBC hdbc)
   x_free(dbc->database);
   assert(dbc->ds);
   ds_delete(dbc->ds);
-  dbc->ds= dbc->database= NULL;
+  dbc->ds= NULL;
+  dbc->database= NULL;
 
   return SQL_SUCCESS;
 }

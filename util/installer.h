@@ -146,6 +146,17 @@ typedef struct {
   unsigned int sslverify;
 } DataSource;
 
+typedef struct{
+  SQLCHAR *type_name;
+  SQLINTEGER name_length;
+  SQLSMALLINT sql_type;
+  SQLSMALLINT mysql_type;
+  SQLUINTEGER type_length;
+  BOOL binary;
+}SQLTypeMap;
+
+#define TYPE_MAP_SIZE 32
+
 DataSource *ds_new();
 void ds_delete(DataSource *ds);
 int ds_set_strattr(SQLWCHAR **attr, const SQLWCHAR *val);

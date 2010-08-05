@@ -42,8 +42,13 @@
 #include "../MYODBC_CONF.h"
 #include "../MYODBC_ODBC.h"
 
-#ifdef WIN32
-#define strcasecmp( a, b ) stricmp( a, b )
+#ifdef _WIN32
+/* It could be defined in mysql headers - we don't want the warning, but want to
+   redefine it */
+# ifdef strcasecmp
+#  undef strcasecmp
+# endif
+# define strcasecmp( a, b ) stricmp( a, b )
 #endif
 
 /* 

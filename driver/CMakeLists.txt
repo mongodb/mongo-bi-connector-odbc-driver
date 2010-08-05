@@ -27,7 +27,7 @@
 ##########################################################################
 
 SET(DRIVER_SRCS
-		ansi.c catalog.c connect.c cursor.c desc.c dll.c error.c execute.c
+		ansi.c catalog.c catalog_no_i_s.c connect.c cursor.c desc.c dll.c error.c execute.c
         handle.c
         info.c driver.c options.c prepare.c results.c transact.c unicode.c
         utility.c)
@@ -36,7 +36,7 @@ INCLUDE_DIRECTORIES(../util)
 
 IF(WIN32)
   # Headers added for convenience of VS users
-	SET(DRIVER_SRCS ${DRIVER_SRCS} driver.def driver.rc driver.h error.h myutil.h)
+	SET(DRIVER_SRCS ${DRIVER_SRCS} driver.def driver.rc catalog.h driver.h error.h myutil.h)
 ENDIF(WIN32)
 
 ADD_LIBRARY(myodbc5 SHARED ${DRIVER_SRCS})

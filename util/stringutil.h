@@ -1,5 +1,5 @@
 /*
-  Copyright 2007-2008 MySQL AB
+  Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the
   GPL, like most MySQL Connectors. There are special exceptions
@@ -108,7 +108,7 @@ void sqlwcharfromul(SQLWCHAR *wstr, unsigned long v);
 size_t sqlwcharncat2(SQLWCHAR *dest, const SQLWCHAR *src, size_t *n);
 SQLWCHAR *sqlwcharncpy(SQLWCHAR *dest, const SQLWCHAR *src, size_t n);
 
-
+char * myodbc_strlwr(char *target, size_t len);
 #ifdef __cplusplus
 }
 #endif

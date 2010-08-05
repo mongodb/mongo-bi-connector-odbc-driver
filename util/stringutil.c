@@ -652,3 +652,16 @@ SQLWCHAR *sqlwcharncpy(SQLWCHAR *dest, const SQLWCHAR *src, size_t n)
   return dest;
 }
 
+
+/* Converts all characters in string to lowercase */
+char * myodbc_strlwr(char *target, size_t len)
+{
+  unsigned char *c= (unsigned char *)target;
+  if (len <= 0)
+    len= strlen(target);
+
+  while (len-- > 0)
+    *c++= tolower(*c);
+
+  return target;
+}

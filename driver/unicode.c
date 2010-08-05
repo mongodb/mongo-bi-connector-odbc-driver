@@ -809,8 +809,37 @@ SQLProcedureColumnsW(SQLHSTMT hstmt,
                      SQLWCHAR *proc, SQLSMALLINT proc_len,
                      SQLWCHAR *column, SQLSMALLINT column_len)
 {
-  /* TODO: do conversions when MySQLProcedureColumns is implemented. */
-  return MySQLProcedureColumns(hstmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0);
+  SQLRETURN rc;
+  SQLCHAR *catalog8, *schema8, *proc8, *column8;
+  DBC *dbc= ((STMT *)hstmt)->dbc;
+  SQLINTEGER len;
+  uint errors= 0;
+
+  len= catalog_len;
+  catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
+  catalog_len= (SQLSMALLINT)len;
+
+  len= schema_len;
+  schema8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, schema, &len, &errors);
+  schema_len= (SQLSMALLINT)len;
+
+  len= proc_len;
+  proc8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, proc, &len, &errors);
+  proc_len= (SQLSMALLINT)len;
+
+  len= column_len;
+  column8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, column, &len, &errors);
+  column_len= (SQLSMALLINT)len;
+
+  rc= MySQLProcedureColumns(hstmt, catalog8, catalog_len, schema8, schema_len, 
+                               proc8, proc_len, column8, column_len);
+
+  x_free(catalog8);
+  x_free(schema8);
+  x_free(proc8);
+  x_free(column8);
+
+  return rc;
 }
 
 

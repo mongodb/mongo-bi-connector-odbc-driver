@@ -824,6 +824,8 @@ SQLRETURN tmysql_prepare(SQLHSTMT hstmt, char *sql_stmt)
 {
     return(SQLPrepare(hstmt, (SQLCHAR *)sql_stmt, SQL_NTS));
 }
+
+
 /**
   return integer data by fetching it
 */
@@ -833,6 +835,20 @@ SQLINTEGER my_fetch_int(SQLHSTMT hstmt, SQLUSMALLINT icol)
     SQLLEN len;
 
     SQLGetData(hstmt, icol, SQL_INTEGER, &nData, 0, &len);
+    printMessage("my_fetch_int: %ld (%ld)", (long int)nData, len);
+    return (len != SQL_NULL_DATA) ? nData : 0;
+}
+
+
+/**
+  return unsigned integer data by fetching it
+*/
+SQLUINTEGER my_fetch_uint(SQLHSTMT hstmt, SQLUSMALLINT icol)
+{
+    SQLUINTEGER nData;
+    SQLLEN len;
+
+    SQLGetData(hstmt, icol, SQL_C_ULONG, &nData, 0, &len);
     printMessage("my_fetch_int: %ld (%ld)", (long int)nData, len);
     return (len != SQL_NULL_DATA) ? nData : 0;
 }

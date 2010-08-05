@@ -97,6 +97,9 @@ typedef char * DYNAMIC_ELEMENT;
 # define MYODBC_FIELD_LONG(name, flags) \
   {(name), (name), NullS, NullS, NullS, NullS, NullS, 11, 11, 0, 0, 0, 0, 0, \
     0, 0, (flags), 0, 0, MYSQL_TYPE_LONG, NULL}
+# define MYODBC_FIELD_LONGLONG(name, flags) \
+  {(name), (name), NullS, NullS, NullS, NullS, NullS, 20, 20, 0, 0, 0, 0, 0, \
+    0, 0, (flags), 0, 0, MYSQL_TYPE_LONGLONG, NULL}
 #elif MYSQL_VERSION_ID >= 40100
 # define MYODBC_FIELD_NAME(name, flags) \
 {(name), (name), NullS, NullS, NullS, NullS, NullS, NAME_LEN*3, 0, 0, 0, 0, 0, 0, \
@@ -111,6 +114,9 @@ typedef char * DYNAMIC_ELEMENT;
 # define MYODBC_FIELD_LONG(name, flags) \
   {(name), (name), NullS, NullS, NullS, NullS, NullS, 11, 11, 0, 0, 0, 0, 0, \
     0, 0, (flags), 0, 0, MYSQL_TYPE_LONG}
+# define MYODBC_FIELD_LONGLONG(name, flags) \
+  {(name), (name), NullS, NullS, NullS, NullS, NullS, 20, 20, 0, 0, 0, 0, 0, \
+    0, 0, (flags), 0, 0, MYSQL_TYPE_LONGLONG }
 #endif
 
 /*
@@ -180,10 +186,12 @@ void translate_error(char *save_state,myodbc_errid errid,uint mysql_err);
 
 SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff);
 SQLULEN get_column_size(STMT *stmt, MYSQL_FIELD *field);
-void fill_column_size_buff(char *buff, STMT *stmt, MYSQL_FIELD *field);
-SQLLEN get_decimal_digits(STMT *stmt, MYSQL_FIELD *field);
+SQLULEN fill_column_size_buff(char *buff, STMT *stmt, MYSQL_FIELD *field);
+SQLSMALLINT get_decimal_digits(STMT *stmt, MYSQL_FIELD *field);
 SQLLEN get_transfer_octet_length(STMT *stmt, MYSQL_FIELD *field);
+SQLLEN fill_transfer_oct_len_buff(char *buff, STMT *stmt, MYSQL_FIELD *field);
 SQLLEN get_display_size(STMT *stmt, MYSQL_FIELD *field);
+SQLLEN fill_display_size_buff(char *buff, STMT *stmt, MYSQL_FIELD *field);
 SQLSMALLINT get_dticode_from_concise_type(SQLSMALLINT concise_type);
 SQLSMALLINT get_concise_type_from_datetime_code(SQLSMALLINT dticode);
 SQLSMALLINT get_concise_type_from_interval_code(SQLSMALLINT dticode);
@@ -292,6 +300,23 @@ void *ptr_offset_adjust(void *ptr, SQLULEN *bind_offset,
 void query_print(FILE *log_file,char *query);
 FILE *init_query_log(void);
 void end_query_log(FILE *query_log);
+
+LIST *list_delete_forward(LIST *elem);
+
+/* proc_* functions - used to parse prcedures headers in SQLProcedureColumns */
+char *proc_param_tokenize(char *str, int *params_num);
+SQLCHAR *proc_get_param_type(SQLCHAR *proc, int len, SQLSMALLINT *ptype);
+SQLCHAR* proc_get_param_name(SQLCHAR *proc, int len, SQLCHAR *cname);
+SQLCHAR* proc_get_param_dbtype(SQLCHAR *proc, int len, SQLCHAR *ptype);
+SQLUINTEGER proc_get_param_size(SQLCHAR *ptype, int len, int sql_type_index,
+                                SQLSMALLINT *dec);
+SQLLEN proc_get_param_octet_len(STMT *stmt, int sql_type_index, unsigned long col_size, 
+                                SQLSMALLINT decimal_digits, unsigned int flags, char * str_buff);
+SQLLEN proc_get_param_col_len(STMT *stmt, int sql_type_index, unsigned long col_size, 
+                              SQLSMALLINT decimal_digits, unsigned int flags, char * str_buff);
+int proc_get_param_sql_type_index(SQLCHAR *ptype, int len);
+SQLTypeMap *proc_get_param_map_by_index(int index);
+char *proc_param_next_token(char *str, char *str_end);
 
 #ifdef __WIN__
 #define cmp_database(A,B) myodbc_strcasecmp((const char *)(A),(const char *)(B))
