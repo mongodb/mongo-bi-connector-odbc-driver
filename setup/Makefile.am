@@ -141,6 +141,7 @@ EXTRA_DIST = \
 	MYODBCSetupDataSourceTab3b.h \
 	MYODBCSetupDataSourceTab3c.h \
 	MYODBCSetupDataSourceTab3d.h \
+	MYODBCSetupDataSourceTab3e.h \
 	MYODBCSetupLineEdit.h \
 	myodbc3S.def \
 	myodbc3S.export \
