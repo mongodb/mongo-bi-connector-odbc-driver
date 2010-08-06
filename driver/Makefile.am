@@ -39,6 +39,7 @@ INCLUDES=-I$(top_srcdir)/util -I$(top_srcdir)
 libmyodbc5_la_SOURCES= \
 ansi.c \
 catalog.c \
+catalog.h \
 connect.c \
 cursor.c \
 desc.c \
