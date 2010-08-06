@@ -1325,7 +1325,7 @@ static void free_procedurecolumn_res(int total_records, LIST *params)
   uint j;
   LIST *cur_params;
 
-  for (i= 1; i < total_records; ++i)
+  for (i= 1; i <= total_records; ++i)
   {
     if(params && params->data)
     {
@@ -1515,7 +1515,7 @@ mysql_procedure_columns(SQLHSTMT hstmt,
         sprintf(param_dbtype, "%s", "char");
       }
 
-      data[mypcTYPE_NAME]= my_strdup(strlwr(param_dbtype), MYF(0)); /* TYPE_NAME */
+      data[mypcTYPE_NAME]= my_strdup(myodbc_strlwr(param_dbtype, 0), MYF(0)); /* TYPE_NAME */
       
       proc_get_param_col_len(stmt, sql_type_index, param_size, dec, flags, param_size_buf);
       data[mypcCOLUMN_SIZE]= my_strdup(param_size_buf, MYF(0)); /* COLUMN_SIZE */

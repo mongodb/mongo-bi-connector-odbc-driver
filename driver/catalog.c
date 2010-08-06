@@ -128,10 +128,6 @@ create_empty_fake_resultset(STMT *stmt, MYSQL_ROW rowval, size_t rowsize,
 }
 
 
-/* non-I_S routines for old servers */
-//#include "catalog_oldsvr.c"
-
-
 /**
   Get the table status for a table or tables using Information_Schema DB.
 
