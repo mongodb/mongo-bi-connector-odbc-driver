@@ -445,7 +445,7 @@ DECLARE_TEST(t_bug27862_1)
   SQLLEN len;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug27862");
-  ok_sql(hstmt, "CREATE TABLE t_bug27862 (a VARCHAR(2), b VARCHAR(2))");
+  ok_sql(hstmt, "CREATE TABLE t_bug27862 (a VARCHAR(2), b VARCHAR(2)) charset latin1");
   ok_sql(hstmt, "INSERT INTO t_bug27862 VALUES ('a','b')");
 
   ok_sql(hstmt, "SELECT CONCAT(a,b) FROM t_bug27862");
@@ -458,7 +458,8 @@ DECLARE_TEST(t_bug27862_1)
   is_num(len, 4);
   ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_OCTET_LENGTH, NULL, 0,
                                  NULL, &len));
-  is_num(len, 5);
+  /* Octet length shoul *not* include terminanting null character according to ODBC specs */
+  is_num(len, 4);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 

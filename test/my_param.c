@@ -226,7 +226,7 @@ DECLARE_TEST(my_param_delete)
 
 DECLARE_TEST(tmysql_fix)
 {
-    SQLRETURN rc;
+  SQLRETURN rc;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_err");
 

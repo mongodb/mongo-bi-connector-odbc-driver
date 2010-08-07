@@ -33,6 +33,7 @@
     (Bug #46910)
   * SQLForeignKeys unacceptable performance getting imported FK. (Bug #39562)
   * SQLTablePrivileges requires SELECT privilege on mysql database. (Bug #50195)
+  * Column octet length includes terminating null byte. (Bug #54206)
 
 ----
 

@@ -564,8 +564,8 @@ DECLARE_TEST(t_pos_datetime_delete)
   SQLUSMALLINT rgfRowStatus;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_pos_datetime_delete");
-  ok_sql(hstmt, "CREATE TABLE t_pos_datetime_delete (a INT NOT NULL,"
-         "b VARCHAR(20) NOT NULL, c DATETIME NOT NULL DEFAULT '2000-01-01')");
+  ok_sql(hstmt, "CREATE TABLE t_pos_datetime_delete (a INT NOT NULL DEFAULT 0,"
+         "b VARCHAR(20) NOT NULL DEFAULT '', c DATETIME NOT NULL DEFAULT '2000-01-01')");
   ok_sql(hstmt, "INSERT INTO t_pos_datetime_delete VALUES"
          "(1,'venu','2003-02-10 14:45:39')");
   ok_sql(hstmt, "INSERT INTO t_pos_datetime_delete (b) VALUES ('')");
@@ -3296,8 +3296,6 @@ DB name in SELECT
 */
 DECLARE_TEST(t_bug41946)
 {
-	SQLRETURN rc;
-
 	SQLINTEGER nData= 500;
 	SQLCHAR szData[255]={0};
 

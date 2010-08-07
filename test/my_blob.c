@@ -745,7 +745,7 @@ DECLARE_TEST(t_bug10562)
   memset(blob, 'X', bsize);
 
   ok_sql(hstmt, "drop table if exists t_bug10562");
-  ok_sql(hstmt, "create table t_bug10562 ( id int not null primary key, mb longblob )");
+  ok_sql(hstmt, "create table t_bug10562 ( id int not null primary key DEFAULT 0, mb longblob )");
   ok_sql(hstmt, "insert into t_bug10562 (mb) values ('zzzzzzzzzz')");
 
   ok_sql(hstmt, "select id, mb from t_bug10562");

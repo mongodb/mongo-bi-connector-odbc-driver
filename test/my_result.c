@@ -298,7 +298,7 @@ DECLARE_TEST(t_desc_col)
          "c20 blob,"
          "c21 mediumblob,"
          "c22 longblob,"
-         "c23 tinyblob)");
+         "c23 tinyblob) CHARSET latin1");
 
   ok_sql(hstmt, "SELECT * FROM t_desc_col");
 
@@ -2064,7 +2064,7 @@ DECLARE_TEST(t_bug13776)
   alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   ok_sql(hstmt1, "DROP TABLE IF EXISTS t_bug13776");
-  ok_sql(hstmt1, "CREATE TABLE t_bug13776(ltext LONGTEXT)");
+  ok_sql(hstmt1, "CREATE TABLE t_bug13776(ltext LONGTEXT) CHARSET latin1");
   ok_sql(hstmt1, "INSERT INTO t_bug13776 VALUES ('long text test')");
   ok_sql(hstmt1, "SELECT * FROM t_bug13776");
   ok_stmt(hstmt1, SQLDescribeCol(hstmt1, 1, szColName, MAX_NAME_LEN+1, NULL,
@@ -2135,7 +2135,7 @@ DECLARE_TEST(t_bug13776_auto)
   alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   ok_sql(hstmt1, "DROP TABLE IF EXISTS t_bug13776");
-  ok_sql(hstmt1, "CREATE TABLE t_bug13776(ltext LONGTEXT)");
+  ok_sql(hstmt1, "CREATE TABLE t_bug13776(ltext LONGTEXT) CHARSET latin1");
   ok_sql(hstmt1, "INSERT INTO t_bug13776 VALUES ('long text test')");
   ok_sql(hstmt1, "SELECT * FROM t_bug13776");
   ok_stmt(hstmt1, SQLDescribeCol(hstmt1, 1, szColName, MAX_NAME_LEN+1, NULL,
@@ -2607,6 +2607,58 @@ DECLARE_TEST(t_bug32821)
 }
 
 
+/*
+  Bug 55024 - Wrong type returned by SQLColAttribute(SQL_DESC_PRECISION...) in 64-bit Linux
+ */
+DECLARE_TEST(t_bug55024)
+{
+  SQLSMALLINT len;
+  SQLLEN      res;
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "DROP TABLE IF EXISTS t_test55024", SQL_NTS));
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "CREATE TABLE t_test55024(col01 LONGTEXT, "\
+                                                                  "col02 BINARY(16),"\
+                                                                  "col03 VARBINARY(16),"\
+                                                                  "col04 LONGBLOB,"\
+                                                                  "col05 BIGINT,"\
+                                                                  "col06 TINYINT,"\
+                                                                  "col07 BIT, col08 DOUBLE"\
+                                                                  ") CHARSET latin1", SQL_NTS));
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "INSERT INTO t_test55024 VALUES ('a', 'b', 'c', 'd', 999, 111, 1, 3.1415)", SQL_NTS));
+
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "SELECT * FROM t_test55024", SQL_NTS));
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_DESC_TYPE, NULL, 0, &len, &res));
+  is_num(res, SQL_LONGVARCHAR);
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 2, SQL_DESC_TYPE, NULL, 0, &len, &res));
+  is_num(res, SQL_BINARY);
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 3, SQL_DESC_TYPE, NULL, 0, &len, &res));
+  is_num(res, SQL_VARBINARY);
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 4, SQL_DESC_TYPE, NULL, 0, &len, &res));
+  is_num(res, SQL_LONGVARBINARY);
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 5, SQL_DESC_TYPE, NULL, 0, &len, &res));
+  is_num(res, SQL_BIGINT);
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 6, SQL_DESC_TYPE, NULL, 0, &len, &res));
+  is_num(res, SQL_TINYINT);
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 7, SQL_DESC_TYPE, NULL, 0, &len, &res));
+  is_num(res, SQL_BIT);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug55024");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -2647,6 +2699,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug32821)
   ADD_TEST(t_bug34271)
   ADD_TEST(t_bug32684)
+  ADD_TEST(t_bug55024)
   END_TESTS
 
 

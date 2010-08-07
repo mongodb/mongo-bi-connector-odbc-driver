@@ -231,7 +231,7 @@ DECLARE_TEST(my_colpriv)
                                      (SQLCHAR *)"test_colprev1", SQL_NTS,
                                      (SQLCHAR *)"%", SQL_NTS));
 
-  is(4 == my_print_non_format_result(hstmt));
+  is_num(4, my_print_non_format_result(hstmt));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
@@ -462,7 +462,7 @@ DECLARE_TEST(t_columns)
          "CREATE TABLE t_columns (col0 SMALLINT,"
          "col1 CHAR(5), col2 VARCHAR(20) NOT NULL, col3 DECIMAL(10,2),"
          "col4 TINYINT NOT NULL, col5 INTEGER PRIMARY KEY,"
-         "col6 TINYINT NOT NULL UNIQUE AUTO_INCREMENT)");
+         "col6 TINYINT NOT NULL UNIQUE AUTO_INCREMENT) CHARSET latin1");
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
@@ -1508,7 +1508,7 @@ DECLARE_TEST(t_bug39957)
 */
 DECLARE_TEST(t_bug37621)
 {
-  SQLCHAR buf[50], szColName[128];
+  SQLCHAR szColName[128];
   SQLSMALLINT iName, iType, iScale, iNullable;
   SQLULEN uiDef;
 
@@ -1696,8 +1696,7 @@ DECLARE_TEST(t_bug36441)
 */
 DECLARE_TEST(t_bug53235)
 {
-  SQLCHAR buf[50];
-  int col_size, buf_len, dec_digits;
+  int col_size, buf_len;
 
   ok_sql(hstmt, "drop table if exists t_bug53235");
   ok_sql(hstmt, "create table t_bug53235 (x decimal(10,3))");
@@ -2018,7 +2017,7 @@ DECLARE_TEST(t_sqlprocedurecolumns)
                 "begin end;"
                 );
 
-  ok_stmt(hstmt, SQLProcedureColumns(hstmt, NULL, NULL, NULL, NULL,
+  ok_stmt(hstmt, SQLProcedureColumns(hstmt, NULL, 0, NULL, 0,
                                      "procedure_columns_test%", SQL_NTS, 
                                      "re_%", SQL_NTS));
 
@@ -2027,7 +2026,7 @@ DECLARE_TEST(t_sqlprocedurecolumns)
     SQLCHAR buff[255] = {0}, *param_cat, *param_name;
     SQLUINTEGER col_size, buf_len, octet_len;
 
-    param_cat= my_fetch_str(hstmt, buff, 1);
+    param_cat= (SQLCHAR*)my_fetch_str(hstmt, buff, 1);
     is_str(param_cat, data_to_check[iter].c01_procedure_cat, 
            strlen(data_to_check[iter].c01_procedure_cat));
 
@@ -2035,7 +2034,7 @@ DECLARE_TEST(t_sqlprocedurecolumns)
            data_to_check[iter].c03_procedure_name, 
            strlen(data_to_check[iter].c03_procedure_name));
 
-    param_name= my_fetch_str(hstmt, buff, 4);
+    param_name= (SQLCHAR*)my_fetch_str(hstmt, buff, 4);
     is_str(param_name, data_to_check[iter].c04_column_name, 
            strlen(data_to_check[iter].c04_column_name));
 
