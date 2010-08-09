@@ -1388,7 +1388,7 @@ mysql_procedure_columns(SQLHSTMT hstmt,
   if (cbColumnName == SQL_NTS)
     cbColumnName= szColumnName ? strlen((char *)szColumnName) : 0;
 
-  if ( init_dynamic_string(&dynQuery, "SELECT 1", 1024,1024) )
+  if (init_dynamic_string(&dynQuery, "SELECT 1", 1024,1024))
     return set_stmt_error(stmt, "S1001", "Not enough memory", 4001);
 
   params_r= params= (LIST *) my_malloc(sizeof(LIST), MYF(MY_ZEROFILL));
@@ -1490,7 +1490,7 @@ mysql_procedure_columns(SQLHSTMT hstmt,
       data[mypcPROCEDURE_NAME]= my_strdup(row[0], MYF(0));  /* PROCEDURE_NAME */
       data[mypcCOLUMN_NAME]= my_strdup(param_name, MYF(0)); /* COLUMN_NAME */
 
-			if (cbColumnName)
+      if (cbColumnName)
       {
         dynstr_append_mem(&dynQuery, ",", 1);
         dynstr_append_os_quoted(&dynQuery, (char *)param_name, NullS);

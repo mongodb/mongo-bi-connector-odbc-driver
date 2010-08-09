@@ -882,7 +882,12 @@ MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
   case SQL_DESC_UNSIGNED:
   case SQL_DESC_UPDATABLE:
     error= stmt_SQLGetDescField(stmt, stmt->ird, column, attrib,
-                                num_attr, SQL_IS_INTEGER, NULL);
+#ifdef USE_SQLCOLATTRIBUTE_SQLLEN_PTR
+                                (SQLPOINTER)num_attr,SQL_IS_LEN,
+#else
+                                num_attr, SQL_IS_INTEGER,
+#endif
+               NULL);
     break;
 
   case SQL_DESC_DISPLAY_SIZE:
