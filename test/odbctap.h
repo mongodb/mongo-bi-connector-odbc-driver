@@ -473,8 +473,8 @@ do { \
 #define is_num(a, b) \
 do { \
   if (a != b) { \
-    printf("# %s (%ld) != %ld in %s on line %d\n", \
-           #a, (long)a, (long)b, __FILE__, __LINE__); \
+    printf("# %s (%lld) != %lld in %s on line %d\n", \
+           #a, a, b, __FILE__, __LINE__); \
     return FAIL; \
   } \
 } while (0);
