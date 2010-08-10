@@ -403,7 +403,7 @@ DECLARE_TEST(t_bug46910)
 		SELECT 1 AS ret;\
 		END"};
 
-	SQLCHAR * clenUpStmt= "DROP PROCEDURE IF EXISTS `spbug46910_1`;";
+	SQLCHAR * cleanupStmt= "DROP PROCEDURE IF EXISTS `spbug46910_1`;";
 
 	for (i= 0; i < 2; ++i)
 		ok_stmt(hstmt, SQLExecDirect(hstmt, initStmt[i], SQL_NTS));
@@ -422,7 +422,7 @@ DECLARE_TEST(t_bug46910)
 	SQLGetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, catalog,
 		sizeof(catalog), &len);
 
-	ok_stmt(hstmt, SQLExecDirect(hstmt, clenUpStmt, SQL_NTS));
+	ok_stmt(hstmt, SQLExecDirect(hstmt, cleanupStmt, SQL_NTS));
 
 	return OK;
 }

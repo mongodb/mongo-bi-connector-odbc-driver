@@ -508,8 +508,8 @@ DECLARE_TEST(t_bug27862_2)
 */
 DECLARE_TEST(decimal_scale)
 {
-  SQLINTEGER fixed= SQL_FALSE;
-  SQLINTEGER prec, scale;
+  SQLLEN fixed= SQL_FALSE;
+  SQLLEN prec, scale;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_decscale");
   ok_sql(hstmt, "CREATE TABLE t_decscale (a DECIMAL(5,3))");
@@ -564,7 +564,7 @@ DECLARE_TEST(binary_suffix)
 */
 DECLARE_TEST(float_scale)
 {
-  SQLINTEGER scale;
+  SQLLEN scale;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_floatscale");
   ok_sql(hstmt, "CREATE TABLE t_floatscale(a FLOAT, b DOUBLE, c DECIMAL(3,2))");
@@ -599,8 +599,7 @@ DECLARE_TEST(float_scale)
 DECLARE_TEST(bit)
 {
   SQLCHAR col[10];
-  SQLINTEGER type;
-  SQLLEN len;
+  SQLLEN type, len;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bit");
   ok_sql(hstmt, "CREATE TABLE t_bit (a BIT(1), b BIT(17))");

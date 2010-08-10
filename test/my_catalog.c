@@ -231,6 +231,7 @@ DECLARE_TEST(my_colpriv)
                                      (SQLCHAR *)"test_colprev1", SQL_NTS,
                                      (SQLCHAR *)"%", SQL_NTS));
 
+  printMessage("1) Privileges on all columns from test_colprev1");
   is_num(4, my_print_non_format_result(hstmt));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
@@ -240,6 +241,7 @@ DECLARE_TEST(my_colpriv)
                                      (SQLCHAR *)"test_colprev1", SQL_NTS,
                                      (SQLCHAR *)"a", SQL_NTS));
 
+  printMessage("2) Privileges on column 'a' from test_colprev1");
   is(1 == my_print_non_format_result(hstmt));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
@@ -248,6 +250,8 @@ DECLARE_TEST(my_colpriv)
                                      NULL, SQL_NTS, NULL, SQL_NTS,
                                      (SQLCHAR *)"test_colprev2", SQL_NTS,
                                      (SQLCHAR *)"%", SQL_NTS));
+
+  printMessage("3) Privileges on all columns from test_colprev2");
   is(0 == my_print_non_format_result(hstmt));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
@@ -257,6 +261,7 @@ DECLARE_TEST(my_colpriv)
                                      (SQLCHAR *)"test_colprev3", SQL_NTS,
                                      (SQLCHAR *)"%", SQL_NTS));
 
+  printMessage("4) Privileges on all columns from test_colprev3");
   is(4 == my_print_non_format_result(hstmt));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
@@ -1599,7 +1604,11 @@ DECLARE_TEST(t_bug49660)
                                 NULL, 0, (SQLCHAR *)"t_bug49660", SQL_NTS));
 
   ok_stmt(hstmt, SQLRowCount(hstmt, &rowsCount));
-  is_num(rowsCount, 1);
+  /* is_num(rowsCount, 1); */
+  /* Going another way around - sort of more reliable */
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  expect_stmt(hstmt,SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
 
   ok_sql(hstmt, "drop database if exists bug49660");
   ok_sql(hstmt, "drop table if exists t_bug49660");

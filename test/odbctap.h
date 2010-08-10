@@ -474,7 +474,7 @@ do { \
 do { \
   if (a != b) { \
     printf("# %s (%lld) != %lld in %s on line %d\n", \
-           #a, a, b, __FILE__, __LINE__); \
+           #a, (long long)a, (long long)b, __FILE__, __LINE__); \
     return FAIL; \
   } \
 } while (0);
@@ -649,7 +649,7 @@ static int my_print_dashes(SQLHSTMT hstmt, SQLSMALLINT nCol)
 
 
 static int my_print_data(SQLHSTMT hstmt, SQLUSMALLINT index,
-                         SQLCHAR *data, SQLINTEGER length)
+                         SQLCHAR *data, SQLLEN length)
 {
     SQLLEN     disp_size, nullable= 0;
     SQLCHAR    ColName[MAX_NAME_LEN+1];

@@ -985,7 +985,7 @@ SQLRETURN SQL_API SQLBindCol(SQLHSTMT      StatementHandle,
     {
       int i;
       --stmt->ard->count;
-      for (i= stmt->ard->count - 1; i >= 0; --i)
+      for (i= (int)stmt->ard->count - 1; i >= 0; --i)
       {
         arrec= desc_get_rec(stmt->ard, i, FALSE);
         if (ARD_IS_BOUND(arrec))
@@ -1360,9 +1360,9 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                                        SQLUSMALLINT FAR    *rgfRowStatus,
                                        my_bool              upd_status )
 {
-    ulong rows_to_fetch;
+    SQLULEN rows_to_fetch;
     long cur_row, max_row;
-    uint i;
+    SQLULEN i;
     SQLRETURN res;
     STMT FAR *stmt= (STMT FAR*) hstmt;
     MYSQL_ROW values= 0;
@@ -1408,7 +1408,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
             cur_row= 0L;
             break;
         case SQL_FETCH_LAST:
-            cur_row= max_row-stmt->ard->array_size;
+            cur_row= max_row - stmt->ard->array_size;
             break;
         case SQL_FETCH_ABSOLUTE:
             if ( irow < 0 )

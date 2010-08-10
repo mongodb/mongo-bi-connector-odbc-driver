@@ -1287,8 +1287,7 @@ DECLARE_TEST(t_desccol1)
 
 DECLARE_TEST(t_colattributes)
 {
-  SQLLEN count;
-  SQLINTEGER isauto;
+  SQLLEN count, isauto;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_colattr");
 
@@ -2432,8 +2431,11 @@ DECLARE_TEST(t_bug24131)
 
   ok_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, &count, &status));
 
-  printMessage("colSize: %ld, boundLen: %ld", colSize, boundLen);
-  is(colSize >= boundLen);
+  if (sizeof(SQLLEN) == 4)
+    printMessage("colSize: %lu, boundLen: %ld", colSize, boundLen);
+  else
+    printMessage("colSize: %llu, boundLen: %lld", colSize, boundLen);
+  is(colSize >= (SQLULEN)boundLen);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
   ok_sql(hstmt, "drop table if exists bug24131");

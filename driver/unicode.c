@@ -721,7 +721,7 @@ SQLNativeSqlW(SQLHDBC hdbc, SQLWCHAR *in, SQLINTEGER in_len,
   SQLRETURN rc= SQL_SUCCESS;
 
   if (in_len == SQL_NTS)
-    in_len= sqlwcharlen(in);
+    in_len= (SQLINTEGER)sqlwcharlen(in);
 
   if (out_len)
     *out_len= in_len;
