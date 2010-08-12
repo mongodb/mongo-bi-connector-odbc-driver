@@ -229,7 +229,7 @@ DECLARE_TEST(my_colpriv)
   ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
                                      NULL, SQL_NTS, NULL, SQL_NTS,
                                      (SQLCHAR *)"test_colprev1", SQL_NTS,
-                                     (SQLCHAR *)/*NULL*/"%", SQL_NTS));
+                                     (SQLCHAR *)NULL/*"%"*/, SQL_NTS));
 
   printMessage("1) Privileges on all columns from test_colprev1");
   is_num(4, my_print_non_format_result(hstmt));
@@ -1691,6 +1691,8 @@ DECLARE_TEST(t_bug36441)
   }
 
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_sql(hstmt, "drop table if exists t_bug36441_0123456789");
 
