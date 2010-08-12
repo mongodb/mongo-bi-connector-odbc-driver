@@ -683,6 +683,15 @@ static int my_print_data(SQLHSTMT hstmt, SQLUSMALLINT index,
 }
 
 
+/* If we just return FAIL from my_print_non_format_result - it will
+   considered as 1 row by caller */
+#define mystmt_rows(hstmt,r, row)  \
+	do { \
+	print_diag(r, SQL_HANDLE_STMT, (hstmt), "mystmt_row(hstmt,r,row)", \
+	__FILE__, __LINE__); \
+	if (!SQL_SUCCEEDED(r)) \
+	  return row; \
+	} while (0)
 /**
 RESULT SET
 */
@@ -693,29 +702,34 @@ int my_print_non_format_result(SQLHSTMT hstmt)
     SQLULEN     pcColDef;
     SQLCHAR     szColName[MAX_NAME_LEN+1];
     SQLCHAR     szData[MAX_COLUMNS][MAX_ROW_DATA_LEN]={{0}};
-    SQLSMALLINT nIndex,ncol,pfSqlType, pcbScale, pfNullable;
+    SQLSMALLINT nIndex,ncol= 0,pfSqlType, pcbScale, pfNullable;
 
     rc = SQLNumResultCols(hstmt,&ncol);
-    mystmt(hstmt,rc);
+    
+    mystmt_rows(hstmt,rc,-1);
 
-    for (nIndex = 1; nIndex <= ncol; nIndex++)
+    for (nIndex = 1; nIndex <= ncol; ++nIndex)
     {
         rc = SQLDescribeCol(hstmt,nIndex,szColName, MAX_NAME_LEN, NULL,
                             &pfSqlType,&pcColDef,&pcbScale,&pfNullable);
-        mystmt(hstmt,rc);
+        /* Returning in case of an error -nIndex we will see in the log column# */
+        mystmt_rows(hstmt,rc,-nIndex);
+
 
         fprintf(stdout, "%s\t", szColName);
 
         rc = SQLBindCol(hstmt,nIndex, SQL_C_CHAR, szData[nIndex-1],
                         MAX_ROW_DATA_LEN+1,NULL);
-        mystmt(hstmt,rc);
+        mystmt_rows(hstmt,rc,-nIndex);
     }
 
+    fprintf(stdout,"\n");
+
     rc = SQLFetch(hstmt);
-    while (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
+    while (SQL_SUCCEEDED(rc))
     {
-        nRowCount++;
-        for (nIndex=0; nIndex< ncol; nIndex++)
+        ++nRowCount;
+        for (nIndex=0; nIndex< ncol; ++nIndex)
             fprintf(stdout, "%s\t", szData[nIndex]);
 
         fprintf(stdout, "\n");
@@ -753,7 +767,7 @@ SQLINTEGER myresult(SQLHSTMT hstmt)
       return -1;
     fprintf(stdout, "# |");
 
-    for (nIndex = 1; nIndex <= ncol; nIndex++)
+    for (nIndex = 1; nIndex <= ncol; ++nIndex)
     {
         ok_stmt(hstmt, SQLColAttribute(hstmt, nIndex, SQL_DESC_BASE_COLUMN_NAME,
                                        ColName, MAX_NAME_LEN, NULL, NULL));
@@ -772,7 +786,7 @@ SQLINTEGER myresult(SQLHSTMT hstmt)
         nRowCount++;
         fprintf(stdout, "# |");
 
-        for (nIndex=1; nIndex<= ncol; nIndex++)
+        for (nIndex=1; nIndex<= ncol; ++nIndex)
         {
             rc = SQLGetData(hstmt, nIndex, SQL_C_CHAR, Data,
                             MAX_ROW_DATA_LEN,&pcbLength);

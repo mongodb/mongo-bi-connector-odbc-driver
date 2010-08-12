@@ -538,17 +538,16 @@ SQLRETURN i_s_list_table_priv(SQLHSTMT    hstmt,
 {
   STMT FAR *stmt=(STMT FAR*) hstmt;
   MYSQL *mysql= &stmt->dbc->mysql;
-  char   buff[255+2*NAME_LEN+1], *pos;
+  char   buff[255+4*NAME_LEN+1], *pos;
   SQLRETURN rc;
 
   /* Db,User,Table_name,"NULL" as Grantor,Table_priv*/
-  pos= strxmov(buff,
+  pos= strmov(buff,
                "SELECT TABLE_SCHEMA as TABLE_CAT, TABLE_CATALOG as TABLE_SCHEM,"
                       "TABLE_NAME, NULL as GRANTOR, GRANTEE,"
                       "PRIVILEGE_TYPE as PRIVILEGE, IS_GRANTABLE "
                "FROM INFORMATION_SCHEMA.TABLE_PRIVILEGES "
-               "WHERE TABLE_NAME",
-               NullS);
+               "WHERE TABLE_NAME");
 
   add_name_condition_pv_id(hstmt, &pos, table, table_len, " LIKE '%'" );
 
@@ -557,6 +556,8 @@ SQLRETURN i_s_list_table_priv(SQLHSTMT    hstmt,
 
   /* TABLE_CAT is always NULL in mysql I_S */
   pos= strmov(pos, " ORDER BY /*TABLE_CAT,*/ TABLE_SCHEM, TABLE_NAME, PRIVILEGE, GRANTEE");
+
+  assert(pos - buff < sizeof(buff));
 
   if( !SQL_SUCCEEDED(rc= MySQLPrepare(hstmt, (SQLCHAR *)buff, SQL_NTS, FALSE)))
     return rc;
@@ -613,7 +614,8 @@ static SQLRETURN i_s_list_column_priv(HSTMT *     hstmt,
 {
   STMT FAR *stmt=(STMT FAR*) hstmt;
   MYSQL *mysql= &stmt->dbc->mysql;
-  char   buff[255+2*NAME_LEN+1], *pos;
+  /* 3 names theorethically can have all their characters escaped - thus 6*NAME_LEN  */
+  char   buff[351+6*NAME_LEN+1], *pos;
   SQLRETURN rc;
 
   /* Db,User,Table_name,"NULL" as Grantor,Table_priv*/
@@ -631,12 +633,14 @@ static SQLRETURN i_s_list_column_priv(HSTMT *     hstmt,
   add_name_condition_oa_id(hstmt, &pos, catalog, catalog_len, "=DATABASE()");
 
 
-  pos= strmov(pos, "AND COLUMN_NAME");
+  pos= strmov(pos, " AND COLUMN_NAME");
   add_name_condition_pv_id(hstmt, &pos, column, column_len, " LIKE '%'");
 
 
   /* TABLE_CAT is always NULL in mysql I_S */
   pos= strmov(pos, " ORDER BY /*TABLE_CAT,*/ TABLE_SCHEM, TABLE_NAME, COLUMN_NAME, PRIVILEGE");
+
+  assert(pos - buff < sizeof(buff));
 
   if( !SQL_SUCCEEDED(rc= MySQLPrepare(hstmt, (SQLCHAR *)buff, SQL_NTS, FALSE)))
     return rc;

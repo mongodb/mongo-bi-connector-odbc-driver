@@ -41,7 +41,7 @@ DECLARE_TEST(my_columns_null)
                             (SQLCHAR *)"my_column_null", SQL_NTS,
                             NULL, SQL_NTS));
 
-  is(2 == my_print_non_format_result(hstmt));
+  is_num(2, my_print_non_format_result(hstmt));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
@@ -61,7 +61,7 @@ DECLARE_TEST(my_drop_table)
   ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0,
                             (SQLCHAR *)"my_drop_table", SQL_NTS, NULL, 0));
 
-  is(1 == my_print_non_format_result(hstmt));
+  is_num(1, my_print_non_format_result(hstmt));
 
   ok_sql(hstmt, "drop table my_drop_table");
 
@@ -79,12 +79,12 @@ DECLARE_TEST(my_table_dbs)
     SQLINTEGER nrows;
     SQLLEN lenOrNull;
 
-  ok_sql(hstmt, "DROP DATABASE IF EXISTS my_all_db_test1");
-  ok_sql(hstmt, "DROP DATABASE IF EXISTS my_all_db_test2");
-  ok_sql(hstmt, "DROP DATABASE IF EXISTS my_all_db_test3");
-  ok_sql(hstmt, "DROP DATABASE IF EXISTS my_all_db_test4");
+    ok_sql(hstmt, "DROP DATABASE IF EXISTS my_all_db_test1");
+    ok_sql(hstmt, "DROP DATABASE IF EXISTS my_all_db_test2");
+    ok_sql(hstmt, "DROP DATABASE IF EXISTS my_all_db_test3");
+    ok_sql(hstmt, "DROP DATABASE IF EXISTS my_all_db_test4");
 
-  ok_stmt(hstmt, SQLTables(hstmt,(SQLCHAR *)"%",1,"",0,"",0,NULL,0));
+    ok_stmt(hstmt, SQLTables(hstmt,(SQLCHAR *)"%",1,"",0,"",0,NULL,0));
 
     nrows = my_print_non_format_result(hstmt);
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
@@ -94,7 +94,7 @@ DECLARE_TEST(my_table_dbs)
                    NULL,0);
     mystmt(hstmt,rc);
 
-    is(nrows == my_print_non_format_result(hstmt));
+    is_num(nrows, my_print_non_format_result(hstmt));
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
@@ -160,7 +160,7 @@ DECLARE_TEST(my_table_dbs)
     mystmt(hstmt,rc);
 
     nrows += 4;
-    is(nrows == my_print_non_format_result(hstmt));
+    is_num(nrows, my_print_non_format_result(hstmt));
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
@@ -229,7 +229,7 @@ DECLARE_TEST(my_colpriv)
   ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
                                      NULL, SQL_NTS, NULL, SQL_NTS,
                                      (SQLCHAR *)"test_colprev1", SQL_NTS,
-                                     (SQLCHAR *)"%", SQL_NTS));
+                                     (SQLCHAR *)/*NULL*/"%", SQL_NTS));
 
   printMessage("1) Privileges on all columns from test_colprev1");
   is_num(4, my_print_non_format_result(hstmt));

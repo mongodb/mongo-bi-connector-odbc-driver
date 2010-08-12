@@ -2111,7 +2111,15 @@ DECLARE_TEST(t_bug13776_auto)
   SQLCHAR     szFileToLoad[255];
 
   /** @todo get the full path to the library using getenv */
+#ifdef _WIN64
+  env_path= getenv("CommonProgramW6432");
+  if (!env_path)
+  {
+    env_path= getenv("CommonProgramFiles");
+  }
+#else
   env_path= getenv("CommonProgramFiles");
+#endif
 
   if (!env_path)
   {
