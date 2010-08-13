@@ -37,6 +37,8 @@
 /*
   @type    : internal
   @purpose : checks if server supports I_S
+  @remark  : All i_s_* functions suppose that parameters specifying other parameters lenthes can't SQL_NTS.
+             caller should take care of that.
 */
 my_bool server_has_i_s(DBC FAR *dbc)
 {
@@ -130,12 +132,13 @@ create_empty_fake_resultset(STMT *stmt, MYSQL_ROW rowval, size_t rowsize,
 
 /**
   Get the table status for a table or tables using Information_Schema DB.
+  Lengths may not be SQL_NTS.
 
   @param[in] stmt           Handle to statement
   @param[in] catalog        Catalog (database) of table, @c NULL for current
-  @param[in] catalog_length Length of catalog name, or @c SQL_NTS
+  @param[in] catalog_length Length of catalog name
   @param[in] table          Name of table
-  @param[in] table_length   Length of table name, or @c SQL_NTS
+  @param[in] table_length   Length of table name
   @param[in] wildcard       Whether the table name is a wildcard
 
   @return Result of SHOW TABLE STATUS, or NULL if there is an error
@@ -154,11 +157,6 @@ static MYSQL_RES *mysql_table_status_i_s(STMT        *stmt,
   /** @todo determine real size for buffer */
   char buff[255], *to;
   my_bool clause_added= FALSE;
-
-  if (table_length == SQL_NTS && table)
-    table_length= (SQLSMALLINT)strlen((char *)table);
-  if (catalog_length == SQL_NTS && catalog)
-    catalog_length= (SQLSMALLINT)strlen((char *)catalog);
 
   to= strmov(buff, "SELECT TABLE_NAME, TABLE_COMMENT, TABLE_TYPE FROM INFORMATION_SCHEMA.TABLES WHERE ");
 
@@ -223,13 +221,13 @@ static MYSQL_RES *mysql_table_status_i_s(STMT        *stmt,
 
 
 /**
-  Get the table status for a table or tables
+  Get the table status for a table or tables. Lengths may not be SQL_NTS.
 
   @param[in] stmt           Handle to statement
   @param[in] catalog        Catalog (database) of table, @c NULL for current
-  @param[in] catalog_length Length of catalog name, or @c SQL_NTS
+  @param[in] catalog_length Length of catalog name
   @param[in] table          Name of table
-  @param[in] table_length   Length of table name, or @c SQL_NTS
+  @param[in] table_length   Length of table name
   @param[in] wildcard       Whether the table name is a wildcard
 
   @return Result of SHOW TABLE STATUS, or NULL if there is an error
@@ -375,6 +373,15 @@ MySQLTables(SQLHSTMT hstmt,
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt, MYSQL_RESET);
 
+  if (catalog_len == SQL_NTS)
+    catalog_len= catalog ? (SQLSMALLINT)strlen((char *)catalog) : 0;
+  if (schema_len == SQL_NTS)
+    schema_len= schema ? (SQLSMALLINT)strlen((char *)schema) : 0;
+  if (table_len == SQL_NTS)
+    table_len= table ? (SQLSMALLINT)strlen((char *)table) : 0;
+  if (type_len == SQL_NTS)
+    type_len= type ? (SQLSMALLINT)strlen((char *)type) : 0;
+
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
     return i_s_tables(hstmt, catalog, catalog_len, schema, schema_len,
@@ -446,6 +453,13 @@ MySQLColumns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt, MYSQL_RESET);
 
+  if (cbCatalog == SQL_NTS)
+    cbCatalog= szCatalog != NULL ? (SQLSMALLINT)strlen((char *)szCatalog) : 0;
+  if (cbColumn == SQL_NTS)
+    cbColumn= szColumn != NULL ? (SQLSMALLINT)strlen((char *)szColumn) : 0;
+  if (cbTable == SQL_NTS)
+    cbTable= szTable != NULL ? (SQLSMALLINT)strlen((char *)szTable) : 0;
+
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
     return i_s_columns(hstmt, szCatalog, cbCatalog,szSchema, cbSchema,
@@ -506,6 +520,12 @@ MySQLStatistics(SQLHSTMT hstmt,
 
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
+
+
+  if (catalog_len == SQL_NTS)
+    catalog_len= catalog ? (SQLSMALLINT)strlen((char *)catalog) : 0;
+  if (table_len == SQL_NTS)
+    table_len= table ? (SQLSMALLINT)strlen((char *)table) : 0;
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
@@ -583,6 +603,11 @@ MySQLTablePrivileges(SQLHSTMT hstmt,
 
     CLEAR_STMT_ERROR(hstmt);
     my_SQLFreeStmt(hstmt,MYSQL_RESET);
+
+    if (catalog_len == SQL_NTS)
+      catalog_len= catalog ? (SQLSMALLINT)strlen((char *)catalog) : 0;
+    if (table_len == SQL_NTS)
+      table_len= table ? (SQLSMALLINT)strlen((char *)table) : 0;
 
     if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
     {
@@ -662,6 +687,13 @@ MySQLColumnPrivileges(SQLHSTMT hstmt,
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
+  if (catalog_len == SQL_NTS)
+    catalog_len= catalog ? (SQLSMALLINT)strlen((char *)catalog) : 0;
+  if (table_len == SQL_NTS)
+    table_len= table ? (SQLSMALLINT)strlen((char *)table) : 0;
+  if (column_len == SQL_NTS)
+    column_len= column ? (SQLSMALLINT)strlen((char *)column) : 0;
+
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
     /* Since mysql is also the name of the system db, using here i_s prefix to
@@ -722,6 +754,11 @@ MySQLSpecialColumns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
+  if (cbTableQualifier == SQL_NTS)
+    cbTableQualifier= szTableQualifier ? (SQLSMALLINT)strlen((char *)szTableQualifier) : 0;
+  if (cbTableName == SQL_NTS)
+    cbTableName= szTableName ? (SQLSMALLINT)strlen((char *)szTableName) : 0;
+
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
     return i_s_special_columns(hstmt, fColType, szTableQualifier,
@@ -774,6 +811,11 @@ MySQLPrimaryKeys(SQLHSTMT hstmt,
 
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
+
+  if (catalog_len == SQL_NTS)
+    catalog_len= catalog ? (SQLSMALLINT)strlen((char *)catalog) : 0;
+  if (table_len == SQL_NTS)
+    table_len= table ? (SQLSMALLINT)strlen((char *)table) : 0;
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
@@ -876,18 +918,18 @@ SQLRETURN i_s_foreign_keys(SQLHSTMT hstmt,
     buff= strmov(buff, "AND A.REFERENCED_TABLE_SCHEMA = ");
     if (szPkCatalogName && szPkCatalogName[0])
     {
-      if (cbPkCatalogName == SQL_NTS)
-        cbPkCatalogName= (SQLSMALLINT)strlen((char *)szPkCatalogName);
       buff= strmov(buff, "'");
       buff+= mysql_real_escape_string(mysql, buff, (char *)szPkCatalogName,
                                       cbPkCatalogName);
       buff= strmov(buff, "' ");
     }
     else
+    {
       buff= strmov(buff, "DATABASE() ");
+    }
+
     buff= strmov(buff, "AND A.REFERENCED_TABLE_NAME = '");
-    if (cbPkTableName == SQL_NTS)
-      cbPkTableName= (SQLSMALLINT)strlen((char *)szPkTableName);
+
     buff+= mysql_real_escape_string(mysql, buff, (char *)szPkTableName,
                                     cbPkTableName);
     buff= strmov(buff, "' ");
@@ -899,29 +941,33 @@ SQLRETURN i_s_foreign_keys(SQLHSTMT hstmt,
   if (szFkTableName && szFkTableName[0])
   {
     buff= strmov(buff, "AND A.TABLE_SCHEMA = ");
+
     if (szFkCatalogName && szFkCatalogName[0])
     {
-      if (cbFkCatalogName == SQL_NTS)
-        cbFkCatalogName= (SQLSMALLINT)strlen((char *)szFkCatalogName);
       buff= strmov(buff, "'");
       buff+= mysql_real_escape_string(mysql, buff, (char *)szFkCatalogName,
                                       cbFkCatalogName);
       buff= strmov(buff, "' ");
     }
     else
+    {
       buff= strmov(buff, "DATABASE() ");
+    }
+
     buff= strmov(buff, "AND A.TABLE_NAME = '");
-    if (cbFkTableName == SQL_NTS)
-      cbFkTableName= (SQLSMALLINT)strlen((char *)szFkTableName);
+
     buff+= mysql_real_escape_string(mysql, buff, (char *)szFkTableName,
                                     cbFkTableName);
     buff= strmov(buff, "' ");
 
-    strmov(buff, "ORDER BY FKTABLE_CAT, FKTABLE_NAME, "
+    buff= strmov(buff, "ORDER BY FKTABLE_CAT, FKTABLE_NAME, "
                  "KEY_SEQ, PKTABLE_NAME");
   }
 
-  rc= MySQLPrepare(hstmt, (SQLCHAR *)query, SQL_NTS, FALSE);
+  assert(buff - query < sizeof(query));
+
+  rc= MySQLPrepare(hstmt, (SQLCHAR *)query, (SQLINTEGER)(buff - query), FALSE);
+
   if (!SQL_SUCCEEDED(rc))
     return rc;
 
@@ -971,6 +1017,18 @@ MySQLForeignKeys(SQLHSTMT hstmt,
 
     CLEAR_STMT_ERROR(hstmt);
     my_SQLFreeStmt(hstmt,MYSQL_RESET);
+
+    if (cbPkTableName == SQL_NTS)
+      cbPkTableName= szPkTableName != NULL ? (SQLSMALLINT)strlen((char *)szPkTableName) : 0;
+
+    if (cbPkCatalogName == SQL_NTS)
+      cbPkCatalogName= szPkCatalogName != NULL ? (SQLSMALLINT)strlen((char *)szPkCatalogName) : 0;
+
+    if (cbFkCatalogName == SQL_NTS)
+      cbFkCatalogName= szFkCatalogName != NULL ? (SQLSMALLINT)strlen((char *)szFkCatalogName) : 0;
+
+    if (cbFkTableName == SQL_NTS)
+      cbFkTableName= szFkTableName != NULL ? (SQLSMALLINT)strlen((char *)szFkTableName) : 0;
 
     if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
     {
@@ -1166,6 +1224,15 @@ MySQLProcedureColumns(SQLHSTMT hstmt,
 
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
+
+  if (cbCatalogName == SQL_NTS)
+    cbCatalogName= szCatalogName ? (SQLSMALLINT)strlen((char *)szCatalogName) : 0;
+
+  if (cbProcName == SQL_NTS)
+    cbProcName= szProcName ? (SQLSMALLINT)strlen((char *)szProcName) : 0;
+
+  if (cbColumnName == SQL_NTS)
+    cbColumnName= szColumnName ? (SQLSMALLINT)strlen((char *)szColumnName) : 0;
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {

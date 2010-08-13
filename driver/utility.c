@@ -3250,12 +3250,12 @@ Gets parameter columns size
 
 Returns parameter octet length
 */
-SQLLEN proc_get_param_col_len(STMT *stmt, int sql_type_index, unsigned long col_size, 
+SQLLEN proc_get_param_col_len(STMT *stmt, int sql_type_index, SQLULEN col_size, 
                               SQLSMALLINT decimal_digits, unsigned int flags, char * str_buff)
 {
   MYSQL_FIELD temp_fld;
 
-  temp_fld.length= col_size + 
+  temp_fld.length= (unsigned long)col_size + 
     (SQL_TYPE_MAP_values[sql_type_index].mysql_type == MYSQL_TYPE_DECIMAL ?
     1 + (flags & UNSIGNED_FLAG ? 0 : 1) : 0); /* add 1for sign, if needed, and 1 for decimal point */
 
@@ -3287,12 +3287,12 @@ SQLLEN proc_get_param_col_len(STMT *stmt, int sql_type_index, unsigned long col_
 
   Returns parameter octet length
 */
-SQLLEN proc_get_param_octet_len(STMT *stmt, int sql_type_index, unsigned long col_size, 
+SQLLEN proc_get_param_octet_len(STMT *stmt, int sql_type_index, SQLULEN col_size, 
                                 SQLSMALLINT decimal_digits, unsigned int flags, char * str_buff)
 {
   MYSQL_FIELD temp_fld;
 
-  temp_fld.length= col_size + 
+  temp_fld.length= (unsigned long)col_size + 
     (SQL_TYPE_MAP_values[sql_type_index].mysql_type == MYSQL_TYPE_DECIMAL ?
     1 + (flags & UNSIGNED_FLAG ? 0 : 1) : 0); /* add 1for sign, if needed, and 1 for decimal point */
 

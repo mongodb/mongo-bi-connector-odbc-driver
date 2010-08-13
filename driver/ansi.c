@@ -175,7 +175,6 @@ SQLColumnPrivileges(SQLHSTMT hstmt,
       column= sqlchar_as_sqlchar(dbc->ansi_charset_info, dbc->cxn_charset_info,
                                  column, &len, &errors);
       column_len= (SQLSMALLINT)len;
-      len= SQL_NTS;
     }
   }
 

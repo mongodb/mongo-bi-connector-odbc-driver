@@ -27,8 +27,10 @@
 */
 
 /**
-  @file  catalog_no_i_s.c
-  @brief Catalog functions not using I_S.
+  @file   catalog_no_i_s.c
+  @brief  Catalog functions not using I_S.
+  @remark All functions suppose that parameters specifying other parameters lenthes can't SQL_NTS.
+          caller should take care of that.
 */
 
 #include "driver.h"
@@ -338,11 +340,6 @@ mysql_columns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
   stmt->result= res;
   alloc= &res->field_alloc;
 
-  if (cbCatalog == SQL_NTS)
-    cbCatalog= szCatalog ? (SQLSMALLINT)strlen((char *)szCatalog) : 0;
-  if (cbColumn == SQL_NTS)
-    cbColumn= szColumn ? (SQLSMALLINT)strlen((char *)szColumn) : 0;
-
   if (!stmt->dbc->ds->no_catalog)
     db= strmake_root(alloc, (char *)szCatalog, cbCatalog);
 
@@ -623,6 +620,7 @@ mysql_list_table_priv(SQLHSTMT hstmt,
     pthread_mutex_lock(&stmt->dbc->lock);
     stmt->result= table_privs_raw_data(stmt->dbc, catalog, catalog_len,
       table, table_len);
+
     if (!stmt->result)
     {
       SQLRETURN rc= handle_connection_error(stmt);
@@ -636,14 +634,17 @@ mysql_list_table_priv(SQLHSTMT hstmt,
       (ulong)stmt->result->row_count *
       MY_MAX_TABPRIV_COUNT,
       MYF(MY_ZEROFILL));
+
     if (!stmt->result_array)
     {
       set_mem_error(&stmt->dbc->mysql);
       return handle_connection_error(stmt);
     }
+
     alloc= &stmt->result->field_alloc;
     data= stmt->result_array;
     row_count= 0;
+
     while ( (row= mysql_fetch_row(stmt->result)) )
     {
       char  *grants= row[4];
@@ -764,13 +765,6 @@ mysql_list_column_priv(SQLHSTMT hstmt,
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
-  if (catalog_len == SQL_NTS)
-    catalog_len= catalog ? (SQLSMALLINT)strlen((char *)catalog) : 0;
-  if (table_len == SQL_NTS)
-    table_len= table ? (SQLSMALLINT)strlen((char *)table) : 0;
-  if (column_len == SQL_NTS)
-    column_len= column ? (SQLSMALLINT)strlen((char *)column) : 0;
-
   pthread_mutex_lock(&stmt->dbc->lock);
   stmt->result= column_privs_raw_data(&stmt->dbc->mysql,
     catalog, catalog_len,
@@ -833,12 +827,13 @@ mysql_list_column_priv(SQLHSTMT hstmt,
 
 /**
 Get the table status for a table or tables using SHOW TABLE STATUS.
+Lengths may not be SQL_NTS.
 
 @param[in] stmt           Handle to statement
 @param[in] catalog        Catalog (database) of table, @c NULL for current
-@param[in] catalog_length Length of catalog name, or @c SQL_NTS
+@param[in] catalog_length Length of catalog name
 @param[in] table          Name of table
-@param[in] table_length   Length of table name, or @c SQL_NTS
+@param[in] table_length   Length of table name
 @param[in] wildcard       Whether the table name is a wildcard
 
 @return Result of SHOW TABLE STATUS, or NULL if there is an error
@@ -854,11 +849,6 @@ MYSQL_RES *mysql_table_status_show(STMT        *stmt,
 	MYSQL *mysql= &stmt->dbc->mysql;
 	/** @todo determine real size for buffer */
 	char buff[255], *to;
-
-	if (table_length == SQL_NTS && table)
-		table_length= (SQLSMALLINT)strlen((char *)table);
-	if (catalog_length == SQL_NTS && catalog)
-		catalog_length= (SQLSMALLINT)strlen((char *)catalog);
 
 	to= strmov(buff, "SHOW TABLE STATUS ");
 	if (catalog && *catalog)
@@ -889,6 +879,7 @@ MYSQL_RES *mysql_table_status_show(STMT        *stmt,
 	}
 
 	MYLOG_QUERY(stmt, buff);
+
 	if (mysql_query(mysql,buff))
 		return NULL;
 
@@ -950,11 +941,6 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
   char      **data;
   char      **tempdata; /* We need this array for the cases if key count is greater than 18 */
   uint       comment_id;
-
-  CLEAR_STMT_ERROR(hstmt);
-
-  if (cbPkTableName == SQL_NTS && szPkTableName)
-    cbPkTableName= (SQLSMALLINT)strlen((char *)szPkTableName);
 
   pthread_mutex_lock(&stmt->dbc->lock);
 
@@ -1169,11 +1155,6 @@ mysql_primary_keys(SQLHSTMT hstmt,
     char      **data;
     uint      row_count;
 
-    if (catalog_len == SQL_NTS)
-      catalog_len= catalog ? (SQLSMALLINT)strlen((char *)catalog) : 0;
-    if (table_len == SQL_NTS)
-      table_len= table ? (SQLSMALLINT)strlen((char *)table) : 0;
-
     pthread_mutex_lock(&stmt->dbc->lock);
     if (!(stmt->result= mysql_list_dbkeys(stmt->dbc, catalog, catalog_len,
                                           table, table_len)))
@@ -1307,7 +1288,7 @@ static MYSQL_RES *mysql_list_proc_params(DBC *dbc,
 
   assert(pos - buff < sizeof(buff));
   MYLOG_DBC_QUERY(dbc, buff);
-  if (mysql_real_query(mysql,buff, pos - buff))
+  if (mysql_real_query(mysql, buff, (unsigned long)(pos - buff)))
     return NULL;
 
   return mysql_store_result(mysql);
@@ -1376,20 +1357,8 @@ mysql_procedure_columns(SQLHSTMT hstmt,
   int params_num= 0, return_params_num= 0;
   unsigned int i, j, total_params_num= 0;
 
-  CLEAR_STMT_ERROR(hstmt);
-  my_SQLFreeStmt(hstmt,MYSQL_RESET);
-
-  if (cbCatalogName == SQL_NTS)
-    cbCatalogName= szCatalogName ? strlen((char *)szCatalogName) : 0;
-
-  if (cbProcName == SQL_NTS)
-    cbProcName= szProcName ? strlen((char *)szProcName) : 0;
-
-  if (cbColumnName == SQL_NTS)
-    cbColumnName= szColumnName ? strlen((char *)szColumnName) : 0;
-
   if (init_dynamic_string(&dynQuery, "SELECT 1", 1024,1024))
-    return set_stmt_error(stmt, "S1001", "Not enough memory", 4001);
+    return set_stmt_error(stmt, "HY001", "Not enough memory", 4001);
 
   params_r= params= (LIST *) my_malloc(sizeof(LIST), MYF(MY_ZEROFILL));
 
@@ -1470,18 +1439,18 @@ mysql_procedure_columns(SQLHSTMT hstmt,
         goto clean_exit;
       }
 
-      token= proc_get_param_type(token, strlen(token), &ptype);
-      token= proc_get_param_name(token, strlen(token), param_name);
-      token= proc_get_param_dbtype(token, strlen(token), param_dbtype);
+      token= proc_get_param_type(token, (int)strlen(token), &ptype);
+      token= proc_get_param_name(token, (int)strlen(token), param_name);
+      token= proc_get_param_dbtype(token, (int)strlen(token), param_dbtype);
 
       /* param_dbtype is lowercased in the proc_get_param_dbtype */
       if (strstr(param_dbtype, "unsigned"))
         flags |= UNSIGNED_FLAG;
 
-      sql_type_index= proc_get_param_sql_type_index(param_dbtype, strlen(param_dbtype));
+      sql_type_index= proc_get_param_sql_type_index(param_dbtype, (int)strlen(param_dbtype));
       type_map= proc_get_param_map_by_index(sql_type_index);
 
-      param_size= proc_get_param_size(param_dbtype, strlen(param_dbtype), sql_type_index, &dec);
+      param_size= proc_get_param_size(param_dbtype, (int)strlen(param_dbtype), sql_type_index, &dec);
 
       proc_get_param_octet_len(stmt, sql_type_index, param_size, dec, flags, param_buffer_len);
 
@@ -1593,7 +1562,7 @@ mysql_procedure_columns(SQLHSTMT hstmt,
   if (cbColumnName)
   {
     pthread_mutex_lock(&stmt->dbc->lock);
-    if (mysql_real_query(&stmt->dbc->mysql, dynQuery.str, dynQuery.length) ||
+    if (mysql_real_query(&stmt->dbc->mysql, dynQuery.str, (unsigned long)dynQuery.length) ||
         !(columns_res= mysql_store_result(&stmt->dbc->mysql)))
     {
       pthread_mutex_unlock(&stmt->dbc->lock);
@@ -1749,11 +1718,6 @@ mysql_special_columns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
     MEM_ROOT    *alloc;
     uint        field_count;
     my_bool     primary_key;
-
-    if (cbTableQualifier == SQL_NTS)
-      cbTableQualifier= szTableQualifier ? (SQLSMALLINT)strlen((char *)szTableQualifier) : 0;
-    if (cbTableName == SQL_NTS)
-      cbTableName= szTableName ? (SQLSMALLINT)strlen((char *)szTableName) : 0;
 
     /* Reset the statement in order to avoid memory leaks when working with ADODB */
     my_SQLFreeStmt(hstmt, MYSQL_RESET);
@@ -1952,11 +1916,6 @@ mysql_statistics(SQLHSTMT hstmt,
     MYSQL *mysql= &stmt->dbc->mysql;
     DBC *dbc= stmt->dbc;
 
-    if (catalog_len == SQL_NTS)
-      catalog_len= catalog ? (SQLSMALLINT)strlen((char *)catalog) : 0;
-    if (table_len == SQL_NTS)
-      table_len= table ? (SQLSMALLINT)strlen((char *)table) : 0;
-
     if (!table_len)
         goto empty_set;
 
@@ -2056,15 +2015,6 @@ mysql_tables(SQLHSTMT hstmt,
 {
     STMT *stmt= (STMT *)hstmt;
     my_bool all_dbs= 1, user_tables, views;
-
-    if (catalog_len == SQL_NTS)
-      catalog_len= catalog ? (SQLSMALLINT)strlen((char *)catalog) : 0;
-    if (schema_len == SQL_NTS)
-      schema_len= schema ? (SQLSMALLINT)strlen((char *)schema) : 0;
-    if (table_len == SQL_NTS)
-      table_len= table ? (SQLSMALLINT)strlen((char *)table) : 0;
-    if (type_len == SQL_NTS)
-      type_len= type ? (SQLSMALLINT)strlen((char *)type) : 0;
 
     /* empty (but non-NULL) schema and table returns catalog list */
     if (catalog_len && !schema_len && schema && !table_len && table)

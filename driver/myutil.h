@@ -310,9 +310,9 @@ SQLCHAR* proc_get_param_name(SQLCHAR *proc, int len, SQLCHAR *cname);
 SQLCHAR* proc_get_param_dbtype(SQLCHAR *proc, int len, SQLCHAR *ptype);
 SQLUINTEGER proc_get_param_size(SQLCHAR *ptype, int len, int sql_type_index,
                                 SQLSMALLINT *dec);
-SQLLEN proc_get_param_octet_len(STMT *stmt, int sql_type_index, unsigned long col_size, 
+SQLLEN proc_get_param_octet_len(STMT *stmt, int sql_type_index, SQLULEN col_size, 
                                 SQLSMALLINT decimal_digits, unsigned int flags, char * str_buff);
-SQLLEN proc_get_param_col_len(STMT *stmt, int sql_type_index, unsigned long col_size, 
+SQLLEN proc_get_param_col_len(STMT *stmt, int sql_type_index, SQLULEN col_size, 
                               SQLSMALLINT decimal_digits, unsigned int flags, char * str_buff);
 int proc_get_param_sql_type_index(SQLCHAR *ptype, int len);
 SQLTypeMap *proc_get_param_map_by_index(int index);

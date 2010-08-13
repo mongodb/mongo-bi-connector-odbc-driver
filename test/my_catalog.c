@@ -229,7 +229,7 @@ DECLARE_TEST(my_colpriv)
   ok_stmt(hstmt, SQLColumnPrivileges(hstmt,
                                      NULL, SQL_NTS, NULL, SQL_NTS,
                                      (SQLCHAR *)"test_colprev1", SQL_NTS,
-                                     (SQLCHAR *)NULL/*"%"*/, SQL_NTS));
+                                     (SQLCHAR *)/*NULL*/"%", SQL_NTS));
 
   printMessage("1) Privileges on all columns from test_colprev1");
   is_num(4, my_print_non_format_result(hstmt));
@@ -1241,7 +1241,10 @@ DECLARE_TEST(t_bug19923)
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug19923c, t_bug19923b, t_bug19923a");
   ok_sql(hstmt, "CREATE TABLE t_bug19923a (a INT PRIMARY KEY) ENGINE=InnoDB");
   ok_sql(hstmt, "CREATE TABLE t_bug19923b (b INT PRIMARY KEY) ENGINE=InnoDB");
-  ok_sql(hstmt, "CREATE TABLE t_bug19923c (a INT, b INT, UNIQUE(a), UNIQUE(b), CONSTRAINT `first_constraint` FOREIGN KEY (`b`) REFERENCES `t_bug19923b` (`b`), CONSTRAINT `second_constraint` FOREIGN KEY (`a`) REFERENCES `t_bug19923a` (`a`)) ENGINE=InnoDB");
+  ok_sql(hstmt, "CREATE TABLE t_bug19923c (a INT, b INT, UNIQUE(a), UNIQUE(b),"
+                "CONSTRAINT `first_constraint` FOREIGN KEY (`b`) REFERENCES `t_bug19923b` (`b`),"
+                "CONSTRAINT `second_constraint` FOREIGN KEY (`a`) REFERENCES `t_bug19923a` (`a`)"
+                ") ENGINE=InnoDB");
 
   ok_stmt(hstmt, SQLForeignKeys(hstmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
                                 NULL, 0, (SQLCHAR *)"t_bug19923c", SQL_NTS));
