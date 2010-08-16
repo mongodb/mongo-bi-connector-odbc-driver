@@ -1052,7 +1052,9 @@ int free_basic_handles(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt)
 
 
 /**
- Helper for possibly converting a (wchar_t *) to a (SQLWCHAR *)
+ Helper for possibly converting a (wchar_t *) to a (SQLWCHAR *).
+ TODO: [almost?] all uses of those macros in tests lead to memore leak,
+       as resulting pointer is not remembered and thus memory never freed
 */
 #define W(string) dup_wchar_t_as_sqlwchar((string), \
                                           sizeof(string) / sizeof(wchar_t))

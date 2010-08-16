@@ -1395,7 +1395,7 @@ DECLARE_TEST(t_bug12805)
   ok_stmt(hstmt, SQLFetch(hstmt));
   ok_stmt(hstmt, SQLGetData(hstmt, 7, SQL_C_ULONG, &len2,
                             0, NULL));
-  is_num(len2, 4294967295);
+  is_num(len2, 4294967295UL);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
@@ -1595,13 +1595,13 @@ DECLARE_TEST(t_bug49660)
   ok_sql(hstmt, "drop table if exists t_bug49660_r");
 
   ok_sql(hstmt, "create database bug49660");
-  ok_sql(hstmt, "create table bug49660.t_bug49660_r (id int unsigned not null primary key, name varchar(10) not null)");
+  ok_sql(hstmt, "create table bug49660.t_bug49660_r (id int unsigned not null primary key, name varchar(10) not null) ENGINE=InnoDB");
   ok_sql(hstmt, "create table bug49660.t_bug49660 (id int unsigned not null primary key, refid int unsigned not null,"
-                "foreign key t_bug49660fk (id) references bug49660.t_bug49660_r (id))");
+                "foreign key t_bug49660fk (id) references bug49660.t_bug49660_r (id)) ENGINE=InnoDB");
 
-  ok_sql(hstmt, "create table t_bug49660_r (id int unsigned not null primary key, name varchar(10) not null)");
+  ok_sql(hstmt, "create table t_bug49660_r (id int unsigned not null primary key, name varchar(10) not null) ENGINE=InnoDB");
   ok_sql(hstmt, "create table t_bug49660 (id int unsigned not null primary key, refid int unsigned not null,"
-                "foreign key t_bug49660fk (id) references t_bug49660_r (id))");
+                "foreign key t_bug49660fk (id) references t_bug49660_r (id)) ENGINE=InnoDB");
 
   ok_stmt(hstmt, SQLForeignKeys(hstmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
                                 NULL, 0, (SQLCHAR *)"t_bug49660", SQL_NTS));
@@ -1612,6 +1612,7 @@ DECLARE_TEST(t_bug49660)
   ok_stmt(hstmt, SQLFetch(hstmt));
   expect_stmt(hstmt,SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
 
   ok_sql(hstmt, "drop database if exists bug49660");
   ok_sql(hstmt, "drop table if exists t_bug49660");

@@ -3322,7 +3322,10 @@ DECLARE_TEST(t_bug41946)
 	nData= 0;
 	strcpy((char *)szData , "something else");
 
-	ok_sql(hstmt, "select * from other_test_db.t_41946");
+  /* We have to close the cursor before issuing next sql query */
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    
+  ok_sql(hstmt, "select * from other_test_db.t_41946");
 
 	ok_stmt(hstmt, SQLFetch(hstmt));
 
