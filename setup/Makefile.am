@@ -43,6 +43,7 @@ libmyodbc3S_la_SOURCES = \
 	MYODBCSetupDataSourceTab3b.cpp \
 	MYODBCSetupDataSourceTab3c.cpp \
 	MYODBCSetupDataSourceTab3d.cpp \
+	MYODBCSetupDataSourceTab3e.cpp \
 	MYODBCSetupDriverConnect.c \
 	MYODBCSetupDriverConnectPrompt.cpp \
 	MYODBCSetupHandleInstallerError.c \
@@ -61,6 +62,7 @@ nodist_libmyodbc3S_la_SOURCES = \
 	mMYODBCSetupDataSourceTab3b.cpp \
 	mMYODBCSetupDataSourceTab3c.cpp \
 	mMYODBCSetupDataSourceTab3d.cpp \
+	mMYODBCSetupDataSourceTab3e.cpp \
 	mMYODBCSetupLineEdit.cpp
 
 mMYODBCSetupAssistText.cpp: @srcdir@/MYODBCSetupAssistText.h
