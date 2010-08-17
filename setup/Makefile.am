@@ -101,6 +101,9 @@ mMYODBCSetupDataSourceTab3c.cpp: @srcdir@/MYODBCSetupDataSourceTab3c.h
 mMYODBCSetupDataSourceTab3d.cpp: @srcdir@/MYODBCSetupDataSourceTab3d.h
 	@MOC@ @srcdir@/MYODBCSetupDataSourceTab3d.h -o mMYODBCSetupDataSourceTab3d.cpp
 
+mMYODBCSetupDataSourceTab3e.cpp: @srcdir@/MYODBCSetupDataSourceTab3e.h
+	@MOC@ @srcdir@/MYODBCSetupDataSourceTab3e.h -o mMYODBCSetupDataSourceTab3e.cpp
+
 mMYODBCSetupLineEdit.cpp: @srcdir@/MYODBCSetupLineEdit.h
 	@MOC@ @srcdir@/MYODBCSetupLineEdit.h -o mMYODBCSetupLineEdit.cpp
 
