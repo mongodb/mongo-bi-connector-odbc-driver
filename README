@@ -1,10 +1,21 @@
-+-------------------------------------------------------------+
-| Connector/ODBC                                              |
-| README                                                      |
-+-------------------------------------------------------------+
+MySQL Connector/ODBC (formerly MyODBC)
+Oracle's ODBC Driver for MySQL
+Copyright 1995, 2010 Oracle and/or its affiliates. All rights reserved.
+
+
+CONTENTS
+
+* Introduction
+* License
+* Building Source
+* Installing
+* Binary Files
+* Connector/ODBC SDK
+* Resources
+
 
 INTRODUCTION
----------------------------------------------------------------
+------------------------------------------------------------
 
 This is the source or binary distribution of ODBC for 
 MySQL. This software is distributed with restrictions - please
@@ -13,48 +24,32 @@ see the license file for details.
 Open Database Connectivity (ODBC) is a widely accepted standard
 for reading/writing data. ODBC is designed in a similar manner
 to the MS Windows printing system in that it has a Driver Manager
-and Drivers. Connector/ODBC is a driver for the ODBC system which
-allows applications to communicate with the MySQL Server using
+and Drivers. MySQL Connector/ODBC is a driver for the ODBC system which
+allows applications to communicate with the MySQL server using
 the ODBC standard. ODBC implementations exist on all popular
 platforms and MySQL Connector/ODBC is also available on those 
 platforms. 
 
-MySQL, the most popular Open Source SQL database, is 
-provided by the MySQL engineering team at Sun Microsystems, Inc. 
+Oracle provides MySQL support for ODBC by means of the MySQL Connector/ODBC driver and programs. MySQL Connector/ODBC is the ODBC driver for MySQL which is ODBC 3.5x compliant; MyODBC is ODBC 2.5x compliant.
 
-MySQL provides the support for ODBC by means of Connector/ODBC 
-driver and programs. Connector/ODBC is the ODBC driver 
-for MySQL which is ODBC 3.5x compliant and MyODBC is
-2.5x compliant.
+To get all functionality from the ODBC 5.1 driver (e.g. 
+transaction support) you should use it against MySQL Database Server 4.1 or later.
 
-To get all functionality from the ODBC 3.51 or 5.1 driver (like
-transaction support) you should use it against MySQL 4.1 or above.
 
 LICENSE
 ---------------------------------------------------------------
 
-Please see the license file for information about licensing 
-and use restrictions of this software.
+MySQL Connector/ODBC is licensed under the GPLv2 or a commercial license from Oracle Corporation. 
 
-THIRD-PARTY SOFTWARE
----------------------------------------------------------------
+If you have licensed this product under the GPLv2, please see the
+LICENSE.gpl file for more information. 
 
-DO NOT TRANSLATE OR LOCALIZE
+There are special exceptions to the terms and conditions of the 
+GPLv2 as it is applied to this software, see the FLOSS License
+Exception 
+<http://www.mysql.com/about/legal/licensing/foss-exception.html>. 
 
-%%The following software may be included in this product:
-Trolltech Qt Libraries
 
-For the avoidance of doubt, with respect to the QT library software,
-Sun elects to use the Lesser General Public License version 2.1
-(LGPLv2.1) at this time, and hereby exercises its right under the 
-terms of LGPLv2.1 to apply the General Public License version 2 
-(GPLv2) to Sun's distribution of the QT library software, and Sun
-elects to use only LGPLv2.1 and GPLv2 for any software where a
-choice of LGPL or GPL license versions is made available with the
-language indicating that any later version may be used, or where a
-choice of which version of the LGPL or GPL is applied is otherwise
-unspecified.
- 
 BUILDING SOURCE
 ---------------------------------------------------------------
 
@@ -69,7 +64,7 @@ Please see the INSTALL file for details on installing.
 BINARY FILES
 ---------------------------------------------------------------
 
-The following, key, files are provided by Connector/ODBC (the MS 
+The following, key, files are provided by MySQL Connector/ODBC (the MS 
 Windows names are included for reference but the file names for 
 other platforms would be similar).
 
@@ -81,22 +76,16 @@ Driver (myodbc3.dll or myodbc5.dll)
         such as the one provided by Microsoft or unixODBC.
 
         Many options can be provided to the driver to adjust its
-        behaviour.
+        behaviour. 
 
-        Note that in MySQL Connector/ODBC 3.51 on Unix and Linux,
-        there are two different library packages, one compiled for non
-        threaded usage "libmyodbc3" and one compiled for threaded
-        usage "libmyodbc3_r". In 5.1 there is only one library,
-        "libmyodbc5", compiled for threaded usage.
-
-Setup Library (myodbc3S.dll)
+Setup Library (myodbc3S.dll or myodbc3S.dll)
 
         The setup library provides a graphical user interface needed
         during certian activities provided by the driver. For example;
         it provides the GUI when you use the ODBC Administrator to
         create/edit a Data Source Name (DSN).
 
-Installer (myodbc3i.exe or myodbc-installer.exe)
+Installer (myodbc3i.exe)
 
         This command-line utility program can be used to manage ODBC
         system information. For example it can be used to register
@@ -105,26 +94,29 @@ Installer (myodbc3i.exe or myodbc-installer.exe)
         abstraction and portability layer within Connector/ODBC but 
         is also useful for installing and uninstalling Conector/ODBC.
 
-        Invoke the 3.51 "myodbc3i" or the 5.1 "myodbc-installer", in
-        a command shell and without options, to get help on its use.
+        Invoke myodbc3i, in a command shell and without options, to 
+        get help on its use.
 
 Library Loading Tester (dltest.exe)
 
-        This command-line utility is not included in the binary
-        packages, but will be built if you build from source. It is
-        useful fo debugging problems related to loading a library
-        and resolving symbols in it.
+        This command-line utility is useful fo debugging problems
+        related to loading a library and resolving symbols in it.
+
+Connector/ODBC SDK
+---------------------------------------------------------------
+
+MyySQL Connector/ODBC provides an SDK for developers in the form of several reusable libraries. These libraries can be used to save development time/effort and to increase stability of resulting software.
+
+myodbc3u
+        This library provides the ODBC system information abstraction
+        and portability used by Connector/ODBC.
 
 RESOURCES
 ---------------------------------------------------------------
 
-MySQL, MySQL Connector/ODBC 3.51 and 5.1 is brought to you by the
-MySQL team at Sun Microsystems, Inc. and MySQL is the trademark of
-Sun Microsystems, Inc.
-
 For more information about MySQL, see
 http://www.mysql.com
 
-For more information about MySQL ODBC 3.51 and 5.1 Driver,
-including installation instructions, please visit;
-http://www.mysql.com/products/connector/
+For more information about MySQL Connector/ODBC, including
+installation instructions, please visit;
+http://www.mysql.com/products/myodbc/index.html
