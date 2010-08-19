@@ -61,8 +61,7 @@ readme_DATA = \
 	README \
 	README.debug \
 	INSTALL \
-	LICENSE.gpl \
-	LICENSE.exceptions
+	LICENSE.gpl
 
 #
 # Create the binary distribution
