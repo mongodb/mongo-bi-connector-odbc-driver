@@ -35,11 +35,11 @@ Group:      Applications/Databases
 Version:    @NUMERIC_VERSION@
 Release:    0
 Provides:   mysqlodbcrpmpack
-License:    Copyright 2000-2008 MySQL AB, 2009-2010 %{mysql_vendor}  All rights reserved.  Use is subject to license terms.  Under %{lic_type} license as shown in the Description field.
+License:    Copyright (c) 2000, 2010,  %{mysql_vendor}. All rights reserved.  Use is subject to license terms.  Under %{lic_type} license as shown in the Description field.
 Source0:    %{name}-@VERSION@.tar.gz
 URL:        http://www.mysql.com/
-Vendor:     Sun Microsystems, Inc.
-Packager:   Sun Microsystems, Inc. Production Engineering Team <build@mysql.com>
+Vendor:     Oracle Corporation
+Packager:   Oracle Corporation Production Engineering Team <build@mysql.com>
 
 BuildRoot:  %{_tmppath}/%{name}-@VERSION@-build
 

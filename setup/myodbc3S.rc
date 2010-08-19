@@ -1,29 +1,25 @@
 /////////////////////////////////////////////////////////////////////////////
-// Copyright 2007-2008 MySQL AB, 2010 Sun Microsystems Inc.
+// Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
 //
-// The MySQL Connector/ODBC is licensed under the terms of the
-// GPL, like most MySQL Connectors. There are special exceptions
-// to the terms and conditions of the GPL as it is applied to
-// this software, see the FLOSS License Exception available on
-// mysql.com.
+// The MySQL Connector/ODBC is licensed under the terms of the GPLv2
+//  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+// MySQL Connectors. There are special exceptions to the terms and
+// conditions of the GPLv2 as it is applied to this software, see the
+// FLOSS License Exception
+// <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 //
 // This program is free software; you can redistribute it and/or modify
-// it under the terms of version 2 of the GNU General Public License as
-// published by the Free Software Foundation.
+// it under the terms of the GNU General Public License as published
+// by the Free Software Foundation; version 2 of the License.
 //
-// There are special exceptions to the terms and conditions of the GPL
-// as it is applied to this software. View the full text of the exception
-// in file LICENSE.exceptions in the top-level directory of this software
-// distribution.
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+// for more details.
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 /////////////////////////////////////////////////////////////////////////////
 // \brief       Resource file for MS Windows builds.
@@ -69,12 +65,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "Comments", "provides GUI bits for Connector/ODBC\0"
-            VALUE "CompanyName", "MySQL AB\0"
+            VALUE "CompanyName", "Oracle Corporation\0"
             VALUE "FileDescription", "MySQL ODBC 5.1 Setup\0"
             VALUE "FileVersion", MYODBC_STRFILEVER
             VALUE "InternalName", "myodbc3S\0"
-            VALUE "LegalCopyright", "Copyright 1995-2008 MySQL AB, 2008-2010 Sun Microsystems Inc.\0"
-            VALUE "LegalTrademarks", "MySQL, MyODBC, Connector/ODBC are trademarks of Sun Microsystems Inc.\0"
+            VALUE "LegalCopyright", "Copyright (c) 1995, 2010, Oracle and/or its affiliates. All rights reserved.\0"
+            VALUE "LegalTrademarks", "MySQL, MyODBC, Connector/ODBC are trademarks of Oracle Corporation.\0"
             VALUE "OriginalFilename", "myodbc3S.dll\0"
             VALUE "PrivateBuild", "Production\0"
             VALUE "ProductName", "Connector/ODBC 5.1\0"
