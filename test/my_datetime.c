@@ -535,8 +535,10 @@ DECLARE_TEST(t_time1)
 
     rc = SQLGetData(hstmt, 1, SQL_C_TIME, &tt, sizeof(tt), &length);
     mystmt(hstmt,rc);
-    is(tt.hour == 10 && tt.minute == 11 && tt.second == 12);
-    is(length == sizeof(SQL_TIME_STRUCT));
+    is_num(tt.hour, 10);
+    is_num(tt.minute, 11);
+    is_num(tt.second, 12);
+    is_num(length, sizeof(SQL_TIME_STRUCT));
 
     rc = SQLFetch(hstmt);
     myassert(rc == SQL_NO_DATA);
@@ -553,11 +555,13 @@ DECLARE_TEST(t_time1)
 
     rc = SQLGetData(hstmt, 1, SQL_C_TIME, &tt, sizeof(tt), &length);
     mystmt(hstmt,rc);
-    is(tt.hour == 05 && tt.minute == 59 && tt.second == 59);
-    is(length == sizeof(SQL_TIME_STRUCT));
+    is_num(tt.hour, 05);
+    is_num(tt.minute, 59);
+    is_num(tt.second, 59);
+    is_num(length, sizeof(SQL_TIME_STRUCT));
 
     rc = SQLFetch(hstmt);
-    myassert(rc == SQL_NO_DATA);
+    is_num(rc, SQL_NO_DATA);
 
     SQLFreeStmt(hstmt, SQL_UNBIND);
     SQLFreeStmt(hstmt, SQL_CLOSE);
@@ -574,7 +578,7 @@ DECLARE_TEST(t_time1)
     rc = SQLGetData(hstmt, 1, SQL_C_TIME, &tt, sizeof(tt), &length);
     mystmt(hstmt,rc);
     is(tt.hour == 00 || tt.minute == 00 || tt.second == 00);
-    is(length == sizeof(SQL_TIME_STRUCT));
+    is_num(length, sizeof(SQL_TIME_STRUCT));
 
     rc = SQLFetch(hstmt);
     myassert(rc == SQL_NO_DATA);
@@ -733,7 +737,7 @@ DECLARE_TEST(t_bug30081)
 DECLARE_TEST(t_datecolumns)
 {
   SQLCHAR col[10];
-  SQLINTEGER type;
+  SQLLEN type;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_datecolumns");
   ok_sql(hstmt,

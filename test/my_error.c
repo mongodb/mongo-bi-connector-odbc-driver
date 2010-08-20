@@ -285,12 +285,12 @@ DECLARE_TEST(bind_invalidcol)
 
   /* test out of range column number */
   expect_stmt(hstmt, SQLBindCol(hstmt, 10, SQL_C_CHAR, "", 4, NULL), SQL_ERROR);
-  is(check_sqlstate(hstmt, "07009") == OK);
+  is_num(check_sqlstate(hstmt, "07009"), OK);
 
   /* test (unsupported) bookmark column number */
   expect_stmt(hstmt, SQLBindCol(hstmt, 0, SQL_C_BOOKMARK, "", 4, NULL),
               SQL_ERROR);
-  is(check_sqlstate(hstmt, "07009") == OK);
+  is_num(check_sqlstate(hstmt, "07009"), OK);
 
   /* SQLDescribeCol() */
   expect_stmt(hstmt, SQLDescribeCol(hstmt, 0, dummy, sizeof(dummy), NULL, NULL,
@@ -301,16 +301,16 @@ DECLARE_TEST(bind_invalidcol)
 
   expect_stmt(hstmt, SQLDescribeCol(hstmt, 5, dummy, sizeof(dummy), NULL,
                                     NULL, NULL, NULL, NULL), SQL_ERROR);
-  is(check_sqlstate(hstmt, "07009") == OK);
+  is_num(check_sqlstate(hstmt, "07009"), OK);
 
   /* SQLColAttribute() */
   expect_stmt(hstmt, SQLColAttribute(hstmt, 0, SQL_DESC_NAME, NULL, 0,
                                      NULL, NULL), SQL_ERROR);
-  is(check_sqlstate(hstmt, "07009") == OK);
+  is_num(check_sqlstate(hstmt, "07009"), OK);
 
   expect_stmt(hstmt, SQLColAttribute(hstmt, 7, SQL_DESC_NAME, NULL, 0,
                                      NULL, NULL), SQL_ERROR);
-  is(check_sqlstate(hstmt, "07009") == OK);
+  is_num(check_sqlstate(hstmt, "07009"), OK);
 
   return OK;
 }
@@ -392,12 +392,12 @@ DECLARE_TEST(t_handle_err)
 
   expect_env(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
                                   (SQLPOINTER)SQL_OV_ODBC3, 0), SQL_ERROR);
-  is(check_sqlstate_ex(henv1, SQL_HANDLE_ENV, "HY010") == OK);
+  is_num(check_sqlstate_ex(henv1, SQL_HANDLE_ENV, "HY010"), OK);
 
   expect_dbc(hdbc1, SQLSetConnectAttr(hdbc1, SQL_ATTR_ASYNC_ENABLE,
                                       (SQLPOINTER)SQL_ASYNC_ENABLE_ON,
                                       SQL_IS_INTEGER), SQL_SUCCESS_WITH_INFO);
-  is(check_sqlstate_ex(hdbc1, SQL_HANDLE_DBC, "01S02") == OK);
+  is_num(check_sqlstate_ex(hdbc1, SQL_HANDLE_DBC, "01S02"), OK);
 
   ok_con(hdbc1, SQLDisconnect(hdbc1));
   ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));

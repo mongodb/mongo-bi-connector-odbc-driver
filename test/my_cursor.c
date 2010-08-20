@@ -3082,7 +3082,7 @@ DECLARE_TEST(t_cursor_pos_dynamic)
   alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
   ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
                                  (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
-  is(t_cursor_pos(hstmt1) == OK);
+  is_num(t_cursor_pos(hstmt1), OK);
   (void) free_basic_handles(&henv1, &hdbc1, &hstmt1);
   SET_DSN_OPTION(0);
   return OK;
@@ -3154,7 +3154,7 @@ DECLARE_TEST(t_dae_setpos_insert)
   expect_stmt(hstmt, SQLSetPos(hstmt, 0, SQL_ADD, SQL_LOCK_NO_CHANGE),
               SQL_NEED_DATA);
   expect_stmt(hstmt, SQLParamData(hstmt, &paramptr), SQL_NEED_DATA);
-  is(paramptr == ((SQLCHAR *)holder + offset));
+  is_num(paramptr, ((SQLCHAR *)holder + offset));
   ok_stmt(hstmt, SQLPutData(hstmt, data[1].y, 10));
   ok_stmt(hstmt, SQLParamData(hstmt, &paramptr));
 
@@ -3208,7 +3208,7 @@ DECLARE_TEST(t_dae_setpos_update)
   expect_stmt(hstmt, SQLSetPos(hstmt, 0, SQL_UPDATE, SQL_LOCK_NO_CHANGE),
               SQL_NEED_DATA);
   expect_stmt(hstmt, SQLParamData(hstmt, &paramptr), SQL_NEED_DATA);
-  is(paramptr == holder);
+  is_num(paramptr, holder);
   ok_stmt(hstmt, SQLPutData(hstmt, yval, 10));
   ok_stmt(hstmt, SQLParamData(hstmt, &paramptr));
 

@@ -89,7 +89,7 @@ DECLARE_TEST(my_pcbvalue)
     mystmt(hstmt, rc);
 
     printMessage(" total rows updated:%d\n",nRowCount);
-    is(nRowCount == 1);
+    is_num(nRowCount, 1);
 
     /* Free statement cursor resorces */
     rc = SQLFreeStmt(hstmt, SQL_UNBIND);
@@ -206,7 +206,7 @@ DECLARE_TEST(my_pcbvalue_add)
     mystmt(hstmt, rc);
 
     printMessage(" total rows updated:%d\n",nRowCount);
-    is(nRowCount == 1);
+    is_num(nRowCount, 1);
 
     /* Free statement cursor resorces */
     rc = SQLFreeStmt(hstmt, SQL_UNBIND);
@@ -279,14 +279,14 @@ DECLARE_TEST(my_columnspace)
 
   ok_sql(hstmt, "SELECT * FROM `TestColNames`");
 
-  is(2 == my_print_non_format_result(hstmt));
+  is_num(my_print_non_format_result(hstmt), 2);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);
 
   ok_sql(hstmt, "SELECT `Value One`,`Value Two`,`Value Three` FROM `TestColNames`");
 
-  is(2 == my_print_non_format_result(hstmt));
+  is_num(my_print_non_format_result(hstmt), 2);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);

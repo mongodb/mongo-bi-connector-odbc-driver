@@ -405,6 +405,8 @@ do { \
 
 /**
   Verify that a Boolean expression is true.
+  It's recommended to use is_num, is_str, etc macros instead of "is(a==b)",
+  since those will show values being compared, in a log.
 
   @param a     The expression to check
 */

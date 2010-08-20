@@ -164,7 +164,7 @@ DECLARE_TEST(my_table_dbs)
                    "", 0, "", 0, "", 0);
     mystmt(hstmt,rc);
 
-    is(nrows == my_print_non_format_result(hstmt));
+    is_num(my_print_non_format_result(hstmt), nrows);
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
@@ -172,7 +172,7 @@ DECLARE_TEST(my_table_dbs)
                    "", 0, "", 0, "", 0);
     mystmt(hstmt,rc);
 
-    is(0 == my_print_non_format_result(hstmt));
+    is_num(my_print_non_format_result(hstmt), 0);
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
@@ -180,7 +180,7 @@ DECLARE_TEST(my_table_dbs)
                    "", 0, "", 0, NULL, 0);
     mystmt(hstmt,rc);
 
-    is(4 == my_print_non_format_result(hstmt));
+    is_num(my_print_non_format_result(hstmt), 4);
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
@@ -189,7 +189,7 @@ DECLARE_TEST(my_table_dbs)
                    NULL, 0, (SQLCHAR *)"xyz", SQL_NTS, NULL, 0);
     mystmt(hstmt,rc);
 
-    is(0 == my_print_non_format_result(hstmt));
+    is_num(my_print_non_format_result(hstmt), 0);
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
@@ -238,7 +238,7 @@ DECLARE_TEST(my_colpriv)
                                      (SQLCHAR *)"a", SQL_NTS));
 
   printMessage("2) Privileges on column 'a' from test_colprev1");
-  is(1 == my_print_non_format_result(hstmt));
+  is_num(my_print_non_format_result(hstmt), 1);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
@@ -248,7 +248,7 @@ DECLARE_TEST(my_colpriv)
                                      (SQLCHAR *)"%", SQL_NTS));
 
   printMessage("3) Privileges on all columns from test_colprev2");
-  is(0 == my_print_non_format_result(hstmt));
+  is_num(my_print_non_format_result(hstmt), 0);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
@@ -258,7 +258,7 @@ DECLARE_TEST(my_colpriv)
                                      (SQLCHAR *)"%", SQL_NTS));
 
   printMessage("4) Privileges on all columns from test_colprev3");
-  is(4 == my_print_non_format_result(hstmt));
+  is_num(my_print_non_format_result(hstmt), 4);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
@@ -267,7 +267,7 @@ DECLARE_TEST(my_colpriv)
                                      (SQLCHAR *)"test_%", SQL_NTS,
                                      (SQLCHAR *)"%", SQL_NTS));
 
-  is(0 == my_print_non_format_result(hstmt));
+  is_num(my_print_non_format_result(hstmt), 0);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
@@ -801,13 +801,13 @@ DECLARE_TEST(my_information_schema)
   mystmt(hstmt1,rc);
 
   /* all tables from all databases should be displayed */
-  is(3 == my_print_non_format_result(hstmt1));
+  is_num(my_print_non_format_result(hstmt1), 3);
   rc = SQLFreeStmt(hstmt1, SQL_CLOSE);
 
   rc = SQLTables(hstmt1, NULL, 0, NULL, 0, "istab%", SQL_NTS, NULL, 0);
   mystmt(hstmt1,rc);
 
-  is(1 == my_print_non_format_result(hstmt1));
+  is_num(my_print_non_format_result(hstmt1), 1);
   rc = SQLFreeStmt(hstmt1, SQL_CLOSE);
   mystmt(hstmt1,rc);
 
@@ -1101,7 +1101,7 @@ DECLARE_TEST(bug8860)
     ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0, (SQLCHAR *)"", SQL_NTS,
                               NULL, 0));
 
-    is(myrowcount(hstmt) == 0);
+    is_num(myrowcount(hstmt), 0);
   }
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
@@ -1438,7 +1438,7 @@ DECLARE_TEST(t_bug30770)
     sprintf(pbuff, ";PORT=%d", myport);
     strcat((char *)conn, pbuff);
   }
-  is(mydrvconnect(&henv1, &hdbc1, &hstmt1, conn) == OK);
+  is_num(mydrvconnect(&henv1, &hdbc1, &hstmt1, conn), OK);
 
   sprintf((char *)buff, "USE %s;", mydb);
   ok_stmt(hstmt1, SQLExecDirect(hstmt1, buff, SQL_NTS));

@@ -82,7 +82,7 @@ DECLARE_TEST(my_dynamic_pos_cursor)
     mystmt(hstmt_pos, rc);
 
     printMessage(" total rows updated:%d\n",nRowCount);
-    is(nRowCount == 1);
+    is_num(nRowCount, 1);
 
     /* Now delete the newly updated record */
     strcpy((char*)szData,"updated");
@@ -101,7 +101,7 @@ DECLARE_TEST(my_dynamic_pos_cursor)
     mystmt(hstmt, rc);
 
     printMessage(" total rows deleted:%d\n",nRowCount);
-    is(nRowCount == 1);
+    is_num(nRowCount, 1);
 
     /* Free statement cursor resorces */
     rc = SQLFreeStmt(hstmt, SQL_UNBIND);
@@ -129,7 +129,7 @@ DECLARE_TEST(my_dynamic_pos_cursor)
 
     rc = SQLGetData(hstmt,1,SQL_C_LONG,&nData,0,NULL);
     mystmt(hstmt,rc);
-    is(nData == 100);
+    is_num(nData, 100);
 
     rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,50,NULL);
     mystmt(hstmt,rc);
@@ -212,7 +212,7 @@ DECLARE_TEST(my_dynamic_pos_cursor1)
     mystmt(hstmt_pos, rc);
 
     printMessage(" total rows updated:%d\n",nRowCount);
-    is(nRowCount == 1);
+    is_num(nRowCount, 1);
     strcpy(szData[1],"updated");
     nData[1] = 999;
 
@@ -223,7 +223,7 @@ DECLARE_TEST(my_dynamic_pos_cursor1)
     mystmt(hstmt, rc);
 
     printMessage(" total rows deleted:%d\n",nRowCount);
-    is(nRowCount == 1);
+    is_num(nRowCount, 1);
 
     /* Free statement cursor resorces */
     rc = SQLFreeStmt(hstmt, SQL_UNBIND);
@@ -342,7 +342,7 @@ DECLARE_TEST(my_position)
     mystmt(hstmt,rc);
 
     printMessage(" rows affected:%d\n",nlen);
-    is(nlen == 1);
+    is_num(nlen, 1);
 
     rc = SQLFreeStmt(hstmt,SQL_UNBIND);
     mystmt(hstmt,rc);
@@ -708,7 +708,7 @@ DECLARE_TEST(my_dynamic_cursor)
     ok_sql(hstmt, "select * from my_dynamic_cursor");
     mystmt(hstmt,rc);
 
-    is(6 == myresult(hstmt));
+    is_num(myresult(hstmt), 6);
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);

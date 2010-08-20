@@ -489,7 +489,7 @@ DECLARE_TEST(t_bug30774)
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
   ok_con(hdbc1, SQLConnect(hdbc1, mydsn, SQL_NTS,
-                           username, strlen((char *)myuid),
+                           username, (SQLSMALLINT)strlen((char *)myuid),
                            mypwd, SQL_NTS));
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
@@ -637,7 +637,7 @@ DECLARE_TEST(t_driverconnect_outstring)
                                      SQL_DRIVER_NOPROMPT),
              SQL_SUCCESS_WITH_INFO);
   is_num(conn_out_len, 9);
-  is(check_sqlstate_ex(hdbc1, SQL_HANDLE_DBC, "01004") == OK);
+  is_num(check_sqlstate_ex(hdbc1, SQL_HANDLE_DBC, "01004"), OK);
   ok_con(hdbc1, SQLDisconnect(hdbc1));
 
   /* test truncation on boundary */
@@ -647,7 +647,7 @@ DECLARE_TEST(t_driverconnect_outstring)
                                      &conn_out_len, SQL_DRIVER_NOPROMPT),
              SQL_SUCCESS_WITH_INFO);
   is_num(conn_out_len, exp_conn_out_len - 1);
-  is(check_sqlstate_ex(hdbc1, SQL_HANDLE_DBC, "01004") == OK);
+  is_num(check_sqlstate_ex(hdbc1, SQL_HANDLE_DBC, "01004"), OK);
   ok_con(hdbc1, SQLDisconnect(hdbc1));
 
   ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
@@ -864,8 +864,8 @@ DECLARE_TEST(t_bug10128)
 */
 DECLARE_TEST(t_bug32727)
 {
-  is(SQLSetConnectAttr(hdbc, SQL_ATTR_ENLIST_IN_DTC,
-                       (SQLPOINTER)1, SQL_IS_UINTEGER) == SQL_ERROR);
+  is_num(SQLSetConnectAttr(hdbc, SQL_ATTR_ENLIST_IN_DTC,
+                       (SQLPOINTER)1, SQL_IS_UINTEGER), SQL_ERROR);
   return OK;
 }
 
@@ -932,7 +932,7 @@ DECLARE_TEST(t_bug31959)
   }
 
   /* check invalid value (and corresponding SQL state) */
-  is(SQLSetConnectAttr(hdbc, SQL_ATTR_TXN_ISOLATION, (SQLPOINTER)999, 0) ==
+  is_num(SQLSetConnectAttr(hdbc, SQL_ATTR_TXN_ISOLATION, (SQLPOINTER)999, 0),
      SQL_ERROR);
   {
   SQLCHAR     sql_state[6];

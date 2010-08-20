@@ -161,7 +161,7 @@ DECLARE_TEST(t_bug14639)
   /* Check that connection is alive */
   ok_con(hdbc2, SQLGetConnectAttr(hdbc2, SQL_ATTR_CONNECTION_DEAD, &is_dead,
                                  sizeof(is_dead), 0));
-  is(is_dead == SQL_CD_FALSE)
+  is_num(is_dead, SQL_CD_FALSE)
 
   /* From another connection, kill the connection created above */
   sprintf(buf, "KILL %d", connection_id);
@@ -170,7 +170,7 @@ DECLARE_TEST(t_bug14639)
   /* Now check that the connection killed returns the right state */
   ok_con(hdbc, SQLGetConnectAttr(hdbc2, SQL_ATTR_CONNECTION_DEAD, &is_dead,
                                  sizeof(is_dead), 0));
-  is(is_dead == SQL_CD_TRUE)
+  is_num(is_dead, SQL_CD_TRUE)
 
   return OK;
 }
@@ -196,7 +196,7 @@ DECLARE_TEST(t_bug31055)
 
   ok_con(hdbc, SQLGetFunctions(hdbc, SQL_API_ODBC3_ALL_FUNCTIONS, funcs));
 
-  is(!SQL_FUNC_EXISTS(funcs, SQL_API_SQLALLOCHANDLESTD));
+  is_num(SQL_FUNC_EXISTS(funcs, SQL_API_SQLALLOCHANDLESTD), 0);
 
   return OK;
 }
@@ -299,15 +299,15 @@ DECLARE_TEST(t_bug30626)
   
   /* odbc 3 */
   ok_stmt(hstmt, SQLGetTypeInfo(hstmt, SQL_TYPE_TIMESTAMP));
-  is(myresult(hstmt) == 2);
+  is_num(myresult(hstmt), 2);
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_stmt(hstmt, SQLGetTypeInfo(hstmt, SQL_TYPE_TIME));
-  is(myresult(hstmt) == 1);
+  is_num(myresult(hstmt), 1);
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_stmt(hstmt, SQLGetTypeInfo(hstmt, SQL_TYPE_DATE));
-  is(myresult(hstmt) == 1);
+  is_num(myresult(hstmt), 1);
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   /* odbc 2 */
@@ -329,20 +329,20 @@ DECLARE_TEST(t_bug30626)
   ok_env(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
 			      (SQLPOINTER) SQL_OV_ODBC2, SQL_IS_INTEGER));
   ok_env(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &hdbc1));
-  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, strlen(conn), NULL, 0,
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, (SQLSMALLINT)strlen(conn), NULL, 0,
 				 NULL, SQL_DRIVER_NOPROMPT));
   ok_con(hdbc1, SQLAllocHandle(SQL_HANDLE_STMT, hdbc1, &hstmt1));
   
   ok_stmt(hstmt1, SQLGetTypeInfo(hstmt1, SQL_TIMESTAMP));
-  is(myresult(hstmt1) == 2);
+  is_num(myresult(hstmt1), 2);
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
   ok_stmt(hstmt1, SQLGetTypeInfo(hstmt1, SQL_TIME));
-  is(myresult(hstmt1) == 1);
+  is_num(myresult(hstmt1), 1);
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
   ok_stmt(hstmt1, SQLGetTypeInfo(hstmt1, SQL_DATE));
-  is(myresult(hstmt1) == 4);
+  is_num(myresult(hstmt1), 4);
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
   ok_stmt(hstmt1, SQLFreeHandle(SQL_HANDLE_STMT, hstmt1));
