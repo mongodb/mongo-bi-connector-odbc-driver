@@ -47,7 +47,6 @@ copy Install.bat mysql-connector-odbc-noinstall-%1-win32
 copy Uninstall.bat mysql-connector-odbc-noinstall-%1-win32
 copy ChangeLog mysql-connector-odbc-noinstall-%1-win32\ChangeLog.rtf
 copy LICENSE.gpl mysql-connector-odbc-noinstall-%1-win32\LICENSE.rtf
-copy LICENSE.exceptions mysql-connector-odbc-noinstall-%1-win32\EXCEPTIONS.rtf
 copy README mysql-connector-odbc-noinstall-%1-win32\README.rtf
 copy INSTALL mysql-connector-odbc-noinstall-%1-win32\INSTALL.rtf
 copy INSTALL.win mysql-connector-odbc-noinstall-%1-win32\INSTALL-win.rtf

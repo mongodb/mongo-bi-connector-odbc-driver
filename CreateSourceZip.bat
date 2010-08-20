@@ -34,7 +34,6 @@ REM root
 mkdir mysql-connector-odbc-%1-win-src 
 copy ChangeLog mysql-connector-odbc-%1-win-src\ChangeLog.rtf
 copy LICENSE.gpl mysql-connector-odbc-%1-win-src\LICENSE.rtf
-copy LICENSE.exceptions mysql-connector-odbc-%1-win-src\EXCEPTIONS.rtf
 copy Build.bat mysql-connector-odbc-%1-win-src
 copy Install.bat mysql-connector-odbc-%1-win-src
 copy Uninstall.bat mysql-connector-odbc-%1-win-src
