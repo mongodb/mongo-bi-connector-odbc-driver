@@ -57,7 +57,6 @@
                 <File Id="license32" Name="MYODBC5-LICENSE.TXT" DiskId="1" Source="doc\MYODBC5-LICENSE.TXT"/>
               <?else?>
                 <File Id="license32" Name="MYODBC5-LICENSE.TXT" DiskId="1" Source="doc\MYODBC5-LICENSE.TXT"/>
-                <File Id="exceptions32" Name="MYODBC5-EXCEPTIONS.TXT" DiskId="1" Source="doc\MYODBC5-EXCEPTIONS.TXT" />
               <?endif?>
             </Component>
             <Component Id="setup_32" Guid="428232BA-9D94-4DB5-87CD-C939D1347664" SharedDllRefCount="yes">
@@ -95,7 +94,6 @@
                 <File Id="license64" Name="MYODBC5-LICENSE.TXT" DiskId="1" Source="doc\MYODBC5-LICENSE.TXT" />
               <?else?>
                 <File Id="license64" Name="MYODBC5-LICENSE.TXT" DiskId="1" Source="doc\MYODBC5-LICENSE.TXT" />
-		<File Id="exceptions64" Name="MYODBC5-EXCEPTIONS.TXT" DiskId="1" Source="doc\MYODBC5-EXCEPTIONS.TXT" />
               <?endif?>
             </Component>
             <Component Id="setup_64" Guid="3A92E95A-AF9C-4A4F-A36D-E0052405C278" SharedDllRefCount="yes" Win64="yes">
