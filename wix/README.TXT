@@ -19,14 +19,12 @@ Resource directory from connectors-svnroot/wix-installer
 
 3) Copying files
 
-Create the directories "doc" (for chm and license files), and "x86"
+Create the directors "doc" (for license files), and "x86"
 (for 32-bit binaries). To create a 64-bit package you create a "x64"
 bit directory as well, i.e. a 64-bit package contains both 32-bit and
 64-bit binaries. Copy the required files:
 
-  doc/connector-odbc.chm
   doc/MYODBC5-LICENSE.TXT
-  doc/MYODBC5-EXCEPTIONS.TXT
   x86/myodbc5.lib
   x86/myodbc5.dll
   x86/myodbc5S.lib

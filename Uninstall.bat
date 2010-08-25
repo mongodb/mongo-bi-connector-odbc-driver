@@ -32,7 +32,6 @@ del /Q /F %installdir%\myodbc5S.lib
 del /Q /F %installdir%\myodbc5.dll
 del /Q /F %installdir%\myodbc5.lib
 del /Q /F %installdir%\myodbc-installer.exe
-del /Q /F %installdir%\myodbc3*.hlp
 
 ECHO "+-----------------------------------------------------+"
 ECHO "| DONE                                                |"

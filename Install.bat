@@ -42,7 +42,6 @@ copy %libdir%\myodbc5S.lib %installdir%
 copy %libdir%\myodbc5.dll  %installdir%
 copy %libdir%\myodbc5.lib  %installdir%
 copy %bindir%\myodbc-installer.exe      %installdir%
-copy doc\*.hlp             %installdir%
 
 REM ****
 REM * Registering driver...

@@ -114,14 +114,6 @@
       </Directory>
       <?endif ?>
 
-      <Directory Id="WindowsFolder">
-        <Directory Id="Help" Name="Help">
-          <Component Id="help" Guid="D29EE791-9763-4DBE-8EAE-67A60A98BEE7" SharedDllRefCount="yes">
-            <File Id="myodbc5_hlp" Name="myodbc.chm" KeyPath="yes" DiskId="1" Source="doc\connector-odbc.chm"/>
-          </Component>
-        </Directory>
-      </Directory>
-
     </Directory>
   </Fragment>
 </Wix>

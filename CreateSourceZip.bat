@@ -87,10 +87,6 @@ copy driver\*.h mysql-connector-odbc-%1-win-src\driver
 copy driver\*.rc mysql-connector-odbc-%1-win-src\driver
 copy driver\*.def mysql-connector-odbc-%1-win-src\driver
 
-REM doc
-mkdir mysql-connector-odbc-%1-win-src\doc
-copy doc\* mysql-connector-odbc-%1-win-src\doc
-
 ECHO Zipping...
 pkzipc -add -maximum -recurse -path=current mysql-connector-odbc-%1-win-src.zip mysql-connector-odbc-%1-win-src/*.*
 IF EXIST mysql-connector-odbc-%1-win-src ( 

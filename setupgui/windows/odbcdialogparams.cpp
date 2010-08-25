@@ -512,8 +512,9 @@ void btnTest_Click (HWND hwnd)
 
 void btnHelp_Click (HWND hwnd)
 {
-  if ( ShellExecute( NULL, NULL, L"help/myodbc.chm", NULL, NULL, SW_SHOWNORMAL ) == (HINSTANCE)ERROR_FILE_NOT_FOUND )
-    ShellExecute(NULL, L"open", L"http://dev.mysql.com/doc/refman/6.0/en/myodbc-configuration-dsn-windows.html" , NULL, NULL, SW_SHOWNORMAL);
+  ShellExecute(NULL, L"open",
+	       L"http://dev.mysql.com/doc/refman/5.1/en/connector-odbc-configuration-dsn-windows.html",
+	       NULL, NULL, SW_SHOWNORMAL);
 }
 
 

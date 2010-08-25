@@ -39,10 +39,8 @@ ECHO GPL: Create stage area and populate...
 mkdir mysql-connector-odbc-noinstall-%1-win32 
 mkdir mysql-connector-odbc-noinstall-%1-win32\bin
 mkdir mysql-connector-odbc-noinstall-%1-win32\lib
-mkdir mysql-connector-odbc-noinstall-%1-win32\doc
 xcopy /E /Y bin\* mysql-connector-odbc-noinstall-%1-win32\bin
 xcopy /E /Y lib\* mysql-connector-odbc-noinstall-%1-win32\lib
-xcopy /E /Y doc\* mysql-connector-odbc-noinstall-%1-win32\doc
 copy Install.bat mysql-connector-odbc-noinstall-%1-win32
 copy Uninstall.bat mysql-connector-odbc-noinstall-%1-win32
 copy ChangeLog mysql-connector-odbc-noinstall-%1-win32\ChangeLog.rtf

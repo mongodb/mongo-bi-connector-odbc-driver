@@ -109,8 +109,7 @@ EXTRA_DIST = \
 	CMakeLists.txt \
 	cmake \
 	setupgui \
-	wix \
-	doc
+	wix
 
 
 # Remove Subversion ".svn" subdirectories from source distribution
