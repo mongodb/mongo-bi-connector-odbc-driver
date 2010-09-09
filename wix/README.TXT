@@ -2,7 +2,7 @@ MSI build instructions
 
 1) Prerequisites
 
-- Wix 3.0 or above (http://wix.sourceforge.net)
+- Wix 3.0 or above (http://wix.codeplex.com/)
 - Resources from connectors-svnroot/wix-installer
 - Microsoft Visual Studio environment
 - CMake 2.4.6 (http://www.cmake.org)
@@ -15,7 +15,7 @@ WIX_DIR environment variable which points to your Wix installation
 directory.
 
 - WIX_RESOURCE
-Resource directory from connectors-svnroot/wix-installer
+Resource directory from svn+ssh://<your-uid>@bk-internal.mysql.com/connectors-svnroot/wix-installer
 
 3) Copying files
 

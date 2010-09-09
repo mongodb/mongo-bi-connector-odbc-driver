@@ -34,7 +34,7 @@
     SetVersion updates: Name, Id, Version. Do not change them manually.
   -->
 
-  <Product Id="29042B1C-0713-4575-B7CA-5C8E7B0899D4" UpgradeCode="FF073FBB-32E2-4052-B6B2-830C5ED4A809"
+  <Product Id="@CONNECTOR_PKG_ID1@" UpgradeCode="FF073FBB-32E2-4052-B6B2-830C5ED4A809"
     Name="MySQL Connector/ODBC $(var.odbc_ver_short)" Version="$(var.odbc_ver_long)" Language="1033" Manufacturer="Oracle Corporation">
 
   <!-- *****************************************************************************************
@@ -49,10 +49,11 @@
     <?define odbc_platform="Intel" ?>
     <?endif ?>
 
-    <Package Keywords="Installer,MSI,Database" 
+    <Package Id="@CONNECTOR_PKG_ID2@" Keywords="Installer,MSI,Database" 
       Description="MySQL Connector/ODBC" Manufacturer="Oracle Corporation"
       InstallerVersion="200" Platforms="$(var.odbc_platform)"
       Languages="1033" SummaryCodepage="1252" Compressed='yes' />
+    <?include mysql-connector-odbc-msi-arpprops.xml ?>
 
     <!-- *****************************************************************************************
       Custom Actions
@@ -66,7 +67,7 @@
 
     <Upgrade Id="FF073FBB-32E2-4052-B6B2-830C5ED4A809">
       <!-- !!!SetVersion updates: Minimum, Maximum -->
-      <UpgradeVersion Property="PREVIOUSVERSIONINSTALLED" Minimum="5.0.999" Maximum="$(var.odbc_ver_prev)" IncludeMaximum="no"
+      <UpgradeVersion Property="PREVIOUSVERSIONINSTALLED" Minimum="5.0.999" Maximum="$(var.odbc_ver_prev)" IncludeMaximum="yes"
         IncludeMinimum="yes"  />
       <!-- !!!SetVersion updates: Minimum, Maximum -->
       <UpgradeVersion Property="NEWERPRODUCTFOUND" Minimum="$(var.odbc_ver_long)" Maximum="$(var.odbc_ver_short).999" OnlyDetect="yes" 
@@ -87,8 +88,8 @@
       <Component Id="RegKeys32" Guid="AECCA4A7-9405-466A-8393-4F0876DCD21A" DiskId="1">
         <RegistryKey Id="MysqlKey32" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
                   Action="createAndRemoveOnUninstall"/>
-	<RegistryValue Id="Version32" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
-		  Name="Version" Type="string" Value="[ProductVersion]"/>
+        <RegistryValue Id="Version32" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
+                  Name="Version" Type="string" Value="[ProductVersion]"/>
       </Component>
     </DirectoryRef>
 
@@ -97,8 +98,8 @@
       <Component Id="RegKeys64" Guid="92FEC72B-EB44-4E4D-B301-A915C80D067B" DiskId="1" Win64="yes">
         <RegistryKey Id="MysqlKey64" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
                   Action="createAndRemoveOnUninstall"/>
-	<RegistryValue Id="Version64" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
-		  Name="Version" Type="string" Value="[ProductVersion]"/>
+        <RegistryValue Id="Version64" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
+                  Name="Version" Type="string" Value="[ProductVersion]"/>
       </Component>
     </DirectoryRef>
     <?endif ?>
@@ -129,6 +130,10 @@
     </Feature>
     <?endif ?>
 
+    <!--Feature Id="Help" Title="MySQL Connector/ODBC $(var.odbc_ver_long) Documentation" Level="1" Description="Installs the MySQL ODBC driver help.">
+        <ComponentRef Id="help" />
+    </Feature-->
+
     <!-- *****************************************************************************************
       End of Feature
     -->
@@ -148,9 +153,6 @@
     <Property Id="AgreeToLicense">No</Property>
     <Property Id="ApplicationUsers">AllUsers</Property> 
     <Property Id="ALLUSERS">1</Property> <!--per-machine installation -->   
-    <Property Id="ARPPRODUCTICON">MySQLConnector.ico</Property>
-    <Property Id="ARPURLUPDATEINFO">http://dev.mysql.com/</Property>    
-    <Property Id="ARPURLINFOABOUT">http://www.mysql.com</Property>
        
     <Property Id="INSTALLLEVEL">1</Property>    
                      

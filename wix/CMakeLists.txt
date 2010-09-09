@@ -22,6 +22,8 @@
 
 ##########################################################################
 
+cmake_minimum_required(VERSION 2.4.6)
+
 PROJECT(MYODBC_MSI_INSTALLER)
 
 #-------------- wix installer ------------------------
@@ -31,21 +33,21 @@ IF(WIN32)
   IF(WIX_DIR)
     FILE(REMOVE "myodbc_version.xml")
     TRY_RUN(VERSION_OUT VERSION_TEST 
-	    "${CMAKE_SOURCE_DIR}"
-	    "${CMAKE_SOURCE_DIR}/cmake/getodbcversion.c" 
-	    ARGS "myodbc_version.xml")
+            "${CMAKE_SOURCE_DIR}"
+            "${CMAKE_SOURCE_DIR}/cmake/getodbcversion.c" 
+            ARGS "myodbc_version.xml")
     IF(NOT VERSION_OUT STREQUAL "0")
-    	MESSAGE(ERROR "Can't create myodbc_version.xml")
+        MESSAGE(ERROR "Can't create myodbc_version.xml")
     ENDIF(NOT VERSION_OUT STREQUAL "0")
   ENDIF(WIX_DIR)
   # --------------------------------------------------
 
   # -------------- find binary resources -------------
   FIND_PATH(WIX_RESOURCE MySQLConnector.ico
-	  $ENV{WIX_RESOURCE}
-	  ${CMAKE_SOURCE_DIR}/../../../wix-installer/resources)
+          $ENV{WIX_RESOURCE}
+          ${CMAKE_SOURCE_DIR}/../../../wix-installer/resources)
   IF(NOT WIX_RESOURCE)
-	  MESSAGE(ERROR "Can't find binary MySQL resource files. Please specify WIX_RESOURCE")
+          MESSAGE(ERROR "Can't find binary MySQL resource files. Please specify WIX_RESOURCE")
   ENDIF(NOT WIX_RESOURCE)
   MESSAGE(STATUS "Wix resources found in ${WIX_RESOURCE}")
   # --------------------------------------------------
@@ -79,25 +81,37 @@ IF(WIN32)
     SET(MSI_PACKAGE "mysql-connector-odbc-${ODBC_VERSION}-${MSI_VERSION}.msi")
   ENDIF(${LICENSE})
 
+  # Generate GUID
+EXECUTE_PROCESS(COMMAND uuidgen
+                OUTPUT_VARIABLE CONNECTOR_PKG_ID1)
+STRING(STRIP ${CONNECTOR_PKG_ID1} CONNECTOR_PKG_ID1)
+EXECUTE_PROCESS(COMMAND uuidgen
+                OUTPUT_VARIABLE CONNECTOR_PKG_ID2)
+STRING(STRIP ${CONNECTOR_PKG_ID2} CONNECTOR_PKG_ID2)
+
 ENDIF(WIN32)
 #-----------------------------------------------------
+
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/mysql_odbc.xml.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/mysql-odbc-${ODBC_VERSION}-${MSI_VERSION}.xml @ONLY)
+
 ADD_CUSTOM_TARGET(
-	MSI_INSTALLER ALL
-	DEPENDS ${MSI_PACKAGE})
+        MSI_INSTALLER ALL
+        DEPENDS ${MSI_PACKAGE})
 
 ADD_CUSTOM_COMMAND(
-	OUTPUT ${MSI_PACKAGE}
-	DEPENDS mysql_odbc.wixobj
+        OUTPUT ${MSI_PACKAGE}
+        DEPENDS mysql_odbc.wixobj
                 mysql_odbc_fragment.wixobj
-	COMMAND ${WIX_DIR}/light.exe mysql_odbc.wixobj mysql_odbc_fragment.wixobj -o ${MSI_PACKAGE})
+        COMMAND ${WIX_DIR}/light.exe mysql_odbc.wixobj mysql_odbc_fragment.wixobj -o ${MSI_PACKAGE})
 
 ADD_CUSTOM_COMMAND(
-	OUTPUT mysql_odbc_fragment.wixobj
-	DEPENDS mysql_odbc_fragment.xml
-	COMMAND ${WIX_DIR}/candle.exe mysql_odbc_fragment.xml -o mysql_odbc_fragment.wixobj)
+        OUTPUT mysql_odbc_fragment.wixobj
+        DEPENDS mysql_odbc_fragment.xml
+        COMMAND ${WIX_DIR}/candle.exe mysql_odbc_fragment.xml -o mysql_odbc_fragment.wixobj)
 
 ADD_CUSTOM_COMMAND(
-	OUTPUT mysql_odbc.wixobj
-	DEPENDS mysql_odbc.xml
+        OUTPUT mysql_odbc.wixobj
+        DEPENDS mysql_odbc.xml.in
                 mysql_common_ui.xml
-	COMMAND ${WIX_DIR}/candle.exe mysql_odbc.xml -o mysql_odbc.wixobj)
+        COMMAND ${WIX_DIR}/candle.exe mysql-odbc-${ODBC_VERSION}-${MSI_VERSION}.xml -o mysql_odbc.wixobj)
