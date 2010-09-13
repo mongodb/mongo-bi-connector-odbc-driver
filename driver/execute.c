@@ -764,14 +764,6 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
       return do_my_pos_cursor(pStmt, pStmtCursor);
     }
 
-    /* If this statement has been executed, there are no
-     * parameters, we do not need to execute it again */
-    if (pStmt->state == ST_PRE_EXECUTED &&
-        pStmt->dummy_state != ST_DUMMY_EXECUTED)
-    {
-        pStmt->state= ST_EXECUTED;
-        return SQL_SUCCESS;
-    }
     my_SQLFreeStmt((SQLHSTMT)pStmt,MYSQL_RESET_BUFFERS);
     query= pStmt->query;
     is_select_stmt= is_select_statement((SQLCHAR *)query);

@@ -2665,6 +2665,62 @@ DECLARE_TEST(t_bug55024)
 }
 
 
+/*
+Bug #56677 - SQLNumResultCols() causes the driver to return 
+only first row in the resultset
+*/
+DECLARE_TEST(t_bug56677)
+{
+  SQLINTEGER  nData;
+  SQLCHAR     szData[16];
+  SQLSMALLINT colCount;
+
+  ok_sql(hstmt, "drop table if exists bug56677");
+  ok_sql(hstmt, "CREATE TABLE bug56677 ("\
+    "tt_int INT PRIMARY KEY auto_increment,"\
+    "tt_varchar VARCHAR(128) NOT NULL)");
+  ok_sql(hstmt, "INSERT INTO bug56677 VALUES "\
+    "(100, 'string 1'),"\
+    "(200, 'string 2'),"\
+    "(300, 'string 3'),"\
+    "(400, 'string 4')");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, "select * from bug56677", SQL_NTS));
+  ok_stmt(hstmt, SQLNumResultCols(hstmt, &colCount));
+
+  is_num(colCount, 2);
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &nData, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szData, sizeof(szData),
+    NULL));
+
+  ok_stmt(hstmt, SQLExecute(hstmt));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(nData, 100);
+  is_str(szData, "string 1", 8);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(nData, 200);
+  is_str(szData, "string 2", 8);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(nData, 300);
+  is_str(szData, "string 3", 8);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(nData, 400);
+  is_str(szData, "string 4", 8);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists bug56677");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -2706,7 +2762,8 @@ BEGIN_TESTS
   ADD_TEST(t_bug34271)
   ADD_TEST(t_bug32684)
   ADD_TEST(t_bug55024)
-  END_TESTS
+  ADD_TEST(t_bug56677)
+END_TESTS
 
 
 RUN_TESTS
