@@ -4,6 +4,12 @@
 
   Bugs fixed:
   * MySQL ODBC Connector on Windows 2008 64bit. (Bug #56233)
+  * SQLNumResultCols() causes the driver to return only first row in the
+    resultset. (Bug #56677)
+  * Connector/ODBC 5.1 series requires uninstall prior to installing a new
+    version. (Bug #54314)
+  * SQLDescribeCol and SQLColAttribute cannot be called before SQLExecute.
+    (Bug #56717)
 
 ----
 

@@ -2721,6 +2721,89 @@ DECLARE_TEST(t_bug56677)
 }
 
 
+/* Test of SQLDescribeCol and SQLColAttribute if they are called before SQLExecute.
+   Bug#56717 */
+DECLARE_TEST(t_desccol_before_exec)
+{
+  SQLINTEGER  nData= 200;
+  SQLCHAR     szData[128];
+  SQLSMALLINT colCount;
+  char        colname[MYSQL_NAME_LEN];
+  SQLULEN     collen;
+  SQLLEN      coltype;
+
+  ok_sql(hstmt, "drop table if exists desccol_before_exec");
+  ok_sql(hstmt, "CREATE TABLE desccol_before_exec ("\
+    "tt_int INT PRIMARY KEY auto_increment,"\
+    "tt_varchar VARCHAR(128) CHARACTER SET latin1 NOT NULL)");
+  ok_sql(hstmt, "INSERT INTO desccol_before_exec VALUES "\
+    "(100, 'string 1'),"\
+    "(200, 'string 2'),"\
+    "(300, 'string 3'),"\
+    "(400, 'string 4')");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, "select tt_varchar from desccol_before_exec where tt_int > ?", SQL_NTS));
+
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 1, colname, sizeof(colname), NULL,
+    NULL, &collen, NULL, NULL));
+
+  is_str(colname, "tt_varchar", 11);
+  is_num(collen, 128);
+
+  /* Just to make sure that SQLNumResultCols still works fine */
+  ok_stmt(hstmt, SQLNumResultCols(hstmt, &colCount));
+
+  is_num(colCount, 1);
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0, 0, &nData, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, szData, sizeof(szData),
+    NULL));
+
+  ok_stmt(hstmt, SQLExecute(hstmt));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(szData, "string 3", 8);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_str(szData, "string 4", 8);
+
+  /* Now doing all the same things with SQLColAttribute */
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLPrepare(hstmt, "select tt_int, tt_varchar "
+                                   "from desccol_before_exec "
+                                   "where tt_int <= ?", SQL_NTS));
+
+  ok_stmt(hstmt, SQLColAttribute(hstmt, 2, SQL_DESC_TYPE, NULL, 0, NULL, &coltype));
+  is_num(coltype, SQL_VARCHAR);
+
+  /* Just to make sure that SQLNumResultCols still works fine */
+  ok_stmt(hstmt, SQLNumResultCols(hstmt, &colCount));
+
+  is_num(colCount, 2);
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0, 0, &nData, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szData, sizeof(szData),
+    NULL));
+
+  ok_stmt(hstmt, SQLExecute(hstmt));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(szData, "string 1", 8);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_str(szData, "string 2", 8);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists desccol_before_exec");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -2763,6 +2846,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug32684)
   ADD_TEST(t_bug55024)
   ADD_TEST(t_bug56677)
+  ADD_TEST(t_desccol_before_exec)
 END_TESTS
 
 

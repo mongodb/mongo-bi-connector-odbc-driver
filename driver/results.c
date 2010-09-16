@@ -311,7 +311,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
     case SQL_C_WCHAR:
       return copy_wchar_result(stmt,
                                (SQLWCHAR *)rgbValue,
-                               cbValueMax / sizeof(SQLWCHAR), pcbValue,
+                               (SQLINTEGER)(cbValueMax / sizeof(SQLWCHAR)), pcbValue,
                                field, value, length);
 
     case SQL_C_BIT:
@@ -738,6 +738,15 @@ MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
   STMT *stmt= (STMT *)hstmt;
   DESCREC* irrec;
 
+  /* SQLDescribeCol can be called before SQLExecute. Thus we need make sure that
+     all parameters have been bound */
+  if ( stmt->param_count > 0 && stmt->dummy_state == ST_DUMMY_UNKNOWN &&
+    (stmt->state != ST_PRE_EXECUTED || stmt->state != ST_EXECUTED) )
+  {
+    if ( do_dummy_parambind(hstmt) != SQL_SUCCESS )
+      return SQL_ERROR;
+  }
+
   if ((error= check_result(stmt)) != SQL_SUCCESS)
     return error;
   if (!stmt->result)
@@ -804,6 +813,15 @@ MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
   SQLLEN nparam= 0;
   SQLRETURN error= SQL_SUCCESS;
   DESCREC *irrec;
+
+  /* MySQLColAttribute can be called before SQLExecute. Thus we need make sure that
+  all parameters have been bound */
+  if ( stmt->param_count > 0 && stmt->dummy_state == ST_DUMMY_UNKNOWN &&
+    (stmt->state != ST_PRE_EXECUTED || stmt->state != ST_EXECUTED) )
+  {
+    if ( do_dummy_parambind(hstmt) != SQL_SUCCESS )
+      return SQL_ERROR;
+  }
 
   if (check_result(stmt) != SQL_SUCCESS)
     return SQL_ERROR;
