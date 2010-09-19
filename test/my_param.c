@@ -429,8 +429,9 @@ DECLARE_TEST(paramarray_by_row)
     dataBinding[i].indStr= SQL_NTS;
   }
 
-  ok_stmt(hstmt, SQLExecDirect(hstmt, "INSERT INTO t_bug48310 (bData, intField, strField) " \
-    "VALUES (?,?,?)", SQL_NTS));
+  /* We don't expect errors in paramsets processing, thus we should get SQL_SUCCESS only*/
+  expect_stmt(hstmt, SQLExecDirect(hstmt, "INSERT INTO t_bug48310 (bData, intField, strField) " \
+    "VALUES (?,?,?)", SQL_NTS), SQL_SUCCESS);
 
   is_num(paramsProcessed, ROWS_TO_INSERT);
 
@@ -526,8 +527,9 @@ DECLARE_TEST(paramarray_by_column)
   ok_stmt(hstmt, SQLBindParameter(hstmt, 3, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR,
     0, 0, (SQLPOINTER)strField, 5, strInd ));
 
-  ok_stmt(hstmt, SQLExecDirect(hstmt, "INSERT INTO t_bug48310 (bData, intField, strField) " \
-    "VALUES (?,?,?)", SQL_NTS));
+  /* We don't expect errors in paramsets processing, thus we should get SQL_SUCCESS only*/
+  expect_stmt(hstmt, SQLExecDirect(hstmt, "INSERT INTO t_bug48310 (bData, intField, strField) " \
+    "VALUES (?,?,?)", SQL_NTS), SQL_SUCCESS);
 
   is_num(paramsProcessed, ROWS_TO_INSERT);
 
@@ -615,8 +617,9 @@ DECLARE_TEST(paramarray_ignore_paramset)
   ok_stmt(hstmt, SQLBindParameter(hstmt, 3, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_CHAR,
     0, 0, (SQLPOINTER)strField, 5, strInd ));
 
-  ok_stmt(hstmt, SQLExecDirect(hstmt, "INSERT INTO t_bug48310 (bData, intField, strField) " \
-    "VALUES (?,?,?)", SQL_NTS));
+  /* We don't expect errors in paramsets processing, thus we should get SQL_SUCCESS only*/
+  expect_stmt(hstmt, SQLExecDirect(hstmt, "INSERT INTO t_bug48310 (bData, intField, strField) " \
+    "VALUES (?,?,?)", SQL_NTS), SQL_SUCCESS);
 
   is_num(paramsProcessed, ROWS_TO_INSERT);
 
@@ -709,8 +712,8 @@ DECLARE_TEST(paramarray_select)
   ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER,
     0, 0, intField, 0, intInd));
 
-  ok_stmt(hstmt, SQLExecDirect(hstmt, "SELect ?,'So what'", SQL_NTS));
-
+  /* We don't expect errors in paramsets processing, thus we should get SQL_SUCCESS only*/
+  expect_stmt(hstmt, SQLExecDirect(hstmt, "SELect ?,'So what'", SQL_NTS), SQL_SUCCESS);
   is_num(paramsProcessed, STMTS_TO_EXEC);
 
   for (i= 0; i < paramsProcessed; ++i)
@@ -762,6 +765,93 @@ DECLARE_TEST(t_bug49029)
 }
 
 
+/*
+  Bug #56804 - Server with sql mode NO_BACKSLASHES_ESCAPE obviously
+  can work incorrectly (at least) with binary parameters
+*/
+DECLARE_TEST(t_bug56804)
+{
+#define PARAMSET_SIZE		10
+
+  SQLINTEGER	len 	= 1;
+  int i;
+
+  SQLINTEGER	c1[PARAMSET_SIZE]=      {0, 1, 2, 3, 4, 5, 1, 7, 8, 9};
+  SQLINTEGER	c2[PARAMSET_SIZE]=      {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+  SQLLEN      d1[PARAMSET_SIZE]=      {4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
+  SQLLEN      d2[PARAMSET_SIZE]=      {4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
+  SQLUSMALLINT status[PARAMSET_SIZE]= {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+  SQLSMALLINT	paramset_size	= PARAMSET_SIZE;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS bug56804");
+  ok_sql(hstmt, "create table bug56804 (c1 int primary key not null, c2 int)");
+  ok_sql(hstmt, "insert into bug56804 values( 1, 1 ), (9, 9009)");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)"insert into bug56804 values( ?,? )", SQL_NTS));
+
+  ok_stmt(hstmt, SQLSetStmtAttr( hstmt, SQL_ATTR_PARAMSET_SIZE,
+    (SQLPOINTER)paramset_size, SQL_IS_UINTEGER ));
+
+  ok_stmt(hstmt, SQLSetStmtAttr( hstmt, SQL_ATTR_PARAM_STATUS_PTR,
+    status, SQL_IS_POINTER ));
+
+  ok_stmt(hstmt, SQLBindParameter( hstmt, 1, SQL_PARAM_INPUT, SQL_C_SLONG,
+    SQL_DECIMAL, 4, 0, c1, 4, d1));
+
+  ok_stmt(hstmt, SQLBindParameter( hstmt, 2, SQL_PARAM_INPUT, SQL_C_SLONG,
+    SQL_DECIMAL, 4, 0, c2, 4, d2));
+
+  expect_stmt(hstmt, SQLExecute(hstmt), SQL_SUCCESS_WITH_INFO);
+
+  /* Following tests are here to ensure that driver works how it is currently
+     expected to work an they need to be changed if driver changes smth in the
+     way how it reports errors in paramsets and diagnostics */
+  for(i = 0; i < PARAMSET_SIZE; ++i )
+  {
+    switch (i)
+    {
+    case 1: 
+    case 6:
+      /* all errors but last have SQL_PARAM_DIAG_UNAVAILABLE */
+      is_num(status[i], SQL_PARAM_DIAG_UNAVAILABLE);
+      break;
+    case 9:
+      /* Last error -  we are supposed to get SQL_PARAM_ERROR for it */
+      is_num(status[i], SQL_PARAM_ERROR);
+      break;
+    default:
+      is_num(status[i], SQL_PARAM_SUCCESS);
+    }
+  }
+
+  {
+    SQLCHAR   sqlstate[6]= {0};
+    SQLCHAR   message[255]= {0};
+    SQLINTEGER native_err= 0;
+    SQLSMALLINT msglen= 0;
+
+    i= 0;
+    while(SQL_SUCCEEDED(SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, ++i, sqlstate,
+      &native_err, message, sizeof(message), &msglen)))
+    {
+      printMessage("%d) [%s] %s %d", i, sqlstate, message, native_err);
+    }
+
+    /* just to make sure we got 1 diagnostics record ... */
+    is_num(i, 2);
+    /* ... and what the record is for the last error */
+    is(strstr(message, "Duplicate entry '9'"));
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "DROP TABLE IF EXISTS bug56804");
+
+  return OK;
+#undef PARAMSET_SIZE
+}
+
 BEGIN_TESTS
   ADD_TEST(my_init_table)
   ADD_TEST(my_param_insert)
@@ -774,6 +864,7 @@ BEGIN_TESTS
   ADD_TEST(paramarray_ignore_paramset)
   ADD_TEST(paramarray_select)
   ADD_TEST(t_bug49029)
+  ADD_TEST(t_bug56804)
 END_TESTS
 
 

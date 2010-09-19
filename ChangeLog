@@ -10,6 +10,7 @@
     version. (Bug #54314)
   * SQLDescribeCol and SQLColAttribute cannot be called before SQLExecute.
     (Bug #56717)
+  * Errors would not be reported in bulk upload. (Bug #56804)
 
 ----
 
