@@ -51,7 +51,7 @@
 
     <Package Id="@CONNECTOR_PKG_ID2@" Keywords="Installer,MSI,Database" 
       Description="MySQL Connector/ODBC" Manufacturer="Oracle Corporation"
-      InstallerVersion="200" Platforms="$(var.odbc_platform)"
+      InstallerVersion="200" Platform="$(var.odbc_platform)"
       Languages="1033" SummaryCodepage="1252" Compressed='yes' />
     <?include mysql-connector-odbc-msi-arpprops.xml ?>
 

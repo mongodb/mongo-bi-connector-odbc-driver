@@ -11,6 +11,7 @@
   * SQLDescribeCol and SQLColAttribute cannot be called before SQLExecute.
     (Bug #56717)
   * Errors would not be reported in bulk upload. (Bug #56804)
+  * MSI installer does not set InstallLocation value in registry. (Bug #56978)
 
 ----
 

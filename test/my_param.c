@@ -812,7 +812,7 @@ DECLARE_TEST(t_bug56804)
   {
     switch (i)
     {
-    case 1: 
+    case 1:
     case 6:
       /* all errors but last have SQL_PARAM_DIAG_UNAVAILABLE */
       is_num(status[i], SQL_PARAM_DIAG_UNAVAILABLE);

@@ -32,9 +32,6 @@
     -->
     <?include myodbc_version.xml ?>
 
-    <Icon Id="MySQLConnector.ico" SourceFile="$(var.odbc_resource)/MySQLConnector.ico" />
-
-  
     <!-- *****************************************************************************************
       Directories / Files
     -->

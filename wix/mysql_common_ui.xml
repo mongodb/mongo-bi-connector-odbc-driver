@@ -23,6 +23,7 @@
 -->
 
 <Include>
+  <Property Id="InstallPath2" Value="dummy" />
   <UI>
     <Property Id="ErrorDialog">SetupErrorDialog</Property>
     <Property Id="DefaultUIFont">Tahoma8</Property>
@@ -74,8 +75,8 @@
     <Dialog Id="SetupCompleteSuccessDialog" Width="374" Height="266" Title="[ProductName] - Setup Wizard"
       NoMinimize="yes">
       <Control Id="OK" Type="PushButton" X="230" Y="243" Width="66" Height="17" Default="yes" Cancel="yes"
-	      Text="&amp;Finish">
-<!--	      
+              Text="&amp;Finish">
+<!--          
 <Publish Event="DoAction" Value="ConfigureServer">ConfigureServer And NOT Installed And ACTION="INSTALL" And $ServerInstanceConfig=3</Publish>
 -->
         <Publish Event="EndDialog" Value="Exit">1</Publish>
@@ -94,7 +95,7 @@
         <Text>Setup has finished installing [ProductName]. Click Finish to exit the wizard.</Text>
         <Condition Action="show">NOT Installed And ACTION="INSTALL"</Condition>
       </Control>
-<!--	      
+<!--          
       <Control Id="InstallServiceCBox" Type="CheckBox" X="135" Y="88" Width="11" Height="11" 
         Property="ConfigureServer" Integer="yes" Hidden="yes">
         <Condition Action="show">NOT Installed And ACTION="INSTALL" And $ServerInstanceConfig=3</Condition>
@@ -518,7 +519,15 @@
         <Publish Property="SelectedSetupType" Value="Custom">SetupType = "Custom"</Publish>
         <Publish Event="SetInstallLevel" Value="1">SetupType="Typical"</Publish>
         <Publish Event="SetInstallLevel" Value="10">SetupType="Complete"</Publish>
-        <Publish Event="SetInstallLevel" Value="1">SetupType="Custom"</Publish>
+	<Publish Event="SetInstallLevel" Value="1">SetupType="Custom"</Publish>
+	<?if $(var.odbc_64bit) = 1 ?>
+	<Publish Property="TargetPath1" Value="64bit Driver: [Connector_ODBC_64]"><![CDATA[SetupType <> "Custom"]]></Publish>
+	<Publish Property="TargetPath2" Value="32bit Driver: [Connector_ODBC_32]"><![CDATA[SetupType <> "Custom"]]></Publish>
+	<Publish Property="TargetPath1">SetupType = "Custom"</Publish>
+	<Publish Property="TargetPath2">SetupType = "Custom"</Publish>
+	<?else ?>
+	<Publish Property="TargetPath1" Value="[Connector_ODBC_32]">1</Publish>
+	<?endif ?>
       </Control>
       
       <Control Id="Cancel" Type="PushButton" X="301" Y="243" Width="66" Height="17" Cancel="yes"
@@ -560,9 +569,11 @@
     -->
     
     <Dialog Id="CustomSetupDialog" Width="374" Height="266" Title="[ProductName] - Setup Wizard" NoMinimize="yes"
-      TrackDiskSpace="yes">
+        TrackDiskSpace="yes">
       <Control Id="Tree" Type="SelectionTree" X="8" Y="70" Width="220" Height="118" Property="_BrowseProperty"
-        Sunken="yes" TabSkip="no" />
+        Sunken="yes" TabSkip="no">
+	<!--Condition Action="SetPath2_32">MsiSelectionTreeSelectedFeature="ODBC_32" AND MsiSelectionTreeSelectedAction=2</Condition-->
+      </Control>
       <Control Id="ChangeFolder" Type="PushButton" X="301" Y="203" Width="66" Height="17" Text="&amp;Change...">
         <Publish Event="SelectionBrowse" Value="InstallChangeFolderDialog">1</Publish>
         <Condition Action="hide">Installed</Condition>
@@ -582,14 +593,28 @@
       </Control>
       
       <Control Id="Next" Type="PushButton" X="230" Y="243" Width="66" Height="17" Default="yes"
-        Text="&amp;Next &gt;">
-        <Publish Event="NewDialog" Value="ReadyToInstallDialog">OutOfNoRbDiskSpace &lt;&gt; 1</Publish>
+        Text="&amp;Next &gt;" Disabled="no">
+        <!--Publish Event="NewDialog" Value="ReadyToInstallDialog">OutOfNoRbDiskSpace &lt;&gt; 1</Publish-->
         <Publish Event="NewDialog" Value="OutOfSpaceDialog">OutOfNoRbDiskSpace = 1</Publish>
         <!-- in maintenance mode this dialog is called without the setuptypedialog -->
-        <Publish Property="SetupType" Value="Custom">1</Publish>
-        <!-- does not work..
-        <Subscribe Event="SelectionNoItems" Attribute="Disable" />
-        -->
+	<Publish Property="SetupType" Value="Custom">1</Publish>
+        <!-- for 32bit only installer we don't need those properties here. All required is set in setup type dialog -->
+        <?if $(var.odbc_64bit) = 1 ?>
+        <Publish Property="TargetPath1" Value="64bit Driver: [Connector_ODBC_64]"><![CDATA[&ODBC_64 > 0 AND &ODBC_64 <> !ODBC_64]]></Publish>
+        <Publish Property="TargetPath2" Value="32bit Driver: [Connector_ODBC_32]"><![CDATA[(&ODBC_64 > 0 AND &ODBC_64 <> !ODBC_64) AND (&ODBC_32> 0 AND &ODBC_32 <> !ODBC_32)]]></Publish>
+        <Publish Property="TargetPath1" Value="32bit Driver: [Connector_ODBC_32]"><![CDATA[NOT (&ODBC_64 > 0 AND &ODBC_64 <> !ODBC_64)]]></Publish>
+        <Publish Property="TargetPath2"><![CDATA[(NOT (&ODBC_64 > 0 AND &ODBC_64 <> !ODBC_64)) OR (&ODBC_32 > 0 AND &ODBC_32 = !ODBC_32)]]></Publish>
+        <?endif ?>
+        <Publish Event="NewDialog" Value="ReadyToInstallDialog">
+        <?if $(var.odbc_64bit) = 1 ?>
+        <![CDATA[(&ODBC_64 > 0 AND &ODBC_64 <> !ODBC_64) OR (&ODBC_32> 0 AND &ODBC_32 <> !ODBC_32)]]>
+        <?else ?>
+        <![CDATA[&ODBC_32> 0 AND &ODBC_32 <> !ODBC_32]]>
+        <?endif ?>	
+        </Publish>
+        <!-- These 2 cenable/disable conditions don't work perfectly, but perhaps they can be improved -->
+        <!--Condition Action="disable"><![CDATA[(NOT (&ODBC_64 > 0 AND &ODBC_64 <> !ODBC_64) OR (&ODBC_32 > 0 AND &ODBC_32 <> !ODBC_32))]]></Condition>
+        <Condition Action="enable"><![CDATA[(&ODBC_64 > 0 AND &ODBC_64 <> !ODBC_64) OR (&ODBC_32 > 0 AND &ODBC_32 <> !ODBC_32)]]></Condition-->
       </Control>
       
       <Control Id="Cancel" Type="PushButton" X="301" Y="243" Width="66" Height="17" Cancel="yes"
@@ -620,8 +645,8 @@
         <Subscribe Event="SelectionPath" Attribute="Text" />
       </Control>
       <Control Id="Banner" Type="Bitmap" X="0" Y="0" Width="374" Height="44" Text="AdminHeader" />
-      <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="378" Height="0" />
-      <Control Id="DlgLine" Type="Line" X="0" Y="234" Width="378" Height="0" />
+      <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="374" Height="0" />
+      <Control Id="DlgLine" Type="Line" X="0" Y="234" Width="374" Height="0" />
       <Control Id="FeatureGroup" Type="GroupBox" X="235" Y="67" Width="131" Height="120" Text="Feature Description" />
     </Dialog>
 
@@ -695,7 +720,9 @@
       <Control Id="TargetFolderText1" Type="Text" X="24" Y="136" Width="306" Height="11" TabSkip="no"
         Text="Destination Folder:" />
       <Control Id="TargetFolderText2" Type="Text" X="37" Y="151" Width="306" Height="13" TabSkip="no"
-        Text="[INSTALLDIR]" />                          
+        Text="[TargetPath1]" />                          
+      <Control Id="TargetFolderText3" Type="Text" X="37" Y="166" Width="306" Height="13" TabSkip="no"
+        Text="[TargetPath2]" />                          
       <Control Id="CurrentSettingsText" Type="Text" X="19" Y="80" Width="81" Height="10" TabSkip="no"
         Text="Current Settings:" />
       <Control Id="DlgDesc" Type="Text" X="21" Y="23" Width="292" Height="25" Transparent="yes">
@@ -714,8 +741,8 @@
         <Condition Action="show">ProgressType0="install"</Condition>
       </Control>
       <Control Id="Banner" Type="Bitmap" X="0" Y="0" Width="374" Height="44" Text="AdminHeader" />
-      <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="378" Height="0" />
-      <Control Id="DlgLine" Type="Line" X="0" Y="234" Width="378" Height="0" />
+      <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="372" Height="0" />
+      <Control Id="DlgLine" Type="Line" X="0" Y="234" Width="372" Height="0" />
       <Control Id="DlgText1" Type="Text" X="21" Y="54" Width="330" Height="24">
         <Text>If you want to review or change any of your installation settings, click Back. Click Cancel to exit the wizard.</Text>
       </Control>
@@ -851,7 +878,7 @@
       <Control Id="DlgLine" Type="Line" X="0" Y="234" Width="378" Height="0" />
       <!--
       <Control Id="DontInstall" Type="Icon" X="21" Y="155" Width="24" Height="24" FixedSize="yes"
-	      IconSize="32" Text="NewBinary15" />
+              IconSize="32" Text="NewBinary15" />
       -->
       <Control Id="DontInstallText" Type="Text" X="60" Y="155" Width="300" Height="20">
         <Text>Will not be installed.</Text>

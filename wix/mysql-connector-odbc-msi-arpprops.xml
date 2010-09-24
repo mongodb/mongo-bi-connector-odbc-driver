@@ -19,7 +19,11 @@
   <Icon Id="MySQLConnector.ico" SourceFile="$(var.odbc_resource)/MySQLConnector.ico" />
 
   <!-- Set up ARPINSTALLLOCATION property -->
-  <CustomAction Id="SetARPINSTALLLOCATION" Property="ARPINSTALLLOCATION" Value="[INSTALLDIR]" />
+  <?if $(var.odbc_64bit) = 1 ?>
+  <CustomAction Id="SetARPINSTALLLOCATION" Property="ARPINSTALLLOCATION" Value="[Connector_ODBC_64]" />
+  <?else ?>
+  <CustomAction Id="SetARPINSTALLLOCATION" Property="ARPINSTALLLOCATION" Value="[Connector_ODBC_32]" />
+  <?endif ?>
   <CustomAction Id="SetARPREADME" Property="ARPREADME" Value="[INSTALLDIR]README" />
 
   <!-- Sequences -->
