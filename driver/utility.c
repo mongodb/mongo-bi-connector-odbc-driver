@@ -3364,7 +3364,6 @@ char *proc_param_tokenize(char *str, int *params_num)
       quote_symbol= '\0';
     }
 
-
     ++str;
     --len;
   }
@@ -3411,4 +3410,19 @@ LIST *list_delete_forward(LIST *elem)
   }
 
   return elem;
+}
+
+
+/**
+   Sets row_count in STMT's MYSQL_RES and affected rows property MYSQL object. Primary use is to set
+   number of affected rows for constructed resulsets. Setting mysql.affected_rows
+   is required for SQLRowCount to return correct data for such resultsets.
+*/
+void set_rows_count(STMT *stmt, my_ulonglong rows)
+{
+  if (stmt != NULL && stmt->result != NULL)
+  {
+    stmt->result->row_count= rows;
+    stmt->dbc->mysql.affected_rows= rows;
+  }
 }

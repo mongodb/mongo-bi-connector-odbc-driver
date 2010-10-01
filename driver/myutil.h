@@ -313,6 +313,7 @@ SQLLEN proc_get_param_col_len(STMT *stmt, int sql_type_index, SQLULEN col_size,
 int proc_get_param_sql_type_index(SQLCHAR *ptype, int len);
 SQLTypeMap *proc_get_param_map_by_index(int index);
 char *proc_param_next_token(char *str, char *str_end);
+void set_rows_count(STMT * stmt, my_ulonglong rows);
 
 #ifdef __WIN__
 #define cmp_database(A,B) myodbc_strcasecmp((const char *)(A),(const char *)(B))

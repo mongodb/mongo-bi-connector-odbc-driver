@@ -12,6 +12,8 @@
     (Bug #56717)
   * Errors would not be reported in bulk upload. (Bug #56804)
   * MSI installer does not set InstallLocation value in registry. (Bug #56978)
+  * SQLProcedureColumns doesn't work with certain data/parameters combinations.
+    (Bug #57182)
 
 ----
 

@@ -1477,10 +1477,15 @@ mysql_procedure_columns(SQLHSTMT hstmt,
       if(!myodbc_strcasecmp(type_map->type_name, "set") ||
          !myodbc_strcasecmp(type_map->type_name, "enum"))
       {
-        sprintf(param_dbtype, "%s", "char");
+        data[mypcTYPE_NAME]= my_strdup("char", MYF(0));
+      }
+      else
+      {
+        data[mypcTYPE_NAME]= my_strdup(type_map->type_name, MYF(0));
       }
 
-      data[mypcTYPE_NAME]= my_strdup(myodbc_strlwr(param_dbtype, 0), MYF(0)); /* TYPE_NAME */
+
+       /* TYPE_NAME */
       
       proc_get_param_col_len(stmt, sql_type_index, param_size, dec, flags, param_size_buf);
       data[mypcCOLUMN_SIZE]= my_strdup(param_size_buf, MYF(0)); /* COLUMN_SIZE */
@@ -1555,6 +1560,8 @@ mysql_procedure_columns(SQLHSTMT hstmt,
     }
   }
   
+  return_params_num= total_params_num;
+
   if (cbColumnName)
   {
     pthread_mutex_lock(&stmt->dbc->lock);
@@ -1587,7 +1594,6 @@ mysql_procedure_columns(SQLHSTMT hstmt,
       params= params_r->next;
     }
 
-    return_params_num= total_params_num - 1;
     /* 1st element is always 1 */
     for (i= 1; i < columns_res->field_count; ++i)
     {
@@ -1595,6 +1601,11 @@ mysql_procedure_columns(SQLHSTMT hstmt,
       {
         --return_params_num;
       }
+    }
+
+    if (return_params_num == 0)
+    {
+      goto empty_set;
     }
   }
 
@@ -1605,12 +1616,14 @@ mysql_procedure_columns(SQLHSTMT hstmt,
   tempdata= stmt->result_array;
   
   if(params_r->next)
+  {
     params= params_r->next;
+  }
 
   /* copy data */
-  for (i= 1; i < total_params_num; ++i)
+  for (i= 0; i < total_params_num; ++i)
   {
-    int skip_result= (columns_res ? strcmp(row[i], "1") : 0);
+    int skip_result= (columns_res ? strcmp(row[i+1], "1") : 0);
     if(params && params->data)
     {
       cur_params= params;
@@ -1634,7 +1647,7 @@ mysql_procedure_columns(SQLHSTMT hstmt,
     }
   }
 
-  stmt->result->row_count= return_params_num;
+  set_rows_count(stmt, return_params_num);
 
   mysql_link_fields(stmt, SQLPROCEDURECOLUMNS_fields, SQLPROCEDURECOLUMNS_FIELDS);
 

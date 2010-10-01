@@ -2039,15 +2039,15 @@ DECLARE_TEST(t_sqlprocedurecolumns)
 
     param_cat= (SQLCHAR*)my_fetch_str(hstmt, buff, 1);
     is_str(param_cat, data_to_check[iter].c01_procedure_cat, 
-           strlen(data_to_check[iter].c01_procedure_cat));
+           strlen(data_to_check[iter].c01_procedure_cat) + 1);
 
     is_str(my_fetch_str(hstmt, buff, 3), 
            data_to_check[iter].c03_procedure_name, 
-           strlen(data_to_check[iter].c03_procedure_name));
+           strlen(data_to_check[iter].c03_procedure_name) + 1);
 
     param_name= (SQLCHAR*)my_fetch_str(hstmt, buff, 4);
     is_str(param_name, data_to_check[iter].c04_column_name, 
-           strlen(data_to_check[iter].c04_column_name));
+           strlen(data_to_check[iter].c04_column_name) + 1);
 
     is_num(my_fetch_int(hstmt, 5), data_to_check[iter].c05_column_type);
 
@@ -2055,7 +2055,7 @@ DECLARE_TEST(t_sqlprocedurecolumns)
 
     is_str(my_fetch_str(hstmt, buff, 7), 
            data_to_check[iter].c07_type_name, 
-           strlen(data_to_check[iter].c07_type_name));
+           strlen(data_to_check[iter].c07_type_name) + 1);
 
     col_size= my_fetch_uint(hstmt, 8);
     is_num(col_size, data_to_check[iter].c08_column_size);
@@ -2078,13 +2078,13 @@ DECLARE_TEST(t_sqlprocedurecolumns)
 
     is_str(my_fetch_str(hstmt, buff, 19), 
            data_to_check[iter].c19_is_nullable, 
-           strlen(data_to_check[iter].c19_is_nullable));
+           strlen(data_to_check[iter].c19_is_nullable + 1));
 
     ++iter;
   }
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
-    
+
   ok_sql(hstmt, "drop procedure if exists procedure_columns_test1");
   ok_sql(hstmt, "drop procedure if exists procedure_columns_test2");
   ok_sql(hstmt, "drop procedure if exists procedure_columns_test2_noparam");
@@ -2092,13 +2092,83 @@ DECLARE_TEST(t_sqlprocedurecolumns)
   ok_sql(hstmt, "drop function if exists procedure_columns_test4_func");
   ok_sql(hstmt, "drop function if exists procedure_columns_test4_func_noparam");
   ok_sql(hstmt, "drop procedure if exists procedure_columns_test5");
+  
 
   return OK;
 }
 
 
-BEGIN_TESTS
+DECLARE_TEST(t_bug57182)
+{
+  SQLLEN nRowCount;
+  SQLCHAR buff[24];
+
+  ok_sql(hstmt, "drop procedure if exists bug57182");
+  ok_sql(hstmt, "CREATE DEFINER=`adb`@`%` PROCEDURE `bug57182`(in id int, in name varchar(20)) "
+    "BEGIN"
+    "  insert into simp values (id, name);"
+    "END");
+
+  ok_stmt(hstmt, SQLProcedureColumns(hstmt, "test", SQL_NTS, NULL, 0,
+    "bug57182", SQL_NTS, 
+    NULL, 0));
+
+  ok_stmt(hstmt, SQLRowCount(hstmt, &nRowCount));
+  is_num(2, nRowCount)
   
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  
+  is_str(my_fetch_str(hstmt, buff, 3), "bug57182", 9);
+  is_str(my_fetch_str(hstmt, buff, 4), "id", 3);
+  is_str(my_fetch_str(hstmt, buff, 7), "int", 4);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_str(my_fetch_str(hstmt, buff, 3), "bug57182", 9);
+  is_str(my_fetch_str(hstmt, buff, 4), "name", 5);
+  is_str(my_fetch_str(hstmt, buff, 7), "varchar", 8);
+  is_num(my_fetch_int(hstmt, 8), 20);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+  
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* Almost the same thing but with column specified */
+  ok_stmt(hstmt, SQLProcedureColumns(hstmt, "test", SQL_NTS, NULL, 0,
+    "bug57182", SQL_NTS, 
+    "id", SQL_NTS));
+
+  ok_stmt(hstmt, SQLRowCount(hstmt, &nRowCount));
+  is_num(1, nRowCount)
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_str(my_fetch_str(hstmt, buff, 3), "bug57182", 9);
+  is_str(my_fetch_str(hstmt, buff, 4), "id", 3);
+  is_str(my_fetch_str(hstmt, buff, 7), "int", 4);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* And testing impossible column condition - expecting to get no rows */
+  ok_stmt(hstmt, SQLProcedureColumns(hstmt, "test", SQL_NTS, NULL, 0,
+    "bug57182", SQL_NTS, 
+    "non_existing_column%", SQL_NTS));
+
+  ok_stmt(hstmt, SQLRowCount(hstmt, &nRowCount));
+  is_num(0, nRowCount);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  ok_sql(hstmt, "drop procedure if exists bug57182");
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  return OK;
+}
+
+
+BEGIN_TESTS
+
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
   ADD_TEST(my_table_dbs)
@@ -2137,6 +2207,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug53235)
   ADD_TEST(t_bug50195)
   ADD_TEST(t_sqlprocedurecolumns)
+  ADD_TEST(t_bug57182)
 END_TESTS
 
 

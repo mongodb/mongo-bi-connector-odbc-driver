@@ -93,15 +93,22 @@ create_fake_resultset(STMT *stmt, MYSQL_ROW rowval, size_t rowsize,
   if (!(stmt->result && stmt->result_array))
   {
     if (stmt->result)
+    {
       my_free((char *)stmt->result, MYF(0));
+    }
     if (stmt->result_array)
+    {
       my_free((char *)stmt->result_array, MYF(0));
+    }
     set_mem_error(&stmt->dbc->mysql);
     return handle_connection_error(stmt);
   }
   stmt->fake_result= 1;
-  stmt->result->row_count= rowcnt;
+
+  set_rows_count(stmt, rowcnt);
+
   mysql_link_fields(stmt, fields, fldcnt);
+
   return SQL_SUCCESS;
 }
 
