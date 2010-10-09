@@ -26,16 +26,21 @@
 
 DECLARE_TEST(my_columns_null)
 {
+  SQLLEN rowCount= 0;
   /* initialize data */
-  ok_sql(hstmt,"drop table if exists my_column_null");
+  ok_sql(hstmt, "drop table if exists my_column_null");
 
   ok_sql(hstmt, "create table my_column_null(id int not null, name varchar(30))");
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_stmt(hstmt, SQLColumns(hstmt, NULL, SQL_NTS, NULL, SQL_NTS,
-                            (SQLCHAR *)"my_column_null", SQL_NTS,
-                            NULL, SQL_NTS));
+    (SQLCHAR *)"my_column_null", SQL_NTS,
+    NULL, SQL_NTS));
+
+  ok_stmt(hstmt, SQLRowCount(hstmt, &rowCount));
+
+  is_num(rowCount, 2);
 
   is_num(2, my_print_non_format_result(hstmt));
 
@@ -73,16 +78,22 @@ DECLARE_TEST(my_table_dbs)
     SQLCHAR    database[100];
     SQLRETURN  rc;
     SQLINTEGER nrows;
-    SQLLEN lenOrNull;
+    SQLLEN lenOrNull, rowCount= 0;
 
+    
     ok_sql(hstmt, "DROP DATABASE IF EXISTS my_all_db_test1");
     ok_sql(hstmt, "DROP DATABASE IF EXISTS my_all_db_test2");
     ok_sql(hstmt, "DROP DATABASE IF EXISTS my_all_db_test3");
     ok_sql(hstmt, "DROP DATABASE IF EXISTS my_all_db_test4");
+    
 
-    ok_stmt(hstmt, SQLTables(hstmt,(SQLCHAR *)"%",1,"",0,"",0,NULL,0));
+    ok_stmt(hstmt, SQLTables(hstmt,(SQLCHAR *)SQL_ALL_CATALOGS,1,"",0,"",0,NULL,0));
 
+    /* Added calls to SQLRowCount just to have tests of it with SQLTAbles. */
+    ok_stmt(hstmt, SQLRowCount(hstmt, &rowCount));
     nrows = my_print_non_format_result(hstmt);
+
+    is_num(rowCount, nrows)
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
@@ -97,7 +108,9 @@ DECLARE_TEST(my_table_dbs)
     rc = SQLTables(hstmt,(SQLCHAR *)"test",4,NULL,0,NULL,0,NULL,0);
     mystmt(hstmt,rc);
 
-    my_print_non_format_result(hstmt);
+    ok_stmt(hstmt, SQLRowCount(hstmt, &rowCount));
+    is_num(rowCount, my_print_non_format_result(hstmt));
+
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 
@@ -171,6 +184,9 @@ DECLARE_TEST(my_table_dbs)
     rc = SQLTables(hstmt, (SQLCHAR *)"my_all_db_test", SQL_NTS,
                    "", 0, "", 0, "", 0);
     mystmt(hstmt,rc);
+
+    ok_stmt(hstmt, SQLRowCount(hstmt, &rowCount));
+    is_num(rowCount, 0);
 
     is_num(my_print_non_format_result(hstmt), 0);
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
@@ -570,36 +586,36 @@ DECLARE_TEST(t_tables_bug)
   ok_stmt(hstmt,  SQLTables(hstmt, NULL, 0, NULL, 0, NULL, 0,
                             (SQLCHAR *)"'TABLE'", SQL_NTS));
 
-   ok_stmt(hstmt, SQLNumResultCols(hstmt, &ColumnCount));
-   is_num(ColumnCount, 5);
+  ok_stmt(hstmt, SQLNumResultCols(hstmt, &ColumnCount));
+  is_num(ColumnCount, 5);
 
-   for (i= 1; i <= ColumnCount; ++i)
-   {
-     ok_stmt(hstmt, SQLDescribeCol(hstmt, (SQLUSMALLINT)i, szColName,
-                                   MAX_NAME_LEN, &pcbColName, &pfSqlType,
-                                   &pcbColDef, &pibScale, &pfNullable));
+  for (i= 1; i <= ColumnCount; ++i)
+  {
+    ok_stmt(hstmt, SQLDescribeCol(hstmt, (SQLUSMALLINT)i, szColName,
+                                 MAX_NAME_LEN, &pcbColName, &pfSqlType,
+                                 &pcbColDef, &pibScale, &pfNullable));
 
-     fprintf(stdout, "# Column '%d':\n", i);
-     fprintf(stdout, "#  Column Name   : %s\n", szColName);
-     fprintf(stdout, "#  NameLengh     : %d\n", pcbColName);
-     fprintf(stdout, "#  DataType      : %d\n", pfSqlType);
-     fprintf(stdout, "#  ColumnSize    : %d\n", pcbColDef);
-     fprintf(stdout, "#  DecimalDigits : %d\n", pibScale);
-     fprintf(stdout, "#  Nullable      : %d\n", pfNullable);
+    fprintf(stdout, "# Column '%d':\n", i);
+    fprintf(stdout, "#  Column Name   : %s\n", szColName);
+    fprintf(stdout, "#  NameLengh     : %d\n", pcbColName);
+    fprintf(stdout, "#  DataType      : %d\n", pfSqlType);
+    fprintf(stdout, "#  ColumnSize    : %d\n", pcbColDef);
+    fprintf(stdout, "#  DecimalDigits : %d\n", pibScale);
+    fprintf(stdout, "#  Nullable      : %d\n", pfNullable);
 
-     is_str(t_tables_bug_data[i-1].szColName, szColName, pcbColName);
-     is_num(t_tables_bug_data[i-1].pcbColName, pcbColName);
-     is_num(t_tables_bug_data[i-1].pfSqlType, pfSqlType);
-     /* This depends on NAME_LEN in mysql_com.h */
-#if UNRELIABLE_TEST
-     is(t_tables_bug_data[i-1].pcbColDef == pcbColDef ||
-        t_tables_bug_data[i-1].pcbColDef == pcbColDef / 3);
-#endif
-     is_num(t_tables_bug_data[i-1].pibScale, pibScale);
-     is_num(t_tables_bug_data[i-1].pfNullable, pfNullable);
-   }
+    is_str(t_tables_bug_data[i-1].szColName, szColName, pcbColName);
+    is_num(t_tables_bug_data[i-1].pcbColName, pcbColName);
+    is_num(t_tables_bug_data[i-1].pfSqlType, pfSqlType);
+    /* This depends on NAME_LEN in mysql_com.h */
+    #if UNRELIABLE_TEST
+    is(t_tables_bug_data[i-1].pcbColDef == pcbColDef ||
+      t_tables_bug_data[i-1].pcbColDef == pcbColDef / 3);
+    #endif
+    is_num(t_tables_bug_data[i-1].pibScale, pibScale);
+    is_num(t_tables_bug_data[i-1].pfNullable, pfNullable);
+  }
 
-   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   return OK;
 }
@@ -689,68 +705,71 @@ DECLARE_TEST(tmysql_showkeys)
 
 DECLARE_TEST(t_sqltables)
 {
-    SQLRETURN r;
-    SQLINTEGER rows;
+  SQLRETURN   r;
+  SQLINTEGER  rows;
+  SQLLEN      rowCount;
 
-    ok_stmt(hstmt, SQLTables(hstmt,NULL,0,NULL,0,NULL,0,NULL,0));
+  ok_stmt(hstmt, SQLTables(hstmt,NULL,0,NULL,0,NULL,0,NULL,0));
 
-    myresult(hstmt);
+  myresult(hstmt);
 
-    r = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,r);
+  r = SQLFreeStmt(hstmt, SQL_CLOSE);
+  mystmt(hstmt,r);
 
-    r  = SQLTables(hstmt, NULL, 0, NULL, 0, NULL, 0,
-                   (SQLCHAR *)"'system table'", SQL_NTS);
-    mystmt(hstmt,r);
+  r  = SQLTables(hstmt, NULL, 0, NULL, 0, NULL, 0,
+                 (SQLCHAR *)"'system table'", SQL_NTS);
+  mystmt(hstmt,r);
 
-    is_num(myresult(hstmt), 0);
+  is_num(myresult(hstmt), 0);
 
-    r = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,r);
+  r = SQLFreeStmt(hstmt, SQL_CLOSE);
+  mystmt(hstmt,r);
 
-    r  = SQLTables(hstmt, NULL, 0, NULL, 0, NULL, 0,
-                   (SQLCHAR *)"TABLE", SQL_NTS);
-    mystmt(hstmt,r);
+  r  = SQLTables(hstmt, NULL, 0, NULL, 0, NULL, 0,
+                 (SQLCHAR *)"TABLE", SQL_NTS);
+  ok_stmt(hstmt, SQLRowCount(hstmt, &rowCount));
 
-    myresult(hstmt);
+  mystmt(hstmt,r);
 
-    r = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,r);
+  is_num(myresult(hstmt), rowCount);
 
-    r  = SQLTables(hstmt, (SQLCHAR *)"TEST", SQL_NTS,
-                   (SQLCHAR *)"TEST", SQL_NTS, NULL, 0,
-                   (SQLCHAR *)"TABLE", SQL_NTS);
-    mystmt(hstmt,r);
+  r = SQLFreeStmt(hstmt, SQL_CLOSE);
+  mystmt(hstmt,r);
 
-    myresult(hstmt);
+  r  = SQLTables(hstmt, (SQLCHAR *)"TEST", SQL_NTS,
+                 (SQLCHAR *)"TEST", SQL_NTS, NULL, 0,
+                 (SQLCHAR *)"TABLE", SQL_NTS);
+  mystmt(hstmt,r);
 
-    r = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,r);
+  myresult(hstmt);
 
-    r = SQLTables(hstmt, (SQLCHAR *)"%", SQL_NTS, NULL, 0, NULL, 0, NULL, 0);
-    mystmt(hstmt,r);
+  r = SQLFreeStmt(hstmt, SQL_CLOSE);
+  mystmt(hstmt,r);
 
-    myresult(hstmt);
+  r = SQLTables(hstmt, (SQLCHAR *)"%", SQL_NTS, NULL, 0, NULL, 0, NULL, 0);
+  mystmt(hstmt,r);
 
-    r = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,r);
+  myresult(hstmt);
 
-    r = SQLTables(hstmt, NULL, 0, (SQLCHAR *)"%", SQL_NTS, NULL, 0, NULL, 0);
-    mystmt(hstmt,r);
+  r = SQLFreeStmt(hstmt, SQL_CLOSE);
+  mystmt(hstmt,r);
 
-    myresult(hstmt);
+  r = SQLTables(hstmt, NULL, 0, (SQLCHAR *)"%", SQL_NTS, NULL, 0, NULL, 0);
+  mystmt(hstmt,r);
 
-    r = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,r);
+  myresult(hstmt);
 
-    r = SQLTables(hstmt, "", 0, "", 0, "", 0, (SQLCHAR *)"%", SQL_NTS);
-    mystmt(hstmt,r);
+  r = SQLFreeStmt(hstmt, SQL_CLOSE);
+  mystmt(hstmt,r);
 
-    rows= myresult(hstmt);
-    is_num(rows, 3);
+  r = SQLTables(hstmt, "", 0, "", 0, "", 0, (SQLCHAR *)"%", SQL_NTS);
+  mystmt(hstmt,r);
 
-    r = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,r);
+  rows= myresult(hstmt);
+  is_num(rows, 3);
+
+  r = SQLFreeStmt(hstmt, SQL_CLOSE);
+  mystmt(hstmt,r);
 
   return OK;
 }
@@ -1526,7 +1545,7 @@ DECLARE_TEST(t_bug37621)
   ok_stmt(hstmt, SQLDescribeCol(hstmt, 5, szColName, sizeof(szColName), 
           &iName, &iType, &uiDef, &iScale, &iNullable));
 
-  is_str(szColName, "REMARKS", 7);
+  is_str(szColName, "REMARKS", 8);
   is_num(iName, 7);
   if (iType != SQL_VARCHAR && iType != SQL_WVARCHAR)
     return FAIL;
@@ -1629,9 +1648,9 @@ DECLARE_TEST(t_bug51422)
   ok_sql(hstmt, "drop table if exists t_bug51422_r");
 
   ok_sql(hstmt, "create table t_bug51422_r (id int unsigned not null primary key, ukey int unsigned not null,"
-                "name varchar(10) not null, UNIQUE KEY uk(ukey))");
+                "name varchar(10) not null, UNIQUE KEY uk(ukey)) ENGINE=InnoDB");
   ok_sql(hstmt, "create table t_bug51422 (id int unsigned not null primary key, refid int unsigned not null,"
-                "foreign key t_bug51422fk (id) references t_bug51422_r (ukey))");
+                "foreign key t_bug51422fk (id) references t_bug51422_r (ukey))  ENGINE=InnoDB");
 
   ok_stmt(hstmt, SQLForeignKeys(hstmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
                                 NULL, 0, (SQLCHAR *)"t_bug51422", SQL_NTS));
@@ -1656,10 +1675,10 @@ DECLARE_TEST(t_bug36441)
   const SQLCHAR key_column_name[][14]= {"pk_for_table1", "c1_for_table1"};
 
   SQLCHAR     catalog[BUF_LEN], schema[BUF_LEN], table[BUF_LEN], column[BUF_LEN];
-  SQLLEN  catalog_len, schema_len, table_len, column_len;
+  SQLLEN      catalog_len, schema_len, table_len, column_len;
   SQLCHAR     keyname[BUF_LEN];
   SQLSMALLINT key_seq, i;
-  SQLLEN  keyname_len, key_seq_len;
+  SQLLEN      keyname_len, key_seq_len, rowCount;
 
   ok_sql(hstmt, "drop table if exists t_bug36441_0123456789");
   ok_sql(hstmt, "create table t_bug36441_0123456789("
@@ -1671,6 +1690,10 @@ DECLARE_TEST(t_bug36441)
 
   ok_stmt(hstmt, SQLPrimaryKeys(hstmt, NULL, SQL_NTS, NULL, SQL_NTS, "t_bug36441_0123456789", SQL_NTS));
 
+  /* Test of SQLRowCount with SQLPrimaryKeys */
+  ok_stmt(hstmt, SQLRowCount(hstmt, &rowCount));
+  is_num(rowCount, 2);
+
   ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR , catalog, sizeof(catalog), &catalog_len));
   ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR , schema , sizeof(schema) , &schema_len));
   ok_stmt(hstmt, SQLBindCol(hstmt, 3, SQL_C_CHAR , table  , sizeof(table)  , &table_len));
@@ -1678,7 +1701,7 @@ DECLARE_TEST(t_bug36441)
   ok_stmt(hstmt, SQLBindCol(hstmt, 5, SQL_C_SHORT,&key_seq, sizeof(key_seq), &key_seq_len));
   ok_stmt(hstmt, SQLBindCol(hstmt, 6, SQL_C_CHAR , keyname, sizeof(keyname), &keyname_len));
 
-  for(i=0; i < 2; ++i)
+  for(i= 0; i < 2; ++i)
   {
     ok_stmt(hstmt, SQLFetch(hstmt));
 
@@ -2167,8 +2190,116 @@ DECLARE_TEST(t_bug57182)
 }
 
 
-BEGIN_TESTS
+/* SQLRowCount() doesn't work with SQLTables and other functions
+   Testing of that with SQLTables, SQLColumn is incorporated in other testcases
+*/
+DECLARE_TEST(t_bug55870)
+{
+  SQLLEN  rowCount;
+  SQLCHAR noI_SconnStr[256], query[256];
+  HDBC    hdbc1;
+  HSTMT   hstmt1;
 
+  ok_sql(hstmt, "drop table if exists bug55870r");
+  ok_sql(hstmt, "drop table if exists bug55870_2");
+  ok_sql(hstmt, "drop table if exists bug55870");
+  ok_sql(hstmt, "create table bug55870(a int not null primary key, "
+    "b varchar(20) not null, c varchar(100) not null, INDEX(b)) ENGINE=InnoDB");
+
+  /* There should be no problems with I_S version of SQLTablePrivileges. Thus need connection
+     not using I_S. SQlStatistics doesn't have I_S version, but it ma change at certain point.
+     Thus let's test it on NO_I_S connection too */
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+
+  sprintf((char *)noI_SconnStr, "DSN=%s;UID=%s;PWD=%s; NO_I_S=1", mydsn, myuid, mypwd);
+
+  if (mysock != NULL)
+  {
+    strcat((char *)noI_SconnStr, ";SOCKET=");
+    strcat((char *)noI_SconnStr, (char *)mysock);
+  }
+
+  if (myport)
+  {
+    char pbuff[20];
+    sprintf(pbuff, ";PORT=%d", myport);
+    strcat((char *)noI_SconnStr, pbuff);
+  }
+
+  sprintf(query, "grant Insert, Select on bug55870 to %s", myuid);
+  ok_stmt(hstmt, SQLExecDirect(hstmt, query, SQL_NTS));
+  sprintf(query, "grant Insert (c), Select (c), Update (c) on bug55870 to %s", myuid);
+  ok_stmt(hstmt, SQLExecDirect(hstmt, query, SQL_NTS));
+
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, noI_SconnStr, sizeof(noI_SconnStr), NULL,
+                                0, NULL, SQL_DRIVER_NOPROMPT));
+
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_stmt(hstmt1, SQLStatistics(hstmt1, NULL, 0, NULL, 0,
+                                   "bug55870", SQL_NTS,
+                                   SQL_INDEX_UNIQUE, SQL_QUICK));
+  ok_stmt(hstmt1, SQLRowCount(hstmt1, &rowCount));
+  is_num(rowCount, 1);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_stmt(hstmt1, SQLTablePrivileges(hstmt1, "test", SQL_NTS, 0, 0, "bug55870",
+                                    SQL_NTS));
+
+  ok_stmt(hstmt1, SQLRowCount(hstmt1, &rowCount));
+  is_num(rowCount, my_print_non_format_result(hstmt1));
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_stmt(hstmt1, SQLColumnPrivileges(hstmt1, "test", SQL_NTS, 0, 0, "bug55870",
+                                      SQL_NTS, "c", SQL_NTS));
+
+  ok_stmt(hstmt1, SQLRowCount(hstmt1, &rowCount));
+  is_num(rowCount, my_print_non_format_result(hstmt1));
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_sql(hstmt, "create table bug55870_2 (id int not null primary key, value "
+                "varchar(255) not null) ENGINE=InnoDB");
+  ok_sql(hstmt, "create table bug55870r (id int unsigned not null primary key,"
+                "refid int not null, refid2 int not null,"
+                "somevalue varchar(20) not null,  foreign key b55870fk1 (refid) "
+                "references bug55870 (a), foreign key b55870fk2 (refid2) "
+                "references bug55870_2 (id)) ENGINE=InnoDB");
+
+  /* actually... looks like no-i_s version of SQLForeignKeys is broken on latest
+     server versions. comment in "show table status..." contains nothing */
+  ok_stmt(hstmt1, SQLForeignKeys(hstmt1, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
+    NULL, 0, (SQLCHAR *)"bug55870r", SQL_NTS));
+
+  ok_stmt(hstmt1, SQLRowCount(hstmt1, &rowCount));
+  is_num(rowCount, my_print_non_format_result(hstmt1));
+
+  /** surprise-surprise - just removing table is not enough to remove related
+      records from tables_priv and columns_priv
+  */
+  sprintf(query, "revoke select,insert on bug55870 from %s", myuid);
+  ok_stmt(hstmt, SQLExecDirect(hstmt, query, SQL_NTS));
+
+  sprintf(query, "revoke select (c),insert (c),update (c) on bug55870 from %s", myuid);
+  ok_stmt(hstmt, SQLExecDirect(hstmt, query, SQL_NTS));
+
+  /*
+  ok_sql(hstmt, "drop table if exists bug55870r");
+    ok_sql(hstmt, "drop table if exists bug55870_2");
+    ok_sql(hstmt, "drop table if exists bug55870");*/
+  
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+
+  return OK;
+}
+
+
+BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
   ADD_TEST(my_table_dbs)
@@ -2208,6 +2339,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug50195)
   ADD_TEST(t_sqlprocedurecolumns)
   ADD_TEST(t_bug57182)
+  ADD_TEST(t_bug55870)
 END_TESTS
 
 

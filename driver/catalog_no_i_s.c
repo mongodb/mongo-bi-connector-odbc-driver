@@ -489,7 +489,7 @@ mysql_columns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
     mysql_free_result(table_res);
   }
 
-  stmt->result->row_count= rows;
+  set_row_count(stmt, rows);
   mysql_link_fields(stmt, SQLCOLUMNS_fields, SQLCOLUMNS_FIELDS);
 
   return SQL_SUCCESS;
@@ -668,8 +668,10 @@ mysql_list_table_priv(SQLHSTMT hstmt,
         data+= SQLTABLES_PRIV_FIELDS;
       }
     }
-    stmt->result->row_count= row_count;
+
+    set_row_count(stmt, row_count);
     mysql_link_fields(stmt,SQLTABLES_priv_fields,SQLTABLES_PRIV_FIELDS);
+
     return SQL_SUCCESS;
 }
 
@@ -815,7 +817,7 @@ mysql_list_column_priv(SQLHSTMT hstmt,
       data+= SQLCOLUMNS_PRIV_FIELDS;
     }
   }
-  stmt->result->row_count= row_count;
+  set_row_count(stmt, row_count);
   mysql_link_fields(stmt,SQLCOLUMNS_priv_fields,SQLCOLUMNS_PRIV_FIELDS);
   return SQL_SUCCESS;
 }
@@ -844,7 +846,7 @@ MYSQL_RES *mysql_table_status_show(STMT        *stmt,
 {
 	MYSQL *mysql= &stmt->dbc->mysql;
 	/** @todo determine real size for buffer */
-	char buff[255], *to;
+	char buff[36 + 4*NAME_LEN + 1], *to;
 
 	to= strmov(buff, "SHOW TABLE STATUS ");
 	if (catalog && *catalog)
@@ -874,12 +876,16 @@ MYSQL_RES *mysql_table_status_show(STMT        *stmt,
 		to= strmov(to, "'");
 	}
 
-	MYLOG_QUERY(stmt, buff);
+  MYLOG_QUERY(stmt, buff);
 
-	if (mysql_query(mysql,buff))
-		return NULL;
+  assert(to - buff < sizeof(buff));
 
-	return mysql_store_result(mysql);
+  if (mysql_real_query(mysql,buff,(unsigned long)(to - buff)))
+  {
+    return NULL;
+  }
+
+  return mysql_store_result(mysql);
 }
 
 
@@ -1096,7 +1102,7 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
     return handle_connection_error(stmt);
   }
 
-  stmt->result->row_count= row_count;
+  set_row_count(stmt, row_count);
   mysql_link_fields(stmt,SQLFORE_KEYS_fields,SQLFORE_KEYS_FIELDS);
   return SQL_SUCCESS;
 
@@ -1198,8 +1204,8 @@ mysql_primary_keys(SQLHSTMT hstmt,
             data+= SQLPRIM_KEYS_FIELDS;
         }
     }
-    stmt->result->row_count= row_count;
 
+    set_row_count(stmt, row_count);
     mysql_link_fields(stmt,SQLPRIM_KEYS_fields,SQLPRIM_KEYS_FIELDS);
 
     return SQL_SUCCESS;
@@ -1647,7 +1653,7 @@ mysql_procedure_columns(SQLHSTMT hstmt,
     }
   }
 
-  set_rows_count(stmt, return_params_num);
+  set_row_count(stmt, return_params_num);
 
   mysql_link_fields(stmt, SQLPROCEDURECOLUMNS_fields, SQLPROCEDURECOLUMNS_FIELDS);
 
@@ -1969,11 +1975,15 @@ mysql_statistics(SQLHSTMT hstmt,
                 prev= &pos->next;
             }
             else
+            {
                 --stmt->result->row_count;
+            }
         }
         (*prev)= 0;
         mysql_data_seek(stmt->result,0);  /* Restore pointer */
     }
+
+    set_row_count(stmt, stmt->result->row_count);
     mysql_link_fields(stmt,SQLSTAT_fields,SQLSTAT_FIELDS);
     return SQL_SUCCESS;
 
@@ -2193,7 +2203,7 @@ mysql_tables(SQLHSTMT hstmt,
         data+= SQLTABLES_FIELDS;
       }
 
-      stmt->result->row_count= row_count;
+      set_row_count(stmt, row_count);
     }
 
     mysql_link_fields(stmt, SQLTABLES_fields, SQLTABLES_FIELDS);

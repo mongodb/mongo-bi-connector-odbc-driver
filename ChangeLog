@@ -14,6 +14,8 @@
   * MSI installer does not set InstallLocation value in registry. (Bug #56978)
   * SQLProcedureColumns doesn't work with certain data/parameters combinations.
     (Bug #57182)
+  * SQLRowCount return wrong result row count for SQLTables and some other 
+    catalog functions. (Bug #57182)
 
 ----
 

@@ -105,7 +105,7 @@ create_fake_resultset(STMT *stmt, MYSQL_ROW rowval, size_t rowsize,
   }
   stmt->fake_result= 1;
 
-  set_rows_count(stmt, rowcnt);
+  set_row_count(stmt, rowcnt);
 
   mysql_link_fields(stmt, fields, fldcnt);
 
@@ -582,7 +582,7 @@ SQLRETURN i_s_list_table_priv(SQLHSTMT    hstmt,
 
   assert(pos - buff < sizeof(buff));
 
-  if( !SQL_SUCCEEDED(rc= MySQLPrepare(hstmt, (SQLCHAR *)buff, SQL_NTS, FALSE)))
+  if( !SQL_SUCCEEDED(rc= MySQLPrepare(hstmt, (SQLCHAR *)buff, (SQLINTEGER)(pos - buff), FALSE)))
     return rc;
 
   return my_SQLExecute(stmt);

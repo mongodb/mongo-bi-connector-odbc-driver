@@ -3418,7 +3418,7 @@ LIST *list_delete_forward(LIST *elem)
    number of affected rows for constructed resulsets. Setting mysql.affected_rows
    is required for SQLRowCount to return correct data for such resultsets.
 */
-void set_rows_count(STMT *stmt, my_ulonglong rows)
+void set_row_count(STMT *stmt, my_ulonglong rows)
 {
   if (stmt != NULL && stmt->result != NULL)
   {
