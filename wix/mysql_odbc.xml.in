@@ -46,7 +46,7 @@
     <?if $(var.odbc_64bit) = 1 ?>
     <?define odbc_platform="x64" ?>
     <?else ?>
-    <?define odbc_platform="Intel" ?>
+    <?define odbc_platform="x86" ?>
     <?endif ?>
 
     <Package Id="@CONNECTOR_PKG_ID2@" Keywords="Installer,MSI,Database" 
