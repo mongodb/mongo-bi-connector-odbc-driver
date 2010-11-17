@@ -1,4 +1,8 @@
-5.1.8
+5.1.9
+
+----
+
+5.1.8 (08-Nov-2010)
 
   Functionality added or changed:
 
@@ -16,6 +20,9 @@
     (Bug #57182)
   * SQLRowCount return wrong result row count for SQLTables and some other 
     catalog functions. (Bug #57182)
+
+
+  Built using MySQL 5.1.46sp1.
 
 ----
 

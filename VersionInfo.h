@@ -23,11 +23,11 @@
 */
 
 /* When changing, also change configure.in and driver/driver.def */
-#define SETUP_VERSION         "5.01.0008"
+#define SETUP_VERSION         "5.01.0009"
 #define DRIVER_VERSION        "0" SETUP_VERSION
 
 #define MYODBC_VERSION        SETUP_VERSION
-#define MYODBC_FILEVER        5,1,8,0
+#define MYODBC_FILEVER        5,1,9,0
 #define MYODBC_PRODUCTVER     MYODBC_FILEVER
-#define MYODBC_STRFILEVER     "5, 1, 8, 0\0"
+#define MYODBC_STRFILEVER     "5, 1, 9, 0\0"
 #define MYODBC_STRPRODUCTVER  MYODBC_STRFILEVER

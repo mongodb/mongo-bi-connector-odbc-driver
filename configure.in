@@ -26,7 +26,7 @@ AC_PREREQ(2.12)dnl    Minimum Autoconf version required.
 AC_CANONICAL_SYSTEM
 
 # When changing, also change VersionInfo.h and driver/driver.def
-AM_INIT_AUTOMAKE(mysql-connector-odbc, 5.1.8)
+AM_INIT_AUTOMAKE(mysql-connector-odbc, 5.1.9)
 
 # Version but without "-alpha", "-beta", i.e. numeric part
 NUMERIC_VERSION=`echo "$VERSION" | sed 's/-.*//'`
