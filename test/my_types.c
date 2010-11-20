@@ -1073,34 +1073,54 @@ DECLARE_TEST(t_bug29402)
 {
   SQLSMALLINT name_length, data_type, decimal_digits, nullable;
   SQLCHAR column_name[SQL_MAX_COLUMN_NAME_LEN];
+  SQLCHAR conn[256], conn_out[256];
+  SQLSMALLINT conn_out_len;
   SQLULEN column_size;
-  SQLHENV    henv1;
+  SQLCHAR buf[80]= {0};
+  SQLLEN buflen= 0;
   SQLHDBC    hdbc1;
   SQLHSTMT   hstmt1;
 
-  /* First check how the option FLAG_NO_BINARY_RESULT works */
-  SET_DSN_OPTION(1 << 28);
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
 
-  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+  /* First check how the option NO_BINARY_RESULT works */
+  sprintf((char *)conn, 
+          "DSN=%s;UID=%s;PWD=%s;NO_BINARY_RESULT=1;CHARSET=CP1251",
+          mydsn, myuid, mypwd);
 
-  ok_sql(hstmt1, "SELECT CONCAT('ABCDEFG', 20) concated");
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, SQL_NTS, conn_out,
+                                 sizeof(conn_out), &conn_out_len,
+                                 SQL_DRIVER_NOPROMPT));
+
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_sql(hstmt1, "SELECT CONCAT('русский текст', 20) concated");
 
   ok_stmt(hstmt1, SQLDescribeCol(hstmt1, 1, column_name, sizeof(column_name),
                                 &name_length, &data_type, &column_size,
                                 &decimal_digits, &nullable));
 
   is(data_type == SQL_VARCHAR || data_type == SQL_WVARCHAR);
-  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
-  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  ok_stmt(hstmt1, SQLGetData(hstmt1, 1, SQL_C_CHAR, buf, sizeof(buf), &buflen));
+
+  is_num(buflen, 15);
+  is_str(buf, "русский текст20", buflen);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
 
   /* Check without FLAG_NO_BINARY_RESULT */
-  ok_sql(hstmt, "SELECT CONCAT('ABCDEFG', 20) concated");
+  ok_sql(hstmt, "SELECT CONCAT('русский текст', 20) concated");
 
   ok_stmt(hstmt, SQLDescribeCol(hstmt, 1, column_name, sizeof(column_name),
                                 &name_length, &data_type, &column_size,
                                 &decimal_digits, &nullable));
 
   is_num(data_type, SQL_VARBINARY);
+
   return OK;
 }
 

@@ -462,9 +462,14 @@ copy_ansi_result(STMT *stmt,
   char *src_end;
   SQLCHAR *result_end;
   ulong used_bytes= 0, used_chars= 0, error_count= 0;
+
+  my_bool convert_binary= test(field->charsetnr == BINARY_CHARSET_NUMBER) &&
+                          test(field->org_table_length == 0) &&
+                          stmt->dbc->ds->handle_binary_as_char;
+
   CHARSET_INFO *to_cs= stmt->dbc->ansi_charset_info,
-               *from_cs= get_charset(field->charsetnr ? field->charsetnr :
-                                     UTF8_CHARSET_NUMBER,
+               *from_cs= get_charset(field->charsetnr && (!convert_binary) ? 
+                                     field->charsetnr : UTF8_CHARSET_NUMBER,
                                      MYF(0));
 
   if (!from_cs)

@@ -299,7 +299,6 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
           length= 19;
         }
 
-        /* Looks like this if and its "else" part are not needed here */
         if (fCType == SQL_C_BINARY)
           return copy_binary_result(stmt, (SQLCHAR *)rgbValue, cbValueMax,
                                     pcbValue, field, value, length);
