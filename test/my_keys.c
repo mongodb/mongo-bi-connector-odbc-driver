@@ -122,7 +122,7 @@ DECLARE_TEST(my_foreign_keys)
     ok_sql(hstmt,
                        "CREATE TABLE test_fkey1(\
                  A INTEGER NOT NULL,B INTEGER NOT NULL,C INTEGER NOT NULL,\
-                 D INTEGER,PRIMARY KEY (C,B,A))TYPE=InnoDB;");
+                 D INTEGER,PRIMARY KEY (C,B,A)) ENGINE=InnoDB;");
 
     ok_sql(hstmt,
                        "CREATE TABLE test_fkey_p1(\
@@ -132,13 +132,13 @@ DECLARE_TEST(my_foreign_keys)
                  J INTEGER NOT NULL,K INTEGER NOT NULL,L INTEGER NOT NULL,\
                  M INTEGER NOT NULL,N INTEGER NOT NULL,O INTEGER NOT NULL,\
                  P INTEGER NOT NULL,Q INTEGER NOT NULL,R INTEGER NOT NULL,\
-                 PRIMARY KEY (D,F,G,H,I,J,K,L,M,N,O))TYPE=InnoDB;");
+                 PRIMARY KEY (D,F,G,H,I,J,K,L,M,N,O)) ENGINE=InnoDB;");
     ok_sql(hstmt,
                         "CREATE TABLE test_fkey2 (\
                  E INTEGER NOT NULL,C INTEGER NOT NULL,B INTEGER NOT NULL,\
                  A INTEGER NOT NULL,PRIMARY KEY (E),\
                  INDEX test_fkey2_ind(C,B,A),\
-                 FOREIGN KEY (C,B,A) REFERENCES test_fkey1(C,B,A))TYPE=InnoDB;");
+                 FOREIGN KEY (C,B,A) REFERENCES test_fkey1(C,B,A)) ENGINE=InnoDB;");
 
     ok_sql(hstmt,
                         "CREATE TABLE test_fkey3 (\
@@ -148,7 +148,7 @@ DECLARE_TEST(my_foreign_keys)
                  INDEX test_fkey3_ind(C,B,A),\
                  INDEX test_fkey3_ind3(E),\
                  FOREIGN KEY (C,B,A) REFERENCES test_fkey1(C,B,A),\
-                 FOREIGN KEY (E) REFERENCES test_fkey2(E))TYPE=InnoDB;");
+                 FOREIGN KEY (E) REFERENCES test_fkey2(E)) ENGINE=InnoDB;");
 
     ok_sql(hstmt,
                        "CREATE TABLE test_fkey_c1(\
@@ -165,7 +165,7 @@ DECLARE_TEST(my_foreign_keys)
                  FOREIGN KEY (D,F,G,H,I,J,K,L,M,N,O) REFERENCES \
                    test_fkey_p1(D,F,G,H,I,J,K,L,M,N,O),\
                  FOREIGN KEY (C,B,A) REFERENCES test_fkey1(C,B,A),\
-                 FOREIGN KEY (E) REFERENCES test_fkey2(E))TYPE=InnoDB;");
+                 FOREIGN KEY (E) REFERENCES test_fkey2(E)) ENGINE=InnoDB;");
 
     ok_sql(hstmt,
                        "CREATE TABLE test_fkey_comment_p ( \
@@ -177,7 +177,7 @@ DECLARE_TEST(my_foreign_keys)
 	              PRIMARY KEY PL_ISP_PK (ISP_ID), \
 	              UNIQUE INDEX PL_ISP_CUSTOMER_ID_UK (CUSTOMER_ID), \
 	              UNIQUE INDEX PL_ISP_ABBR_UK (ABBREVIATION) \
-              ) TYPE = InnoDB COMMENT ='Holds the information of (customers)'");
+                ) ENGINE=InnoDB COMMENT='Holds the information of (customers)'");
 
     ok_sql(hstmt,
                        "CREATE TABLE test_fkey_comment_f ( \
@@ -192,7 +192,7 @@ DECLARE_TEST(my_foreign_keys)
 	              UNIQUE INDEX PL_ISP_CAMPAIGN_BT_UK (BILLING_TYPE), \
 	              INDEX PL_ISP_CAMPAIGN_ISP_ID_IX (ISP_ID), \
 	              FOREIGN KEY (ISP_ID) REFERENCES test_fkey_comment_p(ISP_ID) \
-              ) TYPE = InnoDB COMMENT ='List of campaigns (test comment)'");
+              ) ENGINE=InnoDB COMMENT='List of campaigns (test comment)'");
 
     SQLFreeStmt(hstmt,SQL_CLOSE);
 

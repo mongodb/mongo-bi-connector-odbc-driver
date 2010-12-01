@@ -137,7 +137,7 @@ DECLARE_TEST(t_tstotime)
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
 
-    rc = tmysql_exec(hstmt,"create table t_tstotime(col1 date ,col2 time, col3 timestamp(14))");
+    rc = tmysql_exec(hstmt,"create table t_tstotime(col1 date ,col2 time, col3 timestamp)");
     mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
@@ -286,7 +286,7 @@ DECLARE_TEST(t_time)
   SQLCHAR         str[20];
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_time");
-    rc = tmysql_exec(hstmt,"create table t_time(tm time, ts timestamp(14))");
+    rc = tmysql_exec(hstmt,"create table t_time(tm time, ts timestamp)");
     mystmt(hstmt,rc);
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);

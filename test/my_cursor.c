@@ -1988,8 +1988,8 @@ DECLARE_TEST(t_setpos_upd_bug1)
     rc = tmysql_exec(hstmt,"create table t_setpos_upd_bug1(id int(11) NOT NULL auto_increment,\
                                                            fname char(20) NOT NULL default '',\
                                                            lname char(20) NOT NULL default '',\
-                                                           last_modi timestamp(14),\
-                                                           PRIMARY KEY(id)) TYPE=MyISAM");
+                                                           last_modi timestamp,\
+                                                           PRIMARY KEY(id)) ENGINE=MyISAM");
     mystmt(hstmt,rc);
 
     rc = tmysql_exec(hstmt,"insert into t_setpos_upd_bug1(fname,lname) values('joshua','kugler')");

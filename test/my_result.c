@@ -1112,7 +1112,7 @@ int desccol(SQLHSTMT hstmt, char *cname, SQLSMALLINT clen,
 
 DECLARE_TEST(t_desccolext)
 {
-    SQLRETURN rc;
+  SQLRETURN rc;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_desccolext");
 
@@ -1150,8 +1150,7 @@ DECLARE_TEST(t_desccolext)
         n2 numeric(10,3),\
         dt date,\
         dtime datetime,\
-        ts1 timestamp(8),\
-        ts2 timestamp(14),\
+        ts timestamp,\
         ti  time,\
         yr1 year,\
         yr2 year(2),\
@@ -1322,8 +1321,7 @@ DECLARE_TEST(t_colattributes)
          "n2 NUMERIC(10,3),"
          "dt DATE,"
          "dtime DATETIME,"
-         "ts1 TIMESTAMP(8),"
-         "ts2 TIMESTAMP(14),"
+         "ts TIMESTAMP,"
          "ti  TIME,"
          "yr1 YEAR,"
          "yr2 YEAR(2),"
@@ -1350,7 +1348,7 @@ DECLARE_TEST(t_colattributes)
 
   ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_COLUMN_COUNT, NULL, 0, NULL,
                                  &count));
-  is(count == 55);
+  is(count == 54);
 
   ok_stmt(hstmt, SQLColAttribute(hstmt, 1, SQL_COLUMN_AUTO_INCREMENT, NULL, 0,
                                  NULL, &isauto));

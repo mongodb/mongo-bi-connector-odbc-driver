@@ -42,7 +42,7 @@ DECLARE_TEST(my_init_table)
                               id   int,\
                               auto int primary key auto_increment,\
                               name varchar(20),\
-                              timestamp timestamp(14))");
+                              timestamp timestamp)");
 
   return OK;
 }
@@ -234,7 +234,7 @@ DECLARE_TEST(tmysql_fix)
                   fix_err varchar(100) default NULL,\
                   sql_err varchar(255) default NULL,\
                   prog_err varchar(100) default NULL\
-                ) TYPE=MyISAM");
+                ) ENGINE=MyISAM");
 
   ok_sql(hstmt,"INSERT INTO tmysql_err VALUES\
                   ('0000-00-00','0','0','0','0','0','0'),\
