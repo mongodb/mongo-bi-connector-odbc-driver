@@ -103,8 +103,6 @@ BOOL MYODBCUtilDefaultDataSource( MYODBCUTIL_DATASOURCE *pDataSource )
           pDataSource->pszCHARSET= NULL;
 	}
 
-  pDataSource->bINTERACTIVE= FALSE;
-
 #ifndef _UNIX_
     /* Here we actually unset socket for non-UNIX as it does not apply. */
     if ( pDataSource->pszSOCKET && !pDataSource->pszSOCKET[0] )

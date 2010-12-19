@@ -166,7 +166,11 @@ BOOL MYODBCUtilReadDataSource( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszDSN
             }
             else if ( strcasecmp( pszEntryName, "INTERACTIVE" ) == 0 )
             {
-              pDataSource->bINTERACTIVE= (atol(szValue) != 0);
+              // If some connection option is set in a connection string, it has
+              // priority over value set in DSN for it.
+              // TODO: Following is not absolutely correct - if str contains
+              // INTERACTIVE=0, while DSN - INTERACTIVE=1, driver will use DSN's value
+              pDataSource->bINTERACTIVE= pDataSource->bINTERACTIVE || (atol(szValue) != 0);
             }
             else if ( strcasecmp( pszEntryName, "PWD" ) == 0 || strcasecmp( pszEntryName, "PASSWORD" ) == 0 )
             {    
@@ -188,7 +192,7 @@ BOOL MYODBCUtilReadDataSource( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszDSN
                 if ( !pDataSource->pszSOCKET )
                     pDataSource->pszSOCKET = _global_strdup( szValue );
             }
-            else if ( strcasecmp( pszEntryName, "STMT" ) == 0 )
+            else if ( strcasecmp( pszEntryName, "STMT" ) == 0 || strcasecmp( pszEntryName, "INITSTMT" ) == 0 )
             {    
                 if ( !pDataSource->pszSTMT )
                     pDataSource->pszSTMT = _global_strdup( szValue );

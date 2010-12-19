@@ -166,7 +166,8 @@ BOOL MYODBCUtilReadConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszStr
                             if ( !pDataSource->pszSOCKET )
                                 pDataSource->pszSOCKET = (char *)_global_strndup( pAnchorChar, pScanChar - pAnchorChar );
                         }
-                        else if ( strcasecmp( pszName, "STMT" ) == 0 )
+                        /* We have INITSTMT */
+                        else if ( strcasecmp( pszName, "STMT" ) == 0 || strcasecmp( pszName, "INITSTMT" ) == 0)
                         {    
                             if ( !pDataSource->pszSTMT )
                                 pDataSource->pszSTMT = (char *)_global_strndup( pAnchorChar, pScanChar - pAnchorChar );
@@ -242,8 +243,11 @@ BOOL MYODBCUtilReadConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszStr
                         }
 
                         if ( pszName )
-                            free( pszName );
-                        pszName = 0;
+                        {
+                            _global_free( pszName );
+                            pszName = 0;
+                        }
+                        
                     }
                 }
                 break;
@@ -265,7 +269,9 @@ BOOL MYODBCUtilReadConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszStr
     } /* while scan */
 
     if ( pszName )
-        free( pszName );
+    {
+        _global_free( pszName );
+    }
 
     return TRUE;
 }
