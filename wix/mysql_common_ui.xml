@@ -25,6 +25,8 @@
 <Include>
   <Property Id="InstallPath2" Value="dummy" />
   <UI>
+    <DialogRef Id="LicenseAgreementDlg" />
+    
     <Property Id="ErrorDialog">SetupErrorDialog</Property>
     <Property Id="DefaultUIFont">Tahoma8</Property>
 
@@ -271,7 +273,7 @@
           <Publish Event="NewDialog" Value="SetupTypeDialog">1</Publish>
         <?endif?>
         -->
-        <Publish Event="NewDialog" Value="SetupTypeDialog">1</Publish>
+        <Publish Event="NewDialog" Value="LicenseAgreementDlg">1</Publish>
       </Control>
       <Control Id="Cancel" Type="PushButton" X="301" Y="243" Width="66" Height="17" Cancel="yes"
         Text="Cancel">
@@ -280,10 +282,10 @@
       <Control Id="Back" Type="PushButton" X="164" Y="243" Width="66" Height="17" Disabled="yes"
         Text="&lt; &amp;Back">
       </Control>
-      <Control Id="Copyright" Type="Text" X="135" Y="144" Width="228" Height="73" Transparent="yes"
+      <!--Control Id="Copyright" Type="Text" X="135" Y="144" Width="228" Height="73" Transparent="yes"
         TabSkip="no">
         <Text>WARNING: This program is protected by copyright law.</Text>
-      </Control>
+      </Control-->
       <Control Id="TextLine2" Type="Text" X="135" Y="55" Width="228" Height="45" Transparent="yes">
         <Text>The Setup Wizard will install [ProductName] release [ProductVersion] on your computer. To continue, click Next.</Text>
       </Control>
@@ -508,7 +510,7 @@
             <Publish Event="NewDialog" Value="InstallWelcomeDialog">NOT Installed</Publish>
           <?endif?>        
           -->
-          <Publish Event="NewDialog" Value="InstallWelcomeDialog">NOT Installed</Publish>
+          <Publish Event="NewDialog" Value="LicenseAgreementDlg">NOT Installed</Publish>
       </Control>
       <Control Id="Next" Type="PushButton" X="230" Y="243" Width="66" Height="17" Default="yes"
         Text="&amp;Next &gt;">
@@ -654,9 +656,7 @@
       License Agreement Dialog
     -->
 
-    <!--
-    <?if $(var.LICENSE_TYPE) = "commercial"?>  
-    <Dialog Id="LicenseAgreementDialog" Width="374" Height="266" Title="[ProductName] - Setup Wizard" Hidden="yes"
+    <Dialog Id="LicenseAgreementDlg" Width="374" Height="266" Title="[ProductName] - License Agreement" Hidden="yes"
       NoMinimize="yes">
       <Control Id="Agree" Type="RadioButtonGroup" X="8" Y="190" Width="330" Height="40" Property="AgreeToLicense" />
       <Control Id="Back" Type="PushButton" X="164" Y="243" Width="66" Height="17" Text="&lt; &amp;Back">
@@ -683,11 +683,13 @@
       <Control Id="DlgLine" Type="Line" X="0" Y="234" Width="378" Height="0" />
       
       <Control Id="Memo" Type="ScrollableText" X="8" Y="55" Width="358" Height="130" Sunken="yes">
-        <Text src="resources/commercial_license.rtf" />
+    <?if $(var.license) = "commercial"?>  
+        <Text SourceFile="resources/commercial_license.rtf" />
+    <?else ?>
+        <Text SourceFile="resources/License.rtf" />
+    <?endif?>
       </Control>
     </Dialog>
-    <?endif?>
-    -->
 
     <!-- *****************************************************************************************
       Ready To Install Dialog
@@ -1074,7 +1076,8 @@
       <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="378" Height="0" />
       <Control Id="DlgLine" Type="Line" X="0" Y="234" Width="378" Height="0" />
     </Dialog>
-    
+
+
     <!-- *****************************************************************************************
       Ready To Remove Dialog
     -->
@@ -1123,14 +1126,12 @@
       Radio Groups
     -->
      
-    <!--
-    <RadioGroup Property="AgreeToLicense">
+    <RadioButtonGroup Property="AgreeToLicense">
       <RadioButton Text="I &amp;do not accept the terms in the license agreement" X="0" Y="15" Width="295"
-        Height="15">No</RadioButton>
+        Height="15" Value="No" />
       <RadioButton Text="I &amp;accept the terms in the license agreement" X="0" Y="0" Width="295"
-        Height="15">Yes</RadioButton>
-    </RadioGroup>
-    -->
+        Height="15" Value="Yes" />
+    </RadioButtonGroup>
     <RadioButtonGroup Property="_IsMaintenance">
       <RadioButton Text="{&amp;MSSansBold8}&amp;Modify" X="0" Y="0" Width="290" Height="14" Value="Change" />
       <RadioButton Text="{&amp;MSSansBold8}Re&amp;pair" X="0" Y="60" Width="290" Height="14" Value="Reinstall" />

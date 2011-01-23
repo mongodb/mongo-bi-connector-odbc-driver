@@ -1,4 +1,5 @@
 *.lo
+*.cxx
 *.la
 *.spec
 *.vcproj
