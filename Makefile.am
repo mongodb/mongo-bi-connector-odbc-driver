@@ -61,7 +61,7 @@ readme_DATA = \
 	README \
 	README.debug \
 	INSTALL \
-	LICENSE.gpl
+	COPYING
 
 #
 # Create the binary distribution

@@ -44,7 +44,7 @@ xcopy /E /Y lib\* mysql-connector-odbc-noinstall-%1-win32\lib
 copy Install.bat mysql-connector-odbc-noinstall-%1-win32
 copy Uninstall.bat mysql-connector-odbc-noinstall-%1-win32
 copy ChangeLog mysql-connector-odbc-noinstall-%1-win32\ChangeLog.rtf
-copy LICENSE.gpl mysql-connector-odbc-noinstall-%1-win32\LICENSE.rtf
+copy COPYING mysql-connector-odbc-noinstall-%1-win32\COPYING.rtf
 copy README mysql-connector-odbc-noinstall-%1-win32\README.rtf
 copy INSTALL mysql-connector-odbc-noinstall-%1-win32\INSTALL.rtf
 copy INSTALL.win mysql-connector-odbc-noinstall-%1-win32\INSTALL-win.rtf
@@ -54,7 +54,7 @@ pkzipc -add -maximum -recurse -path=current mysql-connector-odbc-noinstall-%1-wi
 
 ECHO COMMERCIAL: Create stage area and populate...
 move mysql-connector-odbc-noinstall-%1-win32 mysql-connector-odbc-commercial-noinstall-%1-win32 
-copy LICENSE.commercial mysql-connector-odbc-commercial-noinstall-%1-win32\LICENSE.rtf
+copy LICENSE.mysql mysql-connector-odbc-commercial-noinstall-%1-win32\LICENSE.rtf
 del mysql-connector-odbc-commercial-noinstall-%1-win32\EXCEPTIONS.rtf
 
 ECHO Zipping...

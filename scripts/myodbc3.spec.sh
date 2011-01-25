@@ -137,7 +137,7 @@ make
 
 %install
 make DESTDIR=$RPM_BUILD_ROOT install
-rm -v $RPM_BUILD_ROOT%{_datadir}/mysql-connector-odbc/{ChangeLog,README,README.debug,LICENSE.*,INSTALL}
+rm -vf $RPM_BUILD_ROOT%{_datadir}/mysql-connector-odbc/{ChangeLog,README,README.debug,LICENSE.*,COPYING,INSTALL}
 
 # ----------------------------------------------------------------------
 # REGISTER DRIVER
@@ -180,7 +180,7 @@ myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodb
 %if %{com_lic}
 %doc LICENSE.mysql
 %else
-%doc LICENSE.gpl
+%doc COPYING
 %endif
 
 %files setup
