@@ -830,6 +830,9 @@ DECLARE_TEST(my_information_schema)
   rc = SQLFreeStmt(hstmt1, SQL_CLOSE);
   mystmt(hstmt1,rc);
 
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+
   return OK;
 }
 
@@ -1765,15 +1768,15 @@ DECLARE_TEST(t_bug50195)
   SQLCHAR     priv[12];
   SQLLEN      len;
 
-  (void)SQLExecDirect(hstmt, (SQLCHAR *)"DROP USER bug50195@localhost", SQL_NTS);
+  (void)SQLExecDirect(hstmt, (SQLCHAR *)"DROP USER bug50195@127.0.0.1", SQL_NTS);
 
-  ok_sql(hstmt, "grant all on *.* to bug50195@localhost IDENTIFIED BY 'a'");
-  ok_sql(hstmt, "revoke select on *.* from bug50195@localhost");
+  ok_sql(hstmt, "grant all on *.* to bug50195@127.0.0.1 IDENTIFIED BY 'a'");
+  ok_sql(hstmt, "revoke select on *.* from bug50195@127.0.0.1");
 
   /* revoking "global" select is enough, but revoking smth from mysql.tables_priv
      to have not empty result of SQLTablePrivileges */
-  ok_sql(hstmt, "grant all on mysql.tables_priv to bug50195@localhost");
-  ok_sql(hstmt, "revoke select on mysql.tables_priv from bug50195@localhost");
+  ok_sql(hstmt, "grant all on mysql.tables_priv to bug50195@127.0.0.1");
+  ok_sql(hstmt, "revoke select on mysql.tables_priv from bug50195@127.0.0.1");
 
   ok_sql(hstmt, "FLUSH PRIVILEGES");
 
@@ -1800,7 +1803,7 @@ DECLARE_TEST(t_bug50195)
   ok_con(hdbc1, SQLDisconnect(hdbc1));
   ok_con(hdbc1, SQLFreeConnect(hdbc1));
 
-  ok_sql(hstmt, "DROP USER bug50195@localhost");
+  ok_sql(hstmt, "DROP USER bug50195@127.0.0.1");
   
   return OK;
 }
