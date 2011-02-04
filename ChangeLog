@@ -1,5 +1,9 @@
 5.1.9
 
+  Bugs fixed:
+  * SQLFetch() did not return SQL_ERROR if connection was dropped due to a
+    timeout. (Bug #39878)
+
 ----
 
 5.1.8 (08-Nov-2010)
@@ -37,6 +41,7 @@
     (Bug #43644)
   * Added GUI options for MIN_DATE_TO_ZERO and ZERO_DATE_TO_MIN connection
     options. (Bug #30539)
+  * Function SQLProcedureColumns() implemented. (Bug #50400)
 
   Bugs fixed:
   * If NO_BACKSLASH_ESCAPES mode is used on a server, escaping binary data

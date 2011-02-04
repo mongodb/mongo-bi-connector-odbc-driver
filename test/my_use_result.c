@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -108,9 +108,94 @@ DECLARE_TEST(t_bug4657)
 }
 
 
+/**
+ Bug #39878: No error signaled if timeout during fetching data.
+*/
+DECLARE_TEST(t_bug39878)
+{
+  int         i;
+  SQLINTEGER  row_count= 0;
+  SQLRETURN   rc;
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY, 0));
+
+  printMessage("Creating table t_bug39878");
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug39878");
+  ok_sql(hstmt, "CREATE TABLE t_bug39878 (a INT)");
+
+  // Fill table with data
+  printMessage("Filling table with data...");
+
+  ok_sql(hstmt, "INSERT INTO t_bug39878 VALUES (0), (1)");
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)
+                            "INSERT INTO t_bug39878 SELECT a+? FROM t_bug39878", SQL_NTS));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_LONG,
+                                  SQL_INTEGER, 0, 0, &row_count, 0, NULL));
+
+  for (i=1, row_count= 2; i < 14; ++i, row_count *= 2)
+    ok_stmt(hstmt, SQLExecute(hstmt));
+
+  printMessage("inserted %d rows.", row_count);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  printMessage("Setting net_write_timeout to 1");
+  ok_sql(hstmt, "SET net_write_timeout=1");
+
+  // Table scan 
+
+  ok_sql(hstmt, "SELECT * FROM t_bug39878");
+  printMessage("Started table scan, sleeping 3sec ...");
+  sleep(3);
+
+  printMessage("Fetching rows...");
+
+  while (SQL_SUCCEEDED(rc= SQLFetch(hstmt)))
+  {
+    row_count--;
+  }
+
+  print_diag(rc, SQL_HANDLE_STMT, hstmt, "SQLFetch()", __FILE__, __LINE__);
+  printMessage("Scan interrupted, %d rows left in the table.", row_count);
+
+  {
+    char *rc_name;
+    switch(rc)
+    {
+    case SQL_SUCCESS:           rc_name= "SQL_SUCCESS";           break;
+    case SQL_SUCCESS_WITH_INFO: rc_name= "SQL_SUCCESS_WITH_INFO"; break;
+    case SQL_NO_DATA:           rc_name= "SQL_NO_DATA";           break;
+    case SQL_STILL_EXECUTING:   rc_name= "SQL_STILL_EXECUTING";   break;
+    case SQL_ERROR:             rc_name= "SQL_ERROR";             break;
+    case SQL_INVALID_HANDLE:    rc_name= "SQL_INVALID_HANDLE";    break;
+    default:                    rc_name= "<unknown>";             break;
+    }
+    printMessage("Last SQLFetch() returned: %s", rc_name);
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  is(row_count == 0 || rc == SQL_ERROR);
+
+  // We re-connect to drop the table (as connection might be broken)
+  free_basic_handles(&henv, &hdbc, &hstmt);
+  alloc_basic_handles(&henv, &hdbc, &hstmt);
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug39878");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_use_result)
   ADD_TEST(t_bug4657)
+  ADD_TEST(t_bug39878)
 END_TESTS
 
 

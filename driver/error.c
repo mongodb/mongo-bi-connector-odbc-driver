@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -360,6 +360,8 @@ SQLRETURN handle_connection_error(STMT *stmt)
 {
   unsigned int err= mysql_errno(&stmt->dbc->mysql);
   switch (err) {
+  case 0:  /* no error */
+    return SQL_SUCCESS;
   case CR_SERVER_GONE_ERROR:
   case CR_SERVER_LOST:
     return set_stmt_error(stmt, "08S01", mysql_error(&stmt->dbc->mysql), err);

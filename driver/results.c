@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -1494,6 +1494,9 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
         return SQL_NO_DATA_FOUND;
     }
 
+    if (handle_connection_error(stmt))
+      return SQL_ERROR;
+
     if (!stmt->dbc->ds->dont_use_set_locale)
       setlocale(LC_NUMERIC, "C");
     res= SQL_SUCCESS;
@@ -1511,7 +1514,11 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
             if ( i == 0 )
                 save_position= mysql_row_tell(stmt->result);
             if ( !(values= mysql_fetch_row(stmt->result)) )
+            {
+                if (handle_connection_error(stmt))
+                  res= SQL_ERROR;
                 break;
+            }
             if ( stmt->fix_fields )
                 values= (*stmt->fix_fields)(stmt,values);
             stmt->current_values= values;
@@ -1563,7 +1570,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
         for ( ; i < stmt->ard->array_size ; ++i )
             stmt->ird->array_status_ptr[i]= SQL_ROW_NOROW;
 
-    if ( !stmt->result_array && !if_forward_cache(stmt) )
+    if (SQL_SUCCEEDED(res) && !stmt->result_array && !if_forward_cache(stmt))
         /* reset result position */
         stmt->end_of_set= mysql_row_seek(stmt->result,save_position);
 
