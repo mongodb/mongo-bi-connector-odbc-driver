@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -1448,7 +1448,8 @@ DECLARE_TEST(t_bug30770)
 
   /* Connect with no default daabase */
   sprintf((char *)conn, "DRIVER=%s;SERVER=%s;" \
-                        "UID=%s;PASSWORD=%s", mydriver, myserver, myuid, mypwd);
+                        "UID=%s;PASSWORD=%s;DATABASE=%s", mydriver, myserver,
+                        myuid, mypwd, mydb);
   if (mysock != NULL)
   {
     strcat((char *)conn, ";SOCKET=");
@@ -1461,9 +1462,6 @@ DECLARE_TEST(t_bug30770)
     strcat((char *)conn, pbuff);
   }
   is_num(mydrvconnect(&henv1, &hdbc1, &hstmt1, conn), OK);
-
-  sprintf((char *)buff, "USE %s;", mydb);
-  ok_stmt(hstmt1, SQLExecDirect(hstmt1, buff, SQL_NTS));
 
   /* Get the info from just one table.  */
   ok_stmt(hstmt1, SQLColumns(hstmt1, NULL, SQL_NTS, NULL, SQL_NTS,
@@ -1771,12 +1769,17 @@ DECLARE_TEST(t_bug50195)
   (void)SQLExecDirect(hstmt, (SQLCHAR *)"DROP USER bug50195@127.0.0.1", SQL_NTS);
 
   ok_sql(hstmt, "grant all on *.* to bug50195@127.0.0.1 IDENTIFIED BY 'a'");
+  ok_sql(hstmt, "grant all on *.* to bug50195@localhost IDENTIFIED BY 'a'");
+
   ok_sql(hstmt, "revoke select on *.* from bug50195@127.0.0.1");
+  ok_sql(hstmt, "revoke select on *.* from bug50195@localhost");
 
   /* revoking "global" select is enough, but revoking smth from mysql.tables_priv
      to have not empty result of SQLTablePrivileges */
   ok_sql(hstmt, "grant all on mysql.tables_priv to bug50195@127.0.0.1");
+  ok_sql(hstmt, "grant all on mysql.tables_priv to bug50195@localhost");
   ok_sql(hstmt, "revoke select on mysql.tables_priv from bug50195@127.0.0.1");
+  ok_sql(hstmt, "revoke select on mysql.tables_priv from bug50195@localhost");
 
   ok_sql(hstmt, "FLUSH PRIVILEGES");
 

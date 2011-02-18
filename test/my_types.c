@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -1119,7 +1119,15 @@ DECLARE_TEST(t_bug29402)
                                 &name_length, &data_type, &column_size,
                                 &decimal_digits, &nullable));
 
-  is_num(data_type, SQL_VARBINARY);
+  /* Fixed in 5.5(tested in 5.5.9), result's type is SQL_VARCHAR */
+  if (mysql_min_version(hdbc, "5.5", 3))
+  {
+    is_num(data_type, SQL_VARCHAR);
+  }
+  else
+  {
+    is_num(data_type, SQL_VARBINARY);
+  }
 
   return OK;
 }

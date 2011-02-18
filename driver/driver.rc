@@ -65,12 +65,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "Comments", "provides core driver functionality\0"
-            VALUE "CompanyName", "MySQL AB\0"
+            VALUE "CompanyName", "Oracle Corporation\0"
             VALUE "FileDescription", "MySQL ODBC 5.1 Driver\0"
             VALUE "FileVersion", MYODBC_STRFILEVER
             VALUE "InternalName", "myodbc5\0"
-            VALUE "LegalCopyright", "Copyright 1995-2008 MySQL AB, 2008-2010 Sun Microsystems Inc.\0"
-            VALUE "LegalTrademarks", "MySQL, MyODBC, Connector/ODBC are trademarks of Sun Microsystems Inc.\0"
+            VALUE "LegalCopyright", "Copyright (c) 1995, 2011, Oracle and/or its affiliates.\0"
+            VALUE "LegalTrademarks", "MySQL, MyODBC, Connector/ODBC are trademarks of Oracle Corporation\0"
             VALUE "OriginalFilename", "myodbc5.dll\0"
             VALUE "PrivateBuild", "Production\0"
             VALUE "ProductName", "Connector/ODBC 5.1\0"
