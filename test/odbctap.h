@@ -65,7 +65,7 @@ typedef unsigned char UTF8;
 #include "../util/unicode_transcode.c"
 
 
-void printMessage(char *fmt, ...) {
+void printMessage(const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   fprintf(stdout, "# ");
@@ -74,6 +74,15 @@ void printMessage(char *fmt, ...) {
   va_end(ap);
 }
 
+
+void wprintMessage(const wchar_t *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  fwprintf(stdout, L"# ");
+  vfwprintf(stdout, fmt, ap);
+  fwprintf(stdout, L"\n");
+  va_end(ap);
+}
 
 #define MAX_NAME_LEN 255
 #define MAX_COLUMNS 500

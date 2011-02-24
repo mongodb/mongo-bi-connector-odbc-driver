@@ -279,6 +279,13 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
       *toptr= add_to_buffer(net,*toptr,"NULL",4);
       return SQL_SUCCESS;
     }
+    /*
+      According to http://msdn.microsoft.com/en-us/library/ms710963%28VS.85%29.aspx
+
+      "... If StrLen_or_IndPtr is a null pointer, the driver assumes that all
+      input parameter values are non-NULL and that character and *binary* data
+      is null-terminated."
+    */
     else if (!octet_length_ptr || *octet_length_ptr == SQL_NTS)
     {
       if (data)

@@ -2190,6 +2190,8 @@ DECLARE_TEST(t_bug57182)
 
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
   ok_sql(hstmt, "drop procedure if exists bug57182");
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
   return OK;

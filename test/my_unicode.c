@@ -1156,8 +1156,8 @@ DECLARE_TEST(t_bug28168)
 
   if (sizeof(SQLWCHAR) == sizeof(wchar_t))
   {
-    printMessage("expected msg: %ls\n", dummy);
-    printMessage("actual msg: %ls\n", errmsgtxt);
+    wprintMessage(L"expected msg: %ls\n", dummy);
+    wprintMessage(L"actual msg: %ls\n", errmsgtxt);
   }
 
   is(!memcmp(errmsgtxt, W(dummy), wcslen(dummy) * sizeof(SQLWCHAR)));
@@ -1173,6 +1173,8 @@ DECLARE_TEST(t_bug28168)
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug28168");
 
   return OK;
+  /* There is error after this test on freeing environment - function sequence
+     error. looks like an error in the DM since all connections are freed. */
 }
 
 
