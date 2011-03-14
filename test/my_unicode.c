@@ -22,9 +22,9 @@
   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+#include <wchar.h>
 #include "odbctap.h"
 #include <sqlucode.h>
-#include <wchar.h>
 
 
 DECLARE_TEST(sqlconnect)
