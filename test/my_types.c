@@ -1085,7 +1085,7 @@ DECLARE_TEST(t_bug29402)
 
   /* First check how the option NO_BINARY_RESULT works */
   sprintf((char *)conn, 
-          "DSN=%s;UID=%s;PWD=%s;NO_BINARY_RESULT=1;CHARSET=CP1251",
+          "DSN=%s;UID=%s;PWD=%s;NO_BINARY_RESULT=1;CHARSET=CP1250",
           mydsn, myuid, mypwd);
 
   ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, SQL_NTS, conn_out,
@@ -1094,7 +1094,7 @@ DECLARE_TEST(t_bug29402)
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
-  ok_sql(hstmt1, "SELECT CONCAT('русский текст', 20) concated");
+  ok_stmt(hstmt1, SQLExecDirectA(hstmt1, "SELECT CONCAT(/*convert(0x88 using cp1250)*/'И', 100) concated", SQL_NTS));
 
   ok_stmt(hstmt1, SQLDescribeCol(hstmt1, 1, column_name, sizeof(column_name),
                                 &name_length, &data_type, &column_size,
@@ -1105,15 +1105,24 @@ DECLARE_TEST(t_bug29402)
   ok_stmt(hstmt1, SQLFetch(hstmt1));
   ok_stmt(hstmt1, SQLGetData(hstmt1, 1, SQL_C_CHAR, buf, sizeof(buf), &buflen));
 
-  is_num(buflen, 15);
-  is_str(buf, "русский текст20", buflen);
+  is_num(buflen, 4);
+  printMessage("%d (%x)", buf[0], buf[0]);
+  if (strncmp(buf, "И100", buflen) != 0)
+  {
+    /* Because of this
+       http://msdn.microsoft.com/en-us/library/ms716540%28v=vs.85%29.aspx
+       test can fail. Rather test's problem. */
+    printMessage("%s != %s(%x!=%x) - this test may fail on some(or all?) "
+                 "platforms - TODO", buf, "И100", buf[0], 'И');
+    return FAIL;
+  }
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
   ok_con(hdbc1, SQLDisconnect(hdbc1));
   ok_con(hdbc1, SQLFreeConnect(hdbc1));
 
   /* Check without FLAG_NO_BINARY_RESULT */
-  ok_sql(hstmt, "SELECT CONCAT('русский текст', 20) concated");
+  ok_sql(hstmt, "SELECT CONCAT('И', 100) concated");
 
   ok_stmt(hstmt, SQLDescribeCol(hstmt, 1, column_name, sizeof(column_name),
                                 &name_length, &data_type, &column_size,
@@ -1126,6 +1135,7 @@ DECLARE_TEST(t_bug29402)
   }
   else
   {
+    printMessage("Server version is <=5.1");
     is_num(data_type, SQL_VARBINARY);
   }
 

@@ -28,6 +28,9 @@
   A basic interface for writing tests that produces TAP-compliant output.
 */
 
+/* We don't want ansi calls to be mapped to unicode counterparts, but that does not work */
+/* #define SQL_NOUNICODEMAP 1*/
+
 #ifdef HAVE_CONFIG_H
 # include <myconf.h>
 #endif
@@ -78,9 +81,9 @@ void printMessage(const char *fmt, ...) {
 void wprintMessage(const wchar_t *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
-  fwprintf(stdout, L"# ");
+  fprintf(stdout, "# ");
   vfwprintf(stdout, fmt, ap);
-  fwprintf(stdout, L"\n");
+  fprintf(stdout, "\n");
   va_end(ap);
 }
 
@@ -254,7 +257,6 @@ int main(int argc, char **argv) \
   } \
 \
   (void)free_basic_handles(&henv, &hdbc, &hstmt); \
-\
   exit(failcnt); \
 }
 

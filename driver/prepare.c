@@ -245,7 +245,7 @@ SQLRETURN SQL_API my_SQLBindParameter( SQLHSTMT     StatementHandle,
     if (!SQL_SUCCEEDED(rc = stmt_SQLSetDescField(stmt, stmt->apd,
                                                  ParameterNumber,
                                                  SQL_DESC_CONCISE_TYPE,
-                                                 (SQLPOINTER)(SQLINTEGER)ValueType,
+                                                 (SQLPOINTER)(SQLLEN)ValueType,
                                                  SQL_IS_SMALLINT)))
         return rc;
 

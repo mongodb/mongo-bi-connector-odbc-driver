@@ -1767,6 +1767,7 @@ DECLARE_TEST(t_bug50195)
   SQLLEN      len;
 
   (void)SQLExecDirect(hstmt, (SQLCHAR *)"DROP USER bug50195@127.0.0.1", SQL_NTS);
+  (void)SQLExecDirect(hstmt, (SQLCHAR *)"DROP USER bug50195@localhost", SQL_NTS);
 
   ok_sql(hstmt, "grant all on *.* to bug50195@127.0.0.1 IDENTIFIED BY 'a'");
   ok_sql(hstmt, "grant all on *.* to bug50195@localhost IDENTIFIED BY 'a'");
@@ -1807,6 +1808,7 @@ DECLARE_TEST(t_bug50195)
   ok_con(hdbc1, SQLFreeConnect(hdbc1));
 
   ok_sql(hstmt, "DROP USER bug50195@127.0.0.1");
+  ok_sql(hstmt, "DROP USER bug50195@localhost");
   
   return OK;
 }
