@@ -1080,6 +1080,7 @@ DECLARE_TEST(t_bug29402)
   SQLLEN buflen= 0;
   SQLHDBC    hdbc1;
   SQLHSTMT   hstmt1;
+  const SQLCHAR *expected= "\x80""100";
 
   ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
 
@@ -1094,7 +1095,7 @@ DECLARE_TEST(t_bug29402)
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
-  ok_stmt(hstmt1, SQLExecDirectA(hstmt1, "SELECT CONCAT(/*convert(0x88 using cp1250)*/'ˆ', 100) concated", SQL_NTS));
+  ok_stmt(hstmt1, SQLExecDirectA(hstmt1, "SELECT CONCAT('\x80', 100) concated", SQL_NTS));
 
   ok_stmt(hstmt1, SQLDescribeCol(hstmt1, 1, column_name, sizeof(column_name),
                                 &name_length, &data_type, &column_size,
@@ -1106,14 +1107,14 @@ DECLARE_TEST(t_bug29402)
   ok_stmt(hstmt1, SQLGetData(hstmt1, 1, SQL_C_CHAR, buf, sizeof(buf), &buflen));
 
   is_num(buflen, 4);
-  printMessage("%d (%x)", buf[0], buf[0]);
-  if (strncmp(buf, "ˆ100", buflen) != 0)
+
+  if (strncmp(buf, expected, buflen) != 0)
   {
     /* Because of this
        http://msdn.microsoft.com/en-us/library/ms716540%28v=vs.85%29.aspx
        test can fail. Rather test's problem. */
-    printMessage("%s != %s(%x!=%x) - this test may fail on some(or all?) "
-                 "platforms - TODO", buf, "ˆ100", buf[0], 'ˆ');
+    printMessage("%s != %s(%#x!=%#x) - this test may fail on some(or all?) "
+                 "platforms - TODO", buf, "\x80""100", buf[0], expected[0]);
     return FAIL;
   }
 
@@ -1122,7 +1123,7 @@ DECLARE_TEST(t_bug29402)
   ok_con(hdbc1, SQLFreeConnect(hdbc1));
 
   /* Check without FLAG_NO_BINARY_RESULT */
-  ok_sql(hstmt, "SELECT CONCAT('ˆ', 100) concated");
+  ok_sql(hstmt, "SELECT CONCAT('\x80', 100) concated");
 
   ok_stmt(hstmt, SQLDescribeCol(hstmt, 1, column_name, sizeof(column_name),
                                 &name_length, &data_type, &column_size,
