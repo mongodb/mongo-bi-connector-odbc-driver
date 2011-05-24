@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!-- *****************************************************************************************
-  Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -84,24 +84,24 @@
       Registry entries
     -->
 
-    <DirectoryRef Id="ProgramFilesFolder">
-      <Component Id="RegKeys32" Guid="AECCA4A7-9405-466A-8393-4F0876DCD21A" DiskId="1">
-        <RegistryKey Id="MysqlKey32" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
-                  Action="createAndRemoveOnUninstall"/>
-        <RegistryValue Id="Version32" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
-                  Name="Version" Type="string" Value="[ProductVersion]"/>
-      </Component>
-    </DirectoryRef>
-
     <?if $(var.odbc_64bit) = 1 ?>
-    <DirectoryRef Id="ProgramFiles64Folder">
-      <Component Id="RegKeys64" Guid="92FEC72B-EB44-4E4D-B301-A915C80D067B" DiskId="1" Win64="yes">
-        <RegistryKey Id="MysqlKey64" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
+      <DirectoryRef Id="ProgramFiles64Folder">
+      <Component Id="RegKeys" Guid="92FEC72B-EB44-4E4D-B301-A915C80D067B" DiskId="1" Win64="yes">
+    <?else ?>
+      <DirectoryRef Id="ProgramFilesFolder">
+      <Component Id="RegKeys" Guid="AECCA4A7-9405-466A-8393-4F0876DCD21A" DiskId="1">
+    <?endif ?>
+        <RegistryKey Id="MysqlKey" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
                   Action="createAndRemoveOnUninstall"/>
-        <RegistryValue Id="Version64" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
+        <RegistryValue Id="Version" Root="HKLM" Key="SOFTWARE\MySQL AB\[ProductName]" 
                   Name="Version" Type="string" Value="[ProductVersion]"/>
+    <!--Need these to make candle happy -->  
+    <?if $(var.odbc_64bit) = 1 ?>
       </Component>
-    </DirectoryRef>
+      </DirectoryRef>
+    <?else ?>
+      </Component>
+      </DirectoryRef>
     <?endif ?>
 
     <!-- *****************************************************************************************
@@ -112,21 +112,19 @@
       Product Feature
     -->
 
-    <Feature Id="ODBC_32" Title="MySQL Connector/ODBC $(var.odbc_ver_long) 32-bit" Level="1" Description="Installs the MySQL ODBC $(var.odbc_ver_long) 32-bit driver.">
-      <ComponentRef Id="RegKeys32" />
-      <ComponentRef Id="lib_32" />
-      <ComponentRef Id="driver_32" />
-      <ComponentRef Id="setup_32" />
-      <ComponentRef Id="installer_32" />
-    </Feature>
-
     <?if $(var.odbc_64bit) = 1 ?>
-    <Feature Id="ODBC_64" Title="MySQL Connector/ODBC $(var.odbc_ver_long) 64-bit" Level="1" Description="Installs the MySQL ODBC $(var.odbc_ver_long) 64-bit driver.">
-      <ComponentRef Id="RegKeys64" />
-      <ComponentRef Id="lib_64" />
-      <ComponentRef Id="driver_64" />
-      <ComponentRef Id="setup_64" />
-      <ComponentRef Id="installer_64" />
+    <Feature Id="ODBC" Title="MySQL Connector/ODBC $(var.odbc_ver_long) 64-bit" Level="1" Description="Installs the MySQL ODBC $(var.odbc_ver_long) 64-bit driver."  ConfigurableDirectory="INSTALLDIR">
+    <?else ?>
+    <Feature Id="ODBC" Title="MySQL Connector/ODBC $(var.odbc_ver_long) 32-bit" Level="1" Description="Installs the MySQL ODBC $(var.odbc_ver_long) 32-bit driver."  ConfigurableDirectory="INSTALLDIR">
+    <?endif ?>
+      <ComponentRef Id="RegKeys" />
+      <ComponentRef Id="lib" />
+      <ComponentRef Id="driver" />
+      <ComponentRef Id="setup" />
+      <ComponentRef Id="installer" />
+    <?if $(var.odbc_64bit) = 1 ?>
+    </Feature>
+    <?else ?>
     </Feature>
     <?endif ?>
 
@@ -198,6 +196,7 @@
       <Custom Action="NewerVersionInstalled" After="FindRelatedProducts">NEWERPRODUCTFOUND</Custom> 
 
       <RemoveExistingProducts After="InstallInitialize"/>
+      <SetODBCFolders Suppress="yes" />
     </InstallExecuteSequence>
 
     <!-- *****************************************************************************************

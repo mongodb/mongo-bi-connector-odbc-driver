@@ -1,5 +1,5 @@
 <Include>
-  <Property Id="ARPCOMMENTS" Value="MySQL Connector/ODBBC 5.1 is a MySQL database connector for ODBC." />
+  <Property Id="ARPCOMMENTS" Value="MySQL Connector/ODBC 5.1 is a MySQL database connector for ODBC." />
   <Property Id="ARPCONTACT" Value="http://www.mysql.com/about/contact/" />
   <Property Id="ARPPRODUCTICON" Value="MySQLConnector.ico" />
   <Property Id="ARPHELPLINK" Value="http://forums.mysql.com/list.php?37" />
@@ -19,11 +19,7 @@
   <Icon Id="MySQLConnector.ico" SourceFile="$(var.odbc_resource)/MySQLConnector.ico" />
 
   <!-- Set up ARPINSTALLLOCATION property -->
-  <?if $(var.odbc_64bit) = 1 ?>
-  <CustomAction Id="SetARPINSTALLLOCATION" Property="ARPINSTALLLOCATION" Value="[Connector_ODBC_64]" />
-  <?else ?>
-  <CustomAction Id="SetARPINSTALLLOCATION" Property="ARPINSTALLLOCATION" Value="[Connector_ODBC_32]" />
-  <?endif ?>
+  <CustomAction Id="SetARPINSTALLLOCATION" Property="ARPINSTALLLOCATION" Value="[INSTALLDIR]" />
   <CustomAction Id="SetARPREADME" Property="ARPREADME" Value="[INSTALLDIR]README" />
 
   <!-- Sequences -->

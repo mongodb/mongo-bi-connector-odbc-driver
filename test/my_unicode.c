@@ -217,7 +217,7 @@ DECLARE_TEST(sqldriverconnect)
   HSTMT hstmt1;
   wchar_t conn_in[512];
   wchar_t dummy[256];
-  SQLWCHAR conn_out[512];
+  SQLWCHAR conn_out[1024];
   SQLSMALLINT conn_out_len;
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
@@ -1098,6 +1098,10 @@ DECLARE_TEST(t_bug28168)
   wchar_t dummy[256]= {0};
   wchar_t *wstr;
   SQLWCHAR errmsgtxt[256]= {0};
+  SQLWCHAR *grantQuery= W(L"GRANT ALL ON t_bug28168 to "
+    L"'\x03A8\x0391\x03A1\x039F uid'@"
+    L"localhost identified by "
+    L"'\x03A8\x0391\x03A1\x039F pwd'");
   SQLSMALLINT errmsglen;
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
@@ -1105,13 +1109,13 @@ DECLARE_TEST(t_bug28168)
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug28168");
   ok_sql(hstmt, "CREATE TABLE t_bug28168 (x int)");
 
-  ok_stmt(hstmt,
-    SQLExecDirectW(hstmt,
-    W(L"GRANT ALL ON t_bug28168 to "
-    L"'\x03A8\x0391\x03A1\x039F uid'@"
-    L"localhost identified by "
-    L"'\x03A8\x0391\x03A1\x039F pwd'"),
-    SQL_NTS));
+  if (!SQL_SUCCEEDED(SQLExecDirectW(hstmt, grantQuery, SQL_NTS)))
+  {
+    free(grantQuery);
+    return FAIL;
+  }
+
+  free(grantQuery);
 
   ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
 

@@ -1,5 +1,5 @@
 <!-- *****************************************************************************************
-  Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -522,14 +522,7 @@
         <Publish Event="SetInstallLevel" Value="1">SetupType="Typical"</Publish>
         <Publish Event="SetInstallLevel" Value="10">SetupType="Complete"</Publish>
 	<Publish Event="SetInstallLevel" Value="1">SetupType="Custom"</Publish>
-	<?if $(var.odbc_64bit) = 1 ?>
-	<Publish Property="TargetPath1" Value="64bit Driver: [Connector_ODBC_64]"><![CDATA[SetupType <> "Custom"]]></Publish>
-	<Publish Property="TargetPath2" Value="32bit Driver: [Connector_ODBC_32]"><![CDATA[SetupType <> "Custom"]]></Publish>
-	<Publish Property="TargetPath1">SetupType = "Custom"</Publish>
-	<Publish Property="TargetPath2">SetupType = "Custom"</Publish>
-	<?else ?>
-	<Publish Property="TargetPath1" Value="[Connector_ODBC_32]">1</Publish>
-	<?endif ?>
+	<Publish Property="TargetPath1" Value="[INSTALLDIR] -> [Connector_ODBC] -> [TARGETDIR]">1</Publish>
       </Control>
       
       <Control Id="Cancel" Type="PushButton" X="301" Y="243" Width="66" Height="17" Cancel="yes"
@@ -596,27 +589,13 @@
       
       <Control Id="Next" Type="PushButton" X="230" Y="243" Width="66" Height="17" Default="yes"
         Text="&amp;Next &gt;" Disabled="no">
-        <!--Publish Event="NewDialog" Value="ReadyToInstallDialog">OutOfNoRbDiskSpace &lt;&gt; 1</Publish-->
         <Publish Event="NewDialog" Value="OutOfSpaceDialog">OutOfNoRbDiskSpace = 1</Publish>
         <!-- in maintenance mode this dialog is called without the setuptypedialog -->
 	<Publish Property="SetupType" Value="Custom">1</Publish>
         <!-- for 32bit only installer we don't need those properties here. All required is set in setup type dialog -->
-        <?if $(var.odbc_64bit) = 1 ?>
-        <Publish Property="TargetPath1" Value="64bit Driver: [Connector_ODBC_64]"><![CDATA[&ODBC_64 > 0 AND &ODBC_64 <> !ODBC_64]]></Publish>
-        <Publish Property="TargetPath2" Value="32bit Driver: [Connector_ODBC_32]"><![CDATA[(&ODBC_64 > 0 AND &ODBC_64 <> !ODBC_64) AND (&ODBC_32> 0 AND &ODBC_32 <> !ODBC_32)]]></Publish>
-        <Publish Property="TargetPath1" Value="32bit Driver: [Connector_ODBC_32]"><![CDATA[NOT (&ODBC_64 > 0 AND &ODBC_64 <> !ODBC_64)]]></Publish>
-        <Publish Property="TargetPath2"><![CDATA[(NOT (&ODBC_64 > 0 AND &ODBC_64 <> !ODBC_64)) OR (&ODBC_32 > 0 AND &ODBC_32 = !ODBC_32)]]></Publish>
-        <?endif ?>
         <Publish Event="NewDialog" Value="ReadyToInstallDialog">
-        <?if $(var.odbc_64bit) = 1 ?>
-        <![CDATA[(&ODBC_64 > 0 AND &ODBC_64 <> !ODBC_64) OR (&ODBC_32> 0 AND &ODBC_32 <> !ODBC_32)]]>
-        <?else ?>
-        <![CDATA[&ODBC_32> 0 AND &ODBC_32 <> !ODBC_32]]>
-        <?endif ?>	
+        <![CDATA[&ODBC> 0 AND &ODBC <> !ODBC]]>
         </Publish>
-        <!-- These 2 cenable/disable conditions don't work perfectly, but perhaps they can be improved -->
-        <!--Condition Action="disable"><![CDATA[(NOT (&ODBC_64 > 0 AND &ODBC_64 <> !ODBC_64) OR (&ODBC_32 > 0 AND &ODBC_32 <> !ODBC_32))]]></Condition>
-        <Condition Action="enable"><![CDATA[(&ODBC_64 > 0 AND &ODBC_64 <> !ODBC_64) OR (&ODBC_32 > 0 AND &ODBC_32 <> !ODBC_32)]]></Condition-->
       </Control>
       
       <Control Id="Cancel" Type="PushButton" X="301" Y="243" Width="66" Height="17" Cancel="yes"
@@ -722,9 +701,7 @@
       <Control Id="TargetFolderText1" Type="Text" X="24" Y="136" Width="306" Height="11" TabSkip="no"
         Text="Destination Folder:" />
       <Control Id="TargetFolderText2" Type="Text" X="37" Y="151" Width="306" Height="13" TabSkip="no"
-        Text="[TargetPath1]" />                          
-      <Control Id="TargetFolderText3" Type="Text" X="37" Y="166" Width="306" Height="13" TabSkip="no"
-        Text="[TargetPath2]" />                          
+	      Text="[INSTALLDIR]" />                          
       <Control Id="CurrentSettingsText" Type="Text" X="19" Y="80" Width="81" Height="10" TabSkip="no"
         Text="Current Settings:" />
       <Control Id="DlgDesc" Type="Text" X="21" Y="23" Width="292" Height="25" Transparent="yes">
