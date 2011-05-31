@@ -112,7 +112,7 @@ SQLRETURN SQL_API my_SQLFreeEnv(SQLHENV henv)
     GlobalUnlock(GlobalHandle((HGLOBAL) henv));
     GlobalFree(GlobalHandle((HGLOBAL) henv));
 #else
-    if (henv) my_free((char*) henv,MYF(0));
+    x_free(henv);
     myodbc_end();
 #endif /* _UNIX_ */
     return(SQL_SUCCESS);
@@ -268,7 +268,7 @@ SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc)
     GlobalUnlock(GlobalHandle((HGLOBAL) hdbc));
     GlobalFree(GlobalHandle((HGLOBAL) hdbc));
 #else
-    my_free((char*) hdbc,MYF(0));
+    x_free(hdbc);
 #endif
     return SQL_SUCCESS;
 }
@@ -513,7 +513,7 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     GlobalUnlock(GlobalHandle ((HGLOBAL) hstmt));
     GlobalFree(GlobalHandle((HGLOBAL) hstmt));
 #else
-    my_free((char*) hstmt,MYF(0));
+    x_free(hstmt);
 #endif /* _UNIX_*/
     return SQL_SUCCESS;
 }
