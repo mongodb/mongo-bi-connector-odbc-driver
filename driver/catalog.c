@@ -92,14 +92,9 @@ create_fake_resultset(STMT *stmt, MYSQL_ROW rowval, size_t rowsize,
   stmt->result_array= (MYSQL_ROW)my_memdup((char *)rowval, rowsize, MYF(0));
   if (!(stmt->result && stmt->result_array))
   {
-    if (stmt->result)
-    {
-      my_free((char *)stmt->result, MYF(0));
-    }
-    if (stmt->result_array)
-    {
-      my_free((char *)stmt->result_array, MYF(0));
-    }
+    x_free(stmt->result);
+    x_free(stmt->result_array);
+
     set_mem_error(&stmt->dbc->mysql);
     return handle_connection_error(stmt);
   }

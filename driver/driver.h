@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -113,7 +113,11 @@ extern "C"
 /* Max Primary keys in a cursor * WHERE clause */
 #define MY_MAX_PK_PARTS 32
 
-#define x_free(A) { void *tmp= (A); if (tmp) my_free((char *) tmp,MYF(MY_WME+MY_FAE)); }
+#if MYSQL_VERSION_ID >= 50500
+# define x_free(A) { void *tmp= (A); if (tmp) my_free((char *) tmp); }
+#else
+# define x_free(A) { void *tmp= (A); if (tmp) my_free((char *) tmp,MYF(MY_WME+MY_FAE)); }
+#endif
 
 
 /* We don't make any assumption about what the default may be. */

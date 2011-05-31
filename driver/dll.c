@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -96,9 +96,9 @@ void myodbc_end()
 {
   if (!--myodbc_inited)
   {
-    my_free(decimal_point,MYF(0));
-    my_free(default_locale,MYF(0));
-    my_free(thousands_sep,MYF(0));
+    x_free(decimal_point);
+    x_free(default_locale);
+    x_free(thousands_sep);
 
     /* my_thread_end_wait_time was added in 5.1.14 and 5.0.32 */
 #if !defined(NONTHREADSAFE) && \

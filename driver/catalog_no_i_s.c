@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -269,13 +269,13 @@ MYSQL_RES *mysql_list_dbcolumns(STMT *stmt,
     pthread_mutex_lock(&dbc->lock);
     if (mysql_query(mysql, select))
     {
-      my_free(select, MYF(0));
+      x_free(select);
       pthread_mutex_unlock(&dbc->lock);
       return NULL;
     }
     result= mysql_store_result(&dbc->mysql);
     pthread_mutex_unlock(&dbc->lock);
-    my_free(select, MYF(0));
+    x_free(select);
 
     return result;
   }
@@ -1094,7 +1094,7 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
                                            SQLFORE_KEYS_FIELDS *
                                            row_count,
                                            MYF(0));
-  my_free((char *)tempdata, MYF(0));
+  x_free((char *)tempdata);
 
   if (!stmt->result_array)
   {
@@ -1323,12 +1323,14 @@ static void free_procedurecolumn_res(int total_records, LIST *params)
          && (j != mypcREMARKS)
          && (j != mypcCOLUMN_DEF)
          && (j != mypcIS_NULLABLE))
-          my_free(((char**)cur_params->data)[j], MYF(0));
+        {
+          x_free(((char**)cur_params->data)[j]);
+        }
       }
       /* cleanup the list */
       params= list_delete_forward(params);
-      my_free(cur_params->data, MYF(0));
-      my_free(cur_params, MYF(0));
+      x_free(cur_params->data);
+      x_free(cur_params);
     }
   }
 }
@@ -1675,7 +1677,7 @@ clean_exit:
   }
 
   dynstr_free(&dynQuery);
-  my_free(params_r, MYF(0));
+  x_free(params_r);
 
   return nReturn;
 }

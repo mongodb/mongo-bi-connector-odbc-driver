@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -2159,7 +2159,7 @@ my_bool dynstr_append_quoted_name(DYNAMIC_STRING *str, const char *name)
 
 my_bool reget_current_catalog(DBC FAR *dbc)
 {
-    my_free(dbc->database,MYF(0));
+    x_free(dbc->database);
     dbc->database= NULL;
 
     if ( odbc_stmt(dbc, "select database()") )

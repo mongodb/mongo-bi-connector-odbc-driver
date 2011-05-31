@@ -1,5 +1,5 @@
 
-# Copyright (©) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (©) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most 
@@ -26,6 +26,11 @@
 PROJECT(MySQL_Connector_ODBC)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.4 FATAL_ERROR)
+
+if(COMMAND cmake_policy)
+	cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
+
 #SET(CMAKE_VERBOSE_MAKEFILE ON)
 
 #-------------- find qt and mysql --------------------

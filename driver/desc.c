@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -65,7 +65,7 @@ DESC *desc_alloc(STMT *stmt, SQLSMALLINT alloc_type,
   */
   if (my_init_dynamic_array(&desc->records, sizeof(DESCREC), 0, 0))
   {
-    my_free((char *)desc, MYF(0));
+    x_free((char *)desc);
     return NULL;
   }
   desc->desc_type= desc_type;
@@ -111,7 +111,7 @@ void desc_free_paramdata(DESC *desc)
     if (aprec->par.alloced)
     {
       aprec->par.alloced= FALSE;
-      my_free(aprec->par.value, MYF(0));
+      x_free(aprec->par.value);
     }
   }
 }

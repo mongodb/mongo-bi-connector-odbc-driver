@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -301,7 +301,7 @@ MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
                         return SQL_ERROR;
                     }
                 }
-                my_free(dbc->database,MYF(0));
+                x_free(dbc->database);
                 dbc->database= my_strdup(db,MYF(MY_WME));
                 pthread_mutex_unlock(&dbc->lock);
             }

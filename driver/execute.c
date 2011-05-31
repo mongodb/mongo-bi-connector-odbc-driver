@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -96,7 +96,7 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
     exit:
     pthread_mutex_unlock(&stmt->dbc->lock);
     if ( query != stmt->query )
-        my_free(query,MYF(0));
+        x_free(query);
 
     /*
       If the original query was modified, we reset stmt->query so that the
@@ -104,7 +104,7 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
     */
     if (stmt->orig_query)
     {
-        my_free(stmt->query,MYF(0));
+        x_free(stmt->query);
         stmt->query= stmt->orig_query;
         stmt->query_end= stmt->orig_query_end;
         stmt->orig_query= NULL;
@@ -632,7 +632,9 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
 
 out:
     if (free_data)
-      my_free(data, MYF(0));
+    {
+      x_free(data);
+    }
 
     *toptr= to;
     return SQL_SUCCESS;
@@ -1067,7 +1069,9 @@ SQLRETURN SQL_API SQLPutData( SQLHSTMT      hstmt,
     if ( cbValue == SQL_NULL_DATA )
     {
         if ( aprec->par.alloced )
-            my_free(aprec->par.value,MYF(0));
+        {
+            x_free(aprec->par.value);
+        }
         aprec->par.alloced= FALSE;
         aprec->par.value= NULL;
         return SQL_SUCCESS;
