@@ -123,6 +123,16 @@ IF(WIN32)
         ADD_DEFINITIONS(-DENGLISH -DMYODBC_EXPORTS -D_USERDLL)
         ADD_DEFINITIONS(-D_WIN32 -DWIN32 -D_WINDOWS -D__WIN__)
 
+	#Since 5.5.13 libmysql introduces dependency on Secur32.lib
+	FILE(STRINGS "${MYSQL_INCLUDE_DIR}\\mysql_version.h" mysql_version REGEX "^\#define[ \t]+MYSQL_VERSION_ID")
+
+	STRING(REGEX REPLACE "^\#define[ \t]+MYSQL_VERSION_ID[ \t]+([0-9]+)" "\\1" MYSQL_CLIENT_VERSION "${mysql_version}")
+
+	IF(MYSQL_CLIENT_VERSION GREATER 50512)
+		MESSAGE(STATUS "MySQL client lib(version ${MYSQL_CLIENT_VERSION}) requires Secure32.lib - TRUE")
+		SET(SECURE32_LIB Secur32)
+	ENDIF(MYSQL_CLIENT_VERSION GREATER 50512)
+
         # edits for all config build flags
         FOREACH(TYPE C CXX)
                 # makefiles use blank configuration

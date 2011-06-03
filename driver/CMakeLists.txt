@@ -1,4 +1,4 @@
-# Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -41,7 +41,7 @@ INSTALL(TARGETS myodbc5 DESTINATION lib)
 
 IF(WIN32)
 	TARGET_LINK_LIBRARIES(myodbc5 myodbc3u
-				${MYSQL_CLIENT_LIBS} ${ODBCLIB} ${ODBCINSTLIB})
+				${MYSQL_CLIENT_LIBS} ${ODBCLIB} ${ODBCINSTLIB} ${SECURE32_LIB})
 ELSE(WIN32)
 	SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${ODBC_LINK_FLAGS}")
 	TARGET_LINK_LIBRARIES(myodbc5 ltdl mysqlclient_r)
