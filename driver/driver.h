@@ -115,6 +115,9 @@ extern "C"
 
 #if MYSQL_VERSION_ID >= 50500
 # define x_free(A) { void *tmp= (A); if (tmp) my_free((char *) tmp); }
+# ifndef NEAR
+#  define NEAR 
+# endif
 #else
 # define x_free(A) { void *tmp= (A); if (tmp) my_free((char *) tmp,MYF(MY_WME+MY_FAE)); }
 #endif
