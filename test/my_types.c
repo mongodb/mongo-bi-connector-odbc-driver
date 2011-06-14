@@ -1095,7 +1095,7 @@ DECLARE_TEST(t_bug29402)
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
-  ok_stmt(hstmt1, SQLExecDirectA(hstmt1, "SELECT CONCAT('\x80', 100) concated", SQL_NTS));
+  ok_stmt(hstmt1, SQLExecDirect(hstmt1, "SELECT CONCAT('\x80', 100) concated", SQL_NTS));
 
   ok_stmt(hstmt1, SQLDescribeCol(hstmt1, 1, column_name, sizeof(column_name),
                                 &name_length, &data_type, &column_size,

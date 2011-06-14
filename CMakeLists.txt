@@ -137,8 +137,6 @@ IF(WIN32)
         FOREACH(TYPE C CXX)
                 # makefiles use blank configuration
                 FOREACH(CFG "_DEBUG" "_MINSIZEREL" "_RELEASE" "_RELWITHDEBINFO")
-                #FOREACH(CFG "" ${CMAKE_CONFIGURATION_TYPES})
-                        #MESSAGE("Replacing CMAKE_${TYPE}_FLAGS${CFG}: ${CMAKE_${TYPE}_FLAGS${CFG}}")
 
                         SET(NEW_FLAGS "${CMAKE_${TYPE}_FLAGS${CFG}}")
 
@@ -155,7 +153,6 @@ IF(WIN32)
                         SET(CMAKE_${TYPE}_FLAGS${CFG} "${NEW_FLAGS}" CACHE STRING
                                 "CMAKE_${TYPE}_FLAGS${CFG} (overwritten for odbc)" FORCE)
 
-                        #MESSAGE("New       CMAKE_${TYPE}_FLAGS${CFG}: ${CMAKE_${TYPE}_FLAGS${CFG}}")
                 ENDFOREACH(CFG)
         ENDFOREACH(TYPE)
 ELSE(WIN32)
