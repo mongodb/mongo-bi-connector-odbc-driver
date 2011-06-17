@@ -76,9 +76,15 @@ IF(WIN32)
         SET(ODBCLIB odbc32)
         SET(ODBCINSTLIB odbccp32)
 ELSE(WIN32)
+        IF(WITH_UNIXODBC)
+                SET(ODBCLIB odbc)
+                SET(ODBCINSTLIB odbcinst)
+        ELSE(WITH_UNIXODBC)
+                SET(ODBCLIB iodbc)
+                SET(ODBCINSTLIB iodbcinst)
+        ENDIF(WITH_UNIXODBC)
+        # FindODBC uses ODBCLIB and ODBCINSTLIB in some cases
         INCLUDE(cmake/FindODBC.cmake)
-        SET(ODBCLIB odbc)
-        SET(ODBCINSTLIB odbcinst)
 ENDIF(WIN32)
 #-----------------------------------------------------
 

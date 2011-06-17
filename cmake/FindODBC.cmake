@@ -22,40 +22,112 @@
 
 ##########################################################################
 
-IF(WITH_UNIXODBC)
-	# check for location of odbc_config
-	FIND_PROGRAM(ODBC_CONFIG odbc_config
-				 PATHS
-				 $ENV{ODBC_PATH}/bin)
-		
-	IF(NOT ODBC_CONFIG)
-		MESSAGE(STATUS "Couldn't find unixODBC' odbc_config")
-  ELSE(NOT ODBC_CONFIG)
-	  MESSAGE(STATUS "unixODBC: Found odbc_config in ${ODBC_CONFIG}")
+MACRO(_FIX_NOPREFIX VAR _odbc_config _param)
+    EXECUTE_PROCESS(COMMAND ${_odbc_config} ${_param}
+                     OUTPUT_VARIABLE _output
+                   )
+    IF(${VAR} MATCHES "/noprefix")
 
-	  EXEC_PROGRAM(${ODBC_CONFIG} ARGS "--include-prefix" OUTPUT_VARIABLE ODBC_INCLUDE_DIR)
-	  INCLUDE_DIRECTORIES(${ODBC_INCLUDE_DIR})
+      IF(NOT GUESSED_PREFIX)
 
-	  EXEC_PROGRAM(${ODBC_CONFIG} ARGS "--libs" OUTPUT_VARIABLE ODBC_LINK_FLAGS)
-	ENDIF(NOT ODBC_CONFIG)
+        GET_FILENAME_COMPONENT(GUESSED_PREFIX "${_odbc_config}" PATH)
+        GET_FILENAME_COMPONENT(GUESSED_PREFIX "${GUESSED_PREFIX}" PATH)
+        
+      ENDIF(NOT GUESSED_PREFIX)
 
-ELSE(WITH_UNIXODBC)
+      STRING(REGEX REPLACE "/noprefix" "${GUESSED_PREFIX}" _output "${_output}")
 
-	FIND_PROGRAM(ODBC_CONFIG iodbc-config
-				 $ENV{ODBC_PATH}/bin
-				 PATHS)
-		
-	IF(NOT ODBC_CONFIG)
-		MESSAGE(FATAL_ERROR "Couldn't find iODBC")
-	ENDIF(NOT ODBC_CONFIG)
+    ENDIF(${VAR} MATCHES "/noprefix")
 
-	MESSAGE(STATUS "iODBC: Found iodbc-config in ${ODBC_CONFIG}")
+    SET(${VAR} ${_output})
+ENDMACRO(_FIX_NOPREFIX VAR _odbc_config _param)
 
-	EXEC_PROGRAM(${ODBC_CONFIG} ARGS "--cflags" OUTPUT_VARIABLE ODBC_CFLAGS)
-	SET(CMAKE_FLAGS "${CMAKE_FLAGS} ${ODBC_CFLAGS}")
 
-	EXEC_PROGRAM(${ODBC_CONFIG} ARGS "--libs" OUTPUT_VARIABLE ODBC_LINK_FLAGS)
+IF(ODBC_INCLUDES)
 
-		
-ENDIF(WITH_UNIXODBC)
+  INCLUDE_DIRECTORIES(${ODBC_INCLUDES})
+
+ENDIF(ODBC_INCLUDES)
+
+IF(ODBC_LIB_DIR)
+
+  SET(ODBC_LINK_FLAGS "-L${ODBC_LIB_DIR} -l${ODBCLIB} -l${ODBCINSTLIB}")
+
+ENDIF(ODBC_LIB_DIR)
+
+
+# No need to look for (i)odbc[_-]config and run it
+IF(NOT (ODBC_INCLUDES AND ODBC_LIB_DIR))
+
+  IF(WITH_UNIXODBC)
+    # check for location of odbc_config
+    FIND_PROGRAM(ODBC_CONFIG odbc_config
+          PATHS
+          $ENV{ODBC_PATH}/bin)
+      
+    IF(NOT ODBC_CONFIG)
+      MESSAGE(STATUS "Couldn't find unixODBC' odbc_config")
+
+      #odbc config may be not present, and that can be ok
+      IF(NOT ODBC_INCLUDES)
+
+        INCLUDE (CheckIncludeFiles)
+        CHECK_INCLUDE_FILES(sql.h HAVE_SQL_H)
+
+        IF(NOT HAVE_SQL_H)
+          MESSAGE(FATAL_ERROR "sql.h is not found either!")
+        ENDIF(NOT HAVE_SQL_H)
+
+      ENDIF(NOT ODBC_INCLUDES)
+
+      
+      IF(NOT ODBC_LIB_DIR)
+
+        INCLUDE (CheckLibraryExists)
+        CHECK_LIBRARY_EXISTS(odbc SQLConnect "" HAVE_ODBC_LIB)
+
+        IF(NOT HAVE_ODBC_LIB)
+          MESSAGE(FATAL_ERROR "odbc lib is not found either!")
+        ENDIF(NOT HAVE_ODBC_LIB)
+
+      ENDIF(NOT ODBC_LIB_DIR)
+
+    ELSE(NOT ODBC_CONFIG)
+      MESSAGE(STATUS "unixODBC: Found odbc_config in ${ODBC_CONFIG}")
+
+      IF(NOT ODBC_INCLUDES)
+        _FIX_NOPREFIX(ODBC_INCLUDE_DIR ${ODBC_CONFIG} "--include-prefix")
+        INCLUDE_DIRECTORIES(${ODBC_INCLUDE_DIR})
+      ENDIF(NOT ODBC_INCLUDES)
+
+      IF(NOT ODBC_LIB_DIR)
+        _FIX_NOPREFIX(ODBC_LINK_FLAGS ${ODBC_CONFIG} "--libs")
+      ENDIF(NOT ODBC_LIB_DIR)
+
+    ENDIF(NOT ODBC_CONFIG)
+
+  ELSE(WITH_UNIXODBC)
+
+    FIND_PROGRAM(ODBC_CONFIG iodbc-config
+          PATHS
+          $ENV{ODBC_PATH}/bin)
+      
+    IF(NOT ODBC_CONFIG)
+      MESSAGE(FATAL_ERROR "Couldn't find iODBC")
+    ENDIF(NOT ODBC_CONFIG)
+
+    MESSAGE(STATUS "iODBC: Found iodbc-config in ${ODBC_CONFIG}")
+
+
+    IF(NOT ODBC_INCLUDES)
+      _FIX_NOPREFIX(ODBC_CFLAGS ${ODBC_CONFIG} "--cflags")
+      SET(CMAKE_FLAGS "${CMAKE_FLAGS} ${ODBC_CFLAGS}")
+    ENDIF(NOT ODBC_INCLUDES)
+
+    IF(NOT ODBC_LIB_DIR)
+      _FIX_NOPREFIX(ODBC_LINK_FLAGS ${ODBC_CONFIG} "--libs")
+    ENDIF(NOT ODBC_LIB_DIR)
+
+  ENDIF(WITH_UNIXODBC)
+ENDIF(NOT (ODBC_INCLUDES AND ODBC_LIB_DIR))
 
