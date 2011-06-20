@@ -22,26 +22,6 @@
 
 ##########################################################################
 
-MACRO(_FIX_NOPREFIX VAR _odbc_config _param)
-    EXECUTE_PROCESS(COMMAND ${_odbc_config} ${_param}
-                     OUTPUT_VARIABLE _output
-                   )
-    IF(${VAR} MATCHES "/noprefix")
-
-      IF(NOT GUESSED_PREFIX)
-
-        GET_FILENAME_COMPONENT(GUESSED_PREFIX "${_odbc_config}" PATH)
-        GET_FILENAME_COMPONENT(GUESSED_PREFIX "${GUESSED_PREFIX}" PATH)
-        
-      ENDIF(NOT GUESSED_PREFIX)
-
-      STRING(REGEX REPLACE "/noprefix" "${GUESSED_PREFIX}" _output "${_output}")
-
-    ENDIF(${VAR} MATCHES "/noprefix")
-
-    SET(${VAR} ${_output})
-ENDMACRO(_FIX_NOPREFIX VAR _odbc_config _param)
-
 
 IF(LTDL_PATH)
 

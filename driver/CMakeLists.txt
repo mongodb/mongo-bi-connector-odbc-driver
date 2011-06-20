@@ -30,6 +30,10 @@ SET(DRIVER_SRCS
 
 INCLUDE_DIRECTORIES(../util)
 
+IF(LTDL_INCLUDES)
+  INCLUDE_DIRECTORIES(LTDL_INCLUDES)
+ENDIF(LTDL_INCLUDES)
+
 IF(WIN32)
   # Headers added for convenience of VS users
 	SET(DRIVER_SRCS ${DRIVER_SRCS} driver.def driver.rc catalog.h driver.h error.h myutil.h)
