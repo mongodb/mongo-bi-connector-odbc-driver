@@ -25,7 +25,7 @@
 
 IF(LTDL_PATH)
 
-  SET(LTDL_INCLUDES, LTDL_PATH/include)
+  SET(LTDL_INCLUDES, "${LTDL_PATH}/include")
   SET(LTDL_LFLAGS, "-L${LTDL_PATH/lib}")
 
   IF(EXISTS "${LTDL_PATH}/lib/libltda.la")
