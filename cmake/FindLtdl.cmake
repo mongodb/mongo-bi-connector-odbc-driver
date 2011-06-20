@@ -25,13 +25,13 @@
 
 IF(LTDL_PATH)
 
-  SET(LTDL_INCLUDES, "${LTDL_PATH}/include")
-  SET(LTDL_LFLAGS, "-L${LTDL_PATH/lib}")
+  SET(LTDL_INCLUDES "${LTDL_PATH}/include")
+  SET(LTDL_LFLAGS "-L${LTDL_PATH/lib}")
 
   IF(EXISTS "${LTDL_PATH}/lib/libltda.la")
-    SET(LTDL_LFLAGS, "-l${LTDL_PATH}/lib/libltda.la")
+    SET(LTDL_LFLAGS "-l${LTDL_PATH}/lib/libltda.la")
   ELSE(EXISTS "${LTDL_PATH}/lib/libltda.la")
-    SET(LTDL_LFLAGS, "${LTDL_LFLAGS} -lltdl")
+    SET(LTDL_LFLAGS "${LTDL_LFLAGS} -lltdl")
   ENDIF(EXISTS "${LTDL_PATH}/lib/libltda.la")
 
 ELSE(LTDL_PATH)
@@ -50,7 +50,7 @@ ELSE(LTDL_PATH)
     MESSAGE(FATAL_ERROR "ltdl lib could not be found")
   ENDIF(NOT HAVE_LTDL_LIB)
 
-  SET(LTDL_LFLAGS, "-lltdl")
+  SET(LTDL_LFLAGS "-lltdl")
 
 ENDIF(LTDL_PATH)
 
