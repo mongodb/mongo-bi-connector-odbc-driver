@@ -85,6 +85,7 @@ ELSE(WIN32)
         ENDIF(WITH_UNIXODBC)
         # FindODBC uses ODBCLIB and ODBCINSTLIB in some cases
         INCLUDE(cmake/FindODBC.cmake)
+        INCLUDE(cmake/FindLtdl.cmake)
 ENDIF(WIN32)
 #-----------------------------------------------------
 
