@@ -23,6 +23,10 @@
 ##########################################################################
 INCLUDE_DIRECTORIES(${QT_INCLUDE_DIR})
 
+IF(LTDL_INCLUDES)
+  INCLUDE_DIRECTORIES(${LTDL_INCLUDES})
+ENDIF(LTDL_INCLUDES)
+
 SET(setup_SRCS 
 			ConfigDSN.c
 			MYODBCSetupAssistText.cpp

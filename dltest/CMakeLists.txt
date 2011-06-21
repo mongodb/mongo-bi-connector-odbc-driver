@@ -22,7 +22,6 @@
 
 ##########################################################################
 
-ADD_EXECUTABLE(dltest dltest.c)
 
 IF(NOT WIN32)
 
@@ -30,5 +29,8 @@ IF(NOT WIN32)
     INCLUDE_DIRECTORIES(${LTDL_INCLUDES})
   ENDIF(LTDL_INCLUDES)
 
-  SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LTDL_LFLAGS}")
+  SET(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} ${LTDL_LFLAGS}")
 ENDIF(NOT WIN32)
+
+ADD_EXECUTABLE(dltest dltest.c)
+

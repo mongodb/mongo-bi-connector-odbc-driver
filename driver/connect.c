@@ -772,11 +772,8 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
     if (oldds->pszSTMT)
       ds_setattr_from_utf8(&ds->initstmt, oldds->pszSTMT);
     if (oldds->pszOPTION)
-#ifdef _WIN32
       ds_set_options(ds, strtoul(oldds->pszOPTION, NULL, 10));
-#else
-      ds_set_options(ds, strtoul(oldds->pszOPTION));
-#endif
+
     ds->clientinteractive= oldds->bINTERACTIVE;
 
     if (oldds->pszSSLKEY)
