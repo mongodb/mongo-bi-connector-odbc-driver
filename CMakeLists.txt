@@ -89,6 +89,13 @@ ELSE(WIN32)
 ENDIF(WIN32)
 #-----------------------------------------------------
 
+#-------- configuring paths to odbc heders for compatibility checks ---------
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/sqlcolattrib1.c.cmake ${CMAKE_SOURCE_DIR}/cmake/sqlcolattrib1.c @ONLY)
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/sqlcolattrib2.c.cmake ${CMAKE_SOURCE_DIR}/cmake/sqlcolattrib2.c @ONLY)
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/sqlparamopt1.c.cmake ${CMAKE_SOURCE_DIR}/cmake/sqlparamopt1.c @ONLY)
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/sqlparamopt2.c.cmake ${CMAKE_SOURCE_DIR}/cmake/sqlparamopt2.c @ONLY)
+#-----------------------------------------------------
+
 #------------------ check compatibility---------------
 TRY_COMPILE(COMPILE_RESULT ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/cmake/sqlcolattrib1.c)
 MESSAGE(STATUS "Checking if SQLColAttribute last arg is compatible with SQLLEN* - ${COMPILE_RESULT}")
@@ -117,7 +124,11 @@ ELSE(COMPILE_RESULT)
         MESSAGE(STATUS "Checking if SQLParamOptions() 2nd and 3rd arg is compatible with SQLUINTEGER - ${COMPILE_RESULT1}")
 
         IF(COMPILE_RESULT1)
-        ADD_DEFINITIONS(-DUSE_SQLPARAMOPTIONS_SQLUINTEGER_PTR)
+                ADD_DEFINITIONS(-DUSE_SQLPARAMOPTIONS_SQLUINTEGER_PTR)
+        ELSE(COMPILE_RESULT1)
+                # SQLULEN is a default
+                MESSAGE("Apparently odbc headers could not be found. 2nd and 3rd parameters assumed to be (*)SQLULEN by default")
+                ADD_DEFINITIONS(-DUSE_SQLPARAMOPTIONS_SQLULEN_PTR)
         ENDIF(COMPILE_RESULT1)
 
 ENDIF(COMPILE_RESULT)

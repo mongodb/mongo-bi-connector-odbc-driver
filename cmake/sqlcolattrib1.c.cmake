@@ -1,4 +1,4 @@
-/* Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+/* Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
 
    The MySQL Connector/ODBC is licensed under the terms of the GPLv2
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -20,12 +20,28 @@
    with this program; if not, write to the Free Software Foundation, Inc.,
    51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA */
 
+#cmakedefine ODBC_INCLUDES
+
+#ifdef ODBC_INCLUDES
+
+#include "@ODBC_INCLUDES@/sql.h"
+#include "@ODBC_INCLUDES@/sqlext.h"
+
+#else
+
 #include <sql.h>
 #include <sqlext.h>
 
-SQLRETURN SQL_API SQLParamOptions( SQLHSTMT     hstmt, 
-				       SQLULEN      crow,
-				       SQLULEN      *pirow )
+#endif
+
+SQLRETURN SQL_API SQLColAttribute( SQLHSTMT  StatementHandle,
+                                   SQLUSMALLINT ColumnNumber,
+                                   SQLUSMALLINT FieldIdentifier,
+                                   SQLPOINTER  CharacterAttributePtr,
+                                   SQLSMALLINT BufferLength,
+                                   SQLSMALLINT *StringLengthPtr,
+                                   SQLLEN *  NumericAttributePtr )
 { return 1; }
 
-int main() {}
+int main() {
+}
