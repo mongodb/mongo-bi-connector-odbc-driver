@@ -22,6 +22,7 @@
 
 ##########################################################################
 
+ADD_EXECUTABLE(dltest dltest.c)
 
 IF(NOT WIN32)
 
@@ -29,8 +30,13 @@ IF(NOT WIN32)
     INCLUDE_DIRECTORIES(${LTDL_INCLUDES})
   ENDIF(LTDL_INCLUDES)
 
-  SET(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAGS} ${LTDL_LFLAGS}")
+  TARGET_LINK_LIBRARIES(dltest dl)
+
+  IF(${LTDL_LFLAGS} MATCHES "ltdl.a")
+    TARGET_LINK_LIBRARIES(dltest ${LTDL_LFLAGS})
+  ELSE(${LTDL_LFLAGS} MATCHES "ltdl.a")
+    SET_TARGET_PROPERTIES(dltest PROPERTIES LINK_FLAGS "${LTDL_LFLAGS}")
+  ENDIF(${LTDL_LFLAGS} MATCHES "ltdl.a")
 ENDIF(NOT WIN32)
 
-ADD_EXECUTABLE(dltest dltest.c)
 
