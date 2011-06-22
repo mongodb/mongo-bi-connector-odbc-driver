@@ -28,11 +28,11 @@ IF(LTDL_PATH)
   SET(LTDL_INCLUDES "${LTDL_PATH}/include")
   SET(LTDL_LFLAGS "-L${LTDL_PATH}/lib")
 
-  IF(EXISTS "${LTDL_PATH}/lib/libltda.a")
-    SET(LTDL_LFLAGS "${LTDL_PATH}/lib/libltda.a")
-  ELSE(EXISTS "${LTDL_PATH}/lib/libltda.a")
+  IF(EXISTS "${LTDL_PATH}/lib/libltdl.a")
+    SET(LTDL_LFLAGS "${LTDL_PATH}/lib/libltdl.a")
+  ELSE(EXISTS "${LTDL_PATH}/lib/libltdl.a")
     SET(LTDL_LFLAGS "${LTDL_LFLAGS} -lltdl")
-  ENDIF(EXISTS "${LTDL_PATH}/lib/libltda.a")
+  ENDIF(EXISTS "${LTDL_PATH}/lib/libltdl.a")
 
 ELSE(LTDL_PATH)
 
