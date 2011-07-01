@@ -1,4 +1,4 @@
-# Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -28,7 +28,7 @@
 TEST_PREFIX    = 
 TEST_ODBCINI   = odbc.ini
 TEST_ODBCINSTINI = odbcinst.ini
-TEST_DSN       = myodbc3
+TEST_DSN       = myodbc5
 # XXX this is not really correct, but works for testing.
 TEST_DRIVER    = ../driver/.libs/libmyodbc5.so
 TEST_DATABASE  = test
