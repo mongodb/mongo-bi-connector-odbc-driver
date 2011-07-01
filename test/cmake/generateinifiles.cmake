@@ -1,4 +1,4 @@
-# Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -22,25 +22,30 @@
 
 ##########################################################################
 
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/test)
 
-# put the test exe's in test/
-SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/test")
+MACRO(_ENV_OR_DEFAULT VAR _default)
 
-ENABLE_TESTING()
+  SET(${VAR} $ENV{${VAR}})
 
-FOREACH(T my_basics my_blob my_bulk my_catalog my_curext my_cursor
-		my_datetime my_desc my_dyn_cursor my_error my_info my_keys my_param
-		my_prepare my_relative my_result my_scroll my_tran
-		my_types my_unicode my_unixodbc my_use_result my_bug13766)
-	ADD_EXECUTABLE(${T} ${T}.c)
+  IF(NOT ${VAR})
+    SET(${VAR} "${_default}")
+  ENDIF(NOT ${VAR})
 
-	IF(WIN32)
-	  TARGET_LINK_LIBRARIES(${T} ${ODBCLIB} ${ODBCINSTLIB})
-	ELSE(WIN32)
-	  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ODBC_LINK_FLAGS}")
-	ENDIF(WIN32)
-	
-	ADD_TEST(${T} ${EXECUTABLE_OUTPUT_PATH}/${T})
-ENDFOREACH(T)
+ENDMACRO(_ENV_OR_DEFAULT VAR _key _default)
+
+_ENV_OR_DEFAULT(TEST_DRIVER   "${DRIVER_LOCATION}")
+_ENV_OR_DEFAULT(TEST_DATABASE "test")
+_ENV_OR_DEFAULT(TEST_SERVER   "localhost")
+_ENV_OR_DEFAULT(TEST_UID      "root")
+_ENV_OR_DEFAULT(TEST_PASSWORD "")
+_ENV_OR_DEFAULT(TEST_SOCKET   "")
+
+IF(WIN32 AND TEST_SOCKET)
+  SET(TEST_OPTIONS "NAMED_PIPE=1")
+ENDIF(WIN32 AND TEST_SOCKET)
+
+SET(DESCRIPTION   "MySQL ODBC 5.1 Driver test" )
+
+CONFIGURE_FILE("odbcinst.ini.in" "odbcinst.ini" @ONLY)
+CONFIGURE_FILE("odbc.ini.in" "odbc.ini" @ONLY)
 
