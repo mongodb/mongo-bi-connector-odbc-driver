@@ -98,7 +98,8 @@ EXTRA_DIST= \
 	odbcinst.ini.in \
 	odbctap.h \
 	unit.pl \
-	CMakeLists.txt
+	CMakeLists.txt \
+  cmake/generateinifiles.cmake
 
 # We want to rebuild the "test.ini" file each time, as it might need an
 # update from overriding variables on the command line
