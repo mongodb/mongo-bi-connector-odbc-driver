@@ -22,17 +22,17 @@
 
 ##########################################################################
 
+SET(LTDL_LIBS "ltdl")
 
 IF(LTDL_PATH)
 
   SET(LTDL_INCLUDES "${LTDL_PATH}/include")
-  SET(LTDL_LFLAGS "-L${LTDL_PATH}/lib")
+  SET(LTDL_LIB_DIR "${LTDL_PATH}/lib")
+  SET(LTDL_LFLAGS "-L${LTDL_LIB_DIR}")
 
-  IF(EXISTS "${LTDL_PATH}/lib/libltdl.a")
-    SET(LTDL_LFLAGS "${LTDL_PATH}/lib/libltdl.a")
-  ELSE(EXISTS "${LTDL_PATH}/lib/libltdl.a")
-    SET(LTDL_LFLAGS "${LTDL_LFLAGS} -lltdl")
-  ENDIF(EXISTS "${LTDL_PATH}/lib/libltdl.a")
+  IF(NOT LTDL_LINK_DYNAMIC AND EXISTS "${LTDL_LIB_DIR}/libltdl.a")
+    SET(LTDL_LIBS "${LTDL_LIB_DIR}/libltdl.a")
+  ENDIF(NOT LTDL_LINK_DYNAMIC AND EXISTS "${LTDL_LIB_DIR}/libltdl.a")
 
 ELSE(LTDL_PATH)
 
@@ -50,7 +50,18 @@ ELSE(LTDL_PATH)
     MESSAGE(FATAL_ERROR "ltdl lib could not be found")
   ENDIF(NOT HAVE_LTDL_LIB)
 
-  SET(LTDL_LFLAGS "-lltdl")
-
 ENDIF(LTDL_PATH)
 
+TRY_COMPILE(COMPILE_RESULT ${CMAKE_SOURCE_DIR}/cmake/CMakeTmp ${CMAKE_SOURCE_DIR}/cmake/needdl.c
+            CMAKE_FLAGS -DINCLUDE_DIRECTORIES=${LTDL_INCLUDES}
+            -DLINK_DIRECTORIES=${LTDL_LIB_DIR}
+            -DLINK_LIBRARIES=${LTDL_LIBS}
+            OUTPUT_VARIABLE     COMPILE_OUTPUT)
+
+# Perhaps to add try_compile with dl would be safer
+IF(COMPILE_RESULT) 
+  MESSAGE(STATUS "Checking if need to link dl - FALSE")
+ElSE(COMPILE_RESULT) 
+  MESSAGE(STATUS "Checking if need to link dl - TRUE")
+  SET(LTDL_LIBS ${LTDL_LIBS} "dl")
+ENDIF(COMPILE_RESULT)

@@ -24,15 +24,10 @@
 
 SET(DRIVER_SRCS
 		ansi.c catalog.c catalog_no_i_s.c connect.c cursor.c desc.c dll.c error.c execute.c
-        handle.c
-        info.c driver.c options.c prepare.c results.c transact.c unicode.c
-        utility.c)
+    handle.c info.c driver.c options.c prepare.c results.c transact.c unicode.c
+    utility.c)
 
 INCLUDE_DIRECTORIES(../util)
-
-IF(LTDL_INCLUDES)
-  INCLUDE_DIRECTORIES(${LTDL_INCLUDES})
-ENDIF(LTDL_INCLUDES)
 
 IF(WIN32)
   # Headers added for convenience of VS users
@@ -47,9 +42,16 @@ IF(WIN32)
 	TARGET_LINK_LIBRARIES(myodbc5 myodbc3u
 				${MYSQL_CLIENT_LIBS} ${ODBCLIB} ${ODBCINSTLIB} ${SECURE32_LIB})
 ELSE(WIN32)
-	SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${ODBC_LINK_FLAGS} ${LTDL_LFLAGS}")
+	SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${ODBC_LINK_FLAGS}")
 	TARGET_LINK_LIBRARIES(myodbc5 mysqlclient_r)
 	TARGET_LINK_LIBRARIES(myodbc5 myodbc3u)
+
+  #INCLUDE_DIRECTORIES(${LTDL_INCLUDES})
+
+  #TARGET_LINK_LIBRARIES(myodbc5 ${LTDL_LIBS})
+
+  #SET_TARGET_PROPERTIES(myodbc5 PROPERTIES LINK_FLAGS "${LTDL_LFLAGS}")
+
 ENDIF(WIN32)
 
 GET_TARGET_PROPERTY(DRIVER_LOCATION myodbc5 LOCATION)
