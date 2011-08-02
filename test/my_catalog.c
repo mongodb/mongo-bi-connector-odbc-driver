@@ -2309,6 +2309,35 @@ DECLARE_TEST(t_bug55870)
 }
 
 
+/**
+ Bug#31067 test. Testing only part of the patch, as the report itself
+ is about Access and can't be tested automatically. The test checks
+ if SQLColumns returns correct default value if table's catalog specified.
+*/
+DECLARE_TEST(t_bug31067)
+{
+  SQLCHAR    buff[512];
+
+  ok_sql(hstmt, "DROP DATABASE IF EXISTS bug31067");
+  ok_sql(hstmt, "CREATE DATABASE bug31067");
+  ok_sql(hstmt, "CREATE TABLE bug31067.a (a varchar(10) not null default 'bug31067')");
+
+  /* Get the info from just one table.  */
+  ok_stmt(hstmt, SQLColumns(hstmt, (SQLCHAR *)"bug31067", SQL_NTS, NULL, SQL_NTS,
+                             (SQLCHAR *)"a", SQL_NTS, NULL, 0));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_str(my_fetch_str(hstmt, buff, 13), "'bug31067'", 11);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  ok_sql(hstmt, "DROP DATABASE bug31067");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -2350,6 +2379,7 @@ BEGIN_TESTS
   ADD_TEST(t_sqlprocedurecolumns)
   ADD_TEST(t_bug57182)
   ADD_TEST(t_bug55870)
+  ADD_TEST(t_bug31067)
 END_TESTS
 
 

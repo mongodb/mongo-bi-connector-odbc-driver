@@ -167,7 +167,6 @@ MYSQL_FIELD SQLCOLUMNS_fields[]=
 
 const uint SQLCOLUMNS_FIELDS= array_elements(SQLCOLUMNS_values);
 
-
 /**
   Get the list of columns in a table matching a wildcard.
 
@@ -179,109 +178,54 @@ const uint SQLCOLUMNS_FIELDS= array_elements(SQLCOLUMNS_values);
   @param[in] szColumn         Pattern of column names to match
   @param[in] cbColumn         Length of column pattern
 
-  @return Result of SHOW COLUMNS FROM, or NULL if there is an error
+  @return Result of mysql_list_fields, or NULL if there is an error
 */
-static
-MYSQL_RES *mysql_list_dbcolumns(STMT *stmt,
-                                SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
-                                SQLCHAR *szTable, SQLSMALLINT cbTable,
-                                SQLCHAR *szColumn, SQLSMALLINT cbColumn)
+static MYSQL_RES *
+mysql_list_dbcolumns(STMT *stmt,
+                     SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
+                     SQLCHAR *szTable, SQLSMALLINT cbTable,
+                     SQLCHAR *szColumn, SQLSMALLINT cbColumn)
 {
   DBC *dbc= stmt->dbc;
   MYSQL *mysql= &dbc->mysql;
   MYSQL_RES *result;
-  MYSQL_ROW row;
 
-  /* If a catalog was specified, we have to do it the hard way. */
+  /* If a catalog was specified, we have to change working catalog
+     to be able to use mysql_list_fields. */
   if (cbCatalog)
   {
     char buff[255];
-    char *select, *to;
-    size_t select_len;
-    unsigned long *lengths;
 
-    /* Get a list of column names that match our criteria. */
-    to= strmov(buff, "SHOW COLUMNS FROM `");
-    if (cbCatalog)
-    {
-      to+= myodbc_escape_string(mysql, to, (ulong)(sizeof(buff) - (to - buff)),
-                                (char *)szCatalog, cbCatalog, 1);
-      to= strmov(to, "`.`");
-    }
+    if (reget_current_catalog(dbc))
+      return NULL;
 
-    to+= myodbc_escape_string(mysql, to, (ulong)(sizeof(buff) - (to - buff)),
-                              (char *)szTable, cbTable, 1);
-    to= strmov(to, "`");
-
-    if (cbColumn)
-    {
-      to= strmov(to, " LIKE '");
-      to+= mysql_real_escape_string(mysql, to, (char *)szColumn, cbColumn);
-      to= strmov(to, "'");
-    }
-
-    MYLOG_QUERY(stmt, buff);
-
+    /* reget_current_catalog locks and release mutex, so locking
+       here again */
     pthread_mutex_lock(&dbc->lock);
-    if (mysql_query(mysql,buff) ||
-        !(result= mysql_store_result(mysql)))
+
+    strncpy(buff, szCatalog, cbCatalog);
+    buff[cbCatalog]= '\0';
+
+    if (mysql_select_db(mysql, buff))
     {
       pthread_mutex_unlock(&dbc->lock);
       return NULL;
     }
-    pthread_mutex_unlock(&dbc->lock);
-
-    /* Build a SELECT ... LIMIT 0 to get the field metadata. */
-    select_len = (ulong)result->row_count * (NAME_LEN + 1) + NAME_LEN * 2;
-    if (!(select= (char *)my_malloc(select_len, MYF(0))))
-    {
-      set_mem_error(mysql);
-      return NULL;
-    }
-
-    to= strxmov(select, "SELECT ", NullS);
-    while ((row= mysql_fetch_row(result)))
-    {
-      to= strmov(to, "`");
-      lengths= mysql_fetch_lengths(result);
-      to+= myodbc_escape_string(mysql, to, (ulong)(select_len - (to - select)),
-                                (char *)row[0], lengths[0], 1);
-      to= strmov(to, "`,");
-    }
-    *(--to)= '\0';
-
-    to= strmov(to, " FROM `");
-    if (cbCatalog)
-    {
-      to+= myodbc_escape_string(mysql, to, (ulong)(select_len - (to - select)),
-                                (char *)szCatalog, cbCatalog, 1);
-      to= strmov(to, "`.`");
-    }
-
-    to+= myodbc_escape_string(mysql, to, (ulong)(select_len - (to - select)),
-                              (char *)szTable, cbTable, 1);
-    to= strmov(to, "` LIMIT 0");
-
-    mysql_free_result(result);
-
-    MYLOG_QUERY(stmt, select);
-
-    pthread_mutex_lock(&dbc->lock);
-    if (mysql_query(mysql, select))
-    {
-      x_free(select);
-      pthread_mutex_unlock(&dbc->lock);
-      return NULL;
-    }
-    result= mysql_store_result(&dbc->mysql);
-    pthread_mutex_unlock(&dbc->lock);
-    x_free(select);
-
-    return result;
   }
+  else
+    pthread_mutex_lock(&dbc->lock);
 
-  pthread_mutex_lock(&dbc->lock);
   result= mysql_list_fields(mysql, (char *)szTable, (char *)szColumn);
+  if (cbCatalog)
+  {
+    if (mysql_select_db( mysql, dbc->database))
+    {
+      /* Well, probably have to return error here */
+      mysql_free_result(result);
+      pthread_mutex_unlock(&dbc->lock);
+      return NULL;
+    }
+  }
   pthread_mutex_unlock(&dbc->lock);
 
   return result;
@@ -302,23 +246,24 @@ MYSQL_RES *mysql_list_dbcolumns(STMT *stmt,
   @param[in] cbColumn         Length of column pattern
 */
 SQLRETURN
-mysql_columns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
+mysql_columns(STMT * stmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
              SQLCHAR *szSchema __attribute__((unused)),
              SQLSMALLINT cbSchema __attribute__((unused)),
              SQLCHAR *szTable, SQLSMALLINT cbTable,
              SQLCHAR *szColumn, SQLSMALLINT cbColumn)
 
 {
-  STMT *stmt= (STMT *)hstmt;
   MYSQL_RES *res;
   MEM_ROOT *alloc;
   MYSQL_ROW table_row;
   unsigned long rows= 0, next_row= 0, *lengths;
   char *db= NULL;
+  BOOL is_access= FALSE;
 
   /* Get the list of tables that match szCatalog and szTable */
   pthread_mutex_lock(&stmt->dbc->lock);
-  res= mysql_table_status(stmt, szCatalog, cbCatalog, szTable, cbTable, TRUE, TRUE, TRUE);
+  res= mysql_table_status(stmt, szCatalog, cbCatalog, szTable, cbTable, TRUE,
+                          TRUE, TRUE);
 
   if (!res && mysql_errno(&stmt->dbc->mysql))
   {
@@ -332,6 +277,11 @@ mysql_columns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
     goto empty_set;
   }
   pthread_mutex_unlock(&stmt->dbc->lock);
+
+#ifdef _WIN32
+  if (GetModuleHandle("msaccess.exe") != NULL)
+    is_access= TRUE;
+#endif
 
   stmt->result= res;
   alloc= &res->field_alloc;
@@ -410,9 +360,13 @@ mysql_columns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
 
       if (is_char_sql_type(type) || is_wchar_sql_type(type) ||
           is_binary_sql_type(type))
+      {
         row[15]= strdup_root(alloc, buff); /* CHAR_OCTET_LENGTH */
+      }
       else
+      {
         row[15]= NULL;                     /* CHAR_OCTET_LENGTH */
+      }
 
       {
         SQLSMALLINT digits= get_decimal_digits(stmt, field);
@@ -438,9 +392,23 @@ mysql_columns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
       if ((field->flags & NOT_NULL_FLAG) && !(field->flags & TIMESTAMP_FLAG) &&
           !(field->flags & AUTO_INCREMENT_FLAG))
       {
-        sprintf(buff, "%d", SQL_NO_NULLS);
-        row[10]= strdup_root(alloc, buff); /* NULLABLE */
-        row[17]= strdup_root(alloc, "NO"); /* IS_NULLABLE */
+        /* Bug#31067. Access seems to try to put NULL value when not null field
+           is cleared. And that contradicts with its knowledge of that the field
+           is not nullable, and it yields an error. Here is a little trick for
+           such case - we don't tell Access the whole truth we know, and
+           return for such field SQL_NULLABLE_UNKNOWN instead*/
+        if (is_access)
+        {
+          sprintf(buff, "%d", SQL_NULLABLE_UNKNOWN);
+          row[10]= strdup_root(alloc, buff); /* NULLABLE */
+          row[17]= strdup_root(alloc, "NO");/* IS_NULLABLE */
+        }
+        else
+        {
+          sprintf(buff, "%d", SQL_NO_NULLS);
+          row[10]= strdup_root(alloc, buff); /* NULLABLE */
+          row[17]= strdup_root(alloc, "NO"); /* IS_NULLABLE */
+        }
       }
       else
       {
@@ -452,17 +420,17 @@ mysql_columns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
       row[11]= ""; /* REMARKS */
 
       /*
-         The default value of the column. The value in this column should be
-         interpreted as a string if it is enclosed in quotation marks.
+        The default value of the column. The value in this column should be
+        interpreted as a string if it is enclosed in quotation marks.
 
-         if NULL was specified as the default value, then this column is the
-         word NULL, not enclosed in quotation marks. If the default value
-         cannot be represented without truncation, then this column contains
-         TRUNCATED, with no enclosing single quotation marks. If no default
-         value was specified, then this column is NULL.
+        if NULL was specified as the default value, then this column is the
+        word NULL, not enclosed in quotation marks. If the default value
+        cannot be represented without truncation, then this column contains
+        TRUNCATED, with no enclosing single quotation marks. If no default
+        value was specified, then this column is NULL.
 
-         The value of COLUMN_DEF can be used in generating a new column
-         definition, except when it contains the value TRUNCATED
+        The value of COLUMN_DEF can be used in generating a new column
+        definition, except when it contains the value TRUNCATED
       */
       if (!field->def)
         row[12]= NullS; /* COLUMN_DEF */
@@ -470,14 +438,20 @@ mysql_columns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
       {
         if (field->type == MYSQL_TYPE_TIMESTAMP &&
             !strcmp(field->def,"0000-00-00 00:00:00"))
+        {
           row[12]= NullS; /* COLUMN_DEF */
+        }
         else
         {
           char *def= alloc_root(alloc, strlen(field->def) + 3);
           if (is_numeric_mysql_type(field))
+          {
             sprintf(def, "%s", field->def);
+          }
           else
+          {
             sprintf(def, "'%s'", field->def);
+          }
           row[12]= def; /* COLUMN_DEF */
         }
       }
