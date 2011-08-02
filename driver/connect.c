@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -123,8 +123,11 @@ SQLRETURN myodbc_set_initial_character_set(DBC *dbc, const char *charset)
     We always set character_set_results to NULL so we can do our own
     conversion to the ANSI character set or Unicode.
   */
-  if (odbc_stmt(dbc, "SET character_set_results = NULL") != SQL_SUCCESS)
+  if (is_minimum_version(dbc->mysql.server_version, "4.1.1", 5)
+      && odbc_stmt(dbc, "SET character_set_results = NULL") != SQL_SUCCESS)
+  {
     return SQL_ERROR;
+  }
 
   return SQL_SUCCESS;
 }

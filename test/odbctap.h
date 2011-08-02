@@ -885,7 +885,13 @@ const char *my_fetch_str(SQLHSTMT hstmt, SQLCHAR *szData,SQLUSMALLINT icol)
     SQLLEN nLen;
 
     SQLGetData(hstmt,icol,SQL_CHAR,szData,MAX_ROW_DATA_LEN+1,&nLen);
-    printMessage(" my_fetch_str: %s(%ld)",szData,nLen);
+    /* If Null value - putting down smth meaningful. also that allows caller to
+       better/(in more easy way) test the value */
+    if (nLen < 0)
+    {
+      strcpy(szData, "(Null)"); 
+    }
+    printMessage(" my_fetch_str: %s(%ld)", szData, nLen);
     return((const char *)szData);
 }
 
