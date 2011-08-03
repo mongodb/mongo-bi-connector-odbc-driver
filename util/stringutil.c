@@ -526,11 +526,17 @@ int sqlwcharcasecmp(const SQLWCHAR *s1, const SQLWCHAR *s2)
  */
 const SQLWCHAR *sqlwcharchr(const SQLWCHAR *wstr, SQLWCHAR wchr)
 {
-  while (*wstr != wchr && *wstr++);
-  if (*wstr == wchr)
-    return wstr;
-  else
-    return NULL;
+  while (*wstr)
+  {
+    if (*wstr == wchr)
+    {
+      return wstr;
+    }
+
+    ++wstr;
+  }
+
+  return NULL;
 }
 
 

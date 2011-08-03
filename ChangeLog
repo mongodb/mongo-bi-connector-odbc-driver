@@ -3,6 +3,8 @@
   Bugs fixed:
   * SQLFetch() did not return SQL_ERROR if connection was dropped due to a
     timeout. (Bug #39878)
+  * MS Access with VARCHAR NOT NULL columns. (Bug #31067)
+  * sqlwcharchr might read one SQLWCHAR after end of string. (Bug #61586)
 
 ----
 
