@@ -70,7 +70,7 @@ my_bool server_has_i_s(DBC FAR *dbc);
 
 /* no_i_s functions */
 SQLRETURN
-mysql_columns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
+mysql_columns(STMT *hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
              SQLCHAR *szSchema __attribute__((unused)),
              SQLSMALLINT cbSchema __attribute__((unused)),
              SQLCHAR *szTable, SQLSMALLINT cbTable,
