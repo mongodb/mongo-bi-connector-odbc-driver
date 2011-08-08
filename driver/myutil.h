@@ -64,6 +64,10 @@
 #define SQLNUM_TRUNC_FRAC 1
 #define SQLNUM_TRUNC_WHOLE 2
 
+/* Conversion to SQL_TIMESTAMP_STRUCT errors(str_to_ts) */
+#define SQLTS_NULL_DATE -1
+#define SQLTS_BAD_DATE -2
+
 /* Wrappers to hide differences in client library versions. */
 #if MYSQL_VERSION_ID >= 40100
 # define my_int2str(val, dst, radix, upcase) \
@@ -315,6 +319,7 @@ int proc_get_param_sql_type_index(SQLCHAR *ptype, int len);
 SQLTypeMap *proc_get_param_map_by_index(int index);
 char *proc_param_next_token(char *str, char *str_end);
 void set_row_count(STMT * stmt, my_ulonglong rows);
+char *get_fractional_part(const char * str, SQLUINTEGER * fraction);
 
 #ifdef __WIN__
 #define cmp_database(A,B) myodbc_strcasecmp((const char *)(A),(const char *)(B))

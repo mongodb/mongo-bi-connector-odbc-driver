@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -22,6 +22,7 @@
   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+#include <time.h>
 #include "odbctap.h"
 
 
@@ -965,6 +966,102 @@ DECLARE_TEST(t_bug37342)
 }
 
 
+/**
+  Bug#60646 - Fractions of seconds ignored in results
+*/
+DECLARE_TEST(t_bug60646)
+{
+  SQLCHAR buff[128];
+  TIMESTAMP_STRUCT ts;
+  SQLLEN len;
+  const char *expected= "2012-01-01 01:01:01.000001";
+
+  ok_sql(hstmt,
+        "SELECT timestamp('2012-01-01 01:01:01.000001')"            /*1*/
+        " ,timestamp('2012-01-01 01:01:01.100002')"                 /*2*/
+        " ,'2011-07-29 17:52:15.0000000009'"                        /*3*/
+        " ,'1000-01-01 12:00:00.000000001'"                         /*4*/
+        " ,time('2011-12-31 23:59:59.999999')"                      /*5*/
+        " ,ADDTIME('9999-12-31 23:59:59.999999', '1 1:1:1.000002')" /*6*/
+        ); 
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  /* Fields 1-4 checking conversions from date as a string
+  /* 1) just to be sure that everything is fine with string */
+  is_str(my_fetch_str(hstmt, buff, 1), expected, sizeof(expected));
+
+  /* 2) testing if fractional part is converted to nanoseconds correctly */
+  ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_TYPE_TIMESTAMP, &ts, sizeof(ts),
+                            &len));
+
+  is_num(ts.fraction, 100002000);
+
+  /* 3) fractional part is less than we care (less than nanosecond).
+        Test using string as MySQL does not support units less than a microsecond */
+  ok_stmt(hstmt, SQLGetData(hstmt, 3, SQL_C_TYPE_TIMESTAMP, &ts, sizeof(ts),
+                            &len));
+  is_num(ts.fraction, 0);
+
+  /* 4) testing if min fraction detected
+        Again - mysql supports microseconds only. thus using string
+   */
+  ok_stmt(hstmt, SQLGetData(hstmt, 4, SQL_C_TYPE_TIMESTAMP, &ts, sizeof(ts),
+                            &len));
+  is_num(ts.fraction, 1);
+
+  /* 5) if time is converted to timestamp - checking if current date is set
+        and if fractional part in place. former can actually fail if day is
+        being changed */
+
+  {
+    time_t sec_time= time(NULL);
+    struct tm * cur_tm;
+
+    ok_stmt(hstmt, SQLGetData(hstmt, 5, SQL_C_TYPE_TIMESTAMP, &ts, sizeof(ts),
+                              &len));
+    cur_tm= localtime(&sec_time);
+
+    is_num(ts.year, 1900 + cur_tm->tm_year);
+    is_num(ts.month, 1 + cur_tm->tm_mon);
+    is_num(ts.day, cur_tm->tm_mday);
+  }
+
+  is_num(ts.fraction, 999999000);
+
+  /* 6) Expecting an error because of longer date
+        At the moment ADDTIME('9999-12-31 23:59:59.999999', '1 1:1:1.000002')
+        will give you 10000-01-02 01:01:01.000001
+   */
+
+  expect_stmt(hstmt, SQLGetData(hstmt, 6, SQL_C_TYPE_TIMESTAMP, &ts, sizeof(ts),
+                              &len), SQL_ERROR);
+
+  if (check_sqlstate(hstmt, "22018") != OK)
+  {
+    return FAIL;
+  }
+
+  /* 5th col once again This time we get it in time struct. Thus we are
+     loosing fractioanl part. Thus the state has to be 01S07 and
+     SQL_SUCCESS_WITH_INFO returned */
+  {
+    SQL_TIME_STRUCT timestruct;
+
+    expect_stmt(hstmt, SQLGetData(hstmt, 5, SQL_C_TYPE_TIME, &timestruct,
+                            sizeof(timestruct), &len), SQL_SUCCESS_WITH_INFO);
+
+    if (check_sqlstate(hstmt, "01S07") != OK)
+    {
+      return FAIL;
+    }
+  }
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_ts)
   ADD_TEST(t_tstotime)
@@ -981,6 +1078,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug30939)
   ADD_TEST(t_bug31009)
   ADD_TEST(t_bug37342)
+  ADD_TEST(t_bug60646)
 END_TESTS
 
 

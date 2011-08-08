@@ -32,6 +32,7 @@
 #include <ctype.h>
 
 const SQLULEN sql_select_unlimited= (SQLULEN)-1;
+const uint datetime_digits= 14;
 
 /**
   Execute a SQL statement.
@@ -1907,48 +1908,72 @@ ulong bind_length(int sql_data_type,ulong length)
 my_bool str_to_ts(SQL_TIMESTAMP_STRUCT *ts, const char *str, int zeroToMin)
 { 
     uint year, length;
-    char buff[15],*to;
+    char buff[15], *to, *decptr;
     SQL_TIMESTAMP_STRUCT tmp_timestamp;
+    SQLUINTEGER fraction;
 
     if ( !ts )
-        ts= (SQL_TIMESTAMP_STRUCT *) &tmp_timestamp;
-
-    for ( to= buff ; *str && to < buff+sizeof(buff)-1 ; ++str )
     {
-        if ( isdigit(*str) )
-            *to++= *str;
+      ts= (SQL_TIMESTAMP_STRUCT *) &tmp_timestamp;
     }
 
+    /* We don't wan to change value in the out parameter directly
+       before we know that string is a good datetime */
+    decptr= get_fractional_part(str, &fraction);
+
+    for ( to= buff ; (decptr && str < decptr ||  !decptr && *str); ++str )
+    {
+      if ( isdigit(*str) )
+      {
+        if (to < buff+sizeof(buff)-1)
+        {
+          *to++= *str;
+        }
+        else
+        {
+          /* We have too many numbers in the string and we not gonna tolerate it */
+          return SQLTS_BAD_DATE;
+        }
+      }
+    }
+
+    /* If there was fractional part length would be set */
     length= (uint) (to-buff);
 
     if ( length == 6 || length == 12 )  /* YYMMDD or YYMMDDHHMMSS */
     {
-        memmove(to+2, to, length);
-        if ( buff[0] <= '6' )
-        {
-            buff[0]='2';
-            buff[1]='0';
-        }
-        else
-        {
-            buff[0]='1';
-            buff[1]='9';
-        }
-        length+= 2;
-        to+= 2;
+      memmove(to+2, to, length);
+
+      if ( buff[0] <= '6' )
+      {
+          buff[0]='2';
+          buff[1]='0';
+      }
+      else
+      {
+          buff[0]='1';
+          buff[1]='9';
+      }
+
+      length+= 2;
+      to+= 2;
     }
 
-    if ( length < 14 )
-        strfill(to,14 - length,'0');
+    if (length < datetime_digits)
+    {
+      strfill(buff + length, datetime_digits - length, '0');
+    }
     else
-        *to= 0;
-
+    {
+      *to= 0;
+    }
+    
     year= (digit(buff[0])*1000+digit(buff[1])*100+digit(buff[2])*10+digit(buff[3]));
 
     if (!strncmp(&buff[4], "00", 2) || !strncmp(&buff[6], "00", 2))
     {
       if (!zeroToMin) /* Don't convert invalid */
-        return 1;
+        return SQLTS_NULL_DATE;
 
       /* convert invalid to min allowed */
       if (!strncmp(&buff[4], "00", 2))
@@ -1957,13 +1982,14 @@ my_bool str_to_ts(SQL_TIMESTAMP_STRUCT *ts, const char *str, int zeroToMin)
         buff[7]= '1';
     }
 
-    ts->year=   year;
-    ts->month=  digit(buff[4])*10+digit(buff[5]);
-    ts->day=    digit(buff[6])*10+digit(buff[7]);
-    ts->hour=   digit(buff[8])*10+digit(buff[9]);
-    ts->minute= digit(buff[10])*10+digit(buff[11]);
-    ts->second= digit(buff[12])*10+digit(buff[13]);
-    ts->fraction= 0;
+    ts->year=     year;
+    ts->month=    digit(buff[4])*10+digit(buff[5]);
+    ts->day=      digit(buff[6])*10+digit(buff[7]);
+    ts->hour=     digit(buff[8])*10+digit(buff[9]);
+    ts->minute=   digit(buff[10])*10+digit(buff[11]);
+    ts->second=   digit(buff[12])*10+digit(buff[13]);
+    ts->fraction= fraction;
+
     return 0;
 }
 
@@ -1982,7 +2008,7 @@ my_bool str_to_time_st(SQL_TIME_STRUCT *ts, const char *str)
 
     for ( to= buff ; *str && to < buff+sizeof(buff)-1 ; ++str )
     {
-        if ( isdigit(*str) )
+        if (isdigit(*str))
             *to++= *str;
     }
 
@@ -3440,4 +3466,42 @@ void set_row_count(STMT *stmt, my_ulonglong rows)
     stmt->result->row_count= rows;
     stmt->dbc->mysql.affected_rows= rows;
   }
+}
+
+/**
+   Gets fractional time of a second from datetime or time string.
+
+   @param[in]  value      (date)time string
+   @param[out] fraction   buffer where to put fractional part in nanoseconds
+
+   Returns pointer to decimal point in the string
+*/
+char *
+get_fractional_part(const char * str, SQLUINTEGER * fraction)
+{
+  char *decptr= strchr(str, '.');
+
+  if (decptr)
+  {
+    char *ptr, buff[10];
+    strfill(buff, sizeof(buff)-1, '0');
+
+    for (ptr= buff, str= decptr+1; *str && ptr < buff + sizeof(buff); ++ptr)
+    {
+      /* there actually should not be anything that is not a digit... */
+      if (isdigit(*str))
+      {
+        *ptr= *str++;
+      }
+    }
+
+    buff[9]= 0;
+    *fraction= atoi(buff);
+  }
+  else
+  {
+    *fraction= 0;
+  }
+
+  return decptr;
 }

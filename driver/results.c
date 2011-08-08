@@ -139,6 +139,24 @@ my_bool odbc_supported_conversion(SQLSMALLINT sqlType, SQLSMALLINT cType)
          return TRUE;
        }
      }
+   case MYSQL_TYPE_STRING:
+     {
+       switch (cType)
+       {
+       /* Date string is(often) identified as binary data by the driver.
+          Have to either add exception here, or to change the way we detect if
+          field is binary.
+       */
+       case SQL_C_TIMESTAMP:
+       case SQL_C_DATE:
+       case SQL_C_TIME:
+       case SQL_C_TYPE_TIMESTAMP:
+       case SQL_C_TYPE_DATE:
+       case SQL_C_TYPE_TIME:
+
+         return TRUE;
+       }
+     }
    }
 
    return FALSE;
@@ -180,6 +198,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
   SQLLEN    tmp;
   long long numericValue;
   my_bool   convert= 1;
+  SQLRETURN result= SQL_SUCCESS;
 
   /* get the exact type if we don't already have it */
   if (fCType == SQL_C_DEFAULT)
@@ -225,7 +244,10 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
     if (!odbc_supported_conversion(get_sql_data_type(stmt, field, 0), fCType)
      && !driver_supported_conversion(field,fCType))
     {
-      return set_stmt_error(stmt, "07009", "Conversion is not possible", 0);
+      /*The state 07009 was incorrect
+      (http://msdn.microsoft.com/en-us/library/ms715441%28v=VS.85%29.aspx)
+      */
+      return set_stmt_error(stmt, "07006", "Conversion is not possible", 0);
     }
 
     if (!pcbValue)
@@ -435,19 +457,32 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
           field->type == MYSQL_TYPE_DATETIME)
       {
         SQL_TIMESTAMP_STRUCT ts;
-        if (str_to_ts(&ts, value, stmt->dbc->ds->zero_date_to_min))
-          *pcbValue= SQL_NULL_DATA;
-        else
-        {
-          SQL_TIME_STRUCT *time_info= (SQL_TIME_STRUCT *)rgbValue;
 
-          if (time_info)
+        switch (str_to_ts(&ts, value, stmt->dbc->ds->zero_date_to_min))
+        {
+        case SQLTS_BAD_DATE:
+          return set_stmt_error(stmt, "22018", "Data value is not a valid time(stamp) value", 0);
+        case SQLTS_NULL_DATE:
+          *pcbValue= SQL_NULL_DATA;
+          break;
+        default:
           {
-            time_info->hour=   ts.hour;
-            time_info->minute= ts.minute;
-            time_info->second= ts.second;
+            SQL_TIME_STRUCT *time_info= (SQL_TIME_STRUCT *)rgbValue;
+
+            if (time_info)
+            {
+              time_info->hour=   ts.hour;
+              time_info->minute= ts.minute;
+              time_info->second= ts.second;
+
+              if (ts.fraction > 0)
+              {
+                set_stmt_error(stmt, "01S07", NULL, 0);
+                result= SQL_SUCCESS_WITH_INFO;
+              }
+            }
+            *pcbValue= sizeof(TIME_STRUCT);
           }
-          *pcbValue= sizeof(TIME_STRUCT);
         }
       }
       else if (field->type == MYSQL_TYPE_DATE)
@@ -466,10 +501,13 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
       {
         SQL_TIME_STRUCT ts;
         if (str_to_time_st(&ts, value))
+        {
           *pcbValue= SQL_NULL_DATA;
+        }
         else
         {
           SQL_TIME_STRUCT *time_info= (SQL_TIME_STRUCT *)rgbValue;
+          SQLUINTEGER fraction;
 
           if (time_info)
           {
@@ -477,7 +515,19 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
             time_info->minute= ts.minute;
             time_info->second= ts.second;
           }
+
           *pcbValue= sizeof(TIME_STRUCT);
+
+          get_fractional_part(value, &fraction);
+
+          if (fraction)
+          {
+            /* http://msdn.microsoft.com/en-us/library/ms713346%28v=VS.85%29.aspx
+               We are loosing fractional part - thus we have to set correct sqlstate
+               and return SQL_SUCCESS_WITH_INFO */
+            set_stmt_error(stmt, "01S07", NULL, 0);
+            result= SQL_SUCCESS_WITH_INFO;
+          }
         }
       }
       break;
@@ -489,7 +539,9 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
         SQL_TIME_STRUCT ts;
 
         if (str_to_time_st(&ts, value))
+        {
           *pcbValue= SQL_NULL_DATA;
+        }
         else
         {
           SQL_TIMESTAMP_STRUCT *timestamp_info=
@@ -498,23 +550,30 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
           struct tm cur_tm;
           localtime_r(&sec_time, &cur_tm);
 
+          /* I wornder if that hasn't to be server current date*/
           timestamp_info->year=   1900 + cur_tm.tm_year;
           timestamp_info->month=  1 + cur_tm.tm_mon; /* January is 0 in tm */
           timestamp_info->day=    cur_tm.tm_mday;
           timestamp_info->hour=   ts.hour;
           timestamp_info->minute= ts.minute;
           timestamp_info->second= ts.second;
-          timestamp_info->fraction= 0;
+          get_fractional_part(value, &timestamp_info->fraction);
           *pcbValue= sizeof(SQL_TIMESTAMP_STRUCT);
         }
       }
       else
       {
-        if (str_to_ts((SQL_TIMESTAMP_STRUCT *)rgbValue, value,
+        switch (str_to_ts((SQL_TIMESTAMP_STRUCT *)rgbValue, value,
                       stmt->dbc->ds->zero_date_to_min))
+        {
+        case SQLTS_BAD_DATE:
+          return set_stmt_error(stmt, "22018", "Data value is not a valid date/time(stamp) value", 0);
+        case SQLTS_NULL_DATE:
           *pcbValue= SQL_NULL_DATA;
-        else
+          break;
+        default:
           *pcbValue= sizeof(SQL_TIMESTAMP_STRUCT);
+        }
       }
       break;
 
@@ -572,9 +631,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
   if (stmt->getdata.source)  /* Second call to getdata */
     return SQL_NO_DATA_FOUND;
 
-  stmt->getdata.source= NULL;         /* All data is retrieved */
-
-  return SQL_SUCCESS;
+  return result;
 }
 
 
