@@ -195,7 +195,7 @@ IDD_TAB4 DIALOGEX 0, 0, 209, 151
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "Log queries to myodbc.sql",IDC_CHECK_save_queries,
+    CONTROL         "Log queries to %TEMP%\\myodbc.sql",IDC_CHECK_save_queries,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,12,148,10
 END
 

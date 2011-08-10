@@ -1089,7 +1089,8 @@ DECLARE_TEST(t_bug48603)
     if (timeout == interactive)
     {
       /* setting global interactive timeout back if we changed it */
-      sprintf((char *)query, "set GLOBAL interactive_timeout=%d", timeout);      ok_stmt(hstmt, SQLExecDirect(hstmt, query, SQL_NTS));
+      sprintf((char *)query, "set GLOBAL interactive_timeout=%d", timeout);
+      ok_stmt(hstmt, SQLExecDirect(hstmt, query, SQL_NTS));
     }
 
     is_num(timeout + diff, cur_timeout);

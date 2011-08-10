@@ -94,7 +94,7 @@ extern "C"
 
 #else
 
-#define DRIVER_QUERY_LOGFILE "c:\\myodbc.sql"
+#define DRIVER_QUERY_LOGFILE "myodbc.sql"
 
 #endif
 

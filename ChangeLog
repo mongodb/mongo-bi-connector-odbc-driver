@@ -1,6 +1,8 @@
 5.1.11
 
   Functionality added or changed:
+  * MyODBC queries log is written to %TEMP%\myodbc.sql, or to C:\myodbc.sql if
+    TEMP is not defined.
 
   Bugs fixed:
   * Fractional parts of second is ignored in SQLGetData. (Bug #12767740/60646)

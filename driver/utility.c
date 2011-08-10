@@ -2085,7 +2085,7 @@ my_bool str_to_date(SQL_DATE_STRUCT *rgbValue, const char *str,
   @return  : HHMMSS
 */
 
-ulong str_to_time_as_long(const char *str,uint length)
+ulong str_to_time_as_long(const char *str, uint length)
 {
     uint i,date[3];
     const char *end= str+length;
@@ -2267,8 +2267,25 @@ void query_print(FILE *log_file,char *query)
 FILE *init_query_log(void)
 {
     FILE *query_log;
+#ifdef _WIN32
+    char filename[MAX_PATH];
+    size_t buffsize;
 
+    getenv_s(&buffsize, filename, sizeof(filename), "TEMP");
+
+    if (buffsize)
+    {
+      sprintf(filename + buffsize - 1, "\\%s", DRIVER_QUERY_LOGFILE);
+    }
+    else
+    {
+      sprintf(filename, "c:\\%s", DRIVER_QUERY_LOGFILE);
+    }
+
+    if ( (query_log= fopen(filename, "a+")) )
+#else
     if ( (query_log= fopen(DRIVER_QUERY_LOGFILE, "a+")) )
+#endif
     {
         fprintf(query_log,"-- Query logging\n");
         fprintf(query_log,"--\n");
