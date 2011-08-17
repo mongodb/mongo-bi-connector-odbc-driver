@@ -177,6 +177,7 @@ SQLRETURN set_stmt_error(STMT *stmt, char *state,const char *message,uint errcod
 SQLRETURN set_desc_error(DESC *desc, char *state,
                          const char *message, uint errcode);
 SQLRETURN handle_connection_error(STMT *stmt);
+my_bool is_connection_lost(uint errcode);
 void set_mem_error(MYSQL *mysql);
 void translate_error(char *save_state,myodbc_errid errid,uint mysql_err);
 

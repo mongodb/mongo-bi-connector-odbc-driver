@@ -806,10 +806,11 @@ DECLARE_TEST(t_bug56804)
   expect_stmt(hstmt, SQLExecute(hstmt), SQL_SUCCESS_WITH_INFO);
 
   /* Following tests are here to ensure that driver works how it is currently
-     expected to work an they need to be changed if driver changes smth in the
+     expected to work, and they need to be changed if driver changes smth in the
      way how it reports errors in paramsets and diagnostics */
   for(i = 0; i < PARAMSET_SIZE; ++i )
   {
+    printMessage("Paramset #%d (%d, %d)", i, c1[i], c2[i]);
     switch (i)
     {
     case 1:
@@ -827,9 +828,9 @@ DECLARE_TEST(t_bug56804)
   }
 
   {
-    SQLCHAR   sqlstate[6]= {0};
-    SQLCHAR   message[255]= {0};
-    SQLINTEGER native_err= 0;
+    SQLCHAR     sqlstate[6]= {0};
+    SQLCHAR     message[255]= {0};
+    SQLINTEGER  native_err= 0;
     SQLSMALLINT msglen= 0;
 
     i= 0;
@@ -852,6 +853,87 @@ DECLARE_TEST(t_bug56804)
 #undef PARAMSET_SIZE
 }
 
+
+/*
+  Bug 59772 - Column parameter binding makes SQLExecute not to return
+  SQL_ERROR on disconnect
+*/
+DECLARE_TEST(t_bug59772)
+{
+#define ROWS_TO_INSERT 3
+
+    SQLRETURN rc;
+    SQLCHAR   buf_kill[50];
+
+    SQLINTEGER    intField[ROWS_TO_INSERT] = {123321, 1, 0};
+    SQLLEN        intInd[ROWS_TO_INSERT]= {5,4,3};
+
+    SQLUSMALLINT  paramStatusArray[ROWS_TO_INSERT];
+    SQLULEN       paramsProcessed, i;
+
+    SQLINTEGER connection_id;
+
+    SQLHENV henv2;
+    SQLHDBC  hdbc2;
+    SQLHSTMT hstmt2;
+
+    int overall_result= OK;
+
+    /* Create a new connection that we deliberately will kill */
+    alloc_basic_handles(&henv2, &hdbc2, &hstmt2);
+
+    ok_sql(hstmt2, "SELECT connection_id()");
+    ok_stmt(hstmt2, SQLFetch(hstmt2));
+    connection_id= my_fetch_int(hstmt2, 1);
+    ok_stmt(hstmt2, SQLFreeStmt(hstmt2, SQL_CLOSE));
+
+    ok_stmt(hstmt, SQLExecDirect(hstmt, "DROP TABLE IF EXISTS t_bug59772", SQL_NTS));
+    ok_stmt(hstmt, SQLExecDirect(hstmt, "CREATE TABLE t_bug59772 (id int primary key auto_increment,"\
+      "intField int)", SQL_NTS));
+
+    ok_stmt(hstmt2, SQLSetStmtAttr(hstmt2, SQL_ATTR_PARAM_BIND_TYPE, SQL_PARAM_BIND_BY_COLUMN, 0));
+    ok_stmt(hstmt2, SQLSetStmtAttr(hstmt2, SQL_ATTR_PARAMSET_SIZE, (SQLPOINTER)ROWS_TO_INSERT, 0));
+    ok_stmt(hstmt2, SQLSetStmtAttr(hstmt2, SQL_ATTR_PARAM_STATUS_PTR, paramStatusArray, 0));
+    ok_stmt(hstmt2, SQLSetStmtAttr(hstmt2, SQL_ATTR_PARAMS_PROCESSED_PTR, &paramsProcessed, 0));
+
+    ok_stmt(hstmt2, SQLPrepare(hstmt2, "INSERT INTO t_bug59772 (intField) VALUES (?)", SQL_NTS));
+
+    ok_stmt(hstmt2, SQLBindParameter(hstmt2, 1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER,
+      0, 0, intField, 0, intInd));
+
+    /* From another connection, kill the connection created above */
+    sprintf(buf_kill, "KILL %d", connection_id);
+    ok_stmt(hstmt, SQLExecDirect(hstmt, (SQLCHAR *)buf_kill, SQL_NTS));
+
+    rc= SQLExecute(hstmt2);
+    
+    /* The result should be SQL_ERROR */
+    if (rc != SQL_ERROR)
+      overall_result= FAIL;
+
+    for (i= 0; i < paramsProcessed; ++i)
+
+      /* We expect error statuses for all parameters */
+      if ( paramStatusArray[i] != ((i + 1 < ROWS_TO_INSERT) ? 
+            SQL_PARAM_DIAG_UNAVAILABLE : SQL_PARAM_ERROR) )
+      {
+        printMessage("Parameter #%u status isn't successful(0x%X)", i+1, paramStatusArray[i]);
+        overall_result= FAIL;
+      }
+
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    ok_stmt(hstmt, SQLExecDirect(hstmt, "DROP TABLE IF EXISTS t_bug59772", SQL_NTS));
+
+    SQLFreeHandle(SQL_HANDLE_STMT, hstmt2);
+    SQLDisconnect(hdbc2);
+    SQLFreeHandle(SQL_HANDLE_DBC, hdbc2);
+    SQLFreeHandle(SQL_HANDLE_ENV, henv2);
+
+    return overall_result;
+#undef ROWS_TO_INSERT
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_init_table)
   ADD_TEST(my_param_insert)
@@ -865,6 +947,7 @@ BEGIN_TESTS
   ADD_TEST(paramarray_select)
   ADD_TEST(t_bug49029)
   ADD_TEST(t_bug56804)
+  ADD_TEST(t_bug59772)
 END_TESTS
 
 

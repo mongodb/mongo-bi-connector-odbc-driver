@@ -5,6 +5,8 @@
     timeout. (Bug #39878)
   * MS Access with VARCHAR NOT NULL columns. (Bug #31067)
   * sqlwcharchr might read one SQLWCHAR after end of string. (Bug #61586)
+  * Column parameter binding makes SQLExecute not to return SQL_ERROR on
+    disconnect. (Bug #59772)
 
 ----
 

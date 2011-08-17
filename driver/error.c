@@ -376,6 +376,20 @@ SQLRETURN handle_connection_error(STMT *stmt)
 
 
 /*
+  Little helper to check if error code means that we have lost connection
+  @param[in]  errcode  code of the last error
+*/
+my_bool is_connection_lost(uint errcode)
+{
+  if (errcode==CR_SERVER_GONE_ERROR || errcode==CR_SERVER_LOST)
+  {
+    return 1;
+  }
+
+  return 0;
+}
+
+/*
   @type    : myodbc3 internal
   @purpose : sets the error information to appropriate handle.
   it also sets the SQLSTATE based on the ODBC VERSION

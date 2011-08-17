@@ -737,11 +737,15 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
 {
   char       *query, *cursor_pos;
   int         dae_rec, is_select_stmt, one_of_params_not_succeded= 0;
+  int         connection_failure= 0;
   STMT FAR *  pStmtCursor = pStmt;
   SQLRETURN   rc;
   SQLULEN     row, length= 0;
 
   SQLUSMALLINT *param_operation_ptr= NULL, *param_status_ptr= NULL, *lastError= NULL;
+  
+  /* need to have a flag indicating if all parameters failed */
+  int all_parameters_failed= pStmt->apd->array_size > 1 ? 1 : 0;
 
   if ( !pStmt )
       return SQL_ERROR;
@@ -904,7 +908,22 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
 
     if (!is_select_stmt || row == pStmt->apd->array_size-1)
     {
-      rc= do_query(pStmt, query, length);
+      if (!connection_failure)
+      {      
+        rc= do_query(pStmt, query, length);
+      }
+      else
+      {
+        /* with broken connection we always return error for all next queries */
+        rc= SQL_ERROR;
+      }
+
+      if (is_connection_lost(pStmt->error.native_error)
+        && handle_connection_error(pStmt))
+      {
+        connection_failure= 1;
+      }
+
       if (map_error_to_param_status(param_status_ptr, rc))
       {
         lastError= param_status_ptr;
@@ -916,7 +935,12 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
       {
         one_of_params_not_succeded= 1;
       }
-      length= 0;
+      else
+      {
+        all_parameters_failed= 0;
+      }
+
+      length= 0; 
     }
   }
 
@@ -944,9 +968,16 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
   if (pStmt->dummy_state == ST_DUMMY_PREPARED)
       pStmt->dummy_state= ST_DUMMY_EXECUTED;
 
-  if (pStmt->apd->array_size > 1 && one_of_params_not_succeded != 0)
+  if (pStmt->apd->array_size > 1)
   {
-    return SQL_SUCCESS_WITH_INFO;
+    if (all_parameters_failed)
+    {
+      return SQL_ERROR;
+    }
+    else if (one_of_params_not_succeded != 0)
+    {
+      return SQL_SUCCESS_WITH_INFO;
+    }
   }
 
   return rc;
