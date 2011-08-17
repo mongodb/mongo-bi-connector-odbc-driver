@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -1001,7 +1001,10 @@ DECLARE_TEST(t_empty_str_bug)
     name[0]='\0';
     my_assert(10 == my_fetch_int(hstmt,1));
     my_assert(!strcmp((const char *)"MySQL AB",my_fetch_str(hstmt,name,2)));
-    my_assert(!strcmp((const char *)"MySQL AB",my_fetch_str(hstmt,name,3))); /* NULL */
+    ok_stmt(hstmt, SQLGetData(hstmt, 3,SQL_CHAR, name, MAX_ROW_DATA_LEN+1,
+                              &name_len));
+    /*Checking that if value is NULL - buffer will not be changed */
+    is_str("MySQL AB", name, 9); /* NULL */
 
     rc = SQLFreeStmt(hstmt,SQL_CLOSE);
     mystmt(hstmt,rc);

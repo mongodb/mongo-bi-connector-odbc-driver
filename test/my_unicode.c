@@ -1140,6 +1140,14 @@ DECLARE_TEST(t_bug28168)
     wcscat(conn_in, dummy);
   }
 
+  if (myport)
+  {
+    char pbuff[20];
+    sprintf(pbuff, ";PORT=%d", myport);
+    mbstowcs(dummy, (char *)pbuff, sizeof(dummy));
+    wcscat(conn_in, dummy);
+  }
+
   ok_con(hdbc1, SQLDriverConnectW(hdbc1, NULL, W(conn_in), SQL_NTS, NULL, 0,
     NULL, SQL_DRIVER_NOPROMPT));
   ok_con(hdbc1, SQLDisconnect(hdbc1));
