@@ -1,184 +1,166 @@
 @ECHO OFF
 REM #########################################################
 REM 
-REM \brief  Install myodbc.
+REM \brief  Register Connector/ODBC driver with ODBC system
+REM   
+REM         This exists for those working with the Windows 
+REM         source distribution or with installer-less 
+REM         binary distribution.
 REM
-REM         This exists for those working with the Windows source
-REM         distribution.
+REM         Name under which the driver should be registered
+REM         can be specified as first parameter. It should be
+REM         a single word (no spaces).
 REM
 REM \sa     README.win
 REM
 REM #########################################################
 
-SET installdir=none
-IF EXIST %windir%\system\nul   SET installdir=%windir%\system
-IF EXIST %windir%\system32\nul SET installdir=%windir%\system32
-IF %installdir%==none GOTO :doError5
+REM # SETLOCAL prevents the variables set in this script to
+REM # be exported to the environment and pollute it
+SETLOCAL
 
-IF "%1"=="1" GOTO :doDebug
-IF "%1"=="0" GOTO :doNormal
-GOTO doSyntax
+SET         driver_name=MySQL ODBC 5.1 Driver
+SET          driver_lib=myodbc5
+SET    driver_lib_setup=myodbc5S
+SET           installer=myodbc-installer
 
-:doNormal
-IF EXIST %installdir%\myodbc3i.exe GOTO :doError4
+IF "%1" == "" GOTO :doFindDriver
+SET  driver_name=%1
 
-REM ****
-REM * Find out the bin/lib directory, or use default
-REM ****
-SET libdir=lib
-SET bindir=bin
-IF EXIST lib\release\myodbc3.lib         SET libdir=lib\release
-IF EXIST lib\relwithdebinfo\myodbc3.lib  SET libdir=lib\relwithdebinfo
-IF EXIST bin\release\myodbc3i.exe        SET bindir=bin\release
-IF EXIST bin\relwithdebinfo\myodbc3i.exe SET bindir=bin\relwithdebinfo
+:doFindDriver
+REM # Find driver location
 
-REM ****
-REM * Copying myodbc libraries and executables to install dir...
-REM ****
-IF NOT EXIST %bindir%\myodbc3c.exe GOTO :doError2
-IF NOT EXIST %libdir%\myodbc3.lib  GOTO :doError2
-IF NOT EXIST %libdir%\myodbc3S.lib GOTO :doError2
-IF NOT EXIST %bindir%\myodbc3i.exe GOTO :doError2
-copy %libdir%\myodbc3S.dll %installdir%
-copy %libdir%\myodbc3S.lib %installdir%
-copy %libdir%\myodbc3.dll  %installdir%
-copy %libdir%\myodbc3.lib  %installdir%
-copy %bindir%\myodbc3i.exe      %installdir%
-IF EXIST %bindir%\myodbc3m.exe copy %bindir%\myodbc3m.exe      %installdir%
-copy %bindir%\myodbc3c.exe      %installdir%
-copy doc\*.hlp             %installdir%
+SET libdir=none
+FOR %%G IN (. lib lib\release lib\relwithdebinfo lib\debug) DO CALL :subCheckLibDir %%G
 
-REM ****
-REM * Registering driver...
-REM *
-REM * We can do this with myodbc3i.exe or the MS Windows ODBCConf.exe. It
-REM * may be safer to use the ODBCConf.exe when we think about such things
-REM * as 64bit windows. 
-REM ****
-myodbc3i -a -d -t"MySQL ODBC 3.51 Driver;DRIVER=myodbc3.dll;SETUP=myodbc3S.dll"
+IF "%libdir%" == "none" GOTO :errorNoDrivers
+REM ECHO "libdir = %libdir%"
 
-GOTO doSuccess
+REM # Find the installer utility
 
+REM # Try to find it in the build location
+CALL :subFindBinDir "%libdir%"
+SET myodbc_installer=%bindir%\%installer%.exe
+IF EXIST "%myodbc_installer%" GOTO :doRegister
 
-:doDebug
-REM ****
-REM * Find out the bin/lib directory, or use default
-REM ****
-SET libdir=lib
-IF EXIST lib\debug\myodbc3d.lib          SET libdir=lib\debug
+REM # Try some other reasonable locations
+SET myodbc_installer=bin\%installer%.exe
+IF EXIST "%myodbc_installer%" GOTO :doRegister
+SET myodbc_installer=.\%installer%.exe
+IF EXIST "%myodbc_installer%" GOTO :doRegister
 
-IF NOT EXIST %libdir%\myodbc3d.lib goto doError3
-IF NOT EXIST %libdir%\myodbc3E.lib goto doError3
-IF NOT EXIST %installdir%\myodbc3i.exe goto doError1
-REM ****
-REM * Copying myodbc debug libraries to install dir...
-REM ****
-copy %libdir%\myodbc3E.dll %installdir%
-copy %libdir%\myodbc3E.lib %installdir%
-copy %libdir%\myodbc3d.dll %installdir%
-copy %libdir%\myodbc3d.lib %installdir%
+REM # Try if it is in the path
+SET myodbc_installer=%installer%.exe
+%myodbc_installer% >nul 2>nul
+REM # "Command not found" generates error 9009
+IF NOT ERRORLEVEL 9000 GOTO :doRegister
 
-REM ****
-REM * Registering driver...
-REM ****
-myodbc3i -a -d -t"MySQL ODBC 3.51 Driver (debug);DRIVER=myodbc3d.dll;SETUP=myodbc3E.dll"
+GOTO :errorNoInstaller
 
-goto doSuccess
+:doRegister
+REM ECHO myodbc_installer: %myodbc_installer%
 
+REM # Abort if driver is already registered
+
+%myodbc_installer% -d -l -n "%driver_name%" 2>nul:
+IF NOT ERRORLEVEL 1 GOTO :errorDriverInstalled
+
+ECHO Registering %driver_name%
+%myodbc_installer% -d -a -n "%driver_name%" -t "DRIVER=%libdir%\%driver_lib%.dll;SETUP=%libdir%\%driver_lib_setup%.dll"
+
+IF ERRORLEVEL 1 GOTO :errorRegisterDriver
+
+GOTO :doSuccess
+
+REM ######
+REM # A subroutine to check if given location
+REM # (relative to working dir) contains the drivers.
+REM ######
+:subCheckLibDir
+REM # Skip check if a good libdir was already found
+IF NOT "%libdir%" == "none" GOTO :eof
+SET libdir=%CD%\%1
+IF NOT EXIST "%libdir%\%driver_lib%.dll"       GOTO :wrongLibDir
+IF NOT EXIST "%libdir%\%driver_lib_setup%.dll" GOTO :wrongLibDir
+REM ECHO Libdir (%libdir%) is OK.
+GOTO :eof
+:wrongLibDir
+REM ECHO Libdir (%libdir%) is wrong.
+SET libdir=none
+GOTO :eof
+
+REM ######
+REM # A subroutine to compute bindir of the form 
+REM # C:\current\working\directory\bin\XXX where XXX is 
+REM # the last component of libdir, such as Release, Debug etc.
+REM # The libdir should be given as the first argument %1.
+REM # Construct %~n1 is used which returns the last component 
+REM # ("file name") of the path stored in %1.
+REM ######
+:subFindBinDir
+SET bindir=%CD%\bin\%~n1
+GOTO :eof
 
 :doSuccess
-ECHO "+-----------------------------------------------------+"
-ECHO "| DONE                                                |"
-ECHO "+-----------------------------------------------------+"
-ECHO "|                                                     |"
-ECHO "| Hopefully things went well; the Connector/ODBC      |"
-ECHO "| files have been copied to the system directory      |"
-ECHO "| and the driver has been registered.                 |"
-ECHO "|                                                     |"
-ECHO "| Connector/ODBC is ready to use.                     |"
-ECHO "|                                                     |"
-ECHO "| The most common thing to do next is to go to the    |"
-ECHO "| Control Panel and find the ODBC Administrator -     |"
-ECHO "| then use it to create a Data Source Name (DSN)      |"
-ECHO "| so you (and your application) can connect to a      |"
-ECHO "| MySQL server.                                       |"
-ECHO "|                                                     |"
-ECHO "+-----------------------------------------------------+"
+ECHO ^+-----------------------------------------------------^+
+ECHO ^| DONE                                                ^|
+ECHO ^+-----------------------------------------------------^+
+ECHO ^|                                                     ^|
+ECHO ^| Hopefully things went well; the Connector/ODBC      ^|
+ECHO ^| driver has been registered.                         ^|
+ECHO ^|                                                     ^|
+ECHO ^| Connector/ODBC is ready to use.                     ^|
+ECHO ^|                                                     ^|
+ECHO ^| The most common thing to do next is to go to the    ^|
+ECHO ^| Control Panel and find the ODBC Administrator -     ^|
+ECHO ^| then use it to create a Data Source Name (DSN)      ^|
+ECHO ^| so you (and your application) can connect to a      ^|
+ECHO ^| MySQL server.                                       ^|
+ECHO ^|                                                     ^|
+ECHO ^| Alternatively you can use the MyODBC Installer      ^|
+ECHO ^| utility to define data sources.                     ^|
+ECHO ^|                                                     ^|
+ECHO ^+-----------------------------------------------------^+
 EXIT /B 0
 
-:doError1
-ECHO "+-----------------------------------------------------+"
-ECHO "| ERROR                                               |"
-ECHO "+-----------------------------------------------------+"
-ECHO "|                                                     |"
-ECHO "| The non-debug version of Connector/ODBC needs to be |"
-ECHO "| installed.                                          |"
-ECHO "|                                                     |"
-ECHO "+-----------------------------------------------------+"
+:errorNoDrivers
+ECHO ^+-----------------------------------------------------^+
+ECHO ^| ERROR                                               ^|
+ECHO ^+-----------------------------------------------------^+
+ECHO ^|                                                     ^|
+ECHO ^| Could not find Connector/ODBC drivers. Have you run ^|
+ECHO ^| this script from the installation directory?        ^|
+ECHO ^|                                                     ^|
+ECHO ^+-----------------------------------------------------^+
 EXIT /B 1
 
-:doError2
-ECHO "+-----------------------------------------------------+"
-ECHO "| ERROR                                               |"
-ECHO "+-----------------------------------------------------+"
-ECHO "|                                                     |"
-ECHO "| Connector/ODBC not built. Consider executing        |"
-ECHO "| Build.bat.                                          |"
-ECHO "|                                                     |"
-ECHO "+-----------------------------------------------------+"
+:errorNoInstaller
+ECHO ^+-----------------------------------------------------^+
+ECHO ^| ERROR                                               ^|
+ECHO ^+-----------------------------------------------------^+
+ECHO ^|                                                     ^|
+ECHO ^| Could not find the MyODBC Installer utility. Run    ^|
+ECHO ^| this script from the installation directory.        ^|
+ECHO ^|                                                     ^|
+ECHO ^+-----------------------------------------------------^+
 EXIT /B 1
 
-:doError3
-ECHO "+-----------------------------------------------------+"
-ECHO "| ERROR                                               |"
-ECHO "+-----------------------------------------------------+"
-ECHO "|                                                     |"
-ECHO "| Connector/ODBC (debug) not built. Consider executing|"
-ECHO "| Build.bat.                                          |"
-ECHO "|                                                     |"
-ECHO "+-----------------------------------------------------+"
+:errorDriverInstalled
+ECHO ^+-----------------------------------------------------^+
+ECHO ^| ERROR                                               ^|
+ECHO ^+-----------------------------------------------------^+
+ECHO ^|                                                     ^|
+ECHO ^| Existing Connector/ODBC installed. Request ignored. ^|
+ECHO ^|                                                     ^|
+ECHO ^+-----------------------------------------------------^+
 EXIT /B 1
 
-:doError4
-ECHO "+-----------------------------------------------------+"
-ECHO "| ERROR                                               |"
-ECHO "+-----------------------------------------------------+"
-ECHO "|                                                     |"
-ECHO "| Existing Connector/ODBC installed. Request ignored. |"
-ECHO "|                                                     |"
-ECHO "+-----------------------------------------------------+"
+:errorRegisterDriver
+ECHO ^+-----------------------------------------------------^+
+ECHO ^| ERROR                                               ^|
+ECHO ^+-----------------------------------------------------^+
+ECHO ^|                                                     ^|
+ECHO ^| Could not register the driver.                      ^|
+ECHO ^|                                                     ^|
+ECHO ^+-----------------------------------------------------^+
 EXIT /B 1
-
-:doError5
-ECHO "+-----------------------------------------------------+"
-ECHO "| ERROR                                               |"
-ECHO "+-----------------------------------------------------+"
-ECHO "|                                                     |"
-ECHO "| Can't find the Windows system directory             |"
-ECHO "|                                                     |"
-ECHO "+-----------------------------------------------------+"
-EXIT /B 1
-
-:doSyntax
-ECHO "+-----------------------------------------------------+"
-ECHO "| Install.bat                                         |"
-ECHO "+-----------------------------------------------------+"
-ECHO "|                                                     |"
-ECHO "| DESCRIPTION                                         |"
-ECHO "|                                                     |"
-ECHO "| Use this to copy the driver and supporting files    |"
-ECHO "| to the system directory and register the driver.    |"
-ECHO "|                                                     |"
-ECHO "| You can not properly install the debug version      |"
-ECHO "| without first installing the regular version.       |"
-ECHO "|                                                     |"
-ECHO "| SYNTAX                                              |"
-ECHO "|                                                     |"
-ECHO "| Install <debug>                                     |"
-ECHO "|                                                     |"
-ECHO "| <debug>  must be;                                   |"
-ECHO "|              0 - to install a regular build         |"
-ECHO "|              1 - to install a debug version         |"
-ECHO "|                                                     |"
-ECHO "+-----------------------------------------------------+"
-

@@ -45,9 +45,13 @@ ZIP (no installer)
 
         In this case you want to do the following;
 
-        1) Extract the files using pkzip or some compatible program.
-        2) Copy the files to the desired location and register the
-           driver or optionally use Install.bat to do this for you.
+        1) Extract the files to the desired location using pkzip or 
+           some compatible program.
+        2) Register driver by running Install.bat script from the 
+           location where drivers were unziped.
+        3) Alternatively, you can register drivers manually using the
+           provided myodbc-installer utility. Run it without arguments
+           to see usage instructions.
 
         NOTE: Do not try to edit the registery or odbc ini files
               manually to register the driver unless you are 
@@ -60,8 +64,8 @@ ZIP (source)
 
         1) Extract the files (source code).
         2) Build the source (see BUILD file for details).
-        2) Copy the files to the desired location and register the
-           driver or optionally use Install.bat to do this for you.
+        2) Copy the files to the desired location and register them
+           as described above.
 
         NOTE: If you need to reinstall and you are using Install.bat
               then please consider using Uninstall.bat first. This
@@ -79,14 +83,32 @@ Verify Driver Registered
         Go to the Drivers tab and note that it has the MySQL ODBC
         driver listed - this means that the driver is registered
         with the ODBC system.
+        
+        Alternatively you can run 
+        
+        > myodbc-installer -d -l 
+        
+        and see if the driver is listed. Run 
+        
+        > myodbc-installer -d -l -n "<name of the driver>"
+        
+        to see deatailed information about the driver.
 
 Create A Data Source Name
 
-        Go to the 'User DSN' tab of the 'ODBC Administrator' and 
-        create a new DSN. During this request you will use a 
-        MySQL Connector/ODBC DSN window to edit the connection 
-        information. This window has a 'Test' button which allows 
-        you to Test your settings.
+        Data sources can be created with the myodbc-installer utility.
+        Run it without arguments to see usage instructions and examples.
+
+        Alternatively, you can define a data source with Windows 
+        'ODBC Administrator' appliocation. Go to the 'User DSN' tab of 
+        the 'ODBC Administrator' and create a new DSN. During this request
+        you will use a MySQL Connector/ODBC DSN window to edit the 
+        connection information. This window has a 'Test' button which
+        allows you to Test your settings.
 
         Save the DSN and exit the ODBC Administrator. You are now
         ready to use MySQL Connector/ODBC.
+
+        Note: Prior to uninstalling a driver all data sources which use
+        that driver should be removed. It is not possible to remove a
+        data source after its driver has been uninstalled.

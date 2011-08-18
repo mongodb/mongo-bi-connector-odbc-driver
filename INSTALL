@@ -18,10 +18,11 @@ Platforms
         Binary Distributions
 
                 * MS Windows 2000 or newer 
-                * Solaris 8 or newer
-                * OSX 10.3 or newer
-                * Linux (SuSE 10 or compatible)
-                * HPUX
+                * Solaris 10 or newer
+                * OSX 10.5 or newer
+                * Linux (various flavors)
+                * HPUX 11.31 or newer
+                * Free BSD 7 or newer
         
         Source Distributions
                 
@@ -100,19 +101,21 @@ Source Without Installer
 
 Source Repository
 
-        The source repository has been bitkeeper (bk) in the past
-        and this had read-only public access. The new source
-        code repository is subversion (svn) and is, currently, 
-        just for MySQL internal use.
-
+        The bazaar source repository is keept on Launchpad and can be
+        accessed using name lp:myodbc. For example:
+        
+        $ bzr branch lp:myodbc myodbc-source-tree
 
 INSTALLING
 ---------------------------------------------------------------
 
 Connector/ODBC is installed by doing the following steps;
 
-1. copy the driver to the system
-2. register the driver with systems ODBC (possibly with myodbc3i)
+1. optionally copy the driver to a desired location in the filesystem
+2. register the driver with system's ODBC (possibly with 
+   provided myodbc-installer utility)
+3. define data sources which use the driver (possibly with 
+   provided myodbc-installer utility)
 
 Binary With Installer
 
@@ -122,9 +125,14 @@ Binary With Installer
 
 Binary Without Installer
 
-        In this case one must first extract the files and then 
-        manually copy the files to a desired location and then
-        manually register the driver with the ODBC system. 
+        In this case one must first extract the files to a desired
+        location and then manually register the driver with the 
+        ODBC system. The provided myodbc-installer utility can be
+        used for that purpose (run it without options to see usage
+        information). Once driver is registered, data sources which
+        use that driver can be defined either using ODBC tools
+        provided with the operating system or again with 
+        myodbc-installer.
 
         In some cases there may be install/uninstall scripts to 
         aid in this process. See INSTALL.<platform> for details.
@@ -144,5 +152,5 @@ http://www.mysql.com
 
 For more information about MySQL Connector/ODBC, including
 installation instructions, please visit;
-http://www.mysql.com/products/myodbc/index.html
+http://dev.mysql.com/doc/en/connector-odbc.html
 

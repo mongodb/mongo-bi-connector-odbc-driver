@@ -1,135 +1,113 @@
 @ECHO OFF
 REM #########################################################
 REM
-REM \brief  Uninstall myodbc.
+REM \brief  Deregister Connector/ODBC driver registered with
+REM         Install.bat
 REM
-REM         This exists for those working with the Windows source
-REM         distribution.
+REM         This exists for those working with the Windows 
+REM         source distribution or with installer-less 
+REM         binary distribution.
+REM
+REM         If driver was registerd under non-default name,
+REM         the name used should be specified as first 
+REM         parameter of this script.
+REM
+REM         Note that you should manually remove all data
+REM         sources using a driver before uninstalling that
+REM         driver.
 REM
 REM \sa     README.win
 REM
 REM #########################################################
 
-SET installdir=none
-IF EXIST %windir%\system\nul   SET installdir=%windir%\system
-IF EXIST %windir%\system32\nul SET installdir=%windir%\system32
-IF %installdir%==none GOTO :doError4
+REM # SETLOCAL prevents the variables set in this script to
+REM # be exported to the environment and pollute it
+SETLOCAL
 
-IF "%1"=="0" GOTO doNormal
-IF "%1"=="1" GOTO doDebug
-GOTO doSyntax
+SET    driver_name=MySQL ODBC 5.1 Driver
+SET      installer=myodbc-installer
+SET   driver_found=no
 
-:doNormal
-IF NOT EXIST %installdir%\myodbc3i.exe GOTO doError2
-REM ****
-REM * Deregistering driver...
-REM ****
-myodbc3i -r -d -n"MySQL ODBC 3.51 Driver"
+IF "%1" == "" GOTO :doFindInstaller
+SET  driver_name=%1
 
-REM ****
-REM * Removing files...
-REM ****
-del /Q /F %installdir%\myodbc3S.dll
-del /Q /F %installdir%\myodbc3S.lib
-del /Q /F %installdir%\myodbc3.dll
-del /Q /F %installdir%\myodbc3.lib
-del /Q /F %installdir%\myodbc3i.exe
-del /Q /F %installdir%\myodbc3m.exe
-del /Q /F %installdir%\myodbc3c.exe
-del /Q /F %installdir%\myodbc3*.hlp
-GOTO doSuccess
+:doFindInstaller
+REM # Find the installer utility
 
-:doDebug
-IF NOT EXIST %installdir%\myodbc3d.dll GOTO doError3
-IF NOT EXIST %installdir%\myodbc3i.exe GOTO doError1
-REM ****
-REM * Deregistering driver...
-REM ****
-myodbc3i -r -d -n"MySQL ODBC 3.51 Driver (debug)"
+SET bindir=none
+FOR %%G IN (. bin bin\release bin\relwithdebinfo bin\debug) DO CALL :subFindInstaller %%G
 
-REM ****
-REM * Removing files...
-REM ****
-del /Q /F %installdir%\myodbc3E.dll
-del /Q /F %installdir%\myodbc3E.lib
-del /Q /F %installdir%\myodbc3d.dll
-del /Q /F %installdir%\myodbc3d.lib
-GOTO doSuccess
+SET myodbc_installer=%bindir%\%installer%.exe
+IF NOT "%bindir%" == "none" GOTO :doDeregister
+
+REM # Try if it is in the path
+SET myodbc_installer=%installer%.exe
+"%myodbc_installer%" >nul 2>nul
+REM # "Command not found" generates error 9009
+IF NOT ERRORLEVEL 9000 GOTO :doDeregister
+
+GOTO :errorNoInstaller
+
+REM ######
+REM # A subroutine to check if given location
+REM # (relative to working dir) contains myodbc
+REM # installer utility.
+REM ######
+:subFindInstaller
+REM # Skip check if a good libdir was already found
+IF NOT "%bindir%" == "none" GOTO :eof
+SET bindir=%CD%\%1
+IF NOT EXIST "%bindir%\%installer%.exe"  GOTO :wrongBinDir
+REM ECHO Bindir (%bindir%) is OK.
+GOTO :eof
+:wrongBinDir
+REM ECHO Bindir (%bindir%) is wrong.
+SET bindir=none
+GOTO :eof
+
+:doDeregister
+ECHO "installer = %myodbc_installer%"
+
+REM # Check if driver is registered
+
+"%myodbc_installer%" -d -l -n "%driver_name%" 2>nul
+IF ERRORLEVEL 1 GOTO :errorNotRegistered
+SET driver_found=yes
+
+ECHO Deregistering %driver_name%
+"%myodbc_installer%" -d -r -n "%driver_name%"
 
 :doSuccess
-ECHO "+-----------------------------------------------------+"
-ECHO "| DONE                                                |"
-ECHO "+-----------------------------------------------------+"
-ECHO "|                                                     |"
-ECHO "| Hopefully things went well; the Connector/ODBC      |"
-ECHO "| files have been removed from the system directory   |"
-ECHO "| and the driver has been deregistered.               |"
-ECHO "|                                                     |"
-ECHO "+-----------------------------------------------------+"
+ECHO ^+-----------------------------------------------------^+
+ECHO ^| DONE                                                ^|
+ECHO ^+-----------------------------------------------------^+
+ECHO ^|                                                     ^|
+ECHO ^| Hopefully things went well; the Connector/ODBC      ^|
+ECHO ^| driver has been deregistered.                       ^|
+ECHO ^|                                                     ^|
+ECHO ^+-----------------------------------------------------^+
 EXIT /B 0
 
-:doError1
-ECHO "+-----------------------------------------------------+"
-ECHO "| ERROR                                               |"
-ECHO "+-----------------------------------------------------+"
-ECHO "|                                                     |"
-ECHO "| The non-debug version of Connector/ODBC needs to be |"
-ECHO "| installed.                                          |"
-ECHO "|                                                     |"
-ECHO "+-----------------------------------------------------+"
+:errorNoInstaller
+ECHO ^+-----------------------------------------------------^+
+ECHO ^| ERROR                                               ^|
+ECHO ^+-----------------------------------------------------^+
+ECHO ^|                                                     ^|
+ECHO ^| Could not find the MyODBC Installer utility. Run    ^|
+ECHO ^| this script from the installation directory.        ^|
+ECHO ^|                                                     ^|
+ECHO ^+-----------------------------------------------------^+
 EXIT /B 1
 
-:doError2
-ECHO "+-----------------------------------------------------+"
-ECHO "| ERROR                                               |"
-ECHO "+-----------------------------------------------------+"
-ECHO "|                                                     |"
-ECHO "| Connector/ODBC does not appear to be installed.     |"
-ECHO "|                                                     |"
-ECHO "+-----------------------------------------------------+"
+:errorNotRegistered
+ECHO ^+-----------------------------------------------------^+
+ECHO ^| ERROR                                               ^|
+ECHO ^+-----------------------------------------------------^+
+ECHO ^|                                                     ^|
+ECHO ^| Connector/ODBC does not appear to be registered.    ^|
+ECHO ^| Was it registered under non-default name which      ^|
+ECHO ^| then should be specified as the first parameter of  ^|
+ECHO ^| this script?                                        ^|
+ECHO ^|                                                     ^|
+ECHO ^+-----------------------------------------------------^+
 EXIT /B 1
-
-:doError3
-ECHO "+-----------------------------------------------------+"
-ECHO "| ERROR                                               |"
-ECHO "+-----------------------------------------------------+"
-ECHO "|                                                     |"
-ECHO "| Connector/ODBC (debug) does not appear to be        |"
-ECHO "| installed.                                          |"
-ECHO "|                                                     |"
-ECHO "+-----------------------------------------------------+"
-EXIT /B 1
-
-:doError4
-ECHO "+-----------------------------------------------------+"
-ECHO "| ERROR                                               |"
-ECHO "+-----------------------------------------------------+"
-ECHO "|                                                     |"
-ECHO "| Can't find the Windows system directory             |"
-ECHO "|                                                     |"
-ECHO "+-----------------------------------------------------+"
-EXIT /B 1
-
-:doSyntax
-ECHO "+-----------------------------------------------------+"
-ECHO "| Uninstall.bat                                       |"
-ECHO "+-----------------------------------------------------+"
-ECHO "|                                                     |"
-ECHO "| DESCRIPTION                                         |"
-ECHO "|                                                     |"
-ECHO "| Use this to remove the driver and supporting files  |"
-ECHO "| from the system directory and deregister the driver.|"
-ECHO "|                                                     |"
-ECHO "| The regular version must be installed for the       |"
-ECHO "| debug version to be properly uninstalled.           |"
-ECHO "|                                                     |"
-ECHO "| SYNTAX                                              |"
-ECHO "|                                                     |"
-ECHO "| Uninstall <debug>                                   |"
-ECHO "|                                                     |"
-ECHO "| <debug>  must be;                                   |"
-ECHO "|              0 - to uninstall a regular build       |"
-ECHO "|              1 - to uninstall a debug version       |"
-ECHO "|                                                     |"
-ECHO "+-----------------------------------------------------+"
-
