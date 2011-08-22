@@ -25,7 +25,7 @@
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/test)
 
 # put the test exe's in test/
-SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_SOURCE_DIR}/test")
+SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/test")
 
 ENABLE_TESTING()
 
@@ -35,12 +35,18 @@ FOREACH(T my_basics my_blob my_bulk my_catalog my_curext my_cursor
 		my_types my_unicode my_unixodbc my_use_result my_bug13766)
 	ADD_EXECUTABLE(${T} ${T}.c)
 
+    INSTALL(TARGETS ${T} DESTINATION test COMPONENT tests)
+
 	IF(WIN32)
 	  TARGET_LINK_LIBRARIES(${T} ${ODBCLIB} ${ODBCINSTLIB})
 	ELSE(WIN32)
 	  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ODBC_LINK_FLAGS}")
 	ENDIF(WIN32)
 	
-	ADD_TEST(${T} ${EXECUTABLE_OUTPUT_PATH}/${T})
+	ADD_TEST(${T} ${T})
 ENDFOREACH(T)
+
+INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake 
+        DESTINATION test COMPONENT tests)
+
 
