@@ -231,7 +231,8 @@ int default_c_type(int sql_data_type);
 ulong bind_length(int sql_data_type,ulong length);
 my_bool str_to_date(SQL_DATE_STRUCT *rgbValue, const char *str,
                     uint length, int zeroToMin);
-my_bool str_to_ts(SQL_TIMESTAMP_STRUCT *ts, const char *str, int zeroToMin);
+int str_to_ts(SQL_TIMESTAMP_STRUCT *ts, const char *str, int len, int zeroToMin,
+              BOOL dont_use_set_locale);
 my_bool str_to_time_st(SQL_TIME_STRUCT *ts, const char *str);
 ulong str_to_time_as_long(const char *str,uint length);
 void init_getfunctions(void);
@@ -319,7 +320,8 @@ int proc_get_param_sql_type_index(SQLCHAR *ptype, int len);
 SQLTypeMap *proc_get_param_map_by_index(int index);
 char *proc_param_next_token(char *str, char *str_end);
 void set_row_count(STMT * stmt, my_ulonglong rows);
-char *get_fractional_part(const char * str, SQLUINTEGER * fraction);
+const char *get_fractional_part(const char * str, int len, BOOL dont_use_set_locale,
+                          SQLUINTEGER * fraction);
 
 #ifdef __WIN__
 #define cmp_database(A,B) myodbc_strcasecmp((const char *)(A),(const char *)(B))

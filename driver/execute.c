@@ -167,7 +167,7 @@ SQLRETURN insert_params(STMT FAR *stmt, SQLULEN row, char **finalquery,
                         SQLULEN *finalquery_length)
 {
     char *query= stmt->query,*to;
-    uint i,length;
+    uint i,length, had_info= 0;
     NET *net;
     SQLRETURN rc= SQL_SUCCESS;
 
@@ -175,8 +175,12 @@ SQLRETURN insert_params(STMT FAR *stmt, SQLULEN row, char **finalquery,
 
     net= &stmt->dbc->mysql.net;
     to= (char*) net->buff + (finalquery_length!= NULL ? *finalquery_length : 0);
+
     if (!stmt->dbc->ds->dont_use_set_locale)
+    {
       setlocale(LC_NUMERIC, "C");  /* force use of '.' as decimal point */
+    }
+
     for ( i= 0; i < stmt->param_count; ++i )
     {
         DESCREC *aprec= desc_get_rec(stmt->apd, i, FALSE);
@@ -191,33 +195,74 @@ SQLRETURN insert_params(STMT FAR *stmt, SQLULEN row, char **finalquery,
             rc= set_error(stmt,MYERR_07001,NULL,0);
             goto error;
         }
+
         get_dynamic(&stmt->param_pos, (void *)&pos, i);
         length= (uint) (pos-query);
+
         if ( !(to= add_to_buffer(net,to,query,length)) )
+        {
             goto memerror;
+        }
+
         query= pos+1;  /* Skip '?' */
+
         if (!SQL_SUCCEEDED(rc= insert_param(stmt,&to,stmt->apd,aprec,iprec,row)))
+        {
             goto error;
+        }
+        else
+        {
+          if (rc == SQL_SUCCESS_WITH_INFO)
+          {
+            had_info= 1;
+          }
+        }
     }
+
+    /* if any ofr parameters return SQL_SUCCESS_WITH_iNFO - returning it
+       SQLSTATE corresponds to last SQL_SUCCESS_WITH_iNFO
+    */
+    if (had_info)
+    {
+      rc= SQL_SUCCESS_WITH_INFO;
+    }
+
     length= (uint) (stmt->query_end - query);
+
     if ( !(to= add_to_buffer(net,to,query,length+1)) )
+    {
         goto memerror;
+    }
+
     if (finalquery_length!= NULL)
+    {
       *finalquery_length= to - (char*)net->buff - 1;
+    }
+
     if (finalquery!=NULL)
     {
       if ( !(to= (char*) my_memdup((char*) net->buff,
         (uint) (to - (char*) net->buff),MYF(0))) )
+      {
         goto memerror;
+      }
     }
 
     if (!mutex_was_locked)
+    {
       pthread_mutex_unlock(&stmt->dbc->lock);
+    }
+
     if (!stmt->dbc->ds->dont_use_set_locale)
+    {
         setlocale(LC_NUMERIC,default_locale);
+    }
 
     if (finalquery!=NULL)
+    {
       *finalquery= to;
+    }
+
     return rc;
 
 memerror:      /* Too much data */
@@ -231,6 +276,8 @@ error:
     return rc;
 }
 
+
+#define TIME_FIELDS_NONZERO(ts) (ts.hour||ts.minute||ts.second||ts.fraction)
 
 /*
   Add the value of parameter to a string buffer.
@@ -252,6 +299,7 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
     SQLLEN *octet_length_ptr= NULL;
     SQLLEN *indicator_ptr= NULL;
     char *to= *toptr;
+    SQLRETURN result= SQL_SUCCESS;
 
     if (aprec->octet_length_ptr)
     {
@@ -291,13 +339,19 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
       if (data)
       {
         if (aprec->concise_type == SQL_C_WCHAR)
+        {
           length= sqlwcharlen((SQLWCHAR *)data) * sizeof(SQLWCHAR);
-        else /* TODO this is stupid, check condition above, shouldn't we be checking only octet_length, not ptr? */
+        }
+        else
+        {
           length= strlen(data);
+        }
 
         if (!octet_length_ptr && aprec->octet_length > 0 &&
             aprec->octet_length != SQL_SETPARAM_VALUE_MAX)
+        {
           length= myodbc_min(length, aprec->octet_length);
+        }
       }
       else
       {
@@ -477,14 +531,27 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
                 TIMESTAMP_STRUCT *time= (TIMESTAMP_STRUCT*) data;
                 if (dbc->ds->min_date_to_zero &&
                     !time->year && (time->month == time->day == 1))
-                  sprintf(buff, "0000-00-00 %02d:%02d:%02d",
-                          time->hour, time->minute, time->second);
+                {
+                  sprintf(buff, "0000-00-00 %02d:%02d:%02d", time->hour,
+                          time->minute, time->second);
+                }
                 else
+                {
                   sprintf(buff, "%04d-%02d-%02d %02d:%02d:%02d",
-                          time->year, time->month, time->day,
-                          time->hour, time->minute, time->second);
-                data= buff;
+                            time->year, time->month, time->day,
+                            time->hour, time->minute, time->second);
+                }
+
                 length= 19;
+
+                if (time->fraction)
+                {
+                  sprintf(buff + length, ".%09d", time->fraction);
+                  length+= 10;
+                }
+
+                data= buff;
+
                 break;
             }
         case SQL_C_NUMERIC:
@@ -498,13 +565,17 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
               length= strlen(data);
               /* TODO no way to return an error here? */
               if (trunc == SQLNUM_TRUNC_FRAC)
-              {/* 01S07 SQL_SUCCESS_WITH_INFO */}
+              {/* 01S07 SQL_SUCCESS_WITH_INFO */
+                set_stmt_error(stmt, "01S07", "Fractional truncation", 0);
+                result= SQL_SUCCESS_WITH_INFO;
+              }
               else if (trunc == SQLNUM_TRUNC_WHOLE)
               {/* 22003 SQL_ERROR */
                 return SQL_ERROR;
               }
             }
     }
+
     switch ( iprec->concise_type )
     {
         case SQL_DATE:
@@ -515,6 +586,35 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
             {
               to= add_to_buffer(net, to, data, length);
               goto out;
+            }
+
+            if (iprec->concise_type == SQL_DATE
+              || iprec->concise_type == SQL_TYPE_DATE)
+            {
+              TIMESTAMP_STRUCT ts;
+
+              /* For now I think it is safer to assume a dot is always a
+                 separator */
+              /* aprec->concise_type == SQL_C_TYPE_TIMESTAMP
+              || aprec->concise_type == SQL_C_TIMESTAMP
+              || stmt->dbc->ds->dont_use_set_locale */
+              str_to_ts(&ts, data, length, 1, TRUE);
+
+              /* Overflow also possible if converted from other C types
+                 http://msdn.microsoft.com/en-us/library/ms709385%28v=vs.85%29.aspx
+                 (if time fields nonzero sqlstate 22008 )
+                 http://msdn.microsoft.com/en-us/library/aa937531%28v=sql.80%29.aspx
+                 (Class values other than 01, except for the class IM,
+                 indicate an error and are accompanied by a return code
+                 of SQL_ERROR)
+                 
+                 Not sure if fraction should be considered as an overflow.
+                 In fact specs say about "time fields only"
+               */
+              if (TIME_FIELDS_NONZERO(ts))
+              {
+                return set_stmt_error(stmt, "22008", "Date overflow", 0);
+              }
             }
             /* else _binary introducer for binary data */
          case SQL_BINARY:
@@ -557,17 +657,42 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
                  aprec->concise_type == SQL_C_TYPE_TIMESTAMP )
             {
                 TIMESTAMP_STRUCT *time= (TIMESTAMP_STRUCT*) aprec->data_ptr;
-                sprintf(buff,"'%02d:%02d:%02d'",time->hour,time->minute,time->second);
+
+                if (time->fraction)
+                {
+                  /* fractional seconds truncated, need to set correct sqlstate 22008
+                  http://msdn.microsoft.com/en-us/library/ms709385%28v=vs.85%29.aspx */
+
+                  return set_stmt_error(stmt, "22008", "Fractional truncation", 0);
+                }
+
+                sprintf(buff,"'%02d:%02d:%02d'",time->hour,time->minute,
+                      time->second);
                 to= add_to_buffer(net, to, buff, 10);
             }
             else
             {
-                ulong time= str_to_time_as_long(data,length);
+                ulong time;
+                SQLUINTEGER fraction;
+
+                /* For now it is safer to assume a dot is always a separator */
+                /* stmt->dbc->ds->dont_use_set_locale */
+                get_fractional_part(data, length, TRUE, &fraction);
+
+                if (fraction)
+                {
+                  /* truncation need SQL_ERROR and sqlstate 22008*/
+                  return set_stmt_error(stmt, "22008", "Fractional truncation", 0);
+                }
+
+                time= str_to_time_as_long(data,length);
+
                 sprintf(buff,"'%02d:%02d:%02d'",
-                        (int) time/10000,
-                        (int) time/100%100,
-                        (int) time%100);
+                      (int) time/10000,
+                      (int) time/100%100,
+                      (int) time%100);
                 to= add_to_buffer(net, to, buff, 10);
+                
             }
             goto out;
         case SQL_FLOAT:
@@ -580,6 +705,8 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
                 char *end= from+length;
                 while ( *from && from < end )
                 {
+                  /* I wonder if following code really respects dont_use_set_locale
+                     and if it does, then how? */
                     if ( from[0] == thousands_sep[0] && is_prefix(from,thousands_sep) )
                         from+= thousands_sep_length;
                     else if ( from[0] == decimal_point[0] && is_prefix(from,decimal_point) )
@@ -614,7 +741,9 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
       to= add_to_buffer(net,to," 0x",3);
       /* Make sure we have room for a fully-escaped string. */
       if (!(to= extend_buffer(net, to, length * 2)))
-        return 0;
+      {
+        goto memerror;
+      }
       
       copy_binhex_result(stmt, to, length * 2 + 1, &transformed_len, 0, data, length);
       to += transformed_len;
@@ -623,8 +752,10 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
     {
       to= add_to_buffer(net,to,"'",1);
       /* Make sure we have room for a fully-escaped string. */
-      if (!(to= extend_buffer(net, to, length * 2)))
-        return 0;
+      if ( !(to= extend_buffer(net, to, length * 2)) )
+      {
+        goto memerror;
+      }
       
       to+= mysql_real_escape_string(&dbc->mysql, to, data, length);
       to= add_to_buffer(net, to, "'", 1);
@@ -637,7 +768,8 @@ out:
     }
 
     *toptr= to;
-    return SQL_SUCCESS;
+
+    return result;
 
 memerror:
     return set_error(stmt, MYERR_S1001, NULL, 4001);
@@ -865,13 +997,19 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
       /* Making copy of the built query if that is not last paramset for select
          query. */
       if (is_select_stmt && row < pStmt->apd->array_size - 1)
+      {
         rc= insert_params(pStmt, row, NULL, &length);
+      }
       else
+      {
         rc= insert_params(pStmt, row, &query, &length);
+      }
 
       /* Setting status for this paramset*/
       if (map_error_to_param_status( param_status_ptr, rc))
+      {
         lastError= param_status_ptr;
+      }
 
       if (rc != SQL_SUCCESS)
       {
@@ -947,7 +1085,9 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
   /* Changing status for last detected error to SQL_PARAM_ERROR as we have
      diagnostics for it */
   if (lastError != NULL)
+  {
     *lastError= SQL_PARAM_ERROR;
+  }
 
   /* Setting not processed paramsets status to SQL_PARAM_UNUSED 
      this is needed if we stop paramsets processing on error.

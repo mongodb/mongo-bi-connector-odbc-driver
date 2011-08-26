@@ -123,7 +123,7 @@ DECLARE_TEST(my_ts)
 DECLARE_TEST(t_tstotime)
 {
     SQLRETURN rc;
-    SQL_TIMESTAMP_STRUCT ts;
+    SQL_TIMESTAMP_STRUCT ts, ts1, ts2;
 
     ts.day    = 02;
     ts.month  = 8;
@@ -133,7 +133,15 @@ DECLARE_TEST(t_tstotime)
     ts.second = 45;
     ts.fraction = 05;   
 
-  ok_sql(hstmt, "DROP TABLE IF EXISTS t_tstotime");
+    memcpy(&ts1, (void*) &ts, sizeof(SQL_TIMESTAMP_STRUCT));
+    /* For SQL_TIME fraction is truncated and that would cause error */
+    ts1.fraction= 0;
+
+    memcpy(&ts2, (void*) &ts1, sizeof(SQL_TIMESTAMP_STRUCT));
+    /* Same for SQL_DATE - time is truncated -> error */
+    ts2.hour= ts2.minute= ts2.second= 0;
+
+    ok_sql(hstmt, "DROP TABLE IF EXISTS t_tstotime");
 
     rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
     mycon(hdbc,rc);
@@ -152,11 +160,11 @@ DECLARE_TEST(t_tstotime)
     mystmt(hstmt,rc);   
 
     rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
-                          SQL_DATE,0,0,&ts,sizeof(ts),NULL);
+                          SQL_DATE,0,0,&ts2,sizeof(ts2),NULL);
     mystmt(hstmt,rc);
 
     rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
-                          SQL_TIME,0,0,&ts,sizeof(ts),NULL);
+                          SQL_TIME,0,0,&ts1,sizeof(ts1),NULL);
     mystmt(hstmt,rc);
 
     rc = SQLBindParameter(hstmt,3,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
@@ -208,12 +216,30 @@ DECLARE_TEST(t_tstotime1)
                             (SQLCHAR *)"INSERT INTO t_tstotime1 VALUES (?,?,?)",
                             SQL_NTS));
 
-  ok_stmt(hstmt, SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_CHAR,
-                                  SQL_DATE,0,0,&ts,sizeof(ts),NULL));
-  ok_stmt(hstmt, SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,SQL_C_CHAR,
-                                  SQL_TIME,0,0,&ts,sizeof(ts),NULL));
-  ok_stmt(hstmt, SQLBindParameter(hstmt,3,SQL_PARAM_INPUT,SQL_C_CHAR,
-                                  SQL_TIMESTAMP,0,0,&ts,sizeof(ts),NULL));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                  SQL_DATE, 0, 0, &ts, sizeof(ts), NULL));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                  SQL_TIME, 0, 0, &ts, sizeof(ts), NULL));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 3, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                  SQL_TIMESTAMP, 0, 0, &ts, sizeof(ts), NULL));
+
+  expect_stmt(hstmt, SQLExecute(hstmt), SQL_ERROR);
+
+  is_num(check_sqlstate(hstmt, "22008"), OK);
+
+  /* Taking only date part */
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                  SQL_DATE, 0, 0, &ts, 10, NULL));
+
+  expect_stmt(hstmt, SQLExecute(hstmt), SQL_ERROR);
+
+  is_num(check_sqlstate(hstmt, "22008"), OK);
+
+  /* are not taking fractional part */
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                  SQL_TIME, 0, 0, &ts, 19, NULL));
 
   ok_stmt(hstmt, SQLExecute(hstmt));
 
@@ -952,6 +978,10 @@ DECLARE_TEST(t_bug37342)
   ts.second= 59;
   ts.fraction= 4;
 
+  /* Fractional truncation */
+  expect_sql(hstmt, "SELECT ? AS foo", SQL_ERROR);
+  ts.fraction= 0;
+
   ok_sql(hstmt, "SELECT ? AS foo");
 
   ok_stmt(hstmt, SQLFetch(hstmt));
@@ -1062,6 +1092,48 @@ DECLARE_TEST(t_bug60646)
 }
 
 
+/* Bug#60648 ODBC prepared statements ignore fractional part of temporal data
+   types */
+DECLARE_TEST(t_bug60648)
+{
+  SQL_TIMESTAMP_STRUCT param, result;
+
+  param.year=     2011;
+  param.month=    8;
+  param.day=      6;
+  param.hour=     1;
+  param.minute=   2;
+  param.second=   3;
+  param.fraction= 1000;
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)"select ?", SQL_NTS));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_TYPE_TIMESTAMP,
+    SQL_TYPE_DATE, 0, 0, &param, 0, NULL));
+
+  expect_stmt(hstmt, SQLExecute(hstmt), SQL_ERROR);
+  is_num(check_sqlstate(hstmt, "22008"), OK);
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_TYPE_TIMESTAMP,
+    SQL_TYPE_TIME, 0, 0, &param, 0, NULL));
+
+  expect_stmt(hstmt, SQLExecute(hstmt), SQL_ERROR);
+  is_num(check_sqlstate(hstmt, "22008"), OK);
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_TYPE_TIMESTAMP,
+    SQL_TYPE_TIMESTAMP, 0, 0, &param, 0, NULL));
+
+  ok_stmt(hstmt, SQLExecute(hstmt));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_TYPE_TIMESTAMP, &result, 0,
+                            NULL));
+
+  is_num(1000, result.fraction);
+
+  return OK;
+}
+
 BEGIN_TESTS
   ADD_TEST(my_ts)
   ADD_TEST(t_tstotime)
@@ -1079,6 +1151,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug31009)
   ADD_TEST(t_bug37342)
   ADD_TEST(t_bug60646)
+  ADD_TEST(t_bug60648)
 END_TESTS
 
 

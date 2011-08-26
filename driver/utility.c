@@ -31,8 +31,11 @@
 #include "errmsg.h"
 #include <ctype.h>
 
+
+#define DATETIME_DIGITS 14
+
 const SQLULEN sql_select_unlimited= (SQLULEN)-1;
-const uint datetime_digits= 14;
+
 
 /**
   Execute a SQL statement.
@@ -1905,10 +1908,12 @@ ulong bind_length(int sql_data_type,ulong length)
   @purpose : convert a possible string to a timestamp value
 */
 
-my_bool str_to_ts(SQL_TIMESTAMP_STRUCT *ts, const char *str, int zeroToMin)
+int str_to_ts(SQL_TIMESTAMP_STRUCT *ts, const char *str, int len, int zeroToMin,
+              BOOL dont_use_set_locale)
 { 
     uint year, length;
-    char buff[15], *to, *decptr;
+    char buff[DATETIME_DIGITS + 1], *to;
+    const char *end;
     SQL_TIMESTAMP_STRUCT tmp_timestamp;
     SQLUINTEGER fraction;
 
@@ -1917,11 +1922,21 @@ my_bool str_to_ts(SQL_TIMESTAMP_STRUCT *ts, const char *str, int zeroToMin)
       ts= (SQL_TIMESTAMP_STRUCT *) &tmp_timestamp;
     }
 
+    if (len < 0)
+    {
+      len= strlen(str);
+    }
+
     /* We don't wan to change value in the out parameter directly
        before we know that string is a good datetime */
-    decptr= get_fractional_part(str, &fraction);
+    end= get_fractional_part(str, len, dont_use_set_locale, &fraction);
 
-    for ( to= buff ; (decptr && str < decptr ||  !decptr && *str); ++str )
+    if (end == NULL || end > str + len)
+    {
+      end= str + len;
+    }
+
+    for ( to= buff; str < end; ++str )
     {
       if ( isdigit(*str) )
       {
@@ -1959,9 +1974,9 @@ my_bool str_to_ts(SQL_TIMESTAMP_STRUCT *ts, const char *str, int zeroToMin)
       to+= 2;
     }
 
-    if (length < datetime_digits)
+    if (length < DATETIME_DIGITS)
     {
-      strfill(buff + length, datetime_digits - length, '0');
+      strfill(buff + length, DATETIME_DIGITS - length, '0');
     }
     else
     {
@@ -3488,22 +3503,56 @@ void set_row_count(STMT *stmt, my_ulonglong rows)
 /**
    Gets fractional time of a second from datetime or time string.
 
-   @param[in]  value      (date)time string
-   @param[out] fraction   buffer where to put fractional part in nanoseconds
+   @param[in]  value                (date)time string
+   @param[in]  len                  length of value buffer
+   @param[in]  dont_use_set_locale  use dot as decimal part separator
+   @param[out] fraction             buffer where to put fractional part
+                                    in nanoseconds
 
    Returns pointer to decimal point in the string
 */
-char *
-get_fractional_part(const char * str, SQLUINTEGER * fraction)
+const char *
+get_fractional_part(const char * str, int len, BOOL dont_use_set_locale,
+                    SQLUINTEGER * fraction)
 {
-  char *decptr= strchr(str, '.');
+  const char *decptr= NULL, *end;
+  int decpoint_len= 1;
 
-  if (decptr)
+  if (len < 0)
   {
-    char *ptr, buff[10];
-    strfill(buff, sizeof(buff)-1, '0');
+    len= strlen(str);
+  }
 
-    for (ptr= buff, str= decptr+1; *str && ptr < buff + sizeof(buff); ++ptr)
+  end= str + len;
+
+  if (dont_use_set_locale)
+  {
+    decptr= strchr(str, '.');
+  }
+  else
+  {
+    decpoint_len= decimal_point_length;
+    while (*str && str < end)
+    {
+      if (str[0] == decimal_point[0] && is_prefix(str,decimal_point) )
+      {
+        decptr= str;
+        break;
+      }
+
+      ++str;
+    }
+  }
+
+  /* If decimal point is the last character - we don't have fractional part */
+  if (decptr && decptr < end - decpoint_len)
+  {
+    char buff[10], *ptr;
+
+    strfill(buff, sizeof(buff)-1, '0');
+    str= decptr + decpoint_len;
+
+    for (ptr= buff; str < end && ptr < buff + sizeof(buff); ++ptr)
     {
       /* there actually should not be anything that is not a digit... */
       if (isdigit(*str))
@@ -3518,6 +3567,7 @@ get_fractional_part(const char * str, SQLUINTEGER * fraction)
   else
   {
     *fraction= 0;
+    decptr= NULL;
   }
 
   return decptr;

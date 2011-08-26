@@ -458,7 +458,8 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
       {
         SQL_TIMESTAMP_STRUCT ts;
 
-        switch (str_to_ts(&ts, value, stmt->dbc->ds->zero_date_to_min))
+        switch (str_to_ts(&ts, value, SQL_NTS, stmt->dbc->ds->zero_date_to_min,
+                          TRUE))
         {
         case SQLTS_BAD_DATE:
           return set_stmt_error(stmt, "22018", "Data value is not a valid time(stamp) value", 0);
@@ -518,7 +519,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
 
           *pcbValue= sizeof(TIME_STRUCT);
 
-          get_fractional_part(value, &fraction);
+          get_fractional_part(value, SQL_NTS, TRUE, &fraction);
 
           if (fraction)
           {
@@ -557,14 +558,14 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
           timestamp_info->hour=   ts.hour;
           timestamp_info->minute= ts.minute;
           timestamp_info->second= ts.second;
-          get_fractional_part(value, &timestamp_info->fraction);
+          get_fractional_part(value, SQL_NTS, TRUE, &timestamp_info->fraction);
           *pcbValue= sizeof(SQL_TIMESTAMP_STRUCT);
         }
       }
       else
       {
-        switch (str_to_ts((SQL_TIMESTAMP_STRUCT *)rgbValue, value,
-                      stmt->dbc->ds->zero_date_to_min))
+        switch (str_to_ts((SQL_TIMESTAMP_STRUCT *)rgbValue, value, SQL_NTS,
+                      stmt->dbc->ds->zero_date_to_min, TRUE))
         {
         case SQLTS_BAD_DATE:
           return set_stmt_error(stmt, "22018", "Data value is not a valid date/time(stamp) value", 0);
