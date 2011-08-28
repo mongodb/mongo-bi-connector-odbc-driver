@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2006, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2006, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -57,7 +57,8 @@ extern "C"
 #define pthread_mutex_unlock(A)
 #define pthread_mutex_init(A,B)
 #define pthread_mutex_destroy(A)
-#define pthread_mutex_trylock(A) (0)
+/* EBUSY - 16 */
+#define pthread_mutex_trylock(A) (16)
 #endif
 
 /* Get rid of defines from my_config.h that conflict with our myconf.h */
