@@ -870,9 +870,10 @@ int ShowOdbcParamsDialog(DataSource* params, HWND ParentWnd, BOOL isPrompt)
   if (params->name || !isPrompt)
   {
     Driver *driver= driver_new();
-    memcpy(driver->lib, params->driver,
+    params->driver && memcpy(driver->lib, params->driver,
            (sqlwcharlen(params->driver) + 1) * sizeof(SQLWCHAR));
-    if (driver_lookup_name(driver))
+    /* TODO Driver lookup is done in driver too, do we really need it there? */
+    if (!*driver->lib || driver_lookup_name(driver))
     {
       wchar_t msg[256];
       swprintf(msg, 256, L"Failure to lookup driver entry at path '%ls'",
