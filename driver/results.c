@@ -643,7 +643,13 @@ static SQLRETURN check_result(STMT FAR *stmt )
                 stmt->stmt_options.max_rows= 1;
                 /* select limit will be restored back to max_rows before real execution */
                 if ( (error= my_SQLExecute(stmt)) == SQL_SUCCESS )
+                {
                     stmt->state= ST_PRE_EXECUTED;  /* mark for execute */
+                }
+                else
+                {
+                    set_sql_select_limit(stmt->dbc, real_max_rows);
+                }
                 stmt->stmt_options.max_rows= real_max_rows;
             }
             else

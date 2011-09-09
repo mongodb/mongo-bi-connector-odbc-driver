@@ -6,7 +6,8 @@
   * MS Access with VARCHAR NOT NULL columns. (Bug #31067)
   * sqlwcharchr might read one SQLWCHAR after end of string. (Bug #61586)
   * Column parameter binding makes SQLExecute not to return SQL_ERROR on
-    disconnect. (Bug #59772)
+  * If pre-execution failed some catalog functions called right after that
+    would return only one row. (Bug #12824839)
 
 ----
 

@@ -2338,6 +2338,55 @@ DECLARE_TEST(t_bug31067)
 }
 
 
+/* Some catalog functions can return only one row of result if previous prepare
+   statement pre-execution has failed */
+DECLARE_TEST(bug12824839)
+{
+  SQLINTEGER row_count;
+  SQLSMALLINT col_count;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS b12824839");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS b12824839a");
+  ok_sql(hstmt, "CREATE TABLE b12824839 "
+                "(id int primary key, vc_col varchar(32), int_col int)");
+  ok_sql(hstmt, "CREATE TABLE b12824839a "
+                "(id int, vc_col varchar(32) UNIQUE, int_col int,"
+                "primary key(id,int_col))");
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, "SELECT * from any_non_existing_table",
+                            SQL_NTS));
+
+  /* this will fail */
+  expect_stmt(hstmt, SQLNumResultCols(hstmt, &col_count), SQL_ERROR);
+
+  ok_stmt(hstmt, SQLColumns(hstmt, "test", SQL_NTS, NULL, 0, "b12824839",
+                            SQL_NTS, NULL, 0));
+
+  ok_stmt(hstmt, SQLRowCount(hstmt, &row_count));
+  is_num(3, row_count);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLPrimaryKeys(hstmt, NULL, SQL_NTS, NULL, SQL_NTS,
+                                "b12824839a", SQL_NTS));
+
+  ok_stmt(hstmt, SQLRowCount(hstmt, &row_count));
+  is_num(2, row_count);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* SQLColumns was not completely fixed */
+  ok_stmt(hstmt, SQLColumns(hstmt, "test", SQL_NTS, NULL, 0, NULL,
+                            SQL_NTS, NULL, 0));
+  ok_stmt(hstmt, SQLRowCount(hstmt, &row_count));
+
+  /* There should be records at least for those 2 tables we've created */
+  is(row_count >= 6);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -2380,6 +2429,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug57182)
   ADD_TEST(t_bug55870)
   ADD_TEST(t_bug31067)
+  ADD_TEST(bug12824839)
 END_TESTS
 
 

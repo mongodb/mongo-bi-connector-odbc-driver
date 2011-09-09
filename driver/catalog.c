@@ -203,16 +203,25 @@ static MYSQL_RES *mysql_table_status_i_s(STMT        *stmt,
   {
     to= strmov(to, "AND TABLE_NAME LIKE '");
     if (wildcard)
+    {
       to+= mysql_real_escape_string(mysql, to, (char *)table, table_length);
+    }
     else
+    {
       to+= myodbc_escape_string(mysql, to, (ulong)(sizeof(buff) - (to - buff)),
                                 (char *)table, table_length, 0);
+    }
     to= strmov(to, "'");
   }
 
+  assert(to - buff < sizeof(buff));
+
   MYLOG_QUERY(stmt, buff);
-  if (mysql_query(mysql,buff))
+
+  if (mysql_real_query(mysql, buff, (unsigned long)(to - buff)))
+  {
     return NULL;
+  }
 
   return mysql_store_result(mysql);
 }
