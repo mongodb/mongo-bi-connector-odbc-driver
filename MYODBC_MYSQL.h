@@ -57,7 +57,7 @@ extern "C"
 #define pthread_mutex_unlock(A)
 #define pthread_mutex_init(A,B)
 #define pthread_mutex_destroy(A)
-#define pthread_mutex_trylock(A) (1)
+#define pthread_mutex_trylock(A) (0)
 #endif
 
 /* Get rid of defines from my_config.h that conflict with our myconf.h */

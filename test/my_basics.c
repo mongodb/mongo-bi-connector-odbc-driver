@@ -711,6 +711,7 @@ DWORD WINAPI cancel_in_one_second(LPVOID arg)
 
 DECLARE_TEST(sqlcancel)
 {
+#ifdef THREAD
   HANDLE thread;
   DWORD waitrc;
 
@@ -724,6 +725,24 @@ DECLARE_TEST(sqlcancel)
   waitrc= WaitForSingleObject(thread, 10000);
   is(!(waitrc == WAIT_TIMEOUT));
 
+#else
+  SQLLEN     pcbLength= SQL_LEN_DATA_AT_EXEC(0);
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, "select ?", SQL_NTS));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1,SQL_PARAM_INPUT,SQL_C_CHAR,
+                          SQL_VARCHAR,0,0,(SQLPOINTER)1,0,&pcbLength));
+
+  expect_stmt(hstmt, SQLExecute(hstmt), SQL_NEED_DATA);
+
+  /* Without SQLCancel we would get "out of sequence" DM error */
+  ok_stmt(hstmt, SQLCancel(hstmt));
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, "select 1", SQL_NTS));
+
+  ok_stmt(hstmt, SQLExecute(hstmt));
+
+#endif
   return OK;
 }
 #else
