@@ -139,17 +139,17 @@ ELSE(COMPILE_RESULT)
 ENDIF(COMPILE_RESULT)
 #-----------------------------------------------------
 
+	IF(NOT NO_THREADS)
+		MESSAGE(STATUS "Enabling threads support")
+		ADD_DEFINITIONS(-DTHREAD)
+	ENDIF(NOT NO_THREADS)
+
 #------------ build options for windows --------------
 IF(WIN32)
         REMOVE_DEFINITIONS(-DUNICODE)
         ADD_DEFINITIONS(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
         ADD_DEFINITIONS(-DENGLISH -DMYODBC_EXPORTS -D_USERDLL)
         ADD_DEFINITIONS(-D_WIN32 -DWIN32 -D_WINDOWS -D__WIN__)
-	IF(NOT NO_THREADS)
-		MESSAGE(STATUS "Enabling threads support")
-		ADD_DEFINITIONS(-DTHREAD)
-	ENDIF(NOT NO_THREADS)
-
 
 	#Since 5.5.13 libmysql introduces dependency on Secur32.lib
 	FILE(STRINGS "${MYSQL_INCLUDE_DIR}\\mysql_version.h" mysql_version REGEX "^\#define[ \t]+MYSQL_VERSION_ID")
