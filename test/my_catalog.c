@@ -2332,6 +2332,8 @@ DECLARE_TEST(t_bug31067)
 
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
   ok_sql(hstmt, "DROP DATABASE bug31067");
 
   return OK;

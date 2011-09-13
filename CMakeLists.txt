@@ -132,7 +132,7 @@ ELSE(COMPILE_RESULT)
                 ADD_DEFINITIONS(-DUSE_SQLPARAMOPTIONS_SQLUINTEGER_PTR)
         ELSE(COMPILE_RESULT1)
                 # SQLULEN is a default
-                MESSAGE("Apparently odbc headers could not be found. 2nd and 3rd parameters assumed to be (*)SQLULEN by default")
+		MESSAGE(STATUS "Apparently odbc headers could not be found. 2nd and 3rd parameters assumed to be (*)SQLULEN by default")
                 ADD_DEFINITIONS(-DUSE_SQLPARAMOPTIONS_SQLULEN_PTR)
         ENDIF(COMPILE_RESULT1)
 
@@ -145,6 +145,11 @@ IF(WIN32)
         ADD_DEFINITIONS(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
         ADD_DEFINITIONS(-DENGLISH -DMYODBC_EXPORTS -D_USERDLL)
         ADD_DEFINITIONS(-D_WIN32 -DWIN32 -D_WINDOWS -D__WIN__)
+	IF(NOT NO_THREADS)
+		MESSAGE(STATUS "Enabling threads support")
+		ADD_DEFINITIONS(-DTHREAD)
+	ENDIF(NOT NO_THREADS)
+
 
 	#Since 5.5.13 libmysql introduces dependency on Secur32.lib
 	FILE(STRINGS "${MYSQL_INCLUDE_DIR}\\mysql_version.h" mysql_version REGEX "^\#define[ \t]+MYSQL_VERSION_ID")
