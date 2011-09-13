@@ -36,7 +36,7 @@ IF(WIN32)
       ${MYSQL_CLIENT_LIBS})
 ELSE(WIN32)
   SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ODBC_LINK_FLAGS}")
-  TARGET_LINK_LIBRARIES(myodbc-installer mysqlclient_r myodbc3u)
+  TARGET_LINK_LIBRARIES(myodbc-installer mysqlclient_r myodbc3u ${CMAKE_THREAD_LIBS_INIT})
 ENDIF(WIN32)
 
 INSTALL(TARGETS myodbc-installer DESTINATION bin)

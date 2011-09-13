@@ -95,20 +95,20 @@ ENDIF(WIN32)
 #-----------------------------------------------------
 
 #-------- configuring paths to odbc heders for compatibility checks ---------
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/sqlcolattrib1.c.cmake ${CMAKE_SOURCE_DIR}/cmake/sqlcolattrib1.c @ONLY)
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/sqlcolattrib2.c.cmake ${CMAKE_SOURCE_DIR}/cmake/sqlcolattrib2.c @ONLY)
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/sqlparamopt1.c.cmake ${CMAKE_SOURCE_DIR}/cmake/sqlparamopt1.c @ONLY)
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/sqlparamopt2.c.cmake ${CMAKE_SOURCE_DIR}/cmake/sqlparamopt2.c @ONLY)
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/sqlcolattrib1.c.cmake ${CMAKE_BINARY_DIR}/cmake/sqlcolattrib1.c @ONLY)
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/sqlcolattrib2.c.cmake ${CMAKE_BINARY_DIR}/cmake/sqlcolattrib2.c @ONLY)
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/sqlparamopt1.c.cmake ${CMAKE_BINARY_DIR}/cmake/sqlparamopt1.c @ONLY)
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/sqlparamopt2.c.cmake ${CMAKE_BINARY_DIR}/cmake/sqlparamopt2.c @ONLY)
 #-----------------------------------------------------
 
 #------------------ check compatibility---------------
-TRY_COMPILE(COMPILE_RESULT ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/cmake/sqlcolattrib1.c)
+TRY_COMPILE(COMPILE_RESULT ${CMAKE_BINARY_DIR} ${CMAKE_BINARY_DIR}/cmake/sqlcolattrib1.c)
 MESSAGE(STATUS "Checking if SQLColAttribute last arg is compatible with SQLLEN* - ${COMPILE_RESULT}")
 
 IF(COMPILE_RESULT)
         ADD_DEFINITIONS(-DUSE_SQLCOLATTRIBUTE_SQLLEN_PTR)
 ELSE(COMPILE_RESULT)
-        TRY_COMPILE(COMPILE_RESULT1 ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/cmake/sqlcolattrib2.c)
+        TRY_COMPILE(COMPILE_RESULT1 ${CMAKE_BINARY_DIR} ${CMAKE_BINARY_DIR}/cmake/sqlcolattrib2.c)
         MESSAGE(STATUS "Checking if SQLColAttribute last arg is compatible with SQLPOINTER - ${COMPILE_RESULT1}")
 
         IF(COMPILE_RESULT1)
@@ -119,13 +119,13 @@ ELSE(COMPILE_RESULT)
         ENDIF(COMPILE_RESULT1)
 ENDIF(COMPILE_RESULT)
 
-TRY_COMPILE(COMPILE_RESULT ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/cmake/sqlparamopt1.c)
+TRY_COMPILE(COMPILE_RESULT ${CMAKE_BINARY_DIR} ${CMAKE_BINARY_DIR}/cmake/sqlparamopt1.c)
 MESSAGE(STATUS "Checking if SQLParamOptions() 2nd and 3rd arg is compatible with SQLULEN - ${COMPILE_RESULT}")
 
 IF(COMPILE_RESULT)
         ADD_DEFINITIONS(-DUSE_SQLPARAMOPTIONS_SQLULEN_PTR)
 ELSE(COMPILE_RESULT)
-        TRY_COMPILE(COMPILE_RESULT1 ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/cmake/sqlparamopt2.c)
+        TRY_COMPILE(COMPILE_RESULT1 ${CMAKE_BINARY_DIR} ${CMAKE_BINARY_DIR}/cmake/sqlparamopt2.c)
         MESSAGE(STATUS "Checking if SQLParamOptions() 2nd and 3rd arg is compatible with SQLUINTEGER - ${COMPILE_RESULT1}")
 
         IF(COMPILE_RESULT1)

@@ -46,6 +46,6 @@ ENDIF(WIN32 AND TEST_SOCKET)
 
 SET(DESCRIPTION   "MySQL ODBC 5.1 Driver test" )
 
-CONFIGURE_FILE("odbcinst.ini.in" "odbcinst.ini" @ONLY)
-CONFIGURE_FILE("odbc.ini.in" "odbc.ini" @ONLY)
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/odbcinst.ini.in ${BINARY_DIR}/odbcinst.ini @ONLY)
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/odbc.ini.in     ${BINARY_DIR}/odbc.ini @ONLY)
 

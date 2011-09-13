@@ -150,7 +150,8 @@ myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodb
 
 %post setup
 myodbc-installer -r -d -n "MySQL ODBC 5.1 Driver"
-myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5.so;SETUP=%{_libdir}/libmyodbc3S.so"
+#myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5.so;SETUP=%{_libdir}/libmyodbc3S.so"
+myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5.so"
 
 # ----------------------------------------------------------------------
 # DEREGISTER DRIVER 
@@ -184,6 +185,6 @@ myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodb
 %endif
 
 %files setup
-%{_libdir}/libmyodbc3S*
+# %{_libdir}/libmyodbc3S*
 
 ##############################################################################

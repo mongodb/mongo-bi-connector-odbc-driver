@@ -46,7 +46,12 @@ FOREACH(T my_basics my_blob my_bulk my_catalog my_curext my_cursor
 	ADD_TEST(${T} ${T})
 ENDFOREACH(T)
 
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake 
+TARGET_LINK_LIBRARIES(my_basics ${CMAKE_THREAD_LIBS_INIT})
+
+INSTALL(FILES
+	${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake
+	${CMAKE_CURRENT_BINARY_DIR}/odbc.ini
+	${CMAKE_CURRENT_BINARY_DIR}/odbcinst.ini
         DESTINATION test COMPONENT tests)
 
 
