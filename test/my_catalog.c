@@ -2344,7 +2344,7 @@ DECLARE_TEST(t_bug31067)
    statement pre-execution has failed */
 DECLARE_TEST(bug12824839)
 {
-  SQLINTEGER row_count;
+  SQLLEN      row_count;
   SQLSMALLINT col_count;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS b12824839");
