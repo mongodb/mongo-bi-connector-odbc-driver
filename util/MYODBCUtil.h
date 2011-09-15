@@ -227,31 +227,6 @@ int GetPrivateProfileString( LPCSTR lpszSection, LPCSTR lpszEntry, LPCSTR lpszDe
 #endif
 
 
-BOOL                    MYODBCUtilGetDriverNames( char *pszBuffer, int nBuffer );
-BOOL                    MYODBCUtilGetDataSourceNames( char *pszBuffer, int nBuffer, UWORD nScope );
-char *                  MYODBCUtilGetIniFileName( BOOL bUseEnvVar );
-
-/* MYODBCUTIL_DRIVER */
-MYODBCUTIL_DRIVER *     MYODBCUtilAllocDriver();
-void                    MYODBCUtilClearDriver( MYODBCUTIL_DRIVER *pDriver );
-void                    MYODBCUtilFreeDriver( MYODBCUTIL_DRIVER *pDriver );
-BOOL                    MYODBCUtilReadDriver( MYODBCUTIL_DRIVER *pDriver, LPCSTR pszName, LPCSTR pszFileName );
-BOOL                    MYODBCUtilWriteDriver( MYODBCUTIL_DRIVER *pDriver );
-
-/* MYODBCUTIL_DATASOURCE */
-MYODBCUTIL_DATASOURCE * MYODBCUtilAllocDataSource( MYODBCUTIL_DATASOURCE_MODE nMode );
-void                    MYODBCUtilClearDataSource( MYODBCUTIL_DATASOURCE *pDataSource );
-void                    MYODBCUtilFreeDataSource( MYODBCUTIL_DATASOURCE *pDataSource );
-BOOL                    MYODBCUtilDSNExists( char *pszDataSourceName );
-BOOL                    MYODBCUtilReadDataSource( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszDSN );
-BOOL                    MYODBCUtilWriteDataSource( MYODBCUTIL_DATASOURCE *pDataSource );
-BOOL                    MYODBCUtilReadDataSourceStr( MYODBCUTIL_DATASOURCE *pDataSource, MYODBCUTIL_DELIM nDelim, LPCSTR pszStr );
-BOOL                    MYODBCUtilWriteDataSourceStr( MYODBCUTIL_DATASOURCE *pDataSource, MYODBCUTIL_DELIM nDelim, char *pszStr, SQLSMALLINT nMaxLen );
-BOOL                    MYODBCUtilDefaultDataSource( MYODBCUTIL_DATASOURCE *pDataSource );
-BOOL                    MYODBCUtilReadConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, LPCSTR pszStr );
-BOOL                    MYODBCUtilWriteConnectStr( MYODBCUTIL_DATASOURCE *pDataSource, char *pszStr, SQLSMALLINT nMaxLen );
-BOOL                    MYODBCUtilInsertStr( char *pszStr, LPCSTR pszStrIn, SQLSMALLINT nMaxLen, int *pnIndex );
-
 #if defined(WIN32)
    char *strglobaldup( const char *s);
    char *strnglobaldup( const char *s, size_t n);

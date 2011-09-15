@@ -36,12 +36,8 @@
 # define CLIENT_NO_SCHEMA      16
 #endif
 
-#ifndef USE_LEGACY_ODBC_GUI
 typedef BOOL (*PromptFunc)(SQLHWND, SQLWCHAR *, SQLUSMALLINT,
                            SQLWCHAR *, SQLSMALLINT, SQLSMALLINT *);
-#else /* USE_LEGACY_ODBC_GUI */
-typedef BOOL (*PromptFunc)(SQLHDBC, SQLHWND, MYODBCUTIL_DATASOURCE *);
-#endif /* USE_LEGACY_ODBC_GUI */
 
 /**
   Get the connection flags based on the driver options.
@@ -469,13 +465,8 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
   DataSource *ds= ds_new();
   /* We may have to read driver info to find the setup library. */
   Driver *pDriver= driver_new();
-#ifndef USE_LEGACY_ODBC_GUI
   SQLWCHAR *prompt_instr= NULL;
   size_t prompt_inlen;
-#else /* USE_LEGACY_ODBC_GUI */
-  /* Legacy setup lib, used for prompting, will be deprecated by native guis */
-  MYODBCUTIL_DATASOURCE *oldds= MYODBCUtilAllocDataSource(MYODBCUTIL_DATASOURCE_MODE_DRIVER_CONNECT);
-#endif /* USE_LEGACY_ODBC_GUI */
   BOOL bPrompt= FALSE;
   HMODULE hModule= NULL;
 
@@ -537,25 +528,6 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
     rc= set_dbc_error(hdbc, "HY110", "Invalid driver completion.", 0);
     goto error;
   }
-
-#ifdef USE_LEGACY_ODBC_GUI
-  /* set prompt type for legacy GUI code */
-  switch (fDriverCompletion)
-  {
-  case SQL_DRIVER_PROMPT:
-    oldds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_PROMPT;
-    break;
-  case SQL_DRIVER_COMPLETE:
-    oldds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_COMPLETE;
-    break;
-  case SQL_DRIVER_COMPLETE_REQUIRED:
-    oldds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_REQUIRED;
-    break;
-  case SQL_DRIVER_NOPROMPT:
-    oldds->nPrompt= MYODBCUTIL_DATASOURCE_PROMPT_NOPROMPT;
-    break;
-  }
-#endif /* USE_LEGACY_ODBC_GUI */
 
 #ifdef __APPLE__
   /*
@@ -649,15 +621,7 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
       goto error;
     }
 
-#ifndef USE_LEGACY_ODBC_GUI
     pFunc= (PromptFunc)GetProcAddress(hModule, "Driver_Prompt");
-#else /* USE_LEGACY_ODBC_GUI */
-    /*
-       The setup library should expose a MYODBCSetupDriverConnect() C entry point
-       for us to call.
-    */
-    pFunc= (PromptFunc)GetProcAddress(hModule, "MYODBCSetupDriverConnect");
-#endif /* USE_LEGACY_ODBC_GUI */
 
     if (pFunc == NULL)
     {
@@ -676,7 +640,6 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
       goto error;
     }
 
-#ifndef USE_LEGACY_ODBC_GUI
     /* create a string for prompting, and add driver manually */
     prompt_inlen= ds_to_kvpair_len(ds) + sqlwcharlen(W_DRIVER_PARAM) +
                   sqlwcharlen(ds->driver) + 1;
@@ -709,94 +672,6 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
                         "Failed to parse the prompt output string.", 0);
       goto error;
     }
-#else /* USE_LEGACY_ODBC_GUI */
-    /* Copy to the legacy data source structure for prompting */
-    if (ds->name)
-      oldds->pszDSN=         _global_strdup(ds_get_utf8attr(ds->name, &ds->name8));
-    if (ds->description)
-      oldds->pszDESCRIPTION= _global_strdup(ds_get_utf8attr(ds->description, &ds->description8));
-    if (ds->server)
-      oldds->pszSERVER=      _global_strdup(ds_get_utf8attr(ds->server, &ds->server8));
-    if (ds->uid)
-      oldds->pszUSER=        _global_strdup(ds_get_utf8attr(ds->uid, &ds->uid8));
-    if (ds->pwd)
-      oldds->pszPASSWORD=    _global_strdup(ds_get_utf8attr(ds->pwd, &ds->pwd8));
-    if (ds->database)
-      oldds->pszDATABASE=    _global_strdup(ds_get_utf8attr(ds->database, &ds->database8));
-    if (ds->socket)
-      oldds->pszSOCKET=      _global_strdup(ds_get_utf8attr(ds->socket, &ds->socket8));
-    if (ds->initstmt)
-      oldds->pszSTMT=        _global_strdup(ds_get_utf8attr(ds->initstmt, &ds->initstmt8));
-    if (ds_get_options(ds))
-    {
-      oldds->pszOPTION=      _global_alloc(20);
-      sprintf(oldds->pszOPTION, "%ul", ds_get_options(ds));
-    }
-    oldds->bINTERACTIVE=    (ds->clientinteractive != 0);
-
-    if (ds->sslkey)
-      oldds->pszSSLKEY=      _global_strdup(ds_get_utf8attr(ds->sslkey, &ds->sslkey8));
-    if (ds->sslcert)
-      oldds->pszSSLCERT=     _global_strdup(ds_get_utf8attr(ds->sslcert, &ds->sslcert8));
-    if (ds->sslca)
-      oldds->pszSSLCA=       _global_strdup(ds_get_utf8attr(ds->sslca, &ds->sslca8));
-    if (ds->sslcapath)
-      oldds->pszSSLCAPATH=   _global_strdup(ds_get_utf8attr(ds->sslcapath, &ds->sslcapath8));
-    if (ds->sslcipher)
-      oldds->pszSSLCIPHER=   _global_strdup(ds_get_utf8attr(ds->sslcipher, &ds->sslcipher8));
-    if (ds->charset)
-      oldds->pszCHARSET=     _global_strdup(ds_get_utf8attr(ds->charset, &ds->charset8));
-
-    oldds->pszPORT= _global_strdup("        ");
-    sprintf(oldds->pszPORT, "%d", ds->port);
-
-    oldds->pszSSLVERIFY= _global_strdup(" ");
-    sprintf(oldds->pszSSLVERIFY,"%d", ds->sslverify);
-
-    /* Prompt. Function returns false if user cancels.  */
-    if (!pFunc(hdbc, hwnd, oldds))
-    {
-      set_dbc_error(hdbc, "HY000", "User cancelled.", 0);
-      rc= SQL_NO_DATA;
-      goto error;
-    }
-
-    /* After prompting, copy data back from legacy datasource struct */
-    if (oldds->pszSERVER)
-      ds_setattr_from_utf8(&ds->server, oldds->pszSERVER);
-    if (oldds->pszUSER)
-      ds_setattr_from_utf8(&ds->uid, oldds->pszUSER);
-    if (oldds->pszPASSWORD)
-      ds_setattr_from_utf8(&ds->pwd, oldds->pszPASSWORD);
-    if (oldds->pszDATABASE)
-      ds_setattr_from_utf8(&ds->database, oldds->pszDATABASE);
-    if (oldds->pszSOCKET)
-      ds_setattr_from_utf8(&ds->socket, oldds->pszSOCKET);
-    if (oldds->pszSTMT)
-      ds_setattr_from_utf8(&ds->initstmt, oldds->pszSTMT);
-    if (oldds->pszOPTION)
-      ds_set_options(ds, strtoul(oldds->pszOPTION, NULL, 10));
-
-    ds->clientinteractive= oldds->bINTERACTIVE;
-
-    if (oldds->pszSSLKEY)
-      ds_setattr_from_utf8(&ds->sslkey, oldds->pszSSLKEY);
-    if (oldds->pszSSLCERT)
-      ds_setattr_from_utf8(&ds->sslcert, oldds->pszSSLCERT);
-    if (oldds->pszSSLCA)
-      ds_setattr_from_utf8(&ds->sslca, oldds->pszSSLCA);
-    if (oldds->pszSSLCAPATH)
-      ds_setattr_from_utf8(&ds->sslcapath, oldds->pszSSLCAPATH);
-    if (oldds->pszSSLCIPHER)
-      ds_setattr_from_utf8(&ds->sslcipher, oldds->pszSSLCIPHER);
-    if (oldds->pszCHARSET)
-      ds_setattr_from_utf8(&ds->charset, oldds->pszCHARSET);
-    if (oldds->pszPORT)
-      ds->port= strtoul(oldds->pszPORT, NULL, 10);
-    if (oldds->pszSSLVERIFY)
-      ds->sslverify= strtoul(oldds->pszSSLVERIFY, NULL, 10);
-
-#endif /* USE_LEGACY_ODBC_GUI */
   }
 
   if ((rc= myodbc_do_connect(dbc, ds)) != SQL_SUCCESS)
@@ -804,7 +679,6 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
 
 connected:
 
-#ifndef USE_LEGACY_ODBC_GUI
   /* copy input to output if connected without prompting */
   if (!bPrompt && szConnStrOut && cbConnStrOutMax)
   {
@@ -824,32 +698,6 @@ connected:
     set_dbc_error(hdbc, "01004", "String data, right truncated.", 0);
     rc= SQL_SUCCESS_WITH_INFO;
   }
-#else /* USE_LEGACY_ODBC_GUI */
-  if (szConnStrOut /*&& cbConnStrOutMax*/)
-  {
-#ifdef WIN32
-    /*
-      Work around a bug in ADO/VB -- the input and output strings are
-      set to the same address, but the output string is not guaranteed
-      to have the recommended amount of space (1024 bytes).
-    */
-    if (szConnStrOut != szConnStrIn)
-#endif
-    {
-      if (ds_to_kvpair(ds, szConnStrOut, cbConnStrOutMax, L';') < 0)
-      {
-        set_dbc_error(dbc, "01000",
-                      "Something went wrong while building the "
-                      "outgoing connect string.", 0);
-        rc= SQL_SUCCESS_WITH_INFO;
-      }
-    }
-
-    /* TODO set this even if cbConnStrOutMax == 0? */
-    if (pcbConnStrOut)
-      *pcbConnStrOut= sqlwcharlen(szConnStrOut);
-  }
-#endif /* USE_LEGACY_ODBC_GUI */
 
 error:
   if (hModule)
@@ -861,11 +709,7 @@ error:
   /* delete data source unless connected */
   if (!dbc->ds)
     ds_delete(ds);
-#ifndef USE_LEGACY_ODBC_GUI
   x_free(prompt_instr);
-#else /* USE_LEGACY_ODBC_GUI */
-  MYODBCUtilFreeDataSource(oldds);
-#endif /* USE_LEGACY_ODBC_GUI */
 
   return rc;
 }

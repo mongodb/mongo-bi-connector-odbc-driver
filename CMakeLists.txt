@@ -37,41 +37,7 @@ IF(NOT WIN32)
         SET(DISABLE_GUI 1)
 ENDIF(NOT WIN32)
 
-#-------------- find qt and mysql --------------------
-IF(NOT DISABLE_GUI)
-IF(USE_LEGACY_ODBC_GUI)
-        INCLUDE(FindQt)
-
-        INCLUDE_DIRECTORIES(${QT_INCLUDES})
-        LINK_DIRECTORIES(${QT_LIBRARY_DIR})
-
-        # Need explicit Qt deps on Win w/CMake < 2.6
-        IF(WIN32 AND
-                        CMAKE_MAJOR_VERSION EQUAL 2 AND
-                        CMAKE_MINOR_VERSION LESS  6)
-                # not exactly the same as FindQt4.cmake, but good enough
-                SET(QT_QTCORE_LIB_DEPENDENCIES Imm32.lib Winmm.lib Ws2_32.lib)
-        ENDIF(WIN32 AND
-                        CMAKE_MAJOR_VERSION EQUAL 2 AND
-                        CMAKE_MINOR_VERSION LESS 6)
-
-        # FindQT4.cmake is supposed to set this, but doesn't seem to, so we do it
-        IF (CMAKE_BUILD_TYPE STREQUAL Debug)
-                IF (NOT QT_LIBRARIES)
-                        SET(QT_LIBRARIES ${QT_QTCORE_LIBRARY_DEBUG}
-                                        ${QT_QTGUI_LIBRARY_DEBUG} ${QT_QT3SUPPORT_LIBRARY_DEBUG}
-                                        ${QT_QTCORE_LIB_DEPENDENCIES} ${QT_QTGUI_LIB_DEPENDENCIES})
-                ENDIF (NOT QT_LIBRARIES)
-        ELSE (CMAKE_BUILD_TYPE STREQUAL Debug)
-                IF (NOT QT_LIBRARIES)
-                        SET(QT_LIBRARIES ${QT_QTCORE_LIBRARY_RELEASE}
-                                        ${QT_QTGUI_LIBRARY_RELEASE} ${QT_QT3SUPPORT_LIBRARY_RELEASE}
-                                        ${QT_QTCORE_LIB_DEPENDENCIES} ${QT_QTGUI_LIB_DEPENDENCIES})
-                ENDIF (NOT QT_LIBRARIES)
-        ENDIF (CMAKE_BUILD_TYPE STREQUAL Debug)
-ENDIF(USE_LEGACY_ODBC_GUI)
-ENDIF(NOT DISABLE_GUI)
-
+#-------------- find  mysql --------------------
 INCLUDE(${CMAKE_SOURCE_DIR}/cmake/FindMySQL.cmake)
 #-----------------------------------------------------
 
@@ -192,19 +158,11 @@ SET(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
 
-IF(USE_LEGACY_ODBC_GUI)
-        ADD_DEFINITIONS(-DUSE_LEGACY_ODBC_GUI)
-ENDIF(USE_LEGACY_ODBC_GUI)
-
 ADD_SUBDIRECTORY(util)
 ADD_SUBDIRECTORY(driver)
 
 IF(NOT DISABLE_GUI)
-        IF(USE_LEGACY_ODBC_GUI)
-                ADD_SUBDIRECTORY(setup)
-        ELSE(USE_LEGACY_ODBC_GUI)
-                ADD_SUBDIRECTORY(setupgui)
-        ENDIF(USE_LEGACY_ODBC_GUI)
+        ADD_SUBDIRECTORY(setupgui)
 ENDIF(NOT DISABLE_GUI)
 
 ADD_SUBDIRECTORY(dltest)
