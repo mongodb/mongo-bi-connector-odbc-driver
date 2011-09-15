@@ -695,37 +695,9 @@ DECLARE_TEST(setnames_conn)
 /**
  Bug #15601: SQLCancel does not work to stop a query on the database server
 */
-#ifdef WIN32
-DWORD WINAPI cancel_in_one_second(LPVOID arg)
-{
-  HSTMT hstmt= (HSTMT)arg;
-
-  Sleep(1000);
-
-  if (SQLCancel(hstmt) != SQL_SUCCESS)
-    printMessage("SQLCancel failed!");
-
-  return 0;
-}
-
-
+#ifndef THREAD
 DECLARE_TEST(sqlcancel)
 {
-#ifdef THREAD
-  HANDLE thread;
-  DWORD waitrc;
-
-  thread= CreateThread(NULL, 0, cancel_in_one_second, hstmt, 0, NULL);
-
-  /* SLEEP(n) returns 1 when it is killed. */
-  ok_sql(hstmt, "SELECT SLEEP(5)");
-  ok_stmt(hstmt, SQLFetch(hstmt));
-  is_num(my_fetch_int(hstmt, 1), 1);
-
-  waitrc= WaitForSingleObject(thread, 10000);
-  is(!(waitrc == WAIT_TIMEOUT));
-
-#else
   SQLLEN     pcbLength= SQL_LEN_DATA_AT_EXEC(0);
 
   ok_stmt(hstmt, SQLPrepare(hstmt, "select ?", SQL_NTS));
@@ -742,7 +714,39 @@ DECLARE_TEST(sqlcancel)
 
   ok_stmt(hstmt, SQLExecute(hstmt));
 
-#endif
+  return OK;
+}
+#else
+
+#ifdef WIN32
+DWORD WINAPI cancel_in_one_second(LPVOID arg)
+{
+  HSTMT hstmt= (HSTMT)arg;
+
+  Sleep(1000);
+
+  if (SQLCancel(hstmt) != SQL_SUCCESS)
+    printMessage("SQLCancel failed!");
+
+  return 0;
+}
+
+
+DECLARE_TEST(sqlcancel)
+{
+  HANDLE thread;
+  DWORD waitrc;
+
+  thread= CreateThread(NULL, 0, cancel_in_one_second, hstmt, 0, NULL);
+
+  /* SLEEP(n) returns 1 when it is killed. */
+  ok_sql(hstmt, "SELECT SLEEP(5)");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 1);
+
+  waitrc= WaitForSingleObject(thread, 10000);
+  is(!(waitrc == WAIT_TIMEOUT));
+
   return OK;
 }
 #else
@@ -775,7 +779,8 @@ DECLARE_TEST(sqlcancel)
 
   return OK;
 }
-#endif
+#endif  // ifdef WIN32
+#endif  // ifndef THREAD
 
 
 /**

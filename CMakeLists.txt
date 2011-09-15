@@ -33,9 +33,8 @@ endif(COMMAND cmake_policy)
 
 #SET(CMAKE_VERBOSE_MAKEFILE ON)
 
-#There is nothing to build if not windows anyway
 IF(NOT WIN32)
-        SET(USE_LEGACY_ODBC_GUI 1)
+        SET(DISABLE_GUI 1)
 ENDIF(NOT WIN32)
 
 #-------------- find qt and mysql --------------------
