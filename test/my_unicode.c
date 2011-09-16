@@ -224,31 +224,31 @@ DECLARE_TEST(sqldriverconnect)
 
   *conn_in= L'\0';
   wcscat(conn_in, L"DRIVER=");
-  mbstowcs(dummy, (char *)mydriver, sizeof(dummy));
+  mbstowcs(dummy, (char *)mydriver, sizeof(dummy)/sizeof(wchar_t));
   wcscat(conn_in, dummy);
   wcscat(conn_in, L";UID=");
-  mbstowcs(dummy, (char *)myuid, sizeof(dummy));
+  mbstowcs(dummy, (char *)myuid, sizeof(dummy)/sizeof(wchar_t));
   wcscat(conn_in, dummy);
   wcscat(conn_in, L";PWD=");
-  mbstowcs(dummy, (char *)mypwd, sizeof(dummy));
+  mbstowcs(dummy, (char *)mypwd, sizeof(dummy)/sizeof(wchar_t));
   wcscat(conn_in, dummy);
   wcscat(conn_in, L";DATABASE=");
-  mbstowcs(dummy, (char *)mydb, sizeof(dummy));
+  mbstowcs(dummy, (char *)mydb, sizeof(dummy)/sizeof(wchar_t));
   wcscat(conn_in, dummy);
   wcscat(conn_in, L";SERVER=");
-  mbstowcs(dummy, (char *)myserver, sizeof(dummy));
+  mbstowcs(dummy, (char *)myserver, sizeof(dummy)/sizeof(wchar_t));
   wcscat(conn_in, dummy);
   if (mysock != NULL)
   {
     wcscat(conn_in, L";SOCKET=");
-    mbstowcs(dummy, (char *)mysock, sizeof(dummy));
+    mbstowcs(dummy, (char *)mysock, sizeof(dummy)/sizeof(wchar_t));
     wcscat(conn_in, dummy);
   }
   if (myport)
   {
     char pbuff[20];
     sprintf(pbuff, ";PORT=%d", myport);
-    mbstowcs(dummy, (char *)pbuff, sizeof(dummy));
+    mbstowcs(dummy, (char *)pbuff, sizeof(dummy)/sizeof(wchar_t));
     wcscat(conn_in, dummy);
   }
 
@@ -1121,22 +1121,22 @@ DECLARE_TEST(t_bug28168)
 
   *conn_in= L'\0';
   wcscat(conn_in, L"DRIVER=");
-  mbstowcs(dummy, (char *)mydriver, sizeof(dummy));
+  mbstowcs(dummy, (char *)mydriver, sizeof(dummy)/sizeof(wchar_t));
   wcscat(conn_in, dummy);
   wcscat(conn_in, L";UID=");
   wcscat(conn_in, L"{\x03A8\x0391\x03A1\x039F uid}");
   wcscat(conn_in, L";PWD=");
   wcscat(conn_in, L"{\x03A8\x0391\x03A1\x039F pwd}");
   wcscat(conn_in, L";DATABASE=");
-  mbstowcs(dummy, (char *)mydb, sizeof(dummy));
+  mbstowcs(dummy, (char *)mydb, sizeof(dummy)/sizeof(wchar_t));
   wcscat(conn_in, dummy);
   wcscat(conn_in, L";SERVER=");
-  mbstowcs(dummy, (char *)myserver, sizeof(dummy));
+  mbstowcs(dummy, (char *)myserver, sizeof(dummy)/sizeof(wchar_t));
   wcscat(conn_in, dummy);
   if (mysock != NULL)
   {
     wcscat(conn_in, L";SOCKET=");
-    mbstowcs(dummy, (char *)mysock, sizeof(dummy));
+    mbstowcs(dummy, (char *)mysock, sizeof(dummy)/sizeof(wchar_t));
     wcscat(conn_in, dummy);
   }
 
@@ -1144,7 +1144,7 @@ DECLARE_TEST(t_bug28168)
   {
     char pbuff[20];
     sprintf(pbuff, ";PORT=%d", myport);
-    mbstowcs(dummy, (char *)pbuff, sizeof(dummy));
+    mbstowcs(dummy, (char *)pbuff, sizeof(dummy)/sizeof(wchar_t));
     wcscat(conn_in, dummy);
   }
 
