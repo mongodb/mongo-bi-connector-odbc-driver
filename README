@@ -98,7 +98,7 @@ Driver (myodbc3.dll or myodbc5.dll)
      such as the one provided by Microsoft or unixODBC.
 
      Many options can be provided to the driver to adjust its
-     behaviour. 
+     behavior. 
 
 Setup Library (myodbc3S.dll or myodbc5S.dll)
 
@@ -107,7 +107,7 @@ Setup Library (myodbc3S.dll or myodbc5S.dll)
      it provides the GUI when you use the ODBC Administrator to
      create/edit a Data Source Name (DSN).
 
-Installer (myodbc3i.exe)
+Installer (myodbc3i.exe or myodbc-installer.exe)
 
      This command-line utility program can be used to manage ODBC
      system information. For example it can be used to register

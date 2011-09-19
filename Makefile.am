@@ -40,7 +40,6 @@ build="mysql-connector-odbc-@VERSION@-@SYSTEM_TYPE@-@MACHINE_TYPE@"
 SUBDIRS = \
 	util \
 	driver \
-	setup \
 	installer \
 	@myodbc_test_dir@ \
 	scripts \
@@ -49,7 +48,6 @@ SUBDIRS = \
 DIST_SUBDIRS = \
 	util \
 	driver \
-	setup \
 	installer \
 	test \
 	scripts \
