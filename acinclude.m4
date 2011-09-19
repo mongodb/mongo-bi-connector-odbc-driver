@@ -180,7 +180,3 @@ then
   LDFLAGS="$save_LDFLAGS"
 fi   
 ])
-
-
-m4_include([qt.m4])
-

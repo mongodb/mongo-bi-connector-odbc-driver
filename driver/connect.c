@@ -531,9 +531,7 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
 
 #ifdef __APPLE__
   /*
-    We don't support prompting on Mac OS X, because Qt requires that
-    the calling application be a GUI application, and we don't currently
-    have a way to guarantee that.
+    We don't support prompting on Mac OS X.
   */
   if (bPrompt)
   {

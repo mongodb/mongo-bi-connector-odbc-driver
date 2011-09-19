@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 1995, 2010, Oracle and/or its affiliates. All rights reserved #
+# Copyright (c) 1995, 2011, Oracle and/or its affiliates. All rights reserved #
 #                                                                             #
 # The MySQL Connector/ODBC is licensed under the terms of the GPLv2           #
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most          #
@@ -47,7 +47,6 @@ CLEANFILES = make_binary_distribution \
 	-e 's!@''SYSTEM_TYPE''@!@SYSTEM_TYPE@!' \
 	-e 's!@''ODBC_DM_PATH_ARG''@!@ODBC_DM_PATH_ARG@!' \
 	-e 's!@''MYSQL_PATH_ARG''@!@MYSQL_PATH_ARG@!' \
-	-e 's!@''QT_PATH_ARG''@!@QT_PATH_ARG@!' \
 	$< > $@-t
 	chmod +x $@-t
 	mv $@-t $@

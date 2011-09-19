@@ -94,7 +94,6 @@ dialog for configuring the driver.
 
 %define ODBC_DM_PATH_ARG @ODBC_DM_PATH_ARG@
 %define MYSQL_PATH_ARG   @MYSQL_PATH_ARG@
-%define QT_PATH_ARG      @QT_PATH_ARG@
 %define EXTRA_XLIBS      @EXTRA_XLIBS@
 
 %build
@@ -105,7 +104,6 @@ dialog for configuring the driver.
 %if %{no_odbc_gui}
     --disable-gui \
 %else
-    %{QT_PATH_ARG} \
     --with-extra-xlibs='%{EXTRA_XLIBS}' \
 %endif
     --with-separate-debug-driver \

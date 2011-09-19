@@ -509,11 +509,9 @@ AC_SUBST(EXTRA_XLIBS)
 #
 ###################################################################
 
-# We delayed the test for X and Qt, as it will use LDFLAGS and LIBS
+# We delayed the test for X, as it will use LDFLAGS and LIBS
 # set above. This configure doesn't even try find threads library
-# etc, it trust to get these configuration from the packages it uses,
-# so configure trying to link a Qt test app earlier than this, will
-# fail. "qt.m4" actually assumes a PTHREAD_LIBS that never is set.
+# etc, it trust to get these configuration from the packages it uses.
 
 AC_PATH_X
 if test -z "$ac_x_libraries" || test "x$ac_x_libraries" = xNONE; then
@@ -540,7 +538,7 @@ AC_SUBST(LIB_X11)
 #
 ###################################################################
 AC_ARG_ENABLE( gui,
-[AC_HELP_STRING([--enable-gui],[Build GUI bits (needs qt) [default=yes]])],
+[AC_HELP_STRING([--enable-gui],[Build GUI bits [default=yes]])],
 [ case "${enableval}" in
     yes) gui=true ;;
     no) gui=false ;;
@@ -560,18 +558,6 @@ else
     am__fastdepCXX_FALSE=
   fi
 fi
-
-have_qt="no"
-if test "x$gui" = "xtrue"; then
-  FUN_CHECK_QT
-  dnl This did run FUN_QT_COMPILE that try link a Qt test app, but
-  dnl leave it to us to decide what to do with a failure
-  if test "x$qt_compile" != "xyes" ; then
-    AC_MSG_ERROR([--enable-gui is given but can't compile/link a Qt test application])
-  fi
-fi
-
-AM_CONDITIONAL(QT, test "x$have_qt" = "xyes" )
 
 ###################################################################
 #                                                                 #
@@ -771,7 +757,6 @@ AC_OUTPUT([
   Makefile 
   util/Makefile
   driver/Makefile
-  setup/Makefile
   installer/Makefile
   test/Makefile
   scripts/Makefile
@@ -791,7 +776,7 @@ echo "|                                                                    |"
 echo "| Connector/ODBC mailing list archive:                               |"
 echo "|   http://lists.mysql.com/myodbc                                    |" 
 echo "|                                                                    |"
-echo "| If you have any questions or improvements to ithe driver, then     |"
+echo "| If you have any questions or improvements to the driver, then     |"
 echo "| send a detailed mail to 'myodbc@lists.mysql.com'                   |" 
 echo " -------------------------------------------------------------------- "
 echo

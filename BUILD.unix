@@ -64,15 +64,6 @@ The source code is the main thing. You can get it from the bk
 source repository if you want the 'bleeding edge' code but most
 people will simply download the zip or tar-ball of the source.
 
-Qt Class Library
-----------------
-
-The graphical bits of MyODBC are optional. If you plan to build
-them you will need the Qt class library.
-
-see;
-	http://www.trolltech.com
-
 
 BUILD
 ---------------------------------------------------------------
