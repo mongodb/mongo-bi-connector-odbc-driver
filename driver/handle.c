@@ -43,6 +43,17 @@
 
 #include "driver.h"
 
+#ifdef _UNIX_
+/* variables for thread counter */
+static pthread_key_t myodbc_thread_counter_key;
+static pthread_once_t myodbc_thread_key_inited= PTHREAD_ONCE_INIT;
+
+/* Function to call pthread_key_create from pthread_once*/
+void myodbc_thread_key_create()
+{
+  pthread_key_create (&myodbc_thread_counter_key, 0);
+}
+#endif
 /*
   @type    : myodbc3 internal
   @purpose : to allocate the environment handle and to maintain
@@ -52,7 +63,9 @@
 SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV FAR *phenv)
 {
 #ifdef _UNIX_
-    myodbc_init(); /* This is done in LibMain on XP so it probably needs to be in this func only when in UNIX - PAH */
+  /* Init thread key just once for all threads */
+  pthread_once(&myodbc_thread_key_inited, myodbc_thread_key_create);
+  myodbc_init();
 #endif
 
 #ifndef _UNIX_
@@ -159,6 +172,26 @@ SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc)
 {
     DBC FAR *dbc;
     ENV FAR *penv= (ENV FAR*) henv;
+
+#ifdef _UNIX_
+    long *thread_count;
+    thread_count= (long*)pthread_getspecific(myodbc_thread_counter_key);
+    
+    /* Increment or allocate the thread counter */
+    if (thread_count)
+    {
+      ++(*thread_count);
+    }
+    else
+    {
+      thread_count= my_malloc(sizeof(long), MYF(0));
+      (*thread_count)= 1;
+      pthread_setspecific(myodbc_thread_counter_key, thread_count);
+
+      /* Call it just for safety */
+      mysql_thread_init();
+    }
+#endif
 
     if (mysql_get_client_version() < MIN_MYSQL_VERSION)
     {
@@ -269,6 +302,30 @@ SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc)
     GlobalFree(GlobalHandle((HGLOBAL) hdbc));
 #else
     x_free(hdbc);
+
+    {
+      long *thread_count;
+      thread_count= (long*)pthread_getspecific(myodbc_thread_counter_key);
+      
+      if (thread_count)
+      {
+        if (*thread_count)
+        {
+          --(*thread_count);
+        }
+
+        if (*thread_count == 0)
+        {
+          /* The value to the key must be reset before freeing the buffer */
+          pthread_setspecific(myodbc_thread_counter_key, 0);
+          x_free(thread_count);
+
+          /* Last connection deallocated, supposedly the thread is finishing */
+          mysql_thread_end();
+        }
+      }
+    }
+
 #endif
     return SQL_SUCCESS;
 }
