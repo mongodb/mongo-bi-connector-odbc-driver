@@ -1,3 +1,19 @@
+# Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; version 2 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING. If not, write to the
+# Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston
+# MA  02110-1301  USA.
+
 ##############################################################################
 #
 # mysql-connector-odbc 5.1 RPM specification
@@ -25,6 +41,8 @@
 #
 ##############################################################################
 
+%define mysql_vendor		Oracle and/or its affiliates
+
 %if %{com_lic}
 Name:       mysql-connector-odbc-commercial
 %else
@@ -35,7 +53,7 @@ Group:      Applications/Databases
 Version:    @NUMERIC_VERSION@
 Release:    0
 Provides:   mysqlodbcrpmpack
-License:    Copyright (c) 2000, 2010,  %{mysql_vendor}. All rights reserved.  Use is subject to license terms.  Under %{lic_type} license as shown in the Description field.
+License:    Copyright (c) 2000, 2011, %{mysql_vendor}. All rights reserved.  Under %{lic_type} license as shown in the Description field.
 Source0:    %{name}-@VERSION@.tar.gz
 URL:        http://www.mysql.com/
 Vendor:     Oracle Corporation
@@ -79,9 +97,12 @@ The MySQL web site (http://www.mysql.com/) provides the latest
 news and information about the MySQL software. Also please see the
 documentation and the manual for more information.
 
+%if %{no_odbc_gui}
+%else
 %description setup
 The setup library for the MySQL ODBC package, handles the optional GUI
 dialog for configuring the driver.
+%endif
 
 ##############################################################################
 #
@@ -135,7 +156,7 @@ make
 
 %install
 make DESTDIR=$RPM_BUILD_ROOT install
-rm -vf $RPM_BUILD_ROOT%{_datadir}/mysql-connector-odbc/{ChangeLog,README,README.debug,LICENSE.*,COPYING,INSTALL}
+rm -vf $RPM_BUILD_ROOT%{_datadir}/mysql-connector-odbc/{ChangeLog,README,README.debug,LICENSE.*,COPYING,INSTALL,Licenses_for_Third-Party_Components.txt}
 
 # ----------------------------------------------------------------------
 # REGISTER DRIVER
@@ -146,10 +167,12 @@ rm -vf $RPM_BUILD_ROOT%{_datadir}/mysql-connector-odbc/{ChangeLog,README,README.
 %post 
 myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5.so"
 
+%if %{no_odbc_gui}
+%else
 %post setup
 myodbc-installer -r -d -n "MySQL ODBC 5.1 Driver"
-#myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5.so;SETUP=%{_libdir}/libmyodbc3S.so"
-myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5.so"
+myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5.so;SETUP=%{_libdir}/libmyodbc3S.so"
+%endif
 
 # ----------------------------------------------------------------------
 # DEREGISTER DRIVER 
@@ -160,9 +183,12 @@ myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodb
 myodbc-installer -r -d -n "MySQL ODBC 5.1 Driver"
 
 # Removing the setup RPM, downgrade the registration
+%if %{no_odbc_gui}
+%else
 %preun setup
 myodbc-installer -r -d -n "MySQL ODBC 5.1 Driver"
 myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5.so"
+%endif
 
 ##############################################################################
 #
@@ -175,14 +201,17 @@ myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodb
 %{_bindir}/myodbc-installer
 %{_libdir}/libmyodbc5.*
 %{_libdir}/libmyodbc5-*
-%doc ChangeLog README README.debug INSTALL
+%doc ChangeLog README README.debug INSTALL Licenses_for_Third-Party_Components.txt
 %if %{com_lic}
 %doc LICENSE.mysql
 %else
 %doc COPYING
 %endif
 
+%if %{no_odbc_gui}
+%else
 %files setup
-# %{_libdir}/libmyodbc3S*
+%{_libdir}/libmyodbc3S*
+%endif
 
 ##############################################################################

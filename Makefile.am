@@ -59,7 +59,8 @@ readme_DATA = \
 	README \
 	README.debug \
 	INSTALL \
-	COPYING
+	COPYING \
+	Licenses_for_Third-Party_Components.txt
 
 #
 # Create the binary distribution

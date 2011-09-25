@@ -1,4 +1,28 @@
 @ECHO OFF
+
+REM  Copyright (c) 2006, 2011, Oracle and/or its affiliates. All rights reserved.
+REM
+REM  The MySQL Connector/ODBC is licensed under the terms of the GPLv2
+REM  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+REM  MySQL Connectors. There are special exceptions to the terms and
+REM  conditions of the GPLv2 as it is applied to this software, see the
+REM  FLOSS License Exception
+REM  <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+REM
+REM  This program is free software; you can redistribute it and/or modify
+REM  it under the terms of the GNU General Public License as published
+REM  by the Free Software Foundation; version 2 of the License.
+REM
+REM  This program is distributed in the hope that it will be useful, but
+REM  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+REM  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+REM  for more details.
+REM
+REM  You should have received a copy of the GNU General Public License along
+REM  with this program; if not, write to the Free Software Foundation, Inc.,
+REM  51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+REM
+
 REM #########################################################
 REM 
 REM \brief  Create binary distribution (without installer).
@@ -48,6 +72,7 @@ copy COPYING mysql-connector-odbc-noinstall-%1-win32\COPYING.rtf
 copy README mysql-connector-odbc-noinstall-%1-win32\README.rtf
 copy INSTALL mysql-connector-odbc-noinstall-%1-win32\INSTALL.rtf
 copy INSTALL.win mysql-connector-odbc-noinstall-%1-win32\INSTALL-win.rtf
+copy Licenses_for_Third-Party_Components.txt mysql-connector-odbc-noinstall-%1-win32
 
 ECHO Zipping...
 pkzipc -add -maximum -recurse -path=current mysql-connector-odbc-noinstall-%1-win32.zip mysql-connector-odbc-noinstall-%1-win32\*.*
@@ -55,7 +80,6 @@ pkzipc -add -maximum -recurse -path=current mysql-connector-odbc-noinstall-%1-wi
 ECHO COMMERCIAL: Create stage area and populate...
 move mysql-connector-odbc-noinstall-%1-win32 mysql-connector-odbc-commercial-noinstall-%1-win32 
 copy LICENSE.mysql mysql-connector-odbc-commercial-noinstall-%1-win32\LICENSE.rtf
-del mysql-connector-odbc-commercial-noinstall-%1-win32\EXCEPTIONS.rtf
 
 ECHO Zipping...
 pkzipc -add -maximum -recurse -path=current mysql-connector-odbc-commercial-noinstall-%1-win32.zip mysql-connector-odbc-commercial-noinstall-%1-win32/*.*

@@ -55,7 +55,7 @@ fi
 
 mkdir $BASE
 
-for i in ChangeLog COPYING EXCEPTIONS README odbc.ini
+for i in ChangeLog COPYING EXCEPTIONS README odbc.ini Licenses_for_Third-Party_Components.txt
 do
   if [ -f $i ]
   then
