@@ -606,7 +606,9 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
      depend on GUI libraries.
     */
 #ifndef WIN32
+/*
     lt_dlinit();
+*/
 #endif
 
     if (!(hModule= LoadLibrary(ds_get_utf8attr(pDriver->setup_lib,
@@ -633,7 +635,7 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
       rc= set_dbc_error(hdbc, "HY000", (char *)pszMsg, 0);
       LocalFree(pszMsg);
 #else
-      rc= set_dbc_error(hdbc, "HY000", lt_dlerror(), 0);
+      rc= set_dbc_error(hdbc, "HY000", dlerror(), 0);
 #endif
       goto error;
     }

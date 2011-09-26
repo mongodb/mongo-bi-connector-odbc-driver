@@ -29,7 +29,9 @@
 
 #ifdef _UNIX_
 # include <ctype.h>
-# include <ltdl.h>
+# ifdef HAVE_LIBDL
+#  include <dlfcn.h>
+# endif
 # include <sql.h>
 # include <sqlext.h>
 # ifdef USE_IODBC

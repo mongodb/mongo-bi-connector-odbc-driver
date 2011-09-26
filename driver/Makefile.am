@@ -71,7 +71,7 @@ endif
 LTLIBS_DEBUG_DEPS = \
 	../util/libmyodbc3u.la
 
-libmyodbc5_la_LIBADD         = $(LTLIBS_DEPS) @LTDL_LIB@ @MYSQL_LIB@
+libmyodbc5_la_LIBADD         = $(LTLIBS_DEPS) @DL_LIB@ @MYSQL_LIB@
 libmyodbc5_la_DEPENDENCIES   = $(LTLIBS_DEPS)
 
 LDFLAGS=@EXTRA_LDFLAGS@ 

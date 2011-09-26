@@ -73,11 +73,11 @@ extern "C"
 #else
 # define INTFUNC PASCAL
 # define EXPFUNC __export CALLBACK
-/* Simple macros to make ltdl look like the Windows library funcs. */
-# define HMODULE lt_dlhandle
-# define LoadLibrary(library) lt_dlopen((library))
-# define GetProcAddress(module, proc) lt_dlsym((module), (proc))
-# define FreeLibrary(module) lt_dlclose((module))
+/* Simple macros to make dl look like the Windows library funcs. */
+# define HMODULE void*
+# define LoadLibrary(library) dlopen((library), RTLD_GLOBAL | RTLD_LAZY)
+# define GetProcAddress(module, proc) dlsym((module), (proc))
+# define FreeLibrary(module) dlclose((module))
 #endif
 
 #define ODBC_DRIVER	  "ODBC 5.1 Driver"

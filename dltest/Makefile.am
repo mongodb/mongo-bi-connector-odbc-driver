@@ -12,7 +12,7 @@
 
 noinst_PROGRAMS = dltest
 dltest_SOURCES = dltest.c
-dltest_LDADD   = @LTDL_LIB@
+dltest_LDADD   = @DL_LIB@
 
 ###################################################################
 #

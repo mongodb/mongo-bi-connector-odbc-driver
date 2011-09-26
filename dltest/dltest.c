@@ -26,7 +26,7 @@
 #ifdef WIN32
     #include <windows.h>
 #else
-    #include <ltdl.h>
+    #include <dlfcn.h>
 #endif
 
 char *szSyntax =
@@ -130,11 +130,13 @@ int main( int argc, char *argv[] )
 static void dltest_dlinit(void)
 {
 #ifndef WIN32
+/*
   if ( lt_dlinit() )
   {
     printf( "[%s][%d] ERROR: Failed to lt_dlinit()\n", __FILE__, __LINE__ );
     exit( 1 );
   }
+*/
 #endif
 }
 
@@ -157,10 +159,10 @@ static DLTestModule dltest_dlopen(const char *path)
     exit(1);
   }
 #else
-  DLTestModule hModule = lt_dlopen(path);
+  DLTestModule hModule = dlopen(path, RTLD_GLOBAL | RTLD_NOW);
   if ( !hModule )
   {
-    printf("[%s][%d] ERROR dlopen(): %s\n", __FILE__, __LINE__, lt_dlerror());
+    printf("[%s][%d] ERROR dlopen(): %s\n", __FILE__, __LINE__, dlerror());
     exit(1);
   }
 #endif /* WIN32 */
@@ -175,7 +177,7 @@ static void dltest_dlclose(DLTestModule hModule)
 #ifdef WIN32
   FreeLibrary(hModule);
 #else
-  lt_dlclose(hModule);
+  dlclose(hModule);
 #endif /* WIN32 */
 }
 
@@ -201,13 +203,13 @@ static void dltest_dlsym(DLTestModule hModule, const char *sym)
     exit(1);
   }
 #else
-  pFunc = (void (*)())lt_dlsym(hModule,sym);
-/* PAH - lt_dlerror() is not a good indicator of success    */
-/*		if ( (pError = lt_dlerror()) != NULL )              */
+  pFunc = (void (*)())dlsym(hModule,sym);
+/* PAH - dlerror() is not a good indicator of success    */
+/*		if ( (pError = dlerror()) != NULL )              */
   if ( !pFunc )
   {
     const char *pError;
-    if ( (pError = lt_dlerror()) != NULL )
+    if ( (pError = dlerror()) != NULL )
       printf("[%s][%d] ERROR: %s\n Could not find %s\n",__FILE__,__LINE__,pError,sym);
     else
       printf("[%s][%d] ERROR: Could not find %s\n",__FILE__,__LINE__,sym);

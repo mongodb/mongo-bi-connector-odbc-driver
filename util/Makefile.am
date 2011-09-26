@@ -13,7 +13,7 @@ libmyodbc3u_la_SOURCES = \
 	MYODBCUtil.h
 
 # libmysql lib deps
-libmyodbc3u_la_LIBADD         = $(LTLIBS_DEPS) @LTDL_LIB@ @MYSQL_LIB@
+libmyodbc3u_la_LIBADD         = $(LTLIBS_DEPS) @DL_LIB@ @MYSQL_LIB@
 libmyodbc3u_la_DEPENDENCIES   = $(LTLIBS_DEPS)
 
 EXTRA_DIST = \
