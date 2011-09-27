@@ -58,10 +58,12 @@
               <File Id="myodbc5.dll" Name="myodbc5.dll" Checksum="yes" KeyPath="yes" DiskId="1" Source="x64\myodbc5.dll">
                 <ODBCDriver Id="MySQL_ODBC_5.1_Driver" Name="MySQL ODBC 5.1 Driver" SetupFile="myodbc5S.dll" />
               </File>
+              <File Id="readme" Name="README" DiskId="1" Source="doc\README"/>
+              <File Id="lic3rd" Name="Licenses_for_Third-Party_Components.txt" Source="doc\Licenses_for_Third-Party_Components.txt" />
               <?if $(var.license) = "commercial"?>
-                <File Id="license" Name="MYODBC5-LICENSE.TXT" DiskId="1" Source="doc\MYODBC5-LICENSE.TXT" />
+                <File Id="license" Name="MYODBC5-LICENSE.TXT" DiskId="1" Source="doc\LICENSE.mysql" />
               <?else?>
-                <File Id="license" Name="MYODBC5-LICENSE.TXT" DiskId="1" Source="doc\MYODBC5-LICENSE.TXT" />
+                <File Id="license" Name="COPYING"             DiskId="1" Source="doc\COPYING" />
               <?endif?>
             </Component>
             <Component Id="setup" Guid="3A92E95A-AF9C-4A4F-A36D-E0052405C278" SharedDllRefCount="yes" Win64="yes">
@@ -88,10 +90,12 @@
               <File Id="myodbc.dll" Name="myodbc5.dll" Checksum="yes" KeyPath="yes" DiskId="1" Source="x86\myodbc5.dll">
 	        <ODBCDriver Id="MySQL_ODBC_5.1_Driver" Name="MySQL ODBC 5.1 Driver" SetupFile="myodbc5S.dll" />
               </File>
+              <File Id="readme" Name="README" DiskId="1" Source="doc\README"/>
+              <File Id="lic3rd" Name="Licenses_for_Third-Party_Components.txt" Source="doc\Licenses_for_Third-Party_Components.txt" />
               <?if $(var.license) = "commercial"?>
-                <File Id="license" Name="MYODBC5-LICENSE.TXT" DiskId="1" Source="doc\MYODBC5-LICENSE.TXT"/>
+                <File Id="license" Name="MYODBC5-LICENSE.TXT" DiskId="1" Source="doc\LICENSE.mysql" />
               <?else?>
-                <File Id="license" Name="MYODBC5-LICENSE.TXT" DiskId="1" Source="doc\MYODBC5-LICENSE.TXT"/>
+                <File Id="license" Name="COPYING"             DiskId="1" Source="doc\COPYING" />
               <?endif?>
             </Component>
             <Component Id="setup" Guid="428232BA-9D94-4DB5-87CD-C939D1347664" SharedDllRefCount="yes">

@@ -93,6 +93,23 @@ STRING(STRIP ${CONNECTOR_PKG_ID2} CONNECTOR_PKG_ID2)
 ENDIF(WIN32)
 #-----------------------------------------------------
 
+IF(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/doc/LICENSE.mysql")
+  SET(LICENSE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/doc/LICENSE.mysql")
+  SET(LICENSE_RTF  "${CMAKE_CURRENT_BINARY_DIR}/resources/commercial_license.rtf")
+ELSE()
+  SET(LICENSE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/doc/COPYING")
+  SET(LICENSE_RTF  "${CMAKE_CURRENT_BINARY_DIR}/resources/License.rtf")
+ENDIF()
+FILE(READ ${LICENSE_FILE} CONTENTS)
+STRING(REGEX REPLACE "\n" "\\\\par\n" CONTENTS "${CONTENTS}")
+STRING(REGEX REPLACE "\t" "\\\\tab" CONTENTS "${CONTENTS}")
+FILE(WRITE "${LICENSE_RTF}"
+     "{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0\\fnil\\fcharset0 Courier New;}}\\viewkind4\\uc1\\pard\\lang1031\\f0\\fs15")
+FILE(APPEND "${LICENSE_RTF}" "${CONTENTS}")
+FILE(APPEND "${LICENSE_RTF}" "\n}\n")
+
+#-----------------------------------------------------
+
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/mysql_odbc.xml.in
                ${CMAKE_CURRENT_SOURCE_DIR}/mysql-odbc-${ODBC_VERSION}-${MSI_VERSION}.xml @ONLY)
 
