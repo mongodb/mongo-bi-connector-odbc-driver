@@ -58,8 +58,22 @@ ELSE(WIN32)
                 SET(ODBCLIB iodbc)
                 SET(ODBCINSTLIB iodbcinst)
         ENDIF(WITH_UNIXODBC)
+
         # FindODBC uses ODBCLIB and ODBCINSTLIB in some cases
         INCLUDE(cmake/FindODBC.cmake)
+
+        IF(WITH_UNIXODBC)
+                TRY_COMPILE(COMPILE_RESULT ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR}/cmake/havelpcwstr.c
+                        CMAKE_FLAGS "-I${ODBC_INCLUDES} -I${ODBC_INCLUDE_DIR}")
+                MESSAGE(STATUS "Checking if LPCWSTR type is present - ${COMPILE_RESULT}")
+
+                IF(COMPILE_RESULT)
+                        ADD_DEFINITIONS(-DHAVE_LPCWSTR)
+                        ADD_DEFINITIONS(-DUSE_UNIXODBC)
+                ENDIF(COMPILE_RESULT)
+
+        ENDIF(WITH_UNIXODBC)
+
 	INCLUDE(CheckFunctionExists)
 	CHECK_FUNCTION_EXISTS(dlopen DLOPEN_IN_LIBC)
         SET(DL_INCLUDES)

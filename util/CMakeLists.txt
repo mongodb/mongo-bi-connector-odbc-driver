@@ -28,29 +28,10 @@ SET(myodbc3u_SRCS stringutil.c
                   installer.c
                   installer.h)
 
-IF(USE_LEGACY_ODBC_GUI)
+IF(NOT WIN32)
   SET(myodbc3u_SRCS ${myodbc3u_SRCS}
-                        MYODBCUtilAllocDataSource.c
-                        MYODBCUtilAllocDriver.c
-                        MYODBCUtilClearDataSource.c
-                        MYODBCUtilClearDriver.c
-                        MYODBCUtilDefaultDataSource.c
-                        MYODBCUtilDSNExists.c
-                        MYODBCUtilFreeDataSource.c
-                        MYODBCUtilFreeDriver.c
-                        MYODBCUtilGetDataSourceNames.c
-                        MYODBCUtilGetDriverNames.c
-                        MYODBCUtilGetIniFileName.c
-                        MYODBCUtilInsertStr.c
-                        MYODBCUtilReadConnectStr.c
-                        MYODBCUtilReadDataSource.c
-                        MYODBCUtilReadDataSourceStr.c
-                        MYODBCUtilReadDriver.c
-                        MYODBCUtilWriteConnectStr.c
-                        MYODBCUtilWriteDataSource.c
-                        MYODBCUtilWriteDataSourceStr.c
-                        MYODBCUtilWriteDriver.c)
-ENDIF(USE_LEGACY_ODBC_GUI)
+                      odbcinstw.c)
+ENDIF(NOT WIN32)
 
 ADD_LIBRARY(myodbc3u STATIC ${myodbc3u_SRCS})
 

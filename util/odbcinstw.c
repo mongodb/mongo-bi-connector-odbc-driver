@@ -47,12 +47,17 @@
 # define FALSE 0
 #endif
 
+#ifdef HAVE_LPCWSTR
+# define MyODBC_LPCWSTR LPCWSTR
+#else
+# define MyODBC_LPCWSTR LPWSTR
+#endif
 
 #if !defined(HAVE_SQLGETPRIVATEPROFILESTRINGW) || defined(USE_UNIXODBC)
 int INSTAPI
-MySQLGetPrivateProfileStringW(const LPWSTR lpszSection, const LPWSTR lpszEntry,
-                              const LPWSTR lpszDefault, LPWSTR lpszRetBuffer,
-                              int cbRetBuffer, const LPWSTR lpszFilename)
+MySQLGetPrivateProfileStringW(const MyODBC_LPCWSTR lpszSection, const MyODBC_LPCWSTR lpszEntry,
+                              const MyODBC_LPCWSTR lpszDefault, LPWSTR lpszRetBuffer,
+                              int cbRetBuffer, const MyODBC_LPCWSTR lpszFilename)
 {
   SQLINTEGER len;
   int rc;
@@ -108,9 +113,9 @@ MySQLGetPrivateProfileStringW(const LPWSTR lpszSection, const LPWSTR lpszEntry,
 
 #ifndef HAVE_SQLGETPRIVATEPROFILESTRINGW
 int INSTAPI
-SQLGetPrivateProfileStringW(const LPWSTR lpszSection, const LPWSTR lpszEntry,
-                            const LPWSTR lpszDefault, LPWSTR lpszRetBuffer,
-                            int cbRetBuffer, const LPWSTR lpszFilename)
+SQLGetPrivateProfileStringW(const MyODBC_LPCWSTR lpszSection, const MyODBC_LPCWSTR lpszEntry,
+                            const MyODBC_LPCWSTR lpszDefault, LPWSTR lpszRetBuffer,
+                            int cbRetBuffer, const MyODBC_LPCWSTR lpszFilename)
 {
   return MySQLGetPrivateProfileStringW(lpszSection, lpszEntry, lpszDefault,
                                        lpszRetBuffer, cbRetBuffer,
@@ -124,11 +129,11 @@ SQLGetPrivateProfileStringW(const LPWSTR lpszSection, const LPWSTR lpszEntry,
 */
 
 BOOL INSTAPI
-SQLInstallDriverExW(const LPWSTR lpszDriver, const LPWSTR lpszPathIn,
+SQLInstallDriverExW(const MyODBC_LPCWSTR lpszDriver, const MyODBC_LPCWSTR lpszPathIn,
                     LPWSTR lpszPathOut, WORD cbPathOutMax, WORD *pcbPathOut,
                     WORD fRequest, LPDWORD lpdwUsageCount)
 {
-  LPWSTR pos;
+  const SQLWCHAR *pos;
   SQLINTEGER len;
   BOOL rc;
   char *driver, *pathin, *pathout;
@@ -166,7 +171,7 @@ SQLInstallDriverExW(const LPWSTR lpszDriver, const LPWSTR lpszPathIn,
 
 
 BOOL INSTAPI
-SQLValidDSNW(const LPWSTR lpszDSN)
+SQLValidDSNW(const MyODBC_LPCWSTR lpszDSN)
 {
   BOOL ret;
   SQLINTEGER len= SQL_NTS;
@@ -181,7 +186,7 @@ SQLValidDSNW(const LPWSTR lpszDSN)
 
 
 BOOL INSTAPI
-SQLRemoveDSNFromIniW(const LPWSTR lpszDSN)
+SQLRemoveDSNFromIniW(const MyODBC_LPCWSTR lpszDSN)
 {
   BOOL ret;
   SQLINTEGER len= SQL_NTS;
@@ -196,7 +201,7 @@ SQLRemoveDSNFromIniW(const LPWSTR lpszDSN)
 
 
 BOOL INSTAPI
-SQLWriteDSNToIniW(const LPWSTR lpszDSN, const LPWSTR lpszDriver)
+SQLWriteDSNToIniW(const MyODBC_LPCWSTR lpszDSN, const MyODBC_LPCWSTR lpszDriver)
 {
   BOOL ret;
   SQLINTEGER len;
@@ -218,7 +223,7 @@ SQLWriteDSNToIniW(const LPWSTR lpszDSN, const LPWSTR lpszDriver)
 
 
 RETCODE INSTAPI
-SQLPostInstallerErrorW(DWORD fErrorCode, LPWSTR szErrorMsg)
+SQLPostInstallerErrorW(DWORD fErrorCode, MyODBC_LPCWSTR szErrorMsg)
 {
   RETCODE ret;
   SQLINTEGER len= SQL_NTS;
@@ -236,7 +241,7 @@ SQLPostInstallerErrorW(DWORD fErrorCode, LPWSTR szErrorMsg)
 
 
 BOOL INSTAPI
-SQLRemoveDriverW(const LPWSTR lpszDriver, BOOL fRemoveDSN,
+SQLRemoveDriverW(const MyODBC_LPCWSTR lpszDriver, BOOL fRemoveDSN,
                  LPDWORD lpdwUsageCount)
 {
   BOOL ret;
@@ -252,9 +257,9 @@ SQLRemoveDriverW(const LPWSTR lpszDriver, BOOL fRemoveDSN,
 
 
 BOOL INSTAPI
-SQLWritePrivateProfileStringW(const LPWSTR lpszSection, const LPWSTR lpszEntry,
-                              const LPWSTR lpszString,
-                              const LPWSTR lpszFilename)
+SQLWritePrivateProfileStringW(const MyODBC_LPCWSTR lpszSection, const MyODBC_LPCWSTR lpszEntry,
+                              const MyODBC_LPCWSTR lpszString,
+                              const MyODBC_LPCWSTR lpszFilename)
 {
   BOOL ret;
   SQLINTEGER len;

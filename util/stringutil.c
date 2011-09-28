@@ -212,9 +212,9 @@ SQLCHAR *sqlwchar_as_sqlchar(CHARSET_INFO *charset_info, SQLWCHAR *str,
 
   @return  Pointer to a newly allocated SQLCHAR, or @c NULL
 */
-SQLCHAR *sqlwchar_as_utf8(SQLWCHAR *str, SQLINTEGER *len)
+SQLCHAR *sqlwchar_as_utf8(const SQLWCHAR *str, SQLINTEGER *len)
 {
-  SQLWCHAR *str_end;
+  const SQLWCHAR *str_end;
   UTF8 *u8;
   SQLINTEGER i;
 
