@@ -118,20 +118,22 @@ dialog for configuring the driver.
 %define EXTRA_XLIBS      @EXTRA_XLIBS@
 
 %build
-./configure \
-    --prefix=%{_prefix} \
-    --libdir=%{_libdir} \
-    --enable-dmlink \
+mkdir release
+cd release
+cmake -G "Unix Makefiles" \
+    -DRPM_BUILD=1 \
+    -DCMAKE_INSTALL_PREFIX=%{_prefix} \
 %if %{no_odbc_gui}
-    --disable-gui \
-%else
-    --with-extra-xlibs='%{EXTRA_XLIBS}' \
+    -DDISABLE_GUI=1 \
 %endif
-    --with-separate-debug-driver \
     %{ODBC_DM_PATH_ARG} \
     %{MYSQL_PATH_ARG} \
-    --without-debug
-make
+    ..
+
+# Note that the ".." needs to be last, in case some arguments expands to 
+# the empty string, and then "cmake" thinks is "current directory"
+
+make VERBOSE=1
 
 ##############################################################################
 #
@@ -155,8 +157,10 @@ make
 # ----------------------------------------------------------------------
 
 %install
-make DESTDIR=$RPM_BUILD_ROOT install
-rm -vf $RPM_BUILD_ROOT%{_datadir}/mysql-connector-odbc/{ChangeLog,README,README.debug,LICENSE.*,COPYING,INSTALL,Licenses_for_Third-Party_Components.txt}
+cd release
+make DESTDIR=$RPM_BUILD_ROOT install VERBOSE=1
+rm -vf  $RPM_BUILD_ROOT%{_prefix}/{ChangeLog,README*,LICENSE.*,COPYING,INSTALL*,Licenses_for_Third-Party_Components.txt}
+rm -vfr $RPM_BUILD_ROOT%{_prefix}/test
 
 # ----------------------------------------------------------------------
 # REGISTER DRIVER
@@ -196,12 +200,11 @@ myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodb
 #
 ##############################################################################
 
-%files 
+%files
 %defattr(-,root,root)
 %{_bindir}/myodbc-installer
 %{_libdir}/libmyodbc5.*
-%{_libdir}/libmyodbc5-*
-%doc ChangeLog README README.debug INSTALL Licenses_for_Third-Party_Components.txt
+%doc ChangeLog README README.debug INSTALL INSTALL.win Licenses_for_Third-Party_Components.txt
 %if %{com_lic}
 %doc LICENSE.mysql
 %else
