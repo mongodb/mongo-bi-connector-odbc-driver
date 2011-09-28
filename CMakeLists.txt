@@ -64,7 +64,7 @@ ELSE(WIN32)
 
         IF(WITH_UNIXODBC)
                 TRY_COMPILE(COMPILE_RESULT ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR}/cmake/havelpcwstr.c
-                        CMAKE_FLAGS "-I${ODBC_INCLUDES} -I${ODBC_INCLUDE_DIR}")
+                        CMAKE_FLAGS "-DINCLUDE_DIRECTORIES='${ODBC_INCLUDES} ${ODBC_INCLUDE_DIR}'")
                 MESSAGE(STATUS "Checking if LPCWSTR type is present - ${COMPILE_RESULT}")
 
                 IF(COMPILE_RESULT)
