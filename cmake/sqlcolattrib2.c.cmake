@@ -40,7 +40,7 @@ SQLRETURN SQL_API SQLColAttribute( SQLHSTMT  StatementHandle,
                                    SQLPOINTER  CharacterAttributePtr,
                                    SQLSMALLINT BufferLength,
                                    SQLSMALLINT *StringLengthPtr,
-                                   SQLPOINTER *  NumericAttributePtr )
+                                   SQLPOINTER  NumericAttributePtr )
 { return 1; }
 
 int main() {

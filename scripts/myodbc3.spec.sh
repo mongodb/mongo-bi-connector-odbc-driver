@@ -51,7 +51,7 @@ Name:       mysql-connector-odbc
 Summary:    An ODBC 5.1 driver for MySQL - driver package
 Group:      Applications/Databases
 Version:    @NUMERIC_VERSION@
-Release:    0
+Release:    1
 Provides:   mysqlodbcrpmpack
 License:    Copyright (c) 2000, 2011, %{mysql_vendor}. All rights reserved.  Under %{lic_type} license as shown in the Description field.
 Source0:    %{name}-@VERSION@.tar.gz
