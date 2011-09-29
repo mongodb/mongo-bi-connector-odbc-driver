@@ -221,7 +221,7 @@ MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
         return set_dbc_error(dbc, "HY000",
                              "SQLGetInfo() failed to return current catalog.",
                              0);
-    MYINFO_SET_STR(dbc->database);
+    MYINFO_SET_STR(dbc->database ? dbc->database : "null");
 
   case SQL_DATETIME_LITERALS:
     MYINFO_SET_ULONG(SQL_DL_SQL92_DATE | SQL_DL_SQL92_TIME |

@@ -205,9 +205,13 @@ void fix_result_types(STMT *stmt)
     else
       irrec->case_sensitive= SQL_FALSE;
     if (field->db && *field->db)
+    {
         irrec->catalog_name= (SQLCHAR *)field->db;
+    }
     else
+    {
         irrec->catalog_name= (SQLCHAR *)stmt->dbc->database;
+    }
     irrec->fixed_prec_scale= SQL_FALSE;
     switch (field->type)
     {
@@ -2177,9 +2181,13 @@ my_bool reget_current_catalog(DBC FAR *dbc)
 /*            if (cmp_database(row[0], dbc->database)) */
             {
                 if ( row[0] )
+                {
                     dbc->database = my_strdup(row[0], MYF(MY_WME));
+                }
                 else
-                    dbc->database = strdup( "null" );
+                {
+                    dbc->database = NULL;
+                }
             }
         }
         mysql_free_result(res);

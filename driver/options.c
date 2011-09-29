@@ -430,10 +430,14 @@ MySQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attrib, SQLCHAR **char_attr,
 
   case SQL_ATTR_CURRENT_CATALOG:
     if (is_connected(dbc) && reget_current_catalog(dbc))
+    {
       return set_handle_error(SQL_HANDLE_DBC, hdbc, MYERR_S1000,
                               "Unable to get current catalog", 0);
+    }
     else
-      *char_attr= (SQLCHAR *)dbc->database;
+    {
+      *char_attr= (SQLCHAR *)(dbc->database ? dbc->database : "null");
+    }
     break;
 
   case SQL_ATTR_LOGIN_TIMEOUT:

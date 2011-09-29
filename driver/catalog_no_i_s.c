@@ -216,7 +216,9 @@ mysql_list_dbcolumns(STMT *stmt,
     pthread_mutex_lock(&dbc->lock);
 
   result= mysql_list_fields(mysql, (char *)szTable, (char *)szColumn);
-  if (cbCatalog)
+
+  /* If before this call no database were selected - we cannot revert that */
+  if (cbCatalog && dbc->database)
   {
     if (mysql_select_db( mysql, dbc->database))
     {
@@ -920,10 +922,10 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
 
   pthread_mutex_lock(&stmt->dbc->lock);
 
-  stmt->result= mysql_table_status_show(stmt,
+  stmt->result= mysql_table_status(stmt,
                                    szFkCatalogName, cbFkCatalogName,
                                    szFkTableName, cbFkTableName,
-                                   FALSE);
+                                   FALSE, TRUE, FALSE);
 
   if (!stmt->result)
   {
@@ -1016,7 +1018,8 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
               /* FKTABLE_CAT */
               data[4]= (szFkCatalogName ?
                         strdup_root(alloc, (char *)szFkCatalogName) :
-                        strdup_root(alloc, stmt->dbc->database));
+                        strdup_root(alloc, stmt->dbc->database ?
+                          stmt->dbc->database : "null"));
               data[5]= NULL;                         /* FKTABLE_SCHEM */
               data[6]= row[0];                       /* FKTABLE_TABLE */
 
@@ -2144,9 +2147,21 @@ mysql_tables(SQLHSTMT hstmt,
 
       if (!stmt->dbc->ds->no_catalog)
       {
-        if (!catalog && !reget_current_catalog(stmt->dbc))
-          db= strmake_root(&stmt->result->field_alloc,
-                           stmt->dbc->database, strlen(stmt->dbc->database));
+        if (!catalog)
+        {
+          if (!reget_current_catalog(stmt->dbc))
+          {
+            const char *dbname= stmt->dbc->database ? stmt->dbc->database
+                                                    : "null";
+            db= strmake_root(&stmt->result->field_alloc,
+                             dbname, strlen(dbname));
+          }
+          else
+          {
+            /* error was set in reget_current_catalog */
+            return SQL_ERROR;
+          }
+        }
         else
           db= strmake_root(&stmt->result->field_alloc,
                            (char *)catalog, catalog_len);

@@ -2389,6 +2389,63 @@ DECLARE_TEST(bug12824839)
 }
 
 
+/* If no default database is selected for the connection, call of SQLColumns
+   causes error "Unknown database 'null'" */
+DECLARE_TEST(sqlcolumns_nodbselected)
+{
+  SQLHDBC hdbc1;
+  SQLHSTMT hstmt1;
+  SQLCHAR conn_in[256];
+
+  /* Just to make sure we have at least one table in our test db */
+  ok_sql(hstmt, "DROP TABLE IF EXISTS sqlcolumns_nodbselected");
+  ok_sql(hstmt, "CREATE TABLE sqlcolumns_nodbselected (id int)");
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+
+  /* Connecting not specifying default db */
+  sprintf((char *)conn_in, "DRIVER=%s;SERVER=%s;UID=%s;PWD=%s", mydriver,
+                              myserver, myuid, mypwd);
+
+  if (mysock != NULL)
+  {
+    strcat((char *)conn_in, ";SOCKET=");
+    strcat((char *)conn_in, (char *)mysock);
+  }
+
+  if (myport)
+  {
+    char pbuff[20];
+    sprintf(pbuff, ";PORT=%d", myport);
+    strcat((char *)conn_in, pbuff);
+  }
+
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn_in, sizeof(conn_in), NULL,
+                                 0, NULL,
+                                 SQL_DRIVER_NOPROMPT));
+
+
+
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_con(hdbc1, SQLGetInfo(hdbc1, SQL_DATABASE_NAME,
+            (SQLPOINTER) conn_in, sizeof(conn_in), NULL));
+  is_str("null", conn_in, 5);
+
+  ok_stmt(hstmt1, SQLColumns(hstmt1, mydb, SQL_NTS, NULL, 0, NULL,
+                            0, NULL, 0));
+
+  ok_con(hdbc1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS sqlcolumns_nodbselected");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -2432,6 +2489,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug55870)
   ADD_TEST(t_bug31067)
   ADD_TEST(bug12824839)
+  ADD_TEST(sqlcolumns_nodbselected)
 END_TESTS
 
 
