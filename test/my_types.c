@@ -1095,7 +1095,7 @@ DECLARE_TEST(t_bug29402)
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
-  ok_stmt(hstmt1, SQLExecDirect(hstmt1, "SELECT CONCAT('\x80', 100) concated", SQL_NTS));
+  ok_stmt(hstmt1, SQLExecDirect(hstmt1, "SELECT CONCAT(_cp1250 0x80, 100) concated", SQL_NTS));
 
   ok_stmt(hstmt1, SQLDescribeCol(hstmt1, 1, column_name, sizeof(column_name),
                                 &name_length, &data_type, &column_size,
@@ -1112,8 +1112,9 @@ DECLARE_TEST(t_bug29402)
   {
     /* Because of this
        http://msdn.microsoft.com/en-us/library/ms716540%28v=vs.85%29.aspx
-       test can fail. Rather test's problem. */
-    printMessage("%s != %s(%#x!=%#x) - this test may fail on some(or all?) "
+       test can fail. Rather test problem.
+       Hopefully the test is fixed, but keeping this message so far */
+    printMessage("%s != %s(%#x!=%#x) - this test may fail on some "
                  "platforms - TODO", buf, "\x80""100", buf[0], expected[0]);
     return FAIL;
   }
@@ -1132,7 +1133,12 @@ DECLARE_TEST(t_bug29402)
   /* Fixed in 5.5(tested in 5.5.9), result's type is SQL_VARCHAR */
   if (mysql_min_version(hdbc, "5.5", 3))
   {
-    is_num(data_type, SQL_VARCHAR);
+    /* Depending on server default charset it can be either SQL_VARCHAR or
+       SQL_WVARCHAR. Wee are fine to know if the data_type is one of those */
+    if(data_type != SQL_VARCHAR && data_type != SQL_WVARCHAR)
+    {
+      return FAIL;
+    }
   }
   else
   {
