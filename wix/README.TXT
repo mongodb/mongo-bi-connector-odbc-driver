@@ -24,8 +24,8 @@ Create the directors "doc" (for license files), and "x86"
 bit directory as well, i.e. a 64-bit package contains both 32-bit and
 64-bit binaries. Copy the required files:
 
-  doc/README
-  doc/COPYING
+  doc/README.txt
+  doc/COPYING.txt
   doc/Licenses_for_Third-Party_Components.txt
   x86/myodbc5.lib
   x86/myodbc5.dll
