@@ -1,4 +1,7 @@
-5.1.9
+5.1.9 (04-Oct-2011)
+
+  Functionality added or changed:
+  * Support of windows authentication.
 
   Bugs fixed:
   * SQLFetch() did not return SQL_ERROR if connection was dropped due to a
@@ -11,6 +14,8 @@
   * MyODBC driver does not call mysql_thread_end() when the thread ends causing error
     messages such as this: Error in my_thread_global_end(): 1 threads didn't exit
     (Bug #57727)
+
+  Built using MySQL 5.5.16.
 
 ----
 
