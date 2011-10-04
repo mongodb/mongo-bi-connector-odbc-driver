@@ -381,7 +381,10 @@ DECLARE_TEST(t_explicit_error)
 DECLARE_TEST(t_mult_stmt_free)
 {
 #define mult_count 3
-  SQLHANDLE expard, expapd,desc;
+  SQLHANDLE expard, expapd;
+#ifndef _WIN32
+  SQLHANDLE desc;
+#endif
   SQLHANDLE stmt[mult_count];
   SQLINTEGER i;
   SQLINTEGER imp_params[mult_count];
@@ -586,6 +589,61 @@ DECLARE_TEST(t_bug44576)
 }
 
 
+/* If no default database is selected for the connection, call of SQLColumns
+   causes error "Unknown database 'null'" */
+DECLARE_TEST(t_desc_curcatalog)
+{
+  SQLHDBC hdbc1;
+  SQLHSTMT hstmt1;
+  SQLCHAR conn_in[256];
+  SQLHANDLE ird;
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+
+  /* Connecting not specifying default db */
+  sprintf((char *)conn_in, "DRIVER=%s;SERVER=%s;UID=%s;PWD=%s", mydriver,
+                              myserver, myuid, mypwd);
+
+  if (mysock != NULL)
+  {
+    strcat((char *)conn_in, ";SOCKET=");
+    strcat((char *)conn_in, (char *)mysock);
+  }
+
+  if (myport)
+  {
+    char pbuff[20];
+    sprintf(pbuff, ";PORT=%d", myport);
+    strcat((char *)conn_in, pbuff);
+  }
+
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn_in, sizeof(conn_in), NULL,
+                                 0, NULL,
+                                 SQL_DRIVER_NOPROMPT));
+
+
+
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_sql(hstmt1, "select 10 AS no_catalog_column");
+
+  ok_stmt(hstmt1, SQLGetStmtAttr(hstmt1, SQL_ATTR_IMP_ROW_DESC, &ird, 0, NULL));
+  ok_desc(ird, SQLGetDescField(ird, 1, SQL_DESC_CATALOG_NAME, conn_in,
+                               sizeof(conn_in), NULL));
+
+
+  is(conn_in==NULL);
+
+  ok_con(hdbc1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TODO(t_desc_paramset)
   ADD_TEST(t_desc_set_error)
@@ -598,6 +656,7 @@ BEGIN_TESTS
   ADD_TEST(t_free_stmt_with_exp_desc)
   ADD_TEST(t_bug41081)
   ADD_TEST(t_bug44576)
+  ADD_TODO(t_desc_curcatalog)
 END_TESTS
 
 

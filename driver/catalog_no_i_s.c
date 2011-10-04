@@ -189,13 +189,12 @@ mysql_list_dbcolumns(STMT *stmt,
   DBC *dbc= stmt->dbc;
   MYSQL *mysql= &dbc->mysql;
   MYSQL_RES *result;
+  char buff[256], column_buff[64*2+1];
 
   /* If a catalog was specified, we have to change working catalog
      to be able to use mysql_list_fields. */
   if (cbCatalog)
   {
-    char buff[255];
-
     if (reget_current_catalog(dbc))
       return NULL;
 
@@ -215,7 +214,12 @@ mysql_list_dbcolumns(STMT *stmt,
   else
     pthread_mutex_lock(&dbc->lock);
 
-  result= mysql_list_fields(mysql, (char *)szTable, (char *)szColumn);
+  strncpy(buff, szTable, cbTable);
+  buff[cbTable]= '\0';
+  strncpy(column_buff, szColumn, cbColumn);
+  column_buff[cbColumn]= '\0';
+
+  result= mysql_list_fields(mysql, buff, column_buff);
 
   /* If before this call no database were selected - we cannot revert that */
   if (cbCatalog && dbc->database)

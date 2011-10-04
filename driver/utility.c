@@ -204,14 +204,16 @@ void fix_result_types(STMT *stmt)
       irrec->case_sensitive= SQL_TRUE;
     else
       irrec->case_sensitive= SQL_FALSE;
+
     if (field->db && *field->db)
     {
         irrec->catalog_name= (SQLCHAR *)field->db;
     }
     else
     {
-        irrec->catalog_name= (SQLCHAR *)stmt->dbc->database;
+      irrec->catalog_name= (SQLCHAR *)(stmt->dbc->database ? stmt->dbc->database : "");
     }
+
     irrec->fixed_prec_scale= SQL_FALSE;
     switch (field->type)
     {
