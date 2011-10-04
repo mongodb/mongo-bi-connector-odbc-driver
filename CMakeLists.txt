@@ -203,36 +203,6 @@ ADD_SUBDIRECTORY(installer)
 
 ADD_SUBDIRECTORY(test)
 
-#------------ Installation ---------------------------
-
-IF(WIN32)
-
-# For conveninence copy (un)install.bat scripts to the build
-# directory to ease testing.
-
-  CONFIGURE_FILE(Install.bat ${CMAKE_BINARY_DIR}/Install.bat COPYONLY)
-  CONFIGURE_FILE(Uninstall.bat ${CMAKE_BINARY_DIR}/Uninstall.bat COPYONLY)
-
-# TODO: line-ending conversions unix->dos
-
-  INSTALL(FILES ChangeLog   DESTINATION . RENAME ChangeLog.txt)
-  INSTALL(FILES README      DESTINATION . RENAME README.txt)
-  INSTALL(FILES INSTALL     DESTINATION . RENAME INSTALL.txt)
-  INSTALL(FILES INSTALL.win DESTINATION . RENAME INSTALL-win.txt)
-  INSTALL(FILES COPYING     DESTINATION . RENAME MYODBC5-LICENSE.txt)
-  INSTALL(FILES Install.bat   DESTINATION .)
-  INSTALL(FILES Uninstall.bat DESTINATION .)
-
-ELSE(WIN32)
-
-  INSTALL(FILES ChangeLog    DESTINATION .)
-  INSTALL(FILES README       DESTINATION .)
-  INSTALL(FILES README.debug DESTINATION .)
-  INSTALL(FILES INSTALL      DESTINATION .)
-  INSTALL(FILES COPYING      DESTINATION .)
-
-ENDIF(WIN32)
-
 ##############################################################################
 #
 #  Packaging
@@ -283,14 +253,46 @@ Makefile$
 cmake/sql.*\\\\.c$
 )
 
-INSTALL(FILES
-	"INSTALL"
-	"INSTALL.win"
-	"README"
-	"COPYING"
-	"LICENSE.mysql"
-	"ChangeLog"
-	"Licenses_for_Third-Party_Components.txt"
-	DESTINATION "." OPTIONAL)
+#------------ Installation ---------------------------
+
+IF(WIN32)
+
+# For conveninence copy (un)install.bat scripts to the build
+# directory to ease testing.
+
+  CONFIGURE_FILE(Install.bat ${CMAKE_BINARY_DIR}/Install.bat COPYONLY)
+  CONFIGURE_FILE(Uninstall.bat ${CMAKE_BINARY_DIR}/Uninstall.bat COPYONLY)
+
+# TODO: line-ending conversions unix->dos
+
+  INSTALL(FILES ChangeLog     DESTINATION . RENAME ChangeLog.txt)
+  INSTALL(FILES README        DESTINATION . RENAME README.txt)
+  INSTALL(FILES README.debug  DESTINATION . RENAME README-debug.txt)
+  INSTALL(FILES INSTALL       DESTINATION . RENAME INSTALL.txt)
+  INSTALL(FILES INSTALL.win   DESTINATION . RENAME INSTALL-win.txt)
+  IF(EXISTS "${CMAKE_SOURCE_DIR}/COPYING")
+    INSTALL(FILES COPYING       DESTINATION . RENAME COPYING.txt)
+  ELSE()
+    INSTALL(FILES LICENSE.mysql DESTINATION . RENAME LICENSE-mysql.txt)
+  ENDIF()
+
+  INSTALL(FILES Install.bat   DESTINATION .)
+  INSTALL(FILES Uninstall.bat DESTINATION .)
+
+ELSE(WIN32)
+
+  INSTALL(FILES ChangeLog    DESTINATION .)
+  INSTALL(FILES README       DESTINATION .)
+  INSTALL(FILES README.debug DESTINATION .)
+  INSTALL(FILES INSTALL      DESTINATION .)
+  IF(EXISTS "${CMAKE_SOURCE_DIR}/COPYING")
+    INSTALL(FILES COPYING       DESTINATION .)
+  ELSE()
+    INSTALL(FILES LICENSE.mysql DESTINATION .)
+  ENDIF()
+
+ENDIF(WIN32)
+
+INSTALL(FILES Licenses_for_Third-Party_Components.txt DESTINATION .)
 
 INCLUDE(CPack)
