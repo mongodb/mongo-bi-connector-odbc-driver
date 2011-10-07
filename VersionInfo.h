@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -23,11 +23,11 @@
 */
 
 /* When changing, also change configure.in and driver/driver.def */
-#define SETUP_VERSION         "5.01.0009"
+#define SETUP_VERSION         "5.01.0010"
 #define DRIVER_VERSION        "0" SETUP_VERSION
 
 #define MYODBC_VERSION        SETUP_VERSION
-#define MYODBC_FILEVER        5,1,9,0
+#define MYODBC_FILEVER        5,1,10,0
 #define MYODBC_PRODUCTVER     MYODBC_FILEVER
-#define MYODBC_STRFILEVER     "5, 1, 9, 0\0"
+#define MYODBC_STRFILEVER     "5, 1, 10, 0\0"
 #define MYODBC_STRPRODUCTVER  MYODBC_STRFILEVER
