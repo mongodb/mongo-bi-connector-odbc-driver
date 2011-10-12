@@ -22,6 +22,7 @@
   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+
 #include "odbctap.h"
 
 /* result set demo */
@@ -2805,6 +2806,35 @@ DECLARE_TEST(t_desccol_before_exec)
 }
 
 
+/* Bug #62657 	A failure on one stmt causes another stmt to fail */
+DECLARE_TEST(t_bug62657)
+{
+  SQLHSTMT hstmt1;
+
+  ok_sql(hstmt, "DROP table IF EXISTS b62657");
+
+  ok_sql(hstmt, "CREATE table b62657(i int)");
+
+  ok_sql(hstmt, "insert into b62657 values(1),(2)");
+
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "select * from b62657", SQL_NTS));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  /* Any failing  query would do the job here */
+  ok_con(hstmt1, SQLAllocStmt(hdbc, &hstmt1));
+
+  expect_sql(hstmt1, "select * from some_ne_rubbish", SQL_ERROR);
+
+  /* Error of other query before all rows fetched causes next fetch
+     to fail */
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -2848,6 +2878,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug55024)
   ADD_TEST(t_bug56677)
   ADD_TEST(t_desccol_before_exec)
+  ADD_TOFIX(t_bug62657)
 END_TESTS
 
 

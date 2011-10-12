@@ -183,6 +183,11 @@ void mem_debug_init()
 #define BEGIN_TESTS my_test tests[]= {
 #define ADD_TEST(name) { #name, name, OK   },
 #define ADD_TODO(name) { #name, name, FAIL },
+#ifndef DISGUISE_TOFIX_TESTS
+# define ADD_TOFIX(name) { #name, name, OK   },
+#else
+# define ADD_TOFIX(name) { #name, name, FAIL },
+#endif
 #define END_TESTS }; \
 void test_timeout(int signum __attribute__((unused))) \
 { \
