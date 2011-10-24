@@ -6,13 +6,12 @@
 INTRODUCTION
 ---------------------------------------------------------------
 
-In this document we provide a general explaination of how to 
-build the MyODBC driver on UNIX platforms. We will be as brief 
-as possible.
+In this document, we provide a general and brief explaination 
+of how to build the MyODBC driver on UNIX platforms.
 
 NOTE:	This information is fairly generic. You may find other
-	README files with more detailed information for 
-	building for specific flavours of UNIX.
+README files with more detailed information about building 
+MyODBC with specific flavours of UNIX.
 	
 WHAT YOU NEED
 ---------------------------------------------------------------
@@ -20,80 +19,107 @@ WHAT YOU NEED
 UNIX
 ----
 
-UNIX or some UNIX-like operating system such as;
+UNIX or a UNIX-like operating system such as;
 
 - Solaris
 - Linux
-- HP-UX
-- AIX
 - OSX
 
 ODBC
 ----
 
-You need an ODBC SDK and you probably want an ODBC Driver 
+You need an ODBC SDK, and you probably want an ODBC Driver 
 Manager. 
 
 ODBC has not, traditionally, been a standard part of any UNIX 
-or UNIX-like platform. This caused a number of vendors to 
+or UNIX-like platform. This causes a number of vendors to 
 provide ODBC solutions which can be added to UNIX. In theory 
-this should not be a problem but in practice this can cause 
+this should not be a problem, but in practice this can cause 
 compatability and portability issues.
 
 Recently; Linux distributions have been including unixODBC as a
-standard option and Apple OSX now has an ODBC by default.
+standard option, and Apple OSX now has ODBC by default.
 
 We recommend, and use, unixODBC on all UNIX-like platforms
 except OSX where we use the default ODBC.
 
-see;
-	http://www.unixodbc.org
+See:
+	http://www.unixodbc.org/
 
 Compiler Tools
 --------------
 
 We try to build using the native compiler tool set for the 
-target platform. This is SunStudio for Solaris and aCC for
-HP-UX for example. But a common compiler across all platforms
-is the GNU tool-chain.
+target platform. For example, this is SunStudio on Solaris. But
+the GNU tool-chain is a common compiler that works across all 
+platforms.
 
 Source Code
 -----------
 
-The source code is the main thing. You can get it from the bk
-source repository if you want the 'bleeding edge' code but most
-people will simply download the zip or tar-ball of the source.
+You can get the source code from the bzr source repository (for
+'bleeding edge' code) or more commonly, simply download the zip
+or tarball of the source.
 
+Source:
+  bzr branch lp:myodbc
+  https://code.launchpad.net/~myodbc-developers
+
+Downloads:
+  http://dev.mysql.com/downloads/connector/odbc/
 
 BUILD
 ---------------------------------------------------------------
 
-GNU AutoTools
+cmake
 -------------
 
-cd to the MyODBC source directory and do the following.
+CMake is the build system used to create configure files for your 
+system. Instructions are as follows:
 
-Execute 'configure --help' to see a list of configure options then
-execute configure again with the desired options.
+cd into the MyODBC source directory, then run cmake. For example:
 
-Then do;
+ $ cd /path/to/myodbc/source
+ $ cmake -G "Unix Makefiles" .
+
+CMake will look for iODBC by default. Alternatively, if you are using
+unixODBC instead of iODBC, then you'll need to pass in the appropriate
+parameter, such as:
+
+ $ cmake -G "Unix Makefiles" -DWITH_UNIXODBC=1
+
+If the driver manager headers and/or libraries cannot be found, then you 
+may specify their location by passing in these additional parameters:
+
+ -DODBC_INCLUDES=/path/to/headers
+ -DODBC_LIB_DIR=/path/to/libs
+
+And you might need to help cmake find the MySQL headers, by setting 
+the environment variable MYSQL_DIR to the appropriate location. For
+example:
+
+ $ export MYSQL_DIR=/usr/local/mysql
+  
+Upon success, CMake will create the appropriate make files. Then,
+execute make:
 
  $ make
-
 
 INSTALL
 ---------------------------------------------------------------
 
-You probably want to be root user to do install as extra 
-privileges will likely be required. Now do the following to 
-install the MyODBC libraries and tools.
+You probably want to be the root user, or use sudo, because installation
+will probably require these extra privileges.  To install the MyODBC
+library and tools, execute one of the following:
 
-# make install
+ $ sudo make install
+ # make install
 
-At this point all of the MyODBC files should be in place but you
-probably want to register the driver with the ODBC on your system.
+That will copy all of the MyODBC files to their appropriate locations. 
 
-See your ODBC documentation for more on how to do this. For
-unixODBC one could run ODBCConfig from GUI as root or use the 
+Next, you probably want to register the driver with the ODBC on your 
+system. See your ODBC documentation for more about how to do this. 
+
+For unixODBC, you could run ODBCConfig from a GUI as root, or use the 
 odbcinst command line tool. You may also want to look at the 
-myodbc3i command-line tool for this.
+myodbc-installer command-line tool for this.
