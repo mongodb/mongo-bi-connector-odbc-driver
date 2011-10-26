@@ -2831,6 +2831,80 @@ DECLARE_TEST(t_bug62657)
      to fail */
   ok_stmt(hstmt, SQLFetch(hstmt));
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP table b62657");
+
+  return OK;
+}
+
+
+DECLARE_TEST(t_row_status)
+{
+  SQLHANDLE ird, ard;
+  SQLUSMALLINT arr1[2], arr2[2], i, j;
+  const SQLUSMALLINT expected1[]= {SQL_ROW_SUCCESS, SQL_ROW_NOROW},
+  expected2[][2]= { {SQL_ROW_SUCCESS, SQL_ROW_SUCCESS},
+                    {SQL_ROW_SUCCESS_WITH_INFO, SQL_ROW_NOROW}
+                  };
+  SQLCHAR res[5*2];
+  SQLLEN len[2];
+
+  ok_sql(hstmt, "DROP table IF EXISTS b_row_status");
+
+  ok_sql(hstmt, "CREATE table b_row_status(i int)");
+
+  ok_sql(hstmt, "insert into b_row_status values(4),(2),(1)");
+
+  ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_IMP_ROW_DESC,
+                                &ird, SQL_IS_POINTER, NULL));
+  ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_APP_ROW_DESC,
+                                &ard, SQL_IS_POINTER, NULL));
+
+  ok_desc(ird, SQLSetDescField(ird, 0, SQL_DESC_ARRAY_STATUS_PTR,
+                                (SQLPOINTER)arr1, SQL_IS_POINTER));
+  ok_desc(ird, SQLSetDescField(ard, 0, SQL_DESC_ARRAY_SIZE,
+                                (SQLPOINTER)2, SQL_IS_INTEGER));
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "select * from b_row_status\
+                                       where i=1", SQL_NTS));
+
+  /* it has to be SQL_SUCCESS here */
+  expect_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, NULL,
+                                  (SQLUSMALLINT*)&arr2), SQL_SUCCESS);
+
+  for (i= 0; i<2; ++i)
+  {
+    printMessage("Row %d, Desc %d, Parameter %d", i+1, arr1[i], arr2[i]);
+    is_num(expected1[i], arr2[i])
+    is_num(arr1[i], arr2[i]);
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "select repeat(char(64+i),8/i)\
+                                       from b_row_status\
+                                       order by i desc", SQL_NTS));
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, res, 5, len));  
+
+  for (i= 0; i<2; ++i)
+  {
+    expect_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, NULL,
+      (SQLUSMALLINT*)&arr2), i/*SQL_SUCCESS=0, WITH_INFO=1*/);
+    for (j= 0; j<2; ++j)
+    {
+      printMessage("Set %d Row %d, desc %d, parameter %d", i+1, j+1, arr1[j],
+                    arr2[j]);
+      is_num(expected2[i][j], arr2[j])
+      is_num(arr1[j], arr2[j]);
+    }
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP table b_row_status");
+
   return OK;
 }
 
@@ -2879,6 +2953,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug56677)
   ADD_TEST(t_desccol_before_exec)
   ADD_TOFIX(t_bug62657)
+  ADD_TOFIX(t_row_status)
 END_TESTS
 
 
