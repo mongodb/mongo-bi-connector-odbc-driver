@@ -25,3 +25,5 @@ CMakeFiles/
 */release/
 */RelWithDebInfo/
 test/my_*/
+cmake/sqlcolattrib*.c
+cmake/sqlparamopt*.c

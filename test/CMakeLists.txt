@@ -34,6 +34,10 @@ ENDIF(DISGUISE_TOFIX_TESTS)
 
 ENABLE_TESTING()
 
+IF(NOT WIN32)
+  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ODBC_LINK_FLAGS}")
+ENDIF(NOT WIN32)
+
 FOREACH(T my_basics my_blob my_bulk my_catalog my_curext my_cursor
 		my_datetime my_desc my_dyn_cursor my_error my_info my_keys my_param
 		my_prepare my_relative my_result my_scroll my_tran
@@ -44,8 +48,6 @@ FOREACH(T my_basics my_blob my_bulk my_catalog my_curext my_cursor
 
 	IF(WIN32)
 	  TARGET_LINK_LIBRARIES(${T} ${ODBCLIB} ${ODBCINSTLIB})
-	ELSE(WIN32)
-	  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ODBC_LINK_FLAGS}")
 	ENDIF(WIN32)
 	
 	ADD_TEST(${T} ${T})
