@@ -851,7 +851,9 @@ DECLARE_TEST(t_acc_crash)
 {
   SQLINTEGER  id;
   SQLCHAR     name[20], data[30];
+  /* Hasn't that actually to be a SQL_DATE_STRUCT */
   SQL_TIMESTAMP_STRUCT ts;
+  SQLLEN      ind_strlen;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_acc_crash");
   ok_sql(hstmt,
@@ -869,7 +871,7 @@ DECLARE_TEST(t_acc_crash)
 
   ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, &id, 0, NULL));
   ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, name, sizeof(name), NULL));
-  ok_stmt(hstmt, SQLBindCol(hstmt, 3, SQL_C_DATE, &ts, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 3, SQL_C_DATE, &ts, 0, &ind_strlen));
 
   ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_FIRST, 1));
 
@@ -878,6 +880,8 @@ DECLARE_TEST(t_acc_crash)
   ts.year= 2010;
   ts.month= 9;
   ts.day= 25;
+
+  ind_strlen= 0;
 
   ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_POSITION, SQL_LOCK_NO_CHANGE));
   ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));

@@ -442,6 +442,20 @@ DECLARE_TEST(t_bug27158)
 }
 
 
+DECLARE_TEST(t_bug13542600)
+{
+  SQLINTEGER i;
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "select 1 as i , null as j ");
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_LONG, &i, 0, NULL));
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_ERROR);
+
+  return check_sqlstate(hstmt, "22002");
+}
+
+
 BEGIN_TESTS
 #ifndef NO_DRIVERMANAGER
   ADD_TEST(t_odbc2_error)
@@ -460,6 +474,7 @@ BEGIN_TESTS
   ADD_TEST(t_handle_err)
   ADD_TEST(sqlerror)
   ADD_TEST(t_bug27158)
+  ADD_TOFIX(t_bug13542600)
 END_TESTS
 
 RUN_TESTS

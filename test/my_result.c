@@ -2843,18 +2843,19 @@ DECLARE_TEST(t_row_status)
 {
   SQLHANDLE ird, ard;
   SQLUSMALLINT arr1[2], arr2[2], i, j;
-  const SQLUSMALLINT expected1[]= {SQL_ROW_SUCCESS, SQL_ROW_NOROW},
-  expected2[][2]= { {SQL_ROW_SUCCESS, SQL_ROW_SUCCESS},
-                    {SQL_ROW_SUCCESS_WITH_INFO, SQL_ROW_NOROW}
-                  };
+  const SQLUSMALLINT expectedRow1[]= {SQL_ROW_SUCCESS, SQL_ROW_NOROW},
+    expectedRow2[][2]= { {SQL_ROW_SUCCESS, SQL_ROW_SUCCESS},
+                      {SQL_ROW_SUCCESS_WITH_INFO, SQL_ROW_ERROR}
+                    },
+  expectedFunction2[2]= {SQL_SUCCESS, SQL_SUCCESS_WITH_INFO};
+
   SQLCHAR res[5*2];
-  SQLLEN len[2];
 
   ok_sql(hstmt, "DROP table IF EXISTS b_row_status");
 
   ok_sql(hstmt, "CREATE table b_row_status(i int)");
 
-  ok_sql(hstmt, "insert into b_row_status values(4),(2),(1)");
+  ok_sql(hstmt, "insert into b_row_status values(4),(2),(1),(NULL)");
 
   ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_IMP_ROW_DESC,
                                 &ird, SQL_IS_POINTER, NULL));
@@ -2873,31 +2874,31 @@ DECLARE_TEST(t_row_status)
   expect_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, NULL,
                                   (SQLUSMALLINT*)&arr2), SQL_SUCCESS);
 
+  /*expect_stmt(hstmt, SQLFetch(hstmt), SQL_SUCCESS);*/
   for (i= 0; i<2; ++i)
   {
     printMessage("Row %d, Desc %d, Parameter %d", i+1, arr1[i], arr2[i]);
-    is_num(expected1[i], arr2[i])
+    is_num(expectedRow1[i], arr1[i])
     is_num(arr1[i], arr2[i]);
   }
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
-  ok_stmt(hstmt, SQLExecDirect(hstmt, "select repeat(char(64+i),8/i)\
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "select if(i is NULL,NULL,repeat(char(64+i),8/i))\
                                        from b_row_status\
                                        order by i desc", SQL_NTS));
 
-  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, res, 5, len));  
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, res, 5, NULL));  
 
   for (i= 0; i<2; ++i)
   {
-    expect_stmt(hstmt, SQLExtendedFetch(hstmt, SQL_FETCH_NEXT, 1, NULL,
-      (SQLUSMALLINT*)&arr2), i/*SQL_SUCCESS=0, WITH_INFO=1*/);
+    expect_stmt(hstmt, SQLFetch(hstmt), expectedFunction2[i]);
     for (j= 0; j<2; ++j)
     {
       printMessage("Set %d Row %d, desc %d, parameter %d", i+1, j+1, arr1[j],
                     arr2[j]);
-      is_num(expected2[i][j], arr2[j])
-      is_num(arr1[j], arr2[j]);
+      is_num(expectedRow2[i][j], arr1[j])
+
     }
   }
 

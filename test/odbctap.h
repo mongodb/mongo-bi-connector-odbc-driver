@@ -717,6 +717,7 @@ int my_print_non_format_result(SQLHSTMT hstmt)
     SQLCHAR     szColName[MAX_NAME_LEN+1];
     SQLCHAR     szData[MAX_COLUMNS][MAX_ROW_DATA_LEN]={{0}};
     SQLSMALLINT nIndex,ncol= 0,pfSqlType, pcbScale, pfNullable;
+    SQLLEN      ind_strlen;
 
     rc = SQLNumResultCols(hstmt,&ncol);
     
@@ -733,7 +734,7 @@ int my_print_non_format_result(SQLHSTMT hstmt)
         fprintf(stdout, "%s\t", szColName);
 
         rc = SQLBindCol(hstmt,nIndex, SQL_C_CHAR, szData[nIndex-1],
-                        MAX_ROW_DATA_LEN+1,NULL);
+                        MAX_ROW_DATA_LEN+1,&ind_strlen);
         mystmt_rows(hstmt,rc,-nIndex);
     }
 
