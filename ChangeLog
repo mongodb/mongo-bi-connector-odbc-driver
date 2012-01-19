@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * In some cases TIMESTAMP field could be described as SQL_NO_NULLS.
+    (Bug #13532987)
 
 ----
 

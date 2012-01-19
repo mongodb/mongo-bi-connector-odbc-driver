@@ -818,8 +818,8 @@ DECLARE_TEST(t_bug14414)
 
   ok_stmt(hstmt, SQLFetch(hstmt));
   is_str(my_fetch_str(hstmt, col, 4), "b", 1);
-  is_num(my_fetch_int(hstmt, 11), SQL_NO_NULLS);
-  is_str(my_fetch_str(hstmt, col, 18), "NO", 3);
+  is_num(my_fetch_int(hstmt, 11), SQL_NULLABLE);
+  is_str(my_fetch_str(hstmt, col, 18), "YES", 3);
 
   ok_stmt(hstmt, SQLFetch(hstmt));
   is_str(my_fetch_str(hstmt, col, 4), "c", 1);
@@ -842,7 +842,7 @@ DECLARE_TEST(t_bug14414)
 
   ok_stmt(hstmt, SQLDescribeCol(hstmt, 2, col, sizeof(col), NULL, NULL, NULL,
                                 NULL, &nullable));
-  is_num(nullable, SQL_NO_NULLS);
+  is_num(nullable, SQL_NULLABLE);
 
   ok_stmt(hstmt, SQLDescribeCol(hstmt, 3, col, sizeof(col), NULL, NULL, NULL,
                                 NULL, &nullable));

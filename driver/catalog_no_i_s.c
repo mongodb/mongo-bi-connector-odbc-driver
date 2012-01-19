@@ -389,13 +389,12 @@ mysql_columns(STMT * stmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
       }
 
       /*
-        If a field has TIMESTAMP_FLAG set, it's an auto-updating timestamp
-        field, and NULL can be stored to it (although it gets turned into
+        If a field is a TIMESTAMP, NULL can be stored to it (although it gets turned into
         something else).
 
         The same logic applies to fields with AUTO_INCREMENT_FLAG set.
       */
-      if ((field->flags & NOT_NULL_FLAG) && !(field->flags & TIMESTAMP_FLAG) &&
+      if ((field->flags & NOT_NULL_FLAG) && !(field->type == MYSQL_TYPE_TIMESTAMP) &&
           !(field->flags & AUTO_INCREMENT_FLAG))
       {
         /* Bug#31067. Access seems to try to put NULL value when not null field

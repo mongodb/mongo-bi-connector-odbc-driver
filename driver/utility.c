@@ -185,7 +185,7 @@ void fix_result_types(STMT *stmt)
     }
     irrec->scale= myodbc_max(0, get_decimal_digits(stmt, field));
     if ((field->flags & NOT_NULL_FLAG) &&
-        !(field->flags & TIMESTAMP_FLAG) &&
+        !(field->type == MYSQL_TYPE_TIMESTAMP) &&
         !(field->flags & AUTO_INCREMENT_FLAG))
       irrec->nullable= SQL_NO_NULLS;
     else
