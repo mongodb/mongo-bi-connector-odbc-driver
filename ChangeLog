@@ -6,7 +6,8 @@
   * In some cases TIMESTAMP field could be described as SQL_NO_NULLS.
     (Bug #13532987)
   * SQLFetch has to return error if indicator pointer is NULL for NULL value.
-  (Bug #13542600)
+    (Bug #13542600)
+  * A failure on one stmt causes another stmt to fail. (Bug #13097201/#62657)
 
 ----
 

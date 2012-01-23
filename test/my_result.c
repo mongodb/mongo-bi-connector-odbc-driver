@@ -2953,8 +2953,8 @@ BEGIN_TESTS
   ADD_TEST(t_bug55024)
   ADD_TEST(t_bug56677)
   ADD_TEST(t_desccol_before_exec)
-  ADD_TOFIX(t_bug62657)
-  ADD_TOFIX(t_row_status)
+  ADD_TEST(t_bug62657)
+  ADD_TEST(t_row_status)
 END_TESTS
 
 

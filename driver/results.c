@@ -134,7 +134,7 @@ my_bool odbc_supported_conversion(SQLSMALLINT sqlType, SQLSMALLINT cType)
          return TRUE;
 
        /* SQL_BIT should be converted SQL_C_NUMERIC, while SQL_BINARY should not
-          Tempted not convert to it at all */
+        */
        case SQL_C_NUMERIC:
          return TRUE;
        }
@@ -144,6 +144,17 @@ my_bool odbc_supported_conversion(SQLSMALLINT sqlType, SQLSMALLINT cType)
    return FALSE;
  }
 
+
+ SQLUSMALLINT sqlreturn2row_status(SQLRETURN res)
+ {
+   switch (res)
+   {
+     case SQL_SUCCESS:            return SQL_ROW_SUCCESS;
+     case SQL_SUCCESS_WITH_INFO:  return SQL_ROW_SUCCESS_WITH_INFO;
+   }
+
+   return SQL_ROW_ERROR;
+ }
 
 /**
   Retrieve the data from a field as a specified ODBC C type.
@@ -1384,14 +1395,15 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                                        SQLUSMALLINT FAR    *rgfRowStatus,
                                        my_bool              upd_status )
 {
-    SQLULEN rows_to_fetch;
-    long cur_row, max_row;
-    SQLULEN i;
-    SQLRETURN res;
-    STMT FAR *stmt= (STMT FAR*) hstmt;
-    MYSQL_ROW values= 0;
-    MYSQL_ROW_OFFSET save_position;
-    SQLULEN dummy_pcrow;
+    SQLULEN           rows_to_fetch;
+    long              cur_row, max_row;
+    SQLULEN           i;
+    SQLRETURN         row_res, res;
+    STMT FAR          *stmt= (STMT FAR*) hstmt;
+    MYSQL_ROW         values= 0;
+    MYSQL_ROW_OFFSET  save_position;
+    SQLULEN           dummy_pcrow;
+    BOOL              disconnected= FALSE;
 
     LINT_INIT(save_position);
 
@@ -1501,47 +1513,45 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
         *pcrow= 0;
         stmt->rows_found_in_set= 0;
         if ( upd_status && stmt->ird->rows_processed_ptr )
+        {
             *stmt->ird->rows_processed_ptr= 0;
+        }
         return SQL_NO_DATA_FOUND;
     }
 
-    if (handle_connection_error(stmt))
-      return SQL_ERROR;
-
     if (!stmt->dbc->ds->dont_use_set_locale)
+    {
       setlocale(LC_NUMERIC, "C");
+    }
+
     res= SQL_SUCCESS;
-    for ( i= 0 ; i < rows_to_fetch ; ++i )
+    for (i= 0 ; i < rows_to_fetch ; ++i)
     {
         if ( stmt->result_array )
         {
             values= stmt->result_array+cur_row*stmt->result->field_count;
             if ( i == 0 )
+            {
                 stmt->current_values= values;
+            }
         }
         else
         {
             /* This code will ensure that values is always set */
             if ( i == 0 )
+            {
                 save_position= mysql_row_tell(stmt->result);
+            }
             if ( !(values= mysql_fetch_row(stmt->result)) )
             {
-                if (handle_connection_error(stmt))
-                  res= SQL_ERROR;
                 break;
             }
             if ( stmt->fix_fields )
+            {
                 values= (*stmt->fix_fields)(stmt,values);
+            }
             stmt->current_values= values;
         }
-
-        if (rgfRowStatus)
-          rgfRowStatus[i]= SQL_ROW_SUCCESS;
-        /*
-          No need to update rowStatusPtr_ex, it's the same as rgfRowStatus.
-        */
-        if (upd_status && stmt->ird->array_status_ptr)
-          stmt->ird->array_status_ptr[i]= SQL_ROW_SUCCESS;
 
         if (!stmt->fix_fields)
         {
@@ -1561,35 +1571,97 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
             fill_ird_data_lengths(stmt->ird, mysql_fetch_lengths(stmt->result),
                                   stmt->result->field_count);
         }
-        res= fill_fetch_buffers(stmt, values, i);
+        row_res= fill_fetch_buffers(stmt, values, i);
+
+        /* For SQL_SUCCESS we need all rows to be SQL_SUCCESS */
+        if (res != row_res)
+        {
+          /* Any successful row makes overall result SQL_SUCCESS_WITH_INFO */
+          if (SQL_SUCCEEDED(row_res))
+          {
+            res= SQL_SUCCESS_WITH_INFO;
+          }
+          /* Else error */
+          else if (i == 0)
+          {
+            /* SQL_ERROR only if all rows fail */
+            res= SQL_ERROR;
+          }
+          else
+          {
+            res= SQL_SUCCESS_WITH_INFO;
+          }
+        }
+
+        /* "Fetching" includes buffers filling. I think errors in that 
+           have to affect row status */
+
+        if (rgfRowStatus)
+        {
+          rgfRowStatus[i]= sqlreturn2row_status(row_res);
+        }
+        /*
+          No need to update rowStatusPtr_ex, it's the same as rgfRowStatus.
+        */
+        if (upd_status && stmt->ird->array_status_ptr)
+        {
+          stmt->ird->array_status_ptr[i]= sqlreturn2row_status(row_res);
+        }
+
         ++cur_row;
-    }
+    }   /* fetching cycle end*/
+
     stmt->rows_found_in_set= i;
     *pcrow= i;
 
+    disconnected= is_connection_lost(mysql_errno(&stmt->dbc->mysql))
+        && handle_connection_error(stmt);
+
     if ( upd_status && stmt->ird->rows_processed_ptr )
+    {
         *stmt->ird->rows_processed_ptr= i;
+    }
 
-    if ( rgfRowStatus )
-        for ( ; i < stmt->ard->array_size ; ++i )
-            rgfRowStatus[i]= SQL_ROW_NOROW;
-
-    /*
-      No need to update rowStatusPtr_ex, it's the same as rgfRowStatus.
-    */
-    if ( upd_status && stmt->ird->array_status_ptr )
-        for ( ; i < stmt->ard->array_size ; ++i )
-            stmt->ird->array_status_ptr[i]= SQL_ROW_NOROW;
+    /* It is possible that both rgfRowStatus and array_status_ptr are set
+    (and upp_status is TRUE) */
+    for ( ; i < stmt->ard->array_size ; ++i )
+    {
+        if ( rgfRowStatus )
+        {
+          rgfRowStatus[i]= disconnected ? SQL_ROW_ERROR : SQL_ROW_NOROW;
+        }
+        /*
+          No need to update rowStatusPtr_ex, it's the same as rgfRowStatus.
+        */
+        if ( upd_status && stmt->ird->array_status_ptr )
+        {
+          stmt->ird->array_status_ptr[i]= disconnected? SQL_ROW_ERROR
+                                                      : SQL_ROW_NOROW;
+        }
+    }
 
     if (SQL_SUCCEEDED(res) && !stmt->result_array && !if_forward_cache(stmt))
+    {
         /* reset result position */
         stmt->end_of_set= mysql_row_seek(stmt->result,save_position);
+    }
 
     if (!stmt->dbc->ds->dont_use_set_locale)
+
         setlocale(LC_NUMERIC,default_locale);
 
-    if (SQL_SUCCEEDED(res) && stmt->rows_found_in_set == 0)
-      return SQL_NO_DATA_FOUND;
+    if (SQL_SUCCEEDED(res)
+      && stmt->rows_found_in_set < stmt->ard->array_size)
+    {
+      if (disconnected)
+      {
+        return SQL_ERROR;
+      }
+      else if (stmt->rows_found_in_set == 0)
+      {
+        return SQL_NO_DATA_FOUND;
+      }
+    }
 
     return res;
 }
