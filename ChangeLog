@@ -5,6 +5,8 @@
   Bugs fixed:
   * In some cases TIMESTAMP field could be described as SQL_NO_NULLS.
     (Bug #13532987)
+  * SQLFetch has to return error if indicator pointer is NULL for NULL value.
+  (Bug #13542600)
 
 ----
 

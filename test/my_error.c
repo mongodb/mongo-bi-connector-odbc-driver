@@ -474,7 +474,7 @@ BEGIN_TESTS
   ADD_TEST(t_handle_err)
   ADD_TEST(sqlerror)
   ADD_TEST(t_bug27158)
-  ADD_TOFIX(t_bug13542600)
+  ADD_TEST(t_bug13542600)
 END_TESTS
 
 RUN_TESTS

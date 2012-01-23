@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -1315,7 +1315,7 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
     if (ARD_IS_BOUND(arrec))
     {
       SQLLEN offset, pcb_offset;
-      SQLLEN pcbValue;
+      SQLLEN *pcbValue= NULL;
       SQLPOINTER TargetValuePtr= NULL;
 
       if (stmt->ard->bind_type == SQL_BIND_BY_COLUMN)
@@ -1343,8 +1343,16 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
       if (!length && *values)
         length= strlen(*values);
 
+      /* We need to pass that pointer to the sql_get_data so it could detect
+         22002 error - for NULL values that pointer has to be supplied by user.
+       */
+      if (arrec->octet_length_ptr)
+      {
+        pcbValue= arrec->octet_length_ptr + (pcb_offset / sizeof(SQLLEN));
+      }
+
       tmp_res= sql_get_data(stmt, arrec->concise_type, irrec->row.field,
-                            TargetValuePtr, arrec->octet_length, &pcbValue,
+                            TargetValuePtr, arrec->octet_length, pcbValue,
                             *values, length, arrec);
       if (tmp_res != SQL_SUCCESS)
       {
@@ -1356,9 +1364,6 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
         else
           res= SQL_ERROR;
       }
-
-      if (arrec->octet_length_ptr)
-        *(arrec->octet_length_ptr + (pcb_offset / sizeof(SQLLEN))) = pcbValue;
     }
   }
 
