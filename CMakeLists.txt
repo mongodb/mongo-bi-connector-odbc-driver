@@ -1,5 +1,5 @@
 #
-# Copyright (©) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most 
@@ -27,7 +27,7 @@ PROJECT(MySQL_Connector_ODBC)
 
 SET(CONNECTOR_MAJOR "5")
 SET(CONNECTOR_MINOR "1")
-SET(CONNECTOR_PATCH "9")
+SET(CONNECTOR_PATCH "10")
 SET(CONNECTOR_LEVEL "")
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6.2 FATAL_ERROR)
