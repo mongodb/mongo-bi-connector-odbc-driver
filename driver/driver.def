@@ -1,5 +1,5 @@
 ;/*
-;  Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved
+;  Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved
 ;
 ;  The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 ;  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -23,8 +23,8 @@
 ;*/
 ;
 LIBRARY MYODBC5.DLL
-VERSION 05.01.0010
-;DESCRIPTION "MySQL ODBC 5.1 Driver, Copyright (c) 1995, 2011, Oracle and/or its affiliates"
+VERSION 05.01.0011
+;DESCRIPTION "MySQL ODBC 5.1 Driver, Copyright (c) 1995, 2012, Oracle and/or its affiliates"
 ;CODE MOVEABLE DISCARDABLE
 ;DATA MOVEABLE MULTIPLE
 ;PROTMODE
