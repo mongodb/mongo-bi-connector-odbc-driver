@@ -1370,14 +1370,15 @@ DECLARE_TEST(t_bug33298)
 */
 DECLARE_TEST(t_bug12805)
 {
-  SQLHENV    henv1;
-  SQLHDBC    hdbc1;
-  SQLHSTMT   hstmt1;
-  SQLCHAR    dummy[10];
-  SQLULEN    length;  
+  SQLHENV     henv1;
+  SQLHDBC     hdbc1;
+  SQLHSTMT    hstmt1;
+  SQLCHAR     dummy[10];
+  SQLULEN     length;  
   SQLUINTEGER len2;
+  int         saved_options= myoption;
 
-  SET_DSN_OPTION(1 << 27);
+  SET_DSN_OPTION(myoption | 1 << 27);
 
   alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
 
@@ -1426,7 +1427,7 @@ DECLARE_TEST(t_bug12805)
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
   ok_sql(hstmt, "DROP TABLE bug12805");
 
-  SET_DSN_OPTION(0);
+  SET_DSN_OPTION(saved_options);
   return OK;
 }
 
@@ -2492,5 +2493,8 @@ BEGIN_TESTS
   ADD_TEST(sqlcolumns_nodbselected)
 END_TESTS
 
-
+myoption &= ~(1 << 30);
+RUN_TESTS_ONCE
+myoption |= (1 << 30);
+testname_suffix= "_no_i_s";
 RUN_TESTS

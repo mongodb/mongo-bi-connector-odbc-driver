@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -101,6 +101,8 @@ int      myoption= 0, myport= 0;
 SQLCHAR *myserver= (SQLCHAR *)"localhost";
 SQLCHAR *mydb= (SQLCHAR *)"test";
 SQLCHAR *test_db= (SQLCHAR *)"client_odbc_test";
+/* Suffix is useful if a testsuite is run more than once */
+const SQLCHAR *testname_suffix="";
 
 int g_nCursor;
 char g_szHeader[501];
@@ -160,7 +162,8 @@ DWORD WINAPI win32_alarm(LPVOID arg)
 #define ENABLE_ALARMS    int do_alarms= !getenv("DISABLE_TIMEOUT")
 #define RUN_TESTS_SIGNAL halarm= CreateEvent(NULL, FALSE, FALSE, NULL); \
                          if (do_alarms) \
-                           CreateThread(NULL, 0, win32_alarm, (LPVOID) 30, 0, NULL)
+                           CreateThread(NULL, 0, win32_alarm, (LPVOID) 30, 0, NULL); \
+                         do_alarms= 0
 #define RUN_TESTS_ALARM (void) SetEvent(halarm)
 #else
 #define ENABLE_ALARMS    int do_alarms= !getenv("DISABLE_TIMEOUT")
@@ -231,7 +234,7 @@ int main(int argc, char **argv) \
 #define SET_DSN_OPTION(x) \
   myoption= (x);
 
-#define RUN_TESTS \
+#define RUN_TESTS_ONCE \
   setbuf(stdout, NULL); \
   num_tests= sizeof(tests) / sizeof(tests[0]); \
   printf("1..%d\n", num_tests); \
@@ -246,10 +249,10 @@ int main(int argc, char **argv) \
     int rc; \
     RUN_TESTS_ALARM; \
     rc= tests[i].func(hdbc, hstmt, henv); \
-    printf("%s %d - %s %s%s\n", \
+    printf("%s %d - %s%s %s%s\n", \
            (rc == OK || rc == SKIP) ? "ok" : "not ok", \
            i + 1, \
-           tests[i].name, \
+           tests[i].name, testname_suffix, \
            (tests[i].expect == FAIL ? "# TODO" : \
             rc == SKIP ? "# SKIP " : ""), \
            SKIP_REASON ? SKIP_REASON : ""); \
@@ -259,8 +262,10 @@ int main(int argc, char **argv) \
     /* Re-allocate statement to reset all its properties. */ \
     SQLFreeStmt(hstmt, SQL_DROP); \
     SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt); \
-  } \
-\
+  }
+
+#define RUN_TESTS \
+  RUN_TESTS_ONCE \
   (void)free_basic_handles(&henv, &hdbc, &hstmt); \
   exit(failcnt); \
 }
