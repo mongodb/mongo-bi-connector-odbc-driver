@@ -68,7 +68,8 @@ typedef unsigned char UTF8;
 #include "../util/unicode_transcode.c"
 
 
-void printMessage(const char *fmt, ...) {
+void printMessage(const char *fmt, ...)
+{
   va_list ap;
   va_start(ap, fmt);
   fprintf(stdout, "# ");
@@ -78,13 +79,37 @@ void printMessage(const char *fmt, ...) {
 }
 
 
-void wprintMessage(const wchar_t *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  fprintf(stdout, "# ");
-  vfwprintf(stdout, fmt, ap);
-  fprintf(stdout, "\n");
-  va_end(ap);
+/* Function that converts wchr_t string to char string for a debug output
+   Minimum guaranteed lenght of string it can convert is 2048/12=170. Stops if its
+   buffer cannot accomodate more characters from parameter string */
+const char * wstr4output(const wchar_t *wstr)
+{
+  int i;
+  static char str[2048];
+  char dbuf[16], *to= str;
+
+  for (i= 0; i < wcslen(wstr); ++i)
+  {
+    if (wstr[i] < 0x7f )
+    {
+      sprintf(dbuf, "%c", wstr[i]);
+    }
+    else
+    {
+      sprintf(dbuf, "[0x%x]", wstr[i]);
+    }
+
+    if (to - str + strlen(dbuf) + 1 < sizeof(str))
+    {
+      to+= sprintf(to, "%s", dbuf);
+    }
+    else
+    {
+      break;
+    }
+  }
+  
+  return str;
 }
 
 #define MAX_NAME_LEN 255

@@ -1168,8 +1168,8 @@ DECLARE_TEST(t_bug28168)
 
   if (sizeof(SQLWCHAR) == sizeof(wchar_t))
   {
-    wprintMessage(L"expected msg: %ls\n", dummy);
-    wprintMessage(L"actual msg: %ls\n", errmsgtxt);
+    printMessage("expected msg: %s\n", wstr4output(dummy));
+    printMessage("actual msg: %s\n", wstr4output(errmsgtxt));
   }
 
   is(!memcmp(errmsgtxt, W(dummy), wcslen(dummy) * sizeof(SQLWCHAR)));
