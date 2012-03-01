@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -116,83 +116,92 @@ DECLARE_TEST(my_ts)
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS my_ts");
 
+  /* Test of 2-digits year(YYMMDD) format */
+  ok_sql(hstmt, "select \"910825\""); 
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_TIMESTAMP, &ts, sizeof(ts), &len));
+
+  is_num(1991, ts.year);
+  is_num(8, ts.month);
+  is_num(25, ts.day);
+
   return OK;
 }
 
 
 DECLARE_TEST(t_tstotime)
 {
-    SQLRETURN rc;
-    SQL_TIMESTAMP_STRUCT ts, ts1, ts2;
+  SQLRETURN rc;
+  SQL_TIMESTAMP_STRUCT ts, ts1, ts2;
 
-    ts.day    = 02;
-    ts.month  = 8;
-    ts.year   = 2001;
-    ts.hour   = 18;
-    ts.minute = 20;
-    ts.second = 45;
-    ts.fraction = 05;   
+  ts.day    = 02;
+  ts.month  = 8;
+  ts.year   = 2001;
+  ts.hour   = 18;
+  ts.minute = 20;
+  ts.second = 45;
+  ts.fraction = 05;   
 
-    memcpy(&ts1, (void*) &ts, sizeof(SQL_TIMESTAMP_STRUCT));
-    /* For SQL_TIME fraction is truncated and that would cause error */
-    ts1.fraction= 0;
+  memcpy(&ts1, (void*) &ts, sizeof(SQL_TIMESTAMP_STRUCT));
+  /* For SQL_TIME fraction is truncated and that would cause error */
+  ts1.fraction= 0;
 
-    memcpy(&ts2, (void*) &ts1, sizeof(SQL_TIMESTAMP_STRUCT));
-    /* Same for SQL_DATE - time is truncated -> error */
-    ts2.hour= ts2.minute= ts2.second= 0;
+  memcpy(&ts2, (void*) &ts1, sizeof(SQL_TIMESTAMP_STRUCT));
+  /* Same for SQL_DATE - time is truncated -> error */
+  ts2.hour= ts2.minute= ts2.second= 0;
 
-    ok_sql(hstmt, "DROP TABLE IF EXISTS t_tstotime");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_tstotime");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+  mycon(hdbc,rc);
 
-    rc = tmysql_exec(hstmt,"create table t_tstotime(col1 date ,col2 time, col3 timestamp)");
-    mystmt(hstmt,rc);
+  rc = tmysql_exec(hstmt,"create table t_tstotime(col1 date ,col2 time, col3 timestamp)");
+  mystmt(hstmt,rc);
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+  mycon(hdbc,rc);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+  mystmt(hstmt,rc);
 
-    /* TIMESTAMP TO DATE, TIME and TS CONVERSION */
-    rc = SQLPrepare(hstmt, (SQLCHAR *)"insert into t_tstotime(col1,col2,col3) values(?,?,?)",SQL_NTS);
-    mystmt(hstmt,rc);   
+  /* TIMESTAMP TO DATE, TIME and TS CONVERSION */
+  rc = SQLPrepare(hstmt, (SQLCHAR *)"insert into t_tstotime(col1,col2,col3) values(?,?,?)",SQL_NTS);
+  mystmt(hstmt,rc);   
 
-    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
-                          SQL_DATE,0,0,&ts2,sizeof(ts2),NULL);
-    mystmt(hstmt,rc);
+  rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
+                        SQL_DATE,0,0,&ts2,sizeof(ts2),NULL);
+  mystmt(hstmt,rc);
 
-    rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
-                          SQL_TIME,0,0,&ts1,sizeof(ts1),NULL);
-    mystmt(hstmt,rc);
+  rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
+                        SQL_TIME,0,0,&ts1,sizeof(ts1),NULL);
+  mystmt(hstmt,rc);
 
-    rc = SQLBindParameter(hstmt,3,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
-                          SQL_TIMESTAMP,0,0,&ts,sizeof(ts),NULL);
-    mystmt(hstmt,rc);
+  rc = SQLBindParameter(hstmt,3,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
+                        SQL_TIMESTAMP,0,0,&ts,sizeof(ts),NULL);
+  mystmt(hstmt,rc);
 
-    rc = SQLExecute(hstmt);
-    mystmt(hstmt,rc);
+  rc = SQLExecute(hstmt);
+  mystmt(hstmt,rc);
 
-    rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-    mystmt(hstmt,rc);  
+  rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
+  mystmt(hstmt,rc);  
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);  
+  rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+  mystmt(hstmt,rc);  
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+  mycon(hdbc,rc);
 
-    rc = tmysql_exec(hstmt,"select * from t_tstotime");
-    mystmt(hstmt,rc);  
+  rc = tmysql_exec(hstmt,"select * from t_tstotime");
+  mystmt(hstmt,rc);  
 
-    my_assert( 1 == myresult(hstmt));
+  my_assert( 1 == myresult(hstmt));
 
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
+  rc = SQLFreeStmt(hstmt,SQL_UNBIND);
+  mystmt(hstmt,rc);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+  mystmt(hstmt,rc);
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_tstotime");
 

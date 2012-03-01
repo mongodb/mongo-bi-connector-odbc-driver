@@ -1922,6 +1922,7 @@ int str_to_ts(SQL_TIMESTAMP_STRUCT *ts, const char *str, int len, int zeroToMin,
       ts= (SQL_TIMESTAMP_STRUCT *) &tmp_timestamp;
     }
 
+    /* SQL_NTS is (naturally) negative and is caught as well */
     if (len < 0)
     {
       len= strlen(str);
@@ -1952,12 +1953,11 @@ int str_to_ts(SQL_TIMESTAMP_STRUCT *ts, const char *str, int len, int zeroToMin,
       }
     }
 
-    /* If there was fractional part length would be set */
     length= (uint) (to-buff);
 
     if ( length == 6 || length == 12 )  /* YYMMDD or YYMMDDHHMMSS */
     {
-      memmove(to+2, to, length);
+      memmove(buff+2, buff, length);
 
       if ( buff[0] <= '6' )
       {
