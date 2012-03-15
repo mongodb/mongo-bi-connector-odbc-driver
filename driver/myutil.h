@@ -319,9 +319,51 @@ SQLLEN proc_get_param_col_len(STMT *stmt, int sql_type_index, SQLULEN col_size,
 int proc_get_param_sql_type_index(SQLCHAR *ptype, int len);
 SQLTypeMap *proc_get_param_map_by_index(int index);
 char *proc_param_next_token(char *str, char *str_end);
+
 void set_row_count(STMT * stmt, my_ulonglong rows);
 const char *get_fractional_part(const char * str, int len, BOOL dont_use_set_locale,
                           SQLUINTEGER * fraction);
+/* Convert MySQL timestamp to full ANSI timestamp format. */
+char * complete_timestamp(const char * value, ulong length, char buff[21]);
+long double strtold(const char *nptr, char **endptr);
+
+/*results.c*/
+long long binary2numeric(long long *dst, char *src, uint srcLen);
+BOOL isStatementForRead(STMT FAR *stmt);
+void fill_ird_data_lengths(DESC *ird, ulong *lengths, uint fields);
+
+/* Functions to work with prepared and regular statements  */
+/* my_stmt.c */
+BOOL          ssps_used(STMT *stmt);
+BOOL          returned_result(STMT *stmt);
+my_bool       free_current_result(STMT *stmt);
+MYSQL_RES *   get_result(STMT *stmt);
+unsigned int  field_count(STMT *stmt);
+my_ulonglong  affected_rows(STMT *stmt);
+my_ulonglong  update_affected_rows(STMT *stmt);
+my_ulonglong  num_rows(stmt);
+MYSQL_ROW     fetch_row(STMT *stmt);
+unsigned long*fetch_lengths(STMT *stmt);
+int           get_int(STMT *stmt, ulong column_number, char *value,
+                      ulong length);
+long long     get_int64(STMT *stmt, ulong column_number, char *value,
+                        ulong length);
+char *        get_string(STMT *stmt, ulong column_number, char *value,
+                         ulong *length, char * buffer);
+long double   get_double(STMT *stmt, ulong column_number, char *value,
+                         ulong length);
+BOOL          is_null(STMT *stmt, ulong column_number, char *value);
+
+
+/* my_prepared_stmt.c */
+void  ssps_init(STMT *stmt);
+void  ssps_close(STMT *stmt);
+int   ssps_bind_result(STMT *stmt);
+BOOL  ssps_0buffers_truncated_only(STMT *stmt);
+long long   ssps_get_int64 (STMT *stmt, ulong column_number, char *value, ulong length);
+long double ssps_get_double(STMT *stmt, ulong column_number, char *value, ulong length);
+char *      ssps_get_string(STMT *stmt, ulong column_number, char *value, ulong *length,
+                            char * buffer);
 
 #ifdef __WIN__
 #define cmp_database(A,B) myodbc_strcasecmp((const char *)(A),(const char *)(B))

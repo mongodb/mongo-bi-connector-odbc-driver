@@ -215,7 +215,7 @@ DESCREC *desc_get_rec(DESC *desc, int recnum, my_bool expand)
       /* we might have used records lying around from before if
        * SQLFreeStmt() was called with SQL_UNBIND or SQL_FREE_PARAMS
        */
-      if (i < desc->records.elements)
+      if ((uint)i < desc->records.elements)
       {
         rec= ((DESCREC *)desc->records.buffer) + recnum;
       }

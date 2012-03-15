@@ -25,7 +25,7 @@
 SET(DRIVER_SRCS
 		ansi.c catalog.c catalog_no_i_s.c connect.c cursor.c desc.c dll.c error.c execute.c
     handle.c info.c driver.c options.c prepare.c results.c transact.c unicode.c
-    utility.c)
+    my_prepared_stmt.c my_stmt.c utility.c)
 
 INCLUDE_DIRECTORIES(../util)
 

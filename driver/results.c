@@ -57,7 +57,7 @@ my_bool is_binary_ctype( SQLSMALLINT cType)
 
 
 /* Converts binary(currently used for bit field only) to long long number.*/
-void binary2numeric(long long *dst, char *src, uint srcLen)
+long long binary2numeric(long long *dst, char *src, uint srcLen)
 {
   *dst= 0;
 
@@ -70,6 +70,8 @@ void binary2numeric(long long *dst, char *src, uint srcLen)
     *dst+= (0xff & *src) << (--srcLen)*8;
     ++src;
   }
+
+  return *dst;
 }
 
 
@@ -191,26 +193,35 @@ my_bool odbc_supported_conversion(SQLSMALLINT sqlType, SQLSMALLINT cType)
   @param[in]  arrec       ARD record for this column (can be NULL)
 */
 static SQLRETURN SQL_API
-sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
+sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
              SQLPOINTER rgbValue, SQLLEN cbValueMax, SQLLEN *pcbValue,
-             char *value, uint length, DESCREC *arrec)
+             char *value, ulong length, DESCREC *arrec)
 {
+  MYSQL_FIELD *field= mysql_fetch_field_direct(stmt->result, column_number);
   SQLLEN    tmp;
   long long numericValue;
   my_bool   convert= 1;
   SQLRETURN result= SQL_SUCCESS;
+  char      as_string[50]; /* Buffer that might be required to convert other
+                              types data to its string representation */
 
   /* get the exact type if we don't already have it */
   if (fCType == SQL_C_DEFAULT)
   {
     fCType= unireg_to_c_datatype(field);
+
     if (!cbValueMax)
+    {
       cbValueMax= bind_length(fCType, 0);
+    }
   }
   else if (fCType == SQL_ARD_TYPE)
   {
     if (!arrec)
+    {
       return set_stmt_error(stmt, "07009", "Invalid descriptor index", 0);
+    }
+
     fCType= arrec->concise_type;
   }
 
@@ -218,6 +229,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
   if (fCType == SQL_C_NUMERIC && rgbValue)
   {
     SQL_NUMERIC_STRUCT *sqlnum= (SQL_NUMERIC_STRUCT *) rgbValue;
+
     if (arrec) /* normally set via ard */
     {
       sqlnum->precision= (SQLSCHAR) arrec->precision;
@@ -230,12 +242,14 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
     }
   }
 
-  if (!value)
+  if (is_null(stmt, column_number, value))
   {
     /* pcbValue must be available if its NULL */
     if (!pcbValue)
+    {
       return set_stmt_error(stmt,"22002",
                             "Indicator variable required but not supplied",0);
+    }
 
     *pcbValue= SQL_NULL_DATA;
   }
@@ -251,7 +265,9 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
     }
 
     if (!pcbValue)
+    {
       pcbValue= &tmp; /* Easier code */
+    }
 
     if (field->type == MYSQL_TYPE_BIT)
     {
@@ -267,84 +283,56 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
       }
     }
 
-    switch (fCType) {
+    switch (fCType)
+    {
     case SQL_C_CHAR:
       /* Handle BLOB -> CHAR conversion */
       if ((field->flags & (BLOB_FLAG|BINARY_FLAG)) == (BLOB_FLAG|BINARY_FLAG))
+      {
         return copy_binhex_result(stmt,
                                   (SQLCHAR *)rgbValue, cbValueMax, pcbValue,
                                   field, value, length);
+      }
       /* fall through */
 
     case SQL_C_BINARY:
       {
-        char buff[21];
+        char buff[21]; /* Not quite clear why 21 */
         if (field->type == MYSQL_TYPE_TIMESTAMP && length != 19)
         {
           /* Convert MySQL timestamp to full ANSI timestamp format. */
-          char *pos;
-          uint i;
-          if (length == 6 || length == 10 || length == 12)
+          /*TODO if stlen_ind_ptr was not passed - error has to be returned */
+          if (complete_timestamp(value, length, buff) == NULL)
           {
-            /* For two-digit year, < 60 is considered after Y2K */
-            if (value[0] <= '6')
-            {
-              buff[0]= '2';
-              buff[1]= '0';
-            }
-            else
-            {
-              buff[0]= '1';
-              buff[1]= '9';
-            }
-          }
-          else
-          {
-            buff[0]= value[0];
-            buff[1]= value[1];
-            value+= 2;
-            length-= 2;
-          }
-          buff[2]= *value++;
-          buff[3]= *value++;
-          buff[4]= '-';
-          if (value[0] == '0' && value[1] == '0')
-          {
-            /* Month was 0, which ODBC can't handle. */
             *pcbValue= SQL_NULL_DATA;
             break;
           }
-          pos= buff+5;
-          length&= 30;  /* Ensure that length is ok */
-          for (i= 1, length-= 2; (int)length > 0; length-= 2, ++i)
-          {
-            *pos++= *value++;
-            *pos++= *value++;
-            *pos++= i < 2 ? '-' : (i == 2) ? ' ' : ':';
-          }
-          for ( ; pos != buff + 20; ++i)
-          {
-            *pos++= '0';
-            *pos++= '0';
-            *pos++= i < 2 ? '-' : (i == 2) ? ' ' : ':';
-          }
+
           value= buff;
           length= 19;
         }
 
         if (fCType == SQL_C_BINARY)
+        {
           return copy_binary_result(stmt, (SQLCHAR *)rgbValue, cbValueMax,
                                     pcbValue, field, value, length);
+        }
         else
-          return copy_ansi_result(stmt, (SQLCHAR *)rgbValue, cbValueMax,
-                                  pcbValue, field, value, length);
+        {
+          char *tmp= get_string(stmt, column_number, value, &length, as_string);
+          return copy_ansi_result(stmt,(SQLCHAR*)rgbValue, cbValueMax, pcbValue,
+                          field, tmp,length);
+        }
       }
 
     case SQL_C_WCHAR:
-      return copy_wchar_result(stmt,
-                               (SQLWCHAR *)rgbValue,
-                               (SQLINTEGER)(cbValueMax / sizeof(SQLWCHAR)), pcbValue,
-                               field, value, length);
+      {
+        char *tmp= get_string(stmt, column_number, value, &length, as_string);
+
+        return copy_wchar_result(stmt, (SQLWCHAR *)rgbValue,
+                        (SQLINTEGER)(cbValueMax / sizeof(SQLWCHAR)), pcbValue,
+                        field, tmp, length);
+      }
 
     case SQL_C_BIT:
       if (rgbValue)
@@ -352,10 +340,16 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
         /* for MySQL bit(n>1) 1st byte may be '\0'. So testing already converted
            to a number value or atoi for other types. */
         if (!convert)
+        {
           *((char *)rgbValue)= numericValue > 0 ? '\1' : '\0';
+        }
         else
-          *((char *)rgbValue)= atoi(value) > 0 ? '\1' : '\0';
+        {
+          *((char *)rgbValue)= get_int(stmt, column_number, value, length) > 0 ?
+                               '\1' : '\0';
+        }
       }
+
       *pcbValue= 1;
       break;
 
@@ -363,16 +357,16 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
     case SQL_C_STINYINT:
       if (rgbValue)
         *((SQLSCHAR *)rgbValue)= (SQLSCHAR)(convert
-                                            ? atoi(value)
-                                            : (numericValue & (SQLSCHAR)(-1)));
+                                 ? get_int(stmt, column_number, value, length)
+                                 : (numericValue & (SQLSCHAR)(-1)));
       *pcbValue= 1;
       break;
 
     case SQL_C_UTINYINT:
       if (rgbValue)
         *((SQLCHAR *)rgbValue)= (SQLCHAR)(unsigned int)(convert
-                                             ? atoi(value)
-                                             : (numericValue & (SQLCHAR)(-1)));
+                                ? get_int(stmt, column_number, value, length)
+                                : (numericValue & (SQLCHAR)(-1)));
       *pcbValue= 1;
       break;
 
@@ -380,16 +374,16 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
     case SQL_C_SSHORT:
       if (rgbValue)
         *((SQLSMALLINT *)rgbValue)= (SQLSMALLINT)(convert
-                                         ? atoi(value)
-                                         : (numericValue & (SQLUSMALLINT)(-1)));
+                                ? get_int(stmt, column_number, value, length)
+                                : (numericValue & (SQLUSMALLINT)(-1)));
       *pcbValue= sizeof(SQLSMALLINT);
       break;
 
     case SQL_C_USHORT:
       if (rgbValue)
         *((SQLUSMALLINT *)rgbValue)= (SQLUSMALLINT)(uint)(convert
-                                          ? atol(value)
-                                          : (numericValue & (SQLUSMALLINT)(-1)));
+                                ? get_int64(stmt, column_number, value, length)
+                                : (numericValue & (SQLUSMALLINT)(-1)));
       *pcbValue= sizeof(SQLUSMALLINT);
       break;
 
@@ -399,6 +393,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
       {
         /* Check if it could be a date...... :) */
         if (convert)
+        {
           if (length >= 10 && value[4] == '-' && value[7] == '-' &&
                (!value[10] || value[10] == ' '))
           {
@@ -407,7 +402,9 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
                                         (SQLINTEGER) atol(value + 8));
           }
           else
-            *((SQLINTEGER *)rgbValue)= (SQLINTEGER) atol(value);
+            *((SQLINTEGER *)rgbValue)= (SQLINTEGER) get_int64(stmt,
+                                                  column_number, value, length);
+        }
         else
           *((SQLINTEGER *)rgbValue)= (SQLINTEGER)(numericValue
                                                   & (SQLUINTEGER)(-1));
@@ -417,23 +414,23 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
 
     case SQL_C_ULONG:
       if (rgbValue)
-        *((SQLUINTEGER *)rgbValue)= (SQLUINTEGER)(convert
-                                            ? strtoul(value, NULL, 10)
-                                            : numericValue & (SQLUINTEGER)(-1));
+        *((SQLUINTEGER *)rgbValue)= (SQLUINTEGER)(convert ?
+                                get_int64(stmt, column_number, value, length) :
+                                numericValue & (SQLUINTEGER)(-1));
       *pcbValue= sizeof(SQLUINTEGER);
       break;
 
     case SQL_C_FLOAT:
       if (rgbValue)
-        *((float *)rgbValue)= (float)(convert ? atof(value)
-                                              : numericValue & (int)(-1));
+        *((float *)rgbValue)= (float)(convert ? get_double(stmt, column_number,
+                                    value, length) : numericValue & (int)(-1));
       *pcbValue= sizeof(float);
       break;
 
     case SQL_C_DOUBLE:
       if (rgbValue)
-        *((double *)rgbValue)= (double)(convert ? strtod(value, NULL)
-                                                : numericValue);
+        *((double *)rgbValue)= (double)(convert ? get_double(stmt, column_number,
+                                    value, length) : numericValue);
       *pcbValue= sizeof(double);
       break;
 
@@ -441,13 +438,24 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
     case SQL_C_TYPE_DATE:
       {
         SQL_DATE_STRUCT tmp_date;
+        char *tmp= get_string(stmt, column_number, value, &length, as_string);
+
         if (!rgbValue)
+        {
           rgbValue= (char *)&tmp_date;
-        if (!str_to_date((SQL_DATE_STRUCT *)rgbValue, value,
-                         length, stmt->dbc->ds->zero_date_to_min))
+        }
+
+        if (!str_to_date((SQL_DATE_STRUCT *)rgbValue, tmp, length,
+                          stmt->dbc->ds->zero_date_to_min))
+        {
           *pcbValue= sizeof(SQL_DATE_STRUCT);
+        }
         else
+        {
+          /*TODO - again, error if pcbValue was originally NULL */
           *pcbValue= SQL_NULL_DATA;  /* ODBC can't handle 0000-00-00 dates */
+        }
+
         break;
       }
 
@@ -458,7 +466,8 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
       {
         SQL_TIMESTAMP_STRUCT ts;
 
-        switch (str_to_ts(&ts, value, SQL_NTS, stmt->dbc->ds->zero_date_to_min,
+        switch (str_to_ts(&ts, get_string(stmt, column_number, value, &length,
+                          as_string), SQL_NTS, stmt->dbc->ds->zero_date_to_min,
                           TRUE))
         {
         case SQLTS_BAD_DATE:
@@ -501,7 +510,9 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
       else
       {
         SQL_TIME_STRUCT ts;
-        if (str_to_time_st(&ts, value))
+        char *tmp= get_string(stmt,
+                            column_number, value, &length, as_string);
+        if (str_to_time_st(&ts, tmp))
         {
           *pcbValue= SQL_NULL_DATA;
         }
@@ -519,7 +530,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
 
           *pcbValue= sizeof(TIME_STRUCT);
 
-          get_fractional_part(value, SQL_NTS, TRUE, &fraction);
+          get_fractional_part(tmp, SQL_NTS, TRUE, &fraction);
 
           if (fraction)
           {
@@ -535,11 +546,14 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
 
     case SQL_C_TIMESTAMP:
     case SQL_C_TYPE_TIMESTAMP:
+      {
+      char *tmp= get_string(stmt, column_number, value, &length, as_string);
+
       if (field->type == MYSQL_TYPE_TIME)
       {
         SQL_TIME_STRUCT ts;
-
-        if (str_to_time_st(&ts, value))
+        
+        if (str_to_time_st(&ts, tmp))
         {
           *pcbValue= SQL_NULL_DATA;
         }
@@ -558,40 +572,44 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
           timestamp_info->hour=   ts.hour;
           timestamp_info->minute= ts.minute;
           timestamp_info->second= ts.second;
-          get_fractional_part(value, SQL_NTS, TRUE, &timestamp_info->fraction);
+          get_fractional_part(tmp, SQL_NTS, TRUE, &timestamp_info->fraction);
           *pcbValue= sizeof(SQL_TIMESTAMP_STRUCT);
         }
       }
       else
       {
-        switch (str_to_ts((SQL_TIMESTAMP_STRUCT *)rgbValue, value, SQL_NTS,
+        switch (str_to_ts((SQL_TIMESTAMP_STRUCT *)rgbValue, tmp, SQL_NTS,
                       stmt->dbc->ds->zero_date_to_min, TRUE))
         {
         case SQLTS_BAD_DATE:
           return set_stmt_error(stmt, "22018", "Data value is not a valid date/time(stamp) value", 0);
+
         case SQLTS_NULL_DATE:
           *pcbValue= SQL_NULL_DATA;
           break;
+
         default:
           *pcbValue= sizeof(SQL_TIMESTAMP_STRUCT);
         }
       }
       break;
+      }
 
     case SQL_C_SBIGINT:
       /** @todo This is not right. SQLBIGINT is not always longlong. */
       if (rgbValue)
-        *((longlong *)rgbValue)= (longlong)(convert ? strtoll(value, NULL, 10)
-                                                    : numericValue);
+        *((longlong *)rgbValue)= (longlong)(convert ? get_int64(stmt,
+                        column_number, value, length) : numericValue);
+
       *pcbValue= sizeof(longlong);
       break;
 
     case SQL_C_UBIGINT:
       /** @todo This is not right. SQLUBIGINT is not always ulonglong.  */
       if (rgbValue)
-          *((ulonglong *)rgbValue)= (ulonglong)(convert
-                                                ? strtoull(value, NULL, 10)
-                                                : numericValue);
+          *((ulonglong *)rgbValue)= (ulonglong)(convert ? get_int64(stmt,
+                        column_number, value, length) : numericValue);
+
       *pcbValue= sizeof(ulonglong);
       break;
 
@@ -599,10 +617,11 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
       {
         int overflow= 0;
         SQL_NUMERIC_STRUCT *sqlnum= (SQL_NUMERIC_STRUCT *) rgbValue;
+
         if (rgbValue)
         {
           if (convert)
-            sqlnum_from_str(value, sqlnum, &overflow);
+            sqlnum_from_str(get_string(stmt, column_number, value, &length, as_string), sqlnum, &overflow);
           else /* bit field */
           {
             /* Lazy way - converting number we have to a string.
@@ -616,6 +635,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
 
         }
         *pcbValue= sizeof(ulonglong);
+
         if (overflow)
           return set_stmt_error(stmt, "22003",
                                 "Numeric value out of range", 0);
@@ -653,7 +673,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, MYSQL_FIELD *field,
 
     \sa     BUG 5778            
 */
-BOOL isStatementForRead( STMT FAR *stmt )
+BOOL isStatementForRead(STMT *stmt)
 {
     char *pCursor;
     int n = 0;
@@ -1170,7 +1190,7 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
 {
     STMT *stmt= (STMT *) StatementHandle;
     SQLRETURN result;
-    uint length= 0;
+    ulong length= 0;
     DESCREC *irrec;
 
     if (!stmt->result || !stmt->current_values)
@@ -1203,7 +1223,7 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
     if (!stmt->dbc->ds->dont_use_set_locale)
       setlocale(LC_NUMERIC, "C");
 
-    result= sql_get_data(stmt, TargetType, irrec->row.field,
+    result= sql_get_data(stmt, TargetType, ColumnNumber,
                          TargetValuePtr, BufferLength, StrLen_or_IndPtr,
                          stmt->current_values[ColumnNumber], length,
                          desc_get_rec(stmt->ard, ColumnNumber, FALSE));
@@ -1322,7 +1342,8 @@ SQLRETURN SQL_API SQLRowCount( SQLHSTMT hstmt,
 
     if ( stmt->result )
     {
-        *pcrow= (SQLLEN) mysql_affected_rows(&stmt->dbc->mysql);
+      /* for SetPos operations result is defined */
+        *pcrow= (SQLLEN) affected_rows(stmt);
     }
     else
     {
@@ -1339,7 +1360,7 @@ SQLRETURN SQL_API SQLRowCount( SQLHSTMT hstmt,
   @param[in]  lengths     Data lengths from mysql_fetch_lengths()
   @param[in]  fields      Number of fields
 */
-static void fill_ird_data_lengths(DESC *ird, ulong *lengths, uint fields)
+void fill_ird_data_lengths(DESC *ird, ulong *lengths, uint fields)
 {
   uint i;
   DESCREC *irrec;
@@ -1372,7 +1393,7 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
 {
   SQLRETURN res= SQL_SUCCESS, tmp_res;
   int i;
-  uint length= 0;
+  ulong length= 0;
   DESCREC *irrec, *arrec;
 
   for (i= 0; i < myodbc_min(stmt->ird->count, stmt->ard->count); ++i, ++values)
@@ -1393,7 +1414,9 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
         pcb_offset= sizeof(SQLLEN) * rownum;
       }
       else
+      {
         pcb_offset= offset= stmt->ard->bind_type * rownum;
+      }
 
       /* apply SQL_ATTR_ROW_BIND_OFFSET_PTR */
       if (stmt->ard->bind_offset_ptr)
@@ -1405,12 +1428,17 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
       reset_getdata_position(stmt);
 
       if (arrec->data_ptr)
+      {
         TargetValuePtr= ((char*) arrec->data_ptr) + offset;
+      }
 
       /* catalog functions with "fake" results won't have lengths */
       length= irrec->row.datalen;
+
       if (!length && *values)
+      {
         length= strlen(*values);
+      }
 
       /* We need to pass that pointer to the sql_get_data so it could detect
          22002 error - for NULL values that pointer has to be supplied by user.
@@ -1420,7 +1448,7 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
         pcbValue= arrec->octet_length_ptr + (pcb_offset / sizeof(SQLLEN));
       }
 
-      tmp_res= sql_get_data(stmt, arrec->concise_type, irrec->row.field,
+      tmp_res= sql_get_data(stmt, arrec->concise_type, (uint)i,
                             TargetValuePtr, arrec->octet_length, pcbValue,
                             *values, length, arrec);
       if (tmp_res != SQL_SUCCESS)
@@ -1431,7 +1459,9 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
             res= tmp_res;
         }
         else
+        {
           res= SQL_ERROR;
+        }
       }
     }
   }
@@ -1445,6 +1475,8 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
   @purpose : fetches the specified rowset of data from the result set and
   returns data for all bound columns. Rowsets can be specified
   at an absolute or relative position
+
+  This function is way to long and needs to be structured.
 */
 SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                                        SQLUSMALLINT         fFetchType,
@@ -1484,7 +1516,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     if ( !pcrow )
         pcrow= &dummy_pcrow;
 
-    max_row= (long) mysql_num_rows(stmt->result);
+    max_row= (long) num_rows(stmt);
     reset_getdata_position(stmt);
     stmt->current_values= 0;          /* For SQLGetData */
 
@@ -1600,14 +1632,16 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
             {
                 save_position= mysql_row_tell(stmt->result);
             }
-            if ( !(values= mysql_fetch_row(stmt->result)) )
+            if ( !(values= fetch_row(stmt)) )
             {
                 break;
             }
+
             if ( stmt->fix_fields )
             {
                 values= (*stmt->fix_fields)(stmt,values);
             }
+
             stmt->current_values= values;
         }
 
@@ -1626,7 +1660,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
             fill_ird_data_lengths(stmt->ird, stmt->lengths + cur_row*stmt->result->field_count,
                                   stmt->result->field_count);
           else
-            fill_ird_data_lengths(stmt->ird, mysql_fetch_lengths(stmt->result),
+            fill_ird_data_lengths(stmt->ird, fetch_lengths(stmt),
                                   stmt->result->field_count);
         }
         row_res= fill_fetch_buffers(stmt, values, i);

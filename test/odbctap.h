@@ -84,7 +84,7 @@ void printMessage(const char *fmt, ...)
    buffer cannot accomodate more characters from parameter string */
 const char * wstr4output(const wchar_t *wstr)
 {
-  int i;
+  size_t i;
   static char str[2048];
   char dbuf[16], *to= str;
 
@@ -862,7 +862,7 @@ SQLUINTEGER myrowcount(SQLHSTMT hstmt)
     rc = SQLFetch(hstmt);
     while (rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO)
     {
-        nRowCount++;
+        ++nRowCount;
         rc = SQLFetch(hstmt);
     }
     SQLFreeStmt(hstmt,SQL_UNBIND);

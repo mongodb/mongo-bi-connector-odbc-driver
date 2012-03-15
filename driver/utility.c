@@ -130,9 +130,10 @@ void fix_result_types(STMT *stmt)
   stmt->state= ST_EXECUTED;  /* Mark set found */
 
   /* Populate the IRD records */
-  for (i= 0; i < result->field_count; ++i)
+  for (i= 0; i < field_count(stmt); ++i)
   {
     irrec= desc_get_rec(stmt->ird, i, TRUE);
+    /* TODO function for this */
     field= result->fields + i;
 
     irrec->row.field= field;
@@ -2275,7 +2276,9 @@ int myodbc_casecmp(const char *s, const char *t, uint len)
 void query_print(FILE *log_file,char *query)
 {
     if ( log_file && query )
-        fprintf(log_file, "%s;\n",query);
+    {
+      fprintf(log_file, "%lld:%s;\n", time(NULL), query);
+    }
 }
 
 
@@ -3571,4 +3574,109 @@ get_fractional_part(const char * str, int len, BOOL dont_use_set_locale,
   }
 
   return decptr;
+}
+
+/* Convert MySQL timestamp to full ANSI timestamp format. */
+char * complete_timestamp(const char * value, ulong length, char buff[21])
+{
+  char *pos;
+  uint i;
+
+  if (length == 6 || length == 10 || length == 12)
+  {
+    /* For two-digit year, < 60 is considered after Y2K */
+    if (value[0] <= '6')
+    {
+      buff[0]= '2';
+      buff[1]= '0';
+    }
+    else
+    {
+      buff[0]= '1';
+      buff[1]= '9';
+    }
+  }
+  else
+  {
+    buff[0]= value[0];
+    buff[1]= value[1];
+    value+= 2;
+    length-= 2;
+  }
+
+  buff[2]= *value++;
+  buff[3]= *value++;
+  buff[4]= '-';
+
+  if (value[0] == '0' && value[1] == '0')
+  {
+    /* Month was 0, which ODBC can't handle. */
+    return NULL;
+  }
+
+  pos= buff+5;
+  length&= 30;  /* Ensure that length is ok */
+
+  for (i= 1, length-= 2; (int)length > 0; length-= 2, ++i)
+  {
+    *pos++= *value++;
+    *pos++= *value++;
+    *pos++= i < 2 ? '-' : (i == 2) ? ' ' : ':';
+  }
+  for ( ; pos != buff + 20; ++i)
+  {
+    *pos++= '0';
+    *pos++= '0';
+    *pos++= i < 2 ? '-' : (i == 2) ? ' ' : ':';
+  }
+
+  return buff;
+}
+
+
+/*
+  HPUX has some problems with long double : http://docs.hp.com/en/B3782-90716/ch02s02.html
+
+  strtold() has implementations that return struct long_double, 128bit one,
+  which contains four 32bit words.
+  Fix described :
+  --------
+  union {
+	long_double l_d;
+	long double ld;
+  } u;
+  // convert str to a long_double; store return val in union
+  //(Putting value into union enables converted value to be
+  // accessed as an ANSI C long double)
+  u.l_d = strtold( (const char *)str, (char **)NULL);
+  --------
+  reinterpret_cast doesn't work :(
+*/
+long double strtold(const char *nptr, char **endptr)
+{
+/*
+ * Experienced odd compilation errors on one of windows build hosts -
+ * cmake reported there is strold function. Since double and long double on windows
+ * are of the same size - we are using strtod on those platforms regardless
+ * to the HAVE_FUNCTION_STRTOLD value
+ */
+#ifdef _WIN32
+  return strtod(nptr, endptr);
+#else
+# ifndef HAVE_FUNCTION_STRTOLD
+	return ::strtod(nptr, endptr);
+# else
+#  if defined(__hpux) && defined(_LONG_DOUBLE)
+	union {
+		long_double l_d;
+		long double ld;
+	} u;
+	u.l_d = ::strtold( nptr, endptr);
+	return u.ld;
+#  else
+	return ::strtold(nptr, endptr);
+#  endif
+# endif
+#endif
+
 }

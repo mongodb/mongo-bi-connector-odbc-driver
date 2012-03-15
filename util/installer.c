@@ -161,6 +161,7 @@ static SQLWCHAR W_DFLT_BIGINT_BIND_STR[]=
 static SQLWCHAR W_CLIENT_INTERACTIVE[]=
   {'I','N','T','E','R','A','C','T','I','V','E',0};
 static SQLWCHAR W_NO_I_S[]= {'N','O','_','I','_','S',0};
+static SQLWCHAR W_SERVER_CURSOR[]= {'S','E','R','V','E','R','_','C','U','R','S','O','R',0};
 
 /* DS_PARAM */
 /* externally used strings */
@@ -189,7 +190,7 @@ SQLWCHAR *dsnparams[]= {W_DSN, W_DRIVER, W_DESCRIPTION, W_SERVER,
                         W_ZERO_DATE_TO_MIN, W_MIN_DATE_TO_ZERO,
                         W_MULTI_STATEMENTS, W_COLUMN_SIZE_S32,
                         W_NO_BINARY_RESULT, W_DFLT_BIGINT_BIND_STR,
-                        W_CLIENT_INTERACTIVE, W_NO_I_S};
+                        W_CLIENT_INTERACTIVE, W_NO_I_S, W_SERVER_CURSOR};
 static const
 int dsnparamcnt= sizeof(dsnparams) / sizeof(SQLWCHAR *);
 /* DS_PARAM */
@@ -592,7 +593,9 @@ DataSource *ds_new()
   memset(ds, 0, sizeof(DataSource));
 
   /* non-zero DataSource defaults here */
-  ds->port= 3306;
+  ds->port=                   3306;
+  ds->cursor_prefetch_number= 0;/*100 - disabling this functionality so far
+                                          - too raw*/
   /* DS_PARAM */
 
   return ds;

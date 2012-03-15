@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -38,10 +38,12 @@
 
 SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
 {
-    int error= SQL_ERROR;
+    int error= SQL_ERROR, native_error= 0;
 
-    if ( !query )
-        return error;       /* Probably error from insert_param */
+    if (!query)
+    {
+      return error;       /* Probably error from insert_param */
+    }
 
     if(!SQL_SUCCEEDED(set_sql_select_limit(stmt->dbc, stmt->stmt_options.max_rows)))
     {
@@ -54,42 +56,63 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
 
     MYLOG_QUERY(stmt, query);
     pthread_mutex_lock(&stmt->dbc->lock);
+
     if ( check_if_server_is_alive( stmt->dbc ) )
     {
-        set_stmt_error( stmt, "08S01" /* "HYT00" */, mysql_error( &stmt->dbc->mysql ), mysql_errno( &stmt->dbc->mysql ) );
-        translate_error( stmt->error.sqlstate,MYERR_08S01 /* S1000 */, mysql_errno( &stmt->dbc->mysql ) );
-        goto exit;
+      set_stmt_error( stmt, "08S01" /* "HYT00" */, mysql_error( &stmt->dbc->mysql ), mysql_errno( &stmt->dbc->mysql ) );
+      translate_error( stmt->error.sqlstate,MYERR_08S01 /* S1000 */, mysql_errno( &stmt->dbc->mysql ) );
+      goto exit;
     }
 
-    if ( mysql_real_query(&stmt->dbc->mysql,query,query_length) )
+    if (stmt->dbc->ds->cursor_prefetch_number > 0 && if_forward_cache(stmt) 
+      && isStatementForRead(stmt))
     {
-        set_stmt_error(stmt,"HY000",mysql_error(&stmt->dbc->mysql),
-                       mysql_errno(&stmt->dbc->mysql));
+      MYLOG_QUERY(stmt, "Using prepared statement");
+      ssps_init(stmt);
+      /* Leaving old params binding in place so far */
+      native_error= mysql_stmt_prepare(stmt->ssps, query, query_length);
 
-        translate_error(stmt->error.sqlstate,MYERR_S1000,
-                        mysql_errno(&stmt->dbc->mysql));
-        goto exit;
+      if (!native_error)
+      {
+        native_error= mysql_stmt_execute(stmt->ssps);
+        MYLOG_QUERY(stmt, "ssps has been executed");
+      }
     }
-
-
-    /* We can't use USE_RESULT because SQLRowCount will fail in this case! */
-    if ( if_forward_cache(stmt) )
-        stmt->result= mysql_use_result(&stmt->dbc->mysql);
     else
-        stmt->result= mysql_store_result(&stmt->dbc->mysql);
-    if ( !stmt->result )
     {
-        if ( !mysql_field_count(&stmt->dbc->mysql) )
-        {
-            error= SQL_SUCCESS;     /* no result set */
-            stmt->state= ST_EXECUTED;
-            stmt->affected_rows+= mysql_affected_rows(&stmt->dbc->mysql);
-            goto exit;
-        }
-        set_error(stmt,MYERR_S1000,mysql_error(&stmt->dbc->mysql),
-                  mysql_errno(&stmt->dbc->mysql));
-        goto exit;
+      MYLOG_QUERY(stmt, "Using direct execution");
+      native_error= mysql_real_query(&stmt->dbc->mysql,query,query_length);
+      MYLOG_QUERY(stmt, "query has been executed");
     }
+
+    if (native_error)
+    {
+      set_stmt_error(stmt,"HY000",mysql_error(&stmt->dbc->mysql),
+                     mysql_errno(&stmt->dbc->mysql));
+
+      translate_error(stmt->error.sqlstate,MYERR_S1000,
+                      mysql_errno(&stmt->dbc->mysql));
+      goto exit;
+    }
+
+    if (!get_result(stmt))
+    {
+      /* Query was supposed to return result, but result is NULL*/
+      if (returned_result(stmt))
+      {
+        set_error(stmt,MYERR_S1000,mysql_error(&stmt->dbc->mysql),
+                mysql_errno(&stmt->dbc->mysql));
+        goto exit;
+      }
+      else /* Query was not supposed to return a result */
+      {
+        error= SQL_SUCCESS;     /* no result set */
+        stmt->state= ST_EXECUTED;
+        update_affected_rows(stmt);
+        goto exit;
+      }
+    }
+
     fix_result_types(stmt);
     error= SQL_SUCCESS;
 

@@ -370,6 +370,8 @@ SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
 
     stmt= (STMT FAR*) *phstmt;
     stmt->dbc= dbc;
+    stmt->ssps= NULL;;
+
     pthread_mutex_lock(&stmt->dbc->lock);
     dbc->statements= list_add(dbc->statements,&stmt->list);
     pthread_mutex_unlock(&stmt->dbc->lock);
@@ -468,20 +470,27 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     /* reset data-at-exec state */
     stmt->dae_type= 0;
 
+
     if (fOption == SQL_RESET_PARAMS)
     {
-        /* remove all params and reset count to 0 (per spec) */
-        /* http://msdn2.microsoft.com/en-us/library/ms709284.aspx */
-        stmt->apd->count= 0;
-        return SQL_SUCCESS;
+      /* with current use of ps we need to close, if we prepare on server, we will have
+         to change this to mysql_stmt_reset
+         http://dev.mysql.com/doc/refman/5.5/en/mysql-stmt-reset.html
+       */
+      ssps_close(stmt);
+      /* remove all params and reset count to 0 (per spec) */
+      /* http://msdn2.microsoft.com/en-us/library/ms709284.aspx */
+      stmt->apd->count= 0;
+      return SQL_SUCCESS;
     }
 
     if (!stmt->fake_result)
     {
-      mysql_free_result(stmt->result);
+      free_current_result(stmt);
       /* check if there are more resultsets */
       if (clearAllResults)
       {
+        /* For ps _close() will free all pending results */
         while (mysql_more_results(&stmt->dbc->mysql))
         {
           if (!mysql_next_result(&stmt->dbc->mysql))
@@ -499,6 +508,7 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
 
       x_free(stmt->result);
     }
+
     x_free(stmt->fields);
     x_free(stmt->array);
     x_free(stmt->result_array);
@@ -525,12 +535,18 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     stmt->dummy_state= ST_DUMMY_UNKNOWN;
     stmt->cursor.pk_validated= FALSE;
     if (stmt->setpos_apd)
+    {
       desc_free(stmt->setpos_apd);
+    }
     stmt->setpos_apd= NULL;
 
     for (i= stmt->cursor.pk_count; i--;)
-        stmt->cursor.pkcol[i].bind_done= 0;
+    {
+      stmt->cursor.pkcol[i].bind_done= 0;
+    }
     stmt->cursor.pk_count= 0;
+
+    ssps_close(stmt);
 
     if (fOption == SQL_CLOSE)
         return SQL_SUCCESS;
@@ -550,7 +566,9 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     reset_ptr(stmt->stmt_options.rowStatusPtr_ex);
 
     if (fOption == MYSQL_RESET)
-        return SQL_SUCCESS;
+    {
+      return SQL_SUCCESS;
+    }
 
     /* explicitly allocated descriptors are affected up until this point */
     desc_remove_stmt(stmt->apd, stmt);

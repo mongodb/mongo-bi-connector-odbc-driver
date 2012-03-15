@@ -504,7 +504,7 @@ static my_bool insert_field(STMT FAR *stmt, MYSQL_RES *result,
                                         aprec, iprec, 0)))
           return 1;
         if (!(to= (unsigned char *) add_to_buffer(net, (char *) to, " AND ", 5)))
-          return set_error(stmt, MYERR_S1001, NULL, 4001);
+          return (my_bool)set_error(stmt, MYERR_S1001, NULL, 4001);
 
         length= (uint) ((char *)to - (char*) net->buff);
         dynstr_append_mem(dynQuery, (char*) net->buff, length);
@@ -1204,7 +1204,7 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext
               We have a limited capacity to shove data across the wire, but
               we handle this by sending in multiple calls to exec_stmt_query()
             */
-            if (ext_query->length + length >= (SQLLEN) net_buffer_length)
+            if (ext_query->length + length >= (SQLULEN) net_buffer_length)
             {
                 break_insert= TRUE;
                 break;

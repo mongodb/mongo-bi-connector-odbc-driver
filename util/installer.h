@@ -140,6 +140,7 @@ typedef struct {
   BOOL no_information_schema;
   /* SSL */
   unsigned int sslverify;
+  unsigned int cursor_prefetch_number;
 } DataSource;
 
 typedef struct{

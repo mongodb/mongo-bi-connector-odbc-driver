@@ -322,57 +322,57 @@ DECLARE_TEST(t_time)
   SQLCHAR         str[20];
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_time");
-    rc = tmysql_exec(hstmt,"create table t_time(tm time, ts timestamp)");
-    mystmt(hstmt,rc);
+  rc = tmysql_exec(hstmt,"create table t_time(tm time, ts timestamp)");
+  mystmt(hstmt,rc);
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+  mycon(hdbc,rc);
 
-    ok_stmt(hstmt, SQLPrepare(hstmt,
-                              (SQLCHAR *)"insert into t_time values (?,?)",
-                              SQL_NTS));
+  ok_stmt(hstmt, SQLPrepare(hstmt,
+                            (SQLCHAR *)"insert into t_time values (?,?)",
+                            SQL_NTS));
 
-    rc = SQLBindParameter( hstmt, 1, SQL_PARAM_INPUT, SQL_C_TIME,
-                           SQL_TIME, 0, 0, &tm, 0, NULL );
-    mystmt(hstmt,rc);
+  rc = SQLBindParameter( hstmt, 1, SQL_PARAM_INPUT, SQL_C_TIME,
+                         SQL_TIME, 0, 0, &tm, 0, NULL );
+  mystmt(hstmt,rc);
 
-    rc = SQLBindParameter( hstmt, 2, SQL_PARAM_INPUT, SQL_C_TIME,
-                           SQL_TIMESTAMP, 0, 0, &tm, 15, NULL );
-    mystmt(hstmt,rc);
+  rc = SQLBindParameter( hstmt, 2, SQL_PARAM_INPUT, SQL_C_TIME,
+                         SQL_TIMESTAMP, 0, 0, &tm, 15, NULL );
+  mystmt(hstmt,rc);
 
-    tm.hour = 20;
-    tm.minute = 59;
-    tm.second = 45;
+  tm.hour = 20;
+  tm.minute = 59;
+  tm.second = 45;
 
-    rc = SQLExecute(hstmt);
-    mystmt(hstmt,rc);
+  rc = SQLExecute(hstmt);
+  mystmt(hstmt,rc);
 
-    rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-    mystmt(hstmt,rc);
+  rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
+  mystmt(hstmt,rc);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+  mystmt(hstmt,rc);
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+  mycon(hdbc,rc);
 
-    ok_sql(hstmt, "select tm from t_time");
+  ok_sql(hstmt, "select tm from t_time");
 
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
+  rc = SQLFetch(hstmt);
+  mystmt(hstmt,rc);
 
-    rc = SQLGetData(hstmt,1,SQL_C_CHAR,&str,100,NULL);
-    mystmt(hstmt,rc);
-    is_str(str, "20:59:45", 9);
+  rc = SQLGetData(hstmt,1,SQL_C_CHAR,&str,100,NULL);
+  mystmt(hstmt,rc);
+  is_str(str, "20:59:45", 9);
 
-    rc = SQLFetch(hstmt);
-    my_assert(rc == SQL_NO_DATA_FOUND);
+  rc = SQLFetch(hstmt);
+  my_assert(rc == SQL_NO_DATA_FOUND);
 
-    rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-    mystmt(hstmt,rc);
+  rc = SQLFreeStmt(hstmt,SQL_UNBIND);
+  mystmt(hstmt,rc);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+  mystmt(hstmt,rc);
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_time");
 
