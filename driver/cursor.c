@@ -1313,7 +1313,31 @@ SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
     if ( !result )
         return set_error(stmt,MYERR_S1010,NULL,0);
 
-    /* If irow > maximum rows in the resultset */
+    /* With mysql_use_reslt we cannot do anything but move cursor
+       forward. additional connection?
+       besides http://msdn.microsoft.com/en-us/library/windows/desktop/ms713507%28v=vs.85%29.aspx
+       "The cursor associated with the StatementHandle was defined as
+        forward-only, so the cursor could not be positioned within the rowset.
+        The Operation argument was SQL_UPDATE, SQL_DELETE, or SQL_REFRESH, and
+        the row identified by the RowNumber argument had been deleted or had not
+        been fetched." So error is more or less in accordance with specs */
+    if ( if_forward_cache(stmt) )
+    {
+      if (fOption != SQL_POSITION)
+      {
+        /* HY109. Perhaps 24000 Invalid cursor state is a better fit*/
+        return set_error(stmt, MYERR_S1109,NULL, 0);
+      }
+      /* We can't go back with forwrd only cursor */
+      else if (irow < stmt->current_row)
+      {
+        /* Same HY109 Invalid cursor position*/
+        return set_error(stmt, MYERR_S1109,NULL, 0); 
+      }
+    }
+
+    /* If irow > maximum rows in the resultset. for forwrd only row_count is 0
+     */
     if ( fOption != SQL_ADD && irow > result->row_count )
         return set_error(stmt,MYERR_S1107,NULL,0);
 

@@ -923,6 +923,14 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
     {
       return set_error(pStmt,MYERR_S1001,NULL,4001);
     }
+
+    /* Cursor statement use mysql_use_result - thus any operation
+       will couse commands out of sync */
+    if (if_forward_cache(pStmtCursor))
+    {
+      return set_error(pStmt,MYERR_S1010,NULL,0);
+    }
+
     pStmt->orig_query_end= pStmt->orig_query + (pStmt->query_end -
                                                 pStmt->query);
 
