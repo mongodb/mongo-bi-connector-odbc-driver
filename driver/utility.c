@@ -3680,3 +3680,49 @@ long double strtold(const char *nptr, char **endptr)
 #endif
 
 }
+
+
+/*
+  @type    : myodbc3 internal
+  @purpose : help function to enlarge buffer if necessary
+*/
+char *extend_buffer(NET *net, char *to, ulong length)
+{
+    ulong need= 0;
+
+    need= (ulong)(to - (char *)net->buff) + length;
+    if (!to || need > net->max_packet - 10)
+    {
+        if (net_realloc(net, need))
+        {
+            return 0;
+        }
+
+        to= (char *)net->buff + need - length;
+    }
+    return to;
+}
+
+
+/*
+  @type    : myodbc3 internal
+  @purpose : help function to extend the buffer and copy the data
+*/
+char *add_to_buffer(NET *net,char *to,const char *from,ulong length)
+{
+    if ( !(to= extend_buffer(net,to,length)) )
+        return 0;
+
+    memcpy(to,from,length);
+
+    return to+length;
+}
+
+
+MY_LIMIT_CLAUSE find_position4limit(char *query, char * query_end)
+{
+  MY_LIMIT_CLAUSE result={0,0,NULL,NULL};
+  result.begin= result.end= query_end;
+
+  return result;
+}

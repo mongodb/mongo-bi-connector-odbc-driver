@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -364,8 +364,23 @@ enum MY_STATE { ST_UNKNOWN, ST_PREPARED, ST_PRE_EXECUTED, ST_EXECUTED };
 enum MY_DUMMY_STATE { ST_DUMMY_UNKNOWN, ST_DUMMY_PREPARED, ST_DUMMY_EXECUTED };
 
 
-/* Statement primary key handler for cursors */
+typedef struct limit
+{
+  unsigned long long  offset;
+  unsigned int        row_count;
+  char                *begin, *end;
 
+} MY_LIMIT_CLAUSE;
+
+typedef struct limit_scroller
+{
+   char               *query, *offset_pos;
+   unsigned int       row_count;
+   unsigned long long next_offset, total_rows, query_len;
+
+} MY_LIMIT_SCROLLER;
+
+/* Statement primary key handler for cursors */
 typedef struct pk_column
 {
   char	      name[NAME_LEN+1];
@@ -374,7 +389,6 @@ typedef struct pk_column
 
 
 /* Statement cursor handler */
-
 typedef struct cursor
 {
   char        *name;
@@ -401,7 +415,7 @@ typedef struct tagSTMT
   MYERROR	error;
   STMT_OPTIONS	stmt_options;
   char		*table_name;
-  char		*query,*query_end;
+  char		*query, *query_end;
   unsigned long *lengths; /* used to set lengths if we shuffle field values
                              of the resultset of auxiliary query or if we fix_fields. */
   /*
@@ -423,7 +437,9 @@ typedef struct tagSTMT
     ulong dst_bytes;  /* Length of data once it is all converted (in chars). */
     ulong dst_offset; /* Current offset into dest. (ulong)~0L when not set. */
   } getdata;
+
   uint		*order,order_count,param_count,current_param,rows_found_in_set;
+
   enum MY_STATE state;
   enum MY_DUMMY_STATE dummy_state;
 
@@ -441,6 +457,8 @@ typedef struct tagSTMT
 
   MYSQL_STMT *ssps;
   MYSQL_BIND *result_bind;
+
+  MY_LIMIT_SCROLLER scroller;
 } STMT;
 
 

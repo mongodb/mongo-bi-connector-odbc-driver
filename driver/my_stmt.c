@@ -142,13 +142,16 @@ my_ulonglong update_affected_rows(STMT *stmt)
 
 my_ulonglong num_rows(STMT *stmt)
 {
+  my_ulonglong offset= scroller_exists(stmt) && stmt->scroller.next_offset > 0 ? 
+    stmt->scroller.next_offset - stmt->scroller.row_count : 0;
+
   if (ssps_used(stmt))
   {
-    return mysql_stmt_num_rows(stmt->ssps);
+    return  offset + mysql_stmt_num_rows(stmt->ssps);
   }
   else
   {
-    return mysql_num_rows(stmt->result);
+    return offset + mysql_num_rows(stmt->result);
   }
 }
 
@@ -258,4 +261,207 @@ BOOL is_null(STMT *stmt, ulong column_number, char *value)
   {
     return value == NULL;
   }
+}
+
+
+void scroller_reset(STMT *stmt)
+{
+  x_free(stmt->scroller.query);
+  stmt->scroller.next_offset= 0;
+  stmt->scroller.query= stmt->scroller.offset_pos= NULL;
+}
+
+/* @param[in]     selected  - prefetch value in datatsource selected by user
+   @param[in]     app_fetchs- how many rows app fetchs at a time,
+                              i.e. stmt->ard->array_size
+ */
+unsigned int calc_prefetch_number(unsigned int selected, unsigned int app_fetchs)
+{
+  if (selected == 0)
+  {
+    return 0;
+  }
+
+  if (app_fetchs > 1)
+  {
+    if (app_fetchs > selected)
+    {
+      return app_fetchs;
+    }
+
+    if (selected % app_fetchs > 0)
+    {
+      return app_fetchs * (selected/app_fetchs + 1);
+    }
+  }
+
+  return selected;
+}
+
+
+BOOL scroller_exists(STMT * stmt)
+{
+  return stmt->scroller.offset_pos != NULL;
+}
+
+/* Adding limit clause to split resultset retrieving
+   TODO it has got too messy...
+   @returns updated query length */
+void scroller_create(STMT * stmt, char *query, SQLULEN query_len)
+{
+  /* MAX32_BUFF_SIZE includes place for terminating null, which we do not need
+     and will use for comma */
+  char rows2fetch[MAX32_BUFF_SIZE];
+  size_t len, len2add= 7/*" LIMIT "*/ + MAX64_BUFF_SIZE/*offset*/ - 1;
+  MY_LIMIT_CLAUSE limit= find_position4limit(query, query + query_len);
+
+  if (limit.row_count > 0 )
+  {
+    /* If the query already contains LIMIT we probably do not have to do
+       anything. unless maybe "their" limit is much bigger number than ours
+       and its absolute value is big enough.
+       Numbers 500 and 50000 are tentative
+     */
+    if (limit.row_count / stmt->scroller.row_count < 500
+      && limit.row_count < 50000)
+    {
+      return;
+    }
+
+    stmt->scroller.total_rows= limit.row_count;
+  }
+
+  if (limit.offset > 0)
+  {
+    stmt->scroller.next_offset= limit.offset;
+  }
+
+  snprintf(rows2fetch, sizeof(rows2fetch), ",%lu", stmt->scroller.row_count);
+
+  len= strlen(rows2fetch);
+  len2add+= len;
+  len2add-= (limit.end - limit.begin);
+
+  /*extend_buffer(&stmt->dbc->mysql.net, stmt->query_end, len2add);*/
+  stmt->scroller.query_len= query_len+len2add;
+  stmt->scroller.query= (char*)my_malloc((size_t)stmt->scroller.query_len + 1,
+                                          MYF(MY_ZEROFILL));
+
+  memcpy(stmt->scroller.query, query, limit.begin - query);
+
+  limit.begin= stmt->scroller.query + (limit.begin - query);
+
+  /* If there was no LIMIT clause in the query */
+  if (limit.row_count == 0)
+  {
+    strncpy(limit.begin, " LIMIT ", 7);
+  }
+
+  /* That is  where we will update offset */
+  stmt->scroller.offset_pos= limit.begin + 7;
+
+  strncpy(stmt->scroller.offset_pos + MAX64_BUFF_SIZE - 1, rows2fetch, len);
+  memcpy(stmt->scroller.offset_pos + MAX64_BUFF_SIZE - 1, limit.end,
+          query + query_len - limit.end);
+  *(stmt->scroller.query + stmt->scroller.query_len)= '\0';
+}
+
+
+/* Returns next offset/maxrow for current fetch*/
+unsigned long long scroller_move(STMT * stmt)
+{
+  snprintf(stmt->scroller.offset_pos, MAX64_BUFF_SIZE - 1 , "%20llu",
+    stmt->scroller.next_offset);
+
+  stmt->scroller.next_offset+= stmt->scroller.row_count;
+
+  /* TODO if total rows is set have to check if we do not go beyond it and
+          change LIMIT's row count in query if needed. or control fetching! */
+
+  return stmt->scroller.next_offset;
+}
+
+
+SQLRETURN scroller_prefetch(STMT * stmt)
+{
+  if (stmt->scroller.total_rows > 0
+    && stmt->scroller.next_offset > stmt->scroller.total_rows)
+  {
+    return SQL_NO_DATA;
+  }
+
+  MYLOG_QUERY(stmt, stmt->scroller.query);
+
+  pthread_mutex_lock(&stmt->dbc->lock);
+
+  if (mysql_real_query(&stmt->dbc->mysql, stmt->scroller.query,
+                        (unsigned long)stmt->scroller.query_len))
+  {
+    pthread_mutex_unlock(&stmt->dbc->lock);
+    return SQL_ERROR;
+  }
+
+  get_result(stmt);
+
+  /* I think there is no need to do fix_result_types here */
+  pthread_mutex_unlock(&stmt->dbc->lock);
+
+  return SQL_SUCCESS;
+}
+
+
+BOOL scrollable(STMT * stmt, char * query, char * query_end)
+{
+  if (!is_select_statement(query))
+  {
+    return FALSE;
+  }
+
+  /* FOR UPDATE*/
+  {
+    const char *before_token= query_end;
+    const char *last= mystr_get_prev_token(stmt->dbc->ansi_charset_info,
+                                                &before_token,
+                                                query);
+    const char *prev= mystr_get_prev_token(stmt->dbc->ansi_charset_info,
+                                                &before_token,
+                                                query);
+
+    if (!myodbc_casecmp(prev,"FOR",3) && !myodbc_casecmp(last,"UPDATE",6) 
+      || !myodbc_casecmp(prev,"SHARE",5) && !myodbc_casecmp(last,"MODE",4)
+        && !myodbc_casecmp(mystr_get_prev_token(stmt->dbc->ansi_charset_info,
+                                             &before_token, query),"LOCK",4)
+        && !myodbc_casecmp(mystr_get_prev_token(stmt->dbc->ansi_charset_info,
+                                             &before_token, query),"IN",2)
+        )
+    {
+      return FALSE;
+    }
+
+    /* we have to tokens - nothing to do*/
+    if (prev == query)
+    {
+      return FALSE;
+    }
+
+    before_token= prev - 1;
+    /* FROM can be only token before a last one at most
+       no need to scroll if there is no FROM clause
+     */
+    if ( myodbc_casecmp(prev,"FROM", 4)
+      && !find_token(stmt->dbc->ansi_charset_info, query, before_token, "FROM"))
+    {
+      return FALSE;
+    }
+
+    /* If there there is LIMIT - most probably there is no need to scroll
+       skipping such queries before */
+    if ( !myodbc_casecmp(prev,"LIMIT", 5)
+      || find_token(stmt->dbc->ansi_charset_info, query, before_token, "LIMIT"))
+    {
+      return FALSE;
+    }
+  }
+
+  return TRUE;
 }

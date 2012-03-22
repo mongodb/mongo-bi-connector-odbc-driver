@@ -59,13 +59,16 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
 
     if ( check_if_server_is_alive( stmt->dbc ) )
     {
-      set_stmt_error( stmt, "08S01" /* "HYT00" */, mysql_error( &stmt->dbc->mysql ), mysql_errno( &stmt->dbc->mysql ) );
-      translate_error( stmt->error.sqlstate,MYERR_08S01 /* S1000 */, mysql_errno( &stmt->dbc->mysql ) );
+      set_stmt_error( stmt, "08S01" /* "HYT00" */,
+                      mysql_error( &stmt->dbc->mysql ),
+                      mysql_errno( &stmt->dbc->mysql ) );
+      translate_error(stmt->error.sqlstate,MYERR_08S01 /* S1000 */,
+                      mysql_errno( &stmt->dbc->mysql ) );
       goto exit;
     }
 
-    if (stmt->dbc->ds->cursor_prefetch_number > 0 && if_forward_cache(stmt) 
-      && isStatementForRead(stmt))
+    if (stmt->dbc->ds->use_ssps && stmt->dbc->ds->cursor_prefetch_number > 0
+      && if_forward_cache(stmt) && isStatementForRead(stmt))
     {
       MYLOG_QUERY(stmt, "Using prepared statement");
       ssps_init(stmt);
@@ -81,7 +84,33 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
     else
     {
       MYLOG_QUERY(stmt, "Using direct execution");
-      native_error= mysql_real_query(&stmt->dbc->mysql,query,query_length);
+
+      /* Simplifying task so far - we will do "LIMIT" scrolling forward only
+       */
+      if (stmt->dbc->ds->cursor_prefetch_number > 0
+        && stmt->stmt_options.cursor_type == SQL_CURSOR_FORWARD_ONLY
+        && scrollable(stmt, query, query+query_length))
+      {
+        /* we might want to read primary key info at this point, but then we have to
+           know if we have a select from a single table...
+         */
+        scroller_reset(stmt);
+
+        stmt->scroller.row_count= calc_prefetch_number(stmt->dbc->ds->cursor_prefetch_number,
+                                                       stmt->ard->array_size);
+
+        scroller_create(stmt, query, query_length);
+        scroller_move(stmt);
+        MYLOG_QUERY(stmt, query);
+
+        native_error= mysql_real_query(&stmt->dbc->mysql, stmt->scroller.query,
+                                    (unsigned long)stmt->scroller.query_len);
+      }
+      else
+      {
+        native_error= mysql_real_query(&stmt->dbc->mysql,query,query_length);
+      }
+
       MYLOG_QUERY(stmt, "query has been executed");
     }
 
@@ -134,46 +163,6 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
     }
 
     return error;
-}
-
-
-
-/*
-  @type    : myodbc3 internal
-  @purpose : help function to enlarge buffer if necessary
-*/
-
-char *extend_buffer(NET *net, char *to, ulong length)
-{
-    ulong need= 0;
-
-    need= (ulong)(to - (char *)net->buff) + length;
-    if (!to || need > net->max_packet - 10)
-    {
-        if (net_realloc(net, need))
-        {
-            return 0;
-        }
-
-        to= (char *)net->buff + need - length;
-    }
-    return to;
-}
-
-
-/*
-  @type    : myodbc3 internal
-  @purpose : help function to extend the buffer and copy the data
-*/
-
-char *add_to_buffer(NET *net,char *to,const char *from,ulong length)
-{
-    if ( !(to= extend_buffer(net,to,length)) )
-        return 0;
-
-    memcpy(to,from,length);
-
-    return to+length;
 }
 
 
@@ -997,9 +986,9 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
       }
 
       /*
-      * If any parameters are required at execution time, cannot perform the
-      * statement. It will be done through SQLPutData() and SQLParamData().
-      */
+       * If any parameters are required at execution time, cannot perform the
+       * statement. It will be done through SQLPutData() and SQLParamData().
+       */
       if ((dae_rec= desc_find_dae_rec(pStmt->apd)) > -1)
       {
         if (pStmt->apd->array_size > 1)

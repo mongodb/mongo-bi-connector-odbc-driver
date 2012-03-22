@@ -141,6 +141,7 @@ typedef struct {
   /* SSL */
   unsigned int sslverify;
   unsigned int cursor_prefetch_number;
+  BOOL use_ssps;
 } DataSource;
 
 typedef struct{

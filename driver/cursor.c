@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -93,30 +93,6 @@ static const char *find_used_table(STMT *stmt)
     */
     stmt->table_name= dupp_str(table_name,SQL_NTS);
     return stmt->table_name;
-}
-
-
-/*
-  @type    : myodbc internal
-  @purpose : returns the previous token in the query by eating white spaces
-  if we found the start of the string, return it
-*/
-
-static const char *mystr_get_prev_token(CHARSET_INFO *charset,
-                                        const char **query, const char *start)
-{
-  const char *pos= *query;
-
-  do
-  {
-    if (pos == start)
-      return (*query = start);     /* Return start of string */
-    --pos;
-  } while (*pos < 0 || !my_isspace(charset, *pos)) ;
-
-  *query= pos;      /* Remember pos to space */
-
-  return pos + 1;   /* Return found token */
 }
 
 

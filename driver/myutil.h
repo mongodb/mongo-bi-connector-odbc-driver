@@ -68,6 +68,10 @@
 #define SQLTS_NULL_DATE -1
 #define SQLTS_BAD_DATE -2
 
+/* Sizes of buffer for converion of 4 and 8 bytes integer values*/
+#define MAX32_BUFF_SIZE 11
+#define MAX64_BUFF_SIZE 21
+
 /* Wrappers to hide differences in client library versions. */
 #if MYSQL_VERSION_ID >= 40100
 # define my_int2str(val, dst, radix, upcase) \
@@ -326,6 +330,9 @@ const char *get_fractional_part(const char * str, int len, BOOL dont_use_set_loc
 /* Convert MySQL timestamp to full ANSI timestamp format. */
 char * complete_timestamp(const char * value, ulong length, char buff[21]);
 long double strtold(const char *nptr, char **endptr);
+char * extend_buffer(NET *net, char *to, ulong length);
+char * add_to_buffer(NET *net,char *to,const char *from,ulong length);
+MY_LIMIT_CLAUSE find_position4limit(char *query, char * query_end);
 
 /*results.c*/
 long long binary2numeric(long long *dst, char *src, uint srcLen);
@@ -353,17 +360,34 @@ char *        get_string(STMT *stmt, ulong column_number, char *value,
 long double   get_double(STMT *stmt, ulong column_number, char *value,
                          ulong length);
 BOOL          is_null(STMT *stmt, ulong column_number, char *value);
-
+void          scroller_reset(STMT *stmt);
+unsigned int  calc_prefetch_number(unsigned int selected,
+                                   unsigned int app_fetchs);
+BOOL          scroller_exists(STMT * stmt);
+void          scroller_create(STMT * stmt, char *query, SQLULEN len);
+unsigned long long  scroller_move(STMT * stmt);
+SQLRETURN     scroller_prefetch(STMT * stmt);
+BOOL          scrollable(STMT * stmt, char * query, char * query_end);
 
 /* my_prepared_stmt.c */
 void  ssps_init(STMT *stmt);
 void  ssps_close(STMT *stmt);
 int   ssps_bind_result(STMT *stmt);
 BOOL  ssps_0buffers_truncated_only(STMT *stmt);
-long long   ssps_get_int64 (STMT *stmt, ulong column_number, char *value, ulong length);
-long double ssps_get_double(STMT *stmt, ulong column_number, char *value, ulong length);
-char *      ssps_get_string(STMT *stmt, ulong column_number, char *value, ulong *length,
-                            char * buffer);
+long long   ssps_get_int64 (STMT *stmt, ulong column_number, char *value,
+                            ulong length);
+long double ssps_get_double(STMT *stmt, ulong column_number, char *value,
+                            ulong length);
+char *      ssps_get_string(STMT *stmt, ulong column_number, char *value,
+                            ulong *length, char * buffer);
+
+/* parse.c */
+const char *mystr_get_prev_token(CHARSET_INFO *charset,
+                                        const char **query, const char *start);
+const char *mystr_get_next_token(CHARSET_INFO *charset,
+                                        const char **query, const char *end);
+const char *find_token(CHARSET_INFO *charset, const char * begin,
+                       const char * end, const char * target);
 
 #ifdef __WIN__
 #define cmp_database(A,B) myodbc_strcasecmp((const char *)(A),(const char *)(B))

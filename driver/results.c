@@ -1516,6 +1516,8 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     if ( !pcrow )
         pcrow= &dummy_pcrow;
 
+    /* for scrollable cursor("scroller") max_row is max row for currently
+       fetched part of resultset */
     max_row= (long) num_rows(stmt);
     reset_getdata_position(stmt);
     stmt->current_values= 0;          /* For SQLGetData */
@@ -1574,7 +1576,23 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
         return SQL_NO_DATA_FOUND;
     }
     if ( cur_row > max_row )
+    {
+      if (scroller_exists(stmt))
+      {
+        while (cur_row > (max_row= (long)scroller_move(stmt)));
+
+        switch (scroller_prefetch(stmt))
+        {
+          case SQL_NO_DATA: return SQL_NO_DATA_FOUND;
+          case SQL_ERROR:   return set_error(stmt,MYERR_S1000,
+                                            mysql_error(&stmt->dbc->mysql), 0);
+        }
+      }
+      else
+      {
         cur_row= max_row;
+      }
+    }
 
     if ( !stmt->result_array && !if_forward_cache(stmt) )
     {
@@ -1592,11 +1610,16 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     }
     stmt->current_row= cur_row;
 
-    if (if_forward_cache(stmt) && !stmt->result_array)
+    if (scroller_exists(stmt)
+      || (if_forward_cache(stmt) && !stmt->result_array))
+    {
       rows_to_fetch= stmt->ard->array_size;
+    }
     else
+    {
       rows_to_fetch= myodbc_min(max_row-cur_row,
                                 (long)stmt->ard->array_size);
+    }
 
     if ( !rows_to_fetch )
     {
@@ -1634,7 +1657,30 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
             }
             if ( !(values= fetch_row(stmt)) )
             {
+              if (scroller_exists(stmt))
+              {
+                scroller_move(stmt);
+
+                row_res= scroller_prefetch(stmt);
+
+                if (row_res != SQL_SUCCESS)
+                {
+                  break;
+                }
+
+                if ( !(values= fetch_row(stmt)) )
+                {
+                  break;
+                }
+
+                /* Not sure that is right, but see it better than nothing */
+                save_position= mysql_row_tell(stmt->result);
+              }
+              else
+              {
                 break;
+              }
+
             }
 
             if ( stmt->fix_fields )

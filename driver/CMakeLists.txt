@@ -1,4 +1,4 @@
-# Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -24,7 +24,7 @@
 
 SET(DRIVER_SRCS
 		ansi.c catalog.c catalog_no_i_s.c connect.c cursor.c desc.c dll.c error.c execute.c
-    handle.c info.c driver.c options.c prepare.c results.c transact.c unicode.c
+    handle.c info.c driver.c options.c parse.c prepare.c results.c transact.c unicode.c
     my_prepared_stmt.c my_stmt.c utility.c)
 
 INCLUDE_DIRECTORIES(../util)

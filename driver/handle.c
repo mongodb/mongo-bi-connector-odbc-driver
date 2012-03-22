@@ -470,6 +470,7 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     /* reset data-at-exec state */
     stmt->dae_type= 0;
 
+    scroller_reset(stmt);
 
     if (fOption == SQL_RESET_PARAMS)
     {

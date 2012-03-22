@@ -594,8 +594,8 @@ DataSource *ds_new()
 
   /* non-zero DataSource defaults here */
   ds->port=                   3306;
-  ds->cursor_prefetch_number= 0;/*100 - disabling this functionality so far
-                                          - too raw*/
+  ds->cursor_prefetch_number= 100;/*100*/
+  ds->use_ssps=               FALSE;
   /* DS_PARAM */
 
   return ds;
