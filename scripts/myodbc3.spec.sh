@@ -54,7 +54,7 @@ Version:    @NUMERIC_VERSION@
 Release:    1
 Provides:   mysqlodbcrpmpack
 License:    Copyright (c) 2000, 2011, %{mysql_vendor}. All rights reserved.  Under %{lic_type} license as shown in the Description field.
-Source0:    %{name}-@VERSION@.tar.gz
+Source0:    %{name}-@VERSION@-src.tar.gz
 URL:        http://www.mysql.com/
 Vendor:     Oracle Corporation
 Packager:   Oracle Corporation Production Engineering Team <build@mysql.com>
