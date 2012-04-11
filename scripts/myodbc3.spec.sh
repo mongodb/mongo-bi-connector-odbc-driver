@@ -111,7 +111,7 @@ dialog for configuring the driver.
 ##############################################################################
 
 %prep
-%setup
+%setup -n %{name}-@VERSION@-src
 
 %define ODBC_DM_PATH_ARG @ODBC_DM_PATH_ARG@
 %define MYSQL_PATH_ARG   @MYSQL_PATH_ARG@
