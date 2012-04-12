@@ -96,8 +96,10 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
          */
         scroller_reset(stmt);
 
-        stmt->scroller.row_count= calc_prefetch_number(stmt->dbc->ds->cursor_prefetch_number,
-                                                       stmt->ard->array_size);
+        stmt->scroller.row_count= calc_prefetch_number(
+                                        stmt->dbc->ds->cursor_prefetch_number,
+                                        stmt->ard->array_size,
+                                        stmt->stmt_options.max_rows);
 
         scroller_create(stmt, query, query_length);
         scroller_move(stmt);

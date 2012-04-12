@@ -490,8 +490,6 @@ copy_ansi_result(STMT *stmt,
   if (!result_bytes)
     result= 0;       /* Don't copy anything! */
 
-
-
   /*
    If we don't have to do any charset conversion, we can just use
    copy_binary_result() and NUL-terminate the buffer here.

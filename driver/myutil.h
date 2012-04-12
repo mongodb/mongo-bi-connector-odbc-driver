@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -361,8 +361,8 @@ long double   get_double(STMT *stmt, ulong column_number, char *value,
                          ulong length);
 BOOL          is_null(STMT *stmt, ulong column_number, char *value);
 void          scroller_reset(STMT *stmt);
-unsigned int  calc_prefetch_number(unsigned int selected,
-                                   unsigned int app_fetchs);
+unsigned int  calc_prefetch_number(unsigned int selected, SQLULEN app_fetchs,
+                                   SQLULEN max_rows);
 BOOL          scroller_exists(STMT * stmt);
 void          scroller_create(STMT * stmt, char *query, SQLULEN len);
 unsigned long long  scroller_move(STMT * stmt);

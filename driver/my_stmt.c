@@ -274,9 +274,13 @@ void scroller_reset(STMT *stmt)
 /* @param[in]     selected  - prefetch value in datatsource selected by user
    @param[in]     app_fetchs- how many rows app fetchs at a time,
                               i.e. stmt->ard->array_size
+   @param[in]     max_rows  - limit for maximal number of rows to fetch
  */
-unsigned int calc_prefetch_number(unsigned int selected, unsigned int app_fetchs)
+unsigned int calc_prefetch_number(unsigned int selected, SQLULEN app_fetchs,
+                                  SQLULEN max_rows)
 {
+  unsigned int result= selected;
+
   if (selected == 0)
   {
     return 0;
@@ -286,16 +290,21 @@ unsigned int calc_prefetch_number(unsigned int selected, unsigned int app_fetchs
   {
     if (app_fetchs > selected)
     {
-      return app_fetchs;
+      result= app_fetchs;
     }
 
     if (selected % app_fetchs > 0)
     {
-      return app_fetchs * (selected/app_fetchs + 1);
+      result= app_fetchs * (selected/app_fetchs + 1);
     }
   }
 
-  return selected;
+  if (max_rows > 0 && max_rows < result)
+  {
+    return max_rows;
+  }
+
+  return result;
 }
 
 
@@ -304,16 +313,15 @@ BOOL scroller_exists(STMT * stmt)
   return stmt->scroller.offset_pos != NULL;
 }
 
-/* Adding limit clause to split resultset retrieving
-   TODO it has got too messy...
-   @returns updated query length */
+/* Initialization of a scroller */
 void scroller_create(STMT * stmt, char *query, SQLULEN query_len)
 {
   /* MAX32_BUFF_SIZE includes place for terminating null, which we do not need
      and will use for comma */
-  char rows2fetch[MAX32_BUFF_SIZE];
-  size_t len, len2add= 7/*" LIMIT "*/ + MAX64_BUFF_SIZE/*offset*/ - 1;
+  const size_t len2add= 7/*" LIMIT "*/ + MAX64_BUFF_SIZE/*offset*/ - 1 + MAX32_BUFF_SIZE;
   MY_LIMIT_CLAUSE limit= find_position4limit(query, query + query_len);
+
+  stmt->scroller.total_rows= myodbc_max(stmt->stmt_options.max_rows, 0);
 
   if (limit.row_count > 0 )
   {
@@ -328,27 +336,22 @@ void scroller_create(STMT * stmt, char *query, SQLULEN query_len)
       return;
     }
 
-    stmt->scroller.total_rows= limit.row_count;
+    stmt->scroller.total_rows= stmt->scroller.total_rows > 0 ?
+      myodbc_min(limit.row_count, stmt->scroller.total_rows) :
+      limit.row_count;
   }
 
-  if (limit.offset > 0)
-  {
-    stmt->scroller.next_offset= limit.offset;
-  }
-
-  snprintf(rows2fetch, sizeof(rows2fetch), ",%lu", stmt->scroller.row_count);
-
-  len= strlen(rows2fetch);
-  len2add+= len;
-  len2add-= (limit.end - limit.begin);
+  stmt->scroller.next_offset= myodbc_max(limit.offset, 0);
 
   /*extend_buffer(&stmt->dbc->mysql.net, stmt->query_end, len2add);*/
-  stmt->scroller.query_len= query_len+len2add;
+  stmt->scroller.query_len= query_len + len2add - (limit.end - limit.begin);
   stmt->scroller.query= (char*)my_malloc((size_t)stmt->scroller.query_len + 1,
                                           MYF(MY_ZEROFILL));
 
   memcpy(stmt->scroller.query, query, limit.begin - query);
 
+  /* Forgive me - now limit.begin points to beginning of limit in scroller's
+     copy of the query */
   limit.begin= stmt->scroller.query + (limit.begin - query);
 
   /* If there was no LIMIT clause in the query */
@@ -360,8 +363,12 @@ void scroller_create(STMT * stmt, char *query, SQLULEN query_len)
   /* That is  where we will update offset */
   stmt->scroller.offset_pos= limit.begin + 7;
 
-  strncpy(stmt->scroller.offset_pos + MAX64_BUFF_SIZE - 1, rows2fetch, len);
-  memcpy(stmt->scroller.offset_pos + MAX64_BUFF_SIZE - 1, limit.end,
+  /* putting row count in place. normally should not change or only once */
+  snprintf(stmt->scroller.offset_pos + MAX64_BUFF_SIZE - 1, MAX32_BUFF_SIZE,
+    ",%10u", stmt->scroller.row_count);
+  /* cpy'ing end of query from original query - not sure if we will allow to
+     have one */
+  memcpy(stmt->scroller.offset_pos + MAX64_BUFF_SIZE + MAX32_BUFF_SIZE - 1, limit.end,
           query + query_len - limit.end);
   *(stmt->scroller.query + stmt->scroller.query_len)= '\0';
 }
@@ -375,9 +382,6 @@ unsigned long long scroller_move(STMT * stmt)
 
   stmt->scroller.next_offset+= stmt->scroller.row_count;
 
-  /* TODO if total rows is set have to check if we do not go beyond it and
-          change LIMIT's row count in query if needed. or control fetching! */
-
   return stmt->scroller.next_offset;
 }
 
@@ -385,9 +389,23 @@ unsigned long long scroller_move(STMT * stmt)
 SQLRETURN scroller_prefetch(STMT * stmt)
 {
   if (stmt->scroller.total_rows > 0
-    && stmt->scroller.next_offset > stmt->scroller.total_rows)
+    && stmt->scroller.next_offset >= stmt->scroller.total_rows)
   {
-    return SQL_NO_DATA;
+    /* (stmt->scroller.next_offset - stmt->scroller.row_count) - current offset,
+       0 minimum. scroller initialization makes impossible row_count to be > 
+       stmt's max_rows */
+     long long count= stmt->scroller.total_rows -
+      (stmt->scroller.next_offset - stmt->scroller.row_count);
+
+    if (count > 0)
+    {
+      snprintf(stmt->scroller.offset_pos + MAX64_BUFF_SIZE, MAX32_BUFF_SIZE - 1,
+    "%10u", count);
+    }
+    else
+    {
+      return SQL_NO_DATA;
+    }
   }
 
   MYLOG_QUERY(stmt, stmt->scroller.query);
