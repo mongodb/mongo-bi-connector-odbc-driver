@@ -400,105 +400,172 @@ DECLARE_TEST(t_max_rows)
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_max_rows");
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+  mycon(hdbc,rc);
 
-    rc = tmysql_exec(hstmt,"create table t_max_rows(id int)");
-    mystmt(hstmt,rc);
+  rc = tmysql_exec(hstmt,"create table t_max_rows(id int)");
+  mystmt(hstmt,rc);
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+  mycon(hdbc,rc);
 
-    ok_stmt(hstmt, SQLPrepare(hstmt,
-                              (SQLCHAR *)"insert into t_max_rows values(?)",
-                              SQL_NTS));
+  ok_stmt(hstmt, SQLPrepare(hstmt,
+                            (SQLCHAR *)"insert into t_max_rows values(?)",
+                            SQL_NTS));
 
-    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_ULONG,SQL_INTEGER,0,0,&i,0,NULL);
-    mystmt(hstmt,rc);
+  rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_ULONG,SQL_INTEGER,0,0,&i,0,NULL);
+  mystmt(hstmt,rc);
 
-    for(i=0; i < 10; i++)
-    {
-      rc = SQLExecute(hstmt);
-      mystmt(hstmt,rc);
-    }
-
-    SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-    SQLFreeStmt(hstmt,SQL_CLOSE);
-
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
-
-    rc = SQLSetStmtAttr(hstmt,SQL_ATTR_MAX_ROWS,(SQLPOINTER)0,0);
-    mystmt(hstmt,rc);
-
-    rc = tmysql_exec(hstmt,"select count(*) from t_max_rows");
-    mystmt(hstmt,rc);
-    myassert( 1 == myresult(hstmt) );
-    SQLFreeStmt(hstmt,SQL_CLOSE);
-
-    rc = tmysql_exec(hstmt,"select * from t_max_rows");
-    mystmt(hstmt,rc);
-    myassert( 10 == myresult(hstmt) );
-    SQLFreeStmt(hstmt,SQL_CLOSE);
-
-    /* MAX rows through connection attribute */
-    rc = SQLSetStmtAttr(hstmt,SQL_ATTR_MAX_ROWS,(SQLPOINTER)5,0);
-    mystmt(hstmt,rc);
-
-    /*
-     This query includes leading spaces to act as a regression test
-     for Bug #6609: SQL_ATTR_MAX_ROWS and leading spaces in query result in
-     truncating end of query.
-    */
-    rc = tmysql_exec(hstmt,"  select * from t_max_rows");
-    mystmt(hstmt,rc);
-    myassert( 5 == myrowcount(hstmt));
-
-    SQLFreeStmt(hstmt,SQL_CLOSE);
-
-    rc = SQLSetStmtAttr(hstmt,SQL_ATTR_MAX_ROWS,(SQLPOINTER)15,0);
-    mystmt(hstmt,rc);
-
-    rc = tmysql_exec(hstmt,"select * from t_max_rows");
-    mystmt(hstmt,rc);
-    myassert( 10 == myrowcount(hstmt));
-
-    SQLFreeStmt(hstmt,SQL_CLOSE);
-
-    /* Patch for Bug#46411 uses SQL_ATTR_MAX_ROWS attribute to minimize number of
-       rows to pre-fetch(sets to 1). Following fragment ensures that attribute's
-       value is preserved and works. */
-    rc = SQLSetStmtAttr(hstmt,SQL_ATTR_MAX_ROWS,(SQLPOINTER)3,0);
-    mystmt(hstmt,rc);
-
-    rc = tmysql_prepare(hstmt,"select * from t_max_rows where id > ?");
-    mystmt(hstmt,rc);
-    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_ULONG,SQL_INTEGER,0,0,&i,0,NULL);
-    mystmt(hstmt,rc);
-    i= 6;
-
-    ok_stmt(hstmt, SQLNumResultCols(hstmt, &cc));
-
+  for(i=0; i < 10; i++)
+  {
     rc = SQLExecute(hstmt);
     mystmt(hstmt,rc);
+  }
 
-    myassert( 3 == myrowcount(hstmt));
+  SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
+  SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    SQLFreeStmt(hstmt,SQL_CLOSE);
+  rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+  mycon(hdbc,rc);
 
-    rc = SQLSetStmtAttr(hstmt,SQL_ATTR_MAX_ROWS,(SQLPOINTER)0,0);
-    mystmt(hstmt,rc);
+  rc = SQLSetStmtAttr(hstmt,SQL_ATTR_MAX_ROWS,(SQLPOINTER)0,0);
+  mystmt(hstmt,rc);
 
-    rc = tmysql_exec(hstmt,"select * from t_max_rows");
-    mystmt(hstmt,rc);
-    myassert( 10 == myrowcount(hstmt));
+  rc = tmysql_exec(hstmt,"select count(*) from t_max_rows");
+  mystmt(hstmt,rc);
+  myassert( 1 == myresult(hstmt) );
+  SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    SQLFreeStmt(hstmt,SQL_CLOSE);
+  rc = tmysql_exec(hstmt,"select * from t_max_rows");
+  mystmt(hstmt,rc);
+  myassert( 10 == myresult(hstmt) );
+  SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    SQLFreeStmt(hstmt,SQL_CLOSE);
+  /* MAX rows through connection attribute */
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt,SQL_ATTR_MAX_ROWS,(SQLPOINTER)5,0));
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  /*
+   This query includes leading spaces to act as a regression test
+   for Bug #6609: SQL_ATTR_MAX_ROWS and leading spaces in query result in
+   truncating end of query.
+  */
+  rc = tmysql_exec(hstmt,"  select * from t_max_rows");
+  mystmt(hstmt,rc);
+  is_num(5, myrowcount(hstmt));
+
+  SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  rc = SQLSetStmtAttr(hstmt,SQL_ATTR_MAX_ROWS,(SQLPOINTER)15,0);
+  mystmt(hstmt,rc);
+
+  rc = tmysql_exec(hstmt,"select * from t_max_rows");
+  mystmt(hstmt,rc);
+  myassert( 10 == myrowcount(hstmt));
+
+  SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  /* Patch for Bug#46411 uses SQL_ATTR_MAX_ROWS attribute to minimize number of
+     rows to pre-fetch(sets to 1). Following fragment ensures that attribute's
+     value is preserved and works. */
+  rc = SQLSetStmtAttr(hstmt,SQL_ATTR_MAX_ROWS,(SQLPOINTER)3,0);
+  mystmt(hstmt,rc);
+
+  rc = tmysql_prepare(hstmt,"select * from t_max_rows where id > ?");
+  mystmt(hstmt,rc);
+  rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_ULONG,SQL_INTEGER,0,0,&i,0,NULL);
+  mystmt(hstmt,rc);
+  i= 6;
+
+  ok_stmt(hstmt, SQLNumResultCols(hstmt, &cc));
+
+  rc = SQLExecute(hstmt);
+  mystmt(hstmt,rc);
+
+  myassert( 3 == myrowcount(hstmt));
+
+  SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  rc = SQLSetStmtAttr(hstmt,SQL_ATTR_MAX_ROWS,(SQLPOINTER)0,0);
+  mystmt(hstmt,rc);
+
+  rc = tmysql_exec(hstmt,"select * from t_max_rows");
+  mystmt(hstmt,rc);
+  myassert( 10 == myrowcount(hstmt));
+
+  SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+  mystmt(hstmt,rc);
+
+  /* Testing max_rows with PREFETCH feature(client side cursor) enabled */
+  {
+    HDBC  hdbc1;
+    HSTMT hstmt1;
+    SQLCHAR conn[256];
+
+    sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;PREFETCH=5",
+          mydsn, myuid, mypwd);
+    if (mysock != NULL)
+    {
+      strcat((char *)conn, ";SOCKET=");
+      strcat((char *)conn, (char *)mysock);
+    }
+    if (myport)
+    {
+      char pbuff[20];
+      sprintf(pbuff, ";PORT=%d", myport);
+      strcat((char *)conn, pbuff);
+    }
+
+    ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+    ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), NULL,
+                                   0, NULL,
+                                   SQL_DRIVER_NOPROMPT));
+    ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+    /* max_rows is bigger than a prefetch, and is not divided evenly by it */
+    ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1,SQL_ATTR_MAX_ROWS,(SQLPOINTER)7,0));
+
+    ok_sql(hstmt1,"select * from t_max_rows");
+
+    is_num(7, myrowcount(hstmt1));
+
+    SQLFreeStmt(hstmt1,SQL_CLOSE);
+
+    /* max_rows is bigger than prefetch, and than total mumber of rows in the
+       table */
+    ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1,SQL_ATTR_MAX_ROWS,(SQLPOINTER)12,0));
+
+    ok_sql(hstmt1,"select * from t_max_rows");
+  
+    is_num(10, myrowcount(hstmt1));
+
+    SQLFreeStmt(hstmt1,SQL_CLOSE);
+
+    /* max_rows is bigger than prefetch, and equal to total mumber of rows in
+       the table, and is divided evenly by prefetch number */
+    ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1,SQL_ATTR_MAX_ROWS,(SQLPOINTER)10,0));
+
+    ok_sql(hstmt1,"select * from t_max_rows");
+  
+    is_num(10, myrowcount(hstmt1));
+
+    SQLFreeStmt(hstmt1,SQL_CLOSE);
+
+    /* max_rows is less than a prefetch number */
+    ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1,SQL_ATTR_MAX_ROWS,(SQLPOINTER)3,0));
+
+    ok_sql(hstmt1,"select * from t_max_rows");
+
+    is_num(3, myrowcount(hstmt1));
+
+    SQLFreeStmt(hstmt1,SQL_DROP);
+    ok_con(hdbc1, SQLDisconnect(hdbc1));
+    ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+  }
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_max_rows");
 
@@ -514,96 +581,96 @@ DECLARE_TEST(t_multistep)
   SQLINTEGER id;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_multistep");
-    rc = tmysql_exec(hstmt,"create table t_multistep(col1 int,col2 varchar(200))");
-    mystmt(hstmt,rc);
+  rc = tmysql_exec(hstmt,"create table t_multistep(col1 int,col2 varchar(200))");
+  mystmt(hstmt,rc);
 
-    rc = tmysql_exec(hstmt,"insert into t_multistep values(10,'MySQL - Open Source Database')");
-    mystmt(hstmt,rc);
+  rc = tmysql_exec(hstmt,"insert into t_multistep values(10,'MySQL - Open Source Database')");
+  mystmt(hstmt,rc);
 
-    rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-    mycon(hdbc,rc);
+  rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
+  mycon(hdbc,rc);
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+  mystmt(hstmt,rc);
 
-    SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY, (SQLPOINTER) SQL_CONCUR_ROWVER, 0);
-    SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER) SQL_CURSOR_KEYSET_DRIVEN, 0);
+  SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY, (SQLPOINTER) SQL_CONCUR_ROWVER, 0);
+  SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER) SQL_CURSOR_KEYSET_DRIVEN, 0);
 
-    rc = SQLBindCol(hstmt,1,SQL_C_LONG,&id,0,NULL);
-    mystmt(hstmt,rc);
+  rc = SQLBindCol(hstmt,1,SQL_C_LONG,&id,0,NULL);
+  mystmt(hstmt,rc);
 
-    rc = tmysql_exec(hstmt,"select * from t_multistep");
-    mystmt(hstmt,rc);
+  rc = tmysql_exec(hstmt,"select * from t_multistep");
+  mystmt(hstmt,rc);
 
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
-    printMessage("id: %ld",id);
-    myassert(id == 10);
+  rc = SQLFetch(hstmt);
+  mystmt(hstmt,rc);
+  printMessage("id: %ld",id);
+  myassert(id == 10);
 
-    rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,0,&pcbValue);
-    myassert(rc == SQL_SUCCESS_WITH_INFO);
-    printMessage("length: %ld", pcbValue);
-    myassert(pcbValue == 28);
+  rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,0,&pcbValue);
+  myassert(rc == SQL_SUCCESS_WITH_INFO);
+  printMessage("length: %ld", pcbValue);
+  myassert(pcbValue == 28);
 
-    rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,0,&pcbValue);
-    myassert(rc == SQL_SUCCESS_WITH_INFO);
-    printMessage("length: %ld", pcbValue);
-    myassert(pcbValue == 28);
+  rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,0,&pcbValue);
+  myassert(rc == SQL_SUCCESS_WITH_INFO);
+  printMessage("length: %ld", pcbValue);
+  myassert(pcbValue == 28);
 
-    rc = SQLGetData(hstmt,2,SQL_C_BINARY,szData,0,&pcbValue);
-    myassert(rc == SQL_SUCCESS_WITH_INFO);
-    printMessage("length: %ld", pcbValue);
-    myassert(pcbValue == 28);
+  rc = SQLGetData(hstmt,2,SQL_C_BINARY,szData,0,&pcbValue);
+  myassert(rc == SQL_SUCCESS_WITH_INFO);
+  printMessage("length: %ld", pcbValue);
+  myassert(pcbValue == 28);
 
-    rc = SQLGetData(hstmt,2,SQL_C_BINARY,szData,0,&pcbValue);
-    myassert(rc == SQL_SUCCESS_WITH_INFO);
-    printMessage("length: %ld", pcbValue);
-    myassert(pcbValue == 28);
+  rc = SQLGetData(hstmt,2,SQL_C_BINARY,szData,0,&pcbValue);
+  myassert(rc == SQL_SUCCESS_WITH_INFO);
+  printMessage("length: %ld", pcbValue);
+  myassert(pcbValue == 28);
 
-    rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,0,&pcbValue);
-    myassert(rc == SQL_SUCCESS_WITH_INFO);
-    printMessage("length: %ld", pcbValue);
-    is_num(pcbValue, 28);
+  rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,0,&pcbValue);
+  myassert(rc == SQL_SUCCESS_WITH_INFO);
+  printMessage("length: %ld", pcbValue);
+  is_num(pcbValue, 28);
 
-    rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,10,&pcbValue);
-    myassert(rc == SQL_SUCCESS_WITH_INFO);
-    printMessage("data  : %s (%ld)",szData,pcbValue);
-    is_num(pcbValue, 28);
-    is_str(szData, "MySQL - O", 10);
+  rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,10,&pcbValue);
+  myassert(rc == SQL_SUCCESS_WITH_INFO);
+  printMessage("data  : %s (%ld)",szData,pcbValue);
+  is_num(pcbValue, 28);
+  is_str(szData, "MySQL - O", 10);
 
-    pcbValue= 0;
-    rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,5,&pcbValue);
-    myassert(rc == SQL_SUCCESS_WITH_INFO);
-    printMessage("data  : %s (%ld)",szData,pcbValue);
-    is_num(pcbValue, 19);
-    is_str(szData, "pen ", 5);
+  pcbValue= 0;
+  rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,5,&pcbValue);
+  myassert(rc == SQL_SUCCESS_WITH_INFO);
+  printMessage("data  : %s (%ld)",szData,pcbValue);
+  is_num(pcbValue, 19);
+  is_str(szData, "pen ", 5);
 
-    pcbValue= 0;
-    szData[0]='A';
-    rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,0,&pcbValue);
-    myassert(rc == SQL_SUCCESS_WITH_INFO);
-    printMessage("data  : %s (%ld)",szData,pcbValue);
-    myassert(pcbValue == 15);
-    myassert(szData[0] == 'A');
+  pcbValue= 0;
+  szData[0]='A';
+  rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,0,&pcbValue);
+  myassert(rc == SQL_SUCCESS_WITH_INFO);
+  printMessage("data  : %s (%ld)",szData,pcbValue);
+  myassert(pcbValue == 15);
+  myassert(szData[0] == 'A');
 
-    rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,pcbValue+1,&pcbValue);
-    mystmt(hstmt,rc);
-    printMessage("data  : %s (%ld)",szData,pcbValue);
-    is_num(pcbValue, 15);
-    is_str(szData,"Source Database", 16);
+  rc = SQLGetData(hstmt,2,SQL_C_CHAR,szData,pcbValue+1,&pcbValue);
+  mystmt(hstmt,rc);
+  printMessage("data  : %s (%ld)",szData,pcbValue);
+  is_num(pcbValue, 15);
+  is_str(szData,"Source Database", 16);
 
-    pcbValue= 99;
-    szData[0]='A';
-    expect_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_CHAR, szData, 0, &pcbValue),
-                SQL_NO_DATA_FOUND);
-    printMessage("data  : %s (%ld)",szData,pcbValue);
-    myassert(pcbValue == 99);
-    myassert(szData[0] == 'A');
+  pcbValue= 99;
+  szData[0]='A';
+  expect_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_CHAR, szData, 0, &pcbValue),
+              SQL_NO_DATA_FOUND);
+  printMessage("data  : %s (%ld)",szData,pcbValue);
+  myassert(pcbValue == 99);
+  myassert(szData[0] == 'A');
 
-    expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
-    SQLFreeStmt(hstmt,SQL_UNBIND);
-    SQLFreeStmt(hstmt,SQL_CLOSE);
+  SQLFreeStmt(hstmt,SQL_UNBIND);
+  SQLFreeStmt(hstmt,SQL_CLOSE);
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_multistep");
 
