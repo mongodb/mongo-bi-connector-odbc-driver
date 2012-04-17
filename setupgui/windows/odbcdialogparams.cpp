@@ -209,7 +209,7 @@ void getStrFieldData(SQLWCHAR **param, unsigned int framenum, int idc )
 }
 
 
-void setUnsignedFieldData(HWND hwnd, unsigned int & param, int idc )
+void setUnsignedFieldData(HWND hwnd, const unsigned int & param, int idc )
 {
   wchar_t buf[20];
   _itow( param, (wchar_t*)buf, 10 );
@@ -293,9 +293,13 @@ void syncForm(HWND hwnd, DataSource &params)
   SET_STRING(socket);
 
   if (params.force_use_of_named_pipes)
+  {
     Button_SetCheck(GetDlgItem(hwnd,IDC_RADIO_pipe), TRUE);
+  }
   else
+  {
     Button_SetCheck(GetDlgItem(hwnd,IDC_RADIO_tcp), TRUE);
+  }
   SwitchTcpOrPipe(hwnd, pParams->force_use_of_named_pipes);
 }
 
@@ -331,6 +335,17 @@ void syncTabsData(HWND hwnd, DataSource &params)
   GET_BOOL(CURSORS_TAB, dont_cache_result);
   GET_BOOL(CURSORS_TAB, force_use_of_forward_only_cursors);
   GET_BOOL(CURSORS_TAB, zero_date_to_min);
+
+  if (getBoolFieldData(CURSORS_TAB, IDC_CHECK_cursor_prefetch_number))
+  {
+    getUnsignedFieldData(TabCtrl_1.hTabPages[CURSORS_TAB-1],
+                        params.cursor_prefetch_number,
+                        IDC_EDIT_cursor_prefetch_number);
+  }
+  else
+  {
+    params.cursor_prefetch_number= 0;
+  }
 
   /* 4 - debug*/
   GET_BOOL(DEBUG_TAB,save_queries);
@@ -390,6 +405,25 @@ void syncTabs(HWND hwnd, DataSource &params)
   SET_BOOL(CURSORS_TAB, dont_cache_result);
   SET_BOOL(CURSORS_TAB, force_use_of_forward_only_cursors);
   SET_BOOL(CURSORS_TAB, zero_date_to_min);
+
+  HWND cursorTab= TabCtrl_1.hTabPages[CURSORS_TAB-1];
+  assert(cursorTab);
+  /* Following pattern as it done for other tabs - hope it was done for
+     a reason */
+  if (cursorTab)
+  {
+    Button_SetCheck(GetDlgItem(cursorTab, IDC_CHECK_cursor_prefetch_number),
+                  params.cursor_prefetch_number > 0);
+
+    EnableWindow(GetDlgItem(cursorTab, IDC_EDIT_cursor_prefetch_number),
+              params.cursor_prefetch_number > 0);
+
+    if (params.cursor_prefetch_number > 0)
+    {
+      setUnsignedFieldData(cursorTab, params.cursor_prefetch_number,
+                          IDC_EDIT_cursor_prefetch_number);
+    }
+  }
 
   /* 4 - debug*/
   SET_BOOL(DEBUG_TAB,save_queries);
@@ -708,6 +742,23 @@ void FormMain_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
     case IDC_RADIO_tcp:
     case IDC_RADIO_pipe:
       SwitchTcpOrPipe(hwnd, !!Button_GetCheck(GetDlgItem(hwnd, IDC_RADIO_pipe)));
+      break;
+    case IDC_CHECK_cursor_prefetch_number:
+      {
+        HWND cursorTab= TabCtrl_1.hTabPages[CURSORS_TAB-1];
+        assert(cursorTab);
+        HWND prefetch= GetDlgItem(cursorTab, IDC_EDIT_cursor_prefetch_number);
+        assert(prefetch);
+
+        EnableWindow(prefetch, !!Button_GetCheck(GetDlgItem(cursorTab,
+                                            IDC_CHECK_cursor_prefetch_number)));
+                  
+        if (Edit_GetTextLength(prefetch) == 0)
+        {
+          setUnsignedFieldData(cursorTab, default_cursor_prefetch,
+                              IDC_EDIT_cursor_prefetch_number);
+        }
+      }
       break;
     case IDC_EDIT_name:
     {

@@ -161,7 +161,7 @@ static SQLWCHAR W_DFLT_BIGINT_BIND_STR[]=
 static SQLWCHAR W_CLIENT_INTERACTIVE[]=
   {'I','N','T','E','R','A','C','T','I','V','E',0};
 static SQLWCHAR W_NO_I_S[]= {'N','O','_','I','_','S',0};
-static SQLWCHAR W_SERVER_CURSOR[]= {'S','E','R','V','E','R','_','C','U','R','S','O','R',0};
+static SQLWCHAR W_PREFETCH[]= {'P','R','E','F','E','T','C','H',0};
 
 /* DS_PARAM */
 /* externally used strings */
@@ -190,10 +190,12 @@ SQLWCHAR *dsnparams[]= {W_DSN, W_DRIVER, W_DESCRIPTION, W_SERVER,
                         W_ZERO_DATE_TO_MIN, W_MIN_DATE_TO_ZERO,
                         W_MULTI_STATEMENTS, W_COLUMN_SIZE_S32,
                         W_NO_BINARY_RESULT, W_DFLT_BIGINT_BIND_STR,
-                        W_CLIENT_INTERACTIVE, W_NO_I_S, W_SERVER_CURSOR};
+                        W_CLIENT_INTERACTIVE, W_NO_I_S, W_PREFETCH};
 static const
 int dsnparamcnt= sizeof(dsnparams) / sizeof(SQLWCHAR *);
 /* DS_PARAM */
+
+const unsigned int default_cursor_prefetch= 100;
 
 /* convenience macro to append a single character */
 #define APPEND_SQLWCHAR(buf, ctr, c) {\
@@ -594,7 +596,6 @@ DataSource *ds_new()
 
   /* non-zero DataSource defaults here */
   ds->port=                   3306;
-  ds->cursor_prefetch_number= 100;/*100*/
   ds->use_ssps=               FALSE;
   /* DS_PARAM */
 
@@ -744,6 +745,8 @@ void ds_map_param(DataSource *ds, const SQLWCHAR *param,
     *intdest= &ds->writetimeout;
   else if (!sqlwcharcasecmp(W_CLIENT_INTERACTIVE, param))
     *intdest= &ds->clientinteractive;
+  else if (!sqlwcharcasecmp(W_PREFETCH, param))
+    *intdest= &ds->cursor_prefetch_number;
 
   else if (!sqlwcharcasecmp(W_FOUND_ROWS, param))
     *booldest= &ds->return_matching_rows;
@@ -1232,6 +1235,7 @@ int ds_add(DataSource *ds)
   if (ds_add_intprop(ds->name, W_READTIMEOUT, ds->readtimeout)) goto error;
   if (ds_add_intprop(ds->name, W_WRITETIMEOUT, ds->writetimeout)) goto error;
   if (ds_add_intprop(ds->name, W_CLIENT_INTERACTIVE, ds->clientinteractive)) goto error;
+  if (ds_add_intprop(ds->name, W_PREFETCH   , ds->cursor_prefetch_number)) goto error;
 
   if (ds_add_intprop(ds->name, W_FOUND_ROWS, ds->return_matching_rows)) goto error;
   if (ds_add_intprop(ds->name, W_BIG_PACKETS, ds->allow_big_results)) goto error;

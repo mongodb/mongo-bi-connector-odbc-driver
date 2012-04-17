@@ -117,6 +117,8 @@
 #define IDC_EDIT_socket                 10042
 #define IDC_RADIO_tcp                   10043
 #define IDC_RADIO_pipe                  10044
+#define IDC_CHECK_cursor_prefetch_number 10045
+#define IDC_EDIT_cursor_prefetch_number 10046
 #define IDC_BUTTON_TEST                 11014
 #define IDC_BUTTON_HELP                 11015
 #define IDC_STATIC                      -1

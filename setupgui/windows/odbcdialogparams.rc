@@ -102,7 +102,7 @@ BEGIN
     CONTROL         "Named Pipe:",IDC_RADIO_pipe,"Button",BS_AUTORADIOBUTTON | BS_RIGHT,32,122,60,13
     EDITTEXT        IDC_EDIT_server,98,104,85,14,ES_AUTOHSCROLL
     EDITTEXT        IDC_EDIT_port,212,104,28,14,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        IDC_EDIT_socket,98,123,85,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_socket,98,123,85,14,WS_DISABLED,ES_AUTOHSCROLL
     EDITTEXT        IDC_EDIT_uid,98,142,85,14,ES_AUTOHSCROLL
     EDITTEXT        IDC_EDIT_pwd,98,161,85,14,ES_PASSWORD | ES_AUTOHSCROLL
     RTEXT           "Data Source Name:",IDC_STATIC,23,68,67,8
@@ -173,22 +173,26 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     CONTROL         "Enable dynamic cursors",IDC_CHECK_dynamic_cursor,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,12,91,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,2,91,10
     CONTROL         "Disable driver-provided cursor support",IDC_CHECK_user_manager_cursor,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,27,139,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,17,139,10
     CONTROL         "Don't cache results of forward-only cursors",IDC_CHECK_dont_cache_result,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,42,154,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,32,154,10
     CONTROL         "Force use of forward-only cursors",IDC_CHECK_force_use_of_forward_only_cursors,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,57,125,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,47,125,10
+    CONTROL         "Prefetch from server by",IDC_CHECK_cursor_prefetch_number,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,62,89,10
+    EDITTEXT        IDC_EDIT_cursor_prefetch_number,102,62,27,10,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    LTEXT           "rows at a time",IDC_STATIC,130,62,48,10
 
     CONTROL         "Return matched rows instead of affected rows",IDC_CHECK_return_matching_rows,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,75,165,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,80,165,10
     CONTROL         "Enable SQL_AUTO_IS_NULL",IDC_CHECK_auto_increment_null_search,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,90,105,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,95,105,10
     CONTROL         "Pad CHAR to full length with space",IDC_CHECK_pad_char_to_full_length,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,105,127,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,110,127,10
     CONTROL         "Return SQL_NULL_DATA for zero date",IDC_CHECK_zero_date_to_min,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,120,138,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,125,138,10
 END
 
 IDD_TAB4 DIALOGEX 0, 0, 209, 151

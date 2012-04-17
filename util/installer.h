@@ -144,6 +144,9 @@ typedef struct {
   BOOL use_ssps;
 } DataSource;
 
+/* perhaps that is a good idea to have const ds object with defaults */
+extern const unsigned int default_cursor_prefetch;
+
 typedef struct{
   SQLCHAR *type_name;
   SQLINTEGER name_length;
