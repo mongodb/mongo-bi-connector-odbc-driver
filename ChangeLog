@@ -43,9 +43,11 @@
     disconnect. (Bug #59772)
   * If pre-execution failed some catalog functions called right after that
     would return only one row. (Bug #12824839)
-  * MyODBC driver does not call mysql_thread_end() when the thread ends causing error
-    messages such as this: Error in my_thread_global_end(): 1 threads didn't exit
-    (Bug #57727)
+  * MyODBC driver does not call mysql_thread_end() when the thread ends causing
+    error messages such as this: Error in my_thread_global_end(): 1 threads
+    didn't exit. (Bug #57727)
+  * When NO_BINARY_RESULT was set driver failed to perform the expected data
+    conversion. (Bug#11765110/58038)
 
   Built using MySQL 5.5.16.
 
