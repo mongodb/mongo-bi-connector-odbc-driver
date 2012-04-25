@@ -297,8 +297,13 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
 
     case SQL_C_BINARY:
       {
-        char buff[21]; /* Not quite clear why 21 */
-        if (field->type == MYSQL_TYPE_TIMESTAMP && length != 19)
+        char buff[21];
+        /* It seems that server version needs to be checked along with length,
+           as fractions can mess everything up. but on other hand i do not know
+           how to get MYSQL_TYPE_TIMESTAMP with short format date in modern
+           servers. That also makes me think we do not need to consider
+           possibility of having fractional part in complete_timestamp() */
+        if (field->type == MYSQL_TYPE_TIMESTAMP && length < 19)
         {
           /* Convert MySQL timestamp to full ANSI timestamp format. */
           /*TODO if stlen_ind_ptr was not passed - error has to be returned */

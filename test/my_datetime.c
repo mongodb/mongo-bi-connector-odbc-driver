@@ -1070,14 +1070,18 @@ DECLARE_TEST(t_bug60646)
   /* 6) Expecting an error because of longer date
         At the moment ADDTIME('9999-12-31 23:59:59.999999', '1 1:1:1.000002')
         will give you 10000-01-02 01:01:01.000001
+        Fixed in 5.6
    */
 
-  expect_stmt(hstmt, SQLGetData(hstmt, 6, SQL_C_TYPE_TIMESTAMP, &ts, sizeof(ts),
+  if (!mysql_min_version(hdbc, "5.6.", 4))
+  {
+    expect_stmt(hstmt, SQLGetData(hstmt, 6, SQL_C_TYPE_TIMESTAMP, &ts, sizeof(ts),
                               &len), SQL_ERROR);
 
-  if (check_sqlstate(hstmt, "22018") != OK)
-  {
-    return FAIL;
+    if (check_sqlstate(hstmt, "22018") != OK)
+    {
+      return FAIL;
+    }
   }
 
   /* 5th col once again This time we get it in time struct. Thus we are
@@ -1143,6 +1147,60 @@ DECLARE_TEST(t_bug60648)
   return OK;
 }
 
+
+DECLARE_TEST(t_b13975271)
+{
+  if (!mysql_min_version(hdbc, "5.6.", 4))
+  {
+    skip("Necessary feature added in MySQL 5.6.*");
+  }
+  else
+  {
+    SQLCHAR ts[27];
+    SQLLEN len;
+
+    ok_sql(hstmt, "DROP TABLE IF EXISTS t_b13975271");
+    ok_sql(hstmt, "CREATE TABLE t_b13975271 (ts TIMESTAMP(6), dt DATETIME(6),\
+                    t TIME(6))");
+
+    strcpy((char *)ts, "2012-04-25 10:20:49.0194");
+
+    ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                    SQL_TIMESTAMP,0, 0, ts, sizeof(ts), NULL));
+    ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                    SQL_CHAR,0, 0, ts, sizeof(ts), NULL));
+    ok_stmt(hstmt, SQLBindParameter(hstmt, 3, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                    SQL_CHAR,0, 0, ts, sizeof(ts), NULL));
+    ok_stmt(hstmt, SQLPrepare(hstmt, "INSERT INTO t_b13975271(ts,dt,t) \
+                                      VALUES (?,?,?)",
+                              SQL_NTS));
+    ok_stmt(hstmt, SQLExecute(hstmt));
+
+    ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
+
+    /* now fetch and verify the results .. */
+    ok_sql(hstmt, "SELECT * FROM t_b13975271");
+
+    ok_stmt(hstmt, SQLFetch(hstmt));
+    ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, ts, sizeof(ts), &len));
+    is_str(ts, "2012-04-25 10:20:49.0194", 24);
+    is_str(ts+24, "00", 2);
+    /*To make sure that for next test we compare not the data from prev call */
+    ts[0]='\0';
+    ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_CHAR, ts, sizeof(ts), &len));
+    is_str(ts, "2012-04-25 10:20:49.0194", 24);
+    ok_stmt(hstmt, SQLGetData(hstmt, 3, SQL_C_CHAR, ts, sizeof(ts), &len));
+    is_str(ts, "10:20:49.0194", 13);
+
+    ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
+
+    ok_sql(hstmt, "DROP TABLE IF EXISTS t_b13975271");
+  }
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_ts)
   ADD_TEST(t_tstotime)
@@ -1161,6 +1219,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug37342)
   ADD_TEST(t_bug60646)
   ADD_TEST(t_bug60648)
+  ADD_TEST(t_b13975271)
 END_TESTS
 
 
