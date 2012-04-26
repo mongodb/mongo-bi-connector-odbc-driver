@@ -598,6 +598,11 @@ SQLGetDiagRecWImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
   rc= MySQLGetDiagRec(handle_type, handle, record, &sqlstate_value,
                       native_error, &msg_value);
 
+  if (rc == SQL_NO_DATA_FOUND)
+  {
+    return SQL_NO_DATA_FOUND;
+  }
+
   if (msg_value)
   {
     SQLWCHAR *wvalue= sqlchar_as_sqlwchar((dbc && dbc->cxn_charset_info) ?

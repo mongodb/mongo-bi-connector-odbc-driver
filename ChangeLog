@@ -8,6 +8,7 @@
   * Fractional parts of second is ignored in SQLGetData. (Bug #12767740/60646)
   * ODBC prepared statements ignore fractional part of temporal data types.
     (Bug #12767761/60648)
+  * Memory leak on Windows on each connection attepmt. (Bug #11766029/59059)
 
 ----
 

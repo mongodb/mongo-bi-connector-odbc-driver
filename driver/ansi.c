@@ -743,6 +743,11 @@ SQLGetDiagRecImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
   rc= MySQLGetDiagRec(handle_type, handle, record, &sqlstate_value,
                       native_error, &msg_value);
 
+  if (rc == SQL_NO_DATA_FOUND)
+  {
+    return SQL_NO_DATA_FOUND;
+  }
+
   if (msg_value)
   {
     if (dbc && dbc->ansi_charset_info && dbc->cxn_charset_info &&
