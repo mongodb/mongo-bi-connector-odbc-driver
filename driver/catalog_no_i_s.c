@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -2172,14 +2172,19 @@ mysql_tables(SQLHSTMT hstmt,
 
       while ((row= mysql_fetch_row(stmt->result)))
       {
+        int cat_index= 3;
         int type_index= 2;
         int comment_index= 1;
         my_bool view;
 
-        /* TODO Check this condition is really needed here */
+        /* If if did not use I_S */
         if (stmt->dbc->ds->no_information_schema
           || !server_has_i_s(stmt->dbc))
+        {
           type_index= comment_index= (stmt->result->field_count == 18) ? 17 : 15;
+          /* We do not have catalog in result */
+          cat_index= -1;
+        }
 
         view= (myodbc_casecmp(row[type_index], "VIEW", 4) == 0);
 
@@ -2189,7 +2194,10 @@ mysql_tables(SQLHSTMT hstmt,
           continue;
         }
 
-        data[0]= db;
+        /*TODO solve no_i_s case for SQL_ALL_CATALOGS */
+        data[0]= (cat_index >= 0 ?
+                  strdup_root(&stmt->result->field_alloc, row[cat_index]) :
+                  db);
         data[1]= "";
         data[2]= strdup_root(&stmt->result->field_alloc, row[0]);
         data[3]= view ? "VIEW" : "TABLE";

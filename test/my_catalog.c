@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -77,7 +77,7 @@ DECLARE_TEST(my_table_dbs)
 {
     SQLCHAR    database[100];
     SQLRETURN  rc;
-    SQLINTEGER nrows;
+    SQLINTEGER nrows= 0 ;
     SQLLEN lenOrNull, rowCount= 0;
 
     
@@ -85,7 +85,22 @@ DECLARE_TEST(my_table_dbs)
     ok_sql(hstmt, "DROP DATABASE IF EXISTS my_all_db_test2");
     ok_sql(hstmt, "DROP DATABASE IF EXISTS my_all_db_test3");
     ok_sql(hstmt, "DROP DATABASE IF EXISTS my_all_db_test4");
-    
+
+    /* This call caused problems when database names returned as '%' */
+    ok_stmt(hstmt, SQLTables(hstmt,(SQLCHAR*)SQL_ALL_CATALOGS,1,NULL,0,NULL,0,NULL,0));
+
+    while (SQLFetch(hstmt) == SQL_SUCCESS)
+    {
+      ++nrows;
+      ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, database,
+                               sizeof(database), NULL));
+      /* the table catalog in the results must not be '%' */
+      is(database[0] != '%');
+    }
+    /* we should have got rows... */
+    is(nrows>0);
+
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
     ok_stmt(hstmt, SQLTables(hstmt,(SQLCHAR *)SQL_ALL_CATALOGS,1,"",0,"",0,NULL,0));
 

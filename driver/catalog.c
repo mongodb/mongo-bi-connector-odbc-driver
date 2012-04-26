@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -156,7 +156,9 @@ static MYSQL_RES *mysql_table_status_i_s(STMT        *stmt,
   char buff[255], *to;
   my_bool clause_added= FALSE;
 
-  to= strmov(buff, "SELECT TABLE_NAME, TABLE_COMMENT, TABLE_TYPE FROM INFORMATION_SCHEMA.TABLES WHERE ");
+  to= strmov(buff, "SELECT TABLE_NAME, TABLE_COMMENT, TABLE_TYPE, TABLE_SCHEMA \
+                    FROM INFORMATION_SCHEMA.TABLES \
+                    WHERE ");
 
   if (catalog && *catalog)
   {

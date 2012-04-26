@@ -9,6 +9,8 @@
   * ODBC prepared statements ignore fractional part of temporal data types.
     (Bug #12767761/60648)
   * Memory leak on Windows on each connection attepmt. (Bug #11766029/59059)
+  * SQLTables() function does not return the catalog correctly if the wildcard
+    or SQL_ALL_CATALOGS is used. (Bug #13914518)
 
 ----
 
