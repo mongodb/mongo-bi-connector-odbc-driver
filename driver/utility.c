@@ -3717,10 +3717,34 @@ char *add_to_buffer(NET *net,char *to,const char *from,ulong length)
 }
 
 
-MY_LIMIT_CLAUSE find_position4limit(char *query, char * query_end)
+MY_LIMIT_CLAUSE find_position4limit(CHARSET_INFO* cs, char *query, char * query_end)
 {
   MY_LIMIT_CLAUSE result={0,0,NULL,NULL};
+
   result.begin= result.end= query_end;
 
+  assert(query && query_end && query_end >= query);
+
+  while(query_end > query && (!*query_end ||
+            myodbc_isspace(cs, query_end, result.end)))
+  {
+    --query_end;
+  }
+
+  if (*query_end==';')
+  {
+    result.begin= result.end= query_end;
+  }
+  
+
   return result;
+}
+
+
+BOOL myodbc_isspace(CHARSET_INFO* cs, const char * begin, const char *end)
+{
+  int ctype;
+  cs->cset->ctype(cs, &ctype, (const uchar*) begin, (const uchar*) end);
+
+  return ctype & _MY_SPC;
 }

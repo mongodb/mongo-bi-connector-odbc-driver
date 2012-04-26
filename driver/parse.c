@@ -63,7 +63,7 @@ const char *mystr_get_next_token(CHARSET_INFO *charset,
   /* Looking for space after token */
   *query= pos + 1;
 
-  while (*query != end && (**query < 0 || !my_isspace(charset, **query)))
+  while (*query != end && (**query < 0 || !myodbc_isspace(charset, *query, end)))
     ++*query;
 
   return pos;   /* Return found token */

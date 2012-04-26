@@ -562,7 +562,7 @@ DECLARE_TEST(t_max_rows)
 
     is_num(3, myrowcount(hstmt1));
 
-    SQLFreeStmt(hstmt1,SQL_DROP);
+    ok_stmt(hstmt1, SQLFreeStmt(hstmt1,SQL_DROP));
     ok_con(hdbc1, SQLDisconnect(hdbc1));
     ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
   }
@@ -2977,6 +2977,50 @@ DECLARE_TEST(t_row_status)
 }
 
 
+DECLARE_TEST(t_prefetch)
+{
+    HDBC  hdbc1;
+    HSTMT hstmt1;
+    SQLCHAR conn[256];
+
+    sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;PREFETCH=5",
+          mydsn, myuid, mypwd);
+    if (mysock != NULL)
+    {
+      strcat((char *)conn, ";SOCKET=");
+      strcat((char *)conn, (char *)mysock);
+    }
+    if (myport)
+    {
+      char pbuff[20];
+      sprintf(pbuff, ";PORT=%d", myport);
+      strcat((char *)conn, pbuff);
+    }
+
+    ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+    ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), NULL,
+                                   0, NULL,
+                                   SQL_DRIVER_NOPROMPT));
+    ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+    ok_sql(hstmt, "DROP table IF EXISTS b_prefecth");
+    ok_sql(hstmt, "CREATE table b_prefecth(i int)");
+
+    ok_sql(hstmt, "insert into b_prefecth values(1),(2),(3),(4),(5),(6),(7)");
+
+    ok_stmt(hstmt1, SQLPrepare(hstmt1, "select* from b_prefecth;    ", SQL_NTS));
+    ok_stmt(hstmt1, SQLExecute(hstmt1));
+
+    ok_stmt(hstmt1, SQLFreeStmt(hstmt1,SQL_DROP));
+    ok_con(hdbc1, SQLDisconnect(hdbc1));
+    ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+
+    ok_sql(hstmt, "DROP table IF EXISTS b_prefecth");
+
+    return OK;
+}
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -3022,6 +3066,7 @@ BEGIN_TESTS
   ADD_TEST(t_desccol_before_exec)
   ADD_TEST(t_bug62657)
   ADD_TEST(t_row_status)
+  ADD_TEST(t_prefetch)
 END_TESTS
 
 

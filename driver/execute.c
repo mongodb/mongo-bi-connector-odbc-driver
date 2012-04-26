@@ -86,8 +86,11 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
       MYLOG_QUERY(stmt, "Using direct execution");
 
       /* Simplifying task so far - we will do "LIMIT" scrolling forward only
+       * and when no musltiple statements is allowed - we can't now parse query
+       * that well to detect multiple queries.
        */
       if (stmt->dbc->ds->cursor_prefetch_number > 0
+        && !stmt->dbc->ds->allow_multiple_statements
         && stmt->stmt_options.cursor_type == SQL_CURSOR_FORWARD_ONLY
         && scrollable(stmt, query, query+query_length))
       {

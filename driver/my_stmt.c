@@ -319,7 +319,8 @@ void scroller_create(STMT * stmt, char *query, SQLULEN query_len)
   /* MAX32_BUFF_SIZE includes place for terminating null, which we do not need
      and will use for comma */
   const size_t len2add= 7/*" LIMIT "*/ + MAX64_BUFF_SIZE/*offset*/ - 1 + MAX32_BUFF_SIZE;
-  MY_LIMIT_CLAUSE limit= find_position4limit(query, query + query_len);
+  MY_LIMIT_CLAUSE limit= find_position4limit(stmt->dbc->ansi_charset_info,
+                                            query, query + query_len);
 
   stmt->scroller.total_rows= myodbc_max(stmt->stmt_options.max_rows, 0);
 

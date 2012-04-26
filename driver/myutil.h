@@ -332,7 +332,8 @@ char * complete_timestamp(const char * value, ulong length, char buff[21]);
 long double strtold(const char *nptr, char **endptr);
 char * extend_buffer(NET *net, char *to, ulong length);
 char * add_to_buffer(NET *net,char *to,const char *from,ulong length);
-MY_LIMIT_CLAUSE find_position4limit(char *query, char * query_end);
+MY_LIMIT_CLAUSE find_position4limit(CHARSET_INFO* cs, char *query, char * query_end);
+BOOL myodbc_isspace(CHARSET_INFO* cs, const char * begin, const char *end);
 
 /*results.c*/
 long long binary2numeric(long long *dst, char *src, uint srcLen);
