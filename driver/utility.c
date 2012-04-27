@@ -3662,17 +3662,17 @@ long double strtold(const char *nptr, char **endptr)
   return strtod(nptr, endptr);
 #else
 # ifndef HAVE_FUNCTION_STRTOLD
-	return ::strtod(nptr, endptr);
+	return strtod(nptr, endptr);
 # else
 #  if defined(__hpux) && defined(_LONG_DOUBLE)
 	union {
 		long_double l_d;
 		long double ld;
 	} u;
-	u.l_d = ::strtold( nptr, endptr);
+	u.l_d = strtold( nptr, endptr);
 	return u.ld;
 #  else
-	return ::strtold(nptr, endptr);
+	return strtold(nptr, endptr);
 #  endif
 # endif
 #endif
