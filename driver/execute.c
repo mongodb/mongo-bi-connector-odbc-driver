@@ -106,7 +106,7 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
 
         scroller_create(stmt, query, query_length);
         scroller_move(stmt);
-        MYLOG_QUERY(stmt, query);
+        MYLOG_QUERY(stmt, stmt->scroller.query);
 
         native_error= mysql_real_query(&stmt->dbc->mysql, stmt->scroller.query,
                                     (unsigned long)stmt->scroller.query_len);
@@ -121,6 +121,7 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
 
     if (native_error)
     {
+      MYLOG_QUERY(stmt, mysql_error(&stmt->dbc->mysql));
       set_stmt_error(stmt,"HY000",mysql_error(&stmt->dbc->mysql),
                      mysql_errno(&stmt->dbc->mysql));
 

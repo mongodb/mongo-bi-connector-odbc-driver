@@ -2732,7 +2732,7 @@ DECLARE_TEST(t_bug32420)
   SQLINTEGER nData[4];
   SQLCHAR szData[4][16];
   SQLUSMALLINT rgfRowStatus[4];
-  SQLCHAR   conn[256], conn_out[256];
+  SQLCHAR   conn[512], conn_out[512];
   SQLSMALLINT conn_out_len;
   SQLULEN row_count;
 

@@ -318,7 +318,7 @@ void scroller_create(STMT * stmt, char *query, SQLULEN query_len)
 {
   /* MAX32_BUFF_SIZE includes place for terminating null, which we do not need
      and will use for comma */
-  const size_t len2add= 7/*" LIMIT "*/ + MAX64_BUFF_SIZE/*offset*/ - 1 + MAX32_BUFF_SIZE;
+  const size_t len2add= 7/*" LIMIT "*/ + MAX64_BUFF_SIZE/*offset*/ /*- 1*/ + MAX32_BUFF_SIZE;
   MY_LIMIT_CLAUSE limit= find_position4limit(stmt->dbc->ansi_charset_info,
                                             query, query + query_len);
 
@@ -365,8 +365,8 @@ void scroller_create(STMT * stmt, char *query, SQLULEN query_len)
   stmt->scroller.offset_pos= limit.begin + 7;
 
   /* putting row count in place. normally should not change or only once */
-  snprintf(stmt->scroller.offset_pos + MAX64_BUFF_SIZE - 1, MAX32_BUFF_SIZE,
-    ",%10u", stmt->scroller.row_count);
+  snprintf(stmt->scroller.offset_pos + MAX64_BUFF_SIZE - 1, MAX32_BUFF_SIZE + 1,
+    ",%*u", MAX32_BUFF_SIZE-1, stmt->scroller.row_count);
   /* cpy'ing end of query from original query - not sure if we will allow to
      have one */
   memcpy(stmt->scroller.offset_pos + MAX64_BUFF_SIZE + MAX32_BUFF_SIZE - 1, limit.end,
@@ -378,8 +378,9 @@ void scroller_create(STMT * stmt, char *query, SQLULEN query_len)
 /* Returns next offset/maxrow for current fetch*/
 unsigned long long scroller_move(STMT * stmt)
 {
-  snprintf(stmt->scroller.offset_pos, MAX64_BUFF_SIZE - 1 , "%20llu",
+  snprintf(stmt->scroller.offset_pos, MAX64_BUFF_SIZE, "%*llu", MAX64_BUFF_SIZE - 1,
     stmt->scroller.next_offset);
+  stmt->scroller.offset_pos[MAX64_BUFF_SIZE - 1]=',';
 
   stmt->scroller.next_offset+= stmt->scroller.row_count;
 
@@ -400,8 +401,8 @@ SQLRETURN scroller_prefetch(STMT * stmt)
 
     if (count > 0)
     {
-      snprintf(stmt->scroller.offset_pos + MAX64_BUFF_SIZE, MAX32_BUFF_SIZE - 1,
-    "%10u", count);
+      snprintf(stmt->scroller.offset_pos + MAX64_BUFF_SIZE, MAX32_BUFF_SIZE,
+              "%*u", MAX32_BUFF_SIZE - 1, count);
     }
     else
     {

@@ -503,7 +503,7 @@ DECLARE_TEST(t_max_rows)
   {
     HDBC  hdbc1;
     HSTMT hstmt1;
-    SQLCHAR conn[256];
+    SQLCHAR conn[512];
 
     sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;PREFETCH=5",
           mydsn, myuid, mypwd);
@@ -2981,7 +2981,7 @@ DECLARE_TEST(t_prefetch)
 {
     HDBC  hdbc1;
     HSTMT hstmt1;
-    SQLCHAR conn[256];
+    SQLCHAR conn[512];
 
     sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;PREFETCH=5",
           mydsn, myuid, mypwd);

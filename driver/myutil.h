@@ -349,7 +349,7 @@ MYSQL_RES *   get_result(STMT *stmt);
 unsigned int  field_count(STMT *stmt);
 my_ulonglong  affected_rows(STMT *stmt);
 my_ulonglong  update_affected_rows(STMT *stmt);
-my_ulonglong  num_rows(stmt);
+my_ulonglong  num_rows(STMT *stmt);
 MYSQL_ROW     fetch_row(STMT *stmt);
 unsigned long*fetch_lengths(STMT *stmt);
 int           get_int(STMT *stmt, ulong column_number, char *value,

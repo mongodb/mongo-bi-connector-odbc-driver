@@ -267,7 +267,7 @@ DECLARE_TEST(charset_utf8)
 {
   HDBC hdbc1;
   HSTMT hstmt1;
-  SQLCHAR conn[256], conn_out[256];
+  SQLCHAR conn[512], conn_out[512];
   SQLLEN len;
   SQLSMALLINT conn_out_len;
   SQLINTEGER str_size;
@@ -380,7 +380,7 @@ DECLARE_TEST(charset_gbk)
 {
   HDBC hdbc1;
   HSTMT hstmt1;
-  SQLCHAR conn[256], conn_out[256];
+  SQLCHAR conn[512], conn_out[512];
   /*
     The fun here is that 0xbf5c is a valid GBK character, and we have 0x27
     as the second byte of an invalid GBK character. mysql_real_escape_string()
@@ -516,7 +516,7 @@ DECLARE_TEST(t_bug30774)
 DECLARE_TEST(t_bug30840)
 {
   HDBC hdbc1;
-  SQLCHAR   conn[256], conn_out[256];
+  SQLCHAR   conn[512], conn_out[512];
   SQLSMALLINT conn_out_len;
 
   if (using_dm(hdbc))
@@ -585,7 +585,7 @@ DECLARE_TEST(t_bug30983)
 DECLARE_TEST(t_driverconnect_outstring)
 {
   HDBC hdbc1;
-  SQLCHAR conn[256], conn_out[256], exp_out[256];
+  SQLCHAR conn[512], conn_out[512], exp_out[512];
   SQLSMALLINT conn_out_len, exp_conn_out_len;
 
   sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;CHARSET=utf8",
@@ -668,7 +668,7 @@ DECLARE_TEST(setnames)
 DECLARE_TEST(setnames_conn)
 {
   HDBC hdbc1;
-  SQLCHAR conn[256], conn_out[256];
+  SQLCHAR conn[512], conn_out[512];
   SQLSMALLINT conn_out_len;
 
   sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;INITSTMT={set names utf8}",
@@ -1020,7 +1020,7 @@ DECLARE_TEST(t_bug48603)
   SQLSMALLINT conn_out_len;
   HDBC hdbc1;
   HSTMT hstmt1;
-  SQLCHAR conn[256], conn_out[256], query[53];
+  SQLCHAR conn[512], conn_out[512], query[53];
 
   ok_sql(hstmt, "select @@wait_timeout, @@interactive_timeout");
   ok_stmt(hstmt,SQLFetch(hstmt));
@@ -1106,7 +1106,7 @@ DECLARE_TEST(t_bug48603)
 DECLARE_TEST(t_bug45378)
 {
   HDBC hdbc1;
-  SQLCHAR conn[256], conn_out[256];
+  SQLCHAR conn[512], conn_out[512];
   SQLSMALLINT conn_out_len;
 
   sprintf((char *)conn, "DSN=%s; UID = {%s} ;PWD= %s ",

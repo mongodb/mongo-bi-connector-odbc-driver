@@ -1073,7 +1073,7 @@ DECLARE_TEST(t_bug29402)
 {
   SQLSMALLINT name_length, data_type, decimal_digits, nullable;
   SQLCHAR column_name[SQL_MAX_COLUMN_NAME_LEN];
-  SQLCHAR conn[256], conn_out[256];
+  SQLCHAR conn[512], conn_out[512];
   SQLSMALLINT conn_out_len;
   SQLULEN column_size;
   SQLCHAR buf[80]= {0};

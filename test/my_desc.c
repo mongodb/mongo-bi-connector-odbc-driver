@@ -595,7 +595,7 @@ DECLARE_TEST(t_desc_curcatalog)
 {
   SQLHDBC hdbc1;
   SQLHSTMT hstmt1;
-  SQLCHAR conn_in[256];
+  SQLCHAR conn_in[512];
   SQLHANDLE ird;
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));

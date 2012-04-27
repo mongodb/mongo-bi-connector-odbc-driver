@@ -792,7 +792,7 @@ DECLARE_TEST(t_sqltables)
 
 DECLARE_TEST(my_information_schema)
 {
-  SQLCHAR   conn[256], conn_out[256];
+  SQLCHAR   conn[512], conn_out[512];
   HDBC hdbc1;
   HSTMT hstmt1;
   SQLSMALLINT conn_out_len;
@@ -1051,7 +1051,7 @@ DECLARE_TEST(bug15713)
 {
   HDBC hdbc1;
   HSTMT hstmt1;
-  SQLCHAR   conn[256], conn_out[256];
+  SQLCHAR   conn[512], conn_out[512];
   SQLSMALLINT conn_out_len;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug15713");
@@ -2222,7 +2222,7 @@ DECLARE_TEST(t_bug57182)
 DECLARE_TEST(t_bug55870)
 {
   SQLLEN  rowCount;
-  SQLCHAR noI_SconnStr[256], query[256];
+  SQLCHAR noI_SconnStr[512], query[256];
   HDBC    hdbc1;
   HSTMT   hstmt1;
 
@@ -2411,7 +2411,7 @@ DECLARE_TEST(sqlcolumns_nodbselected)
 {
   SQLHDBC hdbc1;
   SQLHSTMT hstmt1;
-  SQLCHAR conn_in[256];
+  SQLCHAR conn_in[512];
 
   /* Just to make sure we have at least one table in our test db */
   ok_sql(hstmt, "DROP TABLE IF EXISTS sqlcolumns_nodbselected");

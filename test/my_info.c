@@ -210,7 +210,7 @@ DECLARE_TEST(t_bug3780)
 {
   HDBC hdbc1;
   HSTMT hstmt1;
-  SQLCHAR   conn[256], conn_out[256];
+  SQLCHAR   conn[512], conn_out[512];
   SQLSMALLINT conn_out_len;
   SQLCHAR   rgbValue[MAX_NAME_LEN];
   SQLSMALLINT pcbInfo;
@@ -295,7 +295,7 @@ DECLARE_TEST(t_bug30626)
   SQLHANDLE henv1;
   SQLHANDLE hdbc1;
   SQLHANDLE hstmt1;
-  SQLCHAR conn[256];
+  SQLCHAR conn[512];
   
   /* odbc 3 */
   ok_stmt(hstmt, SQLGetTypeInfo(hstmt, SQL_TYPE_TIMESTAMP));
