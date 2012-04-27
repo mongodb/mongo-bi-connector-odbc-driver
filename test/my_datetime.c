@@ -1183,8 +1183,8 @@ DECLARE_TEST(t_b13975271)
 
     ok_stmt(hstmt, SQLFetch(hstmt));
     ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, ts, sizeof(ts), &len));
-    is_str(ts, "2012-04-25 10:20:49.0194", 24);
-    is_str(ts+24, "00", 2);
+    is_str(ts, "2012-04-25 10:20:49.019400", 26);
+
     /*To make sure that for next test we compare not the data from prev call */
     ts[0]='\0';
     ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_CHAR, ts, sizeof(ts), &len));

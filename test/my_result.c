@@ -3011,6 +3011,30 @@ DECLARE_TEST(t_prefetch)
 
     ok_stmt(hstmt1, SQLPrepare(hstmt1, "select* from b_prefecth;    ", SQL_NTS));
     ok_stmt(hstmt1, SQLExecute(hstmt1));
+    ok_stmt(hstmt1, SQLFreeStmt(hstmt1,SQL_DROP));
+
+    ok_con(hdbc1, SQLDisconnect(hdbc1));
+
+    sprintf((char *)conn+strlen(conn), ";MULTI_STATEMENTS=1");
+
+    ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), NULL,
+                                   0, NULL,
+                                   SQL_DRIVER_NOPROMPT));
+    ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+    ok_stmt(hstmt1, SQLPrepare(hstmt1, "select* from b_prefecth;\
+                                        select * from b_prefecth where i < 7; ",
+                              SQL_NTS));
+
+    ok_stmt(hstmt1, SQLExecute(hstmt1));
+
+    is_num(7, myrowcount(hstmt1));
+
+    ok_stmt(hstmt1, SQLMoreResults(hstmt1));
+
+    is_num(6, myrowcount(hstmt1));
+
+    expect_stmt(hstmt1, SQLMoreResults(hstmt1), SQL_NO_DATA);
 
     ok_stmt(hstmt1, SQLFreeStmt(hstmt1,SQL_DROP));
     ok_con(hdbc1, SQLDisconnect(hdbc1));
