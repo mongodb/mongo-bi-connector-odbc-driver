@@ -1456,15 +1456,24 @@ SQLSetDescRec(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT type,
 }
 
 
-#ifdef NOT_IMPLEMENTED_YET
+/**
+  Discover and enumerate the attributes and attribute values required to
+  connect.
+
+  @return Always returns @c SQL_ERROR, because the driver does not support this.
+
+  @since ODBC 1.0
+*/
 SQLRETURN SQL_API
 SQLBrowseConnect(SQLHDBC hdbc, SQLCHAR *in, SQLSMALLINT in_len,
                  SQLCHAR *out, SQLSMALLINT out_max, SQLSMALLINT *out_len)
 {
-  NOT_IMPLEMENTED;
+  return set_conn_error(hdbc,MYERR_S1000,
+                        "Driver does not support this API", 0);
 }
 
 
+#ifdef NOT_IMPLEMENTED_YET
 //SQLDataSources
 
 

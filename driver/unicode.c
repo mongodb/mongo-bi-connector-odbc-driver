@@ -1162,15 +1162,16 @@ SQLSetDescRecW(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT type,
 }
 
 
-#ifdef NOT_IMPLEMENTED_YET
 SQLRETURN SQL_API
 SQLBrowseConnectW(SQLHDBC hdbc, SQLWCHAR *in, SQLSMALLINT in_len,
                   SQLWCHAR *out, SQLSMALLINT out_max, SQLSMALLINT *out_len)
 {
-  NOT_IMPLEMENTED;
+  return set_conn_error(hdbc,MYERR_S1000,
+                        "Driver does not support this API", 0);
 }
 
 
+#ifdef NOT_IMPLEMENTED_YET
 //SQLDataSourcesW
 
 

@@ -716,27 +716,6 @@ error:
 
 
 /**
-  Discover and enumerate the attributes and attribute values required to
-  connect.
-
-  @return Always returns @c SQL_ERROR, because the driver does not support this.
-
-  @since ODBC 1.0
-*/
-SQLRETURN SQL_API
-SQLBrowseConnect(SQLHDBC hdbc,
-                 SQLCHAR FAR *szConnStrIn __attribute__((unused)),
-                 SQLSMALLINT cbConnStrIn __attribute__((unused)),
-                 SQLCHAR FAR *szConnStrOut __attribute__((unused)),
-                 SQLSMALLINT cbConnStrOutMax __attribute__((unused)),
-                 SQLSMALLINT FAR *pcbConnStrOut __attribute__((unused)))
-{
-  return set_conn_error(hdbc,MYERR_S1000,
-                        "Driver does not support this API", 0);
-}
-
-
-/**
   Disconnect a connection.
 
   @param[in]  hdbc   Connection handle

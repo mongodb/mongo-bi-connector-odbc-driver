@@ -22,48 +22,55 @@
 
 ##########################################################################
 
+SET(DRIVER_NAME "myodbc5${CONNECTOR_DRIVER_TYPE_SHORT}")
+
 SET(DRIVER_SRCS
-		ansi.c catalog.c catalog_no_i_s.c connect.c cursor.c desc.c dll.c error.c execute.c
-    handle.c info.c driver.c options.c parse.c prepare.c results.c transact.c unicode.c
-    my_prepared_stmt.c my_stmt.c utility.c)
+	catalog.c catalog_no_i_s.c connect.c cursor.c desc.c dll.c error.c execute.c
+	handle.c info.c driver.c options.c parse.c prepare.c results.c transact.c
+	my_prepared_stmt.c my_stmt.c utility.c)
+
+IF(UNICODE)
+	SET(DRIVER_SRCS ${DRIVER_SRCS} unicode.c)
+ELSE(UNICODE)
+	SET(DRIVER_SRCS ${DRIVER_SRCS} ansi.c)
+ENDIF(UNICODE)
 
 INCLUDE_DIRECTORIES(../util)
 
+
 IF(WIN32)
-  # Headers added for convenience of VS users
+	# Headers added for convenience of VS users
+	CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/driver/driver.def.cmake ${CMAKE_SOURCE_DIR}/driver/driver.def @ONLY)
+	CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/driver/driver.rc.cmake ${CMAKE_SOURCE_DIR}/driver/driver.rc @ONLY)
 	SET(DRIVER_SRCS ${DRIVER_SRCS} driver.def driver.rc catalog.h driver.h error.h myutil.h)
 ENDIF(WIN32)
 
 IF(APPLE)
-ADD_LIBRARY(myodbc5 MODULE ${DRIVER_SRCS})
+	ADD_LIBRARY(${DRIVER_NAME} MODULE ${DRIVER_SRCS})
 ELSE(APPLE)
-ADD_LIBRARY(myodbc5 SHARED ${DRIVER_SRCS})
+	ADD_LIBRARY(${DRIVER_NAME} SHARED ${DRIVER_SRCS})
 ENDIF(APPLE)
 
-INSTALL(TARGETS myodbc5 DESTINATION ${LIB_SUBDIR})
+INSTALL(TARGETS ${DRIVER_NAME} DESTINATION ${LIB_SUBDIR})
 
 IF(WIN32)
-	TARGET_LINK_LIBRARIES(myodbc5 myodbc3u
+	TARGET_LINK_LIBRARIES(${DRIVER_NAME} myodbc3u
 				${MYSQL_CLIENT_LIBS} ${ODBCINSTLIB} ${SECURE32_LIB})
 ELSE(WIN32)
 	SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${ODBC_LINK_FLAGS}")
-	TARGET_LINK_LIBRARIES(myodbc5 mysqlclient_r ${CMAKE_THREAD_LIBS_INIT} m)
-	TARGET_LINK_LIBRARIES(myodbc5 myodbc3u)
+	TARGET_LINK_LIBRARIES(${DRIVER_NAME} mysqlclient_r ${CMAKE_THREAD_LIBS_INIT} m)
+	TARGET_LINK_LIBRARIES(${DRIVER_NAME} myodbc3u)
 
   INCLUDE_DIRECTORIES(${DL_INCLUDES})
 
-  #TARGET_LINK_LIBRARIES(myodbc5 ${DL_LIBS})
-
-  #SET_TARGET_PROPERTIES(myodbc5 PROPERTIES LINK_FLAGS "${DL_LFLAGS}")
-
 ENDIF(WIN32)
 
-GET_TARGET_PROPERTY(DRIVER_LOCATION myodbc5 LOCATION)
+GET_TARGET_PROPERTY(DRIVER_LOCATION ${DRIVER_NAME} LOCATION)
 
-add_custom_command(TARGET myodbc5 POST_BUILD
+add_custom_command(TARGET ${DRIVER_NAME} POST_BUILD
                    COMMAND ${CMAKE_COMMAND}
 		   	    -DDRIVER_LOCATION=${DRIVER_LOCATION}
 			    -DBINARY_DIR=${CMAKE_BINARY_DIR}/test
 			    -P ${CMAKE_SOURCE_DIR}/test/cmake/generateinifiles.cmake
-                   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/test")
+                  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/test")
 

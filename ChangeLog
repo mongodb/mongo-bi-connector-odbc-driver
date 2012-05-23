@@ -1,3 +1,10 @@
+5.2.0
+
+  Functionality added or changed:
+  Bugs fixed:
+
+----
+
 5.1.11
 
   Functionality added or changed:
@@ -1052,5 +1059,3 @@ Binaries were made using MySQL 4.1.13 and unixODBC 2.2.11 (where applicable).
        |FetchOffset| > LastResultRow AND
        |FetchOffset| > RowsetSize    
    * Fixed memory leaks when linked against iODBC or unixODBC
-
-vim: ft=text

@@ -24,7 +24,7 @@ REM # SETLOCAL prevents the variables set in this script to
 REM # be exported to the environment and pollute it
 SETLOCAL
 
-SET    driver_name=MySQL ODBC 5.1 Driver
+SET    driver_name=MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@(@CONNECTOR_DRIVER_TYPE_SHORT@) Driver
 SET      installer=myodbc-installer
 SET   driver_found=no
 
