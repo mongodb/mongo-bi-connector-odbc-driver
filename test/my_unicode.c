@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -25,6 +25,7 @@
 #include <wchar.h>
 #include "odbctap.h"
 #include <sqlucode.h>
+#include "../driver/error.h"
 
 
 DECLARE_TEST(sqlconnect)
@@ -1103,6 +1104,7 @@ DECLARE_TEST(t_bug28168)
     L"localhost identified by "
     L"'\x03A8\x0391\x03A1\x039F pwd'");
   SQLSMALLINT errmsglen;
+  wchar_t *err_prefixw= WC(MYODBC_ERROR_PREFIX);
 
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
 
@@ -1112,6 +1114,7 @@ DECLARE_TEST(t_bug28168)
   if (!SQL_SUCCEEDED(SQLExecDirectW(hstmt, grantQuery, SQL_NTS)))
   {
     free(grantQuery);
+    free(err_prefixw);
     return FAIL;
   }
 
@@ -1162,9 +1165,10 @@ DECLARE_TEST(t_bug28168)
   ok_con(hdbc1, SQLGetDiagFieldW(SQL_HANDLE_DBC, hdbc1, 1,
     SQL_DIAG_MESSAGE_TEXT, errmsgtxt,
     256 * sizeof(SQLWCHAR), &errmsglen));
-  swprintf(dummy, 256, L"[MySQL][ODBC 5.1 Driver]Access denied for user "
+  swprintf(dummy, 256, L"%lsAccess denied for user "
     L"'\x03A8\x0391\x03A1\x039F uid'@'localhost' "
-    L"(using password: YES)");
+    L"(using password: YES)", err_prefixw);
+  free(err_prefixw);
 
   if (sizeof(SQLWCHAR) == sizeof(wchar_t))
   {

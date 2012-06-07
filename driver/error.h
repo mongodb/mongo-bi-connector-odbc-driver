@@ -47,7 +47,7 @@
 /*
   myodbc5 error prefix
 */
-#define MYODBC3_ERROR_PREFIX	 "[MySQL][ODBC "MYODBC_STRDRIVERID" Driver]"
+#define MYODBC_ERROR_PREFIX	 "[MySQL][ODBC "MYODBC_STRDRIVERID" Driver]"
 #define MYODBC_ERROR_CODE_START  500
 
 /*
