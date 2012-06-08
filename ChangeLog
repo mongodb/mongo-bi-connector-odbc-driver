@@ -1,3 +1,11 @@
+5.1.12
+
+  Functionality added or changed:
+  Bugs fixed:
+  * Long table names crash OBDC driver. (Bug# 14085211/65200)
+
+----
+
 5.1.11
 
   Functionality added or changed:

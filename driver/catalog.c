@@ -152,8 +152,8 @@ static MYSQL_RES *mysql_table_status_i_s(STMT        *stmt,
                                          my_bool      show_views)
 {
   MYSQL *mysql= &stmt->dbc->mysql;
-  /** @todo determine real size for buffer */
-  char buff[255], *to;
+  /** the buffer size should count possible escapes */
+  char buff[255+4*NAME_CHAR_LEN], *to;
   my_bool clause_added= FALSE;
 
   to= strmov(buff, "SELECT TABLE_NAME, TABLE_COMMENT, TABLE_TYPE, TABLE_SCHEMA \
@@ -390,6 +390,12 @@ MySQLTables(SQLHSTMT hstmt,
     table_len= table ? (SQLSMALLINT)strlen((char *)table) : 0;
   if (type_len == SQL_NTS)
     type_len= type ? (SQLSMALLINT)strlen((char *)type) : 0;
+
+  if(catalog_len > NAME_CHAR_LEN || schema_len > NAME_CHAR_LEN ||
+     table_len > NAME_CHAR_LEN)
+  {
+    return set_stmt_error(stmt, "HY090", "One or more parameters exceed the maximum allowed name length", 0);
+  }
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
