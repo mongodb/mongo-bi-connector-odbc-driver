@@ -1055,11 +1055,13 @@ DECLARE_TEST(t_bug34672)
   {
     chars[0]= 0xd802;
     chars[1]= 0xdc60;
+    chars[2]= 0;
     inchars= 2;
   }
   else
   {
     chars[0]= (SQLWCHAR) 0x10860;
+    chars[1]= 0;
     inchars= 1;
   }
 

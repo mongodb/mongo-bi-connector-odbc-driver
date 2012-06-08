@@ -382,7 +382,7 @@ SQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd, SQLCHAR *in, SQLSMALLINT in_len,
   {
     uint errors;
     /* Now we have to convert SQLWCHAR back into a SQLCHAR. */
-    *out_len= sqlwchar_as_sqlchar_buf(default_charset_info, out, out_max,
+    *out_len= (SQLSMALLINT)sqlwchar_as_sqlchar_buf(default_charset_info, out, out_max,
                                       outw, *out_len, &errors);
     /* TODO what to do with errors? */
 
@@ -813,7 +813,8 @@ SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
 
   if (char_value)
   {
-    if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+    if (dbc->ansi_charset_info && dbc->cxn_charset_info
+      && dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
     {
       char_value= sqlchar_as_sqlchar(dbc->cxn_charset_info,
                                      dbc->ansi_charset_info,

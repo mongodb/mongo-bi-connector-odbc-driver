@@ -222,11 +222,15 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
 
   }
 
-  /*
-    We always use utf8 for the connection, and change it afterwards if needed.
-  */
-  mysql_options(mysql, MYSQL_SET_CHARSET_NAME, "utf8");
-  dbc->cxn_charset_info= utf8_charset_info;
+
+  if (dbc->unicode)
+  {
+    /*
+      We always use utf8 for the connection, and change it afterwards if needed.
+    */
+    mysql_options(mysql, MYSQL_SET_CHARSET_NAME, "utf8");
+    dbc->cxn_charset_info= utf8_charset_info;
+  }
 
   if (!mysql_real_connect(mysql,
                           ds_get_utf8attr(ds->server,   &ds->server8),
