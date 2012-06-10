@@ -39,6 +39,8 @@
 typedef BOOL (*PromptFunc)(SQLHWND, SQLWCHAR *, SQLUSMALLINT,
                            SQLWCHAR *, SQLSMALLINT, SQLSMALLINT *);
 
+const char *my_os_charset_to_mysql_charset(const char *csname);
+
 /**
   Get the connection flags based on the driver options.
 
@@ -231,6 +233,22 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
     mysql_options(mysql, MYSQL_SET_CHARSET_NAME, "utf8");
     dbc->cxn_charset_info= utf8_charset_info;
   }
+#ifdef _WIN32
+  else
+  {
+    char cpbuf[64];
+    const char *client_cs_name= NULL;
+
+    my_snprintf(cpbuf, sizeof(cpbuf), "cp%u", GetACP());
+    client_cs_name= my_os_charset_to_mysql_charset(cpbuf);
+
+    if (client_cs_name)
+    {
+      mysql_options(mysql, MYSQL_SET_CHARSET_NAME, client_cs_name);
+      dbc->ansi_charset_info= dbc->cxn_charset_info= get_charset_by_csname(client_cs_name, MYF(MY_CS_PRIMARY), MYF(0));
+    }
+  }
+#endif
 
   if (!mysql_real_connect(mysql,
                           ds_get_utf8attr(ds->server,   &ds->server8),
