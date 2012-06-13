@@ -169,13 +169,13 @@ rm -vfr $RPM_BUILD_ROOT%{_prefix}/test
 # ----------------------------------------------------------------------
 
 %post 
-myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5.so"
+myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.so"
 
 %if %{no_odbc_gui}
 %else
 %post setup
 myodbc-installer -r -d -n "MySQL ODBC 5.1 Driver"
-myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5.so;SETUP=%{_libdir}/libmyodbc3S.so"
+myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.so;SETUP=%{_libdir}/libmyodbc3S.so"
 %endif
 
 # ----------------------------------------------------------------------
@@ -191,7 +191,7 @@ myodbc-installer -r -d -n "MySQL ODBC 5.1 Driver"
 %else
 %preun setup
 myodbc-installer -r -d -n "MySQL ODBC 5.1 Driver"
-myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5.so"
+myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.so"
 %endif
 
 ##############################################################################
@@ -203,7 +203,7 @@ myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodb
 %files
 %defattr(-,root,root)
 %{_bindir}/myodbc-installer
-%{_libdir}/libmyodbc5.*
+%{_libdir}/libmyodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.*
 %doc ChangeLog README README.debug INSTALL INSTALL.win Licenses_for_Third-Party_Components.txt
 %if %{com_lic}
 %doc LICENSE.mysql

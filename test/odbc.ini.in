@@ -1,7 +1,7 @@
 [ODBC Data Sources]
-data_source_name = myodbc5
+data_source_name = myodbc5@CONNECTOR_DRIVER_TYPE_SHORT@
 
-[myodbc5]
+[myodbc5@CONNECTOR_DRIVER_TYPE_SHORT@]
 Driver          = @TEST_DRIVER@
 DATABASE        = @TEST_DATABASE@
 DESCRIPTION     = MySQL ODBC 5.1 Driver test

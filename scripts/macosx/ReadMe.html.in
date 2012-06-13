@@ -54,7 +54,8 @@
 <p>
   The library files are;
   <ul>
-    <li><code>/usr/local/lib/libmyodbc5.*</code></li>
+    <li><code>/usr/local/lib/libmyodbc5w.*</code> (Unicode version)</li>
+    <li><code>/usr/local/lib/libmyodbc5a.*</code> (ANSI version)</li>
     <li><code>/usr/local/lib/libmyodbc3S.*</code></li>
   </ul>
 </p>

@@ -20,7 +20,7 @@ REM # be exported to the environment and pollute it
 SETLOCAL
 
 SET         driver_name=MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@(@CONNECTOR_DRIVER_TYPE_SHORT@) Driver
-SET          driver_lib=myodbc5
+SET          driver_lib=myodbc5@CONNECTOR_DRIVER_TYPE_SHORT@
 SET    driver_lib_setup=myodbc5S
 SET           installer=myodbc-installer
 

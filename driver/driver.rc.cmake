@@ -71,10 +71,10 @@ BEGIN
             VALUE "CompanyName", "Oracle Corporation\0"
 	    VALUE "FileDescription", "MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@(@CONNECTOR_DRIVER_TYPE_SHORT@) Driver\0"
             VALUE "FileVersion", MYODBC_STRFILEVER
-            VALUE "InternalName", "myodbc5\0"
+            VALUE "InternalName", "myodbc5@CONNECTOR_DRIVER_TYPE_SHORT@\0"
             VALUE "LegalCopyright", "Copyright (c) 1995, 2012, Oracle and/or its affiliates.\0"
             VALUE "LegalTrademarks", "MySQL, MyODBC, Connector/ODBC are trademarks of Oracle Corporation\0"
-            VALUE "OriginalFilename", "myodbc5.dll\0"
+            VALUE "OriginalFilename", "myodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.dll\0"
             VALUE "PrivateBuild", "Production\0"
 	    VALUE "ProductName", "Connector/ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@\0"
             VALUE "ProductVersion", MYODBC_STRPRODUCTVER
