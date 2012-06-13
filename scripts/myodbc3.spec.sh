@@ -16,7 +16,7 @@
 
 ##############################################################################
 #
-# mysql-connector-odbc 5.1 RPM specification
+# mysql-connector-odbc 5.2 RPM specification
 #
 ##############################################################################
 
@@ -48,7 +48,7 @@ Name:       mysql-connector-odbc-commercial
 %else
 Name:       mysql-connector-odbc
 %endif
-Summary:    An ODBC 5.1 driver for MySQL - driver package
+Summary:    An ODBC 5.2 driver for MySQL - driver package
 Group:      Applications/Databases
 Version:    @NUMERIC_VERSION@
 Release:    1
@@ -64,7 +64,7 @@ BuildRoot:  %{_tmppath}/%{name}-@VERSION@-build
 %if %{no_odbc_gui}
 %else
 %package setup
-Summary:    An ODBC 5.1 driver for MySQL - setup library
+Summary:    An ODBC 5.2 driver for MySQL - setup library
 Group:      Application/Databases
 Requires:   mysqlodbcrpmpack
 %endif
@@ -82,9 +82,9 @@ mysql-connector-odbc  works on Windows NT/2000/XP/2003, and most Unix
 platforms (incl. OSX and Linux). MySQL is a trademark of
 %{mysql_vendor}
 
-mysql-connector-odbc 5.1 is an enhanced version of MyODBC 2.50 to meet
+mysql-connector-odbc 5.2 is an enhanced version of MyODBC 2.50 to meet
 ODBC 3.5 specification. The driver is commonly referred to as
-'MySQL ODBC 5.1 Driver'.
+'MySQL ODBC 5.2 Driver'.
 
 The MySQL software has Dual Licensing, which means you can use the MySQL
 software free of charge under the GNU General Public License
@@ -169,13 +169,13 @@ rm -vfr $RPM_BUILD_ROOT%{_prefix}/test
 # ----------------------------------------------------------------------
 
 %post 
-myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.so"
+myodbc-installer -a -d -n "MySQL ODBC 5.2 Driver" -t "DRIVER=%{_libdir}/libmyodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.so"
 
 %if %{no_odbc_gui}
 %else
 %post setup
-myodbc-installer -r -d -n "MySQL ODBC 5.1 Driver"
-myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.so;SETUP=%{_libdir}/libmyodbc3S.so"
+myodbc-installer -r -d -n "MySQL ODBC 5.2 Driver"
+myodbc-installer -a -d -n "MySQL ODBC 5.2 Driver" -t "DRIVER=%{_libdir}/libmyodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.so;SETUP=%{_libdir}/libmyodbc3S.so"
 %endif
 
 # ----------------------------------------------------------------------
@@ -184,14 +184,14 @@ myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodb
 
 # Removing the driver package, we simply orphan any related DSNs
 %preun
-myodbc-installer -r -d -n "MySQL ODBC 5.1 Driver"
+myodbc-installer -r -d -n "MySQL ODBC 5.2 Driver"
 
 # Removing the setup RPM, downgrade the registration
 %if %{no_odbc_gui}
 %else
 %preun setup
-myodbc-installer -r -d -n "MySQL ODBC 5.1 Driver"
-myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "DRIVER=%{_libdir}/libmyodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.so"
+myodbc-installer -r -d -n "MySQL ODBC 5.2 Driver"
+myodbc-installer -a -d -n "MySQL ODBC 5.2 Driver" -t "DRIVER=%{_libdir}/libmyodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.so"
 %endif
 
 ##############################################################################

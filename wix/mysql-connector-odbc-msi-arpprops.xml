@@ -1,12 +1,12 @@
 <Include>
-  <Property Id="ARPCOMMENTS" Value="MySQL Connector/ODBC 5.1 is a MySQL database connector for ODBC." />
+  <Property Id="ARPCOMMENTS" Value="MySQL Connector/ODBC 5.2 is a MySQL database connector for ODBC." />
   <Property Id="ARPCONTACT" Value="http://www.mysql.com/about/contact/" />
   <Property Id="ARPPRODUCTICON" Value="MySQLConnector.ico" />
   <Property Id="ARPHELPLINK" Value="http://forums.mysql.com/list.php?37" />
   <Property Id="ARPURLINFOABOUT" Value="http://dev.mysql.com/downloads/connector/odbc/" />
   <Property Id="ARPURLUPDATEINFO" Value="http://dev.mysql.com/downloads/connector/odbc/" />
   <!--Property Id="ARPHELPTELEPHONE" Value="URL where one can find support phone numbers" /-->
-  <Property Id="ARPAUTHORIZEDCDFPREFIX" Value="http://dev.mysql.com/doc/refman/5.1/en/connector-odbc.html" />
+  <Property Id="ARPAUTHORIZEDCDFPREFIX" Value="http://dev.mysql.com/doc/refman/5.2/en/connector-odbc.html" />
   <Property Id="ARPSIZE" Value="3" />
 
   <!--

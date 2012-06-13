@@ -66,14 +66,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "provides setup library functionality\0"
             VALUE "CompanyName", "Oracle Corporation\0"
-            VALUE "FileDescription", "MySQL ODBC 5.1 Driver Setup Library\0"
+            VALUE "FileDescription", "MySQL ODBC 5.2 Driver Setup Library\0"
             VALUE "FileVersion", MYODBC_STRFILEVER
             VALUE "InternalName", "myodbc5S\0"
             VALUE "LegalCopyright", "Copyright (c) 1995, 2012, Oracle and/or its affiliates.\0"
             VALUE "LegalTrademarks", "MySQL, MyODBC, Connector/ODBC are trademarks of Oracle Corporation\0"
             VALUE "OriginalFilename", "myodbc5S.dll\0"
             VALUE "PrivateBuild", "Production\0"
-            VALUE "ProductName", "Connector/ODBC 5.1\0"
+            VALUE "ProductName", "Connector/ODBC 5.2\0"
             VALUE "ProductVersion", MYODBC_STRPRODUCTVER
             VALUE "SpecialBuild", "GA release\0"
         END

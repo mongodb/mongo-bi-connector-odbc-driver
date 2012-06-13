@@ -43,7 +43,7 @@
       <Directory Id="ProgramFilesFolder">
       <?endif?>
         <Directory Id="MySQL" Name="MySQL">
-          <Directory Id="Connector_ODBC" Name="Connector ODBC 5.1">
+          <Directory Id="Connector_ODBC" Name="Connector ODBC 5.2">
             <Directory Id="INSTALLDIR" Name=".">
 
           <?if $(var.odbc_64bit) = 1 ?>
@@ -56,7 +56,7 @@
             </Component>
             <Component Id="driver" Guid="C1960400-BFC6-4E6E-AF30-4C19EF5A3F07" SharedDllRefCount="yes" Win64="yes">
               <File Id="myodbc5.dll" Name="myodbc5.dll" Checksum="yes" KeyPath="yes" DiskId="1" Source="x64\myodbc5.dll">
-                <ODBCDriver Id="MySQL_ODBC_5.1_Driver" Name="MySQL ODBC 5.1 Driver" SetupFile="myodbc5S.dll" />
+                <ODBCDriver Id="MySQL_ODBC_5.2_Driver" Name="MySQL ODBC 5.2 Driver" SetupFile="myodbc5S.dll" />
               </File>
               <File Id="readme" Name="README.txt" DiskId="1" Source="doc\README.txt"/>
               <File Id="lic3rd" Name="Licenses_for_Third-Party_Components.txt" Source="doc\Licenses_for_Third-Party_Components.txt" />
@@ -88,7 +88,7 @@
             </Component>
             <Component Id="driver" Guid="83B6877B-3220-4C5F-A1B5-84787E9798DD" SharedDllRefCount="yes">
               <File Id="myodbc.dll" Name="myodbc5.dll" Checksum="yes" KeyPath="yes" DiskId="1" Source="x86\myodbc5.dll">
-	        <ODBCDriver Id="MySQL_ODBC_5.1_Driver" Name="MySQL ODBC 5.1 Driver" SetupFile="myodbc5S.dll" />
+	        <ODBCDriver Id="MySQL_ODBC_5.2_Driver" Name="MySQL ODBC 5.2 Driver" SetupFile="myodbc5S.dll" />
               </File>
               <File Id="readme" Name="README.txt" DiskId="1" Source="doc\README.txt"/>
               <File Id="lic3rd" Name="Licenses_for_Third-Party_Components.txt" Source="doc\Licenses_for_Third-Party_Components.txt" />

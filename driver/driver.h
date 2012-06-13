@@ -80,9 +80,9 @@ extern "C"
 # define FreeLibrary(module) dlclose((module))
 #endif
 
-#define ODBC_DRIVER	  "ODBC 5.1 Driver"
-#define DRIVER_NAME	  "MySQL ODBC 5.1 Driver"
-#define DRIVER_NONDSN_TAG "DRIVER={MySQL ODBC 5.1 Driver}"
+#define ODBC_DRIVER	  "ODBC 5.2 Driver"
+#define DRIVER_NAME	  "MySQL ODBC 5.2 Driver"
+#define DRIVER_NONDSN_TAG "DRIVER={MySQL ODBC 5.2 Driver}"
 
 #if defined(__APPLE__)
 
