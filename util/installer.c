@@ -167,7 +167,7 @@ static SQLWCHAR W_PREFETCH[]= {'P','R','E','F','E','T','C','H',0};
 /* externally used strings */
 const SQLWCHAR W_DRIVER_PARAM[]= {';', 'D', 'R', 'I', 'V', 'E', 'R', '=', 0};
 const SQLWCHAR W_DRIVER_NAME[]= {'M', 'y', 'S', 'Q', 'L', ' ',
-                                 'O', 'D', 'B', 'C', ' ', '5', '.', '1', ' ',
+                                 'O', 'D', 'B', 'C', ' ', '5', '.', '2', ' ',
                                  'D', 'r', 'i', 'v', 'e', 'r', 0};
 const SQLWCHAR W_INVALID_ATTR_STR[]= {'I', 'n', 'v', 'a', 'l', 'i', 'd', ' ',
                                       'a', 't', 't', 'r', 'i', 'b', 'u', 't', 'e', ' ',

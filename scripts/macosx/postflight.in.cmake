@@ -73,8 +73,8 @@ fi
 # REGISTER THE DRIVER
 # ----------------------------------------------------------------------
 echo "Registering driver..."
-#$bindir/myodbc-installer -a -d -n "MySQL ODBC 5.2 Driver" -t "Driver=$libdir/libmyodbc5CONNECTOR_DRIVER_TYPE_SHORT.so;Setup=$libdir/libmyodbc3S.so;"
-$bindir/myodbc-installer -a -d -n "MySQL ODBC 5.2 Driver" -t "Driver=$libdir/libmyodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.so;"
+#$bindir/myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "Driver=$libdir/libmyodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.so;Setup=$libdir/libmyodbc3S.so;"
+$bindir/myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "Driver=$libdir/libmyodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.so;"
 
 # ----------------------------------------------------------------------
 # CREATE A SAMPLE DSN

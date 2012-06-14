@@ -1,4 +1,4 @@
-/* Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+/* Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
 
    The MySQL Connector/ODBC is licensed under the terms of the GPLv2
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -90,16 +90,16 @@ const char *usage =
 "|        -d -l                                                         \n"
 "|                                                                      \n"
 "|    Register a driver (UNIX example)                                  \n"
-"|        -d -a -n \"MySQL ODBC 5.2 Driver\" \\                         \n"
-"|              -t \"DRIVER=/usr/lib/myodbc5.so;SETUP=/usr/lib/myodbc3S.so\"\n"
+"|        -d -a -n \"MySQL ODBC "MYODBC_STRSERIES" Driver\" \\                         \n"
+"|              -t \"DRIVER=/usr/lib/myodbc5"MYODBC_STRTYPE_SUFFIX".so;SETUP=/usr/lib/myodbc3S.so\"\n"
 "|                                                                      \n"
 "|    Register a driver (Windows example)                               \n"
-"|        -d -a -n \"MySQL ODBC 5.2 Driver\" \\                         \n"
-"|              -t \"DRIVER=myodbc5.dll;SETUP=myodbc5S.dll\"            \n"
+"|        -d -a -n \"MySQL ODBC "MYODBC_STRSERIES" Driver\" \\                         \n"
+"|              -t \"DRIVER=myodbc5"MYODBC_STRTYPE_SUFFIX".dll;SETUP=myodbc5S.dll\"            \n"
 "|                                                                      \n"
 "|    Add a new data source name                                        \n"
 "|        -s -a -c2 -n \"test\" \\                                      \n"
-"|              -t \"DRIVER=MySQL ODBC 5.2 Driver;SERVER=localhost;DATABASE=test;UID=myid;PWD=mypwd\"\n"
+"|              -t \"DRIVER=MySQL ODBC "MYODBC_STRSERIES" Driver;SERVER=localhost;DATABASE=test;UID=myid;PWD=mypwd\"\n"
 "|                                                                      \n"
 "|    List data source name attributes for 'test'                       \n"
 "|        -s -l -c2 -n \"test\"                                         \n"

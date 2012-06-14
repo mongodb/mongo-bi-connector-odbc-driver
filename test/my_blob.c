@@ -738,6 +738,7 @@ DECLARE_TEST(t_bug10562)
   /* Test to just insert 12k blob */
   SQLCHAR *blob = malloc(bsize);
   SQLCHAR *blobcheck = malloc(bsize);
+  int result= OK;
   memset(blob, 'X', bsize);
 
   ok_sql(hstmt, "drop table if exists t_bug10562");
@@ -754,14 +755,17 @@ DECLARE_TEST(t_bug10562)
   ok_sql(hstmt, "select mb from t_bug10562");
   ok_stmt(hstmt, SQLFetch(hstmt));
   ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_BINARY, blobcheck, bsize, NULL));
-  is(!memcmp(blob, blobcheck, bsize));
+  if (memcmp(blob, blobcheck, bsize))
+  {
+    result= FAIL;
+  }
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_sql(hstmt, "drop table if exists t_bug10562");
   free(blob);
   free(blobcheck);
-  return OK;
+  return result;
 }
 
 

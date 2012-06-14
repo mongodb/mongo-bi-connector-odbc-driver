@@ -71,6 +71,8 @@ add_custom_command(TARGET ${DRIVER_NAME} POST_BUILD
                    COMMAND ${CMAKE_COMMAND}
 		   	    -DDRIVER_LOCATION=${DRIVER_LOCATION}
 			    -DBINARY_DIR=${CMAKE_BINARY_DIR}/test
+			    -DCONNECTOR_MAJOR=${CONNECTOR_MAJOR}
+			    -DCONNECTOR_MINOR=${CONNECTOR_MINOR}
 			    -P ${CMAKE_SOURCE_DIR}/test/cmake/generateinifiles.cmake
                   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/test")
 

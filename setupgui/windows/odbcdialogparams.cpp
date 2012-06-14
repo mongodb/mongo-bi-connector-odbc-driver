@@ -547,7 +547,7 @@ void btnTest_Click (HWND hwnd)
 void btnHelp_Click (HWND hwnd)
 {
   ShellExecute(NULL, L"open",
-	       L"http://dev.mysql.com/doc/refman/5.2/en/connector-odbc-configuration-dsn-windows.html",
+	       L"http://dev.mysql.com/doc/refman/5.1/en/connector-odbc-configuration-dsn-windows.html",
 	       NULL, NULL, SW_SHOWNORMAL);
 }
 

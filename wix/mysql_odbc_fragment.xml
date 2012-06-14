@@ -23,7 +23,7 @@
   with this program; if not, write to the Free Software Foundation, Inc.,
   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 -->
-
+<?include myodbc_version.xml ?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Fragment>
  
@@ -49,13 +49,13 @@
           <?if $(var.odbc_64bit) = 1 ?>
 
             <Component Id="lib" Guid="22F054AC-F3F1-47E6-A03E-46423C467C79" SharedDllRefCount="yes" Win64="yes">
-              <File Id="myodbc.lib" Name="myodbc5.lib" KeyPath="yes" DiskId="1" Source="x64\myodbc5.lib" />
+              <File Id="myodbc.lib" Name="myodbc5.lib" KeyPath="yes" DiskId="1" Source="x64\myodbc5$(var.odbc_driver_type_suffix).lib" />
               <?if $(var.odbc_pdb) = 1 ?>
-                <File Id="myodbc.lib.pdb" Name="myodbc5.pdb" DiskId="1" Source="x64\myodbc5.pdb" />
+                <File Id="myodbc.lib.pdb" Name="myodbc5.pdb" DiskId="1" Source="x64\myodbc5$(var.odbc_driver_type_suffix).pdb" />
               <?endif?>
             </Component>
             <Component Id="driver" Guid="C1960400-BFC6-4E6E-AF30-4C19EF5A3F07" SharedDllRefCount="yes" Win64="yes">
-              <File Id="myodbc5.dll" Name="myodbc5.dll" Checksum="yes" KeyPath="yes" DiskId="1" Source="x64\myodbc5.dll">
+              <File Id="myodbc5.dll" Name="myodbc5.dll" Checksum="yes" KeyPath="yes" DiskId="1" Source="x64\myodbc5$(var.odbc_driver_type_suffix).dll">
                 <ODBCDriver Id="MySQL_ODBC_5.2_Driver" Name="MySQL ODBC 5.2 Driver" SetupFile="myodbc5S.dll" />
               </File>
               <File Id="readme" Name="README.txt" DiskId="1" Source="doc\README.txt"/>
@@ -81,13 +81,13 @@
             </Component>
           <?else ?>
             <Component Id="lib" Guid="FED572C6-4778-4C54-A713-8D67D4758043" SharedDllRefCount="yes">
-              <File Id="myodbc.lib" Name="myodbc5.lib" KeyPath="yes" DiskId="1" Source="x86\myodbc5.lib"/>
+              <File Id="myodbc.lib" Name="myodbc5.lib" KeyPath="yes" DiskId="1" Source="x86\myodbc5$(var.odbc_driver_type_suffix).lib"/>
               <?if $(var.odbc_pdb) = 1 ?>
-                <File Id="myodbc.lib.pdb" Name="myodbc5.pdb" DiskId="1" Source="x86\myodbc5.pdb"/>
+                <File Id="myodbc.lib.pdb" Name="myodbc5.pdb" DiskId="1" Source="x86\myodbc5$(var.odbc_driver_type_suffix).pdb"/>
               <?endif?>
             </Component>
             <Component Id="driver" Guid="83B6877B-3220-4C5F-A1B5-84787E9798DD" SharedDllRefCount="yes">
-              <File Id="myodbc.dll" Name="myodbc5.dll" Checksum="yes" KeyPath="yes" DiskId="1" Source="x86\myodbc5.dll">
+              <File Id="myodbc.dll" Name="myodbc5.dll" Checksum="yes" KeyPath="yes" DiskId="1" Source="x86\myodbc5$(var.odbc_driver_type_suffix).dll">
 	        <ODBCDriver Id="MySQL_ODBC_5.2_Driver" Name="MySQL ODBC 5.2 Driver" SetupFile="myodbc5S.dll" />
               </File>
               <File Id="readme" Name="README.txt" DiskId="1" Source="doc\README.txt"/>

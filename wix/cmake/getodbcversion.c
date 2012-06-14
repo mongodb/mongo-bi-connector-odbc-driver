@@ -1,4 +1,4 @@
-/* Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+/* Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
 
    The MySQL Connector/ODBC is licensed under the terms of the GPLv2
    <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -42,6 +42,7 @@ int main(int argc, char *argv[])
 	fprintf(fp, "<?define odbc_ver_long=\"%d.%d.%d\" ?>\n", v1, v2, v3);
 	fprintf(fp, "<?define odbc_ver_prev=\"%d.%d.%d\" ?>\n", v1, v2, v3-1);
 	fprintf(fp, "<?define odbc_ver_next=\"%d.%d.%d\" ?>\n", v1, v2, v3+1);
+	fprintf(fp, "<?define odbc_driver_type_suffix=\""MYODBC_STRTYPE_SUFFIX"\" ?>\n");
 
 	fclose(fp);
 
@@ -50,5 +51,6 @@ int main(int argc, char *argv[])
 		exit (2);
 
 	fprintf(fp, "SET(ODBC_VERSION \"%d.%d.%d\")", v1,v2,v3);
+
 	fclose(fp);
 }

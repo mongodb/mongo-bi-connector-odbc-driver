@@ -4,7 +4,7 @@ data_source_name = myodbc5@CONNECTOR_DRIVER_TYPE_SHORT@
 [myodbc5@CONNECTOR_DRIVER_TYPE_SHORT@]
 Driver          = @TEST_DRIVER@
 DATABASE        = @TEST_DATABASE@
-DESCRIPTION     = MySQL ODBC 5.2 Driver test
+DESCRIPTION     = @DESCRIPTION@
 SERVER          = @TEST_SERVER@
 UID             = @TEST_UID@
 PASSWORD        = @TEST_PASSWORD@

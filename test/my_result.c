@@ -729,46 +729,43 @@ DECLARE_TEST(t_zerolength)
     myassert(bData1[1] == 'z');
 
     pcbValue= pcbValue1= 99;
-    rc = SQLGetData(hstmt,1,SQL_C_CHAR,szData,1,&pcbValue);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLGetData(hstmt,1,SQL_C_CHAR,szData,1,&pcbValue));
     printMessage("data: %s, length: %d", szData, pcbValue);
     myassert(pcbValue == 0);
     myassert(szData[0] == '\0');
 
     bData[0]=bData[1]='z';
-    rc = SQLGetData(hstmt,2,SQL_C_BINARY,bData,1,&pcbValue1);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLGetData(hstmt,2,SQL_C_BINARY,bData,1,&pcbValue1));
+
     printMessage("data: %s, length: %d", bData, pcbValue1);
     myassert(pcbValue1 == 0);
 
     bData1[0]=bData1[1]='z';
-    rc = SQLGetData(hstmt,3,SQL_C_CHAR,bData1,1,&pcbValue2);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLGetData(hstmt,3,SQL_C_CHAR,bData1,1,&pcbValue2));
     printMessage("data: %s, length: %d", bData1, pcbValue2);
     myassert(pcbValue2 == 0);
     myassert(bData1[0] == '\0');
     myassert(bData1[1] == 'z');
 
-    rc = SQLFetch(hstmt);
-    mystmt(hstmt,rc);
+    ok_stmt(hstmt, SQLFetch(hstmt));
 
     pcbValue= pcbValue1= 99;
     szData[0]= bData[0]= 'z';
     rc = SQLGetData(hstmt,1,SQL_C_CHAR,szData,0,&pcbValue);
-    mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
+    mystmt_err(hstmt, rc == SQL_SUCCESS_WITH_INFO, rc);
     printMessage("length: %d", pcbValue);
     myassert(pcbValue == 4);
     myassert(szData[0] == 'z');
 
     rc = SQLGetData(hstmt,2,SQL_C_BINARY,bData,0,&pcbValue1);
-    mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
+    mystmt_err(hstmt, rc == SQL_SUCCESS_WITH_INFO, rc);
     printMessage("length: %d", pcbValue1);
     myassert(pcbValue1 == 5);
     myassert(bData[0] == 'z');
 
     bData[0]=bData1[1]='z';
     rc = SQLGetData(hstmt,3,SQL_C_BINARY,bData1,0,&pcbValue2);
-    mystmt_err(hstmt,rc == SQL_SUCCESS_WITH_INFO,rc);
+    mystmt_err(hstmt, rc == SQL_SUCCESS_WITH_INFO, rc);
     printMessage("length: %d", pcbValue2);
     myassert(pcbValue2 == 5);
 

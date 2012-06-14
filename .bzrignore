@@ -27,3 +27,15 @@ CMakeFiles/
 test/my_*/
 cmake/sqlcolattrib*.c
 cmake/sqlparamopt*.c
+ALL_BUILD.dir/
+Install.bat
+Uninstall.bat
+VersionInfo.h
+ZERO_CHECK.dir/
+driver/driver.def
+driver/driver.rc
+scripts/macosx/postflight.in
+test/Debug/
+test/odbc.ini
+test/odbcinst.ini
+wix/myodbc_version.xml
