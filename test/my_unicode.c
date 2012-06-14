@@ -1198,27 +1198,37 @@ DECLARE_TEST(t_bug28168)
 
 BEGIN_TESTS
   ADD_TEST(sqlconnect)
+#ifdef MYODBC_UNICODEDRIVER
   ADD_TEST(sqlprepare)
+#endif
   ADD_TEST(sqlprepare_ansi)
+#ifdef MYODBC_UNICODEDRIVER
   ADD_TEST(sqlchar)
+#endif
   ADD_TEST(sqldriverconnect)
   ADD_TEST(sqlnativesql)
   ADD_TEST(sqlsetcursorname)
   ADD_TEST(sqlgetcursorname)
+#ifdef MYODBC_UNICODEDRIVER
   ADD_TEST(sqlcolattribute)
   ADD_TEST(sqldescribecol)
+#endif
   ADD_TEST(sqlgetconnectattr)
   ADD_TEST(sqlgetdiagrec)
   ADD_TEST(sqlgetdiagfield)
+#ifdef MYODBC_UNICODEDRIVER
   ADD_TEST(sqlcolumns)
   ADD_TEST(sqltables)
   ADD_TEST(sqlspecialcolumns)
+#endif
   ADD_TEST(sqlforeignkeys)
+#ifdef MYODBC_UNICODEDRIVER
   ADD_TEST(sqlprimarykeys)
   ADD_TEST(sqlstatistics)
   ADD_TEST(t_bug32161)
   ADD_TEST(t_bug34672)
   ADD_TEST(t_bug28168)
+#endif
 END_TESTS
 
 
