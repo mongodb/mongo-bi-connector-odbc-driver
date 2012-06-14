@@ -291,7 +291,7 @@ SET(CPACK_SOURCE_IGNORE_FILES
 CMakeCache\\\\.txt
 CPackSourceConfig\\\\.cmake
 CPackConfig\\\\.cmake
-VersionInfo\\\\.h
+VersionInfo\\\\.h$
 postflight\\\\.in$
 /cmake_install\\\\.cmake
 /CTestTestfile\\\\.cmake
