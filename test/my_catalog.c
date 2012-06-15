@@ -2470,6 +2470,95 @@ DECLARE_TEST(sqlcolumns_nodbselected)
 }
 
 
+/**
+ Bug#14085211 test. LONG TABLE NAMES CRASH OBDC DRIVER
+ We will try creating databases, tables and columns with the
+ maximum allowed length of 64 symbols and also try to give
+ the driver very long (>1024 symbols) names to make it crash.
+*/
+DECLARE_TEST(t_bug14085211_part1)
+{
+  SQLCHAR  buff[8192];
+  SQLCHAR  db_64_name[65]  = "database_64_symbols_long_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+  SQLCHAR  tab_64_name[65] = "table____64_symbols_long_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+  SQLCHAR  col_64_name[65] = "column___64_symbols_long_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+
+  SQLCHAR  tab_1024_name[1025] = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"\
+                             "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"\
+                             "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"\
+                             "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"\
+                             "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"\
+                             "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"\
+                             "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"\
+                             "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"\
+                             "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"\
+                             "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"\
+                             "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"\
+                             "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"\
+                             "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"\
+                             "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"\
+                             "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"\
+                             "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+
+  sprintf(buff, "DROP DATABASE IF EXISTS %s", db_64_name);
+  ok_stmt(hstmt, SQLExecDirect(hstmt, buff, SQL_NTS));
+
+  sprintf(buff, "CREATE DATABASE %s", db_64_name);
+  ok_stmt(hstmt, SQLExecDirect(hstmt, buff, SQL_NTS));
+
+  sprintf(buff, "CREATE TABLE %s.%s(%s varchar(10))", db_64_name, tab_64_name, col_64_name);
+  ok_stmt(hstmt, SQLExecDirect(hstmt, buff, SQL_NTS));
+
+  /* Lets check if SQLTables can get these long names  */
+  ok_stmt(hstmt, SQLTables(hstmt, (SQLCHAR *)db_64_name, SQL_NTS, NULL, SQL_NTS,
+                                  (SQLCHAR *)tab_64_name, SQL_NTS, 
+                                  "TABLE,VIEW", SQL_NTS));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  /* check the database name */
+  is_str(my_fetch_str(hstmt, buff, 1), db_64_name, 64);
+
+  /* check the table name */
+  is_str(my_fetch_str(hstmt, buff, 3), tab_64_name, 64);
+  
+  /* only one db/table match, so nothing should be in the results */
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  /* Lets check if SQLTables can ignore 1024-characters for table name */
+  ok_stmt(hstmt, SQLTables(hstmt, (SQLCHAR *)tab_1024_name, SQL_NTS, NULL, SQL_NTS,
+                                  (SQLCHAR *)tab_1024_name, SQL_NTS, 
+                                  "TABLE,VIEW", SQL_NTS));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  /* check the database name */
+  is_str(my_fetch_str(hstmt, buff, 1), db_64_name, 64);
+
+  /* check the table name */
+  is_str(my_fetch_str(hstmt, buff, 3), tab_64_name, 64);
+  
+  /* only one db/table match, so nothing should be in the results */
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  sprintf(buff, "DROP DATABASE IF EXISTS %s", db_64_name);
+  ok_stmt(hstmt, SQLExecDirect(hstmt, buff, SQL_NTS));
+
+  return OK;
+}
+
+
+DECLARE_TEST(t_bug14085211_part2)
+{
+  /* 
+    TODO: test all catalog functions for extreme lengths of
+          database, table and column names     
+  */
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
   ADD_TEST(my_drop_table)
@@ -2514,6 +2603,8 @@ BEGIN_TESTS
   ADD_TEST(t_bug31067)
   ADD_TEST(bug12824839)
   ADD_TEST(sqlcolumns_nodbselected)
+  ADD_TEST(t_bug14085211_part1)
+  ADD_TODO(t_bug14085211_part2)
 END_TESTS
 
 myoption &= ~(1 << 30);
