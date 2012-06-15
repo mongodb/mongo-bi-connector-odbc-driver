@@ -1,6 +1,10 @@
 5.2.0
 
   Functionality added or changed:
+  * Driver available in Unicode and ANSI versions(WL#5850)
+  * Driver by default uses server side prepared statements
+  * Connection string option NO_SSPS prevents using of server side prepared
+    statements. It is configurable via GUI dialog.
   Bugs fixed:
   * Long table names crash OBDC driver. (Bug# 14085211/65200)
 
