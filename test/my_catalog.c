@@ -23,6 +23,7 @@
 */
 
 #include "odbctap.h"
+#include "../VersionInfo.h"
 
 DECLARE_TEST(my_columns_null)
 {

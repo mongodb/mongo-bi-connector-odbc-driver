@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -24,6 +24,7 @@
 
 
 #include "odbctap.h"
+#include "../VersionInfo.h"
 
 /* result set demo */
 DECLARE_TEST(my_resultset)
