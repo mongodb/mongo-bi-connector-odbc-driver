@@ -141,7 +141,7 @@ typedef struct {
   /* SSL */
   unsigned int sslverify;
   unsigned int cursor_prefetch_number;
-  BOOL use_ssps;
+  BOOL no_ssps;
 } DataSource;
 
 /* perhaps that is a good idea to have const ds object with defaults */

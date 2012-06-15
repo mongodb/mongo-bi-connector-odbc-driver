@@ -478,6 +478,7 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
          to change this to mysql_stmt_reset
          http://dev.mysql.com/doc/refman/5.5/en/mysql-stmt-reset.html
        */
+
       ssps_close(stmt);
       /* remove all params and reset count to 0 (per spec) */
       /* http://msdn2.microsoft.com/en-us/library/ms709284.aspx */
@@ -492,14 +493,12 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
       if (clearAllResults)
       {
         /* For ps _close() will free all pending results */
-        while (mysql_more_results(&stmt->dbc->mysql))
+        while (!mysql_next_result(&stmt->dbc->mysql))
         {
-          if (!mysql_next_result(&stmt->dbc->mysql))
-          {
-            stmt->result= mysql_store_result(&stmt->dbc->mysql);
-            mysql_free_result(stmt->result);
-          }
+          stmt->result= mysql_store_result(&stmt->dbc->mysql);
+          mysql_free_result(stmt->result);
         }
+
       }
     }
     else
@@ -547,7 +546,10 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     }
     stmt->cursor.pk_count= 0;
 
-    ssps_close(stmt);
+    if (clearAllResults)
+    {
+      ssps_close(stmt);
+    }
 
     if (fOption == SQL_CLOSE)
         return SQL_SUCCESS;

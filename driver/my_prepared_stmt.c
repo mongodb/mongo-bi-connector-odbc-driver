@@ -63,17 +63,23 @@ void ssps_init(STMT *stmt)
   
   stmt->ssps= mysql_stmt_init(&stmt->dbc->mysql);
 
-  if (stmt->dbc->ds->cursor_prefetch_number > 0)
-  {
-    unsigned long type= (unsigned long) CURSOR_TYPE_READ_ONLY;
-
-    /* TODO check return value */
-    mysql_stmt_attr_set(stmt->ssps, STMT_ATTR_CURSOR_TYPE, (void*) &type);
-    mysql_stmt_attr_set(stmt->ssps, STMT_ATTR_PREFETCH_ROWS,
-                      (void*) &stmt->dbc->ds->cursor_prefetch_number);
-  }
-
   stmt->result_bind= 0;
+}
+
+
+MYSQL_RES * ssps_get_result(STMT *stmt)
+{
+  stmt->result= mysql_stmt_result_metadata(stmt->ssps);
+
+  if (stmt->result && !if_forward_cache(stmt))
+  {
+    if (ssps_bind_result(stmt) || mysql_stmt_store_result(stmt->ssps))
+    {
+      return NULL;
+    }
+  }
+  
+  return stmt->result;
 }
 
 
@@ -221,7 +227,7 @@ static MYSQL_ROW fetch_varlength_columns(STMT *stmt, MYSQL_ROW columns)
       stmt->result_bind[i].buffer= stmt->array[i];
       stmt->result_bind[i].buffer_length= stmt->lengths[i];
 
-      mysql_stmt_fetch_column(stmt->ssps, stmt->result_bind, i, 0);
+      mysql_stmt_fetch_column(stmt->ssps, &stmt->result_bind[i], i, 0);
     }
   }
 
@@ -236,6 +242,11 @@ int ssps_bind_result(STMT *stmt)
 {
   const unsigned int  num_fields= field_count(stmt);
   unsigned int        i;
+
+  if (num_fields == 0)
+  {
+    return 0;
+  }
 
   if (stmt->result_bind)
   {
@@ -261,7 +272,7 @@ int ssps_bind_result(STMT *stmt)
     unsigned long       *len= my_malloc(sizeof(unsigned long)*num_fields, MYF(MY_ZEROFILL));
 
     /*TODO care about memory allocation errors */
-    stmt->result_bind=  (MYSQL_BIND*)my_malloc(sizeof(MYSQL_BIND)*num_fields, MYF(0));
+    stmt->result_bind=  (MYSQL_BIND*)my_malloc(sizeof(MYSQL_BIND)*num_fields, MYF(MY_ZEROFILL));
     stmt->array=        (MYSQL_ROW)my_malloc(sizeof(char*)*num_fields, MYF(MY_ZEROFILL));
 
     for (i= 0; i < num_fields; ++i)
@@ -275,7 +286,7 @@ int ssps_bind_result(STMT *stmt)
 	  stmt->result_bind[i].length       = &len[i];
 	  stmt->result_bind[i].is_null      = &is_null[i];
 	  stmt->result_bind[i].error        = &err[i];
-	  stmt->result_bind[i].is_unsigned  = field->flags & UNSIGNED_FLAG;
+      stmt->result_bind[i].is_unsigned  = (field->flags & UNSIGNED_FLAG)? 1: 0;
 
       stmt->array[i]= p.buffer;
 
@@ -291,9 +302,7 @@ int ssps_bind_result(STMT *stmt)
     }
   }
 
-  mysql_stmt_bind_result(stmt->ssps, stmt->result_bind);
-
-  return 0;
+  return mysql_stmt_bind_result(stmt->ssps, stmt->result_bind);
 }
 
 
@@ -427,9 +436,11 @@ char * ssps_get_string(STMT *stmt, ulong column_number, char *value, ulong *leng
     case MYSQL_TYPE_DECIMAL:
     case MYSQL_TYPE_NEWDECIMAL:
     case MYSQL_TYPE_STRING:
+    case MYSQL_TYPE_LONG_BLOB:
     case MYSQL_TYPE_BLOB:
     case MYSQL_TYPE_VARCHAR:
     case MYSQL_TYPE_VAR_STRING:
+      *length= *col_rbind->length;
       return (char *)(col_rbind->buffer);
     default:
       break;
@@ -438,7 +449,7 @@ char * ssps_get_string(STMT *stmt, ulong column_number, char *value, ulong *leng
 
   /* Basically should be prevented by earlied tests of
     conversion possibility */
-  return NULL;
+  return col_rbind->buffer;
 }
 /* }}} */
 
@@ -582,7 +593,7 @@ long long ssps_get_int64(STMT *stmt, ulong column_number, char *value, ulong len
           }
           else
           {
-            ret = !is_it_null? *(unsigned short *)(col_rbind->buffer):0;
+            ret = !is_it_null? *(short *)(col_rbind->buffer):0;
           }
           break;
 
@@ -590,11 +601,11 @@ long long ssps_get_int64(STMT *stmt, ulong column_number, char *value, ulong len
 
           if (is_it_unsigned)
           {
-            ret =  !is_it_null? *(int *)(col_rbind->buffer):0;
+            ret =  !is_it_null? *(unsigned int *)(col_rbind->buffer):0;
           }
           else
           {
-            ret =  !is_it_null? *(unsigned int *)(col_rbind->buffer):0;
+            ret =  !is_it_null? *(int *)(col_rbind->buffer):0;
           }
           break;
 

@@ -239,6 +239,8 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,72,103,10
     CONTROL         "Bind minimal date as zero date",IDC_CHECK_min_date_to_zero,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,87,138,10
+    CONTROL         "Prepare statements on the client",IDC_CHECK_no_ssps,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,102,138,10
 END
 
 #ifdef APSTUDIO_INVOKED

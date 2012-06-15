@@ -1829,7 +1829,11 @@ DECLARE_TEST(t_binary_collation)
       (!strncmp("5.1", (char *)server_version, 3) &&
         mysql_min_version(hdbc, "5.1.22", 6)))
   {
+#ifdef MYODBC_UNICODEDRIVER
     is_num(data_type, SQL_WVARCHAR);
+#else
+    is_num(data_type, SQL_VARCHAR);
+#endif
   }
   else
   {

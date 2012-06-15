@@ -87,3 +87,164 @@ const char * find_token(CHARSET_INFO *charset, const char * begin,
   return NULL;
 }
 
+
+const char * skip_leading_spaces(const char *str)
+{
+  while (str && isspace(*str))
+    ++str;
+
+  return str;
+}
+
+/* TODO: We can't have a separate function for detecting of
+         each type of a query */
+/**
+ Detect if a statement is a SET NAMES statement.
+*/
+int is_set_names_statement(const SQLCHAR *query)
+{
+  query= skip_leading_spaces(query);
+  return myodbc_casecmp((char *)query, "SET NAMES", 9) == 0;
+}
+
+
+/**
+Detect if a statement is a SELECT statement.
+*/
+int is_select_statement(const SQLCHAR *query)
+{
+  query= skip_leading_spaces(query);
+  return myodbc_casecmp((char *)query, "SELECT", 6) == 0;
+}
+
+
+/* That has to be rewritten in a better way */
+BOOL is_batch_of_statements(const SQLCHAR *query)
+{
+  const char * sep1=strchr(query, ';'), *sep2= strstr(query, "\\g");
+
+  while (sep1 != NULL || sep2 != NULL)
+  {
+    const char *token= sep1 + 1;
+
+    if (sep1 != NULL && sep2 != NULL)
+    {
+      token= myodbc_min(sep1, sep2);
+    }
+    else if (sep2 != NULL)
+    {
+      token= sep2;
+      token+= 2;
+    }
+    
+    token= skip_leading_spaces(token);
+
+    if (*token == '\0')
+    {
+      return TRUE;
+    }
+
+    if ((!myodbc_casecmp(token, "INSERT", 6) || !myodbc_casecmp(token, "DELETE", 6)
+      || !myodbc_casecmp(token, "UPDATE", 6) || !myodbc_casecmp(token, "SELECT", 6)
+      || !myodbc_casecmp(token, "CREATE", 6))
+      && (*(token+6) == '\0' || isspace(*(token+6)))
+      || (!myodbc_casecmp(token, "CALL", 4) || !myodbc_casecmp(token, "SHOW", 4)
+      || !myodbc_casecmp(token, "DROP", 4))
+      && (*(token+4) == '\0' || isspace(*(token+4))))
+    {
+      return TRUE;
+    }
+
+    sep1= strchr(token, ';');
+    sep2= strstr(token, "\\g");
+  }
+
+  return FALSE;
+}
+
+
+/* These functions expect that leasding spaces have been skipped */
+BOOL is_drop_procedure(const SQLCHAR * query)
+{
+  if (myodbc_casecmp(query, "DROP", 4) == 0 && *(query+4) != '\0'
+    && isspace(*(query+4)))
+  {
+    query= skip_leading_spaces(query+5);
+    return myodbc_casecmp(query, "PROCEDURE", 9) == 0;
+  }
+
+  return FALSE;
+}
+
+
+BOOL is_drop_function(const SQLCHAR * query)
+{
+  if (myodbc_casecmp(query, "DROP", 4) == 0 && *(query+4) != '\0'
+    && isspace(*(query+4)))
+  {
+    query= skip_leading_spaces(query+5);
+    return myodbc_casecmp(query, "FUNCTION", 8) == 0;
+  }
+
+  return FALSE;
+}
+
+
+/* In fact this function catches all CREATE queries with DEFINER as well.
+   But so far we are fine with that and even are using that.*/
+BOOL is_create_procedure(const SQLCHAR * query)
+{
+  if (myodbc_casecmp(query, "CREATE", 6) == 0 && *(query+6) != '\0'
+    && isspace(*(query+6)))
+  {
+    query= skip_leading_spaces(query+7);
+
+    if (myodbc_casecmp(query, "DEFINER", 7) == 0)
+    {
+      return TRUE;
+    }
+
+    return myodbc_casecmp(query, "PROCEDURE", 9) == 0;
+  }
+
+  return FALSE;
+}
+
+
+BOOL is_create_function(const SQLCHAR * query)
+{
+  if (myodbc_casecmp(query, "CREATE", 6) == 0 && *(query+6) != '\0'
+    && isspace(*(query+6)))
+  {
+    query= skip_leading_spaces(query+7);
+    return myodbc_casecmp(query, "FUNCTION", 8) == 0;
+  }
+
+  return FALSE;
+}
+
+
+BOOL is_use_db(const SQLCHAR * query)
+{
+  if (myodbc_casecmp(query, "USE", 3) == 0 && *(query+3) != '\0'
+    && isspace(*(query+3)))
+  {
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+
+BOOL is_call_procedure(const SQLCHAR * query)
+{
+  query= skip_leading_spaces(query);
+
+  if (myodbc_casecmp(query, "CALL", 4) == 0 && *(query+4) != '\0'
+    && isspace(*(query+4)))
+  {
+    return TRUE;
+  }
+
+  return FALSE;
+}

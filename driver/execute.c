@@ -67,8 +67,40 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
       goto exit;
     }
 
-    if (stmt->dbc->ds->use_ssps && stmt->dbc->ds->cursor_prefetch_number > 0
-      && if_forward_cache(stmt) && isStatementForRead(stmt))
+    /* Simplifying task so far - we will do "LIMIT" scrolling forward only
+     * and when no musltiple statements is allowed - we can't now parse query
+     * that well to detect multiple queries.
+     */
+    if (stmt->dbc->ds->cursor_prefetch_number > 0
+      && !stmt->dbc->ds->allow_multiple_statements
+      && stmt->stmt_options.cursor_type == SQL_CURSOR_FORWARD_ONLY
+      && scrollable(stmt, query, query+query_length))
+    {
+      /* we might want to read primary key info at this point, but then we have to
+         know if we have a select from a single table...
+       */
+      ssps_close(stmt);
+      scroller_reset(stmt);
+
+      stmt->scroller.row_count= calc_prefetch_number(
+                                      stmt->dbc->ds->cursor_prefetch_number,
+                                      stmt->ard->array_size,
+                                      stmt->stmt_options.max_rows);
+
+      scroller_create(stmt, query, query_length);
+      scroller_move(stmt);
+      MYLOG_QUERY(stmt, stmt->scroller.query);
+
+      native_error= mysql_real_query(&stmt->dbc->mysql, stmt->scroller.query,
+                                  (unsigned long)stmt->scroller.query_len);
+    }
+      /* Not using ssps for scroller so far. Relaxing a bit condition
+       if allow_multiple_statements option selected by primitive check if
+       this is a batch of queries */
+    else if (!stmt->dbc->ds->no_ssps && preparable_on_server(query)
+      && (is_minimum_version(stmt->dbc->mysql.server_version, "5.5.3", 5)
+        || !is_call_procedure(query))
+      && (!stmt->dbc->ds->allow_multiple_statements || !is_batch_of_statements(query)))
     {
       MYLOG_QUERY(stmt, "Using prepared statement");
       ssps_init(stmt);
@@ -84,40 +116,13 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
     else
     {
       MYLOG_QUERY(stmt, "Using direct execution");
-
-      /* Simplifying task so far - we will do "LIMIT" scrolling forward only
-       * and when no musltiple statements is allowed - we can't now parse query
-       * that well to detect multiple queries.
-       */
-      if (stmt->dbc->ds->cursor_prefetch_number > 0
-        && !stmt->dbc->ds->allow_multiple_statements
-        && stmt->stmt_options.cursor_type == SQL_CURSOR_FORWARD_ONLY
-        && scrollable(stmt, query, query+query_length))
-      {
-        /* we might want to read primary key info at this point, but then we have to
-           know if we have a select from a single table...
-         */
-        scroller_reset(stmt);
-
-        stmt->scroller.row_count= calc_prefetch_number(
-                                        stmt->dbc->ds->cursor_prefetch_number,
-                                        stmt->ard->array_size,
-                                        stmt->stmt_options.max_rows);
-
-        scroller_create(stmt, query, query_length);
-        scroller_move(stmt);
-        MYLOG_QUERY(stmt, stmt->scroller.query);
-
-        native_error= mysql_real_query(&stmt->dbc->mysql, stmt->scroller.query,
-                                    (unsigned long)stmt->scroller.query_len);
-      }
-      else
-      {
-        native_error= mysql_real_query(&stmt->dbc->mysql,query,query_length);
-      }
-
-      MYLOG_QUERY(stmt, "query has been executed");
+      /* Need to close ps handler if it is open as our relsult will be generated
+         by direct execution. and ps handler may create some chaos */
+      ssps_close(stmt);
+      native_error= mysql_real_query(&stmt->dbc->mysql,query,query_length);
     }
+
+    MYLOG_QUERY(stmt, "query has been executed");
 
     if (native_error)
     {
@@ -148,6 +153,8 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
       }
     }
 
+    /* Caching row counts for queries returning resultset as well */
+    //update_affected_rows(stmt);
     fix_result_types(stmt);
     error= SQL_SUCCESS;
 

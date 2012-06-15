@@ -1131,7 +1131,7 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
       (void)strmov(buff, field_is_binary ? "binary" : "char");
 
     return field_is_binary ? SQL_BINARY :
-      (field->charsetnr != stmt->dbc->ansi_charset_info->number ?
+      (stmt->dbc->unicode && field->charsetnr != stmt->dbc->ansi_charset_info->number ?
        SQL_WCHAR : SQL_CHAR);
 
   /*
@@ -1144,7 +1144,7 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
       (void)strmov(buff, field_is_binary ? "varbinary" : "varchar");
 
     return field_is_binary ? SQL_VARBINARY :
-      (field->charsetnr != stmt->dbc->ansi_charset_info->number ?
+      (stmt->dbc->unicode && field->charsetnr != stmt->dbc->ansi_charset_info->number ?
        SQL_WVARCHAR : SQL_VARCHAR);
 
   case MYSQL_TYPE_TINY_BLOB:
@@ -1152,7 +1152,7 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
       (void)strmov(buff, field_is_binary ? "tinyblob" : "tinytext");
 
     return field_is_binary ? SQL_LONGVARBINARY :
-      (field->charsetnr != stmt->dbc->ansi_charset_info->number ?
+      (stmt->dbc->unicode && field->charsetnr != stmt->dbc->ansi_charset_info->number ?
        SQL_WLONGVARCHAR : SQL_LONGVARCHAR);
 
   case MYSQL_TYPE_BLOB:
@@ -1160,7 +1160,7 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
       (void)strmov(buff, field_is_binary ? "blob" : "text");
 
     return field_is_binary ? SQL_LONGVARBINARY :
-      (field->charsetnr != stmt->dbc->ansi_charset_info->number ?
+      (stmt->dbc->unicode && field->charsetnr != stmt->dbc->ansi_charset_info->number ?
        SQL_WLONGVARCHAR : SQL_LONGVARCHAR);
 
   case MYSQL_TYPE_MEDIUM_BLOB:
@@ -1168,7 +1168,7 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
       (void)strmov(buff, field_is_binary ? "mediumblob" : "mediumtext");
 
     return field_is_binary ? SQL_LONGVARBINARY :
-      (field->charsetnr != stmt->dbc->ansi_charset_info->number ?
+      (stmt->dbc->unicode && field->charsetnr != stmt->dbc->ansi_charset_info->number ?
        SQL_WLONGVARCHAR : SQL_LONGVARCHAR);
 
   case MYSQL_TYPE_LONG_BLOB:
@@ -1176,7 +1176,7 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
       (void)strmov(buff, field_is_binary ? "longblob" : "longtext");
 
     return field_is_binary ? SQL_LONGVARBINARY :
-      (field->charsetnr != stmt->dbc->ansi_charset_info->number ?
+      (stmt->dbc->unicode && field->charsetnr != stmt->dbc->ansi_charset_info->number ?
        SQL_WLONGVARCHAR : SQL_LONGVARCHAR);
 
   case MYSQL_TYPE_ENUM:
@@ -2837,30 +2837,6 @@ end:
 
 
 /**
- Detect if a statement is a SET NAMES statement.
-*/
-int is_set_names_statement(SQLCHAR *query)
-{
-  /* Skip leading spaces */
-  while (query && isspace(*query))
-    ++query;
-  return myodbc_casecmp((char *)query, "SET NAMES", 9) == 0;
-}
-
-
-/**
-Detect if a statement is a SELECT statement.
-*/
-int is_select_statement(SQLCHAR *query)
-{
-  /* Skip leading spaces */
-  while (query && isspace(*query))
-    ++query;
-  return myodbc_casecmp((char *)query, "SELECT", 6) == 0;
-}
-
-
-/**
   Adjust a pointer based on bind offset and bind type.
 
   @param[in] ptr The base pointer
@@ -3747,4 +3723,21 @@ BOOL myodbc_isspace(CHARSET_INFO* cs, const char * begin, const char *end)
   cs->cset->ctype(cs, &ctype, (const uchar*) begin, (const uchar*) end);
 
   return ctype & _MY_SPC;
+}
+
+
+BOOL preparable_on_server(const SQLCHAR * query)
+{
+  query= skip_leading_spaces(query);
+
+  if ( is_drop_procedure(query)
+    || is_drop_function(query)
+    || is_create_function(query)
+    || is_create_procedure(query)
+    || is_use_db(query))
+  {
+    return FALSE;
+  }
+
+  return TRUE;
 }

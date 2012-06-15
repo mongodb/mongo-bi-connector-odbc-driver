@@ -1271,7 +1271,7 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
     }
 
     /* try to get next resultset */
-    nRetVal = mysql_next_result( &pStmt->dbc->mysql );
+    nRetVal = next_result(pStmt);
 
     /* call to mysql_next_result() failed */
     if ( nRetVal > 0 )
@@ -1306,18 +1306,15 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
         goto exitSQLMoreResults;
 
     /* start using the new resultset */
-    if ( if_forward_cache( pStmt ) )
-        pStmt->result = mysql_use_result( &pStmt->dbc->mysql );
-    else
-        pStmt->result = mysql_store_result( &pStmt->dbc->mysql );
+    pStmt->result = get_result(pStmt);
 
     if ( !pStmt->result )
     {
         /* no fields means; INSERT, UPDATE or DELETE so no resultset is fine */
-        if ( !mysql_field_count( &pStmt->dbc->mysql ) )
+        if (!field_count(pStmt))
         {
             pStmt->state = ST_EXECUTED;
-            pStmt->affected_rows = mysql_affected_rows( &pStmt->dbc->mysql );
+            pStmt->affected_rows = affected_rows(pStmt);
             goto exitSQLMoreResults;
         }
         /* we have fields but no resultset (not even an empty one) - this is bad */
@@ -1347,7 +1344,7 @@ SQLRETURN SQL_API SQLRowCount( SQLHSTMT hstmt,
 
     if ( stmt->result )
     {
-      /* for SetPos operations result is defined */
+      /* for SetPos operations result is defined and they use direct execution */
         *pcrow= (SQLLEN) affected_rows(stmt);
     }
     else
@@ -1577,7 +1574,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     {
         stmt->current_row= -1;  /* Before first row */
         stmt->rows_found_in_set= 0;
-        mysql_data_seek(stmt->result,0L);
+        data_seek(stmt, 0L);
         return SQL_NO_DATA_FOUND;
     }
     if ( cur_row > max_row )
@@ -1609,9 +1606,9 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
         if ( stmt->stmt_options.cursor_type != SQL_CURSOR_DYNAMIC &&
              cur_row && cur_row == (long)(stmt->current_row +
                                           stmt->rows_found_in_set) )
-            mysql_row_seek(stmt->result,stmt->end_of_set);
+            row_seek(stmt, stmt->end_of_set);
         else
-            mysql_data_seek(stmt->result,cur_row);
+            data_seek(stmt, cur_row);
     }
     stmt->current_row= cur_row;
 
@@ -1658,7 +1655,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
             /* This code will ensure that values is always set */
             if ( i == 0 )
             {
-                save_position= mysql_row_tell(stmt->result);
+                save_position= row_tell(stmt);
             }
             if ( !(values= fetch_row(stmt)) )
             {
@@ -1679,7 +1676,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                 }
 
                 /* Not sure that is right, but see it better than nothing */
-                save_position= mysql_row_tell(stmt->result);
+                save_position= row_tell(stmt);
               }
               else
               {
@@ -1786,7 +1783,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     if (SQL_SUCCEEDED(res) && !stmt->result_array && !if_forward_cache(stmt))
     {
         /* reset result position */
-        stmt->end_of_set= mysql_row_seek(stmt->result,save_position);
+        stmt->end_of_set= row_seek(stmt, save_position);
     }
 
     if (!stmt->dbc->ds->dont_use_set_locale)

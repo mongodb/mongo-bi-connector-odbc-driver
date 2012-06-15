@@ -41,12 +41,25 @@
 #include "driver.h"
 #include <locale.h>
 
+
+/* Sets affected rows everewhere where SQLRowCOunt could look for */
+void global_set_affected_rows(STMT * stmt, my_ulonglong rows)
+{
+  stmt->affected_rows= stmt->dbc->mysql.affected_rows= rows;
+
+  /* Dirty hack. But not dirtier than the one above */
+  if (ssps_used(stmt))
+  {
+    stmt->ssps->affected_rows= rows;
+  }
+}
+
+
 /*
   @type    : myodbc3 internal
   @purpose : returns the table used by this query and
   ensures that all columns are from the same table
 */
-
 static const char *find_used_table(STMT *stmt)
 {
     MYSQL_FIELD  *field, *end;
@@ -283,26 +296,41 @@ static my_bool check_if_usable_unique_key_exists(STMT *stmt)
   @purpose : positions the data cursor to appropriate row
 */
 
-void set_current_cursor_data(STMT FAR *stmt,SQLUINTEGER irow)
+void set_current_cursor_data(STMT *stmt, SQLUINTEGER irow)
 {
-    long       nrow, row_pos;
-    MYSQL_RES  *result= stmt->result;
-    MYSQL_ROWS *dcursor= result->data->data;
+  long       nrow, row_pos;
+  MYSQL_RES  *result= stmt->result;
 
-    /*
-      If irow exists, then position the current row to point
-      to the rowsetsize+irow, this is needed for positioned
-      calls
-    */
-    row_pos= irow ? (long) (stmt->current_row+irow-1) : stmt->current_row;
-    if ( stmt->cursor_row != row_pos )
+  
+  /*
+    If irow exists, then position the current row to point
+    to the rowsetsize+irow, this is needed for positioned
+    calls
+  */
+  row_pos= irow ? (long) (stmt->current_row+irow-1) : stmt->current_row;
+
+  if ( stmt->cursor_row != row_pos )
+  {
+    if (ssps_used(stmt))
     {
-        for ( nrow= 0; nrow < row_pos; ++nrow )
-            dcursor= dcursor->next;
-
-        stmt->cursor_row= row_pos;
-        result->data_cursor= dcursor;
+       data_seek(stmt, row_pos);
+       fetch_row(stmt);
     }
+    else
+    {
+      MYSQL_ROWS *dcursor;
+      dcursor= result->data->data;
+
+      for ( nrow= 0; nrow < row_pos; ++nrow )
+      {
+        dcursor= dcursor->next;
+      }
+      
+      result->data_cursor= dcursor;
+    }
+
+    stmt->cursor_row= row_pos;
+  }
 }
 
 
@@ -354,13 +382,15 @@ static SQLRETURN update_status(STMT FAR *stmt, SQLUSMALLINT status)
   @purpose : updates the SQLSetPos status information
 */
 
-static SQLRETURN update_setpos_status(STMT FAR *stmt, SQLINTEGER irow,
+static SQLRETURN update_setpos_status(STMT *stmt, SQLINTEGER irow,
                                       my_ulonglong rows, SQLUSMALLINT status)
 {
-  stmt->affected_rows= stmt->dbc->mysql.affected_rows= rows;
+  global_set_affected_rows(stmt, rows);
 
   if (irow && rows > 1)
-      return set_error(stmt,MYERR_01S04,NULL,0);
+  {
+    return set_error(stmt,MYERR_01S04,NULL,0);
+  }
 
   /*
     If all rows successful, then only update status..else
@@ -449,48 +479,61 @@ static SQLRETURN exec_stmt_query(STMT FAR *stmt,char *query,
   @purpose : copies field data to statement
 */
 
-static my_bool insert_field(STMT FAR *stmt, MYSQL_RES *result,
+static my_bool insert_field(STMT *stmt, MYSQL_RES *result,
                             DYNAMIC_STRING *dynQuery,
                             SQLUSMALLINT nSrcCol)
 {
-    DESCREC aprec_, iprec_;
-    DESCREC *aprec= &aprec_, *iprec= &iprec_;
-    MYSQL_FIELD *field= mysql_fetch_field_direct(result,nSrcCol);
-    MYSQL_ROW   row_data= result->data_cursor->data + nSrcCol;
-    NET         *net=&stmt->dbc->mysql.net;
-    unsigned char *to= net->buff;
-    SQLLEN      length;
+  DESCREC aprec_, iprec_;
+  DESCREC *aprec= &aprec_, *iprec= &iprec_;
+  MYSQL_FIELD *field= mysql_fetch_field_direct(result,nSrcCol);
+  MYSQL_ROW   row_data;
+  NET         *net=&stmt->dbc->mysql.net;
+  unsigned char *to= net->buff;
+  SQLLEN      length;
+  char as_string[50], *dummy;
 
-    desc_rec_init_apd(aprec);
-    desc_rec_init_ipd(iprec);
+  if (ssps_used(stmt))
+  {
+    dummy= get_string(stmt, nSrcCol, NULL, &length, as_string);
+    row_data= &dummy;
+  }
+  else
+  {
+    row_data= result->data_cursor->data + nSrcCol;
+  }
 
-    /* Copy row buffer data to statement */
-    iprec->concise_type= get_sql_data_type(stmt, field, 0);
-    aprec->concise_type= SQL_C_CHAR;
+  desc_rec_init_apd(aprec);
+  desc_rec_init_ipd(iprec);
 
-    if ( row_data && *row_data )
+  /* Copy row buffer data to statement */
+  iprec->concise_type= get_sql_data_type(stmt, field, 0);
+  aprec->concise_type= SQL_C_CHAR;
+
+  if (row_data && *row_data)
+  {
+    aprec->data_ptr= (SQLPOINTER) *row_data;
+    length= strlen(*row_data);
+
+    aprec->octet_length_ptr= &length;
+    aprec->indicator_ptr= &length;
+
+    if (!SQL_SUCCEEDED(insert_param(stmt, (char **) &to, stmt->apd,
+                                    aprec, iprec, 0)))
+      return 1;
+    if (!(to= (unsigned char *) add_to_buffer(net, (char *) to, " AND ", 5)))
     {
-        aprec->data_ptr= (SQLPOINTER) *row_data;
-        length= strlen(*row_data);
-
-        aprec->octet_length_ptr= &length;
-        aprec->indicator_ptr= &length;
-
-        if (!SQL_SUCCEEDED(insert_param(stmt, (char **) &to, stmt->apd,
-                                        aprec, iprec, 0)))
-          return 1;
-        if (!(to= (unsigned char *) add_to_buffer(net, (char *) to, " AND ", 5)))
-          return (my_bool)set_error(stmt, MYERR_S1001, NULL, 4001);
-
-        length= (uint) ((char *)to - (char*) net->buff);
-        dynstr_append_mem(dynQuery, (char*) net->buff, length);
+      return (my_bool)set_error(stmt, MYERR_S1001, NULL, 4001);
     }
-    else
-    {
-        --dynQuery->length;
-        dynstr_append_mem(dynQuery, " IS NULL AND ",13);
-    }
-    return 0;
+
+    length= (uint) ((char *)to - (char*) net->buff);
+    dynstr_append_mem(dynQuery, (char*) net->buff, length);
+  }
+  else
+  {
+    --dynQuery->length;
+    dynstr_append_mem(dynQuery, " IS NULL AND ",13);
+  }
+  return 0;
 }
 
 
@@ -780,8 +823,8 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLULEN irow,
         iprec->concise_type= get_sql_data_type(stmt, field, NULL);
         aprec->concise_type= arrec->concise_type;
 	/* copy prec and scale - needed for SQL_NUMERIC values */
-	iprec->precision= arrec->precision;
-	iprec->scale= arrec->scale;
+        iprec->precision= arrec->precision;
+        iprec->scale= arrec->scale;
         if (stmt->dae_type && aprec->par.is_dae)
           aprec->data_ptr= aprec->par.value;
         else
@@ -916,126 +959,140 @@ SQLRETURN my_pos_update( STMT FAR *         pStmtCursor,
 static SQLRETURN setpos_delete(STMT FAR *stmt, SQLUSMALLINT irow,
                                DYNAMIC_STRING *dynQuery)
 {
-    SQLUINTEGER  rowset_pos,rowset_end;
-    my_ulonglong affected_rows= 0;
-    SQLRETURN    nReturn= SQL_SUCCESS;
-    ulong        query_length;
-    const char   *table_name;
+  SQLUINTEGER  rowset_pos,rowset_end;
+  my_ulonglong affected_rows= 0;
+  SQLRETURN    nReturn= SQL_SUCCESS;
+  ulong        query_length;
+  const char   *table_name;
 
-    /* we want to work with base table name - we expect call to fail if more than one base table involved */
-    if ( !(table_name= find_used_table(stmt)) )
-        return SQL_ERROR;
+  /* we want to work with base table name - we expect call to fail if more than one base table involved */
+  if (!(table_name= find_used_table(stmt)))
+  {
+    return SQL_ERROR;
+  }
 
-    /* appened our table name to our DELETE statement */
-    dynstr_append_quoted_name(dynQuery,table_name);
-    query_length= dynQuery->length;
+  /* appened our table name to our DELETE statement */
+  dynstr_append_quoted_name(dynQuery,table_name);
+  query_length= dynQuery->length;
 
-    /* IF irow == 0 THEN delete all rows in the current rowset ELSE specific (as in one) row */
-    if ( irow == 0 )
+  /* IF irow == 0 THEN delete all rows in the current rowset ELSE specific (as in one) row */
+  if ( irow == 0 )
+  {
+    rowset_pos= 1;
+    rowset_end= stmt->rows_found_in_set;
+  }
+  else
+  {
+    rowset_pos= rowset_end= irow;
+  }
+
+  /* process all desired rows in the rowset - we assume rowset_pos is valid */
+  do
+  {
+    dynQuery->length= query_length;
+
+    /* append our WHERE clause to our DELETE statement */
+    nReturn = build_where_clause( stmt, dynQuery, (SQLUSMALLINT)rowset_pos );
+    if (!SQL_SUCCEEDED( nReturn ))
     {
-        rowset_pos= 1;
-        rowset_end= stmt->rows_found_in_set;
+      return nReturn;
     }
-    else
-        rowset_pos= rowset_end= irow;
 
-    /* process all desired rows in the rowset - we assume rowset_pos is valid */
-    do
+    /* execute our DELETE statement */
+    if ( !(nReturn= exec_stmt_query(stmt, dynQuery->str, dynQuery->length)) )
     {
-        dynQuery->length= query_length;
+      affected_rows+= stmt->dbc->mysql.affected_rows;
+    }
 
-        /* append our WHERE clause to our DELETE statement */
-        nReturn = build_where_clause( stmt, dynQuery, (SQLUSMALLINT)rowset_pos );
-        if ( !SQL_SUCCEEDED( nReturn ) )
-            return nReturn;
+  } while ( ++rowset_pos <= rowset_end );
 
-        /* execute our DELETE statement */
-        if ( !(nReturn= exec_stmt_query(stmt, dynQuery->str, dynQuery->length)) )
-            affected_rows+= stmt->dbc->mysql.affected_rows;
+  if (nReturn == SQL_SUCCESS)
+  {
+    nReturn= update_setpos_status(stmt, irow, affected_rows, SQL_ROW_DELETED);
+  }
 
-    } while ( ++rowset_pos <= rowset_end );
+  /* fix-up so fetching next rowset is correct */
+  if (if_dynamic_cursor(stmt))
+  {
+    stmt->rows_found_in_set-= (uint) affected_rows;
+  }
 
-    if ( nReturn == SQL_SUCCESS )
-        nReturn= update_setpos_status(stmt,irow,affected_rows,SQL_ROW_DELETED);
-
-    /* fix-up so fetching next rowset is correct */
-    if (if_dynamic_cursor(stmt))
-      stmt->rows_found_in_set-= (uint) affected_rows;
-
-    return nReturn;
+  return nReturn;
 }
 
 
 /*
-  @type    : myodbc3 internal
-  @purpose : updates the positioned cursor row.
+@type    : myodbc3 internal
+@purpose : updates the positioned cursor row.
 */
 
 static SQLRETURN setpos_update(STMT FAR *stmt, SQLUSMALLINT irow,
-                               DYNAMIC_STRING *dynQuery)
+                             DYNAMIC_STRING *dynQuery)
 {
-    SQLUINTEGER  rowset_pos,rowset_end;
-    my_ulonglong affected_rows= 0;
-    SQLRETURN    nReturn= SQL_SUCCESS;
-    ulong        query_length;
-    const char   *table_name;
+  SQLUINTEGER  rowset_pos,rowset_end;
+  my_ulonglong affected= 0;
+  SQLRETURN    nReturn= SQL_SUCCESS;
+  ulong        query_length;
+  const char   *table_name;
 
-    if ( !(table_name= find_used_table(stmt)) )
+  if ( !(table_name= find_used_table(stmt)) )
+      return SQL_ERROR;
+
+  dynstr_append_quoted_name(dynQuery,table_name);
+  query_length= dynQuery->length;
+
+  if ( !irow )
+  {
+      /*
+        If irow == 0, then update all rows in the current rowset
+      */
+      rowset_pos= 1;
+      rowset_end= stmt->rows_found_in_set;
+  }
+  else
+      rowset_pos= rowset_end= irow;
+
+  do /* UPDATE, irow from current row set */
+  {
+      dynQuery->length= query_length;
+      nReturn= build_set_clause(stmt,rowset_pos,dynQuery);
+      if (nReturn == ER_ALL_COLUMNS_IGNORED)
+      {
+        /*
+          If we're updating more than one row, having all columns ignored
+          is fine. If it's just one row, that's an error.
+        */
+        if (!irow)
+        {
+          nReturn= SQL_SUCCESS;
+          continue;
+        }
+        else
+        {
+          set_stmt_error(stmt, "21S02",
+                         "Degree of derived table does not match column list",
+                         0);
+          return SQL_ERROR;
+        }
+      }
+      else if (nReturn == SQL_ERROR)
         return SQL_ERROR;
 
-    dynstr_append_quoted_name(dynQuery,table_name);
-    query_length= dynQuery->length;
+      nReturn= build_where_clause(stmt, dynQuery, (SQLUSMALLINT)rowset_pos);
+      if (!SQL_SUCCEEDED(nReturn))
+        return nReturn;
 
-    if ( !irow )
-    {
-        /*
-          If irow == 0, then update all rows in the current rowset
-        */
-        rowset_pos= 1;
-        rowset_end= stmt->rows_found_in_set;
-    }
-    else
-        rowset_pos= rowset_end= irow;
+      if ( !(nReturn= exec_stmt_query(stmt, dynQuery->str, dynQuery->length)) )
+      {
+        affected+= mysql_affected_rows(&stmt->dbc->mysql);
+      }
 
-    do /* UPDATE, irow from current row set */
-    {
-        dynQuery->length= query_length;
-        nReturn= build_set_clause(stmt,rowset_pos,dynQuery);
-        if (nReturn == ER_ALL_COLUMNS_IGNORED)
-        {
-          /*
-            If we're updating more than one row, having all columns ignored
-            is fine. If it's just one row, that's an error.
-          */
-          if (!irow)
-          {
-            nReturn= SQL_SUCCESS;
-            continue;
-          }
-          else
-          {
-            set_stmt_error(stmt, "21S02",
-                           "Degree of derived table does not match column list",
-                           0);
-            return SQL_ERROR;
-          }
-        }
-        else if (nReturn == SQL_ERROR)
-          return SQL_ERROR;
+  } while ( ++rowset_pos <= rowset_end );
 
-        nReturn= build_where_clause(stmt, dynQuery, (SQLUSMALLINT)rowset_pos);
-        if (!SQL_SUCCEEDED(nReturn))
-          return nReturn;
+  if (nReturn == SQL_SUCCESS)
+      nReturn= update_setpos_status(stmt, irow, affected, SQL_ROW_UPDATED);
 
-        if ( !(nReturn= exec_stmt_query(stmt, dynQuery->str, dynQuery->length)) )
-            affected_rows+= stmt->dbc->mysql.affected_rows;
-
-    } while ( ++rowset_pos <= rowset_end );
-
-    if ( nReturn == SQL_SUCCESS )
-        nReturn= update_setpos_status(stmt,irow,affected_rows,SQL_ROW_UPDATED);
-
-    return nReturn;
+  return nReturn;
 }
 
 
@@ -1195,8 +1252,7 @@ static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext
 
     } while ( break_insert && count < insert_count );
 
-    /* get rows affected count */
-    stmt->affected_rows= stmt->dbc->mysql.affected_rows= insert_count;
+    global_set_affected_rows(stmt, insert_count);
 
     /* update row status pointer(s) */
     if (stmt->ird->array_status_ptr)
@@ -1314,7 +1370,7 @@ SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
 
     /* If irow > maximum rows in the resultset. for forwrd only row_count is 0
      */
-    if ( fOption != SQL_ADD && irow > result->row_count )
+    if ( fOption != SQL_ADD && irow > num_rows(stmt))
         return set_error(stmt,MYERR_S1107,NULL,0);
 
     /* Not a valid lock type ..*/
@@ -1341,8 +1397,8 @@ SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
                 --irow;
                 sqlRet= SQL_SUCCESS;
                 stmt->cursor_row= (long)(stmt->current_row+irow);
-                mysql_data_seek(stmt->result,(my_ulonglong)stmt->cursor_row);
-                stmt->current_values= mysql_fetch_row(stmt->result);
+                data_seek(stmt, (my_ulonglong)stmt->cursor_row);
+                stmt->current_values= fetch_row(stmt);
                 reset_getdata_position(stmt);
                 if ( stmt->fix_fields )
                     stmt->current_values= (*stmt->fix_fields)(stmt,stmt->current_values);
@@ -1351,7 +1407,7 @@ SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
                  cursor, but we don't want that. We seek back to this row
                  so the MYSQL_RES is in the state we expect.
                 */
-                mysql_data_seek(stmt->result,(my_ulonglong)stmt->cursor_row);
+                data_seek(stmt, (my_ulonglong)stmt->cursor_row);
                 pthread_mutex_unlock(&stmt->dbc->lock);
                 break;
             }

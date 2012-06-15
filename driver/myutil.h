@@ -151,8 +151,6 @@ char *check_if_positioned_cursor_exists(STMT FAR *stmt, STMT FAR **stmtNew);
 SQLRETURN insert_param(STMT *stmt, char **to, DESC *apd,
                        DESCREC *aprec, DESCREC *iprec, SQLULEN row);
 char *add_to_buffer(NET *net,char *to,const char *from,ulong length);
-int is_set_names_statement(SQLCHAR *query);
-int is_select_statement(SQLCHAR *query);
 
 void reset_getdata_position(STMT *stmt);
 
@@ -334,6 +332,7 @@ char * extend_buffer(NET *net, char *to, ulong length);
 char * add_to_buffer(NET *net,char *to,const char *from,ulong length);
 MY_LIMIT_CLAUSE find_position4limit(CHARSET_INFO* cs, char *query, char * query_end);
 BOOL myodbc_isspace(CHARSET_INFO* cs, const char * begin, const char *end);
+BOOL preparable_on_server(const SQLCHAR * query);
 
 /*results.c*/
 long long binary2numeric(long long *dst, char *src, uint srcLen);
@@ -351,7 +350,12 @@ my_ulonglong  affected_rows(STMT *stmt);
 my_ulonglong  update_affected_rows(STMT *stmt);
 my_ulonglong  num_rows(STMT *stmt);
 MYSQL_ROW     fetch_row(STMT *stmt);
-unsigned long*fetch_lengths(STMT *stmt);
+unsigned long*    fetch_lengths(STMT *stmt);
+MYSQL_ROW_OFFSET  row_seek(STMT *stmt, MYSQL_ROW_OFFSET offset);
+void              data_seek(STMT *stmt, my_ulonglong offset);
+MYSQL_ROW_OFFSET  row_tell(STMT *stmt);
+int               next_result(STMT *stmt);
+
 int           get_int(STMT *stmt, ulong column_number, char *value,
                       ulong length);
 long long     get_int64(STMT *stmt, ulong column_number, char *value,
@@ -372,6 +376,7 @@ BOOL          scrollable(STMT * stmt, char * query, char * query_end);
 
 /* my_prepared_stmt.c */
 void  ssps_init(STMT *stmt);
+MYSQL_RES * ssps_get_result(STMT *stmt);
 void  ssps_close(STMT *stmt);
 int   ssps_bind_result(STMT *stmt);
 BOOL  ssps_0buffers_truncated_only(STMT *stmt);
@@ -389,6 +394,16 @@ const char *mystr_get_next_token(CHARSET_INFO *charset,
                                         const char **query, const char *end);
 const char *find_token(CHARSET_INFO *charset, const char * begin,
                        const char * end, const char * target);
+const char *skip_leading_spaces(const char *str);
+int         is_set_names_statement(const SQLCHAR *query);
+int         is_select_statement(const SQLCHAR *query);
+BOOL        is_batch_of_statements(const SQLCHAR *query);
+BOOL        is_drop_procedure(const SQLCHAR * query);
+BOOL        is_drop_function(const SQLCHAR * query);
+BOOL        is_create_procedure(const SQLCHAR * query);
+BOOL        is_create_function(const SQLCHAR * query);
+BOOL        is_use_db(const SQLCHAR * query);
+BOOL        is_call_procedure(const SQLCHAR * query);
 
 #ifdef __WIN__
 #define cmp_database(A,B) myodbc_strcasecmp((const char *)(A),(const char *)(B))

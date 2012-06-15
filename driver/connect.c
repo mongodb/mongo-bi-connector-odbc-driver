@@ -214,6 +214,7 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
     mysql_options(mysql, MYSQL_OPT_SSL_VERIFY_SERVER_CERT,
                   (const char *)&opt_ssl_verify_server_cert);
 
+  if (dbc->unicode)
   {
     /*
       Get the ANSI charset info before we change connection to UTF-8.
@@ -221,12 +222,6 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
     MY_CHARSET_INFO my_charset;
     mysql_get_character_set_info(&dbc->mysql, &my_charset);
     dbc->ansi_charset_info= get_charset(my_charset.number, MYF(0));
-
-  }
-
-
-  if (dbc->unicode)
-  {
     /*
       We always use utf8 for the connection, and change it afterwards if needed.
     */

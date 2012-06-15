@@ -162,6 +162,7 @@ static SQLWCHAR W_CLIENT_INTERACTIVE[]=
   {'I','N','T','E','R','A','C','T','I','V','E',0};
 static SQLWCHAR W_NO_I_S[]= {'N','O','_','I','_','S',0};
 static SQLWCHAR W_PREFETCH[]= {'P','R','E','F','E','T','C','H',0};
+static SQLWCHAR W_NO_SSPS[]= {'N','O','_','S','S','P','S',0};
 
 /* DS_PARAM */
 /* externally used strings */
@@ -190,7 +191,7 @@ SQLWCHAR *dsnparams[]= {W_DSN, W_DRIVER, W_DESCRIPTION, W_SERVER,
                         W_ZERO_DATE_TO_MIN, W_MIN_DATE_TO_ZERO,
                         W_MULTI_STATEMENTS, W_COLUMN_SIZE_S32,
                         W_NO_BINARY_RESULT, W_DFLT_BIGINT_BIND_STR,
-                        W_CLIENT_INTERACTIVE, W_NO_I_S, W_PREFETCH};
+                        W_CLIENT_INTERACTIVE, W_NO_I_S, W_PREFETCH, W_NO_SSPS};
 static const
 int dsnparamcnt= sizeof(dsnparams) / sizeof(SQLWCHAR *);
 /* DS_PARAM */
@@ -596,7 +597,6 @@ DataSource *ds_new()
 
   /* non-zero DataSource defaults here */
   ds->port=                   3306;
-  ds->use_ssps=               FALSE;
   /* DS_PARAM */
 
   return ds;
@@ -747,7 +747,6 @@ void ds_map_param(DataSource *ds, const SQLWCHAR *param,
     *intdest= &ds->clientinteractive;
   else if (!sqlwcharcasecmp(W_PREFETCH, param))
     *intdest= &ds->cursor_prefetch_number;
-
   else if (!sqlwcharcasecmp(W_FOUND_ROWS, param))
     *booldest= &ds->return_matching_rows;
   else if (!sqlwcharcasecmp(W_BIG_PACKETS, param))
@@ -806,6 +805,8 @@ void ds_map_param(DataSource *ds, const SQLWCHAR *param,
     *booldest= &ds->default_bigint_bind_str;
   else if (!sqlwcharcasecmp(W_NO_I_S, param))
     *booldest= &ds->no_information_schema;
+  else if (!sqlwcharcasecmp(W_NO_SSPS, param))
+    *booldest= &ds->no_ssps;
 
   /* DS_PARAM */
 }
@@ -1266,6 +1267,7 @@ int ds_add(DataSource *ds)
   if (ds_add_intprop(ds->name, W_NO_BINARY_RESULT, ds->handle_binary_as_char)) goto error;
   if (ds_add_intprop(ds->name, W_DFLT_BIGINT_BIND_STR, ds->default_bigint_bind_str)) goto error;
   if (ds_add_intprop(ds->name, W_NO_I_S, ds->no_information_schema)) goto error;
+  if (ds_add_intprop(ds->name, W_NO_SSPS, ds->no_ssps)) goto error;
 
   /* DS_PARAM */
 

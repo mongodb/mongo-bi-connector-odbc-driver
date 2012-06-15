@@ -88,8 +88,7 @@ MYSQL_RES * get_result(STMT *stmt)
 {
   if (ssps_used(stmt))
   {
-    /* We do not do store for PS so far */
-    stmt->result= mysql_stmt_result_metadata(stmt->ssps);
+    stmt->result= ssps_get_result(stmt);
   }
   else
   {
@@ -196,6 +195,58 @@ unsigned long* fetch_lengths(STMT *stmt)
 }
 
 
+MYSQL_ROW_OFFSET row_seek(STMT *stmt, MYSQL_ROW_OFFSET offset)
+{
+  if (ssps_used(stmt))
+  {
+    return mysql_stmt_row_seek(stmt->ssps, offset);
+  }
+  else
+  {
+    return mysql_row_seek(stmt->result, offset);
+  }
+}
+
+
+void data_seek(STMT *stmt, my_ulonglong offset)
+{
+  if (ssps_used(stmt))
+  {
+    mysql_stmt_data_seek(stmt->ssps, offset);
+  }
+  else
+  {
+    mysql_data_seek(stmt->result, offset);
+  }
+}
+
+
+MYSQL_ROW_OFFSET row_tell(STMT *stmt)
+{
+  if (ssps_used(stmt))
+  {
+    return mysql_stmt_row_tell(stmt->ssps);
+  }
+  else
+  {
+    return mysql_row_tell(stmt->result);
+  }
+}
+
+
+int next_result(STMT *stmt)
+{
+  if (ssps_used(stmt))
+  {
+    return mysql_stmt_next_result(stmt->ssps);
+  }
+  else
+  {
+    return mysql_next_result(&stmt->dbc->mysql);
+  }
+}
+
+
 /* --- Data conversion methods --- */
 int get_int(STMT *stmt, ulong column_number, char *value, ulong length)
 {
@@ -264,6 +315,7 @@ BOOL is_null(STMT *stmt, ulong column_number, char *value)
 }
 
 
+/* Scrolled cursor related stuff */
 void scroller_reset(STMT *stmt)
 {
   x_free(stmt->scroller.query);
@@ -475,7 +527,7 @@ BOOL scrollable(STMT * stmt, char * query, char * query_end)
     }
 
     /* If there there is LIMIT - most probably there is no need to scroll
-       skipping such queries before */
+       skipping such queries so far */
     if ( !myodbc_casecmp(prev,"LIMIT", 5)
       || find_token(stmt->dbc->ansi_charset_info, query, before_token, "LIMIT"))
     {

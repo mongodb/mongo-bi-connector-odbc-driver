@@ -365,6 +365,7 @@ void syncTabsData(HWND hwnd, DataSource &params)
   GET_BOOL(MISC_TAB, read_options_from_mycnf);
   GET_BOOL(MISC_TAB, disable_transactions);
   GET_BOOL(MISC_TAB, min_date_to_zero);
+  GET_BOOL(MISC_TAB, no_ssps);
 }
 
 
@@ -448,6 +449,7 @@ void syncTabs(HWND hwnd, DataSource &params)
   SET_BOOL(MISC_TAB, read_options_from_mycnf);
   SET_BOOL(MISC_TAB, disable_transactions);
   SET_BOOL(MISC_TAB, min_date_to_zero);
+  SET_BOOL(MISC_TAB, no_ssps);
 }
 
 
