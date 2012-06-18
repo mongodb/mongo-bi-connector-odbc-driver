@@ -3047,6 +3047,76 @@ DECLARE_TEST(t_prefetch)
     return OK;
 }
 
+
+DECLARE_TEST(t_outparams)
+{
+  SQLSMALLINT ncol, i;
+  SQLINTEGER par[3]= {10, 20, 30};
+
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS p_outparams");
+  ok_sql(hstmt, "CREATE PROCEDURE p_outparams("
+                "  IN p_in INT, "
+                "  OUT p_out INT, "
+                "  INOUT p_inout INT) "
+                "BEGIN "
+                "  SELECT p_in, p_out, p_inout; "
+                "  SET p_in = 100, p_out = 200, p_inout = 300; "
+                "  SELECT p_in, p_out, p_inout; "
+                "END");
+
+
+  for (i=0; i < sizeof(par)/sizeof(SQLINTEGER); ++i)
+  {
+    ok_stmt(hstmt, SQLBindParameter(hstmt, i+1, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0,
+      0, &par[i], 0, NULL));
+  }
+
+  ok_sql(hstmt, "CALL p_outparams(?, ?, ?)");
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 10);
+  ok_stmt(hstmt, SQLMoreResults(hstmt));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 2), 20);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 3), 30);
+
+  ok_stmt(hstmt, SQLMoreResults(hstmt));
+
+  ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
+  is_num(ncol, 3);
+  
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 100);
+  ok_stmt(hstmt, SQLMoreResults(hstmt));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 2), 200);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 3), 300);
+
+  ok_stmt(hstmt, SQLMoreResults(hstmt));
+
+  ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
+  is_num(ncol, 2);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 200);
+  ok_stmt(hstmt, SQLMoreResults(hstmt));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 2), 300);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP PROCEDURE p_outparams");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
@@ -3093,6 +3163,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug62657)
   ADD_TEST(t_row_status)
   ADD_TEST(t_prefetch)
+  ADD_TOFIX(t_outparams)
 END_TESTS
 
 

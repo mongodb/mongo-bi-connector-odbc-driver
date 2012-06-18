@@ -2415,7 +2415,7 @@ DECLARE_TEST(bug12824839)
 
 
 /* If no default database is selected for the connection, call of SQLColumns
-   causes error "Unknown database 'null'" */
+   will cause error "Unknown database 'null'" */
 DECLARE_TEST(sqlcolumns_nodbselected)
 {
   SQLHDBC hdbc1;
