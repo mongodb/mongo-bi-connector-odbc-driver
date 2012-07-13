@@ -2517,20 +2517,9 @@ DECLARE_TEST(t_bug14085211_part1)
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
   /* Lets check if SQLTables can ignore 1024-characters for table name */
-  ok_stmt(hstmt, SQLTables(hstmt, (SQLCHAR *)tab_1024_name, SQL_NTS, NULL, SQL_NTS,
+  expect_stmt(hstmt, SQLTables(hstmt, (SQLCHAR *)tab_1024_name, SQL_NTS, NULL, SQL_NTS,
                                   (SQLCHAR *)tab_1024_name, SQL_NTS, 
-                                  "TABLE,VIEW", SQL_NTS));
-
-  ok_stmt(hstmt, SQLFetch(hstmt));
-  /* check the database name */
-  is_str(my_fetch_str(hstmt, buff, 1), db_64_name, 64);
-
-  /* check the table name */
-  is_str(my_fetch_str(hstmt, buff, 3), tab_64_name, 64);
-  
-  /* only one db/table match, so nothing should be in the results */
-  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
-
+                                  "TABLE,VIEW", SQL_NTS), SQL_ERROR);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
