@@ -116,6 +116,7 @@ const char * wstr4output(const wchar_t *wstr)
 #define MAX_COLUMNS 500
 #define MAX_ROW_DATA_LEN 1000
 #define MYSQL_NAME_LEN 64
+#define MAX_MEM_BLOCK_ELEMENTS 100
 
 SQLCHAR *mydriver= (SQLCHAR *)"{MySQL ODBC 5.1 Driver}";
 SQLCHAR *mydsn= (SQLCHAR *)"test";
@@ -128,9 +129,6 @@ SQLCHAR *mydb= (SQLCHAR *)"test";
 SQLCHAR *test_db= (SQLCHAR *)"client_odbc_test";
 /* Suffix is useful if a testsuite is run more than once */
 const SQLCHAR *testname_suffix="";
-
-int g_nCursor;
-char g_szHeader[501];
 
 #ifndef OK
 # define OK 0
@@ -174,6 +172,16 @@ typedef struct {
   int   expect;
 } my_test;
 
+
+typedef struct
+{
+  void *blk[MAX_MEM_BLOCK_ELEMENTS];
+  int  counter;
+} GCOLL;
+
+GCOLL gc_blk;
+
+
 #ifdef WIN32
 void test_timeout(int signum);
 HANDLE halarm= NULL;
@@ -208,6 +216,16 @@ void mem_debug_init()
 #endif
 }
 
+/* 
+  Initialize garbage collector 
+  counter (or position)
+*/
+void mem_gc_init()
+{
+  gc_blk.counter= 0;
+}
+
+
 #define BEGIN_TESTS my_test tests[]= {
 #define ADD_TEST(name) { #name, name, OK   },
 #define ADD_TODO(name) { #name, name, FAIL },
@@ -232,6 +250,7 @@ int main(int argc, char **argv) \
   ENABLE_ALARMS; \
 \
   mem_debug_init(); \
+  mem_gc_init(); \
 \
   /* Set from environment, possibly overrided by command line */ \
   if (getenv("TEST_DSN")) \
@@ -292,6 +311,7 @@ int main(int argc, char **argv) \
 #define RUN_TESTS \
   RUN_TESTS_ONCE \
   (void)free_basic_handles(&henv, &hdbc, &hstmt); \
+  mem_gc_flush(); \
   exit(failcnt); \
 }
 
@@ -516,9 +536,10 @@ do { \
 */
 #define is_num(a, b) \
 do { \
-  if (a != b) { \
+  long long a1= (a), a2= (b); \
+  if (a1 != a2) { \
     printf("# %s (%lld) != %lld in %s on line %d\n", \
-           #a, (long long)a, (long long)b, __FILE__, __LINE__); \
+           #a, a1, a2, __FILE__, __LINE__); \
     return FAIL; \
   } \
 } while (0);
@@ -1102,6 +1123,48 @@ int free_basic_handles(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt)
 }
 
 
+/* 
+  Allocate size bytes and return a pointer 
+  to allocated memory with storing in 
+  garbage collector
+*/
+void *gc_alloc(size_t len)
+{
+  if (gc_blk.counter >= MAX_MEM_BLOCK_ELEMENTS || len <= 0)
+  {
+    printf("# GC Memory reached maximum limit counter: %d " \
+        "or length:%d less then equal to 0 in %s on line %d\n", 
+        gc_blk.counter, len, __FILE__, __LINE__); \
+    return NULL;
+  }
+
+  gc_blk.blk[gc_blk.counter]= malloc(len);
+  return gc_blk.blk[gc_blk.counter++];
+}
+
+
+/* 
+  Free allocated memory collected by
+  garbage collector
+*/
+int mem_gc_flush()
+{
+  int i= 0;
+  if (gc_blk.counter <= 0)
+  {
+    printf("# GC Memory already empty counter:%d in %s on line %d\n", 
+        gc_blk.counter,  __FILE__, __LINE__); 
+    return FAIL;
+  }
+
+  while (i < gc_blk.counter)
+  {
+    free(gc_blk.blk[i++]);
+  }
+  return OK;
+}
+
+
 /**
  Helper for possibly converting a (wchar_t *) to a (SQLWCHAR *).
  TODO: [almost?] all uses of those macros in tests lead to memore leak,
@@ -1121,14 +1184,14 @@ SQLWCHAR *dup_wchar_t_as_sqlwchar(wchar_t *from, size_t len)
 {
   if (sizeof(wchar_t) == sizeof(SQLWCHAR))
   {
-    SQLWCHAR *to= malloc(len * sizeof(SQLWCHAR));
+    SQLWCHAR *to= gc_alloc(len * sizeof(SQLWCHAR));
     memcpy(to, from, len * sizeof(wchar_t));
     return to;
   }
   else
   {
     size_t i;
-    SQLWCHAR *to= malloc(2 * len * sizeof(SQLWCHAR));
+    SQLWCHAR *to= gc_alloc(2 * len * sizeof(SQLWCHAR));
     SQLWCHAR *out= to;
     for (i= 0; i < len; i++)
       to+= utf32toutf16((UTF32)from[i], (UTF16 *)to);
@@ -1151,7 +1214,7 @@ SQLWCHAR *dup_wchar_t_as_sqlwchar(wchar_t *from, size_t len)
 */
 SQLWCHAR *dup_char_as_sqlwchar(SQLCHAR *from)
 {
-  SQLWCHAR *to= malloc((strlen((char *)from) + 1) * sizeof(SQLWCHAR));
+  SQLWCHAR *to= gc_alloc((strlen((char *)from) + 1) * sizeof(SQLWCHAR));
   SQLWCHAR *out= to;
   while (from && *from)
     *(to++)= (SQLWCHAR)*(from++);
