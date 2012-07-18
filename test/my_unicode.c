@@ -1115,12 +1115,9 @@ DECLARE_TEST(t_bug28168)
 
   if (!SQL_SUCCEEDED(SQLExecDirectW(hstmt, grantQuery, SQL_NTS)))
   {
-    free(grantQuery);
-    free(err_prefixw);
     return FAIL;
   }
 
-  free(grantQuery);
 
   ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
 
