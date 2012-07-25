@@ -5,6 +5,7 @@
     slow tests that involve catalog functions and Information_Schema queries.
   Bugs fixed:
   * Long table names crash OBDC driver. (Bug# 14085211/65200)
+  * Close proximity issue when handling OS signlals in myodbc (Bug# 14303803)
 
 ----
 
