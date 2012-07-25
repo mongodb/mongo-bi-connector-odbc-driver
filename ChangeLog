@@ -6,6 +6,7 @@
   Bugs fixed:
   * Long table names crash OBDC driver. (Bug# 14085211/65200)
   * Close proximity issue when handling OS signlals in myodbc (Bug# 14303803)
+  * "String data right truncated" error is not always correct (Bug# 14285620)
 
 ----
 

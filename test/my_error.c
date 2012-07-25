@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -157,9 +157,10 @@ DECLARE_TEST(t_diagrec)
   ok_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate,
                                &native_err, message, 255, &msglen));
 
+  /* MSSQL returns SQL_SUCCESS in similar situations */
   expect_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate,
                                    &native_err, message, 0, &msglen),
-              SQL_SUCCESS_WITH_INFO);
+              SQL_SUCCESS);
 
   expect_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate,
                                    &native_err, message, 10, &msglen),
@@ -456,6 +457,117 @@ DECLARE_TEST(t_bug13542600)
 }
 
 
+DECLARE_TEST(t_bug14285620)
+{
+  SQLSMALLINT data_type, dec_digits, nullable, cblen;
+  SQLUINTEGER info, col_size; 
+  SQLINTEGER timeout= 20, cbilen;
+  SQLCHAR szData[255]={0};
+
+  /* Numeric attribute */
+  expect_dbc(hdbc, SQLGetConnectAttr(hdbc, SQL_ATTR_LOGIN_TIMEOUT, NULL, 0, NULL), SQL_SUCCESS);
+  expect_dbc(hdbc, SQLGetConnectAttr(hdbc, SQL_ATTR_LOGIN_TIMEOUT, &timeout, 0, NULL), SQL_SUCCESS);
+  is_num(timeout, 0);
+  
+  /* Character attribute */
+  /* 
+    In this particular case MSSQL always returns SQL_SUCCESS_WITH_INFO
+    apparently because the driver manager always provides the buffer even
+    when the client application passes NULL
+  */
+#ifdef _WIN32
+  /* 
+    This check is only relevant to Windows Driver Manager 
+  */
+  expect_dbc(hdbc, SQLGetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, NULL, 0, NULL), SQL_SUCCESS_WITH_INFO);
+#endif
+  expect_dbc(hdbc, SQLGetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, szData, 0, NULL), SQL_SUCCESS_WITH_INFO);
+
+  /*
+  MSDN Says about the last parameter &cblen for SQLGetInfo,
+  functions:
+  
+     If InfoValuePtr is NULL, StringLengthPtr will still return the 
+     total number of bytes (excluding the null-termination character 
+     for character data) available to return in the buffer pointed 
+     to by InfoValuePtr.
+
+     http://msdn.microsoft.com/en-us/library/ms710297%28v=vs.85%29
+  */
+
+  expect_dbc(hdbc, SQLGetInfo(hdbc, SQL_AGGREGATE_FUNCTIONS, NULL, 0, NULL), SQL_SUCCESS);
+  expect_dbc(hdbc, SQLGetInfo(hdbc, SQL_AGGREGATE_FUNCTIONS, &info, 0, &cblen), SQL_SUCCESS);
+  is_num(cblen, 4);
+
+  is_num(info, (SQL_AF_ALL | SQL_AF_AVG | SQL_AF_COUNT | SQL_AF_DISTINCT | 
+             SQL_AF_MAX | SQL_AF_MIN | SQL_AF_SUM));
+
+  /* Get database name for further checks */
+  expect_dbc(hdbc, SQLGetInfo(hdbc, SQL_DATABASE_NAME, szData, sizeof(szData), NULL), SQL_SUCCESS);
+  expect_dbc(hdbc, SQLGetInfo(hdbc, SQL_DATABASE_NAME, NULL, 0, &cblen), SQL_SUCCESS);
+
+#ifdef _WIN32  
+  /* Windows uses unicode driver by default */
+  is_num(cblen, strlen(szData)*sizeof(SQLWCHAR));
+#else
+  is_num(cblen, strlen(szData));
+#endif
+
+  expect_dbc(hdbc, SQLGetInfo(hdbc, SQL_DATABASE_NAME, szData, 0, NULL), SQL_SUCCESS);
+
+  /* Get the native string for further checks */
+  expect_dbc(hdbc, SQLNativeSql(hdbc, "SELECT 10", SQL_NTS, szData, sizeof(szData), NULL), SQL_SUCCESS);
+  expect_dbc(hdbc, SQLNativeSql(hdbc, "SELECT 10", SQL_NTS, NULL, 0, &cbilen), SQL_SUCCESS);
+  
+  /* Do like MSSQL, which does calculate as char_count*sizeof(SQLWCHAR) */
+  is_num(cbilen, strlen(szData));
+
+  expect_dbc(hdbc, SQLNativeSql(hdbc, "SELECT 10", SQL_NTS, szData, 0, NULL), SQL_SUCCESS_WITH_INFO);
+
+  /* Get the cursor name for further checks */
+  expect_stmt(hstmt, SQLGetCursorName(hstmt, szData, sizeof(szData), NULL), SQL_SUCCESS);
+  expect_stmt(hstmt, SQLGetCursorName(hstmt, NULL, 0, &cblen), SQL_SUCCESS);
+  
+  /* Do like MSSQL, which does calculate as char_count*sizeof(SQLWCHAR) */
+  is_num(cblen, strlen(szData));
+
+  expect_stmt(hstmt, SQLGetCursorName(hstmt, szData, 0, NULL), SQL_SUCCESS_WITH_INFO);
+
+  expect_stmt(hstmt, SQLExecDirect(hstmt, "ERROR SQL QUERY", SQL_NTS), SQL_ERROR);
+
+  expect_stmt(hstmt, SQLGetDiagField(SQL_HANDLE_STMT, hstmt, 1, SQL_DIAG_SQLSTATE, NULL, 0, NULL), SQL_SUCCESS);
+
+  {
+    SQLCHAR sqlstate[30], message[255];
+    SQLINTEGER native_error= 0;
+    SQLSMALLINT text_len= 0;
+    /* try with the NULL pointer for Message */
+    expect_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate, native_error, NULL, 0, &cblen), SQL_SUCCESS);
+    /* try with the non-NULL pointer for Message */
+    expect_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate, native_error, message, 0, NULL), SQL_SUCCESS);
+  }
+
+  SQLExecDirect(hstmt, "drop table bug14285620", SQL_NTS);
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "CREATE TABLE bug14285620 (id INT)", SQL_NTS));
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "INSERT INTO bug14285620 (id) VALUES (1)", SQL_NTS));
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "SELECT * FROM bug14285620", SQL_NTS));
+
+  expect_stmt(hstmt, SQLDescribeCol(hstmt, 1, NULL, 0, NULL, &data_type, &col_size, &dec_digits, &nullable), SQL_SUCCESS);
+  expect_stmt(hstmt, SQLDescribeCol(hstmt, 1, szData, 0, &cblen, &data_type, &col_size, &dec_digits, &nullable), SQL_SUCCESS_WITH_INFO);
+
+  expect_stmt(hstmt, SQLColAttribute(hstmt,1, SQL_DESC_TYPE, NULL, 0, NULL, NULL), SQL_SUCCESS);
+  expect_stmt(hstmt, SQLColAttribute(hstmt,1, SQL_DESC_TYPE, &data_type, 0, NULL, NULL), SQL_SUCCESS);
+
+  expect_stmt(hstmt, SQLColAttribute(hstmt,1, SQL_DESC_TYPE_NAME, NULL, 0, NULL, NULL), SQL_SUCCESS);
+  expect_stmt(hstmt, SQLColAttribute(hstmt,1, SQL_DESC_TYPE_NAME, szData, 0, NULL, NULL), SQL_SUCCESS_WITH_INFO);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
 #ifndef NO_DRIVERMANAGER
   ADD_TEST(t_odbc2_error)
@@ -475,6 +587,7 @@ BEGIN_TESTS
   ADD_TEST(sqlerror)
   ADD_TEST(t_bug27158)
   ADD_TEST(t_bug13542600)
+  ADD_TEST(t_bug14285620)
 END_TESTS
 
 RUN_TESTS

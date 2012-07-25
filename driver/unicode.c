@@ -96,7 +96,8 @@ SQLColAttributeWImpl(SQLHSTMT hstmt, SQLUSMALLINT column,
     /* char_attr_max is in bytes, we want it in chars. */
     char_attr_max/= sizeof(SQLWCHAR);
 
-    if (len > char_attr_max - 1)
+    /* We set the error only when the result is intented to be returned */
+    if ((char_attr || num_attr) && len > char_attr_max - 1)
       rc= set_error(stmt, MYERR_01004, NULL, 0);
 
     if (char_attr_len)
@@ -269,7 +270,8 @@ SQLDescribeColW(SQLHSTMT hstmt, SQLUSMALLINT column,
       return handle_connection_error(stmt);
     }
 
-    if (len > name_max - 1)
+    /* We set the error only when the result is intented to be returned */
+    if (name && len > name_max - 1)
       rc= set_error(stmt, MYERR_01004, NULL, 0);
 
     if (name_len)
@@ -412,7 +414,14 @@ SQLGetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
   DBC *dbc= (DBC *)hdbc;
   SQLCHAR *char_value= NULL;
 
-  SQLRETURN rc= MySQLGetConnectAttr(hdbc, attribute, &char_value, value);
+  SQLRETURN rc= 0;
+  
+  /* 
+    for numeric attributes value_max can be 0, so we must check for 
+    the valid output buffer to prevent crashes
+  */
+  if (value)
+    rc= MySQLGetConnectAttr(hdbc, attribute, &char_value, value);
 
   if (char_value)
   {
@@ -426,6 +435,11 @@ SQLGetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
     /* value_max is in bytes, we want it in chars. */
     value_max/= sizeof(SQLWCHAR);
 
+    /* 
+      This check is inside the statement, which does not
+      execute if output buffer is NULL 
+      see: "if (char_value)"
+    */
     if (len > value_max - 1)
       rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
 
@@ -477,8 +491,8 @@ SQLGetCursorNameW(SQLHSTMT hstmt, SQLWCHAR *cursor, SQLSMALLINT cursor_max,
   if (cursor_len)
     *cursor_len= (SQLSMALLINT)len;
 
-  /* Warn if name truncated */
-  if (len > cursor_max - 1)
+  /* Warn if name truncated, but buffer is not null */
+  if (cursor && len > cursor_max - 1)
     rc= set_error(stmt, MYERR_01004, NULL, 0);
 
   if (cursor_max > 0)
@@ -533,7 +547,8 @@ SQLGetDiagFieldW(SQLSMALLINT handle_type, SQLHANDLE handle,
     /* info_max is in bytes, we want it in chars. */
     info_max/= sizeof(SQLWCHAR);
 
-    if (len > info_max - 1)
+    /* We set the error only when the result is intented to be returned */
+    if (info && len > info_max - 1)
       rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
 
     if (info_len)
@@ -610,8 +625,12 @@ SQLGetDiagRecWImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
                                           default_charset_info,
                                           msg_value, &len, &errors);
 
-    if (len > message_max - 1)
-      rc= SQL_SUCCESS_WITH_INFO;
+    /* 
+      We set the error only when the result is intented to be returned
+      and message_max is greaater than 0
+    */
+    if (message && message_max && len > message_max - 1)
+      rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
 
     if (message_len)
       *message_len= (SQLSMALLINT)len;
@@ -678,7 +697,11 @@ SQLGetInfoW(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
     /* value_max is in bytes, we want it in chars. */
     value_max/= sizeof(SQLWCHAR);
 
-    if (len > value_max - 1)
+    /* 
+      MSSQL implementation does not return the truncation warning if the
+      value is not NULL and value_max is 0
+     */
+    if (value && value_max && len > value_max - 1)
       rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
 
     if (value_len)
@@ -727,7 +750,7 @@ SQLNativeSqlW(SQLHDBC hdbc, SQLWCHAR *in, SQLINTEGER in_len,
   if (out_len)
     *out_len= in_len;
 
-  if (in_len > out_max)
+  if (out && in_len > out_max)
     rc= set_conn_error((DBC *)hdbc, MYERR_01004, NULL, 0);
 
   if (out_max > 0)
