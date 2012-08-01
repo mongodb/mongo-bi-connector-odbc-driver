@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -3711,7 +3711,6 @@ MY_LIMIT_CLAUSE find_position4limit(CHARSET_INFO* cs, char *query, char * query_
   {
     result.begin= result.end= query_end;
   }
-  
 
   return result;
 }
@@ -3723,21 +3722,4 @@ BOOL myodbc_isspace(CHARSET_INFO* cs, const char * begin, const char *end)
   cs->cset->ctype(cs, &ctype, (const uchar*) begin, (const uchar*) end);
 
   return ctype & _MY_SPC;
-}
-
-
-BOOL preparable_on_server(const SQLCHAR * query)
-{
-  query= skip_leading_spaces(query);
-
-  if ( is_drop_procedure(query)
-    || is_drop_function(query)
-    || is_create_function(query)
-    || is_create_procedure(query)
-    || is_use_db(query))
-  {
-    return FALSE;
-  }
-
-  return TRUE;
 }

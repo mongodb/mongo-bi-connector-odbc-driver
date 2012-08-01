@@ -1167,7 +1167,6 @@ DECLARE_TEST(t_bug28168)
   swprintf(dummy, 256, L"%lsAccess denied for user "
     L"'\x03A8\x0391\x03A1\x039F uid'@'localhost' "
     L"(using password: YES)", err_prefixw);
-  free(err_prefixw);
 
   if (sizeof(SQLWCHAR) == sizeof(wchar_t))
   {

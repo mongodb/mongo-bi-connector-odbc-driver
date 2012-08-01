@@ -63,6 +63,7 @@ extern "C"
 #endif
 
 #include "error.h"
+#include "parse.h"
 
 #if defined(_WIN32) || defined(WIN32)
 # define INTFUNC  __stdcall
@@ -352,6 +353,7 @@ typedef struct tagDBC
   my_bool       unicode;            /* Whether SQL*ConnectW was used */
   CHARSET_INFO  *ansi_charset_info, /* 'ANSI' charset (SQL_C_CHAR) */
                 *cxn_charset_info;  /* Connection charset ('ANSI' or utf-8) */
+  MY_SYNTAX_MARKERS *syntax;
   DataSource    *ds;                /* data source used to connect (parsed or stored) */
   SQLULEN       sql_select_limit;   /* value of the sql_select_limit currently set for a session
                                        (SQLULEN)(-1) if wasn't set */
@@ -402,31 +404,32 @@ typedef struct cursor
 
 typedef struct tagSTMT
 {
-  DBC FAR	*dbc;
-  MYSQL_RES	*result;
-  my_bool       fake_result;
-  MYSQL_ROW	array,result_array,current_values;
-  MYSQL_ROW	(*fix_fields)(struct tagSTMT FAR* stmt,MYSQL_ROW row);
-  MYSQL_FIELD	*fields;
+  DBC FAR           *dbc;
+  MYSQL_RES         *result;
+  my_bool           fake_result;
+  MYSQL_ROW	        array,result_array,current_values;
+  MYSQL_ROW	        (*fix_fields)(struct tagSTMT FAR* stmt,MYSQL_ROW row);
+  MYSQL_FIELD	      *fields;
   MYSQL_ROW_OFFSET  end_of_set;
-  DYNAMIC_ARRAY param_pos; /* param placeholder positions */
-  LIST		list;
-  MYCURSOR	cursor;
-  MYERROR	error;
-  STMT_OPTIONS	stmt_options;
-  char		*table_name;
-  char		*query, *query_end;
-  unsigned long *lengths; /* used to set lengths if we shuffle field values
-                             of the resultset of auxiliary query or if we fix_fields. */
+
+  LIST              list;
+  MYCURSOR          cursor;
+  MYERROR           error;
+  STMT_OPTIONS      stmt_options;
+  char              *table_name;
+
+  MY_PARSED_QUERY	query, orig_query;
+
+  unsigned long     *lengths; /* used to set lengths if we shuffle field values
+                         of the resultset of auxiliary query or if we fix_fields. */
   /*
     We save a copy of the original query before we modify it for 'WHERE
     CURRENT OF' cursor handling.
   */
-  char          *orig_query,*orig_query_end;
-  my_ulonglong	affected_rows;
-  long		current_row;
-  long		cursor_row;
-  char          dae_type; /* data-at-exec type */
+  my_ulonglong      affected_rows;
+  long              current_row;
+  long              cursor_row;
+  char              dae_type; /* data-at-exec type */
   struct {
     uint column;      /* Which column is being used with SQLGetData() */
     char *source;     /* Our current position in the source. */
@@ -438,7 +441,7 @@ typedef struct tagSTMT
     ulong dst_offset; /* Current offset into dest. (ulong)~0L when not set. */
   } getdata;
 
-  uint		*order,order_count,param_count,current_param,rows_found_in_set;
+  uint		*order, order_count, param_count, current_param, rows_found_in_set;
 
   enum MY_STATE state;
   enum MY_DUMMY_STATE dummy_state;

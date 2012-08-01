@@ -680,38 +680,15 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
 */
 BOOL isStatementForRead(STMT *stmt)
 {
-    char *pCursor;
-    int n = 0;
-    char szToken[55];
+  char *token= get_token(&stmt->query, 0);
 
-    if ( !stmt )
-        return FALSE;
+  if (!is_select_statement(token) || !myodbc_casecmp(token, "SHOW", 4) ||
+    !is_call_procedure(token))
+  {
+    return TRUE;
+  }
 
-    if ( !stmt->query )
-        return FALSE;
-
-    /* eat up any space */
-    for ( pCursor = stmt->query; pCursor != stmt->query_end && isspace( *pCursor ); )
-    {
-        ++pCursor; 
-    }
-
-    /* continue while alpha-numeric */
-    for ( ; pCursor != stmt->query_end && !isspace( *pCursor ) && n < 50; )
-    {
-        szToken[n] = toupper( *pCursor );
-        ++pCursor; 
-        ++n;
-    }
-
-    szToken[n] = '\0';
-
-    /* Took from Jess' "ssps rsmd" patch - "CALL" was missing here */
-    if (!strcmp(szToken, "SELECT") || !strcmp(szToken, "SHOW") ||
-        !strcmp(szToken, "CALL"))
-        return TRUE;
-
-    return FALSE;
+  return FALSE;
 }
 
 /*

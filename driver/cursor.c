@@ -120,61 +120,56 @@ static const char *find_used_table(STMT *stmt)
 */
 char *check_if_positioned_cursor_exists(STMT *pStmt, STMT **pStmtCursor)
 {
-  if (pStmt->query && pStmt->query_end)
-  {
-    const char *pszQueryTokenPos= pStmt->query_end;
-    const char *pszCursor= mystr_get_prev_token(pStmt->dbc->ansi_charset_info,
-                                                (const char**)&pszQueryTokenPos,
-                                                pStmt->query);
+  const char * cursorName= get_cursor_name(&pStmt->query);
 
-    if (!myodbc_casecmp(mystr_get_prev_token(pStmt->dbc->ansi_charset_info,
-                                             &pszQueryTokenPos,
-                                             pStmt->query),"OF",2) &&
-        !myodbc_casecmp(mystr_get_prev_token(pStmt->dbc->ansi_charset_info,
-                                             &pszQueryTokenPos,
-                                             pStmt->query),"CURRENT",7) &&
-        !myodbc_casecmp(mystr_get_prev_token(pStmt->dbc->ansi_charset_info,
-                                             &pszQueryTokenPos,
-                                             pStmt->query),"WHERE",5) )
+  if (cursorName != NULL)
+  {
+    
+    LIST *list_element;
+    DBC  *dbc= (DBC *)pStmt->dbc;
+    char * wherePos= get_token(&pStmt->query, TOKEN_COUNT(&pStmt->query)- 4);
+
+    if (wherePos > GET_QUERY(&pStmt->query))
     {
-      LIST *list_element;
-      DBC  *dbc= (DBC *)pStmt->dbc;
+      /* Decrementing if do not point to the beginning of the string to
+         point to a character(?) before "where"*/
+      --wherePos;
+    }
+
+    /*
+      Scan the list of statements for this connection and see if we
+      can find the cursor name this statement is referring to - it
+      must have a result set to count.
+    */
+    for (list_element= dbc->statements;
+         list_element;
+         list_element= list_element->next)
+    {
+      *pStmtCursor= (HSTMT)list_element->data;
 
       /*
-        Scan the list of statements for this connection and see if we
-        can find the cursor name this statement is referring to - it
-        must have a result set to count.
+        Even if the cursor name matches, the statement must have a
+        result set to count.
       */
-      for (list_element= dbc->statements;
-           list_element;
-           list_element= list_element->next)
+      if ((*pStmtCursor)->result &&
+          (*pStmtCursor)->cursor.name &&
+          !myodbc_strcasecmp((*pStmtCursor)->cursor.name,
+                             cursorName))
       {
-        *pStmtCursor= (HSTMT)list_element->data;
-
-        /*
-          Even if the cursor name matches, the statement must have a
-          result set to count.
-        */
-        if ((*pStmtCursor)->result &&
-            (*pStmtCursor)->cursor.name &&
-            !myodbc_strcasecmp((*pStmtCursor)->cursor.name,
-                               pszCursor))
-        {
-          return (char *)pszQueryTokenPos;
-        }
+        return (char *)wherePos;
       }
-
-      /* Did we run out of statements without finding a viable cursor? */
-      if (!list_element)
-      {
-        char buff[200];
-        strxmov(buff,"Cursor '", pszCursor,
-                "' does not exist or does not have a result set.", NullS);
-        set_stmt_error(pStmt, "34000", buff, ER_INVALID_CURSOR_NAME);
-      }
-
-      return (char *)pszQueryTokenPos;
     }
+
+    /* Did we run out of statements without finding a viable cursor? */
+    if (!list_element)
+    {
+      char buff[200];
+      strxmov(buff,"Cursor '", cursorName,
+              "' does not exist or does not have a result set.", NullS);
+      set_stmt_error(pStmt, "34000", buff, ER_INVALID_CURSOR_NAME);
+    }
+
+    return (char *)wherePos;
   }
 
   return NULL;
@@ -938,6 +933,7 @@ SQLRETURN my_pos_update( STMT FAR *         pStmtCursor,
       /*
         Re-prepare the statement, which will leave us with a prepared
         statement that is a non-positioned update.
+        To check: do we really need that?
       */
       if (my_SQLPrepare(pStmt, (SQLCHAR *)dynQuery->str, dynQuery->length,
                         FALSE) != SQL_SUCCESS)

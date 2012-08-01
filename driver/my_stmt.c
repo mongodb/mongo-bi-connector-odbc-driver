@@ -314,6 +314,69 @@ BOOL is_null(STMT *stmt, ulong column_number, char *value)
   }
 }
 
+/* Prepares statement depending on connection option either on a client or
+   on a server. Returns SQLRETURN result code since preparing on client or
+   server can produce errors, memory allocation to name one.  */
+SQLRETURN prepare(STMT *stmt, char * query, SQLINTEGER query_length)
+{
+  /* TODO: I guess we always have to have query length here */
+  if (query_length <= 0)
+  {
+    query_length= strlen(query);
+  }
+
+  reset_parsed_query(&stmt->query, query, query + query_length,
+                     stmt->dbc->cxn_charset_info);
+  /* Tokenising string, detecting and storing parameters placeholders, removing {}
+     So far the only possible error is memory allocation. Thus setting it here.
+     If that changes we will need to make "parse" to set error and return rc */
+  if (parse(&stmt->query))
+  {
+    return set_error(stmt, MYERR_S1001, NULL, 4001);
+  }
+
+  if (!stmt->dbc->ds->no_ssps && !IS_BATCH(&stmt->query)
+    && preparable_on_server(&stmt->query, stmt->dbc->mysql.server_version))
+  {
+    MYLOG_QUERY(stmt, "Using prepared statement");
+    ssps_init(stmt);
+
+    if (mysql_stmt_prepare(stmt->ssps, query, query_length))
+    {
+      MYLOG_QUERY(stmt, mysql_error(&stmt->dbc->mysql));
+
+      set_stmt_error(stmt,"HY000",mysql_error(&stmt->dbc->mysql),
+                     mysql_errno(&stmt->dbc->mysql));
+      translate_error(stmt->error.sqlstate,MYERR_S1000,
+                      mysql_errno(&stmt->dbc->mysql));
+
+      return SQL_ERROR;
+    }
+
+    stmt->param_count= mysql_stmt_param_count(stmt->ssps);
+    assert(stmt->param_count==PARAM_COUNT(&stmt->query));
+  }
+  else
+  {
+    stmt->param_count= PARAM_COUNT(&stmt->query);
+  }
+
+  {
+    /* Creating desc records for each parameter */
+    uint i;
+    for (i= 0; i < stmt->param_count; ++i)
+    {
+      DESCREC *aprec= desc_get_rec(stmt->apd, i, TRUE);
+      DESCREC *iprec= desc_get_rec(stmt->ipd, i, TRUE);
+    }
+  }
+
+  /* Reset current_param so that SQLParamData starts fresh. */
+  stmt->current_param= 0;
+  stmt->state= ST_PREPARED;
+
+  return SQL_SUCCESS;
+}
 
 /* Scrolled cursor related stuff */
 void scroller_reset(STMT *stmt)

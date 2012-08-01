@@ -223,7 +223,7 @@ SQLRETURN set_desc_error(DESC *        desc,
   @purpose : translates SQL error to ODBC error
 */
 
-void translate_error(char *save_state,myodbc_errid errid,uint mysql_err)
+void translate_error(char *save_state, myodbc_errid errid, uint mysql_err)
 {
     char *state= myodbc3_errors[errid].sqlstate;
 

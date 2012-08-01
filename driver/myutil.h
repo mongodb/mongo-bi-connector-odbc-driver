@@ -332,7 +332,6 @@ char * extend_buffer(NET *net, char *to, ulong length);
 char * add_to_buffer(NET *net,char *to,const char *from,ulong length);
 MY_LIMIT_CLAUSE find_position4limit(CHARSET_INFO* cs, char *query, char * query_end);
 BOOL myodbc_isspace(CHARSET_INFO* cs, const char * begin, const char *end);
-BOOL preparable_on_server(const SQLCHAR * query);
 
 /*results.c*/
 long long binary2numeric(long long *dst, char *src, uint srcLen);
@@ -365,6 +364,8 @@ char *        get_string(STMT *stmt, ulong column_number, char *value,
 long double   get_double(STMT *stmt, ulong column_number, char *value,
                          ulong length);
 BOOL          is_null(STMT *stmt, ulong column_number, char *value);
+SQLRETURN     prepare(STMT *stmt, char * query, SQLINTEGER query_length);
+
 void          scroller_reset(STMT *stmt);
 unsigned int  calc_prefetch_number(unsigned int selected, SQLULEN app_fetchs,
                                    SQLULEN max_rows);
@@ -386,24 +387,6 @@ long double ssps_get_double(STMT *stmt, ulong column_number, char *value,
                             ulong length);
 char *      ssps_get_string(STMT *stmt, ulong column_number, char *value,
                             ulong *length, char * buffer);
-
-/* parse.c */
-const char *mystr_get_prev_token(CHARSET_INFO *charset,
-                                        const char **query, const char *start);
-const char *mystr_get_next_token(CHARSET_INFO *charset,
-                                        const char **query, const char *end);
-const char *find_token(CHARSET_INFO *charset, const char * begin,
-                       const char * end, const char * target);
-const char *skip_leading_spaces(const char *str);
-int         is_set_names_statement(const SQLCHAR *query);
-int         is_select_statement(const SQLCHAR *query);
-BOOL        is_batch_of_statements(const SQLCHAR *query);
-BOOL        is_drop_procedure(const SQLCHAR * query);
-BOOL        is_drop_function(const SQLCHAR * query);
-BOOL        is_create_procedure(const SQLCHAR * query);
-BOOL        is_create_function(const SQLCHAR * query);
-BOOL        is_use_db(const SQLCHAR * query);
-BOOL        is_call_procedure(const SQLCHAR * query);
 
 #ifdef __WIN__
 #define cmp_database(A,B) myodbc_strcasecmp((const char *)(A),(const char *)(B))

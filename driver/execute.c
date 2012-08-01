@@ -35,7 +35,6 @@
   @purpose : internal function to execute query and return result
   frees query if query != stmt->query
 */
-
 SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
 {
     int error= SQL_ERROR, native_error= 0;
@@ -52,7 +51,9 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
     }
 
     if (query_length == 0)
+    {
       query_length= strlen(query);
+    }
 
     MYLOG_QUERY(stmt, query);
     pthread_mutex_lock(&stmt->dbc->lock);
@@ -97,21 +98,10 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
       /* Not using ssps for scroller so far. Relaxing a bit condition
        if allow_multiple_statements option selected by primitive check if
        this is a batch of queries */
-    else if (!stmt->dbc->ds->no_ssps && preparable_on_server(query)
-      && (is_minimum_version(stmt->dbc->mysql.server_version, "5.5.3", 5)
-        || !is_call_procedure(query))
-      && (!stmt->dbc->ds->allow_multiple_statements || !is_batch_of_statements(query)))
+    else if (ssps_used(stmt))
     {
-      MYLOG_QUERY(stmt, "Using prepared statement");
-      ssps_init(stmt);
-      /* Leaving old params binding in place so far */
-      native_error= mysql_stmt_prepare(stmt->ssps, query, query_length);
-
-      if (!native_error)
-      {
-        native_error= mysql_stmt_execute(stmt->ssps);
-        MYLOG_QUERY(stmt, "ssps has been executed");
-      }
+      native_error= mysql_stmt_execute(stmt->ssps);
+      MYLOG_QUERY(stmt, "ssps has been executed");
     }
     else
     {
@@ -160,19 +150,19 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
 
     exit:
     pthread_mutex_unlock(&stmt->dbc->lock);
-    if ( query != stmt->query )
-        x_free(query);
+    if (query != GET_QUERY(&stmt->query))
+    {
+      x_free(query);
+    }
 
     /*
       If the original query was modified, we reset stmt->query so that the
       next execution re-starts with the original query.
     */
-    if (stmt->orig_query)
+    if (GET_QUERY(&stmt->orig_query))
     {
-        x_free(stmt->query);
-        stmt->query= stmt->orig_query;
-        stmt->query_end= stmt->orig_query_end;
-        stmt->orig_query= NULL;
+      copy_parsed_query(&stmt->orig_query, &stmt->query);
+      reset_parsed_query(&stmt->orig_query, NULL, NULL, NULL);
     }
 
     return error;
@@ -191,7 +181,7 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
 SQLRETURN insert_params(STMT FAR *stmt, SQLULEN row, char **finalquery,
                         SQLULEN *finalquery_length)
 {
-    char *query= stmt->query,*to;
+    char *query= GET_QUERY(&stmt->query), *to;
     uint i,length, had_info= 0;
     NET *net;
     SQLRETURN rc= SQL_SUCCESS;
@@ -221,7 +211,7 @@ SQLRETURN insert_params(STMT FAR *stmt, SQLULEN row, char **finalquery,
             goto error;
         }
 
-        get_dynamic(&stmt->param_pos, (void *)&pos, i);
+        pos= get_param_pos(&stmt->query, i);
         length= (uint) (pos-query);
 
         if ( !(to= add_to_buffer(net,to,query,length)) )
@@ -252,7 +242,7 @@ SQLRETURN insert_params(STMT FAR *stmt, SQLULEN row, char **finalquery,
       rc= SQL_SUCCESS_WITH_INFO;
     }
 
-    length= (uint) (stmt->query_end - query);
+    length= (uint) (GET_QUERY_END(&stmt->query) - query);
 
     if ( !(to= add_to_buffer(net,to,query,length+1)) )
     {
@@ -808,40 +798,40 @@ memerror:
 
 SQLRETURN do_my_pos_cursor( STMT FAR *pStmt, STMT FAR *pStmtCursor )
 {
-    char *          pszQuery   = pStmt->query;
-    DYNAMIC_STRING  dynQuery;
-    SQLRETURN       nReturn;
+  char *          pszQuery= GET_QUERY(&pStmt->query);
+  DYNAMIC_STRING  dynQuery;
+  SQLRETURN       nReturn;
 
-    if ( pStmt->error.native_error == ER_INVALID_CURSOR_NAME )
-    {
-        return set_stmt_error( pStmt, "HY000", "ER_INVALID_CURSOR_NAME", 0 );
-    }
+  if ( pStmt->error.native_error == ER_INVALID_CURSOR_NAME )
+  {
+      return set_stmt_error( pStmt, "HY000", "ER_INVALID_CURSOR_NAME", 0 );
+  }
 
-    while ( isspace( *pszQuery ) )
-        ++pszQuery;
+  while ( isspace( *pszQuery ) )
+      ++pszQuery;
 
-    if ( init_dynamic_string( &dynQuery, pszQuery, 1024, 1024 ) )
-        return set_error( pStmt, MYERR_S1001, NULL, 4001 );
+  if ( init_dynamic_string( &dynQuery, pszQuery, 1024, 1024 ) )
+      return set_error( pStmt, MYERR_S1001, NULL, 4001 );
 
-    if ( !myodbc_casecmp( pszQuery, "delete", 6 ) )
-    {
-        nReturn = my_pos_delete( pStmtCursor, pStmt, 1, &dynQuery );
-    }
-    else if ( !myodbc_casecmp( pszQuery, "update", 6 ) )
-    {
-        nReturn = my_pos_update( pStmtCursor, pStmt, 1, &dynQuery );
-    }
-    else
-    {
-        nReturn = set_error( pStmt, MYERR_S1000, "Specified SQL syntax is not supported", 0 );
-    }
+  if ( !myodbc_casecmp( pszQuery, "delete", 6 ) )
+  {
+      nReturn = my_pos_delete( pStmtCursor, pStmt, 1, &dynQuery );
+  }
+  else if ( !myodbc_casecmp( pszQuery, "update", 6 ) )
+  {
+      nReturn = my_pos_update( pStmtCursor, pStmt, 1, &dynQuery );
+  }
+  else
+  {
+      nReturn = set_error( pStmt, MYERR_S1000, "Specified SQL syntax is not supported", 0 );
+  }
 
-    if ( SQL_SUCCEEDED( nReturn ) )
-        pStmt->state = ST_EXECUTED;
+  if ( SQL_SUCCEEDED( nReturn ) )
+      pStmt->state = ST_EXECUTED;
 
-    dynstr_free( &dynQuery );
+  dynstr_free( &dynQuery );
 
-    return( nReturn );
+  return( nReturn );
 }
 
 
@@ -909,19 +899,20 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
 
   CLEAR_STMT_ERROR( pStmt );
 
-  if ( !pStmt->query )
+  if (!GET_QUERY(&pStmt->query))
       return set_error(pStmt, MYERR_S1010,
                        "No previous SQLPrepare done", 0);
 
-  if (is_set_names_statement((SQLCHAR *)pStmt->query))
+  if (is_set_names_statement((SQLCHAR *)GET_QUERY(&pStmt->query)))
+  {
     return set_error(pStmt, MYERR_42000,
                      "SET NAMES not allowed by driver", 0);
+  }
 
-  if ( (cursor_pos= check_if_positioned_cursor_exists(pStmt, &pStmtCursor)) )
+  if ((cursor_pos= check_if_positioned_cursor_exists(pStmt, &pStmtCursor)))
   {
     /* Save a copy of the query, because we're about to modify it. */
-    pStmt->orig_query= my_strdup(pStmt->query, MYF(0));
-    if (!pStmt->orig_query)
+    if (copy_parsed_query(&pStmt->query, &pStmt->orig_query))
     {
       return set_error(pStmt,MYERR_S1001,NULL,4001);
     }
@@ -933,17 +924,14 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
       return set_error(pStmt,MYERR_S1010,NULL,0);
     }
 
-    pStmt->orig_query_end= pStmt->orig_query + (pStmt->query_end -
-                                                pStmt->query);
-
-    /* Chop off the 'WHERE CURRENT OF ...' */
-    *(char *)cursor_pos= '\0';
+    /* Chop off the 'WHERE CURRENT OF ...' - doing it a hard way...*/
+    *cursor_pos= '\0';
 
     return do_my_pos_cursor(pStmt, pStmtCursor);
   }
 
   my_SQLFreeStmt((SQLHSTMT)pStmt,MYSQL_RESET_BUFFERS);
-  query= pStmt->query;
+  query= GET_QUERY(&pStmt->query);
   is_select_stmt= is_select_statement((SQLCHAR *)query);
 
   if ( pStmt->ipd->rows_processed_ptr )

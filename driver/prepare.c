@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -65,10 +65,10 @@ SQLRETURN SQL_API MySQLPrepare(SQLHSTMT hstmt, SQLCHAR *query, SQLINTEGER len,
     my_SQLPrepare is used by my_pos_update() when a statement requires
     additional parameters.
   */
-  if (stmt->orig_query)
+
+  if (GET_QUERY(&stmt->orig_query) != NULL)
   {
-    x_free(stmt->orig_query);
-    stmt->orig_query= NULL;
+    reset_parsed_query(&stmt->orig_query, NULL, NULL, NULL);
   }
 
   return my_SQLPrepare(hstmt, query, len, dupe);
@@ -83,108 +83,24 @@ SQLRETURN my_SQLPrepare(SQLHSTMT hstmt, SQLCHAR *szSqlStr, SQLINTEGER cbSqlStr,
                         my_bool dupe)
 {
   STMT FAR *stmt= (STMT FAR*) hstmt;
-  char in_string, *pos, *end, *pcLastCloseBrace= NULL;
-  uint param_count;
-  CHARSET_INFO *charset_info= stmt->dbc->mysql.charset;
-  int bPerhapsEmbraced= 1, bEmbraced= 0;
 
   LINT_INIT(end);
 
   CLEAR_STMT_ERROR(stmt);
 
-  x_free(stmt->query);
+  reset_parsed_query(&stmt->query, NULL, NULL, NULL);
 
-  if (dupe && szSqlStr)
-    stmt->query= (char *)szSqlStr;
-  else
-    if (!(stmt->query= dupp_str((char *)szSqlStr, cbSqlStr)))
-      return set_error(stmt, MYERR_S1001, NULL, 4001);
-
-  /* Count number of parameters and save position for each parameter */
-  in_string= 0;
-  param_count= 0;
-
-  if (use_mb(charset_info))
-    end= strend(stmt->query);
-
-  for (pos= stmt->query; *pos ; ++pos)
+  /* If we need to make a copy - !dupe or empty query string pointer
+     (dupp_str will make it an empty string) */
+  if (!(dupe && szSqlStr))
   {
-    if (use_mb(charset_info))
+    if (!(szSqlStr= dupp_str((char *)szSqlStr, cbSqlStr)))
     {
-      int l;
-      if ((l= my_ismbchar(charset_info, pos, end)))
-      {
-        pos+= l-1;
-        continue;
-      }
-    }
-
-    /* handle case where we have statement within {} - in this case we want to replace'em with ' ' */
-    if (bPerhapsEmbraced)
-    {
-      if (*pos == '{')
-      {
-        bPerhapsEmbraced = 0;
-        bEmbraced= 1;
-        *pos=  ' ';
-        ++pos;
-        continue;
-      }
-      else if (!isspace(*pos))
-        bPerhapsEmbraced= 0;
-    }
-    else if (bEmbraced && *pos == '}')
-      pcLastCloseBrace= pos;
-
-    /* escape char? */
-    if (*pos == '\\' && pos[1]) /* Next char is escaped */
-    {
-      /** @todo not multibyte aware */
-      ++pos;
-      continue;
-    }
-
-    /* in a string? */
-    if (*pos == in_string)
-    {
-      if (pos[1] == in_string)      /* Two quotes is ok */
-        ++pos;
-      else
-        in_string= 0;
-      continue;
-    }
-
-    /* parameter marker? */
-    if (!in_string)
-    {
-      if (*pos == '\'' || *pos == '"' || *pos == '`') /* start of string? */
-      {
-        in_string= *pos;
-        continue;
-      }
-      if (*pos == '?')
-      {
-        DESCREC *aprec= desc_get_rec(stmt->apd, param_count, TRUE);
-        DESCREC *iprec= desc_get_rec(stmt->ipd, param_count, TRUE);
-        if (aprec == NULL || iprec == NULL ||
-            set_dynamic(&stmt->param_pos, (SQLCHAR *)&pos, param_count))
-          return set_error(stmt, MYERR_S1001, NULL, 4001);
-        ++param_count;
-      }
+      return set_error(stmt, MYERR_S1001, NULL, 4001);
     }
   }
 
-  /* remove closing brace if we have one */
-  if (pcLastCloseBrace)
-    *pcLastCloseBrace= ' ';
-
-  /* Reset current_param so that SQLParamData starts fresh. */
-  stmt->current_param= 0;
-  stmt->query_end= pos;
-  stmt->state= ST_PREPARED;
-  stmt->param_count= param_count;
-
-  return SQL_SUCCESS;
+  return prepare(stmt, szSqlStr, cbSqlStr);
 }
 
 

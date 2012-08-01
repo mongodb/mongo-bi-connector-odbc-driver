@@ -42,7 +42,7 @@ IF(WIN32)
 	# Headers added for convenience of VS users
 	CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/driver/driver.def.cmake ${CMAKE_SOURCE_DIR}/driver/driver.def @ONLY)
 	CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/driver/driver.rc.cmake ${CMAKE_SOURCE_DIR}/driver/driver.rc @ONLY)
-	SET(DRIVER_SRCS ${DRIVER_SRCS} driver.def driver.rc catalog.h driver.h error.h myutil.h)
+	SET(DRIVER_SRCS ${DRIVER_SRCS} driver.def driver.rc catalog.h driver.h error.h myutil.h parse.h)
 ENDIF(WIN32)
 
 IF(APPLE)

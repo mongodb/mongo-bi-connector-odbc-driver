@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2001, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -380,7 +380,8 @@ SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
     stmt->state= ST_UNKNOWN;
     stmt->dummy_state= ST_DUMMY_UNKNOWN;
     strmov(stmt->error.sqlstate, "00000");
-    my_init_dynamic_array(&stmt->param_pos, sizeof(char *), 0, 0);
+    init_parsed_query(&stmt->query);
+    init_parsed_query(&stmt->orig_query);
 
     if (!(stmt->ard= desc_alloc(stmt, SQL_DESC_ALLOC_AUTO,
                                 DESC_APP, DESC_ROW)))
@@ -556,9 +557,9 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
         return SQL_SUCCESS;
 
     /* At this point, only MYSQL_RESET and SQL_DROP left out */
-    x_free(stmt->query);
-    x_free(stmt->orig_query);
-    stmt->query= stmt->orig_query= 0;
+    reset_parsed_query(&stmt->orig_query, NULL, NULL, NULL);
+    reset_parsed_query(&stmt->query, NULL, NULL, NULL);
+
     stmt->param_count= 0;
 
     reset_ptr(stmt->apd->rows_processed_ptr);
@@ -584,7 +585,9 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
 
     x_free(stmt->cursor.name);
 
-    delete_dynamic(&stmt->param_pos);
+    delete_parsed_query(&stmt->query);
+    delete_parsed_query(&stmt->orig_query);
+
     pthread_mutex_lock(&stmt->dbc->lock);
     stmt->dbc->statements= list_delete(stmt->dbc->statements,&stmt->list);
     pthread_mutex_unlock(&stmt->dbc->lock);
