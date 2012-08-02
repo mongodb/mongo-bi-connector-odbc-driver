@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2010, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -617,17 +617,18 @@ DECLARE_TEST(sqlgetdiagrec)
   ok_stmt(hstmt, SQLGetDiagRecW(SQL_HANDLE_STMT, hstmt1, 1, sqlstate,
                                 &native_err, message, 255, &msglen));
 
+  /* it has to comply to the bugfix for bug 14285620  */
   expect_stmt(hstmt1, SQLGetDiagRecW(SQL_HANDLE_STMT, hstmt1, 1, sqlstate,
                                      &native_err, message, 0, &msglen),
-              SQL_SUCCESS_WITH_INFO);
+                                     SQL_SUCCESS);
 
   expect_stmt(hstmt1, SQLGetDiagRecW(SQL_HANDLE_STMT, hstmt1, 1, sqlstate,
                                      &native_err, message, 10, &msglen),
-              SQL_SUCCESS_WITH_INFO);
+                                     SQL_SUCCESS_WITH_INFO);
 
   expect_stmt(hstmt1, SQLGetDiagRecW(SQL_HANDLE_STMT, hstmt1, 1, sqlstate,
                                      &native_err, message, -1, &msglen),
-              SQL_ERROR);
+                                     SQL_ERROR);
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
   ok_con(hdbc1, SQLDisconnect(hdbc1));
@@ -1092,30 +1093,55 @@ Bug#28168 odbc, non 7-bit password, connection failed
 */
 DECLARE_TEST(t_bug28168)
 {
-  SQLHANDLE hdbc1;
+  SQLHANDLE hdbc1, hdbc2;
+  SQLHANDLE hstmt1;
 
-  wchar_t conn_in[512]= {0};
+  wchar_t conn_in[512]= {0}, work_conn_in[512]= {0};
   wchar_t dummy[256]= {0};
   wchar_t *wstr;
-  SQLWCHAR errmsgtxt[256]= {0};
+  SQLWCHAR errmsgtxt[256]= {0}, sqlstate[6]= {0};
   SQLWCHAR *grantQuery= W(L"GRANT ALL ON t_bug28168 to "
     L"'\x03A8\x0391\x03A1\x039F uid'@"
     L"localhost identified by "
     L"'\x03A8\x0391\x03A1\x039F pwd'");
+  SQLWCHAR *grantQuery2= W(L"GRANT ALL ON t_bug28168 to "
+    L"'\x03A8\x0391\x03A1\x039F uid'@"
+    L"'%' identified by "
+    L"'\x03A8\x0391\x03A1\x039F pwd'");
   SQLSMALLINT errmsglen;
+  SQLINTEGER native_error= 0;
 
-  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
-
+  /* Create tables to give permissions */
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug28168");
   ok_sql(hstmt, "CREATE TABLE t_bug28168 (x int)");
 
-  if (!SQL_SUCCEEDED(SQLExecDirectW(hstmt, grantQuery, SQL_NTS)))
-  {
-    return FAIL;
-  }
-
+  *work_conn_in= L'\0';
+  wcscat(work_conn_in, L"DSN=");
+  mbstowcs(dummy, (char *)mydsn, sizeof(dummy)/sizeof(wchar_t));
+  wcscat(work_conn_in, dummy);
+  wcscat(work_conn_in, L";UID=");
+  mbstowcs(dummy, (char *)myuid, sizeof(dummy)/sizeof(wchar_t));
+  wcscat(work_conn_in, dummy);
+  wcscat(work_conn_in, L";PWD=");
+  mbstowcs(dummy, (char *)mypwd, sizeof(dummy)/sizeof(wchar_t));
+  wcscat(work_conn_in, dummy);
 
   ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+  /* Connect using UTF8 as transport to avoid server bug with user names */
+  ok_con(hdbc1, SQLDriverConnectW(hdbc1, NULL, WL(work_conn_in, 
+                                  wcslen(work_conn_in)),
+                                  wcslen(work_conn_in), NULL, 0,
+                                  0, SQL_DRIVER_NOPROMPT));
+
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  /* 
+    Grant for localhost and for all other hosts if the test server
+    runs remotely
+  */
+  ok_stmt(hstmt1, SQLExecDirectW(hstmt1, grantQuery, SQL_NTS));
+  ok_stmt(hstmt1, SQLExecDirectW(hstmt1, grantQuery2, SQL_NTS));
 
   *conn_in= L'\0';
   wcscat(conn_in, L"DRIVER=");
@@ -1146,45 +1172,43 @@ DECLARE_TEST(t_bug28168)
     wcscat(conn_in, dummy);
   }
 
-  ok_con(hdbc1, SQLDriverConnectW(hdbc1, NULL, W(conn_in), SQL_NTS, NULL, 0,
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc2));
+  ok_con(hdbc2, SQLDriverConnectW(hdbc2, NULL, W(conn_in), SQL_NTS, NULL, 0,
     NULL, SQL_DRIVER_NOPROMPT));
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc2, SQLDisconnect(hdbc2));
 
   /* we change the password in the connection string to test the error msg */
   wstr= wcsstr(conn_in, L" pwd}") - 4;
   *wstr++= 'x';
 
-  expect_dbc(hdbc1, SQLDriverConnectW(hdbc1, NULL, W(conn_in), SQL_NTS, NULL,
-    0, NULL, SQL_DRIVER_NOPROMPT),
-    SQL_ERROR);
-  ok_con(hdbc1, SQLGetDiagFieldW(SQL_HANDLE_DBC, hdbc1, 1,
-    SQL_DIAG_MESSAGE_TEXT, errmsgtxt,
-    256 * sizeof(SQLWCHAR), &errmsglen));
-  swprintf(dummy, 256, L"[MySQL][ODBC 5.1 Driver]Access denied for user "
-    L"'\x03A8\x0391\x03A1\x039F uid'@'localhost' "
-    L"(using password: YES)");
+  expect_dbc(hdbc2, SQLDriverConnectW(hdbc2, NULL, W(conn_in), SQL_NTS, NULL,
+				      0, NULL, SQL_DRIVER_NOPROMPT), SQL_ERROR);
 
-  if (sizeof(SQLWCHAR) == sizeof(wchar_t))
-  {
-    printMessage("expected msg: %s\n", wstr4output(dummy));
-    printMessage("actual msg: %s\n", wstr4output(errmsgtxt));
-  }
+  ok_con(hdbc2, SQLGetDiagRecW(SQL_HANDLE_DBC, hdbc2, 1,
+                               sqlstate, native_error, errmsgtxt,
+                               256 * sizeof(SQLWCHAR), &errmsglen));
+  
+  ok_con(hdbc2, SQLFreeHandle(SQL_HANDLE_DBC, hdbc2));
 
-  is(!memcmp(errmsgtxt, W(dummy), wcslen(dummy) * sizeof(SQLWCHAR)));
-  is_num(errmsglen, wcslen(dummy) * sizeof(SQLWCHAR));
-
-  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
-
-  ok_stmt(hstmt,
-    SQLExecDirectW(hstmt,
+  /* 
+    The returned error message has to contain the substring
+    with the username
+  */
+   wstr= sqlwchar_to_wchar_t(errmsgtxt);
+   is(wcsstr(wstr,  
+             L"Access denied for user '\x03A8\x0391\x03A1\x039F uid'@") != NULL);
+   
+  ok_stmt(hstmt1,SQLExecDirectW(hstmt1,
     W(L"DROP USER "
     L"'\x03A8\x0391\x03A1\x039F uid'@localhost"), SQL_NTS));
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug28168");
 
   return OK;
-  /* There is error after this test on freeing environment - function sequence
-     error. looks like an error in the DM since all connections are freed. */
 }
 
 
