@@ -206,7 +206,16 @@ LIST *mygetcharsets(HWND hwnd, DataSource* params)
     else if (nReturn != SQL_SUCCESS)
       ShowDiagnostics(nReturn, SQL_HANDLE_STMT, hStmt);
     if (SQL_SUCCEEDED(nReturn))
+    {
+#ifdef DRIVER_ANSI
+      /* Skip undesired charsets */
+      if(!sqlwcharcasecmp(szCharset, sqlwchardup(L"utf16", SQL_NTS)) ||
+         !sqlwcharcasecmp(szCharset, sqlwchardup(L"utf32", SQL_NTS)) ||
+         !sqlwcharcasecmp(szCharset, sqlwchardup(L"ucs2", SQL_NTS)))
+        continue;
+#endif
       csl= list_cons(sqlwchardup(szCharset, SQL_NTS), csl);
+    }
     else
       break;
   }
