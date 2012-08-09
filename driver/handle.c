@@ -567,13 +567,11 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     }
 
     x_free(stmt->fields);
-    x_free(stmt->array);
     x_free(stmt->result_array);
     x_free(stmt->lengths);
     stmt->result= 0;
     stmt->fake_result= 0;
     stmt->fields= 0;
-    stmt->array= 0;
     stmt->result_array= 0;
     stmt->lengths= 0;
     stmt->current_values= 0;   /* For SQLGetData */
@@ -583,10 +581,15 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     stmt->cursor_row= -1;
     stmt->dae_type= 0;
     stmt->ird->count= 0;
-    free_result_bind(stmt);
 
     if (fOption == MYSQL_RESET_BUFFERS)
-        return SQL_SUCCESS;
+    {
+      free_result_bind(stmt);
+      x_free(stmt->array);
+      stmt->array= 0;
+
+      return SQL_SUCCESS;
+    }
 
     stmt->state= ST_UNKNOWN;
 
@@ -608,6 +611,8 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
 
     if (clearAllResults)
     {
+      x_free(stmt->array);
+      stmt->array= 0;
       ssps_close(stmt);
     }
 
