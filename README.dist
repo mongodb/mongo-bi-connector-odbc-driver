@@ -40,7 +40,6 @@ Binary
 - make
 - cd ..
 - su 
-- scripts/makerpm
 - source RPM will be in /usr/src/packages/SRPMS
 - binary RPM will be in /usr/src/packages/RPMS/i586
 
