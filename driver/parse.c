@@ -36,13 +36,13 @@ static const MY_QUERY_TYPE query_type[]=
   /*myqtUpdate*/      {'\0', '\1', NULL},
   /*myqtCall*/        {'\1', '\1', "5.5.3"},
   /*myqtShow*/        {'\1', '\1', NULL},
-  /*myqtUse*/         {'\1', '\0', NULL},
-  /*myqtCreateTable*/ {'\1', '\1', NULL},
+  /*myqtUse*/         {'\0', '\0', NULL},
+  /*myqtCreateTable*/ {'\0', '\0', NULL},
   /*myqtCreateProc*/  {'\0', '\0', NULL},
   /*myqtCreateFunc*/  {'\0', '\0', NULL},
   /*myqtDropProc*/    {'\0', '\0', NULL},
   /*myqtDropFunc*/    {'\0', '\0', NULL},
-  /*myqtOptimize*/    {'\0', '\1', "5.5.1"},/*to check*/
+  /*myqtOptimize*/    {'\0', '\1', "5.0.23"},/*to check*/
   /*myqtOther*/       {'\0', '\1', NULL},
 };
 
@@ -98,6 +98,8 @@ static const QUERY_TYPE_RESOLVING drop_func_rule=
 { &function,  1,          4,          myqtDropFunc,     NULL, NULL };
 static const QUERY_TYPE_RESOLVING drop_proc_rule=
 { &procedure, 1,          4,          myqtDropProc,     NULL, &drop_func_rule };
+static const QUERY_TYPE_RESOLVING crt_table_rule=
+{ &table,     1,          2,          myqtCreateTable,  NULL, &proc_rule };
 
 
 static const QUERY_TYPE_RESOLVING rule[]=
@@ -105,9 +107,9 @@ static const QUERY_TYPE_RESOLVING rule[]=
   { &select_,   0,          0,          myqtSelect,     NULL,       NULL},
   { &call,      0,          0,          myqtCall,       NULL,       NULL},
   { &insert,    0,          0,          myqtInsert,     NULL,       NULL},
-  { &update,    0,          0,          myqtInsert,     NULL,       NULL},
+  { &update,    0,          0,          myqtUpdate,     NULL,       NULL},
   { &show,      0,          0,          myqtShow,       NULL,       NULL},
-  { &create,    0,          0,          myqtOther,      &proc_rule, NULL},
+  { &create,    0,          0,          myqtOther,      &crt_table_rule, NULL},
   { &drop,      0,          0,          myqtOther,      &drop_proc_rule, NULL},
   { &use,       0,          0,          myqtUse,        NULL,       NULL},
   { &optimize,  0,          0,          myqtOptimize,   NULL,       NULL},
@@ -123,10 +125,12 @@ MY_PARSED_QUERY * init_parsed_query(MY_PARSED_QUERY *pq)
     pq->last_char=  NULL;
     pq->is_batch=   NULL;
 
+    pq->query_type= myqtOther;
+
     /* TODO: Store offsets rather than ptrs. In this case we will be fine
        if work with copy of the originally parsed string */
-    my_init_dynamic_array(&pq->token,     sizeof(uint), 0, 0);
-    my_init_dynamic_array(&pq->param_pos, sizeof(uint), 0, 0);
+    my_init_dynamic_array(&pq->token,     sizeof(uint), 20, 10);
+    my_init_dynamic_array(&pq->param_pos, sizeof(uint), 10, 10);
   }
 
   return pq;
@@ -145,6 +149,8 @@ MY_PARSED_QUERY * reset_parsed_query(MY_PARSED_QUERY *pq, char * query,
 
     pq->last_char= NULL;
     pq->is_batch=  NULL;
+
+    pq->query_type= myqtOther;
 
     pq->query= query;
 
@@ -271,7 +277,7 @@ BOOL preparable_on_server(MY_PARSED_QUERY *pq, const char *server_version)
     return query_type[pq->query_type].server_version == NULL
         || is_minimum_version(server_version,
                             query_type[pq->query_type].server_version,
-                            strlen(query_type[pq->query_type].server_version));
+                            myodbc_max(strlen(server_version), strlen(query_type[pq->query_type].server_version)));
   }
 
   return FALSE;
@@ -394,10 +400,9 @@ int is_set_names_statement(const SQLCHAR *query)
 /**
 Detect if a statement is a SELECT statement.
 */
-int is_select_statement(const SQLCHAR *query)
+int is_select_statement(const MY_PARSED_QUERY *query)
 {
-  query= skip_leading_spaces(query);
-  return myodbc_casecmp((char *)query, "SELECT", 6) == 0;
+  return query->query_type == myqtSelect;
 }
 
 
@@ -474,16 +479,35 @@ BOOL is_use_db(const SQLCHAR * query)
 }
 
 
-BOOL is_call_procedure(const SQLCHAR * query)
+BOOL is_call_procedure(const MY_PARSED_QUERY * query)
 {
-  query= skip_leading_spaces(query);
+  return query->query_type == myqtCall;
+}
 
-  if (myodbc_casecmp(query, "CALL", 4) == 0 && *(query+4) != '\0'
-    && isspace(*(query+4)))
+
+/*!
+    \brief  Returns true if we are dealing with a statement which
+            is likely to result in reading only (SELECT || SHOW).
+
+            Some ODBC calls require knowledge about a statement
+            which we can not determine until we have executed 
+            the statement. This is because we do not parse the SQL
+            - the server does.
+
+            However if we silently execute a pending statement we
+            may insert rows.
+
+            So we do a very crude check of the SQL here to reduce 
+            the chance of a problem.
+
+    \sa     BUG 5778            
+*/
+BOOL stmt_returns_result(const MY_PARSED_QUERY *query)
+{
+  if (query->query_type <= myqtOther)
   {
-    return TRUE;
+    return query_type[query->query_type].returns_rs;
   }
-
   return FALSE;
 }
 
@@ -726,7 +750,8 @@ BOOL process_rule(MY_PARSER *parser, const QUERY_TYPE_RESOLVING *rule)
   char *token;
 
   for (i= rule->pos_from;
-       i <= rule->pos_thru > 0 ? rule->pos_thru : rule->pos_from;
+       i <= myodbc_min(rule->pos_thru > 0 ? rule->pos_thru : rule->pos_from,
+                      TOKEN_COUNT(parser->query) - 1);
        ++i)
   {
     token= get_token(parser->query, i);

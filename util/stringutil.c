@@ -204,30 +204,47 @@ SQLCHAR *sqlwchar_as_sqlchar(CHARSET_INFO *charset_info, SQLWCHAR *str,
 
 
 /**
-  Duplicate a SQLWCHAR as a SQLCHAR encoded as UTF-8.
+  A bit extended version of sqlwchar_as_utf8 to be used by it and in other
+  places where sqlwchar_as_utf8 could not be used
 
   @param[in]      str           String to convert
   @param[in,out]  len           Pointer to length of source (in chars) or
-                                destination string (in bytes)
+                                destination string (in bytes). 
+  @param[in]      buff          Buffer to put the result string if it fits
+  @param[in]      buff_max      max size(in bytes) of the buff.
+  @param[out]     utf8mb4_used  has 4 bytes utf8 characters been used
 
   @return  Pointer to a newly allocated SQLCHAR, or @c NULL
 */
-SQLCHAR *sqlwchar_as_utf8(const SQLWCHAR *str, SQLINTEGER *len)
+SQLCHAR *sqlwchar_as_utf8_ext(const SQLWCHAR *str, SQLINTEGER *len,
+                              SQLCHAR *buff, uint buff_max, int *utf8mb4_used)
 {
   const SQLWCHAR *str_end;
   UTF8 *u8;
+  int utf8len, dummy;
   SQLINTEGER i;
 
-  if (*len == SQL_NTS)
-    *len= sqlwcharlen(str);
   if (!str || *len == 0)
   {
     *len= 0;
-    return NULL;
+    return buff;
   }
 
-  u8= (UTF8 *)my_malloc(sizeof(UTF8) * MAX_BYTES_PER_UTF8_CP * *len + 1,
+  if (utf8mb4_used == NULL)
+  {
+    utf8mb4_used= &dummy;
+  }
+
+  if (buff == NULL || buff_max < (uint)(*len * MAX_BYTES_PER_UTF8_CP))
+  {
+    u8= (UTF8 *)my_malloc(sizeof(UTF8) * MAX_BYTES_PER_UTF8_CP * *len + 1,
                         MYF(0));
+  }
+  else
+  {
+    u8= buff;
+  }
+
   if (!u8)
   {
     *len= -1;
@@ -239,7 +256,14 @@ SQLCHAR *sqlwchar_as_utf8(const SQLWCHAR *str, SQLINTEGER *len)
   if (sizeof(SQLWCHAR) == 4)
   {
     for (i= 0; str < str_end; )
-      i+= utf32toutf8((UTF32)*str++, u8 + i);
+    {
+      i+= (utf8len= utf32toutf8((UTF32)*str++, u8 + i));
+
+      if (utf8len)
+      {
+        *utf8mb4_used= 1;
+      }
+    }
   }
   else
   {
@@ -247,16 +271,55 @@ SQLCHAR *sqlwchar_as_utf8(const SQLWCHAR *str, SQLINTEGER *len)
     {
       UTF32 u32;
       int consumed= utf16toutf32((UTF16 *)str, &u32);
-      str+= consumed;
       if (!consumed)
+      {
         break;
-      i+= utf32toutf8(u32, u8 + i);
+      }
+
+      str+= consumed;
+
+      i+= (utf8len= utf32toutf8(u32, u8 + i));
+      if (utf8len)
+      {
+        *utf8mb4_used= 1;
+      }
     }
   }
 
   *len= i;
-  u8[i]= '\0';
   return u8;
+}
+
+
+/**
+  Duplicate a SQLWCHAR as a SQLCHAR encoded as UTF-8.
+
+  @param[in]      str           String to convert
+  @param[in,out]  len           Pointer to length of source (in chars) or
+                                destination string (in bytes)
+
+  @return  Pointer to a newly allocated SQLCHAR, or @c NULL
+*/
+SQLCHAR *sqlwchar_as_utf8(const SQLWCHAR *str, SQLINTEGER *len)
+{
+  SQLCHAR *res;
+
+  if (*len == SQL_NTS)
+  {
+    *len= sqlwcharlen(str);
+  }
+
+  if (!str || *len == 0)
+  {
+    *len= 0;
+    return NULL;
+  }
+
+  res= sqlwchar_as_utf8_ext(str, len, NULL, 0, NULL);
+
+  res[*len]= '\0';
+
+  return res;
 }
 
 

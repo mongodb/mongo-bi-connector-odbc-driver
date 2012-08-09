@@ -100,7 +100,8 @@ SQLColAttributeImpl(SQLHSTMT hstmt, SQLUSMALLINT column,
     else
       len= strlen((char *)value);
 
-    if (len > char_attr_max - 1)
+    /* We set the error only when the result is intented to be returned */
+    if ((char_attr || num_attr) && len > char_attr_max - 1)
       rc= set_error(stmt, MYERR_01004, NULL, 0);
 
     if (char_attr && char_attr_max > 1)
@@ -316,7 +317,8 @@ SQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
     else
       len= strlen((char *)value);
 
-    if (len > name_max - 1)
+    /* We set the error only when the result is intented to be returned */
+    if (name && len > name_max - 1)
       rc= set_error(stmt, MYERR_01004, NULL, 0);
 
     if (name && name_max > 1)
@@ -546,8 +548,14 @@ SQLGetConnectAttrImpl(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
 {
   DBC *dbc= (DBC *)hdbc;
   SQLCHAR *char_value= NULL;
+  SQLRETURN rc= 0;
 
-  SQLRETURN rc= MySQLGetConnectAttr(hdbc, attribute, &char_value, value);
+  /* 
+    for numeric attributes value_max can be 0, so we must check for 
+    the valid output buffer to prevent crashes
+  */
+  if (value)
+    rc= MySQLGetConnectAttr(hdbc, attribute, &char_value, value);
 
   if (char_value)
   {
@@ -565,6 +573,11 @@ SQLGetConnectAttrImpl(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
     else
       len= strlen((char *)char_value);
 
+    /* 
+      This check is inside the statement, which does not
+      execute if output buffer is NULL 
+      see: "if (char_value)"
+    */
     if (len > value_max - 1)
       rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
 
@@ -630,8 +643,8 @@ SQLGetCursorName(SQLHSTMT hstmt, SQLCHAR *cursor, SQLSMALLINT cursor_max,
   if (free_name)
     x_free(name);
 
-  /* Warn if name truncated */
-  if (len > cursor_max - 1)
+  /* We set the error only when the result is intented to be returned */
+  if (cursor && len > cursor_max - 1)
     return set_error(stmt, MYERR_01004, NULL, 0);
 
   return SQL_SUCCESS;
@@ -681,7 +694,8 @@ SQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle,
     else
       len= strlen((char *)value);
 
-    if (len > info_max - 1)
+    /* We set the error only when the result is intented to be returned */
+    if (info && len > info_max - 1)
       rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
 
     if (info_len)
@@ -761,7 +775,11 @@ SQLGetDiagRecImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
     else
       len= strlen((char *)msg_value);
 
-    if (len > message_max - 1)
+    /* 
+      We set the error only when the result is intented to be returned
+      and message_max is greaater than 0
+    */
+    if (message && message_max && len > message_max - 1)
       rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
 
     if (message_len)
@@ -824,7 +842,11 @@ SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
     else
       len= strlen((char *)char_value);
 
-    if (len > value_max - 1)
+    /* 
+      MSSQL implementation does not return the truncation warning if the
+      value is not NULL and value_max is 0
+     */
+    if (value && value_max && len > value_max - 1)
       rc= set_conn_error(dbc, MYERR_01004, NULL, 0);
 
     if (value && value_max > 1)
@@ -869,7 +891,7 @@ SQLNativeSql(SQLHDBC hdbc, SQLCHAR *in, SQLINTEGER in_len,
 
   (void)strncpy((char *)out, (const char *)in, out_max);
 
-  if (in_len > out_max)
+  if (out && in_len > out_max)
     return set_conn_error((DBC *)hdbc, MYERR_01004, NULL, 0);
 
   return SQL_SUCCESS;

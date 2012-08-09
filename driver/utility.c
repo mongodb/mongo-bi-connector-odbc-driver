@@ -2330,20 +2330,29 @@ FILE *init_query_log(void)
 
 void end_query_log(FILE *query_log)
 {
-    if ( query_log )
-    {
-        fclose(query_log);
-        query_log= 0;
-    }
+  if ( query_log )
+  {
+      fclose(query_log);
+      query_log= 0;
+  }
 }
 
 
 my_bool is_minimum_version(const char *server_version,const char *version,
                            uint length)
 {
-    if ( strncmp(server_version,version,length) >= 0 )
-        return TRUE;
-    return FALSE;
+  uint major1, major2, minor1, minor2, build1, build2;
+
+  sscanf(server_version, "%u.%u.%u", &major1, &minor1, &build1);
+  sscanf(version, "%u.%u.%u", &major2, &minor2, &build2);
+
+  if ( major1 > major2 ||
+      major1 == major2 && (minor1 > minor2 ||
+                          minor1 ==  minor2 && build1 >= build2))
+  {
+    return TRUE;
+  }
+  return FALSE;
 }
 
 
@@ -2696,7 +2705,7 @@ end:
                           MUST use numbegin to read the result string.
                           This should point to the LAST byte available.
                           (We fill in digits backwards.)
-  @param[in] numbegin     String pointer that will be set to the start of
+  @param[in,out] numbegin String pointer that will be set to the start of
                           the result string.
   @param[in] reqprec      Requested precision
   @param[in] reqscale     Requested scale
@@ -2792,7 +2801,9 @@ void sqlnum_to_str(SQL_NUMERIC_STRUCT *sqlnum, SQLCHAR *numstr,
       goto end;
     }
     if (*end == '.')
-      *end--= 0;
+    {
+      *end--= '\0';
+    }
     else
     {
       /* move the dec pt-- ??? */
@@ -2826,7 +2837,9 @@ void sqlnum_to_str(SQL_NUMERIC_STRUCT *sqlnum, SQLCHAR *numstr,
 
   /* finish up, handle auxilary fix-ups */
   if (!sqlnum->sign)
+  {
     *numstr--= '-';
+  }
   ++numstr;
   *numbegin= numstr;
 
@@ -3084,6 +3097,21 @@ SQLTypeMap SQL_TYPE_MAP_values[TYPE_MAP_SIZE]=
   {"time", 4, SQL_TYPE_TIME, MYSQL_TYPE_TIME, 8, 1}
 
 };
+
+
+enum enum_field_types map_sql2mysql_type(SQLSMALLINT sql_type)
+{
+  int i;
+  for (i= 0; i < TYPE_MAP_SIZE; ++i)
+  {
+    if (SQL_TYPE_MAP_values[i].sql_type == sql_type)
+    {
+      return SQL_TYPE_MAP_values[i].mysql_type;
+    }
+  }
+
+  return MYSQL_TYPE_BLOB;
+}
 
 /**
   Gets the parameter index in the type map array
@@ -3722,4 +3750,24 @@ BOOL myodbc_isspace(CHARSET_INFO* cs, const char * begin, const char *end)
   cs->cset->ctype(cs, &ctype, (const uchar*) begin, (const uchar*) end);
 
   return ctype & _MY_SPC;
+}
+
+
+BOOL got_out_parameters(STMT *stmt)
+{
+  uint i;
+  DESCREC *iprec;
+
+  for(i= 0; i < stmt->param_count; ++i)
+  {
+    iprec= desc_get_rec(stmt->ipd, i, '\0');
+
+    if (iprec &&  (iprec->parameter_type == SQL_PARAM_INPUT_OUTPUT
+                || iprec->parameter_type == SQL_PARAM_OUTPUT))
+    {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
 }

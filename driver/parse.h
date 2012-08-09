@@ -158,6 +158,7 @@ char * get_cursor_name      (MY_PARSED_QUERY *pq);
 
 MY_PARSER * init_parser(MY_PARSER *parser, MY_PARSED_QUERY *pq);
 
+/* this will not work for some mb charsets */
 #define END_NOT_REACHED(parser) ((parser)->pos < (parser)->query->query_end)
 #define BYTES_LEFT(pq, pos) ((pq)->query_end - (pos))
 #define CLOSE_QUOTE(parser) (parser)->quote= NULL
@@ -195,15 +196,16 @@ const char *find_token(CHARSET_INFO *charset, const char * begin,
                        const char * end, const char * target);
 const char *skip_leading_spaces(const char *str);
 
-int         is_set_names_statement(const SQLCHAR *query);
-int         is_select_statement(const SQLCHAR *query);
-BOOL        is_drop_procedure(const SQLCHAR * query);
-BOOL        is_drop_function(const SQLCHAR * query);
-BOOL        is_create_procedure(const SQLCHAR * query);
-BOOL        is_create_function(const SQLCHAR * query);
-BOOL        is_use_db(const SQLCHAR * query);
-BOOL        is_call_procedure(const SQLCHAR * query);
+int         is_set_names_statement  (const SQLCHAR *query);
+int         is_select_statement     (const MY_PARSED_QUERY *query);
+BOOL        is_drop_procedure       (const SQLCHAR * query);
+BOOL        is_drop_function        (const SQLCHAR * query);
+BOOL        is_create_procedure     (const SQLCHAR * query);
+BOOL        is_create_function      (const SQLCHAR * query);
+BOOL        is_use_db               (const SQLCHAR * query);
+BOOL        is_call_procedure       (const MY_PARSED_QUERY *query);
+BOOL        stmt_returns_result     (const MY_PARSED_QUERY *query);
 
-BOOL        remove_braces(MY_PARSER *query);
+BOOL        remove_braces           (MY_PARSER *query);
 
 #endif

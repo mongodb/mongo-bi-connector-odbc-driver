@@ -220,6 +220,7 @@ DECLARE_TEST(my_param_delete)
 }
 
 
+/*I really wonder what is this test about */
 DECLARE_TEST(tmysql_fix)
 {
   SQLRETURN rc;
@@ -257,58 +258,60 @@ DECLARE_TEST(tmysql_fix)
                   ('0000-00-00','0','0','0','0','0','0'),('2001-08-29','FIX','SQLT2',\
                   'ins1',NULL,NULL,'Error.  SQL cmd %s is not terminated or too long.')");
 
-    /* trace based */
+  /* trace based */
+  {
+    SQLSMALLINT pcpar,pccol,pfSqlType,pibScale,pfNullable;
+    SQLSMALLINT index;
+    SQLCHAR     td[30]="20010830163225";
+    SQLCHAR     node[30]="FIX";
+    SQLCHAR     tag[30]="SQLT2";
+    SQLCHAR     sqlname[30]="ins1";
+    SQLCHAR     sqlerr[30]="error";
+    SQLCHAR     fixerr[30]= "fixerr";
+    SQLCHAR     progerr[30]="progerr";
+    SQLULEN     pcbParamDef;
+
+    SQLFreeStmt(hstmt,SQL_CLOSE);
+    rc = SQLPrepare(hstmt,
+      (SQLCHAR *)"insert into tmysql_err (TD, NODE, TAG, SQLNAME, SQL_ERR,"
+                 "FIX_ERR, PROG_ERR) values (?, ?, ?, ?, ?, ?, ?)", 103);
+    mystmt(hstmt,rc);
+
+    rc = SQLNumParams(hstmt,&pcpar);
+    mystmt(hstmt,rc);
+
+    rc = SQLNumResultCols(hstmt,&pccol);
+    mystmt(hstmt,rc);
+
+    for (index=1; index <= pcpar; index++)
     {
-        SQLSMALLINT pcpar,pccol,pfSqlType,pibScale,pfNullable;
-        SQLSMALLINT index;
-        SQLCHAR     td[30]="20010830163225";
-        SQLCHAR     node[30]="FIX";
-        SQLCHAR     tag[30]="SQLT2";
-        SQLCHAR     sqlname[30]="ins1";
-        SQLCHAR     sqlerr[30]="error";
-        SQLCHAR     fixerr[30]= "fixerr";
-        SQLCHAR     progerr[30]="progerr";
-        SQLULEN     pcbParamDef;
+      rc = SQLDescribeParam(hstmt,index,&pfSqlType,&pcbParamDef,&pibScale,&pfNullable);
+      mystmt(hstmt,rc);
 
-        SQLFreeStmt(hstmt,SQL_CLOSE);
-        rc = SQLPrepare(hstmt, (SQLCHAR *)"insert into tmysql_err (TD, NODE, TAG, SQLNAME, SQL_ERR, FIX_ERR, PROG_ERR)\
-                         values (?, ?, ?, ?, ?, ?, ?)",200);
-        mystmt(hstmt,rc);
-
-        rc = SQLNumParams(hstmt,&pcpar);
-        mystmt(hstmt,rc);
-
-        rc = SQLNumResultCols(hstmt,&pccol);
-        mystmt(hstmt,rc);
-
-        for (index=1; index <= pcpar; index++)
-        {
-            rc = SQLDescribeParam(hstmt,index,&pfSqlType,&pcbParamDef,&pibScale,&pfNullable);
-            mystmt(hstmt,rc);
-
-            printMessage("descparam[%d]:%d,%d,%d,%d\n",index,pfSqlType,pcbParamDef,pibScale,pfNullable);
-        }
-
-        rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,11,12,0,0,td,100,0);
-        mystmt(hstmt,rc);
-
-        rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,1,12,0,0,node,100,0);
-        mystmt(hstmt,rc);
-
-        rc = SQLBindParameter(hstmt,3,SQL_PARAM_INPUT,1,12,0,0,tag,100,0);
-        mystmt(hstmt,rc);
-        rc = SQLBindParameter(hstmt,4,SQL_PARAM_INPUT,1,12,0,0,sqlname,100,0);
-        mystmt(hstmt,rc);
-        rc = SQLBindParameter(hstmt,5,SQL_PARAM_INPUT,1,12,0,0,sqlerr,0,0);
-        mystmt(hstmt,rc);
-        rc = SQLBindParameter(hstmt,6,SQL_PARAM_INPUT,1,12,0,0,fixerr,0,0);
-        mystmt(hstmt,rc);
-        rc = SQLBindParameter(hstmt,7,SQL_PARAM_INPUT,1,12,0,0,progerr,0,0);
-        mystmt(hstmt,rc);
-
-        rc = SQLExecute(hstmt);
-        mystmt(hstmt,rc);
+      printMessage("descparam[%d]:%d,%d,%d,%d\n",index,pfSqlType,pcbParamDef,pibScale,pfNullable);
     }
+
+    /* TODO: C and SQL types as numeric consts. Splendid.*/
+    rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,11,12,0,0,td,100,0);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,1,12,0,0,node,100,0);
+    mystmt(hstmt,rc);
+
+    rc = SQLBindParameter(hstmt,3,SQL_PARAM_INPUT,1,12,0,0,tag,100,0);
+    mystmt(hstmt,rc);
+    rc = SQLBindParameter(hstmt,4,SQL_PARAM_INPUT,1,12,0,0,sqlname,100,0);
+    mystmt(hstmt,rc);
+    rc = SQLBindParameter(hstmt,5,SQL_PARAM_INPUT,1,12,0,0,sqlerr,0,0);
+    mystmt(hstmt,rc);
+    rc = SQLBindParameter(hstmt,6,SQL_PARAM_INPUT,1,12,0,0,fixerr,0,0);
+    mystmt(hstmt,rc);
+    rc = SQLBindParameter(hstmt,7,SQL_PARAM_INPUT,1,12,0,0,progerr,0,0);
+    mystmt(hstmt,rc);
+
+    rc = SQLExecute(hstmt);
+    mystmt(hstmt,rc);
+  }
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS tmysql_err");
 
@@ -934,6 +937,80 @@ DECLARE_TEST(t_bug59772)
 }
 
 
+DECLARE_TEST(t_odbcoutparams)
+{
+  SQLSMALLINT ncol, i;
+  SQLINTEGER  par[3]= {10, 20, 30}, val, len;
+  SQLSMALLINT type[]= {SQL_PARAM_INPUT, SQL_PARAM_OUTPUT, SQL_PARAM_INPUT_OUTPUT};
+
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS t_odbcoutparams");
+  ok_sql(hstmt, "CREATE PROCEDURE t_odbcoutparams("
+                "  IN p_in INT, "
+                "  OUT p_out INT, "
+                "  INOUT p_inout INT) "
+                "BEGIN "
+                /*"  SELECT p_in, p_out, p_inout; "*/
+                "  SET p_in = 100, p_out = 200, p_inout = 300; "
+                /*"  SELECT p_inout, p_in, p_out;"*/
+                "END");
+
+
+
+  for (i=0; i < sizeof(par)/sizeof(SQLINTEGER); ++i)
+  {
+    ok_stmt(hstmt, SQLBindParameter(hstmt, i+1, type[i], SQL_C_LONG, SQL_INTEGER, 0,
+      0, &par[i], 0, NULL));
+  }
+
+  ok_sql(hstmt, "CALL t_odbcoutparams(?, ?, ?)");
+
+  /* rs-1 */
+  /*ok_stmt(hstmt, SQLFetch(hstmt));
+  ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
+  is_num(ncol, 3);
+
+  is_num(my_fetch_int(hstmt, 1), 10);*/
+  /* p_out does not have value at the moment */
+  /*ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_INTEGER, &val, 0, &len));
+  is_num(len, SQL_NULL_DATA);
+  is_num(my_fetch_int(hstmt, 3), 30);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);*/
+
+  /* rs-2 */
+  /*ok_stmt(hstmt, SQLMoreResults(hstmt));
+
+  ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
+  is_num(ncol, 3);
+  
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 300);
+  is_num(my_fetch_int(hstmt, 2), 100);
+  is_num(my_fetch_int(hstmt, 3), 200);*/
+
+  /* rs-3 out params */
+  /*ok_stmt(hstmt, SQLMoreResults(hstmt));*/
+  ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
+  is_num(ncol, 2);
+
+  is_num(par[1], 200);
+  is_num(par[2], 300);
+  
+  /* Only 1 row always - we still can get them as a result */
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 200);
+  is_num(my_fetch_int(hstmt, 2), 300);
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  expect_stmt(hstmt, SQLMoreResults(hstmt), SQL_NO_DATA);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP PROCEDURE t_odbcoutparams");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_init_table)
   ADD_TEST(my_param_insert)
@@ -948,6 +1025,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug49029)
   ADD_TEST(t_bug56804)
   ADD_TEST(t_bug59772)
+  ADD_TEST(t_odbcoutparams)
 END_TESTS
 
 

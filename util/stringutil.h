@@ -82,6 +82,8 @@ SQLWCHAR *sqlchar_as_sqlwchar(CHARSET_INFO *charset_info, SQLCHAR *str,
                               SQLINTEGER *len, uint *errors);
 SQLCHAR *sqlwchar_as_sqlchar(CHARSET_INFO *charset_info, SQLWCHAR *str,
                              SQLINTEGER *len, uint *errors);
+SQLCHAR *sqlwchar_as_utf8_ext(const SQLWCHAR *str, SQLINTEGER *len,
+                              SQLCHAR *buff, uint buff_max, int *utf8mb4_used);
 SQLCHAR *sqlwchar_as_utf8(const SQLWCHAR *str, SQLINTEGER *len);
 SQLSMALLINT utf8_as_sqlwchar(SQLWCHAR *out, SQLINTEGER out_max, SQLCHAR *in,
                              SQLINTEGER in_len);

@@ -341,19 +341,58 @@ SQLRETURN SQL_API SQLFreeConnect(SQLHDBC hdbc)
     return my_SQLFreeConnect(hdbc);
 }
 
+/* allocates dynamic array for param bind.
+   returns TRUE on allocation errors */
+BOOL allocate_param_bind(DYNAMIC_ARRAY **param_bind, uint elements)
+{
+  if (*param_bind == NULL)
+  {
+    *param_bind= my_malloc(sizeof(DYNAMIC_ARRAY), MYF(0));
+
+    if (*param_bind == NULL)
+    {
+      return TRUE;
+    }
+  }
+
+  my_init_dynamic_array(*param_bind, sizeof(MYSQL_BIND), elements, 10);
+  bzero((*param_bind)->buffer, sizeof(MYSQL_BIND) * (*param_bind)->max_element);
+
+  return FALSE;
+}
+
+
+void delete_param_bind(DYNAMIC_ARRAY *param_bind)
+{
+  if (param_bind != NULL)
+  {
+    uint i;
+    for (i=0; i < param_bind->max_element; ++i)
+    {
+      MYSQL_BIND *bind= (MYSQL_BIND *)param_bind->buffer + i;
+
+      if (bind != NULL)
+      {
+        x_free(bind->buffer);
+      }
+    }
+    delete_dynamic(param_bind);
+    x_free(param_bind);
+  }
+}
+
 
 /*
   @type    : myodbc3 internal
   @purpose : allocates the statement handle
 */
-
 SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
 {
 #ifndef _UNIX_
     HGLOBAL  hstmt;
 #endif
-    STMT FAR *stmt;
-    DBC FAR *dbc= (DBC FAR*) hdbc;
+    STMT  *stmt;
+    DBC   *dbc= (DBC*) hdbc;
 
 #ifndef _UNIX_
     hstmt= GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(STMT));
@@ -368,9 +407,8 @@ SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
     if (*phstmt == SQL_NULL_HSTMT)
         goto error;
 
-    stmt= (STMT FAR*) *phstmt;
+    stmt= (STMT *) *phstmt;
     stmt->dbc= dbc;
-    stmt->ssps= NULL;;
 
     pthread_mutex_lock(&stmt->dbc->lock);
     dbc->statements= list_add(dbc->statements,&stmt->list);
@@ -382,6 +420,11 @@ SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
     strmov(stmt->error.sqlstate, "00000");
     init_parsed_query(&stmt->query);
     init_parsed_query(&stmt->orig_query);
+
+    if (!dbc->ds->no_ssps && allocate_param_bind(&stmt->param_bind, 10))
+    {
+      goto error;
+    }
 
     if (!(stmt->ard= desc_alloc(stmt, SQL_DESC_ALLOC_AUTO,
                                 DESC_APP, DESC_ROW)))
@@ -399,11 +442,16 @@ SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
     stmt->imp_apd= stmt->apd;
 
     return SQL_SUCCESS;
+
 error:
     x_free(stmt->ard);
     x_free(stmt->ird);
     x_free(stmt->apd);
     x_free(stmt->ipd);
+    delete_parsed_query(&stmt->query);
+    delete_parsed_query(&stmt->orig_query);
+    delete_param_bind(stmt->param_bind);
+
     return set_dbc_error(dbc, "HY001", "Memory allocation error", MYERR_S1001);
 }
 
@@ -467,6 +515,8 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
       return SQL_SUCCESS;
     }
 
+    stmt->out_params_state= 0;
+
     desc_free_paramdata(stmt->apd);
     /* reset data-at-exec state */
     stmt->dae_type= 0;
@@ -475,12 +525,14 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
 
     if (fOption == SQL_RESET_PARAMS)
     {
-      /* with current use of ps we need to close, if we prepare on server, we will have
-         to change this to mysql_stmt_reset
-         http://dev.mysql.com/doc/refman/5.5/en/mysql-stmt-reset.html
-       */
-
-      ssps_close(stmt);
+      if (stmt->param_bind != NULL)
+      {
+        reset_dynamic(stmt->param_bind);
+      }
+      if (ssps_used(stmt))
+      {
+        mysql_stmt_reset(stmt->ssps);
+      }
       /* remove all params and reset count to 0 (per spec) */
       /* http://msdn2.microsoft.com/en-us/library/ms709284.aspx */
       stmt->apd->count= 0;
@@ -489,24 +541,28 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
 
     if (!stmt->fake_result)
     {
+      /* if we only CLOSEing stmt to get next result*/
       free_current_result(stmt);
-      /* check if there are more resultsets */
+      
       if (clearAllResults)
       {
-        /* For ps _close() will free all pending results */
-        while (!mysql_next_result(&stmt->dbc->mysql))
+        /* We seiously CLOSEing statement for preparing handle object for
+           new query */
+        while (!next_result(stmt))
         {
-          stmt->result= mysql_store_result(&stmt->dbc->mysql);
-          mysql_free_result(stmt->result);
+          /* TODO: verify if we really do not have to store result for
+                   text protocol */
+          get_result(stmt);
+          free_current_result(stmt);
         }
-
       }
     }
     else
     {
       if(stmt->result->field_alloc.pre_alloc)
+      {
         free_root(&stmt->result->field_alloc, MYF(0));
-
+      }
       x_free(stmt->result);
     }
 
@@ -526,6 +582,8 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     stmt->current_row= stmt->rows_found_in_set= 0;
     stmt->cursor_row= -1;
     stmt->dae_type= 0;
+    stmt->ird->count= 0;
+    free_result_bind(stmt);
 
     if (fOption == MYSQL_RESET_BUFFERS)
         return SQL_SUCCESS;
@@ -560,6 +618,11 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     reset_parsed_query(&stmt->orig_query, NULL, NULL, NULL);
     reset_parsed_query(&stmt->query, NULL, NULL, NULL);
 
+    if (stmt->param_bind != NULL)
+    {
+      reset_dynamic(stmt->param_bind);
+    }
+
     stmt->param_count= 0;
 
     reset_ptr(stmt->apd->rows_processed_ptr);
@@ -587,6 +650,7 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
 
     delete_parsed_query(&stmt->query);
     delete_parsed_query(&stmt->orig_query);
+    delete_param_bind(stmt->param_bind);
 
     pthread_mutex_lock(&stmt->dbc->lock);
     stmt->dbc->statements= list_delete(stmt->dbc->statements,&stmt->list);

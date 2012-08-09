@@ -192,7 +192,7 @@ my_bool odbc_supported_conversion(SQLSMALLINT sqlType, SQLSMALLINT cType)
   @param[in]  length      Length of value
   @param[in]  arrec       ARD record for this column (can be NULL)
 */
-static SQLRETURN SQL_API
+SQLRETURN SQL_API
 sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
              SQLPOINTER rgbValue, SQLLEN cbValueMax, SQLLEN *pcbValue,
              char *value, ulong length, DESCREC *arrec)
@@ -661,36 +661,6 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
 }
 
 
-/*!
-    \brief  Returns true if we are dealing with a statement which
-            is likely to result in reading only (SELECT || SHOW).
-
-            Some ODBC calls require knowledge about a statement
-            which we can not determine until we have executed 
-            the statement. This is because we do not parse the SQL
-            - the server does.
-
-            However if we silently execute a pending statement we
-            may insert rows.
-
-            So we do a very crude check of the SQL here to reduce 
-            the chance of a problem.
-
-    \sa     BUG 5778            
-*/
-BOOL isStatementForRead(STMT *stmt)
-{
-  char *token= get_token(&stmt->query, 0);
-
-  if (!is_select_statement(token) || !myodbc_casecmp(token, "SHOW", 4) ||
-    !is_call_procedure(token))
-  {
-    return TRUE;
-  }
-
-  return FALSE;
-}
-
 /*
   @type    : myodbc3 internal
   @purpose : execute the query if it is only prepared. This is needed
@@ -700,37 +670,38 @@ BOOL isStatementForRead(STMT *stmt)
 
 static SQLRETURN check_result(STMT FAR *stmt )
 {
-    SQLRETURN error= 0;
+  SQLRETURN error= 0;
 
-    switch ( stmt->state )
-    {
-        case ST_UNKNOWN:
-            error= set_stmt_error(stmt,"24000","Invalid cursor state",0);
-            break;
-        case ST_PREPARED:
-            if ( isStatementForRead( stmt ) )
-            {
-                SQLULEN real_max_rows= stmt->stmt_options.max_rows;
-                stmt->stmt_options.max_rows= 1;
-                /* select limit will be restored back to max_rows before real execution */
-                if ( (error= my_SQLExecute(stmt)) == SQL_SUCCESS )
-                {
-                    stmt->state= ST_PRE_EXECUTED;  /* mark for execute */
-                }
-                else
-                {
-                    set_sql_select_limit(stmt->dbc, real_max_rows);
-                }
-                stmt->stmt_options.max_rows= real_max_rows;
-            }
-            else
-                error = SQL_SUCCESS;
-            break;
-        case ST_PRE_EXECUTED:
-        case ST_EXECUTED:
-            error= SQL_SUCCESS;
-    }
-    return(error);
+  switch (stmt->state)
+  {
+    case ST_UNKNOWN:
+      error= set_stmt_error(stmt,"24000","Invalid cursor state",0);
+      break;
+    case ST_PREPARED:
+      /*TODO: introduce state for statements prepared on the server side */
+      if (!ssps_used(stmt) && stmt_returns_result(&stmt->query))
+      {
+        SQLULEN real_max_rows= stmt->stmt_options.max_rows;
+        stmt->stmt_options.max_rows= 1;
+        /* select limit will be restored back to max_rows before real execution */
+        if ( (error= my_SQLExecute(stmt)) == SQL_SUCCESS )
+        {
+          stmt->state= ST_PRE_EXECUTED;  /* mark for execute */
+        }
+        else
+        {
+          set_sql_select_limit(stmt->dbc, real_max_rows);
+        }
+        stmt->stmt_options.max_rows= real_max_rows;
+      }
+      else
+        error = SQL_SUCCESS;
+      break;
+    case ST_PRE_EXECUTED:
+    case ST_EXECUTED:
+      error= SQL_SUCCESS;
+  }
+  return(error);
 }
 
 /*
@@ -772,24 +743,28 @@ SQLRETURN do_dummy_parambind(SQLHSTMT hstmt)
 
 SQLRETURN SQL_API SQLNumResultCols(SQLHSTMT  hstmt, SQLSMALLINT FAR *pccol)
 {
-    SQLRETURN error;
-    STMT FAR *stmt= (STMT FAR*) hstmt;
+  SQLRETURN error;
+  STMT FAR *stmt= (STMT FAR*) hstmt;
 
-    if ( stmt->param_count > 0 && stmt->dummy_state == ST_DUMMY_UNKNOWN &&
-         (stmt->state != ST_PRE_EXECUTED || stmt->state != ST_EXECUTED) )
+  if (!ssps_used(stmt))
+  {
+    if (stmt->param_count > 0 && stmt->dummy_state == ST_DUMMY_UNKNOWN &&
+      (stmt->state != ST_PRE_EXECUTED || stmt->state != ST_EXECUTED))
     {
-        if ( do_dummy_parambind(hstmt) != SQL_SUCCESS )
-            return SQL_ERROR;
+      if ( do_dummy_parambind(hstmt) != SQL_SUCCESS )
+      {
+        return SQL_ERROR;
+      }
     }
-    if ( (error= check_result(stmt)) != SQL_SUCCESS )
-        return error;
+    if ((error= check_result(stmt)) != SQL_SUCCESS)
+    {
+      return error;
+    }
+  }
 
-    if ( !stmt->result )
-        *pccol= 0;      /* Not a select */
-    else
-        *pccol= stmt->result->field_count;
+  *pccol= (SQLSMALLINT) stmt->ird->count;
 
-    return SQL_SUCCESS;
+  return SQL_SUCCESS;
 }
 
 
@@ -816,19 +791,22 @@ MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
 
   /* SQLDescribeCol can be called before SQLExecute. Thus we need make sure that
      all parameters have been bound */
-  if ( stmt->param_count > 0 && stmt->dummy_state == ST_DUMMY_UNKNOWN &&
-    (stmt->state != ST_PRE_EXECUTED || stmt->state != ST_EXECUTED) )
+  if (!ssps_used(stmt))
   {
-    if ( do_dummy_parambind(hstmt) != SQL_SUCCESS )
-      return SQL_ERROR;
-  }
+    if ( stmt->param_count > 0 && stmt->dummy_state == ST_DUMMY_UNKNOWN &&
+      (stmt->state != ST_PRE_EXECUTED || stmt->state != ST_EXECUTED) )
+    {
+      if ( do_dummy_parambind(hstmt) != SQL_SUCCESS )
+        return SQL_ERROR;
+    }
 
-  if ((error= check_result(stmt)) != SQL_SUCCESS)
-    return error;
-  if (!stmt->result)
-    return set_stmt_error(stmt, "07005", "No result set", 0);
-  if (column == 0 || column > stmt->ird->count)
-    return set_stmt_error(stmt, "07009", "Invalid descriptor index", 0);
+    if ((error= check_result(stmt)) != SQL_SUCCESS)
+      return error;
+    if (!stmt->result)
+      return set_stmt_error(stmt, "07005", "No result set", 0);
+    if (column == 0 || column > stmt->ird->count)
+      return set_stmt_error(stmt, "07009", "Invalid descriptor index", 0);
+  }
 
   irrec= desc_get_rec(stmt->ird, column - 1, FALSE);
   assert(irrec);
@@ -890,20 +868,25 @@ MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
   SQLRETURN error= SQL_SUCCESS;
   DESCREC *irrec;
 
-  /* MySQLColAttribute can be called before SQLExecute. Thus we need make sure that
-  all parameters have been bound */
-  if ( stmt->param_count > 0 && stmt->dummy_state == ST_DUMMY_UNKNOWN &&
-    (stmt->state != ST_PRE_EXECUTED || stmt->state != ST_EXECUTED) )
+  if (!ssps_used(stmt))
   {
-    if ( do_dummy_parambind(hstmt) != SQL_SUCCESS )
+    /* MySQLColAttribute can be called before SQLExecute. Thus we need make sure that
+    all parameters have been bound */
+    if ( stmt->param_count > 0 && stmt->dummy_state == ST_DUMMY_UNKNOWN &&
+      (stmt->state != ST_PRE_EXECUTED || stmt->state != ST_EXECUTED) )
+    {
+      if ( do_dummy_parambind(hstmt) != SQL_SUCCESS )
+        return SQL_ERROR;
+    }
+
+    if (check_result(stmt) != SQL_SUCCESS)
       return SQL_ERROR;
   }
 
-  if (check_result(stmt) != SQL_SUCCESS)
-    return SQL_ERROR;
-
   if (!stmt->result)
+  {
     return set_stmt_error(stmt, "07005", "No result set", 0);
+  }
 
   /* we report bookmark type if requested, nothing else */
   if (attrib == SQL_DESC_TYPE && column == 0)
@@ -1247,58 +1230,61 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
         goto exitSQLMoreResults;
     }
 
-    /* try to get next resultset */
+    /* cleanup existing resultset */
+    nReturn = my_SQLFreeStmtExtended((SQLHSTMT)pStmt,SQL_CLOSE,0);
+    if (!SQL_SUCCEEDED( nReturn ))
+    {
+      goto exitSQLMoreResults;
+    }
+
+        /* try to get next resultset */
     nRetVal = next_result(pStmt);
 
     /* call to mysql_next_result() failed */
-    if ( nRetVal > 0 )
+    if (nRetVal > 0)
     {
-        nRetVal = mysql_errno( &pStmt->dbc->mysql );
-        switch ( nRetVal )
-        {
-            case CR_SERVER_GONE_ERROR:
-            case CR_SERVER_LOST:
-                nReturn = set_stmt_error( pStmt, "08S01", mysql_error( &pStmt->dbc->mysql ), nRetVal );
-                goto exitSQLMoreResults;
-            case CR_COMMANDS_OUT_OF_SYNC:
-            case CR_UNKNOWN_ERROR:
-                nReturn = set_stmt_error( pStmt, "HY000", mysql_error( &pStmt->dbc->mysql ), nRetVal );
-                goto exitSQLMoreResults;
-            default:
-                nReturn = set_stmt_error( pStmt, "HY000", "unhandled error from mysql_next_result()", nRetVal );
-                goto exitSQLMoreResults;
-        }
+      nRetVal = mysql_errno( &pStmt->dbc->mysql );
+      switch ( nRetVal )
+      {
+        case CR_SERVER_GONE_ERROR:
+        case CR_SERVER_LOST:
+            nReturn = set_stmt_error( pStmt, "08S01", mysql_error( &pStmt->dbc->mysql ), nRetVal );
+            goto exitSQLMoreResults;
+        case CR_COMMANDS_OUT_OF_SYNC:
+        case CR_UNKNOWN_ERROR:
+            nReturn = set_stmt_error( pStmt, "HY000", mysql_error( &pStmt->dbc->mysql ), nRetVal );
+            goto exitSQLMoreResults;
+        default:
+            nReturn = set_stmt_error( pStmt, "HY000", "unhandled error from mysql_next_result()", nRetVal );
+            goto exitSQLMoreResults;
+      }
     }
 
     /* no more resultsets */
-    if ( nRetVal < 0 )
+    if (nRetVal < 0)
     {
-        nReturn = SQL_NO_DATA;
-        goto exitSQLMoreResults;
+      nReturn = SQL_NO_DATA;
+      goto exitSQLMoreResults;
     }
-
-    /* cleanup existing resultset */
-    nReturn = my_SQLFreeStmtExtended((SQLHSTMT)pStmt,SQL_CLOSE,0);
-    if ( !SQL_SUCCEEDED( nReturn ) )
-        goto exitSQLMoreResults;
 
     /* start using the new resultset */
     pStmt->result = get_result(pStmt);
 
-    if ( !pStmt->result )
+    if (!pStmt->result)
     {
-        /* no fields means; INSERT, UPDATE or DELETE so no resultset is fine */
-        if (!field_count(pStmt))
-        {
-            pStmt->state = ST_EXECUTED;
-            pStmt->affected_rows = affected_rows(pStmt);
-            goto exitSQLMoreResults;
-        }
-        /* we have fields but no resultset (not even an empty one) - this is bad */
-        nReturn = set_stmt_error( pStmt, "HY000", mysql_error( &pStmt->dbc->mysql ), mysql_errno( &pStmt->dbc->mysql ) );
+      /* no fields means; INSERT, UPDATE or DELETE so no resultset is fine */
+      if (!field_count(pStmt))
+      {
+        pStmt->state = ST_EXECUTED;
+        pStmt->affected_rows = affected_rows(pStmt);
         goto exitSQLMoreResults;
+      }
+      /* we have fields but no resultset (not even an empty one) - this is bad */
+      nReturn = set_stmt_error( pStmt, "HY000", mysql_error( &pStmt->dbc->mysql ), mysql_errno( &pStmt->dbc->mysql ) );
+      goto exitSQLMoreResults;
     }
-    fix_result_types( pStmt );
+
+    fix_result_types(pStmt);
 
 exitSQLMoreResults:
     pthread_mutex_unlock( &pStmt->dbc->lock );
@@ -1374,7 +1360,7 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
   int i;
   ulong length= 0;
   DESCREC *irrec, *arrec;
-
+ 
   for (i= 0; i < myodbc_min(stmt->ird->count, stmt->ard->count); ++i, ++values)
   {
     irrec= desc_get_rec(stmt->ird, i, FALSE);
@@ -1468,7 +1454,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     long              cur_row, max_row;
     SQLULEN           i;
     SQLRETURN         row_res, res;
-    STMT FAR          *stmt= (STMT FAR*) hstmt;
+    STMT FAR          *stmt= (STMT *) hstmt;
     MYSQL_ROW         values= 0;
     MYSQL_ROW_OFFSET  save_position;
     SQLULEN           dummy_pcrow;
@@ -1478,6 +1464,19 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
 
     if ( !stmt->result )
         return set_stmt_error(stmt, "24000", "Fetch without a SELECT", 0);
+
+    if (stmt->out_params_state > 0)
+    {
+      switch(--stmt->out_params_state)
+      {
+      case 0:
+        return SQL_NO_DATA_FOUND;
+      default:
+        /* TODO: Need to remember real fetch' result*/
+        /* just in case...*/
+        stmt->out_params_state= 1;
+      }
+    }
 
     cur_row = stmt->current_row;
 
@@ -1600,7 +1599,8 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                                 (long)stmt->ard->array_size);
     }
 
-    if ( !rows_to_fetch )
+    /* out params has been silently fetched */
+    if ( !rows_to_fetch && ! stmt->out_params_state > 0)
     {
         *pcrow= 0;
         stmt->rows_found_in_set= 0;
@@ -1634,7 +1634,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
             {
                 save_position= row_tell(stmt);
             }
-            if ( !(values= fetch_row(stmt)) )
+            if ( stmt->out_params_state == 0 && !(values= fetch_row(stmt)) )
             {
               if (scroller_exists(stmt))
               {
@@ -1659,7 +1659,11 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
               {
                 break;
               }
+            }
 
+            if (stmt->out_params_state)
+            {
+              values= stmt->array;
             }
 
             if ( stmt->fix_fields )

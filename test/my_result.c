@@ -1795,7 +1795,7 @@ DECLARE_TEST(t_bug16817)
   is_str(my_fetch_str(hstmt, name, 1), "Zack", 4);
   ok_stmt(hstmt, SQLMoreResults(hstmt));
 
-  ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
+  ok_stmt(hstmt, SQLNumResultCols(hstmt, &ncol));
   is_num(ncol, 0);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
@@ -3051,7 +3051,7 @@ DECLARE_TEST(t_prefetch)
 DECLARE_TEST(t_outparams)
 {
   SQLSMALLINT ncol, i;
-  SQLINTEGER par[3]= {10, 20, 30};
+  SQLINTEGER par[3]= {10, 20, 30}, val, len;
 
   ok_sql(hstmt, "DROP PROCEDURE IF EXISTS p_outparams");
   ok_sql(hstmt, "CREATE PROCEDURE p_outparams("
@@ -3061,7 +3061,7 @@ DECLARE_TEST(t_outparams)
                 "BEGIN "
                 "  SELECT p_in, p_out, p_inout; "
                 "  SET p_in = 100, p_out = 200, p_inout = 300; "
-                "  SELECT p_in, p_out, p_inout; "
+                "  SELECT p_inout, p_in, p_out;"
                 "END");
 
 
@@ -3073,42 +3073,42 @@ DECLARE_TEST(t_outparams)
 
   ok_sql(hstmt, "CALL p_outparams(?, ?, ?)");
 
+  /* rs-1 */
   ok_stmt(hstmt, SQLFetch(hstmt));
+  ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
+  is_num(ncol, 3);
+
   is_num(my_fetch_int(hstmt, 1), 10);
-  ok_stmt(hstmt, SQLMoreResults(hstmt));
-
-  ok_stmt(hstmt, SQLFetch(hstmt));
-  is_num(my_fetch_int(hstmt, 2), 20);
-
-  ok_stmt(hstmt, SQLFetch(hstmt));
+  /* p_out does not have value at the moment */
+  ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_INTEGER, &val, 0, &len));
+  is_num(len, SQL_NULL_DATA);
   is_num(my_fetch_int(hstmt, 3), 30);
 
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  /* rs-2 */
   ok_stmt(hstmt, SQLMoreResults(hstmt));
 
   ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
   is_num(ncol, 3);
   
   ok_stmt(hstmt, SQLFetch(hstmt));
-  is_num(my_fetch_int(hstmt, 1), 100);
+  is_num(my_fetch_int(hstmt, 1), 300);
+  is_num(my_fetch_int(hstmt, 2), 100);
+  is_num(my_fetch_int(hstmt, 3), 200);
+
+  /* rs-3 out params */
   ok_stmt(hstmt, SQLMoreResults(hstmt));
-
-  ok_stmt(hstmt, SQLFetch(hstmt));
-  is_num(my_fetch_int(hstmt, 2), 200);
-
-  ok_stmt(hstmt, SQLFetch(hstmt));
-  is_num(my_fetch_int(hstmt, 3), 300);
-
-  ok_stmt(hstmt, SQLMoreResults(hstmt));
-
   ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
   is_num(ncol, 2);
 
   ok_stmt(hstmt, SQLFetch(hstmt));
   is_num(my_fetch_int(hstmt, 1), 200);
-  ok_stmt(hstmt, SQLMoreResults(hstmt));
-
-  ok_stmt(hstmt, SQLFetch(hstmt));
   is_num(my_fetch_int(hstmt, 2), 300);
+  /* Only 1 row always */
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
+
+  expect_stmt(hstmt, SQLMoreResults(hstmt), SQL_NO_DATA);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 

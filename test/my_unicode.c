@@ -1108,8 +1108,6 @@ DECLARE_TEST(t_bug28168)
   SQLSMALLINT errmsglen;
   wchar_t *err_prefixw= WC(MYODBC_ERROR_PREFIX);
 
-  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
-
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug28168");
   ok_sql(hstmt, "CREATE TABLE t_bug28168 (x int)");
 
@@ -1187,8 +1185,6 @@ DECLARE_TEST(t_bug28168)
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug28168");
 
   return OK;
-  /* There is error after this test on freeing environment - function sequence
-     error. looks like an error in the DM since all connections are freed. */
 }
 
 

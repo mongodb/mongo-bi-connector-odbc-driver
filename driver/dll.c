@@ -46,9 +46,7 @@ static my_bool myodbc_inited=0;
 static sig_handler
 myodbc_pipe_sig_handler(int sig __attribute__((unused)))
 {
-#ifdef DONT_REMEMBER_SIGNAL
-  (void) signal(SIGPIPE,myodbc_pipe_sig_handler);
-#endif
+  /* Do nothing */
 }
 
 #endif
@@ -60,6 +58,17 @@ myodbc_pipe_sig_handler(int sig __attribute__((unused)))
 
 void myodbc_init(void)
 {
+#if !defined(__WIN__) && defined(SIGPIPE)
+   /*
+     sigaction will block other signals from coming when handler is working
+   */
+   struct sigaction action;
+   action.sa_handler = myodbc_pipe_sig_handler;
+   sigemptyset(&action.sa_mask);
+   action.sa_flags = 0;
+   sigaction(SIGPIPE, &action, NULL);
+#endif
+
   if (myodbc_inited++)
     return;
   my_init();
@@ -78,13 +87,6 @@ void myodbc_init(void)
     utf8_charset_info= get_charset_by_csname("utf8", MYF(MY_CS_PRIMARY),
                                              MYF(0));
   }
-  /*
-    If we are not using threads, we may get an SIGPIPE signal when a client
-    aborts.  We disable this signal to avoid problems.
-  */
-#if !defined(__WIN__) && defined(SIGPIPE)
-  signal(SIGPIPE,myodbc_pipe_sig_handler);
-#endif
 }
 
 

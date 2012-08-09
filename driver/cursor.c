@@ -430,7 +430,7 @@ static SQLRETURN copy_rowdata(STMT FAR *stmt, DESCREC *aprec,
     if ( !(*to= (SQLCHAR *) extend_buffer(*net,(char*) *to,length)) )
         return set_error(stmt,MYERR_S1001,NULL,4001);
 
-    rc= insert_param(stmt, (char**) to, stmt->apd, aprec, iprec, 0);
+    rc= insert_param(stmt, (uchar*) to, stmt->apd, aprec, iprec, 0);
     if (!SQL_SUCCEEDED(rc))
         return rc;
 
@@ -512,7 +512,7 @@ static my_bool insert_field(STMT *stmt, MYSQL_RES *result,
     aprec->octet_length_ptr= &length;
     aprec->indicator_ptr= &length;
 
-    if (!SQL_SUCCEEDED(insert_param(stmt, (char **) &to, stmt->apd,
+    if (!SQL_SUCCEEDED(insert_param(stmt, (uchar *) &to, stmt->apd,
                                     aprec, iprec, 0)))
       return 1;
     if (!(to= (unsigned char *) add_to_buffer(net, (char *) to, " AND ", 5)))

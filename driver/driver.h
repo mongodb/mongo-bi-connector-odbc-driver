@@ -419,6 +419,7 @@ typedef struct tagSTMT
   char              *table_name;
 
   MY_PARSED_QUERY	query, orig_query;
+  DYNAMIC_ARRAY     *param_bind;
 
   unsigned long     *lengths; /* used to set lengths if we shuffle field values
                          of the resultset of auxiliary query or if we fix_fields. */
@@ -462,6 +463,9 @@ typedef struct tagSTMT
   MYSQL_BIND *result_bind;
 
   MY_LIMIT_SCROLLER scroller;
+
+  /* TODO: enum */
+  int out_params_state;
 } STMT;
 
 

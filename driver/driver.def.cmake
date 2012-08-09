@@ -1,4 +1,4 @@
-/*
+;/*
 ;  Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved
 ;
 ;  The MySQL Connector/ODBC is licensed under the terms of the GPLv2

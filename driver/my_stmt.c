@@ -238,6 +238,10 @@ int next_result(STMT *stmt)
 {
   if (ssps_used(stmt))
   {
+    if (returned_result(stmt))
+    {
+      mysql_stmt_free_result(stmt->ssps);
+    }
     return mysql_stmt_next_result(stmt->ssps);
   }
   else
@@ -335,30 +339,43 @@ SQLRETURN prepare(STMT *stmt, char * query, SQLINTEGER query_length)
     return set_error(stmt, MYERR_S1001, NULL, 4001);
   }
 
-  if (!stmt->dbc->ds->no_ssps && !IS_BATCH(&stmt->query)
+  ssps_close(stmt);
+  stmt->param_count= PARAM_COUNT(&stmt->query);
+  /* Trusting our parsing we are not using prepared statments unsless there are
+     actually parameter markers in it */
+  if (!stmt->dbc->ds->no_ssps && PARAM_COUNT(&stmt->query) && !IS_BATCH(&stmt->query)
     && preparable_on_server(&stmt->query, stmt->dbc->mysql.server_version))
   {
     MYLOG_QUERY(stmt, "Using prepared statement");
     ssps_init(stmt);
 
-    if (mysql_stmt_prepare(stmt->ssps, query, query_length))
+    /* If the query is in the form of "WHERE CURRENT OF" - we do not need to prepare
+       it at the moment */
+    if (!get_cursor_name(&stmt->query))
     {
-      MYLOG_QUERY(stmt, mysql_error(&stmt->dbc->mysql));
+      if (mysql_stmt_prepare(stmt->ssps, query, query_length))
+      {
+        MYLOG_QUERY(stmt, mysql_error(&stmt->dbc->mysql));
 
-      set_stmt_error(stmt,"HY000",mysql_error(&stmt->dbc->mysql),
-                     mysql_errno(&stmt->dbc->mysql));
-      translate_error(stmt->error.sqlstate,MYERR_S1000,
-                      mysql_errno(&stmt->dbc->mysql));
+        set_stmt_error(stmt,"HY000",mysql_error(&stmt->dbc->mysql),
+                       mysql_errno(&stmt->dbc->mysql));
+        translate_error(stmt->error.sqlstate,MYERR_S1000,
+                        mysql_errno(&stmt->dbc->mysql));
 
-      return SQL_ERROR;
+        return SQL_ERROR;
+      }
+
+      stmt->param_count= mysql_stmt_param_count(stmt->ssps);
+
+      /* Getting result metadata */
+      if ((stmt->result= mysql_stmt_result_metadata(stmt->ssps)))
+      {
+        /*stmt->state= ST_SS_PREPARED;*/
+        fix_result_types(stmt);
+       /*Should we reset stmt->result?*/
+      }
+    /*assert(stmt->param_count==PARAM_COUNT(&stmt->query));*/
     }
-
-    stmt->param_count= mysql_stmt_param_count(stmt->ssps);
-    assert(stmt->param_count==PARAM_COUNT(&stmt->query));
-  }
-  else
-  {
-    stmt->param_count= PARAM_COUNT(&stmt->query);
   }
 
   {
@@ -547,7 +564,7 @@ SQLRETURN scroller_prefetch(STMT * stmt)
 
 BOOL scrollable(STMT * stmt, char * query, char * query_end)
 {
-  if (!is_select_statement(query))
+  if (!is_select_statement(&stmt->query))
   {
     return FALSE;
   }

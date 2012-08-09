@@ -195,13 +195,13 @@ DWORD WINAPI win32_alarm(LPVOID arg)
 #define ENABLE_ALARMS    int do_alarms= !getenv("DISABLE_TIMEOUT")
 #define RUN_TESTS_SIGNAL halarm= CreateEvent(NULL, FALSE, FALSE, NULL); \
                          if (do_alarms) \
-                           CreateThread(NULL, 0, win32_alarm, (LPVOID) 40, 0, NULL); \
+                           CreateThread(NULL, 0, win32_alarm, (LPVOID) 60, 0, NULL); \
                          do_alarms= 0
 #define RUN_TESTS_ALARM (void) SetEvent(halarm)
 #else
 #define ENABLE_ALARMS    int do_alarms= !getenv("DISABLE_TIMEOUT")
 #define RUN_TESTS_SIGNAL (void)signal(SIGALRM, test_timeout)
-#define RUN_TESTS_ALARM  if (do_alarms) alarm(40)
+#define RUN_TESTS_ALARM  if (do_alarms) alarm(60)
 #endif
 
 void mem_debug_init()
@@ -915,8 +915,16 @@ SQLINTEGER my_fetch_int(SQLHSTMT hstmt, SQLUSMALLINT icol)
     SQLLEN len;
 
     SQLGetData(hstmt, icol, SQL_INTEGER, &nData, 0, &len);
-    printMessage("my_fetch_int: %ld (%ld)", (long int)nData, len);
-    return (len != SQL_NULL_DATA) ? nData : 0;
+    if (len == SQL_NULL_DATA)
+    {
+      printMessage("my_fetch_int: NULL");
+    }
+    else
+    {
+      printMessage("my_fetch_int: %ld (%ld)", (long int)nData, len);
+      return nData;
+    }
+    return 0;
 }
 
 

@@ -60,22 +60,91 @@ static char * my_f_to_a(char * buf, size_t buf_size, double a)
 
 void ssps_init(STMT *stmt)
 {
-  
   stmt->ssps= mysql_stmt_init(&stmt->dbc->mysql);
 
   stmt->result_bind= 0;
 }
 
 
+SQLRETURN SQL_API
+sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
+             SQLPOINTER rgbValue, SQLLEN cbValueMax, SQLLEN *pcbValue,
+             char *value, ulong length, DESCREC *arrec);
+
 MYSQL_RES * ssps_get_result(STMT *stmt)
 {
   stmt->result= mysql_stmt_result_metadata(stmt->ssps);
 
-  if (stmt->result && !if_forward_cache(stmt))
+  if (stmt->result)
   {
-    if (ssps_bind_result(stmt) || mysql_stmt_store_result(stmt->ssps))
+    if (!if_forward_cache(stmt) &&  (ssps_bind_result(stmt)
+                                  || mysql_stmt_store_result(stmt->ssps)))
     {
       return NULL;
+    }
+
+    /* If we use prepared statement, and the query is CALL and we have any
+       user's parameter described as INOUT or OUT and that is only result */
+    if (is_call_procedure(&stmt->query)
+      && got_out_parameters(stmt) && !mysql_more_results(&stmt->dbc->mysql))
+    {
+      MYSQL_ROW values= fetch_row(stmt);
+      DESCREC*iprec, *aprec;
+      uint counter= 0;
+      int i;
+
+      if ( stmt->fix_fields )
+      {
+        values= (*stmt->fix_fields)(stmt,values);
+      }
+
+      assert(values);
+      /* Then current result is out params */
+      stmt->out_params_state= 2;
+
+      for (i= 0; i < myodbc_min(stmt->ipd->count, stmt->apd->count); ++i, ++values)
+      {
+        iprec= desc_get_rec(stmt->ipd, i, FALSE);
+        aprec= desc_get_rec(stmt->apd, i, FALSE);
+        assert(iprec && aprec);
+
+        if ((iprec->parameter_type == SQL_PARAM_INPUT_OUTPUT
+        || iprec->parameter_type == SQL_PARAM_OUTPUT))
+        {
+          if (aprec->data_ptr)
+          {
+            unsigned long length= *stmt->result_bind[counter].length;
+            char *target= NULL;
+            SQLLEN *octet_length_ptr= NULL;
+            SQLLEN *indicator_ptr= NULL;
+            SQLINTEGER default_size;
+
+            if (aprec->octet_length_ptr)
+            {
+              octet_length_ptr= ptr_offset_adjust(aprec->octet_length_ptr,
+                                            stmt->apd->bind_offset_ptr,
+                                            stmt->apd->bind_type,
+                                            sizeof(SQLLEN), 0);
+            }
+
+            indicator_ptr= ptr_offset_adjust(aprec->indicator_ptr,
+                                         stmt->apd->bind_offset_ptr,
+                                         stmt->apd->bind_type,
+                                         sizeof(SQLLEN), 0);
+
+            default_size= bind_length(aprec->concise_type,
+                                      aprec->octet_length);
+            target= ptr_offset_adjust(aprec->data_ptr, stmt->apd->bind_offset_ptr,
+                                  stmt->apd->bind_type, default_size, 0);
+
+
+            sql_get_data(stmt, aprec->concise_type, counter,
+                         target, aprec->octet_length, indicator_ptr,
+                         values[counter], length, aprec);
+          }
+          ++counter;
+        }
+      }
     }
   }
   
@@ -83,7 +152,7 @@ MYSQL_RES * ssps_get_result(STMT *stmt)
 }
 
 
-static void free_result_bind(STMT *stmt)
+void free_result_bind(STMT *stmt)
 {
   if (stmt->result_bind != NULL)
   {
@@ -267,9 +336,9 @@ int ssps_bind_result(STMT *stmt)
   }
   else
   {
-    my_bool             *is_null= my_malloc(sizeof(my_bool)*num_fields, MYF(MY_ZEROFILL));
-    my_bool             *err    = my_malloc(sizeof(my_bool)*num_fields, MYF(MY_ZEROFILL));
-    unsigned long       *len= my_malloc(sizeof(unsigned long)*num_fields, MYF(MY_ZEROFILL));
+    my_bool       *is_null= my_malloc(sizeof(my_bool)*num_fields, MYF(MY_ZEROFILL));
+    my_bool       *err=     my_malloc(sizeof(my_bool)*num_fields, MYF(MY_ZEROFILL));
+    unsigned long *len=     my_malloc(sizeof(unsigned long)*num_fields, MYF(MY_ZEROFILL));
 
     /*TODO care about memory allocation errors */
     stmt->result_bind=  (MYSQL_BIND*)my_malloc(sizeof(MYSQL_BIND)*num_fields, MYF(MY_ZEROFILL));

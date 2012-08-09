@@ -100,7 +100,12 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
        this is a batch of queries */
     else if (ssps_used(stmt))
     {
-      native_error= mysql_stmt_execute(stmt->ssps);
+      native_error= mysql_stmt_bind_param(stmt->ssps,
+                                        (MYSQL_BIND*)stmt->param_bind->buffer);
+      if (native_error == 0)
+      {
+        native_error= mysql_stmt_execute(stmt->ssps);
+      }
       MYLOG_QUERY(stmt, "ssps has been executed");
     }
     else
@@ -142,7 +147,6 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
         goto exit;
       }
     }
-
     /* Caching row counts for queries returning resultset as well */
     //update_affected_rows(stmt);
     fix_result_types(stmt);
@@ -181,72 +185,100 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
 SQLRETURN insert_params(STMT FAR *stmt, SQLULEN row, char **finalquery,
                         SQLULEN *finalquery_length)
 {
-    char *query= GET_QUERY(&stmt->query), *to;
-    uint i,length, had_info= 0;
-    NET *net;
-    SQLRETURN rc= SQL_SUCCESS;
+  char *query= GET_QUERY(&stmt->query), *to;
+  uint i,length, had_info= 0;
+  NET *net;
+  SQLRETURN rc= SQL_SUCCESS;
 
-    int mutex_was_locked= pthread_mutex_trylock(&stmt->dbc->lock);
+  int mutex_was_locked= pthread_mutex_trylock(&stmt->dbc->lock);
 
-    net= &stmt->dbc->mysql.net;
-    to= (char*) net->buff + (finalquery_length!= NULL ? *finalquery_length : 0);
+  net= &stmt->dbc->mysql.net;
+  to= (char*) net->buff + (finalquery_length!= NULL ? *finalquery_length : 0);
 
-    if (!stmt->dbc->ds->dont_use_set_locale)
+  if (!stmt->dbc->ds->dont_use_set_locale)
+  {
+    setlocale(LC_NUMERIC, "C");  /* force use of '.' as decimal point */
+  }
+
+  if (ssps_used(stmt))
+  {
+    if (allocate_dynamic(stmt->param_bind, stmt->param_count))
     {
-      setlocale(LC_NUMERIC, "C");  /* force use of '.' as decimal point */
+      goto memerror;
+    }
+  }
+
+  for ( i= 0; i < stmt->param_count; ++i )
+  {
+    DESCREC *aprec= desc_get_rec(stmt->apd, i, FALSE);
+    DESCREC *iprec= desc_get_rec(stmt->ipd, i, FALSE);
+    char *pos;
+    MYSQL_BIND * bind;
+
+    assert(aprec && iprec);
+
+    if (stmt->dummy_state != ST_DUMMY_PREPARED &&
+        !aprec->par.real_param_done)
+    {
+      rc= set_error(stmt,MYERR_07001,NULL,0);
+      goto error;
     }
 
-    for ( i= 0; i < stmt->param_count; ++i )
+    if (ssps_used(stmt))
     {
-        DESCREC *aprec= desc_get_rec(stmt->apd, i, FALSE);
-        DESCREC *iprec= desc_get_rec(stmt->ipd, i, FALSE);
-        char *pos;
+      bind= (MYSQL_BIND *)stmt->param_bind->buffer + i;
+      bind->is_null_value= 0;
+      bind->is_unsigned= 0;
 
-        assert(aprec && iprec);
+      /* as far as looked - this trick is safe */
+      bind->is_null=  &bind->is_null_value;
+      bind->length=   &bind->length_value;
 
-        if (stmt->dummy_state != ST_DUMMY_PREPARED &&
-            !aprec->par.real_param_done)
-        {
-            rc= set_error(stmt,MYERR_07001,NULL,0);
-            goto error;
-        }
+      rc= insert_param(stmt, (uchar*)bind, stmt->apd, aprec, iprec, row);
+    }
+    else
+    {
+      pos= get_param_pos(&stmt->query, i);
+      length= (uint) (pos-query);
 
-        pos= get_param_pos(&stmt->query, i);
-        length= (uint) (pos-query);
+      if ( !(to= add_to_buffer(net,to,query,length)) )
+      {
+        goto memerror;
+      }
 
-        if ( !(to= add_to_buffer(net,to,query,length)) )
-        {
-            goto memerror;
-        }
+      query= pos+1;  /* Skip '?' */
 
-        query= pos+1;  /* Skip '?' */
-
-        if (!SQL_SUCCEEDED(rc= insert_param(stmt,&to,stmt->apd,aprec,iprec,row)))
-        {
-            goto error;
-        }
-        else
-        {
-          if (rc == SQL_SUCCESS_WITH_INFO)
-          {
-            had_info= 1;
-          }
-        }
+      rc= insert_param(stmt, (uchar*)&to, stmt->apd, aprec, iprec, row);
     }
 
-    /* if any ofr parameters return SQL_SUCCESS_WITH_iNFO - returning it
-       SQLSTATE corresponds to last SQL_SUCCESS_WITH_iNFO
-    */
-    if (had_info)
+    if (!SQL_SUCCEEDED(rc))
     {
-      rc= SQL_SUCCESS_WITH_INFO;
+      goto error;
     }
+    else
+    {
+      if (rc == SQL_SUCCESS_WITH_INFO)
+      {
+        had_info= 1;
+      }
+    }
+  }
 
+  /* if any ofr parameters return SQL_SUCCESS_WITH_iNFO - returning it
+     SQLSTATE corresponds to last SQL_SUCCESS_WITH_iNFO
+  */
+  if (had_info)
+  {
+    rc= SQL_SUCCESS_WITH_INFO;
+  }
+
+  if (!ssps_used(stmt))
+  {
     length= (uint) (GET_QUERY_END(&stmt->query) - query);
 
-    if ( !(to= add_to_buffer(net,to,query,length+1)) )
+    if ( !(to= add_to_buffer(net, to, query, length + 1)) )
     {
-        goto memerror;
+      goto memerror;
     }
 
     if (finalquery_length!= NULL)
@@ -263,34 +295,319 @@ SQLRETURN insert_params(STMT FAR *stmt, SQLULEN row, char **finalquery,
       }
     }
 
-    if (!mutex_was_locked)
-    {
-      pthread_mutex_unlock(&stmt->dbc->lock);
-    }
-
-    if (!stmt->dbc->ds->dont_use_set_locale)
-    {
-        setlocale(LC_NUMERIC,default_locale);
-    }
-
     if (finalquery!=NULL)
     {
       *finalquery= to;
     }
+  }
 
-    return rc;
+  if (!mutex_was_locked)
+  {
+    pthread_mutex_unlock(&stmt->dbc->lock);
+  }
+
+  if (!stmt->dbc->ds->dont_use_set_locale)
+  {
+    setlocale(LC_NUMERIC,default_locale);
+  }
+
+
+
+  return rc;
 
 memerror:      /* Too much data */
-    rc= set_error(stmt,MYERR_S1001,NULL,4001);
+  rc= set_error(stmt,MYERR_S1001,NULL,4001);
 error:
-    /* ! was _already_ locked, when we tried to lock */
-    if (!mutex_was_locked)
-      pthread_mutex_unlock(&stmt->dbc->lock);
-    if (!stmt->dbc->ds->dont_use_set_locale)
-        setlocale(LC_NUMERIC,default_locale);
-    return rc;
+  /* ! was _already_ locked, when we tried to lock */
+  if (!mutex_was_locked)
+    pthread_mutex_unlock(&stmt->dbc->lock);
+  if (!stmt->dbc->ds->dont_use_set_locale)
+    setlocale(LC_NUMERIC,default_locale);
+  return rc;
 }
 
+static
+void put_null_param(STMT *stmt, NET* net, char** toptr, MYSQL_BIND *bind)
+{
+  if (ssps_used(stmt))
+  {
+    bind->is_null_value= '\1';
+  }
+  else
+  {
+    *toptr= add_to_buffer(net, *toptr, "NULL", 4);
+  }
+}
+
+
+static
+void put_default_value(STMT *stmt, NET* net, char** toptr, MYSQL_BIND *bind)
+{
+  if (ssps_used(stmt))
+  {
+    /* That is actually wrong, but i can't see a good way */
+    bind->is_null_value= '\1';
+  }
+  else
+  {
+    *toptr= add_to_buffer(net, *toptr, "DEFAULT", 7);
+  }
+}
+
+
+static
+BOOL allocate_param_buffer(MYSQL_BIND *bind, unsigned long length)
+{
+  /* have to be very careful with that. it is probably better to put into
+       a separate data structure. and free right after use */
+  if (bind->buffer == NULL)
+  {
+    bind->buffer= my_malloc(length, MYF(0));
+    bind->buffer_length= length;
+  }
+  else if(bind->buffer_length < length)
+  {
+    bind->buffer= my_realloc(bind->buffer, length, MYF(0));
+    bind->buffer_length= length;
+  }
+
+  if (bind->buffer == NULL)
+  {
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+
+/* Buffer has to be allocated - no checks */
+static
+unsigned long add2param_value(MYSQL_BIND *bind, unsigned long pos,
+                              const char *value, unsigned long length)
+{
+  memcpy((char*)bind->buffer + pos, value, length);
+
+  bind->length_value= pos + length;
+  return pos + length;
+}
+
+
+static
+BOOL bind_param(MYSQL_BIND *bind, const char *value, unsigned long length,
+                enum enum_field_types buffer_type)
+{
+  if (allocate_param_buffer(bind, length))
+  {
+    return TRUE;
+  }
+
+  memcpy(bind->buffer, value, length);
+  bind->buffer_type= buffer_type;
+  bind->length_value= length;
+
+  return FALSE;
+}
+
+/* TRUE - on memory allocation error */
+static
+BOOL put_param_value(STMT *stmt, NET* net, char** toptr, MYSQL_BIND *bind,
+                     const char * value, unsigned long length)
+{
+  if (ssps_used(stmt))
+  {
+    return bind_param(bind, value, length, MYSQL_TYPE_STRING);
+  }
+  else
+  {
+    *toptr= add_to_buffer(net, *toptr, value, length);
+  }
+
+  return FALSE;
+}
+
+/*
+              stmt
+              ctype       Input(parameter) value C type
+              iprec
+    [in,out]  rec         Pointer input and output value
+              length      Pointer for result length
+              buff        Pointer to a buffer for result value
+              buff_max    Size of the buffer
+
+*/
+static
+SQLRETURN convert_c_type2str(STMT *stmt, SQLSMALLINT ctype, DESCREC *iprec,
+                             char **res, int *length, char *buff, uint buff_max)
+{
+  switch ( ctype )
+  {
+    case SQL_C_BINARY:
+    case SQL_C_CHAR:
+        break;
+
+    case SQL_C_WCHAR:
+      {
+        /* Convert SQL_C_WCHAR (utf-16 or utf-32) to utf-8. */
+        int has_utf8_maxlen4= 0;
+
+        /* length is in bytes, we want chars */
+        *length= *length / sizeof(SQLWCHAR);
+
+        *res= sqlwchar_as_utf8_ext((SQLWCHAR*)*res, length, buff, buff_max,
+                                    &has_utf8_maxlen4);
+
+
+        if (has_utf8_maxlen4 &&
+            !is_minimum_version(stmt->dbc->mysql.server_version, "5.5.3", 5))
+        {
+          return set_stmt_error(stmt, "HY000",
+                                "Server does not support 4-byte encoded "
+                                "UTF8 characters.", 0);
+        }
+        break;
+      }
+
+    case SQL_C_BIT:
+    case SQL_C_TINYINT:
+    case SQL_C_STINYINT:
+        *length= my_int2str((long)*((signed char *)*res), buff, -10, 0) - buff;
+        *res= buff;
+        break;
+    case SQL_C_UTINYINT:
+        *length= my_int2str((long)*((unsigned char *)*res), buff, -10, 0) - buff;
+        *res= buff;
+        break;
+    case SQL_C_SHORT:
+    case SQL_C_SSHORT:
+        *length= my_int2str((long)*((short int *)*res), buff, -10, 0) - buff;
+        *res= buff;
+        break;
+    case SQL_C_USHORT:
+        *length= my_int2str((long)*((unsigned short int *)*res), buff, -10, 0) -
+                  buff;
+        *res= buff;
+        break;
+    case SQL_C_LONG:
+    case SQL_C_SLONG:
+        *length= my_int2str(*((SQLINTEGER*) *res), buff, -10, 0) - buff;
+        *res= buff;
+        break;
+    case SQL_C_ULONG:
+        *length= my_int2str(*((SQLUINTEGER*) *res), buff, 10, 0) - buff;
+        *res= buff;
+        break;
+    case SQL_C_SBIGINT:
+        *length= longlong2str(*((longlong*) *res), buff, -10) - buff;
+        *res= buff;
+        break;
+    case SQL_C_UBIGINT:
+        *length= longlong2str(*((ulonglong*) *res), buff, 10) - buff;
+        *res= buff;
+        break;
+    case SQL_C_FLOAT:
+      if ( iprec->concise_type != SQL_NUMERIC && iprec->concise_type != SQL_DECIMAL )
+      {
+        sprintf(buff, "%.17e", *((float*) *res));
+      }
+      else
+      {
+        /* We should perpare this data for string comparison */
+        sprintf(buff, "%.15e", *((float*) *res));
+      }
+      *length= strlen(*res= buff);
+      break;
+    case SQL_C_DOUBLE:
+      if ( iprec->concise_type != SQL_NUMERIC && iprec->concise_type != SQL_DECIMAL )
+      {
+        sprintf(buff,"%.17e",*((double*) *res));
+      }
+      else
+      {
+        /* We should perpare this data for string comparison */
+        sprintf(buff,"%.15e",*((double*) *res));
+      }
+      *length= strlen(*res= buff);
+      break;
+    case SQL_C_DATE:
+    case SQL_C_TYPE_DATE:
+      {
+        DATE_STRUCT *date= (DATE_STRUCT*) *res;
+        if (stmt->dbc->ds->min_date_to_zero && !date->year
+          && (date->month == date->day == 1))
+        {
+          sprintf(buff, "0000-00-00");
+        }
+        else
+        {
+          sprintf(buff, "%04d-%02d-%02d", date->year, date->month, date->day);
+        }
+        *res= buff;
+        *length= 10;
+        break;
+      }
+    case SQL_C_TIME:
+    case SQL_C_TYPE_TIME:
+      {
+        TIME_STRUCT *time= (TIME_STRUCT*) *res;
+        sprintf(buff, "%02d:%02d:%02d",
+                time->hour, time->minute, time->second);
+        *res= buff;
+        *length= 8;
+        break;
+      }
+    case SQL_C_TIMESTAMP:
+    case SQL_C_TYPE_TIMESTAMP:
+      {
+        TIMESTAMP_STRUCT *time= (TIMESTAMP_STRUCT*) *res;
+
+        if (stmt->dbc->ds->min_date_to_zero &&
+            !time->year && (time->month == time->day == 1))
+        {
+          sprintf(buff, "0000-00-00 %02d:%02d:%02d", time->hour,
+                  time->minute, time->second);
+        }
+        else
+        {
+          sprintf(buff, "%04d-%02d-%02d %02d:%02d:%02d",
+                    time->year, time->month, time->day,
+                    time->hour, time->minute, time->second);
+        }
+
+        *length= 19;
+
+        if (time->fraction)
+        {
+          sprintf(buff + *length, ".%09d", time->fraction);
+          *length+= 10;
+        }
+
+        *res= buff;
+
+        break;
+      }
+    case SQL_C_NUMERIC:
+      {
+        int trunc;
+        SQL_NUMERIC_STRUCT *sqlnum= (SQL_NUMERIC_STRUCT *) *res;
+        sqlnum_to_str(sqlnum, (SQLCHAR *)(buff + buff_max - 1),
+                      (SQLCHAR **) res,
+                      (SQLCHAR) iprec->precision,
+                      (SQLSCHAR) iprec->scale, &trunc);
+        *length= strlen(*res);
+        /* TODO no way to return an error here? */
+        if (trunc == SQLNUM_TRUNC_FRAC)
+        {/* 01S07 SQL_SUCCESS_WITH_INFO */
+          set_stmt_error(stmt, "01S07", "Fractional truncation", 0);
+          return SQL_SUCCESS_WITH_INFO;
+        }
+        else if (trunc == SQLNUM_TRUNC_WHOLE)
+        {/* 22003 SQL_ERROR */
+          return SQL_ERROR;
+        }
+      }
+  }
+  return SQL_SUCCESS;
+}
 
 #define TIME_FIELDS_NONZERO(ts) (ts.hour||ts.minute||ts.second||ts.fraction)
 
@@ -298,23 +615,27 @@ error:
   Add the value of parameter to a string buffer.
 
   @param[in]      mysql
-  @param[in,out]  toptr
+  @param[in,out]  toptr - either pointer to a string where to write
+                  parameter value, or a pointer to MYSQL_BIND structure.
   @param[in]      apd The APD of the current statement
   @param[in]      aprec The APD record of the parameter
   @param[in]      iprec The IPD record of the parameter
 */
-SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
+SQLRETURN insert_param(STMT *stmt, uchar *place4param, DESC* apd,
                        DESCREC *aprec, DESCREC *iprec, SQLULEN row)
 {
-    int length;
+    long length;
     char buff[128], *data= NULL;
-    my_bool convert= FALSE, free_data= FALSE;
+    BOOL convert= FALSE, free_data= FALSE;
     DBC *dbc= stmt->dbc;
     NET *net= &dbc->mysql.net;
     SQLLEN *octet_length_ptr= NULL;
     SQLLEN *indicator_ptr= NULL;
-    char *to= *toptr;
     SQLRETURN result= SQL_SUCCESS;
+
+    /* carefully should be used either these 2 or that(bind) ptr. union? */
+    char **toptr= (char**)place4param, *to= *toptr;
+    MYSQL_BIND * bind= (MYSQL_BIND*)place4param;
 
     if (aprec->octet_length_ptr)
     {
@@ -324,6 +645,7 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
                                           sizeof(SQLLEN), row);
       length= *octet_length_ptr;
     }
+
     indicator_ptr= ptr_offset_adjust(aprec->indicator_ptr,
                                      apd->bind_offset_ptr,
                                      apd->bind_type,
@@ -339,7 +661,8 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
 
     if (indicator_ptr && *indicator_ptr == SQL_NULL_DATA)
     {
-      *toptr= add_to_buffer(net,*toptr,"NULL",4);
+      put_null_param(stmt, net, toptr, bind);
+
       return SQL_SUCCESS;
     }
     /*
@@ -387,7 +710,7 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
               aprec->concise_type == SQL_C_DEFAULT &&
               aprec->par.value == NULL))
     {
-      *toptr= add_to_buffer(net,*toptr,"DEFAULT",7);
+      put_default_value(stmt, net, toptr, bind);
       return SQL_SUCCESS;
     }
     else if (IS_DATA_AT_EXEC(octet_length_ptr))
@@ -395,200 +718,37 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
         length= aprec->par.value_length;
         if ( !(data= aprec->par.value) )
         {
-            *toptr= add_to_buffer(net,*toptr,"NULL",4);
-            return SQL_SUCCESS;
+          put_default_value(stmt, net, toptr, bind);
+          return SQL_SUCCESS;
         }
     }
 
     switch ( aprec->concise_type )
     {
-        case SQL_C_BINARY:
-        case SQL_C_CHAR:
-            convert= 1;
-            break;
+      case SQL_C_BINARY:
+      case SQL_C_CHAR:
+          convert= 1;
+          break;
 
-        case SQL_C_WCHAR:
-          {
-            /* Convert SQL_C_WCHAR (utf-16 or utf-32) to utf-8. */
-            char *to;
-            int i= 0;
-            int utf8len, has_utf8_maxlen4= 0;
+      default:
+        switch(convert_c_type2str(stmt, aprec->concise_type, iprec,
+                             &data, &length, buff, sizeof(buff)))
+        {
+        case SQL_ERROR:
+          return SQL_ERROR;
+        case SQL_SUCCESS_WITH_INFO:
+          result= SQL_SUCCESS_WITH_INFO;
+        }
 
-            /* length is in bytes, we want chars */
-            length= length / sizeof(SQLWCHAR);
+        if (data == NULL)
+        {
+          goto memerror;
+        }
 
-            /* Use buff if it is big enough, otherwise alloc some space. */
-            if (sizeof(buff) >= (size_t)length * 4)
-              to= buff;
-            else
-            {
-              if (!(to= (char *)my_malloc(length * 4, MYF(0))))
-                goto memerror;
-              free_data= TRUE;
-            }
-
-            if (sizeof(SQLWCHAR) == 4)
-            {
-              UTF32 *in= (UTF32 *)data;
-              data= to;
-              while (i < length)
-              {
-                to+= (utf8len= utf32toutf8(in[i++], (UTF8 *)to));
-                if (utf8len == 4)
-                  has_utf8_maxlen4= 1;
-              }
-            }
-            else
-            {
-              UTF16 *in= (UTF16 *)data;
-              data= to;
-              while (i < length)
-              {
-                UTF32 c;
-                i+= utf16toutf32(in + i, &c);
-                to+= (utf8len= utf32toutf8(c, (UTF8 *)to));
-                if (utf8len == 4)
-                  has_utf8_maxlen4= 1;
-              }
-            }
-
-            /* TODO need to check if it was merged to other versions already */
-            if (has_utf8_maxlen4 &&
-                !is_minimum_version(dbc->mysql.server_version, "6.0.4", 5))
-              return set_stmt_error(stmt, "HY000",
-                                    "Server does not support 4-byte encoded "
-                                    "UTF8 characters.", 0);
-
-            length= to - data;
-
-            break;
-          }
-
-        case SQL_C_BIT:
-        case SQL_C_TINYINT:
-        case SQL_C_STINYINT:
-            length= my_int2str((long)*((signed char *)data),buff,-10,0) -buff;
-            data= buff;
-            break;
-        case SQL_C_UTINYINT:
-            length= my_int2str((long)*((unsigned char *)data),buff,-10,0) -buff;
-            data= buff;
-            break;
-        case SQL_C_SHORT:
-        case SQL_C_SSHORT:
-            length= my_int2str((long)*((short int *)data),buff,-10,0) -buff;
-            data= buff;
-            break;
-        case SQL_C_USHORT:
-            length= my_int2str((long)*((unsigned short int *)data),buff,-10,0) -buff;
-            data= buff;
-            break;
-        case SQL_C_LONG:
-        case SQL_C_SLONG:
-            length= my_int2str(*((SQLINTEGER*) data),buff,-10,0) -buff;
-            data= buff;
-            break;
-        case SQL_C_ULONG:
-            length= my_int2str(*((SQLUINTEGER*) data),buff,10,0) -buff;
-            data= buff;
-            break;
-        case SQL_C_SBIGINT:
-            length= longlong2str(*((longlong*) data),buff, -10) - buff;
-            data= buff;
-            break;
-        case SQL_C_UBIGINT:
-            length= longlong2str(*((ulonglong*) data),buff, 10) - buff;
-            data= buff;
-            break;
-        case SQL_C_FLOAT:
-            if ( iprec->concise_type != SQL_NUMERIC && iprec->concise_type != SQL_DECIMAL )
-                sprintf(buff,"%.17e",*((float*) data));
-            else
-                /* We should perpare this data for string comparison */
-                sprintf(buff,"%.15e",*((float*) data));
-            length= strlen(data= buff);
-            break;
-        case SQL_C_DOUBLE:
-            if ( iprec->concise_type != SQL_NUMERIC && iprec->concise_type != SQL_DECIMAL )
-                sprintf(buff,"%.17e",*((double*) data));
-            else
-                /* We should perpare this data for string comparison */
-                sprintf(buff,"%.15e",*((double*) data));
-            length= strlen(data= buff);
-            break;
-        case SQL_C_DATE:
-        case SQL_C_TYPE_DATE:
-            {
-                DATE_STRUCT *date= (DATE_STRUCT*) data;
-                if (dbc->ds->min_date_to_zero &&
-                    !date->year && (date->month == date->day == 1))
-                  sprintf(buff, "0000-00-00");
-                else
-                  sprintf(buff, "%04d-%02d-%02d",
-                          date->year, date->month, date->day);
-                data= buff;
-                length= 10;
-                break;
-            }
-        case SQL_C_TIME:
-        case SQL_C_TYPE_TIME:
-            {
-                TIME_STRUCT *time= (TIME_STRUCT*) data;
-                sprintf(buff, "%02d:%02d:%02d",
-                        time->hour, time->minute, time->second);
-                data= buff;
-                length= 8;
-                break;
-            }
-        case SQL_C_TIMESTAMP:
-        case SQL_C_TYPE_TIMESTAMP:
-            {
-                TIMESTAMP_STRUCT *time= (TIMESTAMP_STRUCT*) data;
-                if (dbc->ds->min_date_to_zero &&
-                    !time->year && (time->month == time->day == 1))
-                {
-                  sprintf(buff, "0000-00-00 %02d:%02d:%02d", time->hour,
-                          time->minute, time->second);
-                }
-                else
-                {
-                  sprintf(buff, "%04d-%02d-%02d %02d:%02d:%02d",
-                            time->year, time->month, time->day,
-                            time->hour, time->minute, time->second);
-                }
-
-                length= 19;
-
-                if (time->fraction)
-                {
-                  sprintf(buff + length, ".%09d", time->fraction);
-                  length+= 10;
-                }
-
-                data= buff;
-
-                break;
-            }
-        case SQL_C_NUMERIC:
-            {
-              int trunc;
-              SQL_NUMERIC_STRUCT *sqlnum= (SQL_NUMERIC_STRUCT *) data;
-              sqlnum_to_str(sqlnum, (SQLCHAR *)(buff + sizeof(buff) - 1),
-                            (SQLCHAR **) &data,
-                            (SQLCHAR) iprec->precision,
-                            (SQLSCHAR) iprec->scale, &trunc);
-              length= strlen(data);
-              /* TODO no way to return an error here? */
-              if (trunc == SQLNUM_TRUNC_FRAC)
-              {/* 01S07 SQL_SUCCESS_WITH_INFO */
-                set_stmt_error(stmt, "01S07", "Fractional truncation", 0);
-                result= SQL_SUCCESS_WITH_INFO;
-              }
-              else if (trunc == SQLNUM_TRUNC_WHOLE)
-              {/* 22003 SQL_ERROR */
-                return SQL_ERROR;
-              }
-            }
+        if (!(data >= buff && data < buff + sizeof(buff)))
+        {
+          free_data= TRUE;
+        }
     }
 
     switch ( iprec->concise_type )
@@ -597,52 +757,72 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
         case SQL_TYPE_DATE:
         case SQL_TYPE_TIMESTAMP:
         case SQL_TIMESTAMP:
-            if (data[0] == '{')       /* Of type {d date } */
+          if (data[0] == '{')       /* Of type {d date } */
+          {
+            /* TODO: check if we need to check for truncation here as well? */
+            if (ssps_used(stmt))
             {
-              to= add_to_buffer(net, to, data, length);
-              goto out;
-            }
-
-            if (iprec->concise_type == SQL_DATE
-              || iprec->concise_type == SQL_TYPE_DATE)
-            {
-              TIMESTAMP_STRUCT ts;
-
-              /* For now I think it is safer to assume a dot is always a
-                 separator */
-              /* aprec->concise_type == SQL_C_TYPE_TIMESTAMP
-              || aprec->concise_type == SQL_C_TIMESTAMP
-              || stmt->dbc->ds->dont_use_set_locale */
-              str_to_ts(&ts, data, length, 1, TRUE);
-
-              /* Overflow also possible if converted from other C types
-                 http://msdn.microsoft.com/en-us/library/ms709385%28v=vs.85%29.aspx
-                 (if time fields nonzero sqlstate 22008 )
-                 http://msdn.microsoft.com/en-us/library/aa937531%28v=sql.80%29.aspx
-                 (Class values other than 01, except for the class IM,
-                 indicate an error and are accompanied by a return code
-                 of SQL_ERROR)
-                 
-                 Not sure if fraction should be considered as an overflow.
-                 In fact specs say about "time fields only"
-               */
-              if (TIME_FIELDS_NONZERO(ts))
+              if (bind_param(bind, data, length,
+                          map_sql2mysql_type(iprec->concise_type)))
               {
-                return set_stmt_error(stmt, "22008", "Date overflow", 0);
+                goto memerror;
               }
             }
-            /* else _binary introducer for binary data */
-         case SQL_BINARY:
-         case SQL_VARBINARY:
-         case SQL_LONGVARBINARY:
-           {
-             if (dbc->cxn_charset_info->number !=
-               dbc->ansi_charset_info->number)
-             {
-               to= add_to_buffer(net, to, "_binary", 7);
-             }
-             /* We have only added the introducer, data is added below. */
-             break;
+            else
+            {
+              to= add_to_buffer(net, to, data, length);
+            }
+            goto out;
+          }
+
+          if (iprec->concise_type == SQL_DATE
+            || iprec->concise_type == SQL_TYPE_DATE)
+          {
+            TIMESTAMP_STRUCT ts;
+
+            /* For now I think it is safer to assume a dot is always a
+               separator */
+            /* aprec->concise_type == SQL_C_TYPE_TIMESTAMP
+            || aprec->concise_type == SQL_C_TIMESTAMP
+            || stmt->dbc->ds->dont_use_set_locale */
+            str_to_ts(&ts, data, length, 1, TRUE);
+
+            /* Overflow also possible if converted from other C types
+               http://msdn.microsoft.com/en-us/library/ms709385%28v=vs.85%29.aspx
+               (if time fields nonzero sqlstate 22008 )
+               http://msdn.microsoft.com/en-us/library/aa937531%28v=sql.80%29.aspx
+               (Class values other than 01, except for the class IM,
+               indicate an error and are accompanied by a return code
+               of SQL_ERROR)
+               
+               Not sure if fraction should be considered as an overflow.
+               In fact specs say about "time fields only"
+             */
+            if (TIME_FIELDS_NONZERO(ts))
+            {
+              return set_stmt_error(stmt, "22008", "Date overflow", 0);
+            }
+          }
+          /* else _binary introducer for binary data */
+        case SQL_BINARY:
+        case SQL_VARBINARY:
+        case SQL_LONGVARBINARY:
+          {
+            if (ssps_used(stmt))
+            {
+              /* i guess for ssps we do not need introducer */
+              convert= 0;
+            }
+            else
+            {
+              if (dbc->cxn_charset_info->number !=
+                 dbc->ansi_charset_info->number)
+              {
+                to= add_to_buffer(net, to, "_binary", 7);
+              }
+            }
+            /* We have only added the introducer, data is added below. */
+            break;
            }
            /* else treat as a string */
         case SQL_CHAR:
@@ -651,129 +831,200 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
         case SQL_WCHAR:
         case SQL_WVARCHAR:
         case SQL_WLONGVARCHAR:
+          {
+            if (aprec->concise_type == SQL_C_WCHAR &&
+                dbc->cxn_charset_info->number != UTF8_CHARSET_NUMBER)
             {
-              if (aprec->concise_type == SQL_C_WCHAR &&
-                  dbc->cxn_charset_info->number != UTF8_CHARSET_NUMBER)
+              if (ssps_used(stmt))
+              {
+                 if (bind_param(bind, data, length, MYSQL_TYPE_BLOB))
+                {
+                  goto memerror;
+                }
+
+                goto out;
+              }
+              else
+              {
                 to= add_to_buffer(net, to, "_utf8", 5);
-              else if (aprec->concise_type != SQL_C_WCHAR &&
-                       dbc->cxn_charset_info->number !=
-                       dbc->ansi_charset_info->number)
+              }
+            }
+            else if (aprec->concise_type != SQL_C_WCHAR &&
+                     dbc->cxn_charset_info->number !=
+                     dbc->ansi_charset_info->number)
+            {
+              if (ssps_used(stmt))
+              {
+                if (bind_param(bind, data, length, MYSQL_TYPE_BLOB))
+                {
+                  goto memerror;
+                }
+
+                goto out;
+              }
+              else
               {
                 to= add_to_buffer(net, to, "_", 1);
                 to= add_to_buffer(net, to, dbc->ansi_charset_info->csname,
-                                  strlen(dbc->ansi_charset_info->csname));
+                                strlen(dbc->ansi_charset_info->csname));
               }
-              /* We have only added the introducer, data is added below. */
-              break;
             }
+            /* We have only added the introducer, data is added below. */
+            break;
+          }
         case SQL_TIME:
         case SQL_TYPE_TIME:
-            if ( aprec->concise_type == SQL_C_TIMESTAMP ||
-                 aprec->concise_type == SQL_C_TYPE_TIMESTAMP )
+          if ( aprec->concise_type == SQL_C_TIMESTAMP ||
+               aprec->concise_type == SQL_C_TYPE_TIMESTAMP )
+          {
+            TIMESTAMP_STRUCT *time= (TIMESTAMP_STRUCT*) aprec->data_ptr;
+
+            if (time->fraction)
             {
-                TIMESTAMP_STRUCT *time= (TIMESTAMP_STRUCT*) aprec->data_ptr;
+              /* fractional seconds truncated, need to set correct sqlstate 22008
+              http://msdn.microsoft.com/en-us/library/ms709385%28v=vs.85%29.aspx */
 
-                if (time->fraction)
-                {
-                  /* fractional seconds truncated, need to set correct sqlstate 22008
-                  http://msdn.microsoft.com/en-us/library/ms709385%28v=vs.85%29.aspx */
+              return set_stmt_error(stmt, "22008", "Fractional truncation", 0);
+            }
 
-                  return set_stmt_error(stmt, "22008", "Fractional truncation", 0);
-                }
-
-                sprintf(buff,"'%02d:%02d:%02d'",time->hour,time->minute,
+            if (ssps_used(stmt))
+            {
+              sprintf(buff, "%02d:%02d:%02d",time->hour,time->minute,
                       time->second);
-                to= add_to_buffer(net, to, buff, 10);
+              length= 8;
             }
             else
             {
-                ulong time;
-                SQLUINTEGER fraction;
-
-                /* For now it is safer to assume a dot is always a separator */
-                /* stmt->dbc->ds->dont_use_set_locale */
-                get_fractional_part(data, length, TRUE, &fraction);
-
-                if (fraction)
-                {
-                  /* truncation need SQL_ERROR and sqlstate 22008*/
-                  return set_stmt_error(stmt, "22008", "Fractional truncation", 0);
-                }
-
-                time= str_to_time_as_long(data,length);
-
-                sprintf(buff,"'%02d:%02d:%02d'",
-                      (int) time/10000,
-                      (int) time/100%100,
-                      (int) time%100);
-                to= add_to_buffer(net, to, buff, 10);
-                
+              sprintf(buff, "'%02d:%02d:%02d'",time->hour,time->minute,
+                      time->second);
+              length= 10;
             }
-            goto out;
+
+            if (put_param_value(stmt, net, &to, bind, buff, length))
+            {
+              goto memerror;
+            }
+          }
+          else
+          {
+            ulong time;
+            SQLUINTEGER fraction;
+
+            /* For now it is safer to assume a dot is always a separator */
+            /* stmt->dbc->ds->dont_use_set_locale */
+            get_fractional_part(data, length, TRUE, &fraction);
+
+            if (fraction)
+            {
+              /* truncation need SQL_ERROR and sqlstate 22008*/
+              return set_stmt_error(stmt, "22008", "Fractional truncation", 0);
+            }
+
+            time= str_to_time_as_long(data,length);
+
+            if (ssps_used(stmt))
+            {
+              sprintf(buff, "%02d:%02d:%02d",
+                    (int) time/10000,
+                    (int) time/100%100,
+                    (int) time%100);
+              length= 8;
+            }
+            else
+            {
+              sprintf(buff, "'%02d:%02d:%02d'",
+                    (int) time/10000,
+                    (int) time/100%100,
+                    (int) time%100);
+              length= 10;
+            }
+
+            if (put_param_value(stmt, net, &to, bind, buff, length))
+            {
+              goto memerror;
+            }
+          }
+
+          goto out;
+
         case SQL_FLOAT:
         case SQL_REAL:
         case SQL_DOUBLE:
-            /* If we have string -> float ; Fix locale characters for number */
-            if ( convert )
+          /* If we have string -> float ; Fix locale characters for number */
+          if (convert)
+          {
+            char *to= buff, *from= data;
+            char *end= from+length;
+            while ( *from && from < end )
             {
-                char *to= buff, *from= data;
-                char *end= from+length;
-                while ( *from && from < end )
-                {
-                  /* I wonder if following code really respects dont_use_set_locale
-                     and if it does, then how? */
-                    if ( from[0] == thousands_sep[0] && is_prefix(from,thousands_sep) )
-                        from+= thousands_sep_length;
-                    else if ( from[0] == decimal_point[0] && is_prefix(from,decimal_point) )
-                    {
-                        from+= decimal_point_length;
-                        *to++='.';
-                    }
-                    else
-                        *to++= *from++;
-                }
-                if ( to == buff )
-                    *to++='0';    /* Fix for empty strings */
-                data= buff; length= (uint) (to-buff);
-
-                convert= 0;
-
+              /* I wonder if following code really respects dont_use_set_locale
+                 and if it does, then how? */
+              if ( from[0] == thousands_sep[0] && is_prefix(from,thousands_sep) )
+              {
+                from+= thousands_sep_length;
+              }
+              else if ( from[0] == decimal_point[0] && is_prefix(from,decimal_point) )
+              {
+                from+= decimal_point_length;
+                *to++='.';
+              }
+              else
+              {
+                *to++= *from++;
+              }
             }
-            /* Fall through */
+            if ( to == buff )
+            {
+              *to++='0';    /* Fix for empty strings */
+            }
+            data= buff;
+            length= (uint) (to-buff);
+
+            convert= 0;
+
+          }
+          /* Fall through */
         default:
           if (!convert)
           {
-            to= add_to_buffer(net, to, data, length);
+            put_param_value(stmt, net, &to, bind, data, length);
             goto out;
           }
     }
 
-    /* Convert binary data to hex sequence */
-    if(is_no_backslashes_escape_mode(stmt->dbc) && 
-       is_binary_sql_type(iprec->concise_type))
+    if (ssps_used(stmt))
     {
-      SQLLEN transformed_len = 0;
-      to= add_to_buffer(net,to," 0x",3);
-      /* Make sure we have room for a fully-escaped string. */
-      if (!(to= extend_buffer(net, to, length * 2)))
-      {
-        goto memerror;
-      }
-      
-      copy_binhex_result(stmt, to, length * 2 + 1, &transformed_len, 0, data, length);
-      to += transformed_len;
+      bind_param(bind, data, length, MYSQL_TYPE_STRING);
     }
     else
     {
-      to= add_to_buffer(net,to,"'",1);
-      /* Make sure we have room for a fully-escaped string. */
-      if ( !(to= extend_buffer(net, to, length * 2)) )
+    /* Convert binary data to hex sequence */
+      if(is_no_backslashes_escape_mode(stmt->dbc) && 
+       is_binary_sql_type(iprec->concise_type))
       {
-        goto memerror;
-      }
+        SQLLEN transformed_len = 0;
+        to= add_to_buffer(net, to, " 0x", 3);
+        /* Make sure we have room for a fully-escaped string. */
+        if (!(to= extend_buffer(net, to, length * 2)))
+        {
+          goto memerror;
+        }
       
-      to+= mysql_real_escape_string(&dbc->mysql, to, data, length);
-      to= add_to_buffer(net, to, "'", 1);
+        copy_binhex_result(stmt, to, length * 2 + 1, &transformed_len, 0, data, length);
+        to += transformed_len;
+      }
+      else
+      {
+        to= add_to_buffer(net,to,"'",1);
+        /* Make sure we have room for a fully-escaped string. */
+        if ( !(to= extend_buffer(net, to, length * 2)) )
+        {
+          goto memerror;
+        }
+      
+        to+= mysql_real_escape_string(&dbc->mysql, to, data, length);
+        to= add_to_buffer(net, to, "'", 1);
+      }
     }
 
 out:
@@ -787,6 +1038,10 @@ out:
     return result;
 
 memerror:
+    if (free_data)
+    {
+      x_free(data);
+    }
     return set_error(stmt, MYERR_S1001, NULL, 4001);
 }
 
@@ -931,18 +1186,25 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
   }
 
   my_SQLFreeStmt((SQLHSTMT)pStmt,MYSQL_RESET_BUFFERS);
+
   query= GET_QUERY(&pStmt->query);
-  is_select_stmt= is_select_statement((SQLCHAR *)query);
+  /* Lil dirty hack - for ssps we do not need all those comlications of
+     is_select_stmt*/
+  is_select_stmt= is_select_statement(&pStmt->query) && !ssps_used(pStmt);
 
   if ( pStmt->ipd->rows_processed_ptr )
-      *pStmt->ipd->rows_processed_ptr= 0;
+  {
+    *pStmt->ipd->rows_processed_ptr= 0;
+  }
 
   /* Locking if we have params array for "SELECT" statemnt */
   /* if param_count is zero, the rest probably are artifacts(not reset
      attributes) from a previously executed statement. besides this lock
      is not needed when there are no params*/
   if (pStmt->param_count && pStmt->apd->array_size > 1 && is_select_stmt)
+  {
     pthread_mutex_lock(&pStmt->dbc->lock);
+  }
 
   for (row= 0; row < pStmt->apd->array_size; ++row)
   {
@@ -1012,6 +1274,7 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
 
         pStmt->current_param= dae_rec;
         pStmt->dae_type= DAE_NORMAL;
+
         return SQL_NEED_DATA;
       }
 
@@ -1151,12 +1414,12 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
   data at statement execution time
 */
 
-SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER FAR *prbgValue)
+SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER *prbgValue)
 {
-    STMT FAR *stmt= (STMT FAR*) hstmt;
+    STMT *stmt= (STMT *) hstmt;
     uint i;
     SQLRETURN rc;
-    char *query;
+    char *query=  GET_QUERY(&stmt->query);
     DESC *apd;
     uint param_count= stmt->param_count;
 

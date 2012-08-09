@@ -5,8 +5,12 @@
   * Driver by default uses server side prepared statements
   * Connection string option NO_SSPS prevents using of server side prepared
     statements. It is configurable via GUI dialog.
+  * Increased the timeout in tests from 30 to 60 seconds to avoid failures in
+    slow tests that involve catalog functions and Information_Schema queries.
   Bugs fixed:
   * Long table names crash OBDC driver. (Bug# 14085211/65200)
+  * Close proximity issue when handling OS signlals in myodbc (Bug# 14303803)
+  * "String data right truncated" error is not always correct (Bug# 14285620)
 
 ----
 

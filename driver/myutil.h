@@ -148,7 +148,7 @@ SQLRETURN my_pos_delete(STMT FAR *stmt,STMT FAR *stmtParam,
 SQLRETURN my_pos_update(STMT FAR *stmt,STMT FAR *stmtParam,
 			SQLUSMALLINT irow,DYNAMIC_STRING *dynStr);
 char *check_if_positioned_cursor_exists(STMT FAR *stmt, STMT FAR **stmtNew);
-SQLRETURN insert_param(STMT *stmt, char **to, DESC *apd,
+SQLRETURN insert_param(STMT *stmt, uchar *to, DESC *apd,
                        DESCREC *aprec, DESCREC *iprec, SQLULEN row);
 char *add_to_buffer(NET *net,char *to,const char *from,ulong length);
 
@@ -307,6 +307,8 @@ void end_query_log(FILE *query_log);
 
 LIST *list_delete_forward(LIST *elem);
 
+enum enum_field_types map_sql2mysql_type(SQLSMALLINT sql_type);
+
 /* proc_* functions - used to parse prcedures headers in SQLProcedureColumns */
 char *proc_param_tokenize(char *str, int *params_num);
 SQLCHAR *proc_get_param_type(SQLCHAR *proc, int len, SQLSMALLINT *ptype);
@@ -314,41 +316,47 @@ SQLCHAR* proc_get_param_name(SQLCHAR *proc, int len, SQLCHAR *cname);
 SQLCHAR* proc_get_param_dbtype(SQLCHAR *proc, int len, SQLCHAR *ptype);
 SQLUINTEGER proc_get_param_size(SQLCHAR *ptype, int len, int sql_type_index,
                                 SQLSMALLINT *dec);
-SQLLEN proc_get_param_octet_len(STMT *stmt, int sql_type_index, SQLULEN col_size, 
-                                SQLSMALLINT decimal_digits, unsigned int flags, char * str_buff);
+SQLLEN proc_get_param_octet_len(STMT *stmt, int sql_type_index,
+                                SQLULEN col_size, SQLSMALLINT decimal_digits,
+                                unsigned int flags, char * str_buff);
 SQLLEN proc_get_param_col_len(STMT *stmt, int sql_type_index, SQLULEN col_size, 
-                              SQLSMALLINT decimal_digits, unsigned int flags, char * str_buff);
+                              SQLSMALLINT decimal_digits, unsigned int flags,
+                              char * str_buff);
 int proc_get_param_sql_type_index(SQLCHAR *ptype, int len);
 SQLTypeMap *proc_get_param_map_by_index(int index);
 char *proc_param_next_token(char *str, char *str_end);
 
 void set_row_count(STMT * stmt, my_ulonglong rows);
-const char *get_fractional_part(const char * str, int len, BOOL dont_use_set_locale,
-                          SQLUINTEGER * fraction);
+const char *get_fractional_part(const char * str, int len,
+                                BOOL dont_use_set_locale,
+                                SQLUINTEGER * fraction);
 /* Convert MySQL timestamp to full ANSI timestamp format. */
 char * complete_timestamp(const char * value, ulong length, char buff[21]);
 long double strtold(const char *nptr, char **endptr);
 char * extend_buffer(NET *net, char *to, ulong length);
 char * add_to_buffer(NET *net,char *to,const char *from,ulong length);
-MY_LIMIT_CLAUSE find_position4limit(CHARSET_INFO* cs, char *query, char * query_end);
+MY_LIMIT_CLAUSE find_position4limit(CHARSET_INFO* cs, char *query,
+                                    char * query_end);
 BOOL myodbc_isspace(CHARSET_INFO* cs, const char * begin, const char *end);
+BOOL got_out_parameters(stmt);
 
+/* handle.c*/
+BOOL          allocate_param_bind(DYNAMIC_ARRAY **param_bind, uint elements);
 /*results.c*/
-long long binary2numeric(long long *dst, char *src, uint srcLen);
-BOOL isStatementForRead(STMT FAR *stmt);
-void fill_ird_data_lengths(DESC *ird, ulong *lengths, uint fields);
+long long     binary2numeric(long long *dst, char *src, uint srcLen);
+void          fill_ird_data_lengths(DESC *ird, ulong *lengths, uint fields);
 
 /* Functions to work with prepared and regular statements  */
 /* my_stmt.c */
-BOOL          ssps_used(STMT *stmt);
-BOOL          returned_result(STMT *stmt);
-my_bool       free_current_result(STMT *stmt);
-MYSQL_RES *   get_result(STMT *stmt);
-unsigned int  field_count(STMT *stmt);
-my_ulonglong  affected_rows(STMT *stmt);
-my_ulonglong  update_affected_rows(STMT *stmt);
-my_ulonglong  num_rows(STMT *stmt);
-MYSQL_ROW     fetch_row(STMT *stmt);
+BOOL              ssps_used(STMT *stmt);
+BOOL              returned_result(STMT *stmt);
+my_bool           free_current_result(STMT *stmt);
+MYSQL_RES *       get_result(STMT *stmt);
+unsigned int      field_count(STMT *stmt);
+my_ulonglong      affected_rows(STMT *stmt);
+my_ulonglong      update_affected_rows(STMT *stmt);
+my_ulonglong      num_rows(STMT *stmt);
+MYSQL_ROW         fetch_row(STMT *stmt);
 unsigned long*    fetch_lengths(STMT *stmt);
 MYSQL_ROW_OFFSET  row_seek(STMT *stmt, MYSQL_ROW_OFFSET offset);
 void              data_seek(STMT *stmt, my_ulonglong offset);
@@ -376,11 +384,12 @@ SQLRETURN     scroller_prefetch(STMT * stmt);
 BOOL          scrollable(STMT * stmt, char * query, char * query_end);
 
 /* my_prepared_stmt.c */
-void  ssps_init(STMT *stmt);
+void        ssps_init(STMT *stmt);
 MYSQL_RES * ssps_get_result(STMT *stmt);
-void  ssps_close(STMT *stmt);
-int   ssps_bind_result(STMT *stmt);
-BOOL  ssps_0buffers_truncated_only(STMT *stmt);
+void        ssps_close(STMT *stmt);
+int         ssps_bind_result(STMT *stmt);
+void        free_result_bind(STMT *stmt);
+BOOL        ssps_0buffers_truncated_only(STMT *stmt);
 long long   ssps_get_int64 (STMT *stmt, ulong column_number, char *value,
                             ulong length);
 long double ssps_get_double(STMT *stmt, ulong column_number, char *value,
