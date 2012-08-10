@@ -1,9 +1,14 @@
-5.2.1(09-AUG-2012)
+5.2.1(09-Aug-2012)
 
   Functionality added or changed:
-  * Driver available in Unicode and ANSI versions(WL#5850)
-  * Driver by default uses server side prepared statements
+  * Driver prepares statements on server
   * Support of INOUT and OUT parameters(WL#6116)
+  * Increased the timeout in tests from 30 to 60 seconds to avoid failures in
+    slow tests that involve catalog functions and Information_Schema queries.
+  Bugs fixed:
+  * Long table names crash OBDC driver. (Bug# 14085211/65200)
+  * Close proximity issue when handling OS signlals in myodbc (Bug# 14303803)
+  * "String data right truncated" error is not always correct (Bug# 14285620)
 
   Built using MySQL 5.5.27.
 
@@ -12,15 +17,8 @@
   Functionality added or changed:
   * Driver available in Unicode and ANSI versions(WL#5850)
   * Driver by default uses server side prepared statements
-  * Support of INOUT and OUT parameters(WL#6116)
   * Connection string option NO_SSPS prevents using of server side prepared
     statements. It is configurable via GUI dialog.
-  * Increased the timeout in tests from 30 to 60 seconds to avoid failures in
-    slow tests that involve catalog functions and Information_Schema queries.
-  Bugs fixed:
-  * Long table names crash OBDC driver. (Bug# 14085211/65200)
-  * Close proximity issue when handling OS signlals in myodbc (Bug# 14303803)
-  * "String data right truncated" error is not always correct (Bug# 14285620)
 
   Built using MySQL 5.5.25.
 
