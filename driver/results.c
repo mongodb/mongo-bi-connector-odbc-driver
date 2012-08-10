@@ -1217,12 +1217,6 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
 
     CLEAR_STMT_ERROR( pStmt );
 
-    if (!mysql_more_results(&pStmt->dbc->mysql))
-    {
-      nReturn= SQL_NO_DATA;
-      goto exitSQLMoreResults;
-    }
-
     /* SQLExecute or SQLExecDirect need to be called first */
     if ( pStmt->state != ST_EXECUTED )
     {
@@ -1230,14 +1224,7 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
         goto exitSQLMoreResults;
     }
 
-    /* cleanup existing resultset */
-    nReturn = my_SQLFreeStmtExtended((SQLHSTMT)pStmt,SQL_CLOSE,0);
-    if (!SQL_SUCCEEDED( nReturn ))
-    {
-      goto exitSQLMoreResults;
-    }
-
-        /* try to get next resultset */
+    /* try to get next resultset */
     nRetVal = next_result(pStmt);
 
     /* call to mysql_next_result() failed */
@@ -1264,6 +1251,13 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
     if (nRetVal < 0)
     {
       nReturn = SQL_NO_DATA;
+      goto exitSQLMoreResults;
+    }
+
+    /* cleanup existing resultset */
+    nReturn = my_SQLFreeStmtExtended((SQLHSTMT)pStmt,SQL_CLOSE,0);
+    if (!SQL_SUCCEEDED( nReturn ))
+    {
       goto exitSQLMoreResults;
     }
 

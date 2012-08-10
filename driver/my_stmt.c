@@ -55,15 +55,24 @@ BOOL returned_result(STMT *stmt)
 
 my_bool free_current_result(STMT *stmt)
 {
-  if (ssps_used(stmt))
+  if (returned_result(stmt))
   {
-    return mysql_stmt_free_result(stmt->ssps);
+    if (ssps_used(stmt))
+ 
+    {
+      my_bool res= mysql_stmt_free_result(stmt->ssps);
+      stmt->result= NULL;
+
+      return res;
+    }
+    else
+    {
+      mysql_free_result(stmt->result);
+      stmt->result= NULL;
+      return '\0';
+    }
   }
-  else
-  {
-    mysql_free_result(stmt->result);
-    return '\0';
-  }
+  return '\0';
 }
 
 
@@ -236,12 +245,10 @@ MYSQL_ROW_OFFSET row_tell(STMT *stmt)
 
 int next_result(STMT *stmt)
 {
+  free_current_result(stmt);
+
   if (ssps_used(stmt))
   {
-    if (returned_result(stmt))
-    {
-      mysql_stmt_free_result(stmt->ssps);
-    }
     return mysql_stmt_next_result(stmt->ssps);
   }
   else

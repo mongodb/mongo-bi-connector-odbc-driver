@@ -174,10 +174,10 @@ void ssps_close(STMT *stmt)
 {
   if (stmt->ssps != NULL)
   {
-    mysql_stmt_close(stmt->ssps);
-    stmt->ssps= NULL;
-
     free_result_bind(stmt);
+
+    assert(mysql_stmt_close(stmt->ssps) == '\0');
+    stmt->ssps= NULL;
   }
 }
 

@@ -541,9 +541,6 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
 
     if (!stmt->fake_result)
     {
-      /* if we only CLOSEing stmt to get next result*/
-      free_current_result(stmt);
-      
       if (clearAllResults)
       {
         /* We seiously CLOSEing statement for preparing handle object for
@@ -553,7 +550,6 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
           /* TODO: verify if we really do not have to store result for
                    text protocol */
           get_result(stmt);
-          free_current_result(stmt);
         }
       }
     }

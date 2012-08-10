@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -1019,6 +1019,8 @@ DECLARE_TEST(t_odbcoutparams)
 
   is_num(par[1], 100);
   is_num(par[2], 200);
+
+  expect_stmt(hstmt, SQLMoreResults(hstmt), SQL_NO_DATA);
 
   ok_sql(hstmt, "DROP PROCEDURE t_odbcoutparams");
   return OK;
