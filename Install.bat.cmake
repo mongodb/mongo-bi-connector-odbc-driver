@@ -1,5 +1,5 @@
 @ECHO OFF
-REM Copyright (c) 2006, 2011, Oracle and/or its affiliates. All rights reserved.
+REM Copyright (c) 2006, 2012, Oracle and/or its affiliates. All rights reserved.
 REM
 REM The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 REM <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most 
@@ -41,7 +41,7 @@ REM # SETLOCAL prevents the variables set in this script to
 REM # be exported to the environment and pollute it
 SETLOCAL
 
-SET         driver_name=MySQL ODBC 5.1 Driver
+SET         driver_name=MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ Driver
 SET          driver_lib=myodbc5
 SET    driver_lib_setup=myodbc5S
 SET           installer=myodbc-installer
