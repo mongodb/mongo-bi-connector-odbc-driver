@@ -53,11 +53,11 @@ Group:      Applications/Databases
 Version:    @NUMERIC_VERSION@
 Release:    1
 Provides:   mysqlodbcrpmpack
-License:    Copyright (c) 2000, 2011, %{mysql_vendor}. All rights reserved.  Under %{lic_type} license as shown in the Description field.
+License:    Copyright (c) 2000, @YEAR@, %{mysql_vendor}. All rights reserved.  Under %{lic_type} license as shown in the Description field.
 Source0:    %{name}-@VERSION@-src.tar.gz
 URL:        http://www.mysql.com/
-Vendor:     Oracle Corporation
-Packager:   Oracle Corporation Production Engineering Team <build@mysql.com>
+Vendor:     %{mysql_vendor}
+Packager:   %{mysql_vendor} Product Engineering Team <mysql-build@oss.oracle.com>
 
 BuildRoot:  %{_tmppath}/%{name}-@VERSION@-build
 
