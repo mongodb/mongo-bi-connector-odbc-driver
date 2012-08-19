@@ -3108,6 +3108,8 @@ DECLARE_TEST(t_outparams)
   /* Only 1 row always */
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
 
+  /* SP execution status */
+  ok_stmt(hstmt, SQLMoreResults(hstmt));
   expect_stmt(hstmt, SQLMoreResults(hstmt), SQL_NO_DATA);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
@@ -3118,7 +3120,7 @@ DECLARE_TEST(t_outparams)
 
 
 BEGIN_TESTS
-  /*ADD_TEST(my_resultset)
+  ADD_TEST(my_resultset)
   ADD_TEST(t_convert_type)
   ADD_TEST(t_desc_col)
   ADD_TEST(t_convert)
@@ -3162,7 +3164,7 @@ BEGIN_TESTS
   ADD_TEST(t_desccol_before_exec)
   ADD_TEST(t_bug62657)
   ADD_TEST(t_row_status)
-  ADD_TEST(t_prefetch)*/
+  ADD_TEST(t_prefetch)
   ADD_TOFIX(t_outparams)
 END_TESTS
 

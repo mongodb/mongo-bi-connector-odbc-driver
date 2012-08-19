@@ -547,9 +547,7 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
            new query */
         while (!next_result(stmt))
         {
-          /* TODO: verify if we really do not have to store result for
-                   text protocol */
-          get_result(stmt);
+          get_result_metadata(stmt, TRUE);
         }
       }
     }

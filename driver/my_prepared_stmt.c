@@ -58,12 +58,14 @@ static char * my_f_to_a(char * buf, size_t buf_size, double a)
 /* }}} */
 
 
+/* {{{ ssps_init() -I- */
 void ssps_init(STMT *stmt)
 {
   stmt->ssps= mysql_stmt_init(&stmt->dbc->mysql);
 
   stmt->result_bind= 0;
 }
+/* }}} */
 
 
 SQLRETURN SQL_API
@@ -71,37 +73,38 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
              SQLPOINTER rgbValue, SQLLEN cbValueMax, SQLLEN *pcbValue,
              char *value, ulong length, DESCREC *arrec);
 
-MYSQL_RES * ssps_get_result(STMT *stmt)
+/**
+  @returns TRUE if the resultset is SP OUT params
+  Basically it makes sense with prepared statements only
+  */
+BOOL ssps_get_out_params(STMT *stmt)
 {
-  stmt->result= mysql_stmt_result_metadata(stmt->ssps);
-
-  if (stmt->result)
+    /* If we use prepared statement, and the query is CALL and we have any
+     user's parameter described as INOUT or OUT and that is only result */
+  if (is_call_procedure(&stmt->query)
+#ifdef SERVER_PS_OUT_PARAMS
+    && stmt->dbc->mysql.server_status & SERVER_PS_OUT_PARAMS
+#else
+    && !mysql_more_results(&stmt->dbc->mysql)
+#endif
+    )
   {
-    if (!if_forward_cache(stmt) &&  (ssps_bind_result(stmt)
-                                  || mysql_stmt_store_result(stmt->ssps)))
+    MYSQL_ROW values= fetch_row(stmt);
+    DESCREC*iprec, *aprec;
+    uint counter= 0;
+    int i;
+
+    if ( stmt->fix_fields )
     {
-      return NULL;
+      values= (*stmt->fix_fields)(stmt,values);
     }
 
-    /* If we use prepared statement, and the query is CALL and we have any
-       user's parameter described as INOUT or OUT and that is only result */
-    if (is_call_procedure(&stmt->query)
-      && got_out_parameters(stmt) && !mysql_more_results(&stmt->dbc->mysql))
+    assert(values);
+    /* Then current result is out params */
+    stmt->out_params_state= 2;
+
+    if (got_out_parameters(stmt))
     {
-      MYSQL_ROW values= fetch_row(stmt);
-      DESCREC*iprec, *aprec;
-      uint counter= 0;
-      int i;
-
-      if ( stmt->fix_fields )
-      {
-        values= (*stmt->fix_fields)(stmt,values);
-      }
-
-      assert(values);
-      /* Then current result is out params */
-      stmt->out_params_state= 2;
-
       for (i= 0; i < myodbc_min(stmt->ipd->count, stmt->apd->count); ++i, ++values)
       {
         iprec= desc_get_rec(stmt->ipd, i, FALSE);
@@ -146,9 +149,27 @@ MYSQL_RES * ssps_get_result(STMT *stmt)
         }
       }
     }
+    /* This MAGICAL fetch is required */
+    mysql_stmt_fetch(stmt->ssps);
+
+    return TRUE;
+  }
+  return FALSE;
+}
+
+
+int ssps_get_first_result(STMT *stmt)
+{
+  if (stmt->result)
+  {
+    if (!if_forward_cache(stmt))
+    {
+      return ssps_bind_result(stmt) || mysql_stmt_store_result(stmt->ssps);
+    }
+
   }
   
-  return stmt->result;
+  return 0;
 }
 
 

@@ -1,6 +1,15 @@
 5.2.1(09-Aug-2012)
 
   Functionality added or changed:
+  Bugs fixed:
+  * Server disconnects on the execution of a query following execution of a SP
+    returning resultset(s) and OUT parameters. (Bug# 14512187)
+
+----
+
+5.2.1(09-Aug-2012)
+
+  Functionality added or changed:
   * Driver prepares statements on server
   * Support of INOUT and OUT parameters(WL#6116)
   * Increased the timeout in tests from 30 to 60 seconds to avoid failures in
@@ -11,6 +20,8 @@
   * "String data right truncated" error is not always correct (Bug# 14285620)
 
   Built using MySQL 5.5.27.
+
+----
 
 5.2.0
 

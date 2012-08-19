@@ -988,8 +988,6 @@ DECLARE_TEST(t_odbcoutparams)
   is_num(my_fetch_int(hstmt, 2), 300);
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
 
-  expect_stmt(hstmt, SQLMoreResults(hstmt), SQL_NO_DATA);
-
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
   ok_sql(hstmt, "DROP PROCEDURE t_odbcoutparams");
@@ -1019,6 +1017,9 @@ DECLARE_TEST(t_odbcoutparams)
 
   is_num(par[1], 100);
   is_num(par[2], 200);
+
+  /* SP execution status */
+  ok_stmt(hstmt, SQLMoreResults(hstmt));
 
   expect_stmt(hstmt, SQLMoreResults(hstmt), SQL_NO_DATA);
 

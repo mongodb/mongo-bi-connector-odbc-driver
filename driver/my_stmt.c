@@ -79,10 +79,11 @@ my_bool free_current_result(STMT *stmt)
 /* Name may be misleading, the idea is stmt - for directly executed statements,
    i.e using mysql_* part of api, ssps - prepared on server, using mysql_stmt
  */
-MYSQL_RES * stmt_get_result(STMT *stmt)
+static
+MYSQL_RES * stmt_get_result(STMT *stmt, BOOL force_use)
 {
   /* We can't use USE_RESULT because SQLRowCount will fail in this case! */
-  if (if_forward_cache(stmt))
+  if (if_forward_cache(stmt) || force_use)
   {
     return mysql_use_result(&stmt->dbc->mysql);
   }
@@ -93,18 +94,42 @@ MYSQL_RES * stmt_get_result(STMT *stmt)
 }
 
 
-MYSQL_RES * get_result(STMT *stmt)
+/* For text protocol this get result itself as well. Besides for text protocol
+   we need to use/store each resultset of multiple resultsets */
+MYSQL_RES * get_result_metadata(STMT *stmt, BOOL force_use)
 {
   if (ssps_used(stmt))
   {
-    stmt->result= ssps_get_result(stmt);
+    stmt->result= mysql_stmt_result_metadata(stmt->ssps);
   }
   else
   {
-    stmt->result= stmt_get_result(stmt);
+    stmt->result= stmt_get_result(stmt, force_use);
   }
 
   return stmt->result;
+}
+
+
+int bind_result(STMT *stmt)
+{
+  if (ssps_used(stmt))
+  {
+    return ssps_bind_result(stmt);
+  }
+
+  return 0;
+}
+
+int get_result(STMT *stmt)
+{
+  if (ssps_used(stmt))
+  {
+    return ssps_get_first_result(stmt);
+  }
+  /* Nothing to do here for text protocol */
+
+  return 0;
 }
 
 
@@ -560,7 +585,7 @@ SQLRETURN scroller_prefetch(STMT * stmt)
     return SQL_ERROR;
   }
 
-  get_result(stmt);
+  get_result_metadata(stmt, FALSE);
 
   /* I think there is no need to do fix_result_types here */
   pthread_mutex_unlock(&stmt->dbc->lock);

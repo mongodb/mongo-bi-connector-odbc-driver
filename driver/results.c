@@ -1209,80 +1209,86 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
 
 SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
 {
-    STMT FAR *  pStmt   = (STMT FAR*)hStmt;
-    int         nRetVal;
-    SQLRETURN   nReturn = SQL_SUCCESS;
+  STMT FAR *  pStmt   = (STMT FAR*)hStmt;
+  int         nRetVal;
+  SQLRETURN   nReturn = SQL_SUCCESS;
 
-    pthread_mutex_lock( &pStmt->dbc->lock );
+  pthread_mutex_lock( &pStmt->dbc->lock );
 
-    CLEAR_STMT_ERROR( pStmt );
+  CLEAR_STMT_ERROR( pStmt );
 
-    /* SQLExecute or SQLExecDirect need to be called first */
-    if ( pStmt->state != ST_EXECUTED )
+  /* SQLExecute or SQLExecDirect need to be called first */
+  if ( pStmt->state != ST_EXECUTED )
+  {
+    nReturn = set_stmt_error( pStmt, "HY010", NULL, 0 );
+    goto exitSQLMoreResults;
+  }
+
+  /* try to get next resultset */
+  nRetVal = next_result(pStmt);
+
+  /* call to mysql_next_result() failed */
+  if (nRetVal > 0)
+  {
+    nRetVal= mysql_errno(&pStmt->dbc->mysql);
+
+    switch ( nRetVal )
     {
-        nReturn = set_stmt_error( pStmt, "HY010", NULL, 0 );
+      case CR_SERVER_GONE_ERROR:
+      case CR_SERVER_LOST:
+        nReturn = set_stmt_error( pStmt, "08S01", mysql_error( &pStmt->dbc->mysql ), nRetVal );
+        goto exitSQLMoreResults;
+      case CR_COMMANDS_OUT_OF_SYNC:
+      case CR_UNKNOWN_ERROR:
+        nReturn = set_stmt_error( pStmt, "HY000", mysql_error( &pStmt->dbc->mysql ), nRetVal );
+        goto exitSQLMoreResults;
+      default:
+        nReturn = set_stmt_error( pStmt, "HY000", "unhandled error from mysql_next_result()", nRetVal );
         goto exitSQLMoreResults;
     }
+  }
 
-    /* try to get next resultset */
-    nRetVal = next_result(pStmt);
+  /* no more resultsets */
+  if (nRetVal < 0)
+  {
+    nReturn = SQL_NO_DATA;
+    goto exitSQLMoreResults;
+  }
 
-    /* call to mysql_next_result() failed */
-    if (nRetVal > 0)
+  /* cleanup existing resultset */
+  nReturn = my_SQLFreeStmtExtended((SQLHSTMT)pStmt,SQL_CLOSE,0);
+  if (!SQL_SUCCEEDED( nReturn ))
+  {
+    goto exitSQLMoreResults;
+  }
+
+  /* start using the new resultset */
+  pStmt->result = get_result_metadata(pStmt, FALSE);
+
+  if (!pStmt->result)
+  {
+    /* no fields means; INSERT, UPDATE or DELETE so no resultset is fine */
+    if (!field_count(pStmt))
     {
-      nRetVal = mysql_errno( &pStmt->dbc->mysql );
-      switch ( nRetVal )
-      {
-        case CR_SERVER_GONE_ERROR:
-        case CR_SERVER_LOST:
-            nReturn = set_stmt_error( pStmt, "08S01", mysql_error( &pStmt->dbc->mysql ), nRetVal );
-            goto exitSQLMoreResults;
-        case CR_COMMANDS_OUT_OF_SYNC:
-        case CR_UNKNOWN_ERROR:
-            nReturn = set_stmt_error( pStmt, "HY000", mysql_error( &pStmt->dbc->mysql ), nRetVal );
-            goto exitSQLMoreResults;
-        default:
-            nReturn = set_stmt_error( pStmt, "HY000", "unhandled error from mysql_next_result()", nRetVal );
-            goto exitSQLMoreResults;
-      }
-    }
-
-    /* no more resultsets */
-    if (nRetVal < 0)
-    {
-      nReturn = SQL_NO_DATA;
+      pStmt->state = ST_EXECUTED;
+      pStmt->affected_rows = affected_rows(pStmt);
       goto exitSQLMoreResults;
     }
+    /* we have fields but no resultset (not even an empty one) - this is bad */
+    nReturn = set_stmt_error( pStmt, "HY000", mysql_error( &pStmt->dbc->mysql ), mysql_errno( &pStmt->dbc->mysql ) );
+    goto exitSQLMoreResults;
+  }
 
-    /* cleanup existing resultset */
-    nReturn = my_SQLFreeStmtExtended((SQLHSTMT)pStmt,SQL_CLOSE,0);
-    if (!SQL_SUCCEEDED( nReturn ))
-    {
-      goto exitSQLMoreResults;
-    }
-
-    /* start using the new resultset */
-    pStmt->result = get_result(pStmt);
-
-    if (!pStmt->result)
-    {
-      /* no fields means; INSERT, UPDATE or DELETE so no resultset is fine */
-      if (!field_count(pStmt))
-      {
-        pStmt->state = ST_EXECUTED;
-        pStmt->affected_rows = affected_rows(pStmt);
-        goto exitSQLMoreResults;
-      }
-      /* we have fields but no resultset (not even an empty one) - this is bad */
-      nReturn = set_stmt_error( pStmt, "HY000", mysql_error( &pStmt->dbc->mysql ), mysql_errno( &pStmt->dbc->mysql ) );
-      goto exitSQLMoreResults;
-    }
-
-    fix_result_types(pStmt);
+  fix_result_types(pStmt);
+  /* checking if next result is SP OUT params and fetch them if needed */
+  if (!ssps_get_out_params(pStmt))
+  {
+    get_result(pStmt);
+  }
 
 exitSQLMoreResults:
-    pthread_mutex_unlock( &pStmt->dbc->lock );
-    return nReturn;
+  pthread_mutex_unlock( &pStmt->dbc->lock );
+  return nReturn;
 }
 
 
@@ -1457,7 +1463,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     LINT_INIT(save_position);
 
     if ( !stmt->result )
-        return set_stmt_error(stmt, "24000", "Fetch without a SELECT", 0);
+      return set_stmt_error(stmt, "24000", "Fetch without a SELECT", 0);
 
     if (stmt->out_params_state > 0)
     {
@@ -1476,17 +1482,17 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
 
     if ( stmt->stmt_options.cursor_type == SQL_CURSOR_FORWARD_ONLY )
     {
-        if ( fFetchType != SQL_FETCH_NEXT && !stmt->dbc->ds->safe )
-            return  set_error(stmt,MYERR_S1106,
-                              "Wrong fetchtype with FORWARD ONLY cursor", 0);
+      if ( fFetchType != SQL_FETCH_NEXT && !stmt->dbc->ds->safe )
+        return  set_error(stmt,MYERR_S1106,
+                          "Wrong fetchtype with FORWARD ONLY cursor", 0);
     }
 
     if ( if_dynamic_cursor(stmt) && set_dynamic_result(stmt) )
-        return set_error(stmt,MYERR_S1000,
-                         "Driver Failed to set the internal dynamic result", 0);
+      return set_error(stmt,MYERR_S1000,
+                       "Driver Failed to set the internal dynamic result", 0);
 
     if ( !pcrow )
-        pcrow= &dummy_pcrow;
+      pcrow= &dummy_pcrow;
 
     /* for scrollable cursor("scroller") max_row is max row for currently
        fetched part of resultset */
@@ -1496,56 +1502,58 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
 
     switch ( fFetchType )
     {
-        case SQL_FETCH_NEXT:
-            cur_row= (stmt->current_row < 0 ? 0 :
-                      stmt->current_row+stmt->rows_found_in_set);
-            break;
-        case SQL_FETCH_PRIOR:
-            cur_row= (stmt->current_row <= 0 ? -1 :
-                      (long)(stmt->current_row - stmt->ard->array_size));
-            break;
-        case SQL_FETCH_FIRST:
-            cur_row= 0L;
-            break;
-        case SQL_FETCH_LAST:
-            cur_row= max_row - stmt->ard->array_size;
-            break;
-        case SQL_FETCH_ABSOLUTE:
-            if ( irow < 0 )
-            {
-                /* Fetch from end of result set */
-                if ( max_row+irow < 0 && -irow <= (long) stmt->ard->array_size )
-                {
-                    /*
-                      | FetchOffset | > LastResultRow AND
-                      | FetchOffset | <= RowsetSize
-                    */
-                    cur_row= 0;     /* Return from beginning */
-                }
-                else
-                    cur_row= max_row+irow;     /* Ok if max_row <= -irow */
-            }
-            else
-                cur_row= (long) irow-1;
-            break;
+      case SQL_FETCH_NEXT:
+        cur_row= (stmt->current_row < 0 ? 0 :
+                  stmt->current_row+stmt->rows_found_in_set);
+        break;
+      case SQL_FETCH_PRIOR:
+        cur_row= (stmt->current_row <= 0 ? -1 :
+                  (long)(stmt->current_row - stmt->ard->array_size));
+        break;
+      case SQL_FETCH_FIRST:
+        cur_row= 0L;
+        break;
+      case SQL_FETCH_LAST:
+        cur_row= max_row - stmt->ard->array_size;
+        break;
+      case SQL_FETCH_ABSOLUTE:
+        if (irow < 0)
+        {
+          /* Fetch from end of result set */
+          if ( max_row+irow < 0 && -irow <= (long) stmt->ard->array_size )
+          {
+            /*
+              | FetchOffset | > LastResultRow AND
+              | FetchOffset | <= RowsetSize
+            */
+            cur_row= 0;     /* Return from beginning */
+          }
+          else
+            cur_row= max_row+irow;     /* Ok if max_row <= -irow */
+        }
+        else
+          cur_row= (long) irow-1;
+        break;
 
-        case SQL_FETCH_RELATIVE:
-            cur_row= stmt->current_row + irow;
-            if ( stmt->current_row > 0 && cur_row < 0 &&
-                 (long)-irow <= (long)stmt->ard->array_size )
-                cur_row= 0;
-            break;
+      case SQL_FETCH_RELATIVE:
+        cur_row= stmt->current_row + irow;
+        if (stmt->current_row > 0 && cur_row < 0 &&
+           (long)-irow <= (long)stmt->ard->array_size)
+        {
+          cur_row= 0;
+        }
+        break;
 
-        default:
-            return set_error(stmt, MYERR_S1106, "Fetch type out of range", 0);
+      default:
+          return set_error(stmt, MYERR_S1106, "Fetch type out of range", 0);
     }
 
     if ( cur_row < 0 )
     {
-        stmt->current_row= -1;  /* Before first row */
-        stmt->rows_found_in_set= 0;
-        data_seek(stmt, 0L);
-        return SQL_NO_DATA_FOUND;
+      stmt->current_row= -1;  /* Before first row */
+      stmt->rows_found_in_set= 0;
+      data_seek(stmt, 0L);
+      return SQL_NO_DATA_FOUND;
     }
     if ( cur_row > max_row )
     {
@@ -1594,15 +1602,22 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     }
 
     /* out params has been silently fetched */
-    if ( !rows_to_fetch && ! stmt->out_params_state > 0)
+    if (rows_to_fetch == 0)
     {
+      if (stmt->out_params_state > 0)
+      {
+        rows_to_fetch= 1;
+      }
+      else
+      {
         *pcrow= 0;
         stmt->rows_found_in_set= 0;
         if ( upd_status && stmt->ird->rows_processed_ptr )
         {
-            *stmt->ird->rows_processed_ptr= 0;
+          *stmt->ird->rows_processed_ptr= 0;
         }
         return SQL_NO_DATA_FOUND;
+      }
     }
 
     if (!stmt->dbc->ds->dont_use_set_locale)
@@ -1613,157 +1628,165 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     res= SQL_SUCCESS;
     for (i= 0 ; i < rows_to_fetch ; ++i)
     {
-        if ( stmt->result_array )
+      if ( stmt->result_array )
+      {
+        values= stmt->result_array + cur_row*stmt->result->field_count;
+        if ( i == 0 )
         {
-            values= stmt->result_array+cur_row*stmt->result->field_count;
-            if ( i == 0 )
+          stmt->current_values= values;
+        }
+      }
+      else
+      {
+        /* This code will ensure that values is always set */
+        if ( i == 0 )
+        {
+            save_position= row_tell(stmt);
+        }
+        /* - Actual fetching happens here - */
+        if ( stmt->out_params_state == 0
+          && !(values= fetch_row(stmt)) )
+        {
+          if (scroller_exists(stmt))
+          {
+            scroller_move(stmt);
+
+            row_res= scroller_prefetch(stmt);
+
+            if (row_res != SQL_SUCCESS)
             {
-                stmt->current_values= values;
+              break;
             }
+
+            if ( !(values= fetch_row(stmt)) )
+            {
+              break;
+            }
+
+            /* Not sure that is right, but see it better than nothing */
+            save_position= row_tell(stmt);
+          }
+          else
+          {
+            break;
+          }
+        }
+
+        if (stmt->out_params_state)
+        {
+          values= stmt->array;
+        }
+
+        if ( stmt->fix_fields )
+        {
+            values= (*stmt->fix_fields)(stmt,values);
+        }
+
+        stmt->current_values= values;
+      }
+
+      if (!stmt->fix_fields)
+      {
+        /* lengths contains lengths for all rows. Alternate use could be
+           filling ird buffers in the (fix_fields) function. In this case
+           lengths could contain just one array with rules for lengths
+           calculating(it can work out in many cases like in catalog functions
+           there some fields from results of auxiliary query are simply mixed
+           somehow and constant fields added ).
+           Another approach could be using of "array" and "order" arrays
+           and special fix_fields callback, that will fix array and set
+           lengths in ird*/
+        if (stmt->lengths)
+        {
+          fill_ird_data_lengths(stmt->ird, stmt->lengths + cur_row*stmt->result->field_count,
+                                stmt->result->field_count);
         }
         else
         {
-            /* This code will ensure that values is always set */
-            if ( i == 0 )
-            {
-                save_position= row_tell(stmt);
-            }
-            if ( stmt->out_params_state == 0 && !(values= fetch_row(stmt)) )
-            {
-              if (scroller_exists(stmt))
-              {
-                scroller_move(stmt);
-
-                row_res= scroller_prefetch(stmt);
-
-                if (row_res != SQL_SUCCESS)
-                {
-                  break;
-                }
-
-                if ( !(values= fetch_row(stmt)) )
-                {
-                  break;
-                }
-
-                /* Not sure that is right, but see it better than nothing */
-                save_position= row_tell(stmt);
-              }
-              else
-              {
-                break;
-              }
-            }
-
-            if (stmt->out_params_state)
-            {
-              values= stmt->array;
-            }
-
-            if ( stmt->fix_fields )
-            {
-                values= (*stmt->fix_fields)(stmt,values);
-            }
-
-            stmt->current_values= values;
+          fill_ird_data_lengths(stmt->ird, fetch_lengths(stmt),
+                                stmt->result->field_count);
         }
+      }
 
-        if (!stmt->fix_fields)
+      row_res= fill_fetch_buffers(stmt, values, i);
+
+      /* For SQL_SUCCESS we need all rows to be SQL_SUCCESS */
+      if (res != row_res)
+      {
+        /* Any successful row makes overall result SQL_SUCCESS_WITH_INFO */
+        if (SQL_SUCCEEDED(row_res))
         {
-          /* lengths contains lengths for all rows. Alternate use could be
-             filling ird buffers in the (fix_fields) function. In this case
-             lengths could contain just one array with rules for lengths
-             calculating(it can work out in many cases like in catalog functions
-             there some fields from results of auxiliary query are simply mixed
-             somehow and constant fields added ).
-             Another approach could be using of "array" and "order" arrays
-             and special fix_fields callback, that will fix array and set
-             lengths in ird*/
-          if (stmt->lengths)
-            fill_ird_data_lengths(stmt->ird, stmt->lengths + cur_row*stmt->result->field_count,
-                                  stmt->result->field_count);
-          else
-            fill_ird_data_lengths(stmt->ird, fetch_lengths(stmt),
-                                  stmt->result->field_count);
+          res= SQL_SUCCESS_WITH_INFO;
         }
-        row_res= fill_fetch_buffers(stmt, values, i);
-
-        /* For SQL_SUCCESS we need all rows to be SQL_SUCCESS */
-        if (res != row_res)
+        /* Else error */
+        else if (i == 0)
         {
-          /* Any successful row makes overall result SQL_SUCCESS_WITH_INFO */
-          if (SQL_SUCCEEDED(row_res))
-          {
-            res= SQL_SUCCESS_WITH_INFO;
-          }
-          /* Else error */
-          else if (i == 0)
-          {
-            /* SQL_ERROR only if all rows fail */
-            res= SQL_ERROR;
-          }
-          else
-          {
-            res= SQL_SUCCESS_WITH_INFO;
-          }
+          /* SQL_ERROR only if all rows fail */
+          res= SQL_ERROR;
         }
-
-        /* "Fetching" includes buffers filling. I think errors in that 
-           have to affect row status */
-
-        if (rgfRowStatus)
+        else
         {
-          rgfRowStatus[i]= sqlreturn2row_status(row_res);
+          res= SQL_SUCCESS_WITH_INFO;
         }
-        /*
-          No need to update rowStatusPtr_ex, it's the same as rgfRowStatus.
-        */
-        if (upd_status && stmt->ird->array_status_ptr)
-        {
-          stmt->ird->array_status_ptr[i]= sqlreturn2row_status(row_res);
-        }
+      }
 
-        ++cur_row;
+      /* "Fetching" includes buffers filling. I think errors in that 
+         have to affect row status */
+
+      if (rgfRowStatus)
+      {
+        rgfRowStatus[i]= sqlreturn2row_status(row_res);
+      }
+      /*
+        No need to update rowStatusPtr_ex, it's the same as rgfRowStatus.
+      */
+      if (upd_status && stmt->ird->array_status_ptr)
+      {
+        stmt->ird->array_status_ptr[i]= sqlreturn2row_status(row_res);
+      }
+
+      ++cur_row;
     }   /* fetching cycle end*/
 
     stmt->rows_found_in_set= i;
     *pcrow= i;
 
     disconnected= is_connection_lost(mysql_errno(&stmt->dbc->mysql))
-        && handle_connection_error(stmt);
+      && handle_connection_error(stmt);
 
     if ( upd_status && stmt->ird->rows_processed_ptr )
     {
-        *stmt->ird->rows_processed_ptr= i;
+      *stmt->ird->rows_processed_ptr= i;
     }
 
     /* It is possible that both rgfRowStatus and array_status_ptr are set
     (and upp_status is TRUE) */
     for ( ; i < stmt->ard->array_size ; ++i )
     {
-        if ( rgfRowStatus )
-        {
-          rgfRowStatus[i]= disconnected ? SQL_ROW_ERROR : SQL_ROW_NOROW;
-        }
-        /*
-          No need to update rowStatusPtr_ex, it's the same as rgfRowStatus.
-        */
-        if ( upd_status && stmt->ird->array_status_ptr )
-        {
-          stmt->ird->array_status_ptr[i]= disconnected? SQL_ROW_ERROR
-                                                      : SQL_ROW_NOROW;
-        }
+      if ( rgfRowStatus )
+      {
+        rgfRowStatus[i]= disconnected ? SQL_ROW_ERROR : SQL_ROW_NOROW;
+      }
+      /*
+        No need to update rowStatusPtr_ex, it's the same as rgfRowStatus.
+      */
+      if ( upd_status && stmt->ird->array_status_ptr )
+      {
+        stmt->ird->array_status_ptr[i]= disconnected? SQL_ROW_ERROR
+                                                    : SQL_ROW_NOROW;
+      }
     }
 
     if (SQL_SUCCEEDED(res) && !stmt->result_array && !if_forward_cache(stmt))
     {
-        /* reset result position */
-        stmt->end_of_set= row_seek(stmt, save_position);
+      /* reset result position */
+      stmt->end_of_set= row_seek(stmt, save_position);
     }
 
     if (!stmt->dbc->ds->dont_use_set_locale)
-
-        setlocale(LC_NUMERIC,default_locale);
+    {
+      setlocale(LC_NUMERIC,default_locale);
+    }
 
     if (SQL_SUCCEEDED(res)
       && stmt->rows_found_in_set < stmt->ard->array_size)

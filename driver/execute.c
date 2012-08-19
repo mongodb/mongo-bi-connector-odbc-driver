@@ -130,12 +130,12 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
       goto exit;
     }
 
-    if (!get_result(stmt))
+    if (!get_result_metadata(stmt, FALSE))
     {
       /* Query was supposed to return result, but result is NULL*/
       if (returned_result(stmt))
       {
-        set_error(stmt,MYERR_S1000,mysql_error(&stmt->dbc->mysql),
+        set_error(stmt, MYERR_S1000, mysql_error(&stmt->dbc->mysql),
                 mysql_errno(&stmt->dbc->mysql));
         goto exit;
       }
@@ -147,6 +147,19 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
         goto exit;
       }
     }
+
+
+    /* If the only resultset is OUT params, then we can only detect corresponding
+       server_status right after execution.
+       If the RS is OUT params - we do not need to do store_result obviously*/
+    if (!ssps_get_out_params(stmt)
+      && (bind_result(stmt) || get_result(stmt)))
+    {
+        set_error(stmt, MYERR_S1000, mysql_error(&stmt->dbc->mysql),
+                mysql_errno(&stmt->dbc->mysql));
+        goto exit;
+    }
+    
     /* Caching row counts for queries returning resultset as well */
     //update_affected_rows(stmt);
     fix_result_types(stmt);

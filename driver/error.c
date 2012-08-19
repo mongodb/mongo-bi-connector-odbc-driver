@@ -334,7 +334,7 @@ SQLRETURN set_conn_error(DBC *dbc, myodbc_errid errid, const char *errtext,
 SQLRETURN set_error(STMT *stmt, myodbc_errid errid, const char *errtext,
                     SQLINTEGER errcode)
 {
-    return copy_error(&stmt->error,errid,errtext,errcode,
+    return copy_error(&stmt->error, errid, errtext, errcode,
                       stmt->dbc->st_error_prefix);
 }
 
