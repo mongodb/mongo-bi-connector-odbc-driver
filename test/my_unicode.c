@@ -1212,6 +1212,141 @@ DECLARE_TEST(t_bug28168)
 }
 
 
+/*
+  Bug#14363601 MY_ISSPACE CALLS CAUSE ODBC DRIVER CRASHES
+*/
+DECLARE_TEST(t_bug14363601)
+{
+  HENV henv1;
+  HDBC hdbc1;
+  HSTMT hstmt1;
+  int i;
+  wchar_t conn_in[512];
+  wchar_t dummy[256];
+
+  SQLWCHAR conn_out[1024];
+  SQLSMALLINT conn_out_len;
+  SQLLEN strlen_or_ind= 10;
+  SQLINTEGER col_id= 1234;
+  SQLWCHAR *col_vc= W(L"abcdefg\x30a1"), col_vc_res[30];
+  double col_dc= 12345.678, col_dc_res= 0;
+  unsigned char col_bc[10]= {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, col_bc_res[10];
+
+  ok_env(henv1, SQLAllocEnv(&henv1));
+  ok_env(henv1, SQLAllocConnect(henv1, &hdbc1));
+
+  *conn_in= L'\0';
+  wcscat(conn_in, L"DRIVER=");
+  mbstowcs(dummy, (char *)mydriver, sizeof(dummy)/sizeof(wchar_t));
+  wcscat(conn_in, dummy);
+  wcscat(conn_in, L";UID=");
+  mbstowcs(dummy, (char *)myuid, sizeof(dummy)/sizeof(wchar_t));
+  wcscat(conn_in, dummy);
+  wcscat(conn_in, L";PWD=");
+  mbstowcs(dummy, (char *)mypwd, sizeof(dummy)/sizeof(wchar_t));
+  wcscat(conn_in, dummy);
+  wcscat(conn_in, L";DATABASE=");
+  mbstowcs(dummy, (char *)mydb, sizeof(dummy)/sizeof(wchar_t));
+  wcscat(conn_in, dummy);
+  wcscat(conn_in, L";SERVER=");
+  mbstowcs(dummy, (char *)myserver, sizeof(dummy)/sizeof(wchar_t));
+  wcscat(conn_in, dummy);
+  if (mysock != NULL)
+  {
+    wcscat(conn_in, L";SOCKET=");
+    mbstowcs(dummy, (char *)mysock, sizeof(dummy)/sizeof(wchar_t));
+    wcscat(conn_in, dummy);
+  }
+  if (myport)
+  {
+    char pbuff[20];
+    sprintf(pbuff, ";PORT=%d", myport);
+    mbstowcs(dummy, (char *)pbuff, sizeof(dummy)/sizeof(wchar_t));
+    wcscat(conn_in, dummy);
+  }
+  wcscat(conn_in, L";CHARSET=utf16");
+
+  ok_con(hdbc1, SQLDriverConnectW(hdbc1, NULL, WL(conn_in, wcslen(conn_in)),
+                                  wcslen(conn_in), conn_out, sizeof(conn_out),
+                                  &conn_out_len, SQL_DRIVER_NOPROMPT));
+
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS bug14363601");
+  ok_sql(hstmt1, "CREATE TABLE bug14363601("
+                 "id INT, vc VARCHAR(32),"
+                 "dc DOUBLE, bc BLOB)CHARSET=UTF8");
+
+  ok_stmt(hstmt1, SQLPrepareW(hstmt1, 
+		    W(L"INSERT INTO bug14363601 (id, vc, dc, bc) "
+                      L"VALUES (?, ?, ?, ?)"), SQL_NTS));
+
+  /* Bind 1st INT param */
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT, SQL_C_LONG,
+                                  SQL_INTEGER, 0, 0, &col_id, 0, NULL));
+  
+  /* Bind 2nd VARCHAR param */
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 2, SQL_PARAM_INPUT, SQL_C_WCHAR,
+				   SQL_WCHAR, 10, 0, col_vc, 
+                                  10*sizeof(SQLWCHAR), NULL));
+
+  /* Bind 3rd DECIMAL param */
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 3, SQL_PARAM_INPUT, SQL_C_DOUBLE,
+                                  SQL_DOUBLE, 0, 0, &col_dc, sizeof(col_dc),
+                                  NULL));
+
+  /* Bind 4th BLOB param */
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 4, SQL_PARAM_INPUT, SQL_C_BINARY,
+                                  SQL_BINARY, (SQLULEN)sizeof(col_bc), 0, &col_bc, 
+                                  sizeof(col_bc), &strlen_or_ind));
+
+  ok_stmt(hstmt1, SQLExecute(hstmt1));
+
+  ok_stmt(hstmt1, SQLExecDirectW(hstmt1, W(L"SELECT * FROM bug14363601"), 
+                                 SQL_NTS));
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+
+  is_num(my_fetch_int(hstmt1, 1), col_id);
+
+  ok_stmt(hstmt1, SQLGetData(hstmt1, 2, SQL_C_WCHAR, col_vc_res,
+                             sizeof(col_vc_res), NULL));
+
+  /* we want to compare SQLWCHAR instead of wchar_t */
+  for (i= 0; i < 8; i++)
+  {
+    is(col_vc[i] == col_vc_res[i]);
+  }
+
+  ok_stmt(hstmt1, SQLGetData(hstmt1, 3, SQL_C_DOUBLE, &col_dc_res, 
+                             sizeof(col_dc_res), NULL));
+  is(col_dc == col_dc_res);
+
+  ok_stmt(hstmt1, SQLGetData(hstmt1, 4, SQL_C_BINARY, &col_bc_res, 
+                             sizeof(col_bc_res), NULL));
+
+  /* check the binary buffer byte by byte */
+  for (i= 0; i < sizeof(col_bc_res); i++)
+  {
+    is_num(col_bc[i], col_bc_res[i]);
+  }
+
+  expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS bug14363601");
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+  ok_env(henv1, SQLFreeEnv(henv1));
+  
+  /* OK if it has not crashed */
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlconnect)
   ADD_TEST(sqlprepare)
@@ -1235,6 +1370,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug32161)
   ADD_TEST(t_bug34672)
   ADD_TEST(t_bug28168)
+  ADD_TEST(t_bug14363601)
 END_TESTS
 
 
