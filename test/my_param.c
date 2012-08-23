@@ -942,6 +942,7 @@ DECLARE_TEST(t_odbcoutparams)
   SQLSMALLINT ncol, i;
   SQLINTEGER  par[3]= {10, 20, 30}, val, len;
   SQLSMALLINT type[]= {SQL_PARAM_INPUT, SQL_PARAM_OUTPUT, SQL_PARAM_INPUT_OUTPUT};
+  SQLCHAR     str[20]= "initial value", buff[20];
 
   ok_sql(hstmt, "DROP PROCEDURE IF EXISTS t_odbcoutparams");
   ok_sql(hstmt, "CREATE PROCEDURE t_odbcoutparams("
@@ -949,9 +950,7 @@ DECLARE_TEST(t_odbcoutparams)
                 "  OUT p_out INT, "
                 "  INOUT p_inout INT) "
                 "BEGIN "
-                /*"  SELECT p_in, p_out, p_inout; "*/
                 "  SET p_in = p_in*10, p_out = (p_in+p_inout)*10, p_inout = p_inout*10; "
-                /*"  SELECT p_inout, p_in, p_out;"*/
                 "END");
 
 
@@ -964,18 +963,6 @@ DECLARE_TEST(t_odbcoutparams)
 
   ok_sql(hstmt, "CALL t_odbcoutparams(?, ?, ?)");
 
-  /* rs-2 */
-  /*
-  ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
-  is_num(ncol, 3);
-  
-  ok_stmt(hstmt, SQLFetch(hstmt));
-  is_num(my_fetch_int(hstmt, 1), 300);
-  is_num(my_fetch_int(hstmt, 2), 100);
-  is_num(my_fetch_int(hstmt, 3), 200);*/
-
-  /* rs-3 out params */
-  /*ok_stmt(hstmt, SQLMoreResults(hstmt));*/
   ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
   is_num(ncol, 2);
 
@@ -998,10 +985,9 @@ DECLARE_TEST(t_odbcoutparams)
                 "BEGIN "
                 "  SELECT p_in, p_out, p_inout; "
                 "  SET p_in = 300, p_out = 100, p_inout = 200; "
-                /*"  SELECT p_inout, p_in, p_out;"*/
                 "END");
   ok_sql(hstmt, "CALL t_odbcoutparams(?, ?, ?)");
-    /* rs-1 */
+  /* rs-1 */
   ok_stmt(hstmt, SQLFetch(hstmt));
   ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
   is_num(ncol, 3);
@@ -1024,6 +1010,44 @@ DECLARE_TEST(t_odbcoutparams)
   expect_stmt(hstmt, SQLMoreResults(hstmt), SQL_NO_DATA);
 
   ok_sql(hstmt, "DROP PROCEDURE t_odbcoutparams");
+  ok_sql(hstmt, "CREATE PROCEDURE t_odbcoutparams("
+                "  OUT p_out VARCHAR(19), "
+                "  IN p_in INT, "
+                "  INOUT p_inout INT) "
+                "BEGIN "
+                "  SET p_in = 300, p_out := 'This is OUT param', p_inout = 200; "
+                "  SELECT p_inout, p_in, substring(p_out, 9);"
+                "END");
+  
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_OUTPUT, SQL_C_CHAR, SQL_VARCHAR, 0,
+      0, str, sizeof(str)/sizeof(SQLCHAR), NULL));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_LONG, SQL_INTEGER, 0,
+      0, &par[0], 0, NULL));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 3, SQL_PARAM_INPUT_OUTPUT, SQL_C_LONG,
+      SQL_INTEGER, 0, 0, &par[1], 0, NULL));
+
+  ok_sql(hstmt, "CALL t_odbcoutparams(?, ?, ?)");
+  /* rs-1 */
+  ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
+  is_num(ncol, 3);
+  
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 1), 200);
+  is_num(my_fetch_int(hstmt, 2), 300);
+  is_str(my_fetch_str(hstmt, buff, 3), "OUT param", 10);
+
+  ok_stmt(hstmt, SQLMoreResults(hstmt));
+  is_str(str, "This is OUT param", 18);
+  is_num(par[1], 200);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buff, 1), "This is OUT param", 18);
+  is_num(my_fetch_int(hstmt, 2), 200);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP PROCEDURE t_odbcoutparams");
+
   return OK;
 }
 

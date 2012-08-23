@@ -89,21 +89,32 @@ BOOL ssps_get_out_params(STMT *stmt)
 #endif
     )
   {
-    MYSQL_ROW values= fetch_row(stmt);
+    MYSQL_ROW values= NULL;
     DESCREC*iprec, *aprec;
     uint counter= 0;
     int i;
 
-    if ( stmt->fix_fields )
+    /*Since OUT parameters can be completely different - we have to free current
+      bind and bind new */
+
+    free_result_bind(stmt);
+    /* Thus function interface has to be changed */
+    if (ssps_bind_result(stmt) == 0)
     {
-      values= (*stmt->fix_fields)(stmt,values);
+      values= fetch_row(stmt);
+
+      if (stmt->fix_fields)
+      {
+        values= (*stmt->fix_fields)(stmt,values);
+      }
     }
 
     assert(values);
+
     /* Then current result is out params */
     stmt->out_params_state= 2;
 
-    if (got_out_parameters(stmt))
+    if (values != NULL && got_out_parameters(stmt))
     {
       for (i= 0; i < myodbc_min(stmt->ipd->count, stmt->apd->count); ++i, ++values)
       {
@@ -140,6 +151,7 @@ BOOL ssps_get_out_params(STMT *stmt)
             target= ptr_offset_adjust(aprec->data_ptr, stmt->apd->bind_offset_ptr,
                                   stmt->apd->bind_type, default_size, 0);
 
+            reset_getdata_position(stmt);
 
             sql_get_data(stmt, aprec->concise_type, counter,
                          target, aprec->octet_length, indicator_ptr,
