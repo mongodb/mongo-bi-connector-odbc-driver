@@ -940,7 +940,8 @@ DECLARE_TEST(t_bug59772)
 DECLARE_TEST(t_odbcoutparams)
 {
   SQLSMALLINT ncol, i;
-  SQLINTEGER  par[3]= {10, 20, 30}, val, len;
+  SQLINTEGER  par[3]= {10, 20, 30}, val;
+  SQLLEN      len;
   SQLSMALLINT type[]= {SQL_PARAM_INPUT, SQL_PARAM_OUTPUT, SQL_PARAM_INPUT_OUTPUT};
   SQLCHAR     str[20]= "initial value", buff[20];
 
@@ -1052,6 +1053,45 @@ DECLARE_TEST(t_odbcoutparams)
 }
 
 
+DECLARE_TEST(t_bug14501952)
+{
+  SQLSMALLINT ncol;
+  SQLLEN      len= 0;
+  SQLSMALLINT type[]= {SQL_PARAM_INPUT, SQL_PARAM_OUTPUT, SQL_PARAM_INPUT_OUTPUT};
+  SQLCHAR     blobValue[50]= "initial value", buff[100];
+
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS bug14501952");
+  ok_sql(hstmt, "CREATE PROCEDURE bug14501952 (INOUT param1 BLOB)\
+								   BEGIN\
+								   SET param1= 'this is blob value from SP ';\
+								   END;");
+
+
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT_OUTPUT,
+    SQL_C_BINARY, SQL_LONGVARBINARY, 50, 0, &blobValue, sizeof(blobValue),
+    &len));
+
+  ok_sql(hstmt, "CALL bug14501952(?)");
+
+  is_str(blobValue, "this is blob value from SP ", 27);
+  ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
+  is_num(ncol, 1);
+
+  /* Only 1 row always - we still can get them as a result */
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_BINARY, buff, sizeof(buff),
+                            &len));
+  is_str(buff, blobValue, 27);
+  
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP PROCEDURE bug14501952");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_init_table)
   ADD_TEST(my_param_insert)
@@ -1067,6 +1107,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug56804)
   ADD_TEST(t_bug59772)
   ADD_TEST(t_odbcoutparams)
+  ADD_TEST(t_bug14501952)
 END_TESTS
 
 

@@ -4,6 +4,8 @@
   Bugs fixed:
   * Server disconnects on the execution of a query following execution of a SP
     returning resultset(s) and OUT parameters. (Bug# 14512187)
+  * Crash while executing after binding BLOB datatype as INOUT parameter
+    (Bug# 14501952)
 
 ----
 

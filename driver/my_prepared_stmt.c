@@ -82,11 +82,7 @@ BOOL ssps_get_out_params(STMT *stmt)
     /* If we use prepared statement, and the query is CALL and we have any
      user's parameter described as INOUT or OUT and that is only result */
   if (is_call_procedure(&stmt->query)
-#ifdef SERVER_PS_OUT_PARAMS
-    && stmt->dbc->mysql.server_status & SERVER_PS_OUT_PARAMS
-#else
-    && !mysql_more_results(&stmt->dbc->mysql)
-#endif
+
     )
   {
     MYSQL_ROW values= NULL;
@@ -379,7 +375,7 @@ int ssps_bind_result(STMT *stmt)
 
     for (i= 0; i < num_fields; ++i)
     {
-      MYSQL_FIELD    *field= mysql_fetch_field(stmt->result);
+      MYSQL_FIELD    *field= mysql_fetch_field_direct(stmt->result, i);
       st_buffer_size_type p= allocate_buffer_for_field(field);
 
       stmt->result_bind[i].buffer_type  = p.type;
@@ -402,9 +398,11 @@ int ssps_bind_result(STMT *stmt)
         /* Buffer of initial length? */
       }
     }
+    
+    return mysql_stmt_bind_result(stmt->ssps, stmt->result_bind);
   }
 
-  return mysql_stmt_bind_result(stmt->ssps, stmt->result_bind);
+  return 0;
 }
 
 
