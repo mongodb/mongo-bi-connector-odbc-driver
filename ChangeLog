@@ -10,6 +10,9 @@
   * my_isspace calls cause ODBC driver crashes (Bug# 14363601)
   * SQLNativeSql did not null-terminate output string after copying
     (Bug# 14559721)
+  * SQLColumns and possibly other catalog functions that are not using I_S
+    could work incorrectly if called on the same statement handle after a
+    query returning resultset. (Bug#14338051)
 
 ----
 

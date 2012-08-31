@@ -2520,6 +2520,7 @@ DECLARE_TEST(t_bug14085211_part1)
   expect_stmt(hstmt, SQLTables(hstmt, (SQLCHAR *)tab_1024_name, SQL_NTS, NULL, SQL_NTS,
                                   (SQLCHAR *)tab_1024_name, SQL_NTS, 
                                   "TABLE,VIEW", SQL_NTS), SQL_ERROR);
+  is_num(check_sqlstate(hstmt, "HY090"), OK);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
@@ -2536,6 +2537,37 @@ DECLARE_TEST(t_bug14085211_part2)
     TODO: test all catalog functions for extreme lengths of
           database, table and column names     
   */
+  return OK;
+}
+
+
+/* Bug#14338051 SQLCOLUMNS WORKS INCORRECTLY IF CALLED AFTER A STATEMENT
+                RETURNING RESULT
+   I expect that some other catalog function can be vulnerable, too */
+DECLARE_TEST(t_sqlcolumns_after_select)
+{
+  ok_sql(hstmt, "DROP TABLE if exists b14338051");
+
+  ok_sql(hstmt,"CREATE TABLE b14338051("
+               "blob_field BLOB, text_field TEXT )");
+
+  ok_sql(hstmt, "insert into b14338051 "
+                "set blob_field= 'blob', text_field= 'text'; ");
+
+  ok_sql(hstmt, "SELECT 'blob', 'text'");
+
+
+  while (SQL_SUCCEEDED(SQLFetch(hstmt)))
+  {
+  }
+
+  /*ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));*/
+  ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0,
+                          (SQLCHAR *)"b14338051",
+                          strlen("b14338051"), NULL, 0));
+
+  is_num(myresult(hstmt), 2);
+
   return OK;
 }
 
@@ -2586,6 +2618,7 @@ BEGIN_TESTS
   ADD_TEST(sqlcolumns_nodbselected)
   ADD_TEST(t_bug14085211_part1)
   ADD_TODO(t_bug14085211_part2)
+  ADD_TEST(t_sqlcolumns_after_select)
 END_TESTS
 
 myoption &= ~(1 << 30);
