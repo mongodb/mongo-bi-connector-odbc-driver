@@ -8,6 +8,8 @@
   * Close proximity issue when handling OS signlals in myodbc (Bug# 14303803)
   * "String data right truncated" error is not always correct (Bug# 14285620)
   * my_isspace calls cause ODBC driver crashes (Bug# 14363601)
+  * SQLNativeSql did not null-terminate output string after copying
+    (Bug# 14559721)
 
 ----
 
