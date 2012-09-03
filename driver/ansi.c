@@ -883,18 +883,35 @@ SQLRETURN SQL_API
 SQLNativeSql(SQLHDBC hdbc, SQLCHAR *in, SQLINTEGER in_len,
              SQLCHAR *out, SQLINTEGER out_max, SQLINTEGER *out_len)
 {
+  SQLRETURN rc= SQL_SUCCESS;
+
   if (in_len == SQL_NTS)
+  {
     in_len= strlen((char *)in);
+  }
 
   if (out_len)
+  {
     *out_len= in_len;
+  }
 
-  (void)strncpy((char *)out, (const char *)in, out_max);
+  if (out && in_len >= out_max)
+  {
+    rc= set_conn_error((DBC *)hdbc, MYERR_01004, NULL, 0);
+  }
 
-  if (out && in_len > out_max)
-    return set_conn_error((DBC *)hdbc, MYERR_01004, NULL, 0);
+  if(out_max > 0)
+  {
+    if (in_len > out_max - 1)
+    {
+      in_len= out_max - 1;
+    }
 
-  return SQL_SUCCESS;
+    (void)memcpy((char *)out, (const char *)in, in_len);
+    out[in_len]= '\0';
+  }
+
+  return rc;
 }
 
 

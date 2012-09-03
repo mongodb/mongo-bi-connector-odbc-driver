@@ -321,14 +321,14 @@ int  get_ctype(MY_PARSER *parser)
 const char *mystr_get_prev_token(CHARSET_INFO *charset,
                                         const char **query, const char *start)
 {
-  const char *pos= *query;
+  const char *pos= *query, *end= *query;
 
   do
   {
     if (pos == start)
       return (*query = start);     /* Return start of string */
     --pos;
-  } while (*pos < 0 || !my_isspace(charset, *pos)) ;
+  } while (*pos < 0 || !myodbc_isspace(charset, pos, end)) ;
 
   *query= pos;      /* Remember pos to space */
 
@@ -347,7 +347,7 @@ const char *mystr_get_next_token(CHARSET_INFO *charset,
     if (pos == end)
       return (*query = end);     /* Return start of string */
     ++pos;
-  } while (*pos > 0 && my_isspace(charset, *pos)) ;
+  } while (*pos > 0 && myodbc_isspace(charset, pos, pos + 1)) ;
 
   /* Looking for space after token */
   *query= pos + 1;
