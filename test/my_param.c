@@ -29,20 +29,20 @@
 *********************************************************/
 DECLARE_TEST(my_init_table)
 {
-    SQLRETURN   rc;
+  SQLRETURN   rc;
 
-    ok_sql(hstmt, "DROP TABLE if exists my_demo_param");
+  ok_sql(hstmt, "DROP TABLE if exists my_demo_param");
 
-    /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
-    mycon(hdbc,rc);
+  /* commit the transaction */
+  rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
+  mycon(hdbc,rc);
 
-    /* create the table 'my_demo_param' */
-    ok_sql(hstmt, "CREATE TABLE my_demo_param(\
-                              id   int,\
-                              auto int primary key auto_increment,\
-                              name varchar(20),\
-                              timestamp timestamp)");
+  /* create the table 'my_demo_param' */
+  ok_sql(hstmt, "CREATE TABLE my_demo_param(\
+                            id   int,\
+                            auto int primary key auto_increment,\
+                            name varchar(20),\
+                            timestamp timestamp)");
 
   return OK;
 }
@@ -50,50 +50,50 @@ DECLARE_TEST(my_init_table)
 
 DECLARE_TEST(my_param_insert)
 {
-    SQLRETURN   rc;
-    SQLINTEGER  id;
-    char        name[50];
+  SQLRETURN   rc;
+  SQLINTEGER  id;
+  char        name[50];
 
-    /* prepare the insert statement with parameters */
-    rc = SQLPrepare(hstmt, (SQLCHAR *)"INSERT INTO my_demo_param(id,name) VALUES(?,?)",SQL_NTS);
-    mystmt(hstmt,rc);
+  /* prepare the insert statement with parameters */
+  rc = SQLPrepare(hstmt, (SQLCHAR *)"INSERT INTO my_demo_param(id,name) VALUES(?,?)",SQL_NTS);
+  mystmt(hstmt,rc);
 
-    /* now supply data to parameter 1 and 2 */
-    rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT,
-                          SQL_C_LONG, SQL_INTEGER, 0,0,
-                          &id, 0, NULL);
-    mystmt(hstmt,rc);
+  /* now supply data to parameter 1 and 2 */
+  rc = SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT,
+                        SQL_C_LONG, SQL_INTEGER, 0,0,
+                        &id, 0, NULL);
+  mystmt(hstmt,rc);
 
-    rc = SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT,
-                          SQL_C_CHAR, SQL_CHAR, 0,0,
-                          name, sizeof(name), NULL);
-    mystmt(hstmt,rc);
+  rc = SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT,
+                        SQL_C_CHAR, SQL_CHAR, 0,0,
+                        name, sizeof(name), NULL);
+  mystmt(hstmt,rc);
 
-    /* now insert 10 rows of data */
-    for (id = 0; id < 10; id++)
-    {
-        sprintf(name,"MySQL%d",id);
+  /* now insert 10 rows of data */
+  for (id = 0; id < 10; id++)
+  {
+      sprintf(name,"MySQL%d",id);
 
-        rc = SQLExecute(hstmt);
-        mystmt(hstmt,rc);
-    }
+      rc = SQLExecute(hstmt);
+      mystmt(hstmt,rc);
+  }
 
-    /* Free statement param resorces */
-    rc = SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
-    mystmt(hstmt,rc);
+  /* Free statement param resorces */
+  rc = SQLFreeStmt(hstmt, SQL_RESET_PARAMS);
+  mystmt(hstmt,rc);
 
-    /* Free statement cursor resorces */
-    rc = SQLFreeStmt(hstmt, SQL_CLOSE);
-    mystmt(hstmt,rc);
+  /* Free statement cursor resorces */
+  rc = SQLFreeStmt(hstmt, SQL_CLOSE);
+  mystmt(hstmt,rc);
 
-    /* commit the transaction */
-    rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
-    mycon(hdbc,rc);
+  /* commit the transaction */
+  rc = SQLEndTran(SQL_HANDLE_DBC, hdbc, SQL_COMMIT);
+  mycon(hdbc,rc);
 
-    /* Now fetch and verify the data */
-    ok_sql(hstmt, "SELECT * FROM my_demo_param");
+  /* Now fetch and verify the data */
+  ok_sql(hstmt, "SELECT * FROM my_demo_param");
 
-    is(10 == myresult(hstmt));
+  is(10 == myresult(hstmt));
 
   return OK;
 }
@@ -1062,9 +1062,9 @@ DECLARE_TEST(t_bug14501952)
 
   ok_sql(hstmt, "DROP PROCEDURE IF EXISTS bug14501952");
   ok_sql(hstmt, "CREATE PROCEDURE bug14501952 (INOUT param1 BLOB)\
-								   BEGIN\
-								   SET param1= 'this is blob value from SP ';\
-								   END;");
+                  BEGIN\
+                    SET param1= 'this is blob value from SP ';\
+                  END;");
 
 
 

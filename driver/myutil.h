@@ -347,6 +347,15 @@ long long     binary2numeric(long long *dst, char *src, uint srcLen);
 void          fill_ird_data_lengths(DESC *ird, ulong *lengths, uint fields);
 
 /* Functions to work with prepared and regular statements  */
+
+#ifdef SERVER_PS_OUT_PARAMS
+# define IS_PS_OUT_PARAMS(_stmt) ((_stmt)->dbc->mysql.server_status & SERVER_PS_OUT_PARAMS)
+#else
+/* In case if driver is built against old libmysl. In fact is not quite
+   correct */
+# define IS_PS_OUT_PARAMS(_stmt) (ssps_used(_stmt) && is_call_procedure(&_stmt->query) && !mysql_more_results(&(_stmt)->dbc->mysql))
+#endif
+
 /* my_stmt.c */
 BOOL              ssps_used           (STMT *stmt);
 BOOL              returned_result     (STMT *stmt);
@@ -391,7 +400,7 @@ BOOL          scrollable          (STMT * stmt, char * query, char * query_end);
 /* my_prepared_stmt.c */
 void        ssps_init             (STMT *stmt);
 BOOL        ssps_get_out_params   (STMT *stmt);
-int         ssps_get_first_result (STMT *stmt);
+int         ssps_get_result       (STMT *stmt);
 void        ssps_close            (STMT *stmt);
 int         ssps_bind_result      (STMT *stmt);
 void        free_result_bind      (STMT *stmt);

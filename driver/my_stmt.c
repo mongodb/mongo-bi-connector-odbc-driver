@@ -125,7 +125,7 @@ int get_result(STMT *stmt)
 {
   if (ssps_used(stmt))
   {
-    return ssps_get_first_result(stmt);
+    return ssps_get_result(stmt);
   }
   /* Nothing to do here for text protocol */
 

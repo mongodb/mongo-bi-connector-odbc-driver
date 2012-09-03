@@ -1275,15 +1275,28 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
       goto exitSQLMoreResults;
     }
     /* we have fields but no resultset (not even an empty one) - this is bad */
-    nReturn = set_stmt_error( pStmt, "HY000", mysql_error( &pStmt->dbc->mysql ), mysql_errno( &pStmt->dbc->mysql ) );
+    nReturn = set_stmt_error(pStmt, "HY000", mysql_error( &pStmt->dbc->mysql ),
+                              mysql_errno(&pStmt->dbc->mysql));
     goto exitSQLMoreResults;
   }
-
-  fix_result_types(pStmt);
+  
   /* checking if next result is SP OUT params and fetch them if needed */
-  if (!ssps_get_out_params(pStmt))
+  if (IS_PS_OUT_PARAMS(pStmt))
   {
-    get_result(pStmt);
+    fix_result_types(pStmt);
+    /* This server status(SERVER_PS_OUT_PARAMS) can be only if we used PS */
+    ssps_get_out_params(pStmt);
+  }
+  else
+  {
+    free_result_bind(pStmt);
+    if (bind_result(pStmt) || get_result(pStmt))
+    {
+      nReturn= set_stmt_error(pStmt, "HY000", mysql_error( &pStmt->dbc->mysql ),
+                            mysql_errno(&pStmt->dbc->mysql));
+    }
+
+    fix_result_types(pStmt);
   }
 
 exitSQLMoreResults:

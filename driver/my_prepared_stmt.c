@@ -81,9 +81,7 @@ BOOL ssps_get_out_params(STMT *stmt)
 {
     /* If we use prepared statement, and the query is CALL and we have any
      user's parameter described as INOUT or OUT and that is only result */
-  if (is_call_procedure(&stmt->query)
-
-    )
+  if (is_call_procedure(&stmt->query))
   {
     MYSQL_ROW values= NULL;
     DESCREC*iprec, *aprec;
@@ -166,13 +164,13 @@ BOOL ssps_get_out_params(STMT *stmt)
 }
 
 
-int ssps_get_first_result(STMT *stmt)
+int ssps_get_result(STMT *stmt)
 {
   if (stmt->result)
   {
     if (!if_forward_cache(stmt))
     {
-      return ssps_bind_result(stmt) || mysql_stmt_store_result(stmt->ssps);
+      return mysql_stmt_store_result(stmt->ssps);
     }
 
   }

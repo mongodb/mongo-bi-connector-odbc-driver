@@ -30,13 +30,7 @@
 #include "driver.h"
 #include <locale.h>
 
-#ifdef SERVER_PS_OUT_PARAMS
-# define IS_PS_OUT_PARAMS(_stmt) ((_stmt)->dbc->mysql.server_status & SERVER_PS_OUT_PARAMS)
-#else
-/* In case if driver is built against old libmysl. In fact is not quite
-   correct */
-# define IS_PS_OUT_PARAMS(_stmt) !mysql_more_results(&(_stmt)->dbc->mysql)
-#endif
+
 /*
   @type    : myodbc3 internal
   @purpose : internal function to execute query and return result
@@ -44,7 +38,7 @@
 */
 SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
 {
-    int error= SQL_ERROR, native_error= 0, ps_out_params= 0;
+    int error= SQL_ERROR, native_error= 0;
 
     if (!query)
     {
@@ -158,21 +152,24 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
     /* If the only resultset is OUT params, then we can only detect
        corresponding server_status right after execution.
        If the RS is OUT params - we do not need to do store_result obviously */
-    ps_out_params= IS_PS_OUT_PARAMS(stmt);
-    if (get_result(stmt) || bind_result(stmt))
+    if (IS_PS_OUT_PARAMS(stmt))
     {
-        set_error(stmt, MYERR_S1000, mysql_error(&stmt->dbc->mysql),
-                mysql_errno(&stmt->dbc->mysql));
-        goto exit;
-    }
-    
-    /* Caching row counts for queries returning resultset as well */
-    //update_affected_rows(stmt);
-    fix_result_types(stmt);
-
-    if (ps_out_params)
-    {
+      /* For out parameters resultset we do not need to get result and bind it */
+      fix_result_types(stmt);
+      /* This status(SERVER_PS_OUT_PARAMS) can be only if we used PS */
       ssps_get_out_params(stmt);
+    }
+    else
+    {
+      if (get_result(stmt) || bind_result(stmt))
+      {
+          set_error(stmt, MYERR_S1000, mysql_error(&stmt->dbc->mysql),
+                  mysql_errno(&stmt->dbc->mysql));
+          goto exit;
+      }
+      /* Caching row counts for queries returning resultset as well */
+      //update_affected_rows(stmt);
+      fix_result_types(stmt);
     }
 
     error= SQL_SUCCESS;
