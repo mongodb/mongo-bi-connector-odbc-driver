@@ -1057,7 +1057,6 @@ DECLARE_TEST(t_bug14501952)
 {
   SQLSMALLINT ncol;
   SQLLEN      len= 0;
-  SQLSMALLINT type[]= {SQL_PARAM_INPUT, SQL_PARAM_OUTPUT, SQL_PARAM_INPUT_OUTPUT};
   SQLCHAR     blobValue[50]= "initial value", buff[100];
 
   ok_sql(hstmt, "DROP PROCEDURE IF EXISTS bug14501952");
@@ -1092,11 +1091,12 @@ DECLARE_TEST(t_bug14501952)
 }
 
 
+/* Bug#14563386 More than one BLOB(or any big data types) OUT param caused crash
+ */
 DECLARE_TEST(t_bug14563386)
 {
   SQLSMALLINT ncol;
   SQLLEN      len= 0, len1= 0;
-  SQLSMALLINT type[]= {SQL_PARAM_INPUT, SQL_PARAM_OUTPUT, SQL_PARAM_INPUT_OUTPUT};
   SQLCHAR     blobValue[50]= "initial value", buff[100],
               binValue[50]= "varbinary init value";
 
@@ -1140,6 +1140,39 @@ DECLARE_TEST(t_bug14563386)
 }
 
 
+/* Bug#14551229(could not repeat) Procedure with signed out parameter */
+DECLARE_TEST(t_bug14551229)
+{
+  long        param, value;
+
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS b14551229");
+  ok_sql(hstmt, "CREATE PROCEDURE b14551229 (OUT param INT)\
+                  BEGIN\
+                    SELECT -1 into param from dual;\
+                  END;");
+
+
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_OUTPUT,
+    SQL_C_SLONG, SQL_INTEGER, 50, 0, &param, 0, 0));
+
+  ok_sql(hstmt, "CALL b14551229(?)");
+
+  is_num(param, -1);
+
+  /* Only 1 row always - we still can get them as a result */
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_SLONG, &value, 0, 0));
+  is_num(value, -1);
+  
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP PROCEDURE b14551229");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_init_table)
   ADD_TEST(my_param_insert)
@@ -1157,6 +1190,7 @@ BEGIN_TESTS
   ADD_TEST(t_odbcoutparams)
   ADD_TEST(t_bug14501952)
   ADD_TEST(t_bug14563386)
+  ADD_TEST(t_bug14551229)
 END_TESTS
 
 
