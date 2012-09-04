@@ -110,7 +110,7 @@ BOOL ssps_get_out_params(STMT *stmt)
 
     if (values != NULL && got_out_parameters(stmt))
     {
-      for (i= 0; i < myodbc_min(stmt->ipd->count, stmt->apd->count); ++i, ++values)
+      for (i= 0; i < myodbc_min(stmt->ipd->count, stmt->apd->count); ++i)
       {
         iprec= desc_get_rec(stmt->ipd, i, FALSE);
         aprec= desc_get_rec(stmt->apd, i, FALSE);
@@ -392,7 +392,11 @@ int ssps_bind_result(STMT *stmt)
       {
         stmt->fix_fields= fetch_varlength_columns;
         
-        stmt->lengths= my_malloc(sizeof(unsigned long)*num_fields, MYF(MY_ZEROFILL));
+        /* Need to alloc it only once*/
+        if (stmt->lengths == NULL)
+        {
+          stmt->lengths= my_malloc(sizeof(unsigned long)*num_fields, MYF(MY_ZEROFILL));
+        }
         /* Buffer of initial length? */
       }
     }

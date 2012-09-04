@@ -1092,6 +1092,54 @@ DECLARE_TEST(t_bug14501952)
 }
 
 
+DECLARE_TEST(t_bug14563386)
+{
+  SQLSMALLINT ncol;
+  SQLLEN      len= 0, len1= 0;
+  SQLSMALLINT type[]= {SQL_PARAM_INPUT, SQL_PARAM_OUTPUT, SQL_PARAM_INPUT_OUTPUT};
+  SQLCHAR     blobValue[50]= "initial value", buff[100],
+              binValue[50]= "varbinary init value";
+
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS b14563386");
+  ok_sql(hstmt, "CREATE PROCEDURE b14563386 (INOUT blob_param \
+                        BLOB, INOUT bin_param LONG VARBINARY)\
+                  BEGIN\
+                    SET blob_param = ' BLOB! ';\
+                    SET bin_param = ' LONG VARBINARY ';\
+                  END;");
+
+
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT_OUTPUT,
+    SQL_C_BINARY, SQL_LONGVARBINARY, 50, 0, &blobValue, sizeof(blobValue),
+    &len));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT_OUTPUT,
+    SQL_C_BINARY, SQL_LONGVARBINARY, 50, 0, &binValue, sizeof(binValue),
+    &len1));
+  ok_sql(hstmt, "CALL b14563386(?, ?)");
+
+  is_str(blobValue, " BLOB! ", 7);
+  is_str(binValue, " LONG VARBINARY ", 16);
+  ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
+  is_num(ncol, 2);
+
+  /* Only 1 row always - we still can get them as a result */
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_BINARY, buff, sizeof(buff),
+                            &len));
+  is_str(buff, blobValue, 7);
+  ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_BINARY, buff, sizeof(buff),
+                            &len));
+  is_str(buff, binValue, 16);
+  
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP PROCEDURE b14563386");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_init_table)
   ADD_TEST(my_param_insert)
@@ -1108,6 +1156,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug59772)
   ADD_TEST(t_odbcoutparams)
   ADD_TEST(t_bug14501952)
+  ADD_TEST(t_bug14563386)
 END_TESTS
 
 
