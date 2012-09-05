@@ -68,6 +68,21 @@ void ssps_init(STMT *stmt)
 /* }}} */
 
 
+char * numeric2binary(char * dst, long long src, unsigned int byte_count)
+{
+  char byte;
+
+  while (byte_count)
+  {
+    byte= src & 0xff;
+    *(dst+(--byte_count))= byte;
+    src= src >> 8;
+  }
+
+  return dst;
+}
+
+
 SQLRETURN SQL_API
 sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
              SQLPOINTER rgbValue, SQLLEN cbValueMax, SQLLEN *pcbValue,
@@ -84,9 +99,9 @@ BOOL ssps_get_out_params(STMT *stmt)
   if (is_call_procedure(&stmt->query))
   {
     MYSQL_ROW values= NULL;
-    DESCREC*iprec, *aprec;
-    uint counter= 0;
-    int i;
+    DESCREC   *iprec, *aprec;
+    uint      counter= 0;
+    int       i;
 
     /*Since OUT parameters can be completely different - we have to free current
       bind and bind new */
@@ -112,6 +127,23 @@ BOOL ssps_get_out_params(STMT *stmt)
     {
       for (i= 0; i < myodbc_min(stmt->ipd->count, stmt->apd->count); ++i)
       {
+        /* Making bit field look "normally" */
+        if (stmt->result_bind[counter].buffer_type == MYSQL_TYPE_BIT)
+        {
+          MYSQL_FIELD *field= mysql_fetch_field_direct(stmt->result, counter);
+          unsigned long long numeric;
+
+          assert(field->type == MYSQL_TYPE_BIT);
+          /* terminating with NULL */
+          values[counter][*stmt->result_bind[counter].length]= '\0';
+          numeric= strtoull(values[counter], NULL, 10);
+
+          *stmt->result_bind[counter].length= (field->length+7)/8;
+          numeric2binary(values[counter], numeric,
+                        *stmt->result_bind[counter].length);
+
+        }
+
         iprec= desc_get_rec(stmt->ipd, i, FALSE);
         aprec= desc_get_rec(stmt->apd, i, FALSE);
         assert(iprec && aprec);
@@ -219,7 +251,7 @@ typedef struct tagBST
 
 /* {{{ allocate_buffer_for_field() -I- */
 static st_buffer_size_type
-allocate_buffer_for_field(const MYSQL_FIELD * const field)
+allocate_buffer_for_field(const MYSQL_FIELD * const field, BOOL outparams)
 {
   st_buffer_size_type result= {NULL, 0, field->type};
 
@@ -285,7 +317,20 @@ allocate_buffer_for_field(const MYSQL_FIELD * const field)
     case MYSQL_TYPE_SET:
     #endif
     case MYSQL_TYPE_BIT:
-      result.size= 1;/*8?*/
+      result.type= MYSQL_TYPE_BIT;
+      if (outparams)
+      {
+        /* For out params we surprisingly get it as string representation of a
+           number representing those bits. Allocating buffer to accommodate
+           largest string possible - 8 byte number + NULL terminator.
+           We will need to terminate the string to convert it to a number */
+        result.size= 30;
+      }
+      else
+      {
+        result.size= (field->length + 7)/8;
+      }
+
       break;
     case MYSQL_TYPE_GEOMETRY:
     default:
@@ -363,18 +408,24 @@ int ssps_bind_result(STMT *stmt)
   }
   else
   {
-    my_bool       *is_null= my_malloc(sizeof(my_bool)*num_fields, MYF(MY_ZEROFILL));
-    my_bool       *err=     my_malloc(sizeof(my_bool)*num_fields, MYF(MY_ZEROFILL));
-    unsigned long *len=     my_malloc(sizeof(unsigned long)*num_fields, MYF(MY_ZEROFILL));
+    my_bool       *is_null= my_malloc(sizeof(my_bool)*num_fields,
+                                      MYF(MY_ZEROFILL));
+    my_bool       *err=     my_malloc(sizeof(my_bool)*num_fields,
+                                      MYF(MY_ZEROFILL));
+    unsigned long *len=     my_malloc(sizeof(unsigned long)*num_fields,
+                                      MYF(MY_ZEROFILL));
 
     /*TODO care about memory allocation errors */
-    stmt->result_bind=  (MYSQL_BIND*)my_malloc(sizeof(MYSQL_BIND)*num_fields, MYF(MY_ZEROFILL));
-    stmt->array=        (MYSQL_ROW)my_malloc(sizeof(char*)*num_fields, MYF(MY_ZEROFILL));
+    stmt->result_bind=  (MYSQL_BIND*)my_malloc(sizeof(MYSQL_BIND)*num_fields,
+                                              MYF(MY_ZEROFILL));
+    stmt->array=        (MYSQL_ROW)my_malloc(sizeof(char*)*num_fields,
+                                              MYF(MY_ZEROFILL));
 
     for (i= 0; i < num_fields; ++i)
     {
       MYSQL_FIELD    *field= mysql_fetch_field_direct(stmt->result, i);
-      st_buffer_size_type p= allocate_buffer_for_field(field);
+      st_buffer_size_type p= allocate_buffer_for_field(field,
+                                                      IS_PS_OUT_PARAMS(stmt));
 
       stmt->result_bind[i].buffer_type  = p.type;
 	  stmt->result_bind[i].buffer       = p.buffer;
@@ -386,7 +437,8 @@ int ssps_bind_result(STMT *stmt)
 
       stmt->array[i]= p.buffer;
 
-      /* Marking that there are columns that will require buffer (re) allocating */
+      /* Marking that there are columns that will require buffer (re) allocating
+       */
       if (  stmt->result_bind[i].buffer       == 0
         &&  stmt->result_bind[i].buffer_type  != MYSQL_TYPE_NULL)
       {

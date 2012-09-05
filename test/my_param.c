@@ -1143,7 +1143,7 @@ DECLARE_TEST(t_bug14563386)
 /* Bug#14551229(could not repeat) Procedure with signed out parameter */
 DECLARE_TEST(t_bug14551229)
 {
-  long        param, value;
+  SQLINTEGER param, value;
 
   ok_sql(hstmt, "DROP PROCEDURE IF EXISTS b14551229");
   ok_sql(hstmt, "CREATE PROCEDURE b14551229 (OUT param INT)\
@@ -1173,6 +1173,65 @@ DECLARE_TEST(t_bug14551229)
 }
 
 
+/* Bug#14560916 ASSERT for INOUT parameter of BIT(10) type */
+DECLARE_TEST(t_bug14560916)
+{
+  char        param[2]={1,1};
+  SQLINTEGER  value;
+  SQLLEN      len= 0;
+
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS b14560916");
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS bug14560916");
+  ok_sql(hstmt, "CREATE TABLE bug14560916 (a BIT(10))");
+  ok_sql(hstmt, "INSERT INTO bug14560916  values(b'1001000001')");
+
+  ok_sql(hstmt, "CREATE PROCEDURE b14560916 (INOUT param bit(10))\
+                  BEGIN\
+                    SELECT a INTO param FROM bug14560916;\
+                  END;");
+
+
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT_OUTPUT,
+    SQL_C_CHAR, SQL_CHAR, 0, 0, &param, sizeof(param), &len));
+
+  /* Parameter is used to make sure that ssps will be used */
+  ok_sql(hstmt, "select a from bug14560916 where ? OR 1");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_SLONG, &value, 0, 0));
+  is_num(value, 577);
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_BINARY, &param, sizeof(param),
+                            &len));
+  is_num(len, 2);
+  is_str(param, "\2A", 2);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  
+
+  ok_sql(hstmt, "CALL b14560916(?)");
+
+  is_num(len, 2);
+  is_str(param, "\2A", 2);
+
+  /* Only 1 row always - we still can get them as a result */
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_SLONG, &value, 0, 0));
+  is_num(value, 577);
+  param[0]= param[1]= 1;
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_BINARY, &param, sizeof(param),
+                            &len));
+  is_num(len, 2);
+  is_str(param, "\2A", 2);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP PROCEDURE b14560916");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_init_table)
   ADD_TEST(my_param_insert)
@@ -1191,6 +1250,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug14501952)
   ADD_TEST(t_bug14563386)
   ADD_TEST(t_bug14551229)
+  ADD_TEST(t_bug14560916)
 END_TESTS
 
 

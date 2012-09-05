@@ -161,7 +161,7 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
     }
     else
     {
-      if (get_result(stmt) || bind_result(stmt))
+      if (bind_result(stmt) || get_result(stmt))
       {
           set_error(stmt, MYERR_S1000, mysql_error(&stmt->dbc->mysql),
                   mysql_errno(&stmt->dbc->mysql));

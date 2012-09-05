@@ -273,8 +273,8 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
     {
       if (is_binary_ctype(fCType))
       {
-        return copy_binary_result(stmt, (SQLCHAR *)rgbValue, cbValueMax
-          , pcbValue, field , value , length);
+        return copy_binary_result(stmt, (SQLCHAR *)rgbValue, cbValueMax,
+                                  pcbValue, field, value, length);
       }
       else
       {
