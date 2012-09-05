@@ -1451,7 +1451,7 @@ mysql_procedure_columns(SQLHSTMT hstmt,
         dynstr_append_os_quoted(&dynQuery, (char *)szColumnName, NullS);
       }
 
-      if(param_ordinal_position == 0)
+      if (param_ordinal_position == 0)
       {
         ptype= SQL_RETURN_VALUE;
       }
@@ -1459,10 +1459,17 @@ mysql_procedure_columns(SQLHSTMT hstmt,
       sprintf(param_type, "%d", ptype);
       data[mypcCOLUMN_TYPE]= my_strdup(param_type, MYF(0)); /* COLUMN_TYPE */
 
-      sprintf(param_sql_type, "%d", (int)type_map->sql_type);
+      if (!myodbc_strcasecmp(type_map->type_name, "bit") && param_size > 1)
+      {
+        sprintf(param_sql_type, "%d", SQL_BINARY);
+      }
+      else
+      {
+        sprintf(param_sql_type, "%d", (int)type_map->sql_type);
+      }
       data[mypcDATA_TYPE]= my_strdup(param_sql_type, MYF(0)); /* DATA_TYPE */
       
-      if(!myodbc_strcasecmp(type_map->type_name, "set") ||
+      if (!myodbc_strcasecmp(type_map->type_name, "set") ||
          !myodbc_strcasecmp(type_map->type_name, "enum"))
       {
         data[mypcTYPE_NAME]= my_strdup("char", MYF(0));

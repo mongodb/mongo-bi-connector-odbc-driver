@@ -3296,9 +3296,12 @@ SQLUINTEGER proc_get_param_size(SQLCHAR *ptype, int len, int sql_type_index, SQL
       }
 
       break;
-
-    case MYSQL_TYPE_DATETIME:
     case MYSQL_TYPE_BIT:
+      param_size= proc_parse_sizes(start_pos, end_pos - start_pos, dec);
+
+      /* fall through*/
+    case MYSQL_TYPE_DATETIME:
+    
     case MYSQL_TYPE_TINY:
     case MYSQL_TYPE_SHORT:
     case MYSQL_TYPE_INT24:

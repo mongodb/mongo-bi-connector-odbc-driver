@@ -2580,6 +2580,38 @@ DECLARE_TEST(t_sqlcolumns_after_select)
   return OK;
 }
 
+/* Bug #14555713 USING ADO, ODBC DRIVER RETURNS WRONG TYPE AND VALUE FOR BIT(>1)
+                 FIELD.
+   Parameters datatypes returned for SP bit(n) parameters are inconsistent with
+   those retruned for corresponding column types.
+ */
+DECLARE_TEST(t_bug14555713)
+{
+  ok_sql(hstmt, "drop procedure if exists b14555713");
+
+  ok_sql(hstmt, "create procedure b14555713(OUT p1 bit(1), OUT p2 bit(9)) \
+                begin\
+                 set p1= 1;\
+                 set p2= b'100100001';\
+                end");
+
+  ok_stmt(hstmt, SQLProcedureColumns(hstmt, NULL, 0, NULL, 0,
+                                     "b14555713", SQL_NTS, 
+                                     "p%", SQL_NTS));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 6), SQL_BIT);
+  is_num(my_fetch_int(hstmt, 8), 1);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_num(my_fetch_int(hstmt, 8), 2);
+  is_num(my_fetch_int(hstmt, 6), SQL_BINARY);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "drop procedure if exists b14555713");
+  return OK;
+}
 
 BEGIN_TESTS
   ADD_TEST(my_columns_null)
@@ -2628,6 +2660,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug14085211_part1)
   ADD_TODO(t_bug14085211_part2)
   ADD_TEST(t_sqlcolumns_after_select)
+  ADD_TEST(t_bug14555713)
 END_TESTS
 
 myoption &= ~(1 << 30);

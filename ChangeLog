@@ -8,6 +8,8 @@
     (Bug# 14501952)
   * SP having 2 BLOB OUT parameters crashes at execution (Bug# 14563386)
   * ASSERT for INOUT parameter of BIT(N>3) type (Bug#14560916)
+  * Using ADO, driver returns wrong type and value for bit(>1) parameter
+    (Bug# 14555713)
   * my_isspace calls cause ODBC driver crashes (Bug# 14363601)
   * SQLNativeSql did not null-terminate output string after copying
     (Bug# 14559721)
