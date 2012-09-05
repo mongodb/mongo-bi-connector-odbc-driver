@@ -1232,6 +1232,55 @@ DECLARE_TEST(t_bug14560916)
 }
 
 
+/* Bug#14586094 Crash while executing SP having blob and varchar OUT parameters
+  (could not repeat)
+ */
+DECLARE_TEST(t_bug14586094)
+{
+  SQLSMALLINT ncol;
+  SQLLEN      len= SQL_NTS, len1= SQL_NTS;
+  SQLCHAR     blobValue[50]= {0}/*"initial value"*/, buff[101],
+              vcValue[101]= "varchar init value";
+
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS b14586094");
+  ok_sql(hstmt, "CREATE PROCEDURE b14586094 (INOUT blob_param \
+                    BLOB(50), INOUT vc_param VARCHAR(100))\
+                  BEGIN\
+                    SET blob_param = ' BLOB! ';\
+                    SET vc_param = 'varchar';\
+                  END;");
+
+
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT_OUTPUT,
+    SQL_C_BINARY, SQL_LONGVARBINARY, 50, 0, &blobValue, sizeof(blobValue),
+    &len));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT_OUTPUT,
+    SQL_C_CHAR, SQL_VARCHAR, 50, 0, &vcValue, sizeof(vcValue), &len1));
+  ok_sql(hstmt, "CALL b14586094(?, ?)");
+
+  is_str(blobValue, " BLOB! ", 7);
+  is_str(vcValue, "varchar", 9);
+  ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
+  is_num(ncol, 2);
+
+  /* Only 1 row always - we still can get them as a result */
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_BINARY, buff, sizeof(buff),
+                            &len));
+  is_str(buff, blobValue, 7);
+  ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_CHAR, buff, sizeof(buff),
+                            &len));
+  is_str(buff, vcValue, 9);
+  
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP PROCEDURE b14586094");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_init_table)
   ADD_TEST(my_param_insert)
@@ -1251,6 +1300,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug14563386)
   ADD_TEST(t_bug14551229)
   ADD_TEST(t_bug14560916)
+  ADD_TEST(t_bug14586094)
 END_TESTS
 
 
