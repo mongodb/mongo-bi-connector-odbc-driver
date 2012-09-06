@@ -113,9 +113,9 @@
     -->
 
     <?if $(var.odbc_64bit) = 1 ?>
-    <Feature Id="ODBC" Title="MySQL Connector/ODBC $(var.odbc_ver_long) 64-bit" Level="1" Description="Installs the MySQL ODBC $(var.odbc_ver_long) 64-bit driver."  ConfigurableDirectory="INSTALLDIR">
+    <Feature Id="ODBC" Title="MySQL Connector/ODBC $(var.odbc_ver_long)($(var.odbc_driver_type_suffix)) 64-bit" Level="1" Description="Installs the MySQL ODBC $(var.odbc_ver_long) 64-bit driver."  ConfigurableDirectory="INSTALLDIR">
     <?else ?>
-    <Feature Id="ODBC" Title="MySQL Connector/ODBC $(var.odbc_ver_long) 32-bit" Level="1" Description="Installs the MySQL ODBC $(var.odbc_ver_long) 32-bit driver."  ConfigurableDirectory="INSTALLDIR">
+    <Feature Id="ODBC" Title="MySQL Connector/ODBC $(var.odbc_ver_long)($(var.odbc_driver_type_suffix)) 32-bit" Level="1" Description="Installs the MySQL ODBC $(var.odbc_ver_long) 32-bit driver."  ConfigurableDirectory="INSTALLDIR">
     <?endif ?>
       <ComponentRef Id="RegKeys" />
       <ComponentRef Id="lib" />
@@ -159,7 +159,7 @@
     <Property Id="ProgressType1">Installing</Property>
     <Property Id="ProgressType0">install</Property>
     
-    <Property Id="QualifiedProductName">MySQL Connector/ODBC $(var.odbc_ver_long)</Property>
+    <Property Id="QualifiedProductName">MySQL Connector/ODBC $(var.odbc_ver_long)($(var.odbc_driver_type_suffix))</Property>
     <Property Id="InstallationDirectory">MySQL Connector-ODBC</Property>
     
     <Property Id="ReinstallFileVersion">o</Property>

@@ -1281,6 +1281,44 @@ DECLARE_TEST(t_bug14586094)
 }
 
 
+DECLARE_TEST(t_longtextoutparam)
+{
+  SQLSMALLINT ncol;
+  SQLLEN      len= 0;
+  SQLCHAR     blobValue[50]= "initial value", buff[100];
+
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS t_longtextoutparam");
+  ok_sql(hstmt, "CREATE PROCEDURE t_longtextoutparam (INOUT param1 LONGTEXT)\
+                  BEGIN\
+                    SET param1= 'this is LONGTEXT value from SP ';\
+                  END;");
+
+
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT_OUTPUT,
+    SQL_C_BINARY, SQL_LONGVARBINARY, 50, 0, &blobValue, sizeof(blobValue),
+    &len));
+
+  ok_sql(hstmt, "CALL t_longtextoutparam(?)");
+
+  is_str(blobValue, "this is LONGTEXT value from SP ", 32);
+  ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
+  is_num(ncol, 1);
+
+  /* Only 1 row always - we still can get them as a result */
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, buff, sizeof(buff),
+                            &len));
+  is_str(buff, blobValue, 32);
+  
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP PROCEDURE t_longtextoutparam");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_init_table)
   ADD_TEST(my_param_insert)
@@ -1301,6 +1339,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug14551229)
   ADD_TEST(t_bug14560916)
   ADD_TEST(t_bug14586094)
+  ADD_TEST(t_longtextoutparam)
 END_TESTS
 
 

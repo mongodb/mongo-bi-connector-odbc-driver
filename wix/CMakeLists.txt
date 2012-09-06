@@ -30,6 +30,7 @@ PROJECT(MYODBC_MSI_INSTALLER)
 IF(WIN32)
   INCLUDE(${CMAKE_SOURCE_DIR}/cmake/FindWix.cmake)
   # ----------- generate version information ---------
+  MESSAGE(${WIX_DIR})
   IF(WIX_DIR)
     FILE(REMOVE "myodbc_version.xml")
     TRY_RUN(VERSION_OUT VERSION_TEST 
@@ -76,10 +77,14 @@ IF(WIN32)
   # --------------------------------------------------
   INCLUDE(${CMAKE_SOURCE_DIR}/myodbc_version.cmake)
 
+  IF(ODBC_VERSION_SUFFIX STREQUAL "a")
+	  SET(PACKAGE_SUFFIX "a")
+  ENDIF(ODBC_VERSION_SUFFIX STREQUAL "a")
+
   IF(${LICENSE})
-    SET(MSI_PACKAGE "mysql-connector-odbc-commercial-${ODBC_VERSION}-${MSI_VERSION}.msi")
+	  SET(MSI_PACKAGE "mysql-connector-odbc-commercial-${ODBC_VERSION}-${MSI_VERSION}${PACKAGE_SUFFIX}.msi")
   ELSE(${LICENSE})
-    SET(MSI_PACKAGE "mysql-connector-odbc-${ODBC_VERSION}-${MSI_VERSION}.msi")
+	  SET(MSI_PACKAGE "mysql-connector-odbc-${ODBC_VERSION}-${MSI_VERSION}${PACKAGE_SUFFIX}.msi")
   ENDIF(${LICENSE})
 
   # Generate GUID

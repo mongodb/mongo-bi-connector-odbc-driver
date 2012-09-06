@@ -50,6 +50,7 @@ int main(int argc, char *argv[])
         }
 	fprintf(fp, "<?define odbc_ver_next=\"%d.%d.%d\" ?>\n", v1, v2, v3+1);
 	fprintf(fp, "<?define odbc_driver_type_suffix=\""MYODBC_STRTYPE_SUFFIX"\" ?>\n");
+	fprintf(fp, "<?define odbc_driver_series=\""MYODBC_STRDRIVERID"\" ?>\n");
 
 	fclose(fp);
 
@@ -57,7 +58,8 @@ int main(int argc, char *argv[])
 	if (!(fp = fopen("myodbc_version.cmake",  "w")))
 		exit (2);
 
-	fprintf(fp, "SET(ODBC_VERSION \"%d.%d.%d\")", v1,v2,v3);
+	fprintf(fp, "SET(ODBC_VERSION \"%d.%d.%d\")\n", v1,v2,v3);
+	fprintf(fp, "SET(ODBC_VERSION_SUFFIX \"%s\")", MYODBC_STRTYPE_SUFFIX);
 
 	fclose(fp);
 }
