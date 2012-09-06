@@ -182,6 +182,14 @@ BOOL ssps_get_out_params(STMT *stmt)
             sql_get_data(stmt, aprec->concise_type, counter,
                          target, aprec->octet_length, indicator_ptr,
                          values[counter], length, aprec);
+
+            /* TODO: solve that globally */
+            if (octet_length_ptr != NULL && indicator_ptr != NULL
+              && octet_length_ptr != indicator_ptr
+              && *indicator_ptr != SQL_NULL_DATA)
+            {
+              *octet_length_ptr= *indicator_ptr;
+            }
           }
           ++counter;
         }
