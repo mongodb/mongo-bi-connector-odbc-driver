@@ -1372,14 +1372,17 @@ void fill_ird_data_lengths(DESC *ird, ulong *lengths, uint fields)
 
   assert(fields == ird->count);
 
+  /* This will be NULL for catalog functions with "fake" results */
+  if (!lengths)
+  {	
+    return;
+  }
+
   for (i= 0; i < fields; ++i)
   {
     irrec= desc_get_rec(ird, i, FALSE);
     assert(irrec);
-
-    /* This will be NULL for catalog functions with "fake" results,
-       but we still need to reset lengths in descriptor in such case */
-    irrec->row.datalen= lengths ? lengths[i] : 0;
+	irrec->row.datalen= lengths[i];
   }
 }
 
