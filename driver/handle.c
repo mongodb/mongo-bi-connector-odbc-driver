@@ -525,7 +525,7 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     stmt->affected_rows= 0;
     stmt->current_row= stmt->cursor_row= stmt->rows_found_in_set= 0;
     stmt->dae_type= 0;
-	stmt->ird->count= 0;
+    stmt->ird->count= 0;
 
     if (fOption == MYSQL_RESET_BUFFERS)
         return SQL_SUCCESS;
