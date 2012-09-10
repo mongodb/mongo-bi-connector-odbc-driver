@@ -50,7 +50,7 @@
           <?if $(var.odbc_64bit) = 1 ?>
 
             <Component Id="lib" Guid="22F054AC-F3F1-47E6-A03E-46423C467C79" SharedDllRefCount="yes" Win64="yes">
-              <File Id="myodbc.lib" Name="myodbc5$(odbc_driver_type_suffix).lib" KeyPath="yes" DiskId="1" Source="x64\myodbc5$(var.odbc_driver_type_suffix).lib" />
+              <File Id="myodbc.lib" Name="myodbc5$(var.odbc_driver_type_suffix).lib" KeyPath="yes" DiskId="1" Source="x64\myodbc5$(var.odbc_driver_type_suffix).lib" />
               <?if $(var.odbc_pdb) = 1 ?>
                 <File Id="myodbc.lib.pdb" Name="myodbc5$(var.odbc_driver_type_suffix).pdb" DiskId="1" Source="x64\myodbc5$(var.odbc_driver_type_suffix).pdb" />
               <?endif?>
@@ -74,7 +74,7 @@
                 <File Id="myodbc5S.lib.pdb" Name="myodbc5S.pdb" DiskId="1" Source="x64\myodbc5S.pdb"/>
               <?endif?>
             </Component>
-	    <Component Id="installer" Guid="EB5E7FB3-F6DD-4424-A54A-DD07213E67ED" SharedDllRefCount="yes" Win64="yes">
+            <Component Id="installer" Guid="EB5E7FB3-F6DD-4424-A54A-DD07213E67ED" SharedDllRefCount="yes" Win64="yes">
               <File Id="installer" Name="myodbc-installer.exe" KeyPath="yes" DiskId="1" Source="x64\myodbc-installer.exe" />
               <?if $(var.odbc_pdb) = 1 ?>
                 <File Id="installer.pdb" Name="myodbc-installer.pdb" DiskId="1" Source="x64\myodbc-installer.pdb" />
@@ -82,14 +82,14 @@
             </Component>
           <?else ?>
             <Component Id="lib" Guid="FED572C6-4778-4C54-A713-8D67D4758043" SharedDllRefCount="yes">
-              <File Id="myodbc.lib" Name="myodbc5$(var.odbc_driver_type_suffix).lib" KeyPath="yes" DiskId="1" Source="x86\myodbc5$(var.odbc_driver_type_suffix).lib"/>
+              <File Id="myodbc.lib" Name="myodbc5$(var.odbc_driver_type_suffix).lib" KeyPath="yes" DiskId="1" Source="x86\myodbc5$(var.odbc_driver_type_suffix).lib" />
               <?if $(var.odbc_pdb) = 1 ?>
-                <File Id="myodbc.lib.pdb" Name="myodbc5$(var.odbc_driver_type_suffix).pdb" DiskId="1" Source="x86\myodbc5$(var.odbc_driver_type_suffix).pdb"/>
+                <File Id="myodbc.lib.pdb" Name="myodbc5$(var.odbc_driver_type_suffix).pdb" DiskId="1" Source="x86\myodbc5$(var.odbc_driver_type_suffix).pdb" />
               <?endif?>
             </Component>
             <Component Id="driver" Guid="83B6877B-3220-4C5F-A1B5-84787E9798DD" SharedDllRefCount="yes">
-              <File Id="myodbc.dll" Name="myodbc5$(var.odbc_driver_type_suffix).dll" Checksum="yes" KeyPath="yes" DiskId="1" Source="x86\myodbc5$(var.odbc_driver_type_suffix).dll">
-	      <ODBCDriver Id="MySQL_ODBC_5.2$(var.odbc_driver_type_suffix)_Driver" Name="MySQL ODBC 5.2$(var.odbc_driver_type_suffix) Driver" SetupFile="myodbc5S.dll" />
+              <File Id="myodbc5.dll" Name="myodbc5$(var.odbc_driver_type_suffix).dll" Checksum="yes" KeyPath="yes" DiskId="1" Source="x86\myodbc5$(var.odbc_driver_type_suffix).dll">
+                <ODBCDriver Id="MySQL_ODBC_5.2$(var.odbc_driver_type_suffix)_Driver" Name="MySQL ODBC 5.2$(var.odbc_driver_type_suffix) Driver" SetupFile="myodbc5S.dll" />
               </File>
               <File Id="readme" Name="README.txt" DiskId="1" Source="doc\README.txt"/>
               <File Id="lic3rd" Name="Licenses_for_Third-Party_Components.txt" Source="doc\Licenses_for_Third-Party_Components.txt" />
@@ -99,8 +99,8 @@
                 <File Id="license" Name="COPYING.txt"       DiskId="1" Source="doc\COPYING.txt" />
               <?endif?>
             </Component>
-	    <Component Id="setup" Guid="428232BA-9D94-4DB5-87CD-C939D1347664" SharedDllRefCount="yes">
-              <File Id="myodbc5S.dll" Name="myodb5S.dll" KeyPath="yes" DiskId="1" Source="x86\myodbc5S.dll" />
+            <Component Id="setup" Guid="428232BA-9D94-4DB5-87CD-C939D1347664" SharedDllRefCount="yes">
+              <File Id="myodbc5S.dll" Name="myodbc5S.dll" KeyPath="yes" DiskId="1" Source="x86\myodbc5S.dll" />
               <File Id="myodbc5S.lib" Name="myodbc5S.lib" DiskId="1" Source="x86\myodbc5S.lib"/>
               <?if $(var.odbc_pdb) = 1 ?>
                 <File Id="myodbc5S.lib.pdb" Name="myodbc5S.pdb" DiskId="1" Source="x86\myodbc5S.pdb"/>

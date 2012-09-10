@@ -1,6 +1,5 @@
-5.2.1(09-Aug-2012)
+5.2.2 (10-Sep-2012)
 
-  Functionality added or changed:
   Bugs fixed:
   * Server disconnects on the execution of a query following execution of a SP
     returning resultset(s) and OUT parameters. (Bug# 14512187)
@@ -16,9 +15,11 @@
   * SQLNativeSql did not null-terminate output string after copying
     (Bug# 14559721)
 
+  Built using MySQL 5.5.27.
+
 ----
 
-5.2.1(09-Aug-2012)
+5.2.1 (09-Aug-2012)
 
   Functionality added or changed:
   * Driver prepares statements on server
