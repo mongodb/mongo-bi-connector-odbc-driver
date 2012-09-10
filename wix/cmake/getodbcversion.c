@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
           fprintf(fp, "<?define odbc_ver_prev=\"%d.%d.%d\" ?>\n", v1, v2, v3-1);
         }
 	fprintf(fp, "<?define odbc_ver_next=\"%d.%d.%d\" ?>\n", v1, v2, v3+1);
+	fprintf(fp, "<?define odbc_driver_type=\""MYODBC_STRDRIVERTYPE"\" ?>\n");
 	fprintf(fp, "<?define odbc_driver_type_suffix=\""MYODBC_STRTYPE_SUFFIX"\" ?>\n");
 	fprintf(fp, "<?define odbc_driver_series=\""MYODBC_STRDRIVERID"\" ?>\n");
 
