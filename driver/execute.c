@@ -1210,9 +1210,16 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
   my_SQLFreeStmt((SQLHSTMT)pStmt,MYSQL_RESET_BUFFERS);
 
   query= GET_QUERY(&pStmt->query);
-  /* Lil dirty hack - for ssps we do not need all those comlications of
-     is_select_stmt*/
-  is_select_stmt= is_select_statement(&pStmt->query) && !ssps_used(pStmt);
+
+  is_select_stmt= is_select_statement(&pStmt->query);
+
+  /* if ssps is used for select query then convert it to non ssps 
+	 single statement using UNION
+  */
+  if(is_select_stmt && ssps_used(pStmt))
+  {
+	ssps_close(pStmt);				
+  }
 
   if ( pStmt->ipd->rows_processed_ptr )
   {
@@ -1345,8 +1352,10 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
           length+= binderLength;
         }
         else
+        {
           /* last select statement has been constructed - so releasing lock*/
           pthread_mutex_unlock(&pStmt->dbc->lock);
+        }
       }
     }
 
