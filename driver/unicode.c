@@ -929,6 +929,15 @@ SQLSetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute,
   if (attribute == SQL_ATTR_CURRENT_CATALOG)
   {
     uint errors= 0;
+
+    /* Verifying for incorrect val_len */
+    if (value_len < 0 && value_len != SQL_NTS)
+    {
+      return set_dbc_error((HDBC *)hdbc, "HY090",
+                  " StringLength argument was less "
+                  "than 0 but was not SQL_NTS " , 0);
+    }
+
     if (is_connected(dbc))
       value= sqlwchar_as_sqlchar(dbc->cxn_charset_info,
                                  value, &len, &errors);

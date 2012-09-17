@@ -301,11 +301,13 @@ int main(int argc, char **argv) \
             rc == SKIP ? "# SKIP " : ""), \
            SKIP_REASON ? SKIP_REASON : ""); \
     if ((rc == FAIL) && (FAIL != tests[i].expect)) \
-      failcnt++; \
+      ++failcnt; \
     SKIP_REASON= NULL; /* Reset SKIP_REASON */ \
     /* Re-allocate statement to reset all its properties. */ \
     SQLFreeStmt(hstmt, SQL_DROP); \
     SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt); \
+    /* Freeing allocated memory */ \
+    mem_gc_flush(); \
   }
 
 #define RUN_TESTS \
@@ -1160,8 +1162,6 @@ int mem_gc_flush()
   int i= 0;
   if (gc_blk.counter <= 0)
   {
-    printf("# GC Memory already empty counter:%d in %s on line %d\n", 
-        gc_blk.counter,  __FILE__, __LINE__); 
     return FAIL;
   }
 

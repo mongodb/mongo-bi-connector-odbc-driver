@@ -14,6 +14,8 @@
   * my_isspace calls cause ODBC driver crashes (Bug# 14363601)
   * SQLNativeSql did not null-terminate output string after copying
     (Bug# 14559721)
+  * Incorrect length value passed to SQLSetConnectAttr could cause
+    driver crash. (Bug# 14620420)
 
   Built using MySQL 5.5.27.
 

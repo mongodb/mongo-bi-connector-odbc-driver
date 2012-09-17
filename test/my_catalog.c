@@ -645,52 +645,113 @@ DECLARE_TEST(t_tables_bug)
 }
 
 
-DECLARE_TEST(t_current_catalog)
+DECLARE_TEST(t_current_catalog_unicode)
+{
+  SQLWCHAR    db[255];
+  wchar_t     cur_db[255];
+  SQLRETURN   rc;
+  SQLINTEGER  len;
+
+  rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+  mystmt(hstmt,rc);
+
+  rc = SQLGetConnectAttrW(hdbc, SQL_ATTR_CURRENT_CATALOG, db, sizeof(db), &len);
+  mycon(hdbc,rc);
+
+  is_num(len, strlen("test") * sizeof(SQLWCHAR));
+  is_wstr(sqlwchar_to_wchar_t(db), L"test", 5);
+
+  rc = SQLSetConnectAttrW(hdbc, SQL_ATTR_CURRENT_CATALOG, db, SQL_NTS);
+  mycon(hdbc,rc);
+
+  ok_sql(hstmt, "DROP DATABASE IF EXISTS test_odbc_current");
+
+  wcscpy(cur_db, L"test_odbc_current");
+  rc = SQLSetConnectAttrW(hdbc, SQL_ATTR_CURRENT_CATALOG, W(cur_db), SQL_NTS);
+  mycon_r(hdbc,rc);
+
+  ok_sql(hstmt, "CREATE DATABASE test_odbc_current");
+  rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+
+  wcscpy(cur_db, L"test_odbc_current");
+  rc = SQLSetConnectAttrW(hdbc, SQL_ATTR_CURRENT_CATALOG, W(cur_db), SQL_NTS);
+  mycon(hdbc,rc);
+
+  rc = SQLGetConnectAttrW(hdbc, SQL_ATTR_CURRENT_CATALOG, db, 255, &len);
+  mycon(hdbc,rc);
+
+  is_num(len, strlen("test_odbc_current") * sizeof(SQLWCHAR));
+  is_wstr(sqlwchar_to_wchar_t(db), cur_db, 18);
+
+  wcscpy(cur_db, L"test_odbc_current_12455");
+  rc = SQLSetConnectAttrW(hdbc, SQL_ATTR_CURRENT_CATALOG, W(cur_db), SQL_NTS);
+  mycon_r(hdbc,rc);
+
+#ifdef _WIN32
+  rc = SQLSetConnectAttrW(hdbc, SQL_ATTR_CURRENT_CATALOG, W(cur_db), len);
+#else
+  rc = SQLSetConnectAttrW(hdbc, SQL_ATTR_CURRENT_CATALOG, W(cur_db), len / sizeof(SQLWCHAR));
+#endif
+  mycon(hdbc,rc);
+
+  /* reset for further tests */
+  wcscpy(cur_db, L"test");
+  rc = SQLSetConnectAttrW(hdbc, SQL_ATTR_CURRENT_CATALOG, W(cur_db), SQL_NTS);
+  mycon(hdbc,rc);
+
+  ok_sql(hstmt, "DROP DATABASE test_odbc_current");
+
+  return OK;
+}
+
+
+DECLARE_TEST(t_current_catalog_ansi)
 {
   SQLCHAR     cur_db[255], db[255];
   SQLRETURN   rc;
   SQLINTEGER len;
 
-    rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-    mystmt(hstmt,rc);
+  rc = SQLFreeStmt(hstmt,SQL_CLOSE);
+  mystmt(hstmt,rc);
 
-    rc = SQLGetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, db, sizeof(db), &len);
-    mycon(hdbc,rc);
-    fprintf(stdout,"current_catalog: %s (%ld)\n", db, len);
-    is_num(len, 4);
-    is_str(db, "test", 5);
+  rc = SQLGetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, db, sizeof(db), &len);
+  mycon(hdbc,rc);
 
-    rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, db, SQL_NTS);
-    mycon(hdbc,rc);
+  is_num(len, 4);
+  is_str(db, "test", 5);
 
-    ok_sql(hstmt, "DROP DATABASE IF EXISTS test_odbc_current");
+  rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, db, SQL_NTS);
+  mycon(hdbc,rc);
 
-    strcpy((char *)cur_db, "test_odbc_current");
-    rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, cur_db, SQL_NTS);
-    mycon_r(hdbc,rc);
+  ok_sql(hstmt, "DROP DATABASE IF EXISTS test_odbc_current");
 
-    ok_sql(hstmt, "CREATE DATABASE test_odbc_current");
+  strcpy((char *)cur_db, "test_odbc_current");
+  rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, cur_db, SQL_NTS);
+  mycon_r(hdbc,rc);
 
-    strcpy((char *)cur_db, "test_odbc_current");
-    rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, cur_db, SQL_NTS);
-    mycon(hdbc,rc);
+  ok_sql(hstmt, "CREATE DATABASE test_odbc_current");
+  rc = SQLFreeStmt(hstmt,SQL_CLOSE);
 
-    rc = SQLGetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, db, 255, &len);
-    mycon(hdbc,rc);
-    fprintf(stdout,"current_catalog: %s (%ld)\n", db, len);
-    is_num(len, 17);
-    is_str(db, cur_db, 18);
+  strcpy((char *)cur_db, "test_odbc_current");
+  rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, cur_db, SQL_NTS);
+  mycon(hdbc,rc);
 
-    strcpy((char *)cur_db, "test_odbc_current_12455");
-    rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, cur_db, SQL_NTS);
-    mycon_r(hdbc,rc);
+  rc = SQLGetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, db, 255, &len);
+  mycon(hdbc,rc);
 
-    rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, cur_db, len);
-    mycon(hdbc,rc);
+  is_num(len, 17);
+  is_str(db, cur_db, 18);
 
-    /* reset for further tests */
-    rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, (SQLCHAR *)"test", SQL_NTS);
-    mycon(hdbc,rc);
+  strcpy((char *)cur_db, "test_odbc_current_12455");
+  rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, cur_db, SQL_NTS);
+  mycon_r(hdbc,rc);
+
+  rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, cur_db, len);
+  mycon(hdbc,rc);
+
+  /* reset for further tests */
+  rc = SQLSetConnectAttr(hdbc, SQL_ATTR_CURRENT_CATALOG, (SQLCHAR *)"test", SQL_NTS);
+  mycon(hdbc,rc);
 
   ok_sql(hstmt, "DROP DATABASE test_odbc_current");
 
@@ -2623,7 +2684,11 @@ BEGIN_TESTS
   ADD_TEST(tmysql_specialcols)
   ADD_TEST(t_columns)
   ADD_TEST(t_tables_bug)
-  ADD_TEST(t_current_catalog)
+#ifdef MYODBC_UNICODEDRIVER
+  ADD_TEST(t_current_catalog_unicode)
+#else
+  ADD_TEST(t_current_catalog_ansi)
+#endif
   ADD_TEST(tmysql_showkeys)
   ADD_TEST(t_sqltables)
   ADD_TEST(my_information_schema)

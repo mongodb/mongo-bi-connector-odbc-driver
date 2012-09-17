@@ -224,7 +224,7 @@ SQLCHAR *sqlwchar_as_utf8_ext(const SQLWCHAR *str, SQLINTEGER *len,
   int utf8len, dummy;
   SQLINTEGER i;
 
-  if (!str || *len == 0)
+  if (!str || *len <= 0)
   {
     *len= 0;
     return buff;
@@ -309,7 +309,7 @@ SQLCHAR *sqlwchar_as_utf8(const SQLWCHAR *str, SQLINTEGER *len)
     *len= sqlwcharlen(str);
   }
 
-  if (!str || *len == 0)
+  if (!str || *len <= 0)
   {
     *len= 0;
     return NULL;
@@ -317,7 +317,11 @@ SQLCHAR *sqlwchar_as_utf8(const SQLWCHAR *str, SQLINTEGER *len)
 
   res= sqlwchar_as_utf8_ext(str, len, NULL, 0, NULL);
 
-  res[*len]= '\0';
+  /* If we could not allocate memory */
+  if (res != NULL)
+  {
+    res[*len]= '\0';
+  }
 
   return res;
 }
