@@ -222,12 +222,18 @@ SQLRETURN insert_params(STMT FAR *stmt, SQLULEN row, char **finalquery,
     setlocale(LC_NUMERIC, "C");  /* force use of '.' as decimal point */
   }
 
-  if (ssps_used(stmt))
+  if (ssps_used(stmt) && stmt->param_count > stmt->param_bind->max_element)
   {
+    uint prev_max_elements= stmt->param_bind->max_element;
+
     if (allocate_dynamic(stmt->param_bind, stmt->param_count))
     {
       goto memerror;
     }
+
+    /* Need to init newly allocated area with 0s */
+    memset(stmt->param_bind->buffer + sizeof(MYSQL_BIND)*prev_max_elements, 0,
+      sizeof(MYSQL_BIND) * (stmt->param_bind->max_element - prev_max_elements));
   }
 
   for ( i= 0; i < stmt->param_count; ++i )
@@ -1216,7 +1222,7 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
   /* if ssps is used for select query then convert it to non ssps 
 	 single statement using UNION
   */
-  if(is_select_stmt && ssps_used(pStmt))
+  if(is_select_stmt && ssps_used(pStmt) && pStmt->apd->array_size > 1)
   {
 	ssps_close(pStmt);				
   }

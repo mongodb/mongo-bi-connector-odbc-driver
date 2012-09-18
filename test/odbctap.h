@@ -1167,8 +1167,10 @@ int mem_gc_flush()
 
   while (i < gc_blk.counter)
   {
-    free(gc_blk.blk[i++]);
+    free(gc_blk.blk[i]);
+    gc_blk.blk[i++]= 0;
   }
+
   return OK;
 }
 
