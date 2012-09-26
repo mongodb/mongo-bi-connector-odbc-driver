@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -45,12 +45,6 @@
 
 #ifndef FALSE
 # define FALSE 0
-#endif
-
-#ifdef HAVE_LPCWSTR
-# define MyODBC_LPCWSTR LPCWSTR
-#else
-# define MyODBC_LPCWSTR LPWSTR
 #endif
 
 #if !defined(HAVE_SQLGETPRIVATEPROFILESTRINGW) || defined(USE_UNIXODBC)
@@ -122,53 +116,6 @@ SQLGetPrivateProfileStringW(const MyODBC_LPCWSTR lpszSection, const MyODBC_LPCWS
                                        lpszFilename);
 }
 
-/**
-  The version of iODBC that shipped with Mac OS X 10.4 does not implement
-  the Unicode versions of various installer API functions, so we have to
-  do it ourselves.
-*/
-
-BOOL INSTAPI
-SQLInstallDriverExW(const MyODBC_LPCWSTR lpszDriver, const MyODBC_LPCWSTR lpszPathIn,
-                    LPWSTR lpszPathOut, WORD cbPathOutMax, WORD *pcbPathOut,
-                    WORD fRequest, LPDWORD lpdwUsageCount)
-{
-  const SQLWCHAR *pos;
-  SQLINTEGER len;
-  BOOL rc;
-  char *driver, *pathin, *pathout;
-  WORD out;
-
-  if (!pcbPathOut)
-    pcbPathOut= &out;
-
-  /* Calculate length of double-\0 terminated string */
-  pos= lpszDriver;
-  while (*pos)
-    pos+= sqlwcharlen(pos) + 1;
-  len= pos - lpszDriver + 1;
-  driver= (char *)sqlwchar_as_utf8(lpszDriver, &len);
-
-  len= SQL_NTS;
-  pathin= (char *)sqlwchar_as_utf8(lpszPathIn, &len);
-
-  if (cbPathOutMax > 0)
-    pathout= (char *)malloc(cbPathOutMax * 4 + 1); /* 4 = max utf8 charlen */
-
-  rc= SQLInstallDriverEx(driver, pathin, pathout, cbPathOutMax * 4,
-                         pcbPathOut, fRequest, lpdwUsageCount);
-
-  if (rc == TRUE && cbPathOutMax)
-    *pcbPathOut= utf8_as_sqlwchar(lpszPathOut, cbPathOutMax,
-                                  (SQLCHAR *)pathout, *pcbPathOut);
-
-  x_free(driver);
-  x_free(pathin);
-  x_free(pathout);
-
-  return rc;
-}
-
 
 BOOL INSTAPI
 SQLValidDSNW(const MyODBC_LPCWSTR lpszDSN)
@@ -235,22 +182,6 @@ SQLPostInstallerErrorW(DWORD fErrorCode, MyODBC_LPCWSTR szErrorMsg)
     We have to leak memory here, because iODBC does not make a
     copy of the message.
   */
-
-  return ret;
-}
-
-
-BOOL INSTAPI
-SQLRemoveDriverW(const MyODBC_LPCWSTR lpszDriver, BOOL fRemoveDSN,
-                 LPDWORD lpdwUsageCount)
-{
-  BOOL ret;
-  SQLINTEGER len= SQL_NTS;
-  char *driver= (char *)sqlwchar_as_utf8(lpszDriver, &len);
-
-  ret= SQLRemoveDriver(driver, fRemoveDSN, lpdwUsageCount);
-
-  x_free(driver);
 
   return ret;
 }

@@ -13,6 +13,8 @@
   * SQLColumns and possibly other catalog functions that are not using I_S
     could work incorrectly if called on the same statement handle after a
     query returning resultset. (Bug#14338051)
+  * Version 5.1 exports symbols SQLInstallDriverEx and SQLInstallDriverExW
+    (Bug# 11766724/59900)
 
 ----
 
