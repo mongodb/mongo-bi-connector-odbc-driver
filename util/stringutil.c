@@ -327,6 +327,13 @@ SQLCHAR *sqlwchar_as_utf8(const SQLWCHAR *str, SQLINTEGER *len)
 }
 
 
+SQLCHAR* sqlwchar_as_utf8_simple(SQLWCHAR *s)
+{
+  SQLINTEGER len= SQL_NTS;
+  return sqlwchar_as_utf8(s, &len);
+}
+
+
 /**
   Convert a SQLCHAR encoded as UTF-8 into a SQLWCHAR.
 
@@ -935,4 +942,31 @@ def:
   csname= MYSQL_DEFAULT_CHARSET_NAME;
 
   return csname;
+}
+
+
+/* 
+ Converts from wchar_t to SQLWCHAR and copies the result into the provided
+ buffer
+*/
+SQLWCHAR *wchar_t_as_sqlwchar(wchar_t *from, SQLWCHAR *to, size_t len)
+{
+  /* The function deals mostly with short strings */
+  if (len > 1024)
+  len= 1024;
+
+  if (sizeof(wchar_t) == sizeof(SQLWCHAR))
+  {
+    memcpy(to, from, len * sizeof(wchar_t));
+    return to;
+  }
+  else
+  {
+    size_t i;
+    SQLWCHAR *out= to;
+    for (i= 0; i < len; i++)
+      to+= utf32toutf16((UTF32)from[i], (UTF16 *)to);
+    *to= 0;
+    return out;
+  }
 }

@@ -29,13 +29,6 @@
 
 #define WIN32_LEAN_AND_MEAN
 
-#define CONNECTION_TAB  1
-#define METADATA_TAB    2
-#define CURSORS_TAB     3
-#define DEBUG_TAB       4
-#define SSL_TAB         5
-#define MISC_TAB        6
-
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
@@ -198,28 +191,53 @@ void getStrFieldData(HWND hwnd, SQLWCHAR **param, int idc)
 }
 
 
-void getStrFieldData(SQLWCHAR **param, unsigned int framenum, int idc )
+void getStrFieldDataTab(SQLWCHAR **param, unsigned int framenum, int idc)
 {
   assert(TabCtrl_1.hTabPages);
   HWND tab = TabCtrl_1.hTabPages[framenum-1];
 
   assert(tab);
 
-  getStrFieldData(tab, param, idc );
+  getStrFieldData(tab, param, idc);
+}
+
+void setComboFieldDataTab(SQLWCHAR *param, unsigned int framenum, int idc)
+{
+  if ( TabCtrl_1.hTabPages[framenum-1])
+  {
+    HWND tabHwndMisc = TabCtrl_1.hTabPages[framenum-1];
+    HWND charsetCtrl = GetDlgItem(tabHwndMisc, idc);
+    ComboBox_SetText(charsetCtrl, param);
+  }
 }
 
 
-void setUnsignedFieldData(HWND hwnd, const unsigned int & param, int idc )
+void setStrFieldData(HWND hwnd, SQLWCHAR *param, int idc)
 {
-  wchar_t buf[20];
-  _itow( param, (wchar_t*)buf, 10 );
-  Edit_SetText(GetDlgItem(hwnd,idc), buf);
+  Edit_SetText(GetDlgItem(hwnd, idc), param);
 }
 
 
-void getUnsignedFieldData( HWND hwnd, unsigned int & param, int idc )
+void setStrFieldDataTab(SQLWCHAR *param, unsigned int framenum, int idc)
 {
-  param = 0U;
+  assert(TabCtrl_1.hTabPages);
+  HWND tab = TabCtrl_1.hTabPages[framenum-1];
+
+  assert(tab);
+
+  setStrFieldData(tab, param, idc);
+}
+
+
+void getUnsignedFieldDataTab(unsigned int framenum, unsigned int *param, int idc )
+{
+  getUnsignedFieldData(TabCtrl_1.hTabPages[framenum-1], param, idc);
+}
+
+
+void getUnsignedFieldData(HWND hwnd, unsigned int *param, int idc)
+{
+  *param = 0U;
   int len = Edit_GetTextLength(GetDlgItem(hwnd,idc));
 
   if(len>0)
@@ -229,14 +247,40 @@ void getUnsignedFieldData( HWND hwnd, unsigned int & param, int idc )
     if (tmp1)
     {
       Edit_GetText(GetDlgItem(hwnd,idc), tmp1, len+1);
-      param = _wtol(tmp1);
+      *param = _wtol(tmp1);
       x_free(tmp1);
     }
   }
 }
 
 
-bool getBoolFieldData(unsigned int framenum, int idc)
+void setUnsignedFieldData(HWND hwnd, const unsigned int param, int idc)
+{
+  wchar_t buf[20];
+  _itow( param, (wchar_t*)buf, 10 );
+  Edit_SetText(GetDlgItem(hwnd,idc), buf);
+}
+
+
+void setUnsignedFieldDataTab(unsigned int framenum, const unsigned int param, int idc)
+{
+  setUnsignedFieldData(TabCtrl_1.hTabPages[framenum-1], param, idc);
+}
+
+
+HWND getTabCtrlTab(void)
+{
+  return TabCtrl_1.hTab;
+}
+
+
+HWND getTabCtrlTabPages(unsigned int framenum)
+{
+  return TabCtrl_1.hTabPages[framenum];
+}
+
+
+my_bool getBoolFieldDataTab(unsigned int framenum, int idc)
 {
   assert(TabCtrl_1.hTabPages);
   HWND checkbox = GetDlgItem(TabCtrl_1.hTabPages[framenum-1], idc);
@@ -249,216 +293,45 @@ bool getBoolFieldData(unsigned int framenum, int idc)
 }
 
 
-#define GET_STRING(name)    getStrFieldData(hwnd,&params.name,IDC_EDIT_##name)
-
-#define SET_STRING(name) \
-    Edit_SetText(GetDlgItem(hwnd,IDC_EDIT_##name), params.name)
-
-#define SET_CSTRING(name) \
-    ComboBox_SetText(GetDlgItem(hwnd,IDC_EDIT_##name), params.name)
-
-#define GET_UNSIGNED(name)  getUnsignedFieldData(hwnd,params.name,IDC_EDIT_##name)
-#define SET_UNSIGNED(name)  setUnsignedFieldData(hwnd,params.name,IDC_EDIT_##name)
-
-#define GET_BOOL(framenum,name) \
-    params.name = getBoolFieldData(framenum,IDC_CHECK_##name)
-
-#define SET_BOOL(framenum,name) \
-    Button_SetCheck(GetDlgItem(TabCtrl_1.hTabPages[framenum-1],IDC_CHECK_##name), params.name)
-
-
-void syncData(HWND hwnd, DataSource &params)
+/* this reads non-DSN bool data */
+my_bool getBoolFieldData(HWND hwnd, int idc)
 {
-  GET_STRING(name);
-  GET_STRING(description);
-  GET_STRING(server);
-  GET_UNSIGNED(port);
-  GET_STRING(uid);
-  GET_STRING(pwd);
-  GET_STRING(database);
-  GET_STRING(socket);
-  params.force_use_of_named_pipes = !!Button_GetCheck(GetDlgItem(hwnd, IDC_RADIO_pipe));
+  HWND checkbox = GetDlgItem(hwnd, idc);
+
+  assert(checkbox);
+  if (checkbox)
+      return !!Button_GetCheck(checkbox);
+
+  return false;
 }
 
 
-void syncForm(HWND hwnd, DataSource &params)
+void setBoolFieldData(HWND hwnd, int idc, my_bool state)
 {
-  SET_STRING(name);
-  SET_STRING(description);
-  SET_STRING(server);
-  SET_UNSIGNED(port);
-  SET_STRING(uid);
-  SET_STRING(pwd);
-  SET_STRING(database);
-  SET_STRING(socket);
-
-  if (params.force_use_of_named_pipes)
-  {
-    Button_SetCheck(GetDlgItem(hwnd,IDC_RADIO_pipe), TRUE);
-  }
-  else
-  {
-    Button_SetCheck(GetDlgItem(hwnd,IDC_RADIO_tcp), TRUE);
-  }
-  SwitchTcpOrPipe(hwnd, pParams->force_use_of_named_pipes);
+  HWND checkbox = GetDlgItem(hwnd, idc);
+  assert(checkbox);
+  if (checkbox)
+  Button_SetCheck(checkbox, state);
 }
 
 
-void syncTabsData(HWND hwnd, DataSource &params)
-{  /* 1 - Connection */
-  GET_BOOL(CONNECTION_TAB, allow_big_results);
-  GET_BOOL(CONNECTION_TAB, use_compressed_protocol);
-  GET_BOOL(CONNECTION_TAB, dont_prompt_upon_connect);
-  GET_BOOL(CONNECTION_TAB, auto_reconnect);
-//  GET_BOOL(CONNECTION_TAB, force_use_of_named_pipes);
-  GET_BOOL(CONNECTION_TAB, allow_multiple_statements);
-  GET_BOOL(CONNECTION_TAB, clientinteractive);
+void setBoolFieldDataTab(unsigned int framenum, int idc, my_bool state)
+{
+  assert(TabCtrl_1.hTabPages);
+  Button_SetCheck(GetDlgItem(TabCtrl_1.hTabPages[framenum-1],idc), state);
 
-  getStrFieldData(&params.charset , CONNECTION_TAB, IDC_EDIT_charset);
-  getStrFieldData(&params.initstmt, CONNECTION_TAB, IDC_EDIT_initstmt);
-
-  /* 2 - Metadata*/
-  GET_BOOL(METADATA_TAB, change_bigint_columns_to_int);
-  GET_BOOL(METADATA_TAB, handle_binary_as_char);
-  GET_BOOL(METADATA_TAB, return_table_names_for_SqlDescribeCol);
-  GET_BOOL(METADATA_TAB, ignore_N_in_name_table);
-  GET_BOOL(METADATA_TAB, no_catalog);
-  GET_BOOL(METADATA_TAB, limit_column_size);
-  GET_BOOL(METADATA_TAB, no_information_schema);
-
-  /* 3 - Cursors/Results */
-  GET_BOOL(CURSORS_TAB, return_matching_rows);
-  GET_BOOL(CURSORS_TAB, auto_increment_null_search);
-  GET_BOOL(CURSORS_TAB, dynamic_cursor);
-  GET_BOOL(CURSORS_TAB, user_manager_cursor);
-  GET_BOOL(CURSORS_TAB, pad_char_to_full_length);
-  GET_BOOL(CURSORS_TAB, dont_cache_result);
-  GET_BOOL(CURSORS_TAB, force_use_of_forward_only_cursors);
-  GET_BOOL(CURSORS_TAB, zero_date_to_min);
-
-  if (getBoolFieldData(CURSORS_TAB, IDC_CHECK_cursor_prefetch_number))
-  {
-    getUnsignedFieldData(TabCtrl_1.hTabPages[CURSORS_TAB-1],
-                        params.cursor_prefetch_number,
-                        IDC_EDIT_cursor_prefetch_number);
-  }
-  else
-  {
-    params.cursor_prefetch_number= 0;
-  }
-
-  /* 4 - debug*/
-  GET_BOOL(DEBUG_TAB,save_queries);
-
-  /* 5 - ssl related */
-  getStrFieldData(&params.sslkey   , SSL_TAB, IDC_EDIT_sslkey);
-  getStrFieldData(&params.sslcert  , SSL_TAB, IDC_EDIT_sslcert);
-  getStrFieldData(&params.sslca    , SSL_TAB, IDC_EDIT_sslca);
-  getStrFieldData(&params.sslcapath, SSL_TAB, IDC_EDIT_sslcapath);
-  getStrFieldData(&params.sslcipher, SSL_TAB, IDC_EDIT_sslcipher);
-  GET_BOOL(SSL_TAB,sslverify);
-
-  /* 6 - Misc*/
-  GET_BOOL(MISC_TAB, safe);
-  GET_BOOL(MISC_TAB, dont_use_set_locale);
-  GET_BOOL(MISC_TAB, ignore_space_after_function_names);
-  GET_BOOL(MISC_TAB, read_options_from_mycnf);
-  GET_BOOL(MISC_TAB, disable_transactions);
-  GET_BOOL(MISC_TAB, min_date_to_zero);
-  GET_BOOL(MISC_TAB, no_ssps);
 }
 
 
-void syncTabs(HWND hwnd, DataSource &params)
+void setControlEnabled(unsigned int framenum, int idc, my_bool state)
 {
-  /* 1 - Connection */
-  SET_BOOL(CONNECTION_TAB, allow_big_results);
-  SET_BOOL(CONNECTION_TAB, use_compressed_protocol);
-  SET_BOOL(CONNECTION_TAB, dont_prompt_upon_connect);
-  SET_BOOL(CONNECTION_TAB, auto_reconnect);
-//  SET_BOOL(CONNECTION_TAB, force_use_of_named_pipes);
-  SET_BOOL(CONNECTION_TAB, allow_multiple_statements);
-  SET_BOOL(CONNECTION_TAB, clientinteractive);
-
-  if ( TabCtrl_1.hTabPages[CONNECTION_TAB-1])
-  {
-    HWND tabHwndMisc = TabCtrl_1.hTabPages[CONNECTION_TAB-1];
-    HWND charsetCtrl = GetDlgItem(tabHwndMisc,IDC_EDIT_charset);
-    ComboBox_SetText(charsetCtrl, params.charset);
-    Edit_SetText( GetDlgItem( tabHwndMisc, IDC_EDIT_initstmt), params.initstmt);
-  }
-
-  /* 2 - Metadata*/
-  SET_BOOL(METADATA_TAB, change_bigint_columns_to_int);
-  SET_BOOL(METADATA_TAB, handle_binary_as_char);
-  SET_BOOL(METADATA_TAB, return_table_names_for_SqlDescribeCol);
-  SET_BOOL(METADATA_TAB, ignore_N_in_name_table);
-  SET_BOOL(METADATA_TAB, no_catalog);
-  SET_BOOL(METADATA_TAB, limit_column_size);
-  SET_BOOL(METADATA_TAB, no_information_schema);
-
-  /* 3 - Cursors/Results */
-  SET_BOOL(CURSORS_TAB, return_matching_rows);
-  SET_BOOL(CURSORS_TAB, auto_increment_null_search);
-  SET_BOOL(CURSORS_TAB, dynamic_cursor);
-  SET_BOOL(CURSORS_TAB, user_manager_cursor);
-  SET_BOOL(CURSORS_TAB, pad_char_to_full_length);
-  SET_BOOL(CURSORS_TAB, dont_cache_result);
-  SET_BOOL(CURSORS_TAB, force_use_of_forward_only_cursors);
-  SET_BOOL(CURSORS_TAB, zero_date_to_min);
-
-  HWND cursorTab= TabCtrl_1.hTabPages[CURSORS_TAB-1];
+  HWND cursorTab= TabCtrl_1.hTabPages[framenum-1];
   assert(cursorTab);
-  /* Following pattern as it done for other tabs - hope it was done for
-     a reason */
+
   if (cursorTab)
   {
-    Button_SetCheck(GetDlgItem(cursorTab, IDC_CHECK_cursor_prefetch_number),
-                  params.cursor_prefetch_number > 0);
-
-    EnableWindow(GetDlgItem(cursorTab, IDC_EDIT_cursor_prefetch_number),
-              params.cursor_prefetch_number > 0);
-
-    if (params.cursor_prefetch_number > 0)
-    {
-      setUnsignedFieldData(cursorTab, params.cursor_prefetch_number,
-                          IDC_EDIT_cursor_prefetch_number);
-    }
+    EnableWindow(GetDlgItem(cursorTab, idc), state);
   }
-
-  /* 4 - debug*/
-  SET_BOOL(DEBUG_TAB,save_queries);
-
-  /* 5 - ssl related */
-  if ( TabCtrl_1.hTabPages[SSL_TAB-1])
-  {
-    HWND tabHwnd = TabCtrl_1.hTabPages[SSL_TAB-1];
-
-    Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslkey)     , params.sslkey);
-    Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslcert)    , params.sslcert);
-    Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslca)      , params.sslca);
-    Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslcapath)  , params.sslcapath);
-    Edit_SetText( GetDlgItem( tabHwnd, IDC_EDIT_sslcipher)  , params.sslcipher);
-    SET_BOOL(SSL_TAB, sslverify);
-  }
-
-  /* 6 - Misc*/
-  SET_BOOL(MISC_TAB, safe);
-  SET_BOOL(MISC_TAB, dont_use_set_locale);
-  SET_BOOL(MISC_TAB, ignore_space_after_function_names);
-  SET_BOOL(MISC_TAB, read_options_from_mycnf);
-  SET_BOOL(MISC_TAB, disable_transactions);
-  SET_BOOL(MISC_TAB, min_date_to_zero);
-  SET_BOOL(MISC_TAB, no_ssps);
-}
-
-
-void FillParameters(HWND hwnd, DataSource & params)
-{
-	syncData(hwnd, params );
-
-	if( TabCtrl_1.hTab )
-		syncTabsData(hwnd, params);
 }
 
 
@@ -512,7 +385,7 @@ void btnDetails_Click (HWND hwnd)
 					          TRUE);                      // stretch tab page to fit tab ctrl
 		flag = true;		
 
-		syncTabs(hwnd, *pParams);
+		syncTabs(hwnd, pParams);
 	}
 	MoveWindow( hwnd, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top + 280*mod, TRUE );
 }
@@ -520,7 +393,7 @@ void btnDetails_Click (HWND hwnd)
 
 void btnOk_Click (HWND hwnd)
 {
-  FillParameters(hwnd, *pParams);
+  FillParameters(hwnd, pParams);
 
   /* if DS params are valid, close dialog */
   if (mytestaccept(hwnd, pParams))
@@ -539,7 +412,7 @@ void btnCancel_Click (HWND hwnd)
 
 void btnTest_Click (HWND hwnd)
 {
-  FillParameters(hwnd, *pParams);
+  FillParameters(hwnd, pParams);
   wchar_t *testResultMsg= mytest(hwnd, pParams);
   MessageBoxW(hwnd, testResultMsg, L"Test Result", MB_OK);
   x_free(testResultMsg);
@@ -663,7 +536,7 @@ void processDbCombobox(HWND hwnd, HWND hwndCtl, UINT codeNotify)
     /* Loading list and adjust its height if button clicked and on user input */
     case(CBN_DROPDOWN):
     {
-      FillParameters(hwnd, *pParams);
+      FillParameters(hwnd, pParams);
       LIST *dbs= mygetdatabases(hwnd, pParams);
       LIST *dbtmp= dbs;
 
@@ -745,7 +618,7 @@ void FormMain_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
     case IDC_RADIO_pipe:
       SwitchTcpOrPipe(hwnd, !!Button_GetCheck(GetDlgItem(hwnd, IDC_RADIO_pipe)));
       break;
-    case IDC_CHECK_cursor_prefetch_number:
+    case IDC_CHECK_cursor_prefetch_active:
       {
         HWND cursorTab= TabCtrl_1.hTabPages[CURSORS_TAB-1];
         assert(cursorTab);
@@ -753,7 +626,7 @@ void FormMain_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
         assert(prefetch);
 
         EnableWindow(prefetch, !!Button_GetCheck(GetDlgItem(cursorTab,
-                                            IDC_CHECK_cursor_prefetch_number)));
+                                            IDC_CHECK_cursor_prefetch_active)));
                   
         if (Edit_GetTextLength(prefetch) == 0)
         {
@@ -856,7 +729,7 @@ BOOL FormMain_OnInitDialog(HWND hwnd, HWND hwndFocus, LPARAM lParam)
 	//Get the initial Width and height of the dialog
 	//in order to fix the minimum size of dialog
 
-	syncForm(hwnd,*pParams);
+	syncForm(hwnd, pParams);
 
   /* Disable fields if in prompt mode */
   if (g_isPrompt)

@@ -142,7 +142,7 @@ BOOL INSTAPI ConfigDSNW(HWND hWnd, WORD nRequest, LPCWSTR pszDriver,
       with what information was given
     */
     if (!hWnd || ShowOdbcParamsDialog(ds, hWnd, FALSE) == 1)
-#elif
+#else if
     if (ShowOdbcParamsDialog(ds, hWnd, FALSE) == 1)
 #endif
     {

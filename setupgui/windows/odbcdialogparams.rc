@@ -21,6 +21,8 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
+// Microsoft Visual C++ generated resource script.
+//
 #include "resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
@@ -129,7 +131,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,27,69,10
     CONTROL         "Enable automatic reconnect",IDC_CHECK_auto_reconnect,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,42,105,10
-    CONTROL         "Don't prompt when connecting",IDC_CHECK_dont_prompt_upon_connect,
+    CONTROL         "Don't Prompt Upon Connect",IDC_CHECK_dont_prompt_upon_connect,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,57,113,10
     CONTROL         "Allow multiple statements",IDC_CHECK_allow_multiple_statements,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,72,97,10
@@ -178,7 +180,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,32,154,10
     CONTROL         "Force use of forward-only cursors",IDC_CHECK_force_use_of_forward_only_cursors,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,47,125,10
-    CONTROL         "Prefetch from server by",IDC_CHECK_cursor_prefetch_number,
+    CONTROL         "Prefetch from server by",IDC_CHECK_cursor_prefetch_active,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,62,89,10
     EDITTEXT        IDC_EDIT_cursor_prefetch_number,102,62,27,10,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
     LTEXT           "rows at a time",IDC_STATIC,130,62,48,10

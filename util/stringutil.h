@@ -109,8 +109,11 @@ unsigned long sqlwchartoul(const SQLWCHAR *wstr, const SQLWCHAR **endptr);
 void sqlwcharfromul(SQLWCHAR *wstr, unsigned long v);
 size_t sqlwcharncat2(SQLWCHAR *dest, const SQLWCHAR *src, size_t *n);
 SQLWCHAR *sqlwcharncpy(SQLWCHAR *dest, const SQLWCHAR *src, size_t n);
+SQLWCHAR *wchar_t_as_sqlwchar(wchar_t *from, SQLWCHAR *to, size_t len);
 
 char * myodbc_strlwr(char *target, size_t len);
+SQLCHAR* sqlwchar_as_utf8_simple(SQLWCHAR *s);
+
 #ifdef __cplusplus
 }
 #endif
