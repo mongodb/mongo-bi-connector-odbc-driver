@@ -338,7 +338,8 @@ void setStrFieldData(gchar *widget_name, SQLWCHAR *param, SQLCHAR **param8)
   GtkEntry *widget= GTK_ENTRY(gtk_builder_get_object (builder, widget_name));
   assert(widget);
   ds_get_utf8attr(param, param8);
-  gtk_entry_set_text(widget, (gchar*)(*param8));
+  if(param8 && *param8)
+    gtk_entry_set_text(widget, (gchar*)(*param8));
 }
 
 
@@ -351,7 +352,8 @@ void setComboFieldData(gchar *widget_name, SQLWCHAR *param, SQLCHAR **param8)
   assert(widget);
   ds_get_utf8attr(param, param8);
   
-  gtk_entry_set_text(entry, (gchar*)(*param8));
+  if(param8 && *param8)
+    gtk_entry_set_text(entry, (gchar*)(*param8));
 }
 
 
