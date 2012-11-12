@@ -15,6 +15,7 @@
     query returning resultset. (Bug#14338051)
   * Version 5.1 exports symbols SQLInstallDriverEx and SQLInstallDriverExW
     (Bug# 11766724/59900)
+  * Corrected calculation for length indicator descriptor field (Bug# 11766437)
 
 ----
 

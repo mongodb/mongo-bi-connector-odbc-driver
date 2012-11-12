@@ -38,9 +38,9 @@ IF(NOT WIN32)
   SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ODBC_LINK_FLAGS}")
 ENDIF(NOT WIN32)
 
-FOREACH(T my_basics my_blob my_bulk my_catalog my_curext my_cursor
+FOREACH(T my_basics my_blob my_bulk my_catalog1 my_catalog2 my_curext my_cursor
 		my_datetime my_desc my_dyn_cursor my_error my_info my_keys my_param
-		my_prepare my_relative my_result my_scroll my_tran
+		my_prepare my_relative my_result1 my_result2 my_scroll my_tran
 		my_types my_unicode my_unixodbc my_use_result my_bug13766)
 	ADD_EXECUTABLE(${T} ${T}.c)
 
