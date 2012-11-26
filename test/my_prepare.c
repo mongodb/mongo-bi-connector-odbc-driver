@@ -1075,6 +1075,54 @@ DECLARE_TEST(t_bug29871)
 }
 
 
+/**
+  Bug #67340: Memory leak in 5.2.2(w) ODBC driver
+              causes Prepared_stmt_count to grow
+*/
+DECLARE_TEST(t_bug67340)
+{
+  SQLCHAR *param= (SQLCHAR *)"1";
+  SQLCHAR     data[255]= "abcdefg";
+  SQLLEN paramlen= 7;
+  int i, stmt_count= 0;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug67340");
+  ok_sql(hstmt, "CREATE TABLE t_bug67340(id INT AUTO_INCREMENT PRIMARY KEY,"\
+                "vc VARCHAR(32))");
+
+  /* get the initial numnber of Prepared_stmt_count */
+  ok_sql(hstmt, "SHOW STATUS LIKE 'Prepared_stmt_count'");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  stmt_count= my_fetch_int(hstmt, 2);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  for(i=0; i < 100; i++)
+  {
+    ok_stmt(hstmt, SQLPrepare(hstmt, "INSERT INTO t_bug67340(id, vc) "\
+                                     "VALUES (NULL, ?)", SQL_NTS));
+    ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                    SQL_CHAR, 0, 0, data, sizeof(data), 
+                                    &paramlen));
+    ok_stmt(hstmt, SQLExecute(hstmt));
+
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
+  }
+
+  /* get the new numnber of Prepared_stmt_count */
+  ok_sql(hstmt, "SHOW STATUS LIKE 'Prepared_stmt_count'");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  /* check how much Prepared_stmt_count has increased */
+  is(!(my_fetch_int(hstmt, 2) - stmt_count > 1));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "DROP TABLE t_bug67340");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_prep_basic)
   ADD_TEST(t_prep_buffer_length)
@@ -1090,6 +1138,7 @@ BEGIN_TESTS
   ADD_TEST(tmysql_bindparam)
   ADD_TEST(t_acc_update)
   ADD_TEST(t_bug29871)
+  ADD_TEST(t_bug67340)
 END_TESTS
 
 

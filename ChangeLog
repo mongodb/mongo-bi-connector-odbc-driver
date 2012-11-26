@@ -1,3 +1,11 @@
+5.2.3
+
+  Bugs fixed:
+  * Memory leak in 5.2.2(w) ODBC driver causes Prepared_stmt_count to grow
+    (Bug# 67340/14812778)
+
+----
+
 5.2.2 (10-Sep-2012)
 
   Bugs fixed:
