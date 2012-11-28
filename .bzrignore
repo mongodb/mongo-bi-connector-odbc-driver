@@ -10,6 +10,7 @@
 *.suo
 *.cmake
 *.user
+*.diff
 Makefile
 Makefile.in
 CMakeCache.txt

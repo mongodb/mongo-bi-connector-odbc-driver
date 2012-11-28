@@ -3,6 +3,9 @@
   Bugs fixed:
   * Memory leak in 5.2.2(w) ODBC driver causes Prepared_stmt_count to grow
     (Bug# 67340/14812778)
+  * Version 5.1 exports symbols SQLInstallDriverEx and SQLInstallDriverExW
+    (Bug# 11766724/59900)
+  * Corrected calculation for length indicator descriptor field (Bug# 11766437)
 
 ----
 

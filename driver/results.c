@@ -1347,7 +1347,9 @@ void fill_ird_data_lengths(DESC *ird, ulong *lengths, uint fields)
 
   /* This will be NULL for catalog functions with "fake" results */
   if (!lengths)
+  {	
     return;
+  }
 
   for (i= 0; i < fields; ++i)
   {
@@ -1382,32 +1384,17 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
 
     if (ARD_IS_BOUND(arrec))
     {
-      SQLLEN offset, pcb_offset;
       SQLLEN *pcbValue= NULL;
       SQLPOINTER TargetValuePtr= NULL;
-
-      if (stmt->ard->bind_type == SQL_BIND_BY_COLUMN)
-      {
-        offset= arrec->octet_length * rownum;
-        pcb_offset= sizeof(SQLLEN) * rownum;
-      }
-      else
-      {
-        pcb_offset= offset= stmt->ard->bind_type * rownum;
-      }
-
-      /* apply SQL_ATTR_ROW_BIND_OFFSET_PTR */
-      if (stmt->ard->bind_offset_ptr)
-      {
-        offset     += *stmt->ard->bind_offset_ptr;
-        pcb_offset += *stmt->ard->bind_offset_ptr;
-      }
 
       reset_getdata_position(stmt);
 
       if (arrec->data_ptr)
       {
-        TargetValuePtr= ((char*) arrec->data_ptr) + offset;
+        TargetValuePtr= ptr_offset_adjust(arrec->data_ptr, 
+                                          stmt->ard->bind_offset_ptr, 
+                                          stmt->ard->bind_type, 
+                                          arrec->octet_length, rownum);
       }
 
       /* catalog functions with "fake" results won't have lengths */
@@ -1423,7 +1410,10 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
        */
       if (arrec->octet_length_ptr)
       {
-        pcbValue= arrec->octet_length_ptr + (pcb_offset / sizeof(SQLLEN));
+        pcbValue= ptr_offset_adjust(arrec->octet_length_ptr, 
+                                      stmt->ard->bind_offset_ptr, 
+                                      stmt->ard->bind_type, 
+                                      sizeof(SQLLEN), rownum);
       }
 
       tmp_res= sql_get_data(stmt, arrec->concise_type, (uint)i,
