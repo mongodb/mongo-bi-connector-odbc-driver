@@ -263,8 +263,7 @@ char *extend_buffer(NET *net,char *to,ulong length);
 void myodbc_end();
 my_bool set_dynamic_result(STMT FAR *stmt);
 void set_current_cursor_data(STMT FAR *stmt,SQLUINTEGER irow);
-my_bool is_minimum_version(const char *server_version,const char *version,
-			   uint length);
+my_bool is_minimum_version(const char *server_version,const char *version);
 int myodbc_strcasecmp(const char *s, const char *t);
 int myodbc_casecmp(const char *s, const char *t, uint len);
 my_bool reget_current_catalog(DBC FAR *dbc);

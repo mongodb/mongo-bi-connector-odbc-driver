@@ -486,7 +486,7 @@ SQLRETURN convert_c_type2str(STMT *stmt, SQLSMALLINT ctype, DESCREC *iprec,
 
 
         if (has_utf8_maxlen4 &&
-            !is_minimum_version(stmt->dbc->mysql.server_version, "5.5.3", 5))
+            !is_minimum_version(stmt->dbc->mysql.server_version, "5.5.3"))
         {
           return set_stmt_error(stmt, "HY000",
                                 "Server does not support 4-byte encoded "

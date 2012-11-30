@@ -42,7 +42,7 @@ my_bool server_has_i_s(DBC FAR *dbc)
     According to the server ChangeLog INFORMATION_SCHEMA was introduced
     in the 5.0.2
   */
-  return is_minimum_version(dbc->mysql.server_version, "5.0.2", 5);
+  return is_minimum_version(dbc->mysql.server_version, "5.0.2");
 }
 /*
   @type    : internal
@@ -873,7 +873,7 @@ SQLRETURN i_s_foreign_keys(SQLHSTMT hstmt,
   /*
      With 5.1, we can use REFERENTIAL_CONSTRAINTS to get even more info.
   */
-  if (is_minimum_version(stmt->dbc->mysql.server_version, "5.1", 3))
+  if (is_minimum_version(stmt->dbc->mysql.server_version, "5.1"))
   {
     update_rule= "CASE"
                  " WHEN R.UPDATE_RULE = 'CASCADE' THEN 0"

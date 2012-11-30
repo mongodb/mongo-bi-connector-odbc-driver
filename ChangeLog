@@ -6,6 +6,7 @@
   * Version 5.1 exports symbols SQLInstallDriverEx and SQLInstallDriverExW
     (Bug# 11766724/59900)
   * Corrected calculation for length indicator descriptor field (Bug# 11766437)
+  * is_minimum_version() function does not work correctly (Bug# 15926340)
 
 ----
 
