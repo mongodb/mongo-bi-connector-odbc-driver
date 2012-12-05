@@ -424,46 +424,6 @@ DECLARE_TEST(t_bug46910)
 }
 
 
-/*
-  Bug#11749093: SQLDESCRIBECOL RETURNS EXCESSIVLY LONG COLUMN NAMES
-  Maximum size of column length returned by SQLDescribeCol should be 
-  same as what SQLGetInfo() for SQL_MAX_COLUMN_NAME_LEN returns.
-*/
-DECLARE_TEST(t_bug11749093)
-{
-  char        colName[512];
-  SQLSMALLINT colNameLen;
-  SQLLEN      coltype;
-  SQLSMALLINT maxColLen;
-
-  ok_stmt(hstmt, SQLExecDirect(hstmt, 
-              "SELECT 1234567890+2234567890+3234567890"
-              "+4234567890+5234567890+6234567890+7234567890+"
-              "+8234567890+9234567890+1034567890+1234567890+"
-              "+1334567890+1434567890+1534567890+1634567890+"
-              "+1734567890+1834567890+1934567890+2034567890+"
-              "+2134567890+2234567890+2334567890+2434567890+"
-              "+2534567890+2634567890+2734567890+2834567890"
-              , SQL_NTS));
-
-  ok_stmt(hstmt, SQLGetInfo(hdbc, SQL_MAX_COLUMN_NAME_LEN, &maxColLen, 255, NULL));
-
-  ok_stmt(hstmt, SQLDescribeCol(hstmt, 1, colName, sizeof(colName), &colNameLen,
-                    NULL, NULL, NULL, NULL));
-
-  is_str(colName, "1234567890+2234567890+3234567890"
-              "+4234567890+5234567890+6234567890+7234567890+"
-              "+8234567890+9234567890+1034567890+1234567890+"
-              "+1334567890+1434567890+1534567890+1634567890+"
-              "+1734567890+1834567890+1934567890+2034567890+"
-              "+2134567890+2234567890+2334567890+2434567890+"
-              "+2534567890+2634567890+2734567890+2834567890", maxColLen);
-  is_num(colNameLen, maxColLen);
-
-  return OK;
-}
-
-
 BEGIN_TESTS
   ADD_TEST(sqlgetinfo)
   ADD_TEST(t_gettypeinfo)
@@ -477,7 +437,6 @@ BEGIN_TESTS
   ADD_TEST(t_bug30626)
   ADD_TEST(t_bug43855)
   ADD_TEST(t_bug46910)
-  ADD_TOFIX(t_bug11749093)
 END_TESTS
 
 
