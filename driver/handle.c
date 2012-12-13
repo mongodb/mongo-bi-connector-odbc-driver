@@ -356,7 +356,8 @@ BOOL allocate_param_bind(DYNAMIC_ARRAY **param_bind, uint elements)
   }
 
   my_init_dynamic_array(*param_bind, sizeof(MYSQL_BIND), elements, 10);
-  bzero((*param_bind)->buffer, sizeof(MYSQL_BIND) * (*param_bind)->max_element);
+  memset((*param_bind)->buffer, 0, sizeof(MYSQL_BIND) *
+											(*param_bind)->max_element);
 
   return FALSE;
 }

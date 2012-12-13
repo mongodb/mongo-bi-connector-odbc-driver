@@ -933,7 +933,7 @@ SQLSetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute,
     /* Verifying for incorrect val_len */
     if (value_len < 0 && value_len != SQL_NTS)
     {
-      return set_dbc_error((HDBC *)hdbc, "HY090",
+      return set_dbc_error(dbc, "HY090",
                   " StringLength argument was less "
                   "than 0 but was not SQL_NTS " , 0);
     }

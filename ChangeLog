@@ -7,6 +7,7 @@
     (Bug# 11766724/59900)
   * Corrected calculation for length indicator descriptor field (Bug# 11766437)
   * is_minimum_version() function does not work correctly (Bug# 15926340)
+  * Problem with BIT columns in MS Access (Bug# 15997361/67702)
 
 ----
 

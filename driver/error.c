@@ -187,12 +187,12 @@ SQLRETURN set_dbc_error(DBC FAR *dbc,char *state,
 */
 
 SQLRETURN set_stmt_error( STMT FAR *    stmt,
-                          char *        state,
+                          const char *  state,
                           const char *  message,
                           uint          errcode )
 {
-    strmov( stmt->error.sqlstate, state );
-    strxmov( stmt->error.message, stmt->dbc->st_error_prefix, message, NullS );
+    strmov(stmt->error.sqlstate, state);
+    strxmov(stmt->error.message, stmt->dbc->st_error_prefix, message, NullS);
     stmt->error.native_error = errcode;
 
     return SQL_ERROR;
@@ -272,7 +272,7 @@ void translate_error(char *save_state, myodbc_errid errid, uint mysql_err)
             break;
         default: break;
     }
-    strmov(save_state,state);
+    strmov(save_state, state);
 }
 
 

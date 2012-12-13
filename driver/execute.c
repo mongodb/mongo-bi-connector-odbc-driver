@@ -62,10 +62,10 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
     if ( check_if_server_is_alive( stmt->dbc ) )
     {
       set_stmt_error( stmt, "08S01" /* "HYT00" */,
-                      mysql_error( &stmt->dbc->mysql ),
-                      mysql_errno( &stmt->dbc->mysql ) );
-      translate_error(stmt->error.sqlstate,MYERR_08S01 /* S1000 */,
-                      mysql_errno( &stmt->dbc->mysql ) );
+                      mysql_error(&stmt->dbc->mysql),
+                      mysql_errno(&stmt->dbc->mysql));
+      translate_error(stmt->error.sqlstate, MYERR_08S01 /* S1000 */,
+                      mysql_errno(&stmt->dbc->mysql));
       goto exit;
     }
 
@@ -107,6 +107,17 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
       {
         native_error= mysql_stmt_execute(stmt->ssps);
       }
+      else
+      {
+        set_stmt_error(stmt, "HY000",
+                       mysql_stmt_error(stmt->ssps),
+                       mysql_stmt_errno(stmt->ssps));
+
+        /* For some errors - translating to more appropriate status */
+        translate_error(stmt->error.sqlstate, MYERR_S1000,
+                        mysql_stmt_errno(stmt->ssps));
+        goto exit;
+      }
       MYLOG_QUERY(stmt, "ssps has been executed");
     }
     else
@@ -123,10 +134,11 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
     if (native_error)
     {
       MYLOG_QUERY(stmt, mysql_error(&stmt->dbc->mysql));
-      set_stmt_error(stmt,"HY000",mysql_error(&stmt->dbc->mysql),
+      set_stmt_error(stmt, "HY000", mysql_error(&stmt->dbc->mysql),
                      mysql_errno(&stmt->dbc->mysql));
 
-      translate_error(stmt->error.sqlstate,MYERR_S1000,
+      /* For some errors - translating to more appropriate status */
+      translate_error(stmt->error.sqlstate, MYERR_S1000,
                       mysql_errno(&stmt->dbc->mysql));
       goto exit;
     }
@@ -753,6 +765,7 @@ SQLRETURN insert_param(STMT *stmt, uchar *place4param, DESC* apd,
 
     switch ( aprec->concise_type )
     {
+      
       case SQL_C_BINARY:
       case SQL_C_CHAR:
           convert= 1;
@@ -975,6 +988,13 @@ SQLRETURN insert_param(STMT *stmt, uchar *place4param, DESC* apd,
 
           goto out;
 
+        case SQL_BIT:
+          {
+            char bit_val= atoi(data)!= 0 ? 1 : 0;
+            /* Generic ODBC supports only BIT(1) */
+            bind_param(bind, &bit_val, 1, MYSQL_TYPE_TINY);
+            goto out;
+          }
         case SQL_FLOAT:
         case SQL_REAL:
         case SQL_DOUBLE:
