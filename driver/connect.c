@@ -119,7 +119,7 @@ SQLRETURN myodbc_set_initial_character_set(DBC *dbc, const char *charset)
     We always set character_set_results to NULL so we can do our own
     conversion to the ANSI character set or Unicode.
   */
-  if (is_minimum_version(dbc->mysql.server_version, "4.1.1", 5)
+  if (is_minimum_version(dbc->mysql.server_version, "4.1.1")
       && odbc_stmt(dbc, "SET character_set_results = NULL") != SQL_SUCCESS)
   {
     return SQL_ERROR;
@@ -242,7 +242,7 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
     return SQL_ERROR;
   }
 
-  if (!is_minimum_version(dbc->mysql.server_version, "4.1.1", 5))
+  if (!is_minimum_version(dbc->mysql.server_version, "4.1.1"))
   {
     mysql_close(mysql);
     set_dbc_error(dbc, "08001", "Driver does not support server versions under 4.1.1", 0);

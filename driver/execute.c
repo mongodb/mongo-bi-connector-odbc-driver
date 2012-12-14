@@ -457,7 +457,7 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
 
             /* TODO need to check if it was merged to other versions already */
             if (has_utf8_maxlen4 &&
-                !is_minimum_version(dbc->mysql.server_version, "6.0.4", 5))
+                !is_minimum_version(dbc->mysql.server_version, "6.0.4"))
               return set_stmt_error(stmt, "HY000",
                                     "Server does not support 4-byte encoded "
                                     "UTF8 characters.", 0);

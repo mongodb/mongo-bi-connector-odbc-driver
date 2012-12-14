@@ -2338,12 +2338,24 @@ void end_query_log(FILE *query_log)
 }
 
 
-my_bool is_minimum_version(const char *server_version,const char *version,
-                           uint length)
+my_bool is_minimum_version(const char *server_version,const char *version)
 {
-    if ( strncmp(server_version,version,length) >= 0 )
-        return TRUE;
-    return FALSE;
+  /* 
+    Variables have to be initialized if we don't want to get random 
+    values after sscanf
+  */
+  uint major1= 0, major2= 0, minor1= 0, minor2= 0, build1= 0, build2= 0;
+
+  sscanf(server_version, "%u.%u.%u", &major1, &minor1, &build1);
+  sscanf(version, "%u.%u.%u", &major2, &minor2, &build2);
+
+  if ( major1 > major2 ||
+      major1 == major2 && (minor1 > minor2 ||
+                          minor1 ==  minor2 && build1 >= build2))
+  {
+    return TRUE;
+  }
+  return FALSE;
 }
 
 
