@@ -1181,11 +1181,11 @@ DECLARE_TEST(t_bug28168)
   wstr= wcsstr(conn_in, L" pwd}") - 4;
   *wstr++= 'x';
 
-  expect_dbc(hdbc2, SQLDriverConnectW(hdbc2, NULL, W(conn_in), SQL_NTS, NULL,
-				      0, NULL, SQL_DRIVER_NOPROMPT), SQL_ERROR);
+  expect_dbc(hdbc2, SQLDriverConnectW(hdbc2, NULL, W(conn_in), SQL_NTS,
+                  (SQLWCHAR*)NULL, 0, NULL, SQL_DRIVER_NOPROMPT), SQL_ERROR);
 
   ok_con(hdbc2, SQLGetDiagRecW(SQL_HANDLE_DBC, hdbc2, 1,
-                               sqlstate, native_error, errmsgtxt,
+                               sqlstate, &native_error, errmsgtxt,
                                256 * sizeof(SQLWCHAR), &errmsglen));
   
   ok_con(hdbc2, SQLFreeHandle(SQL_HANDLE_DBC, hdbc2));

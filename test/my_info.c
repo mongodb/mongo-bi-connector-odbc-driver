@@ -433,7 +433,6 @@ DECLARE_TEST(t_bug11749093)
 {
   char        colName[512];
   SQLSMALLINT colNameLen;
-  SQLLEN      coltype;
   SQLSMALLINT maxColLen;
 
   ok_stmt(hstmt, SQLExecDirect(hstmt, 

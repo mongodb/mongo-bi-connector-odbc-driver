@@ -1080,7 +1080,7 @@ int mydrvconnect(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt, SQLCHAR *connIn)
 
 int alloc_basic_handles(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt)
 {
-  SQLCHAR   connIn[MAX_NAME_LEN+1], connOut[MAX_NAME_LEN+1];
+  SQLCHAR   connIn[MAX_NAME_LEN*2], connOut[MAX_NAME_LEN*2];
   SQLSMALLINT len;
 
   ok_env(*henv, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, henv));

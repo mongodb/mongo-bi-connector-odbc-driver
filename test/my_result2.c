@@ -780,7 +780,7 @@ DECLARE_TEST(t_bug11766437)
 {
   SQLINTEGER rowcnt= 3;
   SQLINTEGER i, incr;
-  SQLCHAR buf[50], tbuf[50];
+  SQLCHAR tbuf[50];
   char *ptr;
   char rows[500]= {0};
   SQLINTEGER MAX_CHAR_SIZE= 7; /*max size for character name*/ 
