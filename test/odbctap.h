@@ -229,7 +229,7 @@ void mem_gc_init()
 #define BEGIN_TESTS my_test tests[]= {
 #define ADD_TEST(name) { #name, name, OK   },
 #define ADD_TODO(name) { #name, name, FAIL },
-#ifndef DISGUISE_TOFIX_TESTS
+#ifdef EXPOSE_TOFIX_TESTS
 # define ADD_TOFIX(name) { #name, name, OK   },
 #else
 # define ADD_TOFIX(name) { #name, name, FAIL },
@@ -301,11 +301,13 @@ int main(int argc, char **argv) \
             rc == SKIP ? "# SKIP " : ""), \
            SKIP_REASON ? SKIP_REASON : ""); \
     if ((rc == FAIL) && (FAIL != tests[i].expect)) \
-      failcnt++; \
+      ++failcnt; \
     SKIP_REASON= NULL; /* Reset SKIP_REASON */ \
     /* Re-allocate statement to reset all its properties. */ \
     SQLFreeStmt(hstmt, SQL_DROP); \
     SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt); \
+    /* Freeing allocated memory */ \
+    mem_gc_flush(); \
   }
 
 #define RUN_TESTS \
@@ -915,8 +917,16 @@ SQLINTEGER my_fetch_int(SQLHSTMT hstmt, SQLUSMALLINT icol)
     SQLLEN len;
 
     SQLGetData(hstmt, icol, SQL_INTEGER, &nData, 0, &len);
-    printMessage("my_fetch_int: %ld (%ld)", (long int)nData, len);
-    return (len != SQL_NULL_DATA) ? nData : 0;
+    if (len == SQL_NULL_DATA)
+    {
+      printMessage("my_fetch_int: NULL");
+    }
+    else
+    {
+      printMessage("my_fetch_int: %ld (%ld)", (long int)nData, len);
+      return nData;
+    }
+    return 0;
 }
 
 
@@ -1152,15 +1162,15 @@ int mem_gc_flush()
   int i= 0;
   if (gc_blk.counter <= 0)
   {
-    printf("# GC Memory already empty counter:%d in %s on line %d\n", 
-        gc_blk.counter,  __FILE__, __LINE__); 
     return FAIL;
   }
 
   while (i < gc_blk.counter)
   {
-    free(gc_blk.blk[i++]);
+    free(gc_blk.blk[i]);
+    gc_blk.blk[i++]= 0;
   }
+
   return OK;
 }
 
