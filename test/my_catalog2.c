@@ -999,6 +999,8 @@ DECLARE_TEST(t_bug14085211_part1)
   /* only one db/table match, so nothing should be in the results */
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
 
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
   /* Lets check if SQLTables can ignore 1024-characters for table name */
   expect_stmt(hstmt, SQLTables(hstmt, (SQLCHAR *)tab_1024_name, SQL_NTS, NULL, SQL_NTS,
                                   (SQLCHAR *)tab_1024_name, SQL_NTS, 
@@ -1044,7 +1046,7 @@ DECLARE_TEST(t_sqlcolumns_after_select)
   {
   }
 
-  /*ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));*/
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
   ok_stmt(hstmt, SQLColumns(hstmt, NULL, 0, NULL, 0,
                           (SQLCHAR *)"b14338051",
                           strlen("b14338051"), NULL, 0));
