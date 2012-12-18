@@ -542,9 +542,11 @@ DECLARE_TEST(t_bug14285620)
     SQLINTEGER native_error= 0;
     SQLSMALLINT text_len= 0;
     /* try with the NULL pointer for Message */
-    expect_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate, native_error, NULL, 0, &cblen), SQL_SUCCESS);
+    expect_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate,
+                                    &native_error, NULL, 0, &cblen), SQL_SUCCESS);
     /* try with the non-NULL pointer for Message */
-    expect_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate, native_error, message, 0, NULL), SQL_SUCCESS);
+    expect_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate,
+                                    &native_error, message, 0, NULL), SQL_SUCCESS);
   }
 
   SQLExecDirect(hstmt, "drop table bug14285620", SQL_NTS);

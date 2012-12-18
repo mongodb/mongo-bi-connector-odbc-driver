@@ -229,7 +229,7 @@ void mem_gc_init()
 #define BEGIN_TESTS my_test tests[]= {
 #define ADD_TEST(name) { #name, name, OK   },
 #define ADD_TODO(name) { #name, name, FAIL },
-#ifndef DISGUISE_TOFIX_TESTS
+#ifdef EXPOSE_TOFIX_TESTS
 # define ADD_TOFIX(name) { #name, name, OK   },
 #else
 # define ADD_TOFIX(name) { #name, name, FAIL },
@@ -1080,7 +1080,7 @@ int mydrvconnect(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt, SQLCHAR *connIn)
 
 int alloc_basic_handles(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt)
 {
-  SQLCHAR   connIn[MAX_NAME_LEN+1], connOut[MAX_NAME_LEN+1];
+  SQLCHAR   connIn[MAX_NAME_LEN*2], connOut[MAX_NAME_LEN*2];
   SQLSMALLINT len;
 
   ok_env(*henv, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, henv));

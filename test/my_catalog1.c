@@ -1526,7 +1526,7 @@ DECLARE_TEST(t_bug30770)
   SQLHENV    henv1;
   SQLHDBC    hdbc1;
   SQLHSTMT   hstmt1;
-  SQLCHAR    conn[MAX_NAME_LEN];
+  SQLCHAR    conn[MAX_NAME_LEN*2];
 
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS bug30770");
