@@ -1,4 +1,4 @@
-5.1.12
+5.1.12 (19-Dec-2012)
 
   Functionality added or changed:
   * Increased the timeout in tests from 30 to 60 seconds to avoid failures in
@@ -18,9 +18,11 @@
   * Corrected calculation for length indicator descriptor field (Bug# 11766437)
   * is_minimum_version() function does not work correctly (Bug# 15926340)
 
+  Built using MySQL 5.5.27.
+
 ----
 
-5.1.11
+5.1.11(28-Apr-2012)
 
   Functionality added or changed:
   * MyODBC queries log is written to %TEMP%\myodbc.sql, or to C:\myodbc.sql if
@@ -35,6 +37,8 @@
   * Memory leak on Windows on each connection attepmt. (Bug #11766029/59059)
   * SQLTables() function does not return the catalog correctly if the wildcard
     or SQL_ALL_CATALOGS is used. (Bug #13914518)
+
+  Built using MySQL 5.5.18.
 
 ----
 
