@@ -1,4 +1,4 @@
-5.2.3
+5.2.3 (19-Dec-2012)
 
   Bugs fixed:
   * Memory leak in 5.2.2(w) ODBC driver causes Prepared_stmt_count to grow
@@ -8,6 +8,8 @@
   * Corrected calculation for length indicator descriptor field (Bug# 11766437)
   * is_minimum_version() function does not work correctly (Bug# 15926340)
   * Problem with BIT columns in MS Access (Bug# 15997361/67702)
+
+  Built using MySQL 5.5.27.
 
 ----
 
