@@ -64,7 +64,7 @@
 
 ----
 
-5.1.11
+5.1.11(28-Apr-2012)
 
   Functionality added or changed:
   * MyODBC queries log is written to %TEMP%\myodbc.sql, or to C:\myodbc.sql if
@@ -79,6 +79,8 @@
   * Memory leak on Windows on each connection attepmt. (Bug #11766029/59059)
   * SQLTables() function does not return the catalog correctly if the wildcard
     or SQL_ALL_CATALOGS is used. (Bug #13914518)
+
+  Built using MySQL 5.5.18.
 
 ----
 
