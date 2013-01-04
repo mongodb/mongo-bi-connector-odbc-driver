@@ -1,3 +1,11 @@
+5.2.4
+
+  Functionality added or changed:
+
+  Bugs fixed:
+
+----
+
 5.2.3 (19-Dec-2012)
 
   Bugs fixed:
@@ -43,6 +51,7 @@
   * Support of INOUT and OUT parameters(WL#6116)
   * Increased the timeout in tests from 30 to 60 seconds to avoid failures in
     slow tests that involve catalog functions and Information_Schema queries.
+
   Bugs fixed:
   * Long table names crash OBDC driver. (Bug# 14085211/65200)
   * Close proximity issue when handling OS signlals in myodbc (Bug# 14303803)
