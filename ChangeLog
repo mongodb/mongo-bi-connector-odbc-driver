@@ -1,8 +1,9 @@
-5.1.12 (19-Dec-2012)
+5.1.12 (-2013)
 
   Functionality added or changed:
   * Increased the timeout in tests from 30 to 60 seconds to avoid failures in
     slow tests that involve catalog functions and Information_Schema queries.
+
   Bugs fixed:
   * Long table names crash OBDC driver. (Bug# 14085211/65200)
   * Close proximity issue when handling OS signlals in myodbc (Bug# 14303803)
@@ -17,8 +18,10 @@
     (Bug# 11766724/59900)
   * Corrected calculation for length indicator descriptor field (Bug# 11766437)
   * is_minimum_version() function does not work correctly (Bug# 15926340)
+  * While retrieving data from a field, BLOB to CHAR conversion is done only for 
+    fields having BLOB_FLAG, BINARY_FLAG and binary character set(63) (Bug #11746572)
 
-  Built using MySQL 5.5.27.
+  Built using MySQL 5.6.10.
 
 ----
 

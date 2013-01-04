@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -286,8 +286,13 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
     switch (fCType)
     {
     case SQL_C_CHAR:
-      /* Handle BLOB -> CHAR conversion */
-      if ((field->flags & (BLOB_FLAG|BINARY_FLAG)) == (BLOB_FLAG|BINARY_FLAG))
+      /*
+        Handle BLOB -> CHAR conversion 
+        Conversion only for field which is having binary character set (63)
+      */
+      if (((field->flags & (BLOB_FLAG|BINARY_FLAG)) 
+                == (BLOB_FLAG|BINARY_FLAG) )
+                && field->charsetnr == BINARY_CHARSET_NUMBER )
       {
         return copy_binhex_result(stmt,
                                   (SQLCHAR *)rgbValue, cbValueMax, pcbValue,
