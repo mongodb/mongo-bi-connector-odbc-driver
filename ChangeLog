@@ -3,6 +3,8 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * While retrieving data from a field, BLOB to CHAR conversion is done only for 
+    fields having BLOB_FLAG, BINARY_FLAG and binary character set(63) (Bug #11746572)
 
 ----
 
