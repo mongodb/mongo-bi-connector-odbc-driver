@@ -3227,7 +3227,7 @@ SQLUINTEGER proc_parse_enum_set(SQLCHAR *ptype, int len, BOOL is_enum)
     if (*ptype == quote_symbol)
     {
       quote_symbol= '\0';
-      max_len= max(cur_len, max_len);
+      max_len= myodbc_max(cur_len, max_len);
     }
     else if (*ptype == '\'' || *ptype == '"')
     {
