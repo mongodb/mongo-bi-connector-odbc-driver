@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -146,6 +146,7 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
   unsigned long flags;
   /* Use 'int' and fill all bits to avoid alignment Bug#25920 */
   unsigned int opt_ssl_verify_server_cert = ~0;
+  const my_bool on= 1;
 
 #ifdef WIN32
   /*
@@ -228,6 +229,13 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
   mysql_options(mysql, MYSQL_SET_CHARSET_NAME, "utf8");
   dbc->cxn_charset_info= utf8_charset_info;
 
+#if MYSQL_VERSION_ID >= 50610
+  if (ds->can_handle_exp_pwd)
+  {
+    mysql_options(mysql, MYSQL_OPT_CAN_HANDLE_EXPIRED_PASSWORDS, (char *)&on);
+  }
+#endif
+
   if (!mysql_real_connect(mysql,
                           ds_get_utf8attr(ds->server,   &ds->server8),
                           ds_get_utf8attr(ds->uid,      &ds->uid8),
@@ -237,8 +245,25 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
                           ds_get_utf8attr(ds->socket,   &ds->socket8),
                           flags))
   {
+
+#if MYSQL_VERSION_ID < 50610
+    /* In that special case when the driver was linked against old version of libmysql*/
+    if (mysql_errno(mysql) == ER_MUST_CHANGE_PASSWORD_LOGIN
+      && ds->can_handle_exp_pwd)
+    {
+      /* The password has expired, application said it knows how to deal with
+         that, but the driver was linked  that
+         does not support this option. Thus we change native error. */
+      /* TODO: enum/defines for driver specific errors */
+      return set_conn_error(dbc, MYERR_08004,
+        "Your password has expired, but underlying library doesn't support "
+        "this functionlaity", 0);
+    }
+#endif
+
     set_dbc_error(dbc, "HY000", mysql_error(mysql), mysql_errno(mysql));
     translate_error(dbc->error.sqlstate, MYERR_S1000, mysql_errno(mysql));
+
     return SQL_ERROR;
   }
 
@@ -291,8 +316,7 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
   /* This needs to be set after connection, or it doesn't stick.  */
   if (ds->auto_reconnect)
   {
-    my_bool reconnect= 1;
-    mysql_options(mysql, MYSQL_OPT_RECONNECT, (char *)&reconnect);
+    mysql_options(mysql, MYSQL_OPT_RECONNECT, (char *)&on);
   }
 
   /* Make sure autocommit is set as configured. */

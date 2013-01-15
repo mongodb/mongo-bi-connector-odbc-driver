@@ -135,6 +135,7 @@ typedef enum myodbc_errid
     MYERR_42S12,
     MYERR_42S21,
     MYERR_42S22,
+    MYERR_08004,
     MYERR_08S01
 
 } myodbc_errid;

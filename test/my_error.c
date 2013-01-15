@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -570,6 +570,80 @@ DECLARE_TEST(t_bug14285620)
 }
 
 
+DECLARE_TEST(t_passwordexpire)
+{
+  SQLHDBC hdbc1;
+  SQLHSTMT hstmt1;
+
+  if (!mysql_min_version(hdbc, "5.6.6", 5))
+  {
+    skip("The server does not support tested functionality(expired password)");
+  }
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_password_expire");
+  SQLExecDirect(hstmt, (SQLCHAR *)"DROP USER t_pwd_expire", SQL_NTS);
+
+  ok_sql(hstmt, "GRANT ALL ON *.* TO  t_pwd_expire IDENTIFIED BY 'foo'");
+  ok_sql(hstmt, "ALTER USER t_pwd_expire PASSWORD EXPIRE");
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+
+  /* Expecting error without OPT_CAN_HANDLE_EXPIRED_PASSWORDS */
+  expect_dbc(hdbc1, get_connection(&hdbc1, NULL, "t_pwd_expire", "foo", NULL),
+              SQL_ERROR);
+
+  {
+    SQLCHAR sql_state[6];
+    SQLINTEGER  err_code= 0;
+    SQLCHAR     err_msg[SQL_MAX_MESSAGE_LENGTH]= {0};
+    SQLSMALLINT err_len= 0;
+
+    SQLGetDiagRec(SQL_HANDLE_DBC, hdbc1, 1, sql_state, &err_code, err_msg,
+                  SQL_MAX_MESSAGE_LENGTH - 1, &err_len);
+
+    /* ER_MUST_CHANGE_PASSWORD_LOGIN = 1862 */
+    if (strncmp(sql_state, "08004", 5) != 0 || err_code != 1862)
+    {
+      printMessage(err_msg);
+      return FAIL;
+    }
+  }
+
+  /* Expecting error as password has not been reset */
+  ok_con(hdbc1, get_connection(&hdbc1, NULL, "t_pwd_expire", "foo",
+                                "CAN_HANDLE_EXP_PWD=1"));
+
+  /*strcat((char *)conn_in, ";INITSTMT={set password= password('bar')}");*/
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_sql(hstmt1, "SET PASSWORD= password('bar')");
+
+  /* Just to verify that we got normal connection */
+  ok_sql(hstmt1, "select 1");
+
+  ok_con(hdbc1, SQLFreeStmt(hstmt1, SQL_DROP));
+
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+
+  /* Checking we can get connection with new credentials */
+  ok_con(hdbc1, get_connection(&hdbc1, mydsn, "t_pwd_expire", "bar", NULL));
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  /* Also verifying that we got normal connection */
+  ok_sql(hstmt1, "select 1");
+
+  ok_con(hdbc1, SQLFreeStmt(hstmt1, SQL_DROP));
+
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_password_expire");
+  ok_sql(hstmt, "DROP USER t_pwd_expire");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
 #ifndef NO_DRIVERMANAGER
   ADD_TEST(t_odbc2_error)
@@ -590,6 +664,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug27158)
   ADD_TEST(t_bug13542600)
   ADD_TEST(t_bug14285620)
+  ADD_TEST(t_passwordexpire)
 END_TESTS
 
 RUN_TESTS

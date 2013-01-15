@@ -313,6 +313,7 @@ void syncTabsData(HWND hwnd, DataSource &params)
 //  GET_BOOL(CONNECTION_TAB, force_use_of_named_pipes);
   GET_BOOL(CONNECTION_TAB, allow_multiple_statements);
   GET_BOOL(CONNECTION_TAB, clientinteractive);
+  GET_BOOL(CONNECTION_TAB, can_handle_exp_pwd);
 
   getStrFieldData(&params.charset , CONNECTION_TAB, IDC_EDIT_charset);
   getStrFieldData(&params.initstmt, CONNECTION_TAB, IDC_EDIT_initstmt);
@@ -378,6 +379,7 @@ void syncTabs(HWND hwnd, DataSource &params)
 //  SET_BOOL(CONNECTION_TAB, force_use_of_named_pipes);
   SET_BOOL(CONNECTION_TAB, allow_multiple_statements);
   SET_BOOL(CONNECTION_TAB, clientinteractive);
+  SET_BOOL(CONNECTION_TAB, can_handle_exp_pwd);
 
   if ( TabCtrl_1.hTabPages[CONNECTION_TAB-1])
   {

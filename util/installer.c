@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -162,6 +162,8 @@ static SQLWCHAR W_CLIENT_INTERACTIVE[]=
   {'I','N','T','E','R','A','C','T','I','V','E',0};
 static SQLWCHAR W_NO_I_S[]= {'N','O','_','I','_','S',0};
 static SQLWCHAR W_PREFETCH[]= {'P','R','E','F','E','T','C','H',0};
+static SQLWCHAR W_CAN_HANDLE_EXP_PWD[]=
+  {'C','A','N','_','H','A','N','D','L','E','_','E','X','P','_','P','W','D',0};
 
 /* DS_PARAM */
 /* externally used strings */
@@ -190,7 +192,7 @@ SQLWCHAR *dsnparams[]= {W_DSN, W_DRIVER, W_DESCRIPTION, W_SERVER,
                         W_ZERO_DATE_TO_MIN, W_MIN_DATE_TO_ZERO,
                         W_MULTI_STATEMENTS, W_COLUMN_SIZE_S32,
                         W_NO_BINARY_RESULT, W_DFLT_BIGINT_BIND_STR,
-                        W_CLIENT_INTERACTIVE, W_NO_I_S, W_PREFETCH};
+                        W_CLIENT_INTERACTIVE, W_NO_I_S, W_PREFETCH, W_CAN_HANDLE_EXP_PWD};
 static const
 int dsnparamcnt= sizeof(dsnparams) / sizeof(SQLWCHAR *);
 /* DS_PARAM */
@@ -596,7 +598,6 @@ DataSource *ds_new()
 
   /* non-zero DataSource defaults here */
   ds->port=                   3306;
-  ds->use_ssps=               FALSE;
   /* DS_PARAM */
 
   return ds;
@@ -806,6 +807,8 @@ void ds_map_param(DataSource *ds, const SQLWCHAR *param,
     *booldest= &ds->default_bigint_bind_str;
   else if (!sqlwcharcasecmp(W_NO_I_S, param))
     *booldest= &ds->no_information_schema;
+  else if (!sqlwcharcasecmp(W_CAN_HANDLE_EXP_PWD, param))
+    *booldest= &ds->can_handle_exp_pwd;
 
   /* DS_PARAM */
 }
@@ -1266,7 +1269,7 @@ int ds_add(DataSource *ds)
   if (ds_add_intprop(ds->name, W_NO_BINARY_RESULT, ds->handle_binary_as_char)) goto error;
   if (ds_add_intprop(ds->name, W_DFLT_BIGINT_BIND_STR, ds->default_bigint_bind_str)) goto error;
   if (ds_add_intprop(ds->name, W_NO_I_S, ds->no_information_schema)) goto error;
-
+  if (ds_add_intprop(ds->name, W_CAN_HANDLE_EXP_PWD, ds->can_handle_exp_pwd)) goto error;
   /* DS_PARAM */
 
   rc= 0;
