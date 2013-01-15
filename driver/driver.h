@@ -123,10 +123,14 @@ extern "C"
 # define x_free(A) { void *tmp= (A); if (tmp) my_free((char *) tmp,MYF(MY_WME+MY_FAE)); }
 #endif
 
-
 /* We don't make any assumption about what the default may be. */
 #ifndef DEFAULT_TXN_ISOLATION
 # define DEFAULT_TXN_ISOLATION 0
+#endif
+
+/* For compatibility with old mysql clients - defining error */
+#ifndef ER_MUST_CHANGE_PASSWORD_LOGIN
+# define ER_MUST_CHANGE_PASSWORD_LOGIN 1820
 #endif
 
 /* Connection flags to validate after the connection*/
