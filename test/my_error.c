@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -569,6 +569,63 @@ DECLARE_TEST(t_bug14285620)
   return OK;
 }
 
+/*
+  Bug49466: SQLMoreResults does not set statement errors correctly
+  Wrong error message returned from SQLMoreResults
+*/
+DECLARE_TEST(t_bug49466)
+{
+  HDBC  hdbc1;
+  HSTMT hstmt1;
+  SQLCHAR conn[512];
+  SQLCHAR message[SQL_MAX_MESSAGE_LENGTH + 1];
+  SQLCHAR sqlstate[SQL_SQLSTATE_SIZE + 1];
+  SQLINTEGER error;
+  SQLSMALLINT len;
+  SQLLEN nRowCount;
+
+
+  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;OPTION=67108864", 
+                        mydsn, myuid, mypwd);
+  if (mysock != NULL)
+  {
+    strcat((char *)conn, ";SOCKET=");
+    strcat((char *)conn, (char *)mysock);
+  }
+
+  if (myport)
+  {
+    char pbuff[20];
+    sprintf(pbuff, ";PORT=%d", myport);
+    strcat((char *)conn, pbuff);
+  }
+
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), NULL,
+                                 0, NULL,
+                                 SQL_DRIVER_NOPROMPT));
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_stmt(hstmt1, SQLExecDirect(hstmt1, "SELECT 100; CALL t_bug49466proc()", SQL_NTS));
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  is_num(my_fetch_int(hstmt1, 1), 100);
+
+  SQLMoreResults(hstmt1);
+
+  ok_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt1, 1, sqlstate, &error,
+                               message, sizeof(message), &len));
+  is_num(error, 1305);
+  is(strstr((char *)message, "t_bug49466proc does not exist"));
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1,SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+
+  return OK;
+}
+
 
 BEGIN_TESTS
 #ifndef NO_DRIVERMANAGER
@@ -590,6 +647,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug27158)
   ADD_TEST(t_bug13542600)
   ADD_TEST(t_bug14285620)
+  ADD_TOFIX(t_bug49466)
 END_TESTS
 
 RUN_TESTS
