@@ -18,6 +18,7 @@
   * Corrected calculation for length indicator descriptor field (Bug# 11766437)
   * is_minimum_version() function does not work correctly (Bug# 15926340)
   * Problem with BIT columns in MS Access (Bug# 15997361/67702)
+  * Add new reserved words from MySQL 5.6 in SQLGetInfo (WL#6704)
 
   Built using MySQL 5.5.27.
 
