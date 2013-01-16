@@ -1,4 +1,4 @@
-5.1.12 (-2013)
+5.1.12 (16-Jan--2013)
 
   Functionality added or changed:
   * Increased the timeout in tests from 30 to 60 seconds to avoid failures in

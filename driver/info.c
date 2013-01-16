@@ -397,7 +397,7 @@ MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
                      "TINYBLOB,TINYINT,TINYTEXT,TRIGGER,UNDO,UNLOCK,UNSIGNED,"
                      "USE,UTC_DATE,UTC_TIME,UTC_TIMESTAMP,VARBINARY,"
                      "VARCHARACTER,WHILE,X509,XOR,YEAR_MONTH,ZEROFILL");
-    else if (is_minimum_version(dbc->mysql.server_version, "5.5", 3))
+    else if (is_minimum_version(dbc->mysql.server_version, "5.5"))
       MYINFO_SET_STR("ACCESSIBLE,ANALYZE,ASENSITIVE,BEFORE,BIGINT,BINARY,BLOB,"
                      "CALL,CHANGE,CONDITION,DATABASE,DATABASES,DAY_HOUR,"
                      "DAY_MICROSECOND,DAY_MINUTE,DAY_SECOND,DELAYED,"
