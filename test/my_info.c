@@ -463,6 +463,42 @@ DECLARE_TEST(t_bug11749093)
 }
 
 
+/* Make sure MySQL 5.5 and 5.6 reserved words are returned correctly  */
+DECLARE_TEST(t_getkeywordinfo)
+{
+  SQLSMALLINT pccol;
+  SQLCHAR keywords[8192];
+
+  ok_con(hdbc, SQLGetInfo(hdbc, SQL_KEYWORDS, keywords,
+                          sizeof(keywords), &pccol));
+
+  /* We do not check versions older than 5.5 */
+  if (mysql_min_version(hdbc, "5.6", 3))
+  {
+    is(strstr(keywords, "GET"));
+    is(strstr(keywords, "IO_AFTER_GTIDS"));
+    is(strstr(keywords, "IO_BEFORE_GTIDS"));
+    is(strstr(keywords, "MASTER_BIND"));
+    is(strstr(keywords, "ONE_SHOT"));
+    is(strstr(keywords, "PARTITION"));
+    is(strstr(keywords, "SQL_AFTER_GTIDS"));
+    is(strstr(keywords, "SQL_BEFORE_GTIDS"));
+  }
+  else if (mysql_min_version(hdbc, "5.5", 3))
+  {
+    is(strstr(keywords, "GENERAL"));
+    is(strstr(keywords, "IGNORE_SERVER_IDS"));
+    is(strstr(keywords, "MASTER_HEARTBEAT_PERIOD"));
+    is(strstr(keywords, "MAXVALUE"));
+    is(strstr(keywords, "RESIGNAL"));
+    is(strstr(keywords, "SIGNAL"));
+    is(strstr(keywords, "SLOW"));
+  }
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlgetinfo)
   ADD_TEST(t_gettypeinfo)
@@ -477,6 +513,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug43855)
   ADD_TEST(t_bug46910)
   ADD_TOFIX(t_bug11749093)
+  ADD_TEST(t_getkeywordinfo)
 END_TESTS
 
 

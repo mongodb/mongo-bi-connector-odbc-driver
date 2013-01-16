@@ -3,6 +3,9 @@
   Functionality added or changed:
   * Increased the timeout in tests from 30 to 60 seconds to avoid failures in
     slow tests that involve catalog functions and Information_Schema queries.
+  * Support of expired passwords. Added conenction string option CAN_HANDLE_EXP_PWD.
+    (WL#6786)
+  * Add new reserved words from MySQL 5.6 in SQLGetInfo. (WL#6704)
 
   Bugs fixed:
   * Long table names crash OBDC driver. (Bug# 14085211/65200)
