@@ -1,10 +1,15 @@
-5.2.4
+5.2.4 (16-Jan-2013)
 
   Functionality added or changed:
+  * Support of expired passwords. Added conenction string option CAN_HANDLE_EXP_PWD.
+    (WL#6786)
+  * Add new reserved words from MySQL 5.6 in SQLGetInfo (WL#6704)
 
   Bugs fixed:
   * While retrieving data from a field, BLOB to CHAR conversion is done only for 
     fields having BLOB_FLAG, BINARY_FLAG and binary character set(63) (Bug #11746572)
+
+  Built using MySQL 5.6.10.
 
 ----
 
@@ -18,7 +23,6 @@
   * Corrected calculation for length indicator descriptor field (Bug# 11766437)
   * is_minimum_version() function does not work correctly (Bug# 15926340)
   * Problem with BIT columns in MS Access (Bug# 15997361/67702)
-  * Add new reserved words from MySQL 5.6 in SQLGetInfo (WL#6704)
 
   Built using MySQL 5.5.27.
 

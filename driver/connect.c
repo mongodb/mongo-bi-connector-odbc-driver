@@ -281,7 +281,6 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
         "this functionlaity", 0);
     }
 #endif
-
     set_dbc_error(dbc, "HY000", mysql_error(mysql), mysql_errno(mysql));
     translate_error(dbc->error.sqlstate, MYERR_S1000, mysql_errno(mysql));
 

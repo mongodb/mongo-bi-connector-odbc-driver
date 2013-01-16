@@ -93,8 +93,8 @@ static MYODBC3_ERR_STR myodbc3_errors[]=
   {"42S12","Index not found", SQL_ERROR},
   {"42S21","Column already exists", SQL_ERROR},
   {"42S22","Column not found", SQL_ERROR},
-  {"08004","Server rejected the connection", SQL_ERROR},
   {"08S01","Communication link failure", SQL_ERROR},
+  {"08004","Server rejected the connection", SQL_ERROR},
 };
 
 
