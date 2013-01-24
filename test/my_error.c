@@ -601,10 +601,10 @@ DECLARE_TEST(t_passwordexpire)
     SQLGetDiagRec(SQL_HANDLE_DBC, hdbc1, 1, sql_state, &err_code, err_msg,
                   SQL_MAX_MESSAGE_LENGTH - 1, &err_len);
 
-    /* ER_MUST_CHANGE_PASSWORD_LOGIN = 1862 */
-    if (strncmp(sql_state, "08004", 5) != 0 || err_code != 1862)
+    /* ER_MUST_CHANGE_PASSWORD = 1820, ER_MUST_CHANGE_PASSWORD_LOGIN = 1862 */
+    if (strncmp(sql_state, "08004", 5) != 0 || err_code != 1820)
     {
-      printMessage(err_msg);
+      printMessage("%s %d %s", sql_state, err_code, err_msg);
       return FAIL;
     }
   }
