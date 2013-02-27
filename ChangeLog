@@ -1,3 +1,13 @@
+5.2.5
+
+  Functionality added or changed:
+
+  Bugs fixed:
+  * query_print will cause core dump in 32-bit application 
+    (Bug #16367440/68201)
+
+----
+
 5.2.4 (16-Jan-2013)
 
   Functionality added or changed:
