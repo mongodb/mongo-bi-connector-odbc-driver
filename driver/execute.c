@@ -990,9 +990,16 @@ SQLRETURN insert_param(STMT *stmt, uchar *place4param, DESC* apd,
 
         case SQL_BIT:
           {
-            char bit_val= atoi(data)!= 0 ? 1 : 0;
-            /* Generic ODBC supports only BIT(1) */
-            bind_param(bind, &bit_val, 1, MYSQL_TYPE_TINY);
+            if (ssps_used(stmt))
+            {
+              char bit_val= atoi(data)!= 0 ? 1 : 0;
+              /* Generic ODBC supports only BIT(1) */
+              bind_param(bind, &bit_val, 1, MYSQL_TYPE_TINY);
+            }
+            else if (!convert)
+            {
+              to= add_to_buffer(net, to, data, 1);
+            }
             goto out;
           }
         case SQL_FLOAT:

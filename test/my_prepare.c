@@ -1180,6 +1180,67 @@ DECLARE_TEST(t_bug67702)
 }
 
 
+/**
+  Bug #68243: Microsoft Access Crashes when Bit field updates
+*/
+DECLARE_TEST(t_bug68243)
+{
+  SQLHENV    henv1;
+  SQLHDBC    hdbc1;
+  SQLHSTMT   hstmt1;
+  SQLCHAR    conn[512];
+
+  char c1 = 1, c2= 0;
+  int id= 1;
+
+  SQLLEN paramlen= 0;
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "drop table if exists bug68243", 
+                                      SQL_NTS));
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "create table bug68243"\
+                                      "(id int primary key,"\
+                                      "yesno bit(1))", 
+                                      SQL_NTS));
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "INSERT INTO bug68243(id, yesno)"\
+                                      "VALUES (1, 1)", 
+                                      SQL_NTS));
+
+  my_str_options= "NO_SSPS=1";
+
+  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  /* Set parameter values here to make it clearer where each one goes */
+  c1= 0;
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT, SQL_C_BIT, 
+                                  SQL_BIT, 1, 0, &c1, 0, NULL));
+
+  id= 1;
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 2, SQL_PARAM_INPUT, SQL_C_LONG,
+                                  SQL_INTEGER, sizeof(id), 0, &id, 0, NULL));
+
+  c2= 1;
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 3, SQL_PARAM_INPUT, SQL_C_BIT,
+                                  SQL_BIT, 1, 0, &c2, 0, NULL));
+
+  /* The prepared query looks exactly as MS Access does it */
+  ok_stmt(hstmt1, SQLExecDirect(hstmt1, "UPDATE `bug68243` SET `yesno`=?  "\
+                                      "WHERE `id` = ? AND `yesno` = ?", 
+                                      SQL_NTS));
+  SQLFreeStmt(hstmt1, SQL_CLOSE);
+
+  /* Now check the result of update the bit field should be set to 0 */
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "SELECT `yesno` FROM `bug68243`", SQL_NTS));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is(my_fetch_int(hstmt, 1) == 0);
+  
+  SQLFreeStmt(hstmt, SQL_CLOSE);
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "drop table if exists bug68243", SQL_NTS));
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_prep_basic)
   ADD_TEST(t_prep_buffer_length)
@@ -1197,6 +1258,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug29871)
   ADD_TEST(t_bug67340)
   ADD_TEST(t_bug67702)
+  ADD_TEST(t_bug68243)
 END_TESTS
 
 
