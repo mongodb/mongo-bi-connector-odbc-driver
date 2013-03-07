@@ -257,8 +257,7 @@ DECLARE_TEST(t_bug53235)
 */
 DECLARE_TEST(t_bug50195)
 {
-  SQLHDBC     hdbc1;
-  SQLHSTMT    hstmt1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   const char  expected_privs[][12]= {"ALTER", "CREATE", "CREATE VIEW", "DELETE", "DROP", "INDEX",
                                     "INSERT", "REFERENCES", "SHOW VIEW", "TRIGGER", "UPDATE"};
   int         i;
@@ -283,11 +282,8 @@ DECLARE_TEST(t_bug50195)
 
   ok_sql(hstmt, "FLUSH PRIVILEGES");
 
-  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
-
-  ok_con(hdbc1, SQLConnect(hdbc1, mydsn, SQL_NTS, "bug50195", SQL_NTS, "a", SQL_NTS));
-
-  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL, 
+                                        "bug50195", "a", NULL, NULL));
 
   ok_stmt(hstmt1, SQLTablePrivileges(hstmt1, "mysql", SQL_NTS, 0, 0, "tables_priv", SQL_NTS));
 
@@ -302,9 +298,7 @@ DECLARE_TEST(t_bug50195)
   
   expect_stmt(hstmt1, SQLFetch(hstmt1),100);
 
-  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   ok_sql(hstmt, "DROP USER bug50195@127.0.0.1");
   ok_sql(hstmt, "DROP USER bug50195@localhost");
@@ -704,10 +698,9 @@ DECLARE_TEST(t_bug57182)
 */
 DECLARE_TEST(t_bug55870)
 {
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   SQLLEN  rowCount;
-  SQLCHAR noI_SconnStr[512], query[256];
-  HDBC    hdbc1;
-  HSTMT   hstmt1;
+  SQLCHAR query[256];
 
   ok_sql(hstmt, "drop table if exists bug55870r");
   ok_sql(hstmt, "drop table if exists bug55870_2");
@@ -718,32 +711,15 @@ DECLARE_TEST(t_bug55870)
   /* There should be no problems with I_S version of SQLTablePrivileges. Thus need connection
      not using I_S. SQlStatistics doesn't have I_S version, but it ma change at certain point.
      Thus let's test it on NO_I_S connection too */
-  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
 
-  sprintf((char *)noI_SconnStr, "DSN=%s;UID=%s;PWD=%s; NO_I_S=1", mydsn, myuid, mypwd);
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL, NULL, 
+                                        NULL, "", "NO_I_S=1"));
 
-  if (mysock != NULL)
-  {
-    strcat((char *)noI_SconnStr, ";SOCKET=");
-    strcat((char *)noI_SconnStr, (char *)mysock);
-  }
-
-  if (myport)
-  {
-    char pbuff[20];
-    sprintf(pbuff, ";PORT=%d", myport);
-    strcat((char *)noI_SconnStr, pbuff);
-  }
 
   sprintf(query, "grant Insert, Select on bug55870 to %s", myuid);
   ok_stmt(hstmt, SQLExecDirect(hstmt, query, SQL_NTS));
   sprintf(query, "grant Insert (c), Select (c), Update (c) on bug55870 to %s", myuid);
   ok_stmt(hstmt, SQLExecDirect(hstmt, query, SQL_NTS));
-
-  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, noI_SconnStr, sizeof(noI_SconnStr), NULL,
-                                0, NULL, SQL_DRIVER_NOPROMPT));
-
-  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
   ok_stmt(hstmt1, SQLStatistics(hstmt1, NULL, 0, NULL, 0,
                                    "bug55870", SQL_NTS,
@@ -794,15 +770,12 @@ DECLARE_TEST(t_bug55870)
   sprintf(query, "revoke select (c),insert (c),update (c) on bug55870 from %s", myuid);
   ok_stmt(hstmt, SQLExecDirect(hstmt, query, SQL_NTS));
 
-  /*
-  ok_sql(hstmt, "drop table if exists bug55870r");
-    ok_sql(hstmt, "drop table if exists bug55870_2");
-    ok_sql(hstmt, "drop table if exists bug55870");*/
   
-
-  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+  ok_sql(hstmt, "drop table if exists bug55870r");
+  ok_sql(hstmt, "drop table if exists bug55870_2");
+  ok_sql(hstmt, "drop table if exists bug55870");
+  
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   return OK;
 }
@@ -892,40 +865,15 @@ DECLARE_TEST(bug12824839)
    will cause error "Unknown database 'null'" */
 DECLARE_TEST(sqlcolumns_nodbselected)
 {
-  SQLHDBC hdbc1;
-  SQLHSTMT hstmt1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   SQLCHAR conn_in[512];
 
   /* Just to make sure we have at least one table in our test db */
   ok_sql(hstmt, "DROP TABLE IF EXISTS sqlcolumns_nodbselected");
   ok_sql(hstmt, "CREATE TABLE sqlcolumns_nodbselected (id int)");
 
-  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
-
-  /* Connecting not specifying default db */
-  sprintf((char *)conn_in, "DRIVER=%s;SERVER=%s;UID=%s;PWD=%s", mydriver,
-                              myserver, myuid, mypwd);
-
-  if (mysock != NULL)
-  {
-    strcat((char *)conn_in, ";SOCKET=");
-    strcat((char *)conn_in, (char *)mysock);
-  }
-
-  if (myport)
-  {
-    char pbuff[20];
-    sprintf(pbuff, ";PORT=%d", myport);
-    strcat((char *)conn_in, pbuff);
-  }
-
-  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn_in, sizeof(conn_in), NULL,
-                                 0, NULL,
-                                 SQL_DRIVER_NOPROMPT));
-
-
-
-  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, USE_DRIVER, 
+                                        NULL, NULL, "", NULL));
 
   ok_con(hdbc1, SQLGetInfo(hdbc1, SQL_DATABASE_NAME,
             (SQLPOINTER) conn_in, sizeof(conn_in), NULL));
@@ -934,10 +882,7 @@ DECLARE_TEST(sqlcolumns_nodbselected)
   ok_stmt(hstmt1, SQLColumns(hstmt1, mydb, SQL_NTS, NULL, 0, NULL,
                             0, NULL, 0));
 
-  ok_con(hdbc1, SQLFreeStmt(hstmt1, SQL_CLOSE));
-
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS sqlcolumns_nodbselected");
 

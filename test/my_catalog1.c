@@ -862,11 +862,7 @@ DECLARE_TEST(t_sqltables)
 
 DECLARE_TEST(my_information_schema)
 {
-  SQLCHAR   conn[512], conn_out[512];
-  HDBC hdbc1;
-  HSTMT hstmt1;
-  SQLSMALLINT conn_out_len;
-  SQLRETURN rc;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
 
   ok_sql(hstmt, "DROP DATABASE IF EXISTS istest__");
   ok_sql(hstmt, "DROP DATABASE IF EXISTS istest_1");
@@ -881,43 +877,21 @@ DECLARE_TEST(my_information_schema)
   ok_sql(hstmt, "CREATE TABLE istest_2.istab2(a INT,b INT,c INT, d INT)");
 
   /* We need to have istest__ as the default DB */
-  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;DATABASE=istest__;OPTION=0", mydsn, myuid, mypwd);
-  if (mysock != NULL)
-  {
-    strcat((char *)conn, ";SOCKET=");
-    strcat((char *)conn, (char *)mysock);
-  }
-  if (myport)
-  {
-    char pbuff[20];
-    sprintf(pbuff, ";PORT=%d", myport);
-    strcat((char *)conn, pbuff);
-  }
-
-  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
-
-  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), conn_out,
-                                 sizeof(conn_out), &conn_out_len,
-                                 SQL_DRIVER_NOPROMPT));
-  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
-
-  rc = SQLTables(hstmt1, "istest__", SQL_NTS, "", 0, "istab%", SQL_NTS, NULL, 0);
-  mystmt(hstmt1,rc);
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
+                                        NULL, NULL, "istest__", NULL));
+  
+  ok_stmt(hstmt1, SQLTables(hstmt1, "istest__", SQL_NTS, "", 0, "istab%",
+                            SQL_NTS, NULL, 0));
 
   /* all tables from all databases should be displayed */
   is_num(my_print_non_format_result(hstmt1), 3);
-  rc = SQLFreeStmt(hstmt1, SQL_CLOSE);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
-  rc = SQLTables(hstmt1, NULL, 0, NULL, 0, "istab%", SQL_NTS, NULL, 0);
-  mystmt(hstmt1,rc);
+  ok_stmt(hstmt1, SQLTables(hstmt1, NULL, 0, NULL, 0, "istab%", SQL_NTS, NULL, 0));
 
   is_num(my_print_non_format_result(hstmt1), 1);
-  rc = SQLFreeStmt(hstmt1, SQL_CLOSE);
-  mystmt(hstmt1,rc);
 
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
-
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
   return OK;
 }
 
@@ -1119,34 +1093,16 @@ DECLARE_TEST(t_bug23031)
 */
 DECLARE_TEST(bug15713)
 {
-  HDBC hdbc1;
-  HSTMT hstmt1;
-  SQLCHAR   conn[512], conn_out[512];
-  SQLSMALLINT conn_out_len;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+  SQLCHAR   conn[512];
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug15713");
   ok_sql(hstmt, "CREATE TABLE t_bug15713 (a INT)");
 
   /* The connection strings must not include DATABASE. */
-  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s", mydsn, myuid, mypwd);
-  if (mysock != NULL)
-  {
-    strcat((char *)conn, ";SOCKET=");
-    strcat((char *)conn, (char *)mysock);
-  }
-  if (myport)
-  {
-    char pbuff[20];
-    sprintf(pbuff, ";PORT=%d", myport);
-    strcat((char *)conn, pbuff);
-  }
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
+                                        NULL, NULL, "", NULL));
 
-  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
-
-  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), conn_out,
-                                 sizeof(conn_out), &conn_out_len,
-                                 SQL_DRIVER_NOPROMPT));
-  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
   ok_stmt(hstmt1, SQLColumns(hstmt1, (SQLCHAR *)"test", SQL_NTS,
                              NULL, 0, (SQLCHAR *)"t_bug15713", SQL_NTS,
@@ -1159,9 +1115,7 @@ DECLARE_TEST(bug15713)
 
   expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA_FOUND);
 
-  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug15713");
   return OK;
@@ -1249,11 +1203,9 @@ DECLARE_TEST(bug8860)
 */
 DECLARE_TEST(t_bug26934)
 {
-  HENV henv1;
-  HDBC hdbc1;
-  HSTMT hstmt1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
 
-  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+  is(OK == alloc_basic_handles(&henv1, &hdbc1, &hstmt1));
 
   ok_sql(hstmt1, "SET @@wait_timeout = 1");
   sleep(2);
@@ -1455,17 +1407,14 @@ DECLARE_TEST(t_bug33298)
 */
 DECLARE_TEST(t_bug12805)
 {
-  SQLHENV     henv1;
-  SQLHDBC     hdbc1;
-  SQLHSTMT    hstmt1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   SQLCHAR     dummy[10];
   SQLULEN     length;  
   SQLUINTEGER len2;
-  int         saved_options= myoption;
 
-  SET_DSN_OPTION(myoption | 1 << 27);
-
-  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL, 
+                                        NULL, NULL, NULL, 
+                                        "COLUMN_SIZE_S32=1"));
 
   ok_sql(hstmt1, "DROP TABLE IF EXISTS bug12805");
   ok_sql(hstmt1, "CREATE TABLE bug12805("\
@@ -1512,7 +1461,6 @@ DECLARE_TEST(t_bug12805)
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
   ok_sql(hstmt, "DROP TABLE bug12805");
 
-  SET_DSN_OPTION(saved_options);
   return OK;
 }
 
@@ -1522,32 +1470,15 @@ DECLARE_TEST(t_bug12805)
 */
 DECLARE_TEST(t_bug30770)
 {
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   SQLCHAR    buff[512];
-  SQLHENV    henv1;
-  SQLHDBC    hdbc1;
-  SQLHSTMT   hstmt1;
-  SQLCHAR    conn[MAX_NAME_LEN*2];
-
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS bug30770");
   ok_sql(hstmt, "CREATE TABLE bug30770 (a INT)");
 
   /* Connect with no default daabase */
-  sprintf((char *)conn, "DRIVER=%s;SERVER=%s;" \
-                        "UID=%s;PASSWORD=%s;DATABASE=%s", mydriver, myserver,
-                        myuid, mypwd, mydb);
-  if (mysock != NULL)
-  {
-    strcat((char *)conn, ";SOCKET=");
-    strcat((char *)conn, (char *)mysock);
-  }
-  if (myport)
-  {
-    char pbuff[20];
-    sprintf(pbuff, ";PORT=%d", myport);
-    strcat((char *)conn, pbuff);
-  }
-  is_num(mydrvconnect(&henv1, &hdbc1, &hstmt1, conn), OK);
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, USE_DRIVER,
+                                        NULL, NULL, "", NULL));
 
   /* Get the info from just one table.  */
   ok_stmt(hstmt1, SQLColumns(hstmt1, NULL, SQL_NTS, NULL, SQL_NTS,

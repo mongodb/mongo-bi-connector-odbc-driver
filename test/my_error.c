@@ -27,25 +27,15 @@
 
 DECLARE_TEST(t_odbc3_error)
 {
-  SQLHENV henv1;
-  SQLHDBC hdbc1;
-  SQLHSTMT hstmt1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   SQLINTEGER ov_version;
 
-  ok_env(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
-  ok_env(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
-                              (SQLPOINTER)SQL_OV_ODBC3, 0));
-
-  ok_env(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &hdbc1));
+  is(OK == alloc_basic_handles(&henv1, &hdbc1, &hstmt1));
 
   ok_env(henv1, SQLGetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
                               (SQLPOINTER)&ov_version, 0, 0));
   is_num(ov_version, SQL_OV_ODBC3);
 
-  ok_con(hdbc1, SQLConnect(hdbc1, mydsn, SQL_NTS, myuid, SQL_NTS,
-                           mypwd, SQL_NTS));
-
-  ok_con(hdbc1, SQLAllocHandle(SQL_HANDLE_STMT, hdbc1, &hstmt1));
 
   expect_sql(hstmt1, "SELECT * FROM non_existing_table", SQL_ERROR);
   if (check_sqlstate(hstmt1, "42S02") != OK)
@@ -72,9 +62,7 @@ DECLARE_TEST(t_odbc3_error)
 
   ok_con(hdbc1, SQLDisconnect(hdbc1));
 
-  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
-
-  ok_env(henv1, SQLFreeHandle(SQL_HANDLE_ENV, henv1));
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   return OK;
 }
@@ -82,9 +70,7 @@ DECLARE_TEST(t_odbc3_error)
 
 DECLARE_TEST(t_odbc2_error)
 {
-  SQLHENV henv1;
-  SQLHDBC hdbc1;
-  SQLHSTMT hstmt1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   SQLINTEGER ov_version;
 
   ok_env(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
@@ -127,9 +113,7 @@ DECLARE_TEST(t_odbc2_error)
 
   ok_con(hdbc1, SQLDisconnect(hdbc1));
 
-  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
-
-  ok_env(henv1, SQLFreeHandle(SQL_HANDLE_ENV, henv1));
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   return OK;
 }
@@ -380,7 +364,7 @@ DECLARE_TEST(getdata_need_nullind)
 */
 DECLARE_TEST(t_handle_err)
 {
-  SQLHANDLE henv1, hdbc1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
 
   ok_env(henv1, SQLAllocHandle(SQL_HANDLE_ENV, NULL, &henv1));
   ok_env(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
@@ -575,35 +559,15 @@ DECLARE_TEST(t_bug14285620)
 */
 DECLARE_TEST(t_bug49466)
 {
-  HDBC  hdbc1;
-  HSTMT hstmt1;
-  SQLCHAR conn[512];
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   SQLCHAR message[SQL_MAX_MESSAGE_LENGTH + 1];
   SQLCHAR sqlstate[SQL_SQLSTATE_SIZE + 1];
   SQLINTEGER error;
   SQLSMALLINT len;
 
-  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;OPTION=67108864", 
-                        mydsn, myuid, mypwd);
-  if (mysock != NULL)
-  {
-    strcat((char *)conn, ";SOCKET=");
-    strcat((char *)conn, (char *)mysock);
-  }
-
-  if (myport)
-  {
-    char pbuff[20];
-    sprintf(pbuff, ";PORT=%d", myport);
-    strcat((char *)conn, pbuff);
-  }
-
-  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
-
-  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), NULL,
-                                 0, NULL,
-                                 SQL_DRIVER_NOPROMPT));
-  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
+                                        NULL, NULL, NULL, 
+                                        "OPTION=67108864;NO_SSPS=1"));
 
   ok_stmt(hstmt1, SQLExecDirect(hstmt1, "SELECT 100; CALL t_bug49466proc()", SQL_NTS));
 
@@ -617,9 +581,7 @@ DECLARE_TEST(t_bug49466)
   is_num(error, 1305);
   is(strstr((char *)message, "t_bug49466proc does not exist"));
 
-  ok_stmt(hstmt1, SQLFreeStmt(hstmt1,SQL_DROP));
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   return OK;
 }
@@ -627,8 +589,7 @@ DECLARE_TEST(t_bug49466)
 
 DECLARE_TEST(t_passwordexpire)
 {
-  SQLHDBC hdbc1;
-  SQLHSTMT hstmt1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
 
   if (!mysql_min_version(hdbc, "5.6.6", 5))
   {
@@ -644,8 +605,8 @@ DECLARE_TEST(t_passwordexpire)
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
 
   /* Expecting error without OPT_CAN_HANDLE_EXPIRED_PASSWORDS */
-  expect_dbc(hdbc1, get_connection(&hdbc1, NULL, "t_pwd_expire", "foo", NULL),
-              SQL_ERROR);
+  expect_dbc(hdbc1, get_connection(&hdbc1, NULL, "t_pwd_expire", "foo", 
+             NULL, NULL), SQL_ERROR);
 
   {
     SQLCHAR sql_state[6];
@@ -666,7 +627,7 @@ DECLARE_TEST(t_passwordexpire)
 
   /* Expecting error as password has not been reset */
   ok_con(hdbc1, get_connection(&hdbc1, NULL, "t_pwd_expire", "foo",
-                                "CAN_HANDLE_EXP_PWD=1"));
+                                NULL, "CAN_HANDLE_EXP_PWD=1"));
 
   /*strcat((char *)conn_in, ";INITSTMT={set password= password('bar')}");*/
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
@@ -681,16 +642,14 @@ DECLARE_TEST(t_passwordexpire)
   ok_con(hdbc1, SQLDisconnect(hdbc1));
 
   /* Checking we can get connection with new credentials */
-  ok_con(hdbc1, get_connection(&hdbc1, mydsn, "t_pwd_expire", "bar", NULL));
+  ok_con(hdbc1, get_connection(&hdbc1, mydsn, "t_pwd_expire", "bar", NULL,
+                               NULL));
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
   /* Also verifying that we got normal connection */
   ok_sql(hstmt1, "select 1");
 
-  ok_con(hdbc1, SQLFreeStmt(hstmt1, SQL_DROP));
-
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_password_expire");
   ok_sql(hstmt, "DROP USER t_pwd_expire");

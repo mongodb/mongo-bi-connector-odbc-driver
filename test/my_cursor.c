@@ -2726,34 +2726,17 @@ DECLARE_TEST(t_bug6157)
 */
 DECLARE_TEST(t_bug32420)
 {
-  HDBC hdbc1;
-  HSTMT hstmt1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
 
   SQLINTEGER nData[4];
   SQLCHAR szData[4][16];
   SQLUSMALLINT rgfRowStatus[4];
-  SQLCHAR   conn[512], conn_out[512];
-  SQLSMALLINT conn_out_len;
   SQLULEN row_count;
 
   /* Don't cache result option in the connection string */
-  sprintf((char *)conn, "DRIVER=%s;USER=%s;PASSWORD=%s;"
-          "DATABASE=%s;SERVER=%s;OPTION=1048576",
-          mydriver, myuid, mypwd, mydb, myserver);
-
-  if (mysock != NULL)
-  {
-    strcat((char *)conn, ";SOCKET=");
-    strcat((char *)conn, (char *)mysock);
-  }
-
-  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
-
-  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), conn_out,
-                                 sizeof(conn_out), &conn_out_len,
-                                 SQL_DRIVER_NOPROMPT));
-  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
-
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, USE_DRIVER,
+                                        NULL, NULL, NULL, "NO_CACHE=1"));
+  
   ok_sql(hstmt1, "drop table if exists bug32420");
   ok_sql(hstmt1, "CREATE TABLE bug32420 ("\
                 "tt_int INT PRIMARY KEY auto_increment,"\
@@ -2822,30 +2805,15 @@ DECLARE_TEST(t_bug32420)
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
   ok_sql(hstmt1, "drop table if exists bug32420");
-  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
 
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
   /*
      Result cache is enabled. Need to check that cached results are not
      broken
   */
-  sprintf((char *)conn,"DRIVER=%s;USER=%s;PASSWORD=%s;"
-          "DATABASE=%s;SERVER=%s",
-          mydriver, myuid, mypwd, mydb, myserver);
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, USE_DRIVER,
+                                        NULL, NULL, NULL, NULL));
 
-  if (mysock != NULL)
-  {
-    strcat((char *)conn, ";SOCKET=");
-    strcat((char *)conn, (char *)mysock);
-  }
-
-  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
-
-  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), conn_out,
-                                 sizeof(conn_out), &conn_out_len,
-                                 SQL_DRIVER_NOPROMPT));
-  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
   ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
                                  (SQLPOINTER) SQL_CURSOR_DYNAMIC, 0));
   ok_sql(hstmt1, "drop table if exists bug32420");
@@ -2970,9 +2938,8 @@ DECLARE_TEST(t_bug32420)
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
   ok_sql(hstmt1, "drop table if exists bug32420");
-  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   return OK;
 }

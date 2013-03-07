@@ -502,30 +502,11 @@ DECLARE_TEST(t_max_rows)
 
   /* Testing max_rows with PREFETCH feature(client side cursor) enabled */
   {
-    HDBC  hdbc1;
-    HSTMT hstmt1;
+    DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
     SQLCHAR conn[512];
 
-    sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;PREFETCH=5",
-          mydsn, myuid, mypwd);
-    if (mysock != NULL)
-    {
-      strcat((char *)conn, ";SOCKET=");
-      strcat((char *)conn, (char *)mysock);
-    }
-    if (myport)
-    {
-      char pbuff[20];
-      sprintf(pbuff, ";PORT=%d", myport);
-      strcat((char *)conn, pbuff);
-    }
-
-    ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
-
-    ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), NULL,
-                                   0, NULL,
-                                   SQL_DRIVER_NOPROMPT));
-    ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+    is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
+                                        NULL, NULL, NULL, "PREFETCH=5"));
 
     /* max_rows is bigger than a prefetch, and is not divided evenly by it */
     ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1,SQL_ATTR_MAX_ROWS,(SQLPOINTER)7,0));
@@ -563,9 +544,7 @@ DECLARE_TEST(t_max_rows)
 
     is_num(3, myrowcount(hstmt1));
 
-    ok_stmt(hstmt1, SQLFreeStmt(hstmt1,SQL_DROP));
-    ok_con(hdbc1, SQLDisconnect(hdbc1));
-    ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+    free_basic_handles(&henv1, &hdbc1, &hstmt1);
   }
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_max_rows");
@@ -862,29 +841,18 @@ DECLARE_TEST(t_zerolength)
 /* Test the bug when two stmts are used with the don't cache results */
 DECLARE_TEST(t_cache_bug)
 {
-  SQLHENV    henv1;
-  SQLHDBC    hdbc1;
-  SQLHSTMT   hstmt1, hstmt2;
-  SQLCHAR    conn[MAX_NAME_LEN];
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+  SQLHSTMT   hstmt2;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_cache");
   ok_sql(hstmt, "CREATE TABLE t_cache (id INT)");
   ok_sql(hstmt, "INSERT INTO t_cache VALUES (1),(2),(3),(4),(5)");
 
-  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;DATABASE=%s;OPTION=1048579",
-          mydsn, myuid, mypwd, mydb);
-  if (mysock != NULL)
-  {
-    strcat((char *)conn, ";SOCKET=");
-    strcat((char *)conn, (char *)mysock);
-  }
-  if (myport)
-  {
-    char pbuff[20];
-    sprintf(pbuff, ";PORT=%d", myport);
-    strcat((char *)conn, pbuff);
-  }
-  is(mydrvconnect(&henv1, &hdbc1, &hstmt1, conn) == OK);
+  SET_DSN_OPTION(1048579);
+
+  is(OK == alloc_basic_handles(&henv1, &hdbc1, &hstmt1));
+
+  SET_DSN_OPTION(0);
 
   ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
                                  (SQLPOINTER)SQL_CURSOR_STATIC, 0));
@@ -914,11 +882,7 @@ DECLARE_TEST(t_cache_bug)
 
   expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA);
 
-  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
-
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-  ok_con(hdbc1, SQLFreeConnect(hdbc1));
-  ok_env(henv1, SQLFreeEnv(henv1));
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_cache");
 
@@ -929,26 +893,19 @@ DECLARE_TEST(t_cache_bug)
 /* Test the bug when two stmts are used with the don't cache results */
 DECLARE_TEST(t_non_cache_bug)
 {
-  SQLHENV    henv1;
-  SQLHDBC    hdbc1;
-  SQLHSTMT   hstmt1, hstmt2;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+  SQLHSTMT   hstmt2;
   SQLCHAR    conn[MAX_NAME_LEN];
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_cache");
   ok_sql(hstmt, "CREATE TABLE t_cache (id INT)");
   ok_sql(hstmt, "INSERT INTO t_cache VALUES (1),(2),(3),(4),(5)");
 
-  sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;DATABASE=%s;OPTION=3",
-          mydsn, myuid, mypwd, mydb);
-  if (mysock != NULL)
-  {
-    strcat((char *)conn, ";SOCKET=");
-    strcat((char *)conn, (char *)mysock);
-  }
-  is(mydrvconnect(&henv1, &hdbc1, &hstmt1, conn) == OK);
+  SET_DSN_OPTION(3);
 
-  ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
-                                 (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+  is(OK == alloc_basic_handles(&henv1, &hdbc1, &hstmt1));
+
+  SET_DSN_OPTION(0);
 
   ok_sql(hstmt1, "SELECT * FROM t_cache");
 
@@ -975,11 +932,7 @@ DECLARE_TEST(t_non_cache_bug)
 
   expect_stmt(hstmt1, SQLFetch(hstmt1), SQL_NO_DATA);
 
-  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
-
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-  ok_con(hdbc1, SQLFreeConnect(hdbc1));
-  ok_env(henv1, SQLFreeEnv(henv1));
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_cache");
 
@@ -2115,9 +2068,7 @@ DECLARE_TEST(t_bug31246)
 */
 DECLARE_TEST(t_bug13776)
 {
-  SQLHENV  henv1;
-  SQLHDBC  hdbc1;
-  SQLHSTMT hstmt1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
 
   SQLULEN     pcColSz;
   SQLCHAR     szColName[MAX_NAME_LEN];
@@ -2166,9 +2117,7 @@ DECLARE_TEST(t_bug13776)
 DECLARE_TEST(t_bug13776_auto)
 {
 #ifdef WIN32
-  SQLHENV  henv1;
-  SQLHDBC  hdbc1;
-  SQLHSTMT hstmt1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   HMODULE  ado_dll;
 
   SQLULEN     pcColSz;

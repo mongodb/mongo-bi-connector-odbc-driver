@@ -1078,23 +1078,13 @@ DECLARE_TEST(t_bug29402)
   SQLULEN column_size;
   SQLCHAR buf[80]= {0};
   SQLLEN buflen= 0;
-  SQLHDBC    hdbc1;
-  SQLHSTMT   hstmt1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   const SQLCHAR *expected= "\x80""100";
 
-  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
-
-  /* First check how the option NO_BINARY_RESULT works */
-  sprintf((char *)conn, 
-          "DSN=%s;UID=%s;PWD=%s;NO_BINARY_RESULT=1;CHARSET=CP1250",
-          mydsn, myuid, mypwd);
-
-  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, SQL_NTS, conn_out,
-                                 sizeof(conn_out), &conn_out_len,
-                                 SQL_DRIVER_NOPROMPT));
-
-  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
-
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
+                                        NULL, NULL, NULL, 
+                                        "NO_BINARY_RESULT=1;CHARSET=CP1250"));
+  
   ok_stmt(hstmt1, SQLExecDirect(hstmt1, "SELECT CONCAT(_cp1250 0x80, 100) concated", SQL_NTS));
 
   ok_stmt(hstmt1, SQLDescribeCol(hstmt1, 1, column_name, sizeof(column_name),
@@ -1119,9 +1109,7 @@ DECLARE_TEST(t_bug29402)
     return FAIL;
   }
 
-  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   /* Check without FLAG_NO_BINARY_RESULT */
   ok_sql(hstmt, "SELECT CONCAT('\x80', 100) concated");

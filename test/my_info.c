@@ -208,36 +208,15 @@ DECLARE_TEST(t_bug31055)
 */
 DECLARE_TEST(t_bug3780)
 {
-  HDBC hdbc1;
-  HSTMT hstmt1;
-  SQLCHAR   conn[512], conn_out[512];
-  SQLSMALLINT conn_out_len;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   SQLCHAR   rgbValue[MAX_NAME_LEN];
   SQLSMALLINT pcbInfo;
   SQLINTEGER attrlen;
 
   /* The connection string must not include DATABASE. */
-  sprintf((char *)conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s",
-          mydriver, myserver, myuid, mypwd);
-  if (mysock != NULL)
-  {
-    strcat((char *)conn, ";SOCKET=");
-    strcat((char *)conn, (char *)mysock);
-  }
-  if (myport)
-  {
-    char pbuff[20];
-    sprintf(pbuff, ";PORT=%d", myport);
-    strcat((char *)conn, pbuff);
-  }
-
-  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
-
-  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), conn_out,
-                                 sizeof(conn_out), &conn_out_len,
-                                 SQL_DRIVER_NOPROMPT));
-  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
-
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, USE_DRIVER,
+                                        NULL, NULL, "", NULL));
+  
   ok_con(hdbc1, SQLGetInfo(hdbc1, SQL_DATABASE_NAME, rgbValue, 
                            MAX_NAME_LEN, &pcbInfo));
 
@@ -250,9 +229,7 @@ DECLARE_TEST(t_bug3780)
   is_num(attrlen, 4);
   is_str(rgbValue, "null", attrlen);
 
-  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   return OK;
 }
@@ -292,9 +269,7 @@ DECLARE_TEST(t_bug16653)
 */
 DECLARE_TEST(t_bug30626)
 {
-  SQLHANDLE henv1;
-  SQLHANDLE hdbc1;
-  SQLHANDLE hstmt1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   SQLCHAR conn[512];
   
   /* odbc 3 */
@@ -343,13 +318,8 @@ DECLARE_TEST(t_bug30626)
 
   ok_stmt(hstmt1, SQLGetTypeInfo(hstmt1, SQL_DATE));
   is_num(myresult(hstmt1), 4);
-  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
-  ok_stmt(hstmt1, SQLFreeHandle(SQL_HANDLE_STMT, hstmt1));
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
-  ok_env(henv1, SQLFreeHandle(SQL_HANDLE_ENV, henv1));
-
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
   return OK;
 }
 

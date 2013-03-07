@@ -113,41 +113,13 @@ DECLARE_TEST(t_odbc3_handle)
 
 DECLARE_TEST(t_driver_connect)
 {
-  SQLHENV henv1;
-  SQLHDBC hdbc1;
-  SQLCHAR conn_in[255], conn_out[255];
-  SQLSMALLINT conn_out_len;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
 
-  ok_env(henv1, SQLAllocEnv(&henv1));
-  ok_env(henv1, SQLAllocConnect(henv1,&hdbc1));
-
-  sprintf((char *)conn_in,
-          "DRIVER=%s;UID=%s;PWD=%s;DATABASE=%s;SERVER=%s;"
-          "OPTION=3;STMT=use mysql",
-          (char *)mydriver, (char *)myuid, (char *)mypwd, (char *)mydb,
-          (char *)myserver);
-  if (mysock != NULL)
-  {
-    strcat((char *)conn_in, ";SOCKET=");
-    strcat((char *)conn_in, (char *)mysock);
-  }
-  if (myport)
-  {
-    char pbuff[20];
-    sprintf(pbuff, ";PORT=%d", myport);
-    strcat((char *)conn_in, pbuff);
-  }
-  ok_con(hdbc1, SQLDriverConnect(hdbc1, (SQLHWND)0, conn_in, sizeof(conn_in),
-                                 conn_out, sizeof(conn_out), &conn_out_len,
-                                 SQL_DRIVER_NOPROMPT));
-
-  printMessage( "output string: `%s`\n", conn_out);
-
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-
-  ok_con(hdbc1, SQLFreeConnect(hdbc1));
-
-  ok_env(henv1, SQLFreeEnv(henv1));
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
+                                        NULL, NULL, NULL, 
+                                        "OPTION=3;STMT=use mysql"));
+  
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   return OK;
 }

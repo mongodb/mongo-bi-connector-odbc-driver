@@ -32,7 +32,7 @@
 */
 DECLARE_TEST(t_bug32420)
 {
-  SQLHANDLE henv1, hdbc1, hstmt1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   SQLINTEGER nData[4];
   SQLCHAR szData[4][16];
   SQLUSMALLINT rgfRowStatus[4];
@@ -702,30 +702,11 @@ DECLARE_TEST(t_row_status)
 
 DECLARE_TEST(t_prefetch)
 {
-    HDBC  hdbc1;
-    HSTMT hstmt1;
+    DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
     SQLCHAR conn[512];
 
-    sprintf((char *)conn, "DSN=%s;UID=%s;PWD=%s;PREFETCH=5",
-          mydsn, myuid, mypwd);
-    if (mysock != NULL)
-    {
-      strcat((char *)conn, ";SOCKET=");
-      strcat((char *)conn, (char *)mysock);
-    }
-    if (myport)
-    {
-      char pbuff[20];
-      sprintf(pbuff, ";PORT=%d", myport);
-      strcat((char *)conn, pbuff);
-    }
-
-    ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
-
-    ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), NULL,
-                                   0, NULL,
-                                   SQL_DRIVER_NOPROMPT));
-    ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+    is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
+                                        NULL, NULL, NULL, "PREFETCH=5"));
 
     ok_sql(hstmt, "DROP table IF EXISTS b_prefecth");
     ok_sql(hstmt, "CREATE table b_prefecth(i int)");
@@ -734,16 +715,11 @@ DECLARE_TEST(t_prefetch)
 
     ok_stmt(hstmt1, SQLPrepare(hstmt1, "select* from b_prefecth;    ", SQL_NTS));
     ok_stmt(hstmt1, SQLExecute(hstmt1));
-    ok_stmt(hstmt1, SQLFreeStmt(hstmt1,SQL_DROP));
 
-    ok_con(hdbc1, SQLDisconnect(hdbc1));
+    free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
-    sprintf((char *)conn+strlen(conn), ";MULTI_STATEMENTS=1");
-
-    ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), NULL,
-                                   0, NULL,
-                                   SQL_DRIVER_NOPROMPT));
-    ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+    is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
+                                        NULL, NULL, NULL, "MULTI_STATEMENTS=1"));
 
     ok_stmt(hstmt1, SQLPrepare(hstmt1, "select* from b_prefecth;\
                                         select * from b_prefecth where i < 7; ",
@@ -759,9 +735,7 @@ DECLARE_TEST(t_prefetch)
 
     expect_stmt(hstmt1, SQLMoreResults(hstmt1), SQL_NO_DATA);
 
-    ok_stmt(hstmt1, SQLFreeStmt(hstmt1,SQL_DROP));
-    ok_con(hdbc1, SQLDisconnect(hdbc1));
-    ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+    free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
     ok_sql(hstmt, "DROP table IF EXISTS b_prefecth");
 

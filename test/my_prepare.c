@@ -1185,9 +1185,7 @@ DECLARE_TEST(t_bug67702)
 */
 DECLARE_TEST(t_bug68243)
 {
-  SQLHENV    henv1;
-  SQLHDBC    hdbc1;
-  SQLHSTMT   hstmt1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   SQLCHAR    conn[512];
 
   char c1 = 1, c2= 0;
@@ -1207,9 +1205,8 @@ DECLARE_TEST(t_bug68243)
                                       "VALUES (1, 1)", 
                                       SQL_NTS));
 
-  my_str_options= "NO_SSPS=1";
-
-  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
+                                        NULL, NULL, NULL, "NO_SSPS=1"));
 
   /* Set parameter values here to make it clearer where each one goes */
   c1= 0;
@@ -1237,6 +1234,9 @@ DECLARE_TEST(t_bug68243)
   
   SQLFreeStmt(hstmt, SQL_CLOSE);
   ok_stmt(hstmt, SQLExecDirect(hstmt, "drop table if exists bug68243", SQL_NTS));
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
   return OK;
 }
 
