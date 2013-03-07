@@ -149,6 +149,8 @@ const SQLCHAR *testname_suffix="";
 
 char *SKIP_REASON= NULL;
 
+#define USE_DRIVER (char *)-1
+
 typedef int (*test_func)(SQLHDBC, SQLHSTMT, SQLHENV);
 static void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
 		       const char *text, const char *file, int line);
@@ -226,6 +228,9 @@ void mem_gc_init()
   gc_blk.counter= 0;
 }
 
+#define DECLARE_BASIC_HANDLES(E, C, S) SQLHENV E; \
+  SQLHDBC C; \
+  SQLHSTMT S
 
 #define BEGIN_TESTS my_test tests[]= {
 #define ADD_TEST(name) { #name, name, OK   },
@@ -1095,31 +1100,47 @@ int mydrvconnect(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt, SQLCHAR *connIn)
    and my_str_options, respectively.
    myoption, mysock and myport values are used. */
 int get_connection(SQLHDBC *hdbc, const SQLCHAR *dsn, const SQLCHAR *uid,
-                   const SQLCHAR *pwd, const SQLCHAR *options)
+                   const SQLCHAR *pwd, const SQLCHAR *db, 
+                   const SQLCHAR *options)
 {
-  SQLCHAR     connIn[MAX_NAME_LEN*2], connOut[MAX_NAME_LEN*2];
+  /* Buffers have to be large enough to contain SSL options and long names */
+  SQLCHAR     connIn[4096], connOut[4096];
+  SQLCHAR     dsn_buf[MAX_NAME_LEN]= {0}, socket_buf[MAX_NAME_LEN]= {0};
+  SQLCHAR     db_buf[MAX_NAME_LEN]= {0}, port_buf[MAX_NAME_LEN]= {0};
   SQLSMALLINT len;
   SQLRETURN   rc;
 
+  /* We never set the custom DSN, but sometimes use DRIVER instead */
+  if (dsn == NULL)
+    sprintf((char *)dsn_buf, "DSN=%s", (char *)mydsn);
+  else if (dsn == USE_DRIVER)
+    sprintf((char *)dsn_buf, "DRIVER=%s", (char *)mydriver);
+  else
+    sprintf((char *)dsn_buf, "DSN=%s", (char *)dsn);
+
   /* Defaults */
-  if (dsn     == NULL) dsn=     mydsn;
   if (uid     == NULL) uid=     myuid;
   if (pwd     == NULL) pwd=     mypwd;
+  if (db      == NULL) db=      mydb;
   if (options == NULL) options= my_str_options;
 
-  sprintf((char *)connIn, "DSN=%s;UID=%s;PWD=%s;DATABASE=test;OPTION=%d",
-          (char *)dsn, (char *)uid, (char *)pwd, myoption);
+  sprintf((char *)connIn, "%s;UID=%s;PWD=%s;OPTION=%d",
+          (char *)dsn_buf, (char *)uid, (char *)pwd, myoption);
 
   if (mysock && mysock[0])
   {
-    strcat((char *)connIn, ";SOCKET=");
-    strcat((char *)connIn, (char *)mysock);
+    sprintf((char *)socket_buf, ";SOCKET=%s", (char *)mysock);
+    strcat((char *)connIn, socket_buf);
+  }
+  if (db && db[0])
+  {
+    sprintf((char *)db_buf, ";DATABASE=%s", (char *)db);
+    strcat((char *)connIn, (char *)db_buf);
   }
   if (myport)
   {
-    char buff[20];
-    sprintf(buff, ";PORT=%d", myport);
-    strcat((char *)connIn, buff);
+    sprintf(port_buf, ";PORT=%d", myport);
+    strcat((char *)connIn, port_buf);
   }
 
   if (options != NULL && options[0] > 0)
@@ -1129,7 +1150,7 @@ int get_connection(SQLHDBC *hdbc, const SQLCHAR *dsn, const SQLCHAR *uid,
   }
 
   rc= SQLDriverConnect(*hdbc, NULL, connIn, SQL_NTS, connOut,
-                                 MAX_NAME_LEN, &len, SQL_DRIVER_NOPROMPT);
+                       MAX_NAME_LEN, &len, SQL_DRIVER_NOPROMPT);
 
   if (SQL_SUCCEEDED(rc))
   {
@@ -1138,11 +1159,22 @@ int get_connection(SQLHDBC *hdbc, const SQLCHAR *dsn, const SQLCHAR *uid,
     rc= SQLSetConnectAttr(*hdbc, SQL_ATTR_AUTOCOMMIT,
                                   (SQLPOINTER)SQL_AUTOCOMMIT_ON, 0);
   }
+  else
+  {
+    /* re-build and print the connection string with hidden password */
+    printf("# Connection failed with the following Connection string: " \
+           "\n%s;UID=%s;PWD=*******%s%s%s;%s\n", 
+           dsn_buf, uid, socket_buf, db_buf, port_buf, options);
+  }
 
   return rc;
 }
 
-int alloc_basic_handles(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt)
+
+int alloc_basic_handles_with_opt(SQLHENV *henv, SQLHDBC *hdbc, 
+                                 SQLHSTMT *hstmt,  const SQLCHAR *dsn, 
+                                 const SQLCHAR *uid, const SQLCHAR *pwd, 
+                                 const SQLCHAR *db, const SQLCHAR *options)
 {
   ok_env(*henv, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, henv));
 
@@ -1151,11 +1183,20 @@ int alloc_basic_handles(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt)
 
   ok_env(*henv, SQLAllocHandle(SQL_HANDLE_DBC, *henv, hdbc));
 
-  ok_con(*hdbc, get_connection(hdbc, mydsn, myuid, mypwd, my_str_options));
+  ok_con(*hdbc, get_connection(hdbc, dsn, uid, pwd, db, options));
 
   ok_con(*hdbc, SQLAllocHandle(SQL_HANDLE_STMT, *hdbc, hstmt));
 
   return OK;
+}
+
+
+int alloc_basic_handles(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt)
+{
+  return alloc_basic_handles_with_opt(henv, hdbc, hstmt, (SQLCHAR *)mydsn, 
+                                      (SQLCHAR *)myuid, (SQLCHAR *)mypwd,
+                                      (SQLCHAR *)mydb, 
+                                      (SQLCHAR *)my_str_options);
 }
 
 
