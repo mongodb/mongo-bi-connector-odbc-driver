@@ -703,7 +703,6 @@ DECLARE_TEST(t_row_status)
 DECLARE_TEST(t_prefetch)
 {
     DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
-    SQLCHAR conn[512];
 
     is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
                                         NULL, NULL, NULL, "PREFETCH=5"));

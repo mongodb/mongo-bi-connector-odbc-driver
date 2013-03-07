@@ -503,7 +503,6 @@ DECLARE_TEST(t_max_rows)
   /* Testing max_rows with PREFETCH feature(client side cursor) enabled */
   {
     DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
-    SQLCHAR conn[512];
 
     is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
                                         NULL, NULL, NULL, "PREFETCH=5"));
@@ -895,7 +894,6 @@ DECLARE_TEST(t_non_cache_bug)
 {
   DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   SQLHSTMT   hstmt2;
-  SQLCHAR    conn[MAX_NAME_LEN];
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_cache");
   ok_sql(hstmt, "CREATE TABLE t_cache (id INT)");

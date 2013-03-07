@@ -364,7 +364,7 @@ DECLARE_TEST(getdata_need_nullind)
 */
 DECLARE_TEST(t_handle_err)
 {
-  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+  SQLHANDLE henv1, hdbc1;
 
   ok_env(henv1, SQLAllocHandle(SQL_HANDLE_ENV, NULL, &henv1));
   ok_env(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,

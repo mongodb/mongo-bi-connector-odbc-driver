@@ -1186,8 +1186,6 @@ DECLARE_TEST(t_bug67702)
 DECLARE_TEST(t_bug68243)
 {
   DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
-  SQLCHAR    conn[512];
-
   char c1 = 1, c2= 0;
   int id= 1;
 
