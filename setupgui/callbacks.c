@@ -307,6 +307,8 @@ void syncTabsData(HWND hwnd, DataSource *params)
   GET_BOOL_TAB(CONNECTION_TAB, auto_reconnect);
   GET_BOOL_TAB(CONNECTION_TAB, allow_multiple_statements);
   GET_BOOL_TAB(CONNECTION_TAB, clientinteractive);
+  GET_BOOL_TAB(CONNECTION_TAB, can_handle_exp_pwd);
+  GET_BOOL_TAB(CONNECTION_TAB, enable_cleartext_plugin);
 
   GET_COMBO_TAB(CONNECTION_TAB, charset);
   GET_STRING_TAB(CONNECTION_TAB, initstmt);
@@ -372,6 +374,8 @@ void syncTabs(HWND hwnd, DataSource *params)
   SET_BOOL_TAB(CONNECTION_TAB, auto_reconnect);
   SET_BOOL_TAB(CONNECTION_TAB, allow_multiple_statements);
   SET_BOOL_TAB(CONNECTION_TAB, clientinteractive);
+  SET_BOOL_TAB(CONNECTION_TAB, can_handle_exp_pwd);
+  SET_BOOL_TAB(CONNECTION_TAB, enable_cleartext_plugin);
 
 #ifdef _WIN32
   if ( getTabCtrlTabPages(CONNECTION_TAB-1))

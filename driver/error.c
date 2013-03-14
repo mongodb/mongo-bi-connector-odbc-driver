@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -94,6 +94,7 @@ static MYODBC3_ERR_STR myodbc3_errors[]=
   {"42S21","Column already exists", SQL_ERROR},
   {"42S22","Column not found", SQL_ERROR},
   {"08S01","Communication link failure", SQL_ERROR},
+  {"08004","Server rejected the connection", SQL_ERROR},
 };
 
 
@@ -170,11 +171,11 @@ SQLRETURN copy_stmt_error(STMT FAR *dst,STMT FAR *src)
   conversion
 */
 
-SQLRETURN set_dbc_error(DBC FAR *dbc,char *state,
-                        const char *message,uint errcode)
+SQLRETURN set_dbc_error(DBC FAR *dbc, char *state,
+                        const char *message, uint errcode)
 {
-    strmov(dbc->error.sqlstate,state);
-    strxmov(dbc->error.message,MYODBC_ERROR_PREFIX,message,NullS);
+    strmov(dbc->error.sqlstate, state);
+    strxmov(dbc->error.message, MYODBC_ERROR_PREFIX, message, NullS);
     dbc->error.native_error= errcode;
     return SQL_ERROR;
 }
@@ -187,12 +188,12 @@ SQLRETURN set_dbc_error(DBC FAR *dbc,char *state,
 */
 
 SQLRETURN set_stmt_error( STMT FAR *    stmt,
-                          char *        state,
+                          const char *  state,
                           const char *  message,
                           uint          errcode )
 {
-    strmov( stmt->error.sqlstate, state );
-    strxmov( stmt->error.message, stmt->dbc->st_error_prefix, message, NullS );
+    strmov(stmt->error.sqlstate, state);
+    strxmov(stmt->error.message, stmt->dbc->st_error_prefix, message, NullS);
     stmt->error.native_error = errcode;
 
     return SQL_ERROR;
@@ -227,7 +228,7 @@ void translate_error(char *save_state, myodbc_errid errid, uint mysql_err)
 {
     char *state= myodbc3_errors[errid].sqlstate;
 
-    switch ( mysql_err )
+    switch (mysql_err)
     {
         case ER_WRONG_VALUE_COUNT:
             state= "21S01";
@@ -270,9 +271,17 @@ void translate_error(char *save_state, myodbc_errid errid, uint mysql_err)
         case CR_SERVER_LOST:
             state= "08S01";
             break;
+        case ER_MUST_CHANGE_PASSWORD_LOGIN:
+            state= "08004"; /* Server rejected the connection */
+                            /* The data source rejected the establishment of the
+                               connection for implementation-defined reasons. */
+            break;
+        case CR_AUTH_PLUGIN_CANNOT_LOAD_ERROR:
+            state= "08004"; /* Authenticaton plugin cannot be loaded */
+            break;
         default: break;
     }
-    strmov(save_state,state);
+    strmov(save_state, state);
 }
 
 

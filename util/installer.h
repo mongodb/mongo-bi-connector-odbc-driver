@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -104,7 +104,7 @@ typedef struct {
   SQLCHAR *sslcapath8;
   SQLCHAR *sslcipher8;
 
-  /* flags 1 */
+  /*  */
   BOOL return_matching_rows;
   BOOL allow_big_results;
   BOOL use_compressed_protocol;
@@ -113,7 +113,9 @@ typedef struct {
   BOOL auto_reconnect;
   BOOL auto_increment_null_search;
   BOOL handle_binary_as_char;
-  /* flags 2 */
+  BOOL can_handle_exp_pwd;
+  BOOL enable_cleartext_plugin;
+  /*  */
   BOOL dont_prompt_upon_connect;
   BOOL dynamic_cursor;
   BOOL ignore_N_in_name_table;
@@ -121,7 +123,7 @@ typedef struct {
   BOOL dont_use_set_locale;
   BOOL pad_char_to_full_length;
   BOOL dont_cache_result;
-  /* flags 3 */
+  /*  */
   BOOL return_table_names_for_SqlDescribeCol;
   BOOL ignore_space_after_function_names;
   BOOL force_use_of_named_pipes;
