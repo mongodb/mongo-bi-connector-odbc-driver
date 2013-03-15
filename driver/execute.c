@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -617,8 +617,28 @@ SQLRETURN convert_c_type2str(STMT *stmt, SQLSMALLINT ctype, DESCREC *iprec,
 
         if (time->fraction)
         {
-          sprintf(buff + *length, ".%09d", time->fraction);
-          *length+= 10;
+          char *tmp_buf= buff + *length;
+          
+          /* Start cleaning from the end */
+          int tmp_pos= 9;
+
+          sprintf(tmp_buf, ".%09d", time->fraction);
+          
+          /*
+            ODBC specification defines nanoseconds granularity for
+            the fractional part of seconds. MySQL only supports 
+            microseconds for TIMESTAMP, TIME and DATETIME.
+
+            We are trying to remove the trailing zeros because this 
+            does not really modify the data, but often helps to substitute
+            9 digits with only 6.
+          */
+          while (tmp_pos && tmp_buf[tmp_pos] == '0')
+          {
+            tmp_buf[tmp_pos--]= 0;
+          }
+
+          *length+= tmp_pos + 1;
         }
 
         *res= buff;

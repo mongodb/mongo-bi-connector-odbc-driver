@@ -6,6 +6,8 @@
   * query_print will cause core dump in 32-bit application 
     (Bug #16367440/68201)
   * Microsoft Access Crashes when Bit field updates (Bug# 16287859/68243)
+  * Datetime and timestamp second fractions need removing the trailing 
+    zeros (Bug# 16294197/65418)
 
 ----
 
