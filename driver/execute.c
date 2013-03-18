@@ -564,8 +564,28 @@ SQLRETURN insert_param(STMT *stmt, char **toptr, DESC* apd,
 
                 if (time->fraction)
                 {
-                  sprintf(buff + length, ".%09d", time->fraction);
-                  length+= 10;
+                  char *tmp_buf= buff + length;
+
+                  /* Start cleaning from the end */
+                  int tmp_pos= 9;
+
+                  sprintf(tmp_buf, ".%09d", time->fraction);
+
+                  /*
+                    ODBC specification defines nanoseconds granularity for
+                    the fractional part of seconds. MySQL only supports 
+                    microseconds for TIMESTAMP, TIME and DATETIME.
+
+                    We are trying to remove the trailing zeros because this 
+                    does not really modify the data, but often helps to substitute
+                    9 digits with only 6.
+                  */
+                  while (tmp_pos && tmp_buf[tmp_pos] == '0')
+                  {
+                    tmp_buf[tmp_pos--]= 0;
+                  }
+
+                  length+= tmp_pos + 1;
                 }
 
                 data= buff;

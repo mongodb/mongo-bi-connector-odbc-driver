@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -31,9 +31,18 @@ DECLARE_TEST(my_ts)
   SQLCHAR          szTs[50];
   TIMESTAMP_STRUCT ts;
   SQLLEN           len;
+  int is_fraction_capable = mysql_min_version(hdbc, "5.6.", 4);
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS my_ts");
-  ok_sql(hstmt, "CREATE TABLE my_ts (ts TIMESTAMP)");
+
+  if(is_fraction_capable)
+  {
+    ok_sql(hstmt, "CREATE TABLE my_ts (ts TIMESTAMP(6))");
+  }
+  else
+  {
+    ok_sql(hstmt, "CREATE TABLE my_ts (ts TIMESTAMP)");
+  }
 
   /* insert using SQL_C_CHAR to SQL_TIMESTAMP */
   strcpy((char *)szTs, "2002-01-07 10:20:49.06");
@@ -55,7 +64,8 @@ DECLARE_TEST(my_ts)
   ts.hour= 19;
   ts.minute= 47;
   ts.second= 59;
-  ts.fraction= 4;
+  ts.fraction= is_fraction_capable ? 123456000 : 0;
+
   ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT,
                                   SQL_C_TIMESTAMP, SQL_TIMESTAMP,
                                   0, 0, &ts, sizeof(ts), NULL));
@@ -72,7 +82,10 @@ DECLARE_TEST(my_ts)
   ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 1));
 
   ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, szTs, sizeof(szTs), &len));
-  is_str(szTs, "2002-01-07 10:20:49", len);
+  
+  is_str(szTs, is_fraction_capable ? "2002-01-07 10:20:49.060000" : 
+                                     "2002-01-07 10:20:49", len);
+
   printf("# row1 using SQL_C_CHAR: %s (%ld)\n", szTs, len);
 
   ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 1));
@@ -84,6 +97,8 @@ DECLARE_TEST(my_ts)
   is_num(ts.hour,  10);
   is_num(ts.minute,20);
   is_num(ts.second,49);
+  is_num(ts.fraction, is_fraction_capable ? 60000000 : 0);
+
   printf("# row1 using SQL_C_TIMESTAMP: %d-%d-%d %d:%d:%d.%d (%ld)\n",
          ts.year, ts.month,ts.day, ts.hour, ts.minute, ts.second, ts.fraction,
          len);
@@ -91,7 +106,8 @@ DECLARE_TEST(my_ts)
   ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 2));
 
   ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, szTs, sizeof(szTs), &len));
-  is_str(szTs, "2002-01-07 19:47:59", len);
+  is_str(szTs, is_fraction_capable ? "2002-01-07 19:47:59.123456" :
+                                      "2002-01-07 19:47:59", len);
   printf("# row2 using SQL_C_CHAR: %s(%ld)\n", szTs, len);
 
   ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_ABSOLUTE, 2));
@@ -103,6 +119,8 @@ DECLARE_TEST(my_ts)
   is_num(ts.hour,  19);
   is_num(ts.minute,47);
   is_num(ts.second,59);
+  is_num(ts.fraction, is_fraction_capable ? 123456000 : 0);
+
   printf("# row2 using SQL_C_TIMESTAMP: %d-%d-%d %d:%d:%d.%d (%ld)\n",
          ts.year, ts.month,ts.day, ts.hour, ts.minute, ts.second, ts.fraction,
          len);
@@ -133,6 +151,7 @@ DECLARE_TEST(t_tstotime)
 {
   SQLRETURN rc;
   SQL_TIMESTAMP_STRUCT ts, ts1, ts2;
+  int is_fraction_capable = mysql_min_version(hdbc, "5.6.", 4);
 
   ts.day    = 02;
   ts.month  = 8;
@@ -140,68 +159,66 @@ DECLARE_TEST(t_tstotime)
   ts.hour   = 18;
   ts.minute = 20;
   ts.second = 45;
-  ts.fraction = 05;   
+  ts.fraction = is_fraction_capable ? 555000 : 0;   
 
   memcpy(&ts1, (void*) &ts, sizeof(SQL_TIMESTAMP_STRUCT));
-  /* For SQL_TIME fraction is truncated and that would cause error */
-  ts1.fraction= 0;
 
   memcpy(&ts2, (void*) &ts1, sizeof(SQL_TIMESTAMP_STRUCT));
+
+  /* 
+    SQL_TIME cannot have the fractional part
+    http://msdn.microsoft.com/en-us/library/ms709385%28v=vs.85%29.aspx
+  */
+  ts1.fraction= 0;
+
   /* Same for SQL_DATE - time is truncated -> error */
-  ts2.hour= ts2.minute= ts2.second= 0;
+  ts2.hour= ts2.minute= ts2.second= ts2.fraction= 0;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_tstotime");
 
-  rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-  mycon(hdbc,rc);
+  ok_con(hdbc, SQLTransact(NULL,hdbc,SQL_COMMIT));
 
-  rc = tmysql_exec(hstmt,"create table t_tstotime(col1 date ,col2 time, col3 timestamp)");
-  mystmt(hstmt,rc);
+  if(is_fraction_capable)
+  {
+    ok_sql(hstmt,"create table t_tstotime(col1 date,col2 time, col3 timestamp(6))");
+  }
+  else
+  {
+    ok_sql(hstmt,"create table t_tstotime(col1 date ,col2 time, col3 timestamp)");
+  }
 
-  rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-  mycon(hdbc,rc);
+  ok_con(hdbc, SQLTransact(NULL,hdbc,SQL_COMMIT));
 
-  rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-  mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
 
   /* TIMESTAMP TO DATE, TIME and TS CONVERSION */
-  rc = SQLPrepare(hstmt, (SQLCHAR *)"insert into t_tstotime(col1,col2,col3) values(?,?,?)",SQL_NTS);
-  mystmt(hstmt,rc);   
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)"insert into t_tstotime(col1,col2,col3) values(?,?,?)",SQL_NTS));
 
-  rc = SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
-                        SQL_DATE,0,0,&ts2,sizeof(ts2),NULL);
-  mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindParameter(hstmt,1,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
+                                  SQL_DATE,0,0,&ts2,sizeof(ts2),NULL));
 
-  rc = SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
-                        SQL_TIME,0,0,&ts1,sizeof(ts1),NULL);
-  mystmt(hstmt,rc);
+  //ts1.fraction= 0;
+  ok_stmt(hstmt, SQLBindParameter(hstmt,2,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
+                                  SQL_TIME,0,0,&ts1,sizeof(ts1),NULL));
 
-  rc = SQLBindParameter(hstmt,3,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
-                        SQL_TIMESTAMP,0,0,&ts,sizeof(ts),NULL);
-  mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLBindParameter(hstmt,3,SQL_PARAM_INPUT,SQL_C_TIMESTAMP,
+                                  SQL_TIMESTAMP,0,0,&ts,sizeof(ts),NULL));
 
-  rc = SQLExecute(hstmt);
-  mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLExecute(hstmt));
 
-  rc = SQLFreeStmt(hstmt,SQL_RESET_PARAMS);
-  mystmt(hstmt,rc);  
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_RESET_PARAMS));
 
-  rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-  mystmt(hstmt,rc);  
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
 
-  rc = SQLTransact(NULL,hdbc,SQL_COMMIT);
-  mycon(hdbc,rc);
+  ok_con(hdbc, SQLTransact(NULL,hdbc,SQL_COMMIT));
 
-  rc = tmysql_exec(hstmt,"select * from t_tstotime");
-  mystmt(hstmt,rc);  
+  ok_sql(hstmt,"select * from t_tstotime");
 
   my_assert( 1 == myresult(hstmt));
 
-  rc = SQLFreeStmt(hstmt,SQL_UNBIND);
-  mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_UNBIND));
 
-  rc = SQLFreeStmt(hstmt,SQL_CLOSE);
-  mystmt(hstmt,rc);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_tstotime");
 
@@ -985,7 +1002,7 @@ DECLARE_TEST(t_bug37342)
   ts.hour= 19;
   ts.minute= 47;
   ts.second= 59;
-  ts.fraction= 4;
+  ts.fraction= 4000;
 
   /* Fractional truncation */
   expect_sql(hstmt, "SELECT ? AS foo", SQL_ERROR);
