@@ -1030,17 +1030,29 @@ SQLRETURN insert_param(STMT *stmt, uchar *place4param, DESC* apd,
           {
             char *to= buff, *from= data;
             char *end= from+length;
+            char *local_thousands_sep= thousands_sep;
+            char *local_decimal_point= decimal_point;
+            uint local_thousands_sep_length= thousands_sep_length;
+            uint local_decimal_point_length= decimal_point_length;
+
+            if (!stmt->dbc->ds->dont_use_set_locale)
+            {
+              /* force use of . as decimal point */
+              local_thousands_sep= ",";
+              local_thousands_sep_length= 1;
+              local_decimal_point= ".";
+              local_decimal_point_length= 1;
+            }
+
             while ( *from && from < end )
             {
-              /* I wonder if following code really respects dont_use_set_locale
-                 and if it does, then how? */
-              if ( from[0] == thousands_sep[0] && is_prefix(from,thousands_sep) )
+              if ( from[0] == local_thousands_sep[0] && is_prefix(from,local_thousands_sep) )
               {
-                from+= thousands_sep_length;
+                from+= local_thousands_sep_length;
               }
-              else if ( from[0] == decimal_point[0] && is_prefix(from,decimal_point) )
+              else if ( from[0] == local_decimal_point[0] && is_prefix(from,local_decimal_point) )
               {
-                from+= decimal_point_length;
+                from+= local_decimal_point_length;
                 *to++='.';
               }
               else

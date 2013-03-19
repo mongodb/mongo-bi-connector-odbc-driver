@@ -149,7 +149,6 @@ DECLARE_TEST(my_ts)
 
 DECLARE_TEST(t_tstotime)
 {
-  SQLRETURN rc;
   SQL_TIMESTAMP_STRUCT ts, ts1, ts2;
   int is_fraction_capable = mysql_min_version(hdbc, "5.6.", 4);
 
@@ -969,8 +968,6 @@ DECLARE_TEST(t_bug37342)
   SQLCHAR out[30];
   TIMESTAMP_STRUCT ts;
   SQLLEN len= SQL_NTS;
-  int is_fraction_capable = mysql_min_version(hdbc, "5.6.", 4);
-
 
   ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
                                   SQL_TIMESTAMP, 0, 0, date, 0, &len));
@@ -1004,7 +1001,7 @@ DECLARE_TEST(t_bug37342)
   ts.hour= 19;
   ts.minute= 47;
   ts.second= 59;
-  ts.fraction= is_fraction_capable ? 4000 : 0;
+  ts.fraction= 4000;
 
   /* Fractional truncation */
   expect_sql(hstmt, "SELECT ? AS foo", SQL_ERROR);
@@ -1014,14 +1011,7 @@ DECLARE_TEST(t_bug37342)
 
   ok_stmt(hstmt, SQLFetch(hstmt));
 
-  if (is_fraction_capable)
-  {
-    is_str(my_fetch_str(hstmt, out, 1), "19:47:59.000004", 16);
-  }
-  else
-  {
-    is_str(my_fetch_str(hstmt, out, 1), "19:47:59", 9);
-  }
+  is_str(my_fetch_str(hstmt, out, 1), "19:47:59", 9);
 
   expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA);
 
