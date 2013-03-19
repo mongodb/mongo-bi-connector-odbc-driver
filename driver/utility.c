@@ -2275,7 +2275,13 @@ void query_print(FILE *log_file,char *query)
 {
     if ( log_file && query )
     {
-      fprintf(log_file, "%lld:%s;\n", time(NULL), query);
+      /*
+        because of bug 68201 we bring the result of time() call
+        to 64-bits in any case
+      */
+      long long time_now= time(NULL);
+
+      fprintf(log_file, "%lld:%s;\n", time_now, query);
     }
 }
 
