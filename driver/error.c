@@ -272,6 +272,7 @@ void translate_error(char *save_state, myodbc_errid errid, uint mysql_err)
             state= "08S01";
             break;
         case ER_MUST_CHANGE_PASSWORD_LOGIN:
+        case CR_AUTH_PLUGIN_CANNOT_LOAD_ERROR:
             state= "08004"; /* Server rejected the connection */
                             /* The data source rejected the establishment of the
                                connection for implementation-defined reasons. */

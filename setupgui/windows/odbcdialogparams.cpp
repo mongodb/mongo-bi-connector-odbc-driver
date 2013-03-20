@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -314,6 +314,7 @@ void syncTabsData(HWND hwnd, DataSource &params)
   GET_BOOL(CONNECTION_TAB, allow_multiple_statements);
   GET_BOOL(CONNECTION_TAB, clientinteractive);
   GET_BOOL(CONNECTION_TAB, can_handle_exp_pwd);
+  GET_BOOL(CONNECTION_TAB, enable_cleartext_plugin);
 
   getStrFieldData(&params.charset , CONNECTION_TAB, IDC_EDIT_charset);
   getStrFieldData(&params.initstmt, CONNECTION_TAB, IDC_EDIT_initstmt);
@@ -381,6 +382,7 @@ void syncTabs(HWND hwnd, DataSource &params)
   SET_BOOL(CONNECTION_TAB, allow_multiple_statements);
   SET_BOOL(CONNECTION_TAB, clientinteractive);
   SET_BOOL(CONNECTION_TAB, can_handle_exp_pwd);
+  SET_BOOL(CONNECTION_TAB, enable_cleartext_plugin);
 
   if ( TabCtrl_1.hTabPages[CONNECTION_TAB-1])
   {

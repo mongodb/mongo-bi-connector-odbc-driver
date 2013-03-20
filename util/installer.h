@@ -114,6 +114,7 @@ typedef struct {
   BOOL auto_increment_null_search;
   BOOL handle_binary_as_char;
   BOOL can_handle_exp_pwd;
+  BOOL enable_cleartext_plugin;
   /*  */
   BOOL dont_prompt_upon_connect;
   BOOL dynamic_cursor;

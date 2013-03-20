@@ -657,6 +657,77 @@ DECLARE_TEST(t_passwordexpire)
   return OK;
 }
 
+/*
+  Bug#16445091: CLEARTEXT AUTHENTICATION NOT PRESENT IN ODBC
+*/
+DECLARE_TEST(t_cleartext_password)
+{
+  SQLHDBC hdbc1;
+  SQLHSTMT hstmt1;
+  SQLRETURN rc;
+  SQLCHAR sql_state[6];
+  SQLINTEGER  err_code= 0;                              
+  SQLCHAR     err_msg[SQL_MAX_MESSAGE_LENGTH]= {0};
+  SQLSMALLINT err_len= 0;
+  SQLCHAR server_version[MYSQL_NAME_LEN+1];
+  unsigned int major1= 0, minor1= 0, build1= 0;
+
+  if (!mysql_min_version(hdbc, "5.5.16", 6) )
+  {
+    skip("The server does not support tested functionality(Cleartext Auth)");
+  }
+
+  SQLExecDirect(hstmt, (SQLCHAR *)"DROP USER 't_ct_user'@'%'", SQL_NTS);
+
+  if (!SQL_SUCCEEDED(SQLExecDirect(hstmt, 
+            "GRANT ALL ON *.* TO "
+            "'t_ct_user'@'%' IDENTIFIED WITH "
+            "'authentication_pam'", SQL_NTS))) 
+  {
+    skip("The authentication_pam plugin not loaded");
+  }
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+
+  /* 
+    Expecting error CR_AUTH_PLUGIN_CANNOT_LOAD_ERROR 
+    without option ENABLE_CLEARTEXT_PLUGIN
+  */
+  if(!SQL_SUCCEEDED(get_connection(&hdbc1, mydsn, "t_ct_user", "t_ct_pass",
+                        mydb, NULL)))
+  {
+    SQLGetDiagRec(SQL_HANDLE_DBC, hdbc1, 1, sql_state, &err_code, err_msg,
+                  SQL_MAX_MESSAGE_LENGTH - 1, &err_len);
+
+    printMessage("%s %d %s", sql_state, err_code, err_msg);
+    if ((strncmp(sql_state, "08004", 5) != 0 || err_code != 2059))
+    {                                                                               
+      return FAIL;
+    }
+  }  
+
+  /* 
+    Expecting error other then CR_AUTH_PLUGIN_CANNOT_LOAD_ERROR 
+    as option ENABLE_CLEARTEXT_PLUGIN is used
+  */
+  if(!SQL_SUCCEEDED(get_connection(&hdbc1, mydsn, "t_ct_user", "t_ct_pass",
+                        mydb, "ENABLE_CLEARTEXT_PLUGIN=1")))
+  {
+    SQLGetDiagRec(SQL_HANDLE_DBC, hdbc1, 1, sql_state, &err_code, err_msg,
+                  SQL_MAX_MESSAGE_LENGTH - 1, &err_len);
+    printMessage("%s %d %s", sql_state, err_code, err_msg);
+
+    if ((strncmp(sql_state, "08004", 5) == 0 && err_code == 2059))
+    {                                                                               
+      return FAIL;
+    }
+  }
+
+  ok_sql(hstmt, "DROP USER 't_ct_user'@'%'");
+
+  return OK;
+}
+
 
 BEGIN_TESTS
 #ifndef NO_DRIVERMANAGER
@@ -680,6 +751,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug14285620)
   ADD_TOFIX(t_bug49466)
   ADD_TEST(t_passwordexpire)
+  ADD_TEST(t_cleartext_password)
 END_TESTS
 
 RUN_TESTS

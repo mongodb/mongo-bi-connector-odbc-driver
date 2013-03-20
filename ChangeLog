@@ -10,6 +10,8 @@
     zeros (Bug# 16294197/65418)
   * Binding string to decimal parameter always uses system locale setting
     (Bug# 11766369/59469)
+  * Added CLEARTEXT authentication connection option ENABLE_CLEARTEXT_PLUGIN.
+   (Bug#16445091)
 
 ----
 
