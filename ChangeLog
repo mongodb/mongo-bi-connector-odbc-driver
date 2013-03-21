@@ -1,6 +1,7 @@
 5.2.5
 
   Functionality added or changed:
+	* MSI package installs both ANSI and Unicode drivers. (WL#6793)
 
   Bugs fixed:
   * query_print will cause core dump in 32-bit application 
