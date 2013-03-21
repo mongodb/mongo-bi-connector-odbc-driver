@@ -428,8 +428,20 @@ SQLGetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
     SQLWCHAR *wvalue;
     SQLINTEGER len= SQL_NTS;
     uint errors;
+    CHARSET_INFO *result_charset_info= dbc->cxn_charset_info;
 
-    wvalue= sqlchar_as_sqlwchar(dbc->cxn_charset_info, char_value,
+    /* 
+      When SQLGetConnectAttr is called before connecting the connection
+      is not established yet and its charset is unknown. We assume UTF8
+      as the most suitable charset for the string result.
+    */
+    if(!dbc->cxn_charset_info)
+    {
+      result_charset_info= get_charset_by_csname("utf8", MYF(MY_CS_PRIMARY),
+                                                 MYF(0));
+    }
+
+    wvalue= sqlchar_as_sqlwchar(result_charset_info, char_value,
                                 &len, &errors);
 
     /* value_max is in bytes, we want it in chars. */

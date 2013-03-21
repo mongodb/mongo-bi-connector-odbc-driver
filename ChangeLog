@@ -12,6 +12,7 @@
     (Bug# 11766369/59469)
   * Added CLEARTEXT authentication connection option ENABLE_CLEARTEXT_PLUGIN.
    (Bug#16445091)
+  * Crash in SQLSetConnectAttr(SQL_ATTR_CURRENT_CATALOG) (Bug# 16526604/63844)
 
 ----
 
