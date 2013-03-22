@@ -8,6 +8,7 @@
     (Bug #16367440/68201)
   * Datetime and timestamp second fractions need removing the trailing 
     zeros (Bug# 16294197/65418)
+  * Crash in SQLSetConnectAttr(SQL_ATTR_CURRENT_CATALOG) (Bug# 16526604/63844)
 
 ----
 

@@ -1129,6 +1129,33 @@ DECLARE_TEST(t_bug45378)
 }
 
 
+/*
+  Bug#45378 - Crash in SQLSetConnectAttr
+*/
+DECLARE_TEST(t_bug63844)
+{
+  SQLHDBC hdbc1;
+  SQLCHAR *DatabaseName = mydb;
+
+  /* 
+    We are not going to use alloc_basic_handles() for a special purpose:
+    SQLSetConnectAttr() is to be called before the connection is made
+  */  
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+  ok_con(hdbc1, SQLSetConnectAttr(hdbc1, SQL_ATTR_CURRENT_CATALOG,
+                                  DatabaseName, strlen(DatabaseName)));
+
+  /* The driver crashes here on getting connected */
+  ok_con(hdbc1, get_connection(&hdbc1, NULL, NULL, NULL, NULL, NULL));
+
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -1157,6 +1184,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug44971)
   ADD_TEST(t_bug48603)
   ADD_TEST(t_bug45378)
+  ADD_TEST(t_bug63844)
 END_TESTS
 
 

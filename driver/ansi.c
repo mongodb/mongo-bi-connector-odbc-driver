@@ -563,7 +563,13 @@ SQLGetConnectAttrImpl(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
     SQLINTEGER len= SQL_NTS;
     uint errors;
 
-    if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
+    /* 
+      When SQLGetConnectAttr is called before connecting
+      dbc->ansi_charset_info and dbc->cxn_charset_info will be NULL,
+      so we can just copy the char_value as is.
+    */
+    if (dbc->ansi_charset_info && dbc->cxn_charset_info &&
+        dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
     {
       char_value= sqlchar_as_sqlchar(dbc->cxn_charset_info,
                                      dbc->ansi_charset_info,
