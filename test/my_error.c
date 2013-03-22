@@ -589,7 +589,7 @@ DECLARE_TEST(t_passwordexpire)
   ok_env(henv, SQLAllocConnect(henv, &hdbc1));
 
   /* Expecting error without OPT_CAN_HANDLE_EXPIRED_PASSWORDS */
-  expect_dbc(hdbc1, get_connection(&hdbc1, NULL, "t_pwd_expire", "foo", NULL),
+  expect_dbc(hdbc1, get_connection(&hdbc1, NULL, "t_pwd_expire", "foo", NULL, NULL),
               SQL_ERROR);
 
   {
@@ -610,7 +610,7 @@ DECLARE_TEST(t_passwordexpire)
   }
 
   /* Expecting error as password has not been reset */
-  ok_con(hdbc1, get_connection(&hdbc1, NULL, "t_pwd_expire", "foo",
+  ok_con(hdbc1, get_connection(&hdbc1, NULL, "t_pwd_expire", "foo", NULL,
                                 "CAN_HANDLE_EXP_PWD=1"));
 
   /*strcat((char *)conn_in, ";INITSTMT={set password= password('bar')}");*/
@@ -626,7 +626,8 @@ DECLARE_TEST(t_passwordexpire)
   ok_con(hdbc1, SQLDisconnect(hdbc1));
 
   /* Checking we can get connection with new credentials */
-  ok_con(hdbc1, get_connection(&hdbc1, mydsn, "t_pwd_expire", "bar", NULL));
+  ok_con(hdbc1, get_connection(&hdbc1, mydsn, "t_pwd_expire", "bar", NULL,
+                               NULL));
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
 
   /* Also verifying that we got normal connection */
