@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -130,6 +130,10 @@ extern "C"
 /* For compatibility with old mysql clients - defining error */
 #ifndef ER_MUST_CHANGE_PASSWORD_LOGIN
 # define ER_MUST_CHANGE_PASSWORD_LOGIN 1820
+#endif
+
+#ifndef CR_AUTH_PLUGIN_CANNOT_LOAD_ERROR
+# define CR_AUTH_PLUGIN_CANNOT_LOAD_ERROR 2059
 #endif
 
 /* Connection flags to validate after the connection*/

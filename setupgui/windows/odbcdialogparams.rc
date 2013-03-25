@@ -145,6 +145,8 @@ BEGIN
 // Second Column
     CONTROL         "Can Handle Expired Password",IDC_CHECK_can_handle_exp_pwd
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,12,113,10
+    CONTROL         "Enable Cleartext Authentication",IDC_CHECK_enable_cleartext_plugin
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,27,113,10
 
 END
 
