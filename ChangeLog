@@ -10,7 +10,9 @@
     zeros (Bug# 16294197/65418)
   * Crash in SQLSetConnectAttr(SQL_ATTR_CURRENT_CATALOG) (Bug# 16526604/63844)
   * Added CLEARTEXT authentication connection option ENABLE_CLEARTEXT_PLUGIN.
-   (Bug#16445091)
+    (Bug#16445091)
+  * Binding string to decimal parameter always uses system locale setting
+    (Bug# 11766369/59469)
 
 ----
 
