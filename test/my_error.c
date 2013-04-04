@@ -589,7 +589,8 @@ DECLARE_TEST(t_bug49466)
 
 DECLARE_TEST(t_passwordexpire)
 {
-  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+  SQLHDBC hdbc1;
+  SQLHSTMT hstmt1;
 
   if (!mysql_min_version(hdbc, "5.6.6", 5))
   {
@@ -618,10 +619,10 @@ DECLARE_TEST(t_passwordexpire)
                   SQL_MAX_MESSAGE_LENGTH - 1, &err_len);
 
     /* ER_MUST_CHANGE_PASSWORD = 1820, ER_MUST_CHANGE_PASSWORD_LOGIN = 1862 */
-    if (strncmp(sql_state, "08004", 5) != 0 || err_code != 1820)
+    if (strncmp(sql_state, "08004", 5) != 0 || !(err_code == 1820 || err_code == 1862))
     {
       printMessage("%s %d %s", sql_state, err_code, err_msg);
-      return FAIL;
+      is(FALSE);
     }
   }
 
@@ -649,7 +650,9 @@ DECLARE_TEST(t_passwordexpire)
   /* Also verifying that we got normal connection */
   ok_sql(hstmt1, "select 1");
 
-  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_password_expire");
   ok_sql(hstmt, "DROP USER t_pwd_expire");
@@ -663,13 +666,10 @@ DECLARE_TEST(t_passwordexpire)
 DECLARE_TEST(t_cleartext_password)
 {
   SQLHDBC hdbc1;
-  SQLHSTMT hstmt1;
-  SQLRETURN rc;
   SQLCHAR sql_state[6];
   SQLINTEGER  err_code= 0;                              
   SQLCHAR     err_msg[SQL_MAX_MESSAGE_LENGTH]= {0};
   SQLSMALLINT err_len= 0;
-  SQLCHAR server_version[MYSQL_NAME_LEN+1];
   unsigned int major1= 0, minor1= 0, build1= 0;
 
   if (!mysql_min_version(hdbc, "5.5.16", 6) )
