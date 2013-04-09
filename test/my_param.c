@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -1319,6 +1319,73 @@ DECLARE_TEST(t_longtextoutparam)
 }
 
 
+/* 
+  Bug# 16613308/53891 ODBC driver not parsing comments correctly
+  TODO: fix for NO_SSPS=1
+ */
+DECLARE_TEST(t_bug53891)
+{
+  int c1= 2;
+  
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+
+  /* Connect with SSPS enabled */
+  alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL, NULL, NULL, 
+                               NULL, "NO_SSPS=0");
+  /* Try a simple query without parameters */
+  ok_stmt(hstmt1, SQLPrepare(hstmt1, 
+                             "/* a question mark ? must be ignored */"\
+                             " SELECT 1", SQL_NTS));
+
+  ok_stmt(hstmt1, SQLExecute(hstmt1));
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  is_num(my_fetch_int(hstmt1, 1), 1);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  /* Try a query with parameters */
+  ok_stmt(hstmt1, SQLPrepare(hstmt1, 
+                             "/* a question mark ? must be ignored */"\
+                             " SELECT ?", SQL_NTS));
+
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT, SQL_C_LONG,
+                                  SQL_INTEGER, 0, 0, &c1, 0, NULL));
+  ok_stmt(hstmt1, SQLExecute(hstmt1));
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  is_num(my_fetch_int(hstmt1, 1), c1);
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  /* Connect with SSPS disabled */
+  alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL, NULL, NULL, 
+                               NULL, "NO_SSPS=1");
+  /* Try a simple query without parameters */
+  ok_stmt(hstmt1, SQLPrepare(hstmt1, 
+                             "/* a question mark ? must be ignored */"\
+                             " SELECT 1", SQL_NTS));
+
+  ok_stmt(hstmt1, SQLExecute(hstmt1));
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  is_num(my_fetch_int(hstmt1, 1), 1);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  /* Try a query with parameters */
+  ok_stmt(hstmt1, SQLPrepare(hstmt1, 
+                             "/* a question mark ? must be ignored */"\
+                             " SELECT ?", SQL_NTS));
+
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT, SQL_C_LONG,
+                                  SQL_INTEGER, 0, 0, &c1, 0, NULL));
+  ok_stmt(hstmt1, SQLExecute(hstmt1));
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  is_num(my_fetch_int(hstmt1, 1), c1);
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_init_table)
   ADD_TEST(my_param_insert)
@@ -1340,6 +1407,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug14560916)
   ADD_TEST(t_bug14586094)
   ADD_TEST(t_longtextoutparam)
+  ADD_TEST(t_bug53891)
 END_TESTS
 
 
