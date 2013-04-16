@@ -71,10 +71,10 @@ DECLARE_TEST(t_bug66548)
     Trying to remove the DSN if it is left from the previous run, 
     no need to check the result
   */
-  SQLConfigDataSource(NULL, ODBC_REMOVE_SYS_DSN, drv, "DSN=bug66548dsn\0\0");
+  SQLConfigDataSource(NULL, ODBC_REMOVE_DSN, drv, "DSN=bug66548dsn\0\0");
 
   /* Create the DSN */
-  ok_install(SQLConfigDataSource(NULL, ODBC_ADD_SYS_DSN, drv, attrs));
+  ok_install(SQLConfigDataSource(NULL, ODBC_ADD_DSN, drv, attrs));
 
   ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
 
@@ -85,7 +85,7 @@ DECLARE_TEST(t_bug66548)
   ok_con(hdbc1, SQLDisconnect(hdbc1));
   ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
 
-  ok_install(SQLConfigDataSource(NULL, ODBC_REMOVE_SYS_DSN, drv, "DSN=bug66548dsn\0\0"));
+  ok_install(SQLConfigDataSource(NULL, ODBC_REMOVE_DSN, drv, "DSN=bug66548dsn\0\0"));
 #endif
 
   return OK;
@@ -98,4 +98,3 @@ END_TESTS
 
 
 RUN_TESTS
-
