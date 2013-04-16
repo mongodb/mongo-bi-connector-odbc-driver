@@ -1,7 +1,7 @@
 5.2.5
 
   Functionality added or changed:
-	* MSI package installs both ANSI and Unicode drivers. (WL#6793)
+  * MSI package installs both ANSI and Unicode drivers. (WL#6793)
 
   Bugs fixed:
   * query_print will cause core dump in 32-bit application 
@@ -14,6 +14,8 @@
   * Added CLEARTEXT authentication connection option ENABLE_CLEARTEXT_PLUGIN.
    (Bug#16445091)
   * Crash in SQLSetConnectAttr(SQL_ATTR_CURRENT_CATALOG) (Bug# 16526604/63844)
+  * Driver use the char ';' as separator in attributes string instead 
+    of the '\0' (Bug# 15940689/66548)
 
 ----
 

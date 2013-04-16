@@ -53,6 +53,7 @@
 
 #include <sql.h>
 #include <sqlext.h>
+#include <odbcinst.h>
 
 /* for clock() */
 #include <time.h>
@@ -478,6 +479,21 @@ do { \
 
 
 /**
+  Verify that the results of an ODBC function call on an environment handle
+  was SQL_SUCCESS or SQL_SUCCESS_WITH_INFO.
+
+  @param call    The function call
+*/
+#define ok_install(call) \
+do { \
+  BOOL rc= (call); \
+  print_diag_installer(rc, #call, __FILE__, __LINE__); \
+  if (!rc) \
+    return FAIL; \
+} while (0)
+
+
+/**
   Verify that a Boolean expression is true.
   It's recommended to use is_num, is_str, etc macros instead of "is(a==b)",
   since those will show values being compared, in a log.
@@ -576,6 +592,8 @@ int check_sqlstate_ex(SQLHANDLE hnd, SQLSMALLINT hndtype, char *sqlstate)
 
 
 /**
+  Print error and diagnostic information for ODBC API functions that did not
+  finish with SQL_SUCCESS(_WITH_INFO) result
 */
 static void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
 		       const char *text, const char *file, int line)
@@ -599,6 +617,32 @@ static void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
              sqlstate, length, message, file, line);
     else
       printf("# Did not get expected diagnostics from SQLGetDiagRec() = %d"
+             " in file %s on line %d\n", drc, file, line);
+  }
+}
+
+
+/**
+  Print error and diagnostic information for ODBC INSTALLER API functions 
+  that did not return TRUE (1)
+*/
+static void print_diag_installer(BOOL is_success, const char *text, 
+                                 const char *file, int line)
+{
+  if (!is_success)
+  {
+    SQLCHAR     message[SQL_MAX_MESSAGE_LENGTH];
+    SQLINTEGER  error_code;
+    SQLSMALLINT length;
+    SQLRETURN   drc;
+
+    drc= SQLInstallerError(1, &error_code, message, SQL_MAX_MESSAGE_LENGTH - 1, &length);
+
+    if (SQL_SUCCEEDED(drc))
+      printf("# [%s] %s in %s on line %d\n",
+             text, message, file, line);
+    else
+      printf("# Did not get expected diagnostics from SQLInstallerError() = %d"
              " in file %s on line %d\n", drc, file, line);
   }
 }
