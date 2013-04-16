@@ -1,3 +1,12 @@
+5.2.6
+
+  Bugs fixed:
+  * With utf8 byte string for mysql server version < 5.5.3, insert fails
+    with error message "Server does not support 4-byte encoded UTF8
+    characters." (Bug# 14838690)
+
+----
+
 5.2.5
 
   Functionality added or changed:
@@ -16,9 +25,6 @@
   * Crash in SQLSetConnectAttr(SQL_ATTR_CURRENT_CATALOG) (Bug# 16526604/63844)
   * Driver use the char ';' as separator in attributes string instead 
     of the '\0' (Bug# 15940689/66548)
-  * With utf8 byte string for mysql server version < 5.5.3, insert fails 
-    with error message "Server does not support 4-byte encoded UTF8 
-    characters." (Bug# 14838690)
 
 ----
 
