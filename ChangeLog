@@ -6,6 +6,8 @@
     characters." (Bug# 14838690)
   * Driver use the char ';' as separator in attributes string instead 
     of the '\0' (Bug# 15940689/66548)
+  * DSN connection parameters override those specified in the connection 
+    string (Bug# 11760574/52996)
 
 ----
 
