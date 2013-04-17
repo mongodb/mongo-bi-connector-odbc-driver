@@ -1039,6 +1039,99 @@ DECLARE_TEST(t_bug63844)
 }
 
 
+/*
+  Bug#52996 - DSN connection parameters override those specified in the 
+  connection string
+*/
+DECLARE_TEST(t_bug52996)
+{
+  int res= OK;
+
+  /* TODO: remove #ifdef _WIN32 when Linux and MacOS setup is released */
+#ifdef _WIN32
+  int i, len;
+  SQLCHAR attrs[8192];
+  SQLCHAR drv[128];
+  SQLINTEGER row_count= 0;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS bug52996");
+  ok_sql(hstmt, "CREATE TABLE bug52996 (id int primary key, c1 int)");
+  ok_sql(hstmt, "INSERT INTO bug52996 (id, c1) VALUES "\
+                 "(1,1),(2,2),(3,3)");
+
+  /* 
+    Use ';' as separator because sprintf doesn't work after '\0'
+    The last attribute in the list must end with ';'
+  */
+
+  sprintf((char*)attrs, "DSN=bug52996dsn;SERVER=%s;USER=%s;PASSWORD=%s;"
+                          "DATABASE=%s;FOUND_ROWS=1;",
+                          myserver, myuid, mypwd, mydb);
+
+  len= strlen(attrs);
+  
+  /* replacing ';' by '\0' */
+  for (i= 0; i < len; ++i)
+  {
+    if (attrs[i] == ';')
+      attrs[i]= '\0';
+  }
+
+  /* Adding the extra string termination to get \0\0 */
+  attrs[i]= '\0';
+
+  if (mydriver[0] == '{')
+  {
+    /* We need to remove {} in the driver name or it will not register */
+    len= strlen(mydriver);
+    memcpy(drv, mydriver+1, sizeof(SQLCHAR)*(len-2));
+    drv[len-2]= '\0';
+  }
+  else
+  {
+    memcpy(drv, mydriver, sizeof(SQLCHAR)*len);
+    drv[len]= '\0';
+  }
+
+  /* 
+    Trying to remove the DSN if it is left from the previous run, 
+    no need to check the result
+  */
+  SQLConfigDataSource(NULL, ODBC_REMOVE_DSN, drv, "DSN=bug52996dsn\0\0");
+
+  /* Create the DSN */
+  ok_install(SQLConfigDataSource(NULL, ODBC_ADD_DSN, drv, attrs));
+
+  /* Connect using the new DSN and override FOUND_ROWS option in DSN */
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, 
+                               "bug52996dsn",
+                               NULL, NULL, NULL, "FOUND_ROWS=0"));
+
+  /* Check the affected tows */
+  ok_sql(hstmt1, "UPDATE bug52996 SET c1=3 WHERE id < 4 ");
+  ok_stmt(hstmt1, SQLRowCount(hstmt1, &row_count));
+
+  if(row_count != 2)
+  {
+    /* We don't want to return immediately before clean up DSN and table */
+    res= FAIL;
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  ok_sql(hstmt, "DROP TABLE bug52996");
+
+  ok_install(SQLConfigDataSource(NULL, ODBC_REMOVE_DSN, drv, "DSN=bug52996dsn\0\0"));
+#endif
+
+  return res;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
@@ -1068,6 +1161,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug48603)
   ADD_TEST(t_bug45378)
   ADD_TEST(t_bug63844)
+  ADD_TEST(t_bug52996)
 END_TESTS
 
 
