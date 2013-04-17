@@ -1,4 +1,4 @@
-# Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -40,7 +40,7 @@ ENDIF(NOT WIN32)
 
 FOREACH(T my_basics my_blob my_bulk my_catalog1 my_catalog2 my_curext my_cursor
 		my_datetime my_desc my_dyn_cursor my_error my_info my_keys my_param
-		my_prepare my_relative my_result1 my_result2 my_scroll my_tran
+		my_prepare my_relative my_result1 my_result2 my_scroll my_setup my_tran
 		my_types my_unicode my_unixodbc my_use_result my_bug13766)
 	ADD_EXECUTABLE(${T} ${T}.c)
 

@@ -13,6 +13,8 @@
     (Bug#16445091)
   * Binding string to decimal parameter always uses system locale setting
     (Bug# 11766369/59469)
+  * Driver use the char ';' as separator in attributes string instead 
+    of the '\0' (Bug# 15940689/66548)
 
 ----
 

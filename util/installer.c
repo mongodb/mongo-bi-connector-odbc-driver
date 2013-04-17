@@ -1014,7 +1014,9 @@ int ds_from_kvpair(DataSource *ds, const SQLWCHAR *attrs, SQLWCHAR delim)
 
     attrs= end;
     /* If delim is NULL then double-NULL is the end of key-value pairs list */
-    while ((delim && *attrs == delim) || *attrs == ' ')
+    while ((delim && *attrs == delim) ||
+           (!delim && !*attrs && *(attrs+1)) ||
+           *attrs == ' ')
       ++attrs;
   }
 
