@@ -520,7 +520,16 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
    This also allows us to get pszDRIVER (if not already given).
   */
   if (ds->name)
-    ds_lookup(ds);
+  {
+     ds_lookup(ds);
+    
+    /* 
+      If DSN is used:
+      1 - we want the connection string options to override DSN options
+      2 - no need to check for parsing erros as it was done before
+    */
+    ds_from_kvpair(ds, szConnStrIn, (SQLWCHAR)';');
+  }
 #endif
 
   /* If FLAG_NO_PROMPT is not set, force prompting off. */
