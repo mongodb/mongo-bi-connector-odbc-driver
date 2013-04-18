@@ -540,6 +540,7 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
 
    This also allows us to get pszDRIVER (if not already given).
   */
+  if (ds->name)
   {
      ds_lookup(ds);
     
