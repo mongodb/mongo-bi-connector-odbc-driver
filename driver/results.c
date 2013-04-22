@@ -1222,10 +1222,17 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
 
   CLEAR_STMT_ERROR( pStmt );
 
-  /* SQLExecute or SQLExecDirect need to be called first */
+  /*
+    http://msdn.microsoft.com/en-us/library/ms714673%28v=vs.85%29.aspx
+
+    For some drivers, output parameters and return values are not available
+    until all result sets and row counts have been processed. For such 
+    drivers, output parameters and return values become available when 
+    SQLMoreResults returns SQL_NO_DATA.
+  */
   if ( pStmt->state != ST_EXECUTED )
   {
-    nReturn = set_stmt_error( pStmt, "HY010", NULL, 0 );
+    nReturn = SQL_NO_DATA;
     goto exitSQLMoreResults;
   }
 

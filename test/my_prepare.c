@@ -1238,6 +1238,20 @@ DECLARE_TEST(t_bug68243)
 }
 
 
+/**
+  Bug #67920: Non-compliant behavior of SQLMoreResults
+*/
+DECLARE_TEST(t_bug67920)
+{
+  ok_stmt(hstmt, SQLPrepare(hstmt, "SELECT 1", SQL_NTS));
+  
+  expect_stmt(hstmt, SQLMoreResults(hstmt), SQL_NO_DATA);
+
+  SQLFreeStmt(hstmt, SQL_CLOSE);
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_prep_basic)
   ADD_TEST(t_prep_buffer_length)
@@ -1256,6 +1270,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug67340)
   ADD_TEST(t_bug67702)
   ADD_TEST(t_bug68243)
+  ADD_TEST(t_bug67920)
 END_TESTS
 
 
