@@ -273,10 +273,19 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
                           ds_get_utf8attr(ds->socket,   &ds->socket8),
                           flags))
   {
+    unsigned int native_error= mysql_errno(mysql);
+
+    /* Before 5.6.11 error returned by server was ER_MUST_CHANGE_PASSWORD(1820).
+       In 5.6.11 it changed to ER_MUST_CHANGE_PASSWORD_LOGIN(1862)
+       We must to change error for old servers in order to set correct sqlstate */
+    if (native_error == 1820 && ER_MUST_CHANGE_PASSWORD_LOGIN != 1820)
+    {
+      native_error= ER_MUST_CHANGE_PASSWORD_LOGIN;
+    }
 
 #if MYSQL_VERSION_ID < 50610
     /* In that special case when the driver was linked against old version of libmysql*/
-    if (mysql_errno(mysql) == ER_MUST_CHANGE_PASSWORD_LOGIN
+    if (native_error == ER_MUST_CHANGE_PASSWORD_LOGIN
       && ds->can_handle_exp_pwd)
     {
       /* The password has expired, application said it knows how to deal with
@@ -288,8 +297,9 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
         "this functionlaity", 0);
     }
 #endif
-    set_dbc_error(dbc, "HY000", mysql_error(mysql), mysql_errno(mysql));
-    translate_error(dbc->error.sqlstate, MYERR_S1000, mysql_errno(mysql));
+    set_dbc_error(dbc, "HY000", mysql_error(mysql), native_error);
+
+    translate_error(dbc->error.sqlstate, MYERR_S1000, native_error);
 
     return SQL_ERROR;
   }
