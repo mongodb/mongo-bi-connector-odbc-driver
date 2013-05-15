@@ -98,11 +98,11 @@ int main( int argc, char *argv[] )
     int i;
     for (i = 1; i < argc; i++)
     {
-      if (strncmp(argv[1],"lib:",4) == 0)
+      if (strncmp(argv[i],"lib:",4) == 0)
       {
         hModule = dltest_dlopen(argv[i]+4);     /* Open a new module */
       }
-      else if (strncmp(argv[1],"sym:",4) == 0)
+      else if (strncmp(argv[i],"sym:",4) == 0)
       {
         dltest_dlsym(hModule,argv[i]+4);
       }
