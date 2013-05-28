@@ -434,9 +434,15 @@ MySQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attrib, SQLCHAR **char_attr,
       return set_handle_error(SQL_HANDLE_DBC, hdbc, MYERR_S1000,
                               "Unable to get current catalog", 0);
     }
-    else
+    else if (is_connected(dbc))
     {
       *char_attr= (SQLCHAR *)(dbc->database ? dbc->database : "null");
+    }
+    else
+    {
+      return set_handle_error(SQL_HANDLE_DBC, hdbc, MYERR_S1C00,
+                              "Getting catalog name is not supported "\
+                              "before connection is established", 0);
     }
     break;
 

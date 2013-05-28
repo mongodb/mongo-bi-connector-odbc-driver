@@ -9,6 +9,9 @@
   * DSN connection parameters override those specified in the connection 
     string (Bug# 11760574/52996)
   * Non-compliant behavior of SQLMoreResults (Bug# 16101282/67920)
+  * MSSQL linked server connected to MySQL 5.1.9 driver causes hard crash
+    (Bug# 16604346/63386)
+
 
 ----
 
