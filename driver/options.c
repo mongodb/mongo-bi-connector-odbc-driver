@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -434,9 +434,15 @@ MySQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attrib, SQLCHAR **char_attr,
       return set_handle_error(SQL_HANDLE_DBC, hdbc, MYERR_S1000,
                               "Unable to get current catalog", 0);
     }
-    else
+    else if (is_connected(dbc))
     {
       *char_attr= (SQLCHAR *)(dbc->database ? dbc->database : "null");
+    }
+    else
+    {
+      return set_handle_error(SQL_HANDLE_DBC, hdbc, MYERR_S1C00,
+                              "Getting catalog name is not supported "\
+                              "before connection is established", 0);
     }
     break;
 
