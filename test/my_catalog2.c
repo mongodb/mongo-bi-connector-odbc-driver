@@ -1001,6 +1001,7 @@ DECLARE_TEST(t_sqlcolumns_after_select)
   return OK;
 }
 
+
 /* Bug #14555713 USING ADO, ODBC DRIVER RETURNS WRONG TYPE AND VALUE FOR BIT(>1)
                  FIELD.
    Parameters datatypes returned for SP bit(n) parameters are inconsistent with
@@ -1034,6 +1035,34 @@ DECLARE_TEST(t_bug14555713)
   return OK;
 }
 
+
+/* 
+  Bug #69448 MySQL ODBC drivers incorrectly quotes TableName when 
+  calling SQLPrimaryKeys
+*/
+DECLARE_TEST(t_bug69448)
+{
+ 
+  SQLCHAR buff[255];
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS `table``69448`");
+
+  ok_sql(hstmt, "CREATE TABLE `table``69448`(id int primary key)");
+
+  ok_stmt(hstmt, SQLPrimaryKeys(hstmt, NULL, SQL_NTS, NULL, SQL_NTS, 
+                               "table`69448", SQL_NTS));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  /* check the table name and PK name */
+  is_str(my_fetch_str(hstmt, buff, 3), "table`69448", 11);
+  is_str(my_fetch_str(hstmt, buff, 4), "id", 2);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS `table``69448`");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug37621)
   ADD_TEST(t_bug34272)
@@ -1052,6 +1081,7 @@ BEGIN_TESTS
   ADD_TODO(t_bug14085211_part2)
   ADD_TEST(t_sqlcolumns_after_select)
   ADD_TEST(t_bug14555713)
+  ADD_TODO(t_bug69448)
 END_TESTS
 
 myoption &= ~(1 << 30);
