@@ -11,6 +11,8 @@
   * Non-compliant behavior of SQLMoreResults (Bug# 16101282/67920)
   * MSSQL linked server connected to MySQL 5.1.9 driver causes hard crash
     (Bug# 16604346/63386)
+  * MySQL ODBC drivers incorrectly returns TIME columns, where value > '99:59:59'
+    (Bug# 16176981/67793)
 
 
 ----

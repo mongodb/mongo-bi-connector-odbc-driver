@@ -1136,6 +1136,48 @@ DECLARE_TEST(t_bug29402)
 }
 
 
+/*
+  Bug #67793 - MySQL ODBC drivers incorrectly returns TIME columns, where 
+  value > '99:59:59'
+*/
+DECLARE_TEST(t_bug67793)
+{
+  SQL_TIME_STRUCT sts;
+  SQLLEN outlen= 0;
+
+  /* make sure we have reset everything to zero */
+  sts.hour= 0;
+  sts.minute= 0;
+  sts.second= 0;
+
+  /* check situations with sec and min overflow */
+  ok_sql(hstmt, "SELECT '123456789:45:67', '512:512:512', '20::75:23:10'");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_TIME, &sts, sizeof(sts), &outlen));
+  is_num(outlen, sizeof(sts));
+  /* hour cannot go out of unsigned smallint range */
+  is_num(sts.hour, 65535);
+  is_num(sts.minute, 46);
+  is_num(sts.second, 7);
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_TIME, &sts, sizeof(sts), &outlen));
+  is_num(outlen, sizeof(sts));
+  is_num(sts.hour, 520);
+  is_num(sts.minute, 40);
+  is_num(sts.second, 32);
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 3, SQL_TIME, &sts, sizeof(sts), &outlen));
+  is_num(outlen, sizeof(sts));
+  is_num(sts.hour, 20);
+  is_num(sts.minute, 1);
+  is_num(sts.second, 15);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  return OK;  
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_longlong1)
   ADD_TEST(t_decimal)
@@ -1159,6 +1201,7 @@ BEGIN_TESTS
   ADD_TEST(t_sqlnum_to_str)
   ADD_TEST(t_bug31220)
   ADD_TEST(t_bug29402)
+  ADD_TEST(t_bug67793)
 END_TESTS
 
 
