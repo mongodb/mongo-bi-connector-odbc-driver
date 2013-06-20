@@ -59,12 +59,18 @@ DECLARE_TEST(t_bug66548)
   /* Adding the extra string termination to get \0\0 */
   attrs[i]= '\0';
 
+  len= strlen(mydriver);
+
   if (mydriver[0] == '{')
   {
     /* We need to remove {} in the driver name or it will not register */
-    len= strlen(mydriver);
     memcpy(drv, mydriver+1, sizeof(SQLCHAR)*(len-2));
     drv[len-2]= '\0';
+  }
+  else
+  {
+    memcpy(drv, mydriver, sizeof(SQLCHAR)*len);
+	drv[len]= '\0';
   }
 
   /* 
