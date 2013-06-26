@@ -13,6 +13,8 @@
     (Bug# 16604346/63386)
   * MySQL ODBC drivers incorrectly returns TIME columns, where value > '99:59:59'
     (Bug# 16176981/67793)
+  * Conversion of Time field data to Timestamp type may produce incorrect result
+    (Bug# 17016839/69545)
 
 
 ----

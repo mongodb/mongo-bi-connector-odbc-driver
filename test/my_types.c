@@ -1178,6 +1178,45 @@ DECLARE_TEST(t_bug67793)
 }
 
 
+/*
+  Bug # - C/ODBC driver may incorrectly return timestamp from TIME column
+*/
+DECLARE_TEST(t_bug69545)
+{
+  SQL_TIMESTAMP_STRUCT ts;
+  SQLLEN outlen= 0;
+
+  /* make sure we have reset everything to zero */
+  memset(&ts, 0, sizeof(SQL_TIMESTAMP_STRUCT));
+
+  /* check situations with sec and min overflow */
+  ok_sql(hstmt, "SELECT CAST('24:45:07.0001' AS TIME(6))");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_TIMESTAMP, &ts, sizeof(ts), &outlen));
+  is_num(outlen, sizeof(ts));
+  /* hour cannot go out of unsigned smallint range */
+  is_num(ts.hour, 0);
+  is_num(ts.minute, 45);
+  is_num(ts.second, 7);
+  /* Fractional seconds must be 0 no matter what is actually in the field */
+  is_num(ts.fraction, 0);
+
+  {
+    /* We need tomorrow date */
+    time_t t= time(NULL) + 24*60*60;
+    struct tm *cur_tm= localtime(&t);
+
+    is_num(ts.year,  1900 + cur_tm->tm_year);
+    is_num(ts.month, 1    + cur_tm->tm_mon);
+    is_num(ts.day,   cur_tm->tm_mday);
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  return OK;  
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_longlong1)
   ADD_TEST(t_decimal)
@@ -1202,6 +1241,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug31220)
   ADD_TEST(t_bug29402)
   ADD_TEST(t_bug67793)
+  ADD_TEST(t_bug69545)
 END_TESTS
 
 

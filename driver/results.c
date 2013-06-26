@@ -573,6 +573,13 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
             (SQL_TIMESTAMP_STRUCT *)rgbValue;
           time_t sec_time= time(NULL);
           struct tm cur_tm;
+
+          if (ts.hour > 23)
+          {
+            sec_time+= (ts.hour/24)*24*60*60;
+            ts.hour= ts.hour%24;
+          }
+
           localtime_r(&sec_time, &cur_tm);
 
           /* I wornder if that hasn't to be server current date*/
@@ -582,7 +589,8 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
           timestamp_info->hour=   ts.hour;
           timestamp_info->minute= ts.minute;
           timestamp_info->second= ts.second;
-          get_fractional_part(tmp, SQL_NTS, TRUE, &timestamp_info->fraction);
+          /* Fractional seconds must be 0 no matter what is actually in the field */
+          timestamp_info->fraction= 0;
           *pcbValue= sizeof(SQL_TIMESTAMP_STRUCT);
         }
       }
@@ -1359,7 +1367,7 @@ void fill_ird_data_lengths(DESC *ird, ulong *lengths, uint fields)
 
   /* This will be NULL for catalog functions with "fake" results */
   if (!lengths)
-  {	
+  {
     return;
   }
 
