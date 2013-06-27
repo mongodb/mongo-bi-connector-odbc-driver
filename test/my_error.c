@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -27,25 +27,15 @@
 
 DECLARE_TEST(t_odbc3_error)
 {
-  SQLHENV henv1;
-  SQLHDBC hdbc1;
-  SQLHSTMT hstmt1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   SQLINTEGER ov_version;
 
-  ok_env(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
-  ok_env(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
-                              (SQLPOINTER)SQL_OV_ODBC3, 0));
-
-  ok_env(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &hdbc1));
+  is(OK == alloc_basic_handles(&henv1, &hdbc1, &hstmt1));
 
   ok_env(henv1, SQLGetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
                               (SQLPOINTER)&ov_version, 0, 0));
   is_num(ov_version, SQL_OV_ODBC3);
 
-  ok_con(hdbc1, SQLConnect(hdbc1, mydsn, SQL_NTS, myuid, SQL_NTS,
-                           mypwd, SQL_NTS));
-
-  ok_con(hdbc1, SQLAllocHandle(SQL_HANDLE_STMT, hdbc1, &hstmt1));
 
   expect_sql(hstmt1, "SELECT * FROM non_existing_table", SQL_ERROR);
   if (check_sqlstate(hstmt1, "42S02") != OK)
@@ -72,9 +62,7 @@ DECLARE_TEST(t_odbc3_error)
 
   ok_con(hdbc1, SQLDisconnect(hdbc1));
 
-  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
-
-  ok_env(henv1, SQLFreeHandle(SQL_HANDLE_ENV, henv1));
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   return OK;
 }
@@ -82,9 +70,7 @@ DECLARE_TEST(t_odbc3_error)
 
 DECLARE_TEST(t_odbc2_error)
 {
-  SQLHENV henv1;
-  SQLHDBC hdbc1;
-  SQLHSTMT hstmt1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   SQLINTEGER ov_version;
 
   ok_env(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
@@ -127,9 +113,7 @@ DECLARE_TEST(t_odbc2_error)
 
   ok_con(hdbc1, SQLDisconnect(hdbc1));
 
-  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
-
-  ok_env(henv1, SQLFreeHandle(SQL_HANDLE_ENV, henv1));
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   return OK;
 }
@@ -542,9 +526,11 @@ DECLARE_TEST(t_bug14285620)
     SQLINTEGER native_error= 0;
     SQLSMALLINT text_len= 0;
     /* try with the NULL pointer for Message */
-    expect_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate, native_error, NULL, 0, &cblen), SQL_SUCCESS);
+    expect_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate,
+                                    &native_error, NULL, 0, &cblen), SQL_SUCCESS);
     /* try with the non-NULL pointer for Message */
-    expect_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate, native_error, message, 0, NULL), SQL_SUCCESS);
+    expect_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate,
+                                    &native_error, message, 0, NULL), SQL_SUCCESS);
   }
 
   SQLExecDirect(hstmt, "drop table bug14285620", SQL_NTS);
@@ -563,6 +549,181 @@ DECLARE_TEST(t_bug14285620)
   expect_stmt(hstmt, SQLColAttribute(hstmt,1, SQL_DESC_TYPE_NAME, szData, 0, NULL, NULL), SQL_SUCCESS_WITH_INFO);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  return OK;
+}
+
+/*
+  Bug49466: SQLMoreResults does not set statement errors correctly
+  Wrong error message returned from SQLMoreResults
+*/
+DECLARE_TEST(t_bug49466)
+{
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+  SQLCHAR message[SQL_MAX_MESSAGE_LENGTH + 1];
+  SQLCHAR sqlstate[SQL_SQLSTATE_SIZE + 1];
+  SQLINTEGER error;
+  SQLSMALLINT len;
+
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
+                                        NULL, NULL, NULL, 
+                                        "OPTION=67108864;NO_SSPS=1"));
+
+  ok_stmt(hstmt1, SQLExecDirect(hstmt1, "SELECT 100; CALL t_bug49466proc()", SQL_NTS));
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  is_num(my_fetch_int(hstmt1, 1), 100);
+
+  SQLMoreResults(hstmt1);
+
+  ok_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt1, 1, sqlstate, &error,
+                               message, sizeof(message), &len));
+  is_num(error, 1305);
+  is(strstr((char *)message, "t_bug49466proc does not exist"));
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  return OK;
+}
+
+
+DECLARE_TEST(t_passwordexpire)
+{
+  SQLHDBC hdbc1;
+  SQLHSTMT hstmt1;
+
+  if (!mysql_min_version(hdbc, "5.6.6", 5))
+  {
+    skip("The server does not support tested functionality(expired password)");
+  }
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_password_expire");
+  SQLExecDirect(hstmt, (SQLCHAR *)"DROP USER t_pwd_expire", SQL_NTS);
+
+  ok_sql(hstmt, "GRANT ALL ON *.* TO  t_pwd_expire IDENTIFIED BY 'foo'");
+  ok_sql(hstmt, "ALTER USER t_pwd_expire PASSWORD EXPIRE");
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+
+  /* Expecting error without OPT_CAN_HANDLE_EXPIRED_PASSWORDS */
+  expect_dbc(hdbc1, get_connection(&hdbc1, NULL, "t_pwd_expire", "foo", 
+             NULL, NULL), SQL_ERROR);
+
+  {
+    SQLCHAR sql_state[6];
+    SQLINTEGER  err_code= 0;
+    SQLCHAR     err_msg[SQL_MAX_MESSAGE_LENGTH]= {0};
+    SQLSMALLINT err_len= 0;
+
+    SQLGetDiagRec(SQL_HANDLE_DBC, hdbc1, 1, sql_state, &err_code, err_msg,
+                  SQL_MAX_MESSAGE_LENGTH - 1, &err_len);
+
+    /* ER_MUST_CHANGE_PASSWORD = 1820, ER_MUST_CHANGE_PASSWORD_LOGIN = 1862 */
+    if (strncmp(sql_state, "08004", 5) != 0 || !(err_code == 1820 || err_code == 1862))
+    {
+      printMessage("%s %d %s", sql_state, err_code, err_msg);
+      is(FALSE);
+    }
+  }
+
+  /* Expecting error as password has not been reset */
+  ok_con(hdbc1, get_connection(&hdbc1, NULL, "t_pwd_expire", "foo",
+                                NULL, "CAN_HANDLE_EXP_PWD=1"));
+
+  /*strcat((char *)conn_in, ";INITSTMT={set password= password('bar')}");*/
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  ok_sql(hstmt1, "SET PASSWORD= password('bar')");
+
+  /* Just to verify that we got normal connection */
+  ok_sql(hstmt1, "select 1");
+
+  ok_con(hdbc1, SQLFreeStmt(hstmt1, SQL_DROP));
+
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+
+  /* Checking we can get connection with new credentials */
+  ok_con(hdbc1, get_connection(&hdbc1, mydsn, "t_pwd_expire", "bar", NULL,
+                               NULL));
+  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+
+  /* Also verifying that we got normal connection */
+  ok_sql(hstmt1, "select 1");
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_password_expire");
+  ok_sql(hstmt, "DROP USER t_pwd_expire");
+
+  return OK;
+}
+
+/*
+  Bug#16445091: CLEARTEXT AUTHENTICATION NOT PRESENT IN ODBC
+*/
+DECLARE_TEST(t_cleartext_password)
+{
+  SQLHDBC hdbc1;
+  SQLCHAR sql_state[6];
+  SQLINTEGER  err_code= 0;                              
+  SQLCHAR     err_msg[SQL_MAX_MESSAGE_LENGTH]= {0};
+  SQLSMALLINT err_len= 0;
+  unsigned int major1= 0, minor1= 0, build1= 0;
+
+  if (!mysql_min_version(hdbc, "5.5.16", 6) )
+  {
+    skip("The server does not support tested functionality(Cleartext Auth)");
+  }
+
+  SQLExecDirect(hstmt, (SQLCHAR *)"DROP USER 't_ct_user'@'%'", SQL_NTS);
+
+  if (!SQL_SUCCEEDED(SQLExecDirect(hstmt, 
+            "GRANT ALL ON *.* TO "
+            "'t_ct_user'@'%' IDENTIFIED WITH "
+            "'authentication_pam'", SQL_NTS))) 
+  {
+    skip("The authentication_pam plugin not loaded");
+  }
+
+  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
+
+  /* 
+    Expecting error CR_AUTH_PLUGIN_CANNOT_LOAD_ERROR 
+    without option ENABLE_CLEARTEXT_PLUGIN
+  */
+  if(!SQL_SUCCEEDED(get_connection(&hdbc1, mydsn, "t_ct_user", "t_ct_pass",
+                        mydb, NULL)))
+  {
+    SQLGetDiagRec(SQL_HANDLE_DBC, hdbc1, 1, sql_state, &err_code, err_msg,
+                  SQL_MAX_MESSAGE_LENGTH - 1, &err_len);
+
+    printMessage("%s %d %s", sql_state, err_code, err_msg);
+    if ((strncmp(sql_state, "08004", 5) != 0 || err_code != 2059))
+    {                                                                               
+      return FAIL;
+    }
+  }  
+
+  /* 
+    Expecting error other then CR_AUTH_PLUGIN_CANNOT_LOAD_ERROR 
+    as option ENABLE_CLEARTEXT_PLUGIN is used
+  */
+  if(!SQL_SUCCEEDED(get_connection(&hdbc1, mydsn, "t_ct_user", "t_ct_pass",
+                        mydb, "ENABLE_CLEARTEXT_PLUGIN=1")))
+  {
+    SQLGetDiagRec(SQL_HANDLE_DBC, hdbc1, 1, sql_state, &err_code, err_msg,
+                  SQL_MAX_MESSAGE_LENGTH - 1, &err_len);
+    printMessage("%s %d %s", sql_state, err_code, err_msg);
+
+    if ((strncmp(sql_state, "08004", 5) == 0 && err_code == 2059))
+    {                                                                               
+      return FAIL;
+    }
+  }
+
+  ok_sql(hstmt, "DROP USER 't_ct_user'@'%'");
 
   return OK;
 }
@@ -588,6 +749,9 @@ BEGIN_TESTS
   ADD_TEST(t_bug27158)
   ADD_TEST(t_bug13542600)
   ADD_TEST(t_bug14285620)
+  ADD_TOFIX(t_bug49466)
+  ADD_TEST(t_passwordexpire)
+  ADD_TEST(t_cleartext_password)
 END_TESTS
 
 RUN_TESTS

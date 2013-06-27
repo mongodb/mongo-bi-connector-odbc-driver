@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -62,10 +62,10 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
     if ( check_if_server_is_alive( stmt->dbc ) )
     {
       set_stmt_error( stmt, "08S01" /* "HYT00" */,
-                      mysql_error( &stmt->dbc->mysql ),
-                      mysql_errno( &stmt->dbc->mysql ) );
-      translate_error(stmt->error.sqlstate,MYERR_08S01 /* S1000 */,
-                      mysql_errno( &stmt->dbc->mysql ) );
+                      mysql_error(&stmt->dbc->mysql),
+                      mysql_errno(&stmt->dbc->mysql));
+      translate_error(stmt->error.sqlstate, MYERR_08S01 /* S1000 */,
+                      mysql_errno(&stmt->dbc->mysql));
       goto exit;
     }
 
@@ -107,6 +107,17 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
       {
         native_error= mysql_stmt_execute(stmt->ssps);
       }
+      else
+      {
+        set_stmt_error(stmt, "HY000",
+                       mysql_stmt_error(stmt->ssps),
+                       mysql_stmt_errno(stmt->ssps));
+
+        /* For some errors - translating to more appropriate status */
+        translate_error(stmt->error.sqlstate, MYERR_S1000,
+                        mysql_stmt_errno(stmt->ssps));
+        goto exit;
+      }
       MYLOG_QUERY(stmt, "ssps has been executed");
     }
     else
@@ -123,10 +134,11 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
     if (native_error)
     {
       MYLOG_QUERY(stmt, mysql_error(&stmt->dbc->mysql));
-      set_stmt_error(stmt,"HY000",mysql_error(&stmt->dbc->mysql),
+      set_stmt_error(stmt, "HY000", mysql_error(&stmt->dbc->mysql),
                      mysql_errno(&stmt->dbc->mysql));
 
-      translate_error(stmt->error.sqlstate,MYERR_S1000,
+      /* For some errors - translating to more appropriate status */
+      translate_error(stmt->error.sqlstate, MYERR_S1000,
                       mysql_errno(&stmt->dbc->mysql));
       goto exit;
     }
@@ -486,7 +498,7 @@ SQLRETURN convert_c_type2str(STMT *stmt, SQLSMALLINT ctype, DESCREC *iprec,
 
 
         if (has_utf8_maxlen4 &&
-            !is_minimum_version(stmt->dbc->mysql.server_version, "5.5.3", 5))
+            !is_minimum_version(stmt->dbc->mysql.server_version, "5.5.3"))
         {
           return set_stmt_error(stmt, "HY000",
                                 "Server does not support 4-byte encoded "
@@ -605,8 +617,28 @@ SQLRETURN convert_c_type2str(STMT *stmt, SQLSMALLINT ctype, DESCREC *iprec,
 
         if (time->fraction)
         {
-          sprintf(buff + *length, ".%09d", time->fraction);
-          *length+= 10;
+          char *tmp_buf= buff + *length;
+          
+          /* Start cleaning from the end */
+          int tmp_pos= 9;
+
+          sprintf(tmp_buf, ".%09d", time->fraction);
+          
+          /*
+            ODBC specification defines nanoseconds granularity for
+            the fractional part of seconds. MySQL only supports 
+            microseconds for TIMESTAMP, TIME and DATETIME.
+
+            We are trying to remove the trailing zeros because this 
+            does not really modify the data, but often helps to substitute
+            9 digits with only 6.
+          */
+          while (tmp_pos && tmp_buf[tmp_pos] == '0')
+          {
+            tmp_buf[tmp_pos--]= 0;
+          }
+
+          *length+= tmp_pos + 1;
         }
 
         *res= buff;
@@ -753,6 +785,7 @@ SQLRETURN insert_param(STMT *stmt, uchar *place4param, DESC* apd,
 
     switch ( aprec->concise_type )
     {
+      
       case SQL_C_BINARY:
       case SQL_C_CHAR:
           convert= 1;
@@ -975,6 +1008,20 @@ SQLRETURN insert_param(STMT *stmt, uchar *place4param, DESC* apd,
 
           goto out;
 
+        case SQL_BIT:
+          {
+            if (ssps_used(stmt))
+            {
+              char bit_val= atoi(data)!= 0 ? 1 : 0;
+              /* Generic ODBC supports only BIT(1) */
+              bind_param(bind, &bit_val, 1, MYSQL_TYPE_TINY);
+            }
+            else if (!convert)
+            {
+              to= add_to_buffer(net, to, data, 1);
+            }
+            goto out;
+          }
         case SQL_FLOAT:
         case SQL_REAL:
         case SQL_DOUBLE:
@@ -983,17 +1030,29 @@ SQLRETURN insert_param(STMT *stmt, uchar *place4param, DESC* apd,
           {
             char *to= buff, *from= data;
             char *end= from+length;
+            char *local_thousands_sep= thousands_sep;
+            char *local_decimal_point= decimal_point;
+            uint local_thousands_sep_length= thousands_sep_length;
+            uint local_decimal_point_length= decimal_point_length;
+
+            if (!stmt->dbc->ds->dont_use_set_locale)
+            {
+              /* force use of . as decimal point */
+              local_thousands_sep= ",";
+              local_thousands_sep_length= 1;
+              local_decimal_point= ".";
+              local_decimal_point_length= 1;
+            }
+
             while ( *from && from < end )
             {
-              /* I wonder if following code really respects dont_use_set_locale
-                 and if it does, then how? */
-              if ( from[0] == thousands_sep[0] && is_prefix(from,thousands_sep) )
+              if ( from[0] == local_thousands_sep[0] && is_prefix(from,local_thousands_sep) )
               {
-                from+= thousands_sep_length;
+                from+= local_thousands_sep_length;
               }
-              else if ( from[0] == decimal_point[0] && is_prefix(from,decimal_point) )
+              else if ( from[0] == local_decimal_point[0] && is_prefix(from,local_decimal_point) )
               {
-                from+= decimal_point_length;
+                from+= local_decimal_point_length;
                 *to++='.';
               }
               else

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -1184,8 +1184,8 @@ DECLARE_TEST(t_bug28168)
   wstr= wcsstr(conn_in, L" pwd}") - 4;
   *wstr++= 'x';
 
-  expect_dbc(hdbc2, SQLDriverConnectW(hdbc2, NULL, W(conn_in), SQL_NTS, NULL,
-				      0, NULL, SQL_DRIVER_NOPROMPT), SQL_ERROR);
+  expect_dbc(hdbc2, SQLDriverConnectW(hdbc2, NULL, W(conn_in), SQL_NTS,
+                  (SQLWCHAR*)NULL, 0, NULL, SQL_DRIVER_NOPROMPT), SQL_ERROR);
 
   ok_con(hdbc2, SQLGetDiagRecW(SQL_HANDLE_DBC, hdbc2, 1,
                                sqlstate, &native_error, errmsgtxt,
@@ -1348,6 +1348,67 @@ DECLARE_TEST(t_bug14363601)
 }
 
 
+/*
+  Bug#14838690: ODBC 5.2.2 CONNECTOR BROKEN FOR ALL SQL SERVERS 
+  OLDER THAN 5.5.3
+  With utf8 byte string, Mysql server version < 5.5.3 failes with
+  error message "Server does not support 4-byte encoded UTF8 characters."
+*/
+DECLARE_TEST(t_bug14838690)
+{
+  int i;
+  SQLINTEGER col_id= 1234;
+  SQLWCHAR *col_vc= W(L"abcdefg\x30a1"), col_vc_res[30];
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS bug14838690");
+  ok_sql(hstmt, "CREATE TABLE bug14838690("
+                 "id INT, vc VARCHAR(32)"
+                 ")CHARSET=UTF8");
+
+  ok_stmt(hstmt, SQLPrepareW(hstmt, 
+		    W(L"INSERT INTO bug14838690 (id, vc) "
+                      L"VALUES (?, ?)"), SQL_NTS));
+
+  /* Bind 1st INT param */
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_LONG,
+                                  SQL_INTEGER, 0, 0, &col_id, 0, NULL));
+  
+  /* Bind 2nd VARCHAR param with utf8 byte string */
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_WCHAR,
+                                   SQL_WVARCHAR, 10, 0, col_vc, 
+                                  10*sizeof(SQLWCHAR), NULL));
+
+  ok_stmt(hstmt, SQLExecute(hstmt));
+
+  ok_stmt(hstmt, SQLExecDirectW(hstmt, W(L"SELECT * FROM bug14838690"), 
+                                 SQL_NTS));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_num(my_fetch_int(hstmt, 1), col_id);
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_WCHAR, col_vc_res,
+                             sizeof(col_vc_res), NULL));
+
+  /* we want to compare SQLWCHAR instead of wchar_t */
+  for (i= 0; i < 8; i++)
+  {
+    is(col_vc[i] == col_vc_res[i]);
+  }
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS bug14838690");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_DROP));
+  
+  /* OK if it has not crashed */
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlconnect)
 #ifdef MYODBC_UNICODEDRIVER
@@ -1381,6 +1442,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug34672)
   ADD_TEST(t_bug28168)
   ADD_TEST(t_bug14363601)
+  ADD_TEST(t_bug14838690)
 #endif
 END_TESTS
 

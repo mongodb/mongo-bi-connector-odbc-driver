@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most 
@@ -24,7 +24,7 @@
 
 ##############################################################################
 #
-#  Post Install file for MySQL Connector ODBC 5.2
+#  Post Install file for MySQL Connector ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@
 #
 ##############################################################################
 
@@ -95,11 +95,11 @@ fi
 # REGISTER THE DRIVER
 # ----------------------------------------------------------------------
 echo "Registering driver..."
-#$bindir/myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "Driver=$libdir/libmyodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.so;Setup=$libdir/libmyodbc3S.so;"
-$bindir/myodbc-installer -a -d -n "MySQL ODBC 5.1 Driver" -t "Driver=$libdir/libmyodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.so;"
+#$bindir/myodbc-installer -a -d -n "MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ Driver" -t "Driver=$libdir/libmyodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.so;Setup=$libdir/libmyodbc3S.so;"
+$bindir/myodbc-installer -a -d -n "MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ Driver" -t "Driver=$libdir/libmyodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.so;"
 
 # ----------------------------------------------------------------------
 # CREATE A SAMPLE DSN
 # ----------------------------------------------------------------------
 echo "Ensuring sample data source name (myodbc) exists..."
-$bindir/myodbc-installer -a -s -n myodbc -t "Driver=MySQL ODBC 5.2 Driver;SERVER=localhost;"
+$bindir/myodbc-installer -a -s -n myodbc -t "Driver=MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ Driver;SERVER=localhost;"

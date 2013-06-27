@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -23,6 +23,7 @@
 */
 
 #include "odbctap.h"
+#include "../VersionInfo.h"
 
 DECLARE_TEST(t_blob)
 {
@@ -769,6 +770,74 @@ DECLARE_TEST(t_bug10562)
 }
 
 
+/* 
+  Bug#11746572: TEXT FIELDS WITH BINARY COLLATIONS 
+  Test for text field with latin1_bin and latin1_swedish_ci collation
+  Output of text column should contain same input value and not hexadecimal
+  value of input.
+*/
+DECLARE_TEST(t_bug_11746572)
+{
+  SQLCHAR     szData[MAX_ROW_DATA_LEN+1];
+  SQLSMALLINT SqlType;
+  SQLCHAR     ColName[MAX_NAME_LEN];
+
+  ok_sql(hstmt, "DROP TABLE if exists bug_11746572");
+
+  /* 
+    create table 'bug_11746572' with blob column and text columns 
+    with collation latin1_bin and latin1_swedish_ci.  
+  */
+  ok_sql(hstmt,"CREATE TABLE bug_11746572( blob_field BLOB ,"
+    "  text_bin TEXT CHARACTER SET latin1 COLLATE latin1_bin,"
+    "  text_def TEXT CHARACTER SET latin1 COLLATE latin1_swedish_ci)");
+
+  ok_sql(hstmt, "insert into bug_11746572 "
+          " set blob_field= 'blob', text_bin= 'text', "
+          " text_def= 'text' ; ");
+
+  ok_sql(hstmt, "SELECT * from bug_11746572");
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  /* 
+    Verify inserted data is changed to hexadecimal value for blob field 
+    and remains unchanged for text field for both binary and non-binary 
+    collation.
+  */
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, szData, MAX_ROW_DATA_LEN,NULL));
+  is_str(szData, "626C6F62", 8);
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_CHAR, szData, MAX_ROW_DATA_LEN,NULL));
+  is_str(szData, "text", 4);
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 3, SQL_C_CHAR, szData, MAX_ROW_DATA_LEN,NULL));
+  is_str(szData, "text", 4);
+
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 1, ColName, MAX_NAME_LEN, 
+                        NULL, &SqlType, NULL, NULL, NULL));
+  is_num(SqlType, SQL_LONGVARBINARY);
+
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 2, ColName, MAX_NAME_LEN, 
+                        NULL, &SqlType, NULL, NULL, NULL));
+#ifdef MYODBC_UNICODEDRIVER
+  is_num(SqlType, SQL_WLONGVARCHAR);
+#else
+  is_num(SqlType, SQL_LONGVARCHAR);
+#endif
+
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 3, ColName, MAX_NAME_LEN, 
+                        NULL, &SqlType, NULL, NULL, NULL));
+  is_num(SqlType, SQL_LONGVARCHAR);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE bug_11746572");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_blob)
   ADD_TEST(t_1piecewrite2)
@@ -781,6 +850,7 @@ BEGIN_TESTS
   ADD_TEST(getdata_lenonly)
   ADD_TEST(t_bug9781)
   ADD_TEST(t_bug10562)
+  ADD_TEST(t_bug_11746572)
 END_TESTS
 
 

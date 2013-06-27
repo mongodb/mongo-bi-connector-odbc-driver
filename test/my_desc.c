@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -593,37 +593,12 @@ DECLARE_TEST(t_bug44576)
    causes error "Unknown database 'null'" */
 DECLARE_TEST(t_desc_curcatalog)
 {
-  SQLHDBC hdbc1;
-  SQLHSTMT hstmt1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   SQLCHAR conn_in[512];
   SQLHANDLE ird;
 
-  ok_env(henv, SQLAllocConnect(henv, &hdbc1));
-
-  /* Connecting not specifying default db */
-  sprintf((char *)conn_in, "DRIVER=%s;SERVER=%s;UID=%s;PWD=%s", mydriver,
-                              myserver, myuid, mypwd);
-
-  if (mysock != NULL)
-  {
-    strcat((char *)conn_in, ";SOCKET=");
-    strcat((char *)conn_in, (char *)mysock);
-  }
-
-  if (myport)
-  {
-    char pbuff[20];
-    sprintf(pbuff, ";PORT=%d", myport);
-    strcat((char *)conn_in, pbuff);
-  }
-
-  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn_in, sizeof(conn_in), NULL,
-                                 0, NULL,
-                                 SQL_DRIVER_NOPROMPT));
-
-
-
-  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, USE_DRIVER,
+                                        NULL, NULL, "", NULL));
 
   ok_sql(hstmt1, "select 10 AS no_catalog_column");
 
@@ -633,12 +608,7 @@ DECLARE_TEST(t_desc_curcatalog)
 
 
   is(conn_in==NULL);
-
-  ok_con(hdbc1, SQLFreeStmt(hstmt1, SQL_CLOSE));
-
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-  ok_con(hdbc1, SQLFreeConnect(hdbc1));
-
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   return OK;
 }

@@ -259,7 +259,12 @@ SQLCHAR *sqlwchar_as_utf8_ext(const SQLWCHAR *str, SQLINTEGER *len,
     {
       i+= (utf8len= utf32toutf8((UTF32)*str++, u8 + i));
 
-      if (utf8len)
+      /*
+        utf8mb4 is a superset of utf8, only supplemental characters
+        which require four bytes differs in storage characteristics (length)
+        between utf8 and utf8mb4.
+      */
+      if (utf8len == 4)
       {
         *utf8mb4_used= 1;
       }
@@ -279,7 +284,12 @@ SQLCHAR *sqlwchar_as_utf8_ext(const SQLWCHAR *str, SQLINTEGER *len,
       str+= consumed;
 
       i+= (utf8len= utf32toutf8(u32, u8 + i));
-      if (utf8len)
+      /*
+        utf8mb4 is a superset of utf8, only supplemental characters
+        which require four bytes differs in storage characteristics (length)
+        between utf8 and utf8mb4.
+      */
+      if (utf8len == 4)
       {
         *utf8mb4_used= 1;
       }

@@ -51,6 +51,12 @@ extern "C" {
 #define myodbc_min(a, b) ((a) < (b) ? (a) : (b))
 #define myodbc_max(a, b) ((a) > (b) ? (a) : (b))
 
+#ifdef HAVE_LPCWSTR
+# define MyODBC_LPCWSTR LPCWSTR
+#else
+# define MyODBC_LPCWSTR LPWSTR
+#endif
+
 #define MAX_BYTES_PER_UTF8_CP 4 /* max 4 bytes per utf8 codepoint */
 
 /* Unicode transcoding */

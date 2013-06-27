@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -208,36 +208,15 @@ DECLARE_TEST(t_bug31055)
 */
 DECLARE_TEST(t_bug3780)
 {
-  HDBC hdbc1;
-  HSTMT hstmt1;
-  SQLCHAR   conn[512], conn_out[512];
-  SQLSMALLINT conn_out_len;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   SQLCHAR   rgbValue[MAX_NAME_LEN];
   SQLSMALLINT pcbInfo;
   SQLINTEGER attrlen;
 
   /* The connection string must not include DATABASE. */
-  sprintf((char *)conn, "DRIVER=%s;SERVER=%s;UID=%s;PASSWORD=%s",
-          mydriver, myserver, myuid, mypwd);
-  if (mysock != NULL)
-  {
-    strcat((char *)conn, ";SOCKET=");
-    strcat((char *)conn, (char *)mysock);
-  }
-  if (myport)
-  {
-    char pbuff[20];
-    sprintf(pbuff, ";PORT=%d", myport);
-    strcat((char *)conn, pbuff);
-  }
-
-  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
-
-  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, sizeof(conn), conn_out,
-                                 sizeof(conn_out), &conn_out_len,
-                                 SQL_DRIVER_NOPROMPT));
-  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
-
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, USE_DRIVER,
+                                        NULL, NULL, "", NULL));
+  
   ok_con(hdbc1, SQLGetInfo(hdbc1, SQL_DATABASE_NAME, rgbValue, 
                            MAX_NAME_LEN, &pcbInfo));
 
@@ -250,9 +229,7 @@ DECLARE_TEST(t_bug3780)
   is_num(attrlen, 4);
   is_str(rgbValue, "null", attrlen);
 
-  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   return OK;
 }
@@ -292,9 +269,7 @@ DECLARE_TEST(t_bug16653)
 */
 DECLARE_TEST(t_bug30626)
 {
-  SQLHANDLE henv1;
-  SQLHANDLE hdbc1;
-  SQLHANDLE hstmt1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   SQLCHAR conn[512];
   
   /* odbc 3 */
@@ -343,13 +318,8 @@ DECLARE_TEST(t_bug30626)
 
   ok_stmt(hstmt1, SQLGetTypeInfo(hstmt1, SQL_DATE));
   is_num(myresult(hstmt1), 4);
-  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
-  ok_stmt(hstmt1, SQLFreeHandle(SQL_HANDLE_STMT, hstmt1));
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
-  ok_env(henv1, SQLFreeHandle(SQL_HANDLE_ENV, henv1));
-
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
   return OK;
 }
 
@@ -424,6 +394,81 @@ DECLARE_TEST(t_bug46910)
 }
 
 
+/*
+  Bug#11749093: SQLDESCRIBECOL RETURNS EXCESSIVLY LONG COLUMN NAMES
+  Maximum size of column length returned by SQLDescribeCol should be 
+  same as what SQLGetInfo() for SQL_MAX_COLUMN_NAME_LEN returns.
+*/
+DECLARE_TEST(t_bug11749093)
+{
+  char        colName[512];
+  SQLSMALLINT colNameLen;
+  SQLSMALLINT maxColLen;
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, 
+              "SELECT 1234567890+2234567890+3234567890"
+              "+4234567890+5234567890+6234567890+7234567890+"
+              "+8234567890+9234567890+1034567890+1234567890+"
+              "+1334567890+1434567890+1534567890+1634567890+"
+              "+1734567890+1834567890+1934567890+2034567890+"
+              "+2134567890+2234567890+2334567890+2434567890+"
+              "+2534567890+2634567890+2734567890+2834567890"
+              , SQL_NTS));
+
+  ok_stmt(hstmt, SQLGetInfo(hdbc, SQL_MAX_COLUMN_NAME_LEN, &maxColLen, 255, NULL));
+
+  ok_stmt(hstmt, SQLDescribeCol(hstmt, 1, colName, sizeof(colName), &colNameLen,
+                    NULL, NULL, NULL, NULL));
+
+  is_str(colName, "1234567890+2234567890+3234567890"
+              "+4234567890+5234567890+6234567890+7234567890+"
+              "+8234567890+9234567890+1034567890+1234567890+"
+              "+1334567890+1434567890+1534567890+1634567890+"
+              "+1734567890+1834567890+1934567890+2034567890+"
+              "+2134567890+2234567890+2334567890+2434567890+"
+              "+2534567890+2634567890+2734567890+2834567890", maxColLen);
+  is_num(colNameLen, maxColLen);
+
+  return OK;
+}
+
+
+/* Make sure MySQL 5.5 and 5.6 reserved words are returned correctly  */
+DECLARE_TEST(t_getkeywordinfo)
+{
+  SQLSMALLINT pccol;
+  SQLCHAR keywords[8192];
+
+  ok_con(hdbc, SQLGetInfo(hdbc, SQL_KEYWORDS, keywords,
+                          sizeof(keywords), &pccol));
+
+  /* We do not check versions older than 5.5 */
+  if (mysql_min_version(hdbc, "5.6", 3))
+  {
+    is(strstr(keywords, "GET"));
+    is(strstr(keywords, "IO_AFTER_GTIDS"));
+    is(strstr(keywords, "IO_BEFORE_GTIDS"));
+    is(strstr(keywords, "MASTER_BIND"));
+    is(strstr(keywords, "ONE_SHOT"));
+    is(strstr(keywords, "PARTITION"));
+    is(strstr(keywords, "SQL_AFTER_GTIDS"));
+    is(strstr(keywords, "SQL_BEFORE_GTIDS"));
+  }
+  else if (mysql_min_version(hdbc, "5.5", 3))
+  {
+    is(strstr(keywords, "GENERAL"));
+    is(strstr(keywords, "IGNORE_SERVER_IDS"));
+    is(strstr(keywords, "MASTER_HEARTBEAT_PERIOD"));
+    is(strstr(keywords, "MAXVALUE"));
+    is(strstr(keywords, "RESIGNAL"));
+    is(strstr(keywords, "SIGNAL"));
+    is(strstr(keywords, "SLOW"));
+  }
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(sqlgetinfo)
   ADD_TEST(t_gettypeinfo)
@@ -437,6 +482,8 @@ BEGIN_TESTS
   ADD_TEST(t_bug30626)
   ADD_TEST(t_bug43855)
   ADD_TEST(t_bug46910)
+  ADD_TOFIX(t_bug11749093)
+  ADD_TEST(t_getkeywordinfo)
 END_TESTS
 
 

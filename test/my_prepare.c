@@ -1,6 +1,5 @@
 /*
-  Copyright (c) 2007, 2008 MySQL AB, 2010 Sun Microsystems, Inc.
-  Use is subject to license terms.
+  Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -1075,6 +1074,184 @@ DECLARE_TEST(t_bug29871)
 }
 
 
+/**
+  Bug #67340: Memory leak in 5.2.2(w) ODBC driver
+              causes Prepared_stmt_count to grow
+*/
+DECLARE_TEST(t_bug67340)
+{
+  SQLCHAR *param= (SQLCHAR *)"1";
+  SQLCHAR     data[255]= "abcdefg";
+  SQLLEN paramlen= 7;
+  int i, stmt_count= 0;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug67340");
+  ok_sql(hstmt, "CREATE TABLE t_bug67340(id INT AUTO_INCREMENT PRIMARY KEY,"\
+                "vc VARCHAR(32))");
+
+  /* get the initial numnber of Prepared_stmt_count */
+  ok_sql(hstmt, "SHOW STATUS LIKE 'Prepared_stmt_count'");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  stmt_count= my_fetch_int(hstmt, 2);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  for(i=0; i < 100; i++)
+  {
+    ok_stmt(hstmt, SQLPrepare(hstmt, "INSERT INTO t_bug67340(id, vc) "\
+                                     "VALUES (NULL, ?)", SQL_NTS));
+    ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                    SQL_CHAR, 0, 0, data, sizeof(data), 
+                                    &paramlen));
+    ok_stmt(hstmt, SQLExecute(hstmt));
+
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
+  }
+
+  /* get the new numnber of Prepared_stmt_count */
+  ok_sql(hstmt, "SHOW STATUS LIKE 'Prepared_stmt_count'");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  /* check how much Prepared_stmt_count has increased */
+  is(!(my_fetch_int(hstmt, 2) - stmt_count > 1));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "DROP TABLE t_bug67340");
+  return OK;
+}
+
+
+/**
+  Bug #67702: Problem with BIT columns in MS Access
+*/
+DECLARE_TEST(t_bug67702)
+{
+  SQLCHAR data1[5]= "abcd";
+  char c1 = 1, c2= 0;
+  int id= 1;
+
+  SQLLEN paramlen= 0;
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "drop table if exists bug67702", 
+                                      SQL_NTS));
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "create table bug67702"\
+                                      "(id int auto_increment primary key,"\
+                                      "vc varchar(32), yesno bit(1))", 
+                                      SQL_NTS));
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "INSERT INTO bug67702(id, vc, yesno)"\
+                                      "VALUES (1, 'abcd', 1)", 
+                                      SQL_NTS));
+
+  /* Set parameter values here to make it clearer where each one goes */
+  c1= 0;
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_BIT, 
+                                  SQL_BIT, 1, 0, &c1, 0, NULL));
+
+  id= 1;
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_LONG,
+                                  SQL_INTEGER, sizeof(id), 0, &id, 0, NULL));
+
+  paramlen= 4;
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 3, SQL_PARAM_INPUT, SQL_C_CHAR,
+                                  SQL_VARCHAR, 4, 0, data1, 0, &paramlen));
+
+  c2= 1;
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 4, SQL_PARAM_INPUT, SQL_C_BIT,
+                                  SQL_BIT, 1, 0, &c2, 0, NULL));
+
+  /* The prepared query looks exactly as MS Access does it */
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "UPDATE `bug67702` SET `yesno`=?  "\
+                                      "WHERE `id` = ? AND `vc` = ? AND "\
+                                      "`yesno` = ?", SQL_NTS));
+  SQLFreeStmt(hstmt, SQL_CLOSE);
+
+  /* Now check the result of update the bit field should be set to 0 */
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "SELECT `yesno` FROM `bug67702`", SQL_NTS));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is(my_fetch_int(hstmt, 1) == 0);
+  
+  SQLFreeStmt(hstmt, SQL_CLOSE);
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "drop table if exists bug67702", SQL_NTS));
+  return OK;
+}
+
+
+/**
+  Bug #68243: Microsoft Access Crashes when Bit field updates
+*/
+DECLARE_TEST(t_bug68243)
+{
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+  char c1 = 1, c2= 0;
+  int id= 1;
+
+  SQLLEN paramlen= 0;
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "drop table if exists bug68243", 
+                                      SQL_NTS));
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "create table bug68243"\
+                                      "(id int primary key,"\
+                                      "yesno bit(1))", 
+                                      SQL_NTS));
+
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "INSERT INTO bug68243(id, yesno)"\
+                                      "VALUES (1, 1)", 
+                                      SQL_NTS));
+
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
+                                        NULL, NULL, NULL, "NO_SSPS=1"));
+
+  /* Set parameter values here to make it clearer where each one goes */
+  c1= 0;
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT, SQL_C_BIT, 
+                                  SQL_BIT, 1, 0, &c1, 0, NULL));
+
+  id= 1;
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 2, SQL_PARAM_INPUT, SQL_C_LONG,
+                                  SQL_INTEGER, sizeof(id), 0, &id, 0, NULL));
+
+  c2= 1;
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 3, SQL_PARAM_INPUT, SQL_C_BIT,
+                                  SQL_BIT, 1, 0, &c2, 0, NULL));
+
+  /* The prepared query looks exactly as MS Access does it */
+  ok_stmt(hstmt1, SQLExecDirect(hstmt1, "UPDATE `bug68243` SET `yesno`=?  "\
+                                      "WHERE `id` = ? AND `yesno` = ?", 
+                                      SQL_NTS));
+  SQLFreeStmt(hstmt1, SQL_CLOSE);
+
+  /* Now check the result of update the bit field should be set to 0 */
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "SELECT `yesno` FROM `bug68243`", SQL_NTS));
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is(my_fetch_int(hstmt, 1) == 0);
+  
+  SQLFreeStmt(hstmt, SQL_CLOSE);
+  ok_stmt(hstmt, SQLExecDirect(hstmt, "drop table if exists bug68243", SQL_NTS));
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  return OK;
+}
+
+
+/**
+  Bug #67920: Non-compliant behavior of SQLMoreResults
+*/
+DECLARE_TEST(t_bug67920)
+{
+  ok_stmt(hstmt, SQLPrepare(hstmt, "SELECT 1", SQL_NTS));
+  
+  expect_stmt(hstmt, SQLMoreResults(hstmt), SQL_NO_DATA);
+
+  SQLFreeStmt(hstmt, SQL_CLOSE);
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_prep_basic)
   ADD_TEST(t_prep_buffer_length)
@@ -1090,6 +1267,10 @@ BEGIN_TESTS
   ADD_TEST(tmysql_bindparam)
   ADD_TEST(t_acc_update)
   ADD_TEST(t_bug29871)
+  ADD_TEST(t_bug67340)
+  ADD_TEST(t_bug67702)
+  ADD_TEST(t_bug68243)
+  ADD_TEST(t_bug67920)
 END_TESTS
 
 

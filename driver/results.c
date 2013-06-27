@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -286,8 +286,13 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
     switch (fCType)
     {
     case SQL_C_CHAR:
-      /* Handle BLOB -> CHAR conversion */
-      if ((field->flags & (BLOB_FLAG|BINARY_FLAG)) == (BLOB_FLAG|BINARY_FLAG))
+      /*
+        Handle BLOB -> CHAR conversion 
+        Conversion only for field which is having binary character set (63)
+      */
+      if (((field->flags & (BLOB_FLAG|BINARY_FLAG)) 
+                == (BLOB_FLAG|BINARY_FLAG) )
+                && field->charsetnr == BINARY_CHARSET_NUMBER )
       {
         return copy_binhex_result(stmt,
                                   (SQLCHAR *)rgbValue, cbValueMax, pcbValue,
@@ -1217,10 +1222,17 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
 
   CLEAR_STMT_ERROR( pStmt );
 
-  /* SQLExecute or SQLExecDirect need to be called first */
+  /*
+    http://msdn.microsoft.com/en-us/library/ms714673%28v=vs.85%29.aspx
+
+    For some drivers, output parameters and return values are not available
+    until all result sets and row counts have been processed. For such 
+    drivers, output parameters and return values become available when 
+    SQLMoreResults returns SQL_NO_DATA.
+  */
   if ( pStmt->state != ST_EXECUTED )
   {
-    nReturn = set_stmt_error( pStmt, "HY010", NULL, 0 );
+    nReturn = SQL_NO_DATA;
     goto exitSQLMoreResults;
   }
 
@@ -1347,7 +1359,9 @@ void fill_ird_data_lengths(DESC *ird, ulong *lengths, uint fields)
 
   /* This will be NULL for catalog functions with "fake" results */
   if (!lengths)
+  {	
     return;
+  }
 
   for (i= 0; i < fields; ++i)
   {
@@ -1382,32 +1396,17 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
 
     if (ARD_IS_BOUND(arrec))
     {
-      SQLLEN offset, pcb_offset;
       SQLLEN *pcbValue= NULL;
       SQLPOINTER TargetValuePtr= NULL;
-
-      if (stmt->ard->bind_type == SQL_BIND_BY_COLUMN)
-      {
-        offset= arrec->octet_length * rownum;
-        pcb_offset= sizeof(SQLLEN) * rownum;
-      }
-      else
-      {
-        pcb_offset= offset= stmt->ard->bind_type * rownum;
-      }
-
-      /* apply SQL_ATTR_ROW_BIND_OFFSET_PTR */
-      if (stmt->ard->bind_offset_ptr)
-      {
-        offset     += *stmt->ard->bind_offset_ptr;
-        pcb_offset += *stmt->ard->bind_offset_ptr;
-      }
 
       reset_getdata_position(stmt);
 
       if (arrec->data_ptr)
       {
-        TargetValuePtr= ((char*) arrec->data_ptr) + offset;
+        TargetValuePtr= ptr_offset_adjust(arrec->data_ptr, 
+                                          stmt->ard->bind_offset_ptr, 
+                                          stmt->ard->bind_type, 
+                                          arrec->octet_length, rownum);
       }
 
       /* catalog functions with "fake" results won't have lengths */
@@ -1423,7 +1422,10 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
        */
       if (arrec->octet_length_ptr)
       {
-        pcbValue= arrec->octet_length_ptr + (pcb_offset / sizeof(SQLLEN));
+        pcbValue= ptr_offset_adjust(arrec->octet_length_ptr, 
+                                      stmt->ard->bind_offset_ptr, 
+                                      stmt->ard->bind_type, 
+                                      sizeof(SQLLEN), rownum);
       }
 
       tmp_res= sql_get_data(stmt, arrec->concise_type, (uint)i,

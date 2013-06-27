@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!-- *****************************************************************************************
-  Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -35,7 +35,7 @@
   -->
 
   <Product Id="@CONNECTOR_PKG_ID1@" UpgradeCode="FF073FBB-32E2-4052-B6B2-830C5ED4A809"
-    Name="MySQL Connector/ODBC $(var.odbc_driver_series)" Version="$(var.odbc_ver_long)" Language="1033" Manufacturer="Oracle Corporation">
+    Name="MySQL Connector/ODBC $(var.odbc_ver_short)" Version="$(var.odbc_ver_long)" Language="1033" Manufacturer="Oracle Corporation">
 
   <!-- *****************************************************************************************
     Package
@@ -113,9 +113,9 @@
     -->
 
     <?if $(var.odbc_64bit) = 1 ?>
-    <Feature Id="ODBC" Title="MySQL Connector/ODBC $(var.odbc_ver_long)$(var.odbc_driver_type_suffix) 64-bit" Level="1" Description="Installs the MySQL ODBC $(var.odbc_ver_long) $(var.odbc_driver_type) 64-bit driver."  ConfigurableDirectory="INSTALLDIR">
+    <Feature Id="ODBC" Title="MySQL Connector/ODBC $(var.odbc_ver_long) 64-bit drivers" Level="1" Description="Installs the MySQL ODBC $(var.odbc_ver_long) $(var.odbc_driver_type) 64-bit Unicode and ANSI drivers."  ConfigurableDirectory="INSTALLDIR">
     <?else ?>
-    <Feature Id="ODBC" Title="MySQL Connector/ODBC $(var.odbc_ver_long)$(var.odbc_driver_type_suffix) 32-bit" Level="1" Description="Installs the MySQL ODBC $(var.odbc_ver_long) $(var.odbc_driver_type) 32-bit driver."  ConfigurableDirectory="INSTALLDIR">
+    <Feature Id="ODBC" Title="MySQL Connector/ODBC $(var.odbc_ver_long) 32-bit drivers" Level="1" Description="Installs the MySQL ODBC $(var.odbc_ver_long) 32-bit Unicode and ANSI drivers."  ConfigurableDirectory="INSTALLDIR">
     <?endif ?>
       <ComponentRef Id="RegKeys" />
       <ComponentRef Id="lib" />

@@ -177,15 +177,15 @@ SQLRETURN copy_wchar_result(STMT *stmt,
                             SQLLEN *pcbValue, MYSQL_FIELD *field, char *src,
                             long src_length);
 
-SQLRETURN set_dbc_error(DBC FAR *dbc, char *state, const char *message,uint errcode);
+SQLRETURN set_dbc_error(DBC FAR *dbc, char *state,const char *message,uint errcode);
 #define set_stmt_error myodbc_set_stmt_error
-SQLRETURN set_stmt_error(STMT *stmt, const char *state, const char *message,uint errcode);
+SQLRETURN set_stmt_error(STMT *stmt, const char *state, const char *message, uint errcode);
 SQLRETURN set_desc_error(DESC *desc, char *state,
                          const char *message, uint errcode);
 SQLRETURN handle_connection_error(STMT *stmt);
 my_bool is_connection_lost(uint errcode);
 void set_mem_error(MYSQL *mysql);
-void translate_error(char *save_state,myodbc_errid errid,uint mysql_err);
+void translate_error(char *save_state, myodbc_errid errid, uint mysql_err);
 
 SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff);
 SQLULEN get_column_size(STMT *stmt, MYSQL_FIELD *field);
@@ -263,8 +263,7 @@ char *extend_buffer(NET *net,char *to,ulong length);
 void myodbc_end();
 my_bool set_dynamic_result(STMT FAR *stmt);
 void set_current_cursor_data(STMT FAR *stmt,SQLUINTEGER irow);
-my_bool is_minimum_version(const char *server_version,const char *version,
-			   uint length);
+my_bool is_minimum_version(const char *server_version,const char *version);
 int myodbc_strcasecmp(const char *s, const char *t);
 int myodbc_casecmp(const char *s, const char *t, uint len);
 my_bool reget_current_catalog(DBC FAR *dbc);

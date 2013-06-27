@@ -166,7 +166,7 @@ static SQLWCHAR W_NO_SSPS[]= {'N','O','_','S','S','P','S',0};
 static SQLWCHAR W_CAN_HANDLE_EXP_PWD[]=
   {'C','A','N','_','H','A','N','D','L','E','_','E','X','P','_','P','W','D',0};
 static SQLWCHAR W_ENABLE_CLEARTEXT_PLUGIN[]=
-  {'E','N','A','B','L','E','_','C','L','E','A','R','T','E','X','T','_','P','L','U','G','I','N',0};
+  {'E','N','A','B','L','E','_','C','L','E','A', 'R', 'T', 'E', 'X', 'T', '_','P','L','U','G','I','N',0};
 
 /* DS_PARAM */
 /* externally used strings */
@@ -424,7 +424,8 @@ int driver_lookup_name(Driver *driver)
 #ifdef _WIN32
       if (!Win64CompareLibs(driverinfo, driver->lib))
 #else
-      if (!sqlwcharcasecmp(driverinfo, driver->lib))
+      if (!sqlwcharcasecmp(driverinfo, driver->lib) || 
+          !sqlwcharcasecmp(pdrv, driver->lib))
 #endif
       {
         sqlwcharncpy(driver->name, pdrv, ODBCDRIVER_STRLEN);
@@ -1016,7 +1017,9 @@ int ds_from_kvpair(DataSource *ds, const SQLWCHAR *attrs, SQLWCHAR delim)
 
     attrs= end;
     /* If delim is NULL then double-NULL is the end of key-value pairs list */
-    while ((delim && *attrs == delim) || *attrs == ' ')
+    while ((delim && *attrs == delim) ||
+           (!delim && !*attrs && *(attrs+1)) ||
+           *attrs == ' ')
       ++attrs;
   }
 
@@ -1224,8 +1227,19 @@ int ds_add(DataSource *ds)
 
   RESTORE_MODE();
 
-  /* write all fields (util method takes care of skipping blank fields) */
+#ifdef _WIN32
+  /* Windows driver manager allows writing lib into the DRIVER parameter */
   if (ds_add_strprop(ds->name, W_DRIVER     , driver->lib    )) goto error;
+#else
+  /*
+   If we write driver->lib into the DRIVER parameter with iODBC/UnixODBC
+   the next time GUI will not load because it loses the relation to
+   odbcinst.ini
+   */
+  if (ds_add_strprop(ds->name, W_DRIVER     , driver->name    )) goto error;
+#endif
+
+  /* write all fields (util method takes care of skipping blank fields) */
   if (ds_add_strprop(ds->name, W_DESCRIPTION, ds->description)) goto error;
   if (ds_add_strprop(ds->name, W_SERVER     , ds->server     )) goto error;
   if (ds_add_strprop(ds->name, W_UID        , ds->uid        )) goto error;

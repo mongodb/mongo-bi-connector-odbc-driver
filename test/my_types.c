@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -1073,28 +1073,16 @@ DECLARE_TEST(t_bug29402)
 {
   SQLSMALLINT name_length, data_type, decimal_digits, nullable;
   SQLCHAR column_name[SQL_MAX_COLUMN_NAME_LEN];
-  SQLCHAR conn[512], conn_out[512];
-  SQLSMALLINT conn_out_len;
   SQLULEN column_size;
   SQLCHAR buf[80]= {0};
   SQLLEN buflen= 0;
-  SQLHDBC    hdbc1;
-  SQLHSTMT   hstmt1;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   const SQLCHAR *expected= "\x80""100";
 
-  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
-
-  /* First check how the option NO_BINARY_RESULT works */
-  sprintf((char *)conn, 
-          "DSN=%s;UID=%s;PWD=%s;NO_BINARY_RESULT=1;CHARSET=CP1250",
-          mydsn, myuid, mypwd);
-
-  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, conn, SQL_NTS, conn_out,
-                                 sizeof(conn_out), &conn_out_len,
-                                 SQL_DRIVER_NOPROMPT));
-
-  ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
-
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
+                                        NULL, NULL, NULL, 
+                                        "NO_BINARY_RESULT=1;CHARSET=CP1250"));
+  
   ok_stmt(hstmt1, SQLExecDirect(hstmt1, "SELECT CONCAT(_cp1250 0x80, 100) concated", SQL_NTS));
 
   ok_stmt(hstmt1, SQLDescribeCol(hstmt1, 1, column_name, sizeof(column_name),
@@ -1119,9 +1107,7 @@ DECLARE_TEST(t_bug29402)
     return FAIL;
   }
 
-  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_DROP));
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   /* Check without FLAG_NO_BINARY_RESULT */
   ok_sql(hstmt, "SELECT CONCAT('\x80', 100) concated");
@@ -1150,6 +1136,48 @@ DECLARE_TEST(t_bug29402)
 }
 
 
+/*
+  Bug #67793 - MySQL ODBC drivers incorrectly returns TIME columns, where 
+  value > '99:59:59'
+*/
+DECLARE_TEST(t_bug67793)
+{
+  SQL_TIME_STRUCT sts;
+  SQLLEN outlen= 0;
+
+  /* make sure we have reset everything to zero */
+  sts.hour= 0;
+  sts.minute= 0;
+  sts.second= 0;
+
+  /* check situations with sec and min overflow */
+  ok_sql(hstmt, "SELECT '123456789:45:67', '512:512:512', '20::75:23:10'");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_TIME, &sts, sizeof(sts), &outlen));
+  is_num(outlen, sizeof(sts));
+  /* hour cannot go out of unsigned smallint range */
+  is_num(sts.hour, 65535);
+  is_num(sts.minute, 46);
+  is_num(sts.second, 7);
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_TIME, &sts, sizeof(sts), &outlen));
+  is_num(outlen, sizeof(sts));
+  is_num(sts.hour, 520);
+  is_num(sts.minute, 40);
+  is_num(sts.second, 32);
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 3, SQL_TIME, &sts, sizeof(sts), &outlen));
+  is_num(outlen, sizeof(sts));
+  is_num(sts.hour, 20);
+  is_num(sts.minute, 1);
+  is_num(sts.second, 15);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  return OK;  
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_longlong1)
   ADD_TEST(t_decimal)
@@ -1173,6 +1201,7 @@ BEGIN_TESTS
   ADD_TEST(t_sqlnum_to_str)
   ADD_TEST(t_bug31220)
   ADD_TEST(t_bug29402)
+  ADD_TEST(t_bug67793)
 END_TESTS
 
 

@@ -243,7 +243,9 @@ void ssps_close(STMT *stmt)
   {
     free_result_bind(stmt);
 
-    assert(mysql_stmt_close(stmt->ssps) == '\0');
+    if (mysql_stmt_close(stmt->ssps) != '\0')
+      assert(!"Could not close stmt");
+
     stmt->ssps= NULL;
   }
 }

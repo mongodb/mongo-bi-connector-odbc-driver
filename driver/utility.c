@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -2014,21 +2014,59 @@ int str_to_ts(SQL_TIMESTAMP_STRUCT *ts, const char *str, int len, int zeroToMin,
 
 my_bool str_to_time_st(SQL_TIME_STRUCT *ts, const char *str)
 { 
-    char buff[12],*to;
+    char buff[24],*to, *tokens[3] = {0, 0, 0};
+    int num= 0, int_hour=0, int_min= 0, int_sec= 0;
     SQL_TIME_STRUCT tmp_time;
 
     if ( !ts )
         ts= (SQL_TIME_STRUCT *) &tmp_time;
 
+    /* remember the position of the first numeric string */
+    tokens[0]= buff;
+
     for ( to= buff ; *str && to < buff+sizeof(buff)-1 ; ++str )
     {
         if (isdigit(*str))
             *to++= *str;
+        else if (num < 2)
+        {
+          /* 
+            terminate the string and remember the beginning of the 
+            new one only if the time component number is not out of
+            range
+          */
+          *to++= 0;
+          tokens[++num]= to;
+        }
+        else
+          /* We can leave the loop now */
+          break;
+    }
+    /* Put the final termination character */
+    *to= 0;
+
+    int_hour= tokens[0] ? atoi(tokens[0]) : 0;
+    int_min=  tokens[1] ? atoi(tokens[1]) : 0;
+    int_sec=  tokens[2] ? atoi(tokens[2]) : 0;
+
+    /* Convert seconds into minutes if necessary */
+    if (int_sec > 59)
+    {
+      int_min+= int_sec / 60;
+      int_sec= int_sec % 60;
     }
 
-    ts->hour=   digit(buff[0])*10+digit(buff[1]);
-    ts->minute= digit(buff[2])*10+digit(buff[3]);
-    ts->second= digit(buff[4])*10+digit(buff[5]);
+    /* Convert minutes into hours if necessary */
+    if (int_min > 59)
+    {
+      int_hour+= int_min / 60;
+      int_min= int_min % 60;
+    }
+
+    ts->hour   = (SQLUSMALLINT)(int_hour < 65536 ? int_hour : 65535);
+    ts->minute = (SQLUSMALLINT)int_min;
+    ts->second = (SQLUSMALLINT)int_sec;
+
     return 0;
 }
 
@@ -2275,7 +2313,13 @@ void query_print(FILE *log_file,char *query)
 {
     if ( log_file && query )
     {
-      fprintf(log_file, "%lld:%s;\n", time(NULL), query);
+      /*
+        because of bug 68201 we bring the result of time() call
+        to 64-bits in any case
+      */
+      long long time_now= time(NULL);
+
+      fprintf(log_file, "%lld:%s;\n", time_now, query);
     }
 }
 
@@ -2338,10 +2382,13 @@ void end_query_log(FILE *query_log)
 }
 
 
-my_bool is_minimum_version(const char *server_version,const char *version,
-                           uint length)
+my_bool is_minimum_version(const char *server_version,const char *version)
 {
-  uint major1, major2, minor1, minor2, build1, build2;
+  /* 
+    Variables have to be initialized if we don't want to get random 
+    values after sscanf
+  */
+  uint major1= 0, major2= 0, minor1= 0, minor2= 0, build1= 0, build2= 0;
 
   sscanf(server_version, "%u.%u.%u", &major1, &minor1, &build1);
   sscanf(version, "%u.%u.%u", &major2, &minor2, &build2);
@@ -3219,7 +3266,7 @@ SQLUINTEGER proc_parse_enum_set(SQLCHAR *ptype, int len, BOOL is_enum)
     if (*ptype == quote_symbol)
     {
       quote_symbol= '\0';
-      max_len= max(cur_len, max_len);
+      max_len= myodbc_max(cur_len, max_len);
     }
     else if (*ptype == '\'' || *ptype == '"')
     {

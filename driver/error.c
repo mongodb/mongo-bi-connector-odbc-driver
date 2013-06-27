@@ -188,9 +188,9 @@ SQLRETURN set_dbc_error(DBC FAR *dbc, char *state,
 */
 
 SQLRETURN set_stmt_error( STMT FAR *    stmt,
-                                 const char *  state,
-                                 const char *  message,
-                                 uint          errcode )
+                          const char *  state,
+                          const char *  message,
+                          uint          errcode )
 {
     strmov(stmt->error.sqlstate, state);
     strxmov(stmt->error.message, stmt->dbc->st_error_prefix, message, NullS);
@@ -272,12 +272,10 @@ void translate_error(char *save_state, myodbc_errid errid, uint mysql_err)
             state= "08S01";
             break;
         case ER_MUST_CHANGE_PASSWORD_LOGIN:
+        case CR_AUTH_PLUGIN_CANNOT_LOAD_ERROR:
             state= "08004"; /* Server rejected the connection */
                             /* The data source rejected the establishment of the
                                connection for implementation-defined reasons. */
-            break;
-        case CR_AUTH_PLUGIN_CANNOT_LOAD_ERROR:
-            state= "08004"; /* Authenticaton plugin cannot be loaded */
             break;
         default: break;
     }

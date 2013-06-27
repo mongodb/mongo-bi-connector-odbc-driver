@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -121,7 +121,7 @@ SQLRETURN myodbc_set_initial_character_set(DBC *dbc, const char *charset)
     We always set character_set_results to NULL so we can do our own
     conversion to the ANSI character set or Unicode.
   */
-  if (is_minimum_version(dbc->mysql.server_version, "4.1.1", 5)
+  if (is_minimum_version(dbc->mysql.server_version, "4.1.1")
       && odbc_stmt(dbc, "SET character_set_results = NULL") != SQL_SUCCESS)
   {
     return SQL_ERROR;
@@ -148,6 +148,7 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
   unsigned long flags;
   /* Use 'int' and fill all bits to avoid alignment Bug#25920 */
   unsigned int opt_ssl_verify_server_cert = ~0;
+  const my_bool on= 1;
 
 #ifdef WIN32
   /*
@@ -249,6 +250,20 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
 #endif
 }
 
+#if MYSQL_VERSION_ID >= 50610
+  if (ds->can_handle_exp_pwd)
+  {
+    mysql_options(mysql, MYSQL_OPT_CAN_HANDLE_EXPIRED_PASSWORDS, (char *)&on);
+  }
+#endif
+
+#if (MYSQL_VERSION_ID >= 50527 && MYSQL_VERSION_ID < 50600) || MYSQL_VERSION_ID >= 50607
+  if (ds->enable_cleartext_plugin)
+  {
+    mysql_options(mysql, MYSQL_ENABLE_CLEARTEXT_PLUGIN, (char *)&on);
+  }
+#endif
+
   if (!mysql_real_connect(mysql,
                           ds_get_utf8attr(ds->server,   &ds->server8),
                           ds_get_utf8attr(ds->uid,      &ds->uid8),
@@ -258,12 +273,38 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
                           ds_get_utf8attr(ds->socket,   &ds->socket8),
                           flags))
   {
-    set_dbc_error(dbc, "HY000", mysql_error(mysql), mysql_errno(mysql));
-    translate_error(dbc->error.sqlstate, MYERR_S1000, mysql_errno(mysql));
+    unsigned int native_error= mysql_errno(mysql);
+
+    /* Before 5.6.11 error returned by server was ER_MUST_CHANGE_PASSWORD(1820).
+       In 5.6.11 it changed to ER_MUST_CHANGE_PASSWORD_LOGIN(1862)
+       We must to change error for old servers in order to set correct sqlstate */
+    if (native_error == 1820 && ER_MUST_CHANGE_PASSWORD_LOGIN != 1820)
+    {
+      native_error= ER_MUST_CHANGE_PASSWORD_LOGIN;
+    }
+
+#if MYSQL_VERSION_ID < 50610
+    /* In that special case when the driver was linked against old version of libmysql*/
+    if (native_error == ER_MUST_CHANGE_PASSWORD_LOGIN
+      && ds->can_handle_exp_pwd)
+    {
+      /* The password has expired, application said it knows how to deal with
+         that, but the driver was linked  that
+         does not support this option. Thus we change native error. */
+      /* TODO: enum/defines for driver specific errors */
+      return set_conn_error(dbc, MYERR_08004,
+        "Your password has expired, but underlying library doesn't support "
+        "this functionlaity", 0);
+    }
+#endif
+    set_dbc_error(dbc, "HY000", mysql_error(mysql), native_error);
+
+    translate_error(dbc->error.sqlstate, MYERR_S1000, native_error);
+
     return SQL_ERROR;
   }
 
-  if (!is_minimum_version(dbc->mysql.server_version, "4.1.1", 5))
+  if (!is_minimum_version(dbc->mysql.server_version, "4.1.1"))
   {
     mysql_close(mysql);
     set_dbc_error(dbc, "08001", "Driver does not support server versions under 4.1.1", 0);
@@ -312,8 +353,7 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
   /* This needs to be set after connection, or it doesn't stick.  */
   if (ds->auto_reconnect)
   {
-    my_bool reconnect= 1;
-    mysql_options(mysql, MYSQL_OPT_RECONNECT, (char *)&reconnect);
+    mysql_options(mysql, MYSQL_OPT_RECONNECT, (char *)&on);
   }
 
   /* Make sure autocommit is set as configured. */
@@ -511,7 +551,16 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
    This also allows us to get pszDRIVER (if not already given).
   */
   if (ds->name)
-    ds_lookup(ds);
+  {
+     ds_lookup(ds);
+    
+    /* 
+      If DSN is used:
+      1 - we want the connection string options to override DSN options
+      2 - no need to check for parsing erros as it was done before
+    */
+    ds_from_kvpair(ds, szConnStrIn, (SQLWCHAR)';');
+  }
 #endif
 
   /* If FLAG_NO_PROMPT is not set, force prompting off. */

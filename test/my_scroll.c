@@ -1,6 +1,5 @@
 /*
-  Copyright (c) 2003, 2007, 2008 MySQL AB, 2010 Sun Microsystems, Inc.
-  Use is subject to license terms.
+  Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most

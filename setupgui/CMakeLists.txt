@@ -1,4 +1,4 @@
-# Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -86,3 +86,7 @@ ENDIF (NOT WIN32)
 TARGET_LINK_LIBRARIES(myodbc5S
                       myodbc3u ${ODBCLIB} ${ODBCINSTLIB} ${MYSQL_CLIENT_LIBS}
                       ${PLATFORM_LIBS})
+
+IF(MYSQL_CXX_LINKAGE)
+  SET_TARGET_PROPERTIES(myodbc5S PROPERTIES LINKER_LANGUAGE CXX)
+ENDIF(MYSQL_CXX_LINKAGE)

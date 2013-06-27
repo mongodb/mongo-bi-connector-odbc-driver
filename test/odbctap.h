@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -53,6 +53,7 @@
 
 #include <sql.h>
 #include <sqlext.h>
+#include <odbcinst.h>
 
 /* for clock() */
 #include <time.h>
@@ -124,6 +125,7 @@ SQLCHAR *myuid= (SQLCHAR *)"root";
 SQLCHAR *mypwd= (SQLCHAR *)"";
 SQLCHAR *mysock= NULL;
 int      myoption= 0, myport= 0;
+SQLCHAR *my_str_options= (SQLCHAR *)""; /* String for additional connection options */
 SQLCHAR *myserver= (SQLCHAR *)"localhost";
 SQLCHAR *mydb= (SQLCHAR *)"test";
 SQLCHAR *test_db= (SQLCHAR *)"client_odbc_test";
@@ -147,6 +149,8 @@ const SQLCHAR *testname_suffix="";
 #endif
 
 char *SKIP_REASON= NULL;
+
+#define USE_DRIVER (char *)-1
 
 typedef int (*test_func)(SQLHDBC, SQLHSTMT, SQLHENV);
 static void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
@@ -225,11 +229,14 @@ void mem_gc_init()
   gc_blk.counter= 0;
 }
 
+#define DECLARE_BASIC_HANDLES(E, C, S) SQLHENV E; \
+  SQLHDBC C; \
+  SQLHSTMT S
 
 #define BEGIN_TESTS my_test tests[]= {
 #define ADD_TEST(name) { #name, name, OK   },
 #define ADD_TODO(name) { #name, name, FAIL },
-#ifndef DISGUISE_TOFIX_TESTS
+#ifdef EXPOSE_TOFIX_TESTS
 # define ADD_TOFIX(name) { #name, name, OK   },
 #else
 # define ADD_TOFIX(name) { #name, name, FAIL },
@@ -472,6 +479,21 @@ do { \
 
 
 /**
+  Verify that the results of an ODBC function call on an environment handle
+  was SQL_SUCCESS or SQL_SUCCESS_WITH_INFO.
+
+  @param call    The function call
+*/
+#define ok_install(call) \
+do { \
+  BOOL rc= (call); \
+  print_diag_installer(rc, #call, __FILE__, __LINE__); \
+  if (!rc) \
+    return FAIL; \
+} while (0)
+
+
+/**
   Verify that a Boolean expression is true.
   It's recommended to use is_num, is_str, etc macros instead of "is(a==b)",
   since those will show values being compared, in a log.
@@ -570,6 +592,8 @@ int check_sqlstate_ex(SQLHANDLE hnd, SQLSMALLINT hndtype, char *sqlstate)
 
 
 /**
+  Print error and diagnostic information for ODBC API functions that did not
+  finish with SQL_SUCCESS(_WITH_INFO) result
 */
 static void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
 		       const char *text, const char *file, int line)
@@ -593,6 +617,32 @@ static void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
              sqlstate, length, message, file, line);
     else
       printf("# Did not get expected diagnostics from SQLGetDiagRec() = %d"
+             " in file %s on line %d\n", drc, file, line);
+  }
+}
+
+
+/**
+  Print error and diagnostic information for ODBC INSTALLER API functions 
+  that did not return TRUE (1)
+*/
+static void print_diag_installer(BOOL is_success, const char *text, 
+                                 const char *file, int line)
+{
+  if (!is_success)
+  {
+    SQLCHAR     message[SQL_MAX_MESSAGE_LENGTH];
+    SQLINTEGER  error_code;
+    SQLSMALLINT length;
+    SQLRETURN   drc;
+
+    drc= SQLInstallerError(1, &error_code, message, SQL_MAX_MESSAGE_LENGTH - 1, &length);
+
+    if (SQL_SUCCEEDED(drc))
+      printf("# [%s] %s in %s on line %d\n",
+             text, message, file, line);
+    else
+      printf("# Did not get expected diagnostics from SQLInstallerError() = %d"
              " in file %s on line %d\n", drc, file, line);
   }
 }
@@ -1006,15 +1056,15 @@ wchar_t *my_fetch_wstr(SQLHSTMT hstmt, SQLWCHAR *buffer, SQLUSMALLINT icol)
 */
 int driver_supports_setpos(SQLHDBC hdbc)
 {
-    SQLRETURN    rc;
-    SQLUSMALLINT status= TRUE;
+  SQLRETURN    rc;
+  SQLUSMALLINT status= TRUE;
 
-    rc = SQLGetFunctions(hdbc, SQL_API_SQLSETPOS, &status);
-    mycon(hdbc,rc);
+  rc = SQLGetFunctions(hdbc, SQL_API_SQLSETPOS, &status);
+  mycon(hdbc,rc);
 
-    if (!status)
-        return FALSE;
-    return TRUE;
+  if (!status)
+    return FALSE;
+  return TRUE;
 }
 
 /*
@@ -1022,16 +1072,27 @@ int driver_supports_setpos(SQLHDBC hdbc)
 */
 int mysql_min_version(SQLHDBC hdbc, char *min_version, unsigned int length)
 {
-    SQLCHAR server_version[MYSQL_NAME_LEN+1];
-    SQLRETURN rc;
+  SQLCHAR server_version[MYSQL_NAME_LEN+1];
+  SQLRETURN rc;
 
-    rc = SQLGetInfo(hdbc,SQL_DBMS_VER,server_version,MYSQL_NAME_LEN,NULL);
-    mycon(hdbc, rc);
+  rc = SQLGetInfo(hdbc,SQL_DBMS_VER,server_version,MYSQL_NAME_LEN,NULL);
+  mycon(hdbc, rc);
 
-    if (strncmp((char *)server_version, min_version, length) >= 0)
-        return TRUE;
+  {
+    unsigned int major1= 0, major2= 0, minor1= 0, minor2= 0, build1= 0, build2= 0;
 
-    return FALSE;
+    sscanf(server_version, "%u.%u.%u", &major1, &minor1, &build1);
+    sscanf(min_version, "%u.%u.%u", &major2, &minor2, &build2);
+
+    if ( major1 > major2 ||
+      major1 == major2 && (minor1 > minor2 ||
+                          minor1 ==  minor2 && build1 >= build2))
+    {
+		  return TRUE;
+    }
+  }
+
+  return FALSE;;
 }
 
 /*
@@ -1039,15 +1100,15 @@ int mysql_min_version(SQLHDBC hdbc, char *min_version, unsigned int length)
 */
 int server_supports_trans(SQLHDBC hdbc)
 {
-    SQLSMALLINT trans;
-    SQLRETURN   rc;
+  SQLSMALLINT trans;
+  SQLRETURN   rc;
 
-    rc = SQLGetInfo(hdbc,SQL_TXN_CAPABLE,&trans,0,NULL);
-    mycon(hdbc,rc);
+  rc = SQLGetInfo(hdbc,SQL_TXN_CAPABLE,&trans,0,NULL);
+  mycon(hdbc,rc);
 
-    if (trans != SQL_TC_NONE)
-        return TRUE;
-    return FALSE;
+  if (trans != SQL_TC_NONE)
+      return TRUE;
+  return FALSE;
 }
 
 
@@ -1078,11 +1139,87 @@ int mydrvconnect(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt, SQLCHAR *connIn)
 }
 
 
-int alloc_basic_handles(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt)
+/* Helper function for tests to get (additional) connection 
+   If dsn, uid, pwd or options is null - they defualt to mydsn, myuid, mypwd
+   and my_str_options, respectively.
+   myoption, mysock and myport values are used. */
+int get_connection(SQLHDBC *hdbc, const SQLCHAR *dsn, const SQLCHAR *uid,
+                   const SQLCHAR *pwd, const SQLCHAR *db, 
+                   const SQLCHAR *options)
 {
-  SQLCHAR   connIn[MAX_NAME_LEN+1], connOut[MAX_NAME_LEN+1];
+  /* Buffers have to be large enough to contain SSL options and long names */
+  SQLCHAR     connIn[4096], connOut[4096];
+  SQLCHAR     dsn_buf[MAX_NAME_LEN]= {0}, socket_buf[MAX_NAME_LEN]= {0};
+  SQLCHAR     db_buf[MAX_NAME_LEN]= {0}, port_buf[MAX_NAME_LEN]= {0};
   SQLSMALLINT len;
+  SQLRETURN   rc;
 
+  /* We never set the custom DSN, but sometimes use DRIVER instead */
+  if (dsn == NULL)
+    sprintf((char *)dsn_buf, "DSN=%s", (char *)mydsn);
+  else if (dsn == USE_DRIVER)
+    sprintf((char *)dsn_buf, "DRIVER=%s", (char *)mydriver);
+  else
+    sprintf((char *)dsn_buf, "DSN=%s", (char *)dsn);
+
+  /* Defaults */
+  if (uid     == NULL) uid=     myuid;
+  if (pwd     == NULL) pwd=     mypwd;
+  if (db      == NULL) db=      mydb;
+  if (options == NULL) options= my_str_options;
+
+  sprintf((char *)connIn, "%s;UID=%s;PWD=%s;OPTION=%d",
+          (char *)dsn_buf, (char *)uid, (char *)pwd, myoption);
+
+  if (mysock && mysock[0])
+  {
+    sprintf((char *)socket_buf, ";SOCKET=%s", (char *)mysock);
+    strcat((char *)connIn, socket_buf);
+  }
+  if (db && db[0])
+  {
+    sprintf((char *)db_buf, ";DATABASE=%s", (char *)db);
+    strcat((char *)connIn, (char *)db_buf);
+  }
+  if (myport)
+  {
+    sprintf(port_buf, ";PORT=%d", myport);
+    strcat((char *)connIn, port_buf);
+  }
+
+  if (options != NULL && options[0] > 0)
+  {
+    strcat(connIn, ";");
+    strcat(connIn, options);
+  }
+
+  rc= SQLDriverConnect(*hdbc, NULL, connIn, SQL_NTS, connOut,
+                       MAX_NAME_LEN, &len, SQL_DRIVER_NOPROMPT);
+
+  if (SQL_SUCCEEDED(rc))
+  {
+    /* Let's neglect possibility that error returned by get_connection() can be
+       in fact error of turning autocommit on */
+    rc= SQLSetConnectAttr(*hdbc, SQL_ATTR_AUTOCOMMIT,
+                                  (SQLPOINTER)SQL_AUTOCOMMIT_ON, 0);
+  }
+  else
+  {
+    /* re-build and print the connection string with hidden password */
+    printf("# Connection failed with the following Connection string: " \
+           "\n%s;UID=%s;PWD=*******%s%s%s;%s\n", 
+           dsn_buf, uid, socket_buf, db_buf, port_buf, options);
+  }
+
+  return rc;
+}
+
+
+int alloc_basic_handles_with_opt(SQLHENV *henv, SQLHDBC *hdbc, 
+                                 SQLHSTMT *hstmt,  const SQLCHAR *dsn, 
+                                 const SQLCHAR *uid, const SQLCHAR *pwd, 
+                                 const SQLCHAR *db, const SQLCHAR *options)
+{
   ok_env(*henv, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, henv));
 
   ok_env(*henv, SQLSetEnvAttr(*henv, SQL_ATTR_ODBC_VERSION,
@@ -1090,29 +1227,20 @@ int alloc_basic_handles(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt)
 
   ok_env(*henv, SQLAllocHandle(SQL_HANDLE_DBC, *henv, hdbc));
 
-  sprintf((char *)connIn, "DSN=%s;UID=%s;PWD=%s;DATABASE=test;OPTION=%d",
-          (char *)mydsn, (char *)myuid, (char *)mypwd, myoption);
-  if (mysock && mysock[0])
-  {
-    strcat((char *)connIn, ";SOCKET=");
-    strcat((char *)connIn, (char *)mysock);
-  }
-  if (myport)
-  {
-    char buff[20];
-    sprintf(buff, ";PORT=%d", myport);
-    strcat((char *)connIn, buff);
-  }
-
-  ok_con(*hdbc, SQLDriverConnect(*hdbc, NULL, connIn, SQL_NTS, connOut,
-                                 MAX_NAME_LEN, &len, SQL_DRIVER_NOPROMPT));
-
-  ok_con(*hdbc, SQLSetConnectAttr(*hdbc, SQL_ATTR_AUTOCOMMIT,
-                                  (SQLPOINTER)SQL_AUTOCOMMIT_ON, 0));
+  ok_con(*hdbc, get_connection(hdbc, dsn, uid, pwd, db, options));
 
   ok_con(*hdbc, SQLAllocHandle(SQL_HANDLE_STMT, *hdbc, hstmt));
 
   return OK;
+}
+
+
+int alloc_basic_handles(SQLHENV *henv, SQLHDBC *hdbc, SQLHSTMT *hstmt)
+{
+  return alloc_basic_handles_with_opt(henv, hdbc, hstmt, (SQLCHAR *)mydsn, 
+                                      (SQLCHAR *)myuid, (SQLCHAR *)mypwd,
+                                      (SQLCHAR *)mydb, 
+                                      (SQLCHAR *)my_str_options);
 }
 
 

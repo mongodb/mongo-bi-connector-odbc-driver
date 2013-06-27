@@ -276,8 +276,7 @@ BOOL preparable_on_server(MY_PARSED_QUERY *pq, const char *server_version)
   {
     return query_type[pq->query_type].server_version == NULL
         || is_minimum_version(server_version,
-                            query_type[pq->query_type].server_version,
-                            myodbc_max(strlen(server_version), strlen(query_type[pq->query_type].server_version)));
+                            query_type[pq->query_type].server_version);
   }
 
   return FALSE;
