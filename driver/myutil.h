@@ -177,9 +177,9 @@ SQLRETURN copy_wchar_result(STMT *stmt,
                             SQLLEN *pcbValue, MYSQL_FIELD *field, char *src,
                             long src_length);
 
-SQLRETURN set_dbc_error(DBC FAR *dbc, char *state,const char *message,uint errcode);
+SQLRETURN set_dbc_error(DBC FAR *dbc, char *state, const char *message,uint errcode);
 #define set_stmt_error myodbc_set_stmt_error
-SQLRETURN set_stmt_error(STMT *stmt, char *state,const char *message,uint errcode);
+SQLRETURN set_stmt_error(STMT *stmt, const char *state, const char *message,uint errcode);
 SQLRETURN set_desc_error(DESC *desc, char *state,
                          const char *message, uint errcode);
 SQLRETURN handle_connection_error(STMT *stmt);
@@ -338,7 +338,7 @@ char * add_to_buffer(NET *net,char *to,const char *from,ulong length);
 MY_LIMIT_CLAUSE find_position4limit(CHARSET_INFO* cs, char *query,
                                     char * query_end);
 BOOL myodbc_isspace(CHARSET_INFO* cs, const char * begin, const char *end);
-BOOL got_out_parameters(stmt);
+BOOL got_out_parameters(STMT *stmt);
 
 /* handle.c*/
 BOOL          allocate_param_bind(DYNAMIC_ARRAY **param_bind, uint elements);

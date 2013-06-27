@@ -188,9 +188,9 @@ SQLRETURN set_dbc_error(DBC FAR *dbc, char *state,
 */
 
 SQLRETURN set_stmt_error( STMT FAR *    stmt,
-                          const char *  state,
-                          const char *  message,
-                          uint          errcode )
+                                 const char *  state,
+                                 const char *  message,
+                                 uint          errcode )
 {
     strmov(stmt->error.sqlstate, state);
     strxmov(stmt->error.message, stmt->dbc->st_error_prefix, message, NullS);
