@@ -1,4 +1,4 @@
-# Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -54,6 +54,7 @@ ENDIF(ODBC_INCLUDES)
 IF(ODBC_LIB_DIR)
 
   SET(ODBC_LINK_FLAGS "-L${ODBC_LIB_DIR} -l${ODBCLIB} -l${ODBCINSTLIB}")
+  SET(ODBC_DRIVER_LINK_FLAGS "-L${ODBC_LIB_DIR} -l${ODBCINSTLIB}")
 
 ENDIF(ODBC_LIB_DIR)
 
