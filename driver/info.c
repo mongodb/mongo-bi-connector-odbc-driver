@@ -91,6 +91,9 @@ MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
     /** @todo check if we should report more */
     MYINFO_SET_ULONG(SQL_AT_ADD_COLUMN | SQL_AT_DROP_COLUMN);
 
+  case SQL_ASYNC_DBC_FUNCTIONS:
+    MYINFO_SET_ULONG(SQL_ASYNC_DBC_NOT_CAPABLE);
+
   case SQL_ASYNC_MODE:
     MYINFO_SET_ULONG(SQL_AM_NONE);
 
@@ -258,7 +261,7 @@ MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
 # endif
 #endif
   case SQL_DRIVER_ODBC_VER:
-    MYINFO_SET_STR("03.51");               /* What standard we implement */
+    MYINFO_SET_STR("03.80");               /* What standard we implement */
 
   case SQL_DRIVER_VER:
     MYINFO_SET_STR(DRIVER_VERSION);
@@ -326,7 +329,7 @@ MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
 
   case SQL_GETDATA_EXTENSIONS:
     MYINFO_SET_ULONG(SQL_GD_ANY_COLUMN | SQL_GD_ANY_ORDER | SQL_GD_BLOCK |
-                     SQL_GD_BOUND);
+                     SQL_GD_BOUND | SQL_GD_OUTPUT_PARAMS);
 
   case SQL_GROUP_BY:
     MYINFO_SET_USHORT(SQL_GB_NO_RELATION);
@@ -1120,6 +1123,7 @@ SQLUSMALLINT myodbc3_functions[]=
     SQL_API_SQLBINDCOL,
     /* SQL_API_SQLBINDPARAM */
     SQL_API_SQLCANCEL,
+    SQL_API_SQLCANCELHANDLE,
     SQL_API_SQLCLOSECURSOR,
     SQL_API_SQLCOLATTRIBUTE,
     SQL_API_SQLCOLUMNS,

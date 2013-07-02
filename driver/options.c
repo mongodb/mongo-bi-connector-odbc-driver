@@ -223,163 +223,175 @@ SQLRETURN SQL_API
 MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
                     SQLPOINTER ValuePtr, SQLINTEGER StringLengthPtr)
 {
-    DBC FAR *dbc= (DBC FAR*) hdbc;
+  DBC FAR *dbc= (DBC FAR*) hdbc;
 
-    switch (Attribute)
-    {
-        case SQL_ATTR_ACCESS_MODE:
-            break;
+  switch (Attribute)
+  {
+    case SQL_ATTR_ACCESS_MODE:
+      break;
 
-        case SQL_ATTR_AUTOCOMMIT:
-            if (ValuePtr != (SQLPOINTER) SQL_AUTOCOMMIT_ON)
-            {
-                if (!is_connected(dbc))
-                {
-                    dbc->commit_flag= CHECK_AUTOCOMMIT_OFF;
-                    return SQL_SUCCESS;
-                }
-                if (!(trans_supported(dbc)) || dbc->ds->disable_transactions)
-                    return set_conn_error(dbc,MYERR_S1C00,
-                                          "Transactions are not enabled", 4000);
+    case SQL_ATTR_AUTOCOMMIT:
+      if (ValuePtr != (SQLPOINTER) SQL_AUTOCOMMIT_ON)
+      {
+        if (!is_connected(dbc))
+        {
+          dbc->commit_flag= CHECK_AUTOCOMMIT_OFF;
+          return SQL_SUCCESS;
+        }
+        if (!(trans_supported(dbc)) || dbc->ds->disable_transactions)
+          return set_conn_error(dbc,MYERR_S1C00,
+                                "Transactions are not enabled", 4000);
 
-                if (autocommit_on(dbc))
-                    return odbc_stmt(dbc,"SET AUTOCOMMIT=0");
-            }
-            else if (!is_connected(dbc))
-            {
-                dbc->commit_flag= CHECK_AUTOCOMMIT_ON;
-                return SQL_SUCCESS;
-            }
-            else if (trans_supported(dbc) && !(autocommit_on(dbc)))
-                return odbc_stmt(dbc,"SET AUTOCOMMIT=1");
-            break;
+        if (autocommit_on(dbc))
+          return odbc_stmt(dbc,"SET AUTOCOMMIT=0");
+      }
+      else if (!is_connected(dbc))
+      {
+        dbc->commit_flag= CHECK_AUTOCOMMIT_ON;
+        return SQL_SUCCESS;
+      }
+      else if (trans_supported(dbc) && !(autocommit_on(dbc)))
+        return odbc_stmt(dbc,"SET AUTOCOMMIT=1");
+      break;
 
-        case SQL_ATTR_LOGIN_TIMEOUT:
-            {
-                /* we can't change timeout values in post connect state */
-               if (is_connected(dbc)) {
-                  return set_conn_error(dbc, MYERR_S1011, NULL, 0);
-               }
-               else
-               {
-                  dbc->login_timeout= (SQLUINTEGER)(SQLULEN)ValuePtr;
-                  return SQL_SUCCESS;
-               }
-            }
-            break;
+    case SQL_ATTR_LOGIN_TIMEOUT:
+      {
+        /* we can't change timeout values in post connect state */
+        if (is_connected(dbc))
+        {
+          return set_conn_error(dbc, MYERR_S1011, NULL, 0);
+        }
+        else
+        {
+          dbc->login_timeout= (SQLUINTEGER)(SQLULEN)ValuePtr;
+          return SQL_SUCCESS;
+        }
+      }
+      break;
 
-        case SQL_ATTR_CONNECTION_TIMEOUT:
-            {
-              /*
-                We don't do anything with this, but we pretend that we did
-                to be consistent with Microsoft SQL Server.
-              */
-              return SQL_SUCCESS;
-            }
-            break;
+    case SQL_ATTR_CONNECTION_TIMEOUT:
+      {
+        /*
+          We don't do anything with this, but we pretend that we did
+          to be consistent with Microsoft SQL Server.
+        */
+        return SQL_SUCCESS;
+      }
+      break;
 
-            /*
-                  If this is done before connect (I would say a function 
-                  sequence but .NET IDE does this) then we store the value but
-                  it is quite likely that it will get replaced by DATABASE in
-                  a DSN or connect string.
-            */
-        case SQL_ATTR_CURRENT_CATALOG:
-            {
-                char ldb[NAME_LEN+1], *db;
+      /*
+        If this is done before connect (I would say a function 
+        sequence but .NET IDE does this) then we store the value but
+        it is quite likely that it will get replaced by DATABASE in
+        a DSN or connect string.
+      */
+    case SQL_ATTR_CURRENT_CATALOG:
+      {
+        char ldb[NAME_LEN+1], *db;
 
-                if (!(db= fix_str((char *)ldb, (char *)ValuePtr, StringLengthPtr)))
-                    return set_conn_error(hdbc,MYERR_S1009,NULL, 0);
+        if (!(db= fix_str((char *)ldb, (char *)ValuePtr, StringLengthPtr)))
+          return set_conn_error(hdbc,MYERR_S1009,NULL, 0);
 
-                pthread_mutex_lock(&dbc->lock);
-                if (is_connected(dbc))
-                {
-                    if (mysql_select_db(&dbc->mysql,(char*) db))
-                    {
-                        set_conn_error(dbc,MYERR_S1000,mysql_error(&dbc->mysql),mysql_errno(&dbc->mysql));
-                        pthread_mutex_unlock(&dbc->lock);
-                        return SQL_ERROR;
-                    }
-                }
-                x_free(dbc->database);
-                dbc->database= my_strdup(db,MYF(MY_WME));
-                pthread_mutex_unlock(&dbc->lock);
-            }
-            break;
+        pthread_mutex_lock(&dbc->lock);
+        if (is_connected(dbc))
+        {
+          if (mysql_select_db(&dbc->mysql,(char*) db))
+          {
+            set_conn_error(dbc,MYERR_S1000,mysql_error(&dbc->mysql),mysql_errno(&dbc->mysql));
+            pthread_mutex_unlock(&dbc->lock);
+            return SQL_ERROR;
+          }
+        }
+        x_free(dbc->database);
+        dbc->database= my_strdup(db,MYF(MY_WME));
+        pthread_mutex_unlock(&dbc->lock);
+      }
+      break;
 
 
-        case SQL_ATTR_ODBC_CURSORS:
-            if (dbc->ds->force_use_of_forward_only_cursors &&
-                ValuePtr != (SQLPOINTER) SQL_CUR_USE_ODBC)
-                return set_conn_error(hdbc,MYERR_01S02,
-                                      "Forcing the Driver Manager to use ODBC cursor library",0);
-            break;
+    case SQL_ATTR_ODBC_CURSORS:
+      if (dbc->ds->force_use_of_forward_only_cursors &&
+        ValuePtr != (SQLPOINTER) SQL_CUR_USE_ODBC)
+        return set_conn_error(hdbc,MYERR_01S02,
+                              "Forcing the Driver Manager to use ODBC cursor library",0);
+      break;
 
-        case SQL_OPT_TRACE:
-        case SQL_OPT_TRACEFILE:
-        case SQL_QUIET_MODE:
-        case SQL_TRANSLATE_DLL:
-        case SQL_TRANSLATE_OPTION:
-            {
-                char buff[100];
-                sprintf(buff,"Suppose to set this attribute '%d' through driver manager, not by the driver",(int) Attribute);
-                return set_conn_error(hdbc,MYERR_01S02,buff,0);
-            }
+    case SQL_OPT_TRACE:
+    case SQL_OPT_TRACEFILE:
+    case SQL_QUIET_MODE:
+    case SQL_TRANSLATE_DLL:
+    case SQL_TRANSLATE_OPTION:
+      {
+        char buff[100];
+        sprintf(buff,"Suppose to set this attribute '%d' through driver manager, not by the driver",(int) Attribute);
+        return set_conn_error(hdbc,MYERR_01S02,buff,0);
+      }
 
-        case SQL_ATTR_PACKET_SIZE:
-            break;
+    case SQL_ATTR_PACKET_SIZE:
+      break;
 
-        case SQL_ATTR_TXN_ISOLATION:
-            if (!is_connected(dbc))  /* no connection yet */
-            {
-                dbc->txn_isolation= (SQLINTEGER)(SQLLEN)ValuePtr;
-                return SQL_SUCCESS;
-            }
-            if (trans_supported(dbc))
-            {
-                char buff[80];
-                const char *level= NULL;
+    case SQL_ATTR_TXN_ISOLATION:
+      if (!is_connected(dbc))  /* no connection yet */
+      {
+        dbc->txn_isolation= (SQLINTEGER)(SQLLEN)ValuePtr;
+        return SQL_SUCCESS;
+      }
+      if (trans_supported(dbc))
+      {
+        char buff[80];
+        const char *level= NULL;
 
-                if ((SQLLEN)ValuePtr == SQL_TXN_SERIALIZABLE)
-                    level="SERIALIZABLE";
-                else if ((SQLLEN)ValuePtr == SQL_TXN_REPEATABLE_READ)
-                    level="REPEATABLE READ";
-                else if ((SQLLEN)ValuePtr == SQL_TXN_READ_COMMITTED)
-                    level="READ COMMITTED";
-                else if ((SQLLEN)ValuePtr == SQL_TXN_READ_UNCOMMITTED)
-                    level="READ UNCOMMITTED";
+        if ((SQLLEN)ValuePtr == SQL_TXN_SERIALIZABLE)
+          level="SERIALIZABLE";
+        else if ((SQLLEN)ValuePtr == SQL_TXN_REPEATABLE_READ)
+          level="REPEATABLE READ";
+        else if ((SQLLEN)ValuePtr == SQL_TXN_READ_COMMITTED)
+          level="READ COMMITTED";
+        else if ((SQLLEN)ValuePtr == SQL_TXN_READ_UNCOMMITTED)
+          level="READ UNCOMMITTED";
 
-                if (level)
-                {
-                  SQLRETURN rc;
-                  sprintf(buff,"SET SESSION TRANSACTION ISOLATION LEVEL %s",
-                          level);
-                  if (SQL_SUCCEEDED(rc = odbc_stmt(dbc,buff)))
-                      dbc->txn_isolation= (SQLINTEGER)ValuePtr;
-                  return rc;
-                }
-                else
-                {
-                  return set_dbc_error(dbc, "HY024",
-                                       "Invalid attribute value", 0);
-                }
-            }
-            break;
+        if (level)
+        {
+          SQLRETURN rc;
+          sprintf(buff,"SET SESSION TRANSACTION ISOLATION LEVEL %s",
+                  level);
+          if (SQL_SUCCEEDED(rc = odbc_stmt(dbc,buff)))
+          {
+            dbc->txn_isolation= (SQLINTEGER)ValuePtr;
+          }
 
-        case SQL_ATTR_ENLIST_IN_DTC:
-            return set_dbc_error(dbc, "HYC00",
-                                 "Optional feature not supported", 0);
+          return rc;
+        }
+        else
+        {
+          return set_dbc_error(dbc, "HY024", "Invalid attribute value", 0);
+        }
+      }
+      break;
+    case SQL_ATTR_RESET_CONNECTION:
+      if (ValuePtr != (SQLPOINTER)SQL_RESET_CONNECTION_YES)
+      {
+        return set_dbc_error(dbc, "HY024", "Invalid attribute value", 0);
+      }
+      /* TODO 3.8 feature */
 
-            /*
-              3.x driver doesn't support any statement attributes
-              at connection level, but to make sure all 2.x apps
-              works fine...lets support it..nothing to lose..
-            */
-        default:
-            return set_constmt_attr(2, dbc, &dbc->stmt_options, Attribute,
-                                    ValuePtr);
-    }
-    return SQL_SUCCESS;
+      return SQL_SUCCESS;
+
+    case SQL_ATTR_ENLIST_IN_DTC:
+      return set_dbc_error(dbc, "HYC00",
+                           "Optional feature not supported", 0);
+
+      /*
+        3.x driver doesn't support any statement attributes
+        at connection level, but to make sure all 2.x apps
+        works fine...lets support it..nothing to lose..
+      */
+    default:
+      return set_constmt_attr(2, dbc, &dbc->stmt_options, Attribute,
+                                ValuePtr);
+  }
+
+  return SQL_SUCCESS;
 }
 
 
@@ -856,9 +868,19 @@ SQLSetEnvAttr(SQLHENV    henv,
     switch (Attribute)
     {
         case SQL_ATTR_ODBC_VERSION:
-            ((ENV FAR *)henv)->odbc_ver= (SQLINTEGER)(SQLLEN)ValuePtr;
+          {
+            switch((SQLINTEGER)(SQLLEN)ValuePtr)
+            {
+            case SQL_OV_ODBC2:
+            case SQL_OV_ODBC3:
+            case SQL_OV_ODBC3_80:
+              ((ENV FAR *)henv)->odbc_ver= (SQLINTEGER)(SQLLEN)ValuePtr;
+              break;
+            default:
+              return set_env_error(henv,MYERR_S1024,NULL,0);
+            }
             break;
-
+          }
         case SQL_ATTR_OUTPUT_NTS:
             if (ValuePtr == (SQLPOINTER)SQL_TRUE)
                 break;

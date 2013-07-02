@@ -29,12 +29,15 @@ DECLARE_TEST(t_odbc3_error)
 {
   DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
   SQLINTEGER ov_version;
+  /*SQLCHAR dm_version[6];*/
 
   is(OK == alloc_basic_handles(&henv1, &hdbc1, &hstmt1));
 
+  /*SQLGetInfo(hdbc1, SQL_DM_VER, (SQLPOINTER)dm_version, 6, 0);*/
+
   ok_env(henv1, SQLGetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
                               (SQLPOINTER)&ov_version, 0, 0));
-  is_num(ov_version, SQL_OV_ODBC3);
+  is_num(ov_version, SQL_OV_ODBC3_80);
 
 
   expect_sql(hstmt1, "SELECT * FROM non_existing_table", SQL_ERROR);

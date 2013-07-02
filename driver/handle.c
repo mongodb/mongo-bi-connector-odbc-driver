@@ -104,7 +104,7 @@ SQLRETURN SQL_API SQLAllocEnv(SQLHENV FAR *phenv)
   {
 /* --- if OS=WIN32, set default env option for SQL_ATTR_ODBC_VERSION */
 #ifdef WIN32
-    ((ENV FAR*) *phenv)->odbc_ver= SQL_OV_ODBC3;
+    ((ENV FAR*) *phenv)->odbc_ver= SQL_OV_ODBC3_80;
 #else
     ((ENV FAR*) *phenv)->odbc_ver= SQL_OV_ODBC2;
 #endif /* WIN32 */
@@ -770,6 +770,29 @@ SQLRETURN SQL_API SQLAllocHandle(SQLSMALLINT HandleType,
     }
 
     return error;
+}
+
+
+/*
+  @type    : ODBC 3.8
+  @purpose : Mapped to SQLCancel if HandleType is 
+*/
+SQLRETURN SQL_API SQLCancelHandle(SQLSMALLINT  HandleType,
+                          SQLHANDLE    Handle)
+{
+  switch (HandleType)
+  {
+  case SQL_HANDLE_DBC:
+    {
+      DBC *dbc= (DBC*)Handle;
+      return set_dbc_error(dbc, "IM001", "Driver does not support this function", 0);
+    }
+  /* Normally DM should map such call to SQLCancel */
+  case SQL_HANDLE_STMT:
+    return SQLCancel((SQLHSTMT) Handle);
+  }
+
+  return SQL_SUCCESS;
 }
 
 

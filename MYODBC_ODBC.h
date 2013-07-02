@@ -25,7 +25,9 @@
 #ifndef MYODBC_ODBC_H
 #define MYODBC_ODBC_H
 
-#define ODBCVER 0x0351
+#ifndef ODBCVER
+# define ODBCVER 0x0380
+#endif
 
 #ifdef _UNIX_
 # include <ctype.h>

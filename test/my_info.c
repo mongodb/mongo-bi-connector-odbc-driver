@@ -49,7 +49,7 @@ DECLARE_TEST(sqlgetinfo)
                           sizeof(rgbValue), &pcbInfo));
 
   is_num(pcbInfo, 5);
-  is_str(rgbValue, "03.51", 5);
+  is_str(rgbValue, "03.80", 5);
 
   return OK;
 }
