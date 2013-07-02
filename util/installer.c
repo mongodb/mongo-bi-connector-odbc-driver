@@ -167,6 +167,7 @@ static SQLWCHAR W_CAN_HANDLE_EXP_PWD[]=
   {'C','A','N','_','H','A','N','D','L','E','_','E','X','P','_','P','W','D',0};
 static SQLWCHAR W_ENABLE_CLEARTEXT_PLUGIN[]=
   {'E','N','A','B','L','E','_','C','L','E','A', 'R', 'T', 'E', 'X', 'T', '_','P','L','U','G','I','N',0};
+static SQLWCHAR W_SAVEFILE[]=  {'S','A','V','E','F','I','L','E',0};
 
 /* DS_PARAM */
 /* externally used strings */
@@ -196,7 +197,8 @@ SQLWCHAR *dsnparams[]= {W_DSN, W_DRIVER, W_DESCRIPTION, W_SERVER,
                         W_MULTI_STATEMENTS, W_COLUMN_SIZE_S32,
                         W_NO_BINARY_RESULT, W_DFLT_BIGINT_BIND_STR,
                         W_CLIENT_INTERACTIVE, W_NO_I_S, W_PREFETCH, W_NO_SSPS,
-                        W_CAN_HANDLE_EXP_PWD, W_ENABLE_CLEARTEXT_PLUGIN};
+                        W_CAN_HANDLE_EXP_PWD, W_ENABLE_CLEARTEXT_PLUGIN,
+                        W_SAVEFILE};
 static const
 int dsnparamcnt= sizeof(dsnparams) / sizeof(SQLWCHAR *);
 /* DS_PARAM */
@@ -628,6 +630,7 @@ void ds_delete(DataSource *ds)
   x_free(ds->sslca);
   x_free(ds->sslcapath);
   x_free(ds->sslcipher);
+  x_free(ds->savefile);
   
   x_free(ds->name8);
   x_free(ds->driver8);
@@ -644,6 +647,7 @@ void ds_delete(DataSource *ds)
   x_free(ds->sslca8);
   x_free(ds->sslcapath8);
   x_free(ds->sslcipher8);
+  x_free(ds->savefile8);
 
   x_free(ds);
 }
@@ -739,6 +743,8 @@ void ds_map_param(DataSource *ds, const SQLWCHAR *param,
     *strdest= &ds->sslcapath;
   else if (!sqlwcharcasecmp(W_SSLCIPHER, param))
     *strdest= &ds->sslcipher;
+  else if (!sqlwcharcasecmp(W_SAVEFILE, param))
+    *strdest= &ds->savefile;
 
   else if (!sqlwcharcasecmp(W_PORT, param))
     *intdest= &ds->port;
@@ -1241,6 +1247,7 @@ int ds_add(DataSource *ds)
   if (ds_add_strprop(ds->name, W_SSLCA      , ds->sslca      )) goto error;
   if (ds_add_strprop(ds->name, W_SSLCAPATH  , ds->sslcapath  )) goto error;
   if (ds_add_strprop(ds->name, W_SSLCIPHER  , ds->sslcipher  )) goto error;
+  if (ds_add_strprop(ds->name, W_SAVEFILE   , ds->savefile   )) goto error;
 
   if (ds_add_intprop(ds->name, W_SSLVERIFY  , ds->sslverify  )) goto error;
   if (ds_add_intprop(ds->name, W_PORT       , ds->port       )) goto error;

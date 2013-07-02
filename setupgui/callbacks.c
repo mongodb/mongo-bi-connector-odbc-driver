@@ -38,6 +38,13 @@ SQLWCHAR *mytest(HWND hwnd, DataSource *params)
   SQLHENV hEnv= SQL_NULL_HENV;
   SQLWCHAR *rc;
 
+  /* 
+    In case of file data source we do not want it to be created
+    when clicking the Test button
+  */
+  SQLWCHAR *preservedSavefile= params->savefile;
+  params->savefile= 0;
+
   if (SQL_SUCCEEDED(Connect(&hDbc, &hEnv, params)))
     rc= sqlwchardup(L"Connection successful", SQL_NTS);
   else
@@ -61,6 +68,9 @@ SQLWCHAR *mytest(HWND hwnd, DataSource *params)
       *(rc + sqlwcharlen(rc))= ']';
     }
   }
+
+  /* Restore savefile parameter */
+  params->savefile= preservedSavefile;
 
   Disconnect(hDbc, hEnv);
   return rc;
@@ -86,11 +96,19 @@ LIST *mygetdatabases(HWND hwnd, DataSource* params)
   SQLWCHAR    *preservedDatabase= params->database;
   BOOL        preservedNoCatalog= params->no_catalog;
 
+  /* 
+    In case of file data source we do not want it to be created
+    when clicking the Test button
+  */
+  SQLWCHAR *preservedSavefile= params->savefile;
+  params->savefile= NULL;
+
   params->database= NULL;
   params->no_catalog= FALSE;
 
   nReturn= Connect(&hDbc, &hEnv, params);
 
+  params->savefile= preservedSavefile;
   params->database= preservedDatabase;
   params->no_catalog= preservedNoCatalog;
 
@@ -159,11 +177,19 @@ LIST *mygetcharsets(HWND hwnd, DataSource* params)
   SQLWCHAR    *preservedDatabase= params->database;
   BOOL        preservedNoCatalog= params->no_catalog;
 
+  /* 
+    In case of file data source we do not want it to be created
+    when clicking the Test button
+  */
+  SQLWCHAR *preservedSavefile= params->savefile;
+  params->savefile= NULL;
+
   params->database= NULL;
   params->no_catalog= FALSE;
 
   nReturn= Connect(&hDbc, &hEnv, params);
 
+  params->savefile= preservedSavefile;
   params->database= preservedDatabase;
   params->no_catalog= preservedNoCatalog;
 

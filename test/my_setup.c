@@ -98,8 +98,67 @@ DECLARE_TEST(t_bug66548)
 }
 
 
+/**
+  Bug #24581: Support File DSN
+*/
+DECLARE_TEST(t_bug24581)
+{
+  /* TODO: remove #ifdef _WIN32 when Linux and MacOS setup is released */
+#ifdef _WIN32
+  SQLCHAR grant_query[128];
+  SQLCHAR conn_in[512], conn_out[512];
+  SQLCHAR conn_fdsn[255];
+  SQLCHAR fdsn_path[255];
+  SQLSMALLINT conn_out_len;
+  HDBC hdbc1;
+  HSTMT hstmt1;
+  
+  /* We need a user with minimal privileges and no password */
+  sprintf(grant_query, "grant usage on %s.* to 'user24851'@'%s'", 
+          mydb, myserver);
+  ok_stmt(hstmt, SQLExecDirect(hstmt, grant_query, SQL_NTS));
+
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+  sprintf(fdsn_path, "%s\\filedsn24851.dsn", getenv("TEMP"));
+  sprintf(conn_in, "DRIVER=%s;SERVER=%s;UID=user24851;DATABASE=%s;"\
+                   "SAVEFILE=%s",
+                   mydriver, myserver, mydb, fdsn_path);
+
+  /* Create a .dsn file in the TEMP directory, we will remove it later */
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, (SQLCHAR*)conn_in, SQL_NTS, 
+                          conn_out, 512, &conn_out_len, SQL_DRIVER_NOPROMPT));
+  /* Not necessary, but keep the driver manager happy */
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+
+  sprintf(conn_fdsn, "FileDSN=%s", fdsn_path);
+  
+  /* Connect using the new file DSN */
+  ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, (SQLCHAR*)conn_fdsn, SQL_NTS, 
+                          conn_out, 512, &conn_out_len, SQL_DRIVER_NOPROMPT));
+
+  ok_con(hdbc1, SQLAllocHandle(SQL_HANDLE_STMT, hdbc1, &hstmt1));
+
+  /* just a simple select to verify the server result */
+  ok_sql(hstmt1, "select 24851");
+
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  is_num(my_fetch_int(hstmt1, 1), 24851);
+
+  ok_sql(hstmt, "drop user 'user24851'@'localhost'");
+  free_basic_handles(NULL, &hdbc1, &hstmt1);
+
+  /* Remove the file DSN */
+  is(remove(fdsn_path)==0);
+#endif
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug66548)
+  ADD_TEST(t_bug24581)
 END_TESTS
 
 

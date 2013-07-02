@@ -527,6 +527,8 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
   /* We may have to read driver info to find the setup library. */
   Driver *pDriver= driver_new();
   SQLWCHAR *prompt_instr= NULL;
+  /* We never know how many new parameters might come out of the prompt */
+  SQLWCHAR prompt_outstr[4096];
   size_t prompt_inlen;
   BOOL bPrompt= FALSE;
   HMODULE hModule= NULL;
@@ -725,8 +727,12 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
     sqlwcharncat2(prompt_instr, W_DRIVER_PARAM, &prompt_inlen);
     sqlwcharncat2(prompt_instr, ds->driver, &prompt_inlen);
 
+    /* 
+      In case the client app did not provide the out string we use our
+      inner buffer prompt_outstr
+    */
     if (!pFunc(hwnd, prompt_instr, fDriverCompletion,
-               szConnStrOut, cbConnStrOutMax, pcbConnStrOut))
+               prompt_outstr, sizeof(prompt_outstr), pcbConnStrOut))
     {
       set_dbc_error(hdbc, "HY000", "User cancelled.", 0);
       rc= SQL_NO_DATA;
@@ -736,15 +742,28 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
     /* refresh our DataSource */
     ds_delete(ds);
     ds= ds_new();
-    if (ds_from_kvpair(ds, szConnStrOut, ';'))
+    if (ds_from_kvpair(ds, prompt_outstr, ';'))
     {
       rc= set_dbc_error(dbc, "HY000",
                         "Failed to parse the prompt output string.", 0);
       goto error;
     }
+
+    /* 
+      We don't need prompt_outstr after the new DataSource is created.
+      Copy its contents into szConnStrOut if possible
+    */
+    if (szConnStrOut)
+    {
+      *pcbConnStrOut= (SQLSMALLINT)myodbc_min(cbConnStrOutMax, *pcbConnStrOut);
+      memcpy(szConnStrOut, prompt_outstr, (size_t)*pcbConnStrOut*sizeof(SQLWCHAR));
+      /* term needed if possibly truncated */
+      szConnStrOut[*pcbConnStrOut - 1] = 0;
+    }
+
   }
 
-  if ((rc= myodbc_do_connect(dbc, ds)) != SQL_SUCCESS)
+  if (!ds->savefile && (rc= myodbc_do_connect(dbc, ds)) != SQL_SUCCESS)
     goto error;
 
 connected:
@@ -807,12 +826,15 @@ SQLRETURN SQL_API SQLDisconnect(SQLHDBC hdbc)
   }
   mysql_close(&dbc->mysql);
 
-  if (dbc->ds->save_queries)
+  if (dbc->ds && dbc->ds->save_queries)
     end_query_log(dbc->query_log);
 
   x_free(dbc->database);
-  assert(dbc->ds);
-  ds_delete(dbc->ds);
+
+  if(dbc->ds)
+  {
+    ds_delete(dbc->ds);
+  }
   dbc->ds= NULL;
   dbc->database= NULL;
 

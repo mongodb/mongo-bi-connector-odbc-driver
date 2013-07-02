@@ -1,5 +1,8 @@
 5.3.0
 
+  Functionality added or changed:
+  * Support for File Data Sources. (WL#6583, Bug# 11746219/24581)
+
   Bugs fixed:
   * With utf8 byte string for mysql server version < 5.5.3, insert fails
     with error message "Server does not support 4-byte encoded UTF8

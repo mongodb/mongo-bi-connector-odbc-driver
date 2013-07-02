@@ -1249,13 +1249,21 @@ int free_basic_handles(SQLHENV *henv,SQLHDBC *hdbc, SQLHSTMT *hstmt)
   /* We don't care if this succeeds, the connection may have gone away. */
   (void)SQLEndTran(SQL_HANDLE_DBC, *hdbc, SQL_COMMIT);
 
-  ok_stmt(*hstmt, SQLFreeStmt(*hstmt, SQL_DROP));
+  if(hstmt && *hstmt)
+  {
+    ok_stmt(*hstmt, SQLFreeStmt(*hstmt, SQL_DROP));
+  }
 
-  ok_con(*hdbc, SQLDisconnect(*hdbc));
+  if(hdbc && *hdbc)
+  {
+    ok_con(*hdbc, SQLDisconnect(*hdbc));
+    ok_con(*hdbc, SQLFreeConnect(*hdbc));
+  }
 
-  ok_con(*hdbc, SQLFreeConnect(*hdbc));
-
-  ok_env(*henv, SQLFreeEnv(*henv));
+  if(henv && *henv)
+  {
+    ok_env(*henv, SQLFreeEnv(*henv));
+  }
 
   return OK;
 }

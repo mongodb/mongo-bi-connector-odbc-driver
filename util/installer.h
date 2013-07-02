@@ -82,6 +82,7 @@ typedef struct {
   SQLWCHAR *sslca;
   SQLWCHAR *sslcapath;
   SQLWCHAR *sslcipher;
+  SQLWCHAR *savefile;
 
   unsigned int port;
   unsigned int readtimeout;
@@ -103,6 +104,7 @@ typedef struct {
   SQLCHAR *sslca8;
   SQLCHAR *sslcapath8;
   SQLCHAR *sslcipher8;
+  SQLWCHAR *savefile8;
 
   /*  */
   BOOL return_matching_rows;
