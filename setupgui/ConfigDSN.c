@@ -87,9 +87,16 @@ BOOL INSTAPI ConfigDSNW(HWND hWnd, WORD nRequest, LPCWSTR pszDriver,
   {
     SQLWCHAR delim= ';';
 
-    /* if there's no ;, then it's most likely null-delimited */
+#ifdef _WIN32
+    /* 
+      if there's no ;, then it's most likely null-delimited
+
+     NOTE: the double null-terminated strings are not working
+     *      with UnixODBC-GUI-Qt (posted a bug ) 
+    */
     if (!sqlwcharchr(pszAttributes, delim))
       delim= 0;
+#endif
 
     if (ds_from_kvpair(ds, pszAttributes, delim))
     {
