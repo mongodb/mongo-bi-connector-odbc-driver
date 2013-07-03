@@ -25,6 +25,7 @@
 #include "odbctap.h"
 
 #define MAX_INSERT_COUNT 800
+#define MAX_BM_INS_COUNT 20
 
 DECLARE_TEST(t_bulk_insert)
 {
@@ -294,11 +295,243 @@ DECLARE_TEST(t_bulk_insert_rows)
 }
 
 
+DECLARE_TEST(t_bulk_insert_bookmark)
+{
+  SQLINTEGER i, id[MAX_BM_INS_COUNT+1];
+  SQLCHAR    name[MAX_BM_INS_COUNT][40],
+             buff[100];
+  SQLCHAR bData[MAX_BM_INS_COUNT][10];
+  SQLUINTEGER bookmarkLen;
+  SQLSMALLINT length;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bulk_insert");
+  ok_sql(hstmt, "CREATE TABLE t_bulk_insert (id INT, v VARCHAR(100))");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE,
+                                (SQLPOINTER)MAX_BM_INS_COUNT, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY,
+                                (SQLPOINTER)SQL_CONCUR_ROWVER, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_USE_BOOKMARKS,
+                                (SQLPOINTER) SQL_UB_VARIABLE, 0));
+
+  ok_sql(hstmt, "SELECT id, v FROM t_bulk_insert");
+
+  expect_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0),
+              SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 0, SQL_C_VARBOOKMARK, bData, 
+                                              sizeof(bData[0]), NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, id, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, name, sizeof(name[0]), NULL));
+
+  for (i= 0; i < MAX_BM_INS_COUNT; i++)
+  {
+    id[i]= i;
+    sprintf((char *)name[i], "Varchar%d", i);
+  }
+
+  ok_stmt(hstmt, SQLBulkOperations(hstmt, SQL_ADD));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE,
+                                (SQLPOINTER)1, 0));
+
+  ok_sql(hstmt, "SELECT * FROM t_bulk_insert");
+  is_num(myrowcount(hstmt), MAX_BM_INS_COUNT);
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_BOOKMARK, 0));
+  
+  for (i= 0; i < MAX_BM_INS_COUNT; i++)
+  {
+    length= sprintf((char *)buff, "%d", i + 1);
+    is_str(bData[i], buff, length);
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bulk_insert");
+
+  return OK;
+}
+
+
+/**
+  SQL Bookmark Update using SQLBulkOperations SQL_UPDATE_BY_BOOKMARK operation
+  and verify updated data by fetching data using SQL_FETCH_BY_BOOKMARK
+*/
+DECLARE_TEST(t_bookmark_update)
+{
+  SQLLEN len= 0;
+  SQLUSMALLINT rowStatus[4];
+  SQLUINTEGER numRowsFetched;
+  SQLINTEGER nData[4], i;
+  SQLCHAR szData[4][16];
+  SQLCHAR bData[4][10];
+  SQLLEN nRowCount;
+
+  ok_sql(hstmt, "drop table if exists t_bookmark");
+  ok_sql(hstmt, "CREATE TABLE t_bookmark ("\
+                "tt_int INT PRIMARY KEY auto_increment,"\
+                "tt_varchar VARCHAR(128) NOT NULL)");
+  ok_sql(hstmt, "INSERT INTO t_bookmark VALUES "\
+                "(1, 'string 1'),"\
+                "(2, 'string 2'),"\
+                "(3, 'string 3'),"\
+                "(4, 'string 4'),"\
+                "(5, 'string 5')");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_USE_BOOKMARKS,
+                                (SQLPOINTER) SQL_UB_VARIABLE, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_STATUS_PTR,
+                                (SQLPOINTER)rowStatus, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR,
+                                &numRowsFetched, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+  ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 4));
+
+  ok_sql(hstmt, "select * from t_bookmark order by 1");
+  ok_stmt(hstmt, SQLBindCol(hstmt, 0, SQL_C_VARBOOKMARK, bData, 
+	                        sizeof(bData[0]), NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, nData, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szData, sizeof(szData[0]),
+                            NULL));
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_BOOKMARK, 0));
+
+  is_num(nData[0], 1);
+  is_str(szData[0], "string 1", 8);
+  is_num(nData[1], 2);
+  is_str(szData[1], "string 2", 8);
+  is_num(nData[2], 3);
+  is_str(szData[2], "string 3", 8);
+  is_num(nData[3], 4);
+  is_str(szData[3], "string 4", 8);
+
+  for (i= 0; i < 4; ++i)
+  {
+    strcpy(szData[i], "xxxxxxxx");
+  }
+
+  ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 2));
+  ok_stmt(hstmt, SQLBulkOperations(hstmt, SQL_UPDATE_BY_BOOKMARK));
+  ok_stmt(hstmt, SQLRowCount(hstmt, &nRowCount));
+  is_num(nRowCount, 2);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 4));
+  ok_sql(hstmt, "select * from t_bookmark order by 1");
+  ok_stmt(hstmt, SQLBulkOperations(hstmt, SQL_FETCH_BY_BOOKMARK));
+
+  is_num(nData[0], 1);
+  is_str(szData[0], "xxxxxxxx", 8);
+  is_num(nData[1], 2);
+  is_str(szData[1], "xxxxxxxx", 8);
+  is_num(nData[2], 3);
+  is_str(szData[2], "string 3", 8);
+  is_num(nData[3], 4);
+  is_str(szData[3], "string 4", 8);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists t_bookmark");
+
+  return OK;
+}
+
+
+/**
+  SQL Bookmark Delete using SQLBulkOperations SQL_DELETE_BY_BOOKMARK operation
+*/
+DECLARE_TEST(t_bookmark_delete)
+{
+  SQLLEN len= 0;
+  SQLUSMALLINT rowStatus[4];
+  SQLUINTEGER numRowsFetched;
+  SQLINTEGER nData[4];
+  SQLCHAR szData[4][16];
+  SQLCHAR bData[4][10];
+  SQLLEN nRowCount;
+
+  ok_sql(hstmt, "drop table if exists t_bookmark");
+  ok_sql(hstmt, "CREATE TABLE t_bookmark ("\
+                "tt_int INT PRIMARY KEY auto_increment,"\
+                "tt_varchar VARCHAR(128) NOT NULL)");
+  ok_sql(hstmt, "INSERT INTO t_bookmark VALUES "\
+                "(1, 'string 1'),"\
+                "(2, 'string 2'),"\
+                "(3, 'string 3'),"\
+                "(4, 'string 4')");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_USE_BOOKMARKS,
+                                (SQLPOINTER) SQL_UB_VARIABLE, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_STATUS_PTR,
+                                (SQLPOINTER)rowStatus, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR,
+                                &numRowsFetched, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+  ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 4));
+
+  ok_sql(hstmt, "select * from t_bookmark order by 1");
+  ok_stmt(hstmt, SQLBindCol(hstmt, 0, SQL_C_VARBOOKMARK, bData, 
+	                        sizeof(bData[0]), NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, nData, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szData, sizeof(szData[0]),
+                            NULL));
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_BOOKMARK, 0));
+
+  is_num(nData[0], 1);
+  is_str(szData[0], "string 1", 8);
+  is_num(nData[1], 2);
+  is_str(szData[1], "string 2", 8);
+  is_num(nData[2], 3);
+  is_str(szData[2], "string 3", 8);
+  is_num(nData[3], 4);
+  is_str(szData[3], "string 4", 8);
+
+  ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 2));
+  ok_stmt(hstmt, SQLBulkOperations(hstmt, SQL_DELETE_BY_BOOKMARK));
+  ok_stmt(hstmt, SQLRowCount(hstmt, &nRowCount));
+  is_num(nRowCount, 2);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 4));
+  ok_sql(hstmt, "select * from t_bookmark order by 1");
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_FIRST, 0));
+
+  is_num(nData[0], 3);
+  is_str(szData[0], "string 3", 8);
+  is_num(nData[1], 4);
+  is_str(szData[1], "string 4", 8);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists t_bookmark");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bulk_insert)
   ADD_TEST(t_mul_pkdel)
   ADD_TEST(t_bulk_insert_indicator)
   ADD_TEST(t_bulk_insert_rows)
+  ADD_TEST(t_bulk_insert_bookmark)
+  ADD_TEST(t_bookmark_update)
+  ADD_TEST(t_bookmark_delete)
 END_TESTS
 
 

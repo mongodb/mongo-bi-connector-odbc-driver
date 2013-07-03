@@ -2,6 +2,7 @@
 
   Functionality added or changed:
   * Support for File Data Sources. (WL#6583, Bug# 11746219/24581)
+	* Bookmark support added in myodbc (WL#7039)
 
   Bugs fixed:
   * With utf8 byte string for mysql server version < 5.5.3, insert fails

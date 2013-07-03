@@ -68,6 +68,13 @@ DESC *desc_alloc(STMT *stmt, SQLSMALLINT alloc_type,
     x_free((char *)desc);
     return NULL;
   }
+
+  if (my_init_dynamic_array(&desc->bookmark, sizeof(DESCREC), 0, 0))
+  {
+    x_free((char *)desc);
+    return NULL;
+  }
+
   desc->desc_type= desc_type;
   desc->alloc_type= alloc_type;
   desc->ref_type= ref_type;
@@ -78,6 +85,7 @@ DESC *desc_alloc(STMT *stmt, SQLSMALLINT alloc_type,
   desc->bind_offset_ptr= NULL;
   desc->bind_type= SQL_BIND_BY_COLUMN;
   desc->count= 0;
+  desc->bookmark_count= 0;
   desc->rows_processed_ptr= NULL;
   desc->exp.stmts= NULL;
   return desc;
@@ -206,41 +214,73 @@ DESCREC *desc_get_rec(DESC *desc, int recnum, my_bool expand)
 {
   DESCREC *rec= NULL;
   int i;
-  assert(recnum >= 0);
-  /* expand if needed */
-  if (expand)
+
+  if (recnum == -1 && desc->stmt->stmt_options.bookmarks == SQL_UB_VARIABLE)
   {
-    for (i= desc->count; expand && i <= recnum; ++i)
+    if (expand)
     {
-      /* we might have used records lying around from before if
-       * SQLFreeStmt() was called with SQL_UNBIND or SQL_FREE_PARAMS
-       */
-      if ((uint)i < desc->records.elements)
+      if (!desc->bookmark_count)
       {
-        rec= ((DESCREC *)desc->records.buffer) + recnum;
-      }
-      else
-      {
-        rec= (DESCREC *)alloc_dynamic(&desc->records);
+        rec= (DESCREC *)alloc_dynamic(&desc->bookmark);
         if (!rec)
           return NULL;
-      }
-      memset(rec, 0, sizeof(DESCREC));
-      ++desc->count;
 
-      /* record initialization */
-      if (IS_APD(desc))
-          desc_rec_init_apd(rec);
-      else if (IS_IPD(desc))
-          desc_rec_init_ipd(rec);
-      else if (IS_ARD(desc))
-          desc_rec_init_ard(rec);
-      else if (IS_IRD(desc))
-          desc_rec_init_ird(rec);
+        memset(rec, 0, sizeof(DESCREC));
+        ++desc->bookmark_count;
+
+        /* record initialization */
+        if (IS_APD(desc))
+            desc_rec_init_apd(rec);
+        else if (IS_IPD(desc))
+            desc_rec_init_ipd(rec);
+        else if (IS_ARD(desc))
+            desc_rec_init_ard(rec);
+        else if (IS_IRD(desc))
+            desc_rec_init_ird(rec);
+      }
     }
+
+    rec= (DESCREC *)desc->bookmark.buffer;
   }
-  if (recnum < desc->count)
-    rec= ((DESCREC *)desc->records.buffer) + recnum;
+  else
+  {
+    assert(recnum >= 0);
+    /* expand if needed */
+    if (expand)
+    {
+      for (i= desc->count; expand && i <= recnum; ++i)
+      {
+        /* we might have used records lying around from before if
+         * SQLFreeStmt() was called with SQL_UNBIND or SQL_FREE_PARAMS
+         */
+        if ((uint)i < desc->records.elements)
+        {
+          rec= ((DESCREC *)desc->records.buffer) + recnum;
+        }
+        else
+        {
+          rec= (DESCREC *)alloc_dynamic(&desc->records);
+          if (!rec)
+            return NULL;
+        }
+        memset(rec, 0, sizeof(DESCREC));
+        ++desc->count;
+
+        /* record initialization */
+        if (IS_APD(desc))
+            desc_rec_init_apd(rec);
+        else if (IS_IPD(desc))
+            desc_rec_init_ipd(rec);
+        else if (IS_ARD(desc))
+            desc_rec_init_ard(rec);
+        else if (IS_IRD(desc))
+            desc_rec_init_ird(rec);
+      }
+    }
+    if (recnum < desc->count)
+      rec= ((DESCREC *)desc->records.buffer) + recnum;
+  }
+
   if (expand)
     assert(rec);
   return rec;
@@ -750,11 +790,12 @@ MySQLSetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
     dest_struct= desc;
   else
   {
-    if (recnum < 1)
+    if (recnum < 1 && desc->stmt->stmt_options.bookmarks == SQL_UB_OFF)
       return set_desc_error(desc, "07009",
                 "Invalid descriptor index",
                 MYERR_07009);
-    dest_struct= desc_get_rec(desc, recnum - 1, TRUE);
+    else
+      dest_struct= desc_get_rec(desc, recnum - 1, TRUE);
   }
 
   dest= ((char *)dest_struct) + fld->offset;

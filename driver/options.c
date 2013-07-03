@@ -120,8 +120,18 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
         case 1228:
             break;
 
-        case SQL_ATTR_FETCH_BOOKMARK_PTR:
         case SQL_ATTR_USE_BOOKMARKS:
+          if (ValuePtr == (SQLPOINTER) SQL_UB_VARIABLE ||
+              ValuePtr == (SQLPOINTER) SQL_UB_ON)
+            options->bookmarks= (SQLUINTEGER) SQL_UB_VARIABLE;
+          else 
+            options->bookmarks= (SQLUINTEGER) SQL_UB_OFF;
+          break;
+
+        case SQL_ATTR_FETCH_BOOKMARK_PTR:
+          options->bookmark_ptr = ValuePtr;
+          break;
+
             return set_handle_error(HandleType,Handle,MYERR_S1C00,NULL,0);
 
         case SQL_ATTR_QUERY_TIMEOUT:
@@ -199,9 +209,13 @@ get_constmt_attr(SQLSMALLINT  HandleType,
             *((SQLUINTEGER *) ValuePtr)= SQL_NOSCAN_ON;
             break;
 
-        case SQL_ATTR_FETCH_BOOKMARK_PTR:
         case SQL_ATTR_USE_BOOKMARKS:
-            return set_handle_error(HandleType,Handle,MYERR_S1C00,NULL,0);
+            *((SQLUINTEGER *) ValuePtr) = options->bookmarks;
+            break;
+
+        case SQL_ATTR_FETCH_BOOKMARK_PTR:
+          *((void **) ValuePtr) = options->bookmark_ptr;
+          *StringLengthPtr= sizeof(SQLPOINTER);
 
         case 1226:/* MS SQL Server Extension */
         case 1227:

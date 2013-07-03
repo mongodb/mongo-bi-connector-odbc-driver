@@ -918,6 +918,206 @@ DECLARE_TEST(t_bug11766437)
 }
 
 
+/**
+  Bind column 0 with SQL_C_VARBOOKMARK data type and retrieve bookmark 
+  using FetchOrientation SQL_FETCH_BOOKMARK.
+  Set position in rowset using SQLSetPos and retrieve bookmark for that 
+  position using SQLGetData and save that particular bookmark position 
+  using SQL_ATTR_FETCH_BOOKMARK_PTR. Now fetch using using 
+  FetchOrientation SQL_FETCH_BOOKMARK with retrieve data from that position.
+*/
+DECLARE_TEST(t_varbookmark)
+{
+  SQLLEN len= 0;
+  SQLCHAR abookmark[10];
+  SQLINTEGER outlen;
+  SQLUSMALLINT rowStatus[4];
+  SQLUINTEGER numRowsFetched;
+  SQLINTEGER nData[4];
+  SQLCHAR szData[4][16];
+  SQLCHAR bData[4][10];
+
+  ok_sql(hstmt, "drop table if exists t_bookmark");
+  ok_sql(hstmt, "CREATE TABLE t_bookmark ("\
+                "tt_int INT PRIMARY KEY auto_increment,"\
+                "tt_varchar VARCHAR(128) NOT NULL)");
+  ok_sql(hstmt, "INSERT INTO t_bookmark VALUES "\
+                "(100, 'string 1'),"\
+                "(200, 'string 2'),"\
+                "(300, 'string 3'),"\
+                "(400, 'string 4')");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_USE_BOOKMARKS,
+                                (SQLPOINTER) SQL_UB_VARIABLE, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_STATUS_PTR,
+                                (SQLPOINTER)rowStatus, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR,
+                                &numRowsFetched, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
+
+  ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 4));
+
+  ok_sql(hstmt, "select * from t_bookmark order by 1");
+  ok_stmt(hstmt, SQLBindCol(hstmt, 0, SQL_C_VARBOOKMARK, bData, 
+	                        sizeof(bData[0]), NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, nData, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szData, sizeof(szData[0]),
+                            NULL));
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_FIRST, 0));
+
+  is_num(nData[0], 100);
+  is_str(szData[0], "string 1", 8);
+  is_num(nData[1], 200);
+  is_str(szData[1], "string 2", 8);
+  is_num(nData[2], 300);
+  is_str(szData[2], "string 3", 8);
+  is_num(nData[3], 400);
+  is_str(szData[3], "string 4", 8);
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_BOOKMARK, 0));
+  
+  is_num(nData[0], 100);
+  is_str(szData[0], "string 1", 8);
+  is_str(bData[0], "1", 1);
+  is_num(nData[1], 200);
+  is_str(szData[1], "string 2", 8);
+  is_str(bData[1], "2", 1);
+  is_num(nData[2], 300);
+  is_str(szData[2], "string 3", 8);
+  is_str(bData[2], "3", 1);
+  is_num(nData[3], 400);
+  is_str(szData[3], "string 4", 8);
+  is_str(bData[3], "4", 1);
+
+  ok_stmt(hstmt, SQLSetPos(hstmt, 2, SQL_POSITION, SQL_LOCK_NO_CHANGE));
+  ok_stmt(hstmt, SQLGetData(hstmt, 0, SQL_C_VARBOOKMARK, abookmark, 255, &outlen));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_FETCH_BOOKMARK_PTR, 
+                         (SQLPOINTER) abookmark, 0));
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_BOOKMARK, 0));
+
+  is_num(nData[0], 200);
+  is_str(szData[0], "string 2", 8);
+  is_str(bData[0], "2", 1);
+  is_num(nData[1], 300);
+  is_str(szData[1], "string 3", 8);
+  is_str(bData[1], "3", 1);
+  is_num(nData[2], 400);
+  is_str(szData[2], "string 4", 8);
+  is_str(bData[2], "4", 1);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists t_bookmark");
+
+  return OK;
+}
+
+
+/**
+  Bind column 0 with SQL_C_BOOKMARK data type and retrieve bookmark 
+  using FetchOrientation SQL_FETCH_BOOKMARK.
+  Set position in rowset using SQLSetPos and retrieve bookmark for that 
+  position using SQLGetData and save that particular bookmark position 
+  using SQL_ATTR_FETCH_BOOKMARK_PTR. Now fetch using using 
+  FetchOrientation SQL_FETCH_BOOKMARK with retrieve data from that position.
+*/
+#ifdef _UNIX_ 
+DECLARE_TEST(t_bookmark)
+{
+  SQLLEN len= 0;
+  SQLINTEGER abookmark[4];
+  SQLINTEGER outlen;
+  SQLUSMALLINT rowStatus[4];
+  SQLUINTEGER numRowsFetched;
+  SQLINTEGER nData[4];
+  SQLCHAR szData[4][16];
+  SQLINTEGER bData[4];
+
+  ok_sql(hstmt, "drop table if exists t_bookmark");
+  ok_sql(hstmt, "CREATE TABLE t_bookmark ("\
+                "tt_int INT PRIMARY KEY auto_increment,"\
+                "tt_varchar VARCHAR(128) NOT NULL)");
+  ok_sql(hstmt, "INSERT INTO t_bookmark VALUES "\
+                "(100, 'string 1'),"\
+                "(200, 'string 2'),"\
+                "(300, 'string 3'),"\
+                "(400, 'string 4')");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_USE_BOOKMARKS,
+                                (SQLPOINTER) SQL_UB_VARIABLE, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_STATUS_PTR,
+                                (SQLPOINTER)rowStatus, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR,
+                                &numRowsFetched, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+
+
+  ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 4));
+
+  ok_sql(hstmt, "select * from t_bookmark order by 1");
+  ok_stmt(hstmt, SQLBindCol(hstmt, 0, SQL_C_BOOKMARK, bData, 
+                          sizeof(bData[0]), NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, nData, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szData, sizeof(szData[0]),
+                            NULL));
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_FIRST, 0));
+
+  is_num(nData[0], 100);
+  is_str(szData[0], "string 1", 8);
+  is_num(nData[1], 200);
+  is_str(szData[1], "string 2", 8);
+  is_num(nData[2], 300);
+  is_str(szData[2], "string 3", 8);
+  is_num(nData[3], 400);
+  is_str(szData[3], "string 4", 8);
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_BOOKMARK, 0));
+  
+  is_num(nData[0], 100);
+  is_str(szData[0], "string 1", 8);
+  is_num(bData[0], 1);
+  is_num(nData[1], 200);
+  is_str(szData[1], "string 2", 8);
+  is_num(bData[1], 2);
+  is_num(nData[2], 300);
+  is_str(szData[2], "string 3", 8);
+  is_num(bData[2], 3);
+  is_num(nData[3], 400);
+  is_str(szData[3], "string 4", 8);
+  is_num(bData[3], 4);
+
+  ok_stmt(hstmt, SQLSetPos(hstmt, 3, SQL_POSITION, SQL_LOCK_NO_CHANGE));
+  ok_stmt(hstmt, SQLGetData(hstmt, 0, SQL_C_BOOKMARK, abookmark, 255, &outlen));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_FETCH_BOOKMARK_PTR, 
+                         (SQLPOINTER) abookmark, 0));
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_BOOKMARK, 0));
+
+  is_num(nData[0], 300);
+  is_str(szData[0], "string 3", 8);
+  is_num(bData[0], 3);
+  is_num(nData[1], 400);
+  is_str(szData[1], "string 4", 8);
+  is_num(bData[1], 4);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists t_bookmark");
+
+  return OK;
+}
+#endif
+
 BEGIN_TESTS
   ADD_TEST(t_bug32420)
   ADD_TEST(t_bug34575)
@@ -936,6 +1136,10 @@ BEGIN_TESTS
   ADD_TEST(t_prefetch)
   ADD_TOFIX(t_outparams)
   ADD_TEST(t_bug11766437)
+  ADD_TEST(t_varbookmark)
+#ifdef _UNIX_
+  ADD_TEST(t_bookmark)
+#endif
 END_TESTS
 
 

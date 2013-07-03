@@ -225,6 +225,9 @@ SQLRETURN SQL_API my_SQLBindParameter(SQLHSTMT hstmt,SQLUSMALLINT ipar,
 SQLRETURN SQL_API my_SQLExtendedFetch(SQLHSTMT hstmt, SQLUSMALLINT fFetchType,
 				      SQLLEN irow, SQLULEN *pcrow,
 				      SQLUSMALLINT FAR *rgfRowStatus, my_bool upd_status);
+SQLRETURN SQL_API my_SQLSingleFetch( SQLHSTMT hstmt, SQLUSMALLINT fFetchType,
+              SQLLEN irow, SQLULEN *pcrow, 
+              SQLUSMALLINT FAR *rgfRowStatus, my_bool upd_status);
 SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
                                SQLUSMALLINT fOption, SQLUSMALLINT fLock);
 SQLRETURN copy_stmt_error(STMT FAR *src, STMT FAR *dst);

@@ -218,6 +218,7 @@ typedef struct {
   SQLULEN      *bind_offset_ptr;
   SQLINTEGER    bind_type;
   SQLLEN        count;
+  SQLLEN        bookmark_count;
   /* Everywhere(http://msdn.microsoft.com/en-us/library/ms713560(VS.85).aspx
      http://msdn.microsoft.com/en-us/library/ms712631(VS.85).aspx) I found 
      it's referred as SQLULEN* */
@@ -226,6 +227,7 @@ typedef struct {
   /* internal fields */
   desc_desc_type  desc_type;
   desc_ref_type   ref_type;
+  DYNAMIC_ARRAY   bookmark;
   DYNAMIC_ARRAY   records;
   MYERROR         error;
   struct tagSTMT *stmt;
@@ -319,7 +321,9 @@ typedef struct stmt_options
   SQLUINTEGER      simulateCursor;
   SQLULEN          max_length, max_rows;
   SQLUSMALLINT    *rowStatusPtr_ex; /* set by SQLExtendedFetch */
-  my_bool      retrieve_data;
+  my_bool         retrieve_data;
+  SQLUINTEGER     bookmarks;
+  void            *bookmark_ptr;
 } STMT_OPTIONS;
 
 
@@ -459,6 +463,7 @@ typedef struct tagSTMT
   DESC *ird;
   DESC *apd;
   DESC *ipd;
+
   /* implicit descriptors */
   DESC *imp_ard;
   DESC *imp_apd;

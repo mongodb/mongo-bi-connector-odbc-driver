@@ -659,7 +659,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
                                 "Numeric value out of range", 0);
       }
       break;
-
+    
     default:
       return set_error(stmt,MYERR_07006,
                        "Restricted data type attribute violation",0);
@@ -1092,8 +1092,8 @@ SQLRETURN SQL_API SQLBindCol(SQLHSTMT      StatementHandle,
     return SQL_SUCCESS;
   }
 
-  if (ColumnNumber == 0 || (stmt->state == ST_EXECUTED &&
-                            ColumnNumber > stmt->ird->count))
+  if ((ColumnNumber == 0 && stmt->stmt_options.bookmarks == SQL_UB_OFF) || 
+      (stmt->state == ST_EXECUTED && ColumnNumber > stmt->ird->count))
   {
     return set_stmt_error(stmt, "07009", "Invalid descriptor index",
                           MYERR_07009);
@@ -1169,7 +1169,7 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
     STMT *stmt= (STMT *) StatementHandle;
     SQLRETURN result;
     ulong length= 0;
-    DESCREC *irrec;
+    DESCREC *irrec, *arrec;
 
     if (!stmt->result || !stmt->current_values)
     {
@@ -1177,20 +1177,36 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
       return SQL_ERROR;
     }
 
-    if (ColumnNumber < 1 || ColumnNumber > stmt->ird->count)
+    if (ColumnNumber == 0)
     {
-      return set_stmt_error(stmt, "07009", "Invalid descriptor index",
+      if (stmt->stmt_options.bookmarks == SQL_UB_OFF)
+      {
+        return set_stmt_error(stmt, "07009", "Invalid descriptor index",
                             MYERR_07009);
+      }
+
+      if (TargetType != SQL_C_BOOKMARK && TargetType != SQL_C_VARBOOKMARK)
+      {
+        return set_stmt_error(stmt, "HY003", "Program type out of range", 0);
+      }
     }
-    --ColumnNumber;     /* Easier code if start from 0 */
-    if (ColumnNumber != stmt->getdata.column)
+    else 
     {
-      /* New column. Reset old offset */
-      reset_getdata_position(stmt);
-      stmt->getdata.column= ColumnNumber;
+      if (ColumnNumber < 1 || ColumnNumber > stmt->ird->count)
+      {
+        return set_stmt_error(stmt, "07009", "Invalid descriptor index",
+                              MYERR_07009);
+      }
+      --ColumnNumber;     /* Easier code if start from 0 */
+      if (ColumnNumber != stmt->getdata.column)
+      {
+        /* New column. Reset old offset */
+        reset_getdata_position(stmt);
+        stmt->getdata.column= ColumnNumber;
+      }
     }
 
-    irrec= desc_get_rec(stmt->ird, ColumnNumber, FALSE);
+    irrec= desc_get_rec(stmt->ird, ColumnNumber - 1, FALSE);
     assert(irrec);
 
     /* catalog functions with "fake" results won't have lengths */
@@ -1201,10 +1217,25 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
     if (!stmt->dbc->ds->dont_use_set_locale)
       setlocale(LC_NUMERIC, "C");
 
-    result= sql_get_data(stmt, TargetType, ColumnNumber,
+    if ((ColumnNumber == 0 && stmt->stmt_options.bookmarks == SQL_UB_VARIABLE))
+    {
+      char _value[21];
+      /* save position set using SQLSetPos in buffer */
+      int _len= sprintf(_value, "%ld", (stmt->cursor_row > 0) ? 
+                                    stmt->cursor_row : 0);
+      arrec= desc_get_rec(stmt->ard, ColumnNumber, FALSE);
+      result= sql_get_data(stmt, TargetType, ColumnNumber,
+                         TargetValuePtr, BufferLength, StrLen_or_IndPtr,
+                         _value, _len, arrec);
+    }
+    else
+    {
+      arrec= desc_get_rec(stmt->ard, ColumnNumber, FALSE);
+      result= sql_get_data(stmt, TargetType, ColumnNumber,
                          TargetValuePtr, BufferLength, StrLen_or_IndPtr,
                          stmt->current_values[ColumnNumber], length,
-                         desc_get_rec(stmt->ard, ColumnNumber, FALSE));
+                         arrec);
+    }
 
     if (!stmt->dbc->ds->dont_use_set_locale)
         setlocale(LC_NUMERIC,default_locale);
@@ -1382,6 +1413,69 @@ void fill_ird_data_lengths(DESC *ird, ulong *lengths, uint fields)
 
 
 /**
+  Populate a single row of bookmark fetch buffers
+
+  @param[in]  stmt        Handle of statement
+  @param[in]  value       Row number with Offset
+  @param[in]  rownum      Row number of current fetch block
+*/
+static SQLRETURN
+fill_fetch_bookmark_buffers(STMT *stmt, uint value, uint rownum)
+{
+  SQLRETURN res= SQL_SUCCESS, tmp_res;
+  DESCREC *arrec;
+  ulong length= 0;
+  char _value[21];
+
+  arrec= desc_get_rec(stmt->ard, -1, FALSE);
+
+  if (ARD_IS_BOUND(arrec))
+  {
+    SQLLEN *pcbValue= NULL;
+    SQLPOINTER TargetValuePtr= NULL;
+    ulong copy_bytes= 0;
+
+    reset_getdata_position(stmt);
+
+    if (arrec->data_ptr)
+    {
+      TargetValuePtr= ptr_offset_adjust(arrec->data_ptr, 
+                                        stmt->ard->bind_offset_ptr, 
+                                        stmt->ard->bind_type, 
+                                        arrec->octet_length, rownum);
+    }
+
+    if (arrec->octet_length_ptr)
+    {
+      pcbValue= ptr_offset_adjust(arrec->octet_length_ptr, 
+                                    stmt->ard->bind_offset_ptr, 
+                                    stmt->ard->bind_type, 
+                                    sizeof(SQLLEN), rownum);
+    }
+
+    length= sprintf(_value, "%ld", (value > 0) ? value : 0);
+    tmp_res= sql_get_data(stmt, arrec->concise_type, (uint)0,
+                          TargetValuePtr, arrec->octet_length, pcbValue,
+                          _value, length, arrec);
+    if (tmp_res != SQL_SUCCESS)
+    {
+      if (tmp_res == SQL_SUCCESS_WITH_INFO)
+      {
+        if (res == SQL_SUCCESS)
+          res= tmp_res;
+      }
+      else
+      {
+        res= SQL_ERROR;
+      }
+    }
+  }
+
+  return res;
+}
+
+
+/**
   Populate a single row of fetch buffers
 
   @param[in]  stmt        Handle of statement
@@ -1460,6 +1554,332 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
 
 /*
   @type    : myodbc3 internal
+  @purpose : fetches the specified row from the result set and
+             returns data for all bound columns. Row can be specified
+             at an absolute or relative position
+*/
+SQLRETURN SQL_API my_SQLSingleFetch( SQLHSTMT             hstmt,
+                                       SQLUSMALLINT         fFetchType,
+                                       SQLLEN               irow,
+                                       SQLULEN             *pcrow,
+                                       SQLUSMALLINT FAR    *rgfRowStatus,
+                                       my_bool              upd_status )
+{
+    SQLULEN           rows_to_fetch;
+    long              cur_row, max_row;
+    SQLRETURN         row_res, res;
+    STMT FAR          *stmt= (STMT *) hstmt;
+    MYSQL_ROW         values= 0;
+    MYSQL_ROW_OFFSET  save_position;
+    SQLULEN           dummy_pcrow;
+    BOOL              disconnected= FALSE;
+    long              brow= 0;
+
+    LINT_INIT(save_position);
+
+    if ( !stmt->result )
+      return set_stmt_error(stmt, "24000", "Fetch without a SELECT", 0);
+
+    cur_row = stmt->current_row;
+
+    if ( !pcrow )
+      pcrow= &dummy_pcrow;
+
+    /* for scrollable cursor("scroller") max_row is max row for currently
+       fetched part of resultset */
+    max_row= (long) num_rows(stmt);
+    reset_getdata_position(stmt);
+    stmt->current_values= 0;          /* For SQLGetData */
+
+    switch ( fFetchType )
+    {
+      case SQL_FETCH_NEXT:
+        cur_row= (stmt->current_row < 0 ? 0 :
+                  stmt->current_row + stmt->rows_found_in_set);
+        break;
+      case SQL_FETCH_PRIOR:
+        cur_row= (stmt->current_row <= 0 ? -1 :
+                  (long)(stmt->current_row - stmt->ard->array_size));
+        break;
+      case SQL_FETCH_FIRST:
+        cur_row= 0L;
+        break;
+      case SQL_FETCH_LAST:
+        cur_row= max_row - stmt->ard->array_size;
+        break;
+      case SQL_FETCH_ABSOLUTE:
+        if (irow < 0)
+        {
+          /* Fetch from end of result set */
+          if ( max_row+irow < 0 && -irow <= (long) stmt->ard->array_size )
+          {
+            /*
+              | FetchOffset | > LastResultRow AND
+              | FetchOffset | <= RowsetSize
+            */
+            cur_row= 0;     /* Return from beginning */
+          }
+          else
+            cur_row= max_row + irow;     /* Ok if max_row <= -irow */
+        }
+        else
+          cur_row= (long) irow - 1;
+        break;
+
+      case SQL_FETCH_RELATIVE:
+        cur_row= stmt->current_row + irow;
+        if (stmt->current_row > 0 && cur_row < 0 &&
+           (long) - irow <= (long)stmt->ard->array_size)
+        {
+          cur_row= 0;
+        }
+        break;
+
+      case SQL_FETCH_BOOKMARK:
+        {
+          if (stmt->stmt_options.bookmark_ptr)
+          {
+            DESCREC *arrec;
+            arrec= desc_get_rec(stmt->ard, -1, FALSE);
+
+            if (arrec->concise_type == SQL_C_BOOKMARK)
+            {
+              brow= *((SQLLEN *) stmt->stmt_options.bookmark_ptr);
+            }
+            else
+            {
+              brow= atol((SQLCHAR *) stmt->stmt_options.bookmark_ptr);
+            }
+          }
+
+          cur_row= brow + irow;
+          if (cur_row < 0 && (long)-irow <= (long)stmt->ard->array_size) 
+          {
+            cur_row= 0;
+          }
+        }
+        break;
+
+      default:
+          return set_error(stmt, MYERR_S1106, "Fetch type out of range", 0);
+    }
+
+    if ( cur_row < 0 )
+    {
+      stmt->current_row= -1;  /* Before first row */
+      stmt->rows_found_in_set= 0;
+      data_seek(stmt, 0L);
+      return SQL_NO_DATA_FOUND;
+    }
+    if ( cur_row > max_row )
+    {
+      if (scroller_exists(stmt))
+      {
+        while (cur_row > (max_row= (long)scroller_move(stmt)));
+
+        switch (scroller_prefetch(stmt))
+        {
+          case SQL_NO_DATA: return SQL_NO_DATA_FOUND;
+          case SQL_ERROR:   return set_error(stmt,MYERR_S1000,
+                                            mysql_error(&stmt->dbc->mysql), 0);
+        }
+      }
+      else
+      {
+        cur_row= max_row;
+      }
+    }
+
+    if ( !stmt->result_array && !if_forward_cache(stmt) )
+    {
+        /*
+          If Dynamic, it loses the stmt->end_of_set, so
+          seek to desired row, might have new data or
+          might be deleted
+        */
+        if ( stmt->stmt_options.cursor_type != SQL_CURSOR_DYNAMIC &&
+             cur_row && cur_row == (long)(stmt->current_row +
+                                          stmt->rows_found_in_set) )
+            row_seek(stmt, stmt->end_of_set);
+        else
+            data_seek(stmt, cur_row);
+    }
+    stmt->current_row= cur_row;
+
+    if (scroller_exists(stmt)
+      || (if_forward_cache(stmt) && !stmt->result_array))
+    {
+      rows_to_fetch= stmt->ard->array_size;
+    }
+    else
+    {
+      rows_to_fetch= myodbc_min(max_row-cur_row,
+                                (long)stmt->ard->array_size);
+    }
+
+    /* out params has been silently fetched */
+    if (rows_to_fetch == 0)
+    {
+      if (stmt->out_params_state > 0)
+      {
+        rows_to_fetch= 1;
+      }
+      else
+      {
+        *pcrow= 0;
+        stmt->rows_found_in_set= 0;
+        if ( upd_status && stmt->ird->rows_processed_ptr )
+        {
+          *stmt->ird->rows_processed_ptr= 0;
+        }
+        return SQL_NO_DATA_FOUND;
+      }
+    }
+
+    if (!stmt->dbc->ds->dont_use_set_locale)
+    {
+      setlocale(LC_NUMERIC, "C");
+    }
+
+    res= SQL_SUCCESS;
+    {
+      save_position= row_tell(stmt);
+      /* - Actual fetching happens here - */
+      if (!(values= fetch_row(stmt)) )
+      {
+        if (scroller_exists(stmt))
+        {
+          scroller_move(stmt);
+
+          row_res= scroller_prefetch(stmt);
+
+          if (row_res != SQL_SUCCESS)
+          {
+            goto exitSQLSingleFetch;
+          }
+
+          if ( !(values= fetch_row(stmt)) )
+          {
+            goto exitSQLSingleFetch;
+          }
+
+          /* Not sure that is right, but see it better than nothing */
+          save_position= row_tell(stmt);
+        }
+        else
+        {
+          goto exitSQLSingleFetch;
+        }
+      }
+
+      if ( stmt->fix_fields )
+      {
+          values= (*stmt->fix_fields)(stmt,values);
+      }
+
+      stmt->current_values= values;
+    }
+
+    if (!stmt->fix_fields)
+    {
+        fill_ird_data_lengths(stmt->ird, fetch_lengths(stmt),
+                              stmt->result->field_count);
+    }
+
+    row_res= fill_fetch_buffers(stmt, values, cur_row);
+
+    /* For SQL_SUCCESS we need all rows to be SQL_SUCCESS */
+    if (res != row_res)
+    {
+      /* Any successful row makes overall result SQL_SUCCESS_WITH_INFO */
+      if (SQL_SUCCEEDED(row_res))
+      {
+        res= SQL_SUCCESS_WITH_INFO;
+      }
+      /* Else error */
+      else if (cur_row == 0)
+      {
+        /* SQL_ERROR only if all rows fail */
+        res= SQL_ERROR;
+      }
+      else
+      {
+        res= SQL_SUCCESS_WITH_INFO;
+      }
+    }
+
+    /* "Fetching" includes buffers filling. I think errors in that 
+       have to affect row status */
+
+    if (rgfRowStatus)
+    {
+      rgfRowStatus[cur_row]= sqlreturn2row_status(row_res);
+    }
+    /*
+      No need to update rowStatusPtr_ex, it's the same as rgfRowStatus.
+    */
+    if (upd_status && stmt->ird->array_status_ptr)
+    {
+      stmt->ird->array_status_ptr[cur_row]= sqlreturn2row_status(row_res);
+    }
+
+exitSQLSingleFetch:
+    stmt->rows_found_in_set= 1;
+    *pcrow= cur_row;
+
+    disconnected= is_connection_lost(mysql_errno(&stmt->dbc->mysql))
+      && handle_connection_error(stmt);
+
+    if ( upd_status && stmt->ird->rows_processed_ptr )
+    {
+      *stmt->ird->rows_processed_ptr= cur_row;
+    }
+
+    /* It is possible that both rgfRowStatus and array_status_ptr are set
+    (and upp_status is TRUE) */
+    if ( rgfRowStatus )
+    {
+      rgfRowStatus[cur_row]= disconnected ? SQL_ROW_ERROR : SQL_ROW_NOROW;
+    }
+    /*
+      No need to update rowStatusPtr_ex, it's the same as rgfRowStatus.
+    */
+    if ( upd_status && stmt->ird->array_status_ptr )
+    {
+      stmt->ird->array_status_ptr[cur_row]= disconnected? SQL_ROW_ERROR
+                                                  : SQL_ROW_NOROW;
+    }
+
+    if (SQL_SUCCEEDED(res) && !if_forward_cache(stmt))
+    {
+      /* reset result position */
+      stmt->end_of_set= row_seek(stmt, save_position);
+    }
+
+    if (!stmt->dbc->ds->dont_use_set_locale)
+    {
+      setlocale(LC_NUMERIC,default_locale);
+    }
+
+    if (SQL_SUCCEEDED(res)
+      && stmt->rows_found_in_set < stmt->ard->array_size)
+    {
+      if (disconnected)
+      {
+        return SQL_ERROR;
+      }
+      else if (stmt->rows_found_in_set == 0)
+      {
+        return SQL_NO_DATA_FOUND;
+      }
+    }
+
+    return res;
+}
+
+
+/*
+  @type    : myodbc3 internal
   @purpose : fetches the specified rowset of data from the result set and
   returns data for all bound columns. Rowsets can be specified
   at an absolute or relative position
@@ -1476,12 +1896,13 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     SQLULEN           rows_to_fetch;
     long              cur_row, max_row;
     SQLULEN           i;
-    SQLRETURN         row_res, res;
+    SQLRETURN         row_res, res, row_book= SQL_SUCCESS;
     STMT FAR          *stmt= (STMT *) hstmt;
     MYSQL_ROW         values= 0;
     MYSQL_ROW_OFFSET  save_position;
     SQLULEN           dummy_pcrow;
     BOOL              disconnected= FALSE;
+    long              brow= 0;
 
     LINT_INIT(save_position);
 
@@ -1564,6 +1985,31 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
            (long)-irow <= (long)stmt->ard->array_size)
         {
           cur_row= 0;
+        }
+        break;
+
+      case SQL_FETCH_BOOKMARK:
+        {
+          if (stmt->stmt_options.bookmark_ptr)
+          {
+            DESCREC *arrec;
+            arrec= desc_get_rec(stmt->ard, -1, FALSE);
+
+            if (arrec->concise_type == SQL_C_BOOKMARK)
+            {
+              brow= *((SQLLEN *) stmt->stmt_options.bookmark_ptr);
+            }
+            else
+            {
+              brow= atol((SQLCHAR *) stmt->stmt_options.bookmark_ptr);
+            }
+          }
+
+          cur_row= brow + irow;
+          if (cur_row < 0 && (long)-irow <= (long)stmt->ard->array_size) 
+          {
+            cur_row= 0;
+          }
         }
         break;
 
@@ -1731,13 +2177,18 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
         }
       }
 
+      if (fFetchType == SQL_FETCH_BOOKMARK && 
+           stmt->stmt_options.bookmarks == SQL_UB_VARIABLE)
+      {
+        row_book= fill_fetch_bookmark_buffers(stmt, brow + irow + i + 1, i);
+      }  
       row_res= fill_fetch_buffers(stmt, values, i);
 
       /* For SQL_SUCCESS we need all rows to be SQL_SUCCESS */
-      if (res != row_res)
+      if (res != row_res || res != row_book)
       {
         /* Any successful row makes overall result SQL_SUCCESS_WITH_INFO */
-        if (SQL_SUCCEEDED(row_res))
+        if (SQL_SUCCEEDED(row_res) && SQL_SUCCEEDED(row_res))
         {
           res= SQL_SUCCESS_WITH_INFO;
         }
