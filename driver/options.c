@@ -132,8 +132,6 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
           options->bookmark_ptr = ValuePtr;
           break;
 
-            return set_handle_error(HandleType,Handle,MYERR_S1C00,NULL,0);
-
         case SQL_ATTR_QUERY_TIMEOUT:
         case SQL_ATTR_KEYSET_SIZE:
         case SQL_ATTR_CONCURRENCY:

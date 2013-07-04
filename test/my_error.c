@@ -53,18 +53,7 @@ DECLARE_TEST(t_odbc3_error)
 
   ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
 
-  expect_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_FETCH_BOOKMARK_PTR,
-                                     (SQLPOINTER)NULL, 0),
-              SQL_ERROR);
-  if (check_sqlstate(hstmt1, "HYC00") != OK)
-    return FAIL;
-
-  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
-
   ok_sql(hstmt1, "DROP TABLE IF EXISTS t_error");
-
-  ok_con(hdbc1, SQLDisconnect(hdbc1));
-
   free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   return OK;
