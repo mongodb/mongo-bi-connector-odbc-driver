@@ -17,6 +17,7 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "  <object class=\"GtkWindow\" id=\"odbcdialog\">\n" \
 "    <property name=\"visible\">True</property>\n" \
 "    <property name=\"can_focus\">False</property>\n" \
+"    <property name=\"modal\">True</property>\n" \
 "    <property name=\"title\">MySQL Connector/ODBC Data Source</property>\n" \
 "    <property name=\"resizable\">False</property>\n" \
 "    <child>\n" \
@@ -342,7 +343,7 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"text_column\">0</property>\n" \
 "                        <child internal-child=\"entry\">\n" \
 "                          <object class=\"GtkEntry\" id=\"comboboxentry-entry2\">\n" \
-"                            <property name=\"can_focus\">False</property>\n" \
+"                            <property name=\"can_focus\">True</property>\n" \
 "                            <property name=\"primary_icon_activatable\">False</property>\n" \
 "                            <property name=\"secondary_icon_activatable\">False</property>\n" \
 "                            <property name=\"primary_icon_sensitive\">True</property>\n" \
@@ -615,7 +616,7 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                            <property name=\"text_column\">0</property>\n" \
 "                            <child internal-child=\"entry\">\n" \
 "                              <object class=\"GtkEntry\" id=\"comboboxentry-entry7\">\n" \
-"                                <property name=\"can_focus\">False</property>\n" \
+"                                <property name=\"can_focus\">True</property>\n" \
 "                                <property name=\"invisible_char\">•</property>\n" \
 "                                <property name=\"primary_icon_activatable\">False</property>\n" \
 "                                <property name=\"secondary_icon_activatable\">False</property>\n" \
