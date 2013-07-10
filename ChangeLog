@@ -19,6 +19,10 @@
     (Bug# 16176981/67793)
   * Conversion of Time field data to Timestamp type may produce incorrect result
     (Bug# 17016839/69545)
+  * Added new variable in cmake config files: ODBCCP32_LIB for odbccpp32.lib path, 
+    and MYSQLCLIENT_LIB_NAME for linking mysqlclient statically or dynamically by 
+    specifying mysqlclient library (libmysql.*, mysqlclient.*, libmysqlclient_r.*, 
+    libmysqlclient.*) to be used. Mysql CPP linkage for mysql version >= 5.6.4.
 
 
 ----
