@@ -1189,6 +1189,13 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
       {
         return set_stmt_error(stmt, "HY003", "Program type out of range", 0);
       }
+      if (ColumnNumber != stmt->getdata.column)
+      {
+        /* New column. Reset old offset */
+        reset_getdata_position(stmt);
+        stmt->getdata.column= ColumnNumber;
+      }
+      irrec= desc_get_rec(stmt->ird, -1, FALSE);
     }
     else 
     {
@@ -1204,9 +1211,9 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
         reset_getdata_position(stmt);
         stmt->getdata.column= ColumnNumber;
       }
+      irrec= desc_get_rec(stmt->ird, ColumnNumber, FALSE);
     }
 
-    irrec= desc_get_rec(stmt->ird, ColumnNumber - 1, FALSE);
     assert(irrec);
 
     /* catalog functions with "fake" results won't have lengths */
