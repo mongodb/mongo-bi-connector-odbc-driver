@@ -19,6 +19,11 @@
     string (Bug# 11760574/52996)
   * MSSQL linked server connected to MySQL 5.1.9 driver causes hard crash
     (Bug# 16604346/63386)
+  * Added new variable in cmake config files ODBCCP32_LIB for odbccpp32.lib path, 
+    and MYSQLCLIENT_LIB_NAME for linking mysqlclient statically or dynamically by 
+    specifying mysqlclient library (libmysql.*, mysqlclient.*, libmysqlclient_r.*, 
+    libmysqlclient.*) to be used. Mysql CPP linkage for mysql version >= 5.6.4 
+    (wl#6738)
 
 ----
 
