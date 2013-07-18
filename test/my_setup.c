@@ -114,15 +114,16 @@ DECLARE_TEST(t_bug24581)
   HSTMT hstmt1;
   
   /* We need a user with minimal privileges and no password */
-  sprintf(grant_query, "grant usage on %s.* to 'user24851'@'%s'", 
-          mydb, myserver);
+  sprintf(grant_query, "grant usage on %s.* to 'user24851'@'%s'"\
+          " identified by 'pass24851'", mydb, myserver);
+
   ok_stmt(hstmt, SQLExecDirect(hstmt, grant_query, SQL_NTS));
 
   ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
 
   sprintf(fdsn_path, "%s\\filedsn24851.dsn", getenv("TEMP"));
   sprintf(conn_in, "DRIVER=%s;SERVER=%s;UID=user24851;DATABASE=%s;"\
-                   "SAVEFILE=%s",
+                   "SAVEFILE=%s;PASSWORD='pass24851'",
                    mydriver, myserver, mydb, fdsn_path);
 
   /* Create a .dsn file in the TEMP directory, we will remove it later */
@@ -131,7 +132,7 @@ DECLARE_TEST(t_bug24581)
   /* Not necessary, but keep the driver manager happy */
   ok_con(hdbc1, SQLDisconnect(hdbc1));
 
-  sprintf(conn_fdsn, "FileDSN=%s", fdsn_path);
+  sprintf(conn_fdsn, "FileDSN=%s;PASSWORD='pass24851'", fdsn_path);
   
   /* Connect using the new file DSN */
   ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, (SQLCHAR*)conn_fdsn, SQL_NTS, 
