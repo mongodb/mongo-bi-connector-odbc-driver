@@ -1,4 +1,4 @@
-# Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2013, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -33,11 +33,10 @@ MACRO(_ENV_OR_DEFAULT VAR _default)
 
 ENDMACRO(_ENV_OR_DEFAULT VAR _key _default)
 
-_ENV_OR_DEFAULT(TEST_DRIVER   "${DRIVER_LOCATION}")
-# has to be file location
-IF(NOT EXISTS ${TEST_DRIVER})
-  SET(TEST_DRIVER "${DRIVER_LOCATION}")
-ENDIF(NOT EXISTS ${TEST_DRIVER})
+MESSAGE(STATUS "Configuring ini files for tests")
+
+SET(TEST_DRIVER1 "${DRIVER_LOCATION1}")
+SET(TEST_DRIVER2 "${DRIVER_LOCATION2}")
 _ENV_OR_DEFAULT(TEST_DATABASE "test")
 _ENV_OR_DEFAULT(TEST_SERVER   "localhost")
 _ENV_OR_DEFAULT(TEST_UID      "root")
@@ -48,8 +47,16 @@ IF(WIN32 AND TEST_SOCKET)
   SET(TEST_OPTIONS "NAMED_PIPE=1")
 ENDIF(WIN32 AND TEST_SOCKET)
 
-SET(DESCRIPTION   "MySQL ODBC ${CONNECTOR_MAJOR}.${CONNECTOR_MINOR} Driver test" )
+IF(${DRIVERS_COUNT} LESS 2)
+  # If configured to build 1 driver only we make 2nd driver/dsn to work with the same driver
+  SET(TEST_DRIVER2 "${DRIVER_LOCATION1}")
+  SET(CONNECTOR_DRIVER_TYPE2 "${CONNECTOR_DRIVER_TYPE1}")
+  SET(CONNECTOR_DRIVER_TYPE_SHORT2 "")
+ENDIF(${DRIVERS_COUNT} LESS 2)
 
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/odbcinst.ini.in ${BINARY_DIR}/odbcinst.ini @ONLY)
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/odbc.ini.in     ${BINARY_DIR}/odbc.ini @ONLY)
+SET(DESCRIPTION1 "MySQL ODBC ${CONNECTOR_MAJOR}.${CONNECTOR_MINOR} ${CONNECTOR_DRIVER_TYPE1} Driver test" )
+SET(DESCRIPTION2 "MySQL ODBC ${CONNECTOR_MAJOR}.${CONNECTOR_MINOR} ${CONNECTOR_DRIVER_TYPE2} Driver test" )
+
+CONFIGURE_FILE(odbcinst.ini.in ${BINARY_DIR}/odbcinst.ini @ONLY)
+CONFIGURE_FILE(odbc.ini.in     ${BINARY_DIR}/odbc.ini @ONLY)
 

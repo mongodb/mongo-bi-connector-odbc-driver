@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -76,15 +76,14 @@ Requires:   mysqlodbcrpmpack
 ##############################################################################
 
 %description
-mysql-connector-odbc is an ODBC (3.50) level 0 (with level 1 and level
-2 features) driver for connecting an ODBC-aware application to MySQL.
-mysql-connector-odbc  works on Windows NT/2000/XP/2003, and most Unix
-platforms (incl. OSX and Linux). MySQL is a trademark of
-%{mysql_vendor}
+mysql-connector-odbc is an ODBC (3.51) driver for connecting an ODBC-aware
+application to MySQL. mysql-connector-odbc works on Windows XP/Vista/7/8
+Windows Server 2003/2008/2012, and most Unix platforms (incl. OSX and Linux).
+MySQL is a trademark of %{mysql_vendor}
 
-mysql-connector-odbc 5.2 is an enhanced version of MyODBC 2.50 to meet
-ODBC 3.5 specification. The driver is commonly referred to as
-'MySQL ODBC 5.2 Driver'.
+mysql-connector-odbc 5.2 is an enhanced version of mysql-connector-odbc 5.1.
+The driver comes in 2 flavours - ANSI and Unicode and commonly referred to as
+'MySQL ODBC 5.2 ANSI Driver' or 'MySQL ODBC 5.2 Unicode Driver' respectively.
 
 The MySQL software has Dual Licensing, which means you can use the MySQL
 software free of charge under the GNU General Public License

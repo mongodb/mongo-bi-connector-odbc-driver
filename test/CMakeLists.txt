@@ -42,7 +42,11 @@ FOREACH(T my_basics my_blob my_bulk my_catalog1 my_catalog2 my_curext my_cursor
 		my_datetime my_desc my_dyn_cursor my_error my_info my_keys my_param
 		my_prepare my_relative my_result1 my_result2 my_scroll my_setup my_tran
 		my_types my_unicode my_unixodbc my_use_result my_bug13766)
-	ADD_EXECUTABLE(${T} ${T}.c)
+  IF(WIN32)
+  	ADD_EXECUTABLE(${T} ${T}.c odbctap.h)
+  ELSE(WIN32)
+  	ADD_EXECUTABLE(${T} ${T}.c)
+  ENDIF(WIN32)
 
   IF(MYSQL_CXX_LINKAGE OR MYSQL_NUM_VERSION GREATER 50604 OR MYSQL_NUM_VERSION EQUAL 50604)
     SET_TARGET_PROPERTIES(${T} PROPERTIES 

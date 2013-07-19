@@ -820,11 +820,8 @@ DECLARE_TEST(t_bug_11746572)
 
   ok_stmt(hstmt, SQLDescribeCol(hstmt, 2, ColName, MAX_NAME_LEN, 
                         NULL, &SqlType, NULL, NULL, NULL));
-#ifdef MYODBC_UNICODEDRIVER
-  is_num(SqlType, SQL_WLONGVARCHAR);
-#else
-  is_num(SqlType, SQL_LONGVARCHAR);
-#endif
+
+  is_num(SqlType, unicode_driver ? SQL_WLONGVARCHAR : SQL_LONGVARCHAR);
 
   ok_stmt(hstmt, SQLDescribeCol(hstmt, 3, ColName, MAX_NAME_LEN, 
                         NULL, &SqlType, NULL, NULL, NULL));
