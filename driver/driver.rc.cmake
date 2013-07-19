@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
+// Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 //
 // The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 // <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -69,16 +69,16 @@ BEGIN
         BEGIN
             VALUE "Comments", "provides core driver functionality\0"
             VALUE "CompanyName", "Oracle Corporation\0"
-	    VALUE "FileDescription", "MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@(@CONNECTOR_DRIVER_TYPE_SHORT@) Driver\0"
+	          VALUE "FileDescription", "MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ @DRIVER_TYPE@ Driver\0"
             VALUE "FileVersion", MYODBC_STRFILEVER
             VALUE "InternalName", "myodbc5@CONNECTOR_DRIVER_TYPE_SHORT@\0"
-            VALUE "LegalCopyright", "Copyright (c) 1995, 2012, Oracle and/or its affiliates.\0"
+            VALUE "LegalCopyright", "Copyright (c) 1995, 2013, Oracle and/or its affiliates.\0"
             VALUE "LegalTrademarks", "MySQL, MyODBC, Connector/ODBC are trademarks of Oracle Corporation\0"
             VALUE "OriginalFilename", "myodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.dll\0"
             VALUE "PrivateBuild", "Production\0"
-	    VALUE "ProductName", "Connector/ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@\0"
+	          VALUE "ProductName", "Connector/ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@\0"
             VALUE "ProductVersion", MYODBC_STRPRODUCTVER
-	    VALUE "SpecialBuild", "@CONNECTOR_QUALITY@ release\0"
+	          VALUE "SpecialBuild", "@CONNECTOR_QUALITY@ release\0"
         END
     END
     BLOCK "VarFileInfo"

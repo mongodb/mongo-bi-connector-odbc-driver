@@ -28,7 +28,7 @@
 
 ----
 
-5.2.5
+5.2.5(04-Apr-2013)
 
   Functionality added or changed:
   * MSI package installs both ANSI and Unicode drivers. (WL#6793)
@@ -44,6 +44,8 @@
   * Added CLEARTEXT authentication connection option ENABLE_CLEARTEXT_PLUGIN.
    (Bug#16445091)
   * Crash in SQLSetConnectAttr(SQL_ATTR_CURRENT_CATALOG) (Bug# 16526604/63844)
+
+  Built using MySQL 5.6.11.
 
 ----
 
@@ -117,7 +119,7 @@
 
 ----
 
-5.2.0
+5.2.0(15-Jun-2012)
 
   Functionality added or changed:
   * Driver available in Unicode and ANSI versions(WL#5850)

@@ -1,5 +1,5 @@
 @ECHO OFF
-REM Copyright (c) 2006, 2012, Oracle and/or its affiliates. All rights reserved.
+REM Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
 REM
 REM The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 REM <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most 
@@ -38,7 +38,7 @@ REM         Note that you should manually remove all data
 REM         sources using a driver before uninstalling that
 REM         driver.
 REM
-REM \sa     README.win
+REM \sa     INSTALL.win
 REM
 REM #########################################################
 
@@ -46,12 +46,12 @@ REM # SETLOCAL prevents the variables set in this script to
 REM # be exported to the environment and pollute it
 SETLOCAL
 
-SET    driver_name=MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@(@CONNECTOR_DRIVER_TYPE_SHORT@) Driver
-SET      installer=myodbc-installer
-SET   driver_found=no
+SET    installer=myodbc-installer
+SET    driver_found=no
+SET    driver_name=none
 
-IF "%1" == "" GOTO :doFindInstaller
-SET  driver_name=%1
+IF "%~1" == "" GOTO :doFindInstaller
+SET  driver_name=%~1
 
 :doFindInstaller
 REM # Find the installer utility
@@ -60,13 +60,13 @@ SET bindir=none
 FOR %%G IN (. bin bin\release bin\relwithdebinfo bin\debug) DO CALL :subFindInstaller %%G
 
 SET myodbc_installer=%bindir%\%installer%.exe
-IF NOT "%bindir%" == "none" GOTO :doDeregister
+IF NOT "%bindir%" == "none" GOTO :lookup_deregister
 
 REM # Try if it is in the path
 SET myodbc_installer=%installer%.exe
 "%myodbc_installer%" >nul 2>nul
 REM # "Command not found" generates error 9009
-IF NOT ERRORLEVEL 9000 GOTO :doDeregister
+IF NOT ERRORLEVEL 9000 DO GOTO :lookup_deregister
 
 GOTO :errorNoInstaller
 
@@ -82,22 +82,47 @@ SET bindir=%CD%\%1
 IF NOT EXIST "%bindir%\%installer%.exe"  GOTO :wrongBinDir
 REM ECHO Bindir (%bindir%) is OK.
 GOTO :eof
+
 :wrongBinDir
 REM ECHO Bindir (%bindir%) is wrong.
 SET bindir=none
 GOTO :eof
 
-:doDeregister
-ECHO "installer = %myodbc_installer%"
+:lookup_deregister
+IF "%driver_name%" == "none" FOR %%d IN (@CONNECTOR_DRIVER_TYPE@) DO CALL :driverLookup "MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ %%d% Driver"
+IF NOT "%driver_name%" == "none" CALL :driverLookup "%driver_name%"
+
+IF %driver_found% == yes GOTO doSuccess
+
+ECHO ^+-----------------------------------------------------^+
+ECHO ^| ERROR                                               ^|
+ECHO ^+-----------------------------------------------------^+
+ECHO ^|                                                     ^|
+ECHO ^| No driver was found and deregistered                 ^|
+ECHO ^|                                                     ^|
+ECHO ^+-----------------------------------------------------^+
+
+EXIT /B 1
+
+:driverLookup
+ECHO installer = %myodbc_installer%
+ECHO driver = %1
 
 REM # Check if driver is registered
 
-"%myodbc_installer%" -d -l -n "%driver_name%" 2>nul
-IF ERRORLEVEL 1 GOTO :errorNotRegistered
-SET driver_found=yes
+"%myodbc_installer%" -d -l -n %1  2>nul
+IF ERRORLEVEL 0 IF NOT ERRORLEVEL 1 CALL :doDeregister %1
+IF ERRORLEVEL 1 CALL :errorNotRegistered
 
-ECHO Deregistering %driver_name%
-"%myodbc_installer%" -d -r -n "%driver_name%"
+GOTO :eof
+
+:doDeregister
+
+ECHO Deregistering %1
+"%myodbc_installer%" -d -r -n %1
+SET driver_found= yes
+
+GOTO :eof
 
 :doSuccess
 ECHO ^+-----------------------------------------------------^+
@@ -126,10 +151,10 @@ ECHO ^+-----------------------------------------------------^+
 ECHO ^| ERROR                                               ^|
 ECHO ^+-----------------------------------------------------^+
 ECHO ^|                                                     ^|
-ECHO ^| Connector/ODBC does not appear to be registered.    ^|
+ECHO ^| Such driver does not appear to be registered.       ^|
 ECHO ^| Was it registered under non-default name which      ^|
 ECHO ^| then should be specified as the first parameter of  ^|
 ECHO ^| this script?                                        ^|
 ECHO ^|                                                     ^|
 ECHO ^+-----------------------------------------------------^+
-EXIT /B 1
+GOTO :eof

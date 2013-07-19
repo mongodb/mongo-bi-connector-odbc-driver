@@ -583,21 +583,23 @@ typedef struct t_table_bug
 } t_describe_col;
 
 
-t_describe_col t_tables_bug_data[5] =
+t_describe_col t_tables_bug_data_unicode[5] =
 {
-#ifdef MYODBC_UNICODEDRIVER
   {"TABLE_CAT",   9, SQL_WVARCHAR, MYSQL_NAME_LEN, 0, SQL_NULLABLE},
   {"TABLE_SCHEM",11, SQL_WVARCHAR, MYSQL_NAME_LEN, 0, SQL_NULLABLE},
   {"TABLE_NAME", 10, SQL_WVARCHAR, MYSQL_NAME_LEN, 0, SQL_NULLABLE},
   {"TABLE_TYPE", 10, SQL_WVARCHAR, MYSQL_NAME_LEN, 0, SQL_NULLABLE},
   {"REMARKS",     7, SQL_WVARCHAR, MYSQL_NAME_LEN, 0, SQL_NULLABLE},
-#else
+};
+
+t_describe_col t_tables_bug_data_ansi[5] =
+{
   {"TABLE_CAT",   9, SQL_VARCHAR, MYSQL_NAME_LEN, 0, SQL_NULLABLE},
   {"TABLE_SCHEM",11, SQL_VARCHAR, MYSQL_NAME_LEN, 0, SQL_NULLABLE},
   {"TABLE_NAME", 10, SQL_VARCHAR, MYSQL_NAME_LEN, 0, SQL_NULLABLE},
   {"TABLE_TYPE", 10, SQL_VARCHAR, MYSQL_NAME_LEN, 0, SQL_NULLABLE},
   {"REMARKS",     7, SQL_VARCHAR, MYSQL_NAME_LEN, 0, SQL_NULLABLE},
-#endif
+
 };
 
 
@@ -606,6 +608,8 @@ DECLARE_TEST(t_tables_bug)
   SQLSMALLINT i, ColumnCount, pcbColName, pfSqlType, pibScale, pfNullable;
   SQLULEN     pcbColDef;
   SQLCHAR     szColName[MAX_NAME_LEN];
+  t_describe_col *t_tables_bug_data= unicode_driver ? t_tables_bug_data_unicode
+                                                    : t_tables_bug_data_ansi;
 
   ok_stmt(hstmt,  SQLTables(hstmt, NULL, 0, NULL, 0, NULL, 0,
                             (SQLCHAR *)"'TABLE'", SQL_NTS));
@@ -619,13 +623,13 @@ DECLARE_TEST(t_tables_bug)
                                  MAX_NAME_LEN, &pcbColName, &pfSqlType,
                                  &pcbColDef, &pibScale, &pfNullable));
 
-    fprintf(stdout, "# Column '%d':\n", i);
-    fprintf(stdout, "#  Column Name   : %s\n", szColName);
-    fprintf(stdout, "#  NameLengh     : %d\n", pcbColName);
-    fprintf(stdout, "#  DataType      : %d\n", pfSqlType);
-    fprintf(stdout, "#  ColumnSize    : %d\n", pcbColDef);
-    fprintf(stdout, "#  DecimalDigits : %d\n", pibScale);
-    fprintf(stdout, "#  Nullable      : %d\n", pfNullable);
+    printMessage("Column '%d':", i);
+    printMessage(" Column Name   : %s", szColName);
+    printMessage(" NameLengh     : %d", pcbColName);
+    printMessage(" DataType      : %d", pfSqlType);
+    printMessage(" ColumnSize    : %d", pcbColDef);
+    printMessage(" DecimalDigits : %d", pibScale);
+    printMessage(" Nullable      : %d", pfNullable);
 
     is_str(t_tables_bug_data[i-1].szColName, szColName, pcbColName);
     is_num(t_tables_bug_data[i-1].pcbColName, pcbColName);
@@ -651,6 +655,8 @@ DECLARE_TEST(t_current_catalog_unicode)
   wchar_t     cur_db[255];
   SQLRETURN   rc;
   SQLINTEGER  len;
+
+  REQUIRES_UNICODE_DRIVER;
 
   rc = SQLFreeStmt(hstmt,SQL_CLOSE);
   mystmt(hstmt,rc);
@@ -710,6 +716,8 @@ DECLARE_TEST(t_current_catalog_ansi)
   SQLCHAR     cur_db[255], db[255];
   SQLRETURN   rc;
   SQLINTEGER len;
+
+  REQUIRES_ANSI_DRIVER;
 
   rc = SQLFreeStmt(hstmt,SQL_CLOSE);
   mystmt(hstmt,rc);
@@ -1554,11 +1562,8 @@ BEGIN_TESTS
   ADD_TEST(tmysql_specialcols)
   ADD_TEST(t_columns)
   ADD_TEST(t_tables_bug)
-#ifdef MYODBC_UNICODEDRIVER
   ADD_TEST(t_current_catalog_unicode)
-#else
   ADD_TEST(t_current_catalog_ansi)
-#endif
   ADD_TEST(tmysql_showkeys)
   ADD_TEST(t_sqltables)
   ADD_TEST(my_information_schema)

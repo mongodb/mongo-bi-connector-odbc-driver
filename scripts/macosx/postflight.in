@@ -94,12 +94,23 @@ fi
 # ----------------------------------------------------------------------
 # REGISTER THE DRIVER
 # ----------------------------------------------------------------------
-echo "Registering driver..."
-#$bindir/myodbc-installer -a -d -n "MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ Driver" -t "Driver=$libdir/libmyodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.so;Setup=$libdir/libmyodbc3S.so;"
-$bindir/myodbc-installer -a -d -n "MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ Driver" -t "Driver=$libdir/libmyodbc5@CONNECTOR_DRIVER_TYPE_SHORT@.so;"
+
+for driver_type in @CONNECTOR_DRIVER_TYPE@
+do
+  if [ $driver_type = "ANSI" ] ; then
+    suffix=a
+    dsn=myodbca
+  else
+    suffix=w
+    dsn=myodbc
+  fi
+
+  echo "Registering $driver_type driver..."
+  $bindir/myodbc-installer -a -d -n "MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ $driver_type Driver" -t "Driver=$libdir/libmyodbc5$suffix.so;"
 
 # ----------------------------------------------------------------------
 # CREATE A SAMPLE DSN
 # ----------------------------------------------------------------------
-echo "Ensuring sample data source name (myodbc) exists..."
-$bindir/myodbc-installer -a -s -n myodbc -t "Driver=MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ Driver;SERVER=localhost;"
+  echo "Ensuring sample data source name (myodbc) exists..."
+  $bindir/myodbc-installer -a -s -n $dsn -t "Driver=MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ $driver_type Driver;SERVER=localhost;"
+done

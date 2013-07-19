@@ -1231,9 +1231,7 @@ BEGIN_TESTS
   ADD_TEST(float_scale)
   ADD_TEST(bit)
   ADD_TEST(t_bug32171)
-#ifdef MYODBC_UNICODEDRIVER
-  ADD_TEST(sqlwchar)
-#endif
+  ADD_TEST_UNICODE(sqlwchar)
   ADD_TEST(t_sqlnum_msdn)
   ADD_TEST(t_sqlnum_from_str)
   ADD_TEST(t_bindsqlnum_basic)

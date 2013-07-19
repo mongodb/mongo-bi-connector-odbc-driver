@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -33,9 +33,14 @@
 #define MYODBC_STRPRODUCTVER  MYODBC_STRFILEVER
 
 #define MYODBC_STRSERIES      "@CONNECTOR_MAJOR@.@CONNECTOR_MINOR@"
-#define MYODBC_STRDRIVERID    MYODBC_STRSERIES"(@CONNECTOR_DRIVER_TYPE_SHORT@)"
 #define MYODBC_STRQUALITY     "@CONNECTOR_QUALITY@"
-#define MYODBC_STRDRIVERTYPE  "@CONNECTOR_DRIVER_TYPE@"
-#define MYODBC_STRTYPE_SUFFIX "@CONNECTOR_DRIVER_TYPE_SHORT@"
 
-#cmakedefine MYODBC_UNICODEDRIVER
+#ifdef MYODBC_UNICODEDRIVER
+# define MYODBC_STRDRIVERID    MYODBC_STRSERIES"(w)"
+# define MYODBC_STRDRIVERTYPE  "Unicode"
+# define MYODBC_STRTYPE_SUFFIX "w"
+#else
+# define MYODBC_STRDRIVERID    MYODBC_STRSERIES"(a)"
+# define MYODBC_STRDRIVERTYPE  "ANSI"
+# define MYODBC_STRTYPE_SUFFIX "a"
+#endif

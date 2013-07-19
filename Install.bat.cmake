@@ -1,5 +1,5 @@
 @ECHO OFF
-REM Copyright (c) 2006, 2012, Oracle and/or its affiliates. All rights reserved.
+REM Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
 REM
 REM The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 REM <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most 
@@ -33,7 +33,7 @@ REM         Name under which the driver should be registered
 REM         can be specified as first parameter. It should be
 REM         a single word (no spaces).
 REM
-REM \sa     README.win
+REM \sa     INSTALL.win
 REM
 REM #########################################################
 
@@ -41,13 +41,15 @@ REM # SETLOCAL prevents the variables set in this script to
 REM # be exported to the environment and pollute it
 SETLOCAL
 
-SET         driver_name=MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@(@CONNECTOR_DRIVER_TYPE_SHORT@) Driver
-SET          driver_lib=myodbc5@CONNECTOR_DRIVER_TYPE_SHORT@
+SET    driver_name= none
+SET    driver_lib=myodbc5
 SET    driver_lib_setup=myodbc5S
-SET           installer=myodbc-installer
+SET    installer=myodbc-installer
 
-IF "%1" == "" GOTO :doFindDriver
-SET  driver_name=%1
+IF "%~1" == "" GOTO :doFindDriver
+SET  driver_name=%~1
+
+IF NOT @DRIVERS_COUNT@ == 1 ECHO NOTE: " ANSI" or " Unicode" will be added to the driver name
 
 :doFindDriver
 REM # Find driver location
@@ -63,13 +65,13 @@ REM # Find the installer utility
 REM # Try to find it in the build location
 CALL :subFindBinDir "%libdir%"
 SET myodbc_installer=%bindir%\%installer%.exe
-IF EXIST "%myodbc_installer%" GOTO :doRegister
+IF EXIST "%myodbc_installer%" GOTO :register
 
 REM # Try some other reasonable locations
 SET myodbc_installer=bin\%installer%.exe
-IF EXIST "%myodbc_installer%" GOTO :doRegister
+IF EXIST "%myodbc_installer%" GOTO :register
 SET myodbc_installer=.\%installer%.exe
-IF EXIST "%myodbc_installer%" GOTO :doRegister
+IF EXIST "%myodbc_installer%" GOTO :register
 
 REM # Try if it is in the path
 SET myodbc_installer=%installer%.exe
@@ -79,20 +81,40 @@ IF NOT ERRORLEVEL 9000 GOTO :doRegister
 
 GOTO :errorNoInstaller
 
-:doRegister
+:register
 REM ECHO myodbc_installer: %myodbc_installer%
 
 REM # Abort if driver is already registered
 
-%myodbc_installer% -d -l -n "%driver_name%" 2>nul:
+FOR %%d IN (@CONNECTOR_DRIVER_TYPE@) DO CALL :registerIfNotFound %%d
+
+REM # All is well if we got here
+goto :doSuccess
+
+:registerIfNotFound
+
+ECHO Registering %1 driver
+
+IF %driver_name% == none SET name= "MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ %1% Driver"
+IF NOT %driver_name% == none IF NOT @DRIVERS_COUNT@ == 1 SET name= "%driver_name% %1"
+
+IF %1 == Unicode SET lib= "%driver_lib%w.dll"
+IF %1 == ANSI SET lib= "%driver_lib%a.dll"
+
+ECHO Checking if %name% is not already registered
+
+%myodbc_installer% -d -l -n %name% 2>nul:
+
 IF NOT ERRORLEVEL 1 GOTO :errorDriverInstalled
 
-ECHO Registering %driver_name%
-%myodbc_installer% -d -a -n "%driver_name%" -t "DRIVER=%libdir%\%driver_lib%.dll;SETUP=%libdir%\%driver_lib_setup%.dll"
+ECHO Registering %name%
 
+%myodbc_installer% -d -a -n %name% -t "DRIVER=%libdir%\%lib%;SETUP=%libdir%\%driver_lib_setup%.dll"
+
+REM # If we have error on registering 1 driver - 99.9% we will have it with other as well
 IF ERRORLEVEL 1 GOTO :errorRegisterDriver
 
-GOTO :doSuccess
+goto :eof
 
 REM ######
 REM # A subroutine to check if given location
@@ -102,7 +124,8 @@ REM ######
 REM # Skip check if a good libdir was already found
 IF NOT "%libdir%" == "none" GOTO :eof
 SET libdir=%CD%\%1
-IF NOT EXIST "%libdir%\%driver_lib%.dll"       GOTO :wrongLibDir
+IF NOT EXIST "%libdir%\%driver_lib%a.dll"      GOTO :wrongLibDir
+IF NOT EXIST "%libdir%\%driver_lib%w.dll"      GOTO :wrongLibDir
 IF NOT EXIST "%libdir%\%driver_lib_setup%.dll" GOTO :wrongLibDir
 REM ECHO Libdir (%libdir%) is OK.
 GOTO :eof
@@ -172,10 +195,10 @@ ECHO ^+-----------------------------------------------------^+
 ECHO ^| ERROR                                               ^|
 ECHO ^+-----------------------------------------------------^+
 ECHO ^|                                                     ^|
-ECHO ^| Existing Connector/ODBC installed. Request ignored. ^|
+ECHO ^| There is already driver registered with such name   ^|
 ECHO ^|                                                     ^|
 ECHO ^+-----------------------------------------------------^+
-EXIT /B 1
+EXIT 1
 
 :errorRegisterDriver
 ECHO ^+-----------------------------------------------------^+
@@ -185,4 +208,5 @@ ECHO ^|                                                     ^|
 ECHO ^| Could not register the driver.                      ^|
 ECHO ^|                                                     ^|
 ECHO ^+-----------------------------------------------------^+
-EXIT /B 1
+
+EXIT 1

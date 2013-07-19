@@ -1781,17 +1781,14 @@ DECLARE_TEST(t_binary_collation)
       (!strncmp("5.1", (char *)server_version, 3) &&
         mysql_min_version(hdbc, "5.1.22", 6)))
   {
-#ifdef MYODBC_UNICODEDRIVER
-    is_num(data_type, SQL_WVARCHAR);
-#else
-    is_num(data_type, SQL_VARCHAR);
-#endif
+    is_num(data_type, unicode_driver ? SQL_WVARCHAR : SQL_VARCHAR);
   }
   else
   {
     is_num(data_type, SQL_VARBINARY);
   }
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_binary_collation");
+
   return OK;
 }
 

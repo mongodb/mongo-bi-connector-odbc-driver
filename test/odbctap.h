@@ -131,6 +131,10 @@ SQLCHAR *mydb= (SQLCHAR *)"test";
 SQLCHAR *test_db= (SQLCHAR *)"client_odbc_test";
 /* Suffix is useful if a testsuite is run more than once */
 const SQLCHAR *testname_suffix="";
+/* -1 means that the fact has to be established, 0 - ansi driver, 1 - unicode */
+int     unicode_driver= -1;
+#define REQUIRES_UNICODE_DRIVER if (unicode_driver == 0) skip("This testcase is designed for Unicode drivers only")
+#define REQUIRES_ANSI_DRIVER if (unicode_driver != 0) skip("This testcase is designed for ANSI drivers only")
 
 #ifndef OK
 # define OK 0
@@ -171,9 +175,10 @@ static void print_diag(SQLRETURN rc, SQLSMALLINT htype, SQLHANDLE handle,
              SQLHENV henv __attribute__((unused)))
 
 typedef struct {
-  char *name;
+  char      *name;
   test_func func;
-  int   expect;
+  int       expect;
+  int       required_driver_type;
 } my_test;
 
 
@@ -234,12 +239,14 @@ void mem_gc_init()
   SQLHSTMT S= NULL
 
 #define BEGIN_TESTS my_test tests[]= {
-#define ADD_TEST(name) { #name, name, OK   },
-#define ADD_TODO(name) { #name, name, FAIL },
+#define ADD_TEST(name)          { #name, name, OK  , -1 },
+#define ADD_TEST_UNICODE(name)  { #name, name, OK  ,  1 },
+#define ADD_TEST_ANSI(name)     { #name, name, OK  ,  0 },
+#define ADD_TODO(name)          { #name, name, FAIL, -1 },
 #ifdef EXPOSE_TOFIX_TESTS
-# define ADD_TOFIX(name) { #name, name, OK   },
+# define ADD_TOFIX(name) { #name, name, OK,   -1 },
 #else
-# define ADD_TOFIX(name) { #name, name, FAIL },
+# define ADD_TOFIX(name) { #name, name, FAIL, -1 },
 #endif
 #define END_TESTS }; \
 void test_timeout(int signum __attribute__((unused))) \
@@ -298,23 +305,31 @@ int main(int argc, char **argv) \
   for (i= 0; i < num_tests; i++ ) \
   { \
     int rc; \
-    RUN_TESTS_ALARM; \
-    rc= tests[i].func(hdbc, hstmt, henv); \
-    printf("%s %d - %s%s %s%s\n", \
+    if (tests[i].required_driver_type > -1 && tests[i].required_driver_type != unicode_driver) \
+    { \
+      printf("ok %d # SKIP This testcase is designed for %s drivers only\n", i+1, \
+             unicode_driver == 0 ? "Unicode" : "ANSI" ); \
+    } \
+    else \
+    { \
+      RUN_TESTS_ALARM; \
+      rc= tests[i].func(hdbc, hstmt, henv); \
+      printf("%s %d - %s%s %s%s\n", \
            (rc == OK || rc == SKIP) ? "ok" : "not ok", \
            i + 1, \
            tests[i].name, testname_suffix, \
            (tests[i].expect == FAIL ? "# TODO" : \
             rc == SKIP ? "# SKIP " : ""), \
            SKIP_REASON ? SKIP_REASON : ""); \
-    if ((rc == FAIL) && (FAIL != tests[i].expect)) \
-      ++failcnt; \
-    SKIP_REASON= NULL; /* Reset SKIP_REASON */ \
-    /* Re-allocate statement to reset all its properties. */ \
-    SQLFreeStmt(hstmt, SQL_DROP); \
-    SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt); \
-    /* Freeing allocated memory */ \
-    mem_gc_flush(); \
+      if ((rc == FAIL) && (FAIL != tests[i].expect)) \
+        ++failcnt; \
+      SKIP_REASON= NULL; /* Reset SKIP_REASON */ \
+      /* Re-allocate statement to reset all its properties. */ \
+      SQLFreeStmt(hstmt, SQL_DROP); \
+      SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt); \
+      /* Freeing allocated memory */ \
+      mem_gc_flush(); \
+    } \
   }
 
 #define RUN_TESTS \
@@ -1153,6 +1168,7 @@ int get_connection(SQLHDBC *hdbc, const SQLCHAR *dsn, const SQLCHAR *uid,
   SQLCHAR     db_buf[MAX_NAME_LEN]= {0}, port_buf[MAX_NAME_LEN]= {0};
   SQLSMALLINT len;
   SQLRETURN   rc;
+  SQLCHAR     driver_name[16]; /* Should be enough for myodbc library file name */
 
   /* We never set the custom DSN, but sometimes use DRIVER instead */
   if (dsn == NULL)
@@ -1196,19 +1212,33 @@ int get_connection(SQLHDBC *hdbc, const SQLCHAR *dsn, const SQLCHAR *uid,
   rc= SQLDriverConnect(*hdbc, NULL, connIn, SQL_NTS, connOut,
                        MAX_NAME_LEN, &len, SQL_DRIVER_NOPROMPT);
 
-  if (SQL_SUCCEEDED(rc))
-  {
-    /* Let's neglect possibility that error returned by get_connection() can be
-       in fact error of turning autocommit on */
-    rc= SQLSetConnectAttr(*hdbc, SQL_ATTR_AUTOCOMMIT,
-                                  (SQLPOINTER)SQL_AUTOCOMMIT_ON, 0);
-  }
-  else
+  if (!SQL_SUCCEEDED(rc))
   {
     /* re-build and print the connection string with hidden password */
     printf("# Connection failed with the following Connection string: " \
            "\n%s;UID=%s;PWD=*******%s%s%s;%s\n", 
            dsn_buf, uid, socket_buf, db_buf, port_buf, options);
+    return rc;
+  }
+
+  /* Let's neglect possibility that error returned by get_connection() can be
+     in fact error of turning autocommit on */
+  rc= SQLSetConnectAttr(*hdbc, SQL_ATTR_AUTOCOMMIT,
+                                  (SQLPOINTER)SQL_AUTOCOMMIT_ON, 0);
+  if (!SQL_SUCCEEDED(rc))
+  {
+    return rc;
+  }
+
+  if (unicode_driver < 0)
+  {
+    rc= SQLGetInfo(*hdbc, SQL_DRIVER_NAME, driver_name, sizeof(driver_name), NULL);
+
+    if (SQL_SUCCEEDED(rc))
+    {
+      /* ANSI driver file name contains 5a.{dll|so} */
+      unicode_driver= strstr((char*)driver_name, "a.") == NULL ? 1 : 0;
+    }
   }
 
   return rc;
