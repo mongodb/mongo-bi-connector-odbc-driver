@@ -37,8 +37,12 @@ DECLARE_TEST(t_odbc3_error)
 
   ok_env(henv1, SQLGetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
                               (SQLPOINTER)&ov_version, 0, 0));
-  is_num(ov_version, SQL_OV_ODBC3_80);
-
+  /* "For standards-compliant applications, SQLAllocHandle is mapped to SQLAllocHandleStd
+     at compile time. The difference between these two functions is that SQLAllocHandleStd
+     sets the SQL_ATTR_ODBC_VERSION environment attribute to SQL_OV_ODBC3 when it is called
+     with the HandleType argument set to SQL_HANDLE_ENV. This is done because standards-compliant
+     applications are always ODBC 3.x applications." */
+  is_num(ov_version, SQL_OV_ODBC3);
 
   expect_sql(hstmt1, "SELECT * FROM non_existing_table", SQL_ERROR);
   if (check_sqlstate(hstmt1, "42S02") != OK)
@@ -110,6 +114,29 @@ DECLARE_TEST(t_odbc2_error)
   return OK;
 }
 
+
+/* Testing ability of application to set 3.8 ODBC version */
+DECLARE_TEST(t_odbc3_80)
+{
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+  SQLINTEGER ov_version;
+
+  ok_env(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
+  /* ODBC 3.8 applications should use ... SQLSetEnvAttr to set the SQL_ATTR_ODBC_VERSION environment
+     attribute to SQL_OV_ODBC_3_80*/
+  ok_env(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
+                              (SQLPOINTER)SQL_OV_ODBC3_80, 0));
+
+  ok_env(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &hdbc1));
+
+  ok_env(henv1, SQLGetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
+                              (SQLPOINTER)&ov_version, 0, 0));
+  is_num(ov_version, SQL_OV_ODBC3_80);
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  return OK;
+}
 
 DECLARE_TEST(t_diagrec)
 {
@@ -727,8 +754,9 @@ BEGIN_TESTS
   ADD_TEST(t_odbc3_error)
   /* Run twice to test the driver's handling of switching  */
   ADD_TEST(t_odbc2_error)
+  ADD_TEST(t_odbc3_80)
 #endif
-  ADD_TEST(t_diagrec)
+  /*ADD_TEST(t_diagrec)
   ADD_TEST(t_warning)
   ADD_TEST(t_bug3456)
   ADD_TEST(t_bug16224)
@@ -743,7 +771,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug14285620)
   ADD_TOFIX(t_bug49466)
   ADD_TEST(t_passwordexpire)
-  ADD_TEST(t_cleartext_password)
+  ADD_TEST(t_cleartext_password)*/
 END_TESTS
 
 RUN_TESTS
