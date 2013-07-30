@@ -2,7 +2,12 @@
 
   Functionality added or changed:
   * Support for File Data Sources. (WL#6583, Bug# 11746219/24581)
-	* Bookmark support added in myodbc (WL#7039)
+  * Bookmark support added in myodbc (WL#7039)
+  * Added new variable in cmake config files ODBCCP32_LIB for odbccpp32.lib path, 
+    and MYSQLCLIENT_LIB_NAME for linking mysqlclient statically or dynamically by 
+    specifying mysqlclient library (libmysql.*, mysqlclient.*, libmysqlclient_r.*, 
+    libmysqlclient.*) to be used. Mysql CPP linkage for mysql version >= 5.6.4
+    (wl#6738)
 
   Bugs fixed:
   * With utf8 byte string for mysql server version < 5.5.3, insert fails
@@ -19,11 +24,6 @@
     (Bug# 16176981/67793)
   * Conversion of Time field data to Timestamp type may produce incorrect result
     (Bug# 17016839/69545)
-  * Added new variable in cmake config files ODBCCP32_LIB for odbccpp32.lib path, 
-    and MYSQLCLIENT_LIB_NAME for linking mysqlclient statically or dynamically by 
-    specifying mysqlclient library (libmysql.*, mysqlclient.*, libmysqlclient_r.*, 
-    libmysqlclient.*) to be used. Mysql CPP linkage for mysql version >= 5.6.4
-    (wl#6738)
 
 
 ----
@@ -136,8 +136,9 @@
   Functionality added or changed:
   * MyODBC queries log is written to %TEMP%\myodbc.sql, or to C:\myodbc.sql if
     TEMP is not defined.
-  * Added pre-fetch functionality implemented through LIMIT to avoid reading the
-    entire resultset for full table SELECT queries. (WL#6211)
+  * Added pre-fetch functionality and PREFETCH connection string option 
+    implemented through LIMIT to avoid reading the entire resultset for full
+    table SELECT queries. (WL#6211)
 
   Bugs fixed:
   * Fractional parts of second is ignored in SQLGetData. (Bug #12767740/60646)
@@ -226,6 +227,7 @@
   * Added GUI options for MIN_DATE_TO_ZERO and ZERO_DATE_TO_MIN connection
     options. (Bug #30539)
   * Function SQLProcedureColumns() implemented. (Bug #50400)
+  * Added NO_I_S connection option.
 
   Bugs fixed:
   * If NO_BACKSLASH_ESCAPES mode is used on a server, escaping binary data
@@ -368,6 +370,7 @@
   * Added SSLVERIFY connection option to verify server certificate. By default
     certificate is not verified now. (Bug #34648)
   * Database list height is autoadjusted in Windows GUI. (Bug #33918)
+  * Added new connection string option DFLT_BIGINT_BIND_STR
 
   Bugs fixed:
   * Recordset-based update fails if blob field is queried. (Bug #19065)
