@@ -330,7 +330,9 @@ typedef struct	tagENV
   SQLINTEGER   odbc_ver;
   LIST	       *connections;
   MYERROR      error;
-
+#ifdef THREAD
+  pthread_mutex_t lock;
+#endif
 } ENV;
 
 
