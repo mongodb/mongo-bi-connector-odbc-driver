@@ -685,6 +685,7 @@ SQLRETURN my_SQLAllocDesc(SQLHDBC hdbc, SQLHANDLE *pdesc)
     return set_dbc_error(dbc, "HY001", "Memory allocation error", MYERR_S1001);
 
   desc->exp.dbc= dbc;
+  pthread_mutex_init(&desc->lock, NULL);
 
   /* add to this connection's list of explicit descriptors */
   e= (LIST *) my_malloc(sizeof(LIST), MYF(0));
@@ -741,6 +742,7 @@ SQLRETURN my_SQLFreeDesc(SQLHANDLE hdesc)
     x_free(lstmt);
   }
 
+  pthread_mutex_destroy(&desc->lock);
   desc_free(desc);
   return SQL_SUCCESS;
 }

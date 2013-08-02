@@ -240,6 +240,9 @@ typedef struct {
     /* connection we were allocated on */
     struct tagDBC *dbc;
   } exp;
+#ifdef THREAD
+  pthread_mutex_t lock;
+#endif
 } DESC;
 
 /* descriptor record */
