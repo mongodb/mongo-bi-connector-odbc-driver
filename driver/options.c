@@ -632,6 +632,7 @@ MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
                 /* otherwise, associate this statement with the desc */
                 LIST *e= (LIST *) my_malloc(sizeof(LIST), MYF(0));
                 e->data= stmt;
+                /* No need to lock */
                 desc->exp.stmts= list_add(desc->exp.stmts, e);
               }
 

@@ -24,6 +24,8 @@
     (Bug# 16176981/67793)
   * Conversion of Time field data to Timestamp type may produce incorrect result
     (Bug# 17016839/69545)
+  * Need to add a lock to access connections member in ENV structure
+    (Bug# 17240611/69864)
 
 
 ----

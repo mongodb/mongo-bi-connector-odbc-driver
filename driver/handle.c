@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -62,6 +62,7 @@ void myodbc_thread_key_create()
 
 SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV FAR *phenv)
 {
+  ENV FAR **env= (ENV FAR**) phenv;
 #ifdef _UNIX_
   /* Init thread key just once for all threads */
   pthread_once(&myodbc_thread_key_inited, myodbc_thread_key_create);
@@ -85,7 +86,7 @@ SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV FAR *phenv)
         return SQL_ERROR;
     }
 #endif /* _UNIX_ */
-
+    pthread_mutex_init(&(*env)->lock,NULL);
     return SQL_SUCCESS;
 }
 
@@ -121,6 +122,7 @@ SQLRETURN SQL_API SQLAllocEnv(SQLHENV FAR *phenv)
 
 SQLRETURN SQL_API my_SQLFreeEnv(SQLHENV henv)
 {
+    ENV FAR *env= (ENV FAR*) henv;
 #ifndef _UNIX_
     GlobalUnlock(GlobalHandle((HGLOBAL) henv));
     GlobalFree(GlobalHandle((HGLOBAL) henv));
@@ -128,6 +130,7 @@ SQLRETURN SQL_API my_SQLFreeEnv(SQLHENV henv)
     x_free(henv);
     myodbc_end();
 #endif /* _UNIX_ */
+    pthread_mutex_destroy(&env->lock);
     return(SQL_SUCCESS);
 }
 
@@ -245,7 +248,9 @@ SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc)
     dbc->last_query_time= (time_t) time((time_t*) 0);
     dbc->txn_isolation= DEFAULT_TXN_ISOLATION;
     dbc->env= penv;
+    pthread_mutex_lock(&penv->lock);
     penv->connections= list_add(penv->connections,&dbc->list);
+    pthread_mutex_unlock(&penv->lock);
     dbc->list.data= dbc;
     dbc->unicode= 0;
     dbc->ansi_charset_info= dbc->cxn_charset_info= NULL;
@@ -283,7 +288,9 @@ SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc)
     LIST *ldesc;
     LIST *next;
 
+    pthread_mutex_lock(&dbc->env->lock);
     dbc->env->connections= list_delete(dbc->env->connections,&dbc->list);
+    pthread_mutex_unlock(&dbc->env->lock);
     x_free(dbc->database);
     if (dbc->ds)
       ds_delete(dbc->ds);
@@ -682,7 +689,9 @@ SQLRETURN my_SQLAllocDesc(SQLHDBC hdbc, SQLHANDLE *pdesc)
   /* add to this connection's list of explicit descriptors */
   e= (LIST *) my_malloc(sizeof(LIST), MYF(0));
   e->data= desc;
+  pthread_mutex_lock(&dbc->lock);
   dbc->exp_desc= list_add(dbc->exp_desc, e);
+  pthread_mutex_unlock(&dbc->lock);
 
   *pdesc= desc;
   return SQL_SUCCESS;
@@ -712,7 +721,9 @@ SQLRETURN my_SQLFreeDesc(SQLHANDLE hdesc)
   {
     if (ldesc->data == desc)
     {
+      pthread_mutex_lock(&dbc->lock);
       dbc->exp_desc= list_delete(dbc->exp_desc, ldesc);
+      pthread_mutex_unlock(&dbc->lock);
       x_free(ldesc);
       break;
     }
