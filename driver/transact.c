@@ -40,7 +40,7 @@
 static SQLRETURN my_transact(SQLHDBC hdbc, SQLSMALLINT CompletionType)
 {
   SQLRETURN result= SQL_SUCCESS;
-  DBC FAR *dbc= (DBC FAR *)hdbc;
+  DBC *dbc= (DBC *)hdbc;
   const char *query;
   uint	length;
 
@@ -98,7 +98,7 @@ end_transaction(SQLSMALLINT HandleType,
 	   SQLSMALLINT CompletionType)
 {
   SQLRETURN result= SQL_SUCCESS;
-  ENV FAR *henv;
+  ENV *henv;
   LIST *current;
 
   switch (HandleType) {

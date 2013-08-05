@@ -189,8 +189,8 @@ int __stdcall DllMain(HANDLE hInst,DWORD ul_reason_being_called,
   resource file (for instance string resources).
 ***************************************************************************/
 
-int _export FAR PASCAL libmain(HANDLE hModule,short cbHeapSize,
-	     SQLCHAR FAR *lszCmdLine)
+int _export PASCAL libmain(HANDLE hModule,short cbHeapSize,
+	     SQLCHAR *lszCmdLine)
 {
   myodbc_init();
   return TRUE;
@@ -199,8 +199,8 @@ int _export FAR PASCAL libmain(HANDLE hModule,short cbHeapSize,
 #endif /* __WIN__ */
 
 #ifdef _WIN32
-void __declspec(dllexport) FAR PASCAL LoadByOrdinal(void);
+void __declspec(dllexport) PASCAL LoadByOrdinal(void);
 /* Entry point to cause DM to load using ordinals */
-void __declspec(dllexport) FAR PASCAL LoadByOrdinal(void)
+void __declspec(dllexport) PASCAL LoadByOrdinal(void)
 {}
 #endif

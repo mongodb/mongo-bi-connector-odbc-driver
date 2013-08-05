@@ -36,7 +36,7 @@
   @remark  : All i_s_* functions suppose that parameters specifying other parameters lenthes can't SQL_NTS.
              caller should take care of that.
 */
-my_bool server_has_i_s(DBC FAR *dbc)
+my_bool server_has_i_s(DBC *dbc)
 {
   /*
     According to the server ChangeLog INFORMATION_SCHEMA was introduced
@@ -279,7 +279,7 @@ int add_name_condition_oa_id(HSTMT hstmt, char ** pos, SQLCHAR * name,
   /* we can't rely here that column was checked and is not null */
   if (name)
   {
-    STMT FAR *stmt= (STMT FAR*) hstmt;
+    STMT *stmt= (STMT *) hstmt;
 
     if (metadata_id)
     {
@@ -323,7 +323,7 @@ int add_name_condition_pv_id(HSTMT hstmt, char ** pos, SQLCHAR * name,
   /* we can't rely here that column was checked and is not null */
   if (name)
   {
-    STMT FAR *stmt= (STMT FAR*) hstmt;
+    STMT *stmt= (STMT *) hstmt;
 
     if (metadata_id)
     {
@@ -571,7 +571,7 @@ SQLRETURN i_s_list_table_priv(SQLHSTMT    hstmt,
                               SQLCHAR *   table,
                               SQLSMALLINT table_len)
 {
-  STMT FAR *stmt=(STMT FAR*) hstmt;
+  STMT *stmt=(STMT *) hstmt;
   MYSQL *mysql= &stmt->dbc->mysql;
   char   buff[255+4*NAME_LEN+1], *pos;
   SQLRETURN rc;
@@ -652,7 +652,7 @@ static SQLRETURN i_s_list_column_priv(HSTMT *     hstmt,
                                       SQLCHAR *   column,
                                       SQLSMALLINT column_len)
 {
-  STMT FAR *stmt=(STMT FAR*) hstmt;
+  STMT *stmt=(STMT *) hstmt;
   MYSQL *mysql= &stmt->dbc->mysql;
   /* 3 names theorethically can have all their characters escaped - thus 6*NAME_LEN  */
   char   buff[351+6*NAME_LEN+1], *pos;
@@ -822,7 +822,7 @@ MySQLPrimaryKeys(SQLHSTMT hstmt,
                  SQLSMALLINT schema_len __attribute__((unused)),
                  SQLCHAR *table, SQLSMALLINT table_len)
 {
-  STMT FAR  *stmt= (STMT FAR*) hstmt;
+  STMT *stmt= (STMT *) hstmt;
 
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
@@ -864,7 +864,7 @@ SQLRETURN i_s_foreign_keys(SQLHSTMT hstmt,
                            SQLCHAR    *szFkTableName,
                            SQLSMALLINT cbFkTableName)
 {
-  STMT FAR *stmt=(STMT FAR*) hstmt;
+  STMT *stmt=(STMT *) hstmt;
   MYSQL *mysql= &stmt->dbc->mysql;
   char query[2048], *buff; /* This should be big enough. */
   char *update_rule, *delete_rule, *ref_constraints_join;
@@ -1028,7 +1028,7 @@ MySQLForeignKeys(SQLHSTMT hstmt,
                  SQLSMALLINT cbFkSchemaName __attribute__((unused)),
                  SQLCHAR *szFkTableName, SQLSMALLINT cbFkTableName)
 {
-    STMT FAR *stmt=(STMT FAR*) hstmt;
+    STMT *stmt=(STMT *) hstmt;
 
     CLEAR_STMT_ERROR(hstmt);
     my_SQLFreeStmt(hstmt,MYSQL_RESET);

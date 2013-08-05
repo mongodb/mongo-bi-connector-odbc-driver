@@ -36,7 +36,7 @@
   @purpose : internal function to execute query and return result
   frees query if query != stmt->query
 */
-SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
+SQLRETURN do_query(STMT *stmt,char *query, SQLULEN query_length)
 {
     int error= SQL_ERROR, native_error= 0;
 
@@ -216,7 +216,7 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
   @param[in,out]  length      Length of the query. Pointed value is used as initial offset
 */
 
-SQLRETURN insert_params(STMT FAR *stmt, SQLULEN row, char **finalquery,
+SQLRETURN insert_params(STMT *stmt, SQLULEN row, char **finalquery,
                         SQLULEN *finalquery_length)
 {
   char *query= GET_QUERY(&stmt->query), *to;
@@ -1138,7 +1138,7 @@ memerror:
   @purpose : positioned cursor update/delete
 */
 
-SQLRETURN do_my_pos_cursor( STMT FAR *pStmt, STMT FAR *pStmtCursor )
+SQLRETURN do_my_pos_cursor( STMT *pStmt, STMT *pStmtCursor )
 {
   char *          pszQuery= GET_QUERY(&pStmt->query);
   DYNAMIC_STRING  dynQuery;
@@ -1186,7 +1186,7 @@ SQLRETURN do_my_pos_cursor( STMT FAR *pStmt, STMT FAR *pStmtCursor )
 
 SQLRETURN SQL_API SQLExecute(SQLHSTMT hstmt)
 {
-    return my_SQLExecute((STMT FAR*)hstmt);
+    return my_SQLExecute((STMT *)hstmt);
 }
 
 
@@ -1222,12 +1222,12 @@ BOOL map_error_to_param_status( SQLUSMALLINT *param_status_ptr, SQLRETURN rc)
   exist in the statement
 */
 
-SQLRETURN my_SQLExecute( STMT FAR *pStmt )
+SQLRETURN my_SQLExecute( STMT *pStmt )
 {
   char       *query, *cursor_pos;
   int         dae_rec, is_select_stmt, one_of_params_not_succeded= 0;
   int         connection_failure= 0;
-  STMT FAR *  pStmtCursor = pStmt;
+  STMT       *pStmtCursor = pStmt;
   SQLRETURN   rc;
   SQLULEN     row, length= 0;
 
@@ -1604,7 +1604,7 @@ SQLRETURN SQL_API SQLPutData( SQLHSTMT      hstmt,
                               SQLPOINTER    rgbValue,
                               SQLLEN        cbValue )
 {
-    STMT FAR *stmt= (STMT FAR*) hstmt;
+    STMT *stmt= (STMT *) hstmt;
     DESCREC *aprec;
 
     if ( !stmt )

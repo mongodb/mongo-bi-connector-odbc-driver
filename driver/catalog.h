@@ -65,7 +65,7 @@ SQLRETURN
 create_fake_resultset(STMT *stmt, MYSQL_ROW rowval, size_t rowsize,
                       my_ulonglong rowcnt, MYSQL_FIELD *fields, uint fldcnt);
 
-my_bool server_has_i_s(DBC FAR *dbc);
+my_bool server_has_i_s(DBC *dbc);
 
 
 /* no_i_s functions */

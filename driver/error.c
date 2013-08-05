@@ -155,7 +155,7 @@ void myodbc_sqlstate3_init(void)
   @purpose : copies error from one handle to other
 */
 
-SQLRETURN copy_stmt_error(STMT FAR *dst,STMT FAR *src)
+SQLRETURN copy_stmt_error(STMT *dst,STMT *src)
 {
     strmov(dst->error.sqlstate,src->error.sqlstate);
     strmov(dst->error.message, src->error.message);
@@ -171,7 +171,7 @@ SQLRETURN copy_stmt_error(STMT FAR *dst,STMT FAR *src)
   conversion
 */
 
-SQLRETURN set_dbc_error(DBC FAR *dbc, char *state,
+SQLRETURN set_dbc_error(DBC *dbc, char *state,
                         const char *message, uint errcode)
 {
     strmov(dbc->error.sqlstate, state);
@@ -187,7 +187,7 @@ SQLRETURN set_dbc_error(DBC FAR *dbc, char *state,
   conversion
 */
 
-SQLRETURN set_stmt_error( STMT FAR *    stmt,
+SQLRETURN set_stmt_error( STMT       *  stmt,
                           const char *  state,
                           const char *  message,
                           uint          errcode )

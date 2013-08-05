@@ -43,7 +43,7 @@ const SQLULEN sql_select_unlimited= (SQLULEN)-1;
   @param[in] dbc   The database connection
   @param[in] query The query to execute
 */
-SQLRETURN odbc_stmt(DBC FAR *dbc, const char *query)
+SQLRETURN odbc_stmt(DBC *dbc, const char *query)
 {
     SQLRETURN result= SQL_SUCCESS;
 
@@ -357,9 +357,9 @@ char *dupp_str(char *from,int length)
 */
 
 SQLRETURN copy_str_data(SQLSMALLINT HandleType, SQLHANDLE Handle,
-                        SQLCHAR FAR *rgbValue,
+                        SQLCHAR *rgbValue,
                         SQLSMALLINT cbValueMax,
-                        SQLSMALLINT FAR *pcbValue,char FAR *src)
+                        SQLSMALLINT *pcbValue, char *src)
 {
     SQLSMALLINT dummy;
 
@@ -2181,7 +2181,7 @@ ulong str_to_time_as_long(const char *str, uint length)
   the server is up with mysql_ping (to force a reconnect)
 */
 
-int check_if_server_is_alive( DBC FAR *dbc )
+int check_if_server_is_alive( DBC *dbc )
 {
     time_t seconds= (time_t) time( (time_t*)0 );
     int result= 0;
@@ -2241,7 +2241,7 @@ my_bool dynstr_append_quoted_name(DYNAMIC_STRING *str, const char *name)
   @purpose : reset the db name to current_database()
 */
 
-my_bool reget_current_catalog(DBC FAR *dbc)
+my_bool reget_current_catalog(DBC *dbc)
 {
     x_free(dbc->database);
     dbc->database= NULL;
@@ -2937,7 +2937,7 @@ void *ptr_offset_adjust(void *ptr, SQLULEN *bind_offset_ptr,
 
   Returns new_value if operation was successful, -1 otherwise
  */
-SQLRETURN set_sql_select_limit(DBC FAR *dbc, SQLULEN new_value)
+SQLRETURN set_sql_select_limit(DBC *dbc, SQLULEN new_value)
 {
   char query[44];
   SQLRETURN rc;

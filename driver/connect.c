@@ -798,7 +798,7 @@ error:
 SQLRETURN SQL_API SQLDisconnect(SQLHDBC hdbc)
 {
   LIST *list_element, *next_element;
-  DBC FAR *dbc= (DBC FAR*) hdbc;
+  DBC *dbc= (DBC *) hdbc;
 
   for (list_element= dbc->statements; list_element; list_element= next_element)
   {

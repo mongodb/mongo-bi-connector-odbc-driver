@@ -58,14 +58,14 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
             break;
 
         case SQL_ATTR_CURSOR_TYPE:
-            if (((STMT FAR*)Handle)->dbc->ds->force_use_of_forward_only_cursors)
+            if (((STMT *)Handle)->dbc->ds->force_use_of_forward_only_cursors)
             {
                 options->cursor_type= SQL_CURSOR_FORWARD_ONLY;
                 if (ValuePtr != (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY)
                     return set_handle_error(HandleType,Handle,MYERR_01S02,
                                             "Forcing the use of forward-only cursor)",0);
             }
-            else if (((STMT FAR*)Handle)->dbc->ds->dynamic_cursor)
+            else if (((STMT *)Handle)->dbc->ds->dynamic_cursor)
             {
                 if (ValuePtr != (SQLPOINTER)SQL_CURSOR_KEYSET_DRIVEN)
                     options->cursor_type= (SQLUINTEGER)(SQLULEN)ValuePtr;
@@ -223,7 +223,7 @@ SQLRETURN SQL_API
 MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
                     SQLPOINTER ValuePtr, SQLINTEGER StringLengthPtr)
 {
-    DBC FAR *dbc= (DBC FAR*) hdbc;
+    DBC *dbc= (DBC *) hdbc;
 
     switch (Attribute)
     {
@@ -608,9 +608,8 @@ MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
                 /* otherwise, associate this statement with the desc */
                 LIST *e= (LIST *) my_malloc(sizeof(LIST), MYF(0));
                 e->data= stmt;
-                pthread_mutex_lock(&desc->lock);
+                /* No need to lock */
                 desc->exp.stmts= list_add(desc->exp.stmts, e);
-                pthread_mutex_unlock(&desc->lock);
               }
 
               desc->desc_type= desc_type;
@@ -724,7 +723,7 @@ MySQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
                  SQLINTEGER *StringLengthPtr)
 {
     SQLRETURN result= SQL_SUCCESS;
-    STMT FAR *stmt= (STMT FAR*) hstmt;
+    STMT *stmt= (STMT *) hstmt;
     STMT_OPTIONS *options= &stmt->stmt_options;
     SQLINTEGER vparam= 0;
     SQLINTEGER len;
@@ -852,13 +851,13 @@ SQLSetEnvAttr(SQLHENV    henv,
               SQLINTEGER StringLength __attribute__((unused)))
 {
 
-    if (((ENV FAR *)henv)->connections)
+    if (((ENV *)henv)->connections)
         return set_env_error(henv, MYERR_S1010, NULL, 0);
 
     switch (Attribute)
     {
         case SQL_ATTR_ODBC_VERSION:
-            ((ENV FAR *)henv)->odbc_ver= (SQLINTEGER)(SQLLEN)ValuePtr;
+            ((ENV *)henv)->odbc_ver= (SQLINTEGER)(SQLLEN)ValuePtr;
             break;
 
         case SQL_ATTR_OUTPUT_NTS:
@@ -891,7 +890,7 @@ SQLGetEnvAttr(SQLHENV    henv,
             break;
 
         case SQL_ATTR_ODBC_VERSION:
-            *(SQLINTEGER*)ValuePtr= ((ENV FAR *)henv)->odbc_ver;
+            *(SQLINTEGER*)ValuePtr= ((ENV *)henv)->odbc_ver;
             break;
 
         case SQL_ATTR_OUTPUT_NTS:
