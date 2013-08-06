@@ -1,6 +1,5 @@
 /*
-  Copyright (c) 2000, 2007 MySQL AB, 2009, 2010 Sun Microsystems, Inc.
-  Use is subject to license terms.
+  Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -105,10 +104,12 @@ end_transaction(SQLSMALLINT HandleType,
   switch (HandleType) {
   case SQL_HANDLE_ENV:
     henv= (ENV *)Handle;
+    pthread_mutex_lock(&henv->lock);
     for (current= henv->connections; current; current= current->next)
     {
         my_transact((DBC *)current->data, CompletionType);
     }
+    pthread_mutex_unlock(&henv->lock);
     break;
 
   case SQL_HANDLE_DBC:

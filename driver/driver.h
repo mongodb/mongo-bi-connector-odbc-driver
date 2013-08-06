@@ -239,6 +239,9 @@ typedef struct {
     /* connection we were allocated on */
     struct tagDBC *dbc;
   } exp;
+#ifdef THREAD
+  pthread_mutex_t lock;
+#endif
 } DESC;
 
 /* descriptor record */
@@ -329,7 +332,9 @@ typedef struct	tagENV
   SQLINTEGER   odbc_ver;
   LIST	       *connections;
   MYERROR      error;
-
+#ifdef THREAD
+  pthread_mutex_t lock;
+#endif
 } ENV;
 
 
