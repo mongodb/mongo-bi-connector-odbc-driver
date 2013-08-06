@@ -335,7 +335,7 @@ void set_current_cursor_data(STMT *stmt, SQLUINTEGER irow)
   explicitly by the application
 */
 
-static void set_dynamic_cursor_name(STMT FAR *stmt)
+static void set_dynamic_cursor_name(STMT *stmt)
 {
     stmt->cursor.name= (char*) my_malloc(MYSQL_MAX_CURSOR_LEN,MYF(MY_ZEROFILL));
     sprintf((char*) stmt->cursor.name,"SQL_CUR%d",stmt->dbc->cursor_count++);
@@ -347,7 +347,7 @@ static void set_dynamic_cursor_name(STMT FAR *stmt)
   @purpose : updates the stmt status information
 */
 
-static SQLRETURN update_status(STMT FAR *stmt, SQLUSMALLINT status)
+static SQLRETURN update_status(STMT *stmt, SQLUSMALLINT status)
 {
     if ( stmt->affected_rows == 0 )
         return set_error(stmt,MYERR_01S03,NULL,0);
@@ -418,7 +418,7 @@ static SQLRETURN update_setpos_status(STMT *stmt, SQLINTEGER irow,
   @purpose : copy row buffers to statement
 */
 
-static SQLRETURN copy_rowdata(STMT FAR *stmt, DESCREC *aprec,
+static SQLRETURN copy_rowdata(STMT *stmt, DESCREC *aprec,
                               DESCREC *iprec, NET **net, SQLCHAR **to)
 {
     SQLRETURN rc;
@@ -450,10 +450,10 @@ static SQLRETURN copy_rowdata(STMT FAR *stmt, DESCREC *aprec,
   @purpose : executes a statement query
 */
 
-static SQLRETURN exec_stmt_query(STMT FAR *stmt,char *query,
+static SQLRETURN exec_stmt_query(STMT *stmt,char *query,
                                  SQLUINTEGER len)
 {
-    DBC FAR *dbc= stmt->dbc;
+    DBC *dbc= stmt->dbc;
     SQLRETURN error= SQL_SUCCESS;
 
     MYLOG_QUERY(stmt, query);
@@ -538,7 +538,7 @@ static my_bool insert_field(STMT *stmt, MYSQL_RES *result,
   if it is, copy that data to query, else we can't find the right row
 */
 
-static SQLRETURN insert_pk_fields(STMT FAR *stmt, DYNAMIC_STRING *dynQuery)
+static SQLRETURN insert_pk_fields(STMT *stmt, DYNAMIC_STRING *dynQuery)
 {
     MYSQL_RES    *result= stmt->result;
     MYSQL_FIELD  *field;
@@ -585,7 +585,7 @@ static SQLRETURN insert_pk_fields(STMT FAR *stmt, DYNAMIC_STRING *dynQuery)
   @purpose : generate a WHERE clause based on the fields in the result set
 */
 
-static SQLRETURN append_all_fields(STMT FAR *stmt, DYNAMIC_STRING *dynQuery)
+static SQLRETURN append_all_fields(STMT *stmt, DYNAMIC_STRING *dynQuery)
 {
   MYSQL_RES    *result= stmt->result;
   MYSQL_RES    *presultAllColumns;
@@ -689,7 +689,7 @@ static SQLRETURN append_all_fields(STMT FAR *stmt, DYNAMIC_STRING *dynQuery)
   @purpose : build the where clause
 */
 
-static SQLRETURN build_where_clause( STMT FAR *       pStmt, 
+static SQLRETURN build_where_clause( STMT * pStmt, 
                                      DYNAMIC_STRING * dynQuery,
                                      SQLUSMALLINT     irow )
 {
@@ -741,7 +741,7 @@ static SQLRETURN build_where_clause( STMT FAR *       pStmt,
   @purpose : set clause building..
 */
 
-static SQLRETURN build_set_clause(STMT FAR *stmt, SQLULEN irow,
+static SQLRETURN build_set_clause(STMT *stmt, SQLULEN irow,
                                   DYNAMIC_STRING *dynQuery)
 {
     DESCREC aprec_, iprec_;
@@ -856,7 +856,7 @@ static SQLRETURN build_set_clause(STMT FAR *stmt, SQLULEN irow,
   @purpose : deletes the positioned cursor row
 */
 
-SQLRETURN my_pos_delete(STMT FAR *stmt, STMT FAR *stmtParam,
+SQLRETURN my_pos_delete(STMT *stmt, STMT *stmtParam,
                         SQLUSMALLINT irow, DYNAMIC_STRING *dynQuery)
 {
     SQLRETURN nReturn;
@@ -882,14 +882,14 @@ SQLRETURN my_pos_delete(STMT FAR *stmt, STMT FAR *stmtParam,
   @purpose : updates the positioned cursor row
 */
 
-SQLRETURN my_pos_update( STMT FAR *         pStmtCursor, 
-                         STMT FAR *         pStmt,
+SQLRETURN my_pos_update( STMT *             pStmtCursor, 
+                         STMT *             pStmt,
                          SQLUSMALLINT       nRow, 
                          DYNAMIC_STRING *   dynQuery )
 {
     SQLRETURN   rc;
     SQLHSTMT    hStmtTemp;
-    STMT FAR  * pStmtTemp;
+    STMT        * pStmtTemp;
 
     rc = build_where_clause( pStmtCursor, dynQuery, nRow );
     if ( !SQL_SUCCEEDED( rc ) )
@@ -904,7 +904,7 @@ SQLRETURN my_pos_update( STMT FAR *         pStmtCursor,
         return set_stmt_error( pStmt, "HY000", "my_SQLAllocStmt() failed.", 0 );
     }
 
-    pStmtTemp = (STMT FAR*)hStmtTemp;
+    pStmtTemp = (STMT *)hStmtTemp;
 
     if (my_SQLPrepare(pStmtTemp, (SQLCHAR *)dynQuery->str, dynQuery->length,
                       FALSE) != SQL_SUCCESS)
@@ -953,7 +953,7 @@ SQLRETURN my_pos_update( STMT FAR *         pStmtCursor,
   and returns data for all bound columns.
 */
 
-static SQLRETURN fetch_bookmark(STMT FAR *stmt)
+static SQLRETURN fetch_bookmark(STMT *stmt)
 {
   SQLUINTEGER  rowset_pos,rowset_end;
   my_ulonglong affected= 0;
@@ -1022,7 +1022,7 @@ static SQLRETURN fetch_bookmark(STMT FAR *stmt)
   @type    : myodbc3 internal
   @purpose : deletes the positioned cursor row for bookmark in bound array
 */
-static SQLRETURN setpos_delete_bookmark(STMT FAR *stmt, SQLUSMALLINT irow,
+static SQLRETURN setpos_delete_bookmark(STMT *stmt, SQLUSMALLINT irow,
                                DYNAMIC_STRING *dynQuery)
 {
   SQLUINTEGER  rowset_pos,rowset_end;
@@ -1116,7 +1116,7 @@ static SQLRETURN setpos_delete_bookmark(STMT FAR *stmt, SQLUSMALLINT irow,
   @purpose : deletes the positioned cursor row - will del all rows in rowset if irow = 0
 */
 
-static SQLRETURN setpos_delete(STMT FAR *stmt, SQLUSMALLINT irow,
+static SQLRETURN setpos_delete(STMT *stmt, SQLUSMALLINT irow,
                                DYNAMIC_STRING *dynQuery)
 {
   SQLUINTEGER  rowset_pos,rowset_end;
@@ -1185,7 +1185,7 @@ static SQLRETURN setpos_delete(STMT FAR *stmt, SQLUSMALLINT irow,
 @type    : myodbc3 internal
 @purpose : updates the positioned cursor row for bookmark in bound array
 */
-static SQLRETURN setpos_update_bookmark(STMT FAR *stmt, SQLUSMALLINT irow,
+static SQLRETURN setpos_update_bookmark(STMT *stmt, SQLUSMALLINT irow,
                              DYNAMIC_STRING *dynQuery)
 {
   SQLUINTEGER  rowset_pos,rowset_end;
@@ -1291,7 +1291,7 @@ static SQLRETURN setpos_update_bookmark(STMT FAR *stmt, SQLUSMALLINT irow,
 @purpose : updates the positioned cursor row.
 */
 
-static SQLRETURN setpos_update(STMT FAR *stmt, SQLUSMALLINT irow,
+static SQLRETURN setpos_update(STMT *stmt, SQLUSMALLINT irow,
                              DYNAMIC_STRING *dynQuery)
 {
   SQLUINTEGER  rowset_pos,rowset_end;
@@ -1389,7 +1389,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
     \retval SQL_SUCCESS     Success!
 */
 
-static SQLRETURN batch_insert( STMT FAR *stmt, SQLULEN irow, DYNAMIC_STRING *ext_query )
+static SQLRETURN batch_insert( STMT *stmt, SQLULEN irow, DYNAMIC_STRING *ext_query )
 {
     MYSQL_RES    *result= stmt->result;     /* result set we are working with */
     SQLULEN      insert_count= 1;           /* num rows to insert - will be real value when row is 0 (all)  */
@@ -1658,7 +1658,7 @@ static const char *alloc_error= "Driver Failed to set the internal dynamic resul
 SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
                                SQLUSMALLINT fOption, SQLUSMALLINT fLock)
 {
-    STMT FAR  *stmt= (STMT FAR*) hstmt;
+    STMT      *stmt= (STMT *) hstmt;
     SQLRETURN sqlRet= SQL_SUCCESS;
     MYSQL_RES *result= stmt->result;
     SQLRETURN rc;
@@ -1919,7 +1919,7 @@ SQLRETURN SQL_API SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
 
 SQLRETURN SQL_API SQLBulkOperations(SQLHSTMT  Handle, SQLSMALLINT Operation)
 {
-  STMT FAR  *stmt= (STMT FAR*) Handle;
+  STMT *stmt= (STMT *) Handle;
   SQLRETURN sqlRet= SQL_SUCCESS;
   MYSQL_RES *result= stmt->result;
   SQLRETURN rc;

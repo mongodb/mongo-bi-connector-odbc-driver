@@ -60,9 +60,9 @@ void myodbc_thread_key_create()
        its list
 */
 
-SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV FAR *phenv)
+SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV *phenv)
 {
-  ENV FAR **env= (ENV FAR**) phenv;
+  ENV **env= (ENV **) phenv;
 #ifdef _UNIX_
   /* Init thread key just once for all threads */
   pthread_once(&myodbc_thread_key_inited, myodbc_thread_key_create);
@@ -96,7 +96,7 @@ SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV FAR *phenv)
   @purpose : to allocate the environment handle
 */
 
-SQLRETURN SQL_API SQLAllocEnv(SQLHENV FAR *phenv)
+SQLRETURN SQL_API SQLAllocEnv(SQLHENV *phenv)
 {
   SQLRETURN rc;
 
@@ -105,9 +105,9 @@ SQLRETURN SQL_API SQLAllocEnv(SQLHENV FAR *phenv)
   {
 /* --- if OS=WIN32, set default env option for SQL_ATTR_ODBC_VERSION */
 #ifdef WIN32
-    ((ENV FAR*) *phenv)->odbc_ver= SQL_OV_ODBC3_80;
+    ((ENV *) *phenv)->odbc_ver= SQL_OV_ODBC3_80;
 #else
-    ((ENV FAR*) *phenv)->odbc_ver= SQL_OV_ODBC2;
+    ((ENV *) *phenv)->odbc_ver= SQL_OV_ODBC2;
 #endif /* WIN32 */
   }
 
@@ -122,7 +122,7 @@ SQLRETURN SQL_API SQLAllocEnv(SQLHENV FAR *phenv)
 
 SQLRETURN SQL_API my_SQLFreeEnv(SQLHENV henv)
 {
-    ENV FAR *env= (ENV FAR*) henv;
+    ENV *env= (ENV *) henv;
 #ifndef _UNIX_
     GlobalUnlock(GlobalHandle((HGLOBAL) henv));
     GlobalFree(GlobalHandle((HGLOBAL) henv));
@@ -171,10 +171,10 @@ SQLRETURN my_GetLastError(ENV *henv)
        maintain the connection list
 */
 
-SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc)
+SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC *phdbc)
 {
-    DBC FAR *dbc;
-    ENV FAR *penv= (ENV FAR*) henv;
+    DBC *dbc;
+    ENV *penv= (ENV *) henv;
 
 #ifdef _UNIX_
     long *thread_count;
@@ -239,7 +239,7 @@ SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc)
 /* penv->odbc_ver= SQL_OV_ODBC3; */
 #endif /* WIN32 */
 
-    dbc= (DBC FAR*) *phdbc;
+    dbc= (DBC *) *phdbc;
     dbc->mysql.net.vio= 0;     /* Marker if open */
     dbc->commit_flag= 0;
     dbc->stmt_options.max_rows= dbc->stmt_options.max_length= 0L;
@@ -270,7 +270,7 @@ SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc)
        maintain the connection list
 */
 
-SQLRETURN SQL_API SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc)
+SQLRETURN SQL_API SQLAllocConnect(SQLHENV henv, SQLHDBC *phdbc)
 {
     return my_SQLAllocConnect(henv, phdbc);
 }
@@ -284,7 +284,7 @@ SQLRETURN SQL_API SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc)
 
 SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc)
 {
-    DBC FAR *dbc= (DBC FAR*) hdbc;
+    DBC *dbc= (DBC *) hdbc;
     LIST *ldesc;
     LIST *next;
 
@@ -394,7 +394,7 @@ void delete_param_bind(DYNAMIC_ARRAY *param_bind)
   @type    : myodbc3 internal
   @purpose : allocates the statement handle
 */
-SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
+SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT *phstmt)
 {
 #ifndef _UNIX_
     HGLOBAL  hstmt;
@@ -469,7 +469,7 @@ error:
   @purpose : allocates the statement handle
 */
 
-SQLRETURN SQL_API SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt)
+SQLRETURN SQL_API SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT *phstmt)
 {
     return my_SQLAllocStmt(hdbc,phstmt);
 }
@@ -513,7 +513,7 @@ SQLRETURN SQL_API my_SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption)
 SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
                                          uint clearAllResults)
 {
-    STMT FAR *stmt= (STMT FAR*) hstmt;
+    STMT *stmt= (STMT *) hstmt;
     uint i;
 
     if (fOption == SQL_UNBIND)
@@ -685,7 +685,6 @@ SQLRETURN my_SQLAllocDesc(SQLHDBC hdbc, SQLHANDLE *pdesc)
     return set_dbc_error(dbc, "HY001", "Memory allocation error", MYERR_S1001);
 
   desc->exp.dbc= dbc;
-  pthread_mutex_init(&desc->lock, NULL);
 
   /* add to this connection's list of explicit descriptors */
   e= (LIST *) my_malloc(sizeof(LIST), MYF(0));
@@ -742,7 +741,6 @@ SQLRETURN my_SQLFreeDesc(SQLHANDLE hdesc)
     x_free(lstmt);
   }
 
-  pthread_mutex_destroy(&desc->lock);
   desc_free(desc);
   return SQL_SUCCESS;
 }

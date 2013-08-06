@@ -129,25 +129,25 @@ typedef char * DYNAMIC_ELEMENT;
 
 SQLRETURN my_SQLPrepare(SQLHSTMT hstmt, SQLCHAR *szSqlStr, SQLINTEGER cbSqlStr,
                         my_bool dupe);
-SQLRETURN my_SQLExecute(STMT FAR* stmt);
+SQLRETURN my_SQLExecute(STMT * stmt);
 SQLRETURN SQL_API my_SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption);
 SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,
                     SQLUSMALLINT fOption, uint clearAllResults);
-SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT FAR *phstmt);
-SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length);
-SQLRETURN insert_params(STMT FAR *stmt, SQLULEN row, char **finalquery,
+SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT *phstmt);
+SQLRETURN do_query(STMT *stmt,char *query, SQLULEN query_length);
+SQLRETURN insert_params(STMT *stmt, SQLULEN row, char **finalquery,
                         SQLULEN *length);
-SQLRETURN odbc_stmt(DBC FAR *dbc, const char *query);
+SQLRETURN odbc_stmt(DBC *dbc, const char *query);
 void mysql_link_fields(STMT *stmt,MYSQL_FIELD *fields,uint field_count);
 void fix_row_lengths(STMT *stmt, const long* fix_rules, uint row, uint field_count);
 void fix_result_types(STMT *stmt);
 char *fix_str(char *to,const char *from,int length);
 char *dupp_str(char *from,int length);
-SQLRETURN my_pos_delete(STMT FAR *stmt,STMT FAR *stmtParam,
+SQLRETURN my_pos_delete(STMT *stmt,STMT *stmtParam,
 			SQLUSMALLINT irow,DYNAMIC_STRING *dynStr);
-SQLRETURN my_pos_update(STMT FAR *stmt,STMT FAR *stmtParam,
+SQLRETURN my_pos_update(STMT *stmt,STMT *stmtParam,
 			SQLUSMALLINT irow,DYNAMIC_STRING *dynStr);
-char *check_if_positioned_cursor_exists(STMT FAR *stmt, STMT FAR **stmtNew);
+char *check_if_positioned_cursor_exists(STMT *stmt, STMT **stmtNew);
 SQLRETURN insert_param(STMT *stmt, uchar *to, DESC *apd,
                        DESCREC *aprec, DESCREC *iprec, SQLULEN row);
 char *add_to_buffer(NET *net,char *to,const char *from,ulong length);
@@ -169,7 +169,7 @@ copy_binary_result(STMT *stmt,
                    SQLCHAR *result, SQLLEN result_bytes, SQLLEN *used_bytes,
                    MYSQL_FIELD *field, char *src, unsigned long src_bytes);
 SQLRETURN copy_binhex_result(STMT *stmt,
-			     SQLCHAR FAR *rgbValue, SQLINTEGER cbValueMax,
+			     SQLCHAR *rgbValue, SQLINTEGER cbValueMax,
 			     SQLLEN *pcbValue, MYSQL_FIELD *field, char *src,
 			     ulong src_length);
 SQLRETURN copy_wchar_result(STMT *stmt,
@@ -177,7 +177,7 @@ SQLRETURN copy_wchar_result(STMT *stmt,
                             SQLLEN *pcbValue, MYSQL_FIELD *field, char *src,
                             long src_length);
 
-SQLRETURN set_dbc_error(DBC FAR *dbc, char *state,const char *message,uint errcode);
+SQLRETURN set_dbc_error(DBC *dbc, char *state,const char *message,uint errcode);
 #define set_stmt_error myodbc_set_stmt_error
 SQLRETURN set_stmt_error(STMT *stmt, const char *state, const char *message, uint errcode);
 SQLRETURN set_desc_error(DESC *desc, char *state,
@@ -224,13 +224,13 @@ SQLRETURN SQL_API my_SQLBindParameter(SQLHSTMT hstmt,SQLUSMALLINT ipar,
 				      SQLLEN *pcbValue);
 SQLRETURN SQL_API my_SQLExtendedFetch(SQLHSTMT hstmt, SQLUSMALLINT fFetchType,
 				      SQLLEN irow, SQLULEN *pcrow,
-				      SQLUSMALLINT FAR *rgfRowStatus, my_bool upd_status);
+				      SQLUSMALLINT *rgfRowStatus, my_bool upd_status);
 SQLRETURN SQL_API my_SQLSingleFetch( SQLHSTMT hstmt, SQLUSMALLINT fFetchType,
               SQLLEN irow, SQLULEN *pcrow, 
-              SQLUSMALLINT FAR *rgfRowStatus, my_bool upd_status);
+              SQLUSMALLINT *rgfRowStatus, my_bool upd_status);
 SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
                                SQLUSMALLINT fOption, SQLUSMALLINT fLock);
-SQLRETURN copy_stmt_error(STMT FAR *src, STMT FAR *dst);
+SQLRETURN copy_stmt_error(STMT *src, STMT *dst);
 int unireg_to_c_datatype(MYSQL_FIELD *field);
 int default_c_type(int sql_data_type);
 ulong bind_length(int sql_data_type,ulong length);
@@ -245,7 +245,7 @@ void myodbc_init(void);
 void myodbc_ov_init(SQLINTEGER odbc_version);
 void myodbc_sqlstate2_init(void);
 void myodbc_sqlstate3_init(void);
-int check_if_server_is_alive(DBC FAR *dbc);
+int check_if_server_is_alive(DBC *dbc);
 my_bool dynstr_append_quoted_name(DYNAMIC_STRING *str, const char *name);
 SQLRETURN set_handle_error(SQLSMALLINT HandleType, SQLHANDLE handle,
 			   myodbc_errid errid, const char *errtext, SQLINTEGER errcode);
@@ -256,20 +256,20 @@ SQLRETURN set_conn_error(DBC *dbc,myodbc_errid errid, const char *errtext,
 SQLRETURN set_env_error(ENV * env,myodbc_errid errid, const char *errtext,
 			SQLINTEGER errcode);
 SQLRETURN copy_str_data(SQLSMALLINT HandleType, SQLHANDLE Handle,
-			SQLCHAR FAR *rgbValue, SQLSMALLINT cbValueMax,
-			SQLSMALLINT FAR *pcbValue,char FAR *src);
-SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV FAR * phenv);
-SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC FAR *phdbc);
+			SQLCHAR *rgbValue, SQLSMALLINT cbValueMax,
+			SQLSMALLINT *pcbValue,char *src);
+SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV * phenv);
+SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC *phdbc);
 SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc);
 SQLRETURN SQL_API my_SQLFreeEnv(SQLHENV henv);
 char *extend_buffer(NET *net,char *to,ulong length);
 void myodbc_end();
-my_bool set_dynamic_result(STMT FAR *stmt);
-void set_current_cursor_data(STMT FAR *stmt,SQLUINTEGER irow);
+my_bool set_dynamic_result(STMT *stmt);
+void set_current_cursor_data(STMT *stmt,SQLUINTEGER irow);
 my_bool is_minimum_version(const char *server_version,const char *version);
 int myodbc_strcasecmp(const char *s, const char *t);
 int myodbc_casecmp(const char *s, const char *t, uint len);
-my_bool reget_current_catalog(DBC FAR *dbc);
+my_bool reget_current_catalog(DBC *dbc);
 
 ulong myodbc_escape_string(MYSQL *mysql, char *to, ulong to_length,
                            const char *from, ulong length, int escape_id);

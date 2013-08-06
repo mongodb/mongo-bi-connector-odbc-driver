@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -86,7 +86,7 @@ static my_bool check_table_type(const SQLCHAR *TableType,
 }
 
 
-static MYSQL_ROW fix_fields_copy(STMT FAR *stmt,MYSQL_ROW row)
+static MYSQL_ROW fix_fields_copy(STMT *stmt,MYSQL_ROW row)
 {
     uint i;
     for ( i=0 ; i < stmt->order_count; ++i )
@@ -914,7 +914,7 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
                            SQLCHAR    *szFkTableName,
                            SQLSMALLINT cbFkTableName)
 {
-  STMT FAR *stmt=(STMT FAR*) hstmt;
+  STMT *stmt=(STMT *) hstmt;
   uint row_count= 0;
 
   MEM_ROOT  *alloc;
@@ -1132,7 +1132,7 @@ mysql_primary_keys(SQLHSTMT hstmt,
                  SQLSMALLINT schema_len __attribute__((unused)),
                  SQLCHAR *table, SQLSMALLINT table_len)
 {
-    STMT FAR  *stmt= (STMT FAR*) hstmt;
+    STMT *stmt= (STMT *) hstmt;
     MYSQL_ROW row;
     char      **data;
     uint      row_count;

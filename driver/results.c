@@ -681,7 +681,7 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
   before SQLExecute().
 */
 
-static SQLRETURN check_result(STMT FAR *stmt )
+static SQLRETURN check_result(STMT *stmt)
 {
   SQLRETURN error= 0;
 
@@ -725,7 +725,7 @@ static SQLRETURN check_result(STMT FAR *stmt )
 SQLRETURN do_dummy_parambind(SQLHSTMT hstmt)
 {
     SQLRETURN rc;
-    STMT FAR *stmt= (STMT FAR *)hstmt;
+    STMT *stmt= (STMT *)hstmt;
     uint     nparam;
 
     for ( nparam= 0; nparam < stmt->param_count; ++nparam )
@@ -754,10 +754,10 @@ SQLRETURN do_dummy_parambind(SQLHSTMT hstmt)
   @purpose : returns the number of columns in a result set
 */
 
-SQLRETURN SQL_API SQLNumResultCols(SQLHSTMT  hstmt, SQLSMALLINT FAR *pccol)
+SQLRETURN SQL_API SQLNumResultCols(SQLHSTMT  hstmt, SQLSMALLINT *pccol)
 {
   SQLRETURN error;
-  STMT FAR *stmt= (STMT FAR*) hstmt;
+  STMT *stmt= (STMT *) hstmt;
 
   if (!ssps_used(stmt))
   {
@@ -1055,7 +1055,7 @@ SQLRETURN SQL_API SQLBindCol(SQLHSTMT      StatementHandle,
                              SQLLEN *      StrLen_or_IndPtr)
 {
   SQLRETURN rc;
-  STMT FAR *stmt= (STMT FAR*) StatementHandle;
+  STMT *stmt= (STMT *) StatementHandle;
   DESCREC *arrec;
   /* TODO if this function fails, the SQL_DESC_COUNT should be unchanged in ard */
 
@@ -1134,7 +1134,7 @@ SQLRETURN SQL_API SQLBindCol(SQLHSTMT      StatementHandle,
   @purpose : returns the latest resultset(dynamic)
 */
 
-my_bool set_dynamic_result(STMT FAR *stmt)
+my_bool set_dynamic_result(STMT *stmt)
 {
   SQLRETURN rc;
   long row= stmt->current_row;
@@ -1260,7 +1260,7 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
 
 SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
 {
-  STMT FAR *  pStmt   = (STMT FAR*)hStmt;
+  STMT *  pStmt   = (STMT *)hStmt;
   int         nRetVal;
   SQLRETURN   nReturn = SQL_SUCCESS;
 
@@ -1374,7 +1374,7 @@ exitSQLMoreResults:
 SQLRETURN SQL_API SQLRowCount( SQLHSTMT hstmt, 
                                SQLLEN * pcrow )
 {
-    STMT FAR *stmt= (STMT FAR*) hstmt;
+    STMT *stmt= (STMT *) hstmt;
 
     if ( stmt->result )
     {
@@ -1569,13 +1569,13 @@ SQLRETURN SQL_API my_SQLSingleFetch( SQLHSTMT             hstmt,
                                        SQLUSMALLINT         fFetchType,
                                        SQLLEN               irow,
                                        SQLULEN             *pcrow,
-                                       SQLUSMALLINT FAR    *rgfRowStatus,
+                                       SQLUSMALLINT        *rgfRowStatus,
                                        my_bool              upd_status )
 {
     SQLULEN           rows_to_fetch;
     long              cur_row, max_row;
     SQLRETURN         row_res, res;
-    STMT FAR          *stmt= (STMT *) hstmt;
+    STMT              *stmt= (STMT *) hstmt;
     MYSQL_ROW         values= 0;
     MYSQL_ROW_OFFSET  save_position;
     SQLULEN           dummy_pcrow;
@@ -1897,14 +1897,14 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
                                        SQLUSMALLINT         fFetchType,
                                        SQLLEN               irow,
                                        SQLULEN             *pcrow,
-                                       SQLUSMALLINT FAR    *rgfRowStatus,
+                                       SQLUSMALLINT        *rgfRowStatus,
                                        my_bool              upd_status )
 {
     SQLULEN           rows_to_fetch;
     long              cur_row, max_row;
     SQLULEN           i;
     SQLRETURN         row_res, res, row_book= SQL_SUCCESS;
-    STMT FAR          *stmt= (STMT *) hstmt;
+    STMT              *stmt= (STMT *) hstmt;
     MYSQL_ROW         values= 0;
     MYSQL_ROW_OFFSET  save_position;
     SQLULEN           dummy_pcrow;
@@ -2297,11 +2297,11 @@ SQLRETURN SQL_API SQLExtendedFetch( SQLHSTMT        hstmt,
                                     SQLUSMALLINT    fFetchType,
                                     SQLLEN          irow,
                                     SQLULEN        *pcrow,
-                                    SQLUSMALLINT FAR *rgfRowStatus )
+                                    SQLUSMALLINT   *rgfRowStatus )
 {
     SQLRETURN rc;
     SQLULEN rows;
-    STMT_OPTIONS *options= &((STMT FAR *)hstmt)->stmt_options;
+    STMT_OPTIONS *options= &((STMT *)hstmt)->stmt_options;
 
     options->rowStatusPtr_ex= rgfRowStatus;
 

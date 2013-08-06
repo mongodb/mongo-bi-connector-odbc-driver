@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -82,7 +82,7 @@ SQLRETURN SQL_API MySQLPrepare(SQLHSTMT hstmt, SQLCHAR *query, SQLINTEGER len,
 SQLRETURN my_SQLPrepare(SQLHSTMT hstmt, SQLCHAR *szSqlStr, SQLINTEGER cbSqlStr,
                         my_bool dupe)
 {
-  STMT FAR *stmt= (STMT FAR*) hstmt;
+  STMT *stmt= (STMT *) hstmt;
 
   LINT_INIT(end);
 
@@ -311,12 +311,12 @@ SQLRETURN SQL_API SQLBindParameter( SQLHSTMT        hstmt,
 
 SQLRETURN SQL_API SQLDescribeParam( SQLHSTMT        hstmt,
                                     SQLUSMALLINT    ipar __attribute__((unused)),
-                                    SQLSMALLINT FAR *pfSqlType,
+                                    SQLSMALLINT     *pfSqlType,
                                     SQLULEN *       pcbColDef,
-                                    SQLSMALLINT FAR *pibScale __attribute__((unused)),
-                                    SQLSMALLINT FAR *pfNullable )
+                                    SQLSMALLINT     *pibScale __attribute__((unused)),
+                                    SQLSMALLINT     *pfNullable )
 {
-    STMT FAR *stmt= (STMT FAR*) hstmt;
+    STMT *stmt= (STMT *) hstmt;
 
     if (pfSqlType)
         *pfSqlType= SQL_VARCHAR;

@@ -242,9 +242,6 @@ typedef struct {
     /* connection we were allocated on */
     struct tagDBC *dbc;
   } exp;
-#ifdef THREAD
-  pthread_mutex_t lock;
-#endif
 } DESC;
 
 /* descriptor record */
@@ -421,11 +418,11 @@ typedef struct cursor
 
 typedef struct tagSTMT
 {
-  DBC FAR           *dbc;
+  DBC               *dbc;
   MYSQL_RES         *result;
   my_bool           fake_result;
   MYSQL_ROW	        array,result_array,current_values;
-  MYSQL_ROW	        (*fix_fields)(struct tagSTMT FAR* stmt,MYSQL_ROW row);
+  MYSQL_ROW	        (*fix_fields)(struct tagSTMT *stmt,MYSQL_ROW row);
   MYSQL_FIELD	      *fields;
   MYSQL_ROW_OFFSET  end_of_set;
 
