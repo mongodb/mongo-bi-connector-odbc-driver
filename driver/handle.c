@@ -511,8 +511,10 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     }
     else
     {
-      if(stmt->result->field_alloc.pre_alloc)
+      if(stmt->result && stmt->result->field_alloc.pre_alloc)
+      {
         free_root(&stmt->result->field_alloc, MYF(0));
+      }
 
       x_free(stmt->result);
     }
