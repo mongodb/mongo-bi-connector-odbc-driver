@@ -8,6 +8,7 @@
     specifying mysqlclient library (libmysql.*, mysqlclient.*, libmysqlclient_r.*, 
     libmysqlclient.*) to be used. Mysql CPP linkage for mysql version >= 5.6.4
     (wl#6738)
+  * Added a new test module for crash bugs (my_crash.c)
 
   Bugs fixed:
   * With utf8 byte string for mysql server version < 5.5.3, insert fails
@@ -26,6 +27,8 @@
     (Bug# 17016839/69545)
   * Need to add a lock to access connections member in ENV structure
     (Bug# 17240611/69864)
+  * Visual Studio 2010 crashes when reading rows from any table in Server 
+    Explorer (Bug# 17304031/69950)
 
 
 ----
