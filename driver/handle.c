@@ -123,6 +123,7 @@ SQLRETURN SQL_API SQLAllocEnv(SQLHENV *phenv)
 SQLRETURN SQL_API my_SQLFreeEnv(SQLHENV henv)
 {
     ENV *env= (ENV *) henv;
+    pthread_mutex_destroy(&env->lock);
 #ifndef _UNIX_
     GlobalUnlock(GlobalHandle((HGLOBAL) henv));
     GlobalFree(GlobalHandle((HGLOBAL) henv));
@@ -130,7 +131,6 @@ SQLRETURN SQL_API my_SQLFreeEnv(SQLHENV henv)
     x_free(henv);
     myodbc_end();
 #endif /* _UNIX_ */
-    pthread_mutex_destroy(&env->lock);
     return(SQL_SUCCESS);
 }
 
@@ -820,5 +820,4 @@ SQLRETURN SQL_API SQLFreeHandle(SQLSMALLINT HandleType,
 
     return error;
 }
-
 
