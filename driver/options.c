@@ -380,6 +380,8 @@ MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
         }
       }
       break;
+
+#ifndef USE_IODBC
     case SQL_ATTR_RESET_CONNECTION:
       if (ValuePtr != (SQLPOINTER)SQL_RESET_CONNECTION_YES)
       {
@@ -388,6 +390,7 @@ MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
       /* TODO 3.8 feature */
 
       return SQL_SUCCESS;
+#endif
 
     case SQL_ATTR_ENLIST_IN_DTC:
       return set_dbc_error(dbc, "HYC00",
@@ -886,9 +889,11 @@ SQLSetEnvAttr(SQLHENV    henv,
             {
             case SQL_OV_ODBC2:
             case SQL_OV_ODBC3:
+#ifndef USE_IODBC
             case SQL_OV_ODBC3_80:
               ((ENV *)henv)->odbc_ver= (SQLINTEGER)(SQLLEN)ValuePtr;
               break;
+#endif
             default:
               return set_env_error(henv,MYERR_S1024,NULL,0);
             }

@@ -103,12 +103,11 @@ SQLRETURN SQL_API SQLAllocEnv(SQLHENV *phenv)
   rc= my_SQLAllocEnv(phenv);
   if (rc == SQL_SUCCESS)
   {
-/* --- if OS=WIN32, set default env option for SQL_ATTR_ODBC_VERSION */
-#ifdef WIN32
-    ((ENV *) *phenv)->odbc_ver= SQL_OV_ODBC3_80;
+#ifndef USE_IODBC
+  ((ENV *) *phenv)->odbc_ver= SQL_OV_ODBC3_80;
 #else
-    ((ENV *) *phenv)->odbc_ver= SQL_OV_ODBC2;
-#endif /* WIN32 */
+  ((ENV *) *phenv)->odbc_ver= SQL_OV_ODBC3;
+#endif
   }
 
   return rc;

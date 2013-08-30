@@ -115,6 +115,7 @@ DECLARE_TEST(t_odbc2_error)
 }
 
 
+#ifndef USE_IODBC
 /* Testing ability of application to set 3.8 ODBC version */
 DECLARE_TEST(t_odbc3_80)
 {
@@ -137,6 +138,7 @@ DECLARE_TEST(t_odbc3_80)
 
   return OK;
 }
+#endif
 
 DECLARE_TEST(t_diagrec)
 {
@@ -754,9 +756,11 @@ BEGIN_TESTS
   ADD_TEST(t_odbc3_error)
   /* Run twice to test the driver's handling of switching  */
   ADD_TEST(t_odbc2_error)
+#ifndef USE_IODBC
   ADD_TEST(t_odbc3_80)
 #endif
-  /*ADD_TEST(t_diagrec)
+#endif
+  ADD_TEST(t_diagrec)
   ADD_TEST(t_warning)
   ADD_TEST(t_bug3456)
   ADD_TEST(t_bug16224)
@@ -771,7 +775,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug14285620)
   ADD_TOFIX(t_bug49466)
   ADD_TEST(t_passwordexpire)
-  ADD_TEST(t_cleartext_password)*/
+  ADD_TEST(t_cleartext_password)
 END_TESTS
 
 RUN_TESTS

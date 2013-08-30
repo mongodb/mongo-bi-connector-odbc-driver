@@ -131,6 +131,8 @@ ELSE(WIN32)
 
 	ELSE(WITH_UNIXODBC)
 		ADD_DEFINITIONS(-DHAVE_SQLGETPRIVATEPROFILESTRINGW)
+                #---- if it is not UnixODBC we assume iODBC -------
+                ADD_DEFINITIONS(-DUSE_IODBC)
         ENDIF(WITH_UNIXODBC)
 
 	INCLUDE(CheckFunctionExists)
