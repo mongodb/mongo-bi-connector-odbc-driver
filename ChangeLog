@@ -29,6 +29,11 @@
     (Bug# 17240611/69864)
   * Visual Studio 2010 crashes when reading rows from any table in Server 
     Explorer (Bug# 17304031/69950)
+  * Corrected MYSQL_NUM_VERSION calculation error in FindMysql.cmake. 
+    MYSQL_LIB_DIR, MYSQL_INCLUDE_DIR, MYSQL_LINK_FLAGS and MYSQL_CXXFLAGS will
+    be obtained from mysql_config only when they are not provided using cmake 
+    options.
+
 
 ----
 
