@@ -2141,6 +2141,7 @@ mysql_tables(SQLHSTMT hstmt,
       if (!row_count)
       {
         mysql_free_result(stmt->result);
+        stmt->result= NULL;
         goto empty_set;
       }
 

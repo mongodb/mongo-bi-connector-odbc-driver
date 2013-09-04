@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2012-2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -223,10 +223,17 @@ void free_result_bind(STMT *stmt)
 {
   if (stmt->result_bind != NULL)
   {
+    int i, field_cnt= field_count(stmt);
+
     x_free(stmt->result_bind[0].is_null);
     x_free(stmt->result_bind[0].length);
     x_free(stmt->result_bind[0].error);
-    x_free(stmt->result_bind[0].buffer);
+
+    /* buffer was allocated for each column */
+    for (i= 0; i < field_cnt; i++)
+    {
+      x_free(stmt->result_bind[i].buffer);
+    }
 
     x_free(stmt->result_bind);
     stmt->result_bind= 0;
@@ -438,11 +445,11 @@ int ssps_bind_result(STMT *stmt)
                                                       IS_PS_OUT_PARAMS(stmt));
 
       stmt->result_bind[i].buffer_type  = p.type;
-	  stmt->result_bind[i].buffer       = p.buffer;
-	  stmt->result_bind[i].buffer_length= (unsigned long)p.size;
-	  stmt->result_bind[i].length       = &len[i];
-	  stmt->result_bind[i].is_null      = &is_null[i];
-	  stmt->result_bind[i].error        = &err[i];
+	    stmt->result_bind[i].buffer       = p.buffer;
+	    stmt->result_bind[i].buffer_length= (unsigned long)p.size;
+	    stmt->result_bind[i].length       = &len[i];
+	    stmt->result_bind[i].is_null      = &is_null[i];
+	    stmt->result_bind[i].error        = &err[i];
       stmt->result_bind[i].is_unsigned  = (field->flags & UNSIGNED_FLAG)? 1: 0;
 
       stmt->array[i]= p.buffer;

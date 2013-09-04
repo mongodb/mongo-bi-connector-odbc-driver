@@ -33,6 +33,8 @@
     MYSQL_LIB_DIR, MYSQL_INCLUDE_DIR, MYSQL_LINK_FLAGS and MYSQL_CXXFLAGS will
     be obtained from mysql_config only when they are not provided using cmake 
     options.
+  * Memory leak in SQLPrepare with queries that use parameters 
+    (Bug# 17400483/70113)
 
 
 ----
