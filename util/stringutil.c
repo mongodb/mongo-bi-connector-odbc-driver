@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -55,8 +55,9 @@ SQLWCHAR *sqlchar_as_sqlwchar(CHARSET_INFO *charset_info, SQLCHAR *str,
   my_bool free_str= FALSE;
 
   if (str && *len == SQL_NTS)
+  {
     *len= strlen((char *)str);
-
+  }
   if (!str || *len == 0)
   {
     *len= 0;
@@ -94,13 +95,13 @@ SQLWCHAR *sqlchar_as_sqlwchar(CHARSET_INFO *charset_info, SQLCHAR *str,
     return NULL;
   }
 
-  for (pos= str, i= 0; *pos && pos < str_end; )
+  for (pos= str, i= 0; pos < str_end && *pos != 0; )
   {
     if (sizeof(SQLWCHAR) == 4)
     {
       int consumed= utf8toutf32(pos, (UTF32 *)(out + i++));
       pos+= consumed;
-      if (!consumed)
+      if (consumed == 0)
       {
         *errors+= 1;
         break;
@@ -111,7 +112,7 @@ SQLWCHAR *sqlchar_as_sqlwchar(CHARSET_INFO *charset_info, SQLCHAR *str,
       UTF32 u32;
       int consumed= utf8toutf32(pos, &u32);
       pos+= consumed;
-      if (!consumed)
+      if (consumed == 0)
       {
         *errors+= 1;
         break;
@@ -124,7 +125,9 @@ SQLWCHAR *sqlchar_as_sqlwchar(CHARSET_INFO *charset_info, SQLCHAR *str,
   out[i]= 0;
 
   if (free_str)
+  {
     x_free(str);
+  }
 
   return out;
 }

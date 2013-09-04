@@ -33,6 +33,7 @@
     MYSQL_LIB_DIR, MYSQL_INCLUDE_DIR, MYSQL_LINK_FLAGS and MYSQL_CXXFLAGS will
     be obtained from mysql_config only when they are not provided using cmake 
     options.
+  * Valgrind error, simple loop fix (Bug# 17397596/64105)
 
 
 ----
