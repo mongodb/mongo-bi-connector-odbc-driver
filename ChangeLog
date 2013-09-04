@@ -35,6 +35,7 @@
     options.
   * Memory leak in SQLPrepare with queries that use parameters 
     (Bug# 17400483/70113)
+  * Valgrind error, simple loop fix (Bug# 17397596/64105)
 
 
 ----
