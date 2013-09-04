@@ -44,7 +44,16 @@ BOOL returned_result(STMT *stmt)
   if (ssps_used(stmt))
   {
     /* Basically at this point we are supposed to get result already */
-    return stmt->result ? TRUE : mysql_stmt_result_metadata(stmt->ssps) != NULL;
+    MYSQL_RES *temp_res= NULL;
+
+    if ((stmt->result != NULL) || 
+        (temp_res= mysql_stmt_result_metadata(stmt->ssps)) != NULL)
+    {
+      /* mysql_free_result checks for NULL, so we can always call it */
+      mysql_free_result(temp_res);
+      return TRUE;
+    }
+    return FALSE;
   }
   else
   {
@@ -55,24 +64,18 @@ BOOL returned_result(STMT *stmt)
 
 my_bool free_current_result(STMT *stmt)
 {
+  my_bool res= 0;
   if (returned_result(stmt))
   {
     if (ssps_used(stmt))
- 
     {
-      my_bool res= mysql_stmt_free_result(stmt->ssps);
-      stmt->result= NULL;
-
-      return res;
+      res= mysql_stmt_free_result(stmt->ssps);
     }
-    else
-    {
-      mysql_free_result(stmt->result);
-      stmt->result= NULL;
-      return '\0';
-    }
+    /* We need to always free stmt->result because SSPS keep metadata there */
+    mysql_free_result(stmt->result);
+    stmt->result= NULL;
   }
-  return '\0';
+  return res;
 }
 
 
@@ -98,6 +101,9 @@ MYSQL_RES * stmt_get_result(STMT *stmt, BOOL force_use)
    we need to use/store each resultset of multiple resultsets */
 MYSQL_RES * get_result_metadata(STMT *stmt, BOOL force_use)
 {
+  /* just a precaution, mysql_free_result checks for NULL anywat */
+  mysql_free_result(stmt->result);
+
   if (ssps_used(stmt))
   {
     stmt->result= mysql_stmt_result_metadata(stmt->ssps);
@@ -398,6 +404,9 @@ SQLRETURN prepare(STMT *stmt, char * query, SQLINTEGER query_length)
       }
 
       stmt->param_count= mysql_stmt_param_count(stmt->ssps);
+
+      /* make sure we free the result from the previous time */
+      mysql_free_result(stmt->result);
 
       /* Getting result metadata */
       if ((stmt->result= mysql_stmt_result_metadata(stmt->ssps)))
