@@ -477,7 +477,7 @@ BOOL put_param_value(STMT *stmt, NET* net, char** toptr, MYSQL_BIND *bind,
 */
 static
 SQLRETURN convert_c_type2str(STMT *stmt, SQLSMALLINT ctype, DESCREC *iprec,
-                             char **res, int *length, char *buff, uint buff_max)
+                             char **res, long *length, char *buff, uint buff_max)
 {
   switch ( ctype )
   {
