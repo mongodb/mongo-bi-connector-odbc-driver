@@ -1902,6 +1902,43 @@ ulong bind_length(int sql_data_type,ulong length)
     }
 }
 
+
+/**
+  Get bookmark value from SQL_ATTR_FETCH_BOOKMARK_PTR buffer
+
+  @param[in]  fCType      ODBC C type to return data as
+  @param[out] rgbValue    Pointer to buffer for returning data
+*/
+SQLLEN get_bookmark_value(SQLSMALLINT fCType, SQLPOINTER rgbValue)
+{
+  switch (fCType)
+  {
+  case SQL_C_CHAR:
+  case SQL_C_BINARY:
+    return atol((SQLCHAR *) rgbValue);     
+
+  case SQL_C_WCHAR:
+    return sqlwchartoul((SQLWCHAR *)rgbValue, NULL);
+
+  case SQL_C_TINYINT:
+  case SQL_C_STINYINT:
+  case SQL_C_UTINYINT:
+  case SQL_C_SHORT:
+  case SQL_C_SSHORT:
+  case SQL_C_USHORT:
+  case SQL_C_LONG:
+  case SQL_C_SLONG:
+  case SQL_C_ULONG:
+  case SQL_C_FLOAT:
+  case SQL_C_DOUBLE:
+  case SQL_C_SBIGINT:
+  case SQL_C_UBIGINT:
+    return *((SQLLEN *) rgbValue);
+  }
+   return 0;
+}
+
+
 /*
   @type    : myodbc internal
   @purpose : convert a possible string to a timestamp value

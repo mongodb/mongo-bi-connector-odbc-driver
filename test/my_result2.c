@@ -929,13 +929,13 @@ DECLARE_TEST(t_bug11766437)
 DECLARE_TEST(t_varbookmark)
 {
   SQLLEN len= 0;
-  SQLCHAR abookmark[10];
+  SQLCHAR abookmark[20];
   SQLINTEGER outlen;
-  SQLUSMALLINT rowStatus[4];
+  SQLUSMALLINT rowStatus[11];
   SQLUINTEGER numRowsFetched;
-  SQLINTEGER nData[4];
-  SQLCHAR szData[4][16];
-  SQLCHAR bData[4][10];
+  SQLINTEGER nData[11];
+  SQLCHAR szData[11][16];
+  SQLCHAR bData[11][10];
 
   ok_sql(hstmt, "drop table if exists t_bookmark");
   ok_sql(hstmt, "CREATE TABLE t_bookmark ("\
@@ -945,7 +945,14 @@ DECLARE_TEST(t_varbookmark)
                 "(100, 'string 1'),"\
                 "(200, 'string 2'),"\
                 "(300, 'string 3'),"\
-                "(400, 'string 4')");
+                "(400, 'string 4'),"\
+                "(500, 'string 5'),"\
+                "(600, 'string 6'),"\
+                "(700, 'string 7'),"\
+                "(800, 'string 8'),"\
+                "(900, 'string 9'),"\
+                "(1000, 'string 10'),"\
+                "(1100, 'string 11')");
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
@@ -959,7 +966,7 @@ DECLARE_TEST(t_varbookmark)
                                 (SQLPOINTER)SQL_CURSOR_STATIC, 0));
 
 
-  ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 4));
+  ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 11));
 
   ok_sql(hstmt, "select * from t_bookmark order by 1");
   ok_stmt(hstmt, SQLBindCol(hstmt, 0, SQL_C_VARBOOKMARK, bData, 
@@ -983,16 +990,39 @@ DECLARE_TEST(t_varbookmark)
   
   is_num(nData[0], 100);
   is_str(szData[0], "string 1", 8);
-  is_str(bData[0], "1", 1);
+  is_num(atol(bData[0]), 1);
   is_num(nData[1], 200);
   is_str(szData[1], "string 2", 8);
-  is_str(bData[1], "2", 1);
+  is_num(atol(bData[1]), 2);
   is_num(nData[2], 300);
   is_str(szData[2], "string 3", 8);
-  is_str(bData[2], "3", 1);
+  is_num(atol(bData[2]), 3);
   is_num(nData[3], 400);
   is_str(szData[3], "string 4", 8);
-  is_str(bData[3], "4", 1);
+  is_num(atol(bData[3]), 4);
+
+  is_num(nData[4], 500);
+  is_str(szData[4], "string 5", 8);
+  is_num(atol(bData[4]), 5);
+  is_num(nData[5], 600);
+  is_str(szData[5], "string 6", 8);
+  is_num(atol(bData[5]), 6);
+  is_num(nData[6], 700);
+  is_str(szData[6], "string 7", 8);
+  is_num(atol(bData[6]), 7);
+  is_num(nData[7], 800);
+  is_str(szData[7], "string 8", 8);
+  is_num(atol(bData[7]), 8);
+
+  is_num(nData[8], 900);
+  is_str(szData[8], "string 9", 8);
+  is_num(atol(bData[8]), 9);
+  is_num(nData[9], 1000);
+  is_str(szData[9], "string 10", 8);
+  is_num(atol(bData[9]), 10);
+  is_num(nData[10], 1100);
+  is_str(szData[10], "string 11", 8);
+  is_num(atol(bData[10]), 11);
 
   ok_stmt(hstmt, SQLSetPos(hstmt, 2, SQL_POSITION, SQL_LOCK_NO_CHANGE));
   ok_stmt(hstmt, SQLGetData(hstmt, 0, SQL_C_VARBOOKMARK, abookmark, 255, &outlen));
@@ -1004,13 +1034,13 @@ DECLARE_TEST(t_varbookmark)
 
   is_num(nData[0], 200);
   is_str(szData[0], "string 2", 8);
-  is_str(bData[0], "2", 1);
+  is_num(atol(bData[0]), 2);
   is_num(nData[1], 300);
   is_str(szData[1], "string 3", 8);
-  is_str(bData[1], "3", 1);
+  is_num(atol(bData[1]), 3);
   is_num(nData[2], 400);
   is_str(szData[2], "string 4", 8);
-  is_str(bData[2], "4", 1);
+  is_num(atol(bData[2]), 4);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
   ok_sql(hstmt, "drop table if exists t_bookmark");

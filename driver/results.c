@@ -176,6 +176,210 @@ my_bool odbc_supported_conversion(SQLSMALLINT sqlType, SQLSMALLINT cType)
    return SQL_ROW_ERROR;
  }
 
+
+/**
+  Save bookmark value to specified buffer in specified ODBC C type.
+
+  @param[in]  stmt        Handle of statement
+  @param[in]  fCType      ODBC C type to return data as
+  @param[out] rgbValue    Pointer to buffer for returning data
+  @param[in]  cbValueMax  Length of buffer
+  @param[out] pcbValue    Bytes used in the buffer, or SQL_NULL_DATA
+  @param[out] value       Bookmark value
+  @param[in]  length      Length of value
+  @param[in]  arrec       ARD record for this column (can be NULL)
+*/
+SQLRETURN SQL_API
+sql_get_bookmark_data(STMT *stmt, SQLSMALLINT fCType, int column_number,
+             SQLPOINTER rgbValue, SQLLEN cbValueMax, SQLLEN *pcbValue,
+             char *value, ulong length, DESCREC *arrec)
+{
+  SQLLEN    tmp;
+  long long numericValue;
+  my_bool   convert= 1;
+  SQLRETURN result= SQL_SUCCESS;
+  char      as_string[50]; /* Buffer that might be required to convert other
+                              types data to its string representation */
+
+  if (cbValueMax < sizeof(long))
+  {
+    return set_stmt_error(stmt, "HY090", "Invalid string or buffer length", 0);
+  }
+  
+  /* get the exact type if we don't already have it */
+  if (fCType == SQL_C_DEFAULT)
+  {
+    fCType= SQL_C_VARBOOKMARK;
+
+    if (!cbValueMax)
+    {
+      cbValueMax= bind_length(fCType, 0);
+    }
+  }
+  else if (fCType == SQL_ARD_TYPE)
+  {
+    if (!arrec)
+    {
+      return set_stmt_error(stmt, "07009", "Invalid descriptor index", 0);
+    }
+
+    fCType= arrec->concise_type;
+  }
+
+  if (!pcbValue)
+  {
+    pcbValue= &tmp; /* Easier code */
+  }
+
+  switch (fCType)
+  {
+  case SQL_C_CHAR:
+  case SQL_C_BINARY:
+    {
+      int ret;
+      SQLCHAR *result_end;
+      ulong copy_bytes;
+      ret= copy_binary_result(stmt, (SQLCHAR *)rgbValue, cbValueMax,
+                                pcbValue, NULL, value, length);
+      if (SQL_SUCCEEDED(ret))
+      {
+        copy_bytes= myodbc_min((unsigned long)length, cbValueMax);
+        result_end= (SQLCHAR *)rgbValue + copy_bytes;
+        if (result_end)
+          *result_end= 0;
+      }
+      return ret;     
+    }
+
+  case SQL_C_WCHAR:
+    {
+      int ret;
+      ret= utf8_as_sqlwchar((SQLWCHAR *)rgbValue, 
+                      (SQLINTEGER)(cbValueMax / sizeof(SQLWCHAR)), 
+                      (SQLCHAR *)value, length);
+      if (!ret)
+      {
+        set_stmt_error(stmt, "01004", NULL, 0);
+        return SQL_SUCCESS_WITH_INFO;
+      }
+
+      if (pcbValue)
+        *pcbValue= (SQLINTEGER)(cbValueMax / sizeof(SQLWCHAR));
+      
+    }
+
+  case SQL_C_TINYINT:
+  case SQL_C_STINYINT:
+    if (rgbValue)
+      *((SQLSCHAR *)rgbValue)= (SQLSCHAR)(convert
+                               ? get_int(stmt, column_number, value, length)
+                               : (numericValue & (SQLSCHAR)(-1)));
+    *pcbValue= 1;
+    break;
+
+  case SQL_C_UTINYINT:
+    if (rgbValue)
+      *((SQLCHAR *)rgbValue)= (SQLCHAR)(unsigned int)(convert
+                              ? get_int(stmt, column_number, value, length)
+                              : (numericValue & (SQLCHAR)(-1)));
+    *pcbValue= 1;
+    break;
+
+  case SQL_C_SHORT:
+  case SQL_C_SSHORT:
+    if (rgbValue)
+      *((SQLSMALLINT *)rgbValue)= (SQLSMALLINT)(convert
+                              ? get_int(stmt, column_number, value, length)
+                              : (numericValue & (SQLUSMALLINT)(-1)));
+    *pcbValue= sizeof(SQLSMALLINT);
+    break;
+
+  case SQL_C_USHORT:
+    if (rgbValue)
+      *((SQLUSMALLINT *)rgbValue)= (SQLUSMALLINT)(uint)(convert
+                              ? get_int64(stmt, column_number, value, length)
+                              : (numericValue & (SQLUSMALLINT)(-1)));
+    *pcbValue= sizeof(SQLUSMALLINT);
+    break;
+
+  case SQL_C_LONG:
+  case SQL_C_SLONG:
+    if (rgbValue)
+    {
+      /* Check if it could be a date...... :) */
+      if (convert)
+      {
+        if (length >= 10 && value[4] == '-' && value[7] == '-' &&
+             (!value[10] || value[10] == ' '))
+        {
+          *((SQLINTEGER *)rgbValue)= ((SQLINTEGER) atol(value) * 10000L +
+                                      (SQLINTEGER) atol(value + 5) * 100L +
+                                      (SQLINTEGER) atol(value + 8));
+        }
+        else
+          *((SQLINTEGER *)rgbValue)= (SQLINTEGER) get_int64(stmt,
+                                                column_number, value, length);
+      }
+      else
+        *((SQLINTEGER *)rgbValue)= (SQLINTEGER)(numericValue
+                                                & (SQLUINTEGER)(-1));
+    }
+    *pcbValue= sizeof(SQLINTEGER);
+    break;
+
+  case SQL_C_ULONG:
+    if (rgbValue)
+      *((SQLUINTEGER *)rgbValue)= (SQLUINTEGER)(convert ?
+                              get_int64(stmt, column_number, value, length) :
+                              numericValue & (SQLUINTEGER)(-1));
+    *pcbValue= sizeof(SQLUINTEGER);
+    break;
+
+  case SQL_C_FLOAT:
+    if (rgbValue)
+      *((float *)rgbValue)= (float)(convert ? get_double(stmt, column_number,
+                                  value, length) : numericValue & (int)(-1));
+    *pcbValue= sizeof(float);
+    break;
+
+  case SQL_C_DOUBLE:
+    if (rgbValue)
+      *((double *)rgbValue)= (double)(convert ? get_double(stmt, column_number,
+                                  value, length) : numericValue);
+    *pcbValue= sizeof(double);
+    break;
+
+  case SQL_C_SBIGINT:
+    /** @todo This is not right. SQLBIGINT is not always longlong. */
+    if (rgbValue)
+      *((longlong *)rgbValue)= (longlong)(convert ? get_int64(stmt,
+                      column_number, value, length) : numericValue);
+
+    *pcbValue= sizeof(longlong);
+    break;
+
+  case SQL_C_UBIGINT:
+    /** @todo This is not right. SQLUBIGINT is not always ulonglong.  */
+    if (rgbValue)
+        *((ulonglong *)rgbValue)= (ulonglong)(convert ? get_int64(stmt,
+                      column_number, value, length) : numericValue);
+
+    *pcbValue= sizeof(ulonglong);
+    break;
+
+  default:
+    return set_error(stmt,MYERR_07006,
+                     "Restricted data type attribute violation",0);
+    break;
+  }
+
+  if (stmt->getdata.source)  /* Second call to getdata */
+    return SQL_NO_DATA_FOUND;
+
+  return result;
+}
+
+
 /**
   Retrieve the data from a field as a specified ODBC C type.
 
@@ -1170,6 +1374,7 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
     SQLRETURN result;
     ulong length= 0;
     DESCREC *irrec, *arrec;
+    SQLSMALLINT uColNum= ColumnNumber;
 
     if (!stmt->result || !stmt->current_values)
     {
@@ -1177,70 +1382,56 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
       return SQL_ERROR;
     }
 
-    if (ColumnNumber == 0)
+    if ((uColNum < 1 
+         && stmt->stmt_options.bookmarks == (SQLUINTEGER) SQL_UB_OFF) 
+        || uColNum > stmt->ird->count )
     {
-      if (stmt->stmt_options.bookmarks == SQL_UB_OFF)
-      {
-        return set_stmt_error(stmt, "07009", "Invalid descriptor index",
+      return set_stmt_error(stmt, "07009", "Invalid descriptor index",
                             MYERR_07009);
-      }
+    }
 
-      if (TargetType != SQL_C_BOOKMARK && TargetType != SQL_C_VARBOOKMARK)
-      {
-        return set_stmt_error(stmt, "HY003", "Program type out of range", 0);
-      }
-      if (ColumnNumber != stmt->getdata.column)
-      {
-        /* New column. Reset old offset */
-        reset_getdata_position(stmt);
-        stmt->getdata.column= ColumnNumber;
-      }
-      irrec= desc_get_rec(stmt->ird, -1, FALSE);
-    }
-    else 
+    if (uColNum == 0 && TargetType != SQL_C_BOOKMARK 
+        && TargetType != SQL_C_VARBOOKMARK)
     {
-      if (ColumnNumber < 1 || ColumnNumber > stmt->ird->count)
-      {
-        return set_stmt_error(stmt, "07009", "Invalid descriptor index",
-                              MYERR_07009);
-      }
-      --ColumnNumber;     /* Easier code if start from 0 */
-      if (ColumnNumber != stmt->getdata.column)
-      {
-        /* New column. Reset old offset */
-        reset_getdata_position(stmt);
-        stmt->getdata.column= ColumnNumber;
-      }
-      irrec= desc_get_rec(stmt->ird, ColumnNumber, FALSE);
+      return set_stmt_error(stmt, "HY003", "Program type out of range", 0);
     }
+
+    --uColNum;     /* Easier code if start from 0 */
+    if (uColNum != stmt->getdata.column)
+    {
+      /* New column. Reset old offset */
+      reset_getdata_position(stmt);
+      stmt->getdata.column= uColNum;
+    }
+    irrec= desc_get_rec(stmt->ird, uColNum, FALSE);
 
     assert(irrec);
-
-    /* catalog functions with "fake" results won't have lengths */
-    length= irrec->row.datalen;
-    if (!length && stmt->current_values[ColumnNumber])
-      length= strlen(stmt->current_values[ColumnNumber]);
 
     if (!stmt->dbc->ds->dont_use_set_locale)
       setlocale(LC_NUMERIC, "C");
 
-    if ((ColumnNumber == 0 && stmt->stmt_options.bookmarks == SQL_UB_VARIABLE))
+    if ((uColNum == -1 && stmt->stmt_options.bookmarks == SQL_UB_VARIABLE))
     {
       char _value[21];
       /* save position set using SQLSetPos in buffer */
       int _len= sprintf(_value, "%ld", (stmt->cursor_row > 0) ? 
                                     stmt->cursor_row : 0);
-      arrec= desc_get_rec(stmt->ard, ColumnNumber, FALSE);
-      result= sql_get_data(stmt, TargetType, ColumnNumber,
+      arrec= desc_get_rec(stmt->ard, uColNum, FALSE);
+      result= sql_get_bookmark_data(stmt, TargetType, uColNum,
                          TargetValuePtr, BufferLength, StrLen_or_IndPtr,
                          _value, _len, arrec);
     }
     else
     {
-      arrec= desc_get_rec(stmt->ard, ColumnNumber, FALSE);
-      result= sql_get_data(stmt, TargetType, ColumnNumber,
+      /* catalog functions with "fake" results won't have lengths */
+      length= irrec->row.datalen;
+      if (!length && stmt->current_values[uColNum])
+        length= strlen(stmt->current_values[uColNum]);
+
+      arrec= desc_get_rec(stmt->ard, uColNum, FALSE);
+      result= sql_get_data(stmt, TargetType, uColNum,
                          TargetValuePtr, BufferLength, StrLen_or_IndPtr,
-                         stmt->current_values[ColumnNumber], length,
+                         stmt->current_values[uColNum], length,
                          arrec);
     }
 
@@ -1427,7 +1618,7 @@ void fill_ird_data_lengths(DESC *ird, ulong *lengths, uint fields)
   @param[in]  rownum      Row number of current fetch block
 */
 static SQLRETURN
-fill_fetch_bookmark_buffers(STMT *stmt, uint value, uint rownum)
+fill_fetch_bookmark_buffers(STMT *stmt, ulong value, uint rownum)
 {
   SQLRETURN res= SQL_SUCCESS, tmp_res;
   DESCREC *arrec;
@@ -1461,7 +1652,7 @@ fill_fetch_bookmark_buffers(STMT *stmt, uint value, uint rownum)
     }
 
     length= sprintf(_value, "%ld", (value > 0) ? value : 0);
-    tmp_res= sql_get_data(stmt, arrec->concise_type, (uint)0,
+    tmp_res= sql_get_bookmark_data(stmt, arrec->concise_type, (uint)0,
                           TargetValuePtr, arrec->octet_length, pcbValue,
                           _value, length, arrec);
     if (tmp_res != SQL_SUCCESS)
@@ -1565,7 +1756,7 @@ fill_fetch_buffers(STMT *stmt, MYSQL_ROW values, uint rownum)
              returns data for all bound columns. Row can be specified
              at an absolute or relative position
 */
-SQLRETURN SQL_API my_SQLSingleFetch( SQLHSTMT             hstmt,
+SQLRETURN SQL_API myodbc_single_fetch( SQLHSTMT             hstmt,
                                        SQLUSMALLINT         fFetchType,
                                        SQLLEN               irow,
                                        SQLULEN             *pcrow,
@@ -1997,23 +2188,8 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
 
       case SQL_FETCH_BOOKMARK:
         {
-          if (stmt->stmt_options.bookmark_ptr)
-          {
-            DESCREC *arrec;
-            arrec= desc_get_rec(stmt->ard, -1, FALSE);
-
-            if (arrec->concise_type == SQL_C_BOOKMARK)
-            {
-              brow= *((SQLLEN *) stmt->stmt_options.bookmark_ptr);
-            }
-            else
-            {
-              brow= atol((SQLCHAR *) stmt->stmt_options.bookmark_ptr);
-            }
-          }
-
-          cur_row= brow + irow;
-          if (cur_row < 0 && (long)-irow <= (long)stmt->ard->array_size) 
+          cur_row= irow;
+          if (cur_row < 0 && (long)-irow <= (long)stmt->ard->array_size)
           {
             cur_row= 0;
           }
@@ -2187,7 +2363,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
       if (fFetchType == SQL_FETCH_BOOKMARK && 
            stmt->stmt_options.bookmarks == SQL_UB_VARIABLE)
       {
-        row_book= fill_fetch_bookmark_buffers(stmt, brow + irow + i + 1, i);
+        row_book= fill_fetch_bookmark_buffers(stmt, irow + i + 1, i);
       }  
       row_res= fill_fetch_buffers(stmt, values, i);
 
@@ -2300,7 +2476,7 @@ SQLRETURN SQL_API SQLExtendedFetch( SQLHSTMT        hstmt,
                                     SQLUSMALLINT   *rgfRowStatus )
 {
     SQLRETURN rc;
-    SQLULEN rows;
+    SQLULEN rows= 0;
     STMT_OPTIONS *options= &((STMT *)hstmt)->stmt_options;
 
     options->rowStatusPtr_ex= rgfRowStatus;
@@ -2328,6 +2504,16 @@ SQLRETURN SQL_API SQLFetchScroll( SQLHSTMT      StatementHandle,
     STMT_OPTIONS *options= &stmt->stmt_options;
 
     options->rowStatusPtr_ex= NULL;
+
+    if (FetchOrientation == SQL_FETCH_BOOKMARK 
+        && stmt->stmt_options.bookmark_ptr)
+    {
+      DESCREC *arrec;
+      arrec= desc_get_rec(stmt->ard, -1, FALSE);
+
+      FetchOffset += get_bookmark_value(arrec->concise_type, 
+                       stmt->stmt_options.bookmark_ptr);
+    }
 
     return my_SQLExtendedFetch(StatementHandle, FetchOrientation, FetchOffset,
                                stmt->ird->rows_processed_ptr, stmt->ird->array_status_ptr,

@@ -199,6 +199,7 @@ SQLSMALLINT get_dticode_from_concise_type(SQLSMALLINT concise_type);
 SQLSMALLINT get_concise_type_from_datetime_code(SQLSMALLINT dticode);
 SQLSMALLINT get_concise_type_from_interval_code(SQLSMALLINT dticode);
 SQLSMALLINT get_type_from_concise_type(SQLSMALLINT concise_type);
+SQLLEN get_bookmark_value(SQLSMALLINT fCType, SQLPOINTER rgbValue);
 
 #define is_char_sql_type(type) \
   ((type) == SQL_CHAR || (type) == SQL_VARCHAR || (type) == SQL_LONGVARCHAR)
@@ -225,9 +226,13 @@ SQLRETURN SQL_API my_SQLBindParameter(SQLHSTMT hstmt,SQLUSMALLINT ipar,
 SQLRETURN SQL_API my_SQLExtendedFetch(SQLHSTMT hstmt, SQLUSMALLINT fFetchType,
 				      SQLLEN irow, SQLULEN *pcrow,
 				      SQLUSMALLINT *rgfRowStatus, my_bool upd_status);
-SQLRETURN SQL_API my_SQLSingleFetch( SQLHSTMT hstmt, SQLUSMALLINT fFetchType,
+SQLRETURN SQL_API myodbc_single_fetch( SQLHSTMT hstmt, SQLUSMALLINT fFetchType,
               SQLLEN irow, SQLULEN *pcrow, 
               SQLUSMALLINT *rgfRowStatus, my_bool upd_status);
+SQLRETURN SQL_API sql_get_data(STMT *stmt, SQLSMALLINT fCType, 
+              uint column_number, SQLPOINTER rgbValue, 
+              SQLLEN cbValueMax, SQLLEN *pcbValue,
+              char *value, ulong length, DESCREC *arrec);
 SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
                                SQLUSMALLINT fOption, SQLUSMALLINT fLock);
 SQLRETURN copy_stmt_error(STMT *src, STMT *dst);

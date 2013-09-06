@@ -998,7 +998,7 @@ static SQLRETURN fetch_bookmark(STMT *stmt)
 
     curr_bookmark_index= atol((SQLCHAR *) TargetValuePtr);
 
-    nReturn= my_SQLSingleFetch(stmt, SQL_FETCH_ABSOLUTE, 
+    nReturn= myodbc_single_fetch(stmt, SQL_FETCH_ABSOLUTE, 
                                 curr_bookmark_index,
                                 stmt->ird->rows_processed_ptr,
                                 stmt->stmt_options.rowStatusPtr_ex ?
@@ -1359,12 +1359,6 @@ static SQLRETURN setpos_update(STMT *stmt, SQLUSMALLINT irow,
 
   return nReturn;
 }
-
-
-SQLRETURN SQL_API
-sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
-             SQLPOINTER rgbValue, SQLLEN cbValueMax, SQLLEN *pcbValue,
-             char *value, ulong length, DESCREC *arrec);
 
 
 /*!

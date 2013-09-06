@@ -83,11 +83,6 @@ char * numeric2binary(char * dst, long long src, unsigned int byte_count)
 }
 
 
-SQLRETURN SQL_API
-sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
-             SQLPOINTER rgbValue, SQLLEN cbValueMax, SQLLEN *pcbValue,
-             char *value, ulong length, DESCREC *arrec);
-
 /**
   @returns TRUE if the resultset is SP OUT params
   Basically it makes sense with prepared statements only
