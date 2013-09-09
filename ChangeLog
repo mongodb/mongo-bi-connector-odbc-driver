@@ -9,6 +9,8 @@
     libmysqlclient.*) to be used. Mysql CPP linkage for mysql version >= 5.6.4
     (wl#6738)
   * Added a new test module for crash bugs (my_crash.c)
+  * Added GUI dialog for Linux
+
 
   Bugs fixed:
   * With utf8 byte string for mysql server version < 5.5.3, insert fails

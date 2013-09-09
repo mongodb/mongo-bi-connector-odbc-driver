@@ -1,6 +1,5 @@
 /*
-  Copyright (c) 2007, 2008 MySQL AB, 2009, 2010 Sun Microsystems, Inc.
-  Use is subject to license terms.
+  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -95,9 +94,16 @@ BOOL INSTAPI ConfigDSNW(HWND hWnd, WORD nRequest, LPCWSTR pszDriver,
   {
     SQLWCHAR delim= ';';
 
-    /* if there's no ;, then it's most likely null-delimited */
+#ifdef _WIN32
+    /* 
+      if there's no ;, then it's most likely null-delimited
+
+     NOTE: the double null-terminated strings are not working
+     *      with UnixODBC-GUI-Qt (posted a bug ) 
+    */
     if (!sqlwcharchr(pszAttributes, delim))
       delim= 0;
+#endif
 
     if (ds_from_kvpair(ds, pszAttributes, delim))
     {
@@ -149,7 +155,7 @@ BOOL INSTAPI ConfigDSNW(HWND hWnd, WORD nRequest, LPCWSTR pszDriver,
       with what information was given
     */
     if (!hWnd || ShowOdbcParamsDialog(ds, hWnd, FALSE) == 1)
-#elif
+#else
     if (ShowOdbcParamsDialog(ds, hWnd, FALSE) == 1)
 #endif
     {
@@ -175,3 +181,30 @@ exitConfigDSN:
     driver_delete(driver);
   return rc;
 }
+
+#ifdef USE_IODBC
+BOOL INSTAPI ConfigDSN(HWND hWnd, WORD nRequest, LPCSTR pszDriverA,
+                       LPCSTR pszAttributesA)
+{
+  BOOL rc;
+
+  size_t lenDriver = strlen(pszDriverA);
+  size_t lenAttrib = strlen(pszAttributesA);
+
+  /* We will assume using one-byte Latin string as a subset of UTF-8 */
+  SQLWCHAR *pszDriverW= (SQLWCHAR *) my_malloc((lenDriver + 1) * 
+                                                sizeof(SQLWCHAR), MYF(0));
+  SQLWCHAR *pszAttributesW= (SQLWCHAR *)my_malloc((lenAttrib + 1) * 
+                                                  sizeof(SQLWCHAR), MYF(0));
+
+  utf8_as_sqlwchar(pszDriverW, lenDriver, (SQLCHAR* )pszDriverA, lenDriver);
+  utf8_as_sqlwchar(pszAttributesW, lenAttrib, (SQLCHAR* )pszAttributesA, 
+                   lenAttrib);
+
+  rc= ConfigDSNW(hWnd, nRequest, pszDriverW, pszAttributesW);
+
+  x_free(pszDriverW);
+  x_free(pszAttributesW);                 
+  return rc;
+}
+#endif

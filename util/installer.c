@@ -1232,8 +1232,19 @@ int ds_add(DataSource *ds)
 
   RESTORE_MODE();
 
-  /* write all fields (util method takes care of skipping blank fields) */
+#ifdef _WIN32
+  /* Windows driver manager allows writing lib into the DRIVER parameter */
   if (ds_add_strprop(ds->name, W_DRIVER     , driver->lib    )) goto error;
+#else
+  /*
+   If we write driver->lib into the DRIVER parameter with iODBC/UnixODBC
+   the next time GUI will not load because it loses the relation to
+   odbcinst.ini
+   */
+  if (ds_add_strprop(ds->name, W_DRIVER     , driver->name    )) goto error;
+#endif
+
+  /* write all fields (util method takes care of skipping blank fields) */
   if (ds_add_strprop(ds->name, W_DESCRIPTION, ds->description)) goto error;
   if (ds_add_strprop(ds->name, W_SERVER     , ds->server     )) goto error;
   if (ds_add_strprop(ds->name, W_UID        , ds->uid        )) goto error;

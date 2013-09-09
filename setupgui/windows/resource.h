@@ -117,7 +117,7 @@
 #define IDC_EDIT_socket                 10042
 #define IDC_RADIO_tcp                   10043
 #define IDC_RADIO_pipe                  10044
-#define IDC_CHECK_cursor_prefetch_number 10045
+#define IDC_CHECK_cursor_prefetch_active 10045
 #define IDC_EDIT_cursor_prefetch_number 10046
 #define IDC_CHECK_no_ssps               10047
 #define IDC_CHECK_can_handle_exp_pwd    10048
