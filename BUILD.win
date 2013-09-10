@@ -41,10 +41,24 @@ toolchain. Visual Studio includes a batch file to set these for you,
 and installs a shortcut into the Start menu to open a command prompt
 with these variables set.
 
-You need to set MYSQL_DIR to point to where the MySQL server is
-installed, using the short-style filenames:
+You need to set MYSQL_INCLUDE_DIR, MYSQL_LIB_DIR or MYSQL_DIR to point
+to where the MySQL server is installed, using the short-style filenames:
 
+  set MYSQL_INCLUDE_DIR=C:\PROGRA~1\MySQL\MYSQLS~1.0\include
+  set MYSQL_LIB_DIR=C:\PROGRA~1\MySQL\MYSQLS~1.0\lib
   set MYSQL_DIR=C:\PROGRA~1\MySQL\MYSQLS~1.0
+ 
+Mysql client library(mysqlclient.lib) is build statically with 
+MyODBC. If you want to build dynamically or want to specify mysql client 
+library name with which MyODBC should get linked, use MYSQLCLIENT_LIB_NAME 
+additional parameter with mysqlclient library name.
+
+ -DMYSQLCLIENT_LIB_NAME=mysqlclient lib name with extension
+ 
+If you want to enable C++ linkage to mysql client library, then specify 
+MYSQL_CXX_LINKAGE to true. By default, MYSQL_CXX_LINKAGE is enabled for 
+mysql version greater then equal to 5.6.4
+ -DMYSQL_CXX_LINKAGE=1
 
 Build Connector/ODBC using the "cmake" command-line tool by doing the
 following from the source root directory (in a command prompt window);

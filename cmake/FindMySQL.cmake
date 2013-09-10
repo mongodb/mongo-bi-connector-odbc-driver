@@ -53,21 +53,21 @@ ENDMACRO(_MYSQL_CONFIG_REPLACE _regex1 _replace _regex2 _opt)
 
 IF (MYSQLCLIENT_LIB_NAME)
   IF (${MYSQLCLIENT_LIB_NAME} MATCHES "libmysqlclient_r.a" 
-       OR ${MYSQLCLIENT_LIB_NAME} MATCHES "libmysqlclient_r.a" 
+       OR ${MYSQLCLIENT_LIB_NAME} MATCHES "libmysqlclient.a" 
        OR ${MYSQLCLIENT_LIB_NAME} MATCHES "mysqlclient*")
     SET(MYSQLCLIENT_STATIC_LINKING 1)
   ELSEIF (${MYSQLCLIENT_LIB_NAME} MATCHES "libmysqlclient_r.so" 
-           OR ${MYSQLCLIENT_LIB_NAME} MATCHES "libmysqlclient_r.so" 
-           OR ${MYSQLCLIENT_LIB_NAME} MATCHES "libmysql.dll")
+           OR ${MYSQLCLIENT_LIB_NAME} MATCHES "libmysqlclient.so" 
+           OR ${MYSQLCLIENT_LIB_NAME} MATCHES "libmysql.*")
     SET(MYSQLCLIENT_STATIC_LINKING 0)
   ENDIF (${MYSQLCLIENT_LIB_NAME} MATCHES "libmysqlclient_r.a" 
-       OR ${MYSQLCLIENT_LIB_NAME} MATCHES "libmysqlclient_r.a" 
+       OR ${MYSQLCLIENT_LIB_NAME} MATCHES "libmysqlclient.a" 
        OR ${MYSQLCLIENT_LIB_NAME} MATCHES "mysqlclient*")
 ELSE (MYSQLCLIENT_LIB_NAME)
   IF (WIN32)
     SET(MYSQLCLIENT_LIB_NAME "mysqlclient.lib")
   ELSE (WIN32)
-    SET(MYSQLCLIENT_LIB_NAME "libmysqlclient_r.a libmysqlclient.a")
+    SET(MYSQLCLIENT_LIB_NAME "libmysqlclient.a libmysqlclient_r.a")
   ENDIF (WIN32)
   SET(MYSQLCLIENT_STATIC_LINKING 1)
 ENDIF (MYSQLCLIENT_LIB_NAME)
@@ -160,12 +160,6 @@ IF (WIN32)
 		ADD_DEFINITIONS(-DDBUG_OFF)
 	ENDIF (CMAKE_BUILD_TYPE STREQUAL Debug)
 
-  IF (MYSQLCLIENT_STATIC_LINKING)
-    SET(CMAKE_FIND_LIBRARY_SUFFIXES ".lib")
-  ELSE (MYSQLCLIENT_STATIC_LINKING)
-    SET(CMAKE_FIND_LIBRARY_SUFFIXES ".dll")
-  ENDIF (MYSQLCLIENT_STATIC_LINKING)
-
   FIND_LIBRARY(MYSQL_LIB 
     NAMES 
       ${MYSQLCLIENT_LIB_NAME}
@@ -233,12 +227,12 @@ ELSE (WIN32)
    
     IF (MYSQLCLIENT_STATIC_LINKING)
       _MYSQL_CONFIG_REPLACE(MYSQL_LIBRARIES 
-             "mysqlclient(_r| |$)" "${MYSQL_LIB}" "(^| )-l" "--libs_r")
+             "(mysqlclient|mysqlclient_r)" "${MYSQL_LIB}" "(^| )-l" "--libs")
     ELSE (MYSQLCLIENT_STATIC_LINKING)
-      _MYSQL_CONFIG(MYSQL_LIBRARIES "(^| )-l" "--libs_r")
+      _MYSQL_CONFIG(MYSQL_LIBRARIES "(^| )-l" "--libs")
     ENDIF (MYSQLCLIENT_STATIC_LINKING)
 
-    _MYSQL_CONFIG(MYSQL_CLIB_DIR "(^| )-L" "--libs_r")
+    _MYSQL_CONFIG(MYSQL_CLIB_DIR "(^| )-L" "--libs")
 
     IF (NOT MYSQL_LIB_DIR)
       SET(MYSQL_LIB_DIR ${MYSQL_CLIB_DIR}) 
