@@ -109,7 +109,7 @@ DECLARE_TEST(my_table_dbs)
     ok_stmt(hstmt, SQLRowCount(hstmt, &rowCount));
     nrows = my_print_non_format_result(hstmt);
 
-    is_num(rowCount, nrows)
+    is_num(rowCount, nrows);
     rc = SQLFreeStmt(hstmt, SQL_CLOSE);
     mystmt(hstmt,rc);
 

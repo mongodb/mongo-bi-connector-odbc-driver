@@ -487,6 +487,14 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
       }
     }
 
+    if  (stmt->out_params_state == OPS_STREAMS_PENDING)
+    {
+      if (value == NULL)
+      {
+        return ssps_fetch_chunk(stmt, (SQLCHAR *)rgbValue, cbValueMax, pcbValue);
+      }
+    }
+
     switch (fCType)
     {
     case SQL_C_CHAR:
@@ -1376,7 +1384,7 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
     DESCREC *irrec, *arrec;
     SQLSMALLINT uColNum= ColumnNumber;
 
-    if (!stmt->result || !stmt->current_values)
+    if (!stmt->result || (!stmt->current_values && stmt->out_params_state != OPS_STREAMS_PENDING))
     {
       set_stmt_error(stmt,"24000","SQLGetData without a preceding SELECT",0);
       return SQL_ERROR;
@@ -1386,8 +1394,7 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
          && stmt->stmt_options.bookmarks == (SQLUINTEGER) SQL_UB_OFF) 
         || uColNum > stmt->ird->count )
     {
-      return set_stmt_error(stmt, "07009", "Invalid descriptor index",
-                            MYERR_07009);
+      return set_stmt_error(stmt, "07009", "Invalid descriptor index", MYERR_07009);
     }
 
     if (uColNum == 0 && TargetType != SQL_C_BOOKMARK 
@@ -1405,10 +1412,51 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
     }
     irrec= desc_get_rec(stmt->ird, uColNum, FALSE);
 
+    if (ColumnNumber < 1 || ColumnNumber > stmt->ird->count)
+    {
+      return set_stmt_error(stmt, "07009", "Invalid descriptor index", MYERR_07009);
+    }
+    --ColumnNumber;     /* Easier code if start from 0 */
+
+    if (stmt->out_params_state == OPS_STREAMS_PENDING)
+    {
+      /* http://msdn.microsoft.com/en-us/library/windows/desktop/ms715441%28v=vs.85%29.aspx
+          "07009 Invalid descriptor index ...The Col_or_Param_Num value was not equal to the
+          ordinal of the parameter that is available."
+          Returning error if requested parameter number is different from the last call to
+          SQLParamData */
+      if (ColumnNumber != stmt->current_param)
+      {
+        return set_stmt_error(stmt, "07009", "The parameter number value was not equal to \
+                                            the ordinal of the parameter that is available.",
+                              MYERR_07009);
+      }
+      else
+      {
+        /* In getdatat column we keep out parameter column number in the result */
+        ColumnNumber= stmt->getdata.column;
+      }
+        
+      if (TargetType != SQL_C_BINARY)
+      {
+        return set_stmt_error(stmt, "HYC00", "Stream output parameters supported for SQL_C_BINARY"
+                                      " only", 0);
+      }
+    }
+
+    if (ColumnNumber != stmt->getdata.column)
+    {
+      /* New column. Reset old offset */
+      reset_getdata_position(stmt);
+      stmt->getdata.column= ColumnNumber;
+    }
+    irrec= desc_get_rec(stmt->ird, ColumnNumber, FALSE);
+
     assert(irrec);
 
     if (!stmt->dbc->ds->dont_use_set_locale)
       setlocale(LC_NUMERIC, "C");
+
 
     if ((uColNum == -1 && stmt->stmt_options.bookmarks == SQL_UB_VARIABLE))
     {
@@ -1416,10 +1464,11 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
       /* save position set using SQLSetPos in buffer */
       int _len= sprintf(_value, "%ld", (stmt->cursor_row > 0) ? 
                                     stmt->cursor_row : 0);
+
       arrec= desc_get_rec(stmt->ard, uColNum, FALSE);
       result= sql_get_bookmark_data(stmt, TargetType, uColNum,
-                         TargetValuePtr, BufferLength, StrLen_or_IndPtr,
-                         _value, _len, arrec);
+                                    TargetValuePtr, BufferLength, StrLen_or_IndPtr,
+                                    _value, _len, arrec);
     }
     else
     {
@@ -1430,9 +1479,9 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
 
       arrec= desc_get_rec(stmt->ard, uColNum, FALSE);
       result= sql_get_data(stmt, TargetType, uColNum,
-                         TargetValuePtr, BufferLength, StrLen_or_IndPtr,
-                         stmt->current_values[uColNum], length,
-                         arrec);
+                          TargetValuePtr, BufferLength, StrLen_or_IndPtr,
+                          stmt->current_values[uColNum], length,
+                          arrec);
     }
 
     if (!stmt->dbc->ds->dont_use_set_locale)
@@ -1532,9 +1581,21 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
   /* checking if next result is SP OUT params and fetch them if needed */
   if (IS_PS_OUT_PARAMS(pStmt))
   {
+    int out_params= got_out_parameters(pStmt);
+
     fix_result_types(pStmt);
-    /* This server status(SERVER_PS_OUT_PARAMS) can be only if we used PS */
-    ssps_get_out_params(pStmt);
+
+    if (out_params)
+    {
+      /* This server status(SERVER_PS_OUT_PARAMS) can be only if we used PS
+        - thus calling ssps_ without check */
+      ssps_get_out_params(pStmt);
+    }
+
+    if (out_params & GOT_OUT_STREAM_PARAMETERS)
+    {
+      nReturn= SQL_PARAM_DATA_AVAILABLE;
+    }
   }
   else
   {
@@ -1918,7 +1979,7 @@ SQLRETURN SQL_API myodbc_single_fetch( SQLHSTMT             hstmt,
     /* out params has been silently fetched */
     if (rows_to_fetch == 0)
     {
-      if (stmt->out_params_state > 0)
+      if (stmt->out_params_state != OPS_UNKNOWN)
       {
         rows_to_fetch= 1;
       }
@@ -1926,10 +1987,12 @@ SQLRETURN SQL_API myodbc_single_fetch( SQLHSTMT             hstmt,
       {
         *pcrow= 0;
         stmt->rows_found_in_set= 0;
+
         if ( upd_status && stmt->ird->rows_processed_ptr )
         {
           *stmt->ird->rows_processed_ptr= 0;
         }
+
         return SQL_NO_DATA_FOUND;
       }
     }
@@ -2107,16 +2170,20 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     if ( !stmt->result )
       return set_stmt_error(stmt, "24000", "Fetch without a SELECT", 0);
 
-    if (stmt->out_params_state > 0)
+    if (stmt->out_params_state != OPS_UNKNOWN)
     {
-      switch(--stmt->out_params_state)
+      switch(stmt->out_params_state)
       {
-      case 0:
+      case OPS_BEING_FETCHED:
+        /* Smth weird */
         return SQL_NO_DATA_FOUND;
+      case OPS_STREAMS_PENDING:
+        /* Magical out params fetch */
+        mysql_stmt_fetch(stmt->ssps);
       default:
-        /* TODO: Need to remember real fetch' result*/
-        /* just in case...*/
-        stmt->out_params_state= 1;
+        /* TODO: Need to remember real fetch' result */
+        /* just in case... */
+        stmt->out_params_state= OPS_BEING_FETCHED;
       }
     }
 
@@ -2256,7 +2323,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     /* out params has been silently fetched */
     if (rows_to_fetch == 0)
     {
-      if (stmt->out_params_state > 0)
+      if (stmt->out_params_state != OPS_UNKNOWN)
       {
         rows_to_fetch= 1;
       }
@@ -2296,7 +2363,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
             save_position= row_tell(stmt);
         }
         /* - Actual fetching happens here - */
-        if ( stmt->out_params_state == 0
+        if ( stmt->out_params_state == OPS_UNKNOWN
           && !(values= fetch_row(stmt)) )
         {
           if (scroller_exists(stmt))
@@ -2324,7 +2391,7 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
           }
         }
 
-        if (stmt->out_params_state)
+        if (stmt->out_params_state != OPS_UNKNOWN)
         {
           values= stmt->array;
         }

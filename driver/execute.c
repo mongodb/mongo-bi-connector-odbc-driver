@@ -170,6 +170,12 @@ SQLRETURN do_query(STMT *stmt,char *query, SQLULEN query_length)
       fix_result_types(stmt);
       /* This status(SERVER_PS_OUT_PARAMS) can be only if we used PS */
       ssps_get_out_params(stmt);
+
+      if (stmt->out_params_state == OPS_STREAMS_PENDING)
+      {
+        error= SQL_PARAM_DATA_AVAILABLE;
+        goto exit;
+      }
     }
     else
     {
@@ -234,18 +240,9 @@ SQLRETURN insert_params(STMT *stmt, SQLULEN row, char **finalquery,
     setlocale(LC_NUMERIC, "C");  /* force use of '.' as decimal point */
   }
 
-  if (ssps_used(stmt) && stmt->param_count > stmt->param_bind->max_element)
+  if (adjust_param_bind_array(stmt) )
   {
-    uint prev_max_elements= stmt->param_bind->max_element;
-
-    if (allocate_dynamic(stmt->param_bind, stmt->param_count))
-    {
-      goto memerror;
-    }
-
-    /* Need to init newly allocated area with 0s */
-    memset(stmt->param_bind->buffer + sizeof(MYSQL_BIND)*prev_max_elements, 0,
-      sizeof(MYSQL_BIND) * (stmt->param_bind->max_element - prev_max_elements));
+    goto memerror;
   }
 
   for ( i= 0; i < stmt->param_count; ++i )
@@ -266,13 +263,7 @@ SQLRETURN insert_params(STMT *stmt, SQLULEN row, char **finalquery,
 
     if (ssps_used(stmt))
     {
-      bind= (MYSQL_BIND *)stmt->param_bind->buffer + i;
-      bind->is_null_value= 0;
-      bind->is_unsigned= 0;
-
-      /* as far as looked - this trick is safe */
-      bind->is_null=  &bind->is_null_value;
-      bind->length=   &bind->length_value;
+      bind= get_param_bind(stmt, i, TRUE);
 
       rc= insert_param(stmt, (uchar*)bind, stmt->apd, aprec, iprec, row);
     }
@@ -1283,7 +1274,7 @@ SQLRETURN my_SQLExecute( STMT *pStmt )
   */
   if(is_select_stmt && ssps_used(pStmt) && pStmt->apd->array_size > 1)
   {
-	ssps_close(pStmt);				
+    ssps_close(pStmt);				
   }
 
   if ( pStmt->ipd->rows_processed_ptr )
@@ -1512,16 +1503,50 @@ SQLRETURN my_SQLExecute( STMT *pStmt )
 
 SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER *prbgValue)
 {
-    STMT *stmt= (STMT *) hstmt;
-    uint i;
-    SQLRETURN rc;
-    char *query=  GET_QUERY(&stmt->query);
-    DESC *apd;
-    uint param_count= stmt->param_count;
+  STMT *stmt= (STMT *) hstmt;
+  uint i;
+  SQLRETURN rc;
+  char *query=  GET_QUERY(&stmt->query);
+  DESC *apd;
+  uint param_count= stmt->param_count;
 
-    assert(stmt->dae_type);
+  assert(stmt->dae_type || stmt->out_params_state == OPS_STREAMS_PENDING);
+
+  if (stmt->out_params_state == OPS_STREAMS_PENDING)
+  {
+    DESCREC *rec= desc_find_outstream_rec(stmt, &stmt->current_param, &stmt->getdata.column);
+
+    if (rec != NULL)
+    {
+      uint cur_column_number= stmt->getdata.column;
+      reset_getdata_position(stmt);
+      stmt->getdata.column= cur_column_number;
+      stmt->getdata.src_offset= 0;
+
+      if (prbgValue)
+      {
+        SQLINTEGER default_size= bind_length(rec->concise_type,
+                                            rec->octet_length);
+        *prbgValue= ptr_offset_adjust(rec->data_ptr,
+                                      stmt->ipd->bind_offset_ptr,
+                                      stmt->ipd->bind_type,
+                                      default_size, 0);
+      }
+
+      return SQL_PARAM_DATA_AVAILABLE;
+    }
+    else
+    {
+      /* Magical out params fetch */
+      mysql_stmt_fetch(stmt->ssps);
+      stmt->out_params_state = OPS_PREFETCHED;
+      return SQL_SUCCESS;
+    }
+  }
+  else
+  {
     /* get the correct APD for the dae type we're handling */
-    switch(stmt->dae_type)
+    switch (stmt->dae_type)
     {
     case DAE_NORMAL:
       apd= stmt->apd;
@@ -1533,62 +1558,99 @@ SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER *prbgValue)
       break;
     default:
       return set_stmt_error(stmt, "HY010",
-                            "Invalid data at exec state", 0);
+        "Invalid data at exec state", 0);
     }
+    /* Making sure that param_bind array is big enough - might be needed for send_long_data
+       I guess there is a better place for this though */
+    adjust_param_bind_array(stmt);
+  }
 
-    for ( i= stmt->current_param; i < param_count; ++i )
+  for (i= stmt->current_param; i < param_count; ++i)
+  {
+    DESCREC *aprec= desc_get_rec(apd, i, FALSE);
+    SQLLEN *octet_length_ptr;
+
+    assert(aprec);
+    octet_length_ptr= ptr_offset_adjust(aprec->octet_length_ptr,
+                                        apd->bind_offset_ptr,
+                                        apd->bind_type,
+                                        sizeof(SQLLEN), 0);
+
+    /* get the "placeholder" pointer the application bound */
+    if (IS_DATA_AT_EXEC(octet_length_ptr))
     {
-        DESCREC *aprec= desc_get_rec(apd, i, FALSE);
-        SQLLEN *octet_length_ptr;
-
-        assert(aprec);
-        octet_length_ptr= ptr_offset_adjust(aprec->octet_length_ptr,
-                                            apd->bind_offset_ptr,
-                                            apd->bind_type,
-                                            sizeof(SQLLEN), 0);
-
-        /* get the "placeholder" pointer the application bound */
-        if (IS_DATA_AT_EXEC(octet_length_ptr))
-        {
-            SQLINTEGER default_size= bind_length(aprec->concise_type,
-                                                 aprec->octet_length);
-            stmt->current_param= i+1;
-            if ( prbgValue )
-                *prbgValue= ptr_offset_adjust(aprec->data_ptr,
-                                              apd->bind_offset_ptr,
-                                              apd->bind_type,
-                                              default_size, 0);
-            aprec->par.value= NULL;
-            aprec->par.alloced= FALSE;
-            aprec->par.is_dae= 1;
-            return SQL_NEED_DATA;
-        }
+      SQLINTEGER default_size= bind_length(aprec->concise_type,
+                                            aprec->octet_length);
+      stmt->current_param= i+1;
+      if (prbgValue)
+      {
+        *prbgValue= ptr_offset_adjust(aprec->data_ptr,
+                                      apd->bind_offset_ptr,
+                                      apd->bind_type,
+                                      default_size, 0);
+      }
+      aprec->par.value= NULL;
+      aprec->par.alloced= FALSE;
+      aprec->par.is_dae= 1;
+      return SQL_NEED_DATA;
     }
+  }
 
-    /* all data-at-exec params are complete. continue execution */
-    switch(stmt->dae_type)
-    {
-    case DAE_NORMAL:
-      if (!SQL_SUCCEEDED(rc= insert_params(stmt, 0, &query, 0)))
-        break;
-      rc= do_query(stmt, query, 0);
-      break;
-    case DAE_SETPOS_INSERT:
-      stmt->dae_type= DAE_SETPOS_DONE;
-      rc= my_SQLSetPos(hstmt, stmt->setpos_row, SQL_ADD, stmt->setpos_lock);
-      desc_free(stmt->setpos_apd);
-      stmt->setpos_apd= NULL;
-      break;
-    case DAE_SETPOS_UPDATE:
-      stmt->dae_type= DAE_SETPOS_DONE;
-      rc= my_SQLSetPos(hstmt, stmt->setpos_row, SQL_UPDATE, stmt->setpos_lock);
-      desc_free(stmt->setpos_apd);
-      stmt->setpos_apd= NULL;
-      break;
-    }
+  
+#ifdef WE_CAN_SEND_LONG_DATA_PROPERLY
+  /*
+    * Course of actions has to be following:
+    * 1) We skip DAE parameters that are good for mysql_send_long_data(i.e. binary params) - specs
+    *    allow us to do that. But we are memorizing we have them(first such parameter index)
+    * 2) After we done with regular dae parameters we do insert_params/mysql_stmt_result_bind
+    * 3) SQLParamData loops thru those parameters now skipping "regular" dae params
+    * 4) After last parameter done - do_query as it is now, but it should not call
+    *    mysql_stmt_bind_param
+    */
+
+  if (stmt->send_data_param > 0)
+  {
     
-    stmt->dae_type= 0;
-    return rc;
+    if (mysql_stmt_bind_param(stmt->ssps, (MYSQL_BIND*)stmt->param_bind->buffer))
+    {
+      set_stmt_error(stmt, "HY000", mysql_stmt_error(stmt->ssps),
+                    mysql_stmt_errno(stmt->ssps));
+
+      /* For some errors - translating to more appropriate status */
+      translate_error(stmt->error.sqlstate, MYERR_S1000,
+                    mysql_stmt_errno(stmt->ssps));
+      return SQL_ERROR;
+    }
+
+    /* Do all stuff for stmt->send_data_param as a dae */
+    return SQL_NEED_DATA;
+  }
+#endif
+
+  /* all data-at-exec params are complete. continue execution */
+  switch (stmt->dae_type)
+  {
+  case DAE_NORMAL:
+    if (!SQL_SUCCEEDED(rc= insert_params(stmt, 0, &query, 0)))
+      break;
+    rc= do_query(stmt, query, 0);
+    break;
+  case DAE_SETPOS_INSERT:
+    stmt->dae_type= DAE_SETPOS_DONE;
+    rc= my_SQLSetPos(hstmt, stmt->setpos_row, SQL_ADD, stmt->setpos_lock);
+    desc_free(stmt->setpos_apd);
+    stmt->setpos_apd= NULL;
+    break;
+  case DAE_SETPOS_UPDATE:
+    stmt->dae_type= DAE_SETPOS_DONE;
+    rc= my_SQLSetPos(hstmt, stmt->setpos_row, SQL_UPDATE, stmt->setpos_lock);
+    desc_free(stmt->setpos_apd);
+    stmt->setpos_apd= NULL;
+    break;
+  }
+    
+  stmt->dae_type= 0;
+  return rc;
 }
 
 
@@ -1604,54 +1666,41 @@ SQLRETURN SQL_API SQLPutData( SQLHSTMT      hstmt,
                               SQLPOINTER    rgbValue,
                               SQLLEN        cbValue )
 {
-    STMT *stmt= (STMT *) hstmt;
-    DESCREC *aprec;
+  STMT *stmt= (STMT *) hstmt;
+  DESCREC *aprec;
 
-    if ( !stmt )
-        return SQL_ERROR;
+  if ( !stmt )
+  {
+    return SQL_ERROR;
+  }
 
-    if ( cbValue == SQL_NTS )
-        cbValue= strlen(rgbValue);
-    if (stmt->dae_type == DAE_NORMAL)
-      aprec= desc_get_rec(stmt->apd, stmt->current_param - 1, FALSE);
-    else
-      aprec= desc_get_rec(stmt->setpos_apd, stmt->current_param - 1, FALSE);
-    assert(aprec);
-    if ( cbValue == SQL_NULL_DATA )
-    {
-        if ( aprec->par.alloced )
-        {
-            x_free(aprec->par.value);
-        }
-        aprec->par.alloced= FALSE;
-        aprec->par.value= NULL;
-        return SQL_SUCCESS;
-    }
-    if ( aprec->par.value )
-    {
-        /* Append to old value */
-        assert(aprec->par.alloced);
-        if ( !(aprec->par.value= my_realloc(aprec->par.value,
-                                            aprec->par.value_length + cbValue + 1,
-                                            MYF(0))) )
-          return set_error(stmt,MYERR_S1001,NULL,4001);
+  if ( cbValue == SQL_NTS )
+  {
+    cbValue= strlen(rgbValue);
+  }
+  if (stmt->dae_type == DAE_NORMAL)
+  {
+    aprec= desc_get_rec(stmt->apd, stmt->current_param - 1, FALSE);
+  }
+  else
+  {
+    aprec= desc_get_rec(stmt->setpos_apd, stmt->current_param - 1, FALSE);
+  }
 
-        memcpy(aprec->par.value+aprec->par.value_length,rgbValue,cbValue);
-        aprec->par.value_length+= cbValue;
-        aprec->par.value[aprec->par.value_length]= 0;
-        aprec->par.alloced= TRUE;
-    }
-    else
+  assert(aprec);
+
+  if ( cbValue == SQL_NULL_DATA )
+  {
+    if ( aprec->par.alloced )
     {
-        /* New value */
-        if ( !(aprec->par.value= my_malloc(cbValue+1,MYF(0))) )
-            return set_error(stmt,MYERR_S1001,NULL,4001);
-        memcpy(aprec->par.value,rgbValue,cbValue);
-        aprec->par.value_length= cbValue;
-        aprec->par.value[aprec->par.value_length]= 0;
-        aprec->par.alloced= TRUE;
+      x_free(aprec->par.value);
     }
+    aprec->par.alloced= FALSE;
+    aprec->par.value= NULL;
     return SQL_SUCCESS;
+  }
+
+  return send_long_data(stmt, stmt->current_param - 1, aprec, (const char *)rgbValue, (unsigned long)cbValue);
 }
 
 

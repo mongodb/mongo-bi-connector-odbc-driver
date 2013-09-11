@@ -1386,6 +1386,152 @@ DECLARE_TEST(t_bug53891)
 }
 
 
+DECLARE_TEST(t_odbc_outstream_params)
+{
+  SQLLEN      len= 0, bytes;
+  SQLCHAR     blobValue[50], chunk[8], *ptr= blobValue;
+  SQLPOINTER  token;
+  SQLRETURN   rc;
+
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS t_odbcoutstreamparams");
+  ok_sql(hstmt, "CREATE PROCEDURE t_odbcoutstreamparams (OUT param1 LONGTEXT)\
+                  BEGIN\
+                    SET param1= 'this is LONGTEXT value from SP ';\
+                  END;");
+
+
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_OUTPUT_STREAM,
+          SQL_C_BINARY, SQL_VARBINARY, 0, 0,
+          (SQLPOINTER)123 /* Application-defined token. Using ordinal position or a pointer to some data structure
+                             for it would be a better idea */,
+          0               /* Buffer length is ignored for streamed parameter */,
+          &len));
+
+  expect_stmt(hstmt, SQLExecDirect(hstmt, "CALL t_odbcoutstreamparams(?)", SQL_NTS), SQL_PARAM_DATA_AVAILABLE);
+
+  is_num(len, 31);
+
+  expect_stmt(hstmt, SQLParamData(hstmt, &token), SQL_PARAM_DATA_AVAILABLE);
+
+  /* Checking if right token */
+  is_num((SQLLEN)token, 123);
+
+  /* We support binary streams only so far - checking if error returned and correct sqlstate set */
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, chunk, sizeof(chunk), &bytes), SQL_ERROR);
+  check_sqlstate(hstmt, "HYC00");
+  do
+  {
+    rc= SQLGetData(hstmt, 1, SQL_C_BINARY, chunk, sizeof(chunk), &bytes);
+    is(SQL_SUCCEEDED(rc));
+    memcpy(ptr, chunk, bytes);
+    ptr+= bytes;
+    is(ptr < blobValue + sizeof(blobValue));
+  } while(rc == SQL_SUCCESS_WITH_INFO);
+
+  is_str(blobValue, "this is LONGTEXT value from SP ", 31);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* Just to check that connecton is still usable after our streamed parameter */
+  ok_sql(hstmt, "SELECT 3");
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_num(my_fetch_int(hstmt, 1), 3);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP PROCEDURE t_odbcoutstreamparams");
+
+  return OK;
+}
+
+
+DECLARE_TEST(t_odbc_inoutstream_params)
+{
+  SQLLEN      len= 0, bytes;
+  SQLCHAR     blobValue[50], chunk[8], *ptr= blobValue, c;
+  SQLPOINTER  token;
+  SQLRETURN   rc;
+
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS t_odbcInOutstreamparams");
+  ok_sql(hstmt, "CREATE PROCEDURE t_odbcInOutstreamparams (INOUT param1 LONGTEXT)\
+                  BEGIN\
+                    SELECT param1;\
+                    SET param1= concat('a', param1, 'z');\
+                  END;");
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT_OUTPUT_STREAM,
+          SQL_C_BINARY, SQL_VARBINARY, 0, 0,
+          (SQLPOINTER)1  /* Application-defined token. Using ordinal position or a pointer to some
+                            data structure are good ideas here */,
+          0              /* Buffer length is ignored for streamed parameter */,
+          &len));
+
+  len= SQL_LEN_DATA_AT_EXEC(26);
+
+  expect_stmt(hstmt, SQLExecDirect(hstmt, "CALL t_odbcInOutstreamparams(?)", SQL_NTS), SQL_NEED_DATA);
+
+  expect_stmt(hstmt, SQLParamData(hstmt, &token), SQL_NEED_DATA);
+  is_num((SQLLEN)token, 1);
+  
+  ok_stmt(hstmt, SQLPutData(hstmt, " ", 1));
+  for (c= 'b'; c < 'z'; ++c)
+  {
+    ok_stmt(hstmt, SQLPutData(hstmt, &c, 1));
+  }
+
+  ok_stmt(hstmt, SQLPutData(hstmt, " ", 1));
+  /* After sending last chunk on next SQLParamData the query is supposed to be executed. If we did
+     not have a resultset, SQLParamData would return SQL_PARAM_DATA_AVAILABLE*/
+  ok_stmt(hstmt, SQLParamData(hstmt, &token));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_str(my_fetch_str(hstmt, blobValue, 1), " bcdefghijklmnopqrstuvwxy ", 26);
+
+  expect_stmt(hstmt, SQLMoreResults(hstmt), SQL_PARAM_DATA_AVAILABLE);
+
+  // is_num(len, 28);
+  token= 0;
+  /* Now we are getting the stream */
+  expect_stmt(hstmt, SQLParamData(hstmt, &token), SQL_PARAM_DATA_AVAILABLE);
+  /* Checking if right token */
+  is_num((SQLLEN)token, 1);
+
+  /* We support binary streams only so far - checking if error returned and correct sqlstate set */
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, chunk, sizeof(chunk), &bytes), SQL_ERROR);
+  check_sqlstate(hstmt, "HYC00");
+  do
+  {
+    rc= SQLGetData(hstmt, 1, SQL_C_BINARY, chunk, sizeof(chunk), &bytes);
+    is(SQL_SUCCEEDED(rc));
+    memcpy(ptr, chunk, bytes);
+    ptr+= bytes;
+    is(ptr < blobValue + sizeof(blobValue));
+  } while(rc == SQL_SUCCESS_WITH_INFO);
+
+  is_str(blobValue, "a bcdefghijklmnopqrstuvwxy z", 28);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* Just to check that connecton is still usable after our streamed parameter */
+  ok_sql(hstmt, "SELECT 3");
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_num(my_fetch_int(hstmt, 1), 3);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP PROCEDURE t_odbcInOutstreamparams");
+
+  return OK;
+}
+
+
+
 BEGIN_TESTS
   ADD_TEST(my_init_table)
   ADD_TEST(my_param_insert)
@@ -1408,6 +1554,8 @@ BEGIN_TESTS
   ADD_TEST(t_bug14586094)
   ADD_TEST(t_longtextoutparam)
   ADD_TEST(t_bug53891)
+  ADD_TEST(t_odbc_outstream_params)
+  ADD_TEST(t_odbc_inoutstream_params)
 END_TESTS
 
 

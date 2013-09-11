@@ -347,6 +347,7 @@ SQLRETURN SQL_API SQLFreeConnect(SQLHDBC hdbc)
     return my_SQLFreeConnect(hdbc);
 }
 
+
 /* allocates dynamic array for param bind.
    returns TRUE on allocation errors */
 BOOL allocate_param_bind(DYNAMIC_ARRAY **param_bind, uint elements)
@@ -366,6 +367,26 @@ BOOL allocate_param_bind(DYNAMIC_ARRAY **param_bind, uint elements)
 											(*param_bind)->max_element);
 
   return FALSE;
+}
+
+
+int adjust_param_bind_array(STMT *stmt)
+{
+  if (ssps_used(stmt) && stmt->param_count > stmt->param_bind->max_element)
+  {
+    uint prev_max_elements= stmt->param_bind->max_element;
+
+    if (allocate_dynamic(stmt->param_bind, stmt->param_count))
+    {
+      return 1;
+    }
+
+    /* Need to init newly allocated area with 0s */
+    memset(stmt->param_bind->buffer + sizeof(MYSQL_BIND)*prev_max_elements, 0,
+      sizeof(MYSQL_BIND) * (stmt->param_bind->max_element - prev_max_elements));
+  }
+
+  return 0;
 }
 
 
@@ -522,7 +543,13 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
       return SQL_SUCCESS;
     }
 
-    stmt->out_params_state= 0;
+    if (stmt->out_params_state == OPS_STREAMS_PENDING)
+    {
+      /* Magical out params fetch */
+      mysql_stmt_fetch(stmt->ssps);
+    }
+
+    stmt->out_params_state= OPS_UNKNOWN;
 
     desc_free_paramdata(stmt->apd);
     /* reset data-at-exec state */

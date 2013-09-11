@@ -668,7 +668,7 @@ DECLARE_TEST(t_row_status)
   for (i= 0; i<2; ++i)
   {
     printMessage("Row %d, Desc %d, Parameter %d", i+1, arr1[i], arr2[i]);
-    is_num(expectedRow1[i], arr1[i])
+    is_num(expectedRow1[i], arr1[i]);
     is_num(arr1[i], arr2[i]);
   }
 
@@ -687,8 +687,7 @@ DECLARE_TEST(t_row_status)
     {
       printMessage("Set %d Row %d, desc %d, parameter %d", i+1, j+1, arr1[j],
                     arr2[j]);
-      is_num(expectedRow2[i][j], arr1[j])
-
+      is_num(expectedRow2[i][j], arr1[j]);
     }
   }
 
@@ -1147,6 +1146,7 @@ DECLARE_TEST(t_bookmark)
   return OK;
 }
 #endif
+
 
 BEGIN_TESTS
   ADD_TEST(t_bug32420)

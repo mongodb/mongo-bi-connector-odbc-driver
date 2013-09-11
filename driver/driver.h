@@ -413,6 +413,14 @@ typedef struct cursor
   MY_PK_COLUMN pkcol[MY_MAX_PK_PARTS];
 } MYCURSOR;
 
+enum OUT_PARAM_STATE
+{
+  OPS_UNKNOWN= 0,
+  OPS_BEING_FETCHED,
+  OPS_PREFETCHED,
+  OPS_STREAMS_PENDING
+};
+
 
 /* Main statement handler */
 
@@ -479,8 +487,7 @@ typedef struct tagSTMT
 
   MY_LIMIT_SCROLLER scroller;
 
-  /* TODO: enum */
-  int out_params_state;
+  enum OUT_PARAM_STATE out_params_state;
 } STMT;
 
 

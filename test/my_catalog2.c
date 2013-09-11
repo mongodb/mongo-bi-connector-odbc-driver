@@ -638,7 +638,7 @@ DECLARE_TEST(t_bug57182)
     NULL, 0));
 
   ok_stmt(hstmt, SQLRowCount(hstmt, &nRowCount));
-  is_num(2, nRowCount)
+  is_num(2, nRowCount);
   
   ok_stmt(hstmt, SQLFetch(hstmt));
   
@@ -663,7 +663,7 @@ DECLARE_TEST(t_bug57182)
     "id", SQL_NTS));
 
   ok_stmt(hstmt, SQLRowCount(hstmt, &nRowCount));
-  is_num(1, nRowCount)
+  is_num(1, nRowCount);
 
   ok_stmt(hstmt, SQLFetch(hstmt));
 

@@ -28,7 +28,7 @@
 */
 
 #include "driver.h"
-
+#include "errmsg.h"
 
 
 /* {{{ my_l_to_a() -I- */
@@ -89,14 +89,14 @@ char * numeric2binary(char * dst, long long src, unsigned int byte_count)
   */
 BOOL ssps_get_out_params(STMT *stmt)
 {
-    /* If we use prepared statement, and the query is CALL and we have any
-     user's parameter described as INOUT or OUT and that is only result */
+  /* If we use prepared statement, and the query is CALL and we have any
+    user's parameter described as INOUT or OUT and that is only result */
   if (is_call_procedure(&stmt->query))
   {
     MYSQL_ROW values= NULL;
     DESCREC   *iprec, *aprec;
     uint      counter= 0;
-    int       i;
+    int       i, out_params;
 
     /*Since OUT parameters can be completely different - we have to free current
       bind and bind new */
@@ -107,6 +107,21 @@ BOOL ssps_get_out_params(STMT *stmt)
     {
       values= fetch_row(stmt);
 
+      /* We need this for fetch_varlength_columns pointed by fix_fields, so it omits
+         streamed parameters */
+      out_params= got_out_parameters(stmt);
+
+      if (out_params & GOT_OUT_STREAM_PARAMETERS)
+      {
+        stmt->out_params_state= OPS_STREAMS_PENDING;
+        stmt->current_param= ~0L;
+        reset_getdata_position(stmt);
+      }
+      else if (out_params & GOT_OUT_PARAMETERS)
+      {
+        stmt->out_params_state= OPS_PREFETCHED;
+      }
+
       if (stmt->fix_fields)
       {
         values= (*stmt->fix_fields)(stmt,values);
@@ -115,11 +130,10 @@ BOOL ssps_get_out_params(STMT *stmt)
 
     assert(values);
 
-    /* Then current result is out params */
-    stmt->out_params_state= 2;
-
-    if (values != NULL && got_out_parameters(stmt))
+    if (values != NULL && out_params)
     {
+      stmt->current_values= values;
+
       for (i= 0; i < myodbc_min(stmt->ipd->count, stmt->apd->count); ++i)
       {
         /* Making bit field look "normally" */
@@ -143,8 +157,10 @@ BOOL ssps_get_out_params(STMT *stmt)
         aprec= desc_get_rec(stmt->apd, i, FALSE);
         assert(iprec && aprec);
 
-        if ((iprec->parameter_type == SQL_PARAM_INPUT_OUTPUT
-        || iprec->parameter_type == SQL_PARAM_OUTPUT))
+        if (iprec->parameter_type == SQL_PARAM_INPUT_OUTPUT
+         || iprec->parameter_type == SQL_PARAM_OUTPUT
+         || iprec->parameter_type == SQL_PARAM_INPUT_OUTPUT_STREAM
+         || iprec->parameter_type == SQL_PARAM_OUTPUT_STREAM)
         {
           if (aprec->data_ptr)
           {
@@ -174,24 +190,46 @@ BOOL ssps_get_out_params(STMT *stmt)
 
             reset_getdata_position(stmt);
 
-            sql_get_data(stmt, aprec->concise_type, counter,
-                         target, aprec->octet_length, indicator_ptr,
-                         values[counter], length, aprec);
-
-            /* TODO: solve that globally */
-            if (octet_length_ptr != NULL && indicator_ptr != NULL
-              && octet_length_ptr != indicator_ptr
-              && *indicator_ptr != SQL_NULL_DATA)
+            if (iprec->parameter_type == SQL_PARAM_INPUT_OUTPUT
+             || iprec->parameter_type == SQL_PARAM_OUTPUT)
             {
-              *octet_length_ptr= *indicator_ptr;
+              sql_get_data(stmt, aprec->concise_type, counter,
+                           target, aprec->octet_length, indicator_ptr,
+                           values[counter], length, aprec);
+
+              /* TODO: solve that globally */
+              if (octet_length_ptr != NULL && indicator_ptr != NULL
+                && octet_length_ptr != indicator_ptr
+                && *indicator_ptr != SQL_NULL_DATA)
+              {
+                *octet_length_ptr= *indicator_ptr;
+              }
+            }
+            else if (octet_length_ptr != NULL)
+            {
+              /* Putting full number of bytes in the stream. A bit dirtyhackish.
+                 Only good since only binary type is supported... */
+              *octet_length_ptr= *stmt->result_bind[counter].length;
             }
           }
+
           ++counter;
         }
       }
     }
-    /* This MAGICAL fetch is required */
-    mysql_stmt_fetch(stmt->ssps);
+    else /*values != NULL && out_params*/
+    {
+      /* Something went wrong */
+      stmt->out_params_state= OPS_UNKNOWN;
+    }
+
+    if (stmt->out_params_state != OPS_STREAMS_PENDING)
+    {
+      /* This MAGICAL fetch is required. If there are streams - it has to be after 
+         streams are all done, perhaps when stmt->out_params_state is changed from 
+         OPS_STREAMS_PENDING */
+      mysql_stmt_fetch(stmt->ssps);
+    }
 
     return TRUE;
   }
@@ -253,6 +291,47 @@ void ssps_close(STMT *stmt)
 }
 
 
+SQLRETURN ssps_fetch_chunk(STMT *stmt, char *dest, unsigned long dest_bytes, unsigned long *avail_bytes)
+{
+  MYSQL_BIND bind;
+  my_bool is_null, error= 0;
+
+  bind.buffer= dest;
+  bind.buffer_length= dest_bytes;
+  bind.length= &bind.length_value;
+  bind.is_null= &is_null;
+  bind.error= &error;
+
+  if (mysql_stmt_fetch_column(stmt->ssps, &bind, stmt->getdata.column, stmt->getdata.src_offset))
+  {
+    switch (mysql_stmt_errno(stmt->ssps))
+    {
+      case  CR_INVALID_PARAMETER_NO:
+        /* Shouldn't really happen here*/
+        return set_stmt_error(stmt, "07009", "Invalid descriptor index", 0);
+
+      case CR_NO_DATA: return SQL_NO_DATA;
+
+      default: set_stmt_error(stmt, "HY000", "Internal error", 0);
+    }
+  }
+  else
+  {
+    *avail_bytes= myodbc_min((SQLULEN)dest_bytes, (SQLULEN)bind.length_value -
+                                                            stmt->getdata.src_offset);
+    stmt->getdata.src_offset+= *avail_bytes;
+
+    if (*bind.error)
+    {
+      set_stmt_error(stmt, "01004", NULL, 0);
+      return SQL_SUCCESS_WITH_INFO;
+    }
+  }
+
+  return SQL_SUCCESS;
+}
+
+
 /* The structure and following allocation function are borrowed from c/c++ and adopted */
 typedef struct tagBST
 {  char * buffer;
@@ -267,7 +346,8 @@ allocate_buffer_for_field(const MYSQL_FIELD * const field, BOOL outparams)
 {
   st_buffer_size_type result= {NULL, 0, field->type};
 
-  switch (field->type) {
+  switch (field->type)
+  {
     case MYSQL_TYPE_NULL:
       break;
 
@@ -352,7 +432,7 @@ allocate_buffer_for_field(const MYSQL_FIELD * const field, BOOL outparams)
 
   if (result.size > 0)
   {
-    result.buffer=my_malloc(result.size, MYF(0));
+    result.buffer= my_malloc(result.size, MYF(0));
   }
 
   return result;
@@ -364,23 +444,37 @@ static MYSQL_ROW fetch_varlength_columns(STMT *stmt, MYSQL_ROW columns)
 {
   const unsigned int  num_fields= field_count(stmt);
   unsigned int i;
+  uint desc_index= ~0L, stream_column= ~0L;
+
+  if (stmt->out_params_state == OPS_STREAMS_PENDING)
+  {
+    desc_find_outstream_rec(stmt, &desc_index, &stream_column);
+  }
 
   for (i= 0; i < num_fields; ++i)
   {
-    if (stmt->result_bind[i].buffer == NULL)
+    if (i == stream_column)
     {
-      if (stmt->lengths[i] < *stmt->result_bind[i].length)
+      /* Skipping this column */
+      desc_find_outstream_rec(stmt, &desc_index, &stream_column);
+    }
+    else
+    {
+      if (stmt->result_bind[i].buffer == NULL)
       {
-        /* TODO Realloc error proc */
-        stmt->array[i] = my_realloc(stmt->array[i], *stmt->result_bind[i].length,
-          MYF(MY_ALLOW_ZERO_PTR));
-        stmt->lengths[i]= *stmt->result_bind[i].length;
+        if (stmt->lengths[i] < *stmt->result_bind[i].length)
+        {
+          /* TODO Realloc error proc */
+          stmt->array[i]= my_realloc(stmt->array[i], *stmt->result_bind[i].length,
+            MYF(MY_ALLOW_ZERO_PTR));
+          stmt->lengths[i]= *stmt->result_bind[i].length;
+        }
+
+        stmt->result_bind[i].buffer= stmt->array[i];
+        stmt->result_bind[i].buffer_length= stmt->lengths[i];
+
+        mysql_stmt_fetch_column(stmt->ssps, &stmt->result_bind[i], i, 0);
       }
-
-      stmt->result_bind[i].buffer= stmt->array[i];
-      stmt->result_bind[i].buffer_length= stmt->lengths[i];
-
-      mysql_stmt_fetch_column(stmt->ssps, &stmt->result_bind[i], i, 0);
     }
   }
 
@@ -412,6 +506,7 @@ int ssps_bind_result(STMT *stmt)
         if (stmt->lengths[i] > 0)
         {
           /* Resetting buffer and buffer_length for those fields */
+          x_free(stmt->result_bind[i].buffer);
           stmt->result_bind[i].buffer       = 0;
           stmt->result_bind[i].buffer_length= 0;
         }
@@ -440,11 +535,11 @@ int ssps_bind_result(STMT *stmt)
                                                       IS_PS_OUT_PARAMS(stmt));
 
       stmt->result_bind[i].buffer_type  = p.type;
-	    stmt->result_bind[i].buffer       = p.buffer;
-	    stmt->result_bind[i].buffer_length= (unsigned long)p.size;
-	    stmt->result_bind[i].length       = &len[i];
-	    stmt->result_bind[i].is_null      = &is_null[i];
-	    stmt->result_bind[i].error        = &err[i];
+      stmt->result_bind[i].buffer       = p.buffer;
+      stmt->result_bind[i].buffer_length= (unsigned long)p.size;
+      stmt->result_bind[i].length       = &len[i];
+      stmt->result_bind[i].is_null      = &is_null[i];
+      stmt->result_bind[i].error        = &err[i];
       stmt->result_bind[i].is_unsigned  = (field->flags & UNSIGNED_FLAG)? 1: 0;
 
       stmt->array[i]= p.buffer;
@@ -503,7 +598,7 @@ BOOL ssps_0buffers_truncated_only(STMT *stmt)
 
 #define ALLOC_IFNULL(buff,size) ((buff)==NULL?(char*)my_malloc(size,MYF(0)):buff)
 
-/* {{{ Prepared ResultSet ssps_get_string() -I- */
+/* {{{ ssps_get_string() -I- */
 /* caller should care to make buffer long enough,
    if buffer is not null function allocates memory and that is caller's duty to clean it
  */
@@ -692,7 +787,7 @@ long double ssps_get_double(STMT *stmt, ulong column_number, char *value, ulong 
 }
 
 
-/* {{{ Prepared ResultSet ssps_get_int64() -I- */
+/* {{{ ssps_get_int64() -I- */
 long long ssps_get_int64(STMT *stmt, ulong column_number, char *value, ulong length)
 {
   MYSQL_BIND *col_rbind= &stmt->result_bind[column_number];
@@ -801,7 +896,7 @@ long long ssps_get_int64(STMT *stmt, ulong column_number, char *value, ulong len
       return ret;
     }
     default:
-      break;/* Basically should be prevented by earlied tests of
+      break;/* Basically should be prevented by earlier tests of
                        conversion possibility */
     /* TODO : Geometry? default ? */
   }
@@ -809,3 +904,50 @@ long long ssps_get_int64(STMT *stmt, ulong column_number, char *value, ulong len
   return 0; // fool compilers
 }
 /* }}} */
+
+
+/* {{{ ssps_send_long_data () -I- */
+SQLRETURN ssps_send_long_data(STMT *stmt, unsigned int param_number, const char *chunk,
+                            unsigned long length)
+{
+  if ( mysql_stmt_send_long_data(stmt->ssps, param_number, chunk, length))
+  {
+    uint err= mysql_stmt_errno(stmt->ssps);
+    switch (err)
+    {
+      case CR_INVALID_BUFFER_USE:
+      /* We can fall back to assembling parameter's value on client */
+        return SQL_SUCCESS_WITH_INFO;
+      case CR_SERVER_GONE_ERROR:
+        return set_stmt_error(stmt, "08S01", mysql_stmt_error(stmt->ssps), 0);
+      case CR_COMMANDS_OUT_OF_SYNC:
+      case CR_UNKNOWN_ERROR:
+        return set_stmt_error(stmt, "HY000", mysql_stmt_error( stmt->ssps), 0);
+      case CR_OUT_OF_MEMORY:
+        return set_stmt_error(stmt, "HY001", mysql_stmt_error(stmt->ssps), 0);
+      default:
+        return set_stmt_error(stmt, "HY000", "unhandled error from mysql_stmt_send_long_data", 0 );
+    }
+  }
+
+  return SQL_SUCCESS;
+}
+/* }}} */
+
+
+MYSQL_BIND * get_param_bind(STMT *stmt, unsigned int param_number, int reset)
+{
+  MYSQL_BIND *bind= (MYSQL_BIND *)stmt->param_bind->buffer + param_number;
+
+  if (reset)
+  {
+    bind->is_null_value= 0;
+    bind->is_unsigned=   0;
+
+    /* as far as looked - this trick is safe */
+    bind->is_null= &bind->is_null_value;
+    bind->length=  &bind->length_value;
+  }
+
+  return bind;
+}

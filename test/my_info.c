@@ -161,7 +161,7 @@ DECLARE_TEST(t_bug14639)
   /* Check that connection is alive */
   ok_con(hdbc2, SQLGetConnectAttr(hdbc2, SQL_ATTR_CONNECTION_DEAD, &is_dead,
                                  sizeof(is_dead), 0));
-  is_num(is_dead, SQL_CD_FALSE)
+  is_num(is_dead, SQL_CD_FALSE);
 
   /* From another connection, kill the connection created above */
   sprintf(buf, "KILL %d", connection_id);
@@ -170,7 +170,7 @@ DECLARE_TEST(t_bug14639)
   /* Now check that the connection killed returns the right state */
   ok_con(hdbc, SQLGetConnectAttr(hdbc2, SQL_ATTR_CONNECTION_DEAD, &is_dead,
                                  sizeof(is_dead), 0));
-  is_num(is_dead, SQL_CD_TRUE)
+  is_num(is_dead, SQL_CD_TRUE);
 
   return OK;
 }

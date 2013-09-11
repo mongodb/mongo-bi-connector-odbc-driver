@@ -127,32 +127,32 @@ typedef char * DYNAMIC_ELEMENT;
   Utility function prototypes that share among files
 */
 
-SQLRETURN my_SQLPrepare(SQLHSTMT hstmt, SQLCHAR *szSqlStr, SQLINTEGER cbSqlStr,
-                        my_bool dupe);
-SQLRETURN my_SQLExecute(STMT * stmt);
-SQLRETURN SQL_API my_SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption);
+SQLRETURN         my_SQLPrepare (SQLHSTMT hstmt, SQLCHAR *szSqlStr, SQLINTEGER cbSqlStr,
+                                my_bool dupe);
+SQLRETURN         my_SQLExecute         (STMT * stmt);
+SQLRETURN SQL_API my_SQLFreeStmt        (SQLHSTMT hstmt,SQLUSMALLINT fOption);
 SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,
-                    SQLUSMALLINT fOption, uint clearAllResults);
-SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT *phstmt);
-SQLRETURN do_query(STMT *stmt,char *query, SQLULEN query_length);
-SQLRETURN insert_params(STMT *stmt, SQLULEN row, char **finalquery,
-                        SQLULEN *length);
-SQLRETURN odbc_stmt(DBC *dbc, const char *query);
-void mysql_link_fields(STMT *stmt,MYSQL_FIELD *fields,uint field_count);
-void fix_row_lengths(STMT *stmt, const long* fix_rules, uint row, uint field_count);
-void fix_result_types(STMT *stmt);
-char *fix_str(char *to,const char *from,int length);
-char *dupp_str(char *from,int length);
-SQLRETURN my_pos_delete(STMT *stmt,STMT *stmtParam,
-			SQLUSMALLINT irow,DYNAMIC_STRING *dynStr);
-SQLRETURN my_pos_update(STMT *stmt,STMT *stmtParam,
-			SQLUSMALLINT irow,DYNAMIC_STRING *dynStr);
-char *check_if_positioned_cursor_exists(STMT *stmt, STMT **stmtNew);
-SQLRETURN insert_param(STMT *stmt, uchar *to, DESC *apd,
-                       DESCREC *aprec, DESCREC *iprec, SQLULEN row);
-char *add_to_buffer(NET *net,char *to,const char *from,ulong length);
+                                        SQLUSMALLINT fOption, uint clearAllResults);
+SQLRETURN SQL_API my_SQLAllocStmt       (SQLHDBC hdbc,SQLHSTMT *phstmt);
+SQLRETURN         do_query              (STMT *stmt,char *query, SQLULEN query_length);
+SQLRETURN         insert_params         (STMT *stmt, SQLULEN row, char **finalquery,
+                                        SQLULEN *length);
+SQLRETURN odbc_stmt         (DBC *dbc, const char *query);
+void      mysql_link_fields (STMT *stmt,MYSQL_FIELD *fields,uint field_count);
+void      fix_row_lengths   (STMT *stmt, const long* fix_rules, uint row, uint field_count);
+void      fix_result_types  (STMT *stmt);
+char *    fix_str           (char *to,const char *from,int length);
+char *    dupp_str          (char *from,int length);
+SQLRETURN my_pos_delete (STMT *stmt,STMT *stmtParam,
+			                  SQLUSMALLINT irow,DYNAMIC_STRING *dynStr);
+SQLRETURN my_pos_update (STMT *stmt,STMT *stmtParam,
+			                  SQLUSMALLINT irow,DYNAMIC_STRING *dynStr);
+char *    check_if_positioned_cursor_exists (STMT *stmt, STMT **stmtNew);
+SQLRETURN insert_param  (STMT *stmt, uchar *to, DESC *apd,
+                        DESCREC *aprec, DESCREC *iprec, SQLULEN row);
+char *    add_to_buffer (NET *net,char *to,const char *from,ulong length);
 
-void reset_getdata_position(STMT *stmt);
+void reset_getdata_position   (STMT *stmt);
 
 SQLRETURN set_sql_select_limit(DBC *dbc, SQLULEN new_value);
 
@@ -177,29 +177,29 @@ SQLRETURN copy_wchar_result(STMT *stmt,
                             SQLLEN *pcbValue, MYSQL_FIELD *field, char *src,
                             long src_length);
 
-SQLRETURN set_dbc_error(DBC *dbc, char *state,const char *message,uint errcode);
-#define set_stmt_error myodbc_set_stmt_error
-SQLRETURN set_stmt_error(STMT *stmt, const char *state, const char *message, uint errcode);
-SQLRETURN set_desc_error(DESC *desc, char *state,
-                         const char *message, uint errcode);
-SQLRETURN handle_connection_error(STMT *stmt);
-my_bool is_connection_lost(uint errcode);
-void set_mem_error(MYSQL *mysql);
-void translate_error(char *save_state, myodbc_errid errid, uint mysql_err);
+SQLRETURN set_dbc_error   (DBC *dbc, char *state,const char *message,uint errcode);
+#define   set_stmt_error  myodbc_set_stmt_error
+SQLRETURN set_stmt_error  (STMT *stmt, const char *state, const char *message, uint errcode);
+SQLRETURN set_desc_error  (DESC *desc, char *state,
+                          const char *message, uint errcode);
+SQLRETURN handle_connection_error (STMT *stmt);
+my_bool   is_connection_lost      (uint errcode);
+void      set_mem_error           (MYSQL *mysql);
+void      translate_error         (char *save_state, myodbc_errid errid, uint mysql_err);
 
-SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff);
-SQLULEN get_column_size(STMT *stmt, MYSQL_FIELD *field);
-SQLULEN fill_column_size_buff(char *buff, STMT *stmt, MYSQL_FIELD *field);
-SQLSMALLINT get_decimal_digits(STMT *stmt, MYSQL_FIELD *field);
-SQLLEN get_transfer_octet_length(STMT *stmt, MYSQL_FIELD *field);
-SQLLEN fill_transfer_oct_len_buff(char *buff, STMT *stmt, MYSQL_FIELD *field);
-SQLLEN get_display_size(STMT *stmt, MYSQL_FIELD *field);
-SQLLEN fill_display_size_buff(char *buff, STMT *stmt, MYSQL_FIELD *field);
-SQLSMALLINT get_dticode_from_concise_type(SQLSMALLINT concise_type);
-SQLSMALLINT get_concise_type_from_datetime_code(SQLSMALLINT dticode);
-SQLSMALLINT get_concise_type_from_interval_code(SQLSMALLINT dticode);
-SQLSMALLINT get_type_from_concise_type(SQLSMALLINT concise_type);
-SQLLEN get_bookmark_value(SQLSMALLINT fCType, SQLPOINTER rgbValue);
+SQLSMALLINT get_sql_data_type           (STMT *stmt, MYSQL_FIELD *field, char *buff);
+SQLULEN     get_column_size             (STMT *stmt, MYSQL_FIELD *field);
+SQLULEN     fill_column_size_buff       (char *buff, STMT *stmt, MYSQL_FIELD *field);
+SQLSMALLINT get_decimal_digits          (STMT *stmt, MYSQL_FIELD *field);
+SQLLEN      get_transfer_octet_length   (STMT *stmt, MYSQL_FIELD *field);
+SQLLEN      fill_transfer_oct_len_buff  (char *buff, STMT *stmt, MYSQL_FIELD *field);
+SQLLEN      get_display_size            (STMT *stmt, MYSQL_FIELD *field);
+SQLLEN      fill_display_size_buff      (char *buff, STMT *stmt, MYSQL_FIELD *field);
+SQLSMALLINT get_dticode_from_concise_type       (SQLSMALLINT concise_type);
+SQLSMALLINT get_concise_type_from_datetime_code (SQLSMALLINT dticode);
+SQLSMALLINT get_concise_type_from_interval_code (SQLSMALLINT dticode);
+SQLSMALLINT get_type_from_concise_type          (SQLSMALLINT concise_type);
+SQLLEN      get_bookmark_value                  (SQLSMALLINT fCType, SQLPOINTER rgbValue);
 
 #define is_char_sql_type(type) \
   ((type) == SQL_CHAR || (type) == SQL_VARCHAR || (type) == SQL_LONGVARCHAR)
@@ -235,123 +235,131 @@ SQLRETURN SQL_API sql_get_data(STMT *stmt, SQLSMALLINT fCType,
               char *value, ulong length, DESCREC *arrec);
 SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
                                SQLUSMALLINT fOption, SQLUSMALLINT fLock);
-SQLRETURN copy_stmt_error(STMT *src, STMT *dst);
-int unireg_to_c_datatype(MYSQL_FIELD *field);
-int default_c_type(int sql_data_type);
-ulong bind_length(int sql_data_type,ulong length);
-my_bool str_to_date(SQL_DATE_STRUCT *rgbValue, const char *str,
-                    uint length, int zeroToMin);
-int str_to_ts(SQL_TIMESTAMP_STRUCT *ts, const char *str, int len, int zeroToMin,
-              BOOL dont_use_set_locale);
-my_bool str_to_time_st(SQL_TIME_STRUCT *ts, const char *str);
-ulong str_to_time_as_long(const char *str,uint length);
-void init_getfunctions(void);
-void myodbc_init(void);
-void myodbc_ov_init(SQLINTEGER odbc_version);
-void myodbc_sqlstate2_init(void);
-void myodbc_sqlstate3_init(void);
-int check_if_server_is_alive(DBC *dbc);
-my_bool dynstr_append_quoted_name(DYNAMIC_STRING *str, const char *name);
-SQLRETURN set_handle_error(SQLSMALLINT HandleType, SQLHANDLE handle,
-			   myodbc_errid errid, const char *errtext, SQLINTEGER errcode);
-SQLRETURN set_error(STMT *stmt,myodbc_errid errid, const char *errtext,
-		    SQLINTEGER errcode);
+SQLRETURN copy_stmt_error       (STMT *src, STMT *dst);
+int       unireg_to_c_datatype  (MYSQL_FIELD *field);
+int       default_c_type        (int sql_data_type);
+ulong     bind_length           (int sql_data_type,ulong length);
+my_bool   str_to_date           (SQL_DATE_STRUCT *rgbValue, const char *str,
+                                uint length, int zeroToMin);
+int       str_to_ts             (SQL_TIMESTAMP_STRUCT *ts, const char *str, int len,
+                                int zeroToMin, BOOL dont_use_set_locale);
+my_bool str_to_time_st          (SQL_TIME_STRUCT *ts, const char *str);
+ulong str_to_time_as_long       (const char *str,uint length);
+void  init_getfunctions         (void);
+void  myodbc_init               (void);
+void  myodbc_ov_init            (SQLINTEGER odbc_version);
+void  myodbc_sqlstate2_init     (void);
+void  myodbc_sqlstate3_init     (void);
+int   check_if_server_is_alive  (DBC *dbc);
+
+my_bool   dynstr_append_quoted_name (DYNAMIC_STRING *str, const char *name);
+SQLRETURN set_handle_error          (SQLSMALLINT HandleType, SQLHANDLE handle,
+			                              myodbc_errid errid, const char *errtext, SQLINTEGER errcode);
+SQLRETURN set_error     (STMT *stmt,myodbc_errid errid, const char *errtext,
+		                    SQLINTEGER errcode);
 SQLRETURN set_conn_error(DBC *dbc,myodbc_errid errid, const char *errtext,
-			 SQLINTEGER errcode);
-SQLRETURN set_env_error(ENV * env,myodbc_errid errid, const char *errtext,
-			SQLINTEGER errcode);
-SQLRETURN copy_str_data(SQLSMALLINT HandleType, SQLHANDLE Handle,
-			SQLCHAR *rgbValue, SQLSMALLINT cbValueMax,
-			SQLSMALLINT *pcbValue,char *src);
-SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV * phenv);
-SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC *phdbc);
-SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc);
-SQLRETURN SQL_API my_SQLFreeEnv(SQLHENV henv);
-char *extend_buffer(NET *net,char *to,ulong length);
-void myodbc_end();
-my_bool set_dynamic_result(STMT *stmt);
-void set_current_cursor_data(STMT *stmt,SQLUINTEGER irow);
-my_bool is_minimum_version(const char *server_version,const char *version);
-int myodbc_strcasecmp(const char *s, const char *t);
-int myodbc_casecmp(const char *s, const char *t, uint len);
-my_bool reget_current_catalog(DBC *dbc);
+			                  SQLINTEGER errcode);
+SQLRETURN set_env_error (ENV * env,myodbc_errid errid, const char *errtext,
+			                  SQLINTEGER errcode);
+SQLRETURN copy_str_data (SQLSMALLINT HandleType, SQLHANDLE Handle,
+			                  SQLCHAR *rgbValue, SQLSMALLINT cbValueMax,
+			                  SQLSMALLINT *pcbValue,char *src);
+SQLRETURN SQL_API my_SQLAllocEnv      (SQLHENV * phenv);
+SQLRETURN SQL_API my_SQLAllocConnect  (SQLHENV henv, SQLHDBC *phdbc);
+SQLRETURN SQL_API my_SQLFreeConnect   (SQLHDBC hdbc);
+SQLRETURN SQL_API my_SQLFreeEnv       (SQLHENV henv);
+char *extend_buffer (NET *net,char *to,ulong length);
+void myodbc_end     ();
+my_bool set_dynamic_result        (STMT *stmt);
+void    set_current_cursor_data   (STMT *stmt,SQLUINTEGER irow);
+my_bool is_minimum_version        (const char *server_version,const char *version);
+int     myodbc_strcasecmp         (const char *s, const char *t);
+int     myodbc_casecmp            (const char *s, const char *t, uint len);
+my_bool reget_current_catalog     (DBC *dbc);
 
-ulong myodbc_escape_string(MYSQL *mysql, char *to, ulong to_length,
-                           const char *from, ulong length, int escape_id);
+ulong   myodbc_escape_string      (MYSQL *mysql, char *to, ulong to_length,
+                                  const char *from, ulong length, int escape_id);
 
-DESCREC *desc_get_rec(DESC *desc, int recnum, my_bool expand);
+DESCREC*  desc_get_rec            (DESC *desc, int recnum, my_bool expand);
 
-DESC *desc_alloc(STMT *stmt, SQLSMALLINT alloc_type,
-                 desc_ref_type ref_type, desc_desc_type desc_type);
-void desc_free_paramdata(DESC *desc);
-void desc_free(DESC *desc);
-void desc_rec_init_apd(DESCREC *rec);
-void desc_rec_init_ipd(DESCREC *rec);
-void desc_remove_stmt(DESC *desc, STMT *stmt);
-int desc_find_dae_rec(DESC *desc);
+DESC*     desc_alloc              (STMT *stmt, SQLSMALLINT alloc_type,
+                                  desc_ref_type ref_type, desc_desc_type desc_type);
+void      desc_free_paramdata     (DESC *desc);
+void      desc_free               (DESC *desc);
+void      desc_rec_init_apd       (DESCREC *rec);
+void      desc_rec_init_ipd       (DESCREC *rec);
+void      desc_remove_stmt        (DESC *desc, STMT *stmt);
+int       desc_find_dae_rec       (DESC *desc);
+DESCREC * desc_find_outstream_rec (STMT *stmt, uint *recnum, uint *res_col_num);
 SQLRETURN
-stmt_SQLSetDescField(STMT *stmt, DESC *desc, SQLSMALLINT recnum,
-                     SQLSMALLINT fldid, SQLPOINTER val, SQLINTEGER buflen);
+stmt_SQLSetDescField      (STMT *stmt, DESC *desc, SQLSMALLINT recnum,
+                          SQLSMALLINT fldid, SQLPOINTER val, SQLINTEGER buflen);
 SQLRETURN
-stmt_SQLGetDescField(STMT *stmt, DESC *desc, SQLSMALLINT recnum,
-                     SQLSMALLINT fldid, SQLPOINTER valptr,
-                     SQLINTEGER buflen, SQLINTEGER *strlen);
+stmt_SQLGetDescField      (STMT *stmt, DESC *desc, SQLSMALLINT recnum,
+                          SQLSMALLINT fldid, SQLPOINTER valptr,
+                          SQLINTEGER buflen, SQLINTEGER *strlen);
 SQLRETURN stmt_SQLCopyDesc(STMT *stmt, DESC *src, DESC *dest);
 
-void sqlnum_from_str(const char *numstr, SQL_NUMERIC_STRUCT *sqlnum,
-                     int *overflow_ptr);
-void sqlnum_to_str(SQL_NUMERIC_STRUCT *sqlnum, SQLCHAR *numstr,
-                   SQLCHAR **numbegin, SQLCHAR reqprec, SQLSCHAR reqscale,
-                   int *truncptr);
-void *ptr_offset_adjust(void *ptr, SQLULEN *bind_offset,
-                        SQLINTEGER bind_type, SQLINTEGER default_size,
-                        SQLULEN row);
+void sqlnum_from_str      (const char *numstr, SQL_NUMERIC_STRUCT *sqlnum,
+                          int *overflow_ptr);
+void sqlnum_to_str        (SQL_NUMERIC_STRUCT *sqlnum, SQLCHAR *numstr,
+                          SQLCHAR **numbegin, SQLCHAR reqprec, SQLSCHAR reqscale,
+                          int *truncptr);
+void *ptr_offset_adjust   (void *ptr, SQLULEN *bind_offset,
+                          SQLINTEGER bind_type, SQLINTEGER default_size,
+                          SQLULEN row);
 
 /* Functions used when debugging */
-void query_print(FILE *log_file,char *query);
-FILE *init_query_log(void);
-void end_query_log(FILE *query_log);
+void query_print          (FILE *log_file,char *query);
+FILE *init_query_log      (void);
+void end_query_log        (FILE *query_log);
 
-LIST *list_delete_forward(LIST *elem);
+LIST *list_delete_forward (LIST *elem);
 
 enum enum_field_types map_sql2mysql_type(SQLSMALLINT sql_type);
 
 /* proc_* functions - used to parse prcedures headers in SQLProcedureColumns */
-char *proc_param_tokenize(char *str, int *params_num);
-SQLCHAR *proc_get_param_type(SQLCHAR *proc, int len, SQLSMALLINT *ptype);
-SQLCHAR* proc_get_param_name(SQLCHAR *proc, int len, SQLCHAR *cname);
-SQLCHAR* proc_get_param_dbtype(SQLCHAR *proc, int len, SQLCHAR *ptype);
-SQLUINTEGER proc_get_param_size(SQLCHAR *ptype, int len, int sql_type_index,
-                                SQLSMALLINT *dec);
-SQLLEN proc_get_param_octet_len(STMT *stmt, int sql_type_index,
-                                SQLULEN col_size, SQLSMALLINT decimal_digits,
-                                unsigned int flags, char * str_buff);
-SQLLEN proc_get_param_col_len(STMT *stmt, int sql_type_index, SQLULEN col_size, 
-                              SQLSMALLINT decimal_digits, unsigned int flags,
-                              char * str_buff);
-int proc_get_param_sql_type_index(SQLCHAR *ptype, int len);
-SQLTypeMap *proc_get_param_map_by_index(int index);
-char *proc_param_next_token(char *str, char *str_end);
+char *      proc_param_tokenize   (char *str, int *params_num);
+SQLCHAR *   proc_get_param_type   (SQLCHAR *proc, int len, SQLSMALLINT *ptype);
+SQLCHAR*    proc_get_param_name   (SQLCHAR *proc, int len, SQLCHAR *cname);
+SQLCHAR*    proc_get_param_dbtype (SQLCHAR *proc, int len, SQLCHAR *ptype);
+SQLUINTEGER proc_get_param_size   (SQLCHAR *ptype, int len, int sql_type_index,
+                                  SQLSMALLINT *dec);
+SQLLEN      proc_get_param_octet_len  (STMT *stmt, int sql_type_index,
+                                      SQLULEN col_size, SQLSMALLINT decimal_digits,
+                                      unsigned int flags, char * str_buff);
+SQLLEN      proc_get_param_col_len    (STMT *stmt, int sql_type_index, SQLULEN col_size, 
+                                      SQLSMALLINT decimal_digits, unsigned int flags,
+                                      char * str_buff);
+int         proc_get_param_sql_type_index (SQLCHAR *ptype, int len);
+SQLTypeMap *proc_get_param_map_by_index   (int index);
+char *      proc_param_next_token         (char *str, char *str_end);
 
-void set_row_count(STMT * stmt, my_ulonglong rows);
-const char *get_fractional_part(const char * str, int len,
-                                BOOL dont_use_set_locale,
-                                SQLUINTEGER * fraction);
+void        set_row_count         (STMT * stmt, my_ulonglong rows);
+const char *get_fractional_part   (const char * str, int len,
+                                  BOOL dont_use_set_locale,
+                                  SQLUINTEGER * fraction);
 /* Convert MySQL timestamp to full ANSI timestamp format. */
-char * complete_timestamp(const char * value, ulong length, char buff[21]);
-long double strtold(const char *nptr, char **endptr);
-char * extend_buffer(NET *net, char *to, ulong length);
-char * add_to_buffer(NET *net,char *to,const char *from,ulong length);
-MY_LIMIT_CLAUSE find_position4limit(CHARSET_INFO* cs, char *query,
+char *          complete_timestamp  (const char * value, ulong length, char buff[21]);
+long double     strtold             (const char *nptr, char **endptr);
+char *          extend_buffer       (NET *net, char *to, ulong length);
+char *          add_to_buffer       (NET *net,char *to,const char *from,ulong length);
+MY_LIMIT_CLAUSE find_position4limit (CHARSET_INFO* cs, char *query,
                                     char * query_end);
-BOOL myodbc_isspace(CHARSET_INFO* cs, const char * begin, const char *end);
-BOOL got_out_parameters(STMT *stmt);
+BOOL            myodbc_isspace      (CHARSET_INFO* cs, const char * begin, const char *end);
+
+#define NO_OUT_PARAMETERS         0
+#define GOT_OUT_PARAMETERS        1
+#define GOT_OUT_STREAM_PARAMETERS 2
+
+int           got_out_parameters  (STMT *stmt);
 
 /* handle.c*/
-BOOL          allocate_param_bind(DYNAMIC_ARRAY **param_bind, uint elements);
+BOOL          allocate_param_bind     (DYNAMIC_ARRAY **param_bind, uint elements);
+BOOL          adjust_param_bind_array (STMT *stmt);
 /*results.c*/
-long long     binary2numeric(long long *dst, char *src, uint srcLen);
-void          fill_ird_data_lengths(DESC *ird, ulong *lengths, uint fields);
+long long     binary2numeric        (long long *dst, char *src, uint srcLen);
+void          fill_ird_data_lengths (DESC *ird, ulong *lengths, uint fields);
 
 /* Functions to work with prepared and regular statements  */
 
@@ -380,6 +388,8 @@ MYSQL_ROW_OFFSET  row_seek            (STMT *stmt, MYSQL_ROW_OFFSET offset);
 void              data_seek           (STMT *stmt, my_ulonglong offset);
 MYSQL_ROW_OFFSET  row_tell            (STMT *stmt);
 int               next_result         (STMT *stmt);
+SQLRETURN         send_long_data      (STMT *stmt, unsigned int param_num, DESCREC * aprec,
+                                      const char *chunk, unsigned long length);
 
 int           get_int     (STMT *stmt, ulong column_number, char *value,
                           ulong length);
@@ -409,6 +419,8 @@ void        ssps_init             (STMT *stmt);
 BOOL        ssps_get_out_params   (STMT *stmt);
 int         ssps_get_result       (STMT *stmt);
 void        ssps_close            (STMT *stmt);
+SQLRETURN   ssps_fetch_chunk      (STMT *stmt, char *dest, unsigned long dest_bytes,
+                                  unsigned long *avail_bytes);
 int         ssps_bind_result      (STMT *stmt);
 void        free_result_bind      (STMT *stmt);
 BOOL        ssps_0buffers_truncated_only(STMT *stmt);
@@ -418,6 +430,9 @@ long double ssps_get_double       (STMT *stmt, ulong column_number, char *value,
                                   ulong length);
 char *      ssps_get_string       (STMT *stmt, ulong column_number, char *value,
                                   ulong *length, char * buffer);
+SQLRETURN   ssps_send_long_data   (STMT *stmt, unsigned int param_num, const char *chunk,
+                                  unsigned long length);
+MYSQL_BIND * get_param_bind       (STMT *stmt, unsigned int param_number, int reset);
 
 #ifdef __WIN__
 #define cmp_database(A,B) myodbc_strcasecmp((const char *)(A),(const char *)(B))

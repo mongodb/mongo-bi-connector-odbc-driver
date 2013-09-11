@@ -581,7 +581,7 @@ do { \
            #a, a1, a2, __FILE__, __LINE__); \
     return FAIL; \
   } \
-} while (0);
+} while (0)
 
 
 /* convenience macro for using statement */

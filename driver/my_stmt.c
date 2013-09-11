@@ -436,7 +436,75 @@ SQLRETURN prepare(STMT *stmt, char * query, SQLINTEGER query_length)
   return SQL_SUCCESS;
 }
 
-/* Scrolled cursor related stuff */
+
+SQLRETURN append2param_value(STMT *stmt, DESCREC * aprec, const char *chunk, unsigned long length)
+{
+  if ( aprec->par.value )
+  {
+    /* Append to old value */
+    assert(aprec->par.alloced);
+    if ( !(aprec->par.value= my_realloc(aprec->par.value,
+                                        aprec->par.value_length + length + 1,
+                                        MYF(0))) )
+    {
+      return set_error(stmt,MYERR_S1001,NULL,4001);
+    }
+
+    memcpy(aprec->par.value+aprec->par.value_length,chunk,length);
+    aprec->par.value_length+= length;
+    aprec->par.value[aprec->par.value_length]= 0;
+    aprec->par.alloced= TRUE;
+  }
+  else
+  {
+    /* New value */
+    if ( !(aprec->par.value= my_malloc(length+1,MYF(0))) )
+    {
+      return set_error(stmt,MYERR_S1001,NULL,4001);
+    }
+    memcpy(aprec->par.value,chunk,length);
+    aprec->par.value_length= length;
+    aprec->par.value[aprec->par.value_length]= 0;
+    aprec->par.alloced= TRUE;
+  }
+
+  return SQL_SUCCESS;
+}
+
+
+SQLRETURN send_long_data (STMT *stmt, unsigned int param_num, DESCREC * aprec, const char *chunk,
+                          unsigned long length)
+{
+#ifdef WE_CAN_SEND_LONG_DATA_PROPERLY
+  if (ssps_used(stmt))
+  {
+    /* If we haven't already started to do that on client and parameter is binary */
+    if (aprec->par.value == NULL && aprec->concise_type == SQL_C_BINARY)
+    {
+      SQLRETURN result= ssps_send_long_data(stmt, param_num, chunk, length);
+
+      /* A bit ugly */
+      if (result == SQL_SUCCESS_WITH_INFO)
+      {
+        return append2param_value(stmt, aprec, chunk, length);
+      }
+
+      return result;
+    }
+    else
+    {
+      return append2param_value(stmt, aprec, chunk, length);
+    }
+  }
+  else
+#endif
+  {
+    return append2param_value(stmt, aprec, chunk, length);
+  }
+}
+
+
+/*------------------- Scrolled cursor related stuff -------------------*/
 void scroller_reset(STMT *stmt)
 {
   x_free(stmt->scroller.query);

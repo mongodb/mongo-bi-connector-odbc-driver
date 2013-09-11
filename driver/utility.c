@@ -3840,21 +3840,30 @@ BOOL myodbc_isspace(CHARSET_INFO* cs, const char * begin, const char *end)
 }
 
 
-BOOL got_out_parameters(STMT *stmt)
+int got_out_parameters(STMT *stmt)
 {
   uint i;
   DESCREC *iprec;
+  int result= NO_OUT_PARAMETERS;
 
   for(i= 0; i < stmt->param_count; ++i)
   {
     iprec= desc_get_rec(stmt->ipd, i, '\0');
 
-    if (iprec &&  (iprec->parameter_type == SQL_PARAM_INPUT_OUTPUT
-                || iprec->parameter_type == SQL_PARAM_OUTPUT))
+    if (iprec)
     {
-      return TRUE;
+      if(iprec->parameter_type == SQL_PARAM_INPUT_OUTPUT
+                || iprec->parameter_type == SQL_PARAM_OUTPUT)
+      {
+        result|= GOT_OUT_PARAMETERS;
+      }
+      else if (iprec->parameter_type == SQL_PARAM_INPUT_OUTPUT_STREAM
+                || iprec->parameter_type == SQL_PARAM_OUTPUT_STREAM)
+      {
+        result|= GOT_OUT_STREAM_PARAMETERS;
+      }
     }
   }
 
-  return FALSE;
+  return result;
 }
