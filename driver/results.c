@@ -195,11 +195,7 @@ sql_get_bookmark_data(STMT *stmt, SQLSMALLINT fCType, int column_number,
              char *value, ulong length, DESCREC *arrec)
 {
   SQLLEN    tmp;
-  long long numericValue;
-  my_bool   convert= 1;
   SQLRETURN result= SQL_SUCCESS;
-  char      as_string[50]; /* Buffer that might be required to convert other
-                              types data to its string representation */
 
   if (cbValueMax < sizeof(long))
   {
@@ -271,34 +267,30 @@ sql_get_bookmark_data(STMT *stmt, SQLSMALLINT fCType, int column_number,
   case SQL_C_TINYINT:
   case SQL_C_STINYINT:
     if (rgbValue)
-      *((SQLSCHAR *)rgbValue)= (SQLSCHAR)(convert
-                               ? get_int(stmt, column_number, value, length)
-                               : (numericValue & (SQLSCHAR)(-1)));
+      *((SQLSCHAR *)rgbValue)= (SQLSCHAR) get_int(stmt, column_number, 
+                                                  value, length);
     *pcbValue= 1;
     break;
 
   case SQL_C_UTINYINT:
     if (rgbValue)
-      *((SQLCHAR *)rgbValue)= (SQLCHAR)(unsigned int)(convert
-                              ? get_int(stmt, column_number, value, length)
-                              : (numericValue & (SQLCHAR)(-1)));
+      *((SQLCHAR *)rgbValue)= (SQLCHAR)(unsigned int)
+                              get_int(stmt, column_number, value, length);
     *pcbValue= 1;
     break;
 
   case SQL_C_SHORT:
   case SQL_C_SSHORT:
     if (rgbValue)
-      *((SQLSMALLINT *)rgbValue)= (SQLSMALLINT)(convert
-                              ? get_int(stmt, column_number, value, length)
-                              : (numericValue & (SQLUSMALLINT)(-1)));
+      *((SQLSMALLINT *)rgbValue)= (SQLSMALLINT) get_int(stmt, column_number, 
+                                                        value, length);
     *pcbValue= sizeof(SQLSMALLINT);
     break;
 
   case SQL_C_USHORT:
     if (rgbValue)
-      *((SQLUSMALLINT *)rgbValue)= (SQLUSMALLINT)(uint)(convert
-                              ? get_int64(stmt, column_number, value, length)
-                              : (numericValue & (SQLUSMALLINT)(-1)));
+      *((SQLUSMALLINT *)rgbValue)= (SQLUSMALLINT)(uint)
+                              get_int64(stmt, column_number, value, length);
     *pcbValue= sizeof(SQLUSMALLINT);
     break;
 
@@ -306,64 +298,54 @@ sql_get_bookmark_data(STMT *stmt, SQLSMALLINT fCType, int column_number,
   case SQL_C_SLONG:
     if (rgbValue)
     {
-      /* Check if it could be a date...... :) */
-      if (convert)
+      if (length >= 10 && value[4] == '-' && value[7] == '-' &&
+           (!value[10] || value[10] == ' '))
       {
-        if (length >= 10 && value[4] == '-' && value[7] == '-' &&
-             (!value[10] || value[10] == ' '))
-        {
-          *((SQLINTEGER *)rgbValue)= ((SQLINTEGER) atol(value) * 10000L +
-                                      (SQLINTEGER) atol(value + 5) * 100L +
-                                      (SQLINTEGER) atol(value + 8));
-        }
-        else
-          *((SQLINTEGER *)rgbValue)= (SQLINTEGER) get_int64(stmt,
-                                                column_number, value, length);
+        *((SQLINTEGER *)rgbValue)= ((SQLINTEGER) atol(value) * 10000L +
+                                    (SQLINTEGER) atol(value + 5) * 100L +
+                                    (SQLINTEGER) atol(value + 8));
       }
       else
-        *((SQLINTEGER *)rgbValue)= (SQLINTEGER)(numericValue
-                                                & (SQLUINTEGER)(-1));
+        *((SQLINTEGER *)rgbValue)= (SQLINTEGER) get_int64(stmt,
+                                              column_number, value, length);
     }
     *pcbValue= sizeof(SQLINTEGER);
     break;
 
   case SQL_C_ULONG:
     if (rgbValue)
-      *((SQLUINTEGER *)rgbValue)= (SQLUINTEGER)(convert ?
-                              get_int64(stmt, column_number, value, length) :
-                              numericValue & (SQLUINTEGER)(-1));
+      *((SQLUINTEGER *)rgbValue)= (SQLUINTEGER) get_int64(stmt, column_number, 
+                                                          value, length);
     *pcbValue= sizeof(SQLUINTEGER);
     break;
 
   case SQL_C_FLOAT:
     if (rgbValue)
-      *((float *)rgbValue)= (float)(convert ? get_double(stmt, column_number,
-                                  value, length) : numericValue & (int)(-1));
+      *((float *)rgbValue)= (float) get_double(stmt, column_number,
+                                               value, length);
     *pcbValue= sizeof(float);
     break;
 
   case SQL_C_DOUBLE:
     if (rgbValue)
-      *((double *)rgbValue)= (double)(convert ? get_double(stmt, column_number,
-                                  value, length) : numericValue);
+      *((double *)rgbValue)= (double) get_double(stmt, column_number,
+                                                 value, length);
     *pcbValue= sizeof(double);
     break;
 
   case SQL_C_SBIGINT:
     /** @todo This is not right. SQLBIGINT is not always longlong. */
     if (rgbValue)
-      *((longlong *)rgbValue)= (longlong)(convert ? get_int64(stmt,
-                      column_number, value, length) : numericValue);
-
+      *((longlong *)rgbValue)= (longlong) get_int64(stmt, column_number, 
+                                                    value, length);
     *pcbValue= sizeof(longlong);
     break;
 
   case SQL_C_UBIGINT:
     /** @todo This is not right. SQLUBIGINT is not always ulonglong.  */
     if (rgbValue)
-        *((ulonglong *)rgbValue)= (ulonglong)(convert ? get_int64(stmt,
-                      column_number, value, length) : numericValue);
-
+        *((ulonglong *)rgbValue)= (ulonglong) get_int64(stmt, column_number, 
+                                                        value, length);
     *pcbValue= sizeof(ulonglong);
     break;
 
@@ -1382,7 +1364,11 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
     SQLRETURN result;
     ulong length= 0;
     DESCREC *irrec, *arrec;
-    SQLSMALLINT uColNum= ColumnNumber;
+    /* 
+      Signed column number required for bookmark column 0, 
+      which will become -1 when decremented later. 
+    */
+    SQLSMALLINT sColNum= ColumnNumber; 
 
     if (!stmt->result || (!stmt->current_values && stmt->out_params_state != OPS_STREAMS_PENDING))
     {
@@ -1390,33 +1376,20 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
       return SQL_ERROR;
     }
 
-    if ((uColNum < 1 
+    if ((sColNum < 1 
          && stmt->stmt_options.bookmarks == (SQLUINTEGER) SQL_UB_OFF) 
-        || uColNum > stmt->ird->count )
+        || sColNum > stmt->ird->count )
     {
       return set_stmt_error(stmt, "07009", "Invalid descriptor index", MYERR_07009);
     }
 
-    if (uColNum == 0 && TargetType != SQL_C_BOOKMARK 
+    if (sColNum == 0 && TargetType != SQL_C_BOOKMARK 
         && TargetType != SQL_C_VARBOOKMARK)
     {
       return set_stmt_error(stmt, "HY003", "Program type out of range", 0);
     }
 
-    --uColNum;     /* Easier code if start from 0 */
-    if (uColNum != stmt->getdata.column)
-    {
-      /* New column. Reset old offset */
-      reset_getdata_position(stmt);
-      stmt->getdata.column= uColNum;
-    }
-    irrec= desc_get_rec(stmt->ird, uColNum, FALSE);
-
-    if (ColumnNumber < 1 || ColumnNumber > stmt->ird->count)
-    {
-      return set_stmt_error(stmt, "07009", "Invalid descriptor index", MYERR_07009);
-    }
-    --ColumnNumber;     /* Easier code if start from 0 */
+    --sColNum;     /* Easier code if start from 0 which will make bookmark column -1 */
 
     if (stmt->out_params_state == OPS_STREAMS_PENDING)
     {
@@ -1425,7 +1398,7 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
           ordinal of the parameter that is available."
           Returning error if requested parameter number is different from the last call to
           SQLParamData */
-      if (ColumnNumber != stmt->current_param)
+      if (sColNum != stmt->current_param)
       {
         return set_stmt_error(stmt, "07009", "The parameter number value was not equal to \
                                             the ordinal of the parameter that is available.",
@@ -1434,7 +1407,7 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
       else
       {
         /* In getdatat column we keep out parameter column number in the result */
-        ColumnNumber= stmt->getdata.column;
+        sColNum= stmt->getdata.column;
       }
         
       if (TargetType != SQL_C_BINARY)
@@ -1444,13 +1417,13 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
       }
     }
 
-    if (ColumnNumber != stmt->getdata.column)
+    if (sColNum != stmt->getdata.column)
     {
       /* New column. Reset old offset */
       reset_getdata_position(stmt);
-      stmt->getdata.column= ColumnNumber;
+      stmt->getdata.column= sColNum;
     }
-    irrec= desc_get_rec(stmt->ird, ColumnNumber, FALSE);
+    irrec= desc_get_rec(stmt->ird, sColNum, FALSE);
 
     assert(irrec);
 
@@ -1458,15 +1431,15 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
       setlocale(LC_NUMERIC, "C");
 
 
-    if ((uColNum == -1 && stmt->stmt_options.bookmarks == SQL_UB_VARIABLE))
+    if ((sColNum == -1 && stmt->stmt_options.bookmarks == SQL_UB_VARIABLE))
     {
       char _value[21];
       /* save position set using SQLSetPos in buffer */
       int _len= sprintf(_value, "%ld", (stmt->cursor_row > 0) ? 
                                     stmt->cursor_row : 0);
 
-      arrec= desc_get_rec(stmt->ard, uColNum, FALSE);
-      result= sql_get_bookmark_data(stmt, TargetType, uColNum,
+      arrec= desc_get_rec(stmt->ard, sColNum, FALSE);
+      result= sql_get_bookmark_data(stmt, TargetType, sColNum,
                                     TargetValuePtr, BufferLength, StrLen_or_IndPtr,
                                     _value, _len, arrec);
     }
@@ -1474,13 +1447,13 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
     {
       /* catalog functions with "fake" results won't have lengths */
       length= irrec->row.datalen;
-      if (!length && stmt->current_values[uColNum])
-        length= strlen(stmt->current_values[uColNum]);
+      if (!length && stmt->current_values[sColNum])
+        length= strlen(stmt->current_values[sColNum]);
 
-      arrec= desc_get_rec(stmt->ard, uColNum, FALSE);
-      result= sql_get_data(stmt, TargetType, uColNum,
+      arrec= desc_get_rec(stmt->ard, sColNum, FALSE);
+      result= sql_get_data(stmt, TargetType, sColNum,
                           TargetValuePtr, BufferLength, StrLen_or_IndPtr,
-                          stmt->current_values[uColNum], length,
+                          stmt->current_values[sColNum], length,
                           arrec);
     }
 
