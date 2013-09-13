@@ -1386,6 +1386,10 @@ DECLARE_TEST(t_bug53891)
 }
 
 
+#ifndef SQL_PARAM_DATA_AVAILABLE
+# define SQL_PARAM_DATA_AVAILABLE 101
+#endif
+
 DECLARE_TEST(t_odbc_outstream_params)
 {
   SQLLEN      len= 0, bytes;

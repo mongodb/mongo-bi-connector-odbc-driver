@@ -137,6 +137,10 @@ extern "C"
 # define CR_AUTH_PLUGIN_CANNOT_LOAD_ERROR 2059
 #endif
 
+#ifndef SQL_PARAM_DATA_AVAILABLE
+# define SQL_PARAM_DATA_AVAILABLE 101
+#endif
+
 /* Connection flags to validate after the connection*/
 #define CHECK_AUTOCOMMIT_ON	1  /* AUTOCOMMIT_ON */
 #define CHECK_AUTOCOMMIT_OFF	2  /* AUTOCOMMIT_OFF */
