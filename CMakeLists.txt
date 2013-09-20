@@ -187,7 +187,7 @@ IF(WIN32)
                         SET(NEW_FLAGS "${CMAKE_${TYPE}_FLAGS${CFG}}")
 
                         # fix up static libc flags
-                        STRING(REPLACE "/MD" "/MT" NEW_FLAGS "${NEW_FLAGS}")
+                        #STRING(REPLACE "/MD" "/MT" NEW_FLAGS "${NEW_FLAGS}")
 
                         # Add some additional help for debug builds
                         IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
