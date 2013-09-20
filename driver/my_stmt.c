@@ -69,6 +69,7 @@ my_bool free_current_result(STMT *stmt)
   {
     if (ssps_used(stmt))
     {
+      free_result_bind(stmt);
       res= mysql_stmt_free_result(stmt->ssps);
     }
     /* We need to always free stmt->result because SSPS keep metadata there */
