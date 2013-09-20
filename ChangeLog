@@ -36,7 +36,8 @@
   * Valgrind error, simple loop fix (Bug# 17397596/64105)
   * Wrong pointer type can cause crash in convert_c_type2str()
     (Bug# 17421620/69733)
-
+  * Memory leak in SQLMoreResults() as deallocation of result_bind buffer
+    required before calling mysql_stmt_free_result() (Bug# 17441296)
 
 
 ----
