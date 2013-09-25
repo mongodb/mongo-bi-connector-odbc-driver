@@ -43,6 +43,9 @@
     (Bug# 17421620/69733)
   * Memory leak in SQLMoreResults() as deallocation of result_bind buffer
     required before calling mysql_stmt_free_result() (Bug# 17441296)
+  * FileDSN is created evein if the connection credentials are wrong
+    (Bug# 17508006)
+  
 
 
 ----

@@ -763,8 +763,16 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
 
   }
 
-  if (!ds->savefile && (rc= myodbc_do_connect(dbc, ds)) != SQL_SUCCESS)
+  if ((rc= myodbc_do_connect(dbc, ds)) != SQL_SUCCESS)
+  {
     goto error;
+  }
+
+  if (ds->savefile)
+  {
+    /* We must disconnect if File DSN is created */
+    mysql_close(&dbc->mysql);
+  }
 
 connected:
 

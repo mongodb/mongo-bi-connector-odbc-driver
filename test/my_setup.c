@@ -123,7 +123,7 @@ DECLARE_TEST(t_bug24581)
 
   sprintf(fdsn_path, "%s\\filedsn24851.dsn", getenv("TEMP"));
   sprintf(conn_in, "DRIVER=%s;SERVER=%s;UID=user24851;DATABASE=%s;"\
-                   "SAVEFILE=%s;PASSWORD='pass24851'",
+                   "SAVEFILE=%s;PASSWORD=pass24851",
                    mydriver, myserver, mydb, fdsn_path);
 
   /* Create a .dsn file in the TEMP directory, we will remove it later */
@@ -157,9 +157,45 @@ DECLARE_TEST(t_bug24581)
 }
 
 
+/**
+  Bug #17508006: 
+  FileDSN is created evein if the connection credentials are wrong
+*/
+DECLARE_TEST(t_bug17508006)
+{
+  /* TODO: remove #ifdef _WIN32 when Linux and MacOS setup is released */
+#ifdef _WIN32
+  SQLCHAR conn_in[512], conn_out[512];
+  SQLCHAR fdsn_path[255];
+  SQLSMALLINT conn_out_len;
+  HDBC hdbc1;
+  
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+  sprintf(fdsn_path, "%s\\filedsn17508006.dsn", getenv("TEMP"));
+  sprintf(conn_in, "DRIVER=%s;SERVER=%s;UID=user17508006;DATABASE=%s;"\
+                   "SAVEFILE=%s;PASSWORD='wrongpassword'",
+                   mydriver, myserver, mydb, fdsn_path);
+
+  /* This should result in an error */
+  expect_dbc(hdbc1, SQLDriverConnect(hdbc1, NULL, (SQLCHAR*)conn_in, SQL_NTS, 
+                          conn_out, 512, &conn_out_len, SQL_DRIVER_NOPROMPT),
+						  SQL_ERROR);
+
+  ok_con(hdbc1, SQLFreeHandle(SQL_HANDLE_DBC, hdbc1));
+
+  /* Removing the file DSN should not be successful */
+  is(remove(fdsn_path) == -1);
+#endif
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug66548)
   ADD_TEST(t_bug24581)
+  ADD_TEST(t_bug17508006)
 END_TESTS
 
 
