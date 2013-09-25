@@ -116,6 +116,9 @@ IF(MYSQL_CONFIG_EXECUTABLE AND NOT WIN32)
             )
   ENDIF(MYSQL_CXX_LINKAGE OR MYSQL_NUM_VERSION GREATER 50603)
 
+  # Remove the stl4port dependency
+  STRING(REGEX REPLACE "-library=stlport4" "" _mysql_config_output "${_mysql_config_output}")
+
   IF (NOT MYSQL_LINK_FLAGS)
     STRING(REGEX MATCHALL "-m([^\r\n]+)" MYSQL_LINK_FLAGS "${_mysql_config_output}")
   ENDIF (NOT MYSQL_LINK_FLAGS)
