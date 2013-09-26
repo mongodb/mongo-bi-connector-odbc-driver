@@ -1386,21 +1386,28 @@ DECLARE_TEST(t_bug53891)
 }
 
 
+/* We need this for compilation */
 #ifndef SQL_PARAM_DATA_AVAILABLE
 # define SQL_PARAM_DATA_AVAILABLE 101
 #endif
 
 DECLARE_TEST(t_odbc_outstream_params)
 {
-  SQLLEN      len= 0, bytes;
+  SQLLEN      len= 0, len2= SQL_NTS, bytes;
   SQLCHAR     blobValue[50], chunk[8], *ptr= blobValue;
+  SQLCHAR     inout[32]= "Input";
   SQLPOINTER  token;
   SQLRETURN   rc;
 
+#ifndef _WIN32
+  skip("At the moment the feature is not supported by the DM being used")
+#endif
   ok_sql(hstmt, "DROP PROCEDURE IF EXISTS t_odbcoutstreamparams");
-  ok_sql(hstmt, "CREATE PROCEDURE t_odbcoutstreamparams (OUT param1 LONGTEXT)\
+  ok_sql(hstmt, "CREATE PROCEDURE t_odbcoutstreamparams (OUT   param1 LONGTEXT,\
+                                                         INOUT param2 varchar(100))\
                   BEGIN\
                     SET param1= 'this is LONGTEXT value from SP ';\
+                    SET param2= concat(param2, ' - changed!');\
                   END;");
 
 
@@ -1411,11 +1418,19 @@ DECLARE_TEST(t_odbc_outstream_params)
                              for it would be a better idea */,
           0               /* Buffer length is ignored for streamed parameter */,
           &len));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT_OUTPUT,
+          SQL_C_CHAR, SQL_VARCHAR, 0, 0,
+          (SQLPOINTER)inout,
+          sizeof(inout)   ,
+          &len2));
 
-  expect_stmt(hstmt, SQLExecDirect(hstmt, "CALL t_odbcoutstreamparams(?)", SQL_NTS), SQL_PARAM_DATA_AVAILABLE);
+
+  expect_stmt(hstmt, SQLExecDirect(hstmt, "CALL t_odbcoutstreamparams(?, ?)", SQL_NTS), SQL_PARAM_DATA_AVAILABLE);
 
   is_num(len, 31);
+  is_num(len2, 16);
 
+  is_str(inout, "Input - changed!", len2);
   expect_stmt(hstmt, SQLParamData(hstmt, &token), SQL_PARAM_DATA_AVAILABLE);
 
   /* Checking if right token */
@@ -1454,31 +1469,50 @@ DECLARE_TEST(t_odbc_outstream_params)
 
 DECLARE_TEST(t_odbc_inoutstream_params)
 {
-  SQLLEN      len= 0, bytes;
-  SQLCHAR     blobValue[50], chunk[8], *ptr= blobValue, c;
+  SQLLEN      len= 0, len2= SQL_LEN_DATA_AT_EXEC(16), bytes;
+  SQLCHAR     blobValue[50], chunk[8], *ptr= blobValue, c, inout[32]= "input";
+  SQLINTEGER  intParam= 4;
   SQLPOINTER  token;
   SQLRETURN   rc;
 
+#ifndef _WIN32
+  skip("At the moment the feature is not supported by the DM being used")
+#endif
   ok_sql(hstmt, "DROP PROCEDURE IF EXISTS t_odbcInOutstreamparams");
-  ok_sql(hstmt, "CREATE PROCEDURE t_odbcInOutstreamparams (INOUT param1 LONGTEXT)\
+  ok_sql(hstmt, "CREATE PROCEDURE t_odbcInOutstreamparams (IN    param1 INT,\
+                                                           INOUT param2 LONGTEXT,\
+                                                           INOUT param3 VARCHAR(100),\
+                                                           OUT   param4 INT)\
                   BEGIN\
-                    SELECT param1;\
-                    SET param1= concat('a', param1, 'z');\
+                    SELECT param2;\
+                    SET param2= concat('a', param2, 'z');\
+                    SET param3= concat(param3, ' - output!');\
+                    SET param4= param1 + 7;\
                   END;");
 
-  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT_OUTPUT_STREAM,
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT,
+          SQL_C_LONG, SQL_INTEGER, 0, 0, &intParam, 0, NULL));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT_OUTPUT_STREAM,
           SQL_C_BINARY, SQL_VARBINARY, 0, 0,
-          (SQLPOINTER)1  /* Application-defined token. Using ordinal position or a pointer to some
+          (SQLPOINTER)2  /* Application-defined token. Using ordinal position or a pointer to some
                             data structure are good ideas here */,
           0              /* Buffer length is ignored for streamed parameter */,
           &len));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 3, SQL_PARAM_INPUT_OUTPUT,
+          SQL_C_CHAR, SQL_VARCHAR, 0, 0,
+          inout,
+          sizeof(inout),
+          &len2));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 4, SQL_PARAM_OUTPUT,
+          SQL_C_LONG, SQL_INTEGER, 0, 0, &intParam, 0, NULL));
 
   len= SQL_LEN_DATA_AT_EXEC(26);
 
-  expect_stmt(hstmt, SQLExecDirect(hstmt, "CALL t_odbcInOutstreamparams(?)", SQL_NTS), SQL_NEED_DATA);
+  expect_stmt(hstmt, SQLExecDirect(hstmt, "CALL t_odbcInOutstreamparams(?, ?, ?, ?)", SQL_NTS), SQL_NEED_DATA);
 
   expect_stmt(hstmt, SQLParamData(hstmt, &token), SQL_NEED_DATA);
-  is_num((SQLLEN)token, 1);
+  is_num((SQLLEN)token, 2);
   
   ok_stmt(hstmt, SQLPutData(hstmt, " ", 1));
   for (c= 'b'; c < 'z'; ++c)
@@ -1487,6 +1521,13 @@ DECLARE_TEST(t_odbc_inoutstream_params)
   }
 
   ok_stmt(hstmt, SQLPutData(hstmt, " ", 1));
+
+  expect_stmt(hstmt, SQLParamData(hstmt, &token), SQL_NEED_DATA);
+
+  for (c=0; c < strlen(inout); ++c)
+  {
+    ok_stmt(hstmt, SQLPutData(hstmt, &inout[c], 1));
+  }
   /* After sending last chunk on next SQLParamData the query is supposed to be executed. If we did
      not have a resultset, SQLParamData would return SQL_PARAM_DATA_AVAILABLE*/
   ok_stmt(hstmt, SQLParamData(hstmt, &token));
@@ -1497,19 +1538,23 @@ DECLARE_TEST(t_odbc_inoutstream_params)
 
   expect_stmt(hstmt, SQLMoreResults(hstmt), SQL_PARAM_DATA_AVAILABLE);
 
-  // is_num(len, 28);
+  /* Out parameters are available already */
+  is_num(intParam, 11);
+  /* We have full length of the stream */
+  is_num(len, 28);
   token= 0;
   /* Now we are getting the stream */
   expect_stmt(hstmt, SQLParamData(hstmt, &token), SQL_PARAM_DATA_AVAILABLE);
   /* Checking if right token */
-  is_num((SQLLEN)token, 1);
+  is_num((SQLLEN)token, 2);
 
-  /* We support binary streams only so far - checking if error returned and correct sqlstate set */
-  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, chunk, sizeof(chunk), &bytes), SQL_ERROR);
-  check_sqlstate(hstmt, "HYC00");
+  /* We support binary streams only so far - checking if error returned and correct sqlstate set.
+     For retrieving parameter data 2nd argument is ordinal of parameter, not column in result */
+  expect_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_CHAR, chunk, sizeof(chunk), &bytes), SQL_ERROR);
+  is(check_sqlstate(hstmt, "HYC00") == OK);
   do
   {
-    rc= SQLGetData(hstmt, 1, SQL_C_BINARY, chunk, sizeof(chunk), &bytes);
+    rc= SQLGetData(hstmt, 2, SQL_C_BINARY, chunk, sizeof(chunk), &bytes);
     is(SQL_SUCCEEDED(rc));
     memcpy(ptr, chunk, bytes);
     ptr+= bytes;
@@ -1517,6 +1562,9 @@ DECLARE_TEST(t_odbc_inoutstream_params)
   } while(rc == SQL_SUCCESS_WITH_INFO);
 
   is_str(blobValue, "a bcdefghijklmnopqrstuvwxy z", 28);
+
+  is_num(len2, 15);
+  is_str(inout, "input - output!", len2);
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
@@ -1533,7 +1581,6 @@ DECLARE_TEST(t_odbc_inoutstream_params)
 
   return OK;
 }
-
 
 
 BEGIN_TESTS

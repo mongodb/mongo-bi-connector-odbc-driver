@@ -1581,7 +1581,7 @@ SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER *prbgValue)
     {
       SQLINTEGER default_size= bind_length(aprec->concise_type,
                                             aprec->octet_length);
-      stmt->current_param= i+1;
+      stmt->current_param= i + 1;
       if (prbgValue)
       {
         *prbgValue= ptr_offset_adjust(aprec->data_ptr,
