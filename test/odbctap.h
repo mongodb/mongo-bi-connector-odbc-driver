@@ -119,7 +119,7 @@ const char * wstr4output(const wchar_t *wstr)
 #define MYSQL_NAME_LEN 64
 #define MAX_MEM_BLOCK_ELEMENTS 100
 
-SQLCHAR *mydriver= (SQLCHAR *)"{MySQL ODBC 5.2 Driver}";
+SQLCHAR *mydriver= (SQLCHAR *)"{MySQL ODBC 5.3 Driver}";
 SQLCHAR *mydsn= (SQLCHAR *)"test";
 SQLCHAR *myuid= (SQLCHAR *)"root";
 SQLCHAR *mypwd= (SQLCHAR *)"";
