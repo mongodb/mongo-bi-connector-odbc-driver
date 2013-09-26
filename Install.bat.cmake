@@ -41,7 +41,7 @@ REM # SETLOCAL prevents the variables set in this script to
 REM # be exported to the environment and pollute it
 SETLOCAL
 
-SET    driver_name= none
+SET    driver_name=none
 SET    driver_lib=myodbc5
 SET    driver_lib_setup=myodbc5S
 SET    installer=myodbc-installer
@@ -95,11 +95,11 @@ goto :doSuccess
 
 ECHO Registering %1 driver
 
-IF %driver_name% == none SET name= "MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ %1% Driver"
-IF NOT %driver_name% == none IF NOT @DRIVERS_COUNT@ == 1 SET name= "%driver_name% %1"
+IF %driver_name% == none SET name="MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ %1 Driver"
+IF NOT %driver_name% == none IF NOT @DRIVERS_COUNT@ == 1 SET name="%driver_name% %1"
 
-IF %1 == Unicode SET lib= "%driver_lib%w.dll"
-IF %1 == ANSI SET lib= "%driver_lib%a.dll"
+IF %1 == Unicode SET lib=%driver_lib%w.dll
+IF %1 == ANSI    SET lib=%driver_lib%a.dll
 
 ECHO Checking if %name% is not already registered
 
