@@ -357,6 +357,7 @@ int           got_out_parameters  (STMT *stmt);
 /* handle.c*/
 BOOL          allocate_param_bind     (DYNAMIC_ARRAY **param_bind, uint elements);
 BOOL          adjust_param_bind_array (STMT *stmt);
+int           reset_connection        (DBC *dbc);
 /*results.c*/
 long long     binary2numeric        (long long *dst, char *src, uint srcLen);
 void          fill_ird_data_lengths (DESC *ird, ulong *lengths, uint fields);

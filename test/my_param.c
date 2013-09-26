@@ -1400,7 +1400,7 @@ DECLARE_TEST(t_odbc_outstream_params)
   SQLRETURN   rc;
 
 #ifndef _WIN32
-  skip("At the moment the feature is not supported by the DM being used")
+  skip("At the moment the feature is not supported by the DM being used");
 #endif
   ok_sql(hstmt, "DROP PROCEDURE IF EXISTS t_odbcoutstreamparams");
   ok_sql(hstmt, "CREATE PROCEDURE t_odbcoutstreamparams (OUT   param1 LONGTEXT,\
@@ -1414,10 +1414,11 @@ DECLARE_TEST(t_odbc_outstream_params)
 
   ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_OUTPUT_STREAM,
           SQL_C_BINARY, SQL_VARBINARY, 0, 0,
-          (SQLPOINTER)123 /* Application-defined token. Using ordinal position or a pointer to some data structure
-                             for it would be a better idea */,
-          0               /* Buffer length is ignored for streamed parameter */,
+          (SQLPOINTER)123, /* Application-defined token. Using ordinal position or a pointer to some data structure
+                             for it would be a better idea */
+          0,               /* Buffer length is ignored for streamed parameter */
           &len));
+
   ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT_OUTPUT,
           SQL_C_CHAR, SQL_VARCHAR, 0, 0,
           (SQLPOINTER)inout,
@@ -1476,7 +1477,7 @@ DECLARE_TEST(t_odbc_inoutstream_params)
   SQLRETURN   rc;
 
 #ifndef _WIN32
-  skip("At the moment the feature is not supported by the DM being used")
+  skip("At the moment the feature is not supported by the DM being used");
 #endif
   ok_sql(hstmt, "DROP PROCEDURE IF EXISTS t_odbcInOutstreamparams");
   ok_sql(hstmt, "CREATE PROCEDURE t_odbcInOutstreamparams (IN    param1 INT,\
@@ -1495,9 +1496,9 @@ DECLARE_TEST(t_odbc_inoutstream_params)
 
   ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT_OUTPUT_STREAM,
           SQL_C_BINARY, SQL_VARBINARY, 0, 0,
-          (SQLPOINTER)2  /* Application-defined token. Using ordinal position or a pointer to some
-                            data structure are good ideas here */,
-          0              /* Buffer length is ignored for streamed parameter */,
+          (SQLPOINTER)2,  /* Application-defined token. Using ordinal position or a pointer to some
+                            data structure are good ideas here */
+          0,             /* Buffer length is ignored for streamed parameter */
           &len));
   ok_stmt(hstmt, SQLBindParameter(hstmt, 3, SQL_PARAM_INPUT_OUTPUT,
           SQL_C_CHAR, SQL_VARCHAR, 0, 0,

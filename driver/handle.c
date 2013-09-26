@@ -275,6 +275,23 @@ SQLRETURN SQL_API SQLAllocConnect(SQLHENV henv, SQLHDBC *phdbc)
 }
 
 
+int reset_connection(DBC *dbc)
+{
+  LIST *ldesc;
+  LIST *next;
+
+  /* free any remaining explicitly allocated descriptors */
+  for (ldesc= dbc->exp_desc; ldesc; ldesc= next)
+  {
+    next= ldesc->next;
+    desc_free((DESC *) ldesc->data);
+    x_free(ldesc);
+  }
+
+  return 0;
+}
+
+
 /*
   @type    : myodbc3 internal
   @purpose : to allocate the connection handle and to
@@ -284,8 +301,6 @@ SQLRETURN SQL_API SQLAllocConnect(SQLHENV henv, SQLHDBC *phdbc)
 SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc)
 {
     DBC *dbc= (DBC *) hdbc;
-    LIST *ldesc;
-    LIST *next;
 
     pthread_mutex_lock(&dbc->env->lock);
     dbc->env->connections= list_delete(dbc->env->connections,&dbc->list);
@@ -295,13 +310,7 @@ SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc)
       ds_delete(dbc->ds);
     pthread_mutex_destroy(&dbc->lock);
 
-    /* free any remaining explicitly allocated descriptors */
-    for (ldesc= dbc->exp_desc; ldesc; ldesc= next)
-    {
-      next= ldesc->next;
-      desc_free((DESC *) ldesc->data);
-      x_free(ldesc);
-    }
+    reset_connection(dbc);
 
 #ifndef _UNIX_
     GlobalUnlock(GlobalHandle((HGLOBAL) hdbc));

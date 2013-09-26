@@ -388,6 +388,8 @@ MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
         return set_dbc_error(dbc, "HY024", "Invalid attribute value", 0);
       }
       /* TODO 3.8 feature */
+      reset_connection(dbc);
+      dbc->need_to_reset= 1;
 
       return SQL_SUCCESS;
 #endif
@@ -925,7 +927,7 @@ SQLGetEnvAttr(SQLHENV    henv,
     switch ( Attribute )
     {
         case SQL_ATTR_CONNECTION_POOLING:
-            *(SQLINTEGER*)ValuePtr = SQL_CP_OFF;
+            *(SQLINTEGER*)ValuePtr = SQL_CP_ONE_PER_DRIVER;
             break;
 
         case SQL_ATTR_ODBC_VERSION:

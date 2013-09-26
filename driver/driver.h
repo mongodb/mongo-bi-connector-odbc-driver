@@ -375,6 +375,7 @@ typedef struct tagDBC
   DataSource    *ds;                /* data source used to connect (parsed or stored) */
   SQLULEN       sql_select_limit;   /* value of the sql_select_limit currently set for a session
                                        (SQLULEN)(-1) if wasn't set */
+  int           need_to_reset;      /* Connection have been put to the pool */
 } DBC;
 
 
