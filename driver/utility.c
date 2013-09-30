@@ -3857,11 +3857,13 @@ int got_out_parameters(STMT *stmt)
       {
         result|= GOT_OUT_PARAMETERS;
       }
+#ifndef USE_IODBC
       else if (iprec->parameter_type == SQL_PARAM_INPUT_OUTPUT_STREAM
                 || iprec->parameter_type == SQL_PARAM_OUTPUT_STREAM)
       {
         result|= GOT_OUT_STREAM_PARAMETERS;
       }
+#endif
     }
   }
 
