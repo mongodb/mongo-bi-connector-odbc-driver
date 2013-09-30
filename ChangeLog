@@ -34,6 +34,8 @@
     be obtained from mysql_config only when they are not provided using cmake 
     options.
   * Valgrind error, simple loop fix (Bug# 17397596/64105)
+  * Error with iodbc in SQLAllocHandle with handle type SQL_HANDLE_DBC
+    as odbc_ver is unset.
 
 
 ----
