@@ -38,6 +38,8 @@
     (Bug# 17421620/69733)
   * Memory leak in SQLMoreResults() as deallocation of result_bind buffer
     required before calling mysql_stmt_free_result() (Bug# 17441296)
+  * Error with iodbc in SQLAllocHandle with handle type SQL_HANDLE_DBC
+    as odbc_ver is unset.
 
 
 ----
