@@ -87,6 +87,13 @@ SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV *phenv)
     }
 #endif /* _UNIX_ */
     pthread_mutex_init(&(*env)->lock,NULL);
+
+#ifndef USE_IODBC
+    ((ENV *) *phenv)->odbc_ver= SQL_OV_ODBC3_80;
+#else
+    ((ENV *) *phenv)->odbc_ver= SQL_OV_ODBC3;
+#endif
+
     return SQL_SUCCESS;
 }
 
@@ -98,19 +105,7 @@ SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV *phenv)
 
 SQLRETURN SQL_API SQLAllocEnv(SQLHENV *phenv)
 {
-  SQLRETURN rc;
-
-  rc= my_SQLAllocEnv(phenv);
-  if (rc == SQL_SUCCESS)
-  {
-#ifndef USE_IODBC
-  ((ENV *) *phenv)->odbc_ver= SQL_OV_ODBC3_80;
-#else
-  ((ENV *) *phenv)->odbc_ver= SQL_OV_ODBC3;
-#endif
-  }
-
-  return rc;
+  return my_SQLAllocEnv(phenv);
 }
 
 
