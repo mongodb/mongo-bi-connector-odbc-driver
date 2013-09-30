@@ -120,7 +120,7 @@ GOTO :eof
 
 ECHO Deregistering %1
 "%myodbc_installer%" -d -r -n %1
-SET driver_found= yes
+SET driver_found=yes
 
 GOTO :eof
 
