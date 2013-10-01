@@ -1391,6 +1391,7 @@ DECLARE_TEST(t_bug53891)
 # define SQL_PARAM_DATA_AVAILABLE 101
 #endif
 
+#ifndef USE_IODBC
 DECLARE_TEST(t_odbc_outstream_params)
 {
   SQLLEN      len= 0, len2= SQL_NTS, bytes;
@@ -1582,7 +1583,7 @@ DECLARE_TEST(t_odbc_inoutstream_params)
 
   return OK;
 }
-
+#endif /* #ifndef USE_IODBC */
 
 BEGIN_TESTS
   ADD_TEST(my_init_table)
@@ -1606,8 +1607,10 @@ BEGIN_TESTS
   ADD_TEST(t_bug14586094)
   ADD_TEST(t_longtextoutparam)
   ADD_TEST(t_bug53891)
+#ifndef USE_IODBC
   ADD_TEST(t_odbc_outstream_params)
   ADD_TEST(t_odbc_inoutstream_params)
+#endif
 END_TESTS
 
 

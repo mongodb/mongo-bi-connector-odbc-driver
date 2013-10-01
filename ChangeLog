@@ -45,7 +45,8 @@
     required before calling mysql_stmt_free_result() (Bug# 17441296)
   * FileDSN is created evein if the connection credentials are wrong
     (Bug# 17508006)
-  
+  * Error with iodbc in SQLAllocHandle with handle type SQL_HANDLE_DBC
+    as odbc_ver is unset.
 
 
 ----

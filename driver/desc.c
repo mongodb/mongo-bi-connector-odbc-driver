@@ -351,6 +351,8 @@ DESCREC * desc_find_outstream_rec(STMT *stmt, uint *recnum, uint *res_col_num)
   DESCREC *rec;
   uint column= *res_col_num;
 
+/* No streams in iODBC */
+#ifndef USE_IODBC
   for (i= start; i < stmt->ipd->count; ++i)
   {
     rec= desc_get_rec(stmt->ipd, i, FALSE);
@@ -373,6 +375,7 @@ DESCREC * desc_find_outstream_rec(STMT *stmt, uint *recnum, uint *res_col_num)
       ++column;
     }
   }
+#endif
 
   return NULL;
 }

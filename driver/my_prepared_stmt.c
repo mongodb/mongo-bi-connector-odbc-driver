@@ -159,8 +159,11 @@ BOOL ssps_get_out_params(STMT *stmt)
 
         if (iprec->parameter_type == SQL_PARAM_INPUT_OUTPUT
          || iprec->parameter_type == SQL_PARAM_OUTPUT
+#ifndef USE_IODBC
          || iprec->parameter_type == SQL_PARAM_INPUT_OUTPUT_STREAM
-         || iprec->parameter_type == SQL_PARAM_OUTPUT_STREAM)
+         || iprec->parameter_type == SQL_PARAM_OUTPUT_STREAM
+#endif
+        )
         {
           if (aprec->data_ptr)
           {
