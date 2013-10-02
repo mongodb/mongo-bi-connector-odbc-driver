@@ -30,6 +30,8 @@ if(COMMAND cmake_policy)
 	cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
+FIND_PACKAGE(Threads)
+
 SET(CONNECTOR_MAJOR "5")
 SET(CONNECTOR_MINOR "3")
 

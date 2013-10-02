@@ -176,8 +176,8 @@ myodbc-installer -a -d -n "MySQL ODBC 5.2 ANSI Driver"    -t "DRIVER=%{_libdir}/
 %post setup
 myodbc-installer -r -d -n "MySQL ODBC 5.2 Unicode Driver"
 myodbc-installer -r -d -n "MySQL ODBC 5.2 ANSI Driver"
-myodbc-installer -a -d -n "MySQL ODBC 5.2 Unicode Driver" -t "DRIVER=%{_libdir}/libmyodbc5w.so;SETUP=%{_libdir}/libmyodbc3S.so"
-myodbc-installer -a -d -n "MySQL ODBC 5.2 ANSI Driver"    -t "DRIVER=%{_libdir}/libmyodbc5a.so;SETUP=%{_libdir}/libmyodbc3S.so"
+myodbc-installer -a -d -n "MySQL ODBC 5.2 Unicode Driver" -t "DRIVER=%{_libdir}/libmyodbc5w.so;SETUP=%{_libdir}/libmyodbc5S.so"
+myodbc-installer -a -d -n "MySQL ODBC 5.2 ANSI Driver"    -t "DRIVER=%{_libdir}/libmyodbc5a.so;SETUP=%{_libdir}/libmyodbc5S.so"
 %endif
 
 # ----------------------------------------------------------------------
@@ -208,7 +208,8 @@ myodbc-installer -a -d -n "MySQL ODBC 5.2 ANSI Driver"    -t "DRIVER=%{_libdir}/
 %files
 %defattr(-,root,root)
 %{_bindir}/myodbc-installer
-%{_libdir}/libmyodbc5*.so
+%{_libdir}/libmyodbc5w.so
+%{_libdir}/libmyodbc5a.so
 %doc ChangeLog README README.debug INSTALL Licenses_for_Third-Party_Components.txt
 %if %{com_lic}
 %doc LICENSE.mysql
@@ -219,7 +220,7 @@ myodbc-installer -a -d -n "MySQL ODBC 5.2 ANSI Driver"    -t "DRIVER=%{_libdir}/
 %if %{no_odbc_gui}
 %else
 %files setup
-%{_libdir}/libmyodbc3S*
+%{_libdir}/libmyodbc5S.so
 %endif
 
 ##############################################################################
