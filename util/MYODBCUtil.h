@@ -84,7 +84,7 @@
 
 
 /* Could use DRIVER_NAME but trying to keep dependency upon driver specific code to a min */
-#define MYODBCINST_DRIVER_NAME L"MySQL ODBC 5.2 Driver"
+#define MYODBCINST_DRIVER_NAME L"MySQL ODBC 5.3 Driver"
 
 /* max dsn's we can have in odbc sys info - need to get rid of this limit */
 #define MYODBCUTIL_MAX_DSN_NAMES 50
