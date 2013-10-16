@@ -16,24 +16,25 @@
 
 ##############################################################################
 #
-# mysql-connector-odbc 5.2 RPM specification
+# mysql-connector-odbc @CONNECTOR_BASE_VERSION@ RPM specification
 #
 ##############################################################################
 
-# You can control the license file to include building like
-# "rpmbuild --with commercial" or "rpm --define '_with_commercial 1'"
-# (for RPM 3.x). The default is GPL.
+%global mysql_vendor	Oracle and/or its affiliates
 
-%{?_with_commercial:%define com_lic 1}
-%{!?_with_commercial:%define com_lic 0}
-
-%if %{com_lic}
-%define lic_type Commercial
+%if 0%{?commercial}
+%global license_type	Commercial
+%global license_files	LICENSE.mysql
+%global product_suffix	-commercial
 %else
-%define lic_type GPL
+%global license_type	GPLv2
+%global license_files	COPYING
 %endif
 
-%define no_odbc_gui 0
+# Use rpmbuild -ba --define 'shared_mysqlclient 1' ... to build shared
+%{!?shared_mysqlclient: %global static_mysqlclient 1}
+
+%global odbc_gui	0
 
 ##############################################################################
 #
@@ -41,32 +42,26 @@
 #
 ##############################################################################
 
-%define mysql_vendor		Oracle and/or its affiliates
+Summary:	An ODBC @CONNECTOR_BASE_VERSION@ driver for MySQL - driver package
+Name:		mysql-connector-odbc%{?product_suffix}
+Version:	@CONNECTOR_NODASH_VERSION@
+Release:	1%{?dist}
+License:	Copyright (c) 2000, @CURRENT_YEAR@, %{mysql_vendor}. All rights reserved.  Under %{license_type} license as shown in the Description field.
+Source0:	http://cdn.mysql.com/Downloads/Connector-ODBC/@CONNECTOR_BASE_VERSION@/%{name}-@CONNECTOR_VERSION@-src.tar.gz
+URL:		http://www.mysql.com/
+Group:		Applications/Databases
+Vendor:		%{mysql_vendor}
+Packager:	%{mysql_vendor} Product Engineering Team <mysql-build@oss.oracle.com>
+BuildRequires:	cmake 
+%{?shared_mysqlclient:BuildRequires: mysql-community-devel}
+BuildRequires:	unixODBC-devel
+BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
-%if %{com_lic}
-Name:       mysql-connector-odbc-commercial
-%else
-Name:       mysql-connector-odbc
-%endif
-Summary:    An ODBC 5.2 driver for MySQL - driver package
-Group:      Applications/Databases
-Version:    @NUMERIC_VERSION@
-Release:    1
-Provides:   mysqlodbcrpmpack
-License:    Copyright (c) 2000, @YEAR@, %{mysql_vendor}. All rights reserved.  Under %{lic_type} license as shown in the Description field.
-Source0:    %{name}-@VERSION@-src.tar.gz
-URL:        http://www.mysql.com/
-Vendor:     %{mysql_vendor}
-Packager:   %{mysql_vendor} Product Engineering Team <mysql-build@oss.oracle.com>
-
-BuildRoot:  %{_tmppath}/%{name}-@VERSION@-build
-
-%if %{no_odbc_gui}
-%else
+%if 0%{odbc_gui}
 %package setup
-Summary:    An ODBC 5.2 driver for MySQL - setup library
-Group:      Application/Databases
-Requires:   mysqlodbcrpmpack
+Summary:	An ODBC @CONNECTOR_BASE_VERSION@ driver for MySQL - setup library
+Group:		Application/Databases
+Requires:	%{name} = %{version}-%{release}
 %endif
 
 ##############################################################################
@@ -81,23 +76,22 @@ application to MySQL. mysql-connector-odbc works on Windows XP/Vista/7/8
 Windows Server 2003/2008/2012, and most Unix platforms (incl. OSX and Linux).
 MySQL is a trademark of %{mysql_vendor}
 
-mysql-connector-odbc 5.2 is an enhanced version of mysql-connector-odbc 5.1.
+mysql-connector-odbc @CONNECTOR_BASE_VERSION@ is an enhanced version of mysql-connector-odbc @CONNECTOR_BASE_PREVIOUS@.
 The driver comes in 2 flavours - ANSI and Unicode and commonly referred to as
-'MySQL ODBC 5.2 ANSI Driver' or 'MySQL ODBC 5.2 Unicode Driver' respectively.
+'MySQL ODBC @CONNECTOR_BASE_VERSION@ ANSI Driver' or 'MySQL ODBC @CONNECTOR_BASE_VERSION@ Unicode Driver' respectively.
 
-The MySQL software has Dual Licensing, which means you can use the MySQL
-software free of charge under the GNU General Public License
+The MySQL software has Dual Licensing, which means you can use the
+MySQL software free of charge under the GNU General Public License
 (http://www.gnu.org/licenses/). You can also purchase commercial MySQL
-licenses from %{mysql_vendor} if you do not wish to be bound by the terms of
-the GPL. See the chapter "Licensing and Support" in the manual for
-further info.
+licenses from %{mysql_vendor} if you do not wish to be bound by the
+terms of the GPL. See the chapter "Licensing and Support" in the
+manual for further info.
 
-The MySQL web site (http://www.mysql.com/) provides the latest
-news and information about the MySQL software. Also please see the
+The MySQL web site (http://www.mysql.com/) provides the latest news
+and information about the MySQL software. Also please see the
 documentation and the manual for more information.
 
-%if %{no_odbc_gui}
-%else
+%if 0%{?odbc_gui}
 %description setup
 The setup library for the MySQL ODBC package, handles the optional GUI
 dialog for configuring the driver.
@@ -110,29 +104,26 @@ dialog for configuring the driver.
 ##############################################################################
 
 %prep
-%setup -n %{name}-@VERSION@-src
-
-%define ODBC_DM_PATH_ARG @ODBC_DM_PATH_ARG@
-%define MYSQL_PATH_ARG   @MYSQL_PATH_ARG@
-%define EXTRA_XLIBS      @EXTRA_XLIBS@
+%setup -q -n %{name}-@CONNECTOR_VERSION@-src
 
 %build
 mkdir release
-cd release
-cmake -G "Unix Makefiles" \
-    -DRPM_BUILD=1 \
+pushd release
+export CFLAGS="%{optflags}"
+cmake -G "Unix Makefiles"   \
+    -DRPM_BUILD=1           \
     -DCMAKE_INSTALL_PREFIX=%{_prefix} \
-%if %{no_odbc_gui}
-    -DDISABLE_GUI=1 \
+%if 0%{!?odbc_gui}
+    -DDISABLE_GUI=1         \
 %endif
-    %{ODBC_DM_PATH_ARG} \
-    %{MYSQL_PATH_ARG} \
+    -DWITH_UNIXODBC=1       \
     ..
 
 # Note that the ".." needs to be last, in case some arguments expands to 
 # the empty string, and then "cmake" thinks is "current directory"
 
-make VERBOSE=1
+make  %{?_smp_mflags} VERBOSE=1
+popd
 
 ##############################################################################
 #
@@ -140,8 +131,8 @@ make VERBOSE=1
 #
 ##############################################################################
 
-%clean 
-[ -n "$RPM_BUILD_ROOT" -a "$RPM_BUILD_ROOT" != / ] && rm -rf $RPM_BUILD_ROOT
+%clean
+rm -rf %{buildroot}
 
 ##############################################################################
 #
@@ -156,10 +147,11 @@ make VERBOSE=1
 # ----------------------------------------------------------------------
 
 %install
-cd release
-make DESTDIR=$RPM_BUILD_ROOT install VERBOSE=1
-rm -vf  $RPM_BUILD_ROOT%{_prefix}/{ChangeLog,README*,LICENSE.*,COPYING,INSTALL*,Licenses_for_Third-Party_Components.txt}
-rm -vfr $RPM_BUILD_ROOT%{_prefix}/test
+pushd release
+make DESTDIR=%{buildroot} install VERBOSE=1
+rm -vf  %{buildroot}%{_prefix}/{ChangeLog,README*,LICENSE.*,COPYING,INSTALL*,Licenses_for_Third-Party_Components.txt}
+rm -vfr %{buildroot}%{_prefix}/test
+popd
 
 # ----------------------------------------------------------------------
 # REGISTER DRIVER
@@ -168,16 +160,17 @@ rm -vfr $RPM_BUILD_ROOT%{_prefix}/test
 # ----------------------------------------------------------------------
 
 %post 
-myodbc-installer -a -d -n "MySQL ODBC 5.2 Unicode Driver" -t "DRIVER=%{_libdir}/libmyodbc5w.so"
-myodbc-installer -a -d -n "MySQL ODBC 5.2 ANSI Driver"    -t "DRIVER=%{_libdir}/libmyodbc5a.so"
+if [ -x /usr/bin/myodbc-installer ]; then
+    /usr/bin/myodbc-installer -a -d -n "MySQL ODBC @CONNECTOR_BASE_VERSION@ Unicode Driver" -t "DRIVER=%{_libdir}/libmyodbc5w.so"
+    /usr/bin/myodbc-installer -a -d -n "MySQL ODBC @CONNECTOR_BASE_VERSION@ ANSI Driver"    -t "DRIVER=%{_libdir}/libmyodbc5a.so"
+fi
 
-%if %{no_odbc_gui}
-%else
+%if 0%{?odbc_gui}
 %post setup
-myodbc-installer -r -d -n "MySQL ODBC 5.2 Unicode Driver"
-myodbc-installer -r -d -n "MySQL ODBC 5.2 ANSI Driver"
-myodbc-installer -a -d -n "MySQL ODBC 5.2 Unicode Driver" -t "DRIVER=%{_libdir}/libmyodbc5w.so;SETUP=%{_libdir}/libmyodbc3S.so"
-myodbc-installer -a -d -n "MySQL ODBC 5.2 ANSI Driver"    -t "DRIVER=%{_libdir}/libmyodbc5a.so;SETUP=%{_libdir}/libmyodbc3S.so"
+/usr/bin/myodbc-installer -r -d -n "MySQL ODBC @CONNECTOR_BASE_VERSION@ Unicode Driver"
+/usr/bin/myodbc-installer -r -d -n "MySQL ODBC @CONNECTOR_BASE_VERSION@ ANSI Driver"
+/usr/bin/myodbc-installer -a -d -n "MySQL ODBC @CONNECTOR_BASE_VERSION@ Unicode Driver" -t "DRIVER=%{_libdir}/libmyodbc5w.so;SETUP=%{_libdir}/libmyodbc5S.so"
+/usr/bin/myodbc-installer -a -d -n "MySQL ODBC @CONNECTOR_BASE_VERSION@ ANSI Driver"    -t "DRIVER=%{_libdir}/libmyodbc5a.so;SETUP=%{_libdir}/libmyodbc5S.so"
 %endif
 
 # ----------------------------------------------------------------------
@@ -186,17 +179,20 @@ myodbc-installer -a -d -n "MySQL ODBC 5.2 ANSI Driver"    -t "DRIVER=%{_libdir}/
 
 # Removing the driver package, we simply orphan any related DSNs
 %preun
-myodbc-installer -r -d -n "MySQL ODBC 5.2 Unicode Driver"
-myodbc-installer -r -d -n "MySQL ODBC 5.2 ANSI Driver"
+myodbc-installer -r -d -n "MySQL ODBC @CONNECTOR_BASE_VERSION@ Unicode Driver"
+myodbc-installer -r -d -n "MySQL ODBC @CONNECTOR_BASE_VERSION@ ANSI Driver"
 
 # Removing the setup RPM, downgrade the registration
-%if %{no_odbc_gui}
-%else
+%if 0%{?odbc_gui}
 %preun setup
-myodbc-installer -r -d -n "MySQL ODBC 5.2 Unicode Driver"
-myodbc-installer -r -d -n "MySQL ODBC 5.2 ANSI Driver"
-myodbc-installer -a -d -n "MySQL ODBC 5.2 Unicode Driver" -t "DRIVER=%{_libdir}/libmyodbc5w.so"
-myodbc-installer -a -d -n "MySQL ODBC 5.2 ANSI Driver"    -t "DRIVER=%{_libdir}/libmyodbc5a.so"
+if [ "$1" = 0 ]; then
+    if [ -x %{_bindir}/myodbc-installer ]; then
+        %{_bindir}/myodbc-installer -r -d -n "MySQL ODBC @CONNECTOR_BASE_VERSION@ Unicode Driver" > /dev/null 2>&1 || :
+        %{_bindir}/myodbc-installer -r -d -n "MySQL ODBC @CONNECTOR_BASE_VERSION@ ANSI Driver"    > /dev/null 2>&1 || :
+        %{_bindir}/myodbc-installer -a -d -n "MySQL ODBC @CONNECTOR_BASE_VERSION@ Unicode Driver" -t "DRIVER=%{_libdir}/libmyodbc5w.so" > /dev/null 2>&1 || :
+        %{_bindir}/myodbc-installer -a -d -n "MySQL ODBC @CONNECTOR_BASE_VERSION@ ANSI Driver"    -t "DRIVER=%{_libdir}/libmyodbc5a.so" > /dev/null 2>&1 || :
+    fi
+fi
 %endif
 
 ##############################################################################
@@ -206,20 +202,17 @@ myodbc-installer -a -d -n "MySQL ODBC 5.2 ANSI Driver"    -t "DRIVER=%{_libdir}/
 ##############################################################################
 
 %files
-%defattr(-,root,root)
+%defattr(-, root, root, -)
 %{_bindir}/myodbc-installer
-%{_libdir}/libmyodbc5*.so
+%{_libdir}/libmyodbc5w.so
+%{_libdir}/libmyodbc5a.so
+%doc %{license_files}
 %doc ChangeLog README README.debug INSTALL Licenses_for_Third-Party_Components.txt
-%if %{com_lic}
-%doc LICENSE.mysql
-%else
-%doc COPYING
-%endif
 
-%if %{no_odbc_gui}
-%else
+%if 0%{?odbc_gui}
 %files setup
-%{_libdir}/libmyodbc3S*
+%defattr(-, root, root, -)
+%{_libdir}/libmyodbc5S.so
 %endif
 
 ##############################################################################

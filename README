@@ -90,24 +90,27 @@ The following, key, files are provided by MySQL Connector/ODBC
 (the MS Windows names are included for reference but the file 
 names for other platforms would be similar).
 
-Driver (myodbc3.dll or myodbc5.dll)
+Driver (myodbc5a.dll and myodbc5w.dll)
 
      The most important part of Connector/ODBC is the driver.
      Application developers can link directly to the driver but 
      more often use the driver indirectly, via a Driver Manager
      such as the one provided by Microsoft or unixODBC.
 
+     There is an ANSI version, myodbc5a.dll, and an Unicode
+     version, myodbc5w.dll, of the driver.
+
      Many options can be provided to the driver to adjust its
      behavior. 
 
-Setup Library (myodbc3S.dll or myodbc5S.dll)
+Setup Library (myodbc5S.dll)
 
      The setup library provides a graphical user interface needed
      during certain activities provided by the driver. For example;
      it provides the GUI when you use the ODBC Administrator to
      create/edit a Data Source Name (DSN).
 
-Installer (myodbc3i.exe or myodbc-installer.exe)
+Installer (myodbc-installer.exe)
 
      This command-line utility program can be used to manage ODBC
      system information. For example it can be used to register
@@ -116,8 +119,8 @@ Installer (myodbc3i.exe or myodbc-installer.exe)
      abstraction and portability layer within Connector/ODBC but 
      is also useful for installing and uninstalling Connector/ODBC.
 
-     Invoke myodbc3i, in a command shell and without options, to 
-     get help on its use.
+     Invoke myodbc-installer.exe, in a command shell and without
+     options, to get help on its use.
 
 Library Loading Tester (dltest.exe)
 
