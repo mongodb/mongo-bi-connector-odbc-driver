@@ -95,7 +95,7 @@ fi
 # REGISTER THE DRIVER
 # ----------------------------------------------------------------------
 echo "Registering driver..."
-#$bindir/myodbc-installer -a -d -n "MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ Driver" -t "Driver=$libdir/libmyodbc5.so;Setup=$libdir/libmyodbc3S.so;"
+#$bindir/myodbc-installer -a -d -n "MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ Driver" -t "Driver=$libdir/libmyodbc5.so;Setup=$libdir/libmyodbc5S.so;"
 $bindir/myodbc-installer -a -d -n "MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ Driver" -t "Driver=$libdir/libmyodbc5.so;"
 
 # ----------------------------------------------------------------------

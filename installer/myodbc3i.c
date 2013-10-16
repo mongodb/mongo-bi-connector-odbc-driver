@@ -93,7 +93,7 @@ const char *usage =
 "|                                                                      \n"
 "|    Register a driver (UNIX example)                                  \n"
 "|        -d -a -n \"MySQL ODBC 5.1 Driver\" \\                         \n"
-"|              -t \"DRIVER=/usr/lib/myodbc5.so;SETUP=/usr/lib/myodbc3S.so\"\n"
+"|              -t \"DRIVER=/usr/lib/myodbc5.so;SETUP=/usr/lib/myodbc5S.so\"\n"
 "|                                                                      \n"
 "|    Register a driver (Windows example)                               \n"
 "|        -d -a -n \"MySQL ODBC 5.1 Driver\" \\                         \n"
