@@ -1558,12 +1558,11 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
 
     fix_result_types(pStmt);
 
-    if (out_params)
-    {
+    /* We prefetch out params row even if application did not specify any out parameter.
+       In this way we can do the "magical" fetch safely right after that */
       /* This server status(SERVER_PS_OUT_PARAMS) can be only if we used PS
         - thus calling ssps_ without check */
-      ssps_get_out_params(pStmt);
-    }
+    ssps_get_out_params(pStmt);
 
     if (out_params & GOT_OUT_STREAM_PARAMETERS)
     {
