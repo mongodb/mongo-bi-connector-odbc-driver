@@ -71,6 +71,7 @@ DESC *desc_alloc(STMT *stmt, SQLSMALLINT alloc_type,
 
   if (my_init_dynamic_array(&desc->bookmark, sizeof(DESCREC), 0, 0))
   {
+    delete_dynamic(&desc->records);
     x_free((char *)desc);
     return NULL;
   }
@@ -101,6 +102,7 @@ void desc_free(DESC *desc)
   if (IS_APD(desc))
     desc_free_paramdata(desc);
   delete_dynamic(&desc->records);
+  delete_dynamic(&desc->bookmark);
   x_free(desc);
 }
 
