@@ -1178,6 +1178,14 @@ int get_connection(SQLHDBC *hdbc, const SQLCHAR *dsn, const SQLCHAR *uid,
   else
     sprintf((char *)dsn_buf, "DSN=%s", (char *)dsn);
 
+  /* We never set the custom DSN, but sometimes use DRIVER instead */
+  if (dsn == NULL)
+    sprintf((char *)dsn_buf, "DSN=%s", (char *)mydsn);
+  else if (dsn == USE_DRIVER)
+    sprintf((char *)dsn_buf, "DRIVER=%s", (char *)mydriver);
+  else
+    sprintf((char *)dsn_buf, "DSN=%s", (char *)dsn);
+
   /* Defaults */
   if (uid     == NULL) uid=     myuid;
   if (pwd     == NULL) pwd=     mypwd;
@@ -1239,6 +1247,13 @@ int get_connection(SQLHDBC *hdbc, const SQLCHAR *dsn, const SQLCHAR *uid,
       /* ANSI driver file name contains 5a.{dll|so} */
       unicode_driver= strstr((char*)driver_name, "a.") == NULL ? 1 : 0;
     }
+  }
+  else
+  {
+    /* re-build and print the connection string with hidden password */
+    printf("# Connection failed with the following Connection string: " \
+           "\n%s;UID=%s;PWD=*******%s%s%s;%s\n", 
+           dsn_buf, uid, socket_buf, db_buf, port_buf, options);
   }
 
   return rc;

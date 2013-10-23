@@ -354,6 +354,28 @@ IF(WIN32)
   INSTALL(FILES Install.bat   DESTINATION .)
   INSTALL(FILES Uninstall.bat DESTINATION .)
 
+  # Install all .pdb files to enable debugging. Note that what build
+  # type and what sub directory the binaries ends up in, like
+  # "Release" and "Debug", is not determined until we run "devenv" or
+  # similar. So when running "cmake" we don't know the location. We
+  # can't test for the location here, a IF(EXISTS ...) is run at
+  # "cmake" invocation time, not when we are to install. So we do a
+  # bit of a hack here until finding a better solution.
+  INSTALL(DIRECTORY
+    ${PROJECT_BINARY_DIR}/bin/RelWithDebInfo/
+    ${PROJECT_BINARY_DIR}/bin/Debug/
+    DESTINATION bin
+    FILES_MATCHING
+    PATTERN *.pdb
+  )
+  INSTALL(DIRECTORY
+    ${PROJECT_BINARY_DIR}/lib/RelWithDebInfo/
+    ${PROJECT_BINARY_DIR}/lib/Debug/
+    DESTINATION lib
+    FILES_MATCHING
+    PATTERN *.pdb
+  )
+
 ELSE(WIN32)
 
   INSTALL(FILES ChangeLog    DESTINATION .)

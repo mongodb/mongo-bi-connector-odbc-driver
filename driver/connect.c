@@ -30,7 +30,6 @@
 #include "driver.h"
 #include "installer.h"
 #include "stringutil.h"
-#include "MYODBCUtil.h"
 
 #ifndef CLIENT_NO_SCHEMA
 # define CLIENT_NO_SCHEMA      16
@@ -254,6 +253,13 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
   if (ds->can_handle_exp_pwd)
   {
     mysql_options(mysql, MYSQL_OPT_CAN_HANDLE_EXPIRED_PASSWORDS, (char *)&on);
+  }
+#endif
+
+#if (MYSQL_VERSION_ID >= 50527 && MYSQL_VERSION_ID < 50600) || MYSQL_VERSION_ID >= 50607
+  if (ds->enable_cleartext_plugin)
+  {
+    mysql_options(mysql, MYSQL_ENABLE_CLEARTEXT_PLUGIN, (char *)&on);
   }
 #endif
 

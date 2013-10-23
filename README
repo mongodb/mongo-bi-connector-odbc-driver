@@ -135,7 +135,7 @@ of several reusable libraries. These libraries can be used to
 save development time/effort and to increase stability of resulting
 software.
 
-myodbc3u
+myodbc-util
 
      This library provides the ODBC system information abstraction
      and portability used by Connector/ODBC.
