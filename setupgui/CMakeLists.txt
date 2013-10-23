@@ -54,7 +54,7 @@ INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/util)
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/driver)
 
 TARGET_LINK_LIBRARIES(myodbc5S
-                      myodbc3u ${ODBCLIB} ${ODBCINSTLIB} ${MYSQL_CLIENT_LIBS}
+                      myodbc-util ${ODBCLIB} ${ODBCINSTLIB} ${MYSQL_CLIENT_LIBS}
                       ${PLATFORM_LIBS})
 
 IF (WIN32)

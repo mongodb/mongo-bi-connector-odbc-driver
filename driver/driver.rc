@@ -27,7 +27,6 @@
 // \note        Hand crafted - do not overwrite and save to source repo!
 //
 #include <windows.h>
-#include "..\resource.h"
 
 /////////////////////////////////////////////////////////////////////////////
 //

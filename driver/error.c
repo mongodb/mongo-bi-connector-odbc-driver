@@ -175,7 +175,7 @@ SQLRETURN set_dbc_error(DBC FAR *dbc, char *state,
                         const char *message, uint errcode)
 {
     strmov(dbc->error.sqlstate, state);
-    strxmov(dbc->error.message, MYODBC3_ERROR_PREFIX, message, NullS);
+    strxmov(dbc->error.message, MYODBC_ERROR_PREFIX, message, NullS);
     dbc->error.native_error= errcode;
     return SQL_ERROR;
 }
@@ -317,7 +317,7 @@ static SQLRETURN copy_error(MYERROR *error, myodbc_errid errid,
 SQLRETURN set_env_error(ENV *env, myodbc_errid errid, const char *errtext,
                         SQLINTEGER errcode)
 {
-    return copy_error(&env->error,errid,errtext,errcode,MYODBC3_ERROR_PREFIX);
+    return copy_error(&env->error,errid,errtext,errcode,MYODBC_ERROR_PREFIX);
 }
 
 
@@ -329,7 +329,7 @@ SQLRETURN set_env_error(ENV *env, myodbc_errid errid, const char *errtext,
 SQLRETURN set_conn_error(DBC *dbc, myodbc_errid errid, const char *errtext,
                          SQLINTEGER errcode)
 {
-    return copy_error(&dbc->error,errid,errtext,errcode,MYODBC3_ERROR_PREFIX);
+    return copy_error(&dbc->error,errid,errtext,errcode,MYODBC_ERROR_PREFIX);
 }
 
 
@@ -410,10 +410,10 @@ SQLRETURN set_handle_error(SQLSMALLINT HandleType, SQLHANDLE handle,
     {
         case SQL_HANDLE_ENV:
             return copy_error(&((ENV *)handle)->error,errid,errtext,
-                              errcode,MYODBC3_ERROR_PREFIX);
+                              errcode,MYODBC_ERROR_PREFIX);
         case SQL_HANDLE_DBC:
             return copy_error(&((DBC *)handle)->error,errid,errtext,
-                              errcode,MYODBC3_ERROR_PREFIX);
+                              errcode,MYODBC_ERROR_PREFIX);
         case SQL_HANDLE_STMT:
             return copy_error(&((STMT *)handle)->error,errid,errtext,
                               errcode,((STMT *)handle)->dbc->st_error_prefix);

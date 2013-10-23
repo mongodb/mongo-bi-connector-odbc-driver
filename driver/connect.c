@@ -30,7 +30,6 @@
 #include "driver.h"
 #include "installer.h"
 #include "stringutil.h"
-#include "MYODBCUtil.h"
 
 #ifndef CLIENT_NO_SCHEMA
 # define CLIENT_NO_SCHEMA      16
@@ -316,7 +315,7 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
     dbc->query_log= init_query_log();
 
   /* Set the statement error prefix based on the server version. */
-  strxmov(dbc->st_error_prefix, MYODBC3_ERROR_PREFIX, "[mysqld-",
+  strxmov(dbc->st_error_prefix, MYODBC_ERROR_PREFIX, "[mysqld-",
           mysql->server_version, "]", NullS);
 
   /* This needs to be set after connection, or it doesn't stick.  */

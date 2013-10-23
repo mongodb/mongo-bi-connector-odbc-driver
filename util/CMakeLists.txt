@@ -1,4 +1,4 @@
-# Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -22,27 +22,27 @@
 
 ##########################################################################
 
-SET(myodbc3u_SRCS stringutil.c
+SET(myodbc-util_SRCS stringutil.c
                   stringutil.h
                   unicode_transcode.c
                   installer.c
                   installer.h)
 
 IF(NOT WIN32)
-  SET(myodbc3u_SRCS ${myodbc3u_SRCS}
+  SET(myodbc-util_SRCS ${myodbc-util_SRCS}
                       odbcinstw.c)
 ENDIF(NOT WIN32)
 
-ADD_LIBRARY(myodbc3u STATIC ${myodbc3u_SRCS})
+ADD_LIBRARY(myodbc-util STATIC ${myodbc-util_SRCS})
 
-TARGET_LINK_LIBRARIES(myodbc3u ${ODBCINSTLIB})
+TARGET_LINK_LIBRARIES(myodbc-util ${ODBCINSTLIB})
 
 IF(NOT WIN32)
-  SET_TARGET_PROPERTIES(myodbc3u PROPERTIES COMPILE_FLAGS ${CMAKE_SHARED_LIBRARY_C_FLAGS})
+  SET_TARGET_PROPERTIES(myodbc-util PROPERTIES COMPILE_FLAGS ${CMAKE_SHARED_LIBRARY_C_FLAGS})
 
   INCLUDE_DIRECTORIES(${DL_INCLUDES})
 
-  TARGET_LINK_LIBRARIES(myodbc3u ${DL_LIBS})
+  TARGET_LINK_LIBRARIES(myodbc-util ${DL_LIBS})
 
-  SET_TARGET_PROPERTIES(myodbc3u PROPERTIES LINK_FLAGS "${DL_LFLAGS}")
+  SET_TARGET_PROPERTIES(myodbc-util PROPERTIES LINK_FLAGS "${DL_LFLAGS}")
 ENDIF(NOT WIN32)
