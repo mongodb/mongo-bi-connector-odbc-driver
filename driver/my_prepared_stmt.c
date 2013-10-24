@@ -117,7 +117,7 @@ BOOL ssps_get_out_params(STMT *stmt)
         stmt->current_param= ~0L;
         reset_getdata_position(stmt);
       }
-      else if (out_params & GOT_OUT_PARAMETERS)
+      else//(out_params & GOT_OUT_PARAMETERS)
       {
         stmt->out_params_state= OPS_PREFETCHED;
       }
@@ -130,97 +130,100 @@ BOOL ssps_get_out_params(STMT *stmt)
 
     assert(values);
 
-    if (values != NULL && out_params)
+    if (values)
     {
       stmt->current_values= values;
 
-      for (i= 0; i < myodbc_min(stmt->ipd->count, stmt->apd->count); ++i)
+      if (out_params)
       {
-        /* Making bit field look "normally" */
-        if (stmt->result_bind[counter].buffer_type == MYSQL_TYPE_BIT)
+        for (i= 0; i < myodbc_min(stmt->ipd->count, stmt->apd->count); ++i)
         {
-          MYSQL_FIELD *field= mysql_fetch_field_direct(stmt->result, counter);
-          unsigned long long numeric;
-
-          assert(field->type == MYSQL_TYPE_BIT);
-          /* terminating with NULL */
-          values[counter][*stmt->result_bind[counter].length]= '\0';
-          numeric= strtoull(values[counter], NULL, 10);
-
-          *stmt->result_bind[counter].length= (field->length+7)/8;
-          numeric2binary(values[counter], numeric,
-                        *stmt->result_bind[counter].length);
-
-        }
-
-        iprec= desc_get_rec(stmt->ipd, i, FALSE);
-        aprec= desc_get_rec(stmt->apd, i, FALSE);
-        assert(iprec && aprec);
-
-        if (iprec->parameter_type == SQL_PARAM_INPUT_OUTPUT
-         || iprec->parameter_type == SQL_PARAM_OUTPUT
-#ifndef USE_IODBC
-         || iprec->parameter_type == SQL_PARAM_INPUT_OUTPUT_STREAM
-         || iprec->parameter_type == SQL_PARAM_OUTPUT_STREAM
-#endif
-        )
-        {
-          if (aprec->data_ptr)
+          /* Making bit field look "normally" */
+          if (stmt->result_bind[counter].buffer_type == MYSQL_TYPE_BIT)
           {
-            unsigned long length= *stmt->result_bind[counter].length;
-            char *target= NULL;
-            SQLLEN *octet_length_ptr= NULL;
-            SQLLEN *indicator_ptr= NULL;
-            SQLINTEGER default_size;
+            MYSQL_FIELD *field= mysql_fetch_field_direct(stmt->result, counter);
+            unsigned long long numeric;
 
-            if (aprec->octet_length_ptr)
-            {
-              octet_length_ptr= ptr_offset_adjust(aprec->octet_length_ptr,
-                                            stmt->apd->bind_offset_ptr,
-                                            stmt->apd->bind_type,
-                                            sizeof(SQLLEN), 0);
-            }
+            assert(field->type == MYSQL_TYPE_BIT);
+            /* terminating with NULL */
+            values[counter][*stmt->result_bind[counter].length]= '\0';
+            numeric= strtoull(values[counter], NULL, 10);
 
-            indicator_ptr= ptr_offset_adjust(aprec->indicator_ptr,
-                                         stmt->apd->bind_offset_ptr,
-                                         stmt->apd->bind_type,
-                                         sizeof(SQLLEN), 0);
+            *stmt->result_bind[counter].length= (field->length+7)/8;
+            numeric2binary(values[counter], numeric,
+                          *stmt->result_bind[counter].length);
 
-            default_size= bind_length(aprec->concise_type,
-                                      aprec->octet_length);
-            target= ptr_offset_adjust(aprec->data_ptr, stmt->apd->bind_offset_ptr,
-                                  stmt->apd->bind_type, default_size, 0);
-
-            reset_getdata_position(stmt);
-
-            if (iprec->parameter_type == SQL_PARAM_INPUT_OUTPUT
-             || iprec->parameter_type == SQL_PARAM_OUTPUT)
-            {
-              sql_get_data(stmt, aprec->concise_type, counter,
-                           target, aprec->octet_length, indicator_ptr,
-                           values[counter], length, aprec);
-
-              /* TODO: solve that globally */
-              if (octet_length_ptr != NULL && indicator_ptr != NULL
-                && octet_length_ptr != indicator_ptr
-                && *indicator_ptr != SQL_NULL_DATA)
-              {
-                *octet_length_ptr= *indicator_ptr;
-              }
-            }
-            else if (octet_length_ptr != NULL)
-            {
-              /* Putting full number of bytes in the stream. A bit dirtyhackish.
-                 Only good since only binary type is supported... */
-              *octet_length_ptr= *stmt->result_bind[counter].length;
-            }
           }
 
-          ++counter;
+          iprec= desc_get_rec(stmt->ipd, i, FALSE);
+          aprec= desc_get_rec(stmt->apd, i, FALSE);
+          assert(iprec && aprec);
+
+          if (iprec->parameter_type == SQL_PARAM_INPUT_OUTPUT
+           || iprec->parameter_type == SQL_PARAM_OUTPUT
+  #ifndef USE_IODBC
+           || iprec->parameter_type == SQL_PARAM_INPUT_OUTPUT_STREAM
+           || iprec->parameter_type == SQL_PARAM_OUTPUT_STREAM
+  #endif
+          )
+          {
+            if (aprec->data_ptr)
+            {
+              unsigned long length= *stmt->result_bind[counter].length;
+              char *target= NULL;
+              SQLLEN *octet_length_ptr= NULL;
+              SQLLEN *indicator_ptr= NULL;
+              SQLINTEGER default_size;
+
+              if (aprec->octet_length_ptr)
+              {
+                octet_length_ptr= ptr_offset_adjust(aprec->octet_length_ptr,
+                                              stmt->apd->bind_offset_ptr,
+                                              stmt->apd->bind_type,
+                                              sizeof(SQLLEN), 0);
+              }
+
+              indicator_ptr= ptr_offset_adjust(aprec->indicator_ptr,
+                                           stmt->apd->bind_offset_ptr,
+                                           stmt->apd->bind_type,
+                                           sizeof(SQLLEN), 0);
+
+              default_size= bind_length(aprec->concise_type,
+                                        aprec->octet_length);
+              target= ptr_offset_adjust(aprec->data_ptr, stmt->apd->bind_offset_ptr,
+                                    stmt->apd->bind_type, default_size, 0);
+
+              reset_getdata_position(stmt);
+
+              if (iprec->parameter_type == SQL_PARAM_INPUT_OUTPUT
+               || iprec->parameter_type == SQL_PARAM_OUTPUT)
+              {
+                sql_get_data(stmt, aprec->concise_type, counter,
+                             target, aprec->octet_length, indicator_ptr,
+                             values[counter], length, aprec);
+
+                /* TODO: solve that globally */
+                if (octet_length_ptr != NULL && indicator_ptr != NULL
+                  && octet_length_ptr != indicator_ptr
+                  && *indicator_ptr != SQL_NULL_DATA)
+                {
+                  *octet_length_ptr= *indicator_ptr;
+                }
+              }
+              else if (octet_length_ptr != NULL)
+              {
+                /* Putting full number of bytes in the stream. A bit dirtyhackish.
+                   Only good since only binary type is supported... */
+                *octet_length_ptr= *stmt->result_bind[counter].length;
+              }
+            }
+
+            ++counter;
+          }
         }
       }
     }
-    else /*values != NULL && out_params*/
+    else /*values != NULL */
     {
       /* Something went wrong */
       stmt->out_params_state= OPS_UNKNOWN;

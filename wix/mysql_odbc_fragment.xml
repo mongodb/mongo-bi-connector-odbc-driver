@@ -57,10 +57,10 @@
             </Component>
             <Component Id="driver" Guid="C1960400-BFC6-4E6E-AF30-4C19EF5A3F07" SharedDllRefCount="yes" Win64="yes">
               <File Id="myodbc5a.dll" Name="myodbc5a.dll" Checksum="yes" KeyPath="yes" DiskId="1" Source="x64\myodbc5a.dll">
-                <ODBCDriver Id="MySQL_ODBC_5.2a_Driver" Name="MySQL ODBC 5.2 ANSI Driver" SetupFile="myodbc5S.dll" />
+                <ODBCDriver Id="MySQL_ODBC_5.3a_Driver" Name="MySQL ODBC 5.3 ANSI Driver" SetupFile="myodbc5S.dll" />
               </File>
               <File Id="myodbc5w.dll" Name="myodbc5w.dll" Checksum="yes" DiskId="1" Source="x64\myodbc5w.dll">
-                <ODBCDriver Id="MySQL_ODBC_5.2w_Driver" Name="MySQL ODBC 5.2 Unicode Driver" SetupFile="myodbc5S.dll" />
+                <ODBCDriver Id="MySQL_ODBC_5.3w_Driver" Name="MySQL ODBC 5.3 Unicode Driver" SetupFile="myodbc5S.dll" />
               </File>
               <File Id="readme" Name="README.txt" DiskId="1" Source="doc\README.txt"/>
               <File Id="lic3rd" Name="Licenses_for_Third-Party_Components.txt" Source="doc\Licenses_for_Third-Party_Components.txt" />
@@ -94,10 +94,10 @@
             </Component>
             <Component Id="driver" Guid="83B6877B-3220-4C5F-A1B5-84787E9798DD" SharedDllRefCount="yes">
               <File Id="myodbc5a.dll" Name="myodbc5a.dll" Checksum="yes" KeyPath="yes" DiskId="1" Source="x86\myodbc5a.dll">
-                <ODBCDriver Id="MySQL_ODBC_5.2a_Driver" Name="MySQL ODBC 5.2 ANSI Driver" SetupFile="myodbc5S.dll" />
+                <ODBCDriver Id="MySQL_ODBC_5.3a_Driver" Name="MySQL ODBC 5.3 ANSI Driver" SetupFile="myodbc5S.dll" />
               </File>
               <File Id="myodbc5w.dll" Name="myodbc5w.dll" Checksum="yes" DiskId="1" Source="x86\myodbc5w.dll">
-                <ODBCDriver Id="MySQL_ODBC_5.2w_Driver" Name="MySQL ODBC 5.2 Unicode Driver" SetupFile="myodbc5S.dll" />
+                <ODBCDriver Id="MySQL_ODBC_5.3w_Driver" Name="MySQL ODBC 5.3 Unicode Driver" SetupFile="myodbc5S.dll" />
               </File>
               <File Id="readme" Name="README.txt" DiskId="1" Source="doc\README.txt"/>
               <File Id="lic3rd" Name="Licenses_for_Third-Party_Components.txt" Source="doc\Licenses_for_Third-Party_Components.txt" />
