@@ -6,6 +6,8 @@
 
   Bugs fixed:
   * Removed references to myodbc3 in file names and in file contents (Bug#12906468)
+  * MySQL ODBC driver incorrectly quotes TableName when calling SQLPrimaryKeys
+    (Bug# 16952531/69448)
 
 
 ----

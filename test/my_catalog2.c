@@ -1079,6 +1079,9 @@ DECLARE_TEST(t_bug69448)
   is_str(my_fetch_str(hstmt, buff, 4), "id", 2);
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS `table``69448`");
+
+  /* free the statement cursor */
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
   return OK;
 }
 
