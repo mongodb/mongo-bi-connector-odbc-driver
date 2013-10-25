@@ -1013,7 +1013,7 @@ DECLARE_TEST(t_bug45378)
 
 
 /*
-  Bug#45378 - Crash in SQLSetConnectAttr
+  Bug#63844 - Crash in SQLSetConnectAttr
 */
 DECLARE_TEST(t_bug63844)
 {

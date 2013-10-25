@@ -30,7 +30,6 @@
 #include "driver.h"
 #include "installer.h"
 #include "stringutil.h"
-#include "MYODBCUtil.h"
 
 #ifndef CLIENT_NO_SCHEMA
 # define CLIENT_NO_SCHEMA      16

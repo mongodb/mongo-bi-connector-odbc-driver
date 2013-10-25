@@ -55,8 +55,8 @@ ZIP (no installer)
 
         NOTE: Do not try to edit the registery or odbc ini files
               manually to register the driver unless you are 
-              intimate with how to do this properly. myodbc3i has
-              been created for this purpose.
+              intimate with how to do this properly. myodbc-installer
+              has been created for this purpose.
 
 ZIP (source)
 

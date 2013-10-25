@@ -53,6 +53,11 @@ ENDIF(CONNECTOR_PATCH LESS 10)
 SET(CONNECTOR_LEVEL "-beta")
 SET(CONNECTOR_QUALITY "BETA")
 
+SET(CONNECTOR_BASE_VERSION    "${CONNECTOR_MAJOR}.${CONNECTOR_MINOR}")
+SET(CONNECTOR_BASE_PREVIOUS   "5.2")
+SET(CONNECTOR_NUMERIC_VERSION "${CONNECTOR_BASE_VERSION}.${CONNECTOR_PATCH}")
+SET(CONNECTOR_VERSION         "${CONNECTOR_NUMERIC_VERSION}${EXTRA_VERSION_SUFFIX}${CONNECTOR_LEVEL}")
+
 #Default is to build both drivers
 IF(UNICODE OR NOT ANSI)
 	MESSAGE(STATUS "Configuring to build Unicode driver")
@@ -270,9 +275,15 @@ ADD_SUBDIRECTORY(test)
 #
 ##############################################################################
 
-SET(CONNECTOR_NUMERIC_VERSION "${CONNECTOR_MAJOR}.${CONNECTOR_MINOR}.${CONNECTOR_PATCH}")
-SET(CONNECTOR_VERSION         "${CONNECTOR_NUMERIC_VERSION}${EXTRA_VERSION_SUFFIX}${CONNECTOR_LEVEL}")
+# Some stuff for building RPMs, that is not using CPack
+# RPMs doesn't allow "-" in version, so we use like "5.3.0_alpha"
+STRING(REPLACE "-" "_" CONNECTOR_NODASH_VERSION "${CONNECTOR_VERSION}")
+IF(UNIX)
+  EXECUTE_PROCESS(COMMAND "date" "+%Y" OUTPUT_VARIABLE CURRENT_YEAR OUTPUT_STRIP_TRAILING_WHITESPACE)
+ENDIF()
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/scripts/myodbc3.spec.sh ${CMAKE_SOURCE_DIR}/myodbc3.spec @ONLY)
 
+# The rest is mainly about CPack
 SET(CPACK_PACKAGE_VERSION_MAJOR ${CONNECTOR_MAJOR})
 SET(CPACK_PACKAGE_VERSION_MINOR ${CONNECTOR_MINOR})
 SET(CPACK_PACKAGE_VERSION_PATCH ${CONNECTOR_PATCH})
@@ -344,6 +355,28 @@ IF(WIN32)
 
   INSTALL(FILES Install.bat   DESTINATION .)
   INSTALL(FILES Uninstall.bat DESTINATION .)
+
+  # Install all .pdb files to enable debugging. Note that what build
+  # type and what sub directory the binaries ends up in, like
+  # "Release" and "Debug", is not determined until we run "devenv" or
+  # similar. So when running "cmake" we don't know the location. We
+  # can't test for the location here, a IF(EXISTS ...) is run at
+  # "cmake" invocation time, not when we are to install. So we do a
+  # bit of a hack here until finding a better solution.
+  INSTALL(DIRECTORY
+    ${PROJECT_BINARY_DIR}/bin/RelWithDebInfo/
+    ${PROJECT_BINARY_DIR}/bin/Debug/
+    DESTINATION bin
+    FILES_MATCHING
+    PATTERN *.pdb
+  )
+  INSTALL(DIRECTORY
+    ${PROJECT_BINARY_DIR}/lib/RelWithDebInfo/
+    ${PROJECT_BINARY_DIR}/lib/Debug/
+    DESTINATION lib
+    FILES_MATCHING
+    PATTERN *.pdb
+  )
 
 ELSE(WIN32)
 

@@ -2528,7 +2528,7 @@ ulong myodbc_escape_string(MYSQL *mysql __attribute__((unused)),
         overflow= TRUE;
         break;
       }
-      *to++= '\\';
+      *to++= escape != '`' ? '\\' : '`';
       *to++= escape;
     }
     else
