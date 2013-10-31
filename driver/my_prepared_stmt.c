@@ -125,7 +125,9 @@ BOOL ssps_get_out_params(STMT *stmt)
 
     if (values != NULL && got_out_parameters(stmt))
     {
-      for (i= 0; i < myodbc_min(stmt->ipd->count, stmt->apd->count); ++i)
+      for (i= 0;
+           i < myodbc_min(stmt->ipd->count, stmt->apd->count) && counter < field_count(stmt);
+           ++i)
       {
         /* Making bit field look "normally" */
         if (stmt->result_bind[counter].buffer_type == MYSQL_TYPE_BIT)

@@ -6,6 +6,7 @@
 
   * MySQL ODBC driver incorrectly quotes TableName when calling SQLPrimaryKeys
     (Bug# 16952531/69448)
+  * Bad memory access when get out params (Bug #17640929/70642)
 
 ----
 5.2.6(25-Sep-2013)

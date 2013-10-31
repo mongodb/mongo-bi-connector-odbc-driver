@@ -47,8 +47,46 @@ DECLARE_TEST(t_bug69950)
   return OK;
 }
 
+
+/*
+  Bug #17640929/70642 "Bad memory access when get out params"
+  If IN param went last in the list of SP parameters containing any (IN)OUT parameter,
+  the driver would access not allocated memory.
+  In fact the testcase doesn't reliably hit the problem
+*/
+DECLARE_TEST(t_bug70642)
+{
+  SQLSMALLINT i;
+  SQLINTEGER  par[]= {10, 20};
+  SQLSMALLINT type[]= { SQL_PARAM_OUTPUT, SQL_PARAM_INPUT};
+
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS t_bug70642");
+  ok_sql(hstmt, "CREATE PROCEDURE t_bug70642("
+                "  OUT p_out INT, "
+                "  IN p_in INT) "
+                "BEGIN "
+                "  SET p_in = p_in*10, p_out = p_in*10; "
+                "END");
+
+  for (i=0; i < sizeof(par)/sizeof(SQLINTEGER); ++i)
+  {
+    ok_stmt(hstmt, SQLBindParameter(hstmt, i+1, type[i], SQL_C_LONG, SQL_INTEGER, 0,
+      0, &par[i], 0, NULL));
+  }
+
+  ok_sql(hstmt, "CALL t_bug70642(?, ?)");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS t_bug70642");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug69950)
+  ADD_TEST(t_bug70642)
 END_TESTS
 
 myoption &= ~(1 << 30);
