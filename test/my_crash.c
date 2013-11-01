@@ -57,13 +57,14 @@ DECLARE_TEST(t_bug69950)
 DECLARE_TEST(t_bug70642)
 {
   SQLSMALLINT i;
-  SQLINTEGER  par[]= {10, 20};
-  SQLSMALLINT type[]= { SQL_PARAM_OUTPUT, SQL_PARAM_INPUT};
+  SQLINTEGER  par[]= {10, 20, 1, 0, 1};
+  SQLSMALLINT type[]= { SQL_PARAM_OUTPUT, SQL_PARAM_INPUT, SQL_PARAM_INPUT, SQL_PARAM_INPUT,
+                        SQL_PARAM_INPUT};
 
   ok_sql(hstmt, "DROP PROCEDURE IF EXISTS t_bug70642");
   ok_sql(hstmt, "CREATE PROCEDURE t_bug70642("
                 "  OUT p_out INT, "
-                "  IN p_in INT) "
+                "  IN p_in INT, IN d1 INT, IN d2 INT, IN d3 INT) "
                 "BEGIN "
                 "  SET p_in = p_in*10, p_out = p_in*10; "
                 "END");
@@ -74,9 +75,12 @@ DECLARE_TEST(t_bug70642)
       0, &par[i], 0, NULL));
   }
 
-  ok_sql(hstmt, "CALL t_bug70642(?, ?)");
+  for (i=0; i < 10; ++i)
+  {
+    ok_sql(hstmt, "CALL t_bug70642(?, ?, ?, ?, ?)");
 
-  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+    ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  }
 
   ok_sql(hstmt, "DROP PROCEDURE IF EXISTS t_bug70642");
 
@@ -89,8 +93,8 @@ BEGIN_TESTS
   ADD_TEST(t_bug70642)
 END_TESTS
 
-myoption &= ~(1 << 30);
+/*myoption &= ~(1 << 30);
 RUN_TESTS_ONCE
 myoption |= (1 << 30);
-testname_suffix= "_no_i_s";
+testname_suffix= "_no_i_s";*/
 RUN_TESTS
