@@ -940,7 +940,7 @@ DECLARE_TEST(t_bug59772)
 DECLARE_TEST(t_odbcoutparams)
 {
   SQLSMALLINT ncol, i;
-  SQLINTEGER  par[3]= {10, 20, 30}, val;
+  SQLINTEGER  par[]= {10, 20, 30}, val;
   SQLLEN      len;
   SQLSMALLINT type[]= {SQL_PARAM_INPUT, SQL_PARAM_OUTPUT, SQL_PARAM_INPUT_OUTPUT};
   SQLCHAR     str[20]= "initial value", buff[20];
@@ -953,8 +953,6 @@ DECLARE_TEST(t_odbcoutparams)
                 "BEGIN "
                 "  SET p_in = p_in*10, p_out = (p_in+p_inout)*10, p_inout = p_inout*10; "
                 "END");
-
-
 
   for (i=0; i < sizeof(par)/sizeof(SQLINTEGER); ++i)
   {
