@@ -65,7 +65,7 @@ BOOL returned_result(STMT *stmt)
 my_bool free_current_result(STMT *stmt)
 {
   my_bool res= 0;
-  if (returned_result(stmt))
+  if (stmt->result)
   {
     if (ssps_used(stmt))
     {
