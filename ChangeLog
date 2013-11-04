@@ -3,6 +3,7 @@
   Functionality added or changed:
 
   Bugs fixed:
+  * Memory leak using 5.2.6 ODBC Connector (Bug 17653461/70662)
 
   * MySQL ODBC driver incorrectly quotes TableName when calling SQLPrimaryKeys
     (Bug# 16952531/69448)
