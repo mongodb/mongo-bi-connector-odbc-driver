@@ -277,9 +277,8 @@ void syncData(HWND hwnd, DataSource *params)
   GET_COMBO(database);
 
 #ifdef _WIN32
+  /* use this flag exclusively for Windows */
   params->force_use_of_named_pipes = READ_BOOL(hwnd, IDC_RADIO_pipe);
-#else
-  params->force_use_of_named_pipes = READ_BOOL(__UNUSED, use_socket_file);
 #endif
 }
 
@@ -296,8 +295,8 @@ void syncForm(HWND hwnd, DataSource *params)
   SET_STRING(socket);
   SET_COMBO(database);
 
-  if (params->force_use_of_named_pipes)
 #ifdef _WIN32
+  if (params->force_use_of_named_pipes)
   {
     SET_RADIO(hwnd, IDC_RADIO_pipe, TRUE);
   }
@@ -307,6 +306,7 @@ void syncForm(HWND hwnd, DataSource *params)
   }
   SwitchTcpOrPipe(hwnd, params->force_use_of_named_pipes);
 #else
+  if (params->socket)
   {
     /* this flag means the socket file in Linux */
     SET_CHECKED(__UNUSED, use_socket_file, TRUE);
