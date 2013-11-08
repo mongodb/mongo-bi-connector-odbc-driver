@@ -190,6 +190,14 @@ typedef enum { DESC_HDR, DESC_REC } fld_loc;
 #define DESC_GET_DBC(X) (((X)->alloc_type == SQL_DESC_ALLOC_USER) ? \
                          (X)->exp.dbc : (X)->stmt->dbc)
 
+#define IS_BOOKMARK_VARIABLE(S) if (S->stmt_options.bookmarks != \
+                                    SQL_UB_VARIABLE) \
+  { \
+    set_stmt_error(stmt, "HY092", "Invalid attribute identifier", 0); \
+    return SQL_ERROR; \
+  }
+
+
 /* data-at-exec type */
 #define DAE_NORMAL 1 /* normal SQLExecute() */
 #define DAE_SETPOS_INSERT 2 /* SQLSetPos() insert */

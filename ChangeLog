@@ -10,6 +10,7 @@
   * Bad memory access when get out params (Bug #17640929/70642)
   * Setting Unix Socket using ODBCManageDataSourcesQ4 sets NAMED_PIPE=1
     (Bug# 17586452)
+  * Segmentation Fault in SQLBulkOperations() (Bug #17714290)
 
 ----
 

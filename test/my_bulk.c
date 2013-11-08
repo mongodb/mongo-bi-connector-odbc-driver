@@ -301,7 +301,6 @@ DECLARE_TEST(t_bulk_insert_bookmark)
   SQLCHAR    name[MAX_BM_INS_COUNT][40],
              buff[100];
   SQLCHAR bData[MAX_BM_INS_COUNT][10];
-  SQLUINTEGER bookmarkLen;
   SQLSMALLINT length;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bulk_insert");
@@ -524,6 +523,48 @@ DECLARE_TEST(t_bookmark_delete)
 }
 
 
+
+
+/**
+  Segmentation Fault in SQLBulkOperations() (Bug #17714290)
+*/
+DECLARE_TEST(t_bug17714290)
+{
+
+  SQLINTEGER nData[4] = {1, 2, 3, 4};
+  SQLCHAR szData[4][16] = {{"xxxxxxxx"},{"xxxxxxxx"},{"xxxxxxxx"},{"xxxxxxxx"}};
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS bug17714290");
+  ok_sql(hstmt, "CREATE TABLE bug17714290 ("\
+                "tt_int INT PRIMARY KEY auto_increment,"\
+                "tt_varchar VARCHAR(128) NOT NULL)");
+
+  ok_sql(hstmt, "INSERT INTO bug17714290 VALUES "\
+                "(1, 'str 1'),(2, 'str 2'),(3, 'str 3'),(4, 'str 4')");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE, (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+  ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 4));
+
+  ok_sql(hstmt, "SELECT * FROM bug17714290");
+
+  /* We are not setting any bookmark options and not binding bookmark column */
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, nData, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szData, sizeof(szData[0]), NULL));
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_BOOKMARK, 0));
+
+  /* This cannot be success, we just don't want to crash */
+  SQLBulkOperations(hstmt, SQL_UPDATE_BY_BOOKMARK);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "DROP TABLE bug17714290");
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bulk_insert)
   ADD_TEST(t_mul_pkdel)
@@ -532,6 +573,7 @@ BEGIN_TESTS
   ADD_TEST(t_bulk_insert_bookmark)
   ADD_TEST(t_bookmark_update)
   ADD_TEST(t_bookmark_delete)
+  ADD_TEST(t_bug17714290)
 END_TESTS
 
 

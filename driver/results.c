@@ -1658,6 +1658,7 @@ fill_fetch_bookmark_buffers(STMT *stmt, ulong value, uint rownum)
   ulong length= 0;
   char _value[21];
 
+  IS_BOOKMARK_VARIABLE(stmt);
   arrec= desc_get_rec(stmt->ard, -1, FALSE);
 
   if (ARD_IS_BOUND(arrec))
@@ -1871,6 +1872,7 @@ SQLRETURN SQL_API myodbc_single_fetch( SQLHSTMT             hstmt,
           if (stmt->stmt_options.bookmark_ptr)
           {
             DESCREC *arrec;
+            IS_BOOKMARK_VARIABLE(stmt);
             arrec= desc_get_rec(stmt->ard, -1, FALSE);
 
             if (arrec->concise_type == SQL_C_BOOKMARK)
@@ -2548,6 +2550,7 @@ SQLRETURN SQL_API SQLFetchScroll( SQLHSTMT      StatementHandle,
         && stmt->stmt_options.bookmark_ptr)
     {
       DESCREC *arrec;
+      IS_BOOKMARK_VARIABLE(stmt);
       arrec= desc_get_rec(stmt->ard, -1, FALSE);
 
       FetchOffset += get_bookmark_value(arrec->concise_type, 

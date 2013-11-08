@@ -963,15 +963,8 @@ static SQLRETURN fetch_bookmark(STMT *stmt)
   long curr_bookmark_index= 0;
   long tmp_array_size= 0;
 
+  IS_BOOKMARK_VARIABLE(stmt);
   arrec= desc_get_rec(stmt->ard, -1, FALSE);
-
-  if (stmt->stmt_options.bookmarks != SQL_UB_VARIABLE)
-  {
-      set_stmt_error(stmt, "HY092",
-                     "Invalid attribute identifier",
-                     0);
-      return SQL_ERROR;
-  }
 
   if (!ARD_IS_BOUND(arrec))
   {
@@ -1043,15 +1036,9 @@ static SQLRETURN setpos_delete_bookmark(STMT *stmt, SQLUSMALLINT irow,
   /* appened our table name to our DELETE statement */
   dynstr_append_quoted_name(dynQuery,table_name);
   query_length= dynQuery->length;
-  arrec= desc_get_rec(stmt->ard, -1, FALSE);
 
-  if (stmt->stmt_options.bookmarks != SQL_UB_VARIABLE)
-  {
-    set_stmt_error(stmt, "HY092",
-                   "Invalid attribute identifier",
-                   0);
-    return SQL_ERROR;
-  }
+  IS_BOOKMARK_VARIABLE(stmt);
+  arrec= desc_get_rec(stmt->ard, -1, FALSE);
 
   if (!ARD_IS_BOUND(arrec))
   {
@@ -1204,15 +1191,9 @@ static SQLRETURN setpos_update_bookmark(STMT *stmt, SQLUSMALLINT irow,
 
   dynstr_append_quoted_name(dynQuery,table_name);
   query_length= dynQuery->length;
-  arrec= desc_get_rec(stmt->ard, -1, FALSE);
 
-  if (stmt->stmt_options.bookmarks != SQL_UB_VARIABLE)
-  {
-    set_stmt_error(stmt, "HY092",
-                   "Invalid attribute identifier",
-                   0);
-    return SQL_ERROR;
-  }
+  IS_BOOKMARK_VARIABLE(stmt);
+  arrec= desc_get_rec(stmt->ard, -1, FALSE);
 
   if (!ARD_IS_BOUND(arrec))
   {
