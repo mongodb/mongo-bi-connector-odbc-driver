@@ -124,7 +124,7 @@ SQLCHAR *mydsn= (SQLCHAR *)"test";
 SQLCHAR *myuid= (SQLCHAR *)"root";
 SQLCHAR *mypwd= (SQLCHAR *)"";
 SQLCHAR *mysock= NULL;
-int      myoption= 0, myport= 0;
+int      myoption= 0, myport= 0, myenable_pooling= 0;
 SQLCHAR *my_str_options= (SQLCHAR *)""; /* String for additional connection options */
 SQLCHAR *myserver= (SQLCHAR *)"localhost";
 SQLCHAR *mydb= (SQLCHAR *)"test";
@@ -279,6 +279,8 @@ int main(int argc, char **argv) \
     mysock= (SQLCHAR *)getenv("TEST_SOCKET"); \
   if (getenv("TEST_PORT")) \
     myport= atoi(getenv("TEST_PORT")); \
+  if (getenv("TEST_ENABLE_POOLING")) \
+    myenable_pooling= atoi(getenv("TEST_ENABLE_POOLING")); \
 \
   if (argc > 1) \
     mydsn= (SQLCHAR *)argv[1]; \
@@ -1265,13 +1267,36 @@ int alloc_basic_handles_with_opt(SQLHENV *henv, SQLHDBC *hdbc,
                                  const SQLCHAR *uid, const SQLCHAR *pwd, 
                                  const SQLCHAR *db, const SQLCHAR *options)
 {
+  if (myenable_pooling)
+  {
+    SQLSetEnvAttr(NULL, SQL_ATTR_CONNECTION_POOLING,
+                 (SQLPOINTER)SQL_CP_ONE_PER_DRIVER, 0);
+  }
+
   ok_env(*henv, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, henv));
 
+#ifdef SQL_OV_ODBC3_80
+  ok_env(*henv, SQLSetEnvAttr(*henv, SQL_ATTR_ODBC_VERSION,
+                              (SQLPOINTER)SQL_OV_ODBC3_80, 0));
+#else
   ok_env(*henv, SQLSetEnvAttr(*henv, SQL_ATTR_ODBC_VERSION,
                               (SQLPOINTER)SQL_OV_ODBC3, 0));
+#endif
+
+  if (myenable_pooling)
+  {
+    SQLRETURN rc= SQLSetEnvAttr(*henv, SQL_ATTR_CP_MATCH, (SQLPOINTER)SQL_CP_STRICT_MATCH, 0);
+
+    if( !SQL_SUCCEEDED(rc))
+    {
+      /* No DM case? */
+      is_num(check_sqlstate_ex(*henv, SQL_HANDLE_ENV, "HYC00"), OK);
+    }
+  }
 
   ok_env(*henv, SQLAllocHandle(SQL_HANDLE_DBC, *henv, hdbc));
 
+  /* ok_con(*hdbc, SQLConnect(*hdbc, mydsn, strlen(mydsn), myuid, strlen(myuid), mypwd, strlen(mypwd))); */
   ok_con(*hdbc, get_connection(hdbc, dsn, uid, pwd, db, options));
 
   ok_con(*hdbc, SQLAllocHandle(SQL_HANDLE_STMT, *hdbc, hstmt));

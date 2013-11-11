@@ -357,7 +357,12 @@ int           got_out_parameters  (STMT *stmt);
 /* handle.c*/
 BOOL          allocate_param_bind     (DYNAMIC_ARRAY **param_bind, uint elements);
 BOOL          adjust_param_bind_array (STMT *stmt);
+/* Actions taken when connection is put to the pool. Used in connection freeing as well */
 int           reset_connection        (DBC *dbc);
+/* Actions taken when connection is taken from the pool */
+int           wakeup_connection       (DBC *dbc);
+#define WAKEUP_CONN_IF_NEEDED(dbc) if (dbc->need_to_wakeup && wakeup_connection(dbc)) return SQL_ERROR
+
 /*results.c*/
 long long     binary2numeric        (long long *dst, char *src, uint srcLen);
 void          fill_ird_data_lengths (DESC *ird, ulong *lengths, uint fields);
@@ -434,6 +439,9 @@ char *      ssps_get_string       (STMT *stmt, ulong column_number, char *value,
 SQLRETURN   ssps_send_long_data   (STMT *stmt, unsigned int param_num, const char *chunk,
                                   unsigned long length);
 MYSQL_BIND * get_param_bind       (STMT *stmt, unsigned int param_number, int reset);
+
+/* connect.c */
+void free_connection_stmts(DBC *dbc);
 
 #ifdef __WIN__
 #define cmp_database(A,B) myodbc_strcasecmp((const char *)(A),(const char *)(B))

@@ -237,6 +237,10 @@ MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
 {
   DBC *dbc= (DBC *) hdbc;
 
+  /* In fact it should be awaken when DM checks whether connection is alive before taking it from pool.
+     Keeping the check here to stay on the safe side */
+  WAKEUP_CONN_IF_NEEDED(dbc);
+
   switch (Attribute)
   {
     case SQL_ATTR_ACCESS_MODE:
@@ -389,7 +393,7 @@ MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
       }
       /* TODO 3.8 feature */
       reset_connection(dbc);
-      dbc->need_to_reset= 1;
+      dbc->need_to_wakeup= 1;
 
       return SQL_SUCCESS;
 #endif
@@ -427,7 +431,16 @@ MySQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attrib, SQLCHAR **char_attr,
   DBC *dbc= (DBC *)hdbc;
   SQLRETURN result= SQL_SUCCESS;
 
-  switch (attrib) {
+  /* (Windows) DM checks SQL_ATTR_CONNECTION_DEAD before taking it from the pool and returning to the
+     application. We can use wake-up procedure for diagnostics of whether connection is alive instead
+     of mysql_ping(). But we are leaving this check for other attributes, too */
+  if (attrib != SQL_ATTR_CONNECTION_DEAD)
+  {
+    WAKEUP_CONN_IF_NEEDED(dbc);
+  }
+
+  switch (attrib)
+  {
   case SQL_ATTR_ACCESS_MODE:
     *((SQLUINTEGER *)num_attr)= SQL_MODE_READ_WRITE;
     break;
@@ -444,7 +457,9 @@ MySQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attrib, SQLCHAR **char_attr,
     break;
 
   case SQL_ATTR_CONNECTION_DEAD:
-    if (mysql_ping(&dbc->mysql) &&
+    /* If waking up fails - we return "connection is dead", no matter what really the reason is */
+    if (dbc->need_to_wakeup != 0 && wakeup_connection(dbc)
+      || dbc->need_to_wakeup == 0 && (&dbc->mysql) &&
         (mysql_errno(&dbc->mysql) == CR_SERVER_LOST ||
          mysql_errno(&dbc->mysql) == CR_SERVER_GONE_ERROR))
       *((SQLUINTEGER *)num_attr)= SQL_CD_TRUE;
@@ -879,36 +894,41 @@ SQLSetEnvAttr(SQLHENV    henv,
               SQLPOINTER ValuePtr,
               SQLINTEGER StringLength __attribute__((unused)))
 {
+  /* No Driver Manager? */
+  if(henv == NULL)
+  {
+    return SQL_ERROR;
+  }
 
-    if (((ENV *)henv)->connections)
-        return set_env_error(henv, MYERR_S1010, NULL, 0);
+  if (((ENV *)henv)->connections)
+      return set_env_error(henv, MYERR_S1010, NULL, 0);
 
-    switch (Attribute)
-    {
-        case SQL_ATTR_ODBC_VERSION:
+  switch (Attribute)
+  {
+      case SQL_ATTR_ODBC_VERSION:
+        {
+          switch((SQLINTEGER)(SQLLEN)ValuePtr)
           {
-            switch((SQLINTEGER)(SQLLEN)ValuePtr)
-            {
-            case SQL_OV_ODBC2:
-            case SQL_OV_ODBC3:
+          case SQL_OV_ODBC2:
+          case SQL_OV_ODBC3:
 #ifndef USE_IODBC
-            case SQL_OV_ODBC3_80:
-              ((ENV *)henv)->odbc_ver= (SQLINTEGER)(SQLLEN)ValuePtr;
-              break;
-#endif
-            default:
-              return set_env_error(henv,MYERR_S1024,NULL,0);
-            }
+          case SQL_OV_ODBC3_80:
+            ((ENV *)henv)->odbc_ver= (SQLINTEGER)(SQLLEN)ValuePtr;
             break;
+#endif
+          default:
+            return set_env_error(henv,MYERR_S1024,NULL,0);
           }
-        case SQL_ATTR_OUTPUT_NTS:
-            if (ValuePtr == (SQLPOINTER)SQL_TRUE)
-                break;
+          break;
+        }
+      case SQL_ATTR_OUTPUT_NTS:
+          if (ValuePtr == (SQLPOINTER)SQL_TRUE)
+              break;
 
-        default:
-            return set_env_error(henv,MYERR_S1C00,NULL,0);
-    }
-    return SQL_SUCCESS;
+      default:
+          return set_env_error(henv,MYERR_S1C00,NULL,0);
+  }
+  return SQL_SUCCESS;
 }
 
 

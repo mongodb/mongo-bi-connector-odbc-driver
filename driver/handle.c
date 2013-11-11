@@ -270,7 +270,7 @@ SQLRETURN SQL_API SQLAllocConnect(SQLHENV henv, SQLHDBC *phdbc)
 }
 
 
-int reset_connection(DBC *dbc)
+void free_explicit_descriptors(DBC *dbc)
 {
   LIST *ldesc;
   LIST *next;
@@ -282,7 +282,32 @@ int reset_connection(DBC *dbc)
     desc_free((DESC *) ldesc->data);
     x_free(ldesc);
   }
+}
 
+
+/* ODBC specs suggest(and that actually makes sense) to do jobs that require communication with server
+   when connection is taken from pool, i.e. at "wakeup" time */
+int reset_connection(DBC *dbc)
+{
+  free_connection_stmts(dbc);
+  free_explicit_descriptors(dbc);
+
+  return 0;
+}
+
+
+int wakeup_connection(DBC *dbc)
+{
+  DataSource *ds= dbc->ds;
+
+  if (mysql_change_user(&dbc->mysql, ds_get_utf8attr(ds->uid, &ds->uid8),
+                                     ds_get_utf8attr(ds->pwd, &ds->pwd8),
+                                     ds_get_utf8attr(ds->database, &ds->database8)))
+  {
+    return 1;
+  }
+
+  dbc->need_to_wakeup= 0;
   return 0;
 }
 
@@ -302,10 +327,12 @@ SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc)
     pthread_mutex_unlock(&dbc->env->lock);
     x_free(dbc->database);
     if (dbc->ds)
+    {
       ds_delete(dbc->ds);
+    }
     pthread_mutex_destroy(&dbc->lock);
 
-    reset_connection(dbc);
+    free_explicit_descriptors(dbc);
 
 #ifndef _UNIX_
     GlobalUnlock(GlobalHandle((HGLOBAL) hdbc));
@@ -421,70 +448,74 @@ void delete_param_bind(DYNAMIC_ARRAY *param_bind)
 SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT *phstmt)
 {
 #ifndef _UNIX_
-    HGLOBAL  hstmt;
+  HGLOBAL  hstmt;
 #endif
-    STMT  *stmt;
-    DBC   *dbc= (DBC*) hdbc;
+  STMT  *stmt;
+  DBC   *dbc= (DBC*) hdbc;
+
+  /* In fact it should be awaken when DM checks whether connection is alive before taking it from pool.
+    Keeping the check here to stay on the safe side */
+  WAKEUP_CONN_IF_NEEDED(dbc);
 
 #ifndef _UNIX_
-    hstmt= GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(STMT));
-    if (!hstmt || (*phstmt= (SQLHSTMT)GlobalLock(hstmt)) == SQL_NULL_HSTMT)
-    {
-        *phstmt= SQL_NULL_HSTMT;
-        GlobalFree(hstmt);
-    }
+  hstmt= GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(STMT));
+  if (!hstmt || (*phstmt= (SQLHSTMT)GlobalLock(hstmt)) == SQL_NULL_HSTMT)
+  {
+    *phstmt= SQL_NULL_HSTMT;
+    GlobalFree(hstmt);
+  }
 #else
-    *phstmt= (SQLHSTMT) my_malloc(sizeof (STMT), MYF(MY_ZEROFILL | MY_WME));
+  *phstmt= (SQLHSTMT) my_malloc(sizeof (STMT), MYF(MY_ZEROFILL | MY_WME));
 #endif /* IS UNIX */
-    if (*phstmt == SQL_NULL_HSTMT)
-        goto error;
+  if (*phstmt == SQL_NULL_HSTMT)
+    goto error;
 
-    stmt= (STMT *) *phstmt;
-    stmt->dbc= dbc;
+  stmt= (STMT *) *phstmt;
+  stmt->dbc= dbc;
 
-    pthread_mutex_lock(&stmt->dbc->lock);
-    dbc->statements= list_add(dbc->statements,&stmt->list);
-    pthread_mutex_unlock(&stmt->dbc->lock);
-    stmt->list.data= stmt;
-    stmt->stmt_options= dbc->stmt_options;
-    stmt->state= ST_UNKNOWN;
-    stmt->dummy_state= ST_DUMMY_UNKNOWN;
-    strmov(stmt->error.sqlstate, "00000");
-    init_parsed_query(&stmt->query);
-    init_parsed_query(&stmt->orig_query);
+  pthread_mutex_lock(&stmt->dbc->lock);
+  dbc->statements= list_add(dbc->statements,&stmt->list);
+  pthread_mutex_unlock(&stmt->dbc->lock);
+  stmt->list.data= stmt;
+  stmt->stmt_options= dbc->stmt_options;
+  stmt->state= ST_UNKNOWN;
+  stmt->dummy_state= ST_DUMMY_UNKNOWN;
+  strmov(stmt->error.sqlstate, "00000");
+  init_parsed_query(&stmt->query);
+  init_parsed_query(&stmt->orig_query);
 
-    if (!dbc->ds->no_ssps && allocate_param_bind(&stmt->param_bind, 10))
-    {
-      goto error;
-    }
+  if (!dbc->ds->no_ssps && allocate_param_bind(&stmt->param_bind, 10))
+  {
+    goto error;
+  }
 
-    if (!(stmt->ard= desc_alloc(stmt, SQL_DESC_ALLOC_AUTO,
-                                DESC_APP, DESC_ROW)))
-        goto error;
-    if (!(stmt->ird= desc_alloc(stmt, SQL_DESC_ALLOC_AUTO,
-                                DESC_IMP, DESC_ROW)))
-        goto error;
-    if (!(stmt->apd= desc_alloc(stmt, SQL_DESC_ALLOC_AUTO,
-                                DESC_APP, DESC_PARAM)))
-        goto error;
-    if (!(stmt->ipd= desc_alloc(stmt, SQL_DESC_ALLOC_AUTO,
-                                DESC_IMP, DESC_PARAM)))
-        goto error;
-    stmt->imp_ard= stmt->ard;
-    stmt->imp_apd= stmt->apd;
+  if (!(stmt->ard= desc_alloc(stmt, SQL_DESC_ALLOC_AUTO,
+                              DESC_APP, DESC_ROW)))
+    goto error;
+  if (!(stmt->ird= desc_alloc(stmt, SQL_DESC_ALLOC_AUTO,
+                              DESC_IMP, DESC_ROW)))
+    goto error;
+  if (!(stmt->apd= desc_alloc(stmt, SQL_DESC_ALLOC_AUTO,
+                              DESC_APP, DESC_PARAM)))
+    goto error;
+  if (!(stmt->ipd= desc_alloc(stmt, SQL_DESC_ALLOC_AUTO,
+                              DESC_IMP, DESC_PARAM)))
+    goto error;
+  stmt->imp_ard= stmt->ard;
+  stmt->imp_apd= stmt->apd;
 
-    return SQL_SUCCESS;
+  return SQL_SUCCESS;
 
 error:
-    x_free(stmt->ard);
-    x_free(stmt->ird);
-    x_free(stmt->apd);
-    x_free(stmt->ipd);
-    delete_parsed_query(&stmt->query);
-    delete_parsed_query(&stmt->orig_query);
-    delete_param_bind(stmt->param_bind);
+  x_free(stmt->ard);
+  x_free(stmt->ird);
+  x_free(stmt->apd);
+  x_free(stmt->ipd);
+  delete_parsed_query(&stmt->query);
+  delete_parsed_query(&stmt->orig_query);
+  delete_param_bind(stmt->param_bind);
 
-    return set_dbc_error(dbc, "HY001", "Memory allocation error", MYERR_S1001);
+  return set_dbc_error(dbc, "HY001", "Memory allocation error", MYERR_S1001);
 }
 
 

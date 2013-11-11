@@ -1,6 +1,7 @@
 5.3.1
 
   Functionality added or changed:
+  * Support of SQL_ATTR_RESET_CONNECTION connection attribute (WL# 7274)
 
   Bugs fixed:
   * Memory leak using 5.2.6 ODBC Connector (Bug 17653461/70662)

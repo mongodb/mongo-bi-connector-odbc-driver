@@ -811,6 +811,18 @@ error:
 }
 
 
+void free_connection_stmts(DBC *dbc)
+{
+  LIST *list_element, *next_element;
+
+  for (list_element= dbc->statements; list_element; list_element= next_element)
+  {
+      next_element= list_element->next;
+      my_SQLFreeStmt((SQLHSTMT)list_element->data, SQL_DROP);
+  }
+}
+
+
 /**
   Disconnect a connection.
 
@@ -823,14 +835,10 @@ error:
 */
 SQLRETURN SQL_API SQLDisconnect(SQLHDBC hdbc)
 {
-  LIST *list_element, *next_element;
   DBC *dbc= (DBC *) hdbc;
 
-  for (list_element= dbc->statements; list_element; list_element= next_element)
-  {
-     next_element= list_element->next;
-     my_SQLFreeStmt((SQLHSTMT)list_element->data, SQL_DROP);
-  }
+  free_connection_stmts(dbc);
+  
   mysql_close(&dbc->mysql);
 
   if (dbc->ds && dbc->ds->save_queries)
