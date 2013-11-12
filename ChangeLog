@@ -10,6 +10,8 @@
     (Bug# 16952531/69448)
   * Memory leak in SQLSetStmtAttr() as statement deallocation was missing
     (Bug# 17441507)
+  * Memory leak is happening in SQLProcedureColumns when returning empty results. 
+    (Bug# 17298721)
 
 
 ----
