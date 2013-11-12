@@ -12,6 +12,8 @@
     more then 256 and 129 respectively (Bug# 17358838)
   * Memory leak in SQLSetStmtAttr() as statement deallocation was missing
     (Bug# 17441507)
+  * Memory leak is happening in SQLProcedureColumns when returning empty results. 
+    (Bug# 17298721)
 
 ----
 5.2.6(25-Sep-2013)

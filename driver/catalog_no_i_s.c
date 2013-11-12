@@ -1422,10 +1422,9 @@ mysql_procedure_columns(SQLHSTMT hstmt,
 
       if (data ==  NULL)
       {
-        mysql_free_result(proc_list_res);
         set_mem_error(&stmt->dbc->mysql);
         nReturn= handle_connection_error(stmt);
-        goto clean_exit;
+        goto exit_with_free;
       }
 
       token= proc_get_param_type(token, (int)strlen(token), &ptype);
@@ -1483,7 +1482,6 @@ mysql_procedure_columns(SQLHSTMT hstmt,
       {
         data[mypcTYPE_NAME]= my_strdup(type_map->type_name, MYF(0));
       }
-
 
        /* TYPE_NAME */
       
@@ -1543,10 +1541,9 @@ mysql_procedure_columns(SQLHSTMT hstmt,
 
         if (new_elem == NULL)
         {
-          mysql_free_result(proc_list_res);
           set_mem_error(&stmt->dbc->mysql);
           nReturn= handle_connection_error(stmt);
-          goto clean_exit;
+          goto exit_with_free;
         }
 
         new_elem->data= data;
@@ -1570,10 +1567,9 @@ mysql_procedure_columns(SQLHSTMT hstmt,
     {
       pthread_mutex_unlock(&stmt->dbc->lock);
 
-      mysql_free_result(proc_list_res);
       nReturn= set_error(stmt, MYERR_S1000, mysql_error(&stmt->dbc->mysql),
                 mysql_errno(&stmt->dbc->mysql));
-      goto clean_exit;
+      goto exit_with_free;
     }
 
     pthread_mutex_unlock(&stmt->dbc->lock);
@@ -1583,10 +1579,9 @@ mysql_procedure_columns(SQLHSTMT hstmt,
 
     if (row == NULL)
     {
-      mysql_free_result(proc_list_res);
       nReturn= set_error(stmt, MYERR_S1000, mysql_error(&stmt->dbc->mysql),
                 mysql_errno(&stmt->dbc->mysql));
-      goto clean_exit;
+      goto exit_with_free;
     }
 
     if(params_r->next)
@@ -1659,6 +1654,10 @@ empty_set:
                                       sizeof(SQLPROCEDURECOLUMNS_values),
                                       SQLPROCEDURECOLUMNS_fields,
                                       SQLPROCEDURECOLUMNS_FIELDS);
+exit_with_free:
+
+  mysql_free_result(proc_list_res);
+
 clean_exit:
 
   free_procedurecolumn_res(total_params_num, params_r->next);
