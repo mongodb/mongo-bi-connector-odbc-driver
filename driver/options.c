@@ -641,12 +641,22 @@ MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
 
               if (desc->alloc_type == SQL_DESC_ALLOC_AUTO &&
                   (*dest)->alloc_type == SQL_DESC_ALLOC_USER)
+              {
                 /*
                   If we're setting back the original implicit
                   descriptor, we must disassociate this statement
                   from the explicit descriptor.
                 */
+                LIST *e= (*dest)->exp.stmts;
                 desc_remove_stmt(*dest, stmt);
+                
+                /* Free only if it was the last element */
+                if (!e->next && !e->prev)
+                {
+                  x_free(e);
+                  (*dest)->exp.stmts= NULL;
+                }
+              }
               else if (desc->alloc_type == SQL_DESC_ALLOC_USER)
               {
                 /* otherwise, associate this statement with the desc */

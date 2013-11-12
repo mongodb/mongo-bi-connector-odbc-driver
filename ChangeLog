@@ -14,6 +14,8 @@
   * Segmentation Fault in SQLBulkOperations() (Bug #17714290)
   * Segmentation fault when SQLColumns table or column argument are provided 
     more then 256 and 129 respectively (Bug# 17358838)
+  * Memory leak in SQLSetStmtAttr() as statement deallocation was missing
+    (Bug# 17441507)
 
 ----
 
