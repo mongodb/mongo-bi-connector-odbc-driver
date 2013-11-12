@@ -10,6 +10,8 @@
   * Bad memory access when get out params (Bug #17640929/70642)
   * Segmentation fault when SQLColumns table or column argument are provided 
     more then 256 and 129 respectively (Bug# 17358838)
+  * Memory leak in SQLSetStmtAttr() as statement deallocation was missing
+    (Bug# 17441507)
 
 ----
 5.2.6(25-Sep-2013)
