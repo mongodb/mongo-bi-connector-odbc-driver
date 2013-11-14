@@ -18,6 +18,7 @@
     (Bug# 17441507)
   * Memory leak is happening in SQLProcedureColumns when returning empty results. 
     (Bug# 17298721)
+  * Memory leak in SQLConnect() called after SQLSetConnectAttr() (Bug #17586844)
 
 ----
 
