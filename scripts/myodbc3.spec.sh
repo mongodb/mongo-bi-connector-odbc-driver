@@ -34,8 +34,6 @@
 # Use rpmbuild -ba --define 'shared_mysqlclient 1' ... to build shared
 %{!?shared_mysqlclient: %global static_mysqlclient 1}
 
-%global odbc_gui	0
-
 ##############################################################################
 #
 #  Main information section
@@ -113,10 +111,14 @@ export CFLAGS="%{optflags}"
 cmake -G "Unix Makefiles"   \
     -DRPM_BUILD=1           \
     -DCMAKE_INSTALL_PREFIX=%{_prefix} \
-%if 0%{!?odbc_gui}
+%if 0%{?odbc_gui}
+%else
     -DDISABLE_GUI=1         \
 %endif
+%if 0%{?unixodbc}
     -DWITH_UNIXODBC=1       \
+%endif
+    %{?cmake_opt_extra}      \
     ..
 
 # Note that the ".." needs to be last, in case some arguments expands to 
