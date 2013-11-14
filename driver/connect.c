@@ -308,8 +308,11 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
   ds_get_utf8attr(ds->pwd, &ds->pwd8);
   ds_get_utf8attr(ds->socket, &ds->socket8);
   if (ds->database)
+  {
+    x_free(dbc->database);
     dbc->database= my_strdup(ds_get_utf8attr(ds->database, &ds->database8),
                              MYF(MY_WME));
+  }
   
   if (ds->save_queries && !dbc->query_log)
     dbc->query_log= init_query_log();
