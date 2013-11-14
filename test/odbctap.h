@@ -1275,14 +1275,8 @@ int alloc_basic_handles_with_opt(SQLHENV *henv, SQLHDBC *hdbc,
 
   ok_env(*henv, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, henv));
 
-#ifdef SQL_OV_ODBC3_80
-  ok_env(*henv, SQLSetEnvAttr(*henv, SQL_ATTR_ODBC_VERSION,
-                              (SQLPOINTER)SQL_OV_ODBC3_80, 0));
-#else
   ok_env(*henv, SQLSetEnvAttr(*henv, SQL_ATTR_ODBC_VERSION,
                               (SQLPOINTER)SQL_OV_ODBC3, 0));
-#endif
-
   if (myenable_pooling)
   {
     SQLRETURN rc= SQLSetEnvAttr(*henv, SQL_ATTR_CP_MATCH, (SQLPOINTER)SQL_CP_STRICT_MATCH, 0);

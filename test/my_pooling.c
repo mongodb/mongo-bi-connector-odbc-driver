@@ -93,6 +93,8 @@ DECLARE_TEST(t_reset_connection)
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_reset_connection");
   ok_sql(hstmt, "DROP DATABASE IF EXISTS t_reset_connection");
+
+  return OK;
 }
 
 
