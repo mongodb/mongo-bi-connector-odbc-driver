@@ -47,12 +47,56 @@ DECLARE_TEST(t_bug69950)
   return OK;
 }
 
+
+/**
+  Bug 17587913 Connect crash if the catalog name given to SQLSetConnectAttr 
+  IS INVALID
+*/
+DECLARE_TEST(t_bug17587913)
+{
+  SQLHDBC hdbc1;
+  SQLCHAR str[1024]={0};
+  SQLLEN len= 0;
+  SQLCHAR *DatabaseName = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\
+                          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\
+                          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\
+                          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\
+                          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\
+                          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\
+                          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\
+                          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\
+                          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\
+                          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+  /* 
+    We are not going to use alloc_basic_handles() for a special purpose:
+    SQLSetConnectAttr() is to be called before the connection is made
+  */  
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+  /* getting error here */
+  get_connection(&hdbc1, NULL, NULL, NULL, DatabaseName, NULL);
+
+  ok_con(hdbc1, SQLSetConnectAttr(hdbc1, SQL_ATTR_CURRENT_CATALOG,
+                                  DatabaseName, strlen(DatabaseName)));
+
+  /* Expecting error here */
+  SQLGetConnectAttr(hdbc1, SQL_ATTR_CURRENT_CATALOG, str, 100, &len);
+
+  /* The driver crashes here on getting connected */
+  ok_con(hdbc1, SQLConnect(hdbc1, mydsn, SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS));  
+  ok_con(hdbc1, SQLGetConnectAttr(hdbc1, SQL_ATTR_CURRENT_CATALOG, str, 100, &len));
+
+  ok_con(hdbc1, SQLDisconnect(hdbc1));
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug69950)
+  ADD_TEST(t_bug17587913)
 END_TESTS
 
-myoption &= ~(1 << 30);
-RUN_TESTS_ONCE
-myoption |= (1 << 30);
-testname_suffix= "_no_i_s";
+
 RUN_TESTS

@@ -13,6 +13,8 @@
   * Memory leak is happening in SQLProcedureColumns when returning empty results. 
     (Bug# 17298721)
   * Memory leak in SQLConnect() called after SQLSetConnectAttr() (Bug #17586844)
+  * Connect crash if the catalog name given to SQLSetConnectAttr is invalid
+    (Bug 17587913)
 
 
 ----
