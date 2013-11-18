@@ -287,6 +287,14 @@ MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
         case SQL_ATTR_CURRENT_CATALOG:
             {
                 char ldb[NAME_LEN+1], *db;
+                int cat_len= StringLengthPtr == SQL_NTS ? 
+                             strlen((char *)ValuePtr) : StringLengthPtr;
+
+                if (cat_len > NAME_LEN)
+                {
+                  return set_conn_error(hdbc, MYERR_01004, 
+                                        "Invalid string or buffer length", 0);
+                }
 
                 if (!(db= fix_str((char *)ldb, (char *)ValuePtr, StringLengthPtr)))
                     return set_conn_error(hdbc,MYERR_S1009,NULL, 0);
