@@ -1392,7 +1392,7 @@ DECLARE_TEST(t_bug53891)
 #ifndef USE_IODBC
 DECLARE_TEST(t_odbc_outstream_params)
 {
-  SQLLEN      len= 0, len2= SQL_NTS, bytes;
+  SQLLEN      len= 0, len2= SQL_NTS, bytes, chunk_size;
   SQLCHAR     blobValue[50], chunk[8], *ptr= blobValue;
   SQLCHAR     inout[32]= "Input";
   SQLPOINTER  token;
@@ -1443,10 +1443,18 @@ DECLARE_TEST(t_odbc_outstream_params)
   {
     rc= SQLGetData(hstmt, 1, SQL_C_BINARY, chunk, sizeof(chunk), &bytes);
     is(SQL_SUCCEEDED(rc));
-    memcpy(ptr, chunk, bytes);
-    ptr+= bytes;
+    chunk_size= bytes < sizeof(chunk) ? bytes : sizeof(chunk);
+    memcpy(ptr, chunk, chunk_size);
+    ptr+= chunk_size;
     is(ptr < blobValue + sizeof(blobValue));
+    /* Bug #17814768/70946 - in length pointer driver should always return total number of bytes left */
+    is_num(bytes, len);
+    len-= chunk_size;
   } while(rc == SQL_SUCCESS_WITH_INFO);
+
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_BINARY, chunk, sizeof(chunk), &bytes), SQL_NO_DATA);
+  /* Bug #17814768/70946 - last call should put into length ptr total number of bytes, and not 0 or SQL_NO_TOTAL */
+  is_num(bytes, 31);
 
   is_str(blobValue, "this is LONGTEXT value from SP ", 31);
 
@@ -1469,7 +1477,7 @@ DECLARE_TEST(t_odbc_outstream_params)
 
 DECLARE_TEST(t_odbc_inoutstream_params)
 {
-  SQLLEN      len= 0, len2= SQL_LEN_DATA_AT_EXEC(16), bytes;
+  SQLLEN      len= 0, len2= SQL_LEN_DATA_AT_EXEC(16), bytes, chunk_size;
   SQLCHAR     blobValue[50], chunk[8], *ptr= blobValue, c, inout[32]= "input";
   SQLINTEGER  intParam= 4;
   SQLPOINTER  token;
@@ -1556,9 +1564,13 @@ DECLARE_TEST(t_odbc_inoutstream_params)
   {
     rc= SQLGetData(hstmt, 2, SQL_C_BINARY, chunk, sizeof(chunk), &bytes);
     is(SQL_SUCCEEDED(rc));
-    memcpy(ptr, chunk, bytes);
-    ptr+= bytes;
+    chunk_size= bytes < sizeof(chunk) ? bytes : sizeof(chunk);
+    memcpy(ptr, chunk, chunk_size);
+    ptr+= chunk_size;
     is(ptr < blobValue + sizeof(blobValue));
+    /* Bug #17814768/70946 - in length pointer driver should always return total number of bytes left */
+    is_num(bytes, len);
+    len-= chunk_size;
   } while(rc == SQL_SUCCESS_WITH_INFO);
 
   is_str(blobValue, "a bcdefghijklmnopqrstuvwxy z", 28);

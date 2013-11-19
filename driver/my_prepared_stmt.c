@@ -325,14 +325,22 @@ SQLRETURN ssps_fetch_chunk(STMT *stmt, char *dest, unsigned long dest_bytes, uns
   }
   else
   {
-    *avail_bytes= myodbc_min((SQLULEN)dest_bytes, (SQLULEN)bind.length_value -
-                                                            stmt->getdata.src_offset);
-    stmt->getdata.src_offset+= *avail_bytes;
+    *avail_bytes= (SQLULEN)bind.length_value - stmt->getdata.src_offset;
+    stmt->getdata.src_offset+= myodbc_min((SQLULEN)dest_bytes, *avail_bytes);
 
     if (*bind.error)
     {
       set_stmt_error(stmt, "01004", NULL, 0);
       return SQL_SUCCESS_WITH_INFO;
+    }
+
+    if (*avail_bytes == 0)
+    {
+      /* http://msdn.microsoft.com/en-us/library/ms715441%28v=vs.85%29.aspx
+         "The last call to SQLGetData must always return the length of the data, not zero or SQL_NO_TOTAL." */
+      *avail_bytes= (SQLULEN)bind.length_value;
+      /* "Returns SQL_NO_DATA if it has already returned all of the data for the column." */
+      return SQL_NO_DATA;
     }
   }
 
