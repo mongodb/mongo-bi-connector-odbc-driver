@@ -19,6 +19,9 @@
     (Bug 17587913)
   * SQLPUTDATA give error when Unicode string is used WITH SQL_NTS in string 
     length. (Bug#14810497)
+  * Assert failure in case of prepared statments and SQLDESCRIBECOL() called
+    with column number given larger then actual parameter marker in query.
+    (Bug# 17311065)
 
 ----
 5.2.6(25-Sep-2013)

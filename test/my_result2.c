@@ -918,6 +918,44 @@ DECLARE_TEST(t_bug11766437)
 }
 
 
+/* 
+  Bug #17311065: ASSERT FAILURE IN SQLDESCRIBECOL() 
+                 IF THE COLUMN NUMBER GIVEN IS LARGE
+  Assert failure in case of prepared statments and SQLDESCRIBECOL() called 
+  with column number given larger then actual parameter marker in query.
+*/
+DECLARE_TEST(t_bug17311065)
+{
+  SQLCHAR     message[SQL_MAX_MESSAGE_LENGTH + 1];
+  SQLCHAR     sqlstate[SQL_SQLSTATE_SIZE + 1];
+  char        colname[MYSQL_NAME_LEN];
+  SQLULEN     collen;
+  SQLINTEGER  error;
+  SQLSMALLINT len;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug17311065");
+  ok_sql(hstmt, "CREATE TABLE t_bug17311065("\
+                "id INT , val VARCHAR(20))");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, "select * from t_bug17311065 where id > ?", SQL_NTS));
+
+  expect_stmt(hstmt, SQLDescribeCol(hstmt, 3, colname, sizeof(colname), NULL,
+    NULL, &collen, NULL, NULL), SQL_ERROR);
+
+  ok_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate, &error,
+                               message, sizeof(message), &len));
+  is(strstr((char *)message, "Invalid descriptor index"));
+  is_str(sqlstate, "07009", 5);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug17311065");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug32420)
   ADD_TEST(t_bug34575)
@@ -936,6 +974,7 @@ BEGIN_TESTS
   ADD_TEST(t_prefetch)
   ADD_TOFIX(t_outparams)
   ADD_TEST(t_bug11766437)
+  ADD_TEST(t_bug17311065)
 END_TESTS
 
 
