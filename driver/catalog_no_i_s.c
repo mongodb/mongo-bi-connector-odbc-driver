@@ -189,7 +189,7 @@ mysql_list_dbcolumns(STMT *stmt,
   DBC *dbc= stmt->dbc;
   MYSQL *mysql= &dbc->mysql;
   MYSQL_RES *result;
-  char buff[256], column_buff[64*2+1];
+  char buff[NAME_LEN], column_buff[NAME_LEN];
 
   /* If a catalog was specified, we have to change working catalog
      to be able to use mysql_list_fields. */
@@ -265,6 +265,11 @@ mysql_columns(STMT * stmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
   unsigned long rows= 0, next_row= 0, *lengths;
   char *db= NULL;
   BOOL is_access= FALSE;
+
+  if (cbColumn > NAME_LEN || cbTable > NAME_LEN || cbCatalog > NAME_LEN)
+  {
+    return set_stmt_error(stmt, "HY090", "Invalid string or buffer length", 4001);
+  }
 
   /* Get the list of tables that match szCatalog and szTable */
   pthread_mutex_lock(&stmt->dbc->lock);
@@ -1132,7 +1137,7 @@ mysql_primary_keys(SQLHSTMT hstmt,
                  SQLSMALLINT schema_len __attribute__((unused)),
                  SQLCHAR *table, SQLSMALLINT table_len)
 {
-    STMT FAR  *stmt= (STMT FAR*) hstmt;
+    STMT FAR *stmt= (STMT FAR*) hstmt;
     MYSQL_ROW row;
     char      **data;
     uint      row_count;

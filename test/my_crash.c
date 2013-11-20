@@ -93,9 +93,43 @@ DECLARE_TEST(t_bug17587913)
 }
 
 
+DECLARE_TEST(t_bug17358838)
+{
+  SQLCHAR    buff[512];
+  SQLCHAR    colName[512];
+  SQLSMALLINT maxColLen;
+  SQLCHAR message[SQL_MAX_MESSAGE_LENGTH + 1];
+  SQLCHAR sqlstate[SQL_SQLSTATE_SIZE + 1];
+  SQLINTEGER error;
+  SQLSMALLINT len;
+
+  memset(colName, '\0', 512);
+  memset(colName, 'a', 500);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug17358838");
+  ok_sql(hstmt, "CREATE TABLE t_bug17358838 (a INT)");
+
+  expect_stmt(hstmt, SQLColumns(hstmt, mydb, SQL_NTS, NULL, SQL_NTS,
+    (SQLCHAR *)"t_bug17358838", SQL_NTS, colName, SQL_NTS), SQL_ERROR);
+
+  ok_stmt(hstmt, SQLGetDiagRec(SQL_HANDLE_STMT, hstmt, 1, sqlstate, &error,
+                               message, sizeof(message), &len));
+
+  is_str(sqlstate, "HY090", 5);
+  is(strstr((char *)message, "Invalid string or buffer length"));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE t_bug17358838");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug69950)
   ADD_TEST(t_bug17587913)
+  ADD_TEST(t_bug17358838)
 END_TESTS
 
 

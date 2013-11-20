@@ -17,6 +17,8 @@
     (Bug 17587913)
   * SQLPUTDATA give error when Unicode string is used WITH SQL_NTS in string 
     length. (Bug#14810497)
+  * Segmentation fault when SQLColumns table or column argument are provided
+    more then 256 and 129 respectively (Bug# 17358838)
 
 
 ----
