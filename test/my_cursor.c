@@ -3340,6 +3340,64 @@ DECLARE_TEST(t_bug41946)
 }
 
 
+/**
+ Bug#14810497: SQLPUTDATA DON'T HANDLE UNICODE STRING WITH SQL_NTS IN 
+               STRING LENGTH.
+*/
+DECLARE_TEST(t_sqlputdata)
+{
+  SQLRETURN rc;
+  SQLINTEGER  id, resId;
+  SQLINTEGER  resData;
+  SQLWCHAR wbuff[MAX_ROW_DATA_LEN+1];
+  wchar_t wcdata[]= L"S\x00e3o Paolo";
+
+  ok_sql(hstmt, "drop table if exists t_sqlputdata");
+  ok_sql(hstmt, "CREATE TABLE t_sqlputdata( id INT, pdata varchar(50));");
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, "INSERT INTO t_sqlputdata VALUES ( ?, ?)", SQL_NTS));
+  id= 1;
+  resId = 0;
+  resData = SQL_LEN_DATA_AT_EXEC(0);
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_SLONG,
+                        SQL_INTEGER, 0, 0, &id, 0, &resId));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT,
+                        SQL_C_WCHAR, SQL_WCHAR, 0, 0, (SQLPOINTER)1,
+                        0, &resData));
+
+  rc = SQLExecute(hstmt);
+  if (rc == SQL_NEED_DATA)
+  {
+    int parameter;
+    if (SQLParamData(hstmt,(void**)&parameter) == SQL_NEED_DATA && parameter == 1)
+    {
+      if (sizeof(SQLWCHAR) == sizeof(wchar_t))
+        ok_stmt(hstmt, SQLPutData(hstmt, wcdata,  SQL_NTS));
+      else
+        ok_stmt(hstmt, SQLPutData(hstmt, W(wcdata),  SQL_NTS));
+      ok_stmt(hstmt, SQLParamData(hstmt,(void**)&parameter));
+    }
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+
+  ok_sql(hstmt, "select id, pdata from t_sqlputdata");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_num(my_fetch_int(hstmt, 1), 1);
+  is_wstr(my_fetch_wstr(hstmt, wbuff, 2), 
+			wcdata, 9);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists t_sqlputdata");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_positioned_cursor)
   ADD_TEST(my_setpos_cursor)
@@ -3389,6 +3447,7 @@ BEGIN_TESTS
   ADD_TEST(t_dae_setpos_update)
   ADD_TEST(t_bug39961)
   ADD_TEST(t_bug41946)
+  ADD_TEST(t_sqlputdata)
 END_TESTS
 
 
