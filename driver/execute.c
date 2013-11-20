@@ -1610,13 +1610,24 @@ SQLRETURN SQL_API SQLPutData( SQLHSTMT      hstmt,
     if ( !stmt )
         return SQL_ERROR;
 
-    if ( cbValue == SQL_NTS )
-        cbValue= strlen(rgbValue);
     if (stmt->dae_type == DAE_NORMAL)
       aprec= desc_get_rec(stmt->apd, stmt->current_param - 1, FALSE);
     else
       aprec= desc_get_rec(stmt->setpos_apd, stmt->current_param - 1, FALSE);
     assert(aprec);
+
+    if ( cbValue == SQL_NTS )
+    {
+      if (aprec->concise_type == SQL_C_WCHAR)
+      {
+        cbValue= sqlwcharlen((SQLWCHAR *)rgbValue) * sizeof(SQLWCHAR);
+      }
+      else
+      {
+        cbValue= strlen(rgbValue);
+      }
+    }
+
     if ( cbValue == SQL_NULL_DATA )
     {
         if ( aprec->par.alloced )
