@@ -1011,8 +1011,11 @@ MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
       return error;
     if (!stmt->result)
       return set_stmt_error(stmt, "07005", "No result set", 0);
-    if (column == 0 || column > stmt->ird->count)
-      return set_stmt_error(stmt, "07009", "Invalid descriptor index", 0);
+  }
+
+  if (column == 0 || column > stmt->ird->count)
+  {
+    return set_stmt_error(stmt, "07009", "Invalid descriptor index", 0);
   }
 
   irrec= desc_get_rec(stmt->ird, column - 1, FALSE);
