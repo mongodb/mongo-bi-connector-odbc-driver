@@ -19,6 +19,8 @@
     length. (Bug#14810497)
   * Segmentation fault when SQLColumns table or column argument are provided
     more then 256 and 129 respectively (Bug# 17358838)
+  * SQLFOREIGNKEYS WITH FLAG_NO_INFORMATION_SCHEMA OPTION RETURNS BAD RESULTS
+    (Bug#16920750)
 
 
 ----

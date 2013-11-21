@@ -63,6 +63,7 @@ extern "C"
 #endif
 
 #include "error.h"
+#include "parse.h"
 
 #if defined(_WIN32) || defined(WIN32)
 # define INTFUNC  __stdcall

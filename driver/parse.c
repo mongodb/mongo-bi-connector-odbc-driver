@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -69,6 +69,22 @@ const char *mystr_get_next_token(CHARSET_INFO *charset,
   return pos;   /* Return found token */
 }
 
+const char * find_first_token(CHARSET_INFO *charset, const char * begin,
+                        const char * end, const char * target)
+{
+  const char * token, *before= end;
+
+  while ((token= mystr_get_next_token(charset, &begin, end)) != end)
+  {
+    if (!myodbc_casecmp(token, target, strlen(target)))
+    {
+      return token;
+    }
+  }
+
+  return NULL;
+}
+
 
 const char * find_token(CHARSET_INFO *charset, const char * begin,
                         const char * end, const char * target)
@@ -85,5 +101,14 @@ const char * find_token(CHARSET_INFO *charset, const char * begin,
   }
 
   return NULL;
+}
+
+
+const char * skip_leading_spaces(const char *str)
+{
+  while (str && isspace(*str))
+    ++str;
+
+  return str;
 }
 

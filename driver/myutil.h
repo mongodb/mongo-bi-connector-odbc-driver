@@ -151,8 +151,6 @@ char *check_if_positioned_cursor_exists(STMT FAR *stmt, STMT FAR **stmtNew);
 SQLRETURN insert_param(STMT *stmt, char **to, DESC *apd,
                        DESCREC *aprec, DESCREC *iprec, SQLULEN row);
 char *add_to_buffer(NET *net,char *to,const char *from,ulong length);
-int is_set_names_statement(SQLCHAR *query);
-int is_select_statement(SQLCHAR *query);
 
 void reset_getdata_position(STMT *stmt);
 
@@ -333,6 +331,8 @@ char * extend_buffer(NET *net, char *to, ulong length);
 char * add_to_buffer(NET *net,char *to,const char *from,ulong length);
 MY_LIMIT_CLAUSE find_position4limit(CHARSET_INFO* cs, char *query, char * query_end);
 BOOL myodbc_isspace(CHARSET_INFO* cs, const char * begin, const char *end);
+const char get_identifier_quote(STMT *stmt);
+const char * get_session_variable(STMT *stmt, const char *var);
 
 /*results.c*/
 long long binary2numeric(long long *dst, char *src, uint srcLen);
@@ -380,14 +380,6 @@ long double ssps_get_double(STMT *stmt, ulong column_number, char *value,
                             ulong length);
 char *      ssps_get_string(STMT *stmt, ulong column_number, char *value,
                             ulong *length, char * buffer);
-
-/* parse.c */
-const char *mystr_get_prev_token(CHARSET_INFO *charset,
-                                        const char **query, const char *start);
-const char *mystr_get_next_token(CHARSET_INFO *charset,
-                                        const char **query, const char *end);
-const char *find_token(CHARSET_INFO *charset, const char * begin,
-                       const char * end, const char * target);
 
 #ifdef __WIN__
 #define cmp_database(A,B) myodbc_strcasecmp((const char *)(A),(const char *)(B))
