@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -53,7 +53,7 @@ enum myodbcProcColumns {mypcPROCEDURE_CAT= 0, mypcPROCEDURE_SCHEM,  mypcPROCEDUR
 
 /* Some common(for i_s/no_i_s) helper functions */
 const char *my_next_token(const char *prev_token, 
-                                char **token, 
+                          const char **token, 
                                 char *data, 
                           const char chr);
 

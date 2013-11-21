@@ -22,6 +22,8 @@
   * Assert failure in case of prepared statments and SQLDESCRIBECOL() called
     with column number given larger then actual parameter marker in query.
     (Bug# 17311065)
+  * SQLFOREIGNKEYS WITH FLAG_NO_INFORMATION_SCHEMA OPTION RETURNS BAD RESULTS 
+    (Bug#16920750)
 
 ----
 5.2.6(25-Sep-2013)

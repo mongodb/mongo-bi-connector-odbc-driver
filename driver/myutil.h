@@ -338,6 +338,8 @@ MY_LIMIT_CLAUSE find_position4limit(CHARSET_INFO* cs, char *query,
                                     char * query_end);
 BOOL myodbc_isspace(CHARSET_INFO* cs, const char * begin, const char *end);
 BOOL got_out_parameters(STMT *stmt);
+const char get_identifier_quote(STMT *stmt);
+const char * get_session_variable(STMT *stmt, const char *var);
 
 /* handle.c*/
 BOOL          allocate_param_bind(DYNAMIC_ARRAY **param_bind, uint elements);

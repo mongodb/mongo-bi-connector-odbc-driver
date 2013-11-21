@@ -194,6 +194,8 @@ const char *mystr_get_next_token(CHARSET_INFO *charset,
                                         const char **query, const char *end);
 const char *find_token(CHARSET_INFO *charset, const char * begin,
                        const char * end, const char * target);
+const char *find_first_token(CHARSET_INFO *charset, const char * begin,
+                       const char * end, const char * target);
 const char *skip_leading_spaces(const char *str);
 
 int         is_set_names_statement  (const SQLCHAR *query);
