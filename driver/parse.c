@@ -376,6 +376,23 @@ const char * find_token(CHARSET_INFO *charset, const char * begin,
 }
 
 
+const char * find_first_token(CHARSET_INFO *charset, const char * begin,
+                        const char * end, const char * target)
+{
+  const char * token, *before= end;
+
+  while ((token= mystr_get_next_token(charset, &begin, end)) != end)
+  {
+    if (!myodbc_casecmp(token, target, strlen(target)))
+    {
+      return token;
+    }
+  }
+
+  return NULL;
+}
+
+
 const char * skip_leading_spaces(const char *str)
 {
   while (str && isspace(*str))

@@ -353,6 +353,8 @@ BOOL            myodbc_isspace      (CHARSET_INFO* cs, const char * begin, const
 #define GOT_OUT_STREAM_PARAMETERS 2
 
 int           got_out_parameters  (STMT *stmt);
+const char    get_identifier_quote(STMT *stmt);
+const char *  get_session_variable(STMT *stmt, const char *var);
 
 /* handle.c*/
 BOOL          allocate_param_bind     (DYNAMIC_ARRAY **param_bind, uint elements);

@@ -427,10 +427,76 @@ void t_strstr()
 }
 
 
+/**
+ Bug #16920750: SQLFOREIGNKEYS WITH FLAG_NO_INFORMATION_SCHEMA OPTION RETURNS
+                BAD RESULTS
+ Test consists of reference action ON UPDATE | ON DELETE with multiple keys.
+ This was not present in any earlier test case.
+*/
+DECLARE_TEST(t_bug16920750)
+{
+  SQLCHAR buff[255];
+  SQLLEN len;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug16920750c, t_bug16920750b, t_bug16920750a");
+  ok_sql(hstmt, "CREATE TABLE t_bug16920750a (category INT NOT NULL, id INT NOT NULL, price DECIMAL, "
+                "PRIMARY KEY(category, id) ) ENGINE=INNODB;");
+  ok_sql(hstmt, "CREATE TABLE t_bug16920750b (id INT NOT NULL, PRIMARY KEY (id)) ENGINE=InnoDB");
+  ok_sql(hstmt, "CREATE TABLE t_bug16920750c (no INT NOT NULL AUTO_INCREMENT, product_category "
+                "INT NOT NULL, product_id INT NOT NULL, customer_id INT NOT NULL, "
+                "PRIMARY KEY(no), INDEX (product_category, product_id), INDEX (customer_id), "
+                "CONSTRAINT `constraint_1` FOREIGN KEY (product_category, product_id) "
+                "REFERENCES t_bug16920750a(category, id) ON UPDATE CASCADE ON DELETE RESTRICT, "
+                "CONSTRAINT `constraint_2` FOREIGN KEY (customer_id) "
+                "REFERENCES t_bug16920750b(id) ) ENGINE=InnoDB");
+
+  ok_stmt(hstmt, SQLForeignKeys(hstmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
+                                NULL, 0, (SQLCHAR *)"t_bug16920750c", SQL_NTS));
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buff, 3), "t_bug16920750a", 14);
+  is_str(my_fetch_str(hstmt, buff, 4), "category", 8);
+  is_str(my_fetch_str(hstmt, buff, 7), "t_bug16920750c", 14);
+  is_str(my_fetch_str(hstmt, buff, 8), "product_category", 16);
+  is_str(my_fetch_str(hstmt, buff, 12), "constraint_1", 12);
+  is_str(my_fetch_str(hstmt, buff, 10), "0", 1);
+  is_str(my_fetch_str(hstmt, buff, 11), "3", 1);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buff, 3), "t_bug16920750b", 14);
+  is_str(my_fetch_str(hstmt, buff, 4), "id", 2);
+  is_str(my_fetch_str(hstmt, buff, 7), "t_bug16920750c", 14);
+  is_str(my_fetch_str(hstmt, buff, 8), "customer_id", 11);
+  is_str(my_fetch_str(hstmt, buff, 12), "constraint_2", 12);
+  is_str(my_fetch_str(hstmt, buff, 10), "3", 1);
+  is_str(my_fetch_str(hstmt, buff, 11), "3", 1);
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buff, 3), "t_bug16920750a", 14);
+  is_str(my_fetch_str(hstmt, buff, 4), "id", 2);
+  is_str(my_fetch_str(hstmt, buff, 7), "t_bug16920750c", 14);
+  is_str(my_fetch_str(hstmt, buff, 8), "product_id", 10);
+  is_str(my_fetch_str(hstmt, buff, 12), "constraint_1", 12);
+  is_str(my_fetch_str(hstmt, buff, 10), "0", 1);
+  is_str(my_fetch_str(hstmt, buff, 11), "3", 1);
+
+  expect_stmt(hstmt, SQLFetch(hstmt), SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug16920750c, t_bug16920750b, t_bug16920750a");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_no_keys)
   ADD_TEST(my_foreign_keys)
+  ADD_TEST(t_bug16920750)
 END_TESTS
 
-
+myoption &= ~(1 << 30);
+RUN_TESTS_ONCE
+myoption |= (1 << 30);
+testname_suffix= "_no_i_s";
 RUN_TESTS
+

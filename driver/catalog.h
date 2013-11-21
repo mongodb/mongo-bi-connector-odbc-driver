@@ -53,7 +53,7 @@ enum myodbcProcColumns {mypcPROCEDURE_CAT= 0, mypcPROCEDURE_SCHEM,  mypcPROCEDUR
 
 /* Some common(for i_s/no_i_s) helper functions */
 const char *my_next_token(const char *prev_token, 
-                                char **token, 
+                          const char **token, 
                                 char *data, 
                           const char chr);
 

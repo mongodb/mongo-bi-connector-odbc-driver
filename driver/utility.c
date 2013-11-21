@@ -3869,3 +3869,57 @@ int got_out_parameters(STMT *stmt)
 
   return result;
 }
+
+
+const char * get_session_variable(STMT *stmt, const char *var)
+{
+  char buff[255+4*NAME_CHAR_LEN], *to;
+  MYSQL_RES *res;
+  MYSQL_ROW row;
+
+  if (var)
+  {
+    to= strmov(buff, "SHOW SESSION VARIABLES LIKE '");
+    to= strmov(to, var);
+    to= strmov(to, "'");
+    *to= '\0';
+
+    if (!SQL_SUCCEEDED(odbc_stmt(stmt->dbc, buff)))
+    {
+      return NULL;
+    }
+
+    res= mysql_store_result(&stmt->dbc->mysql);
+    if (!res)
+      return NULL;
+
+    row= mysql_fetch_row(res);
+    if (row)
+      return row[1];
+  }
+
+  return NULL;
+}
+
+
+const char get_identifier_quote(STMT *stmt)
+{
+  const char tick= '`', quote= '"', empty= ' ';
+
+  if (is_minimum_version(stmt->dbc->mysql.server_version, "3.23.06"))
+  {
+    const char *sql_mode= get_session_variable(stmt, "SQL_MODE");
+    uint length= strlen(sql_mode);
+    const char *end=  sql_mode + length;
+    if (find_first_token(stmt->dbc->ansi_charset_info, sql_mode, end, "ANSI_QUOTES"))
+    {
+      return quote;
+    }
+    else
+    {
+      return tick;
+    }
+  }
+  return empty;
+}
+

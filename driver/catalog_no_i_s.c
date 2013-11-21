@@ -627,7 +627,7 @@ mysql_list_table_priv(SQLHSTMT hstmt,
 
     while ( (row= mysql_fetch_row(stmt->result)) )
     {
-      char  *grants= row[4];
+      const char  *grants= row[4];
       char  token[NAME_LEN+1];
       const char *grant= (const char *)grants;
 
@@ -775,7 +775,7 @@ mysql_list_column_priv(SQLHSTMT hstmt,
   row_count= 0;
   while ( (row= mysql_fetch_row(stmt->result)) )
   {
-    char  *grants= row[5];
+    const char  *grants= row[5];
     char  token[NAME_LEN+1];
     const char *grant= (const char *)grants;
 
@@ -873,6 +873,61 @@ MYSQL_RES *mysql_table_status_show(STMT        *stmt,
 }
 
 
+/**
+Get the CREATE TABLE statement for the given table.
+Lengths may not be SQL_NTS.
+
+@param[in] stmt           Handle to statement
+@param[in] catalog        Catalog (database) of table, @c NULL for current
+@param[in] catalog_length Length of catalog name
+@param[in] table          Name of table
+@param[in] table_length   Length of table name
+
+@return Result of SHOW CREATE TABLE , or NULL if there is an error
+or empty result (check mysql_errno(&stmt->dbc->mysql) != 0)
+*/
+MYSQL_RES *mysql_show_create_table(STMT        *stmt,
+                                   SQLCHAR     *catalog,
+                                   SQLSMALLINT  catalog_length,
+                                   SQLCHAR     *table,
+                                   SQLSMALLINT  table_length)
+{
+  MYSQL *mysql= &stmt->dbc->mysql;
+  /** @todo determine real size for buffer */
+  char buff[36 + 4*NAME_LEN + 1], *to;
+
+  to= strmov(buff, "SHOW CREATE TABLE ");
+  if (catalog && *catalog)
+  {
+    to= strmov(to, " `");
+    to= strmov(to, (char *)catalog);
+    to= strmov(to, "`.");
+  }
+
+  /* Empty string won't match anything. */
+  if (!*table)
+    return NULL;
+
+  if (table && *table)
+  {
+    to= strmov(to, " `");
+    to= strmov(to, (char *)table);
+    to= strmov(to, "`");
+  }
+
+  MYLOG_QUERY(stmt, buff);
+
+  assert(to - buff < sizeof(buff));
+
+  if (mysql_real_query(mysql,buff,(unsigned long)(to - buff)))
+  {
+    return NULL;
+  }
+
+  return mysql_store_result(mysql);
+}
+
+
 /*
 ****************************************************************************
 SQLForeignKeys
@@ -898,11 +953,106 @@ MYSQL_FIELD SQLFORE_KEYS_fields[]=
 
 const uint SQLFORE_KEYS_FIELDS= array_elements(SQLFORE_KEYS_fields);
 
+/* Multiple array of Struct to store and sort SQLForeignKeys field */
+typedef struct SQL_FOREIGN_KEY_FIELD
+{
+  char PKTABLE_CAT[NAME_LEN + 1];
+  char PKTABLE_SCHEM[NAME_LEN + 1];
+  char PKTABLE_NAME[NAME_LEN + 1];
+  char PKCOLUMN_NAME[NAME_LEN + 1];
+  char FKTABLE_CAT[NAME_LEN + 1];
+  char FKTABLE_SCHEM[NAME_LEN + 1];
+  char FKTABLE_NAME[NAME_LEN + 1];
+  char FKCOLUMN_NAME[NAME_LEN + 1];
+  int  KEY_SEQ;
+  int  UPDATE_RULE;
+  int  DELETE_RULE;
+  char FK_NAME[NAME_LEN + 1];
+  char PK_NAME[NAME_LEN + 1];
+  int  DEFERRABILITY;
+} MY_FOREIGN_KEY_FIELD;
+
 char *SQLFORE_KEYS_values[]= {
     NULL,"",NULL,NULL,
     NULL,"",NULL,NULL,
     0,0,0,NULL,NULL,0
 };
+
+
+/*
+ * Get a record from the array if exists otherwise allocate a new 
+ * record and return.  
+ *
+ * @param records MY_FOREIGN_KEY_FIELD record 
+ * @param recnum  0-based record number
+ *
+ * @return The requested record or NULL if it doesn't exist
+ *         (and isn't created).
+ */
+MY_FOREIGN_KEY_FIELD *fk_get_rec(DYNAMIC_ARRAY *records, unsigned int recnum)
+{
+  MY_FOREIGN_KEY_FIELD *rec= NULL;
+  if (recnum < records->elements)
+  {
+    rec= ((MY_FOREIGN_KEY_FIELD *)records->buffer) + recnum;
+  }
+  else
+  {
+    rec= (MY_FOREIGN_KEY_FIELD *) alloc_dynamic(records);
+    if (!rec)
+      return NULL;
+    memset(rec, 0, sizeof(MY_FOREIGN_KEY_FIELD));
+  }
+  return rec;
+}
+
+
+/* 
+  If the foreign keys associated with a primary key are requested, the 
+  result set is ordered by FKTABLE_CAT, FKTABLE_NAME, KEY_SEQ, PKTABLE_NAME
+*/
+static int sql_fk_sort(const void *var1, const void *var2)
+{
+  if ((strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->FKTABLE_CAT,
+               ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_CAT) <= 0)
+        && (strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->FKTABLE_NAME,
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_NAME) <= 0)
+        && (((MY_FOREIGN_KEY_FIELD *) var1)->KEY_SEQ <= 
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->KEY_SEQ)
+        && (strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->PKTABLE_NAME,
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_NAME) <= 0))
+  {
+    return -1;
+  }
+  else
+  {
+    return 1;
+  }
+}
+
+
+/* 
+  If the primary keys associated with a foreign key are requested, the 
+  result set is ordered by PKTABLE_CAT, PKTABLE_NAME, KEY_SEQ, FKTABLE_NAME
+*/
+static int sql_pk_sort(const void *var1, const void *var2)
+{
+  if ((strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->PKTABLE_CAT,
+               ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_CAT) <= 0)
+        && (strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->PKTABLE_NAME,
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_NAME) <= 0)
+        && (((MY_FOREIGN_KEY_FIELD *) var1)->KEY_SEQ <= 
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->KEY_SEQ)
+        && (strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->FKTABLE_NAME,
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_NAME) <= 0))
+  {
+    return -1;
+  }
+  else
+  {
+    return 1;
+  }
+}
 
 
 SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
@@ -923,34 +1073,18 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
   uint row_count= 0;
 
   MEM_ROOT  *alloc;
-  MYSQL_ROW row;
+  MYSQL_ROW row, table_row;
+  MYSQL_RES *res;
   char      **data;
   char      **tempdata; /* We need this array for the cases if key count is greater than 18 */
-  uint       comment_id;
+  char      buffer[NAME_LEN + 1];
+  unsigned int index= 0;
+  DYNAMIC_ARRAY records;
+  MY_FOREIGN_KEY_FIELD *fkRows= NULL;
+  unsigned long *lengths;
 
-  pthread_mutex_lock(&stmt->dbc->lock);
+  my_init_dynamic_array(&records, sizeof(MY_FOREIGN_KEY_FIELD), 0, 0);
 
-  stmt->result= mysql_table_status(stmt,
-                                   szFkCatalogName, cbFkCatalogName,
-                                   szFkTableName, cbFkTableName,
-                                   FALSE, TRUE, FALSE);
-
-  if (!stmt->result)
-  {
-    if (mysql_errno(&stmt->dbc->mysql))
-    {
-      SQLRETURN rc= handle_connection_error(stmt);
-      pthread_mutex_unlock(&stmt->dbc->lock);
-      return rc;
-    }
-    else
-    {
-      pthread_mutex_unlock(&stmt->dbc->lock);
-      goto empty_set;
-    }
-    pthread_mutex_unlock(&stmt->dbc->lock);
-  }
-  pthread_mutex_unlock(&stmt->dbc->lock);
   tempdata= (char**) my_malloc(sizeof(char*)*SQLFORE_KEYS_FIELDS*
                                          64, /* Maximum index count */
                                          MYF(MY_ZEROFILL));
@@ -960,118 +1094,310 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
     return handle_connection_error(stmt);
   }
 
-  /* Convert mysql fields to data that odbc wants */
-  alloc= &stmt->result->field_alloc;
   data= tempdata;
-  comment_id= stmt->result->field_count - 1;
 
-  while ( (row= mysql_fetch_row(stmt->result)) )
+  /* Get the list of tables that match szCatalog and szTable */
+  pthread_mutex_lock(&stmt->dbc->lock);
+  res= mysql_table_status(stmt, szFkCatalogName, cbFkCatalogName, szFkTableName, 
+                          cbFkTableName, FALSE, TRUE, TRUE);
+  if (!res && mysql_errno(&stmt->dbc->mysql))
   {
-      if ( (row[1] && strcmp(row[1],"InnoDB")==0) )
-      {
-          const char *token,*pktoken,*fk_cols_start,*pk_cols_start;
-          char       *comment_token, ref_token[NAME_LEN+1];
-          char       *pkcomment,*fkcomment;
-          uint       key_seq,pk_length,fk_length;
-
-          if ( !(comment_token= strchr(row[comment_id],';')) )
-              continue; /* MySQL 4.1 and above, the comment field is '15' */
-
-          do
-          {
-              /*
-                Found reference information in comment field from
-                InnoDB type, and parse the same to get the FK
-                information ..
-              */
-              key_seq= 1;
-
-              if ( !(token= my_next_token(NULL,&comment_token,NULL,'(')) )
-                  break;
-              fk_cols_start = token + 1;
-
-              if ( !(token= my_next_token(token,&comment_token,ref_token,')')) )
-                  continue;
-              fk_length= (uint)((token-2)-fk_cols_start);
-
-              if ( !(token= my_next_token(token+8,&comment_token,ref_token,'/')) )
-                  continue;
-
-              data[0]= strdup_root(alloc,ref_token); /* PKTABLE_CAT */
-
-              if (!(token= my_next_token(token, &comment_token,
-                                         ref_token, '(')) ||
-                   (szPkTableName &&
-                    myodbc_casecmp((char *)szPkTableName, ref_token,
-                                   cbPkTableName)))
-                  continue;
-
-              ref_token[strlen(ref_token)- 1] = 0;   /* Remove last quot character */
-              data[2]= strdup_root(alloc,ref_token); /* PKTABLE_TABLE */
-              pk_cols_start = token + 1;
-
-              if ( !(token= my_next_token(token,&comment_token,ref_token,')')) )
-                  continue;
-              pk_length= (uint)((token-2)-pk_cols_start);
-
-              data[1]= NULL;                         /* PKTABLE_SCHEM */
-
-              /**
-                @todo clean this up when current database tracking is
-                better
-              */
-              if (!szFkCatalogName && !stmt->dbc->database)
-                reget_current_catalog(stmt->dbc);
-
-              /* FKTABLE_CAT */
-              data[4]= (szFkCatalogName ?
-                        strdup_root(alloc, (char *)szFkCatalogName) :
-                        strdup_root(alloc, stmt->dbc->database ?
-                          stmt->dbc->database : "null"));
-              data[5]= NULL;                         /* FKTABLE_SCHEM */
-              data[6]= row[0];                       /* FKTABLE_TABLE */
-
-              /*
-                 We could figure out UPDATE_RULE and DELETE_RULE by
-                 parsing the comment field. For now, we just return
-                 SQL_CASCADE>
-              */
-              data[9]=  "1"; /*SQL_CASCADE*/        /* UPDATE_RULE */
-              data[10]= "1"; /*SQL_CASCADE*/        /* DELETE_RULE */
-              data[11]= NULL;                       /* FK_NAME */
-              data[12]= NULL;                       /* PK_NAME */
-              data[13]= "7"; /*SQL_NOT_DEFERRABLE*/ /* DEFERRABILITY */
-
-              token = fkcomment = (char *)fk_cols_start;
-              pktoken = pkcomment = (char *)pk_cols_start;
-              fkcomment[fk_length]= '\0';
-              pkcomment[pk_length]= '\0';
-
-              while ( (token= my_next_token(token,&fkcomment,ref_token,' ')) )
-              {
-                  /* Multiple columns exists .. parse them to individual rows */
-                  char **prev_data= data;
-                  data[7]= strdup_root(alloc,ref_token);    /* FKTABLE_COLUMN */
-                  pktoken= my_next_token(pktoken,&pkcomment,ref_token,' ');
-                  data[3]= strdup_root(alloc,ref_token);    /* PKTABLE_COLUMN */
-                  sprintf(ref_token,"%d",key_seq++);
-                  data[8]= strdup_root(alloc,ref_token);    /* KEY_SEQ */
-                  data+= SQLFORE_KEYS_FIELDS;
-                  ++row_count;
-                  for ( fk_length= SQLFORE_KEYS_FIELDS; fk_length--; )
-                      data[fk_length]= prev_data[fk_length];
-              }
-              data[7]= strdup_root(alloc,fkcomment);      /* FKTABLE_COLUMN */
-              data[3]= strdup_root(alloc,pkcomment);      /* PKTABLE_COLUMN */
-              sprintf(ref_token,"%d",key_seq);
-              data[8]= strdup_root(alloc,ref_token);      /* KEY_SEQ */
-
-              data+= SQLFORE_KEYS_FIELDS;
-              ++row_count;
-
-          } while ( (comment_token = strchr(comment_token,';')) );/* multi table ref */
-      }
+    SQLRETURN rc= handle_connection_error(stmt);
+    pthread_mutex_unlock(&stmt->dbc->lock);
+    return rc;
   }
+  else if (!res)
+  {
+    pthread_mutex_unlock(&stmt->dbc->lock);
+    goto empty_set;
+  }
+  pthread_mutex_unlock(&stmt->dbc->lock);
+
+  while ((table_row= mysql_fetch_row(res)))
+  {
+    pthread_mutex_lock(&stmt->dbc->lock);
+    lengths= mysql_fetch_lengths(res);
+    stmt->result= mysql_show_create_table(stmt,
+                                          szFkCatalogName, cbFkCatalogName,
+                                          (SQLCHAR *)table_row[0], 
+                                          (SQLSMALLINT)lengths[0]);
+
+    if (!stmt->result)
+    {
+      if (mysql_errno(&stmt->dbc->mysql))
+      {
+        SQLRETURN rc= handle_connection_error(stmt);
+        pthread_mutex_unlock(&stmt->dbc->lock);
+        return rc;
+      }
+      else
+      {
+        pthread_mutex_unlock(&stmt->dbc->lock);
+        goto empty_set;
+      }
+      pthread_mutex_unlock(&stmt->dbc->lock);
+    }
+    pthread_mutex_unlock(&stmt->dbc->lock);
+   
+    /* Convert mysql fields to data that odbc wants */
+    alloc= &stmt->result->field_alloc;
+
+    while (row= mysql_fetch_row(stmt->result))
+    {
+      lengths= mysql_fetch_lengths(stmt->result);
+      if (lengths[1])
+      {    
+        const char Fk_keywords[2][12]= {"FOREIGN KEY", "REFERENCES"};
+        const char Fk_ref_action[2][12]= {"ON UPDATE", "ON DELETE"};
+        const char *pos, *end_pos, *bracket_end, *comma_pos;
+        char       table_name[NAME_LEN+1], constraint_name[NAME_LEN+1];
+        char       quote_char;
+        unsigned int last_index= 0, quote_char_length= 1, key_seq, key_search;
+        const char *end= row[1] + lengths[1];
+        const char *token= row[1];
+
+        quote_char= get_identifier_quote(stmt);
+        while ((token= find_first_token(stmt->dbc->ansi_charset_info, 
+                              token, end, "CONSTRAINT")) != NULL)
+        {
+          pos= token;
+          last_index= index;
+          key_seq= 0;  
+
+          /* get constraint name */
+          pos= my_next_token(NULL, &pos, NULL, 
+                 quote_char ? quote_char : ' ');
+          end_pos= my_next_token(pos, &pos, constraint_name, 
+                     quote_char ? quote_char : ' ');
+          token= end_pos;
+
+          for (key_search= 0; key_search < 2; ++key_search)
+          {
+            /* get [FOREIGN KEY | REFERENCES] position */
+            token= find_first_token(stmt->dbc->ansi_charset_info, token - 1, 
+                                      end, Fk_keywords[key_search]);
+            token += strlen(Fk_keywords[key_search]);
+            token= skip_leading_spaces(token);
+            *table_name= 0;
+
+            /* if '(' not present get primary key table name */
+            if (*token != '(')
+            {
+              pos= token;
+              pos= my_next_token(NULL, &pos, NULL, 
+                     quote_char ? quote_char : ' ');
+              end_pos= my_next_token(pos, &pos, table_name, 
+                         quote_char ? quote_char : ' ');
+              token= end_pos;
+            }
+
+            token= skip_leading_spaces(token);
+            /* 
+               get foreign key and primary column name 
+               in loop 1 and 2 respectively
+            */
+            if (*token == '(')
+            {
+              bracket_end= pos= token + 1;
+              bracket_end= my_next_token(NULL, &bracket_end, NULL, ')');
+              /* 
+                index position need to be maintained for both PK column 
+                and FK column to fetch proper record    
+              */
+              if (key_search == 0)
+                last_index= index;
+              else
+                index= last_index;
+              do 
+              {
+                fkRows= fk_get_rec(&records, index);
+                if (!fkRows)
+                  goto empty_set;
+
+                comma_pos= pos;
+                comma_pos= my_next_token(NULL, &comma_pos, NULL, ',');
+
+                if (comma_pos > bracket_end || comma_pos == NULL)
+                {
+                  memcpy(buffer, pos + quote_char_length, 
+                           bracket_end - pos - quote_char_length * 2 - 1);
+                  buffer[bracket_end - pos - quote_char_length * 2 - 1]= '\0';
+                  if (key_search == 0)
+                  {
+                    strmov(fkRows->FKCOLUMN_NAME, buffer);
+                  }
+                  else
+                  {
+                    strmov(fkRows->PKCOLUMN_NAME, buffer);
+                    strmov(fkRows->PKTABLE_NAME, table_name);
+                    strmov(fkRows->FK_NAME, constraint_name);
+                    strmov(fkRows->FKTABLE_NAME, row[0]);
+                    strmov(fkRows->FKTABLE_CAT, (szFkCatalogName ?
+                            strdup_root(alloc, (char *)szFkCatalogName) :
+                            strdup_root(alloc, stmt->dbc->database ?
+                            stmt->dbc->database : "null")));
+                    strmov(fkRows->PKTABLE_CAT, (szPkCatalogName ?
+                            strdup_root(alloc, (char *)szPkCatalogName) :
+                            strdup_root(alloc, stmt->dbc->database ?
+                            stmt->dbc->database : "null")));
+                    /* key_seq incremented once for each PK column */
+                    fkRows->KEY_SEQ= ++key_seq;
+                  }
+                  ++index;
+                  break;
+                }
+                else
+                {
+                  memcpy(buffer, pos + quote_char_length, 
+                           comma_pos - pos - quote_char_length * 2 - 1);
+                  buffer[comma_pos - pos - quote_char_length * 2 - 1]= '\0';
+                  if (key_search == 0)
+                  {    
+                    strmov(fkRows->FKCOLUMN_NAME, buffer);
+                  }
+                  else
+                  {
+                    strmov(fkRows->PKCOLUMN_NAME, buffer);
+                    strmov(fkRows->PKTABLE_NAME, table_name);
+                    strmov(fkRows->FK_NAME, constraint_name);
+                    strmov(fkRows->FKTABLE_NAME, row[0]);
+                    strmov(fkRows->FKTABLE_CAT, (szFkCatalogName ?
+                            strdup_root(alloc, (char *)szFkCatalogName) :
+                            strdup_root(alloc, stmt->dbc->database ?
+                            stmt->dbc->database : "null")));
+                    strmov(fkRows->PKTABLE_CAT, (szPkCatalogName ?
+                            strdup_root(alloc, (char *)szPkCatalogName) :
+                            strdup_root(alloc, stmt->dbc->database ?
+                            stmt->dbc->database : "null")));
+                    /* key_seq incremented once for each PK column */
+                    fkRows->KEY_SEQ= ++key_seq;
+                  }
+                  pos= comma_pos + 1;
+                  ++index;
+                }
+              } while (1);
+              token= bracket_end + 1;
+            }
+          }
+
+          /* OPTIONAL (UPDATE|DELETE) operations */
+          for (key_search= 0; key_search < 2; ++key_search)
+          {
+            unsigned int curr_index;
+            int action= SQL_NO_ACTION;
+            bracket_end= comma_pos= pos= token;
+            bracket_end= my_next_token(NULL, &bracket_end, NULL, ')');
+            comma_pos= my_next_token(NULL, &comma_pos, NULL, ',');
+            pos= find_first_token(stmt->dbc->ansi_charset_info, pos - 1, 
+              comma_pos ?
+               ((comma_pos < bracket_end) ? comma_pos : bracket_end)
+               : bracket_end,
+              Fk_ref_action[key_search]);
+            if (pos)
+            {
+              pos += strlen(Fk_ref_action[key_search]);
+              pos= skip_leading_spaces(pos);
+              if (*pos == 'R')  /* RESTRICT */
+              {
+                action= SQL_NO_ACTION;
+              }
+              else if (*pos == 'C')  /* CASCADE */
+              {
+                action= SQL_CASCADE;
+              }
+              else if (*pos == 'S')  /* SET NULL */
+              {
+                action= SQL_SET_NULL;
+              }
+              else if (*pos == 'N')  /* NO ACTION */
+              {
+                action= SQL_NO_ACTION;
+              }
+            }
+
+            for (curr_index= last_index; curr_index < index; ++curr_index)
+            {
+              fkRows= fk_get_rec(&records, curr_index);
+              if (!fkRows)
+                goto empty_set;
+              if (key_search == 0)
+                fkRows->UPDATE_RULE= action;
+              else
+                fkRows->DELETE_RULE= action;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (!records.elements)
+  {
+    goto empty_set;
+  }
+
+  /* 
+    if foreign keys associated with a primary key are requested 
+    then sort order is FKTABLE_CAT, FKTABLE_NAME, KEY_SEQ, PKTABLE_NAME
+    Sort order used same as present in no_i_s case, but it is different from
+    http://msdn.microsoft.com/en-us/library/windows/desktop/ms709315(v=vs.85).aspx
+  */
+  if (szFkTableName && szFkTableName[0])
+  {
+    sort_dynamic(&records, sql_fk_sort);
+  }
+  /* 
+    If the primary keys associated with a foreign key are requested, then
+    sort order is PKTABLE_CAT, PKTABLE_NAME, KEY_SEQ, FKTABLE_NAME
+    Sort order used same as present in no_i_s case, but it is different from
+    http://msdn.microsoft.com/en-us/library/windows/desktop/ms709315(v=vs.85).aspx
+  */
+  else if (szPkTableName && szPkTableName[0])
+  {
+    sort_dynamic(&records, sql_pk_sort);
+  }
+
+  fkRows= (MY_FOREIGN_KEY_FIELD *) records.buffer;
+  index= 0;  
+  while (index < records.elements)
+  {
+    if (szPkTableName && szPkTableName[0])
+    {
+      if (myodbc_strcasecmp(szPkTableName, fkRows[index].PKTABLE_NAME))
+      {
+        ++index;
+        continue;
+      }
+    }
+
+    data[0]= strdup_root(alloc, fkRows[index].PKTABLE_CAT);   /* PKTABLE_CAT */
+    data[1]= NULL;                                            /* PKTABLE_SCHEM */
+    data[2]= strdup_root(alloc, fkRows[index].PKTABLE_NAME);  /* PKTABLE_NAME */
+    data[3]= strdup_root(alloc, fkRows[index].PKCOLUMN_NAME); /* PKCOLUMN_NAME */
+
+    data[4]= strdup_root(alloc, fkRows[index].FKTABLE_CAT);   /* FKTABLE_CAT */ 
+    data[5]= NULL;                                            /* FKTABLE_SCHEM */
+    data[6]= strdup_root(alloc, fkRows[index].FKTABLE_NAME);  /* FKTABLE_NAME */
+    data[7]= strdup_root(alloc, fkRows[index].FKCOLUMN_NAME); /* FKCOLUMN_NAME */
+
+    sprintf(buffer,"%d", fkRows[index].KEY_SEQ);
+    data[8]= strdup_root(alloc, buffer);                      /* KEY_SEQ */
+
+    sprintf(buffer,"%d", fkRows[index].UPDATE_RULE);
+    data[9]= strdup_root(alloc, buffer);                      /* UPDATE_RULE */ 
+  
+    sprintf(buffer,"%d", fkRows[index].DELETE_RULE);
+    data[10]= strdup_root(alloc, buffer);                     /* DELETE_RULE */
+
+    data[11]= strdup_root(alloc, fkRows[index].FK_NAME);      /* FK_NAME */
+    data[12]= strdup_root(alloc, "PRIMARY");                  /* PK_NAME */
+    data[13]= "7";  /*SQL_NOT_DEFERRABLE*/                    /* DEFERRABILITY */
+
+    data+= SQLFORE_KEYS_FIELDS;
+    ++row_count;
+    ++index;
+  }
+  delete_dynamic(&records);
 
   /* Copy only the elements that contain fk names */
   stmt->result_array= (MYSQL_ROW)my_memdup((char *)tempdata,
@@ -1530,7 +1856,7 @@ mysql_procedure_columns(SQLHSTMT hstmt,
         data[mypcCHAR_OCTET_LENGTH]= NULL;                     /* CHAR_OCTET_LENGTH */
       }
 
-      sprintf(param_pos, "%d", param_ordinal_position);
+      sprintf(param_pos, "%d", (int) param_ordinal_position);
       data[mypcORDINAL_POSITION]= my_strdup(param_pos, MYF(0)); /* ORDINAL_POSITION */
       ++param_ordinal_position;
 

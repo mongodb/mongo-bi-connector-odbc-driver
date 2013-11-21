@@ -50,7 +50,7 @@ my_bool server_has_i_s(DBC *dbc)
 */
 
 const char *my_next_token(const char *prev_token, 
-                                char **token, 
+                          const char **token, 
                                 char *data, 
                           const char chr)
 {
