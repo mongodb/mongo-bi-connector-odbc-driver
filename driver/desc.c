@@ -266,6 +266,11 @@ void desc_remove_stmt(DESC *desc, STMT *stmt)
     if (lstmt->data == stmt)
     {
       desc->exp.stmts= list_delete(desc->exp.stmts, lstmt);
+      /* Free only if it was the last element */
+      if(!lstmt->next && !lstmt->prev)
+      {
+        x_free(lstmt);
+      }
       return;
     }
   }

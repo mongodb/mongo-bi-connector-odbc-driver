@@ -611,15 +611,8 @@ MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
                   descriptor, we must disassociate this statement
                   from the explicit descriptor.
                 */
-                LIST *e= (*dest)->exp.stmts;
                 desc_remove_stmt(*dest, stmt);
                 
-                /* Free only if it was the last element */
-                if (!e->next && !e->prev)
-                {
-                  x_free(e);
-                  (*dest)->exp.stmts= NULL;
-                }
               }
               else if (desc->alloc_type == SQL_DESC_ALLOC_USER)
               {
