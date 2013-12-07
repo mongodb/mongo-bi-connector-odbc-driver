@@ -95,9 +95,7 @@ DECLARE_TEST(t_bug70642)
 */
 DECLARE_TEST(t_bug17358838)
 {
-  SQLCHAR    buff[512];
   SQLCHAR    colName[512];
-  SQLSMALLINT maxColLen;
   SQLCHAR message[SQL_MAX_MESSAGE_LENGTH + 1];
   SQLCHAR sqlstate[SQL_SQLSTATE_SIZE + 1];
   SQLINTEGER error;
@@ -171,11 +169,69 @@ DECLARE_TEST(t_bug17587913)
 }
 
 
+/**
+  Bug #17857204 SQLFETCH() CRASHING WHEN EXECUTE USING 
+  UNIXODBC 2.3.2 VERSION
+*/
+DECLARE_TEST(t_bug17857204)
+{
+  int i;
+  char TmpBuff[256] = {0};
+  SQLSMALLINT col_count= 0;
+  SQLUINTEGER uintval= 0;
+  SQLLEN len= 0;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS bug17857204");
+  ok_sql(hstmt, "CREATE TABLE bug17857204 (id int unsigned,c char(10))");
+  ok_sql(hstmt, "CREATE INDEX i ON bug17857204 (id ,c)");
+
+  for (i= 0; i < 10; i++)
+  {
+    sprintf(TmpBuff,"INSERT INTO bug17857204 VALUES (%d,'%d')", i, i);
+    ok_stmt(hstmt, SQLExecDirect(hstmt, (SQLCHAR*)TmpBuff, SQL_NTS));
+  }
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR*)"EXPLAIN DELETE a1,a2 "\
+                                             "FROM bug17857204 AS a1 "\
+                                             "INNER JOIN bug17857204 AS a2 "\
+                                             "WHERE a1.id=a2.id and a2.id>=?",
+                                             SQL_NTS));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_ULONG, 
+          SQL_NUMERIC, 4, 0, &uintval, 0,  &len));
+
+  ok_stmt(hstmt, SQLExecute(hstmt));
+  ok_stmt(hstmt, SQLNumResultCols(hstmt,&col_count));
+  
+  while (1)
+  {
+    SQLRETURN rc= 0;
+    memset(TmpBuff,0,256);
+    rc= SQLFetch(hstmt);
+    if (rc != SQL_SUCCESS)
+    {
+      break;
+    }
+    
+    for (i= 1; i <= col_count; i++)
+    {
+      ok_stmt(hstmt, SQLGetData(hstmt, i, SQL_C_CHAR, TmpBuff, 
+                                sizeof(TmpBuff), &len));
+    }
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE bug17857204");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug69950)
   ADD_TEST(t_bug70642)
   ADD_TEST(t_bug17358838)
   ADD_TEST(t_bug17587913)
+  ADD_TEST(t_bug17857204)
 END_TESTS
 
 /*myoption &= ~(1 << 30);

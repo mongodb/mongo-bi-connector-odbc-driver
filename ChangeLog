@@ -24,6 +24,7 @@
     (Bug# 17311065)
   * SQLFOREIGNKEYS WITH FLAG_NO_INFORMATION_SCHEMA OPTION RETURNS BAD RESULTS 
     (Bug#16920750)
+  * SQLFetch() crashing when execute using UnixODBC 2.3.2 (Bug# 17857204)
 
 ----
 5.2.6(25-Sep-2013)
