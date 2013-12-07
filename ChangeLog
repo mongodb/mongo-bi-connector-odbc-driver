@@ -1,3 +1,19 @@
+5.3.2
+
+  Functionality added or changed:
+
+  Bugs fixed:
+  * SQLPUTDATA give error when Unicode string is used WITH SQL_NTS in string 
+    length. (Bug#14810497)
+  * Assert failure in case of prepared statments and SQLDESCRIBECOL() called
+    with column number given larger then actual parameter marker in query.
+    (Bug# 17311065)
+  * SQLFOREIGNKEYS WITH FLAG_NO_INFORMATION_SCHEMA OPTION RETURNS BAD RESULTS 
+    (Bug#16920750)
+  * SQLFetch() crashing when execute using UnixODBC 2.3.2 (Bug# 17857204)
+
+----
+
 5.3.1(20-Nov-2013)
 
   Functionality added or changed:
@@ -23,13 +39,6 @@
     (Bug 17587913)
   * Driver returns wrong length for output parameter streams
     (Bug #17814768/70946)
-  * SQLPUTDATA give error when Unicode string is used WITH SQL_NTS in string 
-    length. (Bug#14810497)
-  * Assert failure in case of prepared statments and SQLDESCRIBECOL() called
-    with column number given larger then actual parameter marker in query.
-    (Bug# 17311065)
-  * SQLFOREIGNKEYS WITH FLAG_NO_INFORMATION_SCHEMA OPTION RETURNS BAD RESULTS 
-    (Bug#16920750)
 
   Built using MySQL 5.6.14.
 

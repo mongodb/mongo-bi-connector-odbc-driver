@@ -274,6 +274,11 @@ void free_result_bind(STMT *stmt)
     for (i= 0; i < field_cnt; i++)
     {
       x_free(stmt->result_bind[i].buffer);
+
+      if (stmt->lengths)
+      {
+        stmt->lengths[i]= 0;
+      }
     }
 
     x_free(stmt->result_bind);
@@ -521,6 +526,12 @@ int ssps_bind_result(STMT *stmt)
         /* length marks such fields */
         if (stmt->lengths[i] > 0)
         {
+          if (stmt->result_bind[i].buffer == stmt->array[i])
+          {
+            /* make sure we do not free it twice */
+            stmt->array[i]= NULL;
+            stmt->lengths[i]= 0;
+          }
           /* Resetting buffer and buffer_length for those fields */
           x_free(stmt->result_bind[i].buffer);
           stmt->result_bind[i].buffer       = 0;

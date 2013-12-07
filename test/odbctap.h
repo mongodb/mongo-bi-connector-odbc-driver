@@ -1167,7 +1167,10 @@ int get_connection(SQLHDBC *hdbc, const SQLCHAR *dsn, const SQLCHAR *uid,
   /* Buffers have to be large enough to contain SSL options and long names */
   SQLCHAR     connIn[4096], connOut[4096];
   SQLCHAR     dsn_buf[MAX_NAME_LEN]= {0}, socket_buf[MAX_NAME_LEN]= {0};
-  SQLCHAR     db_buf[MAX_NAME_LEN]= {0}, port_buf[MAX_NAME_LEN]= {0};
+  /* ";database="+ we make buffer bigger for one certain test */
+  SQLCHAR     db_buf[10+2*MAX_NAME_LEN]= {0};
+  /* Should fit 8 byte + ";port=" */
+  SQLCHAR     port_buf[32]= {0};
   SQLSMALLINT len;
   SQLRETURN   rc;
   SQLCHAR     driver_name[16]; /* Should be enough for myodbc library file name */
