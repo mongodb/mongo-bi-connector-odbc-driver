@@ -474,8 +474,8 @@ copy_ansi_result(STMT *stmt,
   SQLCHAR *result_end;
   ulong used_bytes= 0, used_chars= 0, error_count= 0;
 
-  my_bool convert_binary= test(field->charsetnr == BINARY_CHARSET_NUMBER) &&
-                          test(field->org_table_length == 0) &&
+  my_bool convert_binary= (field->charsetnr == BINARY_CHARSET_NUMBER ? 1 : 0) &&
+                          (field->org_table_length == 0 ? 1 : 0) &&
                           stmt->dbc->ds->handle_binary_as_char;
 
   CHARSET_INFO *to_cs= stmt->dbc->ansi_charset_info,
@@ -995,8 +995,8 @@ SQLRETURN copy_binhex_result(STMT *stmt,
 */
 SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 {
-  my_bool field_is_binary= test(field->charsetnr == BINARY_CHARSET_NUMBER) &&
-                           (test(field->org_table_length > 0) ||
+  my_bool field_is_binary= (field->charsetnr == BINARY_CHARSET_NUMBER ? 1 : 0) &&
+                           ((field->org_table_length > 0 ? 1 : 0) ||
                             !stmt->dbc->ds->handle_binary_as_char);
 
   switch (field->type) {
@@ -1339,8 +1339,8 @@ SQLULEN get_column_size(STMT *stmt, MYSQL_FIELD *field)
   case MYSQL_TYPE_DECIMAL:
   case MYSQL_TYPE_NEWDECIMAL:
     return (length -
-            test(!(field->flags & UNSIGNED_FLAG)) - /* sign? */
-            test(field->decimals));                 /* decimal point? */
+            (!(field->flags & UNSIGNED_FLAG) ? 1:  0) - /* sign? */
+            (field->decimals ? 1 : 0));             /* decimal point? */
 
   case MYSQL_TYPE_BIT:
     /*
@@ -1536,16 +1536,16 @@ SQLLEN get_display_size(STMT *stmt __attribute__((unused)),MYSQL_FIELD *field)
 
   switch (field->type) {
   case MYSQL_TYPE_TINY:
-    return 3 + test(field->flags & UNSIGNED_FLAG);
+    return 3 + (field->flags & UNSIGNED_FLAG ? 1 : 0);
 
   case MYSQL_TYPE_SHORT:
-    return 5 + test(field->flags & UNSIGNED_FLAG);
+    return 5 + (field->flags & UNSIGNED_FLAG ? 1 : 0);
 
   case MYSQL_TYPE_INT24:
-    return 8 + test(field->flags & UNSIGNED_FLAG);
+    return 8 + (field->flags & UNSIGNED_FLAG ? 1 : 0);
 
   case MYSQL_TYPE_LONG:
-    return 10 + test(field->flags & UNSIGNED_FLAG);
+    return 10 + (field->flags & UNSIGNED_FLAG ? 1 : 0);
 
   case MYSQL_TYPE_FLOAT:
     return 14;
