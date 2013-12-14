@@ -1,6 +1,6 @@
 @ECHO OFF
 
-REM  Copyright (c) 2006, 2011, Oracle and/or its affiliates. All rights reserved.
+REM  Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
 REM
 REM  The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 REM  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
