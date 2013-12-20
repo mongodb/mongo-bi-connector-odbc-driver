@@ -21,6 +21,9 @@
     more then 256 and 129 respectively (Bug# 17358838)
   * SQLFOREIGNKEYS WITH FLAG_NO_INFORMATION_SCHEMA OPTION RETURNS BAD RESULTS
     (Bug#16920750)
+  * Segmentation fault in SQLSpecialColumns if table name is invalid
+    (Bug# 17854697)
+
 
 
 ----

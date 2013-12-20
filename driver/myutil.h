@@ -395,4 +395,9 @@ char *      ssps_get_string(STMT *stmt, ulong column_number, char *value,
                             (*(X) == SQL_DATA_AT_EXEC || \
                              *(X) <= SQL_LEN_DATA_AT_EXEC_OFFSET))
 
+#define GET_NAME_LEN(S, N, L) L = (L == SQL_NTS ? (N ? (SQLSMALLINT)strlen((char *)N) : 0) : L); \
+  if (L > NAME_LEN) \
+    return set_stmt_error(S, "HY090", \
+           "One or more parameters exceed the maximum allowed name length", 0);
+ 
 #endif /* __MYUTIL_H__ */
