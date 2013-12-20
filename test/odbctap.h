@@ -1168,7 +1168,7 @@ int get_connection(SQLHDBC *hdbc, const SQLCHAR *dsn, const SQLCHAR *uid,
   SQLCHAR     connIn[4096], connOut[4096];
   SQLCHAR     dsn_buf[MAX_NAME_LEN]= {0}, socket_buf[MAX_NAME_LEN]= {0};
   /* ";database="+ we make buffer bigger for one certain test */
-  SQLCHAR     db_buf[10+2*MAX_NAME_LEN]= {0};
+  SQLCHAR     db_buf[4096]= {0};
   /* Should fit 8 byte + ";port=" */
   SQLCHAR     port_buf[32]= {0};
   SQLSMALLINT len;
