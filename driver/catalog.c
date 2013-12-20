@@ -133,20 +133,20 @@ create_empty_fake_resultset(STMT *stmt, MYSQL_ROW rowval, size_t rowsize,
   Lengths may not be SQL_NTS.
 
   @param[in] stmt           Handle to statement
-  @param[in] catalog        Catalog (database) of table, @c NULL for current
-  @param[in] catalog_length Length of catalog name
-  @param[in] table          Name of table
-  @param[in] table_length   Length of table name
+  @param[in] catalog_name   Catalog (database) of table, @c NULL for current
+  @param[in] catalog_len    Length of catalog name
+  @param[in] table_name     Name of table
+  @param[in] table_len      Length of table name
   @param[in] wildcard       Whether the table name is a wildcard
 
   @return Result of SHOW TABLE STATUS, or NULL if there is an error
           or empty result (check mysql_errno(&stmt->dbc->mysql) != 0)
 */
 static MYSQL_RES *mysql_table_status_i_s(STMT        *stmt,
-                                         SQLCHAR     *catalog,
-                                         SQLSMALLINT  catalog_length,
-                                         SQLCHAR     *table,
-                                         SQLSMALLINT  table_length,
+                                         SQLCHAR     *catalog_name,
+                                         SQLSMALLINT  catalog_len,
+                                         SQLCHAR     *table_name,
+                                         SQLSMALLINT  table_len,
                                          my_bool      wildcard,
                                          my_bool      show_tables,
                                          my_bool      show_views)
@@ -160,11 +160,11 @@ static MYSQL_RES *mysql_table_status_i_s(STMT        *stmt,
                     FROM INFORMATION_SCHEMA.TABLES \
                     WHERE ");
 
-  if (catalog && *catalog)
+  if (catalog_name && *catalog_name)
   {
     to= strmov(to, "TABLE_SCHEMA LIKE '");
     to+= myodbc_escape_string(mysql, to, (ulong)(sizeof(buff) - (to - buff)),
-                              (char *)catalog, catalog_length, 1);
+                              (char *)catalog_name, catalog_len, 1);
     to= strmov(to, "' ");
     clause_added= TRUE;
   }
@@ -198,20 +198,20 @@ static MYSQL_RES *mysql_table_status_i_s(STMT        *stmt,
     literally. (It's not the same as NULL, which is the same as '%'.)
     But it will never match anything, so bail out now.
   */
-  if (table && wildcard && !*table)
+  if (table_name && wildcard && !*table_name)
     return NULL;
 
-  if (table && *table)
+  if (table_name && *table_name)
   {
     to= strmov(to, "AND TABLE_NAME LIKE '");
     if (wildcard)
     {
-      to+= mysql_real_escape_string(mysql, to, (char *)table, table_length);
+      to+= mysql_real_escape_string(mysql, to, (char *)table_name, table_len);
     }
     else
     {
       to+= myodbc_escape_string(mysql, to, (ulong)(sizeof(buff) - (to - buff)),
-                                (char *)table, table_length, 0);
+                                (char *)table_name, table_len, 0);
     }
     to= strmov(to, "'");
   }
@@ -233,31 +233,31 @@ static MYSQL_RES *mysql_table_status_i_s(STMT        *stmt,
   Get the table status for a table or tables. Lengths may not be SQL_NTS.
 
   @param[in] stmt           Handle to statement
-  @param[in] catalog        Catalog (database) of table, @c NULL for current
-  @param[in] catalog_length Length of catalog name
-  @param[in] table          Name of table
-  @param[in] table_length   Length of table name
+  @param[in] catalog_name   Catalog (database) of table, @c NULL for current
+  @param[in] catalog_len    Length of catalog name
+  @param[in] table_name     Name of table
+  @param[in] table_len      Length of table name
   @param[in] wildcard       Whether the table name is a wildcard
 
   @return Result of SHOW TABLE STATUS, or NULL if there is an error
           or empty result (check mysql_errno(&stmt->dbc->mysql) != 0)
 */
 MYSQL_RES *mysql_table_status(STMT        *stmt,
-                              SQLCHAR     *catalog,
-                              SQLSMALLINT  catalog_length,
-                              SQLCHAR     *table,
-                              SQLSMALLINT  table_length,
+                              SQLCHAR     *catalog_name,
+                              SQLSMALLINT  catalog_len,
+                              SQLCHAR     *table_name,
+                              SQLSMALLINT  table_len,
                               my_bool      wildcard,
                               my_bool      show_tables,
                               my_bool      show_views)
 {
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
-    return mysql_table_status_i_s(stmt, catalog, catalog_length,
-                                  table, table_length, wildcard,
+    return mysql_table_status_i_s(stmt, catalog_name, catalog_len,
+                                  table_name, table_len, wildcard,
                                              show_tables, show_views);
   else
-    return mysql_table_status_show(stmt, catalog, catalog_length,
-                                   table, table_length, wildcard);
+    return mysql_table_status_show(stmt, catalog_name, catalog_len,
+                                   table_name, table_len, wildcard);
 }
 
 
@@ -359,53 +359,42 @@ SQLTables
 
 SQLRETURN
 i_s_tables(SQLHSTMT hstmt,
-           SQLCHAR *catalog, SQLSMALLINT catalog_len,
-           SQLCHAR *schema, SQLSMALLINT schema_len,
-           SQLCHAR *table, SQLSMALLINT table_len,
-           SQLCHAR *type, SQLSMALLINT type_len)
+           SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
+           SQLCHAR *schema_name, SQLSMALLINT schema_len,
+           SQLCHAR *table_name, SQLSMALLINT table_len,
+           SQLCHAR *type_name, SQLSMALLINT type_len)
 {
   /* The function is just a stub. We call non-I_S version of the function before implementing the I_S one */
-  return mysql_tables(hstmt, catalog, catalog_len, schema, schema_len,
-                      table, table_len, type, type_len);
+  return mysql_tables(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+                      table_name, table_len, type_name, type_len);
 }
 
 
 SQLRETURN SQL_API
 MySQLTables(SQLHSTMT hstmt,
-            SQLCHAR *catalog, SQLSMALLINT catalog_len,
-            SQLCHAR *schema, SQLSMALLINT schema_len,
-            SQLCHAR *table, SQLSMALLINT table_len,
-            SQLCHAR *type, SQLSMALLINT type_len)
+            SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
+            SQLCHAR *schema_name, SQLSMALLINT schema_len,
+            SQLCHAR *table_name, SQLSMALLINT table_len,
+            SQLCHAR *type_name, SQLSMALLINT type_len)
 {
   STMT *stmt= (STMT *)hstmt;
 
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt, MYSQL_RESET);
 
-  if (catalog_len == SQL_NTS)
-    catalog_len= catalog ? (SQLSMALLINT)strlen((char *)catalog) : 0;
-  if (schema_len == SQL_NTS)
-    schema_len= schema ? (SQLSMALLINT)strlen((char *)schema) : 0;
-  if (table_len == SQL_NTS)
-    table_len= table ? (SQLSMALLINT)strlen((char *)table) : 0;
-  if (type_len == SQL_NTS)
-    type_len= type ? (SQLSMALLINT)strlen((char *)type) : 0;
-
-  if(catalog_len > NAME_CHAR_LEN || schema_len > NAME_CHAR_LEN ||
-     table_len > NAME_CHAR_LEN)
-  {
-    return set_stmt_error(stmt, "HY090", "One or more parameters exceed the maximum allowed name length", 0);
-  }
+  GET_NAME_LEN(stmt, catalog_name, catalog_len);
+  GET_NAME_LEN(stmt, table_name, table_len);
+  GET_NAME_LEN(stmt, type_name, type_len);
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
-    return i_s_tables(hstmt, catalog, catalog_len, schema, schema_len,
-                      table, table_len, type, type_len);
+    return i_s_tables(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+                      table_name, table_len, type_name, type_len);
   }
   else
   {
-    return mysql_tables(hstmt, catalog, catalog_len, schema, schema_len,
-                        table, table_len, type, type_len);
+    return mysql_tables(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+                        table_name, table_len, type_name, type_len);
   }
 }
 
@@ -418,27 +407,27 @@ SQLColumns
 /**
   Get information about the columns in one or more tables.
 
-  @param[in] hstmt            Handle of statement
-  @param[in] szCatalog        Name of catalog (database)
-  @param[in] cbCatalog        Length of catalog
-  @param[in] szSchema         Name of schema (unused)
-  @param[in] cbSchema         Length of schema name
-  @param[in] szTable          Pattern of table names to match
-  @param[in] cbTable          Length of table pattern
-  @param[in] szColumn         Pattern of column names to match
-  @param[in] cbColumn         Length of column pattern
+  @param[in] hstmt           Handle of statement
+  @param[in] catalog_name    Name of catalog (database)
+  @param[in] catalog_len     Length of catalog
+  @param[in] schema_name     Name of schema (unused)
+  @param[in] schema_len      Length of schema name
+  @param[in] table_name      Pattern of table names to match
+  @param[in] table_len       Length of table pattern
+  @param[in] column_name     Pattern of column names to match
+  @param[in] column_len      Length of column pattern
 */
 SQLRETURN
-i_s_columns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
-            SQLCHAR *szSchema __attribute__((unused)),
-            SQLSMALLINT cbSchema __attribute__((unused)),
-            SQLCHAR *szTable, SQLSMALLINT cbTable,
-            SQLCHAR *szColumn, SQLSMALLINT cbColumn)
+i_s_columns(SQLHSTMT hstmt, SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
+            SQLCHAR *schema_name __attribute__((unused)),
+            SQLSMALLINT schema_len __attribute__((unused)),
+            SQLCHAR *table_name, SQLSMALLINT table_len,
+            SQLCHAR *column_name, SQLSMALLINT column_len)
 
 {
   /* The function is just a stub. We call non-I_S version of the function before implementing the I_S one */
-  return mysql_columns(hstmt, szCatalog, cbCatalog,szSchema, cbSchema,
-                       szTable, cbTable, szColumn, cbColumn);
+  return mysql_columns(hstmt, catalog_name, catalog_len,schema_name, schema_len,
+                       table_name, table_len, column_name, column_len);
 }
 
 
@@ -446,21 +435,21 @@ i_s_columns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
   Get information about the columns in one or more tables.
 
   @param[in] hstmt            Handle of statement
-  @param[in] szCatalog        Name of catalog (database)
-  @param[in] cbCatalog        Length of catalog
-  @param[in] szSchema         Name of schema (unused)
-  @param[in] cbSchema         Length of schema name
-  @param[in] szTable          Pattern of table names to match
-  @param[in] cbTable          Length of table pattern
-  @param[in] szColumn         Pattern of column names to match
-  @param[in] cbColumn         Length of column pattern
+  @param[in] catalog_name     Name of catalog (database)
+  @param[in] catalog_len      Length of catalog
+  @param[in] schema_name      Name of schema (unused)
+  @param[in] schema_len       Length of schema name
+  @param[in] table_name       Pattern of table names to match
+  @param[in] table_len        Length of table pattern
+  @param[in] column_name      Pattern of column names to match
+  @param[in] column_len       Length of column pattern
 */
 SQLRETURN SQL_API
-MySQLColumns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
-             SQLCHAR *szSchema __attribute__((unused)),
-             SQLSMALLINT cbSchema __attribute__((unused)),
-             SQLCHAR *szTable, SQLSMALLINT cbTable,
-             SQLCHAR *szColumn, SQLSMALLINT cbColumn)
+MySQLColumns(SQLHSTMT hstmt, SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
+             SQLCHAR *schema_name __attribute__((unused)),
+             SQLSMALLINT schema_len __attribute__((unused)),
+             SQLCHAR *table_name, SQLSMALLINT table_len,
+             SQLCHAR *column_name, SQLSMALLINT column_len)
 
 {
   STMT *stmt= (STMT *)hstmt;
@@ -468,22 +457,19 @@ MySQLColumns(SQLHSTMT hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt, MYSQL_RESET);
 
-  if (cbCatalog == SQL_NTS)
-    cbCatalog= szCatalog != NULL ? (SQLSMALLINT)strlen((char *)szCatalog) : 0;
-  if (cbColumn == SQL_NTS)
-    cbColumn= szColumn != NULL ? (SQLSMALLINT)strlen((char *)szColumn) : 0;
-  if (cbTable == SQL_NTS)
-    cbTable= szTable != NULL ? (SQLSMALLINT)strlen((char *)szTable) : 0;
+  GET_NAME_LEN(stmt, catalog_name, catalog_len);
+  GET_NAME_LEN(stmt, table_name, table_len);
+  GET_NAME_LEN(stmt, column_name, column_len);
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
-    return i_s_columns(hstmt, szCatalog, cbCatalog,szSchema, cbSchema,
-                         szTable, cbTable, szColumn, cbColumn);
+    return i_s_columns(hstmt, catalog_name, catalog_len,schema_name, schema_len,
+                         table_name, table_len, column_name, column_len);
   }
   else
   {
-    return mysql_columns(hstmt, szCatalog, cbCatalog,szSchema, cbSchema,
-                         szTable, cbTable, szColumn, cbColumn);
+    return mysql_columns(hstmt, catalog_name, catalog_len,schema_name, schema_len,
+                         table_name, table_len, column_name, column_len);
   }
 }
 
@@ -502,16 +488,16 @@ SQLStatistics
 
 SQLRETURN
 i_s_statistics(SQLHSTMT hstmt,
-                SQLCHAR *catalog, SQLSMALLINT catalog_len,
-                SQLCHAR *schema __attribute__((unused)),
+                SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
+                SQLCHAR *schema_name __attribute__((unused)),
                 SQLSMALLINT schema_len __attribute__((unused)),
-                SQLCHAR *table, SQLSMALLINT table_len,
+                SQLCHAR *table_name, SQLSMALLINT table_len,
                 SQLUSMALLINT fUnique,
                 SQLUSMALLINT fAccuracy __attribute__((unused)))
 {
   /* The function is just a stub. We call non-I_S version of the function before implementing the I_S one */
-  return mysql_statistics(hstmt, catalog, catalog_len, schema, schema_len,
-                          table, table_len, fUnique, fAccuracy);
+  return mysql_statistics(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+                          table_name, table_len, fUnique, fAccuracy);
 }
 
 
@@ -524,10 +510,10 @@ i_s_statistics(SQLHSTMT hstmt,
 
 SQLRETURN SQL_API
 MySQLStatistics(SQLHSTMT hstmt,
-                SQLCHAR *catalog, SQLSMALLINT catalog_len,
-                SQLCHAR *schema __attribute__((unused)),
+                SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
+                SQLCHAR *schema_name __attribute__((unused)),
                 SQLSMALLINT schema_len __attribute__((unused)),
-                SQLCHAR *table, SQLSMALLINT table_len,
+                SQLCHAR *table_name, SQLSMALLINT table_len,
                 SQLUSMALLINT fUnique,
                 SQLUSMALLINT fAccuracy __attribute__((unused)))
 {
@@ -536,21 +522,18 @@ MySQLStatistics(SQLHSTMT hstmt,
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
-
-  if (catalog_len == SQL_NTS)
-    catalog_len= catalog ? (SQLSMALLINT)strlen((char *)catalog) : 0;
-  if (table_len == SQL_NTS)
-    table_len= table ? (SQLSMALLINT)strlen((char *)table) : 0;
+  GET_NAME_LEN(stmt, catalog_name, catalog_len);
+  GET_NAME_LEN(stmt, table_name, table_len);
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
-    return i_s_statistics(hstmt, catalog, catalog_len, schema, schema_len,
-                          table, table_len, fUnique, fAccuracy);
+    return i_s_statistics(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+                          table_name, table_len, fUnique, fAccuracy);
   }
   else
   {
-    return mysql_statistics(hstmt, catalog, catalog_len, schema, schema_len,
-                          table, table_len, fUnique, fAccuracy);
+    return mysql_statistics(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+                          table_name, table_len, fUnique, fAccuracy);
   }
 }
 
@@ -564,11 +547,11 @@ SQLTablePrivileges
   @purpose : fetches data from I_S table_privileges. returns SQLRETURN of the operation
 */
 SQLRETURN i_s_list_table_priv(SQLHSTMT    hstmt,
-                              SQLCHAR *   catalog,
+                              SQLCHAR *   catalog_name,
                               SQLSMALLINT catalog_len,
-                              SQLCHAR *   schema      __attribute__((unused)),
+                              SQLCHAR *   schema_name __attribute__((unused)),
                               SQLSMALLINT schema_len  __attribute__((unused)),
-                              SQLCHAR *   table,
+                              SQLCHAR *   table_name,
                               SQLSMALLINT table_len)
 {
   STMT *stmt=(STMT *) hstmt;
@@ -584,10 +567,10 @@ SQLRETURN i_s_list_table_priv(SQLHSTMT    hstmt,
                "FROM INFORMATION_SCHEMA.TABLE_PRIVILEGES "
                "WHERE TABLE_NAME");
 
-  add_name_condition_pv_id(hstmt, &pos, table, table_len, " LIKE '%'" );
+  add_name_condition_pv_id(hstmt, &pos, table_name, table_len, " LIKE '%'" );
 
   pos= strmov(pos, " AND TABLE_SCHEMA");
-  add_name_condition_oa_id(hstmt, &pos, catalog, catalog_len, "=DATABASE()");
+  add_name_condition_oa_id(hstmt, &pos, catalog_name, catalog_len, "=DATABASE()");
 
   /* TABLE_CAT is always NULL in mysql I_S */
   pos= strmov(pos, " ORDER BY /*TABLE_CAT,*/ TABLE_SCHEM, TABLE_NAME, PRIVILEGE, GRANTEE");
@@ -609,31 +592,29 @@ SQLRETURN i_s_list_table_priv(SQLHSTMT    hstmt,
 */
 SQLRETURN SQL_API
 MySQLTablePrivileges(SQLHSTMT hstmt,
-                     SQLCHAR *catalog, SQLSMALLINT catalog_len,
-                     SQLCHAR *schema __attribute__((unused)),
+                     SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
+                     SQLCHAR *schema_name __attribute__((unused)),
                      SQLSMALLINT schema_len __attribute__((unused)),
-                     SQLCHAR *table, SQLSMALLINT table_len)
+                     SQLCHAR *table_name, SQLSMALLINT table_len)
 {
     STMT     *stmt= (STMT *)hstmt;
 
     CLEAR_STMT_ERROR(hstmt);
     my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
-    if (catalog_len == SQL_NTS)
-      catalog_len= catalog ? (SQLSMALLINT)strlen((char *)catalog) : 0;
-    if (table_len == SQL_NTS)
-      table_len= table ? (SQLSMALLINT)strlen((char *)table) : 0;
+    GET_NAME_LEN(stmt, catalog_name, catalog_len);
+    GET_NAME_LEN(stmt, table_name, table_len);
 
     if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
     {
       /* Since mysql is also the name of the system db, using here i_s prefix to
          distinct functions */
-      return i_s_list_table_priv(hstmt, catalog, catalog_len, schema, schema_len,
-                                table, table_len);
+      return i_s_list_table_priv(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+                                table_name, table_len);
     }
     else
     {
-      return mysql_list_table_priv(hstmt, catalog, catalog_len, schema, schema_len, table, table_len);
+      return mysql_list_table_priv(hstmt, catalog_name, catalog_len, schema_name, schema_len, table_name, table_len);
     }
 }
 
@@ -643,13 +624,13 @@ MySQLTablePrivileges(SQLHSTMT hstmt,
   @purpose : returns a column privileges result, NULL on error
 */
 static SQLRETURN i_s_list_column_priv(HSTMT *     hstmt,
-                                      SQLCHAR *   catalog,
+                                      SQLCHAR *   catalog_name,
                                       SQLSMALLINT catalog_len,
-                                      SQLCHAR *   schema,
+                                      SQLCHAR *   schema_name,
                                       SQLSMALLINT schema_len,
-                                      SQLCHAR *   table,
+                                      SQLCHAR *   table_name,
                                       SQLSMALLINT table_len,
-                                      SQLCHAR *   column,
+                                      SQLCHAR *   column_name,
                                       SQLSMALLINT column_len)
 {
   STMT *stmt=(STMT *) hstmt;
@@ -666,15 +647,15 @@ static SQLRETURN i_s_list_column_priv(HSTMT *     hstmt,
     "FROM INFORMATION_SCHEMA.COLUMN_PRIVILEGES "
     "WHERE TABLE_NAME");
 
-  if(add_name_condition_oa_id(hstmt, &pos, table, table_len, NULL))
+  if(add_name_condition_oa_id(hstmt, &pos, table_name, table_len, NULL))
     return set_stmt_error(stmt, "HY009", "Invalid use of NULL pointer(table is required parameter)", 0);
 
   pos= strmov(pos, " AND TABLE_SCHEMA");
-  add_name_condition_oa_id(hstmt, &pos, catalog, catalog_len, "=DATABASE()");
+  add_name_condition_oa_id(hstmt, &pos, catalog_name, catalog_len, "=DATABASE()");
 
 
   pos= strmov(pos, " AND COLUMN_NAME");
-  add_name_condition_pv_id(hstmt, &pos, column, column_len, " LIKE '%'");
+  add_name_condition_pv_id(hstmt, &pos, column_name, column_len, " LIKE '%'");
 
 
   /* TABLE_CAT is always NULL in mysql I_S */
@@ -691,35 +672,32 @@ static SQLRETURN i_s_list_column_priv(HSTMT *     hstmt,
 
 SQLRETURN SQL_API
 MySQLColumnPrivileges(SQLHSTMT hstmt,
-                      SQLCHAR *catalog, SQLSMALLINT catalog_len,
-                      SQLCHAR *schema __attribute__((unused)),
+                      SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
+                      SQLCHAR *schema_name __attribute__((unused)),
                       SQLSMALLINT schema_len __attribute__((unused)),
-                      SQLCHAR *table, SQLSMALLINT table_len,
-                      SQLCHAR *column, SQLSMALLINT column_len)
+                      SQLCHAR *table_name, SQLSMALLINT table_len,
+                      SQLCHAR *column_name, SQLSMALLINT column_len)
 {
   STMT     *stmt= (STMT *)hstmt;
 
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
-  if (catalog_len == SQL_NTS)
-    catalog_len= catalog ? (SQLSMALLINT)strlen((char *)catalog) : 0;
-  if (table_len == SQL_NTS)
-    table_len= table ? (SQLSMALLINT)strlen((char *)table) : 0;
-  if (column_len == SQL_NTS)
-    column_len= column ? (SQLSMALLINT)strlen((char *)column) : 0;
+  GET_NAME_LEN(stmt, catalog_name, catalog_len);
+  GET_NAME_LEN(stmt, table_name, table_len);
+  GET_NAME_LEN(stmt, column_name, column_len);
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
     /* Since mysql is also the name of the system db, using here i_s prefix to
     distinct functions */
-    return i_s_list_column_priv(hstmt, catalog, catalog_len, schema, schema_len,
-      table, table_len, column, column_len);
+    return i_s_list_column_priv(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+      table_name, table_len, column_name, column_len);
   }
   else
   {
-    return mysql_list_column_priv(hstmt, catalog, catalog_len, schema, schema_len,
-      table, table_len, column, column_len);
+    return mysql_list_column_priv(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+      table_name, table_len, column_name, column_len);
   }
 }
 
@@ -731,17 +709,17 @@ SQLSpecialColumns
 */
 SQLRETURN
 i_s_special_columns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
-                      SQLCHAR *szTableQualifier, SQLSMALLINT cbTableQualifier,
-                      SQLCHAR *szTableOwner __attribute__((unused)),
-                      SQLSMALLINT cbTableOwner __attribute__((unused)),
-                      SQLCHAR *szTableName, SQLSMALLINT cbTableName,
+                      SQLCHAR *table_qualifier, SQLSMALLINT table_qualifier_len,
+                      SQLCHAR *table_owner __attribute__((unused)),
+                      SQLSMALLINT table_owner_len __attribute__((unused)),
+                      SQLCHAR *table_name, SQLSMALLINT table_len,
                       SQLUSMALLINT fScope __attribute__((unused)),
                       SQLUSMALLINT fNullable __attribute__((unused)))
 {
   /* The function is just a stub. We call non-I_S version of the function before implementing the I_S one */
-  return mysql_special_columns(hstmt, fColType, szTableQualifier,
-                               cbTableQualifier, szTableOwner, cbTableOwner,
-                               szTableName, cbTableName, fScope, fNullable);
+  return mysql_special_columns(hstmt, fColType, table_qualifier,
+                               table_qualifier_len, table_owner, table_owner_len,
+                               table_name, table_len, fScope, fNullable);
 }
 
 
@@ -757,10 +735,10 @@ i_s_special_columns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
 
 SQLRETURN SQL_API
 MySQLSpecialColumns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
-                    SQLCHAR *szTableQualifier, SQLSMALLINT cbTableQualifier,
-                    SQLCHAR *szTableOwner __attribute__((unused)),
-                    SQLSMALLINT cbTableOwner __attribute__((unused)),
-                    SQLCHAR *szTableName, SQLSMALLINT cbTableName,
+                    SQLCHAR *table_qualifier, SQLSMALLINT table_qualifier_len,
+                    SQLCHAR *table_owner __attribute__((unused)),
+                    SQLSMALLINT table_owner_len __attribute__((unused)),
+                    SQLCHAR *table_name, SQLSMALLINT table_len,
                     SQLUSMALLINT fScope __attribute__((unused)),
                     SQLUSMALLINT fNullable __attribute__((unused)))
 {
@@ -769,22 +747,20 @@ MySQLSpecialColumns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
-  if (cbTableQualifier == SQL_NTS)
-    cbTableQualifier= szTableQualifier ? (SQLSMALLINT)strlen((char *)szTableQualifier) : 0;
-  if (cbTableName == SQL_NTS)
-    cbTableName= szTableName ? (SQLSMALLINT)strlen((char *)szTableName) : 0;
+  GET_NAME_LEN(stmt, table_qualifier, table_qualifier_len);
+  GET_NAME_LEN(stmt, table_name, table_len);
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
-    return i_s_special_columns(hstmt, fColType, szTableQualifier,
-                                 cbTableQualifier, szTableOwner, cbTableOwner,
-                                 szTableName, cbTableName, fScope, fNullable);
+    return i_s_special_columns(hstmt, fColType, table_qualifier,
+                                 table_qualifier_len, table_owner, table_owner_len,
+                                 table_name, table_len, fScope, fNullable);
   }
   else
   {
-    return mysql_special_columns(hstmt, fColType, szTableQualifier,
-                                 cbTableQualifier, szTableOwner, cbTableOwner,
-                                 szTableName, cbTableName, fScope, fNullable);
+    return mysql_special_columns(hstmt, fColType, table_qualifier,
+                                 table_qualifier_len, table_owner, table_owner_len,
+                                 table_name, table_len, fScope, fNullable);
   }
 }
 
@@ -796,14 +772,14 @@ SQLPrimaryKeys
 */
 SQLRETURN
 i_s_primary_keys(SQLHSTMT hstmt,
-                 SQLCHAR *catalog, SQLSMALLINT catalog_len,
-                 SQLCHAR *schema __attribute__((unused)),
+                 SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
+                 SQLCHAR *schema_name __attribute__((unused)),
                  SQLSMALLINT schema_len __attribute__((unused)),
-                 SQLCHAR *table, SQLSMALLINT table_len)
+                 SQLCHAR *table_name, SQLSMALLINT table_len)
 {
   /* The function is just a stub. We call non-I_S version of the function before implementing the I_S one */
-  return mysql_primary_keys(hstmt, catalog, catalog_len, schema, schema_len,
-                            table, table_len);
+  return mysql_primary_keys(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+                            table_name, table_len);
 }
 
 
@@ -817,30 +793,28 @@ i_s_primary_keys(SQLHSTMT hstmt,
 
 SQLRETURN SQL_API
 MySQLPrimaryKeys(SQLHSTMT hstmt,
-                 SQLCHAR *catalog, SQLSMALLINT catalog_len,
-                 SQLCHAR *schema __attribute__((unused)),
+                 SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
+                 SQLCHAR *schema_name __attribute__((unused)),
                  SQLSMALLINT schema_len __attribute__((unused)),
-                 SQLCHAR *table, SQLSMALLINT table_len)
+                 SQLCHAR *table_name, SQLSMALLINT table_len)
 {
   STMT *stmt= (STMT *) hstmt;
 
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
-  if (catalog_len == SQL_NTS)
-    catalog_len= catalog ? (SQLSMALLINT)strlen((char *)catalog) : 0;
-  if (table_len == SQL_NTS)
-    table_len= table ? (SQLSMALLINT)strlen((char *)table) : 0;
+  GET_NAME_LEN(stmt, catalog_name, catalog_len);
+  GET_NAME_LEN(stmt, table_name, table_len);
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
-    return i_s_primary_keys(hstmt, catalog, catalog_len, schema, schema_len,
-                              table, table_len);
+    return i_s_primary_keys(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+                              table_name, table_len);
   }
   else
   {
-    return mysql_primary_keys(hstmt, catalog, catalog_len, schema, schema_len,
-                              table, table_len);
+    return mysql_primary_keys(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+                              table_name, table_len);
   }
 }
 
@@ -851,18 +825,18 @@ SQLForeignKeys
 ****************************************************************************
 */
 SQLRETURN i_s_foreign_keys(SQLHSTMT hstmt,
-                           SQLCHAR    *szPkCatalogName __attribute__((unused)),
-                           SQLSMALLINT cbPkCatalogName __attribute__((unused)),
-                           SQLCHAR    *szPkSchemaName __attribute__((unused)),
-                           SQLSMALLINT cbPkSchemaName __attribute__((unused)),
-                           SQLCHAR    *szPkTableName,
-                           SQLSMALLINT cbPkTableName,
-                           SQLCHAR    *szFkCatalogName,
-                           SQLSMALLINT cbFkCatalogName,
-                           SQLCHAR    *szFkSchemaName __attribute__((unused)),
-                           SQLSMALLINT cbFkSchemaName __attribute__((unused)),
-                           SQLCHAR    *szFkTableName,
-                           SQLSMALLINT cbFkTableName)
+                           SQLCHAR    *pk_catalog_name __attribute__((unused)),
+                           SQLSMALLINT pk_catalog_len __attribute__((unused)),
+                           SQLCHAR    *pk_schema_name __attribute__((unused)),
+                           SQLSMALLINT pk_schema_len __attribute__((unused)),
+                           SQLCHAR    *pk_table_name,
+                           SQLSMALLINT pk_table_len,
+                           SQLCHAR    *fk_catalog_name,
+                           SQLSMALLINT fk_catalog_len,
+                           SQLCHAR    *fk_schema_name __attribute__((unused)),
+                           SQLSMALLINT fk_schema_len __attribute__((unused)),
+                           SQLCHAR    *fk_table_name,
+                           SQLSMALLINT fk_table_len)
 {
   STMT *stmt=(STMT *) hstmt;
   MYSQL *mysql= &stmt->dbc->mysql;
@@ -928,14 +902,14 @@ SQLRETURN i_s_foreign_keys(SQLHSTMT hstmt,
                 " WHERE D.CONSTRAINT_NAME='PRIMARY' ",
                 NullS);
 
-  if (szPkTableName && szPkTableName[0])
+  if (pk_table_name && pk_table_name[0])
   {
     buff= strmov(buff, "AND A.REFERENCED_TABLE_SCHEMA = ");
-    if (szPkCatalogName && szPkCatalogName[0])
+    if (pk_catalog_name && pk_catalog_name[0])
     {
       buff= strmov(buff, "'");
-      buff+= mysql_real_escape_string(mysql, buff, (char *)szPkCatalogName,
-                                      cbPkCatalogName);
+      buff+= mysql_real_escape_string(mysql, buff, (char *)pk_catalog_name,
+                                      pk_catalog_len);
       buff= strmov(buff, "' ");
     }
     else
@@ -945,23 +919,23 @@ SQLRETURN i_s_foreign_keys(SQLHSTMT hstmt,
 
     buff= strmov(buff, "AND A.REFERENCED_TABLE_NAME = '");
 
-    buff+= mysql_real_escape_string(mysql, buff, (char *)szPkTableName,
-                                    cbPkTableName);
+    buff+= mysql_real_escape_string(mysql, buff, (char *)pk_table_name,
+                                    pk_table_len);
     buff= strmov(buff, "' ");
 
     strmov(buff, "ORDER BY PKTABLE_CAT, PKTABLE_NAME, "
                  "KEY_SEQ, FKTABLE_NAME");
   }
 
-  if (szFkTableName && szFkTableName[0])
+  if (fk_table_name && fk_table_name[0])
   {
     buff= strmov(buff, "AND A.TABLE_SCHEMA = ");
 
-    if (szFkCatalogName && szFkCatalogName[0])
+    if (fk_catalog_name && fk_catalog_name[0])
     {
       buff= strmov(buff, "'");
-      buff+= mysql_real_escape_string(mysql, buff, (char *)szFkCatalogName,
-                                      cbFkCatalogName);
+      buff+= mysql_real_escape_string(mysql, buff, (char *)fk_catalog_name,
+                                      fk_catalog_len);
       buff= strmov(buff, "' ");
     }
     else
@@ -971,8 +945,8 @@ SQLRETURN i_s_foreign_keys(SQLHSTMT hstmt,
 
     buff= strmov(buff, "AND A.TABLE_NAME = '");
 
-    buff+= mysql_real_escape_string(mysql, buff, (char *)szFkTableName,
-                                    cbFkTableName);
+    buff+= mysql_real_escape_string(mysql, buff, (char *)fk_table_name,
+                                    fk_table_len);
     buff= strmov(buff, "' ");
 
     buff= strmov(buff, "ORDER BY FKTABLE_CAT, FKTABLE_NAME, "
@@ -994,23 +968,23 @@ SQLRETURN i_s_foreign_keys(SQLHSTMT hstmt,
   specified table. (We currently only support the former, not the latter.)
 
   @param[in] hstmt           Handle of statement
-  @param[in] szPkCatalogName Catalog (database) of table with primary key that
+  @param[in] pk_catalog_name Catalog (database) of table with primary key that
                              we want to see foreign keys for
-  @param[in] cbPkCatalogName Length of @a szPkCatalogName
-  @param[in] szPkSchemaName  Schema of table with primary key that we want to
+  @param[in] pk_catalog_len  Length of @a pk_catalog_name
+  @param[in] pk_schema_name  Schema of table with primary key that we want to
                              see foreign keys for (unused)
-  @param[in] cbPkSchemaName  Length of @a szPkSchemaName
-  @param[in] szPkTableName   Table with primary key that we want to see foreign
+  @param[in] pk_schema_len   Length of @a pk_schema_name
+  @param[in] pk_table_name   Table with primary key that we want to see foreign
                              keys for
-  @param[in] cbPkTableName   Length of @a szPkTableName
-  @param[in] szFkCatalogName Catalog (database) of table with foreign keys we
+  @param[in] pk_table_len    Length of @a pk_table_name
+  @param[in] fk_catalog_name Catalog (database) of table with foreign keys we
                              are interested in
-  @param[in] cbFkCatalogName Length of @a szFkCatalogName
-  @param[in] szFkSchemaName  Schema of table with foreign keys we are
+  @param[in] fk_catalog_len  Length of @a fk_catalog_name
+  @param[in] fk_schema_name  Schema of table with foreign keys we are
                              interested in
-  @param[in] cbFkSchemaName  Length of szFkSchemaName
-  @param[in] szFkTableName   Table with foreign keys we are interested in
-  @param[in] cbFkTableName   Length of @a szFkTableName
+  @param[in] fk_schema_len   Length of fk_schema_name
+  @param[in] fk_table_name   Table with foreign keys we are interested in
+  @param[in] fk_table_len    Length of @a fk_table_name
 
   @return SQL_SUCCESS
 
@@ -1018,47 +992,40 @@ SQLRETURN i_s_foreign_keys(SQLHSTMT hstmt,
 */
 SQLRETURN SQL_API
 MySQLForeignKeys(SQLHSTMT hstmt,
-                 SQLCHAR *szPkCatalogName __attribute__((unused)),
-                 SQLSMALLINT cbPkCatalogName __attribute__((unused)),
-                 SQLCHAR *szPkSchemaName __attribute__((unused)),
-                 SQLSMALLINT cbPkSchemaName __attribute__((unused)),
-                 SQLCHAR *szPkTableName, SQLSMALLINT cbPkTableName,
-                 SQLCHAR *szFkCatalogName, SQLSMALLINT cbFkCatalogName,
-                 SQLCHAR *szFkSchemaName __attribute__((unused)),
-                 SQLSMALLINT cbFkSchemaName __attribute__((unused)),
-                 SQLCHAR *szFkTableName, SQLSMALLINT cbFkTableName)
+                 SQLCHAR *pk_catalog_name __attribute__((unused)),
+                 SQLSMALLINT pk_catalog_len __attribute__((unused)),
+                 SQLCHAR *pk_schema_name __attribute__((unused)),
+                 SQLSMALLINT pk_schema_len __attribute__((unused)),
+                 SQLCHAR *pk_table_name, SQLSMALLINT pk_table_len,
+                 SQLCHAR *fk_catalog_name, SQLSMALLINT fk_catalog_len,
+                 SQLCHAR *fk_schema_name __attribute__((unused)),
+                 SQLSMALLINT fk_schema_len __attribute__((unused)),
+                 SQLCHAR *fk_table_name, SQLSMALLINT fk_table_len)
 {
     STMT *stmt=(STMT *) hstmt;
 
     CLEAR_STMT_ERROR(hstmt);
     my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
-    if (cbPkTableName == SQL_NTS)
-      cbPkTableName= szPkTableName != NULL ? (SQLSMALLINT)strlen((char *)szPkTableName) : 0;
-
-    if (cbPkCatalogName == SQL_NTS)
-      cbPkCatalogName= szPkCatalogName != NULL ? (SQLSMALLINT)strlen((char *)szPkCatalogName) : 0;
-
-    if (cbFkCatalogName == SQL_NTS)
-      cbFkCatalogName= szFkCatalogName != NULL ? (SQLSMALLINT)strlen((char *)szFkCatalogName) : 0;
-
-    if (cbFkTableName == SQL_NTS)
-      cbFkTableName= szFkTableName != NULL ? (SQLSMALLINT)strlen((char *)szFkTableName) : 0;
+    GET_NAME_LEN(stmt, pk_catalog_name, pk_catalog_len);
+    GET_NAME_LEN(stmt, fk_catalog_name, fk_catalog_len);
+    GET_NAME_LEN(stmt, pk_table_name, pk_table_len);
+    GET_NAME_LEN(stmt, fk_table_name, fk_table_len);
 
     if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
     {
-      return i_s_foreign_keys(hstmt, szPkCatalogName, cbPkCatalogName, szPkSchemaName,
-                              cbPkSchemaName, szPkTableName, cbPkTableName, szFkCatalogName,
-                              cbFkCatalogName, szFkSchemaName, cbFkSchemaName,
-                              szFkTableName, cbFkTableName);
+      return i_s_foreign_keys(hstmt, pk_catalog_name, pk_catalog_len, pk_schema_name,
+                              pk_schema_len, pk_table_name, pk_table_len, fk_catalog_name,
+                              fk_catalog_len, fk_schema_name, fk_schema_len,
+                              fk_table_name, fk_table_len);
     }
     /* For 3.23 and later, use comment in SHOW TABLE STATUS (yuck). */
     else /* We wouldn't get here if we had server version under 3.23 */
     {
-      return mysql_foreign_keys(hstmt, szPkCatalogName, cbPkCatalogName, szPkSchemaName,
-                              cbPkSchemaName, szPkTableName, cbPkTableName, szFkCatalogName,
-                              cbFkCatalogName, szFkSchemaName, cbFkSchemaName,
-                              szFkTableName, cbFkTableName);
+      return mysql_foreign_keys(hstmt, pk_catalog_name, pk_catalog_len, pk_schema_name,
+                              pk_schema_len, pk_table_name, pk_table_len, fk_catalog_name,
+                              fk_catalog_len, fk_schema_name, fk_schema_len,
+                              fk_table_name, fk_table_len);
     }
 }
 
@@ -1074,25 +1041,28 @@ SQLProcedures and SQLProcedureColumns
   database is specified, the current database is used.
 
   @param[in] hstmt            Handle of statement
-  @param[in] szCatalogName    Name of catalog (database)
-  @param[in] cbCatalogName    Length of catalog
-  @param[in] szSchemaName     Pattern of schema (unused)
-  @param[in] cbSchemaName     Length of schema name
-  @param[in] szProcName       Pattern of procedure names to fetch
-  @param[in] cbProcName       Length of procedure name
+  @param[in] catalog_name     Name of catalog (database)
+  @param[in] catalog_len      Length of catalog
+  @param[in] schema_name      Pattern of schema (unused)
+  @param[in] schema_len       Length of schema name
+  @param[in] proc_name        Pattern of procedure names to fetch
+  @param[in] proc_len         Length of procedure name
 */
 SQLRETURN SQL_API
 MySQLProcedures(SQLHSTMT hstmt,
-                SQLCHAR *szCatalogName, SQLSMALLINT cbCatalogName,
-                SQLCHAR *szSchemaName __attribute__((unused)),
-                SQLSMALLINT cbSchemaName __attribute__((unused)),
-                SQLCHAR *szProcName, SQLSMALLINT cbProcName)
+                SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
+                SQLCHAR *schema_name __attribute__((unused)),
+                SQLSMALLINT schema_len __attribute__((unused)),
+                SQLCHAR *proc_name, SQLSMALLINT proc_len)
 {
   SQLRETURN rc;
   STMT *stmt= (STMT *)hstmt;
 
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
+
+  GET_NAME_LEN(stmt, catalog_name, catalog_len);
+  GET_NAME_LEN(stmt, proc_name, proc_len);
 
   /* If earlier than 5.0, the server doesn't even support stored procs. */
   if (!server_has_i_s(stmt->dbc))
@@ -1121,7 +1091,7 @@ MySQLProcedures(SQLHSTMT hstmt,
     look up procedures from the current database. (This is not standard
     behavior, but seems useful.)
   */
-  if (szCatalogName && szProcName)
+  if (catalog_name && proc_name)
     rc= MySQLPrepare(hstmt, (SQLCHAR *)
                      "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT,"
                      "NULL AS PROCEDURE_SCHEM,"
@@ -1135,7 +1105,7 @@ MySQLProcedures(SQLHSTMT hstmt,
                      "  FROM INFORMATION_SCHEMA.ROUTINES"
                      " WHERE ROUTINE_NAME LIKE ? AND ROUTINE_SCHEMA = ?",
                      SQL_NTS, FALSE);
-  else if (szProcName)
+  else if (proc_name)
     rc= MySQLPrepare(hstmt, (SQLCHAR *)
                      "SELECT ROUTINE_SCHEMA AS PROCEDURE_CAT,"
                      "NULL AS PROCEDURE_SCHEM,"
@@ -1167,22 +1137,18 @@ MySQLProcedures(SQLHSTMT hstmt,
   if (!SQL_SUCCEEDED(rc))
     return rc;
 
-  if (szProcName)
+  if (proc_name)
   {
-    if (cbProcName == SQL_NTS)
-      cbProcName= (SQLSMALLINT)strlen((const char *)szProcName);
     rc= my_SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR, SQL_C_CHAR,
-                            0, 0, szProcName, cbProcName, NULL);
+                            0, 0, proc_name, proc_len, NULL);
     if (!SQL_SUCCEEDED(rc))
       return rc;
   }
 
-  if (szCatalogName)
+  if (catalog_name)
   {
-    if (cbCatalogName == SQL_NTS)
-      cbCatalogName= (SQLSMALLINT)strlen((const char *)szCatalogName);
     rc= my_SQLBindParameter(hstmt, 2, SQL_PARAM_INPUT, SQL_C_CHAR,
-                            SQL_C_CHAR, 0, 0, szCatalogName, cbCatalogName,
+                            SQL_C_CHAR, 0, 0, catalog_name, catalog_len,
                             NULL);
     if (!SQL_SUCCEEDED(rc))
       return rc;
@@ -1206,16 +1172,16 @@ SQLProcedure Columns
 */
 SQLRETURN
 i_s_procedure_columns(SQLHSTMT hstmt,
-                      SQLCHAR *szCatalogName, SQLSMALLINT cbCatalogName,
-                      SQLCHAR *szSchemaName __attribute__((unused)),
-                      SQLSMALLINT cbSchemaName __attribute__((unused)),
-                      SQLCHAR *szProcName, SQLSMALLINT cbProcName,
-                      SQLCHAR *szColumnName, SQLSMALLINT cbColumnName)
+                      SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
+                      SQLCHAR *schema_name __attribute__((unused)),
+                      SQLSMALLINT schema_len __attribute__((unused)),
+                      SQLCHAR *proc_name, SQLSMALLINT proc_len,
+                      SQLCHAR *column_name, SQLSMALLINT column_len)
 {
   /* The function is just a stub. We call non-I_S version of the function before implementing the I_S one */
-  return mysql_procedure_columns(hstmt, szCatalogName, cbCatalogName, szSchemaName,
-                                 cbSchemaName, szProcName, cbProcName, szColumnName,
-                                 cbColumnName);
+  return mysql_procedure_columns(hstmt, catalog_name, catalog_len, schema_name,
+                                 schema_len, proc_name, proc_len, column_name,
+                                 column_len);
 }
 
 
@@ -1229,36 +1195,31 @@ i_s_procedure_columns(SQLHSTMT hstmt,
 
 SQLRETURN SQL_API
 MySQLProcedureColumns(SQLHSTMT hstmt,
-                    SQLCHAR *szCatalogName, SQLSMALLINT cbCatalogName,
-                    SQLCHAR *szSchemaName __attribute__((unused)),
-                    SQLSMALLINT cbSchemaName __attribute__((unused)),
-                    SQLCHAR *szProcName, SQLSMALLINT cbProcName,
-                    SQLCHAR *szColumnName, SQLSMALLINT cbColumnName)
+                    SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
+                    SQLCHAR *schema_name __attribute__((unused)),
+                    SQLSMALLINT schema_len __attribute__((unused)),
+                    SQLCHAR *proc_name, SQLSMALLINT proc_len,
+                    SQLCHAR *column_name, SQLSMALLINT column_len)
 {
   STMT *stmt= (STMT *)hstmt;
 
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
-  if (cbCatalogName == SQL_NTS)
-    cbCatalogName= szCatalogName ? (SQLSMALLINT)strlen((char *)szCatalogName) : 0;
-
-  if (cbProcName == SQL_NTS)
-    cbProcName= szProcName ? (SQLSMALLINT)strlen((char *)szProcName) : 0;
-
-  if (cbColumnName == SQL_NTS)
-    cbColumnName= szColumnName ? (SQLSMALLINT)strlen((char *)szColumnName) : 0;
+  GET_NAME_LEN(stmt, catalog_name, catalog_len);
+  GET_NAME_LEN(stmt, proc_name, proc_len);
+  GET_NAME_LEN(stmt, column_name, column_len);
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
-    return i_s_procedure_columns(hstmt, szCatalogName, cbCatalogName, szSchemaName,
-                                 cbSchemaName, szProcName, cbProcName, szColumnName,
-                                 cbColumnName);
+    return i_s_procedure_columns(hstmt, catalog_name, catalog_len, schema_name,
+                                 schema_len, proc_name, proc_len, column_name,
+                                 column_len);
   }
   else
   {
-    return mysql_procedure_columns(hstmt, szCatalogName, cbCatalogName, szSchemaName,
-                                 cbSchemaName, szProcName, cbProcName, szColumnName,
-                                 cbColumnName);
+    return mysql_procedure_columns(hstmt, catalog_name, catalog_len, schema_name,
+                                 schema_len, proc_name, proc_len, column_name,
+                                 column_len);
   }
 }

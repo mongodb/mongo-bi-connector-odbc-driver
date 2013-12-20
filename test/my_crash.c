@@ -226,12 +226,85 @@ DECLARE_TEST(t_bug17857204)
 }
 
 
+/**
+  Bug #17854697 SEGMENTATION FAULT IN SQLSPECIALCOLUMNS IF TABLE NAME IS 
+  INVALID
+*/
+DECLARE_TEST(t_bug17854697)
+{
+  SQLCHAR *any_name = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\
+                      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\
+                      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\
+                      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\
+                      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\
+                      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\
+                      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\
+                      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\
+                      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\
+                      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+  SQLCHAR buf[1024]= {0};
+
+  int len= strlen(any_name);
+
+  /* lets check all catalog functions */
+  expect_stmt(hstmt, SQLColumnPrivileges(hstmt, any_name, SQL_NTS, NULL, 0,
+                                         any_name, SQL_NTS, any_name,
+                                         SQL_NTS), SQL_ERROR);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  expect_stmt(hstmt, SQLColumns(hstmt, any_name, SQL_NTS, NULL, 0,
+                                any_name, SQL_NTS, any_name,
+                                SQL_NTS), SQL_ERROR);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  expect_stmt(hstmt, SQLForeignKeys(hstmt, any_name, SQL_NTS, NULL, 0,
+                                any_name, SQL_NTS, any_name, SQL_NTS,
+                                any_name, SQL_NTS, any_name, SQL_NTS), 
+                     SQL_ERROR);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  expect_stmt(hstmt, SQLPrimaryKeys(hstmt, any_name, SQL_NTS, NULL, 0,
+                                    any_name, SQL_NTS), SQL_ERROR);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  expect_stmt(hstmt, SQLProcedureColumns(hstmt, any_name, SQL_NTS, NULL, 0,
+                                any_name, SQL_NTS, any_name, SQL_NTS), 
+                     SQL_ERROR);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  expect_stmt(hstmt, SQLProcedures(hstmt, any_name, SQL_NTS, NULL, 0,
+                                any_name, SQL_NTS), SQL_ERROR);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  expect_stmt(hstmt, SQLSpecialColumns(hstmt, SQL_BEST_ROWID, any_name, SQL_NTS, 
+                                NULL, 0, any_name, SQL_NTS, SQL_SCOPE_SESSION, 
+                                SQL_NULLABLE), SQL_ERROR);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  expect_stmt(hstmt, SQLStatistics(hstmt, any_name, SQL_NTS, NULL, 0,
+                                any_name, SQL_NTS, SQL_INDEX_ALL, SQL_QUICK),
+                     SQL_ERROR);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  expect_stmt(hstmt, SQLTablePrivileges(hstmt, any_name, SQL_NTS, NULL, 0,
+                                any_name, SQL_NTS), SQL_ERROR);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  expect_stmt(hstmt, SQLTables(hstmt, any_name, SQL_NTS, NULL, 0,
+                                any_name, SQL_NTS, any_name, SQL_NTS),
+                     SQL_ERROR);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug69950)
   ADD_TEST(t_bug70642)
   ADD_TEST(t_bug17358838)
   ADD_TEST(t_bug17587913)
   ADD_TEST(t_bug17857204)
+  ADD_TEST(t_bug17854697)
 END_TESTS
 
 /*myoption &= ~(1 << 30);
