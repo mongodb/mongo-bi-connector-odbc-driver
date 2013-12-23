@@ -285,17 +285,17 @@ Driver *driver_new()
                                      MYF(0));
   if (!driver->lib)
   {
-    x_free(driver);
     x_free(driver->name);
+    x_free(driver);
     return NULL;
   }
   driver->setup_lib= (SQLWCHAR *)my_malloc(ODBCDRIVER_STRLEN *
                                            sizeof(SQLWCHAR), MYF(0));
   if (!driver->setup_lib)
   {
-    x_free(driver);
     x_free(driver->name);
     x_free(driver->lib);
+    x_free(driver);
     return NULL;
   }
   /* init to empty strings */
