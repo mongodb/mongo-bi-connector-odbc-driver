@@ -27,6 +27,7 @@
   * SQLFetch() crashing when execute using UnixODBC 2.3.2 (Bug# 17857204)
   * Segmentation fault in SQLSpecialColumns if table name is invalid
     (Bug# 17854697)
+  * Invalid order of free() functions can cause crash (Bug# 17992912)
 
 ----
 5.2.6(25-Sep-2013)
