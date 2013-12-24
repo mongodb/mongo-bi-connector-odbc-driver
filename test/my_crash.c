@@ -114,7 +114,7 @@ DECLARE_TEST(t_bug17358838)
                                message, sizeof(message), &len));
 
   is_str(sqlstate, "HY090", 5);
-  is(strstr((char *)message, "Invalid string or buffer length"));
+  is(strstr((char *)message, "One or more parameters exceed the maximum allowed name length"));
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
 
