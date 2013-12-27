@@ -298,6 +298,22 @@ DECLARE_TEST(t_bug17854697)
 }
 
 
+/* Bug #17999659 CRASH IN ODBC DRIVER WITH CHARSET=WRONGCHARSET  */
+DECLARE_TEST(t_bug17999659)
+{
+  SQLHDBC hdbc1;
+
+  ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
+
+  /* getting error here */
+  expect_dbc(hdbc1, get_connection(&hdbc1, NULL, NULL, NULL, NULL, 
+             "CHARSET=wrongcharset"), SQL_ERROR);
+
+  ok_con(hdbc1, SQLFreeConnect(hdbc1));
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug69950)
   ADD_TEST(t_bug70642)
@@ -305,6 +321,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug17587913)
   ADD_TEST(t_bug17857204)
   ADD_TEST(t_bug17854697)
+  ADD_TEST(t_bug17999659)
 END_TESTS
 
 /*myoption &= ~(1 << 30);
