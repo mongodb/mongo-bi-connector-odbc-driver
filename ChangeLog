@@ -18,6 +18,7 @@
   * Segmentation fault in SQLSpecialColumns if table name is invalid 
     (Bug# 17854697)
   * Invalid order of free() functions can cause crash (Bug# 17992912)
+  * Crash in ODBC Driver with CHARSET=WRONGCHARSET (Bug# 17999659)
 
 ----
 
