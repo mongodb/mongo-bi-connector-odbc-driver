@@ -234,9 +234,9 @@ void mem_gc_init()
   gc_blk.counter= 0;
 }
 
-#define DECLARE_BASIC_HANDLES(E, C, S) SQLHENV E; \
-  SQLHDBC C; \
-  SQLHSTMT S
+#define DECLARE_BASIC_HANDLES(E, C, S) SQLHENV E= NULL; \
+  SQLHDBC C= NULL; \
+  SQLHSTMT S= NULL
 
 #define BEGIN_TESTS my_test tests[]= {
 #define ADD_TEST(name)          { #name, name, OK  , -1 },
