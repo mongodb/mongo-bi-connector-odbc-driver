@@ -526,6 +526,12 @@ int driver_from_kvpair_semicolon(Driver *driver, const SQLWCHAR *attrs)
     if ((end= sqlwcharchr(attrs, ';')) == NULL)
       end= attrs + sqlwcharlen(attrs);
 
+    /* check the attribute length (must not be longer than the buffer size) */
+    if (split - attrs >= 100)
+    {
+      return 1;
+    }
+
     /* pull out the attribute name */
     memcpy(attribute, attrs, (split - attrs) * sizeof(SQLWCHAR));
     attribute[split - attrs]= 0; /* add null term */
@@ -541,6 +547,14 @@ int driver_from_kvpair_semicolon(Driver *driver, const SQLWCHAR *attrs)
 
     if (dest)
     {
+      if (end - split >= ODBCDRIVER_STRLEN)
+      {
+        /* 
+          The value is longer than the allocated buffer length
+          for driver->lib or driver->setup_lib
+        */
+        return 1;
+      }
       memcpy(dest, split, (end - split) * sizeof(SQLWCHAR));
       dest[end - split]= 0; /* add null term */
     }
@@ -962,6 +976,13 @@ int ds_from_kvpair(DataSource *ds, const SQLWCHAR *attrs, SQLWCHAR delim)
     while (*attrs == ' ')
       ++attrs;
     len = split - attrs;
+
+    /* the attribute length must not be longer than the buffer size */
+    if (len >= 100)
+    {
+      return 1;
+    }
+
     memcpy(attribute, attrs, len * sizeof(SQLWCHAR));
     attribute[len]= 0;
     /* remove trailing spaces on attribute */

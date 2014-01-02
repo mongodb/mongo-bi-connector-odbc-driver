@@ -313,6 +313,28 @@ DECLARE_TEST(t_bug17999659)
   return OK;
 }
 
+/*
+  Bug #17966018 DRIVER AND MYODBC-INSTALLER CRASH WITH LONG OPTION 
+  NAMES (>100) AND VALUES (>255)
+*/
+DECLARE_TEST(t_bug17966018)
+{
+  char opt_buff[2048];
+  int result_connect;
+
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+
+  /* This makes a really long SETUP=000000...0;OPTION_0000000000...0=1 */
+  sprintf(opt_buff, "OPTION_%0*d=1", 2000, 0);
+
+  result_connect= alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL, 
+                                               NULL, NULL, NULL, opt_buff);
+  is_num(result_connect, FAIL);
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+  return OK;
+}
+
 
 BEGIN_TESTS
   ADD_TEST(t_bug69950)
@@ -322,6 +344,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug17857204)
   ADD_TEST(t_bug17854697)
   ADD_TEST(t_bug17999659)
+  ADD_TEST(t_bug17966018)
 END_TESTS
 
 RUN_TESTS
