@@ -81,12 +81,15 @@ SQLRETURN myodbc_set_initial_character_set(DBC *dbc, const char *charset)
       dbc->ansi_charset_info= get_charset_by_csname(charset,
                                                     MYF(MY_CS_PRIMARY),
                                                     MYF(0));
+      if (!dbc->ansi_charset_info)
+      {
         char errmsg[NAME_LEN + 32*SYSTEM_CHARSET_MBMAXLEN];
         /* This message should help the user to identify the error */
         sprintf(errmsg, "Wrong character set name %.*s", NAME_LEN, charset);
         set_dbc_error(dbc, "HY000", errmsg, 0);
 
         return SQL_ERROR;
+      }
     }
 
     charset= "utf8";

@@ -25,6 +25,8 @@
     (Bug# 17854697)
   * Invalid order of free() functions can cause crash (Bug# 17992912)
   * Crash in ODBC Driver with CHARSET=WRONGCHARSET (Bug# 17999659)
+  * Driver and myodbc-installer crash with long option names (>100) and 
+    values (>255) (Bug# 17966018)
 
 
 ----
