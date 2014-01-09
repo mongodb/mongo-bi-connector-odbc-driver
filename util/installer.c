@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -426,7 +426,9 @@ int driver_lookup_name(Driver *driver)
 #ifdef _WIN32
       if (!Win64CompareLibs(driverinfo, driver->lib))
 #else
-      if (!sqlwcharcasecmp(driverinfo, driver->lib))
+      /* Trying to match the driver lib or section name in odbcinst.ini */
+      if (!sqlwcharcasecmp(driverinfo, driver->lib) ||
+          !sqlwcharcasecmp(pdrv, driver->lib))
 #endif
       {
         sqlwcharncpy(driver->name, pdrv, ODBCDRIVER_STRLEN);
