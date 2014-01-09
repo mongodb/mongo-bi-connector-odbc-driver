@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2001, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -458,6 +458,42 @@ void free_connection_stmts(DBC *dbc);
 #define IS_DATA_AT_EXEC(X) ((X) && \
                             (*(X) == SQL_DATA_AT_EXEC || \
                              *(X) <= SQL_LEN_DATA_AT_EXEC_OFFSET))
+
+/* Macro evaluates SQLRETURN expression and in case of error pushes it up in callstack */
+#define PUSH_ERROR(sqlreturn_expr) do\
+                                   {\
+                                     SQLRETURN lrc= (sqlreturn_expr);\
+                                     if (!SQL_SUCCEEDED(lrc))\
+                                       return lrc;\
+                                   } while(0)
+
+/* Same as previous, but remembers to given var2rec SQL_SUCCESS_WITH_INFO */
+#define PUSH_ERROR_EXT(var2rec,sqlreturn_expr) do\
+                                               {\
+                                                 SQLRETURN lrc= (sqlreturn_expr);\
+                                                 if (!SQL_SUCCEEDED(lrc))\
+                                                   return lrc;\
+                                                 else if (lrc!=SQL_SUCCESS)\
+                                                        var2rec= lrc;\
+                                               } while(0)
+
+/* Same as PUSH_ERROR but does not break execution in case of specified 'error' */
+#define PUSH_ERROR_UNLESS(sqlreturn_expr, error) do\
+                                                 {\
+                                                   SQLRETURN lrc= (sqlreturn_expr);\
+                                                   if (!SQL_SUCCEEDED(lrc)&&lrc!=error)\
+                                                     return lrc;\
+                                                 } while(0)
+
+/* Same as PUSH_ERROR_UNLESS but remembers to given var2rec SQL_SUCCESS_WITH_INFO */
+#define PUSH_ERROR_UNLESS_EXT(var2rec, sqlreturn_expr, error) do\
+                                                 {\
+                                                   SQLRETURN lrc= (sqlreturn_expr);\
+                                                   if (!SQL_SUCCEEDED(lrc)&&lrc!=error)\
+                                                     return lrc;\
+                                                   else if (lrc!=SQL_SUCCESS)\
+                                                          var2rec= lrc;\
+                                                 } while(0)
 
 #define GET_NAME_LEN(S, N, L) L = (L == SQL_NTS ? (N ? (SQLSMALLINT)strlen((char *)N) : 0) : L); \
   if (L > NAME_LEN) \

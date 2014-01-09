@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -1593,6 +1593,93 @@ DECLARE_TEST(t_odbc_inoutstream_params)
 
   return OK;
 }
+
+
+/* Bug #17842966 - SQLGETDATA RETURNING ERROR BEING CALLED AFTER SQLPARAMDATA
+   If query uses in and out stream and no resultset, additional SQLParamData would be
+   required to get out stream token */
+DECLARE_TEST(t_inoutstream17842966)
+{
+  SQLLEN      len= 0, len2= SQL_LEN_DATA_AT_EXEC(16), bytes, chunk_size;
+  SQLCHAR     blobValue[50], chunk[8], *ptr= blobValue, c, inout[32]= "input";
+  SQLINTEGER  intParam= 4;
+  SQLPOINTER  token;
+  SQLRETURN   rc;
+
+#ifndef _WIN32
+  skip("At the moment the feature is not supported by the DM being used");
+#endif
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS t_inoutstream17842966");
+  ok_sql(hstmt, "CREATE PROCEDURE t_inoutstream17842966 (INOUT param2 LONGTEXT)\
+                  BEGIN\
+                    SET param2= concat('a', param2, 'z');\
+                  END;");
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT_OUTPUT_STREAM,
+          SQL_C_BINARY, SQL_VARBINARY, 0, 0,
+          (SQLPOINTER)1,  /* Application-defined token. Using ordinal position or a pointer to some
+                            data structure are good ideas here */
+          0,             /* Buffer length is ignored for streamed parameter */
+          &len));
+
+  len= SQL_LEN_DATA_AT_EXEC(26);
+
+  expect_stmt(hstmt, SQLExecDirect(hstmt, "CALL t_inoutstream17842966(?)", SQL_NTS), SQL_NEED_DATA);
+
+  expect_stmt(hstmt, SQLParamData(hstmt, &token), SQL_NEED_DATA);
+  is_num((SQLLEN)token, 1);
+  
+  ok_stmt(hstmt, SQLPutData(hstmt, " ", 1));
+  for (c= 'b'; c < 'z'; ++c)
+  {
+    ok_stmt(hstmt, SQLPutData(hstmt, &c, 1));
+  }
+
+  ok_stmt(hstmt, SQLPutData(hstmt, " ", 1));
+
+  token= 0;
+  /* DAE is done, query shoud be executed and we are getting the stream - this where the bug occured
+    (token did not get correct value) */
+  expect_stmt(hstmt, SQLParamData(hstmt, &token), SQL_PARAM_DATA_AVAILABLE);
+
+  /* Checking if right token */
+  is_num((SQLLEN)token, 1);
+
+  /* We support binary streams only so far - checking if error returned and correct sqlstate set.
+     For retrieving parameter data 2nd argument is ordinal of parameter, not column in result */
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, chunk, sizeof(chunk), &bytes), SQL_ERROR);
+  is(check_sqlstate(hstmt, "HYC00") == OK);
+  do
+  {
+    rc= SQLGetData(hstmt, 1, SQL_C_BINARY, chunk, sizeof(chunk), &bytes);
+    is(SQL_SUCCEEDED(rc));
+    chunk_size= bytes < sizeof(chunk) ? bytes : sizeof(chunk);
+    memcpy(ptr, chunk, chunk_size);
+    ptr+= chunk_size;
+    is(ptr < blobValue + sizeof(blobValue));
+    /* Bug #17814768/70946 - in length pointer driver should always return total number of bytes left */
+    is_num(bytes, len);
+    len-= chunk_size;
+  } while(rc == SQL_SUCCESS_WITH_INFO);
+
+  is_str(blobValue, "a bcdefghijklmnopqrstuvwxy z", 28);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* Just to check that connecton is still usable after our streamed parameter */
+  ok_sql(hstmt, "SELECT 3");
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  is_num(my_fetch_int(hstmt, 1), 3);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP PROCEDURE t_inoutstream17842966");
+
+  return OK;
+}
+
 #endif /* #ifndef USE_IODBC */
 
 BEGIN_TESTS
@@ -1620,6 +1707,7 @@ BEGIN_TESTS
 #ifndef USE_IODBC
   ADD_TEST(t_odbc_outstream_params)
   ADD_TEST(t_odbc_inoutstream_params)
+  ADD_TEST(t_inoutstream17842966)
 #endif
 END_TESTS
 

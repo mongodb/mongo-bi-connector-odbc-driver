@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -1495,75 +1495,36 @@ SQLRETURN my_SQLExecute( STMT *pStmt )
 }
 
 
-/*
-  @type    : ODBC 1.0 API
-  @purpose : is used in conjunction with SQLPutData to supply parameter
-  data at statement execution time
-*/
-
-SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER *prbgValue)
+static SQLRETURN select_dae_param_desc(STMT *stmt, DESC **apd, unsigned int *param_count)
 {
-  STMT *stmt= (STMT *) hstmt;
-  uint i;
-  SQLRETURN rc;
-  char *query=  GET_QUERY(&stmt->query);
-  DESC *apd;
-  uint param_count= stmt->param_count;
-
-  assert(stmt->dae_type || stmt->out_params_state == OPS_STREAMS_PENDING);
-
-  if (stmt->out_params_state == OPS_STREAMS_PENDING)
+  *param_count= stmt->param_count;
+  /* get the correct APD for the dae type we're handling */
+  switch (stmt->dae_type)
   {
-    DESCREC *rec= desc_find_outstream_rec(stmt, &stmt->current_param, &stmt->getdata.column);
-
-    if (rec != NULL)
-    {
-      uint cur_column_number= stmt->getdata.column;
-      reset_getdata_position(stmt);
-      stmt->getdata.column= cur_column_number;
-      stmt->getdata.src_offset= 0;
-
-      if (prbgValue)
-      {
-        SQLINTEGER default_size= bind_length(rec->concise_type,
-                                            rec->octet_length);
-        *prbgValue= ptr_offset_adjust(rec->data_ptr,
-                                      stmt->ipd->bind_offset_ptr,
-                                      stmt->ipd->bind_type,
-                                      default_size, 0);
-      }
-
-      return SQL_PARAM_DATA_AVAILABLE;
-    }
-    else
-    {
-      /* Magical out params fetch */
-      mysql_stmt_fetch(stmt->ssps);
-      stmt->out_params_state = OPS_PREFETCHED;
-      return SQL_SUCCESS;
-    }
-  }
-  else
-  {
-    /* get the correct APD for the dae type we're handling */
-    switch (stmt->dae_type)
-    {
     case DAE_NORMAL:
-      apd= stmt->apd;
+      *apd= stmt->apd;
       break;
     case DAE_SETPOS_INSERT:
     case DAE_SETPOS_UPDATE:
-      apd= stmt->setpos_apd;
-      param_count= stmt->ard->count;
+      *apd= stmt->setpos_apd;
+      *param_count= stmt->ard->count;
       break;
     default:
       return set_stmt_error(stmt, "HY010",
         "Invalid data at exec state", 0);
-    }
-    /* Making sure that param_bind array is big enough - might be needed for send_long_data
-       I guess there is a better place for this though */
-    adjust_param_bind_array(stmt);
   }
+
+  return SQL_SUCCESS;
+}
+
+
+/* Looks for next DAE parameter and returns true if finds it */
+static SQLRETURN find_next_dae_param(STMT *stmt,  SQLPOINTER *token)
+{
+  unsigned int i, param_count;
+  DESC *apd;
+
+  PUSH_ERROR(select_dae_param_desc(stmt, &apd, &param_count));
 
   for (i= stmt->current_param; i < param_count; ++i)
   {
@@ -1582,9 +1543,9 @@ SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER *prbgValue)
       SQLINTEGER default_size= bind_length(aprec->concise_type,
                                             aprec->octet_length);
       stmt->current_param= i + 1;
-      if (prbgValue)
+      if (token)
       {
-        *prbgValue= ptr_offset_adjust(aprec->data_ptr,
+        *token= ptr_offset_adjust(aprec->data_ptr,
                                       apd->bind_offset_ptr,
                                       apd->bind_type,
                                       default_size, 0);
@@ -1592,64 +1553,140 @@ SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER *prbgValue)
       aprec->par.value= NULL;
       aprec->par.alloced= FALSE;
       aprec->par.is_dae= 1;
+
       return SQL_NEED_DATA;
     }
   }
 
-  
-#ifdef WE_CAN_SEND_LONG_DATA_PROPERLY
-  /*
-    * Course of actions has to be following:
-    * 1) We skip DAE parameters that are good for mysql_send_long_data(i.e. binary params) - specs
-    *    allow us to do that. But we are memorizing we have them(first such parameter index)
-    * 2) After we done with regular dae parameters we do insert_params/mysql_stmt_result_bind
-    * 3) SQLParamData loops thru those parameters now skipping "regular" dae params
-    * 4) After last parameter done - do_query as it is now, but it should not call
-    *    mysql_stmt_bind_param
-    */
+  return SQL_SUCCESS;
+}
 
-  if (stmt->send_data_param > 0)
-  {
-    
-    if (mysql_stmt_bind_param(stmt->ssps, (MYSQL_BIND*)stmt->param_bind->buffer))
-    {
-      set_stmt_error(stmt, "HY000", mysql_stmt_error(stmt->ssps),
-                    mysql_stmt_errno(stmt->ssps));
 
-      /* For some errors - translating to more appropriate status */
-      translate_error(stmt->error.sqlstate, MYERR_S1000,
-                    mysql_stmt_errno(stmt->ssps));
-      return SQL_ERROR;
-    }
+static SQLRETURN execute_dae(STMT *stmt)
+{
+  SQLRETURN rc;
 
-    /* Do all stuff for stmt->send_data_param as a dae */
-    return SQL_NEED_DATA;
-  }
-#endif
-
-  /* all data-at-exec params are complete. continue execution */
   switch (stmt->dae_type)
   {
   case DAE_NORMAL:
-    if (!SQL_SUCCEEDED(rc= insert_params(stmt, 0, &query, 0)))
+    if (!SQL_SUCCEEDED(rc= insert_params(stmt, 0, &(GET_QUERY(&stmt->query)), 0)))
       break;
-    rc= do_query(stmt, query, 0);
+    rc= do_query(stmt, GET_QUERY(&stmt->query), 0);
     break;
   case DAE_SETPOS_INSERT:
     stmt->dae_type= DAE_SETPOS_DONE;
-    rc= my_SQLSetPos(hstmt, stmt->setpos_row, SQL_ADD, stmt->setpos_lock);
+    rc= my_SQLSetPos((HSTMT)stmt, stmt->setpos_row, SQL_ADD, stmt->setpos_lock);
     desc_free(stmt->setpos_apd);
     stmt->setpos_apd= NULL;
     break;
   case DAE_SETPOS_UPDATE:
     stmt->dae_type= DAE_SETPOS_DONE;
-    rc= my_SQLSetPos(hstmt, stmt->setpos_row, SQL_UPDATE, stmt->setpos_lock);
+    rc= my_SQLSetPos((HSTMT)stmt, stmt->setpos_row, SQL_UPDATE, stmt->setpos_lock);
     desc_free(stmt->setpos_apd);
     stmt->setpos_apd= NULL;
     break;
   }
     
   stmt->dae_type= 0;
+
+  return rc;
+}
+
+
+static SQLRETURN find_next_out_stream(STMT *stmt, SQLPOINTER *token)
+{
+  DESCREC *rec= desc_find_outstream_rec(stmt, &stmt->current_param, &stmt->getdata.column);
+
+  if (rec != NULL)
+  {
+    uint cur_column_number= stmt->getdata.column;
+    reset_getdata_position(stmt);
+    stmt->getdata.column= cur_column_number;
+    stmt->getdata.src_offset= 0;
+
+    if (token)
+    {
+      SQLINTEGER default_size= bind_length(rec->concise_type,
+                                          rec->octet_length);
+      *token= ptr_offset_adjust(rec->data_ptr,
+                                    stmt->ipd->bind_offset_ptr,
+                                    stmt->ipd->bind_type,
+                                    default_size, 0);
+    }
+
+    return SQL_PARAM_DATA_AVAILABLE;
+  }
+  else
+  {
+    /* Magical out params fetch */
+    mysql_stmt_fetch(stmt->ssps);
+    stmt->out_params_state = OPS_PREFETCHED;
+
+    return SQL_SUCCESS;
+  }
+}
+
+
+/*
+  @type    : ODBC 1.0 API
+  @purpose : is used in conjunction with SQLPutData to supply parameter
+  data at statement execution time
+*/
+
+SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER *prbgValue)
+{
+  STMT *stmt= (STMT *) hstmt;
+  SQLRETURN rc= SQL_SUCCESS;
+
+  if (stmt->out_params_state != OPS_STREAMS_PENDING)
+  {
+    PUSH_ERROR(find_next_dae_param(stmt, prbgValue));
+
+     /* Making sure that param_bind array is big enough - might be needed for send_long_data
+       I guess there is a better place for this though */
+    adjust_param_bind_array(stmt);
+
+#ifdef WE_CAN_SEND_LONG_DATA_PROPERLY
+    /*
+      * Course of actions has to be following:
+      * 1) We skip DAE parameters that are good for mysql_send_long_data(i.e. binary params) - specs
+      *    allow us to do that. But we are memorizing we have them(first such parameter index)
+      * 2) After we done with regular dae parameters we do insert_params/mysql_stmt_result_bind
+      * 3) SQLParamData loops thru those parameters now skipping "regular" dae params
+      * 4) After last parameter done - do_query as it is now, but it should not call
+      *    mysql_stmt_bind_param
+      */
+
+    if (stmt->send_data_param > 0)
+    {
+    
+      if (mysql_stmt_bind_param(stmt->ssps, (MYSQL_BIND*)stmt->param_bind->buffer))
+      {
+        set_stmt_error(stmt, "HY000", mysql_stmt_error(stmt->ssps),
+                      mysql_stmt_errno(stmt->ssps));
+
+        /* For some errors - translating to more appropriate status */
+        translate_error(stmt->error.sqlstate, MYERR_S1000,
+                      mysql_stmt_errno(stmt->ssps));
+        return SQL_ERROR;
+      }
+
+      /* Do all stuff for stmt->send_data_param as a dae */
+      return SQL_NEED_DATA;
+    }
+#endif
+
+    /* all data-at-exec params are complete. continue execution */
+    PUSH_ERROR_UNLESS_EXT(rc, execute_dae(stmt), SQL_PARAM_DATA_AVAILABLE);
+  }
+
+  /* We could have got out streams just now */
+  if (stmt->out_params_state == OPS_STREAMS_PENDING)
+  {
+    return find_next_out_stream(stmt, prbgValue);
+  }
+
+  /* We should not normally get here */
   return rc;
 }
 

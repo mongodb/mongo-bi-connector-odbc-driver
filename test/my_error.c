@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -588,7 +588,7 @@ DECLARE_TEST(t_bug49466)
 
   is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
                                         NULL, NULL, NULL, 
-                                        "OPTION=67108864;NO_SSPS=1"));
+                                        "OPTION=67108864"));//;NO_SSPS=1"));
 
   ok_stmt(hstmt1, SQLExecDirect(hstmt1, "SELECT 100; CALL t_bug49466proc()", SQL_NTS));
 
