@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2012, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -67,7 +67,15 @@ MySQLGetPrivateProfileStringW(const MyODBC_LPCWSTR lpszSection, const MyODBC_LPC
   filename= (char *)sqlwchar_as_utf8(lpszFilename, &len);
 
   if (lpszRetBuffer && cbRetBuffer)
+  {
     ret= malloc(cbRetBuffer + 1);
+    /*
+      We cannot rely on getting correct results from the next call of
+      SQLGetPrivateProfileString. So, taking precautions against unititialized
+      values in the allocated buffer.
+    */
+    memset(ret, 0, cbRetBuffer + 1);
+  }
   else
     ret= NULL;
 
