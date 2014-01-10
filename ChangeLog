@@ -24,6 +24,8 @@
   * ODBCManageDataSourcesQ4 cannot run MyODBC GUI setup to edit an existing
     DSN (Bug# 18046123)
   * SQLGetData returning error being called after SQLParamData (Bug #17842966)
+  * Valgrind: jump or move depends on uninitialised value error from 
+    myodbc-installer (Bug# 18046120)
 
 ----
 
