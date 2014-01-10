@@ -31,6 +31,8 @@
   * Crash in ODBC Driver with CHARSET=WRONGCHARSET (Bug# 17999659)
   * Driver and myodbc-installer crash with long option names (>100) and 
     values (>255) (Bug# 17966018)
+  * Valgrind: jump or move depends on uninitialised value error from 
+    myodbc-installer (Bug# 18046120)
 
 ----
 5.2.6(25-Sep-2013)
