@@ -26,6 +26,8 @@
   * SQLGetData returning error being called after SQLParamData (Bug #17842966)
   * Valgrind: jump or move depends on uninitialised value error from 
     myodbc-installer (Bug# 18046120)
+  * Memory leak in sqlexecute() when connection is killed from another thread
+    (Bug#17587617)
 
 ----
 

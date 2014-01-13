@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -855,6 +855,12 @@ SQLRETURN SQL_API SQLDisconnect(SQLHDBC hdbc)
 
   if (dbc->ds && dbc->ds->save_queries)
     end_query_log(dbc->query_log);
+
+  /* free allocated packet buffer */
+  if (dbc->mysql.net.buff)
+  {
+    myodbc_net_end(&dbc->mysql.net);
+  }
 
   x_free(dbc->database);
 
