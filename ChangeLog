@@ -33,6 +33,8 @@
     values (>255) (Bug# 17966018)
   * Valgrind: jump or move depends on uninitialised value error from 
     myodbc-installer (Bug# 18046120)
+  * Memory leak in sqlexecute() when connection is killed from another thread
+    (Bug#17587617)
 
 ----
 5.2.6(25-Sep-2013)
