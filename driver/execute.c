@@ -42,13 +42,14 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
 
     if (!query)
     {
-      return error;       /* Probably error from insert_param */
+      /* Probably error from insert_param */
+      goto skip_unlock_exit;
     }
 
     if(!SQL_SUCCEEDED(set_sql_select_limit(stmt->dbc, stmt->stmt_options.max_rows)))
     {
       /* if setting sql_select_limit fails, the query will probably fail anyway too */
-      return error;
+      goto skip_unlock_exit;
     }
 
     if (query_length == 0)
@@ -151,8 +152,10 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length)
     fix_result_types(stmt);
     error= SQL_SUCCESS;
 
-    exit:
+exit:
     pthread_mutex_unlock(&stmt->dbc->lock);
+
+skip_unlock_exit:
     if ( query != stmt->query )
         x_free(query);
 
@@ -1114,6 +1117,23 @@ SQLRETURN my_SQLExecute( STMT FAR *pStmt )
       }
       else
       {
+        if (query != pStmt->query)
+        {
+          x_free(query);
+        }
+  
+        /*
+          If the original query was modified, we reset pStmt->query so that the
+          next execution re-starts with the original query.
+        */
+        if (pStmt->orig_query)
+        {
+          x_free(pStmt->query);
+          pStmt->query= pStmt->orig_query;
+          pStmt->query_end= pStmt->orig_query_end;
+          pStmt->orig_query= NULL;
+        }
+
         /* with broken connection we always return error for all next queries */
         rc= SQL_ERROR;
       }

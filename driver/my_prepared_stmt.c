@@ -270,12 +270,12 @@ int ssps_bind_result(STMT *stmt)
       st_buffer_size_type p= allocate_buffer_for_field(field);
 
       stmt->result_bind[i].buffer_type  = p.type;
-	  stmt->result_bind[i].buffer       = p.buffer;
-	  stmt->result_bind[i].buffer_length= (unsigned long)p.size;
-	  stmt->result_bind[i].length       = &len[i];
-	  stmt->result_bind[i].is_null      = &is_null[i];
-	  stmt->result_bind[i].error        = &err[i];
-	  stmt->result_bind[i].is_unsigned  = field->flags & UNSIGNED_FLAG;
+	    stmt->result_bind[i].buffer       = p.buffer;
+	    stmt->result_bind[i].buffer_length= (unsigned long)p.size;
+	    stmt->result_bind[i].length       = &len[i];
+	    stmt->result_bind[i].is_null      = &is_null[i];
+	    stmt->result_bind[i].error        = &err[i];
+	    stmt->result_bind[i].is_unsigned  = field->flags & UNSIGNED_FLAG;
 
       stmt->array[i]= p.buffer;
 

@@ -261,6 +261,8 @@ SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc);
 SQLRETURN SQL_API my_SQLFreeEnv(SQLHENV henv);
 char *extend_buffer(NET *net,char *to,ulong length);
 void myodbc_end();
+my_bool myodbc_net_realloc(NET *net, size_t length);
+void myodbc_net_end(NET *net);
 my_bool set_dynamic_result(STMT FAR *stmt);
 void set_current_cursor_data(STMT FAR *stmt,SQLUINTEGER irow);
 my_bool is_minimum_version(const char *server_version,const char *version);

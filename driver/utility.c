@@ -3709,7 +3709,7 @@ char *extend_buffer(NET *net, char *to, ulong length)
     need= (ulong)(to - (char *)net->buff) + length;
     if (!to || need > net->max_packet - 10)
     {
-        if (net_realloc(net, need))
+        if (myodbc_net_realloc(net, need))
         {
             return 0;
         }
@@ -3819,5 +3819,50 @@ const char get_identifier_quote(STMT *stmt)
   }
   return empty;
 }
+
+
+/** Realloc the NET packet buffer. */
+my_bool myodbc_net_realloc(NET *net, size_t length)
+{
+  uchar *buff;
+  size_t pkt_length;
+
+  if (length >= net->max_packet_size)
+  {
+    /* @todo: 1 and 2 codes are identical. */
+    net->error= 1;
+    net->last_errno= ER_NET_PACKET_TOO_LARGE;
+    return 1;
+  }
+  pkt_length = (length+IO_SIZE-1) & ~(IO_SIZE-1); 
+  /*
+    We must allocate some extra bytes for the end 0 and to be able to
+    read big compressed blocks + 1 safety byte since uint3korr() in
+    net_read_packet() may actually read 4 bytes depending on build flags and
+    platform.
+  */
+  if (!(buff= (uchar*) my_realloc((char*) net->buff, pkt_length +
+                                  NET_HEADER_SIZE + COMP_HEADER_SIZE + 1,
+                                  MYF(MY_WME))))
+  {
+    /* @todo: 1 and 2 codes are identical. */
+    net->error= 1;
+    net->last_errno= ER_OUT_OF_RESOURCES;
+    /* In the server the error is reported by MY_WME flag. */
+    return 1;
+  }
+  net->buff=net->write_pos=buff;
+  net->buff_end=buff+(net->max_packet= (ulong) pkt_length);
+  return 0;
+}
+
+
+/** Free net packet buffer. */
+void myodbc_net_end(NET *net)
+{
+  my_free(net->buff);
+  net->buff=0;
+}
+
 
 
