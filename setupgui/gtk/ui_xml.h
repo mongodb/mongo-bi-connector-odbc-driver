@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -1498,6 +1498,23 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"expand\">True</property>\n" \
 "                        <property name=\"fill\">True</property>\n" \
 "                        <property name=\"position\">6</property>\n" \
+"                      </packing>\n" \
+"                    </child>\n" \
+"                    <child>\n" \
+"                      <object class=\"GtkCheckButton\" id=\"default_bigint_bind_str\">\n" \
+"                        <property name=\"label\" translatable=\"yes\">Bind BIGINT parameters as strings</property>\n" \
+"                        <property name=\"visible\">True</property>\n" \
+"                        <property name=\"can_focus\">True</property>\n" \
+"                        <property name=\"receives_default\">False</property>\n" \
+"                        <property name=\"tooltip_text\" translatable=\"yes\">Causes BIGINT parameters to be bound as strings</property>\n" \
+"                        <property name=\"use_action_appearance\">False</property>\n" \
+"                        <property name=\"use_underline\">True</property>\n" \
+"                        <property name=\"draw_indicator\">True</property>\n" \
+"                      </object>\n" \
+"                      <packing>\n" \
+"                        <property name=\"expand\">True</property>\n" \
+"                        <property name=\"fill\">True</property>\n" \
+"                        <property name=\"position\">7</property>\n" \
 "                      </packing>\n" \
 "                    </child>\n" \
 "                  </object>\n" \

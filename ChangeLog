@@ -2,6 +2,8 @@
 
   Functionality added or changed:
   * Support of ODBCINSTGetProperties in MyODBC Driver (WL #7577)
+  * Add DFLT_BIGINT_BIND_STR option to Connector/ODBC GUI (Windows and Linux)
+    (WL#7579)
 
   Bugs fixed:
   * Connect crash if the catalog name given to SQLSetConnectAttr is invalid

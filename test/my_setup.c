@@ -127,6 +127,7 @@ DECLARE_TEST(t_bug24581)
   {
     sprintf(socket_path, "SOCKET=%s", mysock);
   }
+  printf("\nSOCKET_PATH=%s", socket_path);
 #endif
 
   sprintf(conn_in, "DRIVER=%s;SERVER=%s;UID=user24851;DATABASE=%s;"\

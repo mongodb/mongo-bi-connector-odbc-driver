@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- *****************************************************************************************
-  Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -1499,6 +1499,23 @@
                         <property name="expand">True</property>
                         <property name="fill">True</property>
                         <property name="position">6</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="default_bigint_bind_str">
+                        <property name="label" translatable="yes">Bind BIGINT parameters as strings</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="tooltip_text" translatable="yes">Causes BIGINT parameters to be bound as strings</property>
+                        <property name="use_action_appearance">False</property>
+                        <property name="use_underline">True</property>
+                        <property name="draw_indicator">True</property>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">7</property>
                       </packing>
                     </child>
                   </object>
