@@ -49,6 +49,7 @@ IF (WIN32)
 ELSE (WIN32)
   SET(SETUP_SRCS ${SETUP_SRCS}
                  gtk/odbcdialogparams.c
+                 gtk/ODBCINSTGetProperties.c
   )
   INCLUDE (FindPkgConfig)
   PKG_CHECK_MODULES(GTK2 gtk+-2.0)

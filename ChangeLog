@@ -1,6 +1,7 @@
 5.3.2
 
   Functionality added or changed:
+  * Support of ODBCINSTGetProperties in MyODBC Driver (WL #7577)
 
   Bugs fixed:
   * Connect crash if the catalog name given to SQLSetConnectAttr is invalid

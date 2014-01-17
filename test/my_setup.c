@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -103,8 +103,6 @@ DECLARE_TEST(t_bug66548)
 */
 DECLARE_TEST(t_bug24581)
 {
-  /* TODO: remove #ifdef _WIN32 when Linux and MacOS setup is released */
-#ifdef _WIN32
   SQLCHAR grant_query[128];
   SQLCHAR conn_in[512], conn_out[512];
   SQLCHAR conn_fdsn[255];
@@ -121,7 +119,12 @@ DECLARE_TEST(t_bug24581)
 
   ok_env(henv, SQLAllocHandle(SQL_HANDLE_DBC, henv, &hdbc1));
 
+#ifdef _WIN32
   sprintf(fdsn_path, "%s\\filedsn24851.dsn", getenv("TEMP"));
+#else
+  sprintf(fdsn_path, "%s/filedsn24851.dsn", getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp");
+#endif
+
   sprintf(conn_in, "DRIVER=%s;SERVER=%s;UID=user24851;DATABASE=%s;"\
                    "SAVEFILE=%s;PASSWORD=pass24851",
                    mydriver, myserver, mydb, fdsn_path);
@@ -132,7 +135,7 @@ DECLARE_TEST(t_bug24581)
   /* Not necessary, but keep the driver manager happy */
   ok_con(hdbc1, SQLDisconnect(hdbc1));
 
-  sprintf(conn_fdsn, "FileDSN=%s;PASSWORD='pass24851'", fdsn_path);
+  sprintf(conn_fdsn, "FileDSN=%s;PASSWORD=pass24851", fdsn_path);
   
   /* Connect using the new file DSN */
   ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, (SQLCHAR*)conn_fdsn, SQL_NTS, 
@@ -151,7 +154,6 @@ DECLARE_TEST(t_bug24581)
 
   /* Remove the file DSN */
   is(remove(fdsn_path)==0);
-#endif
 
   return OK;
 }
