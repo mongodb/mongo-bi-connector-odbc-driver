@@ -104,7 +104,7 @@ DECLARE_TEST(t_bug66548)
 DECLARE_TEST(t_bug24581)
 {
   SQLCHAR grant_query[128];
-  SQLCHAR conn_in[512], conn_out[512];
+  SQLCHAR conn_in[512], conn_out[512], socket_path[512] = {0};
   SQLCHAR conn_fdsn[255];
   SQLCHAR fdsn_path[255];
   SQLSMALLINT conn_out_len;
@@ -123,11 +123,15 @@ DECLARE_TEST(t_bug24581)
   sprintf(fdsn_path, "%s\\filedsn24851.dsn", getenv("TEMP"));
 #else
   sprintf(fdsn_path, "%s/filedsn24851.dsn", getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp");
+  if (mysock)
+  {
+    sprintf(socket_path, "SOCKET=%s", mysock);
+  }
 #endif
 
   sprintf(conn_in, "DRIVER=%s;SERVER=%s;UID=user24851;DATABASE=%s;"\
-                   "SAVEFILE=%s;PASSWORD=pass24851",
-                   mydriver, myserver, mydb, fdsn_path);
+                   "SAVEFILE=%s;PASSWORD=pass24851;%s",
+                   mydriver, myserver, mydb, fdsn_path, socket_path);
 
   /* Create a .dsn file in the TEMP directory, we will remove it later */
   ok_con(hdbc1, SQLDriverConnect(hdbc1, NULL, (SQLCHAR*)conn_in, SQL_NTS, 
