@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+// Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
 //
 // The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 // <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -243,6 +243,8 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,72,103,10
     CONTROL         "Bind minimal date as zero date",IDC_CHECK_min_date_to_zero,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,87,138,10
+    CONTROL         "Bind BIGINT parameters as strings",IDC_CHECK_default_bigint_bind_str,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,102,138,10
 END
 
 #ifdef APSTUDIO_INVOKED

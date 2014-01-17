@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
+// Copyright (c) 2006, 2014, Oracle and/or its affiliates. All rights reserved.
 //
 // The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 // <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -121,6 +121,7 @@
 #define IDC_EDIT_cursor_prefetch_number 10046
 #define IDC_CHECK_can_handle_exp_pwd    10047
 #define IDC_CHECK_enable_cleartext_plugin 10048
+#define IDC_CHECK_default_bigint_bind_str 10050
 #define IDC_BUTTON_TEST                 11014
 #define IDC_BUTTON_HELP                 11015
 #define IDC_STATIC                      -1

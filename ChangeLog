@@ -2,6 +2,8 @@
 5.1.14
 
   Functionality added or changed:
+  * Add DFLT_BIGINT_BIND_STR option to Connector/ODBC GUI (Windows and Linux)
+    (WL#7579)
 
 
   Bugs fixed:
