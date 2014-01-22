@@ -33,6 +33,8 @@
     (Bug#17587617)
   * Data corruption in SQLBulkOperations because of buffer overrun.
     (Bug #17714172)
+  * Segfault in SQLBulkOperations() for SQL_UPDATE_BY_BOOKMARK when select 
+    returns 0 records. (Bug# 17714358)
 
 ----
 

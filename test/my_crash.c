@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -391,6 +391,63 @@ DECLARE_TEST(t_bug17841121)
 }
 
 
+/**
+  Segmentation in SQLBulkOperations for SQL_UPDATE_BY_BOOKMARK operation
+  when 0 records gets fetched and provided.
+*/
+DECLARE_TEST(t_bookmark_update_zero_rec)
+{
+  SQLLEN len= 0;
+  SQLUSMALLINT rowStatus[4];
+  SQLUINTEGER numRowsFetched;
+  SQLINTEGER nData[4], i;
+  SQLCHAR szData[4][16];
+  SQLCHAR bData[4][10];
+  SQLLEN nRowCount;
+
+  ok_sql(hstmt, "drop table if exists t_bookmark");
+  ok_sql(hstmt, "CREATE TABLE t_bookmark ("\
+                "tt_int INT PRIMARY KEY auto_increment,"\
+                "tt_varchar VARCHAR(128) NOT NULL)");
+  ok_sql(hstmt, "INSERT INTO t_bookmark VALUES "\
+                "(1, 'string 1'),"\
+                "(2, 'string 2'),"\
+                "(3, 'string 3'),"\
+                "(4, 'string 4'),"\
+                "(5, 'string 5')");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_USE_BOOKMARKS,
+                                (SQLPOINTER) SQL_UB_VARIABLE, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_STATUS_PTR,
+                                (SQLPOINTER)rowStatus, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROWS_FETCHED_PTR,
+                                &numRowsFetched, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+  ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 4));
+
+  ok_sql(hstmt, "select * from t_bookmark where tt_int = 50 order by 1");
+  ok_stmt(hstmt, SQLBindCol(hstmt, 0, SQL_C_VARBOOKMARK, bData,
+                         sizeof(bData[0]), NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, nData, 0, NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szData, sizeof(szData[0]),
+                            NULL));
+
+  SQLFetchScroll(hstmt, SQL_FETCH_BOOKMARK, 0);
+
+  ok_stmt(hstmt, SQLBulkOperations(hstmt, SQL_UPDATE_BY_BOOKMARK));
+  ok_stmt(hstmt, SQLRowCount(hstmt, &nRowCount));
+  is_num(nRowCount, 0);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists t_bookmark");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug69950)
   ADD_TEST(t_bug70642)
@@ -401,6 +458,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug17999659)
   ADD_TEST(t_bug17966018)
   ADD_TEST(t_bug17841121)
+  ADD_TEST(t_bookmark_update_zero_rec)
 END_TESTS
 
 RUN_TESTS

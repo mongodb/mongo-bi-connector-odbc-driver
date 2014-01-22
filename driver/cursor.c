@@ -1918,19 +1918,33 @@ SQLRETURN SQL_API SQLBulkOperations(SQLHSTMT  Handle, SQLSMALLINT Operation)
       DYNAMIC_STRING dynQuery;
 
       if ( irow > stmt->rows_found_in_set )
+      {
         return set_error(stmt, MYERR_S1107, NULL, 0);
+      }
+
+      /* If no rows provided for update return with SQL_SUCCESS. */
+      if (stmt->rows_found_in_set == 0)
+      {
+        return SQL_SUCCESS;
+      }
 
       /* IF dynamic cursor THEN rerun query to refresh resultset */
       if (!stmt->dae_type && if_dynamic_cursor(stmt) &&
           set_dynamic_result(stmt))
+      {
         return set_error(stmt,MYERR_S1000, alloc_error, 0);
+      }
 
       if (rc= setpos_dae_check_and_init(stmt, irow, SQL_LOCK_NO_CHANGE,
                                         DAE_SETPOS_UPDATE))
+      {
         return rc;
+      }
 
       if ( init_dynamic_string(&dynQuery, "UPDATE ", 1024, 1024) )
+      {
         return set_error(stmt,MYERR_S1001,NULL,4001);
+      }
 
       sqlRet= setpos_update_bookmark(stmt, irow, &dynQuery);
       dynstr_free(&dynQuery);
