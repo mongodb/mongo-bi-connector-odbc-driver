@@ -1227,8 +1227,12 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
 
     /* catalog functions with "fake" results won't have lengths */
     length= irrec->row.datalen;
-    if (!length && stmt->current_values[ColumnNumber])
+    if (!length && 
+        !is_null(stmt, ColumnNumber, stmt->current_values[ColumnNumber]))
+    {
+      /* Measure the length only when we are sure the column is not NULL */
       length= strlen(stmt->current_values[ColumnNumber]);
+    }
 
     if (!stmt->dbc->ds->dont_use_set_locale)
       setlocale(LC_NUMERIC, "C");
