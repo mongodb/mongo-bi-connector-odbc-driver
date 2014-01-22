@@ -34,6 +34,7 @@
   * Memory leak in sqlexecute() when connection is killed from another thread
     (Bug#17587617)
   * MS Access crashed when sorting a column (Bug# 17071780/69550)
+  * Empty query giving segmentation fault in myodbc_casecmp (Bug# 17085344)
 
 
 ----
