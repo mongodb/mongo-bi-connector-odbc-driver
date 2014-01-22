@@ -996,6 +996,8 @@ MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
   STMT *stmt= (STMT *)hstmt;
   DESCREC* irrec;
 
+  *need_free= 0;
+
   /* SQLDescribeCol can be called before SQLExecute. Thus we need make sure that
      all parameters have been bound */
   if (!ssps_used(stmt))
@@ -1029,8 +1031,6 @@ MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
     *scale= irrec->scale;
   if (nullable)
     *nullable= irrec->nullable;
-
-  *need_free= 0;
 
   if (stmt->dbc->ds->return_table_names_for_SqlDescribeCol && irrec->table_name)
   {
