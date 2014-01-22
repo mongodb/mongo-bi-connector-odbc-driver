@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -246,7 +246,7 @@ SQLDescribeColW(SQLHSTMT hstmt, SQLUSMALLINT column,
   SQLCHAR *value= NULL;
   SQLWCHAR *wvalue= NULL;
   SQLINTEGER len= SQL_NTS;
-  SQLSMALLINT free_value;
+  SQLSMALLINT free_value= 0;
   uint errors;
 
   SQLRETURN rc= MySQLDescribeCol(hstmt, column, &value, &free_value, type,
