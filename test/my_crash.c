@@ -336,6 +336,61 @@ DECLARE_TEST(t_bug17966018)
 }
 
 
+/**
+  Bug #17841121 Valgrind reported invalid read/write error in my_SQLFreeDesc
+*/
+DECLARE_TEST(t_bug17841121)
+{
+  SQLHSTMT hstmt1;
+  SQLHANDLE expard;
+  SQLINTEGER imp_result= 0, exp_result= 0;
+  int i= 0, *num, attempts_left= 20;
+
+  do
+  {
+    ok_con(hdbc, SQLAllocHandle(SQL_HANDLE_DESC, hdbc, &expard));
+
+    ok_con(hdbc, SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmt1));
+
+    ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_APP_ROW_DESC, expard, 0));
+
+    /* this affects the expard */
+    ok_stmt(hstmt1, SQLBindCol(hstmt1, 1, SQL_C_LONG, &exp_result, 0, NULL));
+
+    /* set it to null, getting rid of the expard */
+    ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_APP_ROW_DESC, 
+                                  SQL_NULL_HANDLE, 0));
+
+    ok_stmt(hstmt1, SQLExecDirect(hstmt1, (SQLCHAR*)"select 1", SQL_NTS));
+
+
+    ok_stmt(hstmt1, SQLFetch(hstmt1));
+
+    ok_stmt(hstmt1, SQLFreeHandle(SQL_HANDLE_STMT, hstmt1));
+
+    /* after STMT was freed we want to overwrite the contents of freed memory */
+    num= (int*)gc_alloc(2500*sizeof(int));
+
+    for(i= 0; i< 2500; i++)
+    {
+      /* Lets assign each element its number in the array */
+      num[i]= i;
+    }
+    
+    /* this might crash, but no guarantee */
+    ok_desc(expard, SQLFreeHandle(SQL_HANDLE_DESC, expard));
+
+    for(i= 0; i< 2500; i++)
+    {
+      /* Check if any array elements changed */
+      is_num(num[i], i);
+    }
+  }while (--attempts_left);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug69950)
   ADD_TEST(t_bug70642)
@@ -345,6 +400,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug17854697)
   ADD_TEST(t_bug17999659)
   ADD_TEST(t_bug17966018)
+  ADD_TEST(t_bug17841121)
 END_TESTS
 
 RUN_TESTS
