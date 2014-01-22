@@ -36,6 +36,7 @@
   * Segfault in SQLBulkOperations() for SQL_UPDATE_BY_BOOKMARK when select 
     returns 0 records. (Bug# 17714358)
   * MS Access crashed when sorting a column (Bug# 17071780/69550)
+  * Empty query giving segmentation fault in myodbc_casecmp (Bug# 17085344)
 
 ----
 

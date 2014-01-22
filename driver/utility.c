@@ -2321,6 +2321,16 @@ my_bool reget_current_catalog(DBC *dbc)
 
 int myodbc_strcasecmp(const char *s, const char *t)
 {
+  if (!s && !t)
+  {
+    return 0;
+  }
+
+  if (!s || !t)
+  {
+    return 1;
+  }
+
   while (toupper((uchar) *s) == toupper((uchar) *t++))
     if (!*s++)
       return 0;
@@ -2335,6 +2345,16 @@ int myodbc_strcasecmp(const char *s, const char *t)
 
 int myodbc_casecmp(const char *s, const char *t, uint len)
 {
+  if (!s && !t)
+  {
+    return 0;
+  }
+
+  if (!s || !t)
+  {
+    return (int)len + 1;
+  }
+
   while (len-- != 0 && toupper(*s++) == toupper(*t++))
     ;
   return (int)len + 1;

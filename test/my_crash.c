@@ -448,6 +448,18 @@ DECLARE_TEST(t_bookmark_update_zero_rec)
 }
 
 
+/* 
+  Bug#17085344: SEGMENTATION FAULT IN MYODBC_CASECMP WHEN QUERY IS EMPTY
+*/
+DECLARE_TEST(t_bug17085344)
+{
+  expect_stmt(hstmt, SQLExecDirect(hstmt, "", SQL_NTS), SQL_ERROR);
+  expect_stmt(hstmt, SQLExecDirect(hstmt, "  ", SQL_NTS), SQL_ERROR);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug69950)
   ADD_TEST(t_bug70642)
@@ -459,6 +471,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug17966018)
   ADD_TEST(t_bug17841121)
   ADD_TEST(t_bookmark_update_zero_rec)
+  ADD_TEST(t_bug17085344)
 END_TESTS
 
 RUN_TESTS
