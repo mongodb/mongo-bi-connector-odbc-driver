@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -190,7 +190,7 @@ my_bool odbc_supported_conversion(SQLSMALLINT sqlType, SQLSMALLINT cType)
   @param[in]  arrec       ARD record for this column (can be NULL)
 */
 SQLRETURN SQL_API
-sql_get_bookmark_data(STMT *stmt, SQLSMALLINT fCType, int column_number,
+sql_get_bookmark_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
              SQLPOINTER rgbValue, SQLLEN cbValueMax, SQLLEN *pcbValue,
              char *value, ulong length, DESCREC *arrec)
 {
@@ -2287,7 +2287,8 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     stmt->current_row= cur_row;
 
     if (scroller_exists(stmt)
-      || (if_forward_cache(stmt) && !stmt->result_array))
+      || (if_forward_cache(stmt) && !stmt->result_array)
+      || (fFetchType == SQL_FETCH_BOOKMARK && stmt->stmt_options.bookmark_insert))
     {
       rows_to_fetch= stmt->ard->array_size;
     }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2001, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -956,7 +956,6 @@ SQLRETURN my_pos_update( STMT *             pStmtCursor,
 static SQLRETURN fetch_bookmark(STMT *stmt)
 {
   SQLUINTEGER  rowset_pos,rowset_end;
-  my_ulonglong affected= 0;
   SQLRETURN    nReturn= SQL_SUCCESS;
   DESCREC *arrec;
   SQLPOINTER TargetValuePtr= NULL;
@@ -997,15 +996,9 @@ static SQLRETURN fetch_bookmark(STMT *stmt)
                                 stmt->stmt_options.rowStatusPtr_ex ?
                                 stmt->stmt_options.rowStatusPtr_ex :
                                 stmt->ird->array_status_ptr, 0);
-    ++affected;
   } while ( ++rowset_pos <= rowset_end );
 
   stmt->ard->array_size= tmp_array_size;
-  /* fix-up so fetching next rowset is correct */
-  if (if_dynamic_cursor(stmt))
-  {
-    stmt->rows_found_in_set-= (uint) affected;
-  }
 
   return nReturn;
 }
@@ -1382,6 +1375,8 @@ static SQLRETURN batch_insert( STMT *stmt, SQLULEN irow, DYNAMIC_STRING *ext_que
 
     desc_rec_init_ipd(iprec);
 
+    stmt->stmt_options.bookmark_insert= FALSE;
+
     /* determine the number of rows to insert when irow = 0 */
     if ( !irow && stmt->ard->array_size > 1 ) /* batch wise */
     {
@@ -1497,58 +1492,64 @@ static SQLRETURN batch_insert( STMT *stmt, SQLULEN irow, DYNAMIC_STRING *ext_que
              SQL_SUCCESS )
             return(SQL_ERROR);
 
-        if (stmt->stmt_options.bookmarks == SQL_UB_VARIABLE)
+    } while ( break_insert && count < insert_count );
+
+
+    if (stmt->stmt_options.bookmarks == SQL_UB_VARIABLE)
+    {
+      ulong copy_bytes= 0;
+      int _len= 0;
+      char _value[21];
+      DESCREC *arrec;
+      long max_row;
+
+      arrec= desc_get_rec(stmt->ard, -1, FALSE);
+      max_row= (long) num_rows(stmt);
+
+      if (ARD_IS_BOUND(arrec))
+      {
+        SQLLEN *pcbValue= NULL;
+        SQLPOINTER TargetValuePtr= NULL;
+
+        for (i= max_row; i < insert_count; ++i)
         {
-          ulong copy_bytes= 0;
-          int _len= 0;
-          char _value[21];
-          DESCREC *arrec;
-          long max_row;
+          pcbValue= NULL;
+          TargetValuePtr= NULL;
 
-          arrec= desc_get_rec(stmt->ard, -1, FALSE);
-          max_row= (long) num_rows(stmt);
+          reset_getdata_position(stmt);
 
-          if (ARD_IS_BOUND(arrec))
+          if (arrec->data_ptr)
           {
-            for (i= 0; i < count; ++i)
-            {
-              SQLLEN *pcbValue= NULL;
-              SQLPOINTER TargetValuePtr= NULL;
-
-              reset_getdata_position(stmt);
-
-              if (arrec->data_ptr)
-              {
-                TargetValuePtr= ptr_offset_adjust(arrec->data_ptr,
-                                                  stmt->ard->bind_offset_ptr,
-                                                  stmt->ard->bind_type,
-                                                  arrec->octet_length,
-                                                  max_row + i);
-              }
-
-              if (arrec->octet_length_ptr)
-              {
-                pcbValue= ptr_offset_adjust(arrec->octet_length_ptr,
+            TargetValuePtr= ptr_offset_adjust(arrec->data_ptr,
                                               stmt->ard->bind_offset_ptr,
                                               stmt->ard->bind_type,
-                                              sizeof(SQLLEN), max_row + i);
-              }
+                                              arrec->octet_length,
+                                              i);
+          }
 
-              _len= sprintf(_value, "%ld", i + 1);
-              copy_bytes= myodbc_min(arrec->octet_length, _len);
-              res= sql_get_data(stmt, arrec->concise_type, (uint)0,
-                                    TargetValuePtr, arrec->octet_length, 
-                                    pcbValue, _value, copy_bytes, arrec);
+          if (arrec->octet_length_ptr)
+          {
+            pcbValue= ptr_offset_adjust(arrec->octet_length_ptr,
+                                          stmt->ard->bind_offset_ptr,
+                                          stmt->ard->bind_type,
+                                          sizeof(SQLLEN), i);
+          }
 
-              if (!SQL_SUCCEEDED(res))
-              {
-                return SQL_ERROR;
-              }
-            }
+          _len= sprintf(_value, "%ld", i + 1);
+          res= sql_get_bookmark_data(stmt, arrec->concise_type, (uint)0,
+                                TargetValuePtr, arrec->octet_length, 
+                                pcbValue, _value, _len, arrec);
+
+          if (!SQL_SUCCEEDED(res))
+          {
+            return SQL_ERROR;
           }
         }
 
-    } while ( break_insert && count < insert_count );
+        stmt->ard->array_size= insert_count;
+        stmt->stmt_options.bookmark_insert= TRUE;
+      }
+    }
 
     global_set_affected_rows(stmt, insert_count);
 
@@ -1905,6 +1906,8 @@ SQLRETURN SQL_API SQLBulkOperations(SQLHSTMT  Handle, SQLSMALLINT Operation)
   if ( !result )
       return set_error(stmt,MYERR_S1010,NULL,0);
 
+  stmt->stmt_options.bookmark_insert= FALSE;
+
   switch (Operation)
   {
   case SQL_ADD:
@@ -1915,7 +1918,7 @@ SQLRETURN SQL_API SQLBulkOperations(SQLHSTMT  Handle, SQLSMALLINT Operation)
       DYNAMIC_STRING dynQuery;
 
       if ( irow > stmt->rows_found_in_set )
-          return set_error(stmt,MYERR_S1107,NULL,0);
+        return set_error(stmt, MYERR_S1107, NULL, 0);
 
       /* IF dynamic cursor THEN rerun query to refresh resultset */
       if (!stmt->dae_type && if_dynamic_cursor(stmt) &&
@@ -1927,7 +1930,7 @@ SQLRETURN SQL_API SQLBulkOperations(SQLHSTMT  Handle, SQLSMALLINT Operation)
         return rc;
 
       if ( init_dynamic_string(&dynQuery, "UPDATE ", 1024, 1024) )
-          return set_error(stmt,MYERR_S1001,NULL,4001);
+        return set_error(stmt,MYERR_S1001,NULL,4001);
 
       sqlRet= setpos_update_bookmark(stmt, irow, &dynQuery);
       dynstr_free(&dynQuery);

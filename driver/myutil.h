@@ -233,6 +233,10 @@ SQLRETURN SQL_API sql_get_data(STMT *stmt, SQLSMALLINT fCType,
               uint column_number, SQLPOINTER rgbValue, 
               SQLLEN cbValueMax, SQLLEN *pcbValue,
               char *value, ulong length, DESCREC *arrec);
+SQLRETURN SQL_API sql_get_bookmark_data(STMT *stmt, SQLSMALLINT fCType, 
+              uint column_number, SQLPOINTER rgbValue, 
+              SQLLEN cbValueMax, SQLLEN *pcbValue,
+              char *value, ulong length, DESCREC *arrec);
 SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
                                SQLUSMALLINT fOption, SQLUSMALLINT fLock);
 SQLRETURN copy_stmt_error       (STMT *src, STMT *dst);
