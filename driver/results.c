@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -802,6 +802,8 @@ MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
   STMT *stmt= (STMT *)hstmt;
   DESCREC* irrec;
 
+  *need_free= 0;
+
   /* SQLDescribeCol can be called before SQLExecute. Thus we need make sure that
      all parameters have been bound */
   if (!ssps_used(stmt))
@@ -835,8 +837,6 @@ MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
     *scale= irrec->scale;
   if (nullable)
     *nullable= irrec->nullable;
-
-  *need_free= 0;
 
   if (stmt->dbc->ds->return_table_names_for_SqlDescribeCol && irrec->table_name)
   {
