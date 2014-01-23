@@ -383,6 +383,7 @@ MySQLTables(SQLHSTMT hstmt,
   my_SQLFreeStmt(hstmt, MYSQL_RESET);
 
   GET_NAME_LEN(stmt, catalog_name, catalog_len);
+  GET_NAME_LEN(stmt, schema_name, schema_len);
   GET_NAME_LEN(stmt, table_name, table_len);
   GET_NAME_LEN(stmt, type_name, type_len);
 
@@ -458,6 +459,7 @@ MySQLColumns(SQLHSTMT hstmt, SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
   my_SQLFreeStmt(hstmt, MYSQL_RESET);
 
   GET_NAME_LEN(stmt, catalog_name, catalog_len);
+  GET_NAME_LEN(stmt, schema_name, schema_len);
   GET_NAME_LEN(stmt, table_name, table_len);
   GET_NAME_LEN(stmt, column_name, column_len);
 
@@ -523,6 +525,7 @@ MySQLStatistics(SQLHSTMT hstmt,
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
   GET_NAME_LEN(stmt, catalog_name, catalog_len);
+  GET_NAME_LEN(stmt, schema_name, schema_len);
   GET_NAME_LEN(stmt, table_name, table_len);
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
@@ -603,6 +606,7 @@ MySQLTablePrivileges(SQLHSTMT hstmt,
     my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
     GET_NAME_LEN(stmt, catalog_name, catalog_len);
+    GET_NAME_LEN(stmt, schema_name, schema_len);
     GET_NAME_LEN(stmt, table_name, table_len);
 
     if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
@@ -684,6 +688,7 @@ MySQLColumnPrivileges(SQLHSTMT hstmt,
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
   GET_NAME_LEN(stmt, catalog_name, catalog_len);
+  GET_NAME_LEN(stmt, schema_name, schema_len);
   GET_NAME_LEN(stmt, table_name, table_len);
   GET_NAME_LEN(stmt, column_name, column_len);
 
@@ -748,6 +753,7 @@ MySQLSpecialColumns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
   GET_NAME_LEN(stmt, table_qualifier, table_qualifier_len);
+  GET_NAME_LEN(stmt, table_owner, table_owner_len);
   GET_NAME_LEN(stmt, table_name, table_len);
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
@@ -804,6 +810,7 @@ MySQLPrimaryKeys(SQLHSTMT hstmt,
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
   GET_NAME_LEN(stmt, catalog_name, catalog_len);
+  GET_NAME_LEN(stmt, schema_name, schema_len);
   GET_NAME_LEN(stmt, table_name, table_len);
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
@@ -1009,6 +1016,8 @@ MySQLForeignKeys(SQLHSTMT hstmt,
 
     GET_NAME_LEN(stmt, pk_catalog_name, pk_catalog_len);
     GET_NAME_LEN(stmt, fk_catalog_name, fk_catalog_len);
+    GET_NAME_LEN(stmt, pk_schema_name, pk_schema_len);
+    GET_NAME_LEN(stmt, fk_schema_name, fk_schema_len);
     GET_NAME_LEN(stmt, pk_table_name, pk_table_len);
     GET_NAME_LEN(stmt, fk_table_name, fk_table_len);
 
@@ -1062,6 +1071,7 @@ MySQLProcedures(SQLHSTMT hstmt,
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
   GET_NAME_LEN(stmt, catalog_name, catalog_len);
+  GET_NAME_LEN(stmt, schema_name, schema_len);
   GET_NAME_LEN(stmt, proc_name, proc_len);
 
   /* If earlier than 5.0, the server doesn't even support stored procs. */
@@ -1207,6 +1217,7 @@ MySQLProcedureColumns(SQLHSTMT hstmt,
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
   GET_NAME_LEN(stmt, catalog_name, catalog_len);
+  GET_NAME_LEN(stmt, schema_name, schema_len);
   GET_NAME_LEN(stmt, proc_name, proc_len);
   GET_NAME_LEN(stmt, column_name, column_len);
 
