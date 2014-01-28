@@ -1202,7 +1202,8 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
         !is_null(stmt, ColumnNumber, stmt->current_values[ColumnNumber]))
     {
       /* Measure the length only when we are sure the column is not NULL */
-      length= strlen(stmt->current_values[ColumnNumber]);
+      length= ssps_used(stmt) ? *stmt->result_bind[ColumnNumber].length : 
+                                strlen(stmt->current_values[ColumnNumber]);
     }
 
     if (!stmt->dbc->ds->dont_use_set_locale)
