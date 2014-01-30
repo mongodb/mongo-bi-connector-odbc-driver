@@ -41,6 +41,7 @@
   * Empty query giving segmentation fault in myodbc_casecmp (Bug# 17085344)
   * Uninitialized variable free_value can set wrong error in SQLDescribeCol 
     (Bug# 17588101)
+  * ODBC 5.2.5 DMG installer fails on OSX 10.8.5 (Bug #17512040/70422)
 
 ----
 5.2.6(25-Sep-2013)
