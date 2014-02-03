@@ -1429,6 +1429,16 @@ static SQLRETURN batch_insert( STMT *stmt, SQLULEN irow, DYNAMIC_STRING *ext_que
 
                   iprec->concise_type= get_sql_data_type(stmt, field, NULL);
                   aprec->concise_type= arrec->concise_type;
+                  aprec->type= get_type_from_concise_type(aprec->concise_type);
+
+                  /* If column buffer type is interval - making sql type interval too. Making it for 2 supported interval types so far */
+                  if (aprec->type == SQL_INTERVAL && (aprec->concise_type == SQL_C_INTERVAL_HOUR_TO_SECOND || aprec->concise_type == SQL_C_INTERVAL_HOUR_TO_MINUTE)
+                    && (iprec->concise_type == SQL_TYPE_TIME || iprec->concise_type == SQL_TIME))
+                  {
+                    iprec->type= aprec->type;
+                    iprec->concise_type= aprec->concise_type;
+                  }
+
                   /* copy prec and scale - needed for SQL_NUMERIC values */
                   iprec->precision= arrec->precision;
                   iprec->scale= arrec->scale;

@@ -51,13 +51,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+/* Driver does that - applications should do that too, to have same size of structures */
+# ifndef RC_INVOKED
+#  pragma pack(push, 1)
+# endif
+#endif
+
 #include <sql.h>
 #include <sqlext.h>
 #include <odbcinst.h>
 
+#ifdef _WIN32
+# ifndef RC_INVOKED
+#  pragma pack(pop)
+# endif
+#endif
+
 /* for clock() */
 #include <time.h>
-
 
 /* Get routines for helping with Unicode conversion. */
 #define ODBCTAP

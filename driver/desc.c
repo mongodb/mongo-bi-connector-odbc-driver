@@ -898,7 +898,11 @@ MySQLSetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
   apply_desc_val(dest, fld->data_type, val, buflen);
 
   /* post-set responsibilities */
-  if ((IS_ARD(desc) || IS_APD(desc)) && fld->loc == DESC_REC)
+  /*http://msdn.microsoft.com/en-us/library/ms710963%28v=vs.85%29.aspx
+    "ParameterType Argument" sectiosn - basically IPD has to be heres as well with same rules
+    C and SQL types match. Thus we can use same function for calculation of type and dti code.
+   */
+  if ((IS_ARD(desc) || IS_APD(desc) || IS_IPD(desc)) && fld->loc == DESC_REC)
   {
     DESCREC *rec= (DESCREC *) dest_struct;
     switch (fldid)

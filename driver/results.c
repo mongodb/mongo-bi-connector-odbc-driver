@@ -662,7 +662,49 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
 
         break;
       }
+    case SQL_C_INTERVAL_HOUR_TO_SECOND:
+    case SQL_C_INTERVAL_HOUR_TO_MINUTE:
+      {
+        if (field->type= MYSQL_TYPE_TIME)
+        {
+          SQL_TIME_STRUCT ts;
+          char *tmp= get_string(stmt,
+                            column_number, value, &length, as_string);
+          if (str_to_time_st(&ts, tmp))
+          {
+            *pcbValue= SQL_NULL_DATA;
+          }
+          else
+          {
+            SQL_INTERVAL_STRUCT *interval= (SQL_INTERVAL_STRUCT *)rgbValue;
+            memset(interval, 0, sizeof(SQL_INTERVAL_STRUCT));
 
+            interval->interval_type= fCType;
+            interval->intval.day_second.hour= ts.hour;
+            interval->intval.day_second.minute= ts.minute;
+
+            if (fCType == SQL_C_INTERVAL_HOUR_TO_SECOND)
+            {
+              interval->intval.day_second.second= ts.second;
+            }
+            else if(ts.second > 0)
+            {
+              /* Truncation */
+              set_stmt_error(stmt, "01S07", NULL, 0);
+              result= SQL_SUCCESS_WITH_INFO;
+            }
+
+            *pcbValue= sizeof(SQL_INTERVAL_STRUCT);
+          }
+        }
+        else
+        {
+          return set_error(stmt,MYERR_07006,
+                       "Restricted data type attribute violation",0);
+        }
+
+        break;
+      }
     case SQL_C_TIME:
     case SQL_C_TYPE_TIME:
       if (field->type == MYSQL_TYPE_TIMESTAMP ||
@@ -725,6 +767,11 @@ sql_get_data(STMT *stmt, SQLSMALLINT fCType, uint column_number,
           SQL_TIME_STRUCT *time_info= (SQL_TIME_STRUCT *)rgbValue;
           SQLUINTEGER fraction;
 
+          if (ts.hour > 23)
+          {
+            return set_stmt_error(stmt, "22007",
+                           "Invalid time(hours) format. Use interval types instead", 0);
+          }
           if (time_info)
           {
             time_info->hour=   ts.hour;

@@ -459,6 +459,36 @@ BOOL put_param_value(STMT *stmt, NET* net, char** toptr, MYSQL_BIND *bind,
   return FALSE;
 }
 
+
+SQLRETURN check_c2sql_conversion_supported(STMT *stmt, DESCREC *aprec, DESCREC *iprec)
+{
+  if (aprec->type == SQL_DATETIME && iprec->type == SQL_INTERVAL
+   || aprec->type == SQL_INTERVAL && iprec->type == SQL_DATETIME)
+  {
+    return set_stmt_error(stmt, "07006", "Conversion is not supported", 0);
+  }
+
+  switch (aprec->concise_type)
+  {
+    /* Currently we do not support those types */
+    case SQL_C_INTERVAL_YEAR:
+    case SQL_C_INTERVAL_MONTH:
+		case SQL_C_INTERVAL_DAY:
+		case SQL_C_INTERVAL_HOUR:
+		case SQL_C_INTERVAL_MINUTE:
+		case SQL_C_INTERVAL_SECOND:
+		case SQL_C_INTERVAL_YEAR_TO_MONTH:
+		case SQL_C_INTERVAL_DAY_TO_HOUR:
+		case SQL_C_INTERVAL_DAY_TO_MINUTE:
+		case SQL_C_INTERVAL_DAY_TO_SECOND:
+    case SQL_C_INTERVAL_MINUTE_TO_SECOND:
+      return set_stmt_error(stmt, "07006", "Conversion is not supported by driver", 0);
+  }
+
+  return SQL_SUCCESS;
+}
+
+
 /*
               stmt
               ctype       Input(parameter) value C type
@@ -569,24 +599,28 @@ SQLRETURN convert_c_type2str(STMT *stmt, SQLSMALLINT ctype, DESCREC *iprec,
         if (stmt->dbc->ds->min_date_to_zero && !date->year
           && (date->month == date->day == 1))
         {
-          sprintf(buff, "0000-00-00");
+          *length= sprintf(buff, "0000-00-00");
         }
         else
         {
-          sprintf(buff, "%04d-%02d-%02d", date->year, date->month, date->day);
+          *length= sprintf(buff, "%04d-%02d-%02d", date->year, date->month, date->day);
         }
         *res= buff;
-        *length= 10;
         break;
       }
     case SQL_C_TIME:
     case SQL_C_TYPE_TIME:
       {
         TIME_STRUCT *time= (TIME_STRUCT*) *res;
-        sprintf(buff, "%02d:%02d:%02d",
-                time->hour, time->minute, time->second);
+
+        if (time->hour > 23)
+        {
+          return set_stmt_error(stmt, "22008", "Not a valid time value supplied", 0);
+        }
+
+        *length= sprintf(buff, "%02d:%02d:%02d",
+                                time->hour, time->minute, time->second);
         *res= buff;
-        *length= 8;
         break;
       }
     case SQL_C_TIMESTAMP:
@@ -597,17 +631,15 @@ SQLRETURN convert_c_type2str(STMT *stmt, SQLSMALLINT ctype, DESCREC *iprec,
         if (stmt->dbc->ds->min_date_to_zero &&
             !time->year && (time->month == time->day == 1))
         {
-          sprintf(buff, "0000-00-00 %02d:%02d:%02d", time->hour,
+          *length= sprintf(buff, "0000-00-00 %02d:%02d:%02d", time->hour,
                   time->minute, time->second);
         }
         else
         {
-          sprintf(buff, "%04d-%02d-%02d %02d:%02d:%02d",
+          *length= sprintf(buff, "%04d-%02d-%02d %02d:%02d:%02d",
                     time->year, time->month, time->day,
                     time->hour, time->minute, time->second);
         }
-
-        *length= 19;
 
         if (time->fraction)
         {
@@ -659,6 +691,49 @@ SQLRETURN convert_c_type2str(STMT *stmt, SQLSMALLINT ctype, DESCREC *iprec,
           return SQL_ERROR;
         }
       }
+
+    case SQL_C_INTERVAL_HOUR_TO_MINUTE:
+		case SQL_C_INTERVAL_HOUR_TO_SECOND:
+      {
+        SQL_INTERVAL_STRUCT *interval= (SQL_INTERVAL_STRUCT*)*res;
+
+        if (ctype == SQL_C_INTERVAL_HOUR_TO_MINUTE)
+        {
+          /* Dirty-hackish */
+          if (ssps_used(stmt))
+          {
+            *length= sprintf(buff, "%d:%02d:00", interval->intval.day_second.hour,
+                                               interval->intval.day_second.minute);
+          }
+          else
+          {
+            *length= sprintf(buff, "'%d:%02d:00'", interval->intval.day_second.hour,
+                                               interval->intval.day_second.minute);
+          }
+        }
+        else
+        {
+          if (ssps_used(stmt))
+          {
+            *length= sprintf(buff, "%d:%02d:%02d", interval->intval.day_second.hour,
+                                                 interval->intval.day_second.minute,
+                                                 interval->intval.day_second.second);
+          }
+          else
+          {
+            *length= sprintf(buff, "'%d:%02d:%02d'", interval->intval.day_second.hour,
+                                                 interval->intval.day_second.minute,
+                                                 interval->intval.day_second.second);
+          }
+        }
+
+        *res= buff;
+        break;
+      }
+    /* If we are missing processing of some valid C type. Probably means a bug elsewhere */
+    default:
+      return set_stmt_error(stmt, "07006",
+               "Conversion is not supported", 0);
   }
   return SQL_SUCCESS;
 }
@@ -777,6 +852,8 @@ SQLRETURN insert_param(STMT *stmt, uchar *place4param, DESC* apd,
         }
     }
 
+    PUSH_ERROR(check_c2sql_conversion_supported(stmt, aprec, iprec));
+
     switch ( aprec->concise_type )
     {
       
@@ -808,269 +885,291 @@ SQLRETURN insert_param(STMT *stmt, uchar *place4param, DESC* apd,
 
     switch ( iprec->concise_type )
     {
-        case SQL_DATE:
-        case SQL_TYPE_DATE:
-        case SQL_TYPE_TIMESTAMP:
-        case SQL_TIMESTAMP:
-          if (data[0] == '{')       /* Of type {d date } */
+      case SQL_DATE:
+      case SQL_TYPE_DATE:
+      case SQL_TYPE_TIMESTAMP:
+      case SQL_TIMESTAMP:
+        if (data[0] == '{')       /* Of type {d date } */
+        {
+          /* TODO: check if we need to check for truncation here as well? */
+          if (ssps_used(stmt))
           {
-            /* TODO: check if we need to check for truncation here as well? */
-            if (ssps_used(stmt))
-            {
-              if (bind_param(bind, data, length,
-                          map_sql2mysql_type(iprec->concise_type)))
-              {
-                goto memerror;
-              }
-            }
-            else
-            {
-              to= add_to_buffer(net, to, data, length);
-            }
-            goto out;
-          }
-
-          if (iprec->concise_type == SQL_DATE
-            || iprec->concise_type == SQL_TYPE_DATE)
-          {
-            TIMESTAMP_STRUCT ts;
-
-            /* For now I think it is safer to assume a dot is always a
-               separator */
-            /* aprec->concise_type == SQL_C_TYPE_TIMESTAMP
-            || aprec->concise_type == SQL_C_TIMESTAMP
-            || stmt->dbc->ds->dont_use_set_locale */
-            str_to_ts(&ts, data, length, 1, TRUE);
-
-            /* Overflow also possible if converted from other C types
-               http://msdn.microsoft.com/en-us/library/ms709385%28v=vs.85%29.aspx
-               (if time fields nonzero sqlstate 22008 )
-               http://msdn.microsoft.com/en-us/library/aa937531%28v=sql.80%29.aspx
-               (Class values other than 01, except for the class IM,
-               indicate an error and are accompanied by a return code
-               of SQL_ERROR)
-               
-               Not sure if fraction should be considered as an overflow.
-               In fact specs say about "time fields only"
-             */
-            if (TIME_FIELDS_NONZERO(ts))
-            {
-              return set_stmt_error(stmt, "22008", "Date overflow", 0);
-            }
-          }
-          /* else _binary introducer for binary data */
-        case SQL_BINARY:
-        case SQL_VARBINARY:
-        case SQL_LONGVARBINARY:
-          {
-            if (ssps_used(stmt))
-            {
-              /* i guess for ssps we do not need introducer */
-              convert= 0;
-            }
-            else
-            {
-              if (dbc->cxn_charset_info->number !=
-                 dbc->ansi_charset_info->number)
-              {
-                to= add_to_buffer(net, to, "_binary", 7);
-              }
-            }
-            /* We have only added the introducer, data is added below. */
-            break;
-           }
-           /* else treat as a string */
-        case SQL_CHAR:
-        case SQL_VARCHAR:
-        case SQL_LONGVARCHAR:
-        case SQL_WCHAR:
-        case SQL_WVARCHAR:
-        case SQL_WLONGVARCHAR:
-          {
-            if (aprec->concise_type == SQL_C_WCHAR &&
-                dbc->cxn_charset_info->number != UTF8_CHARSET_NUMBER)
-            {
-              if (ssps_used(stmt))
-              {
-                 if (bind_param(bind, data, length, MYSQL_TYPE_BLOB))
-                {
-                  goto memerror;
-                }
-
-                goto out;
-              }
-              else
-              {
-                to= add_to_buffer(net, to, "_utf8", 5);
-              }
-            }
-            else if (aprec->concise_type != SQL_C_WCHAR &&
-                     dbc->cxn_charset_info->number !=
-                     dbc->ansi_charset_info->number)
-            {
-              if (ssps_used(stmt))
-              {
-                if (bind_param(bind, data, length, MYSQL_TYPE_BLOB))
-                {
-                  goto memerror;
-                }
-
-                goto out;
-              }
-              else
-              {
-                to= add_to_buffer(net, to, "_", 1);
-                to= add_to_buffer(net, to, dbc->ansi_charset_info->csname,
-                                strlen(dbc->ansi_charset_info->csname));
-              }
-            }
-            /* We have only added the introducer, data is added below. */
-            break;
-          }
-        case SQL_TIME:
-        case SQL_TYPE_TIME:
-          if ( aprec->concise_type == SQL_C_TIMESTAMP ||
-               aprec->concise_type == SQL_C_TYPE_TIMESTAMP )
-          {
-            TIMESTAMP_STRUCT *time= (TIMESTAMP_STRUCT*) aprec->data_ptr;
-
-            if (time->fraction)
-            {
-              /* fractional seconds truncated, need to set correct sqlstate 22008
-              http://msdn.microsoft.com/en-us/library/ms709385%28v=vs.85%29.aspx */
-
-              return set_stmt_error(stmt, "22008", "Fractional truncation", 0);
-            }
-
-            if (ssps_used(stmt))
-            {
-              sprintf(buff, "%02d:%02d:%02d",time->hour,time->minute,
-                      time->second);
-              length= 8;
-            }
-            else
-            {
-              sprintf(buff, "'%02d:%02d:%02d'",time->hour,time->minute,
-                      time->second);
-              length= 10;
-            }
-
-            if (put_param_value(stmt, net, &to, bind, buff, length))
+            if (bind_param(bind, data, length,
+                        map_sql2mysql_type(iprec->concise_type)))
             {
               goto memerror;
             }
           }
           else
           {
-            ulong time;
-            SQLUINTEGER fraction;
+            to= add_to_buffer(net, to, data, length);
+          }
+          goto out;
+        }
 
-            /* For now it is safer to assume a dot is always a separator */
-            /* stmt->dbc->ds->dont_use_set_locale */
-            get_fractional_part(data, length, TRUE, &fraction);
+        if (iprec->concise_type == SQL_DATE
+          || iprec->concise_type == SQL_TYPE_DATE)
+        {
+          TIMESTAMP_STRUCT ts;
 
-            if (fraction)
+          /* For now I think it is safer to assume a dot is always a
+              separator */
+          /* aprec->concise_type == SQL_C_TYPE_TIMESTAMP
+          || aprec->concise_type == SQL_C_TIMESTAMP
+          || stmt->dbc->ds->dont_use_set_locale */
+          str_to_ts(&ts, data, length, 1, TRUE);
+
+          /* Overflow also possible if converted from other C types
+              http://msdn.microsoft.com/en-us/library/ms709385%28v=vs.85%29.aspx
+              (if time fields nonzero sqlstate 22008 )
+              http://msdn.microsoft.com/en-us/library/aa937531%28v=sql.80%29.aspx
+              (Class values other than 01, except for the class IM,
+              indicate an error and are accompanied by a return code
+              of SQL_ERROR)
+               
+              Not sure if fraction should be considered as an overflow.
+              In fact specs say about "time fields only"
+            */
+          if (TIME_FIELDS_NONZERO(ts))
+          {
+            return set_stmt_error(stmt, "22008", "Date overflow", 0);
+          }
+        }
+        /* else _binary introducer for binary data */
+      case SQL_BINARY:
+      case SQL_VARBINARY:
+      case SQL_LONGVARBINARY:
+        {
+          if (ssps_used(stmt))
+          {
+            /* i guess for ssps we do not need introducer */
+            convert= 0;
+          }
+          else
+          {
+            if (dbc->cxn_charset_info->number !=
+                dbc->ansi_charset_info->number)
             {
-              /* truncation need SQL_ERROR and sqlstate 22008*/
-              return set_stmt_error(stmt, "22008", "Fractional truncation", 0);
+              to= add_to_buffer(net, to, "_binary", 7);
             }
-
-            time= str_to_time_as_long(data,length);
-
+          }
+          /* We have only added the introducer, data is added below. */
+          break;
+          }
+          /* else treat as a string */
+      case SQL_CHAR:
+      case SQL_VARCHAR:
+      case SQL_LONGVARCHAR:
+      case SQL_WCHAR:
+      case SQL_WVARCHAR:
+      case SQL_WLONGVARCHAR:
+        {
+          if (aprec->concise_type == SQL_C_WCHAR &&
+              dbc->cxn_charset_info->number != UTF8_CHARSET_NUMBER)
+          {
             if (ssps_used(stmt))
             {
-              sprintf(buff, "%02d:%02d:%02d",
-                    (int) time/10000,
-                    (int) time/100%100,
-                    (int) time%100);
-              length= 8;
+                if (bind_param(bind, data, length, MYSQL_TYPE_BLOB))
+              {
+                goto memerror;
+              }
+
+              goto out;
             }
             else
             {
-              sprintf(buff, "'%02d:%02d:%02d'",
-                    (int) time/10000,
-                    (int) time/100%100,
-                    (int) time%100);
-              length= 10;
-            }
-
-            if (put_param_value(stmt, net, &to, bind, buff, length))
-            {
-              goto memerror;
+              to= add_to_buffer(net, to, "_utf8", 5);
             }
           }
-
-          goto out;
-
-        case SQL_BIT:
+          else if (aprec->concise_type != SQL_C_WCHAR &&
+                    dbc->cxn_charset_info->number !=
+                    dbc->ansi_charset_info->number)
           {
             if (ssps_used(stmt))
             {
-              char bit_val= atoi(data)!= 0 ? 1 : 0;
-              /* Generic ODBC supports only BIT(1) */
-              bind_param(bind, &bit_val, 1, MYSQL_TYPE_TINY);
+              if (bind_param(bind, data, length, MYSQL_TYPE_BLOB))
+              {
+                goto memerror;
+              }
+
+              goto out;
             }
-            else if (!convert)
+            else
             {
-              to= add_to_buffer(net, to, data, 1);
+              to= add_to_buffer(net, to, "_", 1);
+              to= add_to_buffer(net, to, dbc->ansi_charset_info->csname,
+                              strlen(dbc->ansi_charset_info->csname));
             }
-            goto out;
           }
-        case SQL_FLOAT:
-        case SQL_REAL:
-        case SQL_DOUBLE:
-          /* If we have string -> float ; Fix locale characters for number */
-          if (convert)
+          /* We have only added the introducer, data is added below. */
+          break;
+        }
+      case SQL_INTERVAL_HOUR_TO_MINUTE:
+      case SQL_INTERVAL_HOUR_TO_SECOND:
+        if (aprec->concise_type != SQL_C_INTERVAL_HOUR_TO_MINUTE &&
+            aprec->concise_type != SQL_C_INTERVAL_HOUR_TO_SECOND)
+        {
+          /* Allow only interval to interval conversion */
+          set_stmt_error(stmt, "07006", "Conversion is not supported", 0);
+        }
+        else
+        {
+          if (put_param_value(stmt, net, &to, bind, buff, length))
           {
-            char *to= buff, *from= data;
-            char *end= from+length;
-            char *local_thousands_sep= thousands_sep;
-            char *local_decimal_point= decimal_point;
-            uint local_thousands_sep_length= thousands_sep_length;
-            uint local_decimal_point_length= decimal_point_length;
-
-            if (!stmt->dbc->ds->dont_use_set_locale)
-            {
-              /* force use of . as decimal point */
-              local_thousands_sep= ",";
-              local_thousands_sep_length= 1;
-              local_decimal_point= ".";
-              local_decimal_point_length= 1;
-            }
-
-            while ( *from && from < end )
-            {
-              if ( from[0] == local_thousands_sep[0] && is_prefix(from,local_thousands_sep) )
-              {
-                from+= local_thousands_sep_length;
-              }
-              else if ( from[0] == local_decimal_point[0] && is_prefix(from,local_decimal_point) )
-              {
-                from+= local_decimal_point_length;
-                *to++='.';
-              }
-              else
-              {
-                *to++= *from++;
-              }
-            }
-            if ( to == buff )
-            {
-              *to++='0';    /* Fix for empty strings */
-            }
-            data= buff;
-            length= (uint) (to-buff);
-
-            convert= 0;
-
+            goto memerror;
           }
-          /* Fall through */
-        default:
-          if (!convert)
+        }
+        goto out;
+
+      case SQL_TIME:
+      case SQL_TYPE_TIME:
+        if ( aprec->concise_type == SQL_C_TIMESTAMP ||
+              aprec->concise_type == SQL_C_TYPE_TIMESTAMP )
+        {
+          TIMESTAMP_STRUCT *time= (TIMESTAMP_STRUCT*) aprec->data_ptr;
+
+          if (time->hour > 23)
           {
-            put_param_value(stmt, net, &to, bind, data, length);
-            goto out;
+            return set_stmt_error(stmt, "22008", "Not a valid time value supplied", 0);
           }
+          if (time->fraction)
+          {
+            /* fractional seconds truncated, need to set correct sqlstate 22008
+            http://msdn.microsoft.com/en-us/library/ms709385%28v=vs.85%29.aspx */
+
+            return set_stmt_error(stmt, "22008", "Fractional truncation", 0);
+          }
+
+          if (ssps_used(stmt))
+          {
+            length= sprintf(buff, "%02d:%02d:%02d", time->hour, time->minute, time->second);
+          }
+          else
+          {
+            length= sprintf(buff, "'%02d:%02d:%02d'", time->hour, time->minute, time->second);
+          }
+
+          if (put_param_value(stmt, net, &to, bind, buff, length))
+          {
+            goto memerror;
+          }
+        }
+        else
+        {
+          ulong time;
+          int hours;
+          SQLUINTEGER fraction;
+
+          /* For now it is safer to assume a dot is always a separator */
+          /* stmt->dbc->ds->dont_use_set_locale */
+          get_fractional_part(data, length, TRUE, &fraction);
+
+          if (fraction)
+          {
+            /* truncation need SQL_ERROR and sqlstate 22008*/
+            return set_stmt_error(stmt, "22008", "Fractional truncation", 0);
+          }
+
+          time= str_to_time_as_long(data,length);
+          hours= time/10000;
+
+          if (hours > 23)
+          {
+            return set_stmt_error(stmt, "22008", "Not a valid time value supplied", 0);
+          }
+
+          if (ssps_used(stmt))
+          {
+            length= sprintf(buff, "%02d:%02d:%02d",
+                  hours,
+                  (int) time/100%100,
+                  (int) time%100);
+          }
+          else
+          {
+            length= sprintf(buff, "'%02d:%02d:%02d'",
+                  hours,
+                  (int) time/100%100,
+                  (int) time%100);
+          }
+
+          if (put_param_value(stmt, net, &to, bind, buff, length))
+          {
+            goto memerror;
+          }
+        }
+
+        goto out;
+
+      case SQL_BIT:
+        {
+          if (ssps_used(stmt))
+          {
+            char bit_val= atoi(data)!= 0 ? 1 : 0;
+            /* Generic ODBC supports only BIT(1) */
+            bind_param(bind, &bit_val, 1, MYSQL_TYPE_TINY);
+          }
+          else if (!convert)
+          {
+            to= add_to_buffer(net, to, data, 1);
+          }
+          goto out;
+        }
+      case SQL_FLOAT:
+      case SQL_REAL:
+      case SQL_DOUBLE:
+        /* If we have string -> float ; Fix locale characters for number */
+        if (convert)
+        {
+          char *to= buff, *from= data;
+          char *end= from+length;
+          char *local_thousands_sep= thousands_sep;
+          char *local_decimal_point= decimal_point;
+          uint local_thousands_sep_length= thousands_sep_length;
+          uint local_decimal_point_length= decimal_point_length;
+
+          if (!stmt->dbc->ds->dont_use_set_locale)
+          {
+            /* force use of . as decimal point */
+            local_thousands_sep= ",";
+            local_thousands_sep_length= 1;
+            local_decimal_point= ".";
+            local_decimal_point_length= 1;
+          }
+
+          while ( *from && from < end )
+          {
+            if ( from[0] == local_thousands_sep[0] && is_prefix(from,local_thousands_sep) )
+            {
+              from+= local_thousands_sep_length;
+            }
+            else if ( from[0] == local_decimal_point[0] && is_prefix(from,local_decimal_point) )
+            {
+              from+= local_decimal_point_length;
+              *to++='.';
+            }
+            else
+            {
+              *to++= *from++;
+            }
+          }
+          if ( to == buff )
+          {
+            *to++='0';    /* Fix for empty strings */
+          }
+          data= buff;
+          length= (uint) (to-buff);
+
+          convert= 0;
+
+        }
+        /* Fall through */
+      default:
+        if (!convert)
+        {
+          put_param_value(stmt, net, &to, bind, data, length);
+          goto out;
+        }
     }
 
     if (ssps_used(stmt))

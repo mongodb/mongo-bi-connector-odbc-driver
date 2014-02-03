@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -21,6 +21,7 @@
   with this program; if not, write to the Free Software Foundation, Inc.,
   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 */
+
 
 #include <time.h>
 #include "odbctap.h"
@@ -171,7 +172,7 @@ DECLARE_TEST(t_tstotime)
   ts1.fraction= 0;
 
   /* Same for SQL_DATE - time is truncated -> error */
-  ts2.hour= ts2.minute= ts2.second= ts2.fraction= 0;
+  ts2.fraction= ts2.hour= ts2.minute= ts2.second= 0;
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_tstotime");
 
@@ -1217,6 +1218,147 @@ DECLARE_TEST(t_b13975271)
 }
 
 
+DECLARE_TEST(t_17613161)
+{
+  SQL_TIME_STRUCT ts, result;
+  SQL_INTERVAL_STRUCT h2s, interval;
+
+  h2s.intval.day_second.hour=   ts.hour  = 100;
+  h2s.intval.day_second.minute= ts.minute= 20;
+  h2s.intval.day_second.second= ts.second= 45;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_17613161");
+
+  ok_sql(hstmt, "CREATE TABLE t_17613161(col1 time)");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)"INSERT INTO t_17613161 "
+                            "(col1) VALUES (?)",SQL_NTS));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_TIME,
+                                  SQL_TIME, 0, 0, &ts, sizeof(ts), NULL));
+  expect_stmt(hstmt, SQLExecute(hstmt), SQL_ERROR);
+  is_num(check_sqlstate(hstmt, "22008"), OK);
+
+  /* Such conversion is not supported */
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_TIME,
+                                  SQL_INTERVAL_HOUR_TO_SECOND, 0, 0, &ts, sizeof(ts), NULL));
+ expect_stmt(hstmt, SQLExecute(hstmt), SQL_ERROR);
+ is_num(check_sqlstate(hstmt, "07006"), OK);
+
+  /* For interval types big hours should work fine */
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_INTERVAL_HOUR_TO_SECOND,
+                                  SQL_INTERVAL_HOUR_TO_SECOND, 0, 0, &h2s, sizeof(h2s), NULL));
+  ok_stmt(hstmt, SQLExecute(hstmt));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
+
+  ok_sql(hstmt,"SELECT * FROM t_17613161");
+
+  ok_stmt(hstmt, SQLFetch(hstmt));
+
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_TYPE_TIME, &result, 0,
+                            NULL), SQL_ERROR);
+  is_num(check_sqlstate(hstmt, "22007"), OK);
+
+  expect_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_INTERVAL_HOUR_TO_MINUTE, &interval, 0,
+                        NULL), SQL_SUCCESS_WITH_INFO);
+  is_num(check_sqlstate(hstmt, "01S07"), OK);
+
+  is_num(interval.intval.day_second.second, 0);
+  is_num(interval.intval.day_second.minute, 20);
+  is_num(interval.intval.day_second.hour, 100);
+
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_INTERVAL_HOUR_TO_SECOND, &interval, 0,
+                        NULL));
+
+  is_num(interval.intval.day_second.second, 45);
+  is_num(interval.intval.day_second.minute, 20);
+  is_num(interval.intval.day_second.hour, 100);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_17613161");
+
+  return OK;
+}
+
+
+DECLARE_TEST(t_17613161_bookmark)
+{
+  SQLCHAR bData[2][10];
+  SQL_TIME_STRUCT tm[2]= {0};
+  SQL_INTERVAL_STRUCT h2s[2];
+
+  h2s[0].intval.day_second.hour=   tm[0].hour   = 11;
+  h2s[0].intval.day_second.minute= tm[0].minute = 02;
+  h2s[0].intval.day_second.second= tm[0].second = 19;
+
+  h2s[1].intval.day_second.hour=   tm[1].hour  = 100;
+  h2s[1].intval.day_second.minute= tm[1].minute= 20;
+  h2s[1].intval.day_second.second= tm[1].second= 45;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_17613161_bookmark");
+
+  ok_sql(hstmt,"CREATE TABLE t_17613161_bookmark(col1 time)");
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
+                                (SQLPOINTER)SQL_CURSOR_STATIC, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE,
+                                (SQLPOINTER)2, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CONCURRENCY,
+                                (SQLPOINTER)SQL_CONCUR_ROWVER, 0));
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_USE_BOOKMARKS,
+                                (SQLPOINTER) SQL_UB_VARIABLE, 0));
+
+  ok_sql(hstmt, "SELECT * FROM t_17613161_bookmark");
+
+  expect_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0),
+              SQL_NO_DATA_FOUND);
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 0, SQL_C_VARBOOKMARK, bData, 
+                            sizeof(bData[0]), NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_TYPE_TIME, tm, 
+                            sizeof(tm[0]), NULL));
+
+  expect_stmt(hstmt, SQLBulkOperations(hstmt, SQL_ADD), SQL_ERROR);
+  is_num(check_sqlstate(hstmt, "22008"), OK);
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_INTERVAL_HOUR_TO_SECOND, h2s, 
+                            sizeof(h2s[0]), NULL));
+  ok_stmt(hstmt, SQLBulkOperations(hstmt, SQL_ADD));
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_ARRAY_SIZE,
+                                (SQLPOINTER)1, 0));
+
+  ok_sql(hstmt, "SELECT * FROM t_17613161_bookmark");
+  is_num(myrowcount(hstmt), 2);
+
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_BOOKMARK, 0));
+ 
+  is_num(atol(bData[0]), 1);
+  is_num(tm[0].hour, 11);
+  is_num(tm[0].minute, 02);
+  is_num(tm[0].second, 19);
+
+  is_num(atol(bData[1]), 2);
+  is_num(tm[1].hour, 100);
+  is_num(tm[1].minute, 20);
+  is_num(tm[1].second, 45);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt,SQL_CLOSE));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_17613161_bookmark");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_ts)
   ADD_TEST(t_tstotime)
@@ -1236,6 +1378,8 @@ BEGIN_TESTS
   ADD_TEST(t_bug60646)
   ADD_TEST(t_bug60648)
   ADD_TEST(t_b13975271)
+  ADD_TEST(t_17613161)
+  ADD_TEST(t_17613161_bookmark)
 END_TESTS
 
 
