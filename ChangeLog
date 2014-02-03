@@ -41,6 +41,8 @@
     (Bug# 17588101)
   * ODBC 5.2.5 DMG installer fails on OSX 10.8.5 (Bug #17512040/70422)
   * Bulk insert on time column with hour value > 99 gives error (Bug#17613161)
+  * Concurrent execution of SQLEndTran() with SQL_HANDLE_ENV results in 
+    SEG FAULT (Bug #18166331)
 
 ----
 

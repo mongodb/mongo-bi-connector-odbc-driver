@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2001, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -44,7 +44,7 @@ static SQLRETURN my_transact(SQLHDBC hdbc, SQLSMALLINT CompletionType)
   const char *query;
   uint	length;
 
-  if (dbc && !dbc->ds->disable_transactions)
+  if (dbc && dbc->ds && !dbc->ds->disable_transactions)
   {
     switch(CompletionType) {
     case SQL_COMMIT:
@@ -99,6 +99,7 @@ end_transaction(SQLSMALLINT HandleType,
 {
   SQLRETURN result= SQL_SUCCESS;
   ENV *henv;
+  DBC *hdbc;
   LIST *current;
 
   switch (HandleType) {
@@ -113,7 +114,15 @@ end_transaction(SQLSMALLINT HandleType,
     break;
 
   case SQL_HANDLE_DBC:
-    result= my_transact(Handle,CompletionType);
+    hdbc= (DBC*)Handle;
+
+#ifndef _WIN32
+    pthread_mutex_lock(&hdbc->env->lock);
+#endif
+    result= my_transact(hdbc, CompletionType);
+#ifndef _WIN32
+    pthread_mutex_unlock(&hdbc->env->lock);
+#endif
     break;
 
   default:
