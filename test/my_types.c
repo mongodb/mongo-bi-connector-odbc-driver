@@ -1143,6 +1143,7 @@ DECLARE_TEST(t_bug29402)
 DECLARE_TEST(t_bug67793)
 {
   SQL_TIME_STRUCT sts;
+  SQL_INTERVAL_STRUCT h2s;
   SQLLEN outlen= 0;
 
   /* make sure we have reset everything to zero */
@@ -1154,18 +1155,18 @@ DECLARE_TEST(t_bug67793)
   ok_sql(hstmt, "SELECT '123456789:45:67', '512:512:512', '20::75:23:10'");
   ok_stmt(hstmt, SQLFetch(hstmt));
 
-  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_TIME, &sts, sizeof(sts), &outlen));
-  is_num(outlen, sizeof(sts));
+  ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_INTERVAL_HOUR_TO_SECOND, &h2s, sizeof(h2s), &outlen));
+  is_num(outlen, sizeof(h2s));
   /* hour cannot go out of unsigned smallint range */
-  is_num(sts.hour, 65535);
-  is_num(sts.minute, 46);
-  is_num(sts.second, 7);
+  is_num(h2s.intval.day_second.hour, 65535);
+  is_num(h2s.intval.day_second.minute, 46);
+  is_num(h2s.intval.day_second.second, 7);
 
-  ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_TIME, &sts, sizeof(sts), &outlen));
-  is_num(outlen, sizeof(sts));
-  is_num(sts.hour, 520);
-  is_num(sts.minute, 40);
-  is_num(sts.second, 32);
+  ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_INTERVAL_HOUR_TO_SECOND, &h2s, sizeof(h2s), &outlen));
+  is_num(outlen, sizeof(h2s));
+  is_num(h2s.intval.day_second.hour, 520);
+  is_num(h2s.intval.day_second.minute, 40);
+  is_num(h2s.intval.day_second.second, 32);
 
   ok_stmt(hstmt, SQLGetData(hstmt, 3, SQL_TIME, &sts, sizeof(sts), &outlen));
   is_num(outlen, sizeof(sts));
