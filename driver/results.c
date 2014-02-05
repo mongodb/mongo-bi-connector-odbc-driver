@@ -1497,8 +1497,8 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
     {
       /* catalog functions with "fake" results won't have lengths */
       length= irrec->row.datalen;
-      if (!length && stmt->current_values[ColumnNumber - 1])
-        length= strlen(stmt->current_values[ColumnNumber - 1]);
+      if (!length && stmt->current_values[sColNum])
+        length= strlen(stmt->current_values[sColNum]);
 
       arrec= desc_get_rec(stmt->ard, sColNum, FALSE);
       result= sql_get_data(stmt, TargetType, sColNum,
