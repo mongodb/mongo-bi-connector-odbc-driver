@@ -55,12 +55,17 @@ BuildRequires:	cmake
 BuildRequires:	unixODBC-devel
 BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 
-%if 0%{odbc_gui}
+%if 0%{?odbc_gui}
 %package setup
 Summary:	An ODBC @CONNECTOR_BASE_VERSION@ driver for MySQL - setup library
 Group:		Application/Databases
 Requires:	%{name} = %{version}-%{release}
 %endif
+
+%package test
+Summary:	An ODBC @CONNECTOR_BASE_VERSION@ driver for MySQL - tests
+Group:		Application/Databases
+Requires:	%{name} = %{version}-%{release}
 
 ##############################################################################
 #
@@ -94,6 +99,9 @@ documentation and the manual for more information.
 The setup library for the MySQL ODBC package, handles the optional GUI
 dialog for configuring the driver.
 %endif
+
+%description test
+The test suite for MySQL ODBC.
 
 ##############################################################################
 #
@@ -152,7 +160,9 @@ rm -rf %{buildroot}
 pushd release
 make DESTDIR=%{buildroot} install VERBOSE=1
 rm -vf  %{buildroot}%{_prefix}/{ChangeLog,README*,LICENSE.*,COPYING,INSTALL*,Licenses_for_Third-Party_Components.txt}
-rm -vfr %{buildroot}%{_prefix}/test
+mkdir -p %{buildroot}%{_datadir}/mysql-connector-odbc
+mv %{buildroot}%{_prefix}/test %{buildroot}%{_datadir}/mysql-connector-odbc/
+mv bin/dltest %{buildroot}%{_bindir}/
 popd
 
 # ----------------------------------------------------------------------
@@ -216,5 +226,9 @@ fi
 %defattr(-, root, root, -)
 %{_libdir}/libmyodbc5S.so
 %endif
+
+%files test
+%attr(-, root, root) %{_datadir}/mysql-connector-odbc/test
+%attr(755, root, root) %{_bindir}/dltest
 
 ##############################################################################
