@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -687,6 +687,7 @@ DECLARE_TEST(sqlcancel)
 {
   pthread_t thread;
 
+#ifdef IODBC_BUG_SQLCANCEL_FIXED
   pthread_create(&thread, NULL, cancel_in_one_second, hstmt);
 
   /* SLEEP(n) returns 1 when it is killed. */
@@ -695,6 +696,7 @@ DECLARE_TEST(sqlcancel)
   is_num(my_fetch_int(hstmt, 1), 1);
 
   pthread_join(thread, NULL);
+#endif // ifdef IODBC_BUG_SQLCANCEL_FIXED
 
   return OK;
 }
