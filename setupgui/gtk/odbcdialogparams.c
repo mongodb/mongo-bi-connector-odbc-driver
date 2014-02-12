@@ -204,6 +204,43 @@ void on_database_popup (GtkComboBox *widget, gpointer user_data)
 }
 
 
+void on_tab_press (GtkComboBox *widget, GdkEvent *event, gpointer user_data)
+{
+  GtkWidget *next_widget, *prev_widget;
+  GdkEventKey *key= (GdkEventKey *)event;
+
+  if (user_data == NULL)
+  {
+    next_widget= GTK_WIDGET (gtk_builder_get_object (builder, "test"));
+    prev_widget= GTK_WIDGET (gtk_builder_get_object (builder, "pwd"));;
+  }
+  else
+  {
+    next_widget= GTK_WIDGET (gtk_builder_get_object (builder, "initstmt"));
+    prev_widget= GTK_WIDGET (gtk_builder_get_object (builder, "allow_big_results"));;
+  }
+
+  switch (key->keyval)
+  {
+    case GDK_KEY_Up:
+      gtk_widget_grab_focus(prev_widget);
+      break;
+      
+    case GDK_KEY_Down:
+      gtk_combo_box_popup(widget);
+      break;
+      
+    case GDK_KEY_ISO_Left_Tab:
+      gtk_widget_grab_focus(prev_widget);
+      break;
+
+    case GDK_KEY_Tab:
+      gtk_widget_grab_focus(next_widget);
+      break;
+
+  }
+}
+
 void on_charset_popup (GtkComboBox *widget, gpointer user_data) 
 {
   GtkListStore *store;
@@ -547,10 +584,16 @@ int ShowOdbcParamsDialog(DataSource* params, HWND ParentWnd, BOOL isPrompt)
   dummy= GTK_WIDGET (gtk_builder_get_object (builder, "database"));
   g_signal_connect ((gpointer) dummy, "notify::popup-shown",
                     G_CALLBACK (on_database_popup), NULL);
+  /* Work around the keyboard-trapping bug in GTKComboBox */
+  g_signal_connect ((gpointer) dummy, "key-press-event",
+                    G_CALLBACK (on_tab_press), NULL);
 
   dummy= GTK_WIDGET (gtk_builder_get_object (builder, "charset"));
   g_signal_connect ((gpointer) dummy, "notify::popup-shown",
                     G_CALLBACK (on_charset_popup), NULL);
+  /* Work around the keyboard-trapping bug in GTKComboBox */
+  g_signal_connect ((gpointer) dummy, "key-press-event",
+                    G_CALLBACK (on_tab_press), (gpointer)1);
   
   dummy= GTK_WIDGET (gtk_builder_get_object (builder, "use_tcp_ip_server"));
   g_signal_connect ((gpointer) dummy, "toggled",

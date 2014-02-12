@@ -144,6 +144,11 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"secondary_icon_activatable\">False</property>\n" \
 "                        <property name=\"primary_icon_sensitive\">True</property>\n" \
 "                        <property name=\"secondary_icon_sensitive\">True</property>\n" \
+"                        <child internal-child=\"accessible\">\n" \
+"                          <object class=\"AtkObject\" id=\"serveratkobject\">\n" \
+"                            <property name=\"AtkObject::accessible-name\" translatable=\"yes\">TCP/IP Address of MySQL Server</property>\n" \
+"                          </object>\n" \
+"                        </child>\n" \
 "                      </object>\n" \
 "                      <packing>\n" \
 "                        <property name=\"left_attach\">1</property>\n" \
@@ -162,6 +167,11 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"secondary_icon_activatable\">False</property>\n" \
 "                        <property name=\"primary_icon_sensitive\">True</property>\n" \
 "                        <property name=\"secondary_icon_sensitive\">True</property>\n" \
+"                        <child internal-child=\"accessible\">\n" \
+"                          <object class=\"AtkObject\" id=\"uidatkobject\">\n" \
+"                            <property name=\"AtkObject::accessible-name\" translatable=\"yes\">User name</property>\n" \
+"                          </object>\n" \
+"                        </child>\n" \
 "                      </object>\n" \
 "                      <packing>\n" \
 "                        <property name=\"left_attach\">1</property>\n" \
@@ -181,6 +191,11 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"secondary_icon_activatable\">False</property>\n" \
 "                        <property name=\"primary_icon_sensitive\">True</property>\n" \
 "                        <property name=\"secondary_icon_sensitive\">True</property>\n" \
+"                        <child internal-child=\"accessible\">\n" \
+"                          <object class=\"AtkObject\" id=\"pwdatkobject\">\n" \
+"                            <property name=\"AtkObject::accessible-name\" translatable=\"yes\">Password</property>\n" \
+"                          </object>\n" \
+"                        </child>\n" \
 "                      </object>\n" \
 "                      <packing>\n" \
 "                        <property name=\"left_attach\">1</property>\n" \
@@ -230,6 +245,11 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"secondary_icon_sensitive\">True</property>\n" \
 "                        <property name=\"adjustment\">adjustment1</property>\n" \
 "                        <property name=\"climb_rate\">1</property>\n" \
+"                        <child internal-child=\"accessible\">\n" \
+"                          <object class=\"AtkObject\" id=\"portatkobject\">\n" \
+"                            <property name=\"AtkObject::accessible-name\" translatable=\"yes\">Port</property>\n" \
+"                          </object>\n" \
+"                        </child>\n" \
 "                      </object>\n" \
 "                      <packing>\n" \
 "                        <property name=\"left_attach\">3</property>\n" \
@@ -250,6 +270,11 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"secondary_icon_activatable\">False</property>\n" \
 "                        <property name=\"primary_icon_sensitive\">True</property>\n" \
 "                        <property name=\"secondary_icon_sensitive\">True</property>\n" \
+"                        <child internal-child=\"accessible\">\n" \
+"                          <object class=\"AtkObject\" id=\"nameatkobject\">\n" \
+"                            <property name=\"AtkObject::accessible-name\" translatable=\"yes\">Data Source Name</property>\n" \
+"                          </object>\n" \
+"                        </child>\n" \
 "                      </object>\n" \
 "                      <packing>\n" \
 "                        <property name=\"left_attach\">1</property>\n" \
@@ -267,6 +292,11 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"secondary_icon_activatable\">False</property>\n" \
 "                        <property name=\"primary_icon_sensitive\">True</property>\n" \
 "                        <property name=\"secondary_icon_sensitive\">True</property>\n" \
+"                        <child internal-child=\"accessible\">\n" \
+"                          <object class=\"AtkObject\" id=\"descriptionatkobject\">\n" \
+"                            <property name=\"AtkObject::accessible-name\" translatable=\"yes\">Description</property>\n" \
+"                          </object>\n" \
+"                        </child>\n" \
 "                      </object>\n" \
 "                      <packing>\n" \
 "                        <property name=\"left_attach\">1</property>\n" \
@@ -300,6 +330,11 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"secondary_icon_activatable\">False</property>\n" \
 "                        <property name=\"primary_icon_sensitive\">True</property>\n" \
 "                        <property name=\"secondary_icon_sensitive\">True</property>\n" \
+"                        <child internal-child=\"accessible\">\n" \
+"                          <object class=\"AtkObject\" id=\"socketatkobject\">\n" \
+"                            <property name=\"AtkObject::accessible-name\" translatable=\"yes\">Socket</property>\n" \
+"                          </object>\n" \
+"                        </child>\n" \
 "                      </object>\n" \
 "                      <packing>\n" \
 "                        <property name=\"left_attach\">1</property>\n" \
@@ -365,16 +400,22 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"events\">GDK_BUTTON_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_STRUCTURE_MASK</property>\n" \
 "                        <property name=\"button_sensitivity\">on</property>\n" \
 "                        <property name=\"text_column\">0</property>\n" \
-"                        <child internal-child=\"entry\">\n" \
-"                          <object class=\"GtkEntry\" id=\"comboboxentry-entry2\">\n" \
-"                            <property name=\"can_focus\">True</property>\n" \
-"                            <property name=\"primary_icon_activatable\">False</property>\n" \
-"                            <property name=\"secondary_icon_activatable\">False</property>\n" \
-"                            <property name=\"primary_icon_sensitive\">True</property>\n" \
-"                            <property name=\"secondary_icon_sensitive\">True</property>\n" \
-"                          </object>\n" \
-"                        </child>\n" \
-"                      </object>\n" \
+"                          <child internal-child=\"entry\">\n" \
+"                            <object class=\"GtkEntry\" id=\"comboboxentry-entry2\">\n" \
+"                              <property name=\"can_focus\">True</property>\n" \
+"                              <property name=\"invisible_char\">•</property>\n" \
+"                              <property name=\"primary_icon_activatable\">False</property>\n" \
+"                              <property name=\"secondary_icon_activatable\">False</property>\n" \
+"                              <property name=\"primary_icon_sensitive\">True</property>\n" \
+"                              <property name=\"secondary_icon_sensitive\">True</property>\n" \
+"                              <child internal-child=\"accessible\">\n" \
+"                                <object class=\"AtkObject\" id=\"databaseatkobject\">\n" \
+"                                  <property name=\"AtkObject::accessible-name\" translatable=\"yes\">Database</property>\n" \
+"                                </object>\n" \
+"                              </child>\n" \
+"                            </object>\n" \
+"                          </child>\n" \
+"                        </object>\n" \
 "                      <packing>\n" \
 "                        <property name=\"left_attach\">1</property>\n" \
 "                        <property name=\"right_attach\">2</property>\n" \
@@ -622,6 +663,11 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                            <property name=\"secondary_icon_activatable\">False</property>\n" \
 "                            <property name=\"primary_icon_sensitive\">True</property>\n" \
 "                            <property name=\"secondary_icon_sensitive\">True</property>\n" \
+"                            <child internal-child=\"accessible\">\n" \
+"                              <object class=\"AtkObject\" id=\"initstmtatkobject\">\n" \
+"                                <property name=\"AtkObject::accessible-name\" translatable=\"yes\">Initial Statement</property>\n" \
+"                              </object>\n" \
+"                            </child>\n" \
 "                          </object>\n" \
 "                          <packing>\n" \
 "                            <property name=\"left_attach\">1</property>\n" \
@@ -646,6 +692,11 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                                <property name=\"secondary_icon_activatable\">False</property>\n" \
 "                                <property name=\"primary_icon_sensitive\">True</property>\n" \
 "                                <property name=\"secondary_icon_sensitive\">True</property>\n" \
+"                                <child internal-child=\"accessible\">\n" \
+"                                  <object class=\"AtkObject\" id=\"charsetatkobject\">\n" \
+"                                    <property name=\"AtkObject::accessible-name\" translatable=\"yes\">Character Set</property>\n" \
+"                                  </object>\n" \
+"                                </child>\n" \
 "                              </object>\n" \
 "                            </child>\n" \
 "                          </object>\n" \
@@ -930,6 +981,11 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                                <property name=\"secondary_icon_sensitive\">True</property>\n" \
 "                                <property name=\"adjustment\">adjustment2</property>\n" \
 "                                <property name=\"numeric\">True</property>\n" \
+"                                <child internal-child=\"accessible\">\n" \
+"                                  <object class=\"AtkObject\" id=\"prefetchatkobject\">\n" \
+"                                    <property name=\"AtkObject::accessible-name\" translatable=\"yes\">Prefetch Number</property>\n" \
+"                                  </object>\n" \
+"                                </child>\n" \
 "                              </object>\n" \
 "                              <packing>\n" \
 "                                <property name=\"expand\">True</property>\n" \
@@ -1111,6 +1167,11 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"secondary_icon_activatable\">False</property>\n" \
 "                        <property name=\"primary_icon_sensitive\">True</property>\n" \
 "                        <property name=\"secondary_icon_sensitive\">True</property>\n" \
+"                        <child internal-child=\"accessible\">\n" \
+"                          <object class=\"AtkObject\" id=\"sslkeyatkobject\">\n" \
+"                            <property name=\"AtkObject::accessible-name\" translatable=\"yes\">SSL Key</property>\n" \
+"                          </object>\n" \
+"                        </child>\n" \
 "                      </object>\n" \
 "                      <packing>\n" \
 "                        <property name=\"left_attach\">1</property>\n" \
@@ -1126,6 +1187,11 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"secondary_icon_activatable\">False</property>\n" \
 "                        <property name=\"primary_icon_sensitive\">True</property>\n" \
 "                        <property name=\"secondary_icon_sensitive\">True</property>\n" \
+"                        <child internal-child=\"accessible\">\n" \
+"                          <object class=\"AtkObject\" id=\"sslcertatkobject\">\n" \
+"                            <property name=\"AtkObject::accessible-name\" translatable=\"yes\">SSL Certificate</property>\n" \
+"                          </object>\n" \
+"                        </child>\n" \
 "                      </object>\n" \
 "                      <packing>\n" \
 "                        <property name=\"left_attach\">1</property>\n" \
@@ -1143,6 +1209,11 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"secondary_icon_activatable\">False</property>\n" \
 "                        <property name=\"primary_icon_sensitive\">True</property>\n" \
 "                        <property name=\"secondary_icon_sensitive\">True</property>\n" \
+"                        <child internal-child=\"accessible\">\n" \
+"                          <object class=\"AtkObject\" id=\"sslcaatkobject\">\n" \
+"                            <property name=\"AtkObject::accessible-name\" translatable=\"yes\">SSL Certificate Authority</property>\n" \
+"                          </object>\n" \
+"                        </child>\n" \
 "                      </object>\n" \
 "                      <packing>\n" \
 "                        <property name=\"left_attach\">1</property>\n" \
@@ -1243,6 +1314,11 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"secondary_icon_activatable\">False</property>\n" \
 "                        <property name=\"primary_icon_sensitive\">True</property>\n" \
 "                        <property name=\"secondary_icon_sensitive\">True</property>\n" \
+"                        <child internal-child=\"accessible\">\n" \
+"                          <object class=\"AtkObject\" id=\"sslcipheratkobject\">\n" \
+"                            <property name=\"AtkObject::accessible-name\" translatable=\"yes\">SSL Cipher</property>\n" \
+"                          </object>\n" \
+"                        </child>\n" \
 "                      </object>\n" \
 "                      <packing>\n" \
 "                        <property name=\"left_attach\">1</property>\n" \
@@ -1318,6 +1394,11 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"secondary_icon_activatable\">False</property>\n" \
 "                        <property name=\"primary_icon_sensitive\">True</property>\n" \
 "                        <property name=\"secondary_icon_sensitive\">True</property>\n" \
+"                        <child internal-child=\"accessible\">\n" \
+"                          <object class=\"AtkObject\" id=\"sslcapathatkobject\">\n" \
+"                            <property name=\"AtkObject::accessible-name\" translatable=\"yes\">SSL CA Path</property>\n" \
+"                          </object>\n" \
+"                        </child>\n" \
 "                      </object>\n" \
 "                      <packing>\n" \
 "                        <property name=\"left_attach\">1</property>\n" \

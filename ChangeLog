@@ -4,6 +4,7 @@
   * Support of ODBCINSTGetProperties in MyODBC Driver (WL #7577)
   * Add DFLT_BIGINT_BIND_STR option to Connector/ODBC GUI (Windows and Linux)
     (WL#7579)
+  * Accessibility features in Connector/ODBC Linux GUI (WL #7635)
 
   Bugs fixed:
   * Connect crash if the catalog name given to SQLSetConnectAttr is invalid
@@ -43,6 +44,7 @@
   * Bulk insert on time column with hour value > 99 gives error (Bug#17613161)
   * Concurrent execution of SQLEndTran() with SQL_HANDLE_ENV results in 
     SEG FAULT (Bug #18166331)
+  * Workaround to GTK bug in GtkComboBox and GtkComboBoxEntry (WL #7637)
 
 ----
 
