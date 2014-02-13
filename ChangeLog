@@ -45,6 +45,8 @@
   * Concurrent execution of SQLEndTran() with SQL_HANDLE_ENV results in 
     SEG FAULT (Bug #18166331)
   * Workaround to GTK bug in GtkComboBox and GtkComboBoxEntry (WL #7637)
+  * ODBC Driver GUI in Windows has wrong order of controls selection
+    (Bug# 18240696)
 
 ----
 
