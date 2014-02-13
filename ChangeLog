@@ -42,6 +42,8 @@
   * Uninitialized variable free_value can set wrong error in SQLDescribeCol 
     (Bug# 17588101)
   * ODBC 5.2.5 DMG installer fails on OSX 10.8.5 (Bug #17512040/70422)
+  * ODBC Driver GUI in Windows has wrong order of controls selection
+    (Bug# 18240696)
 
 ----
 5.2.6(25-Sep-2013)
