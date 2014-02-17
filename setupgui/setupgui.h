@@ -38,6 +38,7 @@
 
 #else
 # include <gtk/gtk.h>
+# include <gdk/gdkkeysyms.h>
 #endif
 
 #include "MYODBC_MYSQL.h"
