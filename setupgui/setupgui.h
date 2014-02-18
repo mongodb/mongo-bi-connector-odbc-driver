@@ -39,6 +39,25 @@
 #else
 # include <gtk/gtk.h>
 # include <gdk/gdkkeysyms.h>
+
+/* Older versions of GDK have different macros for keys */
+
+# ifndef GDK_KEY_Up
+#   define GDK_KEY_Up GDK_Up
+# endif
+
+# ifndef GDK_KEY_Down
+#   define GDK_KEY_Down GDK_Down
+# endif
+
+# ifndef GDK_KEY_Tab
+#   define GDK_KEY_Tab GDK_Tab
+# endif
+
+# ifndef GDK_KEY_ISO_Left_Tab
+#   define GDK_KEY_ISO_Left_Tab GDK_ISO_Left_Tab
+# endif
+
 #endif
 
 #include "MYODBC_MYSQL.h"
