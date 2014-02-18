@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most 
@@ -251,9 +251,11 @@ SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 SET(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
 
 SET(LIB_SUBDIR "lib")
-IF(RPM_BUILD AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+IF(RPM_BUILD AND CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64|ppc64|ppc64p7|s390x|sparc64)") 
   SET(LIB_SUBDIR "lib64")
 ENDIF()
+
+MESSAGE(STATUS "Installation library subdir: ${LIB_SUBDIR}")
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR})
 

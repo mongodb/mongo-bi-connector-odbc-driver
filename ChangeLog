@@ -47,6 +47,8 @@
   * Workaround to GTK bug in GtkComboBox and GtkComboBoxEntry (WL #7637)
   * ODBC Driver GUI in Windows has wrong order of controls selection
     (Bug# 18240696)
+  * Wrong installation library directory on some 64bit system other than x86_64.
+    (Bug# 68848)
 
 ----
 
