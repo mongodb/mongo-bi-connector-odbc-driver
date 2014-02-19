@@ -44,6 +44,8 @@
   * ODBC 5.2.5 DMG installer fails on OSX 10.8.5 (Bug #17512040/70422)
   * ODBC Driver GUI in Windows has wrong order of controls selection
     (Bug# 18240696)
+  * Wrong installation library directory on some 64bit system other than x86_64.
+    (Bug# 68848)
 
 ----
 5.2.6(25-Sep-2013)
