@@ -803,6 +803,12 @@ SQLRETURN SQL_API SQLNumResultCols(SQLHSTMT  hstmt, SQLSMALLINT FAR *pccol)
     SQLRETURN error;
     STMT FAR *stmt= (STMT FAR*) hstmt;
 
+    if (pccol == NULL)
+    {
+      set_stmt_error(stmt, "HY000", "Invalid output buffer", 0);
+      return SQL_ERROR;
+    }
+
     if ( stmt->param_count > 0 && stmt->dummy_state == ST_DUMMY_UNKNOWN &&
          (stmt->state != ST_PRE_EXECUTED || stmt->state != ST_EXECUTED) )
     {
