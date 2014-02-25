@@ -1000,6 +1000,12 @@ SQLRETURN SQL_API SQLNumResultCols(SQLHSTMT  hstmt, SQLSMALLINT *pccol)
   SQLRETURN error;
   STMT *stmt= (STMT *) hstmt;
 
+  if (pccol == NULL)
+  {
+    set_stmt_error(stmt, "HY000", "Invalid output buffer", 0);
+    return SQL_ERROR;
+  }
+
   if (!ssps_used(stmt))
   {
     if (stmt->param_count > 0 && stmt->dummy_state == ST_DUMMY_UNKNOWN &&

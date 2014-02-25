@@ -460,6 +460,19 @@ DECLARE_TEST(t_bug17085344)
 }
 
 
+/* 
+  Bug#18165197: SQLNUMRESULTCOLS() WITH NULL PARAMETER RESULTS IN
+  SEGMENTATION FAULT
+*/
+DECLARE_TEST(t_bug18165197)
+{
+  ok_sql(hstmt, "SELECT 1");
+  expect_stmt(hstmt, SQLNumResultCols(hstmt, NULL), SQL_ERROR);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug69950)
   ADD_TEST(t_bug70642)
@@ -472,6 +485,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug17841121)
   ADD_TEST(t_bookmark_update_zero_rec)
   ADD_TEST(t_bug17085344)
+  ADD_TEST(t_bug18165197)
 END_TESTS
 
 RUN_TESTS
