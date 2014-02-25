@@ -46,6 +46,8 @@
     (Bug# 18240696)
   * Wrong installation library directory on some 64bit system other than x86_64.
     (Bug# 68848)
+  * SQLNumResultCols() with NULL parameter results in Segmentation Fault
+    (Bug# 18165197)
 
 ----
 5.2.6(25-Sep-2013)
