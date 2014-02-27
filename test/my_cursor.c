@@ -3314,10 +3314,10 @@ DECLARE_TEST(t_bug41946)
 DECLARE_TEST(t_sqlputdata)
 {
   SQLRETURN rc;
-  SQLINTEGER  id, resId;
+  SQLINTEGER  id, resId, i;
   SQLINTEGER  resData;
   SQLWCHAR wbuff[MAX_ROW_DATA_LEN+1];
-  wchar_t wcdata[]= L"S\x00e3o Paolo";
+  SQLWCHAR *wcdata= W(L"S\x00e3o Paolo");
 
   ok_sql(hstmt, "drop table if exists t_sqlputdata");
   ok_sql(hstmt, "CREATE TABLE t_sqlputdata( id INT, pdata varchar(50));");
@@ -3340,10 +3340,7 @@ DECLARE_TEST(t_sqlputdata)
     int parameter;
     if (SQLParamData(hstmt,(void**)&parameter) == SQL_NEED_DATA && parameter == 1)
     {
-      if (sizeof(SQLWCHAR) == sizeof(wchar_t))
-        ok_stmt(hstmt, SQLPutData(hstmt, wcdata,  SQL_NTS));
-      else
-        ok_stmt(hstmt, SQLPutData(hstmt, W(wcdata),  SQL_NTS));
+      ok_stmt(hstmt, SQLPutData(hstmt, wcdata,  SQL_NTS));
       ok_stmt(hstmt, SQLParamData(hstmt,(void**)&parameter));
     }
   }
@@ -3355,8 +3352,13 @@ DECLARE_TEST(t_sqlputdata)
   ok_stmt(hstmt, SQLFetch(hstmt));
 
   is_num(my_fetch_int(hstmt, 1), 1);
-  is_wstr(my_fetch_wstr(hstmt, wbuff, 2), 
-			wcdata, 9);
+  ok_stmt(hstmt, SQLGetData(hstmt, 2, SQL_C_WCHAR, wbuff,
+                             sizeof(wbuff), NULL));
+  /* we want to compare SQLWCHAR instead of wchar_t */
+  for (i= 0; i < 9; i++)
+  {
+    is(wbuff[i] == wcdata[i]);
+  }
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
   ok_sql(hstmt, "drop table if exists t_sqlputdata");
