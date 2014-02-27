@@ -53,6 +53,8 @@
     (Bug# 18165197)
   * SQLBULKOPERATIONS(SQL_FETCH_BOOKMARK) RETURNS SQL_NO_DATA ERROR 
     (Bug# 18287216)
+  * Segmentation Fault in SQLExecute() while executing test file "my_types"
+    (Bug# 18303978)
 
 ----
 

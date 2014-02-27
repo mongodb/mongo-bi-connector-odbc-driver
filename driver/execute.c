@@ -690,6 +690,7 @@ SQLRETURN convert_c_type2str(STMT *stmt, SQLSMALLINT ctype, DESCREC *iprec,
         {/* 22003 SQL_ERROR */
           return SQL_ERROR;
         }
+        break;
       }
 
     case SQL_C_INTERVAL_HOUR_TO_MINUTE:
