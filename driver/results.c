@@ -1958,7 +1958,8 @@ SQLRETURN SQL_API myodbc_single_fetch( SQLHSTMT             hstmt,
       stmt->current_row= -1;  /* Before first row */
       stmt->rows_found_in_set= 0;
       data_seek(stmt, 0L);
-      return SQL_NO_DATA_FOUND;
+      set_stmt_error(stmt, "01S07", "One or more row has error.", 0);
+      return SQL_SUCCESS_WITH_INFO; //SQL_NO_DATA_FOUND
     }
     if ( cur_row > max_row )
     {
@@ -1968,7 +1969,9 @@ SQLRETURN SQL_API myodbc_single_fetch( SQLHSTMT             hstmt,
 
         switch (scroller_prefetch(stmt))
         {
-          case SQL_NO_DATA: return SQL_NO_DATA_FOUND;
+          case SQL_NO_DATA: 
+            set_stmt_error(stmt, "01S07", "One or more row has error.", 0);
+            return SQL_SUCCESS_WITH_INFO; //SQL_NO_DATA_FOUND
           case SQL_ERROR:   return set_error(stmt,MYERR_S1000,
                                             mysql_error(&stmt->dbc->mysql), 0);
         }
@@ -2023,7 +2026,8 @@ SQLRETURN SQL_API myodbc_single_fetch( SQLHSTMT             hstmt,
           *stmt->ird->rows_processed_ptr= 0;
         }
 
-        return SQL_NO_DATA_FOUND;
+        set_stmt_error(stmt, "01S07", "One or more row has error.", 0);
+        return SQL_SUCCESS_WITH_INFO; //SQL_NO_DATA_FOUND
       }
     }
 
@@ -2161,7 +2165,8 @@ exitSQLSingleFetch:
       }
       else if (stmt->rows_found_in_set == 0)
       {
-        return SQL_NO_DATA_FOUND;
+        set_stmt_error(stmt, "01S07", "One or more row has error.", 0);
+        return SQL_SUCCESS_WITH_INFO; //SQL_NO_DATA_FOUND
       }
     }
 

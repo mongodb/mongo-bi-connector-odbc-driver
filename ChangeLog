@@ -51,6 +51,8 @@
     (Bug# 68848)
   * SQLNumResultCols() with NULL parameter results in Segmentation Fault
     (Bug# 18165197)
+  * SQLBULKOPERATIONS(SQL_FETCH_BOOKMARK) RETURNS SQL_NO_DATA ERROR 
+    (Bug# 18287216)
 
 ----
 

@@ -539,13 +539,26 @@ DECLARE_TEST(t_bookmark_delete)
   is_num(nData[1], 4);
   is_str(szData[1], "string 4", 8);
 
+  memset(nData, 0, sizeof(nData));
+  memset(szData, 'x', sizeof(szData));
+  ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 4));
+  expect_stmt(hstmt, SQLBulkOperations(hstmt, SQL_FETCH_BY_BOOKMARK), 
+              SQL_SUCCESS_WITH_INFO);
+
+  is_num(nData[0], 3);
+  is_str(szData[0], "string 3", 8);
+  is_num(nData[1], 4);
+  is_str(szData[1], "string 4", 8);
+  is_num(nData[2], 0);
+  is_str(szData[2], "xxxxxxxx", 8);
+  is_num(nData[3], 0);
+  is_str(szData[3], "xxxxxxxx", 8);
+
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
   ok_sql(hstmt, "drop table if exists t_bookmark");
 
   return OK;
 }
-
-
 
 
 /**

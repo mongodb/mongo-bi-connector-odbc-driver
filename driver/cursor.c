@@ -996,9 +996,12 @@ static SQLRETURN fetch_bookmark(STMT *stmt)
                                 stmt->stmt_options.rowStatusPtr_ex ?
                                 stmt->stmt_options.rowStatusPtr_ex :
                                 stmt->ird->array_status_ptr, 0);
+    if (nReturn != SQL_SUCCESS)
+      break;
   } while ( ++rowset_pos <= rowset_end );
 
   stmt->ard->array_size= tmp_array_size;
+  stmt->rows_found_in_set= rowset_pos - 1;
 
   return nReturn;
 }
@@ -1008,8 +1011,7 @@ static SQLRETURN fetch_bookmark(STMT *stmt)
   @type    : myodbc3 internal
   @purpose : deletes the positioned cursor row for bookmark in bound array
 */
-static SQLRETURN setpos_delete_bookmark(STMT *stmt, SQLUSMALLINT irow,
-                               DYNAMIC_STRING *dynQuery)
+static SQLRETURN setpos_delete_bookmark(STMT *stmt, DYNAMIC_STRING *dynQuery)
 {
   SQLUINTEGER  rowset_pos,rowset_end;
   my_ulonglong affected_rows= 0;
@@ -1020,7 +1022,10 @@ static SQLRETURN setpos_delete_bookmark(STMT *stmt, SQLUSMALLINT irow,
   SQLPOINTER TargetValuePtr= NULL;
   long curr_bookmark_index= 0;
 
-  /* we want to work with base table name - we expect call to fail if more than one base table involved */
+  /* 
+     we want to work with base table name - 
+     we expect call to fail if more than one base table involved 
+  */
   if (!(table_name= find_used_table(stmt)))
   {
     return SQL_ERROR;
@@ -1041,18 +1046,18 @@ static SQLRETURN setpos_delete_bookmark(STMT *stmt, SQLUSMALLINT irow,
     return SQL_ERROR;
   }
 
-  rowset_pos= irow= 1;
+  rowset_pos= 0;
   rowset_end= stmt->ard->array_size;
 
   /* fetch all bookmark rows in the rowset to delete */
-  do
+  while (rowset_pos < rowset_end)
   {
     if (arrec->data_ptr)
     {
       TargetValuePtr= ptr_offset_adjust(arrec->data_ptr, 
                                         stmt->ard->bind_offset_ptr, 
                                         stmt->ard->bind_type, 
-                                        arrec->octet_length, rowset_pos - 1);
+                                        arrec->octet_length, rowset_pos);
     }
 
     curr_bookmark_index= atol((SQLCHAR *) TargetValuePtr);
@@ -1078,7 +1083,8 @@ static SQLRETURN setpos_delete_bookmark(STMT *stmt, SQLUSMALLINT irow,
     {
       stmt->ird->array_status_ptr[curr_bookmark_index]= SQL_ROW_DELETED;
     }
-  } while ( ++rowset_pos <= rowset_end );
+    ++rowset_pos;
+  }
 
   global_set_affected_rows(stmt, affected_rows);
   /* fix-up so fetching next rowset is correct */
@@ -1165,8 +1171,7 @@ static SQLRETURN setpos_delete(STMT *stmt, SQLUSMALLINT irow,
 @type    : myodbc3 internal
 @purpose : updates the positioned cursor row for bookmark in bound array
 */
-static SQLRETURN setpos_update_bookmark(STMT *stmt, SQLUSMALLINT irow,
-                             DYNAMIC_STRING *dynQuery)
+static SQLRETURN setpos_update_bookmark(STMT *stmt, DYNAMIC_STRING *dynQuery)
 {
   SQLUINTEGER  rowset_pos,rowset_end;
   my_ulonglong affected= 0;
@@ -1196,18 +1201,18 @@ static SQLRETURN setpos_update_bookmark(STMT *stmt, SQLUSMALLINT irow,
     return SQL_ERROR;
   }
 
-  rowset_pos= irow= 1;
+  rowset_pos= 0;
   rowset_end= stmt->ard->array_size;
 
   /* fetch all bookmark rows in the rowset to update */
-  do
+  while (rowset_pos < rowset_end )
   {
     if (arrec->data_ptr)
     {
       TargetValuePtr= ptr_offset_adjust(arrec->data_ptr, 
                                         stmt->ard->bind_offset_ptr, 
                                         stmt->ard->bind_type, 
-                                        arrec->octet_length, rowset_pos - 1);
+                                        arrec->octet_length, rowset_pos);
     }
 
     curr_bookmark_index= atol((SQLCHAR *) TargetValuePtr);
@@ -1216,22 +1221,10 @@ static SQLRETURN setpos_update_bookmark(STMT *stmt, SQLUSMALLINT irow,
     nReturn= build_set_clause(stmt, curr_bookmark_index, dynQuery);
     if (nReturn == ER_ALL_COLUMNS_IGNORED)
     {
-      /*
-        If we're updating more than one row, having all columns ignored
-        is fine. If it's just one row, that's an error.
-      */
-      if (!irow)
-      {
-        nReturn= SQL_SUCCESS;
-        continue;
-      }
-      else
-      {
-        set_stmt_error(stmt, "21S02",
-                       "Degree of derived table does not match column list",
-                       0);
-        return SQL_ERROR;
-      }
+      set_stmt_error(stmt, "21S02",
+                     "Degree of derived table does not match column list",
+                     0);
+      return SQL_ERROR;
     }
     else if (nReturn == SQL_ERROR)
     {
@@ -1253,7 +1246,9 @@ static SQLRETURN setpos_update_bookmark(STMT *stmt, SQLUSMALLINT irow,
     {
       stmt->ird->array_status_ptr[curr_bookmark_index]= SQL_ROW_UPDATED;
     }
-  } while ( ++rowset_pos <= rowset_end );
+
+    ++rowset_pos; 
+  }
 
   global_set_affected_rows(stmt, affected);
   return nReturn;
@@ -1927,11 +1922,6 @@ SQLRETURN SQL_API SQLBulkOperations(SQLHSTMT  Handle, SQLSMALLINT Operation)
     {
       DYNAMIC_STRING dynQuery;
 
-      if ( irow > stmt->rows_found_in_set )
-      {
-        return set_error(stmt, MYERR_S1107, NULL, 0);
-      }
-
       /* If no rows provided for update return with SQL_SUCCESS. */
       if (stmt->rows_found_in_set == 0)
       {
@@ -1956,16 +1946,13 @@ SQLRETURN SQL_API SQLBulkOperations(SQLHSTMT  Handle, SQLSMALLINT Operation)
         return set_error(stmt,MYERR_S1001,NULL,4001);
       }
 
-      sqlRet= setpos_update_bookmark(stmt, irow, &dynQuery);
+      sqlRet= setpos_update_bookmark(stmt, &dynQuery);
       dynstr_free(&dynQuery);
       break;
     }
   case SQL_DELETE_BY_BOOKMARK:
     {
       DYNAMIC_STRING dynQuery;
-
-      if ( irow > stmt->rows_found_in_set )
-          return set_error(stmt,MYERR_S1107,NULL,0);
 
       /* IF dynamic cursor THEN rerun query to refresh resultset */
       if ( if_dynamic_cursor(stmt) && set_dynamic_result(stmt) )
@@ -1975,7 +1962,7 @@ SQLRETURN SQL_API SQLBulkOperations(SQLHSTMT  Handle, SQLSMALLINT Operation)
       if ( init_dynamic_string(&dynQuery, "DELETE FROM ", 1024, 1024) )
           return set_error(stmt,MYERR_S1001,NULL,4001);
 
-      sqlRet = setpos_delete_bookmark( stmt, irow, &dynQuery );
+      sqlRet = setpos_delete_bookmark(stmt, &dynQuery);
       dynstr_free(&dynQuery);
       break;
     }
