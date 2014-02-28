@@ -778,6 +778,8 @@ DECLARE_TEST(t_prefetch)
 */
 DECLARE_TEST(t_bug11766437)
 {
+/* It can crash on non-86 CPU due to alignment issues */
+#ifdef X86CPU
   SQLINTEGER rowcnt= 3;
   SQLINTEGER i, incr;
   SQLCHAR tbuf[50];
@@ -867,7 +869,7 @@ DECLARE_TEST(t_bug11766437)
 
   ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
   ok_sql(hstmt, "drop table if exists t_bug11766437");
-
+#endif
   return OK;
 }
 
