@@ -362,6 +362,7 @@ SQLRETURN SQL_API SQLParamOptions( SQLHSTMT     hstmt,
         http://mail.easysoft.com/pipermail/unixodbc-dev/2005-July/000627.html
   */
 #ifdef USE_SQLPARAMOPTIONS_SQLULEN_PTR
+  if (pirow != NULL)
   {
     int x = 1;
     if(*(char *)&x != 1)

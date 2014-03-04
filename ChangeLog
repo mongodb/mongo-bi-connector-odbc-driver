@@ -48,6 +48,7 @@
     (Bug# 68848)
   * SQLNumResultCols() with NULL parameter results in Segmentation Fault
     (Bug# 18165197)
+  * Segmentation fault in SQLParamOptions() in Solaris platform (Bug# 18325878)
 
 ----
 5.2.6(25-Sep-2013)
