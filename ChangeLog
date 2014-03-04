@@ -55,6 +55,7 @@
     (Bug# 18287216)
   * Segmentation Fault in SQLExecute() while executing test file "my_types"
     (Bug# 18303978)
+  * Segmentation fault in SQLParamOptions() in Solaris platform (Bug# 18325878)
 
 ----
 

@@ -473,6 +473,58 @@ DECLARE_TEST(t_bug18165197)
 }
 
 
+/*
+  Bug #18325878 SEGMENTATION FAULT IN SQLPARAMOPTIONS() IN SOLARIS PLATFORM
+*/
+DECLARE_TEST(t_bug18325878)
+{
+#ifdef RCNT
+#undef RCNT
+#endif
+#define RCNT 8
+  SQLRETURN rc;
+  char TmpBuff[1024] = {0};
+  SQLUINTEGER j = 0;
+  SQLUINTEGER k = 0;
+  SQLUINTEGER uintval[RCNT] = {0};
+#ifdef USE_SQLPARAMOPTIONS_SQLULEN_PTR
+  SQLULEN lval[RCNT] = {0};
+# define PARAMTYPE SQLULEN
+#else
+  SQLUINTEGER lval[RCNT] = {0};
+# define PARAMTYPE SQLUINTEGER
+#endif
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug18325878");
+  ok_sql(hstmt, "CREATE TABLE t_bug18325878 (id int)");
+
+  ok_stmt(hstmt, SQLParamOptions(hstmt, RCNT, NULL));
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR*)"INSERT INTO t_bug18325878 VALUES (?+1)", SQL_NTS));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_ULONG,
+                                  SQL_NUMERIC, sizeof(SQLUINTEGER), 0, 
+                                  &uintval[0], 0, NULL));
+
+  /* Set values for our parameters */
+  for (j= 0; j<RCNT; j++)
+  {
+    uintval[j]= j;
+  }
+
+  ok_stmt(hstmt, SQLExecute(hstmt));
+  ok_sql(hstmt, "SELECT * FROM t_bug18325878");
+
+  while (SQLFetch(hstmt) == SQL_SUCCESS)
+  {
+    is_num(my_fetch_int(hstmt, 1), ++k);
+  }
+
+  is_num(k, RCNT);
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug69950)
   ADD_TEST(t_bug70642)
@@ -486,6 +538,7 @@ BEGIN_TESTS
   ADD_TEST(t_bookmark_update_zero_rec)
   ADD_TEST(t_bug17085344)
   ADD_TEST(t_bug18165197)
+  ADD_TEST(t_bug18325878)
 END_TESTS
 
 RUN_TESTS
