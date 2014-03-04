@@ -1013,21 +1013,25 @@ MY_FOREIGN_KEY_FIELD *fk_get_rec(DYNAMIC_ARRAY *records, unsigned int recnum)
 */
 static int sql_fk_sort(const void *var1, const void *var2)
 {
-  if ((strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->FKTABLE_CAT,
-               ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_CAT) <= 0)
-        && (strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->FKTABLE_NAME,
-                  ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_NAME) <= 0)
-        && (((MY_FOREIGN_KEY_FIELD *) var1)->KEY_SEQ <= 
-                  ((MY_FOREIGN_KEY_FIELD *) var2)->KEY_SEQ)
-        && (strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->PKTABLE_NAME,
-                  ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_NAME) <= 0))
+  int ret;
+  if ((ret= strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->FKTABLE_CAT,
+               ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_CAT) == 0))
   {
-    return -1;
+    if ((ret= strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->FKTABLE_NAME,
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_NAME) == 0))
+    {
+      if ((ret= ((MY_FOREIGN_KEY_FIELD *) var1)->KEY_SEQ -
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->KEY_SEQ) == 0)
+      {
+        if ((ret= strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->PKTABLE_NAME,
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_NAME) == 0))
+        {
+          return 0;
+        }
+      }
+    }
   }
-  else
-  {
-    return 1;
-  }
+  return ret;
 }
 
 
@@ -1037,21 +1041,25 @@ static int sql_fk_sort(const void *var1, const void *var2)
 */
 static int sql_pk_sort(const void *var1, const void *var2)
 {
-  if ((strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->PKTABLE_CAT,
-               ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_CAT) <= 0)
-        && (strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->PKTABLE_NAME,
-                  ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_NAME) <= 0)
-        && (((MY_FOREIGN_KEY_FIELD *) var1)->KEY_SEQ <= 
-                  ((MY_FOREIGN_KEY_FIELD *) var2)->KEY_SEQ)
-        && (strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->FKTABLE_NAME,
-                  ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_NAME) <= 0))
+  int ret;
+  if ((ret= strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->PKTABLE_CAT,
+               ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_CAT) == 0))
   {
-    return -1;
+    if ((ret= strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->PKTABLE_NAME,
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_NAME) == 0))
+    {
+      if ((ret= ((MY_FOREIGN_KEY_FIELD *) var1)->KEY_SEQ -
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->KEY_SEQ) == 0)
+      {
+        if ((ret= strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->FKTABLE_NAME,
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_NAME) == 0))
+        {
+          return 0;
+        }
+      }
+    }
   }
-  else
-  {
-    return 1;
-  }
+  return ret;
 }
 
 
@@ -1162,7 +1170,7 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
         {
           pos= token;
           last_index= index;
-          key_seq= 0;  
+          key_seq= 0;
 
           /* get constraint name */
           pos= my_next_token(NULL, &pos, NULL, 
@@ -1337,6 +1345,17 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
   }
 
   /* 
+    If the primary keys associated with a foreign key are requested, then
+    sort order is PKTABLE_CAT, PKTABLE_NAME, KEY_SEQ, FKTABLE_NAME
+    Sort order used same as present in no_i_s case, but it is different from
+    http://msdn.microsoft.com/en-us/library/windows/desktop/ms709315(v=vs.85).aspx
+  */
+  if (szPkTableName && szPkTableName[0])
+  {
+    sort_dynamic(&records, sql_pk_sort);
+  }
+
+  /* 
     if foreign keys associated with a primary key are requested 
     then sort order is FKTABLE_CAT, FKTABLE_NAME, KEY_SEQ, PKTABLE_NAME
     Sort order used same as present in no_i_s case, but it is different from
@@ -1345,16 +1364,6 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
   if (szFkTableName && szFkTableName[0])
   {
     sort_dynamic(&records, sql_fk_sort);
-  }
-  /* 
-    If the primary keys associated with a foreign key are requested, then
-    sort order is PKTABLE_CAT, PKTABLE_NAME, KEY_SEQ, FKTABLE_NAME
-    Sort order used same as present in no_i_s case, but it is different from
-    http://msdn.microsoft.com/en-us/library/windows/desktop/ms709315(v=vs.85).aspx
-  */
-  else if (szPkTableName && szPkTableName[0])
-  {
-    sort_dynamic(&records, sql_pk_sort);
   }
 
   fkRows= (MY_FOREIGN_KEY_FIELD *) records.buffer;
