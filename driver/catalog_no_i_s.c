@@ -1013,21 +1013,25 @@ MY_FOREIGN_KEY_FIELD *fk_get_rec(DYNAMIC_ARRAY *records, unsigned int recnum)
 */
 static int sql_fk_sort(const void *var1, const void *var2)
 {
-  if ((strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->FKTABLE_CAT,
-               ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_CAT) <= 0)
-        && (strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->FKTABLE_NAME,
-                  ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_NAME) <= 0)
-        && (((MY_FOREIGN_KEY_FIELD *) var1)->KEY_SEQ <= 
-                  ((MY_FOREIGN_KEY_FIELD *) var2)->KEY_SEQ)
-        && (strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->PKTABLE_NAME,
-                  ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_NAME) <= 0))
+  int ret;
+  if ((ret= strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->FKTABLE_CAT,
+               ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_CAT) == 0))
   {
-    return -1;
+    if ((ret= strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->FKTABLE_NAME,
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_NAME) == 0))
+    {
+      if ((ret= ((MY_FOREIGN_KEY_FIELD *) var1)->KEY_SEQ -
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->KEY_SEQ) == 0)
+      {
+        if ((ret= strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->PKTABLE_NAME,
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_NAME) == 0))
+        {
+          return 0;
+        }
+      }
+    }
   }
-  else
-  {
-    return 1;
-  }
+  return ret;
 }
 
 
@@ -1037,21 +1041,25 @@ static int sql_fk_sort(const void *var1, const void *var2)
 */
 static int sql_pk_sort(const void *var1, const void *var2)
 {
-  if ((strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->PKTABLE_CAT,
-               ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_CAT) <= 0)
-        && (strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->PKTABLE_NAME,
-                  ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_NAME) <= 0)
-        && (((MY_FOREIGN_KEY_FIELD *) var1)->KEY_SEQ <= 
-                  ((MY_FOREIGN_KEY_FIELD *) var2)->KEY_SEQ)
-        && (strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->FKTABLE_NAME,
-                  ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_NAME) <= 0))
+  int ret;
+  if ((ret= strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->PKTABLE_CAT,
+               ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_CAT) == 0))
   {
-    return -1;
+    if ((ret= strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->PKTABLE_NAME,
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_NAME) == 0))
+    {
+      if ((ret= ((MY_FOREIGN_KEY_FIELD *) var1)->KEY_SEQ -
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->KEY_SEQ) == 0)
+      {
+        if ((ret= strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->FKTABLE_NAME,
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_NAME) == 0))
+        {
+          return 0;
+        }
+      }
+    }
   }
-  else
-  {
-    return 1;
-  }
+  return ret;
 }
 
 
@@ -1069,7 +1077,7 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
                            SQLCHAR    *szFkTableName,
                            SQLSMALLINT cbFkTableName)
 {
-  STMT FAR *stmt=(STMT FAR*) hstmt;
+  STMT *stmt=(STMT *) hstmt;
   uint row_count= 0;
 
   MEM_ROOT  *alloc;
@@ -1082,6 +1090,7 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
   DYNAMIC_ARRAY records;
   MY_FOREIGN_KEY_FIELD *fkRows= NULL;
   unsigned long *lengths;
+  SQLRETURN rc= SQL_SUCCESS;
 
   my_init_dynamic_array(&records, sizeof(MY_FOREIGN_KEY_FIELD), 0, 0);
 
@@ -1091,7 +1100,8 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
   if (!tempdata)
   {
     set_mem_error(&stmt->dbc->mysql);
-    return handle_connection_error(stmt);
+    rc= handle_connection_error(stmt);
+    goto free_and_return;
   }
 
   data= tempdata;
@@ -1102,14 +1112,12 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
                           cbFkTableName, FALSE, TRUE, TRUE);
   if (!res && mysql_errno(&stmt->dbc->mysql))
   {
-    SQLRETURN rc= handle_connection_error(stmt);
-    pthread_mutex_unlock(&stmt->dbc->lock);
-    return rc;
+    rc= handle_connection_error(stmt);
+    goto unlock_and_free;
   }
   else if (!res)
   {
-    pthread_mutex_unlock(&stmt->dbc->lock);
-    goto empty_set;
+    goto empty_set_unlock;
   }
   pthread_mutex_unlock(&stmt->dbc->lock);
 
@@ -1117,6 +1125,10 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
   {
     pthread_mutex_lock(&stmt->dbc->lock);
     lengths= mysql_fetch_lengths(res);
+    if (stmt->result)
+    {
+      mysql_free_result(stmt->result);
+    }
     stmt->result= mysql_show_create_table(stmt,
                                           szFkCatalogName, cbFkCatalogName,
                                           (SQLCHAR *)table_row[0], 
@@ -1126,16 +1138,10 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
     {
       if (mysql_errno(&stmt->dbc->mysql))
       {
-        SQLRETURN rc= handle_connection_error(stmt);
-        pthread_mutex_unlock(&stmt->dbc->lock);
-        return rc;
+        rc= handle_connection_error(stmt);
+        goto unlock_and_free;
       }
-      else
-      {
-        pthread_mutex_unlock(&stmt->dbc->lock);
-        goto empty_set;
-      }
-      pthread_mutex_unlock(&stmt->dbc->lock);
+      goto empty_set_unlock;
     }
     pthread_mutex_unlock(&stmt->dbc->lock);
    
@@ -1162,7 +1168,7 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
         {
           pos= token;
           last_index= index;
-          key_seq= 0;  
+          key_seq= 0;
 
           /* get constraint name */
           pos= my_next_token(NULL, &pos, NULL, 
@@ -1212,7 +1218,9 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
               {
                 fkRows= fk_get_rec(&records, index);
                 if (!fkRows)
+                {
                   goto empty_set;
+                }
 
                 comma_pos= pos;
                 comma_pos= my_next_token(NULL, &comma_pos, NULL, ',');
@@ -1319,7 +1327,10 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
             {
               fkRows= fk_get_rec(&records, curr_index);
               if (!fkRows)
+              {
                 goto empty_set;
+              }
+
               if (key_search == 0)
                 fkRows->UPDATE_RULE= action;
               else
@@ -1337,6 +1348,17 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
   }
 
   /* 
+    If the primary keys associated with a foreign key are requested, then
+    sort order is PKTABLE_CAT, PKTABLE_NAME, KEY_SEQ, FKTABLE_NAME
+    Sort order used same as present in no_i_s case, but it is different from
+    http://msdn.microsoft.com/en-us/library/windows/desktop/ms709315(v=vs.85).aspx
+  */
+  if (szPkTableName && szPkTableName[0])
+  {
+    sort_dynamic(&records, sql_pk_sort);
+  }
+
+  /* 
     if foreign keys associated with a primary key are requested 
     then sort order is FKTABLE_CAT, FKTABLE_NAME, KEY_SEQ, PKTABLE_NAME
     Sort order used same as present in no_i_s case, but it is different from
@@ -1345,16 +1367,6 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
   if (szFkTableName && szFkTableName[0])
   {
     sort_dynamic(&records, sql_fk_sort);
-  }
-  /* 
-    If the primary keys associated with a foreign key are requested, then
-    sort order is PKTABLE_CAT, PKTABLE_NAME, KEY_SEQ, FKTABLE_NAME
-    Sort order used same as present in no_i_s case, but it is different from
-    http://msdn.microsoft.com/en-us/library/windows/desktop/ms709315(v=vs.85).aspx
-  */
-  else if (szPkTableName && szPkTableName[0])
-  {
-    sort_dynamic(&records, sql_pk_sort);
   }
 
   fkRows= (MY_FOREIGN_KEY_FIELD *) records.buffer;
@@ -1398,6 +1410,7 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
     ++index;
   }
   delete_dynamic(&records);
+  mysql_free_result(res);
 
   /* Copy only the elements that contain fk names */
   stmt->result_array= (MYSQL_ROW)my_memdup((char *)tempdata,
@@ -1417,11 +1430,28 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
   mysql_link_fields(stmt,SQLFORE_KEYS_fields,SQLFORE_KEYS_FIELDS);
   return SQL_SUCCESS;
 
+empty_set_unlock:
+  pthread_mutex_unlock(&stmt->dbc->lock);
+
 empty_set:
+  x_free((char *)tempdata);
+  delete_dynamic(&records);
+  mysql_free_result(res);
+  if (stmt->result)
+    mysql_free_result(stmt->result);
+  
   return create_empty_fake_resultset(stmt, SQLFORE_KEYS_values,
                                      sizeof(SQLFORE_KEYS_values),
                                      SQLFORE_KEYS_fields,
                                      SQLFORE_KEYS_FIELDS);
+unlock_and_free:
+  pthread_mutex_unlock(&stmt->dbc->lock);
+  mysql_free_result(res);
+
+free_and_return:
+  x_free((char *)tempdata);
+  delete_dynamic(&records);
+  return rc;
 }
 
 

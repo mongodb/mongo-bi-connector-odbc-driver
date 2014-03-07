@@ -334,7 +334,7 @@ char * add_to_buffer(NET *net,char *to,const char *from,ulong length);
 MY_LIMIT_CLAUSE find_position4limit(CHARSET_INFO* cs, char *query, char * query_end);
 BOOL myodbc_isspace(CHARSET_INFO* cs, const char * begin, const char *end);
 const char get_identifier_quote(STMT *stmt);
-const char * get_session_variable(STMT *stmt, const char *var);
+int get_session_variable(STMT *stmt, const char *var, char *result);
 
 /*results.c*/
 long long binary2numeric(long long *dst, char *src, uint srcLen);
