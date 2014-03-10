@@ -49,6 +49,9 @@
   * SQLNumResultCols() with NULL parameter results in Segmentation Fault
     (Bug# 18165197)
   * Segmentation fault in SQLParamOptions() in Solaris platform (Bug# 18325878)
+  * Segmentation fault in SQLForeignKeys() when number of columns in the table
+    is more (Bug# 18286366)
+  * Valgrind: memory leak in SQLForeignKeys when NO_I_S=1 (Bug# 18286007)
 
 ----
 5.2.6(25-Sep-2013)
