@@ -3891,7 +3891,7 @@ int got_out_parameters(STMT *stmt)
 }
 
 
-const char * get_session_variable(STMT *stmt, const char *var)
+int get_session_variable(STMT *stmt, const char *var, char *result)
 {
   char buff[255+4*NAME_CHAR_LEN], *to;
   MYSQL_RES *res;
@@ -3906,19 +3906,23 @@ const char * get_session_variable(STMT *stmt, const char *var)
 
     if (!SQL_SUCCEEDED(odbc_stmt(stmt->dbc, buff)))
     {
-      return NULL;
+      return 0;
     }
 
     res= mysql_store_result(&stmt->dbc->mysql);
     if (!res)
-      return NULL;
+      return 0;
 
     row= mysql_fetch_row(res);
     if (row)
-      return row[1];
+    {
+      strcpy(result, row[1]);
+      mysql_free_result(res);
+      return strlen(result);
+    }
   }
 
-  return NULL;
+  return 0;
 }
 
 
@@ -3928,8 +3932,13 @@ const char get_identifier_quote(STMT *stmt)
 
   if (is_minimum_version(stmt->dbc->mysql.server_version, "3.23.06"))
   {
-    const char *sql_mode= get_session_variable(stmt, "SQL_MODE");
-    uint length= strlen(sql_mode);
+    /* 
+      The full list of all SQL modes takes over 512 symbols, so we reserve
+      some for the future
+     */
+    char sql_mode[2048]= {0};
+    uint length= get_session_variable(stmt, "SQL_MODE", (char*)sql_mode);
+    
     const char *end=  sql_mode + length;
     if (find_first_token(stmt->dbc->ansi_charset_info, sql_mode, end, "ANSI_QUOTES"))
     {

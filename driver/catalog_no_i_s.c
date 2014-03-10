@@ -1090,6 +1090,7 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
   DYNAMIC_ARRAY records;
   MY_FOREIGN_KEY_FIELD *fkRows= NULL;
   unsigned long *lengths;
+  SQLRETURN rc= SQL_SUCCESS;
 
   my_init_dynamic_array(&records, sizeof(MY_FOREIGN_KEY_FIELD), 0, 0);
 
@@ -1099,7 +1100,8 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
   if (!tempdata)
   {
     set_mem_error(&stmt->dbc->mysql);
-    return handle_connection_error(stmt);
+    rc= handle_connection_error(stmt);
+    goto free_and_return;
   }
 
   data= tempdata;
@@ -1110,14 +1112,12 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
                           cbFkTableName, FALSE, TRUE, TRUE);
   if (!res && mysql_errno(&stmt->dbc->mysql))
   {
-    SQLRETURN rc= handle_connection_error(stmt);
-    pthread_mutex_unlock(&stmt->dbc->lock);
-    return rc;
+    rc= handle_connection_error(stmt);
+    goto unlock_and_free;
   }
   else if (!res)
   {
-    pthread_mutex_unlock(&stmt->dbc->lock);
-    goto empty_set;
+    goto empty_set_unlock;
   }
   pthread_mutex_unlock(&stmt->dbc->lock);
 
@@ -1125,6 +1125,10 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
   {
     pthread_mutex_lock(&stmt->dbc->lock);
     lengths= mysql_fetch_lengths(res);
+    if (stmt->result)
+    {
+      mysql_free_result(stmt->result);
+    }
     stmt->result= mysql_show_create_table(stmt,
                                           szFkCatalogName, cbFkCatalogName,
                                           (SQLCHAR *)table_row[0], 
@@ -1134,16 +1138,10 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
     {
       if (mysql_errno(&stmt->dbc->mysql))
       {
-        SQLRETURN rc= handle_connection_error(stmt);
-        pthread_mutex_unlock(&stmt->dbc->lock);
-        return rc;
+        rc= handle_connection_error(stmt);
+        goto unlock_and_free;
       }
-      else
-      {
-        pthread_mutex_unlock(&stmt->dbc->lock);
-        goto empty_set;
-      }
-      pthread_mutex_unlock(&stmt->dbc->lock);
+      goto empty_set_unlock;
     }
     pthread_mutex_unlock(&stmt->dbc->lock);
    
@@ -1220,7 +1218,9 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
               {
                 fkRows= fk_get_rec(&records, index);
                 if (!fkRows)
+                {
                   goto empty_set;
+                }
 
                 comma_pos= pos;
                 comma_pos= my_next_token(NULL, &comma_pos, NULL, ',');
@@ -1327,7 +1327,10 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
             {
               fkRows= fk_get_rec(&records, curr_index);
               if (!fkRows)
+              {
                 goto empty_set;
+              }
+
               if (key_search == 0)
                 fkRows->UPDATE_RULE= action;
               else
@@ -1407,6 +1410,7 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
     ++index;
   }
   delete_dynamic(&records);
+  mysql_free_result(res);
 
   /* Copy only the elements that contain fk names */
   stmt->result_array= (MYSQL_ROW)my_memdup((char *)tempdata,
@@ -1426,11 +1430,28 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
   mysql_link_fields(stmt,SQLFORE_KEYS_fields,SQLFORE_KEYS_FIELDS);
   return SQL_SUCCESS;
 
+empty_set_unlock:
+  pthread_mutex_unlock(&stmt->dbc->lock);
+
 empty_set:
+  x_free((char *)tempdata);
+  delete_dynamic(&records);
+  mysql_free_result(res);
+  if (stmt->result)
+    mysql_free_result(stmt->result);
+  
   return create_empty_fake_resultset(stmt, SQLFORE_KEYS_values,
                                      sizeof(SQLFORE_KEYS_values),
                                      SQLFORE_KEYS_fields,
                                      SQLFORE_KEYS_FIELDS);
+unlock_and_free:
+  pthread_mutex_unlock(&stmt->dbc->lock);
+  mysql_free_result(res);
+
+free_and_return:
+  x_free((char *)tempdata);
+  delete_dynamic(&records);
+  return rc;
 }
 
 
