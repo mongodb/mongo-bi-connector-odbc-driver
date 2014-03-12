@@ -3416,7 +3416,7 @@ BEGIN_TESTS
   ADD_TEST(t_dae_setpos_update)
   ADD_TEST(t_bug39961)
   ADD_TEST(t_bug41946)
-  ADD_TEST(t_sqlputdata)
+  ADD_TEST_UNICODE(t_sqlputdata)
 END_TESTS
 
 
