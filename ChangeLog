@@ -58,7 +58,9 @@
   * Segmentation fault in SQLParamOptions() in Solaris platform (Bug# 18325878)
   * Segmentation fault in SQLForeignKeys() when number of columns in the table
     is more (Bug# 18286366)
-  * Valgrind: memory leak in SQLForeignKeys when NO_I_S=1 (Bug# 18286007)
+  * Valgrind memory leak in SQLForeignKeys when NO_I_S=1 (Bug# 18286007)
+  * Valgrind memory leak in when SQLPrepare used with SQLParamData/SQLPutData for
+    NO_I_S=1 (Bug#18295317)
 
 ----
 

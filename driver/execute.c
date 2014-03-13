@@ -223,6 +223,8 @@ skip_unlock_exit:
   @param[in]      row         Parameters row
   @param[in,out]  finalquery  if NULL, final query is not copied
   @param[in,out]  length      Length of the query. Pointed value is used as initial offset
+  @comment : it allocates and modifies finalquery (when finalquery!=NULL), 
+             so passing stmt->query->query can lead to memory leak.
 */
 
 SQLRETURN insert_params(STMT *stmt, SQLULEN row, char **finalquery,
@@ -1683,13 +1685,15 @@ static SQLRETURN find_next_dae_param(STMT *stmt,  SQLPOINTER *token)
 static SQLRETURN execute_dae(STMT *stmt)
 {
   SQLRETURN rc;
+  char *query;
 
   switch (stmt->dae_type)
   {
   case DAE_NORMAL:
-    if (!SQL_SUCCEEDED(rc= insert_params(stmt, 0, &(GET_QUERY(&stmt->query)), 0)))
+    query= GET_QUERY(&stmt->query);
+    if (!SQL_SUCCEEDED(rc= insert_params(stmt, 0, &query, 0)))
       break;
-    rc= do_query(stmt, GET_QUERY(&stmt->query), 0);
+    rc= do_query(stmt, query, 0);
     break;
   case DAE_SETPOS_INSERT:
     stmt->dae_type= DAE_SETPOS_DONE;
