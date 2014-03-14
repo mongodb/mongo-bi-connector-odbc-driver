@@ -468,6 +468,63 @@ DECLARE_TEST(t_bug18325878)
 }
 
 
+/**
+  Bug #18286366: SEG FAULT IN SQLFOREIGNKEYS() WHEN NUMBER OF COLUMNS IN 
+                 THE TABLE IS MORE
+*/
+DECLARE_TEST(t_bug18286366)
+{
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+  SQLCHAR buff[2056], tmp_buff[50];
+  int i, len= 0;
+
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL, NULL, 
+                                        NULL, NULL, "NO_I_S=1"));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug18286366b, t_bug18286366a");
+  len= sprintf(buff, "CREATE TABLE t_bug18286366a ( ");
+  for (i= 0; i < 20; i++)
+  {
+    len+= sprintf(buff + len, "`id%d` INT, UNIQUE(`id%d`),", i, i);
+  }
+  len= sprintf(buff + len - 1, ")");
+  ok_stmt(hstmt, SQLExecDirect(hstmt, (SQLCHAR*)buff, SQL_NTS));
+
+  len= sprintf(buff, "CREATE TABLE t_bug18286366b ( ");
+  for (i= 0; i < 20; i++)
+  {
+    len+= sprintf(buff + len, "`id%d` INT, "
+                              "CONSTRAINT `cons%d` FOREIGN KEY "
+                              "(`id%d`) REFERENCES `t_bug18286366a` (`id%d`),", 
+                              i, i, i, i);
+  }
+  len= sprintf(buff + len - 1, ")");
+  ok_stmt(hstmt, SQLExecDirect(hstmt, (SQLCHAR*)buff, SQL_NTS));
+
+
+  ok_stmt(hstmt1, SQLForeignKeys(hstmt1, NULL, 0, NULL, 0, 
+                                (SQLCHAR *)"t_bug18286366a", SQL_NTS, NULL, 0,
+                                NULL, 0, (SQLCHAR *)"t_bug18286366b", SQL_NTS));
+
+  for (i= 0; i < 20; i++)
+  {
+    len= sprintf(tmp_buff, "id%d", i);
+    ok_stmt(hstmt1, SQLFetch(hstmt1));
+    is_str(my_fetch_str(hstmt1, buff, 3), "t_bug18286366a", 14);
+    is_str(my_fetch_str(hstmt1, buff, 4), tmp_buff, len);
+    is_str(my_fetch_str(hstmt1, buff, 7), "t_bug18286366b", 14);
+    is_str(my_fetch_str(hstmt1, buff, 8), tmp_buff, len);
+    len= sprintf(tmp_buff, "cons%d", i);
+    is_str(my_fetch_str(hstmt1, buff, 12), tmp_buff, len);
+  }
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug16920750b, t_bug16920750a");
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug69950)
   ADD_TEST(t_bug70642)
@@ -481,6 +538,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug17085344)
   ADD_TEST(t_bug18165197)
   ADD_TEST(t_bug18325878)
+  ADD_TEST(t_bug18286366)
 END_TESTS
 
 /*myoption &= ~(1 << 30);
