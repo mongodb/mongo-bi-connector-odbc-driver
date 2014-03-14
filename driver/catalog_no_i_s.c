@@ -1015,16 +1015,16 @@ static int sql_fk_sort(const void *var1, const void *var2)
 {
   int ret;
   if ((ret= strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->FKTABLE_CAT,
-               ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_CAT) == 0))
+               ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_CAT)) == 0)
   {
     if ((ret= strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->FKTABLE_NAME,
-                  ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_NAME) == 0))
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_NAME)) == 0)
     {
       if ((ret= ((MY_FOREIGN_KEY_FIELD *) var1)->KEY_SEQ -
                   ((MY_FOREIGN_KEY_FIELD *) var2)->KEY_SEQ) == 0)
       {
         if ((ret= strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->PKTABLE_NAME,
-                  ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_NAME) == 0))
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_NAME)) == 0)
         {
           return 0;
         }
@@ -1043,16 +1043,16 @@ static int sql_pk_sort(const void *var1, const void *var2)
 {
   int ret;
   if ((ret= strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->PKTABLE_CAT,
-               ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_CAT) == 0))
+               ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_CAT)) == 0)
   {
     if ((ret= strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->PKTABLE_NAME,
-                  ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_NAME) == 0))
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->PKTABLE_NAME)) == 0)
     {
       if ((ret= ((MY_FOREIGN_KEY_FIELD *) var1)->KEY_SEQ -
                   ((MY_FOREIGN_KEY_FIELD *) var2)->KEY_SEQ) == 0)
       {
         if ((ret= strcmp(((MY_FOREIGN_KEY_FIELD *) var1)->FKTABLE_NAME,
-                  ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_NAME) == 0))
+                  ((MY_FOREIGN_KEY_FIELD *) var2)->FKTABLE_NAME)) == 0)
         {
           return 0;
         }
