@@ -61,7 +61,9 @@
   * Valgrind memory leak in SQLForeignKeys when NO_I_S=1 (Bug# 18286007)
   * Valgrind memory leak in when SQLPrepare used with SQLParamData/SQLPutData for
     NO_I_S=1 (Bug#18295317)
-
+  * The password is getting saved when creating FileDSN using SQLDriverConnect
+    (Bug# 18310873)
+ 
 ----
 
 5.3.1(20-Nov-2013)

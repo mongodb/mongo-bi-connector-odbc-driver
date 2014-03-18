@@ -790,9 +790,29 @@ connected:
   /* copy input to output if connected without prompting */
   if (!bPrompt && szConnStrOut && cbConnStrOutMax)
   {
-    size_t inlen= (sqlwcharlen(szConnStrIn) + 1) * sizeof(SQLWCHAR);
-    size_t copylen= myodbc_min((size_t)cbConnStrOutMax, inlen);
-    memcpy(szConnStrOut, szConnStrIn, copylen);
+    size_t inlen, copylen;
+    SQLWCHAR *internal_out_str= szConnStrOut;
+    
+    if (ds->savefile)
+    {
+      SQLWCHAR *pwd_temp= ds->pwd;
+      SQLCHAR  *pwd8_temp= ds->pwd8;
+
+      /* make sure the password does not go into the output buffer */
+      ds->pwd= NULL;
+      ds->pwd8= NULL;
+      
+      ds_to_kvpair(ds, prompt_outstr, sizeof(prompt_outstr)/sizeof(SQLWCHAR), ';');
+      internal_out_str= (SQLWCHAR*)prompt_outstr;
+
+      /* restore old values */
+      ds->pwd= pwd_temp;
+      ds->pwd8= pwd8_temp;
+    }
+
+    inlen= (sqlwcharlen(internal_out_str) + 1) * sizeof(SQLWCHAR);
+    copylen= myodbc_min((size_t)cbConnStrOutMax, inlen);
+    memcpy(szConnStrOut, internal_out_str, copylen);
     /* term needed if possibly truncated */
     szConnStrOut[(copylen / sizeof(SQLWCHAR)) - 1] = 0;
     if (pcbConnStrOut)
