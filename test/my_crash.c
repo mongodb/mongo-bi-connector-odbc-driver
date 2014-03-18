@@ -325,7 +325,7 @@ DECLARE_TEST(t_bug17966018)
   DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
 
   /* This makes a really long SETUP=000000...0;OPTION_0000000000...0=1 */
-  sprintf(opt_buff, "OPTION_%0*d=1", 2000, 0);
+  sprintf(opt_buff, "OPTION_%0*d=1", 1000, 0);
 
   result_connect= alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL, 
                                                NULL, NULL, NULL, opt_buff);
@@ -532,7 +532,7 @@ DECLARE_TEST(t_bug18325878)
 DECLARE_TEST(t_bug18286366)
 {
   DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
-  SQLCHAR buff[2056], tmp_buff[50];
+  SQLCHAR buff[2048], tmp_buff[50];
   int i, len= 0;
 
   is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL, NULL, 
@@ -575,8 +575,83 @@ DECLARE_TEST(t_bug18286366)
     is_str(my_fetch_str(hstmt1, buff, 12), tmp_buff, len);
   }
 
-  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug16920750b, t_bug16920750a");
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+  return OK;
+}
+
+
+/**
+  Bug #18286366_2: Segmentation fault in SQLForeignKeys() when number of 
+                   columns in the table is more then 64
+*/
+#define MAX_18286366_KEYS 50
+DECLARE_TEST(t_bug18286366_2)
+{
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+  SQLCHAR buff[8192], tmp_buff[100];
+  int i, len= 0;
+
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL, NULL, 
+                                        NULL, NULL, "NO_I_S=1"));
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug182863662c,  t_bug182863662b, t_bug182863662a");
+  len= sprintf(buff, "CREATE TABLE t_bug182863662a ( ");
+  for (i= 0; i < MAX_18286366_KEYS; i++)
+  {
+    len+= sprintf(buff + len, "`id%d` INT, UNIQUE(`id%d`),", i, i);
+  }
+  len= sprintf(buff + len - 1, ")");
+  ok_stmt(hstmt, SQLExecDirect(hstmt, (SQLCHAR*)buff, SQL_NTS));
+
+  len= sprintf(buff, "CREATE TABLE t_bug182863662b ( ");
+  for (i= 0; i < MAX_18286366_KEYS; i++)
+  {
+    len+= sprintf(buff + len, "`id%d` INT, "
+                              "CONSTRAINT `consb%d` FOREIGN KEY "
+                              "(`id%d`) REFERENCES `t_bug182863662a` (`id%d`),", 
+                              i, i, i, i);
+  }
+  len= sprintf(buff + len - 1, ")");
+  ok_stmt(hstmt, SQLExecDirect(hstmt, (SQLCHAR*)buff, SQL_NTS));
+
+  len= sprintf(buff, "CREATE TABLE t_bug182863662c ( ");
+  for (i= 0; i < MAX_18286366_KEYS; i++)
+  {
+    len+= sprintf(buff + len, "`id%d` INT, "
+                              "CONSTRAINT `consc%d` FOREIGN KEY "
+                              "(`id%d`) REFERENCES `t_bug182863662a` (`id%d`),", 
+                              i, i, i, i);
+  }
+  len= sprintf(buff + len - 1, ")");
+  ok_stmt(hstmt, SQLExecDirect(hstmt, (SQLCHAR*)buff, SQL_NTS));
+
+  ok_stmt(hstmt1, SQLForeignKeys(hstmt1, NULL, 0, NULL, 0, 
+                                (SQLCHAR *)"t_bug182863662a", SQL_NTS, NULL, 0,
+                                NULL, 0, (SQLCHAR *)"", SQL_NTS));
+
+  for (i= 0; i < MAX_18286366_KEYS; i++)
+  {
+    ok_stmt(hstmt1, SQLFetch(hstmt1));
+    is_str(my_fetch_str(hstmt1, buff, 3), "t_bug182863662a", 14);
+    is_str(my_fetch_str(hstmt1, buff, 4), "id", 2);
+    is_str(my_fetch_str(hstmt1, buff, 7), "t_bug182863662b", 14);
+    is_str(my_fetch_str(hstmt1, buff, 8), "id", 2);
+    is_str(my_fetch_str(hstmt1, buff, 12), "consb", 5);
+  }
+
+  for (i= 0; i < MAX_18286366_KEYS; i++)
+  {
+    ok_stmt(hstmt1, SQLFetch(hstmt1));
+    is_str(my_fetch_str(hstmt1, buff, 3), "t_bug182863662a", 14);
+    is_str(my_fetch_str(hstmt1, buff, 4), "id", 2);
+    is_str(my_fetch_str(hstmt1, buff, 7), "t_bug182863662c", 14);
+    is_str(my_fetch_str(hstmt1, buff, 8), "id", 2);
+    is_str(my_fetch_str(hstmt1, buff, 12), "consc", 5);
+  }
+  
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug169207502c, t_bug169207502b, t_bug169207502a");
   free_basic_handles(&henv1, &hdbc1, &hstmt1);
   return OK;
 }
@@ -597,6 +672,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug18165197)
   ADD_TEST(t_bug18325878)
   ADD_TEST(t_bug18286366)
+  ADD_TEST(t_bug18286366_2)
 END_TESTS
 
 RUN_TESTS

@@ -1083,8 +1083,9 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
   MEM_ROOT  *alloc;
   MYSQL_ROW row, table_row;
   MYSQL_RES *res;
-  char      **data;
-  char      **tempdata; /* We need this array for the cases if key count is greater than 18 */
+  char      **data= NULL;
+  /* We need this array for the cases if key count is greater than 18 */
+  char      **tempdata= NULL;
   char      buffer[NAME_LEN + 1];
   unsigned int index= 0;
   DYNAMIC_ARRAY records;
@@ -1093,18 +1094,6 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
   SQLRETURN rc= SQL_SUCCESS;
 
   my_init_dynamic_array(&records, sizeof(MY_FOREIGN_KEY_FIELD), 0, 0);
-
-  tempdata= (char**) my_malloc(sizeof(char*)*SQLFORE_KEYS_FIELDS*
-                                         64, /* Maximum index count */
-                                         MYF(MY_ZEROFILL));
-  if (!tempdata)
-  {
-    set_mem_error(&stmt->dbc->mysql);
-    rc= handle_connection_error(stmt);
-    goto free_and_return;
-  }
-
-  data= tempdata;
 
   /* Get the list of tables that match szCatalog and szTable */
   pthread_mutex_lock(&stmt->dbc->lock);
@@ -1369,6 +1358,20 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
     sort_dynamic(&records, sql_fk_sort);
   }
 
+  if (records.elements)
+  {
+    tempdata= (char**) my_malloc(sizeof(char*)*SQLFORE_KEYS_FIELDS*
+                                         records.elements,
+                                         MYF(MY_ZEROFILL));
+    if (!tempdata)
+    {
+      set_mem_error(&stmt->dbc->mysql);
+      rc= handle_connection_error(stmt);
+      goto free_and_return;
+    }
+  }
+
+  data= tempdata;
   fkRows= (MY_FOREIGN_KEY_FIELD *) records.buffer;
   index= 0;  
   while (index < records.elements)
@@ -1451,6 +1454,9 @@ unlock_and_free:
 free_and_return:
   x_free((char *)tempdata);
   delete_dynamic(&records);
+  mysql_free_result(res);
+  if (stmt->result)
+    mysql_free_result(stmt->result);
   return rc;
 }
 
