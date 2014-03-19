@@ -791,7 +791,7 @@ connected:
   if (!bPrompt && szConnStrOut && cbConnStrOutMax)
   {
     size_t inlen, copylen;
-    SQLWCHAR *internal_out_str= szConnStrOut;
+    SQLWCHAR *internal_out_str= szConnStrIn;
     
     if (ds->savefile)
     {
