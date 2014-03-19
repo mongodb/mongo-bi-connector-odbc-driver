@@ -1447,10 +1447,13 @@ empty_set:
 unlock_and_free:
   pthread_mutex_unlock(&stmt->dbc->lock);
   mysql_free_result(res);
+  res= NULL;
 
 free_and_return:
   x_free((char *)tempdata);
   delete_dynamic(&records);
+  if (res)
+    mysql_free_result(res);
   return rc;
 }
 
