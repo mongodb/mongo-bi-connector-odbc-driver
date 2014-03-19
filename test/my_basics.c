@@ -807,8 +807,25 @@ DECLARE_TEST(t_bug10128)
 */
 DECLARE_TEST(t_bug32727)
 {
+  /* 
+    We must avoid extra connection settings made for the version 5.3 
+    or iODBC can crash 
+  */
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+
+  ok_env(henv1, SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv1));
+  ok_env(henv1, SQLSetEnvAttr(henv1, SQL_ATTR_ODBC_VERSION,
+                              (SQLPOINTER)SQL_OV_ODBC3, 0));
+
+  ok_env(henv1, SQLAllocHandle(SQL_HANDLE_DBC, henv1, &hdbc1));
+
+  ok_con(hdbc1, SQLConnect(hdbc1, mydsn, SQL_NTS, myuid, SQL_NTS,
+                           mypwd, SQL_NTS));
   is_num(SQLSetConnectAttr(hdbc, SQL_ATTR_ENLIST_IN_DTC,
                        (SQLPOINTER)1, SQL_IS_UINTEGER), SQL_ERROR);
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+  
   return OK;
 }
 
