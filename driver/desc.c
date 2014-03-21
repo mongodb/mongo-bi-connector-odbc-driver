@@ -608,6 +608,11 @@ MySQLGetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
   void *src_struct;
   void *src;
 
+  if (desc == NULL)
+  {
+    return SQL_INVALID_HANDLE;
+  }
+
   CLEAR_DESC_ERROR(desc);
 
   if (IS_IRD(desc) && desc->stmt->state < ST_PREPARED)
@@ -787,6 +792,11 @@ MySQLSetDescField(SQLHDESC hdesc, SQLSMALLINT recnum, SQLSMALLINT fldid,
   DESC *desc= (DESC *)hdesc;
   void *dest_struct;
   void *dest;
+
+  if (desc == NULL)
+  {
+    return SQL_INVALID_HANDLE;
+  }
 
   CLEAR_DESC_ERROR(desc);
 

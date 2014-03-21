@@ -63,6 +63,8 @@
     NO_I_S=1 (Bug#18295317)
   * The password is getting saved when creating FileDSN using SQLDriverConnect
     (Bug# 18310873)
+  * Passing NULL pointer to SQLSetDescField, SQLGetDiagField and SQLGetDiagRec
+    results in a crash (Bug# 18431088)
  
 ----
 
