@@ -52,6 +52,8 @@
   * Segmentation fault in SQLForeignKeys() when number of columns in the table
     is more (Bug# 18286366)
   * Valgrind: memory leak in SQLForeignKeys when NO_I_S=1 (Bug# 18286007)
+  * Passing NULL pointer to SQLSetDescField, SQLGetDiagField and SQLGetDiagRec
+    results in a crash (Bug# 18431088)
 
 ----
 5.2.6(25-Sep-2013)

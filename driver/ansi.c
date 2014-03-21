@@ -667,8 +667,15 @@ SQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle,
   SQLCHAR *value= NULL;
   SQLINTEGER len= SQL_NTS;
 
-  SQLRETURN rc= MySQLGetDiagField(handle_type, handle, record, field,
-                                  &value, info);
+  SQLRETURN rc= SQL_SUCCESS;
+
+  if (handle == NULL)
+  {
+    return SQL_INVALID_HANDLE;
+  }
+
+  rc= MySQLGetDiagField(handle_type, handle, record, field,
+                        &value, info);
 
   switch (handle_type) {
   case SQL_HANDLE_DBC:
@@ -741,6 +748,11 @@ SQLGetDiagRecImpl(SQLSMALLINT handle_type, SQLHANDLE handle,
   SQLINTEGER len= SQL_NTS;
   SQLSMALLINT free_value= FALSE;
   uint errors;
+
+  if (handle == NULL)
+  {
+    return SQL_INVALID_HANDLE;
+  }
 
   switch (handle_type) {
   case SQL_HANDLE_DBC:
