@@ -377,9 +377,9 @@ SQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd, SQLCHAR *in, SQLSMALLINT in_len,
 
     @todo verify that this actually happens.
   */
-  if (rc == SQL_SUCCESS && out && in != out)
+  if ((rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) && out && in != out && out_max)
 #else
-  if (rc == SQL_SUCCESS && out)
+  if ((rc == SQL_SUCCESS || rc == SQL_SUCCESS_WITH_INFO) && out && out_max)
 #endif
   {
     uint errors;
