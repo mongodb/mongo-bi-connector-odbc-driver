@@ -254,7 +254,8 @@ DECLARE_TEST(sqldriverconnect)
   }
 
   ok_con(hdbc1, SQLDriverConnectW(hdbc1, NULL, WL(conn_in, wcslen(conn_in)),
-                                  wcslen(conn_in), conn_out, sizeof(conn_out),
+                                  wcslen(conn_in), conn_out, 
+                                  sizeof(conn_out)/sizeof(SQLWCHAR),
                                   &conn_out_len, SQL_DRIVER_NOPROMPT));
 
   ok_con(hdbc, SQLAllocStmt(hdbc1, &hstmt1));
@@ -1268,7 +1269,8 @@ DECLARE_TEST(t_bug14363601)
   wcscat(conn_in, L";CHARSET=utf16");
 
   ok_con(hdbc1, SQLDriverConnectW(hdbc1, NULL, WL(conn_in, wcslen(conn_in)),
-                                  wcslen(conn_in), conn_out, sizeof(conn_out),
+                                  wcslen(conn_in), conn_out, 
+                                  sizeof(conn_out)/sizeof(SQLWCHAR),
                                   &conn_out_len, SQL_DRIVER_NOPROMPT));
 
   ok_con(hdbc1, SQLAllocStmt(hdbc1, &hstmt1));
