@@ -3337,11 +3337,12 @@ DECLARE_TEST(t_sqlputdata)
   rc = SQLExecute(hstmt);
   if (rc == SQL_NEED_DATA)
   {
-    int parameter;
-    if (SQLParamData(hstmt,(void**)&parameter) == SQL_NEED_DATA && parameter == 1)
+    SQLPOINTER parameter;
+    if (SQLParamData(hstmt, &parameter) == SQL_NEED_DATA 
+        && parameter == (SQLPOINTER)1)
     {
       ok_stmt(hstmt, SQLPutData(hstmt, wcdata,  SQL_NTS));
-      ok_stmt(hstmt, SQLParamData(hstmt,(void**)&parameter));
+      ok_stmt(hstmt, SQLParamData(hstmt, &parameter));
     }
   }
 

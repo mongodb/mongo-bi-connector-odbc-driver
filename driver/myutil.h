@@ -462,8 +462,8 @@ void free_connection_stmts(DBC *dbc);
   WARNING: This macro evaluates the argument multiple times.
 */
 #define IS_DATA_AT_EXEC(X) ((X) && \
-                            ((SQLINTEGER)(*(X)) == SQL_DATA_AT_EXEC || \
-                             (SQLINTEGER)(*(X)) <= SQL_LEN_DATA_AT_EXEC_OFFSET))
+                            (*(X) == SQL_DATA_AT_EXEC || \
+                             *(X) <= SQL_LEN_DATA_AT_EXEC_OFFSET))
 
 /* Macro evaluates SQLRETURN expression and in case of error pushes it up in callstack */
 #define PUSH_ERROR(sqlreturn_expr) do\
