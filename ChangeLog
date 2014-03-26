@@ -11,8 +11,6 @@
     (Bug #17587913)
   * Driver returns wrong length for output parameter streams
     (Bug #17814768/70946)
-  * SQLPUTDATA give error when Unicode string is used WITH SQL_NTS in string 
-    length. (Bug #14810497)
   * Assert failure in case of prepared statments and SQLDESCRIBECOL() called
     with column number given larger then actual parameter marker in query.
     (Bug #17311065)
