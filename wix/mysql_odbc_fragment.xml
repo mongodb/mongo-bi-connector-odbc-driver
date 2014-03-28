@@ -63,7 +63,8 @@
                 <ODBCDriver Id="MySQL_ODBC_5.2w_Driver" Name="MySQL ODBC 5.2 Unicode Driver" SetupFile="myodbc5S.dll" />
               </File>
               <File Id="readme" Name="README.txt" DiskId="1" Source="doc\README.txt"/>
-              <File Id="lic3rd" Name="Licenses_for_Third-Party_Components.txt" Source="doc\Licenses_for_Third-Party_Components.txt" />
+              <File Id="lic3rd" Name="Licenses_for_Third-Party_Components.txt" DiskId="1" Source="doc\Licenses_for_Third-Party_Components.txt" />
+              <File Id="changelog" Name="ChangeLog.txt" DiskId="1" Source="doc\ChangeLog.txt"/>
               <?if $(var.license) = "commercial"?>
                 <File Id="license" Name="LICENSE.mysql.txt" DiskId="1" Source="doc\LICENSE.mysql.txt" />
               <?else?>
@@ -100,7 +101,8 @@
                 <ODBCDriver Id="MySQL_ODBC_5.2w_Driver" Name="MySQL ODBC 5.2 Unicode Driver" SetupFile="myodbc5S.dll" />
               </File>
               <File Id="readme" Name="README.txt" DiskId="1" Source="doc\README.txt"/>
-              <File Id="lic3rd" Name="Licenses_for_Third-Party_Components.txt" Source="doc\Licenses_for_Third-Party_Components.txt" />
+              <File Id="lic3rd" Name="Licenses_for_Third-Party_Components.txt" DiskId="1" Source="doc\Licenses_for_Third-Party_Components.txt" />
+              <File Id="changelog" Name="ChangeLog.txt" DiskId="1" Source="doc\ChangeLog.txt"/>
               <?if $(var.license) = "commercial"?>
                 <File Id="license" Name="LICENSE.mysql.txt" DiskId="1" Source="doc\LICENSE.mysql.txt" />
               <?else?>
