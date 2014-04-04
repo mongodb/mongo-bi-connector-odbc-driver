@@ -63,6 +63,8 @@
     (Bug# 18310873)
   * Passing NULL pointer to SQLSetDescField, SQLGetDiagField and SQLGetDiagRec
     results in a crash (Bug# 18431088)
+  * Rename internal functions named as mysql_xxxx inside ODBC sources 
+    (WL #7789)
  
 ----
 
