@@ -102,7 +102,7 @@ create_fake_resultset(STMT *stmt, MYSQL_ROW rowval, size_t rowsize,
 
   set_row_count(stmt, rowcnt);
 
-  mysql_link_fields(stmt, fields, fldcnt);
+  myodbc_link_fields(stmt, fields, fldcnt);
 
   return SQL_SUCCESS;
 }
@@ -142,7 +142,7 @@ create_empty_fake_resultset(STMT *stmt, MYSQL_ROW rowval, size_t rowsize,
   @return Result of SHOW TABLE STATUS, or NULL if there is an error
           or empty result (check mysql_errno(&stmt->dbc->mysql) != 0)
 */
-static MYSQL_RES *mysql_table_status_i_s(STMT        *stmt,
+static MYSQL_RES *table_status_i_s(STMT        *stmt,
                                          SQLCHAR     *catalog_name,
                                          SQLSMALLINT  catalog_len,
                                          SQLCHAR     *table_name,
@@ -242,21 +242,21 @@ static MYSQL_RES *mysql_table_status_i_s(STMT        *stmt,
   @return Result of SHOW TABLE STATUS, or NULL if there is an error
           or empty result (check mysql_errno(&stmt->dbc->mysql) != 0)
 */
-MYSQL_RES *mysql_table_status(STMT        *stmt,
-                              SQLCHAR     *catalog_name,
-                              SQLSMALLINT  catalog_len,
-                              SQLCHAR     *table_name,
-                              SQLSMALLINT  table_len,
-                              my_bool      wildcard,
-                              my_bool      show_tables,
-                              my_bool      show_views)
+MYSQL_RES *table_status(STMT        *stmt,
+                        SQLCHAR     *catalog_name,
+                        SQLSMALLINT  catalog_len,
+                        SQLCHAR     *table_name,
+                        SQLSMALLINT  table_len,
+                        my_bool      wildcard,
+                        my_bool      show_tables,
+                        my_bool      show_views)
 {
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
-    return mysql_table_status_i_s(stmt, catalog_name, catalog_len,
+    return table_status_i_s(stmt, catalog_name, catalog_len,
                                   table_name, table_len, wildcard,
                                              show_tables, show_views);
   else
-    return mysql_table_status_show(stmt, catalog_name, catalog_len,
+    return table_status_no_i_s(stmt, catalog_name, catalog_len,
                                    table_name, table_len, wildcard);
 }
 
@@ -358,15 +358,15 @@ SQLTables
 */
 
 SQLRETURN
-i_s_tables(SQLHSTMT hstmt,
+tables_i_s(SQLHSTMT hstmt,
            SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
            SQLCHAR *schema_name, SQLSMALLINT schema_len,
            SQLCHAR *table_name, SQLSMALLINT table_len,
            SQLCHAR *type_name, SQLSMALLINT type_len)
 {
   /* The function is just a stub. We call non-I_S version of the function before implementing the I_S one */
-  return mysql_tables(hstmt, catalog_name, catalog_len, schema_name, schema_len,
-                      table_name, table_len, type_name, type_len);
+  return tables_no_i_s(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+                       table_name, table_len, type_name, type_len);
 }
 
 
@@ -389,13 +389,13 @@ MySQLTables(SQLHSTMT hstmt,
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
-    return i_s_tables(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+    return tables_i_s(hstmt, catalog_name, catalog_len, schema_name, schema_len,
                       table_name, table_len, type_name, type_len);
   }
   else
   {
-    return mysql_tables(hstmt, catalog_name, catalog_len, schema_name, schema_len,
-                        table_name, table_len, type_name, type_len);
+    return tables_no_i_s(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+                         table_name, table_len, type_name, type_len);
   }
 }
 
@@ -419,7 +419,7 @@ SQLColumns
   @param[in] column_len      Length of column pattern
 */
 SQLRETURN
-i_s_columns(SQLHSTMT hstmt, SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
+columns_i_s(SQLHSTMT hstmt, SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
             SQLCHAR *schema_name __attribute__((unused)),
             SQLSMALLINT schema_len __attribute__((unused)),
             SQLCHAR *table_name, SQLSMALLINT table_len,
@@ -427,8 +427,8 @@ i_s_columns(SQLHSTMT hstmt, SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
 
 {
   /* The function is just a stub. We call non-I_S version of the function before implementing the I_S one */
-  return mysql_columns(hstmt, catalog_name, catalog_len,schema_name, schema_len,
-                       table_name, table_len, column_name, column_len);
+  return columns_no_i_s(hstmt, catalog_name, catalog_len,schema_name, schema_len,
+                        table_name, table_len, column_name, column_len);
 }
 
 
@@ -465,13 +465,13 @@ MySQLColumns(SQLHSTMT hstmt, SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
-    return i_s_columns(hstmt, catalog_name, catalog_len,schema_name, schema_len,
-                         table_name, table_len, column_name, column_len);
+    return columns_i_s(hstmt, catalog_name, catalog_len,schema_name, schema_len,
+                       table_name, table_len, column_name, column_len);
   }
   else
   {
-    return mysql_columns(hstmt, catalog_name, catalog_len,schema_name, schema_len,
-                         table_name, table_len, column_name, column_len);
+    return columns_no_i_s(hstmt, catalog_name, catalog_len,schema_name, schema_len,
+                          table_name, table_len, column_name, column_len);
   }
 }
 
@@ -489,17 +489,17 @@ SQLStatistics
 */
 
 SQLRETURN
-i_s_statistics(SQLHSTMT hstmt,
-                SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
-                SQLCHAR *schema_name __attribute__((unused)),
-                SQLSMALLINT schema_len __attribute__((unused)),
-                SQLCHAR *table_name, SQLSMALLINT table_len,
-                SQLUSMALLINT fUnique,
-                SQLUSMALLINT fAccuracy __attribute__((unused)))
+statistics_i_s(SQLHSTMT hstmt,
+               SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
+               SQLCHAR *schema_name __attribute__((unused)),
+               SQLSMALLINT schema_len __attribute__((unused)),
+               SQLCHAR *table_name, SQLSMALLINT table_len,
+               SQLUSMALLINT fUnique,
+               SQLUSMALLINT fAccuracy __attribute__((unused)))
 {
   /* The function is just a stub. We call non-I_S version of the function before implementing the I_S one */
-  return mysql_statistics(hstmt, catalog_name, catalog_len, schema_name, schema_len,
-                          table_name, table_len, fUnique, fAccuracy);
+  return statistics_no_i_s(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+                           table_name, table_len, fUnique, fAccuracy);
 }
 
 
@@ -530,13 +530,13 @@ MySQLStatistics(SQLHSTMT hstmt,
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
-    return i_s_statistics(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+    return statistics_i_s(hstmt, catalog_name, catalog_len, schema_name, schema_len,
                           table_name, table_len, fUnique, fAccuracy);
   }
   else
   {
-    return mysql_statistics(hstmt, catalog_name, catalog_len, schema_name, schema_len,
-                          table_name, table_len, fUnique, fAccuracy);
+    return statistics_no_i_s(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+                             table_name, table_len, fUnique, fAccuracy);
   }
 }
 
@@ -549,7 +549,7 @@ SQLTablePrivileges
   @type    : internal
   @purpose : fetches data from I_S table_privileges. returns SQLRETURN of the operation
 */
-SQLRETURN i_s_list_table_priv(SQLHSTMT    hstmt,
+SQLRETURN list_table_priv_i_s(SQLHSTMT    hstmt,
                               SQLCHAR *   catalog_name,
                               SQLSMALLINT catalog_len,
                               SQLCHAR *   schema_name __attribute__((unused)),
@@ -613,12 +613,12 @@ MySQLTablePrivileges(SQLHSTMT hstmt,
     {
       /* Since mysql is also the name of the system db, using here i_s prefix to
          distinct functions */
-      return i_s_list_table_priv(hstmt, catalog_name, catalog_len, schema_name, schema_len,
-                                table_name, table_len);
+      return list_table_priv_i_s(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+                                 table_name, table_len);
     }
     else
     {
-      return mysql_list_table_priv(hstmt, catalog_name, catalog_len, schema_name, schema_len, table_name, table_len);
+      return list_table_priv_no_i_s(hstmt, catalog_name, catalog_len, schema_name, schema_len, table_name, table_len);
     }
 }
 
@@ -627,7 +627,7 @@ MySQLTablePrivileges(SQLHSTMT hstmt,
   @type    : internal
   @purpose : returns a column privileges result, NULL on error
 */
-static SQLRETURN i_s_list_column_priv(HSTMT *     hstmt,
+static SQLRETURN list_column_priv_i_s(HSTMT *     hstmt,
                                       SQLCHAR *   catalog_name,
                                       SQLSMALLINT catalog_len,
                                       SQLCHAR *   schema_name,
@@ -696,12 +696,12 @@ MySQLColumnPrivileges(SQLHSTMT hstmt,
   {
     /* Since mysql is also the name of the system db, using here i_s prefix to
     distinct functions */
-    return i_s_list_column_priv(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+    return list_column_priv_i_s(hstmt, catalog_name, catalog_len, schema_name, schema_len,
       table_name, table_len, column_name, column_len);
   }
   else
   {
-    return mysql_list_column_priv(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+    return list_column_priv_no_i_s(hstmt, catalog_name, catalog_len, schema_name, schema_len,
       table_name, table_len, column_name, column_len);
   }
 }
@@ -713,18 +713,18 @@ SQLSpecialColumns
 ****************************************************************************
 */
 SQLRETURN
-i_s_special_columns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
-                      SQLCHAR *table_qualifier, SQLSMALLINT table_qualifier_len,
-                      SQLCHAR *table_owner __attribute__((unused)),
-                      SQLSMALLINT table_owner_len __attribute__((unused)),
-                      SQLCHAR *table_name, SQLSMALLINT table_len,
-                      SQLUSMALLINT fScope __attribute__((unused)),
-                      SQLUSMALLINT fNullable __attribute__((unused)))
+special_columns_i_s(SQLHSTMT hstmt, SQLUSMALLINT fColType,
+                    SQLCHAR *table_qualifier, SQLSMALLINT table_qualifier_len,
+                    SQLCHAR *table_owner __attribute__((unused)),
+                    SQLSMALLINT table_owner_len __attribute__((unused)),
+                    SQLCHAR *table_name, SQLSMALLINT table_len,
+                    SQLUSMALLINT fScope __attribute__((unused)),
+                    SQLUSMALLINT fNullable __attribute__((unused)))
 {
   /* The function is just a stub. We call non-I_S version of the function before implementing the I_S one */
-  return mysql_special_columns(hstmt, fColType, table_qualifier,
-                               table_qualifier_len, table_owner, table_owner_len,
-                               table_name, table_len, fScope, fNullable);
+  return special_columns_no_i_s(hstmt, fColType, table_qualifier,
+                                table_qualifier_len, table_owner, table_owner_len,
+                                table_name, table_len, fScope, fNullable);
 }
 
 
@@ -758,15 +758,15 @@ MySQLSpecialColumns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
-    return i_s_special_columns(hstmt, fColType, table_qualifier,
-                                 table_qualifier_len, table_owner, table_owner_len,
-                                 table_name, table_len, fScope, fNullable);
+    return special_columns_i_s(hstmt, fColType, table_qualifier,
+                               table_qualifier_len, table_owner, table_owner_len,
+                               table_name, table_len, fScope, fNullable);
   }
   else
   {
-    return mysql_special_columns(hstmt, fColType, table_qualifier,
-                                 table_qualifier_len, table_owner, table_owner_len,
-                                 table_name, table_len, fScope, fNullable);
+    return special_columns_no_i_s(hstmt, fColType, table_qualifier,
+                                  table_qualifier_len, table_owner, table_owner_len,
+                                  table_name, table_len, fScope, fNullable);
   }
 }
 
@@ -777,15 +777,15 @@ SQLPrimaryKeys
 ****************************************************************************
 */
 SQLRETURN
-i_s_primary_keys(SQLHSTMT hstmt,
+primary_keys_i_s(SQLHSTMT hstmt,
                  SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
                  SQLCHAR *schema_name __attribute__((unused)),
                  SQLSMALLINT schema_len __attribute__((unused)),
                  SQLCHAR *table_name, SQLSMALLINT table_len)
 {
   /* The function is just a stub. We call non-I_S version of the function before implementing the I_S one */
-  return mysql_primary_keys(hstmt, catalog_name, catalog_len, schema_name, schema_len,
-                            table_name, table_len);
+  return primary_keys_no_i_s(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+                             table_name, table_len);
 }
 
 
@@ -815,13 +815,13 @@ MySQLPrimaryKeys(SQLHSTMT hstmt,
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
-    return i_s_primary_keys(hstmt, catalog_name, catalog_len, schema_name, schema_len,
-                              table_name, table_len);
+    return primary_keys_i_s(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+                            table_name, table_len);
   }
   else
   {
-    return mysql_primary_keys(hstmt, catalog_name, catalog_len, schema_name, schema_len,
-                              table_name, table_len);
+    return primary_keys_no_i_s(hstmt, catalog_name, catalog_len, schema_name, schema_len,
+                               table_name, table_len);
   }
 }
 
@@ -831,7 +831,7 @@ MySQLPrimaryKeys(SQLHSTMT hstmt,
 SQLForeignKeys
 ****************************************************************************
 */
-SQLRETURN i_s_foreign_keys(SQLHSTMT hstmt,
+SQLRETURN foreign_keys_i_s(SQLHSTMT hstmt,
                            SQLCHAR    *pk_catalog_name __attribute__((unused)),
                            SQLSMALLINT pk_catalog_len __attribute__((unused)),
                            SQLCHAR    *pk_schema_name __attribute__((unused)),
@@ -1023,7 +1023,7 @@ MySQLForeignKeys(SQLHSTMT hstmt,
 
     if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
     {
-      return i_s_foreign_keys(hstmt, pk_catalog_name, pk_catalog_len, pk_schema_name,
+      return foreign_keys_i_s(hstmt, pk_catalog_name, pk_catalog_len, pk_schema_name,
                               pk_schema_len, pk_table_name, pk_table_len, fk_catalog_name,
                               fk_catalog_len, fk_schema_name, fk_schema_len,
                               fk_table_name, fk_table_len);
@@ -1031,10 +1031,10 @@ MySQLForeignKeys(SQLHSTMT hstmt,
     /* For 3.23 and later, use comment in SHOW TABLE STATUS (yuck). */
     else /* We wouldn't get here if we had server version under 3.23 */
     {
-      return mysql_foreign_keys(hstmt, pk_catalog_name, pk_catalog_len, pk_schema_name,
-                              pk_schema_len, pk_table_name, pk_table_len, fk_catalog_name,
-                              fk_catalog_len, fk_schema_name, fk_schema_len,
-                              fk_table_name, fk_table_len);
+      return foreign_keys_no_i_s(hstmt, pk_catalog_name, pk_catalog_len, pk_schema_name,
+                                 pk_schema_len, pk_table_name, pk_table_len, fk_catalog_name,
+                                 fk_catalog_len, fk_schema_name, fk_schema_len,
+                                 fk_table_name, fk_table_len);
     }
 }
 
@@ -1181,7 +1181,7 @@ SQLProcedure Columns
   set on the specified statement
 */
 SQLRETURN
-i_s_procedure_columns(SQLHSTMT hstmt,
+procedure_columns_i_s(SQLHSTMT hstmt,
                       SQLCHAR *catalog_name, SQLSMALLINT catalog_len,
                       SQLCHAR *schema_name __attribute__((unused)),
                       SQLSMALLINT schema_len __attribute__((unused)),
@@ -1189,9 +1189,9 @@ i_s_procedure_columns(SQLHSTMT hstmt,
                       SQLCHAR *column_name, SQLSMALLINT column_len)
 {
   /* The function is just a stub. We call non-I_S version of the function before implementing the I_S one */
-  return mysql_procedure_columns(hstmt, catalog_name, catalog_len, schema_name,
-                                 schema_len, proc_name, proc_len, column_name,
-                                 column_len);
+  return procedure_columns_no_i_s(hstmt, catalog_name, catalog_len, schema_name,
+                                  schema_len, proc_name, proc_len, column_name,
+                                  column_len);
 }
 
 
@@ -1223,14 +1223,14 @@ MySQLProcedureColumns(SQLHSTMT hstmt,
 
   if (server_has_i_s(stmt->dbc) && !stmt->dbc->ds->no_information_schema)
   {
-    return i_s_procedure_columns(hstmt, catalog_name, catalog_len, schema_name,
+    return procedure_columns_i_s(hstmt, catalog_name, catalog_len, schema_name,
                                  schema_len, proc_name, proc_len, column_name,
                                  column_len);
   }
   else
   {
-    return mysql_procedure_columns(hstmt, catalog_name, catalog_len, schema_name,
-                                 schema_len, proc_name, proc_len, column_name,
-                                 column_len);
+    return procedure_columns_no_i_s(hstmt, catalog_name, catalog_len, schema_name,
+                                    schema_len, proc_name, proc_len, column_name,
+                                    column_len);
   }
 }

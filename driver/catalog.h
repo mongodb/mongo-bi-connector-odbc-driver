@@ -70,14 +70,14 @@ my_bool server_has_i_s(DBC *dbc);
 
 /* no_i_s functions */
 SQLRETURN
-mysql_columns(STMT *hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
-             SQLCHAR *szSchema __attribute__((unused)),
-             SQLSMALLINT cbSchema __attribute__((unused)),
-             SQLCHAR *szTable, SQLSMALLINT cbTable,
-             SQLCHAR *szColumn, SQLSMALLINT cbColumn);
+columns_no_i_s(STMT *hstmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
+               SQLCHAR *szSchema __attribute__((unused)),
+               SQLSMALLINT cbSchema __attribute__((unused)),
+               SQLCHAR *szTable, SQLSMALLINT cbTable,
+               SQLCHAR *szColumn, SQLSMALLINT cbColumn);
 
 SQLRETURN 
-mysql_list_column_priv(SQLHSTMT hstmt,
+list_column_priv_no_i_s(SQLHSTMT hstmt,
                       SQLCHAR *catalog, SQLSMALLINT catalog_len,
                       SQLCHAR *schema __attribute__((unused)),
                       SQLSMALLINT schema_len __attribute__((unused)),
@@ -85,68 +85,68 @@ mysql_list_column_priv(SQLHSTMT hstmt,
                       SQLCHAR *column, SQLSMALLINT column_len);
 
 SQLRETURN
-mysql_list_table_priv(SQLHSTMT hstmt,
-                     SQLCHAR *catalog, SQLSMALLINT catalog_len,
-                     SQLCHAR *schema __attribute__((unused)),
-                     SQLSMALLINT schema_len __attribute__((unused)),
-                     SQLCHAR *table, SQLSMALLINT table_len);
+list_table_priv_no_i_s(SQLHSTMT hstmt,
+                       SQLCHAR *catalog, SQLSMALLINT catalog_len,
+                       SQLCHAR *schema __attribute__((unused)),
+                       SQLSMALLINT schema_len __attribute__((unused)),
+                       SQLCHAR *table, SQLSMALLINT table_len);
 
-MYSQL_RES *mysql_table_status(STMT        *stmt,
-                              SQLCHAR     *catalog,
-                              SQLSMALLINT  catalog_length,
-                              SQLCHAR     *table,
-                              SQLSMALLINT  table_length,
-                              my_bool      wildcard,
-                              my_bool      show_tables,
-                              my_bool      show_views);
+MYSQL_RES *table_status(STMT        *stmt,
+                        SQLCHAR     *catalog,
+                        SQLSMALLINT  catalog_length,
+                        SQLCHAR     *table,
+                        SQLSMALLINT  table_length,
+                        my_bool      wildcard,
+                        my_bool      show_tables,
+                        my_bool      show_views);
 
-MYSQL_RES *mysql_table_status_show(STMT        *stmt,
-										               SQLCHAR     *catalog,
-										               SQLSMALLINT  catalog_length,
-										               SQLCHAR     *table,
-										               SQLSMALLINT  table_length,
-										               my_bool      wildcard);
+MYSQL_RES *table_status_no_i_s(STMT        *stmt,
+                               SQLCHAR     *catalog,
+                               SQLSMALLINT  catalog_length,
+                               SQLCHAR     *table,
+                               SQLSMALLINT  table_length,
+                               my_bool      wildcard);
 
-SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
-                           SQLCHAR    *szPkCatalogName __attribute__((unused)),
-                           SQLSMALLINT cbPkCatalogName __attribute__((unused)),
-                           SQLCHAR    *szPkSchemaName __attribute__((unused)),
-                           SQLSMALLINT cbPkSchemaName __attribute__((unused)),
-                           SQLCHAR    *szPkTableName,
-                           SQLSMALLINT cbPkTableName,
-                           SQLCHAR    *szFkCatalogName,
-                           SQLSMALLINT cbFkCatalogName,
-                           SQLCHAR    *szFkSchemaName __attribute__((unused)),
-                           SQLSMALLINT cbFkSchemaName __attribute__((unused)),
-                           SQLCHAR    *szFkTableName,
-                           SQLSMALLINT cbFkTableName);
-
-
-SQLRETURN
-mysql_primary_keys(SQLHSTMT hstmt,
-                 SQLCHAR *catalog, SQLSMALLINT catalog_len,
-                 SQLCHAR *schema __attribute__((unused)),
-                 SQLSMALLINT schema_len __attribute__((unused)),
-                 SQLCHAR *table, SQLSMALLINT table_len);
+SQLRETURN foreign_keys_no_i_s(SQLHSTMT hstmt,
+                              SQLCHAR    *szPkCatalogName __attribute__((unused)),
+                              SQLSMALLINT cbPkCatalogName __attribute__((unused)),
+                              SQLCHAR    *szPkSchemaName __attribute__((unused)),
+                              SQLSMALLINT cbPkSchemaName __attribute__((unused)),
+                              SQLCHAR    *szPkTableName,
+                              SQLSMALLINT cbPkTableName,
+                              SQLCHAR    *szFkCatalogName,
+                              SQLSMALLINT cbFkCatalogName,
+                              SQLCHAR    *szFkSchemaName __attribute__((unused)),
+                              SQLSMALLINT cbFkSchemaName __attribute__((unused)),
+                              SQLCHAR    *szFkTableName,
+                              SQLSMALLINT cbFkTableName);
 
 
 SQLRETURN
-mysql_procedure_columns(SQLHSTMT hstmt,
-                    SQLCHAR *szCatalogName, SQLSMALLINT cbCatalogName,
-                    SQLCHAR *szSchemaName __attribute__((unused)),
-                    SQLSMALLINT cbSchemaName __attribute__((unused)),
-                    SQLCHAR *szProcName, SQLSMALLINT cbProcName,
-                    SQLCHAR *szColumnName, SQLSMALLINT cbColumnName);
+primary_keys_no_i_s(SQLHSTMT hstmt,
+                    SQLCHAR *catalog, SQLSMALLINT catalog_len,
+                    SQLCHAR *schema __attribute__((unused)),
+                    SQLSMALLINT schema_len __attribute__((unused)),
+                    SQLCHAR *table, SQLSMALLINT table_len);
 
 
 SQLRETURN
-mysql_special_columns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
-                      SQLCHAR *szTableQualifier, SQLSMALLINT cbTableQualifier,
-                      SQLCHAR *szTableOwner __attribute__((unused)),
-                      SQLSMALLINT cbTableOwner __attribute__((unused)),
-                      SQLCHAR *szTableName, SQLSMALLINT cbTableName,
-                      SQLUSMALLINT fScope __attribute__((unused)),
-                      SQLUSMALLINT fNullable __attribute__((unused)));
+procedure_columns_no_i_s(SQLHSTMT hstmt,
+                         SQLCHAR *szCatalogName, SQLSMALLINT cbCatalogName,
+                         SQLCHAR *szSchemaName __attribute__((unused)),
+                         SQLSMALLINT cbSchemaName __attribute__((unused)),
+                         SQLCHAR *szProcName, SQLSMALLINT cbProcName,
+                         SQLCHAR *szColumnName, SQLSMALLINT cbColumnName);
+
+
+SQLRETURN
+special_columns_no_i_s(SQLHSTMT hstmt, SQLUSMALLINT fColType,
+                       SQLCHAR *szTableQualifier, SQLSMALLINT cbTableQualifier,
+                       SQLCHAR *szTableOwner __attribute__((unused)),
+                       SQLSMALLINT cbTableOwner __attribute__((unused)),
+                       SQLCHAR *szTableName, SQLSMALLINT cbTableName,
+                       SQLUSMALLINT fScope __attribute__((unused)),
+                       SQLUSMALLINT fNullable __attribute__((unused)));
 
 /*
   @purpose : retrieves a list of statistics about a single table and the
@@ -155,17 +155,17 @@ mysql_special_columns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
 */
 
 SQLRETURN
-mysql_statistics(SQLHSTMT hstmt,
-                SQLCHAR *catalog, SQLSMALLINT catalog_len,
-                SQLCHAR *schema __attribute__((unused)),
-                SQLSMALLINT schema_len __attribute__((unused)),
-                SQLCHAR *table, SQLSMALLINT table_len,
-                SQLUSMALLINT fUnique,
-                SQLUSMALLINT fAccuracy __attribute__((unused)));
+statistics_no_i_s(SQLHSTMT hstmt,
+                  SQLCHAR *catalog, SQLSMALLINT catalog_len,
+                  SQLCHAR *schema __attribute__((unused)),
+                  SQLSMALLINT schema_len __attribute__((unused)),
+                  SQLCHAR *table, SQLSMALLINT table_len,
+                  SQLUSMALLINT fUnique,
+                  SQLUSMALLINT fAccuracy __attribute__((unused)));
 
 SQLRETURN
-mysql_tables(SQLHSTMT hstmt,
-             SQLCHAR *catalog, SQLSMALLINT catalog_len,
-             SQLCHAR *schema, SQLSMALLINT schema_len,
-             SQLCHAR *table, SQLSMALLINT table_len,
-             SQLCHAR *type, SQLSMALLINT type_len);
+tables_no_i_s(SQLHSTMT hstmt,
+              SQLCHAR *catalog, SQLSMALLINT catalog_len,
+              SQLCHAR *schema, SQLSMALLINT schema_len,
+              SQLCHAR *table, SQLSMALLINT table_len,
+              SQLCHAR *type, SQLSMALLINT type_len);
