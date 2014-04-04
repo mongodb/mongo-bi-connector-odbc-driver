@@ -1031,7 +1031,7 @@ SQLRETURN SQL_API MySQLGetTypeInfo(SQLHSTMT hstmt, SQLSMALLINT fSqlType)
       }
     }
   }
-  mysql_link_fields(stmt, SQL_GET_TYPE_INFO_fields, SQL_GET_TYPE_INFO_FIELDS);
+  myodbc_link_fields(stmt, SQL_GET_TYPE_INFO_fields, SQL_GET_TYPE_INFO_FIELDS);
 
   return SQL_SUCCESS;
 }

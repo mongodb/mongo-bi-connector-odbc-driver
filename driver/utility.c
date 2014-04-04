@@ -68,7 +68,7 @@ SQLRETURN odbc_stmt(DBC FAR *dbc, const char *query)
   @param[in] fields      The fields to attach to the statement
   @param[in] field_count The number of fields
 */
-void mysql_link_fields(STMT *stmt, MYSQL_FIELD *fields, uint field_count)
+void myodbc_link_fields(STMT *stmt, MYSQL_FIELD *fields, uint field_count)
 {
     MYSQL_RES *result;
     pthread_mutex_lock(&stmt->dbc->lock);
@@ -82,7 +82,7 @@ void mysql_link_fields(STMT *stmt, MYSQL_FIELD *fields, uint field_count)
 
 
 /**
-Fills STMT's lengths array for given row. Makes use of mysql_link_fields a bit
+Fills STMT's lengths array for given row. Makes use of myodbc_link_fields a bit
 less terrible.
 
 @param[in,out] stmt     The statement to modify

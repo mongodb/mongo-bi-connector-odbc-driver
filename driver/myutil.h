@@ -138,7 +138,7 @@ SQLRETURN do_query(STMT FAR *stmt,char *query, SQLULEN query_length);
 SQLRETURN insert_params(STMT FAR *stmt, SQLULEN row, char **finalquery,
                         SQLULEN *length);
 SQLRETURN odbc_stmt(DBC FAR *dbc, const char *query);
-void mysql_link_fields(STMT *stmt,MYSQL_FIELD *fields,uint field_count);
+void myodbc_link_fields(STMT *stmt,MYSQL_FIELD *fields,uint field_count);
 void fix_row_lengths(STMT *stmt, const long* fix_rules, uint row, uint field_count);
 void fix_result_types(STMT *stmt);
 char *fix_str(char *to,const char *from,int length);

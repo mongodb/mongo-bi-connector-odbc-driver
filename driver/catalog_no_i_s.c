@@ -99,11 +99,11 @@ static MYSQL_ROW fix_fields_copy(STMT FAR *stmt,MYSQL_ROW row)
   @type    : internal
   @purpose : returns columns from a particular table, NULL on error
 */
-static MYSQL_RES *mysql_list_dbkeys(DBC *dbc,
-                                    SQLCHAR *catalog,
-                                    SQLSMALLINT catalog_len,
-                                    SQLCHAR *table,
-                                    SQLSMALLINT table_len)
+static MYSQL_RES *server_list_dbkeys(DBC *dbc,
+                                     SQLCHAR *catalog,
+                                     SQLSMALLINT catalog_len,
+                                     SQLCHAR *table,
+                                     SQLSMALLINT table_len)
 {
     MYSQL *mysql= &dbc->mysql;
     char  buff[255], *to;
@@ -181,10 +181,10 @@ const uint SQLCOLUMNS_FIELDS= array_elements(SQLCOLUMNS_values);
   @return Result of mysql_list_fields, or NULL if there is an error
 */
 static MYSQL_RES *
-mysql_list_dbcolumns(STMT *stmt,
-                     SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
-                     SQLCHAR *szTable, SQLSMALLINT cbTable,
-                     SQLCHAR *szColumn, SQLSMALLINT cbColumn)
+server_list_dbcolumns(STMT *stmt,
+                      SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
+                      SQLCHAR *szTable, SQLSMALLINT cbTable,
+                      SQLCHAR *szColumn, SQLSMALLINT cbColumn)
 {
   DBC *dbc= stmt->dbc;
   MYSQL *mysql= &dbc->mysql;
@@ -252,11 +252,11 @@ mysql_list_dbcolumns(STMT *stmt,
   @param[in] cbColumn         Length of column pattern
 */
 SQLRETURN
-mysql_columns(STMT * stmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
-             SQLCHAR *szSchema __attribute__((unused)),
-             SQLSMALLINT cbSchema __attribute__((unused)),
-             SQLCHAR *szTable, SQLSMALLINT cbTable,
-             SQLCHAR *szColumn, SQLSMALLINT cbColumn)
+columns_no_i_s(STMT * stmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
+               SQLCHAR *szSchema __attribute__((unused)),
+               SQLSMALLINT cbSchema __attribute__((unused)),
+               SQLCHAR *szTable, SQLSMALLINT cbTable,
+               SQLCHAR *szColumn, SQLSMALLINT cbColumn)
 
 {
   MYSQL_RES *res;
@@ -273,8 +273,8 @@ mysql_columns(STMT * stmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
 
   /* Get the list of tables that match szCatalog and szTable */
   pthread_mutex_lock(&stmt->dbc->lock);
-  res= mysql_table_status(stmt, szCatalog, cbCatalog, szTable, cbTable, TRUE,
-                          TRUE, TRUE);
+  res= table_status(stmt, szCatalog, cbCatalog, szTable, cbTable, TRUE,
+                    TRUE, TRUE);
 
   if (!res && mysql_errno(&stmt->dbc->mysql))
   {
@@ -308,10 +308,10 @@ mysql_columns(STMT * stmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
 
     /* Get list of columns matching szColumn for each table. */
     lengths= mysql_fetch_lengths(res);
-    table_res= mysql_list_dbcolumns(stmt, szCatalog, cbCatalog,
-                                    (SQLCHAR *)table_row[0],
-                                    (SQLSMALLINT)lengths[0],
-                                    szColumn, cbColumn);
+    table_res= server_list_dbcolumns(stmt, szCatalog, cbCatalog,
+                                     (SQLCHAR *)table_row[0],
+                                     (SQLSMALLINT)lengths[0],
+                                     szColumn, cbColumn);
 
     if (!table_res)
     {
@@ -474,7 +474,7 @@ mysql_columns(STMT * stmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
   }
 
   set_row_count(stmt, rows);
-  mysql_link_fields(stmt, SQLCOLUMNS_fields, SQLCOLUMNS_FIELDS);
+  myodbc_link_fields(stmt, SQLCOLUMNS_fields, SQLCOLUMNS_FIELDS);
 
   return SQL_SUCCESS;
 
@@ -585,11 +585,11 @@ const uint SQLTABLES_PRIV_FIELDS= array_elements(SQLTABLES_priv_values);
 */
 
 SQLRETURN
-mysql_list_table_priv(SQLHSTMT hstmt,
-                     SQLCHAR *catalog, SQLSMALLINT catalog_len,
-                     SQLCHAR *schema __attribute__((unused)),
-                     SQLSMALLINT schema_len __attribute__((unused)),
-                     SQLCHAR *table, SQLSMALLINT table_len)
+list_table_priv_no_i_s(SQLHSTMT hstmt,
+                       SQLCHAR *catalog, SQLSMALLINT catalog_len,
+                       SQLCHAR *schema __attribute__((unused)),
+                       SQLSMALLINT schema_len __attribute__((unused)),
+                       SQLCHAR *table, SQLSMALLINT table_len)
 {
     STMT     *stmt= (STMT *)hstmt;
 
@@ -654,7 +654,7 @@ mysql_list_table_priv(SQLHSTMT hstmt,
     }
 
     set_row_count(stmt, row_count);
-    mysql_link_fields(stmt,SQLTABLES_priv_fields,SQLTABLES_PRIV_FIELDS);
+    myodbc_link_fields(stmt,SQLTABLES_priv_fields,SQLTABLES_PRIV_FIELDS);
 
     return SQL_SUCCESS;
 }
@@ -732,12 +732,12 @@ const uint SQLCOLUMNS_PRIV_FIELDS= array_elements(SQLCOLUMNS_priv_values);
 
 
 SQLRETURN 
-mysql_list_column_priv(SQLHSTMT hstmt,
-                      SQLCHAR *catalog, SQLSMALLINT catalog_len,
-                      SQLCHAR *schema __attribute__((unused)),
-                      SQLSMALLINT schema_len __attribute__((unused)),
-                      SQLCHAR *table, SQLSMALLINT table_len,
-                      SQLCHAR *column, SQLSMALLINT column_len)
+list_column_priv_no_i_s(SQLHSTMT hstmt,
+                        SQLCHAR *catalog, SQLSMALLINT catalog_len,
+                        SQLCHAR *schema __attribute__((unused)),
+                        SQLSMALLINT schema_len __attribute__((unused)),
+                        SQLCHAR *table, SQLSMALLINT table_len,
+                        SQLCHAR *column, SQLSMALLINT column_len)
 {
   STMT *stmt=(STMT *) hstmt;
   char     **row, **data;
@@ -802,7 +802,7 @@ mysql_list_column_priv(SQLHSTMT hstmt,
     }
   }
   set_row_count(stmt, row_count);
-  mysql_link_fields(stmt,SQLCOLUMNS_priv_fields,SQLCOLUMNS_PRIV_FIELDS);
+  myodbc_link_fields(stmt,SQLCOLUMNS_priv_fields,SQLCOLUMNS_PRIV_FIELDS);
   return SQL_SUCCESS;
 }
 
@@ -821,12 +821,12 @@ Lengths may not be SQL_NTS.
 @return Result of SHOW TABLE STATUS, or NULL if there is an error
 or empty result (check mysql_errno(&stmt->dbc->mysql) != 0)
 */
-MYSQL_RES *mysql_table_status_show(STMT        *stmt,
-										               SQLCHAR     *catalog,
-										               SQLSMALLINT  catalog_length,
-										               SQLCHAR     *table,
-										               SQLSMALLINT  table_length,
-										               my_bool      wildcard)
+MYSQL_RES *table_status_no_i_s(STMT        *stmt,
+                               SQLCHAR     *catalog,
+                               SQLSMALLINT  catalog_length,
+                               SQLCHAR     *table,
+                               SQLSMALLINT  table_length,
+                               my_bool      wildcard)
 {
 	MYSQL *mysql= &stmt->dbc->mysql;
 	/** @todo determine real size for buffer */
@@ -886,11 +886,11 @@ Lengths may not be SQL_NTS.
 @return Result of SHOW CREATE TABLE , or NULL if there is an error
 or empty result (check mysql_errno(&stmt->dbc->mysql) != 0)
 */
-MYSQL_RES *mysql_show_create_table(STMT        *stmt,
-                                   SQLCHAR     *catalog,
-                                   SQLSMALLINT  catalog_length,
-                                   SQLCHAR     *table,
-                                   SQLSMALLINT  table_length)
+MYSQL_RES *server_show_create_table(STMT        *stmt,
+                                    SQLCHAR     *catalog,
+                                    SQLSMALLINT  catalog_length,
+                                    SQLCHAR     *table,
+                                    SQLSMALLINT  table_length)
 {
   MYSQL *mysql= &stmt->dbc->mysql;
   /** @todo determine real size for buffer */
@@ -1063,19 +1063,19 @@ static int sql_pk_sort(const void *var1, const void *var2)
 }
 
 
-SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
-                           SQLCHAR    *szPkCatalogName __attribute__((unused)),
-                           SQLSMALLINT cbPkCatalogName __attribute__((unused)),
-                           SQLCHAR    *szPkSchemaName __attribute__((unused)),
-                           SQLSMALLINT cbPkSchemaName __attribute__((unused)),
-                           SQLCHAR    *szPkTableName,
-                           SQLSMALLINT cbPkTableName,
-                           SQLCHAR    *szFkCatalogName,
-                           SQLSMALLINT cbFkCatalogName,
-                           SQLCHAR    *szFkSchemaName __attribute__((unused)),
-                           SQLSMALLINT cbFkSchemaName __attribute__((unused)),
-                           SQLCHAR    *szFkTableName,
-                           SQLSMALLINT cbFkTableName)
+SQLRETURN foreign_keys_no_i_s(SQLHSTMT hstmt,
+                              SQLCHAR    *szPkCatalogName __attribute__((unused)),
+                              SQLSMALLINT cbPkCatalogName __attribute__((unused)),
+                              SQLCHAR    *szPkSchemaName __attribute__((unused)),
+                              SQLSMALLINT cbPkSchemaName __attribute__((unused)),
+                              SQLCHAR    *szPkTableName,
+                              SQLSMALLINT cbPkTableName,
+                              SQLCHAR    *szFkCatalogName,
+                              SQLSMALLINT cbFkCatalogName,
+                              SQLCHAR    *szFkSchemaName __attribute__((unused)),
+                              SQLSMALLINT cbFkSchemaName __attribute__((unused)),
+                              SQLCHAR    *szFkTableName,
+                              SQLSMALLINT cbFkTableName)
 {
   STMT *stmt=(STMT *) hstmt;
   uint row_count= 0;
@@ -1108,8 +1108,8 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
 
   /* Get the list of tables that match szCatalog and szTable */
   pthread_mutex_lock(&stmt->dbc->lock);
-  res= mysql_table_status(stmt, szFkCatalogName, cbFkCatalogName, szFkTableName, 
-                          cbFkTableName, FALSE, TRUE, TRUE);
+  res= table_status(stmt, szFkCatalogName, cbFkCatalogName, szFkTableName, 
+                    cbFkTableName, FALSE, TRUE, TRUE);
   if (!res && mysql_errno(&stmt->dbc->mysql))
   {
     rc= handle_connection_error(stmt);
@@ -1129,10 +1129,10 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
     {
       mysql_free_result(stmt->result);
     }
-    stmt->result= mysql_show_create_table(stmt,
-                                          szFkCatalogName, cbFkCatalogName,
-                                          (SQLCHAR *)table_row[0], 
-                                          (SQLSMALLINT)lengths[0]);
+    stmt->result= server_show_create_table(stmt,
+                                           szFkCatalogName, cbFkCatalogName,
+                                           (SQLCHAR *)table_row[0], 
+                                           (SQLSMALLINT)lengths[0]);
 
     if (!stmt->result)
     {
@@ -1427,7 +1427,7 @@ SQLRETURN mysql_foreign_keys(SQLHSTMT hstmt,
   }
 
   set_row_count(stmt, row_count);
-  mysql_link_fields(stmt,SQLFORE_KEYS_fields,SQLFORE_KEYS_FIELDS);
+  myodbc_link_fields(stmt,SQLFORE_KEYS_fields,SQLFORE_KEYS_FIELDS);
   return SQL_SUCCESS;
 
 empty_set_unlock:
@@ -1490,11 +1490,11 @@ char *SQLPRIM_KEYS_values[]= {
 */
 
 SQLRETURN
-mysql_primary_keys(SQLHSTMT hstmt,
-                 SQLCHAR *catalog, SQLSMALLINT catalog_len,
-                 SQLCHAR *schema __attribute__((unused)),
-                 SQLSMALLINT schema_len __attribute__((unused)),
-                 SQLCHAR *table, SQLSMALLINT table_len)
+primary_keys_no_i_s(SQLHSTMT hstmt,
+                    SQLCHAR *catalog, SQLSMALLINT catalog_len,
+                    SQLCHAR *schema __attribute__((unused)),
+                    SQLSMALLINT schema_len __attribute__((unused)),
+                    SQLCHAR *table, SQLSMALLINT table_len)
 {
     STMT FAR *stmt= (STMT FAR*) hstmt;
     MYSQL_ROW row;
@@ -1502,8 +1502,8 @@ mysql_primary_keys(SQLHSTMT hstmt,
     uint      row_count;
 
     pthread_mutex_lock(&stmt->dbc->lock);
-    if (!(stmt->result= mysql_list_dbkeys(stmt->dbc, catalog, catalog_len,
-                                          table, table_len)))
+    if (!(stmt->result= server_list_dbkeys(stmt->dbc, catalog, catalog_len,
+                                           table, table_len)))
     {
       SQLRETURN rc= handle_connection_error(stmt);
       pthread_mutex_unlock(&stmt->dbc->lock);
@@ -1550,7 +1550,7 @@ mysql_primary_keys(SQLHSTMT hstmt,
     }
 
     set_row_count(stmt, row_count);
-    mysql_link_fields(stmt,SQLPRIM_KEYS_fields,SQLPRIM_KEYS_FIELDS);
+    myodbc_link_fields(stmt,SQLPRIM_KEYS_fields,SQLPRIM_KEYS_FIELDS);
 
     return SQL_SUCCESS;
 }
@@ -1601,11 +1601,11 @@ const uint SQLPROCEDURECOLUMNS_FIELDS=
   @type    : internal
   @purpose : returns procedure params as resultset
 */
-static MYSQL_RES *mysql_list_proc_params(DBC *dbc,
-                                        SQLCHAR *catalog,
-                                        SQLSMALLINT catalog_len,
-                                        SQLCHAR *proc_name,
-                                        SQLSMALLINT proc_name_len)
+static MYSQL_RES *server_list_proc_params(DBC *dbc,
+                                          SQLCHAR *catalog,
+                                          SQLSMALLINT catalog_len,
+                                          SQLCHAR *proc_name,
+                                          SQLSMALLINT proc_name_len)
 {
   MYSQL *mysql= &dbc->mysql;
   char   buff[255+4*NAME_LEN+1], *pos;
@@ -1688,12 +1688,12 @@ static void free_procedurecolumn_res(int total_records, LIST *params)
   set on the specified statement
 */
 SQLRETURN
-mysql_procedure_columns(SQLHSTMT hstmt,
-                    SQLCHAR *szCatalogName, SQLSMALLINT cbCatalogName,
-                    SQLCHAR *szSchemaName __attribute__((unused)),
-                    SQLSMALLINT cbSchemaName __attribute__((unused)),
-                    SQLCHAR *szProcName, SQLSMALLINT cbProcName,
-                    SQLCHAR *szColumnName, SQLSMALLINT cbColumnName)
+procedure_columns_no_i_s(SQLHSTMT hstmt,
+                         SQLCHAR *szCatalogName, SQLSMALLINT cbCatalogName,
+                         SQLCHAR *szSchemaName __attribute__((unused)),
+                         SQLSMALLINT cbSchemaName __attribute__((unused)),
+                         SQLCHAR *szProcName, SQLSMALLINT cbProcName,
+                         SQLCHAR *szColumnName, SQLSMALLINT cbColumnName)
 {
   STMT *stmt= (STMT *)hstmt;
   LIST *params= 0, *params_r, *cur_params= 0;
@@ -1720,7 +1720,7 @@ mysql_procedure_columns(SQLHSTMT hstmt,
   /* get procedures list */
   pthread_mutex_lock(&stmt->dbc->lock);
 
-  if (!(proc_list_res= mysql_list_proc_params(stmt->dbc, 
+  if (!(proc_list_res= server_list_proc_params(stmt->dbc, 
       szCatalogName, cbCatalogName, szProcName, cbProcName)))
   {
     pthread_mutex_unlock(&stmt->dbc->lock);
@@ -2003,7 +2003,7 @@ mysql_procedure_columns(SQLHSTMT hstmt,
 
   set_row_count(stmt, return_params_num);
 
-  mysql_link_fields(stmt, SQLPROCEDURECOLUMNS_fields, SQLPROCEDURECOLUMNS_FIELDS);
+  myodbc_link_fields(stmt, SQLPROCEDURECOLUMNS_fields, SQLPROCEDURECOLUMNS_FIELDS);
 
   goto clean_exit;
 
@@ -2069,13 +2069,13 @@ const uint SQLSPECIALCOLUMNS_FIELDS= array_elements(SQLSPECIALCOLUMNS_fields);
 */
 
 SQLRETURN
-mysql_special_columns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
-                      SQLCHAR *szTableQualifier, SQLSMALLINT cbTableQualifier,
-                      SQLCHAR *szTableOwner __attribute__((unused)),
-                      SQLSMALLINT cbTableOwner __attribute__((unused)),
-                      SQLCHAR *szTableName, SQLSMALLINT cbTableName,
-                      SQLUSMALLINT fScope __attribute__((unused)),
-                      SQLUSMALLINT fNullable __attribute__((unused)))
+special_columns_no_i_s(SQLHSTMT hstmt, SQLUSMALLINT fColType,
+                       SQLCHAR *szTableQualifier, SQLSMALLINT cbTableQualifier,
+                       SQLCHAR *szTableOwner __attribute__((unused)),
+                       SQLSMALLINT cbTableOwner __attribute__((unused)),
+                       SQLCHAR *szTableName, SQLSMALLINT cbTableName,
+                       SQLUSMALLINT fScope __attribute__((unused)),
+                       SQLUSMALLINT fNullable __attribute__((unused)))
 {
     STMT        *stmt=(STMT *) hstmt;
     char        buff[80];
@@ -2089,8 +2089,8 @@ mysql_special_columns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
     /* Reset the statement in order to avoid memory leaks when working with ADODB */
     my_SQLFreeStmt(hstmt, MYSQL_RESET);
 
-    stmt->result= mysql_list_dbcolumns(stmt, szTableQualifier, cbTableQualifier,
-                                       szTableName, cbTableName, NULL, 0);
+    stmt->result= server_list_dbcolumns(stmt, szTableQualifier, cbTableQualifier,
+                                        szTableName, cbTableName, NULL, 0);
     if (!(result= stmt->result))
     {
       return handle_connection_error(stmt);
@@ -2154,7 +2154,7 @@ mysql_special_columns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
             row+= SQLSPECIALCOLUMNS_FIELDS;
         }
         result->row_count= field_count;
-        mysql_link_fields(stmt,SQLSPECIALCOLUMNS_fields,SQLSPECIALCOLUMNS_FIELDS);
+        myodbc_link_fields(stmt,SQLSPECIALCOLUMNS_fields,SQLSPECIALCOLUMNS_FIELDS);
         return SQL_SUCCESS;
     }
 
@@ -2230,7 +2230,7 @@ mysql_special_columns(SQLHSTMT hstmt, SQLUSMALLINT fColType,
         row+= SQLSPECIALCOLUMNS_FIELDS;
     }
     result->row_count= field_count;
-    mysql_link_fields(stmt,SQLSPECIALCOLUMNS_fields,SQLSPECIALCOLUMNS_FIELDS);
+    myodbc_link_fields(stmt,SQLSPECIALCOLUMNS_fields,SQLSPECIALCOLUMNS_FIELDS);
     return SQL_SUCCESS;
 }
 
@@ -2271,13 +2271,13 @@ const uint SQLSTAT_FIELDS= array_elements(SQLSTAT_fields);
 */
 
 SQLRETURN
-mysql_statistics(SQLHSTMT hstmt,
-                SQLCHAR *catalog, SQLSMALLINT catalog_len,
-                SQLCHAR *schema __attribute__((unused)),
-                SQLSMALLINT schema_len __attribute__((unused)),
-                SQLCHAR *table, SQLSMALLINT table_len,
-                SQLUSMALLINT fUnique,
-                SQLUSMALLINT fAccuracy __attribute__((unused)))
+statistics_no_i_s(SQLHSTMT hstmt,
+                  SQLCHAR *catalog, SQLSMALLINT catalog_len,
+                  SQLCHAR *schema __attribute__((unused)),
+                  SQLSMALLINT schema_len __attribute__((unused)),
+                  SQLCHAR *table, SQLSMALLINT table_len,
+                  SQLUSMALLINT fUnique,
+                  SQLUSMALLINT fAccuracy __attribute__((unused)))
 {
     STMT *stmt= (STMT *)hstmt;
     MYSQL *mysql= &stmt->dbc->mysql;
@@ -2287,8 +2287,8 @@ mysql_statistics(SQLHSTMT hstmt,
         goto empty_set;
 
     pthread_mutex_lock(&dbc->lock);
-    stmt->result= mysql_list_dbkeys(stmt->dbc, catalog, catalog_len,
-                                    table, table_len);
+    stmt->result= server_list_dbkeys(stmt->dbc, catalog, catalog_len,
+                                     table, table_len);
     if (!stmt->result)
     {
       SQLRETURN rc= handle_connection_error(stmt);
@@ -2336,7 +2336,7 @@ mysql_statistics(SQLHSTMT hstmt,
     }
 
     set_row_count(stmt, stmt->result->row_count);
-    mysql_link_fields(stmt,SQLSTAT_fields,SQLSTAT_FIELDS);
+    myodbc_link_fields(stmt,SQLSTAT_fields,SQLSTAT_FIELDS);
     return SQL_SUCCESS;
 
 empty_set:
@@ -2378,11 +2378,11 @@ MYSQL_FIELD SQLTABLES_fields[]=
 const uint SQLTABLES_FIELDS= array_elements(SQLTABLES_values);
 
 SQLRETURN
-mysql_tables(SQLHSTMT hstmt,
-             SQLCHAR *catalog, SQLSMALLINT catalog_len,
-             SQLCHAR *schema, SQLSMALLINT schema_len,
-             SQLCHAR *table, SQLSMALLINT table_len,
-             SQLCHAR *type, SQLSMALLINT type_len)
+tables_no_i_s(SQLHSTMT hstmt,
+              SQLCHAR *catalog, SQLSMALLINT catalog_len,
+              SQLCHAR *schema, SQLSMALLINT schema_len,
+              SQLCHAR *table, SQLSMALLINT table_len,
+              SQLCHAR *type, SQLSMALLINT type_len)
 {
     STMT *stmt= (STMT *)hstmt;
     my_bool all_dbs= 1, user_tables, views;
@@ -2419,7 +2419,7 @@ mysql_tables(SQLHSTMT hstmt,
           set_mem_error(&stmt->dbc->mysql);
           return handle_connection_error(stmt);
         }
-        mysql_link_fields(stmt,SQLTABLES_fields,SQLTABLES_FIELDS);
+        myodbc_link_fields(stmt,SQLTABLES_fields,SQLTABLES_FIELDS);
         return SQL_SUCCESS;
     }
 
@@ -2470,9 +2470,9 @@ mysql_tables(SQLHSTMT hstmt,
     if (user_tables || views)
     {
       pthread_mutex_lock(&stmt->dbc->lock);
-      stmt->result= mysql_table_status(stmt, catalog, catalog_len,
-                                       table, table_len, TRUE,
-                                       user_tables, views);
+      stmt->result= table_status(stmt, catalog, catalog_len,
+                                 table, table_len, TRUE,
+                                 user_tables, views);
 
       if (!stmt->result && mysql_errno(&stmt->dbc->mysql))
       {
@@ -2578,7 +2578,7 @@ mysql_tables(SQLHSTMT hstmt,
       set_row_count(stmt, row_count);
     }
 
-    mysql_link_fields(stmt, SQLTABLES_fields, SQLTABLES_FIELDS);
+    myodbc_link_fields(stmt, SQLTABLES_fields, SQLTABLES_FIELDS);
     return SQL_SUCCESS;
 
 empty_set:
