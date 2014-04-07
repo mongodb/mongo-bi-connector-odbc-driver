@@ -1265,13 +1265,6 @@ int get_connection(SQLHDBC *hdbc, const SQLCHAR *dsn, const SQLCHAR *uid,
       unicode_driver= strstr((char*)driver_name, "a.") == NULL ? 1 : 0;
     }
   }
-  else
-  {
-    /* re-build and print the connection string with hidden password */
-    printf("# Connection failed with the following Connection string: " \
-           "\n%s;UID=%s;PWD=*******%s%s%s;%s\n", 
-           dsn_buf, uid, socket_buf, db_buf, port_buf, options);
-  }
 
   return rc;
 }
