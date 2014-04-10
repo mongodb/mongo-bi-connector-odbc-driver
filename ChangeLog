@@ -1,3 +1,13 @@
+5.3.3
+
+  Functionality added or changed:
+
+  Bugs fixed:
+  * Seg Fault in SQLForeignKeys() when column name contains special characters
+    (Bug #18286118)
+ 
+----
+
 5.3.2
 
   Functionality added or changed:
@@ -65,6 +75,8 @@
     results in a crash (Bug# 18431088)
   * Rename internal functions named as mysql_xxxx inside ODBC sources 
     (WL #7789)
+
+  Built using MySQL 5.6.17.
  
 ----
 
