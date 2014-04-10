@@ -1194,6 +1194,16 @@ SQLRETURN foreign_keys_no_i_s(SQLHSTMT hstmt,
             if (*token == '(')
             {
               bracket_end= pos= token + 1;
+
+              /* Get past opening quote */
+              bracket_end= my_next_token(NULL, &bracket_end, NULL,
+                                         quote_char ? quote_char : ' ');
+
+              /* Get past closing quote */
+              bracket_end= my_next_token(NULL, &bracket_end, NULL,
+                                         quote_char ? quote_char : ' ');
+
+              /* Only now it is safe to look for closing parenthese */
               bracket_end= my_next_token(NULL, &bracket_end, NULL, ')');
               /* 
                 index position need to be maintained for both PK column 
@@ -1216,6 +1226,10 @@ SQLRETURN foreign_keys_no_i_s(SQLHSTMT hstmt,
 
                 if (comma_pos > bracket_end || comma_pos == NULL)
                 {
+                  /* 
+                    TODO: make the length calculation more efficient and simple.
+                          Add checking for negative values.
+                  */
                   memcpy(buffer, pos + quote_char_length, 
                            bracket_end - pos - quote_char_length * 2 - 1);
                   buffer[bracket_end - pos - quote_char_length * 2 - 1]= '\0';

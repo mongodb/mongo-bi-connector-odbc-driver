@@ -54,6 +54,8 @@
     results in a crash (Bug# 18431088)
   * Rename internal functions named as mysql_xxxx inside ODBC sources 
     (WL #7789)
+  * Seg Fault in SQLForeignKeys() when column name contains special characters
+    (Bug #18286118)
 
 ----
 5.2.6(25-Sep-2013)

@@ -600,6 +600,77 @@ DECLARE_TEST(t_bug18286366_2)
 }
 
 
+/*
+  Bug #18286118 SEG FAULT IN SQLFOREIGNKEYS() WHEN COLUMN NAME CONTAINS
+  SPECIAL CHARACTERS
+*/
+DECLARE_TEST(t_bug18286118)
+{
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+
+  char *tabname1= (char*)"t1";
+  char *tabname2= (char*)"t2";
+  char *colname1= (char*)"col1";
+  char *colname2= (char*)") Specialname (";
+  char tmpBuff[2048]= {0};
+  SQLSMALLINT col_count= 0;
+  SQLLEN nLen= 0;
+  SQLRETURN sqlrc= SQL_SUCCESS;
+  int i= 0;
+  is_num(OK, alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL, 
+                                      NULL, NULL, NULL,
+                                      (SQLCHAR*)"NO_I_S=1"));
+
+  sprintf(tmpBuff, "DROP TABLE IF EXISTS %s,%s CASCADE", tabname2,tabname1);
+  ok_stmt(hstmt1, SQLExecDirect(hstmt1, (SQLCHAR*)tmpBuff, SQL_NTS));
+
+  sprintf(tmpBuff, "CREATE TABLE %s (id int, %s bigint, primary key(%s,id)) "\
+                   "COMMENT  \"  Comment1 \"", tabname1, colname1, colname1);
+  ok_stmt(hstmt1, SQLExecDirect(hstmt1, (SQLCHAR*)tmpBuff, SQL_NTS));
+
+  sprintf(tmpBuff, "CREATE TABLE %s (id  int, `%s` bigint, bd1 double, "\
+                   "FOREIGN KEY (`%s`) REFERENCES %s(%s) ON DELETE CASCADE) "\
+                   "COMMENT  \" Comment 2\"", tabname2, colname2, colname2,
+                   tabname1, colname1);
+  ok_stmt(hstmt1, SQLExecDirect(hstmt1, (SQLCHAR*)tmpBuff, SQL_NTS));
+
+  ok_stmt(hstmt1, SQLForeignKeys(hstmt1, NULL, 0, NULL, 0, (SQLCHAR*)tabname1,
+          SQL_NTS, NULL, 0, NULL, 0, (SQLCHAR*)tabname2, SQL_NTS));
+  
+  ok_stmt(hstmt1, SQLNumResultCols(hstmt1, &col_count));
+
+  while (((sqlrc= SQLFetch(hstmt1)) == SQL_SUCCESS) || 
+         (sqlrc == SQL_SUCCESS_WITH_INFO))
+  {
+    memset(tmpBuff, 0, sizeof(tmpBuff));
+    /* PKTABLE_CAT */
+    is_str(my_fetch_str(hstmt1, tmpBuff, 1), mydb, strlen(mydb));
+
+    /* PKTABLE_NAME */
+    is_str(my_fetch_str(hstmt1, tmpBuff, 3), tabname1, strlen(tabname1));
+
+    /* PKCOLUMN_NAME */
+    is_str(my_fetch_str(hstmt1, tmpBuff, 4), colname1, strlen(colname1));
+
+    /* FKTABLE_CAT */
+    is_str(my_fetch_str(hstmt1, tmpBuff, 5), mydb, strlen(mydb));
+
+    /* FKTABLE_NAME */
+    is_str(my_fetch_str(hstmt1, tmpBuff, 7), tabname2, strlen(tabname2));
+
+    /* FKCOLUMN_NAME */
+    is_str(my_fetch_str(hstmt1, tmpBuff, 8), colname2, strlen(tabname2));
+  }
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  sprintf(tmpBuff, "DROP TABLE %s,%s CASCADE", tabname2,tabname1);
+  ok_stmt(hstmt1, SQLExecDirect(hstmt1, (SQLCHAR*)tmpBuff, SQL_NTS));
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug69950)
   ADD_TEST(t_bug70642)
@@ -615,6 +686,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug18325878)
   ADD_TEST(t_bug18286366)
   ADD_TEST(t_bug18286366_2)
+  ADD_TEST(t_bug18286118)
 END_TESTS
 
 /*myoption &= ~(1 << 30);
