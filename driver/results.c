@@ -759,11 +759,8 @@ SQLRETURN SQL_API SQLNumResultCols(SQLHSTMT  hstmt, SQLSMALLINT *pccol)
   SQLRETURN error;
   STMT *stmt= (STMT *) hstmt;
 
-  if (pccol == NULL)
-  {
-    set_stmt_error(stmt, "HY000", "Invalid output buffer", 0);
-    return SQL_ERROR;
-  }
+  CHECK_HANDLE(hstmt);
+  CHECK_DATA_OUTPUT(hstmt, pccol);
 
   if (!ssps_used(stmt))
   {
@@ -1068,6 +1065,8 @@ SQLRETURN SQL_API SQLBindCol(SQLHSTMT      StatementHandle,
   DESCREC *arrec;
   /* TODO if this function fails, the SQL_DESC_COUNT should be unchanged in ard */
 
+  CHECK_HANDLE(stmt);
+
   CLEAR_STMT_ERROR(stmt);
 
   if (!TargetValuePtr && !StrLen_or_IndPtr) /* Handling unbinding */
@@ -1180,6 +1179,8 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
     ulong length= 0;
     DESCREC *irrec;
 
+    CHECK_HANDLE(stmt);
+
     if (!stmt->result || !stmt->current_values)
     {
       set_stmt_error(stmt,"24000","SQLGetData without a preceding SELECT",0);
@@ -1234,6 +1235,8 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
   STMT *  pStmt   = (STMT *)hStmt;
   int         nRetVal;
   SQLRETURN   nReturn = SQL_SUCCESS;
+
+  CHECK_HANDLE(hStmt);
 
   pthread_mutex_lock( &pStmt->dbc->lock );
 
@@ -1346,6 +1349,9 @@ SQLRETURN SQL_API SQLRowCount( SQLHSTMT hstmt,
                                SQLLEN * pcrow )
 {
     STMT *stmt= (STMT *) hstmt;
+
+    CHECK_HANDLE(hstmt);
+    CHECK_DATA_OUTPUT(hstmt, pcrow);
 
     if ( stmt->result )
     {
@@ -1852,8 +1858,11 @@ SQLRETURN SQL_API SQLExtendedFetch( SQLHSTMT        hstmt,
 {
     SQLRETURN rc;
     SQLULEN rows;
-    STMT_OPTIONS *options= &((STMT *)hstmt)->stmt_options;
+    STMT_OPTIONS *options;
 
+    CHECK_HANDLE(hstmt);
+
+    options= &((STMT *)hstmt)->stmt_options;
     options->rowStatusPtr_ex= rgfRowStatus;
 
     rc= my_SQLExtendedFetch(hstmt, fFetchType, irow, &rows, rgfRowStatus, 1);
@@ -1876,8 +1885,11 @@ SQLRETURN SQL_API SQLFetchScroll( SQLHSTMT      StatementHandle,
                                   SQLLEN        FetchOffset )
 {
     STMT *stmt = (STMT *)StatementHandle;
-    STMT_OPTIONS *options= &stmt->stmt_options;
+    STMT_OPTIONS *options;
 
+    CHECK_HANDLE(stmt);
+
+    options= &stmt->stmt_options;
     options->rowStatusPtr_ex= NULL;
 
     return my_SQLExtendedFetch(StatementHandle, FetchOrientation, FetchOffset,
@@ -1894,8 +1906,11 @@ SQLRETURN SQL_API SQLFetchScroll( SQLHSTMT      StatementHandle,
 SQLRETURN SQL_API SQLFetch(SQLHSTMT StatementHandle)
 {
     STMT *stmt = (STMT *)StatementHandle;
-    STMT_OPTIONS *options= &stmt->stmt_options;
+    STMT_OPTIONS *options;
 
+    CHECK_HANDLE(stmt);
+
+    options= &stmt->stmt_options;
     options->rowStatusPtr_ex= NULL;
 
     return my_SQLExtendedFetch(StatementHandle, SQL_FETCH_NEXT, 0,

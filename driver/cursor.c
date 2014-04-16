@@ -1581,6 +1581,8 @@ SQLCHAR *MySQLGetCursorName(HSTMT hstmt)
 SQLRETURN SQL_API SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
                             SQLUSMALLINT fOption, SQLUSMALLINT fLock)
 {
+    CHECK_HANDLE(hstmt);
+
     return my_SQLSetPos(hstmt,irow,fOption,fLock);
 }
 
@@ -1592,6 +1594,8 @@ SQLRETURN SQL_API SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
 
 SQLRETURN SQL_API SQLBulkOperations(SQLHSTMT  Handle, SQLSMALLINT Operation)
 {
+    CHECK_HANDLE(Handle);
+
     if ( Operation == SQL_ADD )
         return my_SQLSetPos(Handle, 0, SQL_ADD, SQL_LOCK_NO_CHANGE);
 
@@ -1607,5 +1611,7 @@ SQLRETURN SQL_API SQLBulkOperations(SQLHSTMT  Handle, SQLSMALLINT Operation)
 
 SQLRETURN SQL_API SQLCloseCursor(SQLHSTMT Handle)
 {
+    CHECK_HANDLE(Handle);
+
     return  my_SQLFreeStmt(Handle, SQL_CLOSE);
 }

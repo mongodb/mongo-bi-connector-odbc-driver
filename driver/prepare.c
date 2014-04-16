@@ -276,6 +276,8 @@ SQLRETURN SQL_API SQLSetParam(SQLHSTMT        hstmt,
                               SQLPOINTER      rgbValue, 
                               SQLLEN *        pcbValue)
 {
+  CHECK_HANDLE(hstmt);
+
   return my_SQLBindParameter(hstmt, ipar, SQL_PARAM_INPUT_OUTPUT, fCType, 
                              fSqlType, cbColDef, ibScale, rgbValue, 
                              SQL_SETPARAM_VALUE_MAX, pcbValue);
@@ -298,6 +300,8 @@ SQLRETURN SQL_API SQLBindParameter( SQLHSTMT        hstmt,
                                     SQLLEN          cbValueMax,
                                     SQLLEN *        pcbValue )
 {
+  CHECK_HANDLE(hstmt);
+
   return my_SQLBindParameter(hstmt, ipar, fParamType, fCType, fSqlType,
                              cbColDef, ibScale, rgbValue, cbValueMax, pcbValue);
 }
@@ -317,6 +321,9 @@ SQLRETURN SQL_API SQLDescribeParam( SQLHSTMT        hstmt,
                                     SQLSMALLINT     *pfNullable )
 {
     STMT *stmt= (STMT *) hstmt;
+
+    /* It is needed only in one case, but we won't make exceptions */
+    CHECK_HANDLE(hstmt);
 
     if (pfSqlType)
         *pfSqlType= SQL_VARCHAR;
@@ -349,6 +356,9 @@ SQLRETURN SQL_API SQLParamOptions( SQLHSTMT     hstmt,
 #endif
   SQLRETURN rc;
   STMT *stmt= (STMT *)hstmt;
+
+  CHECK_HANDLE(hstmt);
+
   rc= stmt_SQLSetDescField(stmt, stmt->apd, 0, SQL_DESC_ARRAY_SIZE,
                            (SQLPOINTER)crow, buflen);
   if (!SQL_SUCCEEDED(rc))
@@ -387,6 +397,8 @@ SQLRETURN SQL_API SQLNumParams(SQLHSTMT hstmt, SQLSMALLINT *pcpar)
 {
   STMT *stmt= (STMT *)hstmt;
 
+  CHECK_HANDLE(hstmt);
+
   if (pcpar)
     *pcpar= stmt->param_count;
 
@@ -405,6 +417,9 @@ SQLRETURN SQL_API SQLSetScrollOptions(  SQLHSTMT        hstmt,
                                         SQLUSMALLINT    crowRowset )
 {
     STMT *stmt= (STMT *)hstmt;
+
+    CHECK_HANDLE(hstmt);
+
     return stmt_SQLSetDescField(stmt, stmt->ard, 0, SQL_DESC_ARRAY_SIZE,
                                 (SQLPOINTER)(SQLUINTEGER)crowRowset,
                                 SQL_IS_USMALLINT);

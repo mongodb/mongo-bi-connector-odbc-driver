@@ -143,6 +143,8 @@ SQLEndTran(SQLSMALLINT HandleType,
            SQLHANDLE   Handle,
            SQLSMALLINT CompletionType)
 {
+  CHECK_HANDLE(Handle);
+
   return end_transaction(HandleType, Handle, CompletionType);
 }
 
@@ -164,6 +166,9 @@ SQLRETURN SQL_API SQLTransact(SQLHENV henv,
 			      SQLHDBC hdbc,
 			      SQLUSMALLINT fType)
 {
+  if(henv == NULL && hdbc == NULL)
+    return SQL_INVALID_HANDLE;
+
   return end_transaction(hdbc ? SQL_HANDLE_DBC : SQL_HANDLE_ENV,
                          hdbc ? hdbc : henv, fType);
 }

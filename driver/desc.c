@@ -980,6 +980,9 @@ SQLRETURN stmt_SQLCopyDesc(STMT *stmt, DESC *src, DESC *dest)
 SQLRETURN SQL_API
 SQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandle)
 {
+  CHECK_HANDLE(SourceDescHandle);
+  CHECK_HANDLE(TargetDescHandle);
+
   return MySQLCopyDesc(SourceDescHandle, TargetDescHandle);
 }
 

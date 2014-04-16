@@ -56,6 +56,7 @@
     (WL #7789)
   * Seg Fault in SQLForeignKeys() when column name contains special characters
     (Bug #18286118)
+  * Add NULL handle checks in ODBC API functions (WL #7807)
 
 ----
 5.2.6(25-Sep-2013)

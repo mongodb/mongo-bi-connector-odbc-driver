@@ -66,6 +66,7 @@ SQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
 #endif
                )
 {
+  CHECK_HANDLE(hstmt);
   return SQLColAttributeImpl(hstmt, column, field, char_attr, char_attr_max,
                              char_attr_len, num_attr);
 }
@@ -123,6 +124,7 @@ SQLColAttributes(SQLHSTMT hstmt, SQLUSMALLINT column, SQLUSMALLINT field,
                  SQLPOINTER char_attr, SQLSMALLINT char_attr_max,
                  SQLSMALLINT *char_attr_len, SQLLEN *num_attr)
 {
+  CHECK_HANDLE(hstmt);
   return SQLColAttributeImpl(hstmt, column, field, char_attr, char_attr_max,
                              char_attr_len, num_attr);
 }
@@ -136,7 +138,11 @@ SQLColumnPrivileges(SQLHSTMT hstmt,
                     SQLCHAR *column, SQLSMALLINT column_len)
 {
   SQLRETURN rc;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
+  DBC *dbc;
+
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
 
   if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
   {
@@ -197,7 +203,11 @@ SQLColumns(SQLHSTMT hstmt, SQLCHAR *catalog, SQLSMALLINT catalog_len,
            SQLCHAR *column, SQLSMALLINT column_len)
 {
   SQLRETURN rc;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
+  DBC *dbc;
+
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
 
   if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
   {
@@ -269,6 +279,8 @@ SQLConnect(SQLHDBC hdbc, SQLCHAR *dsn, SQLSMALLINT dsn_len_in,
   SQLWCHAR *authw= sqlchar_as_sqlwchar(default_charset_info,
                                        auth, &auth_len, &errors);
 
+  CHECK_HANDLE(hdbc);
+
   rc= MySQLConnect(hdbc, dsnw, dsn_len_in, userw, user_len_in,
                    authw, auth_len_in);
 
@@ -292,7 +304,11 @@ SQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
   SQLSMALLINT free_value= 0;
   uint errors;
 
-  SQLRETURN rc= MySQLDescribeCol(hstmt, column, &value, &free_value, type,
+  SQLRETURN rc;
+
+  CHECK_HANDLE(hstmt);
+
+  rc= MySQLDescribeCol(hstmt, column, &value, &free_value, type,
                                  size, scale, nullable);
 
   if (free_value == -1)
@@ -346,6 +362,8 @@ SQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd, SQLCHAR *in, SQLSMALLINT in_len,
   SQLINTEGER inw_len;
   SQLWCHAR *inw;
   SQLSMALLINT outw_max, dummy_out;
+
+  CHECK_HANDLE(hdbc);
 
   if (in_len == SQL_NTS)
     in_len= strlen((char *)in);
@@ -434,6 +452,8 @@ SQLRETURN SQL_API
 SQLExecDirect(SQLHSTMT hstmt, SQLCHAR *str, SQLINTEGER str_len)
 {
   int error;
+  
+  CHECK_HANDLE(hstmt);  
 
   if ((error= SQLPrepareImpl(hstmt, str, str_len)))
     return error;
@@ -453,7 +473,11 @@ SQLForeignKeys(SQLHSTMT hstmt,
                SQLCHAR *fk_table, SQLSMALLINT fk_table_len)
 {
   SQLRETURN rc;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
+  DBC *dbc;
+
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
 
   if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
   {
@@ -538,6 +562,8 @@ SQLRETURN SQL_API
 SQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
                   SQLINTEGER value_max, SQLINTEGER *value_len)
 {
+  CHECK_HANDLE(hdbc);
+
   return SQLGetConnectAttrImpl(hdbc, attribute, value, value_max, value_len);
 }
 
@@ -604,6 +630,8 @@ SQLGetConnectAttrImpl(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
 SQLRETURN SQL_API
 SQLGetConnectOption(SQLHDBC hdbc, SQLUSMALLINT option, SQLPOINTER value)
 {
+  CHECK_HANDLE(hdbc);
+
   return SQLGetConnectAttrImpl(hdbc, option, value,
                                ((option == SQL_ATTR_CURRENT_CATALOG) ?
                                 SQL_MAX_OPTION_STRING_LENGTH : 0), NULL);
@@ -620,6 +648,7 @@ SQLGetCursorName(SQLHSTMT hstmt, SQLCHAR *cursor, SQLSMALLINT cursor_max,
   SQLINTEGER len;
   uint errors;
 
+  CHECK_HANDLE(stmt);
   CLEAR_STMT_ERROR(stmt);
 
   if (cursor_max < 0)
@@ -669,10 +698,7 @@ SQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle,
 
   SQLRETURN rc= SQL_SUCCESS;
 
-  if (handle == NULL)
-  {
-    return SQL_INVALID_HANDLE;
-  }
+  CHECK_HANDLE(handle);
 
   rc= MySQLGetDiagField(handle_type, handle, record, field,
                         &value, info);
@@ -731,6 +757,8 @@ SQLGetDiagRec(SQLSMALLINT handle_type, SQLHANDLE handle,
               SQLINTEGER *native_error, SQLCHAR *message,
               SQLSMALLINT message_max, SQLSMALLINT *message_len)
 {
+  CHECK_HANDLE(handle);
+
   return SQLGetDiagRecImpl(handle_type, handle, record, sqlstate, native_error,
                            message, message_max, message_len);
 }
@@ -845,7 +873,11 @@ SQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
   SQLSMALLINT free_value= FALSE;
   uint errors;
 
-  SQLRETURN rc= MySQLGetInfo(hdbc, type, &char_value, value, value_len);
+  SQLRETURN rc;
+
+  CHECK_HANDLE(hdbc);
+
+  rc= MySQLGetInfo(hdbc, type, &char_value, value, value_len);
 
   if (char_value)
   {
@@ -885,6 +917,8 @@ SQLRETURN SQL_API
 SQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER attribute, SQLPOINTER value,
                 SQLINTEGER value_max, SQLINTEGER *value_len)
 {
+  CHECK_HANDLE(hstmt);
+
   /* Nothing special to do, since we don't have any string stmt attribs */
   return MySQLGetStmtAttr(hstmt, attribute, value, value_max, value_len);
 }
@@ -893,6 +927,8 @@ SQLGetStmtAttr(SQLHSTMT hstmt, SQLINTEGER attribute, SQLPOINTER value,
 SQLRETURN SQL_API
 SQLGetTypeInfo(SQLHSTMT hstmt, SQLSMALLINT type)
 {
+  CHECK_HANDLE(hstmt);
+
   return MySQLGetTypeInfo(hstmt, type);
 }
 
@@ -902,6 +938,8 @@ SQLNativeSql(SQLHDBC hdbc, SQLCHAR *in, SQLINTEGER in_len,
              SQLCHAR *out, SQLINTEGER out_max, SQLINTEGER *out_len)
 {
   SQLRETURN rc= SQL_SUCCESS;
+
+  CHECK_HANDLE(hdbc);
 
   if (in_len == SQL_NTS)
   {
@@ -936,6 +974,8 @@ SQLNativeSql(SQLHDBC hdbc, SQLCHAR *in, SQLINTEGER in_len,
 SQLRETURN SQL_API
 SQLPrepare(SQLHSTMT hstmt, SQLCHAR *str, SQLINTEGER str_len)
 {
+  CHECK_HANDLE(hstmt);
+
   return SQLPrepareImpl(hstmt, str, str_len);
 }
 
@@ -986,7 +1026,11 @@ SQLPrimaryKeys(SQLHSTMT hstmt,
                SQLCHAR *table, SQLSMALLINT table_len)
 {
   SQLRETURN rc;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
+  DBC *dbc;
+
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
 
   if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
   {
@@ -1040,7 +1084,11 @@ SQLProcedureColumns(SQLHSTMT hstmt,
                     SQLCHAR *column, SQLSMALLINT column_len)
 {
   SQLRETURN rc;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
+  DBC *dbc;
+
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
 
   if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
   {
@@ -1101,7 +1149,11 @@ SQLProcedures(SQLHSTMT hstmt,
               SQLCHAR *proc, SQLSMALLINT proc_len)
 {
   SQLRETURN rc;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
+  DBC *dbc;
+
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
 
   if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
   {
@@ -1151,6 +1203,8 @@ SQLRETURN SQL_API
 SQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER attribute,
                   SQLPOINTER value, SQLINTEGER value_len)
 {
+  CHECK_HANDLE(hdbc);
+
   return SQLSetConnectAttrImpl(hdbc, attribute, value, value_len);
 }
 
@@ -1195,6 +1249,9 @@ SQLRETURN SQL_API
 SQLSetConnectOption(SQLHDBC hdbc, SQLUSMALLINT option, SQLULEN param)
 {
   SQLINTEGER value_len= 0;
+
+  CHECK_HANDLE(hdbc);
+
   if (option == SQL_ATTR_CURRENT_CATALOG)
     value_len= SQL_NTS;
 
@@ -1208,6 +1265,8 @@ SQLSetCursorName(SQLHSTMT hstmt, SQLCHAR *name, SQLSMALLINT name_len)
   STMT *stmt= (STMT *)hstmt;
   SQLINTEGER len= name_len;
   uint errors= 0;
+
+  CHECK_HANDLE(hstmt);
 
   if (stmt->dbc->ansi_charset_info->number ==
       stmt->dbc->cxn_charset_info->number)
@@ -1240,6 +1299,8 @@ SQLRETURN SQL_API
 SQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER attribute,
                SQLPOINTER value, SQLINTEGER value_len)
 {
+  CHECK_HANDLE(hstmt);
+
   /* Nothing special to do, since we don't have any string stmt attribs */
   return MySQLSetStmtAttr(hstmt, attribute, value, value_len);
 }
@@ -1253,7 +1314,11 @@ SQLSpecialColumns(SQLHSTMT hstmt, SQLUSMALLINT type,
                   SQLUSMALLINT scope, SQLUSMALLINT nullable)
 {
   SQLRETURN rc;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
+  DBC *dbc;
+
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
 
   if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
   {
@@ -1307,7 +1372,11 @@ SQLStatistics(SQLHSTMT hstmt,
               SQLUSMALLINT unique, SQLUSMALLINT accuracy)
 {
   SQLRETURN rc;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
+  DBC *dbc;
+
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
 
   if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
   {
@@ -1360,7 +1429,11 @@ SQLTablePrivileges(SQLHSTMT hstmt,
                    SQLCHAR *table, SQLSMALLINT table_len)
 {
   SQLRETURN rc;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
+  DBC *dbc;
+
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
 
   if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
   {
@@ -1414,7 +1487,11 @@ SQLTables(SQLHSTMT hstmt,
           SQLCHAR *type, SQLSMALLINT type_len)
 {
   SQLRETURN rc;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
+  DBC *dbc;
+
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
 
   if (dbc->ansi_charset_info->number != dbc->cxn_charset_info->number)
   {
@@ -1482,6 +1559,8 @@ SQLRETURN SQL_API
 SQLGetDescField(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT field,
                 SQLPOINTER value, SQLINTEGER value_max, SQLINTEGER *value_len)
 {
+  CHECK_HANDLE(hdesc);
+
   return MySQLGetDescField(hdesc, record, field, value, value_max, value_len);
 }
 
@@ -1500,6 +1579,8 @@ SQLRETURN SQL_API
 SQLSetDescField(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT field,
                 SQLPOINTER value, SQLINTEGER value_len)
 {
+  CHECK_HANDLE(hdesc);
+
   return MySQLSetDescField(hdesc, record, field, value, value_len);
 }
 
@@ -1526,6 +1607,8 @@ SQLRETURN SQL_API
 SQLBrowseConnect(SQLHDBC hdbc, SQLCHAR *in, SQLSMALLINT in_len,
                  SQLCHAR *out, SQLSMALLINT out_max, SQLSMALLINT *out_len)
 {
+  CHECK_HANDLE(hdbc);
+
   return set_conn_error(hdbc,MYERR_S1000,
                         "Driver does not support this API", 0);
 }

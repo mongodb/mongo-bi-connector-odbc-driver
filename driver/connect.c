@@ -811,6 +811,8 @@ SQLRETURN SQL_API SQLDisconnect(SQLHDBC hdbc)
   LIST *list_element, *next_element;
   DBC *dbc= (DBC *) hdbc;
 
+  CHECK_HANDLE(hdbc);
+
   for (list_element= dbc->statements; list_element; list_element= next_element)
   {
      next_element= list_element->next;

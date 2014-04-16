@@ -1189,7 +1189,9 @@ SQLRETURN do_my_pos_cursor( STMT *pStmt, STMT *pStmtCursor )
 
 SQLRETURN SQL_API SQLExecute(SQLHSTMT hstmt)
 {
-    return my_SQLExecute((STMT *)hstmt);
+  CHECK_HANDLE(hstmt);
+
+  return my_SQLExecute((STMT *)hstmt);
 }
 
 
@@ -1533,9 +1535,15 @@ SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER *prbgValue)
     STMT *stmt= (STMT *) hstmt;
     uint i;
     SQLRETURN rc;
-    char *query=  GET_QUERY(&stmt->query);
+    char *query;
     DESC *apd;
-    uint param_count= stmt->param_count;
+    uint param_count;
+
+    /* We only check hstmt, no need to check prbgValue */
+    CHECK_HANDLE(hstmt);
+
+    query=  GET_QUERY(&stmt->query);
+    param_count= stmt->param_count;
 
     assert(stmt->dae_type);
     /* get the correct APD for the dae type we're handling */
@@ -1625,8 +1633,9 @@ SQLRETURN SQL_API SQLPutData( SQLHSTMT      hstmt,
     STMT *stmt= (STMT *) hstmt;
     DESCREC *aprec;
 
-    if ( !stmt )
-        return SQL_ERROR;
+    CHECK_HANDLE(hstmt);
+    CHECK_DATA_POINTER(stmt, rgbValue, cbValue);
+    CHECK_STRLEN_OR_IND(stmt, rgbValue, cbValue);
 
     if (stmt->dae_type == DAE_NORMAL)
       aprec= desc_get_rec(stmt->apd, stmt->current_param - 1, FALSE);
@@ -1695,10 +1704,13 @@ SQLRETURN SQL_API SQLPutData( SQLHSTMT      hstmt,
 */
 SQLRETURN SQL_API SQLCancel(SQLHSTMT hstmt)
 {
-  DBC *dbc= ((STMT *)hstmt)->dbc;
   MYSQL *second= NULL;
   int error;
+  DBC *dbc;
 
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
   error= pthread_mutex_trylock(&dbc->lock);
 
   /* If there's no query going on, just close the statement. */
