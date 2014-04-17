@@ -1282,7 +1282,9 @@ SQLRETURN do_my_pos_cursor( STMT *pStmt, STMT *pStmtCursor )
 
 SQLRETURN SQL_API SQLExecute(SQLHSTMT hstmt)
 {
-    return my_SQLExecute((STMT *)hstmt);
+  CHECK_HANDLE(hstmt);
+
+  return my_SQLExecute((STMT *)hstmt);
 }
 
 
@@ -1760,6 +1762,9 @@ SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER *prbgValue)
   STMT *stmt= (STMT *) hstmt;
   SQLRETURN rc= SQL_SUCCESS;
 
+  /* We only check hstmt here */
+  CHECK_HANDLE(hstmt);
+
   if (stmt->out_params_state != OPS_STREAMS_PENDING)
   {
     PUSH_ERROR(find_next_dae_param(stmt, prbgValue));
@@ -1828,10 +1833,9 @@ SQLRETURN SQL_API SQLPutData( SQLHSTMT      hstmt,
   STMT *stmt= (STMT *) hstmt;
   DESCREC *aprec;
 
-  if ( !stmt )
-  {
-    return SQL_ERROR;
-  }
+  CHECK_HANDLE(hstmt);
+  CHECK_DATA_POINTER(stmt, rgbValue, cbValue);
+  CHECK_STRLEN_OR_IND(stmt, rgbValue, cbValue);
 
   if (stmt->dae_type == DAE_NORMAL)
   {
@@ -1882,10 +1886,13 @@ SQLRETURN SQL_API SQLPutData( SQLHSTMT      hstmt,
 */
 SQLRETURN SQL_API SQLCancel(SQLHSTMT hstmt)
 {
-  DBC *dbc= ((STMT *)hstmt)->dbc;
   MYSQL *second= NULL;
   int error;
+  DBC *dbc;
 
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
   error= pthread_mutex_trylock(&dbc->lock);
 
   /* If there's no query going on, just close the statement. */

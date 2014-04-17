@@ -905,11 +905,7 @@ SQLSetEnvAttr(SQLHENV    henv,
               SQLPOINTER ValuePtr,
               SQLINTEGER StringLength __attribute__((unused)))
 {
-  /* No Driver Manager? */
-  if(henv == NULL)
-  {
-    return SQL_ERROR;
-  }
+  CHECK_HANDLE(henv);
 
   if (((ENV *)henv)->connections)
       return set_env_error(henv, MYERR_S1010, NULL, 0);
@@ -955,18 +951,21 @@ SQLGetEnvAttr(SQLHENV    henv,
               SQLINTEGER BufferLength __attribute__((unused)),
               SQLINTEGER *StringLengthPtr __attribute__((unused)))
 {
+    CHECK_HANDLE(henv);
+    /* NULL is acceptable for ValuePtr, so we are not checking for it here */
+
     switch ( Attribute )
     {
         case SQL_ATTR_CONNECTION_POOLING:
-            *(SQLINTEGER*)ValuePtr = SQL_CP_ONE_PER_DRIVER;
+            IF_NOT_NULL(ValuePtr, *(SQLINTEGER*)ValuePtr = SQL_CP_ONE_PER_DRIVER);
             break;
 
         case SQL_ATTR_ODBC_VERSION:
-            *(SQLINTEGER*)ValuePtr= ((ENV *)henv)->odbc_ver;
+            IF_NOT_NULL(ValuePtr, *(SQLINTEGER*)ValuePtr= ((ENV *)henv)->odbc_ver);
             break;
 
         case SQL_ATTR_OUTPUT_NTS:
-            *((SQLINTEGER*)ValuePtr)= SQL_TRUE;
+            IF_NOT_NULL(ValuePtr, *((SQLINTEGER*)ValuePtr)= SQL_TRUE);
             break;
 
         default:
@@ -979,6 +978,8 @@ SQLGetEnvAttr(SQLHENV    henv,
 SQLRETURN SQL_API
 SQLGetStmtOption(SQLHSTMT hstmt,SQLUSMALLINT option, SQLPOINTER param)
 {
+  CHECK_HANDLE(hstmt);
+
   return MySQLGetStmtAttr(hstmt, option, param, SQL_NTS, (SQLINTEGER *)NULL);
 }
 
@@ -986,5 +987,7 @@ SQLGetStmtOption(SQLHSTMT hstmt,SQLUSMALLINT option, SQLPOINTER param)
 SQLRETURN SQL_API
 SQLSetStmtOption(SQLHSTMT hstmt, SQLUSMALLINT option, SQLULEN param)
 {
+  CHECK_HANDLE(hstmt);
+
   return MySQLSetStmtAttr(hstmt, option, (SQLPOINTER)param, SQL_NTS);
 }

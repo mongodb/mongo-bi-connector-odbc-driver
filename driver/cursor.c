@@ -1889,6 +1889,8 @@ SQLCHAR *MySQLGetCursorName(HSTMT hstmt)
 SQLRETURN SQL_API SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
                             SQLUSMALLINT fOption, SQLUSMALLINT fLock)
 {
+    CHECK_HANDLE(hstmt);
+
     return my_SQLSetPos(hstmt,irow,fOption,fLock);
 }
 
@@ -1905,6 +1907,8 @@ SQLRETURN SQL_API SQLBulkOperations(SQLHSTMT  Handle, SQLSMALLINT Operation)
   MYSQL_RES *result= stmt->result;
   SQLRETURN rc;
   SQLSETPOSIROW irow= 0;
+
+  CHECK_HANDLE(Handle);
 
   CLEAR_STMT_ERROR(stmt);
 
@@ -1987,5 +1991,7 @@ SQLRETURN SQL_API SQLBulkOperations(SQLHSTMT  Handle, SQLSMALLINT Operation)
 
 SQLRETURN SQL_API SQLCloseCursor(SQLHSTMT Handle)
 {
+    CHECK_HANDLE(Handle);
+
     return  my_SQLFreeStmt(Handle, SQL_CLOSE);
 }

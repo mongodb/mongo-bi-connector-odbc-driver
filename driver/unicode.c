@@ -69,6 +69,8 @@ SQLColAttributeW(SQLHSTMT hstmt, SQLUSMALLINT column,
 #endif
                )
 {
+  CHECK_HANDLE(hstmt);
+
   return SQLColAttributeWImpl(hstmt, column, field, char_attr, char_attr_max,
                               char_attr_len, num_attr);
 }
@@ -125,6 +127,8 @@ SQLColAttributesW(SQLHSTMT hstmt, SQLUSMALLINT column, SQLUSMALLINT field,
                   SQLPOINTER char_attr, SQLSMALLINT char_attr_max,
                   SQLSMALLINT *char_attr_len, SQLLEN *num_attr)
 {
+  CHECK_HANDLE(hstmt);
+
   return SQLColAttributeWImpl(hstmt, column, field, char_attr, char_attr_max,
                               char_attr_len, num_attr);
 }
@@ -139,9 +143,13 @@ SQLColumnPrivilegesW(SQLHSTMT hstmt,
 {
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8, *column8;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
   SQLINTEGER len;
   uint errors= 0;
+  DBC *dbc;
+
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
 
   len= catalog_len;
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
@@ -180,9 +188,13 @@ SQLColumnsW(SQLHSTMT hstmt,
 {
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8, *column8;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
   SQLINTEGER len;
   uint errors= 0;
+  DBC *dbc;
+
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
 
   len= catalog_len;
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
@@ -217,6 +229,8 @@ SQLConnectW(SQLHDBC hdbc, SQLWCHAR *dsn, SQLSMALLINT dsn_len,
             SQLWCHAR *user, SQLSMALLINT user_len,
             SQLWCHAR *auth, SQLSMALLINT auth_len)
 {
+  CHECK_HANDLE(hdbc);
+
   ((DBC *)hdbc)->unicode= TRUE; /* Hooray, a Unicode connection! */
 
   return MySQLConnect(hdbc, dsn, dsn_len, user, user_len, auth, auth_len);
@@ -229,6 +243,8 @@ SQLDriverConnectW(SQLHDBC hdbc, SQLHWND hwnd,
                   SQLWCHAR *out, SQLSMALLINT out_max, SQLSMALLINT *out_len,
                   SQLUSMALLINT completion)
 {
+  CHECK_HANDLE(hdbc);
+
   ((DBC *)hdbc)->unicode= TRUE; /* Hooray, a Unicode connection! */
 
   return MySQLDriverConnect(hdbc, hwnd, in, in_len, out, out_max,
@@ -249,7 +265,11 @@ SQLDescribeColW(SQLHSTMT hstmt, SQLUSMALLINT column,
   SQLSMALLINT free_value= 0;
   uint errors;
 
-  SQLRETURN rc= MySQLDescribeCol(hstmt, column, &value, &free_value, type,
+  SQLRETURN rc;
+
+  CHECK_HANDLE(hstmt);
+
+  rc= MySQLDescribeCol(hstmt, column, &value, &free_value, type,
                                  size, scale, nullable);
 
   if (free_value == -1)
@@ -329,6 +349,8 @@ SQLExecDirectW(SQLHSTMT hstmt, SQLWCHAR *str, SQLINTEGER str_len)
 {
   int error;
 
+  CHECK_HANDLE(hstmt);
+
   if ((error= SQLPrepareWImpl(hstmt, str, str_len)))
     return error;
   error= my_SQLExecute((STMT *)hstmt);
@@ -349,9 +371,13 @@ SQLForeignKeysW(SQLHSTMT hstmt,
   SQLRETURN rc;
   SQLCHAR *pk_catalog8, *pk_schema8, *pk_table8,
           *fk_catalog8, *fk_schema8, *fk_table8;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
   SQLINTEGER len;
   uint errors= 0;
+  DBC *dbc;
+
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
 
   len= pk_catalog_len;
   pk_catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, pk_catalog, &len,
@@ -403,6 +429,8 @@ SQLRETURN SQL_API
 SQLGetConnectAttrW(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
                    SQLINTEGER value_max, SQLINTEGER *value_len)
 {
+  CHECK_HANDLE(hdbc);
+
   return SQLGetConnectAttrWImpl(hdbc, attribute, value, value_max, value_len);
 }
 
@@ -476,6 +504,8 @@ SQLGetConnectAttrWImpl(SQLHDBC hdbc, SQLINTEGER attribute, SQLPOINTER value,
 SQLRETURN SQL_API
 SQLGetConnectOptionW(SQLHDBC hdbc, SQLUSMALLINT option, SQLPOINTER param)
 {
+  CHECK_HANDLE(hdbc);
+
   return SQLGetConnectAttrWImpl(hdbc, option, param,
                                 ((option == SQL_ATTR_CURRENT_CATALOG) ?
                                  SQL_MAX_OPTION_STRING_LENGTH : 0), NULL);
@@ -491,6 +521,8 @@ SQLGetCursorNameW(SQLHSTMT hstmt, SQLWCHAR *cursor, SQLSMALLINT cursor_max,
   SQLWCHAR *name;
   SQLINTEGER len= SQL_NTS;
   uint errors;
+
+  CHECK_HANDLE(hstmt);
 
   CLEAR_STMT_ERROR(stmt);
 
@@ -532,10 +564,7 @@ SQLGetDiagFieldW(SQLSMALLINT handle_type, SQLHANDLE handle,
 
   SQLRETURN rc= SQL_SUCCESS;
 
-  if (handle == NULL)
-  {
-    return SQL_INVALID_HANDLE;
-  }
+  CHECK_HANDLE(handle);
 
   rc= MySQLGetDiagField(handle_type, handle, record, field,
                         &value, info);
@@ -594,6 +623,8 @@ SQLGetDiagRecW(SQLSMALLINT handle_type, SQLHANDLE handle,
                SQLINTEGER *native_error, SQLWCHAR *message,
                SQLSMALLINT message_max, SQLSMALLINT *message_len)
 {
+  CHECK_HANDLE(handle);
+
   return SQLGetDiagRecWImpl(handle_type, handle, record, sqlstate, native_error,
                             message, message_max, message_len);
 }
@@ -709,7 +740,11 @@ SQLGetInfoW(SQLHDBC hdbc, SQLUSMALLINT type, SQLPOINTER value,
   SQLINTEGER len= SQL_NTS;
   uint errors;
 
-  SQLRETURN rc= MySQLGetInfo(hdbc, type, &char_value, value, value_len);
+  SQLRETURN rc;
+
+  CHECK_HANDLE(hdbc);
+
+  rc= MySQLGetInfo(hdbc, type, &char_value, value, value_len);
 
   if (char_value)
   {
@@ -750,6 +785,8 @@ SQLRETURN SQL_API
 SQLGetStmtAttrW(SQLHSTMT hstmt, SQLINTEGER attribute, SQLPOINTER value,
                 SQLINTEGER value_max, SQLINTEGER *value_len)
 {
+  CHECK_HANDLE(hstmt);
+
   return MySQLGetStmtAttr(hstmt, attribute, value, value_max, value_len);
 }
 
@@ -758,6 +795,8 @@ SQLGetStmtAttrW(SQLHSTMT hstmt, SQLINTEGER attribute, SQLPOINTER value,
 SQLRETURN SQL_API
 SQLGetTypeInfoW(SQLHSTMT hstmt, SQLSMALLINT type)
 {
+  CHECK_HANDLE(hstmt);
+
   return MySQLGetTypeInfo(hstmt, type);
 }
 
@@ -767,6 +806,8 @@ SQLNativeSqlW(SQLHDBC hdbc, SQLWCHAR *in, SQLINTEGER in_len,
               SQLWCHAR *out, SQLINTEGER out_max, SQLINTEGER *out_len)
 {
   SQLRETURN rc= SQL_SUCCESS;
+
+  CHECK_HANDLE(hdbc);
 
   if (in_len == SQL_NTS)
     in_len= (SQLINTEGER)sqlwcharlen(in);
@@ -795,6 +836,8 @@ SQLNativeSqlW(SQLHDBC hdbc, SQLWCHAR *in, SQLINTEGER in_len,
 SQLRETURN SQL_API
 SQLPrepareW(SQLHSTMT hstmt, SQLWCHAR *str, SQLINTEGER str_len)
 {
+  CHECK_HANDLE(hstmt);
+
   return SQLPrepareWImpl(hstmt, str, str_len);
 }
 
@@ -825,10 +868,13 @@ SQLPrimaryKeysW(SQLHSTMT hstmt,
 {
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
   SQLINTEGER len;
   uint errors= 0;
+  DBC *dbc;
 
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
   len= catalog_len;
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
   catalog_len= (SQLSMALLINT)len;
@@ -861,10 +907,13 @@ SQLProcedureColumnsW(SQLHSTMT hstmt,
 {
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *proc8, *column8;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
   SQLINTEGER len;
   uint errors= 0;
+  DBC *dbc;
 
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
   len= catalog_len;
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
   catalog_len= (SQLSMALLINT)len;
@@ -901,10 +950,13 @@ SQLProceduresW(SQLHSTMT hstmt,
 {
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *proc8;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
   SQLINTEGER len;
   uint errors= 0;
+  DBC *dbc;
 
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
   len= catalog_len;
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
   catalog_len= (SQLSMALLINT)len;
@@ -932,6 +984,8 @@ SQLRETURN SQL_API
 SQLSetConnectAttrW(SQLHDBC hdbc, SQLINTEGER attribute,
                    SQLPOINTER value, SQLINTEGER value_len)
 {
+  CHECK_HANDLE(hdbc);
+
   return SQLSetConnectAttrWImpl(hdbc, attribute, value, value_len);
 }
 
@@ -984,10 +1038,15 @@ SQLRETURN SQL_API
 SQLSetCursorNameW(SQLHSTMT hstmt, SQLWCHAR *name, SQLSMALLINT name_len)
 {
   SQLRETURN rc;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
   SQLINTEGER len= name_len;
   uint errors= 0;
-  SQLCHAR *name_char= sqlwchar_as_sqlchar(dbc->cxn_charset_info,
+  SQLCHAR *name_char;
+  DBC *dbc;
+
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
+  name_char= sqlwchar_as_sqlchar(dbc->cxn_charset_info,
                                           name, &len, &errors);
 
   rc= MySQLSetCursorName(hstmt, name_char, (SQLSMALLINT)len);
@@ -1009,6 +1068,8 @@ SQLSetCursorNameW(SQLHSTMT hstmt, SQLWCHAR *name, SQLSMALLINT name_len)
 SQLRETURN SQL_API
 SQLSetConnectOptionW(SQLHDBC hdbc, SQLUSMALLINT option, SQLULEN param)
 {
+  CHECK_HANDLE(hdbc);
+
   return SQLSetConnectAttrWImpl(hdbc, option, (SQLPOINTER)param,
                                 ((option == SQL_ATTR_CURRENT_CATALOG) ?
                                  SQL_NTS : 0));
@@ -1019,6 +1080,8 @@ SQLRETURN SQL_API
 SQLSetStmtAttrW(SQLHSTMT hstmt, SQLINTEGER attribute,
                 SQLPOINTER value, SQLINTEGER value_len)
 {
+  CHECK_HANDLE(hstmt);
+
   /* Nothing special to do, since we don't have any string stmt attribs */
   return MySQLSetStmtAttr(hstmt, attribute, value, value_len);
 }
@@ -1033,10 +1096,13 @@ SQLSpecialColumnsW(SQLHSTMT hstmt, SQLUSMALLINT type,
 {
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
   SQLINTEGER len;
   uint errors= 0;
+  DBC *dbc;
 
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
   len= catalog_len;
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
   catalog_len= (SQLSMALLINT)len;
@@ -1070,10 +1136,13 @@ SQLStatisticsW(SQLHSTMT hstmt,
 {
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
   SQLINTEGER len;
   uint errors= 0;
+  DBC *dbc;
 
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
   len= catalog_len;
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
   catalog_len= (SQLSMALLINT)len;
@@ -1105,10 +1174,13 @@ SQLTablePrivilegesW(SQLHSTMT hstmt,
 {
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
   SQLINTEGER len;
   uint errors= 0;
+  DBC *dbc;
 
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
   len= catalog_len;
   catalog8= sqlwchar_as_sqlchar(dbc->cxn_charset_info, catalog, &len, &errors);
   catalog_len= (SQLSMALLINT)len;
@@ -1141,9 +1213,13 @@ SQLTablesW(SQLHSTMT hstmt,
 {
   SQLRETURN rc;
   SQLCHAR *catalog8, *schema8, *table8, *type8;
-  DBC *dbc= ((STMT *)hstmt)->dbc;
   SQLINTEGER len;
   uint errors= 0;
+  DBC *dbc;
+
+  CHECK_HANDLE(hstmt);
+
+  dbc= ((STMT *)hstmt)->dbc;
 
   /* we must preserve NULL/blank strings for SQLTables() semantics */
 
@@ -1188,6 +1264,8 @@ SQLRETURN SQL_API
 SQLGetDescFieldW(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT field,
                  SQLPOINTER value, SQLINTEGER value_max, SQLINTEGER *value_len)
 {
+  CHECK_HANDLE(hdesc);
+
   return MySQLGetDescField(hdesc, record, field, value, value_max, value_len);
 }
 
@@ -1206,6 +1284,8 @@ SQLRETURN SQL_API
 SQLSetDescFieldW(SQLHDESC hdesc, SQLSMALLINT record, SQLSMALLINT field,
                  SQLPOINTER value, SQLINTEGER value_len)
 {
+  CHECK_HANDLE(hdesc);
+
   return MySQLSetDescField(hdesc, record, field, value, value_len);
 }
 
@@ -1224,6 +1304,8 @@ SQLRETURN SQL_API
 SQLBrowseConnectW(SQLHDBC hdbc, SQLWCHAR *in, SQLSMALLINT in_len,
                   SQLWCHAR *out, SQLSMALLINT out_max, SQLSMALLINT *out_len)
 {
+  CHECK_HANDLE(hdbc);
+
   return set_conn_error(hdbc,MYERR_S1000,
                         "Driver does not support this API", 0);
 }

@@ -5,6 +5,7 @@
   Bugs fixed:
   * Seg Fault in SQLForeignKeys() when column name contains special characters
     (Bug #18286118)
+  * Add NULL handle checks in ODBC API functions (WL #7807)
  
 ----
 
@@ -75,6 +76,7 @@
     results in a crash (Bug# 18431088)
   * Rename internal functions named as mysql_xxxx inside ODBC sources 
     (WL #7789)
+<<<<<<< TREE
 
   Built using MySQL 5.6.17.
  
@@ -111,6 +113,16 @@
   Functionality added or changed:
   * Support for File Data Sources. (WL #6583, Bug #11746219/24581)
   * Bookmark support added in myodbc (WL #7039)
+=======
+  * Seg Fault in SQLForeignKeys() when column name contains special characters
+    (Bug #18286118)
+  * Add NULL handle checks in ODBC API functions (WL #7807)
+
+----
+5.2.6(25-Sep-2013)
+
+  Functionality added or changed:
+>>>>>>> MERGE-SOURCE
   * Added new variable in cmake config files ODBCCP32_LIB for odbccpp32.lib path, 
     and MYSQLCLIENT_LIB_NAME for linking mysqlclient statically or dynamically by 
     specifying mysqlclient library (libmysql.*, mysqlclient.*, libmysqlclient_r.*, 

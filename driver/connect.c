@@ -869,6 +869,8 @@ SQLRETURN SQL_API SQLDisconnect(SQLHDBC hdbc)
 {
   DBC *dbc= (DBC *) hdbc;
 
+  CHECK_HANDLE(hdbc);
+
   free_connection_stmts(dbc);
   
   mysql_close(&dbc->mysql);

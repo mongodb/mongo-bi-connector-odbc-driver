@@ -505,5 +505,25 @@ void free_connection_stmts(DBC *dbc);
   if (L > NAME_LEN) \
     return set_stmt_error(S, "HY090", \
            "One or more parameters exceed the maximum allowed name length", 0);
+
+#define CHECK_HANDLE(h) if (h == NULL) return SQL_INVALID_HANDLE
+
+#define CHECK_DATA_POINTER(S, D, C) if (D == NULL && C != 0 && C != SQL_DEFAULT_PARAM && C != SQL_NULL_DATA) \
+                                   return set_stmt_error(S, "HY009", "Invalid use of NULL pointer", 0);
+
+#define CHECK_STRLEN_OR_IND(S, D, C) if (D != NULL && C < 0 && C != SQL_NTS && C != SQL_NULL_DATA) \
+                                   return set_stmt_error(S, "HY090", "Invalid string or buffer length", 0);
+
+#define CHECK_ENV_OUTPUT(e) if(e == NULL) return SQL_ERROR
+
+#define CHECK_DBC_OUTPUT(e, d) if(d == NULL) return set_env_error((ENV *)e, MYERR_S1009, NULL, 0)
+
+#define CHECK_STMT_OUTPUT(d, s) if(s == NULL) return set_conn_error((DBC *)d, MYERR_S1009, NULL, 0)
  
+#define CHECK_DESC_OUTPUT(d, s) CHECK_STMT_OUTPUT(d, s)
+
+#define CHECK_DATA_OUTPUT(s, d) if(d == NULL) return set_error((STMT *)s, MYERR_S1000, "Invalid output buffer", 0)
+ 
+#define IF_NOT_NULL(v, x) if (v != NULL) x
+
 #endif /* __MYUTIL_H__ */

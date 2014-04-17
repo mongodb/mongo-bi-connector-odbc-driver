@@ -105,6 +105,8 @@ SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV *phenv)
 
 SQLRETURN SQL_API SQLAllocEnv(SQLHENV *phenv)
 {
+  CHECK_ENV_OUTPUT(phenv);
+
   return my_SQLAllocEnv(phenv);
 }
 
@@ -135,6 +137,8 @@ SQLRETURN SQL_API my_SQLFreeEnv(SQLHENV henv)
 */
 SQLRETURN SQL_API SQLFreeEnv(SQLHENV henv)
 {
+    CHECK_HANDLE(henv);
+
     return my_SQLFreeEnv(henv);
 }
 
@@ -266,7 +270,11 @@ SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC *phdbc)
 
 SQLRETURN SQL_API SQLAllocConnect(SQLHENV henv, SQLHDBC *phdbc)
 {
-    return my_SQLAllocConnect(henv, phdbc);
+  /* Checking only henv because phdbc will be checked later */
+  CHECK_HANDLE(henv);
+  CHECK_DBC_OUTPUT(henv, phdbc);
+
+  return my_SQLAllocConnect(henv, phdbc);
 }
 
 
@@ -375,7 +383,9 @@ SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc)
 */
 SQLRETURN SQL_API SQLFreeConnect(SQLHDBC hdbc)
 {
-    return my_SQLFreeConnect(hdbc);
+  CHECK_HANDLE(hdbc);
+
+  return my_SQLFreeConnect(hdbc);
 }
 
 
@@ -526,6 +536,9 @@ error:
 
 SQLRETURN SQL_API SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT *phstmt)
 {
+  CHECK_HANDLE(hdbc);
+  CHECK_STMT_OUTPUT(hdbc, phstmt);
+
     return my_SQLAllocStmt(hdbc,phstmt);
 }
 
@@ -540,6 +553,8 @@ SQLRETURN SQL_API SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT *phstmt)
 
 SQLRETURN SQL_API SQLFreeStmt(SQLHSTMT hstmt,SQLUSMALLINT fOption)
 {
+    CHECK_HANDLE(hstmt);
+
     return my_SQLFreeStmt(hstmt,fOption);
 }
 
@@ -823,18 +838,25 @@ SQLRETURN SQL_API SQLAllocHandle(SQLSMALLINT HandleType,
     switch (HandleType)
     {
         case SQL_HANDLE_ENV:
+            CHECK_ENV_OUTPUT(OutputHandlePtr);
             error= my_SQLAllocEnv(OutputHandlePtr);
             break;
 
         case SQL_HANDLE_DBC:
+            CHECK_HANDLE(InputHandle);
+            CHECK_DBC_OUTPUT(InputHandle, OutputHandlePtr);
             error= my_SQLAllocConnect(InputHandle,OutputHandlePtr);
             break;
 
         case SQL_HANDLE_STMT:
+            CHECK_HANDLE(InputHandle);
+            CHECK_STMT_OUTPUT(InputHandle, OutputHandlePtr);
             error= my_SQLAllocStmt(InputHandle,OutputHandlePtr);
             break;
 
         case SQL_HANDLE_DESC:
+            CHECK_HANDLE(InputHandle);
+            CHECK_DESC_OUTPUT(InputHandle, OutputHandlePtr);
             error= my_SQLAllocDesc(InputHandle, OutputHandlePtr);
             break;
 
@@ -853,6 +875,8 @@ SQLRETURN SQL_API SQLAllocHandle(SQLSMALLINT HandleType,
 SQLRETURN SQL_API SQLCancelHandle(SQLSMALLINT  HandleType,
                           SQLHANDLE    Handle)
 {
+  CHECK_HANDLE(Handle);
+
   switch (HandleType)
   {
   case SQL_HANDLE_DBC:
@@ -879,6 +903,8 @@ SQLRETURN SQL_API SQLFreeHandle(SQLSMALLINT HandleType,
                                 SQLHANDLE   Handle)
 {
     SQLRETURN error= SQL_ERROR;
+
+    CHECK_HANDLE(Handle);
 
     switch (HandleType)
     {
