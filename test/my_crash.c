@@ -671,6 +671,29 @@ DECLARE_TEST(t_bug18286118)
 }
 
 
+/**
+  Bug #18531838: SQLROWCOUNT() WITH NULL PARAMETER RESULTS IN 
+                 SEGMENTATION FAULT
+*/
+DECLARE_TEST(t_bug18531838)
+{
+  SQLRETURN rc= SQL_SUCCESS;
+  SQLINTEGER rcount= 0;
+
+  ok_sql(hstmt, "SELECT 1");
+  rc= SQLRowCount(hstmt, NULL);
+  is_num(rc, SQL_ERROR);
+
+  rc= SQLRowCount(NULL, &rcount);
+  is_num(rc, SQL_INVALID_HANDLE);
+  
+  rc= SQLRowCount(NULL, NULL);
+  is_num(rc, SQL_INVALID_HANDLE);
+
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug69950)
   ADD_TEST(t_bug70642)
@@ -687,6 +710,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug18286366)
   ADD_TEST(t_bug18286366_2)
   ADD_TEST(t_bug18286118)
+  ADD_TEST(t_bug18531838)
 END_TESTS
 
 /*myoption &= ~(1 << 30);
