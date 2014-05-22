@@ -315,7 +315,7 @@ void on_ssl_folder_button_clicked(GtkComboBox *widget, gpointer user_data)
   if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT)
   {
     gchar *foldername;
-    foldername = gtk_file_chooser_get_current_folder (GTK_FILE_CHOOSER (dialog));
+    foldername = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
     gtk_entry_set_text(GTK_ENTRY(user_data), foldername);
     g_free (foldername);
   }
