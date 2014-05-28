@@ -728,6 +728,49 @@ DECLARE_TEST(t_bug18286118)
 }
 
 
+/*
+  Bug #18805520: Segmentation Fault in SQLSetPos() when NO_SSPS= 0
+*/
+DECLARE_TEST(t_setpos_update_no_ssps)
+{
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+  SQLINTEGER x[6];
+  SQLINTEGER i;
+  SQLINTEGER  id;
+
+  ok_sql(hstmt, "drop table if exists t_setpos_update_no_ssps");
+  ok_sql(hstmt, "create table t_setpos_update_no_ssps (x int not null, "
+                "primary key (x) )");
+  ok_sql(hstmt, "insert into t_setpos_update_no_ssps values (1), (2), (3), "
+                "(4), (5), (6)");
+
+  /* Connect with SSPS enabled */
+  alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL, NULL, NULL,
+                               NULL, "NO_SSPS=0");
+  /* create cursor and get first row */
+  ok_stmt(hstmt, SQLPrepare(hstmt1, "select x from t_setpos_update_no_ssps "
+                                   "where x > ?", SQL_NTS));
+  id= 1;
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT, SQL_C_ULONG,
+                        SQL_INTEGER, 0, 0, &id, 0, NULL));
+  ok_stmt(hstmt1, SQLExecute(hstmt1));
+
+  ok_stmt(hstmt1, SQLBindCol(hstmt1, 1, SQL_C_LONG, x, 0, NULL));
+  ok_stmt(hstmt1, SQLFetchScroll(hstmt1, SQL_FETCH_NEXT, 0));
+
+  for (i= 0; i < 6; ++i)
+    x[i]= i * 10;
+
+  ok_stmt(hstmt1, SQLSetPos(hstmt1, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  ok_sql(hstmt, "drop table if exists t_setpos_update_no_ssps");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug69950)
   ADD_TEST(t_bug70642)
@@ -745,6 +788,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug18286366)
   ADD_TEST(t_bug18286366_2)
   ADD_TEST(t_bug18286118)
+  ADD_TEST(t_setpos_update_no_ssps)
 END_TESTS
 
 RUN_TESTS
