@@ -3368,6 +3368,51 @@ DECLARE_TEST(t_sqlputdata)
 }
 
 
+/*
+  Bug #18805455: VALGRIND: MEMORY LEAK IN SQLSETPOS()
+*/
+DECLARE_TEST(t_18805455)
+{
+  SQLINTEGER  i;
+  SQLCHAR     buff[10];
+  SQLCHAR     buff1[10];
+  SQLLEN      nRowCount;
+
+  ok_sql(hstmt, "drop table if exists t_18805455");
+  ok_sql(hstmt, "create table t_18805455 (val char(10))");
+  ok_sql(hstmt, "insert into t_18805455 values ('value11')");
+
+  /* create cursor and get first row */
+  ok_stmt(hstmt, SQLPrepare(hstmt, "select * from t_18805455 "
+                                   "where val = ?", SQL_NTS));
+  strcpy(buff, "value11");
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_CHAR,
+                        SQL_CHAR, 10, 0, &buff, 10, NULL));
+  ok_stmt(hstmt, SQLExecute(hstmt));
+
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, buff1, sizeof(buff1), NULL));
+  ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_NEXT, 0));
+  is_str(buff1, "value11", 7);
+
+  strcpy(buff1, "value12");
+  ok_stmt(hstmt, SQLSetPos(hstmt, 1, SQL_UPDATE, SQL_LOCK_NO_CHANGE));
+  ok_stmt(hstmt, SQLRowCount(hstmt, &nRowCount));
+  is_num(nRowCount, 1);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_UNBIND));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* Now fetch and verify the data */
+  ok_sql(hstmt, "SELECT * FROM t_18805455");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  is_str(my_fetch_str(hstmt, buff, 1), "value12", 7);
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "drop table if exists t_18805455");
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(my_positioned_cursor)
   ADD_TEST(my_setpos_cursor)
@@ -3418,6 +3463,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug39961)
   ADD_TEST(t_bug41946)
   /*ADD_TEST(t_sqlputdata)*/
+  ADD_TEST(t_18805455)
 END_TESTS
 
 
