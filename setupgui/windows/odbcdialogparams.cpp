@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -614,6 +614,8 @@ void FormMain_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
       chooseFile(hwnd, IDC_EDIT_sslca); break;
     case IDC_SSLCAPATHCHOOSER:
       choosePath(hwnd, IDC_EDIT_sslcapath); break;
+    case IDC_RSAKEYCHOOSER:
+      chooseFile(hwnd, IDC_EDIT_rsakey); break;
     case IDC_RADIO_tcp:
     case IDC_RADIO_pipe:
       SwitchTcpOrPipe(hwnd, !!Button_GetCheck(GetDlgItem(hwnd, IDC_RADIO_pipe)));

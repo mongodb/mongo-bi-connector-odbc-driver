@@ -64,6 +64,7 @@
 #define IDC_SSLCAPATHCHOOSER            1027
 #define IDC_CHECK_sslverify             1028
 #define IDC_CHECK_min_date_to_zero      1029
+#define IDC_RSAKEYCHOOSER               1030
 #define IDC_EDIT_drvname                10000
 #define IDC_EDIT_name                   10000
 #define IDC_EDIT_drvdesc                10001
@@ -123,6 +124,7 @@
 #define IDC_CHECK_can_handle_exp_pwd    10048
 #define IDC_CHECK_enable_cleartext_plugin 10049
 #define IDC_CHECK_default_bigint_bind_str 10050
+#define IDC_EDIT_rsakey                 10051
 #define IDC_BUTTON_TEST                 11014
 #define IDC_BUTTON_HELP                 11015
 #define IDC_STATIC                      -1

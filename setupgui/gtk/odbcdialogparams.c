@@ -623,6 +623,12 @@ int ShowOdbcParamsDialog(DataSource* params, HWND ParentWnd, BOOL isPrompt)
   g_signal_connect ((gpointer) dummy, "clicked",
                     G_CALLBACK (on_ssl_folder_button_clicked), entry);
 
+  dummy= GTK_WIDGET (gtk_builder_get_object (builder, "rsakey_button"));
+  entry= GTK_ENTRY (gtk_builder_get_object (builder, "rsakey"));
+  g_signal_connect ((gpointer) dummy, "clicked",
+                    G_CALLBACK (on_ssl_file_button_clicked), entry);
+
+
   dummy= GTK_WIDGET (gtk_builder_get_object (builder, "cursor_prefetch_active"));
   g_signal_connect ((gpointer) dummy, "toggled",
                     G_CALLBACK (on_check_cursor_prefetch_toggled), NULL);

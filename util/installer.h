@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -82,6 +82,7 @@ typedef struct {
   SQLWCHAR *sslca;
   SQLWCHAR *sslcapath;
   SQLWCHAR *sslcipher;
+  SQLWCHAR *rsakey;
   SQLWCHAR *savefile;
 
   unsigned int port;
@@ -104,6 +105,7 @@ typedef struct {
   SQLCHAR *sslca8;
   SQLCHAR *sslcapath8;
   SQLCHAR *sslcipher8;
+  SQLCHAR *rsakey8;
   SQLWCHAR *savefile8;
 
   /*  */

@@ -1154,10 +1154,10 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                    <property name=\"visible\">True</property>\n" \
 "                    <property name=\"can_focus\">False</property>\n" \
 "                    <property name=\"border_width\">8</property>\n" \
-"                    <property name=\"n_rows\">6</property>\n" \
+"                    <property name=\"n_rows\">7</property>\n" \
 "                    <property name=\"n_columns\">4</property>\n" \
 "                    <property name=\"column_spacing\">8</property>\n" \
-"                    <property name=\"row_spacing\">8</property>\n" \
+"                    <property name=\"row_spacing\">5</property>\n" \
 "                    <child>\n" \
 "                      <object class=\"GtkEntry\" id=\"sslkey\">\n" \
 "                        <property name=\"visible\">True</property>\n" \
@@ -1289,6 +1289,23 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                      </packing>\n" \
 "                    </child>\n" \
 "                    <child>\n" \
+"                      <object class=\"GtkButton\" id=\"rsakey_button\">\n" \
+"                        <property name=\"label\" translatable=\"yes\">...</property>\n" \
+"                        <property name=\"visible\">True</property>\n" \
+"                        <property name=\"can_focus\">True</property>\n" \
+"                        <property name=\"receives_default\">True</property>\n" \
+"                        <property name=\"use_action_appearance\">False</property>\n" \
+"                      </object>\n" \
+"                      <packing>\n" \
+"                        <property name=\"left_attach\">2</property>\n" \
+"                        <property name=\"right_attach\">3</property>\n" \
+"                        <property name=\"top_attach\">6</property>\n" \
+"                        <property name=\"bottom_attach\">7</property>\n" \
+"                        <property name=\"x_options\"></property>\n" \
+"                        <property name=\"y_options\"></property>\n" \
+"                      </packing>\n" \
+"                    </child>\n" \
+"                    <child>\n" \
 "                      <object class=\"GtkCheckButton\" id=\"sslverify\">\n" \
 "                        <property name=\"label\" translatable=\"yes\">Verify SSL Certificate</property>\n" \
 "                        <property name=\"visible\">True</property>\n" \
@@ -1325,6 +1342,18 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"right_attach\">2</property>\n" \
 "                        <property name=\"top_attach\">4</property>\n" \
 "                        <property name=\"bottom_attach\">5</property>\n" \
+"                      </packing>\n" \
+"                    </child>\n" \
+"                    <child>\n" \
+"                      <object class=\"GtkLabel\" id=\"rsakeylabel\">\n" \
+"                        <property name=\"visible\">True</property>\n" \
+"                        <property name=\"can_focus\">False</property>\n" \
+"                        <property name=\"xalign\">1</property>\n" \
+"                        <property name=\"label\" translatable=\"yes\">RSA Key</property>\n" \
+"                      </object>\n" \
+"                      <packing>\n" \
+"                        <property name=\"top_attach\">6</property>\n" \
+"                        <property name=\"bottom_attach\">7</property>\n" \
 "                      </packing>\n" \
 "                    </child>\n" \
 "                    <child>\n" \
@@ -1405,6 +1434,30 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"right_attach\">2</property>\n" \
 "                        <property name=\"top_attach\">3</property>\n" \
 "                        <property name=\"bottom_attach\">4</property>\n" \
+"                      </packing>\n" \
+"                    </child>\n" \
+"                    <child>\n" \
+"                      <object class=\"GtkEntry\" id=\"rsakey\">\n" \
+"                        <property name=\"width_request\">250</property>\n" \
+"                        <property name=\"visible\">True</property>\n" \
+"                        <property name=\"can_focus\">True</property>\n" \
+"                        <property name=\"invisible_char\">•</property>\n" \
+"                        <property name=\"invisible_char_set\">True</property>\n" \
+"                        <property name=\"primary_icon_activatable\">False</property>\n" \
+"                        <property name=\"secondary_icon_activatable\">False</property>\n" \
+"                        <property name=\"primary_icon_sensitive\">True</property>\n" \
+"                        <property name=\"secondary_icon_sensitive\">True</property>\n" \
+"                        <child internal-child=\"accessible\">\n" \
+"                          <object class=\"AtkObject\" id=\"rsakeyatkobject\">\n" \
+"                            <property name=\"AtkObject::accessible-name\" translatable=\"yes\">RSA Key</property>\n" \
+"                          </object>\n" \
+"                        </child>\n" \
+"                      </object>\n" \
+"                      <packing>\n" \
+"                        <property name=\"left_attach\">1</property>\n" \
+"                        <property name=\"right_attach\">2</property>\n" \
+"                        <property name=\"top_attach\">6</property>\n" \
+"                        <property name=\"bottom_attach\">7</property>\n" \
 "                      </packing>\n" \
 "                    </child>\n" \
 "                    <child>\n" \

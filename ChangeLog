@@ -1,6 +1,8 @@
 5.3.4
 
   Functionality added or changed:
+  * New ODBC connection option to specify the location of RSA public key
+    (WL #7911)
 
   Bugs fixed:
   * SSL CA Path cannot be selected in Linux GUI (Bug #18813389/72716)
