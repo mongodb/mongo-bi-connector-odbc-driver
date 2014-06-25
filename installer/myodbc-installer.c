@@ -55,12 +55,18 @@ const char *usage =
 "|                                                                      \n"
 "| Description                                                          \n"
 "|                                                                      \n"
-"|    This program can be used to create, edit or remove a DSN. It      \n"
-"|    can also be used to register or deregister a driver. In other     \n"
-"|    words - it can be used to manage ODBC system information.         \n"
+"|    This program is for managing MySQL Connector/ODBC configuration   \n"
+"|    options at the command prompt. It can be used to register or      \n"
+"|    unregister an ODBC driver, and to create, edit, or remove DSN.    \n"
 "|                                                                      \n"
-"|    This operates consistently across platforms. This has been created\n"
-"|    specifically for MySQL Connector/ODBC.                            \n"
+"|    The program has been designed to work across all platforms        \n"
+"|    supported by Connector/ODBC, including MS Windows and             \n"
+"|    various Unix-like systems.                                        \n"
+"|                                                                      \n"
+"|    The program requires that unixODBC version 2.2.14 or newer        \n"
+"|    has already been installed on the system.                         \n"
+"|    UnixODBC can be downloaded from here:                             \n"
+"|    http://www.unixodbc.org/                                          \n"
 "|                                                                      \n"
 "| Syntax                                                               \n"
 "|                                                                      \n"
@@ -76,35 +82,58 @@ const char *usage =
 "|     -l list                                                          \n"
 "|     -a add (add/update for data source)                              \n"
 "|     -r remove                                                        \n"
+"|     -h display this help page and exit                               \n"
 "|                                                                      \n"
 "| Options                                                              \n"
 "|                                                                      \n"
 "|     -n <name>                                                        \n"
 "|     -t <attribute string>                                            \n"
+"|        if used for handling data source names the <attribute string> \n"
+"|        can contain ODBC options for establishing connections to MySQL\n"
+"|        Server. The full list of ODBC options can be obtained from    \n"
+"|        http://dev.mysql.com/doc/connector-odbc/en/                   \n"
 /* Note: These scope values line up with the SQLSetConfigMode constants */
-"|     -c0 both                                                         \n"
-"|     -c1 user data source                                             \n"
-"|     -c2 system data source (default)                                 \n"
+"|     -c0 add as both a user and a system data source                  \n"
+"|     -c1 add as a user data source                                    \n"
+"|     -c2 add as a system data source (default)                        \n"
 "|                                                                      \n"
 "| Examples                                                             \n"
 "|                                                                      \n"
 "|    List drivers                                                      \n"
-"|        -d -l                                                         \n"
+"|    shell> myodbc-installer -d -l                                     \n"
 "|                                                                      \n"
-"|    Register a driver (UNIX example)                                  \n"
-"|        -d -a -n \"MySQL ODBC "MYODBC_STRSERIES" Driver\" \\                         \n"
-"|              -t \"DRIVER=/usr/lib/myodbc5"MYODBC_STRTYPE_SUFFIX".so;SETUP=/usr/lib/myodbc5S.so\"\n"
+#ifndef _WIN32
+"|    Register a Unicode driver (UNIX example)                          \n"
+"|    shell> myodbc-installer -d -a -n \"MySQL ODBC "MYODBC_STRSERIES" Unicode Driver\" \\ \n"
+"|              -t \"DRIVER=/path/to/driver/libmyodbc5w.so;SETUP=/path/to/gui/myodbc5S.so\"\n"
 "|                                                                      \n"
-"|    Register a driver (Windows example)                               \n"
-"|        -d -a -n \"MySQL ODBC "MYODBC_STRSERIES" Driver\" \\                         \n"
-"|              -t \"DRIVER=myodbc5"MYODBC_STRTYPE_SUFFIX".dll;SETUP=myodbc5S.dll\"            \n"
+"|      Note                                                            \n"
+"|         * The /path/to/driver is /usr/lib for 32-bit systems and     \n"
+"|           some 64-bit systems, and /usr/lib64 for most 64-bit systems\n"
 "|                                                                      \n"
-"|    Add a new data source name                                        \n"
-"|        -s -a -c2 -n \"test\" \\                                      \n"
-"|              -t \"DRIVER=MySQL ODBC "MYODBC_STRSERIES" Driver;SERVER=localhost;DATABASE=test;UID=myid;PWD=mypwd\"\n"
+"|         * driver_name is libmyodbc5a.so for the ANSI version and     \n"
+"|           libmyodbc5w.so for the Unicode version of MySQL ODBC Driver\n"
+"|                                                                      \n"
+"|         * The SETUP parameter is optional; it provides location of   \n"
+"|           the GUI module (libmyodbc5S.so) for DSN setup, which       \n"
+"|           is not supported on Solaris and Mac OSX systems            \n"
+"|                                                                      \n"
+#else
+"|    Register a Unicode driver (Windows example)                       \n"
+"|    shell> myodbc-installer -d -a -n \"MySQL ODBC "MYODBC_STRSERIES" Unicode Driver\" \\ \n"
+"|              -t \"DRIVER=myodbc5w.dll;SETUP=myodbc5S.dll\"\n"
+"|                                                                      \n"
+"|      Note                                                            \n"
+"|         * driver_name is myodbc5a.dll for the ANSI version and       \n"
+"|           myodbc5w.dll for the Unicode version of MySQL ODBC Driver  \n"
+"|                                                                      \n"
+#endif
+"|    Add a new system data source name for Unicode driver              \n"
+"|    shell> myodbc-installer -s -a -c2 -n \"test\" \\                  \n"
+"|              -t \"DRIVER=MySQL ODBC "MYODBC_STRSERIES" Unicode Driver;SERVER=localhost;DATABASE=test;UID=myid;PWD=mypwd\"\n"
 "|                                                                      \n"
 "|    List data source name attributes for 'test'                       \n"
-"|        -s -l -c2 -n \"test\"                                         \n"
+"|    shell> myodbc-installer -s -l -c2 -n \"test\"                    \n"
 "+---                                                                   \n";
 
 /* command line args */
@@ -114,6 +143,7 @@ const char *usage =
 #define ACTION_LIST 'l'
 #define ACTION_ADD 'a'
 #define ACTION_REMOVE 'r'
+#define ACTION_HELP 'h'
 
 #define OPT_NAME 'n'
 #define OPT_ATTR 't'
@@ -146,9 +176,9 @@ void action_usage()
 }
 
 
-void main_usage()
+void main_usage(FILE *out_file)
 {
-  fprintf(stderr, usage);
+  fprintf(out_file, usage);
 }
 
 
@@ -696,8 +726,18 @@ int main(int argc, char **argv)
   /* minimum number of args to do anything useful */
   if (argc < 3)
   {
+    if (argc == 2)
+    {
+      arg= argv[1]; /* check for help option */
+      if (*arg == '-' && *(arg + 1) == ACTION_HELP)
+      {
+        main_usage(stdout);
+        return 1;
+      }
+    }
+
     fprintf(stderr, "[ERROR] Not enough arguments given\n");
-    main_usage();
+    main_usage(stderr);
     return 1;
   }
 
@@ -763,9 +803,9 @@ int main(int argc, char **argv)
         return 1;
       }
       break;
-    case 'h':
+    case ACTION_HELP:
       /* print usage if -h is given anywhere */
-      main_usage();
+      main_usage(stdout);
       return 1;
     default:
       fprintf(stderr, "[ERROR] Invalid command line option: %s\n", arg);
