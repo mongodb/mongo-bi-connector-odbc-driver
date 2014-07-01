@@ -3,6 +3,7 @@
   Functionality added or changed:
   * Add DFLT_BIGINT_BIND_STR option to Connector/ODBC GUI (Windows and Linux)
     (WL#7579)
+  * Keywords specific to MySQL server 5.7 (WL#7992)
 
   Bugs fixed:
   * Memory leak using 5.2.6 ODBC Connector (Bug 17653461/70662)
