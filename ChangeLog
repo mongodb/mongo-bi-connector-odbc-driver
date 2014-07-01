@@ -1,3 +1,12 @@
+5.3.5
+
+  Functionality added or changed:
+  * Keywords specific to MySQL server 5.7 (WL#7992)
+
+  Bugs fixed:
+
+----
+
 5.3.4
 
   Functionality added or changed:
