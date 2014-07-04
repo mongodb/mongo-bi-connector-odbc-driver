@@ -341,6 +341,8 @@ MY_LIMIT_CLAUSE find_position4limit(CHARSET_INFO* cs, char *query,
 BOOL myodbc_isspace(CHARSET_INFO* cs, const char * begin, const char *end);
 BOOL got_out_parameters(STMT *stmt);
 const char get_identifier_quote(STMT *stmt);
+SQLULEN get_query_timeout(STMT *stmt);
+SQLRETURN set_query_timeout(STMT *stmt, SQLULEN new_value);
 int get_session_variable(STMT *stmt, const char *var, char *result);
 
 /* handle.c*/
