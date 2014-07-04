@@ -332,6 +332,7 @@ typedef struct stmt_options
   SQLUINTEGER      cursor_type;
   SQLUINTEGER      simulateCursor;
   SQLULEN          max_length, max_rows;
+  SQLULEN          query_timeout;
   SQLUSMALLINT    *rowStatusPtr_ex; /* set by SQLExtendedFetch */
   my_bool         retrieve_data;
   SQLUINTEGER     bookmarks;

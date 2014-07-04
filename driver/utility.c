@@ -3926,6 +3926,65 @@ int get_session_variable(STMT *stmt, const char *var, char *result)
 }
 
 
+/**
+  Sets the value of @@max_statement_time
+
+  @param[in]  stmt        stmt handler
+  @param[in]  new_value   Value to set @@max_statement_time.
+
+  Returns new_value if operation was successful, -1 otherwise
+ */
+SQLRETURN set_query_timeout(STMT *stmt, SQLULEN new_value)
+{
+  char query[44];
+  SQLRETURN rc= SQL_SUCCESS;
+
+  if (new_value == stmt->stmt_options.query_timeout ||
+      !is_minimum_version(stmt->dbc->mysql.server_version, "5.7.4"))
+  {
+    /* Do nothing if setting same timeout or MySQL server older than 5.7.4 */
+    return SQL_SUCCESS;
+  }
+
+  if (new_value > 0)
+  {
+    unsigned long long msec_value= (unsigned long long)new_value * 1000;
+    sprintf(query, "set @@max_statement_time=%llu", msec_value);
+  }
+  else
+  {
+    strcpy(query, "set @@max_statement_time=DEFAULT");
+    new_value= 0;
+  }
+
+  if (SQL_SUCCEEDED(rc= odbc_stmt(stmt->dbc, query)))
+  {
+    stmt->stmt_options.query_timeout= new_value;
+  }
+
+  return rc;
+}
+
+
+SQLULEN get_query_timeout(STMT *stmt)
+{
+  SQLULEN query_timeout= SQL_QUERY_TIMEOUT_DEFAULT; /* 0 */
+  
+  if (is_minimum_version(stmt->dbc->mysql.server_version, "5.7.4"))
+  {
+    /* Be cautious with very long values even if they don't make sense */
+    char query_timeout_char[32]= {0};
+    uint length= get_session_variable(stmt, "MAX_STATEMENT_TIME", 
+                                      (char*)query_timeout_char);
+    /* Terminate the string just in case */
+    query_timeout_char[length]= 0;
+    /* convert */
+    query_timeout= (SQLULEN)(atol(query_timeout_char) / 1000);
+  }
+  return query_timeout;
+}
+
+
 const char get_identifier_quote(STMT *stmt)
 {
   const char tick= '`', quote= '"', empty= ' ';

@@ -473,7 +473,69 @@ DECLARE_TEST(t_getkeywordinfo)
 }
 
 
+/* 
+  WL 7991 Implement SQL_ATTR_QUERY_TIMEOUT statement attribute 
+
+  TODO: Fix bug 19157465 ODBC Driver returns HY000 SQL status 
+        instead of HYT00 on query timeout
+*/
+DECLARE_TEST(t_query_timeout)
+{
+  if (mysql_min_version(hdbc, "5.7.4", 5))
+  {
+    SQLULEN q_timeout1= 10;
+    time_t t1, t2;
+    SQLCHAR *large_buf;
+    SQLCHAR iquery[1024]= {0};
+    int i= 0;
+
+    ok_sql(hstmt, "DROP TABLE if exists t_query_timeout1");
+    ok_sql(hstmt, "CREATE TABLE t_query_timeout1(c11 varchar(512), c12 varchar(512), c13 varchar(512))");
+
+    /* 3Mb should be enough */
+    large_buf=gc_alloc(3000000);
+
+    large_buf[0]= 0;
+    strcpy(large_buf, "INSERT INTO t_query_timeout1 VALUES ('a', 'b', 'c')");
+
+    for (i= 1; i < 200; i++)
+    {
+      sprintf(iquery, ",('col 1 tab 1 val %d', 'col 2 tab 1 val %d', 'col 3 tab 1 val %d')", i, i, i);
+      strcat(large_buf, iquery);
+    }
+
+    ok_stmt(hstmt, SQLExecDirect(hstmt, large_buf, SQL_NTS));
+
+    ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_QUERY_TIMEOUT, (SQLPOINTER) &q_timeout1,
+                                  sizeof(SQLULEN), NULL));
+    is_num(q_timeout1, SQL_QUERY_TIMEOUT_DEFAULT);
+    ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_QUERY_TIMEOUT, (SQLPOINTER)2, 0));
+
+    ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_QUERY_TIMEOUT, (SQLPOINTER) &q_timeout1,
+                                  sizeof(SQLULEN), NULL));
+    is_num(q_timeout1, 2);
+
+    t1= time(NULL);
+
+    expect_stmt(hstmt, SQLExecDirect(hstmt, "SELECT t1.c11 FROM t_query_timeout1 t1, t_query_timeout1 t2, t_query_timeout1 t3, t_query_timeout1 t4, t_query_timeout1 t5 WHERE (substring(t2.c13, -3) IN (select substring(concat(tt5.c11,tt4.c13,tt3.c11,tt2.c12), instr(tt5.c12, 'val '), 3) FROM t_query_timeout1 tt5, t_query_timeout1 tt4, t_query_timeout1 tt3, t_query_timeout1 tt2)) LIMIT 100", SQL_NTS),
+                                            SQL_ERROR);
+    t2= time(NULL);
+
+    /* We check only for SQL_ERROR and SQLSTATE */
+    is(check_sqlstate(hstmt, "HY000") == OK);
+
+    ok_sql(hstmt, "DROP TABLE if exists t_query_timeout1");
+
+    /* Just in case there is a small delay in the network or somewhere else */
+    is(t2 - t1 < 3);
+  }
+  return OK;
+}
+
+
 BEGIN_TESTS
+  /* Query timeout should go first */
+  ADD_TEST(t_query_timeout)
   ADD_TEST(sqlgetinfo)
   ADD_TEST(t_gettypeinfo)
   ADD_TEST(t_stmt_attr_status)

@@ -133,6 +133,13 @@ static SQLRETURN set_constmt_attr(SQLSMALLINT  HandleType,
           break;
 
         case SQL_ATTR_QUERY_TIMEOUT:
+            /* Do something only if the handle is STMT */
+            if (HandleType == SQL_HANDLE_STMT)
+            {
+              return set_query_timeout((STMT*)Handle, (SQLULEN)ValuePtr);
+            }
+            break;
+
         case SQL_ATTR_KEYSET_SIZE:
         case SQL_ATTR_CONCURRENCY:
         case SQL_ATTR_NOSCAN:
@@ -184,7 +191,16 @@ get_constmt_attr(SQLSMALLINT  HandleType,
             break;
 
         case SQL_ATTR_QUERY_TIMEOUT:
-            *((SQLUINTEGER *) ValuePtr)= SQL_QUERY_TIMEOUT_DEFAULT;
+            /* Do something only if the handle is STMT */
+            if (HandleType == SQL_HANDLE_STMT)
+            {
+              /* Check if the query timeout was requested before */
+              if (options->query_timeout == (SQLULEN)-1)
+              {
+                options->query_timeout= get_query_timeout((STMT*)Handle);
+              }
+              *((SQLULEN *) ValuePtr)= options->query_timeout;
+            }
             break;
 
         case SQL_ATTR_RETRIEVE_DATA:

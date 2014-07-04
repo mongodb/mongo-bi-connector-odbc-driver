@@ -242,6 +242,12 @@ SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC *phdbc)
     dbc->commit_flag= 0;
     dbc->stmt_options.max_rows= dbc->stmt_options.max_length= 0L;
     dbc->stmt_options.cursor_type= SQL_CURSOR_FORWARD_ONLY;  /* ODBC default */
+    /* 
+      Query timeout is unknown, assign with the first request in 
+      get_constmt_attr. It might never be needed, so we are not getting it
+      at the connect stage
+    */
+    dbc->stmt_options.query_timeout= (SQLULEN)-1;
     dbc->login_timeout= 0;
     dbc->last_query_time= (time_t) time((time_t*) 0);
     dbc->txn_isolation= DEFAULT_TXN_ISOLATION;

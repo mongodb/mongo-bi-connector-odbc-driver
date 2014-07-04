@@ -2,6 +2,7 @@
 
   Functionality added or changed:
   * Keywords specific to MySQL server 5.7 (WL#7992)
+  * Implement SQL_ATTR_QUERY_TIMEOUT statement attribute (WL#7991)
 
   Bugs fixed:
 
