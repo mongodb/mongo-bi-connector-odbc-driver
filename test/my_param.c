@@ -1319,8 +1319,7 @@ DECLARE_TEST(t_longtextoutparam)
 
 /* 
   Bug# 16613308/53891 ODBC driver not parsing comments correctly
-  TODO: fix for NO_SSPS=1
- */
+*/
 DECLARE_TEST(t_bug53891)
 {
   int c1= 2;
@@ -1378,6 +1377,24 @@ DECLARE_TEST(t_bug53891)
   ok_stmt(hstmt1, SQLExecute(hstmt1));
   ok_stmt(hstmt1, SQLFetch(hstmt1));
   is_num(my_fetch_int(hstmt1, 1), c1);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  /* Try a simple query without parameters */
+  ok_stmt(hstmt1, SQLPrepare(hstmt1, 
+                             "SELECT 1 -- a question mark ? must be ignored " _MY_NEWLINE
+                             " + 1", SQL_NTS));
+  ok_stmt(hstmt1, SQLExecute(hstmt1));
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  is_num(my_fetch_int(hstmt1, 1), 2);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  /* Try a simple query without parameters */
+  ok_stmt(hstmt1, SQLPrepare(hstmt1, 
+                             "SELECT 1 # a question mark ? must be ignored " _MY_NEWLINE
+                             " + 2", SQL_NTS));
+  ok_stmt(hstmt1, SQLExecute(hstmt1));
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  is_num(my_fetch_int(hstmt1, 1), 3);
 
   free_basic_handles(&henv1, &hdbc1, &hstmt1);
   return OK;

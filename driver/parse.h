@@ -81,6 +81,12 @@ typedef struct syntax_markers
   const MY_STRING *odbc_escape_open;
   const MY_STRING *odbc_escape_close;
   const MY_STRING *param_marker;
+  const MY_STRING hash_comment;
+  const MY_STRING dash_comment;
+  const MY_STRING c_style_open_comment;
+  const MY_STRING c_style_close_comment;
+  const MY_STRING c_var_open_comment;
+  const MY_STRING new_line_end;
 
   struct my_keywords
   {
@@ -129,6 +135,9 @@ typedef struct parser
   int               ctype;
   const MY_STRING   *quote;  /* If quote was open - pointer to the quote char */
   MY_PARSED_QUERY   *query;
+  BOOL hash_comment;      /* Comment starts with "#" and end with end of line */
+  BOOL dash_comment;      /* Comment starts with "-- " and end with end of line  */
+  BOOL c_style_comment;   /* C style comment */
 
   const MY_SYNTAX_MARKERS *syntax;
 } MY_PARSER;

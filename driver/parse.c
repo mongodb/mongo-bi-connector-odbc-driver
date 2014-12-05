@@ -81,6 +81,16 @@ static const MY_SYNTAX_MARKERS ansi_syntax_markers= {/*quote*/
                                               /*odbc close*/  &odbc_close,
                                               /*param marker*/&param_marker,
                                               /*keyword*/
+                                              {"#", 1, 1}, /* Comment hash */
+                                              {"-- ", 3, 3}, /* Comment double dash */
+                                              {"/*", 2, 2},  /* C style comment start */
+                                              {"*/", 2, 2}, /* C style comment end  */
+                                              {"/*!", 3, 3}, /* Special not a comment syntax */
+#ifdef _WIN32
+                                              {"\r\n", 2, 2},
+#else
+                                              {"\n", 1, 1},
+#endif
                                               {
                                                 &select_, &insert, &update,
                                                 &call, &show, &use, &create,
@@ -540,6 +550,23 @@ BOOL skip_spaces(MY_PARSER *parser)
 }
 
 
+BOOL skip_comment(MY_PARSER *parser)
+{
+  while(END_NOT_REACHED(parser) && 
+        ((parser->hash_comment && 
+            !compare(parser, &parser->syntax->new_line_end)) ||  
+          (parser->dash_comment && 
+            !compare(parser, &parser->syntax->new_line_end)) ||
+          (parser->c_style_comment &&  
+            !compare(parser, &parser->syntax->c_style_close_comment))))
+  {
+    step_char(parser);
+  }
+
+  return !END_NOT_REACHED(parser);
+}
+
+
 my_bool add_token(MY_PARSER *parser)
 {
   if (END_NOT_REACHED(parser))
@@ -576,6 +603,38 @@ const MY_STRING * is_quote(MY_PARSER *parser)
 
   return NULL;
 }
+
+
+BOOL is_comment(MY_PARSER *parser)
+{
+  parser->hash_comment= FALSE;
+  parser->dash_comment= FALSE;
+  parser->c_style_comment= FALSE;
+
+  if (compare(parser, &parser->syntax->hash_comment))
+  {
+    parser->hash_comment= TRUE;
+    return TRUE;
+  }
+  else if (compare(parser, &parser->syntax->dash_comment))
+  {
+    parser->dash_comment= TRUE;
+    return TRUE;
+  }
+  /* C style comment variant which is consided not as comment */
+  else if (compare(parser, &parser->syntax->c_var_open_comment))
+  {
+    return FALSE;
+  }
+  else if (compare(parser, &parser->syntax->c_style_open_comment))
+  {
+    parser->c_style_comment= TRUE;
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
 
 /*static?*/
 BOOL is_closing_quote(MY_PARSER *parser)
@@ -741,6 +800,11 @@ BOOL tokenize(MY_PARSER *parser)
         {
           return TRUE;
         }
+      }
+      else if (is_comment(parser))
+      {
+        skip_comment(parser);
+        continue;
       }
       else if (is_param_marker(parser))
       {

@@ -131,6 +131,12 @@ const char * wstr4output(const wchar_t *wstr)
 #define MYSQL_NAME_LEN 64
 #define MAX_MEM_BLOCK_ELEMENTS 100
 
+#ifdef __WIN__
+#define _MY_NEWLINE "\r\n"
+#else
+#define _MY_NEWLINE "\n"
+#endif
+
 SQLCHAR *mydriver= (SQLCHAR *)"{MySQL ODBC 5.3 Driver}";
 SQLCHAR *mydsn= (SQLCHAR *)"test";
 SQLCHAR *myuid= (SQLCHAR *)"root";
