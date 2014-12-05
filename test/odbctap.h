@@ -67,7 +67,7 @@ typedef unsigned short UTF16;
 typedef unsigned char UTF8;
 
 #include "../util/unicode_transcode.c"
-
+#include "mysql_version.h"
 
 void printMessage(const char *fmt, ...)
 {
@@ -128,9 +128,14 @@ int      myoption= 0, myport= 0;
 SQLCHAR *my_str_options= (SQLCHAR *)""; /* String for additional connection options */
 SQLCHAR *myserver= (SQLCHAR *)"localhost";
 SQLCHAR *mydb= (SQLCHAR *)"test";
+SQLCHAR *myauth= NULL;
+SQLCHAR *myplugindir= NULL;
+
 SQLCHAR *test_db= (SQLCHAR *)"client_odbc_test";
 /* Suffix is useful if a testsuite is run more than once */
 const SQLCHAR *testname_suffix="";
+
+int      init_auth_plugin= 0;
 
 #ifndef OK
 # define OK 0
@@ -272,6 +277,10 @@ int main(int argc, char **argv) \
     mysock= (SQLCHAR *)getenv("TEST_SOCKET"); \
   if (getenv("TEST_PORT")) \
     myport= atoi(getenv("TEST_PORT")); \
+  if (getenv("TEST_DEFAULTAUTH")) \
+    myauth=  (SQLCHAR *)getenv("TEST_DEFAULTAUTH"); \
+  if (getenv("TEST_PLUGINDIR")) \
+    myplugindir=  (SQLCHAR *)getenv("TEST_PLUGINDIR"); \
 \
   if (argc > 1) \
     mydsn= (SQLCHAR *)argv[1]; \
@@ -1192,6 +1201,23 @@ int get_connection(SQLHDBC *hdbc, const SQLCHAR *dsn, const SQLCHAR *uid,
     strcat(connIn, ";");
     strcat(connIn, options);
   }
+
+#if MYSQL_VERSION_ID >= 50507
+  if (init_auth_plugin)
+  {
+    init_auth_plugin= 0; /* reset the plugin init flag */
+    if (myauth && myauth[0])
+    {
+      strcat((char *)connIn, ";DEFAULTAUTH=");
+      strcat((char *)connIn, (char *)myauth);
+    }
+    if (myplugindir && myplugindir[0])
+    {
+      strcat((char *)connIn, ";PLUGINDIR=");
+      strcat((char *)connIn, (char *)myplugindir);
+    }
+  }
+#endif
 
   rc= SQLDriverConnect(*hdbc, NULL, connIn, SQL_NTS, connOut,
                        MAX_NAME_LEN, &len, SQL_DRIVER_NOPROMPT);

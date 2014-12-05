@@ -133,21 +133,25 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,42,105,10
     CONTROL         "Don't prompt when connecting",IDC_CHECK_dont_prompt_upon_connect,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,57,113,10
-    CONTROL         "Allow multiple statements",IDC_CHECK_allow_multiple_statements,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,72,97,10
-    CONTROL         "Interactive Client",IDC_CHECK_clientinteractive,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,87,79,10
-    RTEXT           "Character Set:",IDC_STATIC,12,102,67,8
-    COMBOBOX        IDC_EDIT_charset,90,102,97,8,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Initial Statement:",IDC_STATIC,12,117,67,8
-    EDITTEXT        IDC_EDIT_initstmt,90,117,97,12,ES_AUTOHSCROLL
+    RTEXT           "Character Set:",IDC_STATIC,12,72,67,8
+    COMBOBOX        IDC_EDIT_charset,90,72,97,8,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Initial Statement:",IDC_STATIC,12,87,67,8
+    EDITTEXT        IDC_EDIT_initstmt,90,87,97,12,ES_AUTOHSCROLL
+    RTEXT           "Plugin Directory:",IDC_STATIC,12,102,67,8
+    EDITTEXT        IDC_EDIT_plugin_dir,90,102,97,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_CHOOSER_plugin_dir,192,102,12,12,BS_CENTER
+    RTEXT           "Authentication Library:",IDC_STATIC,12,117,67,8
+    EDITTEXT        IDC_EDIT_default_auth,90,117,97,12,ES_AUTOHSCROLL
 
 // Second Column
+    CONTROL         "Allow multiple statements",IDC_CHECK_allow_multiple_statements,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,12,97,10
+    CONTROL         "Interactive Client",IDC_CHECK_clientinteractive,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,27,79,10
     CONTROL         "Can Handle Expired Password",IDC_CHECK_can_handle_exp_pwd
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,12,113,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,42,113,10
     CONTROL         "Enable Cleartext Authentication",IDC_CHECK_enable_cleartext_plugin
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,27,113,10
-
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,57,113,10
 END
 
 IDD_TAB2 DIALOGEX 0, 0, 209, 151

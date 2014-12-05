@@ -4,6 +4,7 @@
   Functionality added or changed:
   * Add DFLT_BIGINT_BIND_STR option to Connector/ODBC GUI (Windows and Linux)
     (WL#7579)
+  * Added DEFAULTAUTH and PLUGINDIR options in connection parameters.
 
 
   Bugs fixed:
