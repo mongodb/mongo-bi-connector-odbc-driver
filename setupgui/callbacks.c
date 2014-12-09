@@ -338,6 +338,8 @@ void syncTabsData(HWND hwnd, DataSource *params)
 
   GET_COMBO_TAB(CONNECTION_TAB, charset);
   GET_STRING_TAB(CONNECTION_TAB, initstmt);
+  GET_STRING_TAB(CONNECTION_TAB, plugin_dir);
+  GET_STRING_TAB(CONNECTION_TAB, default_auth);
 
   /* 2 - Metadata*/
   GET_BOOL_TAB(METADATA_TAB, change_bigint_columns_to_int);
@@ -411,6 +413,8 @@ void syncTabs(HWND hwnd, DataSource *params)
   {
     SET_COMBO_TAB(CONNECTION_TAB, charset);
     SET_STRING_TAB(CONNECTION_TAB,initstmt);
+    SET_STRING_TAB(CONNECTION_TAB,plugin_dir);
+    SET_STRING_TAB(CONNECTION_TAB,default_auth);
   }
 
   /* 2 - Metadata*/

@@ -84,6 +84,8 @@ typedef struct {
   SQLWCHAR *sslcipher;
   SQLWCHAR *rsakey;
   SQLWCHAR *savefile;
+  SQLWCHAR *plugin_dir;
+  SQLWCHAR *default_auth;
 
   unsigned int port;
   unsigned int readtimeout;
@@ -107,6 +109,8 @@ typedef struct {
   SQLCHAR *sslcipher8;
   SQLCHAR *rsakey8;
   SQLWCHAR *savefile8;
+  SQLCHAR *plugin_dir8;
+  SQLCHAR *default_auth8;
 
   /*  */
   BOOL return_matching_rows;

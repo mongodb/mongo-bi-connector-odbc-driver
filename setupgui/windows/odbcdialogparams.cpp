@@ -387,7 +387,7 @@ void btnDetails_Click (HWND hwnd)
 
 		syncTabs(hwnd, pParams);
 	}
-	MoveWindow( hwnd, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top + 280*mod, TRUE );
+	MoveWindow( hwnd, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top + 310*mod, TRUE );
 }
 
 
@@ -616,6 +616,8 @@ void FormMain_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
       choosePath(hwnd, IDC_EDIT_sslcapath); break;
     case IDC_RSAKEYCHOOSER:
       chooseFile(hwnd, IDC_EDIT_rsakey); break;
+    case IDC_CHOOSER_plugin_dir:
+      choosePath(hwnd, IDC_EDIT_plugin_dir); break;
     case IDC_RADIO_tcp:
     case IDC_RADIO_pipe:
       SwitchTcpOrPipe(hwnd, !!Button_GetCheck(GetDlgItem(hwnd, IDC_RADIO_pipe)));

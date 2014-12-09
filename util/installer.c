@@ -169,6 +169,10 @@ static SQLWCHAR W_CAN_HANDLE_EXP_PWD[]=
 static SQLWCHAR W_ENABLE_CLEARTEXT_PLUGIN[]=
   {'E','N','A','B','L','E','_','C','L','E','A', 'R', 'T', 'E', 'X', 'T', '_','P','L','U','G','I','N',0};
 static SQLWCHAR W_SAVEFILE[]=  {'S','A','V','E','F','I','L','E',0};
+static SQLWCHAR W_PLUGIN_DIR[]=
+  {'P','L','U','G','I','N','_','D','I','R',0};
+static SQLWCHAR W_DEFAULT_AUTH[]=
+  {'D','E','F','A','U','L','T','_','A','U','T', 'H',0};
 
 /* DS_PARAM */
 /* externally used strings */
@@ -199,7 +203,7 @@ SQLWCHAR *dsnparams[]= {W_DSN, W_DRIVER, W_DESCRIPTION, W_SERVER,
                         W_NO_BINARY_RESULT, W_DFLT_BIGINT_BIND_STR,
                         W_CLIENT_INTERACTIVE, W_NO_I_S, W_PREFETCH, W_NO_SSPS,
                         W_CAN_HANDLE_EXP_PWD, W_ENABLE_CLEARTEXT_PLUGIN,
-                        W_SAVEFILE, W_RSAKEY};
+                        W_SAVEFILE, W_RSAKEY, W_PLUGIN_DIR, W_DEFAULT_AUTH};
 static const
 int dsnparamcnt= sizeof(dsnparams) / sizeof(SQLWCHAR *);
 /* DS_PARAM */
@@ -649,6 +653,8 @@ void ds_delete(DataSource *ds)
   x_free(ds->sslcipher);
   x_free(ds->rsakey);
   x_free(ds->savefile);
+  x_free(ds->plugin_dir);
+  x_free(ds->default_auth);
   
   x_free(ds->name8);
   x_free(ds->driver8);
@@ -667,6 +673,8 @@ void ds_delete(DataSource *ds)
   x_free(ds->sslcipher8);
   x_free(ds->rsakey8);
   x_free(ds->savefile8);
+  x_free(ds->plugin_dir8);
+  x_free(ds->default_auth8);
 
   x_free(ds);
 }
@@ -843,6 +851,11 @@ void ds_map_param(DataSource *ds, const SQLWCHAR *param,
     *booldest= &ds->can_handle_exp_pwd;
   else if (!sqlwcharcasecmp(W_ENABLE_CLEARTEXT_PLUGIN, param))
     *booldest= &ds->enable_cleartext_plugin;
+  else if (!sqlwcharcasecmp(W_PLUGIN_DIR, param))
+    *strdest= &ds->plugin_dir;
+  else if (!sqlwcharcasecmp(W_DEFAULT_AUTH, param))
+    *strdest= &ds->default_auth;
+
 
   /* DS_PARAM */
 }
@@ -1328,6 +1341,8 @@ int ds_add(DataSource *ds)
   if (ds_add_intprop(ds->name, W_NO_SSPS, ds->no_ssps)) goto error;
   if (ds_add_intprop(ds->name, W_CAN_HANDLE_EXP_PWD, ds->can_handle_exp_pwd)) goto error;
   if (ds_add_intprop(ds->name, W_ENABLE_CLEARTEXT_PLUGIN, ds->enable_cleartext_plugin)) goto error;
+  if (ds_add_strprop(ds->name, W_PLUGIN_DIR  , ds->plugin_dir  )) goto error;
+  if (ds_add_strprop(ds->name, W_DEFAULT_AUTH, ds->default_auth)) goto error;
   /* DS_PARAM */
 
   rc= 0;

@@ -3,6 +3,7 @@
   Functionality added or changed:
   * Keywords specific to MySQL server 5.7 (WL#7992)
   * Implement SQL_ATTR_QUERY_TIMEOUT statement attribute (WL#7991)
+  * Added DEFAULTAUTH and PLUGINDIR options in connection parameters.
 
   Bugs fixed:
   * ODBC Driver not parsing comments correctly (Bug# 16613308/53891)
@@ -37,7 +38,6 @@
   * Support of ODBCINSTGetProperties in MyODBC Driver (WL #7577)
   * Add DFLT_BIGINT_BIND_STR option to Connector/ODBC GUI (Windows and Linux)
     (WL#7579)
-  * Accessibility features in Connector/ODBC Linux GUI (WL #7635)
 
   Bugs fixed:
   * Connect crash if the catalog name given to SQLSetConnectAttr is invalid
