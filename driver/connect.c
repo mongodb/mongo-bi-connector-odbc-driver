@@ -211,6 +211,23 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
     mysql_options(mysql, MYSQL_OPT_WRITE_TIMEOUT,
                   (const char *) &ds->writetimeout);
 
+/*
+  Pluggable authentication was introduced in mysql 5.5.7
+*/
+#if MYSQL_VERSION_ID >= 50507
+  if (ds->plugin_dir)
+  {
+    mysql_options(mysql, MYSQL_PLUGIN_DIR,
+                  ds_get_utf8attr(ds->plugin_dir, &ds->plugin_dir8));
+  }
+
+  if (ds->default_auth)
+  {
+    mysql_options(mysql, MYSQL_DEFAULT_AUTH,
+                  ds_get_utf8attr(ds->default_auth, &ds->default_auth8));
+  }
+#endif
+
   /* set SSL parameters */
   mysql_ssl_set(mysql,
                 ds_get_utf8attr(ds->sslkey,    &ds->sslkey8),

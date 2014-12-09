@@ -5,6 +5,7 @@
     (WL#7579)
   * Keywords specific to MySQL server 5.7 (WL#7992)
   * Implement SQL_ATTR_QUERY_TIMEOUT statement attribute (WL#7991)
+  * Added DEFAULTAUTH and PLUGINDIR options in connection parameters.
 
   Bugs fixed:
   * Memory leak using 5.2.6 ODBC Connector (Bug 17653461/70662)

@@ -82,6 +82,8 @@ typedef struct {
   SQLWCHAR *sslca;
   SQLWCHAR *sslcapath;
   SQLWCHAR *sslcipher;
+  SQLWCHAR *plugin_dir;
+  SQLWCHAR *default_auth;
 
   unsigned int port;
   unsigned int readtimeout;
@@ -103,6 +105,8 @@ typedef struct {
   SQLCHAR *sslca8;
   SQLCHAR *sslcapath8;
   SQLCHAR *sslcipher8;
+  SQLCHAR *plugin_dir8;
+  SQLCHAR *default_auth8;
 
   /*  */
   BOOL return_matching_rows;

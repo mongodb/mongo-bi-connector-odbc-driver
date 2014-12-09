@@ -318,6 +318,8 @@ void syncTabsData(HWND hwnd, DataSource &params)
 
   getStrFieldData(&params.charset , CONNECTION_TAB, IDC_EDIT_charset);
   getStrFieldData(&params.initstmt, CONNECTION_TAB, IDC_EDIT_initstmt);
+  getStrFieldData(&params.plugin_dir, CONNECTION_TAB, IDC_EDIT_plugin_dir);
+  getStrFieldData(&params.default_auth, CONNECTION_TAB, IDC_EDIT_default_auth);
 
   /* 2 - Metadata*/
   GET_BOOL(METADATA_TAB, change_bigint_columns_to_int);
@@ -391,6 +393,8 @@ void syncTabs(HWND hwnd, DataSource &params)
     HWND charsetCtrl = GetDlgItem(tabHwndMisc,IDC_EDIT_charset);
     ComboBox_SetText(charsetCtrl, params.charset);
     Edit_SetText( GetDlgItem( tabHwndMisc, IDC_EDIT_initstmt), params.initstmt);
+    Edit_SetText( GetDlgItem( tabHwndMisc, IDC_EDIT_plugin_dir), params.plugin_dir);
+    Edit_SetText( GetDlgItem( tabHwndMisc, IDC_EDIT_default_auth), params.default_auth);
   }
 
   /* 2 - Metadata*/
@@ -520,7 +524,7 @@ void btnDetails_Click (HWND hwnd)
 
 		syncTabs(hwnd, *pParams);
 	}
-	MoveWindow( hwnd, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top + 280*mod, TRUE );
+	MoveWindow( hwnd, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top + 310*mod, TRUE );
 }
 
 
@@ -747,6 +751,8 @@ void FormMain_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
       chooseFile(hwnd, IDC_EDIT_sslca); break;
     case IDC_SSLCAPATHCHOOSER:
       choosePath(hwnd, IDC_EDIT_sslcapath); break;
+    case IDC_CHOOSER_plugin_dir:
+      choosePath(hwnd, IDC_EDIT_plugin_dir); break;
     case IDC_RADIO_tcp:
     case IDC_RADIO_pipe:
       SwitchTcpOrPipe(hwnd, !!Button_GetCheck(GetDlgItem(hwnd, IDC_RADIO_pipe)));
