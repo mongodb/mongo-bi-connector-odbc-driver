@@ -623,8 +623,8 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"visible\">True</property>\n" \
 "                        <property name=\"can_focus\">False</property>\n" \
 "                        <property name=\"border_width\">8</property>\n" \
-"                        <property name=\"n_rows\">2</property>\n" \
-"                        <property name=\"n_columns\">2</property>\n" \
+"                        <property name=\"n_rows\">4</property>\n" \
+"                        <property name=\"n_columns\">3</property>\n" \
 "                        <property name=\"column_spacing\">8</property>\n" \
 "                        <property name=\"row_spacing\">5</property>\n" \
 "                        <child>\n" \
@@ -705,6 +705,102 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                            <property name=\"right_attach\">2</property>\n" \
 "                          </packing>\n" \
 "                        </child>\n" \
+" "\
+"                        <child>\n" \
+"                          <object class=\"GtkLabel\" id=\"plugin_dirlbl\">\n" \
+"                            <property name=\"visible\">True</property>\n" \
+"                            <property name=\"can_focus\">False</property>\n" \
+"                            <property name=\"xalign\">1</property>\n" \
+"                            <property name=\"label\" translatable=\"yes\">Plugin Directory:</property>\n" \
+"                          </object>\n" \
+"                          <packing>\n" \
+"                            <property name=\"top_attach\">2</property>\n" \
+"                            <property name=\"bottom_attach\">3</property>\n" \
+"                            <property name=\"x_options\">GTK_FILL</property>\n" \
+"                            <property name=\"y_options\"></property>\n" \
+"                          </packing>\n" \
+"                        </child>\n" \
+"                        <child>\n" \
+"                          <object class=\"GtkEntry\" id=\"plugin_dir\">\n" \
+"                            <property name=\"visible\">True</property>\n" \
+"                            <property name=\"can_focus\">True</property>\n" \
+"                            <property name=\"invisible_char\">●</property>\n" \
+"                            <property name=\"invisible_char_set\">True</property>\n" \
+"                            <property name=\"primary_icon_activatable\">False</property>\n" \
+"                            <property name=\"secondary_icon_activatable\">False</property>\n" \
+"                            <property name=\"primary_icon_sensitive\">True</property>\n" \
+"                            <property name=\"secondary_icon_sensitive\">True</property>\n" \
+"                            <child internal-child=\"accessible\">\n" \
+"                              <object class=\"AtkObject\" id=\"plugin_diratkobject\">\n" \
+"                                <property name=\"AtkObject::accessible-name\" translatable=\"yes\">Plugin Directory</property>\n" \
+"                              </object>\n" \
+"                            </child>\n" \
+"                          </object>\n" \
+"                          <packing>\n" \
+"                            <property name=\"left_attach\">1</property>\n" \
+"                            <property name=\"right_attach\">2</property>\n" \
+"                            <property name=\"top_attach\">2</property>\n" \
+"                            <property name=\"bottom_attach\">3</property>\n" \
+"                            <property name=\"y_options\"></property>\n" \
+"                          </packing>\n" \
+"                        </child>\n" \
+"                        <child>\n" \
+"                          <object class=\"GtkButton\" id=\"plugindir_button\">\n" \
+"                            <property name=\"label\" translatable=\"yes\">...</property>\n" \
+"                            <property name=\"visible\">True</property>\n" \
+"                            <property name=\"can_focus\">True</property>\n" \
+"                            <property name=\"receives_default\">True</property>\n" \
+"                            <property name=\"use_action_appearance\">False</property>\n" \
+"                          </object>\n" \
+"                          <packing>\n" \
+"                            <property name=\"left_attach\">2</property>\n" \
+"                            <property name=\"right_attach\">3</property>\n" \
+"                            <property name=\"top_attach\">2</property>\n" \
+"                            <property name=\"bottom_attach\">3</property>\n" \
+"                            <property name=\"x_options\"></property>\n" \
+"                            <property name=\"y_options\"></property>\n" \
+"                          </packing>\n" \
+"                        </child>\n" \
+" "\
+"                        <child>\n" \
+"                          <object class=\"GtkLabel\" id=\"authlbl\">\n" \
+"                            <property name=\"visible\">True</property>\n" \
+"                            <property name=\"can_focus\">False</property>\n" \
+"                            <property name=\"xalign\">1</property>\n" \
+"                            <property name=\"label\" translatable=\"yes\">Default Authentication:</property>\n" \
+"                          </object>\n" \
+"                          <packing>\n" \
+"                            <property name=\"top_attach\">3</property>\n" \
+"                            <property name=\"bottom_attach\">4</property>\n" \
+"                            <property name=\"x_options\">GTK_FILL</property>\n" \
+"                            <property name=\"y_options\"></property>\n" \
+"                          </packing>\n" \
+"                        </child>\n" \
+"                        <child>\n" \
+"                          <object class=\"GtkEntry\" id=\"default_auth\">\n" \
+"                            <property name=\"visible\">True</property>\n" \
+"                            <property name=\"can_focus\">True</property>\n" \
+"                            <property name=\"invisible_char\">●</property>\n" \
+"                            <property name=\"invisible_char_set\">True</property>\n" \
+"                            <property name=\"primary_icon_activatable\">False</property>\n" \
+"                            <property name=\"secondary_icon_activatable\">False</property>\n" \
+"                            <property name=\"primary_icon_sensitive\">True</property>\n" \
+"                            <property name=\"secondary_icon_sensitive\">True</property>\n" \
+"                            <child internal-child=\"accessible\">\n" \
+"                              <object class=\"AtkObject\" id=\"default_authatkobject\">\n" \
+"                                <property name=\"AtkObject::accessible-name\" translatable=\"yes\">Plugin Directory</property>\n" \
+"                              </object>\n" \
+"                            </child>\n" \
+"                          </object>\n" \
+"                          <packing>\n" \
+"                            <property name=\"left_attach\">1</property>\n" \
+"                            <property name=\"right_attach\">2</property>\n" \
+"                            <property name=\"top_attach\">3</property>\n" \
+"                            <property name=\"bottom_attach\">4</property>\n" \
+"                            <property name=\"y_options\"></property>\n" \
+"                          </packing>\n" \
+"                        </child>\n" \
+" " \
 "                      </object>\n" \
 "                      <packing>\n" \
 "                        <property name=\"expand\">False</property>\n" \

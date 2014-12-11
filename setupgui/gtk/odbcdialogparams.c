@@ -633,6 +633,11 @@ int ShowOdbcParamsDialog(DataSource* params, HWND ParentWnd, BOOL isPrompt)
   g_signal_connect ((gpointer) dummy, "toggled",
                     G_CALLBACK (on_check_cursor_prefetch_toggled), NULL);
   
+
+  dummy= GTK_WIDGET (gtk_builder_get_object (builder, "plugindir_button"));
+  entry= GTK_ENTRY (gtk_builder_get_object (builder, "plugin_dir"));
+  g_signal_connect ((gpointer) dummy, "clicked",
+                    G_CALLBACK (on_ssl_folder_button_clicked), entry);
   
   gtk_builder_connect_signals(builder, NULL);
 
