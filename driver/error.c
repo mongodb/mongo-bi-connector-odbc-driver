@@ -570,10 +570,7 @@ MySQLGetDiagField(SQLSMALLINT handle_type, SQLHANDLE handle, SQLSMALLINT record,
   case SQL_DIAG_ROW_COUNT:
     if (handle_type != SQL_HANDLE_STMT)
       return SQL_ERROR;
-    if (!stmt->result)
-      *(SQLLEN *)num_value= 0;
-    else
-      *(SQLLEN *)num_value= (SQLLEN)stmt->affected_rows;
+    *(SQLLEN *)num_value= (SQLLEN)stmt->affected_rows;
     return SQL_SUCCESS;
 
   /* Record fields */

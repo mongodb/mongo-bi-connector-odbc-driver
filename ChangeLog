@@ -7,6 +7,8 @@
 
   Bugs fixed:
   * ODBC Driver not parsing comments correctly (Bug# 16613308/53891)
+  * Calling SQLGetDiagField with DIAGIDENTIFIER SQL_DIAG_ROW_COUNT always
+    returns 0 (Bug #11750296/40771)
 
 ----
 
@@ -134,7 +136,6 @@
   Functionality added or changed:
   * Support for File Data Sources. (WL #6583, Bug #11746219/24581)
   * Bookmark support added in myodbc (WL #7039)
-=======
   * Seg Fault in SQLForeignKeys() when column name contains special characters
     (Bug #18286118)
   * Add NULL handle checks in ODBC API functions (WL #7807)
