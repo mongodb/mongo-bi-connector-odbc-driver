@@ -62,6 +62,8 @@
   * Add NULL handle checks in ODBC API functions (WL #7807)
   * SQLRowCount() with NULL parameter results in Segmentation Fault
     (Bug #18531838)
+  * Calling SQLGetDiagField with DIAGIDENTIFIER SQL_DIAG_ROW_COUNT always
+    returns 0 (Bug #11750296/40771)
 
 ----
 5.2.6(25-Sep-2013)
