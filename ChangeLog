@@ -49,6 +49,8 @@
   * Valgrind: memory leak in SQLForeignKeys when NO_I_S=1 (Bug# 18286007)
   * Rename internal functions named as mysql_xxxx inside ODBC sources 
     (WL #7789)
+  * Calling SQLGetDiagField with DIAGIDENTIFIER SQL_DIAG_ROW_COUNT always
+    returns 0 (Bug #11750296/40771)
 
 ----
 

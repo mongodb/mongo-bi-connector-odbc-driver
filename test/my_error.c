@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -716,6 +716,25 @@ DECLARE_TEST(t_cleartext_password)
 }
 
 
+DECLARE_TEST(t_bug11750296)
+{
+  SQLINTEGER rowCount;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS bug11750296");
+  ok_sql(hstmt, "CREATE TABLE bug11750296(Col Integer)");
+  ok_sql(hstmt, "INSERT INTO bug11750296 VALUES(1),(2),(3)");
+
+  ok_stmt(hstmt, SQLGetDiagField(SQL_HANDLE_STMT, hstmt, 0,
+                                 SQL_DIAG_ROW_COUNT, &rowCount,
+                                 0, NULL));
+  is_num(rowCount, 3);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "DROP TABLE bug11750296");
+
+  return OK;
+}
+
+
 BEGIN_TESTS
 #ifndef NO_DRIVERMANAGER
   ADD_TEST(t_odbc2_error)
@@ -738,6 +757,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug14285620)
   ADD_TEST(t_passwordexpire)
   ADD_TEST(t_cleartext_password)
+  ADD_TEST(t_bug11750296)
 END_TESTS
 
 RUN_TESTS
