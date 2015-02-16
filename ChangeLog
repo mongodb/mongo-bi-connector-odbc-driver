@@ -9,6 +9,8 @@
   * ODBC Driver not parsing comments correctly (Bug# 16613308/53891)
   * Calling SQLGetDiagField with DIAGIDENTIFIER SQL_DIAG_ROW_COUNT always
     returns 0 (Bug #11750296/40771)
+  * ADO hangs when using MySQL ODBC 5.3 ANSI Driver with French characters
+    (Bug# 20526062)
 
 ----
 

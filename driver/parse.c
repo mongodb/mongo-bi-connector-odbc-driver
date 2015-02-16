@@ -695,7 +695,8 @@ my_bool add_parameter(MY_PARSER *parser)
 
 void step_char(MY_PARSER *parser)
 {
-  parser->pos+= parser->bytes_at_pos;
+  /* We must step forward at least one byte */
+  parser->pos+= parser->bytes_at_pos ? parser->bytes_at_pos : 1;
 
   if (END_NOT_REACHED(parser))
   {
