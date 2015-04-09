@@ -1,3 +1,13 @@
+5.3.5
+
+  Security Notes:
+  * Connector/ODBC 5.3.5 upgrades the linked OpenSSL library to
+    version 1.0.1m. Issues fixed in the new version are
+    described at
+    http://www.openssl.org/news/vulnerabilities.html.
+ 
+----
+
 5.3.4
 
   Functionality added or changed:
