@@ -1,10 +1,19 @@
 5.3.5
 
   Security Notes:
-  * Connector/ODBC 5.3.5 upgrades the linked OpenSSL library to
-    version 1.0.1m. Issues fixed in the new version are
-    described at
-    http://www.openssl.org/news/vulnerabilities.html.
+  * Connector/ODBC 5.3.5 Commercial upgrades the linked OpenSSL
+    library to version 1.0.1m which has been publicly reported
+    as not vulnerable to CVE-2015-0286
+    (http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2015-0286).
+
+    Since the only change in Connector/ODBC 5.3.5 is the inclusion
+    of OpenSSL libraries publicly reported as unaffected by
+    CVE-2015-0286, and since Oracle-produced MySQL Community
+    builds use YaSSL libraries which have been reported as not
+    affected by CVE-2015-0286, Oracle will not produce builds for
+    Connector/ODBC Community for version 5.3.5. This means the
+    Community edition of Connector/ODBC will skip version 5.3.5.
+    (Bug #20747740, CVE-2015-0286)
  
 ----
 
