@@ -55,7 +55,7 @@
 DESC *desc_alloc(STMT *stmt, SQLSMALLINT alloc_type,
                  desc_ref_type ref_type, desc_desc_type desc_type)
 {
-  DESC *desc= (DESC *)my_malloc(sizeof(DESC), MYF(MY_ZEROFILL));
+  DESC *desc= (DESC *)myodbc_malloc(sizeof(DESC), MYF(MY_ZEROFILL));
   if (!desc)
     return NULL;
   /*
@@ -63,13 +63,13 @@ DESC *desc_alloc(STMT *stmt, SQLSMALLINT alloc_type,
      but in desc_get_rec we manually get a pointer to it. This avoids
      having to call set_dynamic after modifying the DESCREC.
   */
-  if (my_init_dynamic_array(&desc->records, sizeof(DESCREC), 0, 0))
+  if (myodbc_init_dynamic_array(&desc->records, sizeof(DESCREC), 0, 0))
   {
     x_free((char *)desc);
     return NULL;
   }
 
-  if (my_init_dynamic_array(&desc->bookmark, sizeof(DESCREC), 0, 0))
+  if (myodbc_init_dynamic_array(&desc->bookmark, sizeof(DESCREC), 0, 0))
   {
     delete_dynamic(&desc->records);
     x_free((char *)desc);
@@ -995,7 +995,7 @@ SQLRETURN MySQLCopyDesc(SQLHDESC SourceDescHandle, SQLHDESC TargetDescHandle)
 
   /* copy the records */
   delete_dynamic(&dest->records);
-  if (my_init_dynamic_array(&dest->records, sizeof(DESCREC),
+  if (myodbc_init_dynamic_array(&dest->records, sizeof(DESCREC),
                             src->records.max_element,
                             src->records.alloc_increment))
   {

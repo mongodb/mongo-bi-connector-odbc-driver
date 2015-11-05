@@ -108,16 +108,16 @@ static MYSQL_RES *server_list_dbkeys(DBC *dbc,
     MYSQL *mysql= &dbc->mysql;
     char  buff[255], *to;
 
-    to= strmov(buff, "SHOW KEYS FROM `");
+    to= my_stpmov(buff, "SHOW KEYS FROM `");
     if (catalog_len)
     {
       to+= myodbc_escape_string(mysql, to, (ulong)(sizeof(buff) - (to - buff)),
                                 (char *)catalog, catalog_len, 1);
-      to= strmov(to, "`.`");
+      to= my_stpmov(to, "`.`");
     }
     to+= myodbc_escape_string(mysql, to, (ulong)(sizeof(buff) - (to - buff)),
                               (char *)table, table_len, 1);
-    to= strmov(to, "`");
+    to= my_stpmov(to, "`");
 
     MYLOG_DBC_QUERY(dbc, buff);
     if (mysql_query(mysql,buff))
@@ -200,19 +200,19 @@ server_list_dbcolumns(STMT *stmt,
 
     /* reget_current_catalog locks and release mutex, so locking
        here again */
-    pthread_mutex_lock(&dbc->lock);
+    myodbc_mutex_lock(&dbc->lock);
 
     strncpy(buff, szCatalog, cbCatalog);
     buff[cbCatalog]= '\0';
 
     if (mysql_select_db(mysql, buff))
     {
-      pthread_mutex_unlock(&dbc->lock);
+      myodbc_mutex_unlock(&dbc->lock);
       return NULL;
     }
   }
   else
-    pthread_mutex_lock(&dbc->lock);
+    myodbc_mutex_lock(&dbc->lock);
 
   strncpy(buff, szTable, cbTable);
   buff[cbTable]= '\0';
@@ -228,11 +228,11 @@ server_list_dbcolumns(STMT *stmt,
     {
       /* Well, probably have to return error here */
       mysql_free_result(result);
-      pthread_mutex_unlock(&dbc->lock);
+      myodbc_mutex_unlock(&dbc->lock);
       return NULL;
     }
   }
-  pthread_mutex_unlock(&dbc->lock);
+  myodbc_mutex_unlock(&dbc->lock);
 
   return result;
 }
@@ -272,22 +272,22 @@ columns_no_i_s(STMT * stmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
   }
 
   /* Get the list of tables that match szCatalog and szTable */
-  pthread_mutex_lock(&stmt->dbc->lock);
+  myodbc_mutex_lock(&stmt->dbc->lock);
   res= table_status(stmt, szCatalog, cbCatalog, szTable, cbTable, TRUE,
                     TRUE, TRUE);
 
   if (!res && mysql_errno(&stmt->dbc->mysql))
   {
     SQLRETURN rc= handle_connection_error(stmt);
-    pthread_mutex_unlock(&stmt->dbc->lock);
+    myodbc_mutex_unlock(&stmt->dbc->lock);
     return rc;
   }
   else if (!res)
   {
-    pthread_mutex_unlock(&stmt->dbc->lock);
+    myodbc_mutex_unlock(&stmt->dbc->lock);
     goto empty_set;
   }
-  pthread_mutex_unlock(&stmt->dbc->lock);
+  myodbc_mutex_unlock(&stmt->dbc->lock);
 
 #ifdef _WIN32
   if (GetModuleHandle("msaccess.exe") != NULL)
@@ -320,7 +320,7 @@ columns_no_i_s(STMT * stmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
 
     rows+= mysql_num_fields(table_res);
 
-    stmt->result_array= (char **)my_realloc((char *)stmt->result_array,
+    stmt->result_array= (char **)myodbc_realloc((char *)stmt->result_array,
                                             sizeof(char *) *
                                             SQLCOLUMNS_FIELDS * rows,
                                             MYF(MY_ALLOW_ZERO_PTR));
@@ -539,12 +539,12 @@ static MYSQL_RES *table_privs_raw_data( DBC *       dbc,
   pos= strxmov(pos, "' AND Db = ", NullS);
   if (catalog_len)
   {
-    pos= strmov(pos, "'");
+    pos= my_stpmov(pos, "'");
     pos+= mysql_real_escape_string(mysql, pos, (char *)catalog, catalog_len);
-    pos= strmov(pos, "'");
+    pos= my_stpmov(pos, "'");
   }
   else
-    pos= strmov(pos, "DATABASE()");
+    pos= my_stpmov(pos, "DATABASE()");
 
   pos= strxmov(pos, " ORDER BY Db, Table_name, Table_priv, User", NullS);
 
@@ -597,20 +597,20 @@ list_table_priv_no_i_s(SQLHSTMT hstmt,
     MEM_ROOT *alloc;
     uint     row_count;
 
-    pthread_mutex_lock(&stmt->dbc->lock);
+    myodbc_mutex_lock(&stmt->dbc->lock);
     stmt->result= table_privs_raw_data(stmt->dbc, catalog, catalog_len,
       table, table_len);
 
     if (!stmt->result)
     {
       SQLRETURN rc= handle_connection_error(stmt);
-      pthread_mutex_unlock(&stmt->dbc->lock);
+      myodbc_mutex_unlock(&stmt->dbc->lock);
       return rc;
     }
-    pthread_mutex_unlock(&stmt->dbc->lock);
+    myodbc_mutex_unlock(&stmt->dbc->lock);
 
     /* Allocate max buffers, to avoid reallocation */
-    stmt->result_array= (char**) my_malloc(sizeof(char*)* SQLTABLES_PRIV_FIELDS *
+    stmt->result_array= (char**) myodbc_malloc(sizeof(char*)* SQLTABLES_PRIV_FIELDS *
       (ulong)stmt->result->row_count *
       MY_MAX_TABPRIV_COUNT,
       MYF(MY_ZEROFILL));
@@ -679,27 +679,27 @@ static MYSQL_RES *column_privs_raw_data( MYSQL *    mysql,
 {
   char buff[255+3*NAME_LEN+1], *pos;
 
-  pos= strmov(buff,
+  pos= my_stpmov(buff,
     "SELECT c.Db, c.User, c.Table_name, c.Column_name,"
     "t.Grantor, c.Column_priv, t.Table_priv "
     "FROM mysql.columns_priv AS c, mysql.tables_priv AS t "
     "WHERE c.Table_name = '");
   pos+= mysql_real_escape_string(mysql, pos, (char *)table, table_len);
 
-  pos= strmov(pos, "' AND c.Db = ");
+  pos= my_stpmov(pos, "' AND c.Db = ");
   if (catalog_len)
   {
-    pos= strmov(pos, "'");
+    pos= my_stpmov(pos, "'");
     pos+= mysql_real_escape_string(mysql, pos, (char *)catalog, catalog_len);
-    pos= strmov(pos, "'");
+    pos= my_stpmov(pos, "'");
   }
   else
-    pos= strmov(pos, "DATABASE()");
+    pos= my_stpmov(pos, "DATABASE()");
 
-  pos= strmov(pos, "AND c.Column_name LIKE '");
+  pos= my_stpmov(pos, "AND c.Column_name LIKE '");
   pos+= mysql_real_escape_string(mysql, pos, (char *)column, column_len);
 
-  pos= strmov(pos,
+  pos= my_stpmov(pos,
     "' AND c.Table_name = t.Table_name "
     "ORDER BY c.Db, c.Table_name, c.Column_name, c.Column_priv");
 
@@ -747,7 +747,7 @@ list_column_priv_no_i_s(SQLHSTMT hstmt,
   CLEAR_STMT_ERROR(hstmt);
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
-  pthread_mutex_lock(&stmt->dbc->lock);
+  myodbc_mutex_lock(&stmt->dbc->lock);
   stmt->result= column_privs_raw_data(&stmt->dbc->mysql,
     catalog, catalog_len,
     table, table_len,
@@ -755,12 +755,12 @@ list_column_priv_no_i_s(SQLHSTMT hstmt,
   if (!stmt->result)
   {
     SQLRETURN rc= handle_connection_error(stmt);
-    pthread_mutex_unlock(&stmt->dbc->lock);
+    myodbc_mutex_unlock(&stmt->dbc->lock);
     return rc;
   }
-  pthread_mutex_unlock(&stmt->dbc->lock);
+  myodbc_mutex_unlock(&stmt->dbc->lock);
 
-  stmt->result_array= (char **)my_malloc(sizeof(char *) *
+  stmt->result_array= (char **)myodbc_malloc(sizeof(char *) *
     SQLCOLUMNS_PRIV_FIELDS *
     (ulong) stmt->result->row_count *
     MY_MAX_COLPRIV_COUNT,
@@ -832,13 +832,13 @@ MYSQL_RES *table_status_no_i_s(STMT        *stmt,
 	/** @todo determine real size for buffer */
 	char buff[36 + 4*NAME_LEN + 1], *to;
 
-	to= strmov(buff, "SHOW TABLE STATUS ");
+	to= my_stpmov(buff, "SHOW TABLE STATUS ");
 	if (catalog && *catalog)
 	{
-		to= strmov(to, "FROM `");
+		to= my_stpmov(to, "FROM `");
 		to+= myodbc_escape_string(mysql, to, (ulong)(sizeof(buff) - (to - buff)),
 			(char *)catalog, catalog_length, 1);
-		to= strmov(to, "` ");
+		to= my_stpmov(to, "` ");
 	}
 
 	/*
@@ -851,13 +851,13 @@ MYSQL_RES *table_status_no_i_s(STMT        *stmt,
 
 	if (table && *table)
 	{
-		to= strmov(to, "LIKE '");
+		to= my_stpmov(to, "LIKE '");
 		if (wildcard)
 			to+= mysql_real_escape_string(mysql, to, (char *)table, table_length);
 		else
 			to+= myodbc_escape_string(mysql, to, (ulong)(sizeof(buff) - (to - buff)),
 			(char *)table, table_length, 0);
-		to= strmov(to, "'");
+		to= my_stpmov(to, "'");
 	}
 
   MYLOG_QUERY(stmt, buff);
@@ -896,12 +896,12 @@ MYSQL_RES *server_show_create_table(STMT        *stmt,
   /** @todo determine real size for buffer */
   char buff[36 + 4*NAME_LEN + 1], *to;
 
-  to= strmov(buff, "SHOW CREATE TABLE ");
+  to= my_stpmov(buff, "SHOW CREATE TABLE ");
   if (catalog && *catalog)
   {
-    to= strmov(to, " `");
-    to= strmov(to, (char *)catalog);
-    to= strmov(to, "`.");
+    to= my_stpmov(to, " `");
+    to= my_stpmov(to, (char *)catalog);
+    to= my_stpmov(to, "`.");
   }
 
   /* Empty string won't match anything. */
@@ -910,9 +910,9 @@ MYSQL_RES *server_show_create_table(STMT        *stmt,
 
   if (table && *table)
   {
-    to= strmov(to, " `");
-    to= strmov(to, (char *)table);
-    to= strmov(to, "`");
+    to= my_stpmov(to, " `");
+    to= my_stpmov(to, (char *)table);
+    to= my_stpmov(to, "`");
   }
 
   MYLOG_QUERY(stmt, buff);
@@ -1093,10 +1093,10 @@ SQLRETURN foreign_keys_no_i_s(SQLHSTMT hstmt,
   unsigned long *lengths;
   SQLRETURN rc= SQL_SUCCESS;
 
-  my_init_dynamic_array(&records, sizeof(MY_FOREIGN_KEY_FIELD), 0, 0);
+  myodbc_init_dynamic_array(&records, sizeof(MY_FOREIGN_KEY_FIELD), 0, 0);
 
   /* Get the list of tables that match szCatalog and szTable */
-  pthread_mutex_lock(&stmt->dbc->lock);
+  myodbc_mutex_lock(&stmt->dbc->lock);
   res= table_status(stmt, szFkCatalogName, cbFkCatalogName, szFkTableName, 
                     cbFkTableName, FALSE, TRUE, TRUE);
   if (!res && mysql_errno(&stmt->dbc->mysql))
@@ -1108,11 +1108,11 @@ SQLRETURN foreign_keys_no_i_s(SQLHSTMT hstmt,
   {
     goto empty_set_unlock;
   }
-  pthread_mutex_unlock(&stmt->dbc->lock);
+  myodbc_mutex_unlock(&stmt->dbc->lock);
 
   while ((table_row= mysql_fetch_row(res)))
   {
-    pthread_mutex_lock(&stmt->dbc->lock);
+    myodbc_mutex_lock(&stmt->dbc->lock);
     lengths= mysql_fetch_lengths(res);
     if (stmt->result)
     {
@@ -1132,7 +1132,7 @@ SQLRETURN foreign_keys_no_i_s(SQLHSTMT hstmt,
       }
       goto empty_set_unlock;
     }
-    pthread_mutex_unlock(&stmt->dbc->lock);
+    myodbc_mutex_unlock(&stmt->dbc->lock);
    
     /* Convert mysql fields to data that odbc wants */
     alloc= &stmt->result->field_alloc;
@@ -1235,19 +1235,19 @@ SQLRETURN foreign_keys_no_i_s(SQLHSTMT hstmt,
                   buffer[bracket_end - pos - quote_char_length * 2 - 1]= '\0';
                   if (key_search == 0)
                   {
-                    strmov(fkRows->FKCOLUMN_NAME, buffer);
+                    my_stpmov(fkRows->FKCOLUMN_NAME, buffer);
                   }
                   else
                   {
-                    strmov(fkRows->PKCOLUMN_NAME, buffer);
-                    strmov(fkRows->PKTABLE_NAME, table_name);
-                    strmov(fkRows->FK_NAME, constraint_name);
-                    strmov(fkRows->FKTABLE_NAME, row[0]);
-                    strmov(fkRows->FKTABLE_CAT, (szFkCatalogName ?
+                    my_stpmov(fkRows->PKCOLUMN_NAME, buffer);
+                    my_stpmov(fkRows->PKTABLE_NAME, table_name);
+                    my_stpmov(fkRows->FK_NAME, constraint_name);
+                    my_stpmov(fkRows->FKTABLE_NAME, row[0]);
+                    my_stpmov(fkRows->FKTABLE_CAT, (szFkCatalogName ?
                             strdup_root(alloc, (char *)szFkCatalogName) :
                             strdup_root(alloc, stmt->dbc->database ?
                             stmt->dbc->database : "null")));
-                    strmov(fkRows->PKTABLE_CAT, (szPkCatalogName ?
+                    my_stpmov(fkRows->PKTABLE_CAT, (szPkCatalogName ?
                             strdup_root(alloc, (char *)szPkCatalogName) :
                             strdup_root(alloc, stmt->dbc->database ?
                             stmt->dbc->database : "null")));
@@ -1264,19 +1264,19 @@ SQLRETURN foreign_keys_no_i_s(SQLHSTMT hstmt,
                   buffer[comma_pos - pos - quote_char_length * 2 - 1]= '\0';
                   if (key_search == 0)
                   {    
-                    strmov(fkRows->FKCOLUMN_NAME, buffer);
+                    my_stpmov(fkRows->FKCOLUMN_NAME, buffer);
                   }
                   else
                   {
-                    strmov(fkRows->PKCOLUMN_NAME, buffer);
-                    strmov(fkRows->PKTABLE_NAME, table_name);
-                    strmov(fkRows->FK_NAME, constraint_name);
-                    strmov(fkRows->FKTABLE_NAME, row[0]);
-                    strmov(fkRows->FKTABLE_CAT, (szFkCatalogName ?
+                    my_stpmov(fkRows->PKCOLUMN_NAME, buffer);
+                    my_stpmov(fkRows->PKTABLE_NAME, table_name);
+                    my_stpmov(fkRows->FK_NAME, constraint_name);
+                    my_stpmov(fkRows->FKTABLE_NAME, row[0]);
+                    my_stpmov(fkRows->FKTABLE_CAT, (szFkCatalogName ?
                             strdup_root(alloc, (char *)szFkCatalogName) :
                             strdup_root(alloc, stmt->dbc->database ?
                             stmt->dbc->database : "null")));
-                    strmov(fkRows->PKTABLE_CAT, (szPkCatalogName ?
+                    my_stpmov(fkRows->PKTABLE_CAT, (szPkCatalogName ?
                             strdup_root(alloc, (char *)szPkCatalogName) :
                             strdup_root(alloc, stmt->dbc->database ?
                             stmt->dbc->database : "null")));
@@ -1374,7 +1374,7 @@ SQLRETURN foreign_keys_no_i_s(SQLHSTMT hstmt,
 
   if (records.elements)
   {
-    tempdata= (char**) my_malloc(sizeof(char*)*SQLFORE_KEYS_FIELDS*
+    tempdata= (char**) myodbc_malloc(sizeof(char*)*SQLFORE_KEYS_FIELDS*
                                          records.elements,
                                          MYF(MY_ZEROFILL));
     if (!tempdata)
@@ -1430,7 +1430,7 @@ SQLRETURN foreign_keys_no_i_s(SQLHSTMT hstmt,
   mysql_free_result(res);
 
   /* Copy only the elements that contain fk names */
-  stmt->result_array= (MYSQL_ROW)my_memdup((char *)tempdata,
+  stmt->result_array= (MYSQL_ROW)myodbc_memdup((char *)tempdata,
                                            sizeof(char *) *
                                            SQLFORE_KEYS_FIELDS *
                                            row_count,
@@ -1448,7 +1448,7 @@ SQLRETURN foreign_keys_no_i_s(SQLHSTMT hstmt,
   return SQL_SUCCESS;
 
 empty_set_unlock:
-  pthread_mutex_unlock(&stmt->dbc->lock);
+  myodbc_mutex_unlock(&stmt->dbc->lock);
 
 empty_set:
   x_free((char *)tempdata);
@@ -1462,7 +1462,7 @@ empty_set:
                                      SQLFORE_KEYS_fields,
                                      SQLFORE_KEYS_FIELDS);
 unlock_and_free:
-  pthread_mutex_unlock(&stmt->dbc->lock);
+  myodbc_mutex_unlock(&stmt->dbc->lock);
   mysql_free_result(res);
   res= NULL;
 
@@ -1523,16 +1523,16 @@ primary_keys_no_i_s(SQLHSTMT hstmt,
     char      **data;
     uint      row_count;
 
-    pthread_mutex_lock(&stmt->dbc->lock);
+    myodbc_mutex_lock(&stmt->dbc->lock);
     if (!(stmt->result= server_list_dbkeys(stmt->dbc, catalog, catalog_len,
                                            table, table_len)))
     {
       SQLRETURN rc= handle_connection_error(stmt);
-      pthread_mutex_unlock(&stmt->dbc->lock);
+      myodbc_mutex_unlock(&stmt->dbc->lock);
       return rc;
     }
-    pthread_mutex_unlock(&stmt->dbc->lock);
-    stmt->result_array= (char**) my_malloc(sizeof(char*)*SQLPRIM_KEYS_FIELDS*
+    myodbc_mutex_unlock(&stmt->dbc->lock);
+    stmt->result_array= (char**) myodbc_malloc(sizeof(char*)*SQLPRIM_KEYS_FIELDS*
                                             (ulong) stmt->result->row_count,
                                             MYF(MY_ZEROFILL));
     if (!stmt->result_array)
@@ -1541,7 +1541,7 @@ primary_keys_no_i_s(SQLHSTMT hstmt,
       return handle_connection_error(stmt);
     }
 
-    stmt->lengths= (unsigned long*) my_malloc( sizeof(long)*SQLPRIM_KEYS_FIELDS*
+    stmt->lengths= (unsigned long*) myodbc_malloc( sizeof(long)*SQLPRIM_KEYS_FIELDS*
                                             (ulong) stmt->result->row_count,
                                             MYF(MY_ZEROFILL));
     if (!stmt->lengths)
@@ -1632,27 +1632,27 @@ static MYSQL_RES *server_list_proc_params(DBC *dbc,
   MYSQL *mysql= &dbc->mysql;
   char   buff[255+4*NAME_LEN+1], *pos;
 
-  pos= strmov(buff, "SELECT name, CONCAT(IF(length(returns)>0, CONCAT('RETURN_VALUE ', returns, if(length(param_list)>0, ',', '')),''), param_list),"
+  pos= my_stpmov(buff, "SELECT name, CONCAT(IF(length(returns)>0, CONCAT('RETURN_VALUE ', returns, if(length(param_list)>0, ',', '')),''), param_list),"
                     "db, type FROM mysql.proc WHERE Db=");
 
 
   if (catalog_len)
   {
-    pos= strmov(pos, "'");
+    pos= my_stpmov(pos, "'");
     pos+= mysql_real_escape_string(mysql, pos, (char *)catalog, catalog_len);
-    pos= strmov(pos, "'");
+    pos= my_stpmov(pos, "'");
   }
   else
-    pos= strmov(pos, "DATABASE()");
+    pos= my_stpmov(pos, "DATABASE()");
 
   if (proc_name_len)
   {
-    pos= strmov(pos, " AND name LIKE '");
+    pos= my_stpmov(pos, " AND name LIKE '");
     pos+= mysql_real_escape_string(mysql, pos, (char *)proc_name, proc_name_len);
-    pos= strmov(pos, "'");
+    pos= my_stpmov(pos, "'");
   }
 
-  pos= strmov(pos, " ORDER BY Db, name");
+  pos= my_stpmov(pos, " ORDER BY Db, name");
 
   assert(pos - buff < sizeof(buff));
   MYLOG_DBC_QUERY(dbc, buff);
@@ -1730,7 +1730,7 @@ procedure_columns_no_i_s(SQLHSTMT hstmt,
   if (init_dynamic_string(&dynQuery, "SELECT 1", 1024,1024))
     return set_stmt_error(stmt, "HY001", "Not enough memory", 4001);
 
-  params_r= params= (LIST *) my_malloc(sizeof(LIST), MYF(MY_ZEROFILL));
+  params_r= params= (LIST *) myodbc_malloc(sizeof(LIST), MYF(MY_ZEROFILL));
 
   if (params_r == NULL)
   {
@@ -1740,19 +1740,19 @@ procedure_columns_no_i_s(SQLHSTMT hstmt,
   }
 
   /* get procedures list */
-  pthread_mutex_lock(&stmt->dbc->lock);
+  myodbc_mutex_lock(&stmt->dbc->lock);
 
   if (!(proc_list_res= server_list_proc_params(stmt->dbc, 
       szCatalogName, cbCatalogName, szProcName, cbProcName)))
   {
-    pthread_mutex_unlock(&stmt->dbc->lock);
+    myodbc_mutex_unlock(&stmt->dbc->lock);
 
     nReturn= set_error(stmt, MYERR_S1000, mysql_error(&stmt->dbc->mysql),
                       mysql_errno(&stmt->dbc->mysql));
     goto clean_exit;
   }
 
-  pthread_mutex_unlock(&stmt->dbc->lock);
+  myodbc_mutex_unlock(&stmt->dbc->lock);
 
   while ((row= mysql_fetch_row(proc_list_res)))
   {
@@ -1796,7 +1796,7 @@ procedure_columns_no_i_s(SQLHSTMT hstmt,
       SQLTypeMap *type_map;
       SQLSMALLINT dec;
       SQLULEN param_size= 0;
-      MYSQL_ROW data= my_malloc(sizeof(SQLPROCEDURECOLUMNS_values), MYF(MY_ZEROFILL));
+      MYSQL_ROW data= myodbc_malloc(sizeof(SQLPROCEDURECOLUMNS_values), MYF(MY_ZEROFILL));
       /* temp variables for debugging */
       SQLUINTEGER dec_int= 0;
       SQLINTEGER sql_type_int= 0;
@@ -1823,10 +1823,10 @@ procedure_columns_no_i_s(SQLHSTMT hstmt,
 
       proc_get_param_octet_len(stmt, sql_type_index, param_size, dec, flags, param_buffer_len);
 
-      data[mypcPROCEDURE_CAT]= my_strdup(row[2], MYF(0));   /* PROCEDURE_CAT */
+      data[mypcPROCEDURE_CAT]= myodbc_strdup(row[2], MYF(0));   /* PROCEDURE_CAT */
       data[mypcPROCEDURE_SCHEM]= NULL;                      /* PROCEDURE_SCHEM */
-      data[mypcPROCEDURE_NAME]= my_strdup(row[0], MYF(0));  /* PROCEDURE_NAME */
-      data[mypcCOLUMN_NAME]= my_strdup(param_name, MYF(0)); /* COLUMN_NAME */
+      data[mypcPROCEDURE_NAME]= myodbc_strdup(row[0], MYF(0));  /* PROCEDURE_NAME */
+      data[mypcCOLUMN_NAME]= myodbc_strdup(param_name, MYF(0)); /* COLUMN_NAME */
 
       if (cbColumnName)
       {
@@ -1842,7 +1842,7 @@ procedure_columns_no_i_s(SQLHSTMT hstmt,
       }
 
       sprintf(param_type, "%d", ptype);
-      data[mypcCOLUMN_TYPE]= my_strdup(param_type, MYF(0)); /* COLUMN_TYPE */
+      data[mypcCOLUMN_TYPE]= myodbc_strdup(param_type, MYF(0)); /* COLUMN_TYPE */
 
       if (!myodbc_strcasecmp(type_map->type_name, "bit") && param_size > 1)
       {
@@ -1852,29 +1852,29 @@ procedure_columns_no_i_s(SQLHSTMT hstmt,
       {
         sprintf(param_sql_type, "%d", (int)type_map->sql_type);
       }
-      data[mypcDATA_TYPE]= my_strdup(param_sql_type, MYF(0)); /* DATA_TYPE */
+      data[mypcDATA_TYPE]= myodbc_strdup(param_sql_type, MYF(0)); /* DATA_TYPE */
       
       if (!myodbc_strcasecmp(type_map->type_name, "set") ||
          !myodbc_strcasecmp(type_map->type_name, "enum"))
       {
-        data[mypcTYPE_NAME]= my_strdup("char", MYF(0));
+        data[mypcTYPE_NAME]= myodbc_strdup("char", MYF(0));
       }
       else
       {
-        data[mypcTYPE_NAME]= my_strdup(type_map->type_name, MYF(0));
+        data[mypcTYPE_NAME]= myodbc_strdup(type_map->type_name, MYF(0));
       }
 
        /* TYPE_NAME */
       
       proc_get_param_col_len(stmt, sql_type_index, param_size, dec, flags, param_size_buf);
-      data[mypcCOLUMN_SIZE]= my_strdup(param_size_buf, MYF(0)); /* COLUMN_SIZE */
+      data[mypcCOLUMN_SIZE]= myodbc_strdup(param_size_buf, MYF(0)); /* COLUMN_SIZE */
 
-      data[mypcBUFFER_LENGTH]= my_strdup(param_buffer_len, MYF(0)); /* BUFFER_LENGTH */
+      data[mypcBUFFER_LENGTH]= myodbc_strdup(param_buffer_len, MYF(0)); /* BUFFER_LENGTH */
       
       if (dec != SQL_NO_TOTAL)
       {
         sprintf(param_decimal, "%d", (int)dec);
-        data[mypcDECIMAL_DIGITS]= my_strdup(param_decimal, MYF(0)); /* DECIMAL_DIGITS */
+        data[mypcDECIMAL_DIGITS]= myodbc_strdup(param_decimal, MYF(0)); /* DECIMAL_DIGITS */
         data[mypcNUM_PREC_RADIX]= "10"; /* NUM_PREC_RADIX */
       }
       else
@@ -1891,20 +1891,20 @@ procedure_columns_no_i_s(SQLHSTMT hstmt,
          type_map->sql_type == SQL_TYPE_TIMESTAMP)
       {
         sprintf(param_desc_type, "%d", SQL_DATETIME);
-        data[mypcSQL_DATA_TYPE]= my_strdup(param_desc_type, MYF(0)); /* SQL_DATA_TYPE  */
-        data[mypcSQL_DATETIME_SUB]= my_strdup(data[mypcDATA_TYPE], MYF(0)); /* SQL_DATETIME_SUB */
+        data[mypcSQL_DATA_TYPE]= myodbc_strdup(param_desc_type, MYF(0)); /* SQL_DATA_TYPE  */
+        data[mypcSQL_DATETIME_SUB]= myodbc_strdup(data[mypcDATA_TYPE], MYF(0)); /* SQL_DATETIME_SUB */
       }
       else
       {
-        data[mypcSQL_DATA_TYPE]= my_strdup(data[mypcDATA_TYPE], MYF(0)); /* SQL_DATA_TYPE  */
+        data[mypcSQL_DATA_TYPE]= myodbc_strdup(data[mypcDATA_TYPE], MYF(0)); /* SQL_DATA_TYPE  */
         data[mypcSQL_DATETIME_SUB]= NULL;  /* SQL_DATETIME_SUB */
       }
 
       if (is_char_sql_type(type_map->sql_type) || is_wchar_sql_type(type_map->sql_type) ||
           is_binary_sql_type(type_map->sql_type))
       {
-        /* Actualy can use data[mypcBUFFER_LENGTH] here and don't do my_strdup */
-        data[mypcCHAR_OCTET_LENGTH]= my_strdup(param_buffer_len, MYF(0)); /* CHAR_OCTET_LENGTH */
+        /* Actualy can use data[mypcBUFFER_LENGTH] here and don't do myodbc_strdup */
+        data[mypcCHAR_OCTET_LENGTH]= myodbc_strdup(param_buffer_len, MYF(0)); /* CHAR_OCTET_LENGTH */
       }
       else
       {
@@ -1912,13 +1912,13 @@ procedure_columns_no_i_s(SQLHSTMT hstmt,
       }
 
       sprintf(param_pos, "%d", (int) param_ordinal_position);
-      data[mypcORDINAL_POSITION]= my_strdup(param_pos, MYF(0)); /* ORDINAL_POSITION */
+      data[mypcORDINAL_POSITION]= myodbc_strdup(param_pos, MYF(0)); /* ORDINAL_POSITION */
       ++param_ordinal_position;
 
       data[mypcIS_NULLABLE]= "YES"; /* IS_NULLABLE */
 
       {
-        LIST *new_elem= (LIST *) my_malloc(sizeof(LIST), MYF(MY_ZEROFILL));
+        LIST *new_elem= (LIST *) myodbc_malloc(sizeof(LIST), MYF(MY_ZEROFILL));
 
         if (new_elem == NULL)
         {
@@ -1942,18 +1942,18 @@ procedure_columns_no_i_s(SQLHSTMT hstmt,
 
   if (cbColumnName)
   {
-    pthread_mutex_lock(&stmt->dbc->lock);
+    myodbc_mutex_lock(&stmt->dbc->lock);
     if (mysql_real_query(&stmt->dbc->mysql, dynQuery.str, (unsigned long)dynQuery.length) ||
         !(columns_res= mysql_store_result(&stmt->dbc->mysql)))
     {
-      pthread_mutex_unlock(&stmt->dbc->lock);
+      myodbc_mutex_unlock(&stmt->dbc->lock);
 
       nReturn= set_error(stmt, MYERR_S1000, mysql_error(&stmt->dbc->mysql),
                 mysql_errno(&stmt->dbc->mysql));
       goto exit_with_free;
     }
 
-    pthread_mutex_unlock(&stmt->dbc->lock);
+    myodbc_mutex_unlock(&stmt->dbc->lock);
 
     /* should be only one row */
     row= mysql_fetch_row(columns_res);
@@ -1986,7 +1986,7 @@ procedure_columns_no_i_s(SQLHSTMT hstmt,
   }
 
   stmt->result= proc_list_res;
-  stmt->result_array= (MYSQL_ROW) my_malloc(sizeof(char*) * SQLPROCEDURECOLUMNS_FIELDS *
+  stmt->result_array= (MYSQL_ROW) myodbc_malloc(sizeof(char*) * SQLPROCEDURECOLUMNS_FIELDS *
                                             (return_params_num ? return_params_num : total_params_num), 
                                             MYF(MY_ZEROFILL));
   tempdata= stmt->result_array;
@@ -2121,7 +2121,7 @@ special_columns_no_i_s(SQLHSTMT hstmt, SQLUSMALLINT fColType,
     if ( fColType == SQL_ROWVER )
     {
         /* Find possible timestamp */
-        if ( !(stmt->result_array= (char**) my_malloc(sizeof(char*)*SQLSPECIALCOLUMNS_FIELDS*
+        if ( !(stmt->result_array= (char**) myodbc_malloc(sizeof(char*)*SQLSPECIALCOLUMNS_FIELDS*
                                                       result->field_count, MYF(MY_ZEROFILL))) )
         {
           set_mem_error(&stmt->dbc->mysql);
@@ -2202,7 +2202,7 @@ special_columns_no_i_s(SQLHSTMT hstmt, SQLUSMALLINT fColType,
             break;
         }
     }
-    if ( !(stmt->result_array= (char**) my_malloc(sizeof(char*)*SQLSPECIALCOLUMNS_FIELDS*
+    if ( !(stmt->result_array= (char**) myodbc_malloc(sizeof(char*)*SQLSPECIALCOLUMNS_FIELDS*
                                                   result->field_count, MYF(MY_ZEROFILL))) )
     {
       set_mem_error(&stmt->dbc->mysql);
@@ -2308,21 +2308,21 @@ statistics_no_i_s(SQLHSTMT hstmt,
     if (!table_len)
         goto empty_set;
 
-    pthread_mutex_lock(&dbc->lock);
+    myodbc_mutex_lock(&dbc->lock);
     stmt->result= server_list_dbkeys(stmt->dbc, catalog, catalog_len,
                                      table, table_len);
     if (!stmt->result)
     {
       SQLRETURN rc= handle_connection_error(stmt);
-      pthread_mutex_unlock(&dbc->lock);
+      myodbc_mutex_unlock(&dbc->lock);
       return rc;
     }
-    pthread_mutex_unlock(&dbc->lock);
+    myodbc_mutex_unlock(&dbc->lock);
     my_int2str(SQL_INDEX_OTHER,SS_type,10,0);
     stmt->order=       SQLSTAT_order;
     stmt->order_count= array_elements(SQLSTAT_order);
     stmt->fix_fields=  fix_fields_copy;
-    stmt->array= (MYSQL_ROW) my_memdup((char *)SQLSTAT_values,
+    stmt->array= (MYSQL_ROW) myodbc_memdup((char *)SQLSTAT_values,
                                        sizeof(SQLSTAT_values),MYF(0));
     if (!stmt->array)
     {
@@ -2412,18 +2412,18 @@ tables_no_i_s(SQLHSTMT hstmt,
     /* empty (but non-NULL) schema and table returns catalog list */
     if (catalog_len && !schema_len && schema && !table_len && table)
     {
-        pthread_mutex_lock(&stmt->dbc->lock);
+        myodbc_mutex_lock(&stmt->dbc->lock);
         {
           char buff[32 + NAME_LEN], *to;
-          to= strmov(buff, "SHOW DATABASES LIKE '");
+          to= my_stpmov(buff, "SHOW DATABASES LIKE '");
           to+= mysql_real_escape_string(&stmt->dbc->mysql, to,
                                         (char *)catalog, catalog_len);
-          to= strmov(to, "'");
+          to= my_stpmov(to, "'");
           MYLOG_QUERY(stmt, buff);
           if (!mysql_query(&stmt->dbc->mysql, buff))
             stmt->result= mysql_store_result(&stmt->dbc->mysql);
         }
-        pthread_mutex_unlock(&stmt->dbc->lock);
+        myodbc_mutex_unlock(&stmt->dbc->lock);
 
         if (!stmt->result)
         {
@@ -2433,7 +2433,7 @@ tables_no_i_s(SQLHSTMT hstmt,
         stmt->order         = SQLTABLES_qualifier_order;
         stmt->order_count   = array_elements(SQLTABLES_qualifier_order);
         stmt->fix_fields    = fix_fields_copy;
-        stmt->array= (MYSQL_ROW) my_memdup((char *)SQLTABLES_qualifier_values,
+        stmt->array= (MYSQL_ROW) myodbc_memdup((char *)SQLTABLES_qualifier_values,
                                            sizeof(SQLTABLES_qualifier_values),
                                            MYF(0));
         if (!stmt->array)
@@ -2491,7 +2491,7 @@ tables_no_i_s(SQLHSTMT hstmt,
     /* User Tables with type as 'TABLE' or 'VIEW' */
     if (user_tables || views)
     {
-      pthread_mutex_lock(&stmt->dbc->lock);
+      myodbc_mutex_lock(&stmt->dbc->lock);
       stmt->result= table_status(stmt, catalog, catalog_len,
                                  table, table_len, TRUE,
                                  user_tables, views);
@@ -2503,15 +2503,15 @@ tables_no_i_s(SQLHSTMT hstmt,
         switch (mysql_errno(&stmt->dbc->mysql))
         {
         case ER_BAD_DB_ERROR:
-          pthread_mutex_unlock(&stmt->dbc->lock);
+          myodbc_mutex_unlock(&stmt->dbc->lock);
           goto empty_set;
         default:
           rc= handle_connection_error(stmt);
-          pthread_mutex_unlock(&stmt->dbc->lock);
+          myodbc_mutex_unlock(&stmt->dbc->lock);
           return rc;
         }
       }
-      pthread_mutex_unlock(&stmt->dbc->lock);
+      myodbc_mutex_unlock(&stmt->dbc->lock);
     }
 
     if (!stmt->result)
@@ -2531,7 +2531,7 @@ tables_no_i_s(SQLHSTMT hstmt,
       }
 
       if (!(stmt->result_array=
-            (char **)my_malloc((uint)(sizeof(char *) * SQLTABLES_FIELDS *
+            (char **)myodbc_malloc((uint)(sizeof(char *) * SQLTABLES_FIELDS *
                                       row_count),
                                MYF(MY_ZEROFILL))))
       {

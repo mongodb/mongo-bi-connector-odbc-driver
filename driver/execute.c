@@ -58,7 +58,7 @@ SQLRETURN do_query(STMT *stmt,char *query, SQLULEN query_length)
     }
 
     MYLOG_QUERY(stmt, query);
-    pthread_mutex_lock(&stmt->dbc->lock);
+    myodbc_mutex_lock(&stmt->dbc->lock);
 
     if ( check_if_server_is_alive( stmt->dbc ) )
     {
@@ -194,7 +194,7 @@ SQLRETURN do_query(STMT *stmt,char *query, SQLULEN query_length)
     error= SQL_SUCCESS;
 
 exit:
-    pthread_mutex_unlock(&stmt->dbc->lock);
+    myodbc_mutex_unlock(&stmt->dbc->lock);
 
 skip_unlock_exit:
     if (query != GET_QUERY(&stmt->query))
@@ -235,7 +235,7 @@ SQLRETURN insert_params(STMT *stmt, SQLULEN row, char **finalquery,
   NET *net;
   SQLRETURN rc= SQL_SUCCESS;
 
-  int mutex_was_locked= pthread_mutex_trylock(&stmt->dbc->lock);
+  int mutex_was_locked= myodbc_mutex_trylock(&stmt->dbc->lock);
 
   net= &stmt->dbc->mysql.net;
   to= (char*) net->buff + (finalquery_length!= NULL ? *finalquery_length : 0);
@@ -324,7 +324,7 @@ SQLRETURN insert_params(STMT *stmt, SQLULEN row, char **finalquery,
 
     if (finalquery!=NULL)
     {
-      if ( !(to= (char*) my_memdup((char*) net->buff,
+      if ( !(to= (char*) myodbc_memdup((char*) net->buff,
         (uint) (to - (char*) net->buff),MYF(0))) )
       {
         goto memerror;
@@ -339,7 +339,7 @@ SQLRETURN insert_params(STMT *stmt, SQLULEN row, char **finalquery,
 
   if (!mutex_was_locked)
   {
-    pthread_mutex_unlock(&stmt->dbc->lock);
+    myodbc_mutex_unlock(&stmt->dbc->lock);
   }
 
   if (!stmt->dbc->ds->dont_use_set_locale)
@@ -356,7 +356,7 @@ memerror:      /* Too much data */
 error:
   /* ! was _already_ locked, when we tried to lock */
   if (!mutex_was_locked)
-    pthread_mutex_unlock(&stmt->dbc->lock);
+    myodbc_mutex_unlock(&stmt->dbc->lock);
   if (!stmt->dbc->ds->dont_use_set_locale)
     setlocale(LC_NUMERIC,default_locale);
   return rc;
@@ -398,12 +398,12 @@ BOOL allocate_param_buffer(MYSQL_BIND *bind, unsigned long length)
        a separate data structure. and free right after use */
   if (bind->buffer == NULL)
   {
-    bind->buffer= my_malloc(length, MYF(0));
+    bind->buffer= myodbc_malloc(length, MYF(0));
     bind->buffer_length= length;
   }
   else if(bind->buffer_length < length)
   {
-    bind->buffer= my_realloc(bind->buffer, length, MYF(0));
+    bind->buffer= myodbc_realloc(bind->buffer, length, MYF(0));
     bind->buffer_length= length;
   }
 
@@ -1395,7 +1395,7 @@ SQLRETURN my_SQLExecute( STMT *pStmt )
      is not needed when there are no params*/
   if (pStmt->param_count && pStmt->apd->array_size > 1 && is_select_stmt)
   {
-    pthread_mutex_lock(&pStmt->dbc->lock);
+    myodbc_mutex_lock(&pStmt->dbc->lock);
   }
 
   for (row= 0; row < pStmt->apd->array_size; ++row)
@@ -1435,7 +1435,7 @@ SQLRETURN my_SQLExecute( STMT *pStmt )
         /* If this is last paramset - we will miss unlock */
         if (pStmt->apd->array_size > 1 && is_select_stmt
             && row == pStmt->apd->array_size - 1)
-          pthread_mutex_unlock(&pStmt->dbc->lock);
+          myodbc_mutex_unlock(&pStmt->dbc->lock);
 
         continue;
       }
@@ -1454,7 +1454,7 @@ SQLRETURN my_SQLExecute( STMT *pStmt )
 
           /* unlocking since we do break*/
           if (is_select_stmt)
-            pthread_mutex_unlock(&pStmt->dbc->lock);
+            myodbc_mutex_unlock(&pStmt->dbc->lock);
 
           one_of_params_not_succeded= 1;
 
@@ -1496,7 +1496,7 @@ SQLRETURN my_SQLExecute( STMT *pStmt )
       {
         if (pStmt->apd->array_size > 1 && is_select_stmt
           && row == pStmt->apd->array_size - 1)
-          pthread_mutex_unlock(&pStmt->dbc->lock);
+          myodbc_mutex_unlock(&pStmt->dbc->lock);
 
         continue/*return rc*/;
       }
@@ -1517,7 +1517,7 @@ SQLRETURN my_SQLExecute( STMT *pStmt )
         else
         {
           /* last select statement has been constructed - so releasing lock*/
-          pthread_mutex_unlock(&pStmt->dbc->lock);
+          myodbc_mutex_unlock(&pStmt->dbc->lock);
         }
       }
     }
@@ -1893,12 +1893,12 @@ SQLRETURN SQL_API SQLCancel(SQLHSTMT hstmt)
   CHECK_HANDLE(hstmt);
 
   dbc= ((STMT *)hstmt)->dbc;
-  error= pthread_mutex_trylock(&dbc->lock);
+  error= myodbc_mutex_trylock(&dbc->lock);
 
   /* If there's no query going on, just close the statement. */
   if (error == 0)
   {
-    pthread_mutex_unlock(&dbc->lock);
+    myodbc_mutex_unlock(&dbc->lock);
     return my_SQLFreeStmt(hstmt, SQL_CLOSE);
   }
 

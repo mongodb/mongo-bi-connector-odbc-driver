@@ -34,7 +34,7 @@
 /* {{{ my_l_to_a() -I- */
 static char * my_l_to_a(char * buf, size_t buf_size, long long a)
 {
-	snprintf(buf, buf_size, "%lld", (long long) a);
+	myodbc_snprintf(buf, buf_size, "%lld", (long long) a);
 	return buf;
 }
 /* }}} */
@@ -43,7 +43,7 @@ static char * my_l_to_a(char * buf, size_t buf_size, long long a)
 /* {{{ my_ul_to_a() -I- */
 static char * my_ul_to_a(char * buf, size_t buf_size, unsigned long long a)
 {
-	snprintf(buf, buf_size, "%llu", (unsigned long long) a);
+	myodbc_snprintf(buf, buf_size, "%llu", (unsigned long long) a);
 	return buf;
 }
 /* }}} */
@@ -52,7 +52,7 @@ static char * my_ul_to_a(char * buf, size_t buf_size, unsigned long long a)
 /* {{{ my_f_to_a() -I- */
 static char * my_f_to_a(char * buf, size_t buf_size, double a)
 {
-	snprintf(buf, buf_size, "%f", a);
+	myodbc_snprintf(buf, buf_size, "%f", a);
 	return buf;
 }
 /* }}} */
@@ -453,7 +453,7 @@ allocate_buffer_for_field(const MYSQL_FIELD * const field, BOOL outparams)
 
   if (result.size > 0)
   {
-    result.buffer= my_malloc(result.size, MYF(0));
+    result.buffer= myodbc_malloc(result.size, MYF(0));
   }
 
   return result;
@@ -486,7 +486,7 @@ static MYSQL_ROW fetch_varlength_columns(STMT *stmt, MYSQL_ROW columns)
         if (stmt->lengths[i] < *stmt->result_bind[i].length)
         {
           /* TODO Realloc error proc */
-          stmt->array[i]= my_realloc(stmt->array[i], *stmt->result_bind[i].length,
+          stmt->array[i]= myodbc_realloc(stmt->array[i], *stmt->result_bind[i].length,
             MYF(MY_ALLOW_ZERO_PTR));
           stmt->lengths[i]= *stmt->result_bind[i].length;
         }
@@ -542,17 +542,17 @@ int ssps_bind_result(STMT *stmt)
   }
   else
   {
-    my_bool       *is_null= my_malloc(sizeof(my_bool)*num_fields,
+    my_bool       *is_null= myodbc_malloc(sizeof(my_bool)*num_fields,
                                       MYF(MY_ZEROFILL));
-    my_bool       *err=     my_malloc(sizeof(my_bool)*num_fields,
+    my_bool       *err=     myodbc_malloc(sizeof(my_bool)*num_fields,
                                       MYF(MY_ZEROFILL));
-    unsigned long *len=     my_malloc(sizeof(unsigned long)*num_fields,
+    unsigned long *len=     myodbc_malloc(sizeof(unsigned long)*num_fields,
                                       MYF(MY_ZEROFILL));
 
     /*TODO care about memory allocation errors */
-    stmt->result_bind=  (MYSQL_BIND*)my_malloc(sizeof(MYSQL_BIND)*num_fields,
+    stmt->result_bind=  (MYSQL_BIND*)myodbc_malloc(sizeof(MYSQL_BIND)*num_fields,
                                               MYF(MY_ZEROFILL));
-    stmt->array=        (MYSQL_ROW)my_malloc(sizeof(char*)*num_fields,
+    stmt->array=        (MYSQL_ROW)myodbc_malloc(sizeof(char*)*num_fields,
                                               MYF(MY_ZEROFILL));
 
     for (i= 0; i < num_fields; ++i)
@@ -581,7 +581,7 @@ int ssps_bind_result(STMT *stmt)
         /* Need to alloc it only once*/
         if (stmt->lengths == NULL)
         {
-          stmt->lengths= my_malloc(sizeof(unsigned long)*num_fields, MYF(MY_ZEROFILL));
+          stmt->lengths= myodbc_malloc(sizeof(unsigned long)*num_fields, MYF(MY_ZEROFILL));
         }
         /* Buffer of initial length? */
       }
@@ -623,7 +623,7 @@ BOOL ssps_0buffers_truncated_only(STMT *stmt)
 
 /* --------------- Type conversion functions -------------- */
 
-#define ALLOC_IFNULL(buff,size) ((buff)==NULL?(char*)my_malloc(size,MYF(0)):buff)
+#define ALLOC_IFNULL(buff,size) ((buff)==NULL?(char*)myodbc_malloc(size,MYF(0)):buff)
 
 /* {{{ ssps_get_string() -I- */
 /* caller should care to make buffer long enough,
@@ -647,14 +647,14 @@ char * ssps_get_string(STMT *stmt, ulong column_number, char *value, ulong *leng
       MYSQL_TIME * t = (MYSQL_TIME *)(col_rbind->buffer);
 
       buffer= ALLOC_IFNULL(buffer, 30);
-      snprintf(buffer, 20, "%04u-%02u-%02u %02u:%02u:%02u",
+      myodbc_snprintf(buffer, 20, "%04u-%02u-%02u %02u:%02u:%02u",
                       t->year, t->month, t->day, t->hour, t->minute, t->second);
 
       *length= 19;
 
       if (t->second_part > 0)
       {
-        snprintf(buffer+*length, 8, ".%06lu", t->second_part);
+        myodbc_snprintf(buffer+*length, 8, ".%06lu", t->second_part);
         *length= 26;
       }
 
@@ -665,7 +665,7 @@ char * ssps_get_string(STMT *stmt, ulong column_number, char *value, ulong *leng
       MYSQL_TIME * t = (MYSQL_TIME *)(col_rbind->buffer);
 
       buffer= ALLOC_IFNULL(buffer, 12);
-      snprintf(buffer, 11, "%04u-%02u-%02u", t->year, t->month, t->day);
+      myodbc_snprintf(buffer, 11, "%04u-%02u-%02u", t->year, t->month, t->day);
       *length= 10;
 
       return buffer;
@@ -675,13 +675,13 @@ char * ssps_get_string(STMT *stmt, ulong column_number, char *value, ulong *leng
       MYSQL_TIME * t = (MYSQL_TIME *)(col_rbind->buffer);
 
       buffer= ALLOC_IFNULL(buffer, 20);
-      snprintf(buffer, 10, "%s%02u:%02u:%02u", t->neg? "-":"", t->hour,
+      myodbc_snprintf(buffer, 10, "%s%02u:%02u:%02u", t->neg? "-":"", t->hour,
                                               t->minute, t->second);
       *length= t->neg ? 9 : 8;
 
       if (t->second_part > 0)
       {
-        snprintf(buffer+*length, 8, ".%06lu", t->second_part);
+        myodbc_snprintf(buffer+*length, 8, ".%06lu", t->second_part);
         *length+= 7;
       }
       return buffer;

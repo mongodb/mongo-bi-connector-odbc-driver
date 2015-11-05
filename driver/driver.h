@@ -349,7 +349,7 @@ typedef struct	tagENV
   LIST	       *connections;
   MYERROR      error;
 #ifdef THREAD
-  pthread_mutex_t lock;
+  myodbc_mutex_t lock;
 #endif
 } ENV;
 
@@ -375,7 +375,7 @@ typedef struct tagDBC
   uint          cursor_count;
   uint          commit_flag;
 #ifdef THREAD
-  pthread_mutex_t lock;
+  myodbc_mutex_t lock;
 #endif
 
   my_bool       unicode;            /* Whether SQL*ConnectW was used */
@@ -512,7 +512,7 @@ extern uint decimal_point_length,thousands_sep_length;
 extern HINSTANCE NEAR s_hModule;  /* DLL handle. */
 #endif
 #ifdef THREAD
-extern pthread_mutex_t myodbc_lock;
+extern myodbc_mutex_t myodbc_lock;
 #endif
 
 /*

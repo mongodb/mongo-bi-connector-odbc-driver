@@ -1047,9 +1047,9 @@ SQLRETURN SQL_API MySQLGetTypeInfo(SQLHSTMT hstmt, SQLSMALLINT fSqlType)
   }
 
   /* Set up result Data dictionary. */
-  stmt->result= (MYSQL_RES *)my_malloc(sizeof(MYSQL_RES), MYF(MY_ZEROFILL));
+  stmt->result= (MYSQL_RES *)myodbc_malloc(sizeof(MYSQL_RES), MYF(MY_ZEROFILL));
   stmt->fake_result= 1;
-  stmt->result_array= (char **)my_malloc(sizeof(SQL_GET_TYPE_INFO_values),
+  stmt->result_array= (char **)myodbc_malloc(sizeof(SQL_GET_TYPE_INFO_values),
                                          MYF(MY_FAE | MY_ZEROFILL));
 
   if (fSqlType == SQL_ALL_TYPES)

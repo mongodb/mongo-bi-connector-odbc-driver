@@ -173,6 +173,10 @@ static SQLWCHAR W_PLUGIN_DIR[]=
   {'P','L','U','G','I','N','_','D','I','R',0};
 static SQLWCHAR W_DEFAULT_AUTH[]=
   {'D','E','F','A','U','L','T','_','A','U','T', 'H',0};
+static SQLWCHAR W_DISABLE_SSL_DEFAULT[] =
+{ 'D', 'I', 'S', 'A', 'B', 'L', 'E', '_', 'S', 'S', 'L', '_', 'D', 'E', 'F', 'A', 'U', 'L', 'T', 0 };
+static SQLWCHAR W_SSL_ENFORCE[] =
+{ 'S', 'S', 'L', '_', 'E', 'N', 'F', 'O', 'R', 'C', 'E', 0 };
 
 /* DS_PARAM */
 /* externally used strings */
@@ -203,7 +207,8 @@ SQLWCHAR *dsnparams[]= {W_DSN, W_DRIVER, W_DESCRIPTION, W_SERVER,
                         W_NO_BINARY_RESULT, W_DFLT_BIGINT_BIND_STR,
                         W_CLIENT_INTERACTIVE, W_NO_I_S, W_PREFETCH, W_NO_SSPS,
                         W_CAN_HANDLE_EXP_PWD, W_ENABLE_CLEARTEXT_PLUGIN,
-                        W_SAVEFILE, W_RSAKEY, W_PLUGIN_DIR, W_DEFAULT_AUTH};
+                        W_SAVEFILE, W_RSAKEY, W_PLUGIN_DIR, W_DEFAULT_AUTH,
+                        W_DISABLE_SSL_DEFAULT, W_SSL_ENFORCE };
 static const
 int dsnparamcnt= sizeof(dsnparams) / sizeof(SQLWCHAR *);
 /* DS_PARAM */
@@ -279,17 +284,17 @@ UWORD config_set(UWORD mode)
  */
 Driver *driver_new()
 {
-  Driver *driver= (Driver *)my_malloc(sizeof(Driver), MYF(0));
+  Driver *driver= (Driver *)myodbc_malloc(sizeof(Driver), MYF(0));
   if (!driver)
     return NULL;
-  driver->name= (SQLWCHAR *)my_malloc(ODBCDRIVER_STRLEN * sizeof(SQLWCHAR),
+  driver->name= (SQLWCHAR *)myodbc_malloc(ODBCDRIVER_STRLEN * sizeof(SQLWCHAR),
                                       MYF(0));
   if (!driver->name)
   {
     x_free(driver);
     return NULL;
   }
-  driver->lib= (SQLWCHAR *)my_malloc(ODBCDRIVER_STRLEN * sizeof(SQLWCHAR),
+  driver->lib= (SQLWCHAR *)myodbc_malloc(ODBCDRIVER_STRLEN * sizeof(SQLWCHAR),
                                      MYF(0));
   if (!driver->lib)
   {
@@ -297,7 +302,7 @@ Driver *driver_new()
     x_free(driver);
     return NULL;
   }
-  driver->setup_lib= (SQLWCHAR *)my_malloc(ODBCDRIVER_STRLEN *
+  driver->setup_lib= (SQLWCHAR *)myodbc_malloc(ODBCDRIVER_STRLEN *
                                            sizeof(SQLWCHAR), MYF(0));
   if (!driver->setup_lib)
   {
@@ -618,7 +623,7 @@ int driver_to_kvpair_null(Driver *driver, SQLWCHAR *attrs, size_t attrslen)
  */
 DataSource *ds_new()
 {
-  DataSource *ds= (DataSource *)my_malloc(sizeof(DataSource), MYF(0));
+  DataSource *ds= (DataSource *)myodbc_malloc(sizeof(DataSource), MYF(0));
   if (!ds)
     return NULL;
   memset(ds, 0, sizeof(DataSource));
@@ -855,6 +860,10 @@ void ds_map_param(DataSource *ds, const SQLWCHAR *param,
     *strdest= &ds->plugin_dir;
   else if (!sqlwcharcasecmp(W_DEFAULT_AUTH, param))
     *strdest= &ds->default_auth;
+  else if (!sqlwcharcasecmp(W_DISABLE_SSL_DEFAULT, param))
+    *booldest = &ds->disable_ssl_default;
+  else if (!sqlwcharcasecmp(W_SSL_ENFORCE, param))
+    *booldest = &ds->ssl_enforce;
 
 
   /* DS_PARAM */
@@ -1343,6 +1352,8 @@ int ds_add(DataSource *ds)
   if (ds_add_intprop(ds->name, W_ENABLE_CLEARTEXT_PLUGIN, ds->enable_cleartext_plugin)) goto error;
   if (ds_add_strprop(ds->name, W_PLUGIN_DIR  , ds->plugin_dir  )) goto error;
   if (ds_add_strprop(ds->name, W_DEFAULT_AUTH, ds->default_auth)) goto error;
+  if (ds_add_intprop(ds->name, W_DISABLE_SSL_DEFAULT, ds->disable_ssl_default)) goto error;
+  if (ds_add_intprop(ds->name, W_SSL_ENFORCE, ds->ssl_enforce)) goto error;
   /* DS_PARAM */
 
   rc= 0;
@@ -1395,7 +1406,7 @@ int ds_setattr_from_utf8(SQLWCHAR **attr, SQLCHAR *val8)
 {
   size_t len= strlen((char *)val8);
   x_free(*attr);
-  if (!(*attr= (SQLWCHAR *)my_malloc((len + 1) * sizeof(SQLWCHAR), MYF(0))))
+  if (!(*attr= (SQLWCHAR *)myodbc_malloc((len + 1) * sizeof(SQLWCHAR), MYF(0))))
     return -1;
   utf8_as_sqlwchar(*attr, len, val8, len);
   return 0;

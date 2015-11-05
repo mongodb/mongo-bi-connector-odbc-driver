@@ -340,7 +340,7 @@ long double get_double(STMT *stmt, ulong column_number, char *value,
   }
   else
   {
-    return strtold(value, NULL);
+    return myodbc_strtold(value, NULL);
   }
 }
 
@@ -444,7 +444,7 @@ SQLRETURN append2param_value(STMT *stmt, DESCREC * aprec, const char *chunk, uns
   {
     /* Append to old value */
     assert(aprec->par.alloced);
-    if ( !(aprec->par.value= my_realloc(aprec->par.value,
+    if ( !(aprec->par.value= myodbc_realloc(aprec->par.value,
                                         aprec->par.value_length + length + 1,
                                         MYF(0))) )
     {
@@ -459,7 +459,7 @@ SQLRETURN append2param_value(STMT *stmt, DESCREC * aprec, const char *chunk, uns
   else
   {
     /* New value */
-    if ( !(aprec->par.value= my_malloc(length+1,MYF(0))) )
+    if ( !(aprec->par.value= myodbc_malloc(length+1,MYF(0))) )
     {
       return set_error(stmt,MYERR_S1001,NULL,4001);
     }
@@ -588,7 +588,7 @@ void scroller_create(STMT * stmt, char *query, SQLULEN query_len)
 
   /*extend_buffer(&stmt->dbc->mysql.net, stmt->query_end, len2add);*/
   stmt->scroller.query_len= query_len + len2add - (limit.end - limit.begin);
-  stmt->scroller.query= (char*)my_malloc((size_t)stmt->scroller.query_len + 1,
+  stmt->scroller.query= (char*)myodbc_malloc((size_t)stmt->scroller.query_len + 1,
                                           MYF(MY_ZEROFILL));
 
   memcpy(stmt->scroller.query, query, limit.begin - query);
@@ -607,7 +607,7 @@ void scroller_create(STMT * stmt, char *query, SQLULEN query_len)
   stmt->scroller.offset_pos= limit.begin + 7;
 
   /* putting row count in place. normally should not change or only once */
-  snprintf(stmt->scroller.offset_pos + MAX64_BUFF_SIZE - 1, MAX32_BUFF_SIZE + 1,
+  myodbc_snprintf(stmt->scroller.offset_pos + MAX64_BUFF_SIZE - 1, MAX32_BUFF_SIZE + 1,
     ",%*u", MAX32_BUFF_SIZE-1, stmt->scroller.row_count);
   /* cpy'ing end of query from original query - not sure if we will allow to
      have one */
@@ -620,7 +620,7 @@ void scroller_create(STMT * stmt, char *query, SQLULEN query_len)
 /* Returns next offset/maxrow for current fetch*/
 unsigned long long scroller_move(STMT * stmt)
 {
-  snprintf(stmt->scroller.offset_pos, MAX64_BUFF_SIZE, "%*llu", MAX64_BUFF_SIZE - 1,
+  myodbc_snprintf(stmt->scroller.offset_pos, MAX64_BUFF_SIZE, "%*llu", MAX64_BUFF_SIZE - 1,
     stmt->scroller.next_offset);
   stmt->scroller.offset_pos[MAX64_BUFF_SIZE - 1]=',';
 
@@ -643,7 +643,7 @@ SQLRETURN scroller_prefetch(STMT * stmt)
 
     if (count > 0)
     {
-      snprintf(stmt->scroller.offset_pos + MAX64_BUFF_SIZE, MAX32_BUFF_SIZE,
+      myodbc_snprintf(stmt->scroller.offset_pos + MAX64_BUFF_SIZE, MAX32_BUFF_SIZE,
               "%*u", MAX32_BUFF_SIZE - 1, count);
     }
     else
@@ -654,19 +654,19 @@ SQLRETURN scroller_prefetch(STMT * stmt)
 
   MYLOG_QUERY(stmt, stmt->scroller.query);
 
-  pthread_mutex_lock(&stmt->dbc->lock);
+  myodbc_mutex_lock(&stmt->dbc->lock);
 
   if (mysql_real_query(&stmt->dbc->mysql, stmt->scroller.query,
                         (unsigned long)stmt->scroller.query_len))
   {
-    pthread_mutex_unlock(&stmt->dbc->lock);
+    myodbc_mutex_unlock(&stmt->dbc->lock);
     return SQL_ERROR;
   }
 
   get_result_metadata(stmt, FALSE);
 
   /* I think there is no need to do fix_result_types here */
-  pthread_mutex_unlock(&stmt->dbc->lock);
+  myodbc_mutex_unlock(&stmt->dbc->lock);
 
   return SQL_SUCCESS;
 }

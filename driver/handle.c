@@ -45,7 +45,7 @@
 
 #ifdef _UNIX_
 /* variables for thread counter */
-static pthread_key_t myodbc_thread_counter_key;
+static myodbc_key_t myodbc_thread_counter_key;
 static pthread_once_t myodbc_thread_key_inited= PTHREAD_ONCE_INIT;
 
 /* Function to call pthread_key_create from pthread_once*/
@@ -80,13 +80,13 @@ SQLRETURN SQL_API my_SQLAllocEnv(SQLHENV *phenv)
         }
     }
 #else
-    if (!(*phenv= (SQLHENV) my_malloc(sizeof(ENV),MYF(MY_ZEROFILL))))
+    if (!(*phenv= (SQLHENV) myodbc_malloc(sizeof(ENV),MYF(MY_ZEROFILL))))
     {
         *phenv= SQL_NULL_HENV;
         return SQL_ERROR;
     }
 #endif /* _UNIX_ */
-    pthread_mutex_init(&(*env)->lock,NULL);
+    myodbc_mutex_init(&(*env)->lock,NULL);
 
 #ifndef USE_IODBC
     ((ENV *) *phenv)->odbc_ver= SQL_OV_ODBC3_80;
@@ -119,7 +119,7 @@ SQLRETURN SQL_API SQLAllocEnv(SQLHENV *phenv)
 SQLRETURN SQL_API my_SQLFreeEnv(SQLHENV henv)
 {
     ENV *env= (ENV *) henv;
-    pthread_mutex_destroy(&env->lock);
+    myodbc_mutex_destroy(&env->lock);
 #ifndef _UNIX_
     GlobalUnlock(GlobalHandle((HGLOBAL) henv));
     GlobalFree(GlobalHandle((HGLOBAL) henv));
@@ -185,7 +185,7 @@ SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC *phdbc)
     }
     else
     {
-      thread_count= my_malloc(sizeof(long), MYF(0));
+      thread_count= myodbc_malloc(sizeof(long), MYF(0));
       (*thread_count)= 1;
       pthread_setspecific(myodbc_thread_counter_key, thread_count);
 
@@ -224,7 +224,7 @@ SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC *phdbc)
         }
     }
 #else
-    if (!(*phdbc= (SQLHDBC) my_malloc(sizeof(DBC),MYF(MY_ZEROFILL))))
+    if (!(*phdbc= (SQLHDBC) myodbc_malloc(sizeof(DBC),MYF(MY_ZEROFILL))))
     {
         *phdbc= SQL_NULL_HDBC;
         return(set_env_error(henv,MYERR_S1001,NULL,0));
@@ -252,18 +252,18 @@ SQLRETURN SQL_API my_SQLAllocConnect(SQLHENV henv, SQLHDBC *phdbc)
     dbc->last_query_time= (time_t) time((time_t*) 0);
     dbc->txn_isolation= DEFAULT_TXN_ISOLATION;
     dbc->env= penv;
-    pthread_mutex_lock(&penv->lock);
+    myodbc_mutex_lock(&penv->lock);
     penv->connections= list_add(penv->connections,&dbc->list);
-    pthread_mutex_unlock(&penv->lock);
+    myodbc_mutex_unlock(&penv->lock);
     dbc->list.data= dbc;
     dbc->unicode= 0;
     dbc->ansi_charset_info= dbc->cxn_charset_info= NULL;
     dbc->exp_desc= NULL;
     dbc->sql_select_limit= (SQLULEN) -1;
-    pthread_mutex_init(&dbc->lock,NULL);
-    pthread_mutex_lock(&dbc->lock);
+    myodbc_mutex_init(&dbc->lock,NULL);
+    myodbc_mutex_lock(&dbc->lock);
     myodbc_ov_init(penv->odbc_ver); /* Initialize based on ODBC version */
-    pthread_mutex_unlock(&dbc->lock);
+    myodbc_mutex_unlock(&dbc->lock);
     return(SQL_SUCCESS);
 }
 
@@ -336,15 +336,15 @@ SQLRETURN SQL_API my_SQLFreeConnect(SQLHDBC hdbc)
 {
     DBC *dbc= (DBC *) hdbc;
 
-    pthread_mutex_lock(&dbc->env->lock);
+    myodbc_mutex_lock(&dbc->env->lock);
     dbc->env->connections= list_delete(dbc->env->connections,&dbc->list);
-    pthread_mutex_unlock(&dbc->env->lock);
+    myodbc_mutex_unlock(&dbc->env->lock);
     x_free(dbc->database);
     if (dbc->ds)
     {
       ds_delete(dbc->ds);
     }
-    pthread_mutex_destroy(&dbc->lock);
+    myodbc_mutex_destroy(&dbc->lock);
 
     free_explicit_descriptors(dbc);
 
@@ -401,7 +401,7 @@ BOOL allocate_param_bind(DYNAMIC_ARRAY **param_bind, uint elements)
 {
   if (*param_bind == NULL)
   {
-    *param_bind= my_malloc(sizeof(DYNAMIC_ARRAY), MYF(0));
+    *param_bind= myodbc_malloc(sizeof(DYNAMIC_ARRAY), MYF(0));
 
     if (*param_bind == NULL)
     {
@@ -409,7 +409,7 @@ BOOL allocate_param_bind(DYNAMIC_ARRAY **param_bind, uint elements)
     }
   }
 
-  my_init_dynamic_array(*param_bind, sizeof(MYSQL_BIND), elements, 10);
+  myodbc_init_dynamic_array(*param_bind, sizeof(MYSQL_BIND), elements, 10);
   memset((*param_bind)->buffer, 0, sizeof(MYSQL_BIND) *
 											(*param_bind)->max_element);
 
@@ -423,7 +423,7 @@ int adjust_param_bind_array(STMT *stmt)
   {
     uint prev_max_elements= stmt->param_bind->max_element;
 
-    if (allocate_dynamic(stmt->param_bind, stmt->param_count))
+    if (myodbc_allocate_dynamic(stmt->param_bind, stmt->param_count))
     {
       return 1;
     }
@@ -481,7 +481,7 @@ SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT *phstmt)
     GlobalFree(hstmt);
   }
 #else
-  *phstmt= (SQLHSTMT) my_malloc(sizeof (STMT), MYF(MY_ZEROFILL | MY_WME));
+  *phstmt= (SQLHSTMT) myodbc_malloc(sizeof (STMT), MYF(MY_ZEROFILL | MY_WME));
 #endif /* IS UNIX */
   if (*phstmt == SQL_NULL_HSTMT)
     goto error;
@@ -489,14 +489,14 @@ SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT *phstmt)
   stmt= (STMT *) *phstmt;
   stmt->dbc= dbc;
 
-  pthread_mutex_lock(&stmt->dbc->lock);
+  myodbc_mutex_lock(&stmt->dbc->lock);
   dbc->statements= list_add(dbc->statements,&stmt->list);
-  pthread_mutex_unlock(&stmt->dbc->lock);
+  myodbc_mutex_unlock(&stmt->dbc->lock);
   stmt->list.data= stmt;
   stmt->stmt_options= dbc->stmt_options;
   stmt->state= ST_UNKNOWN;
   stmt->dummy_state= ST_DUMMY_UNKNOWN;
-  strmov(stmt->error.sqlstate, "00000");
+  my_stpmov(stmt->error.sqlstate, "00000");
   init_parsed_query(&stmt->query);
   init_parsed_query(&stmt->orig_query);
 
@@ -742,9 +742,9 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
     delete_parsed_query(&stmt->orig_query);
     delete_param_bind(stmt->param_bind);
 
-    pthread_mutex_lock(&stmt->dbc->lock);
+    myodbc_mutex_lock(&stmt->dbc->lock);
     stmt->dbc->statements= list_delete(stmt->dbc->statements,&stmt->list);
-    pthread_mutex_unlock(&stmt->dbc->lock);
+    myodbc_mutex_unlock(&stmt->dbc->lock);
 #ifndef _UNIX_
     GlobalUnlock(GlobalHandle ((HGLOBAL) hstmt));
     GlobalFree(GlobalHandle((HGLOBAL) hstmt));
@@ -770,11 +770,11 @@ SQLRETURN my_SQLAllocDesc(SQLHDBC hdbc, SQLHANDLE *pdesc)
   desc->exp.dbc= dbc;
 
   /* add to this connection's list of explicit descriptors */
-  e= (LIST *) my_malloc(sizeof(LIST), MYF(0));
+  e= (LIST *) myodbc_malloc(sizeof(LIST), MYF(0));
   e->data= desc;
-  pthread_mutex_lock(&dbc->lock);
+  myodbc_mutex_lock(&dbc->lock);
   dbc->exp_desc= list_add(dbc->exp_desc, e);
-  pthread_mutex_unlock(&dbc->lock);
+  myodbc_mutex_unlock(&dbc->lock);
 
   *pdesc= desc;
   return SQL_SUCCESS;
@@ -804,9 +804,9 @@ SQLRETURN my_SQLFreeDesc(SQLHANDLE hdesc)
   {
     if (ldesc->data == desc)
     {
-      pthread_mutex_lock(&dbc->lock);
+      myodbc_mutex_lock(&dbc->lock);
       dbc->exp_desc= list_delete(dbc->exp_desc, ldesc);
-      pthread_mutex_unlock(&dbc->lock);
+      myodbc_mutex_unlock(&dbc->lock);
       x_free(ldesc);
       break;
     }

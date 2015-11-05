@@ -84,8 +84,6 @@ SQLRETURN my_SQLPrepare(SQLHSTMT hstmt, SQLCHAR *szSqlStr, SQLINTEGER cbSqlStr,
 {
   STMT *stmt= (STMT *) hstmt;
 
-  LINT_INIT(end);
-
   CLEAR_STMT_ERROR(stmt);
 
   reset_parsed_query(&stmt->query, NULL, NULL, NULL);

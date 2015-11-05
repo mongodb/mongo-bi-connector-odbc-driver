@@ -377,7 +377,7 @@ SQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd, SQLCHAR *in, SQLSMALLINT in_len,
 
   if (outw_max)
   {
-    outw= (SQLWCHAR *)my_malloc(sizeof(SQLWCHAR) * out_max, MYF(0));
+    outw= (SQLWCHAR *)myodbc_malloc(sizeof(SQLWCHAR) * out_max, MYF(0));
     if (!outw)
     {
       rc= set_dbc_error((DBC *)hdbc, "HY001", NULL, 0);

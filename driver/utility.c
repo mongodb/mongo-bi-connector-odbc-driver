@@ -47,14 +47,14 @@ SQLRETURN odbc_stmt(DBC *dbc, const char *query)
 {
     SQLRETURN result= SQL_SUCCESS;
 
-    pthread_mutex_lock(&dbc->lock);
+    myodbc_mutex_lock(&dbc->lock);
     if ( check_if_server_is_alive(dbc) ||
          mysql_real_query(&dbc->mysql,query,strlen(query)) )
     {
         result= set_conn_error(dbc,MYERR_S1000,mysql_error(&dbc->mysql),
                                mysql_errno(&dbc->mysql));
     }
-    pthread_mutex_unlock(&dbc->lock);
+    myodbc_mutex_unlock(&dbc->lock);
     return result;
 }
 
@@ -71,13 +71,13 @@ SQLRETURN odbc_stmt(DBC *dbc, const char *query)
 void myodbc_link_fields(STMT *stmt, MYSQL_FIELD *fields, uint field_count)
 {
     MYSQL_RES *result;
-    pthread_mutex_lock(&stmt->dbc->lock);
+    myodbc_mutex_lock(&stmt->dbc->lock);
     result= stmt->result;
     result->fields= fields;
     result->field_count= field_count;
     result->current_field= 0;
     fix_result_types(stmt);
-    pthread_mutex_unlock(&stmt->dbc->lock);
+    myodbc_mutex_unlock(&stmt->dbc->lock);
 }
 
 
@@ -337,10 +337,10 @@ char *dupp_str(char *from,int length)
 {
     char *to;
     if ( !from )
-        return my_strdup("",MYF(MY_WME));
+        return myodbc_strdup("",MYF(MY_WME));
     if ( length == SQL_NTS )
         length= strlen(from);
-    if ( (to= my_malloc(length+1,MYF(MY_WME))) )
+    if ( (to= myodbc_malloc(length+1,MYF(MY_WME))) )
     {
         memcpy(to,from,length);
         to[length]= 0;
@@ -1002,7 +1002,7 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
   switch (field->type) {
   case MYSQL_TYPE_BIT:
     if (buff)
-      (void)strmov(buff, "bit");
+      (void)my_stpmov(buff, "bit");
     /*
       MySQL's BIT type can have more than one bit, in which case we treat
       it as a BINARY field.
@@ -1012,43 +1012,43 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
   case MYSQL_TYPE_DECIMAL:
   case MYSQL_TYPE_NEWDECIMAL:
     if (buff)
-      (void)strmov(buff, "decimal");
+      (void)my_stpmov(buff, "decimal");
     return SQL_DECIMAL;
 
   case MYSQL_TYPE_TINY:
     /* MYSQL_TYPE_TINY could either be a TINYINT or a single CHAR. */
     if (buff)
     {
-      buff= strmov(buff, (field->flags & NUM_FLAG) ? "tinyint" : "char");
+      buff= my_stpmov(buff, (field->flags & NUM_FLAG) ? "tinyint" : "char");
       if (field->flags & UNSIGNED_FLAG)
-        (void)strmov(buff, " unsigned");
+        (void)my_stpmov(buff, " unsigned");
     }
     return (field->flags & NUM_FLAG) ? SQL_TINYINT : SQL_CHAR;
 
   case MYSQL_TYPE_SHORT:
     if (buff)
     {
-      buff= strmov(buff, "smallint");
+      buff= my_stpmov(buff, "smallint");
       if (field->flags & UNSIGNED_FLAG)
-        (void)strmov(buff, " unsigned");
+        (void)my_stpmov(buff, " unsigned");
     }
     return SQL_SMALLINT;
 
   case MYSQL_TYPE_INT24:
     if (buff)
     {
-      buff= strmov(buff, "mediumint");
+      buff= my_stpmov(buff, "mediumint");
       if (field->flags & UNSIGNED_FLAG)
-        (void)strmov(buff, " unsigned");
+        (void)my_stpmov(buff, " unsigned");
     }
     return SQL_INTEGER;
 
   case MYSQL_TYPE_LONG:
     if (buff)
     {
-      buff= strmov(buff, "integer");
+      buff= my_stpmov(buff, "integer");
       if (field->flags & UNSIGNED_FLAG)
-        (void)strmov(buff, " unsigned");
+        (void)my_stpmov(buff, " unsigned");
     }
     return SQL_INTEGER;
 
@@ -1056,12 +1056,12 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
     if (buff)
     {
       if (stmt->dbc->ds->change_bigint_columns_to_int)
-        buff= strmov(buff, "int");
+        buff= my_stpmov(buff, "int");
       else
-        buff= strmov(buff, "bigint");
+        buff= my_stpmov(buff, "bigint");
       
       if (field->flags & UNSIGNED_FLAG)
-        (void)strmov(buff, " unsigned");
+        (void)my_stpmov(buff, " unsigned");
     }
 
     if (stmt->dbc->ds->change_bigint_columns_to_int)
@@ -1072,41 +1072,41 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
   case MYSQL_TYPE_FLOAT:
     if (buff)
     {
-      buff= strmov(buff, "float");
+      buff= my_stpmov(buff, "float");
       if (field->flags & UNSIGNED_FLAG)
-        (void)strmov(buff, " unsigned");
+        (void)my_stpmov(buff, " unsigned");
     }
     return SQL_REAL;
 
   case MYSQL_TYPE_DOUBLE:
     if (buff)
     {
-      buff= strmov(buff, "double");
+      buff= my_stpmov(buff, "double");
       if (field->flags & UNSIGNED_FLAG)
-        (void)strmov(buff, " unsigned");
+        (void)my_stpmov(buff, " unsigned");
     }
     return SQL_DOUBLE;
 
   case MYSQL_TYPE_NULL:
     if (buff)
-      (void)strmov(buff, "null");
+      (void)my_stpmov(buff, "null");
     return SQL_VARCHAR;
 
   case MYSQL_TYPE_YEAR:
     if (buff)
-      (void)strmov(buff, "year");
+      (void)my_stpmov(buff, "year");
     return SQL_SMALLINT;
 
   case MYSQL_TYPE_TIMESTAMP:
     if (buff)
-      (void)strmov(buff, "timestamp");
+      (void)my_stpmov(buff, "timestamp");
     if (stmt->dbc->env->odbc_ver == SQL_OV_ODBC3)
       return SQL_TYPE_TIMESTAMP;
     return SQL_TIMESTAMP;
 
   case MYSQL_TYPE_DATETIME:
     if (buff)
-      (void)strmov(buff, "datetime");
+      (void)my_stpmov(buff, "datetime");
     if (stmt->dbc->env->odbc_ver == SQL_OV_ODBC3)
       return SQL_TYPE_TIMESTAMP;
     return SQL_TIMESTAMP;
@@ -1114,21 +1114,21 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
   case MYSQL_TYPE_NEWDATE:
   case MYSQL_TYPE_DATE:
     if (buff)
-      (void)strmov(buff, "date");
+      (void)my_stpmov(buff, "date");
     if (stmt->dbc->env->odbc_ver == SQL_OV_ODBC3)
       return SQL_TYPE_DATE;
     return SQL_DATE;
 
   case MYSQL_TYPE_TIME:
     if (buff)
-      (void)strmov(buff, "time");
+      (void)my_stpmov(buff, "time");
     if (stmt->dbc->env->odbc_ver == SQL_OV_ODBC3)
       return SQL_TYPE_TIME;
     return SQL_TIME;
 
   case MYSQL_TYPE_STRING:
     if (buff)
-      (void)strmov(buff, field_is_binary ? "binary" : "char");
+      (void)my_stpmov(buff, field_is_binary ? "binary" : "char");
 
     return field_is_binary ? SQL_BINARY :
       (stmt->dbc->unicode && field->charsetnr != stmt->dbc->ansi_charset_info->number ?
@@ -1141,7 +1141,7 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
   case MYSQL_TYPE_VARCHAR:
   case MYSQL_TYPE_VAR_STRING:
     if (buff)
-      (void)strmov(buff, field_is_binary ? "varbinary" : "varchar");
+      (void)my_stpmov(buff, field_is_binary ? "varbinary" : "varchar");
 
     return field_is_binary ? SQL_VARBINARY :
       (stmt->dbc->unicode && field->charsetnr != stmt->dbc->ansi_charset_info->number ?
@@ -1149,7 +1149,7 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 
   case MYSQL_TYPE_TINY_BLOB:
     if (buff)
-      (void)strmov(buff, field_is_binary ? "tinyblob" : "tinytext");
+      (void)my_stpmov(buff, field_is_binary ? "tinyblob" : "tinytext");
 
     return field_is_binary ? SQL_LONGVARBINARY :
       (stmt->dbc->unicode && field->charsetnr != stmt->dbc->ansi_charset_info->number ?
@@ -1157,7 +1157,7 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 
   case MYSQL_TYPE_BLOB:
     if (buff)
-      (void)strmov(buff, field_is_binary ? "blob" : "text");
+      (void)my_stpmov(buff, field_is_binary ? "blob" : "text");
 
     return field_is_binary ? SQL_LONGVARBINARY :
       (stmt->dbc->unicode && field->charsetnr != stmt->dbc->ansi_charset_info->number ?
@@ -1165,7 +1165,7 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 
   case MYSQL_TYPE_MEDIUM_BLOB:
     if (buff)
-      (void)strmov(buff, field_is_binary ? "mediumblob" : "mediumtext");
+      (void)my_stpmov(buff, field_is_binary ? "mediumblob" : "mediumtext");
 
     return field_is_binary ? SQL_LONGVARBINARY :
       (stmt->dbc->unicode && field->charsetnr != stmt->dbc->ansi_charset_info->number ?
@@ -1173,7 +1173,7 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 
   case MYSQL_TYPE_LONG_BLOB:
     if (buff)
-      (void)strmov(buff, field_is_binary ? "longblob" : "longtext");
+      (void)my_stpmov(buff, field_is_binary ? "longblob" : "longtext");
 
     return field_is_binary ? SQL_LONGVARBINARY :
       (stmt->dbc->unicode && field->charsetnr != stmt->dbc->ansi_charset_info->number ?
@@ -1181,17 +1181,17 @@ SQLSMALLINT get_sql_data_type(STMT *stmt, MYSQL_FIELD *field, char *buff)
 
   case MYSQL_TYPE_ENUM:
     if (buff)
-      (void)strmov(buff, "enum");
+      (void)my_stpmov(buff, "enum");
     return SQL_CHAR;
 
   case MYSQL_TYPE_SET:
     if (buff)
-      (void)strmov(buff, "set");
+      (void)my_stpmov(buff, "set");
     return SQL_CHAR;
 
   case MYSQL_TYPE_GEOMETRY:
     if (buff)
-      (void)strmov(buff, "geometry");
+      (void)my_stpmov(buff, "geometry");
     return SQL_LONGVARBINARY;
   }
 
@@ -2299,7 +2299,7 @@ my_bool reget_current_catalog(DBC *dbc)
             {
                 if ( row[0] )
                 {
-                    dbc->database = my_strdup(row[0], MYF(MY_WME));
+                    dbc->database = myodbc_strdup(row[0], MYF(MY_WME));
                 }
                 else
                 {
@@ -3761,7 +3761,7 @@ char * complete_timestamp(const char * value, ulong length, char buff[21])
   --------
   reinterpret_cast doesn't work :(
 */
-long double strtold(const char *nptr, char **endptr)
+long double myodbc_strtold(const char *nptr, char **endptr)
 {
 /*
  * Experienced odd compilation errors on one of windows build hosts -
@@ -3899,9 +3899,9 @@ int get_session_variable(STMT *stmt, const char *var, char *result)
 
   if (var)
   {
-    to= strmov(buff, "SHOW SESSION VARIABLES LIKE '");
-    to= strmov(to, var);
-    to= strmov(to, "'");
+    to= my_stpmov(buff, "SHOW SESSION VARIABLES LIKE '");
+    to= my_stpmov(to, var);
+    to= my_stpmov(to, "'");
     *to= '\0';
 
     if (!SQL_SUCCEEDED(odbc_stmt(stmt->dbc, buff)))
@@ -4032,7 +4032,7 @@ my_bool myodbc_net_realloc(NET *net, size_t length)
     net_read_packet() may actually read 4 bytes depending on build flags and
     platform.
   */
-  if (!(buff= (uchar*) my_realloc((char*) net->buff, pkt_length +
+  if (!(buff= (uchar*) myodbc_realloc((char*) net->buff, pkt_length +
                                   NET_HEADER_SIZE + COMP_HEADER_SIZE + 1,
                                   MYF(MY_WME))))
   {

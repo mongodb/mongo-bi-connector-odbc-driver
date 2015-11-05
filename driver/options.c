@@ -332,19 +332,19 @@ MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
         if (!(db= fix_str((char *)ldb, (char *)ValuePtr, StringLengthPtr)))
           return set_conn_error(hdbc,MYERR_S1009,NULL, 0);
 
-        pthread_mutex_lock(&dbc->lock);
+        myodbc_mutex_lock(&dbc->lock);
         if (is_connected(dbc))
         {
           if (mysql_select_db(&dbc->mysql,(char*) db))
           {
             set_conn_error(dbc,MYERR_S1000,mysql_error(&dbc->mysql),mysql_errno(&dbc->mysql));
-            pthread_mutex_unlock(&dbc->lock);
+            myodbc_mutex_unlock(&dbc->lock);
             return SQL_ERROR;
           }
         }
         x_free(dbc->database);
-        dbc->database= my_strdup(db,MYF(MY_WME));
-        pthread_mutex_unlock(&dbc->lock);
+        dbc->database= myodbc_strdup(db,MYF(MY_WME));
+        myodbc_mutex_unlock(&dbc->lock);
       }
       break;
 
@@ -677,7 +677,7 @@ MySQLSetStmtAttr(SQLHSTMT hstmt, SQLINTEGER Attribute, SQLPOINTER ValuePtr,
               else if (desc->alloc_type == SQL_DESC_ALLOC_USER)
               {
                 /* otherwise, associate this statement with the desc */
-                LIST *e= (LIST *) my_malloc(sizeof(LIST), MYF(0));
+                LIST *e= (LIST *) myodbc_malloc(sizeof(LIST), MYF(0));
                 e->data= stmt;
                 /* No need to lock */
                 desc->exp.stmts= list_add(desc->exp.stmts, e);

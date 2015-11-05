@@ -232,19 +232,19 @@ static my_bool check_if_usable_unique_key_exists(STMT *stmt)
     table= stmt->result->fields->table;
 
   /* Use SHOW KEYS FROM table to check for keys. */
-  pos= strmov(buff, "SHOW KEYS FROM `");
+  pos= my_stpmov(buff, "SHOW KEYS FROM `");
   pos+= mysql_real_escape_string(&stmt->dbc->mysql, pos, table, strlen(table));
-  pos= strmov(pos, "`");
+  pos= my_stpmov(pos, "`");
 
   MYLOG_QUERY(stmt, buff);
 
-  pthread_mutex_lock(&stmt->dbc->lock);
+  myodbc_mutex_lock(&stmt->dbc->lock);
   if (mysql_query(&stmt->dbc->mysql, buff) ||
       !(res= mysql_store_result(&stmt->dbc->mysql)))
   {
     set_error(stmt, MYERR_S1000, mysql_error(&stmt->dbc->mysql),
               mysql_errno(&stmt->dbc->mysql));
-    pthread_mutex_unlock(&stmt->dbc->lock);
+    myodbc_mutex_unlock(&stmt->dbc->lock);
     return FALSE;
   }
 
@@ -269,7 +269,7 @@ static my_bool check_if_usable_unique_key_exists(STMT *stmt)
     if (have_field_in_result(row[4], stmt->result))
     {
       /* We have a unique key field -- copy it, and increment our count. */
-      strmov(stmt->cursor.pkcol[stmt->cursor.pk_count++].name, row[4]);
+      my_stpmov(stmt->cursor.pkcol[stmt->cursor.pk_count++].name, row[4]);
       seq_in_index= seq;
     }
     else
@@ -277,7 +277,7 @@ static my_bool check_if_usable_unique_key_exists(STMT *stmt)
       stmt->cursor.pk_count= seq_in_index= 0;
   }
   mysql_free_result(res);
-  pthread_mutex_unlock(&stmt->dbc->lock);
+  myodbc_mutex_unlock(&stmt->dbc->lock);
 
   /* Remember that we've figured this out already. */
   stmt->cursor.pk_validated= 1;
@@ -337,7 +337,7 @@ void set_current_cursor_data(STMT *stmt, SQLUINTEGER irow)
 
 static void set_dynamic_cursor_name(STMT *stmt)
 {
-    stmt->cursor.name= (char*) my_malloc(MYSQL_MAX_CURSOR_LEN,MYF(MY_ZEROFILL));
+    stmt->cursor.name= (char*) myodbc_malloc(MYSQL_MAX_CURSOR_LEN,MYF(MY_ZEROFILL));
     sprintf((char*) stmt->cursor.name,"SQL_CUR%d",stmt->dbc->cursor_count++);
 }
 
@@ -457,14 +457,14 @@ static SQLRETURN exec_stmt_query(STMT *stmt,char *query,
     SQLRETURN error= SQL_SUCCESS;
 
     MYLOG_QUERY(stmt, query);
-    pthread_mutex_lock(&dbc->lock);
+    myodbc_mutex_lock(&dbc->lock);
     if ( check_if_server_is_alive(dbc) ||
          mysql_real_query(&dbc->mysql, query, len) )
     {
         error= set_error(stmt,MYERR_S1000,mysql_error(&dbc->mysql),
                          mysql_errno(&dbc->mysql));
     }
-    pthread_mutex_unlock(&dbc->lock);
+    myodbc_mutex_unlock(&dbc->lock);
     return(error);
 }
 
@@ -607,16 +607,16 @@ static SQLRETURN append_all_fields(STMT *stmt, DYNAMIC_STRING *dynQuery)
   */
   strxmov(select, "SELECT * FROM `", stmt->table_name, "` LIMIT 0", NullS);
   MYLOG_QUERY(stmt, select);
-  pthread_mutex_lock(&stmt->dbc->lock);
+  myodbc_mutex_lock(&stmt->dbc->lock);
   if (mysql_query(&stmt->dbc->mysql, select) ||
       !(presultAllColumns= mysql_store_result(&stmt->dbc->mysql)))
   {
     set_error(stmt, MYERR_S1000, mysql_error(&stmt->dbc->mysql),
               mysql_errno(&stmt->dbc->mysql));
-    pthread_mutex_unlock(&stmt->dbc->lock);
+    myodbc_mutex_unlock(&stmt->dbc->lock);
     return SQL_ERROR;
   }
-  pthread_mutex_unlock(&stmt->dbc->lock);
+  myodbc_mutex_unlock(&stmt->dbc->lock);
 
   /*
     If the number of fields in the underlying table is not the same as
@@ -1697,7 +1697,7 @@ SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
                     return set_error(stmt,MYERR_S1000, alloc_error, 0);
                 }
 
-                pthread_mutex_lock(&stmt->dbc->lock);
+                myodbc_mutex_lock(&stmt->dbc->lock);
                 --irow;
                 sqlRet= SQL_SUCCESS;
                 stmt->cursor_row= (long)(stmt->current_row+irow);
@@ -1712,7 +1712,7 @@ SQLRETURN SQL_API my_SQLSetPos(SQLHSTMT hstmt, SQLSETPOSIROW irow,
                  so the MYSQL_RES is in the state we expect.
                 */
                 data_seek(stmt, (my_ulonglong)stmt->cursor_row);
-                pthread_mutex_unlock(&stmt->dbc->lock);
+                myodbc_mutex_unlock(&stmt->dbc->lock);
                 break;
             }
 

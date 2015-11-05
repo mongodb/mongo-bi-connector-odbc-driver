@@ -44,21 +44,99 @@ extern "C"
 #endif
 
 #ifdef THREAD
+#if MYSQL_VERSION_ID < 50703
 #include <my_pthread.h>
+#define myodbc_mutex_t pthread_mutex_t
+#define myodbc_key_t pthread_key_t
+#define myodbc_malloc my_malloc
+#define myodbc_realloc my_realloc
+#define myodbc_memdup my_memdup
+#define myodbc_strdup my_strdup
+#define myodbc_init_dynamic_array my_init_dynamic_array
+#define myodbc_mutex_lock pthread_mutex_lock
+#define myodbc_mutex_unlock pthread_mutex_unlock
+#define myodbc_mutex_trylock pthread_mutex_trylock
+#define myodbc_mutex_init pthread_mutex_init
+#define myodbc_mutex_destroy pthread_mutex_destroy
+#define myodbc_allocate_dynamic allocate_dynamic
+#define myodbc_snprintf snprintf
 #else
-# ifdef pthread_mutex_lock
-#  undef pthread_mutex_lock
-#  undef pthread_mutex_unlock
-#  undef pthread_mutex_init
-#  undef pthread_mutex_destroy
-#  undef pthread_mutex_trylock
+#include <my_thread.h>
+#define myodbc_mutex_t native_mutex_t
+#define myodbc_key_t native_
+#define myodbc_malloc(A,B) my_malloc(PSI_NOT_INSTRUMENTED,A,B)
+#define myodbc_realloc(A,B,C) my_realloc(PSI_NOT_INSTRUMENTED,A,B,C)
+#define myodbc_memdup(A,B,C) my_memdup(PSI_NOT_INSTRUMENTED,A,B,C)
+#define myodbc_strdup(A,B) my_strdup(PSI_NOT_INSTRUMENTED,A,B)
+#define myodbc_init_dynamic_array(A,B,C,D) my_init_dynamic_array(A,B,NULL,C,D)
+#define myodbc_mutex_lock native_mutex_lock
+#define myodbc_mutex_unlock native_mutex_unlock
+#define myodbc_mutex_trylock native_mutex_trylock
+#define myodbc_mutex_init native_mutex_init
+#define myodbc_mutex_destroy native_mutex_destroy
+#define sort_dynamic(A,cmp) my_qsort((A)->buffer, (A)->elements, (A)->size_of_element, (cmp))
+#define push_dynamic(A,B) insert_dynamic((A),(B))
+#define myodbc_snprintf my_snprintf
+
+  my_bool inline myodbc_allocate_dynamic(DYNAMIC_ARRAY *array, uint max_elements)
+  {
+    if (max_elements >= array->max_element)
+    {
+      uint size;
+      uchar *new_ptr;
+      size = (max_elements + array->alloc_increment) / array->alloc_increment;
+      size *= array->alloc_increment;
+      if (array->buffer == (uchar *)(array + 1))
+      {
+        /*
+        In this senerio, the buffer is statically preallocated,
+        so we have to create an all-new malloc since we overflowed
+        */
+        if (!(new_ptr = (uchar *)myodbc_malloc(size *
+          array->size_of_element,
+          MYF(MY_WME))))
+          return 0;
+        memcpy(new_ptr, array->buffer,
+          array->elements * array->size_of_element);
+      }
+      else
+
+
+      if (!(new_ptr = (uchar*)myodbc_realloc(array->buffer, size*
+        array->size_of_element,
+        MYF(MY_WME | MY_ALLOW_ZERO_PTR))))
+        return TRUE;
+      array->buffer = new_ptr;
+      array->max_element = size;
+    }
+    return FALSE;
+  }
+
+  void inline delete_dynamic_element(DYNAMIC_ARRAY *array, uint idx)
+  {
+    char *ptr = (char*)array->buffer + array->size_of_element*idx;
+    array->elements--;
+    memmove(ptr, ptr + array->size_of_element,
+      (array->elements - idx)*array->size_of_element);
+  }
+
+
+#endif
+
+#else
+# ifdef myodbc_mutex_lock
+#  undef myodbc_mutex_lock
+#  undef myodbc_mutex_unlock
+#  undef myodbc_mutex_init
+#  undef myodbc_mutex_destroy
+#  undef myodbc_mutex_trylock
 # endif
-#define pthread_mutex_lock(A)
-#define pthread_mutex_unlock(A)
-#define pthread_mutex_init(A,B)
-#define pthread_mutex_destroy(A)
+#define myodbc_mutex_lock(A)
+#define myodbc_mutex_unlock(A)
+#define myodbc_mutex_init(A,B)
+#define myodbc_mutex_destroy(A)
 /* EBUSY - 16 */
-#define pthread_mutex_trylock(A) (16)
+#define myodbc_mutex_trylock(A) (16)
 #endif
 
 /* Get rid of defines from my_config.h that conflict with our myconf.h */

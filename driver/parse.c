@@ -139,8 +139,8 @@ MY_PARSED_QUERY * init_parsed_query(MY_PARSED_QUERY *pq)
 
     /* TODO: Store offsets rather than ptrs. In this case we will be fine
        if work with copy of the originally parsed string */
-    my_init_dynamic_array(&pq->token,     sizeof(uint), 20, 10);
-    my_init_dynamic_array(&pq->param_pos, sizeof(uint), 10, 10);
+    myodbc_init_dynamic_array(&pq->token,     sizeof(uint), 20, 10);
+    myodbc_init_dynamic_array(&pq->param_pos, sizeof(uint), 10, 10);
   }
 
   return pq;
@@ -194,7 +194,7 @@ void delete_parsed_query(MY_PARSED_QUERY *pq)
 
 int copy_parsed_query(MY_PARSED_QUERY* src, MY_PARSED_QUERY *target)
 {
-  char * dummy= my_strdup(GET_QUERY(src), MYF(0));
+  char * dummy= myodbc_strdup(GET_QUERY(src), MYF(0));
 
   if (dummy == NULL)
   {
@@ -216,7 +216,7 @@ int copy_parsed_query(MY_PARSED_QUERY* src, MY_PARSED_QUERY *target)
 
   target->query_type= src->query_type;
 
-  if (allocate_dynamic(&target->token, src->token.elements))
+  if (myodbc_allocate_dynamic(&target->token, src->token.elements))
   {
     return 1;
   }
@@ -225,7 +225,7 @@ int copy_parsed_query(MY_PARSED_QUERY* src, MY_PARSED_QUERY *target)
         src->token.elements*src->token.size_of_element);
   target->token.elements= src->token.elements;
 
-  if (allocate_dynamic(&target->param_pos, src->param_pos.elements))
+  if (myodbc_allocate_dynamic(&target->param_pos, src->param_pos.elements))
   {
     return 1;
   }

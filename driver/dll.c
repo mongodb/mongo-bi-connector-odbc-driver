@@ -75,12 +75,12 @@ void myodbc_init(void)
   {
     struct lconv *tmp;
     init_getfunctions();
-    default_locale=my_strdup(setlocale(LC_NUMERIC,NullS),MYF(0));
+    default_locale=myodbc_strdup(setlocale(LC_NUMERIC,NullS),MYF(0));
     setlocale(LC_NUMERIC,"");
     tmp=localeconv();
-    decimal_point=my_strdup(tmp->decimal_point,MYF(0));
+    decimal_point=myodbc_strdup(tmp->decimal_point,MYF(0));
     decimal_point_length=strlen(decimal_point);
-    thousands_sep=my_strdup(tmp->thousands_sep,MYF(0));
+    thousands_sep=myodbc_strdup(tmp->thousands_sep,MYF(0));
     thousands_sep_length=strlen(thousands_sep);
     setlocale(LC_NUMERIC,default_locale);
 
@@ -105,7 +105,8 @@ void myodbc_end()
     /* my_thread_end_wait_time was added in 5.1.14 and 5.0.32 */
 #if !defined(NONTHREADSAFE) && \
     (MYSQL_VERSION_ID >= 50114 || \
-     (MYSQL_VERSION_ID >= 50032 && MYSQL_VERSION_ID < 50100))
+    (MYSQL_VERSION_ID >= 50032 && MYSQL_VERSION_ID < 50100)) && \
+    MYSQL_VERSION_ID < 50701
     /*
        This eliminates the delay when my_end() is called and other threads
        have been initialized but not ended.

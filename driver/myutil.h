@@ -347,7 +347,7 @@ const char *get_fractional_part   (const char * str, int len,
                                   SQLUINTEGER * fraction);
 /* Convert MySQL timestamp to full ANSI timestamp format. */
 char *          complete_timestamp  (const char * value, ulong length, char buff[21]);
-long double     strtold             (const char *nptr, char **endptr);
+long double     myodbc_strtold             (const char *nptr, char **endptr);
 char *          extend_buffer       (NET *net, char *to, ulong length);
 char *          add_to_buffer       (NET *net,char *to,const char *from,ulong length);
 MY_LIMIT_CLAUSE find_position4limit (CHARSET_INFO* cs, char *query,

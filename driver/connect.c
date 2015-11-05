@@ -267,7 +267,7 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
     char cpbuf[64];
     const char *client_cs_name= NULL;
 
-    my_snprintf(cpbuf, sizeof(cpbuf), "cp%u", GetACP());
+    myodbc_snprintf(cpbuf, sizeof(cpbuf), "cp%u", GetACP());
     client_cs_name= my_os_charset_to_mysql_charset(cpbuf);
 
     if (client_cs_name)
@@ -293,6 +293,16 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
   if (ds->enable_cleartext_plugin)
   {
     mysql_options(mysql, MYSQL_ENABLE_CLEARTEXT_PLUGIN, (char *)&on);
+  }
+#endif
+
+  mysql->options.use_ssl = !ds->disable_ssl_default;
+#if MYSQL_VERSION_ID >= 50703
+  {
+    if (ds->ssl_enforce)
+    {
+      mysql_options(mysql, MYSQL_OPT_SSL_ENFORCE, (char *)&on);
+    }
   }
 #endif
 
@@ -374,7 +384,7 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
   if (ds->database)
   {
     x_free(dbc->database);
-    dbc->database= my_strdup(ds_get_utf8attr(ds->database, &ds->database8),
+    dbc->database= myodbc_strdup(ds_get_utf8attr(ds->database, &ds->database8),
                              MYF(MY_WME));
   }
   
@@ -750,7 +760,7 @@ SQLRETURN SQL_API MySQLDriverConnect(SQLHDBC hdbc, SQLHWND hwnd,
     /* create a string for prompting, and add driver manually */
     prompt_inlen= ds_to_kvpair_len(ds) + sqlwcharlen(W_DRIVER_PARAM) +
                   sqlwcharlen(ds->driver) + 1;
-    prompt_instr= (SQLWCHAR *) my_malloc(prompt_inlen * sizeof(SQLWCHAR),
+    prompt_instr= (SQLWCHAR *) myodbc_malloc(prompt_inlen * sizeof(SQLWCHAR),
                                          MYF(0));
     if (ds_to_kvpair(ds, prompt_instr, prompt_inlen, ';') == -1)
     {

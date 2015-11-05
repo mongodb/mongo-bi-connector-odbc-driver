@@ -1084,7 +1084,7 @@ MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
 
   if (stmt->dbc->ds->return_table_names_for_SqlDescribeCol && irrec->table_name)
   {
-    char *tmp= my_malloc(strlen((char *)irrec->name) +
+    char *tmp= myodbc_malloc(strlen((char *)irrec->name) +
                          strlen((char *)irrec->table_name) + 2,
                          MYF(0));
     if (!tmp)
@@ -1536,7 +1536,7 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
 
   CHECK_HANDLE(hStmt);
 
-  pthread_mutex_lock( &pStmt->dbc->lock );
+  myodbc_mutex_lock( &pStmt->dbc->lock );
 
   CLEAR_STMT_ERROR( pStmt );
 
@@ -1641,7 +1641,7 @@ SQLRETURN SQL_API SQLMoreResults( SQLHSTMT hStmt )
   }
 
 exitSQLMoreResults:
-  pthread_mutex_unlock( &pStmt->dbc->lock );
+  myodbc_mutex_unlock( &pStmt->dbc->lock );
   return nReturn;
 }
 
@@ -1864,12 +1864,10 @@ SQLRETURN SQL_API myodbc_single_fetch( SQLHSTMT             hstmt,
     SQLRETURN         row_res, res;
     STMT              *stmt= (STMT *) hstmt;
     MYSQL_ROW         values= 0;
-    MYSQL_ROW_OFFSET  save_position;
+    MYSQL_ROW_OFFSET  save_position= 0;
     SQLULEN           dummy_pcrow;
     BOOL              disconnected= FALSE;
     long              brow= 0;
-
-    LINT_INIT(save_position);
 
     if ( !stmt->result )
       return set_stmt_error(stmt, "24000", "Fetch without a SELECT", 0);
@@ -2201,12 +2199,10 @@ SQLRETURN SQL_API my_SQLExtendedFetch( SQLHSTMT             hstmt,
     SQLRETURN         row_res, res, row_book= SQL_SUCCESS;
     STMT              *stmt= (STMT *) hstmt;
     MYSQL_ROW         values= 0;
-    MYSQL_ROW_OFFSET  save_position;
+    MYSQL_ROW_OFFSET  save_position= 0;
     SQLULEN           dummy_pcrow;
     BOOL              disconnected= FALSE;
     long              brow= 0;
-
-    LINT_INIT(save_position);
 
     if ( !stmt->result )
       return set_stmt_error(stmt, "24000", "Fetch without a SELECT", 0);
