@@ -158,6 +158,7 @@ static BOOL FormMain_OnNotify (HWND hwnd, WPARAM wParam, LPARAM lParam)
     case IDC_TAB1:
     {
       TabControl_Select(&TabCtrl_1); //update internal "this" pointer
+
       LPNMHDR nm = (LPNMHDR)lParam;
       switch (nm->code)
       {
@@ -184,7 +185,7 @@ void getStrFieldData(HWND hwnd, SQLWCHAR **param, int idc)
 
   if (len>0)
   {
-    *param= (SQLWCHAR *)my_malloc((len + 1) * sizeof(SQLWCHAR), MYF(0));
+    *param= (SQLWCHAR *)myodbc_malloc((len + 1) * sizeof(SQLWCHAR), MYF(0));
     if (*param)
       Edit_GetText(GetDlgItem(hwnd,idc), *param, len+1);
   }
@@ -242,7 +243,7 @@ void getUnsignedFieldData(HWND hwnd, unsigned int *param, int idc)
 
   if(len>0)
   {
-    SQLWCHAR *tmp1= (SQLWCHAR *)my_malloc((len + 1) * sizeof(SQLWCHAR),
+    SQLWCHAR *tmp1= (SQLWCHAR *)myodbc_malloc((len + 1) * sizeof(SQLWCHAR),
                                          MYF(0));
     if (tmp1)
     {
@@ -672,6 +673,54 @@ void FormMain_OnSize(HWND hwnd, UINT state, int cx, int cy)
 	AdjustLayout(hwnd);
 }
 
+static int yCurrentScroll = 0;   // current vertical scroll value
+
+void FormMain_OnScroll(HWND hwnd, HWND hCtrl, UINT code, int pos)
+{
+  SCROLLINFO si;
+  si.cbSize = sizeof(si);
+  si.fMask = SIF_POS;
+  int yNewPos;    // new position
+  switch (code)
+  {
+      // User clicked the scroll bar shaft above the scroll box. 
+    case SB_PAGEUP:
+      yNewPos = yCurrentScroll - 50;
+      break;
+
+      // User clicked the scroll bar shaft below the scroll box. 
+    case SB_PAGEDOWN:
+      yNewPos = yCurrentScroll + 50;
+      break;
+
+      // User clicked the top arrow. 
+    case SB_LINEUP:
+      yNewPos = yCurrentScroll - 5;
+      break;
+
+      // User clicked the bottom arrow. 
+    case SB_LINEDOWN:
+      yNewPos = yCurrentScroll + 5;
+      break;
+
+      // User dragged the scroll box. 
+    case SB_THUMBPOSITION:
+      yNewPos = pos;
+      break;
+
+    default:
+      yNewPos = yCurrentScroll;
+  }
+  
+  si.nPos = yNewPos;
+
+  ScrollWindowEx(hwnd, 0, -50,
+    NULL, NULL, NULL, NULL, SW_INVALIDATE);
+  UpdateWindow(hwnd);
+
+  SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
+  yCurrentScroll = yNewPos;
+}
 
 void AdjustLayout(HWND hwnd)
 {
@@ -766,6 +815,7 @@ BOOL FormMain_DlgProc (HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam)
 		HANDLE_MSG (hwndDlg, WM_COMMAND, FormMain_OnCommand);
 		HANDLE_MSG (hwndDlg, WM_INITDIALOG, FormMain_OnInitDialog);
 		HANDLE_MSG (hwndDlg, WM_SIZE, FormMain_OnSize);
+    HANDLE_MSG (hwndDlg, WM_VSCROLL, FormMain_OnScroll);
 	// There is no message cracker for WM_NOTIFY so redirect manually
 	case WM_NOTIFY:
 		return FormMain_OnNotify (hwndDlg,wParam,lParam);

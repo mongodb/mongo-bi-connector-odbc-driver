@@ -127,6 +127,8 @@
 #define IDC_EDIT_plugin_dir             10053
 #define IDC_EDIT_default_auth           10054
 #define IDC_CHOOSER_plugin_dir          10055
+#define IDC_CHECK_disable_ssl_default   10056
+#define IDC_CHECK_ssl_enforce           10057
 #define IDC_BUTTON_TEST                 11014
 #define IDC_BUTTON_HELP                 11015
 #define IDC_STATIC                      -1

@@ -389,9 +389,9 @@ int Win64CompareLibs(SQLWCHAR *lib1, SQLWCHAR *lib2)
   rc= sqlwcharcasecmp(llib1, llib2);
 
   if (free1)
-    free(llib1);
+    x_free(llib1);
   if (free2)
-    free(llib2);
+    x_free(llib2);
   return rc;
 }
 #endif /* _WIN32 */

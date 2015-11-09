@@ -61,7 +61,7 @@ SQLWCHAR *mytest(HWND hwnd, DataSource *params)
     SQLSMALLINT len;
     SQLWCHAR *ptr;
 
-    msg= (SQLWCHAR *) my_malloc(512 * sizeof(SQLWCHAR), MYF(0));
+    msg= (SQLWCHAR *) myodbc_malloc(512 * sizeof(SQLWCHAR), MYF(0));
     *msg= 0;
 
     sqlwcharncpy(msg, _W(L"Connection Failed\n"), SQL_NTS);
@@ -335,6 +335,8 @@ void syncTabsData(HWND hwnd, DataSource *params)
   GET_BOOL_TAB(CONNECTION_TAB, clientinteractive);
   GET_BOOL_TAB(CONNECTION_TAB, can_handle_exp_pwd);
   GET_BOOL_TAB(CONNECTION_TAB, enable_cleartext_plugin);
+  GET_BOOL_TAB(CONNECTION_TAB, disable_ssl_default);
+  GET_BOOL_TAB(CONNECTION_TAB, ssl_enforce);
 
   GET_COMBO_TAB(CONNECTION_TAB, charset);
   GET_STRING_TAB(CONNECTION_TAB, initstmt);
@@ -406,6 +408,8 @@ void syncTabs(HWND hwnd, DataSource *params)
   SET_BOOL_TAB(CONNECTION_TAB, clientinteractive);
   SET_BOOL_TAB(CONNECTION_TAB, can_handle_exp_pwd);
   SET_BOOL_TAB(CONNECTION_TAB, enable_cleartext_plugin);
+  SET_BOOL_TAB(CONNECTION_TAB, disable_ssl_default);
+  SET_BOOL_TAB(CONNECTION_TAB, ssl_enforce);
 
 #ifdef _WIN32
   if ( getTabCtrlTabPages(CONNECTION_TAB-1))
