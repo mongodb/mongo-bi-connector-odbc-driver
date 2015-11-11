@@ -63,12 +63,12 @@ extern "C"
 #else
 #include <my_thread.h>
 #define myodbc_mutex_t native_mutex_t
-#define myodbc_key_t native_
+#define myodbc_key_t thread_local_key_t
 #define myodbc_malloc(A,B) my_malloc(PSI_NOT_INSTRUMENTED,A,B)
 #define myodbc_realloc(A,B,C) my_realloc(PSI_NOT_INSTRUMENTED,A,B,C)
 #define myodbc_memdup(A,B,C) my_memdup(PSI_NOT_INSTRUMENTED,A,B,C)
 #define myodbc_strdup(A,B) my_strdup(PSI_NOT_INSTRUMENTED,A,B)
-#define myodbc_init_dynamic_array(A,B,C,D) my_init_dynamic_array(A,B,NULL,C,D)
+#define myodbc_init_dynamic_array(A,B,C,D) my_init_dynamic_array(A,PSI_NOT_INSTRUMENTED,B,NULL,C,D)
 #define myodbc_mutex_lock native_mutex_lock
 #define myodbc_mutex_unlock native_mutex_unlock
 #define myodbc_mutex_trylock native_mutex_trylock
@@ -78,7 +78,7 @@ extern "C"
 #define push_dynamic(A,B) insert_dynamic((A),(B))
 #define myodbc_snprintf my_snprintf
 
-  my_bool inline myodbc_allocate_dynamic(DYNAMIC_ARRAY *array, uint max_elements)
+  static my_bool inline myodbc_allocate_dynamic(DYNAMIC_ARRAY *array, uint max_elements)
   {
     if (max_elements >= array->max_element)
     {
@@ -112,7 +112,7 @@ extern "C"
     return FALSE;
   }
 
-  void inline delete_dynamic_element(DYNAMIC_ARRAY *array, uint idx)
+  static void inline delete_dynamic_element(DYNAMIC_ARRAY *array, uint idx)
   {
     char *ptr = (char*)array->buffer + array->size_of_element*idx;
     array->elements--;

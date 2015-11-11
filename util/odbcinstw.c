@@ -105,7 +105,7 @@ MySQLGetPrivateProfileStringW(const MyODBC_LPCWSTR lpszSection, const MyODBC_LPC
   x_free(section);
   x_free(entry);
   x_free(def);
-  x_free(ret);
+  free(ret);
   x_free(filename);
 
   return rc;

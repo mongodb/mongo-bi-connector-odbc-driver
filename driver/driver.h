@@ -373,6 +373,7 @@ typedef struct tagDBC
   int           txn_isolation;
   uint          port;
   uint          cursor_count;
+  ulong         net_buffer_length;
   uint          commit_flag;
 #ifdef THREAD
   myodbc_mutex_t lock;

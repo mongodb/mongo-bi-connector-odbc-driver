@@ -336,8 +336,11 @@ void setBoolFieldData(gchar *widget_name, gboolean checked)
 {
   GtkToggleButton *widget= GTK_TOGGLE_BUTTON(gtk_builder_get_object (builder, 
                                              widget_name));
-  assert(widget);
-  gtk_toggle_button_set_active(widget, checked);
+  if (widget)
+  {
+	  assert(widget);
+	  gtk_toggle_button_set_active(widget, checked);
+  }
 }
 
 
@@ -358,7 +361,7 @@ void getStrFieldData(gchar *widget_name, SQLWCHAR **param)
 
   if(len>0)
   {
-    *param= (SQLWCHAR *) my_malloc((len + 1) * sizeof (SQLWCHAR), MYF (0));
+    *param= (SQLWCHAR *) myodbc_malloc((len + 1) * sizeof (SQLWCHAR), MYF (0));
     if(*param)
     {
     const gchar *entry_text= gtk_entry_get_text(widget);
@@ -389,8 +392,8 @@ void setComboFieldData(gchar *widget_name, SQLWCHAR *param, SQLCHAR **param8)
   assert(widget);
   ds_get_utf8attr(param, param8);
   
-  if(param8 && *param8)
-    gtk_entry_set_text(entry, (gchar*)(*param8));
+/*  if(param8 && *param8)
+    gtk_entry_set_text(entry, (gchar*)(*param8));*/
 }
 
 
@@ -415,7 +418,7 @@ void getComboFieldData(gchar *widget_name, SQLWCHAR **param)
 
   if(len>0)
   {
-    *param= (SQLWCHAR *) my_malloc((len + 1) * sizeof (SQLWCHAR), MYF (0));
+    *param= (SQLWCHAR *) myodbc_malloc((len + 1) * sizeof (SQLWCHAR), MYF (0));
     if(*param)
     {
       const gchar *entry_text= gtk_entry_get_text(entry);
@@ -501,7 +504,7 @@ int ShowOdbcParamsDialog(DataSource* params, HWND ParentWnd, BOOL isPrompt)
 
       msglen= 50 + (driver->lib8?strlen(driver->lib8):0) +
                   (params->name8?strlen(params->name8):0);
-      msg= (char*)my_malloc(msglen, MYF(0));
+      msg= (char*)myodbc_malloc(msglen, MYF(0));
       snprintf(msg, msglen, "Failure to lookup driver entry at path '%s'('%s')",
                driver->lib8, params->name8);
 

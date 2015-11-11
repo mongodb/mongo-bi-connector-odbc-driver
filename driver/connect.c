@@ -157,6 +157,7 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
   /* Use 'int' and fill all bits to avoid alignment Bug#25920 */
   unsigned int opt_ssl_verify_server_cert = ~0;
   const my_bool on= 1;
+  unsigned long max_long = ~0L;
 
 #ifdef WIN32
   /*
@@ -178,8 +179,12 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
   /* Set other connection options */
 
   if (ds->allow_big_results || ds->safe)
+#if MYSQL_VERSION_ID >= 50709
+    mysql_options(mysql, MYSQL_OPT_MAX_ALLOWED_PACKET, &max_long);
+#else
     /* max_allowed_packet is a magical mysql macro. */
     max_allowed_packet= ~0L;
+#endif
 
   if (ds->force_use_of_named_pipes)
     mysql_options(mysql, MYSQL_OPT_NAMED_PIPE, NullS);
@@ -462,6 +467,12 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
     }
   }
 
+#if MYSQL_VERSION_ID >= 50709
+  mysql_get_option(mysql, MYSQL_OPT_NET_BUFFER_LENGTH, &dbc->net_buffer_length);
+#else
+  // for older versions just use net_buffer_length() macro
+  dbc->net_buffer_length = net_buffer_length;
+#endif
   return rc;
 
 error:

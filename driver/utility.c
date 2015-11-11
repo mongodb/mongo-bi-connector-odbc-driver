@@ -2421,9 +2421,9 @@ FILE *init_query_log(void)
                     start.tm_hour,
                     start.tm_min,
                     start.tm_sec);
-#endif /* HAVE_LOCALTIME_R */
-            fprintf(query_log,"\n");
         }
+#endif /* HAVE_LOCALTIME_R */
+      fprintf(query_log,"\n");
     }
     return query_log;
 }

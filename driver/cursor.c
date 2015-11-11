@@ -1484,7 +1484,7 @@ static SQLRETURN batch_insert( STMT *stmt, SQLULEN irow, DYNAMIC_STRING *ext_que
               We have a limited capacity to shove data across the wire, but
               we handle this by sending in multiple calls to exec_stmt_query()
             */
-            if (ext_query->length + length >= (SQLULEN) net_buffer_length)
+            if (ext_query->length + length >= (SQLULEN) stmt->dbc->net_buffer_length)
             {
                 break_insert= TRUE;
                 break;
