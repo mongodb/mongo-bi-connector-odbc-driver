@@ -14,6 +14,10 @@
     returns 0 (Bug #11750296/40771)
   * ADO hangs when using MySQL ODBC 5.3 ANSI Driver with French characters
     (Bug# 20526062)
+  * Connector/ODBC fails to build when using libmysqlclient 5.7
+    (Bug# 20685833/76261)
+  * malloc/free mismatch in MySqlGetPrivateProvileStringW
+    (Bug# 21074676/76984)
  
 ----
 5.3.5
