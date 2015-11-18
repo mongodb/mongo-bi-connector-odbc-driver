@@ -1,0 +1,6 @@
+mysql-connector-odbc (5.3.6-1) CHANGEHERE; urgency=low
+
+  * Updating the packaging source for mysql-connector-odbc.
+
+ -- sreedhar sreedhargadda <sreedhar.sreedhargadda@oracle.com>  Thu, 10 Sept 2015 17:23:39 +0530
+

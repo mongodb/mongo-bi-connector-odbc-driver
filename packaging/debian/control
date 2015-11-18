@@ -1,0 +1,22 @@
+Source: mysql-connector-odbc
+Section: libs
+Priority: optional
+Maintainer: Sreedhar Sreedhargadda <sreedhar.sreedhargadda@oracle.com>
+Standards-Version: 3.9.2
+Build-Depends: debhelper (>= 8.9.4), autotools-dev
+Homepage: http://dev.mysql.com/downloads/connector/odbc/
+Vcs-Bzr: nosmart+http://bzr.debian.org/bzr/users/vorlon/myodbc/trunk/
+Vcs-Browser: http://anonscm.debian.org/loggerhead/users/vorlon/myodbc/trunk/
+
+Package: mysql-connector-odbc
+Section: libs
+Architecture: any
+Multi-Arch: same
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends: libodbc1 | libiodbc2
+Breaks: unixodbc (<< 2.2.14p2-3), odbcinst1debian2 (<< 2.2.14p2-3), libiodbc2 (<< 3.52.7-3~)
+Description: the MySQL ODBC driver
+ This package allows you to connect to MySQL database servers using
+ ODBC, the Open Database Connectivity abstraction layer which is
+ understood by a variety of database tools that cannot talk to MySQL
+ databases directly.
