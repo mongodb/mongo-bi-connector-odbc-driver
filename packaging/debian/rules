@@ -30,6 +30,7 @@ override_dh_auto_configure:
 #       dh_auto_configure -- --disable-debug --enable-static
 #       --disable-gui --disable-test
 	cmake -G 'Unix Makefiles' -DFINDMYSQL_DEBUG:BOOL=TRUE \
+	              -DCMAKE_INSTALL_PREFIX=/usr \
                   -DMYSQLCLIENT_STATIC_LINKING:BOOL=TRUE  \
                   -DEXTRA_NAME_SUFFIX= -DCONNECTOR_PLATFORM= \
                   -DODBC_INCLUDES= \
