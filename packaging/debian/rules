@@ -29,9 +29,8 @@ override_dh_auto_configure:
 #	dh_auto_configure -- --with-unixODBC=/usr \
 #       dh_auto_configure -- --disable-debug --enable-static
 #       --disable-gui --disable-test
-	cmake -G 'Unix Makefiles' -DMYSQL_LIB_DIR=dummy \
-                  -DFINDMYSQL_DEBUG:BOOL=TRUE \
-                  -DMYSQL_CLIENT_STATIC_LINKING:BOOL=TRUE  \
+	cmake -G 'Unix Makefiles' -DFINDMYSQL_DEBUG:BOOL=TRUE \
+                  -DMYSQLCLIENT_STATIC_LINKING:BOOL=TRUE  \
                   -DEXTRA_NAME_SUFFIX= -DCONNECTOR_PLATFORM= \
                   -DODBC_INCLUDES= \
                   -DODBC_LIB_DIR= \
