@@ -150,6 +150,9 @@ ELSE(WIN32)
         IF(NOT DLOPEN_IN_LIBC)
           FIND_LIBRARY(DL_LIBS dl)
         ENDIF(NOT DLOPEN_IN_LIBC)
+        IF(DLOPEN_IN_LIBC OR DL_LIBS)
+          ADD_DEFINITIONS(-DHAVE_LIBDL)
+        ENDIF()
 ENDIF(WIN32)
 #-----------------------------------------------------
 
