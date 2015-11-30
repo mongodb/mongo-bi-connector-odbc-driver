@@ -39,11 +39,11 @@ static my_bool myodbc_inited=0;
   Sigpipe handler
 */
 
-#if !defined(__WIN__) && defined(SIGPIPE)
+#if !defined(__WIN__) && !defined(SKIP_SIGPIPE_HANDLER)
 
 #include <signal.h>
 
-static sig_handler
+static void
 myodbc_pipe_sig_handler(int sig __attribute__((unused)))
 {
   /* Do nothing */
@@ -58,7 +58,7 @@ myodbc_pipe_sig_handler(int sig __attribute__((unused)))
 
 void myodbc_init(void)
 {
-#if !defined(__WIN__) && defined(SIGPIPE)
+#if !defined(__WIN__) && !defined(SKIP_SIGPIPE_HANDLER)
    /*
      sigaction will block other signals from coming when handler is working
    */
