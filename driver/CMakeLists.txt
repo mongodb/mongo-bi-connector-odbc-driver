@@ -21,6 +21,17 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 ##########################################################################
+
+# At least in CMake 2.8.12.2 the file "Dawin.cmake" defines
+# CMAKE_C_CREATE_SHARED_LIBRARY without honoring
+# CMAKE_SHARED_LINKER_FLAGS. I also failed to modify
+# CMAKE_C_CREATE_SHARED_LIBRARY to include it. So as a
+# work-around we add ODBC_LIB_DIR to the link directories.
+
+IF(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  LINK_DIRECTORIES(${ODBC_LIB_DIR})
+ENDIF()
+
 SET(DRIVER_INDEX 0)
 SET(DRIVER_LOCATION2 "")
 SET(CONNECTOR_DRIVER_TYPE2 "")
