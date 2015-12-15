@@ -1,7 +1,7 @@
 Template: libmyodbc/addtoodbc
 Type: boolean
 Default: false
- Description: Do you want MyODBC to be registered as an ODBC driver?
+Description: Do you want MyODBC to be registered as an ODBC driver?
  You appear to have an ODBC manager (unixodbc or iODBC) installed on your
  system.
  .
