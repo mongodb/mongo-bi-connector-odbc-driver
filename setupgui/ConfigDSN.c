@@ -192,9 +192,9 @@ BOOL INSTAPI ConfigDSN(HWND hWnd, WORD nRequest, LPCSTR pszDriverA,
   size_t lenAttrib = strlen(pszAttributesA);
 
   /* We will assume using one-byte Latin string as a subset of UTF-8 */
-  SQLWCHAR *pszDriverW= (SQLWCHAR *) my_malloc((lenDriver + 1) * 
+  SQLWCHAR *pszDriverW= (SQLWCHAR *) myodbc_malloc((lenDriver + 1) * 
                                                 sizeof(SQLWCHAR), MYF(0));
-  SQLWCHAR *pszAttributesW= (SQLWCHAR *)my_malloc((lenAttrib + 1) * 
+  SQLWCHAR *pszAttributesW= (SQLWCHAR *)myodbc_malloc((lenAttrib + 1) * 
                                                   sizeof(SQLWCHAR), MYF(0));
 
   utf8_as_sqlwchar(pszDriverW, lenDriver, (SQLCHAR* )pszDriverA, lenDriver);

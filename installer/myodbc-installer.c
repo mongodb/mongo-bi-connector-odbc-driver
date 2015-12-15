@@ -306,7 +306,7 @@ SQLInstallDriverExW(const MyODBC_LPCWSTR lpszDriver, const MyODBC_LPCWSTR lpszPa
   pathin= (char *)sqlwchar_as_utf8(lpszPathIn, &len);
 
   if (cbPathOutMax > 0)
-    pathout= (char *)malloc(cbPathOutMax * 4 + 1); /* 4 = max utf8 charlen */
+    pathout= (char *)myodbc_malloc(cbPathOutMax * 4 + 1, MYF(0)); /* 4 = max utf8 charlen */
 
   rc= SQLInstallDriverEx(driver, pathin, pathout, cbPathOutMax * 4,
                          pcbPathOut, fRequest, lpdwUsageCount);
