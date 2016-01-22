@@ -160,9 +160,9 @@ rm -rf %{buildroot}
 pushd release
 make DESTDIR=%{buildroot} install VERBOSE=1
 rm -vf  %{buildroot}%{_prefix}/{ChangeLog,README*,LICENSE.*,COPYING,INSTALL*,Licenses_for_Third-Party_Components.txt}
-mkdir -p %{buildroot}%{_datadir}/mysql-connector-odbc
-mv %{buildroot}%{_prefix}/test %{buildroot}%{_datadir}/mysql-connector-odbc/
-mv bin/dltest %{buildroot}%{_bindir}/
+mkdir -p %{buildroot}%{_libdir}/mysql-connector-odbc
+mv %{buildroot}%{_prefix}/test %{buildroot}%{_libdir}/mysql-connector-odbc/
+mv bin/dltest                  %{buildroot}%{_libdir}/mysql-connector-odbc/
 popd
 
 # ----------------------------------------------------------------------
@@ -228,7 +228,7 @@ fi
 %endif
 
 %files test
-%attr(-, root, root) %{_datadir}/mysql-connector-odbc/test
-%attr(755, root, root) %{_bindir}/dltest
+%attr(-, root, root)   %{_libdir}/mysql-connector-odbc/test
+%attr(755, root, root) %{_libdir}/mysql-connector-odbc/dltest
 
 ##############################################################################

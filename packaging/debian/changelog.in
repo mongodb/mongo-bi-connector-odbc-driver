@@ -1,4 +1,4 @@
-mysql-connector-odbc (5.3.6-1) CHANGEHERE; urgency=low
+mysql-connector-odbc (5.3.6-1@ID_RELEASE@) @CODENAME@; urgency=low
 
   * Updating the packaging source for mysql-connector-odbc.
 

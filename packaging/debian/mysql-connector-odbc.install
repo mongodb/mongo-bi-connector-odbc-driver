@@ -1,40 +1,7 @@
 usr/lib/libmyodbc5a.so
 usr/lib/libmyodbc5w.so
 usr/bin/myodbc-installer
-usr/test/CTestTestfile.cmake
-usr/test/my_basics
-usr/test/my_blob
-usr/test/my_bug13766
-usr/test/my_bulk
-usr/test/my_catalog1
-usr/test/my_catalog2
-usr/test/my_crash
-usr/test/my_curext
-usr/test/my_cursor
-usr/test/my_datetime
-usr/test/my_desc
-usr/test/my_dyn_cursor
-usr/test/my_error
-usr/test/my_info
-usr/test/my_keys
-usr/test/my_nodma
-usr/test/my_param
-usr/test/my_pooling
-usr/test/my_prepare
-usr/test/my_relative
-usr/test/my_result1
-usr/test/my_result2
-usr/test/my_scroll
-usr/test/my_setup
-usr/test/my_tran
-usr/test/my_types
-usr/test/my_unicode
-usr/test/my_unixodbc
-usr/test/my_use_result
-usr/test/odbc.ini
-usr/test/odbcinst.ini
-usr/ChangeLog /usr/share/doc/mysql-connector-odbc/
-usr/COPYING /usr/share/doc/mysql-connector-odbc/
-usr/INSTALL /usr/share/doc/mysql-connector-odbc/
-usr/README /usr/share/doc/mysql-connector-odbc/
-usr/README.debug /usr/share/doc/mysql-connector-odbc/
+usr/ChangeLog            usr/share/doc/mysql-connector-odbc
+usr/COPYING              usr/share/doc/mysql-connector-odbc
+usr/README               usr/share/doc/mysql-connector-odbc
+usr/README.debug         usr/share/doc/mysql-connector-odbc
