@@ -30,5 +30,5 @@ usr/test/my_unixodbc            usr/lib/mysql-connector-odbc/test
 usr/test/my_use_result          usr/lib/mysql-connector-odbc/test
 usr/test/odbc.ini               usr/lib/mysql-connector-odbc/test
 usr/test/odbcinst.ini           usr/lib/mysql-connector-odbc/test
-usr/COPYING                     usr/share/doc/mysql-connector-odbc-test
+usr/@LIC_FILE@                  usr/share/doc/mysql-connector-odbc-test
 usr/README                      usr/share/doc/mysql-connector-odbc-test

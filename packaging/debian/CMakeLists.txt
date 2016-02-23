@@ -70,6 +70,12 @@ message(STATUS "OS code name    : ${CODENAME}")
 
 set(DEST_DIR ${CMAKE_SOURCE_DIR}/../../debian)
 
+if(EXISTS "${CMAKE_SOURCE_DIR}/../../LICENSE.mysql")
+  set(LIC_FILE "LICENSE.mysql")
+else()
+  set(LIC_FILE "COPYING")
+endif()
+
 file(
   COPY ${CMAKE_SOURCE_DIR}/
   DESTINATION ${DEST_DIR}
@@ -77,14 +83,18 @@ file(
   PATTERN "CMake*" EXCLUDE
 )
 
-configure_file(
-  ${CMAKE_SOURCE_DIR}/changelog.in
-  ${DEST_DIR}/changelog
-  @ONLY
+set(in_files
+  changelog
+  rules
+  mysql-connector-odbc-setup.install
+  mysql-connector-odbc-test.install
+  mysql-connector-odbc.install
 )
 
-configure_file(
-  ${CMAKE_SOURCE_DIR}/rules.in
-  ${DEST_DIR}/rules
-  @ONLY
-)
+foreach(_in_file ${in_files})
+  configure_file(
+    ${CMAKE_SOURCE_DIR}/${_in_file}.in
+    ${DEST_DIR}/${_in_file}
+    @ONLY
+  )
+endforeach()
