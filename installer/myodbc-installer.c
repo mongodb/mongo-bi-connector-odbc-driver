@@ -48,7 +48,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-const char *usage =
+const char usage[] =
 "+---                                                                   \n"
 "| myodbc-installer v" MYODBC_VERSION "                                 \n"
 "+---                                                                   \n"

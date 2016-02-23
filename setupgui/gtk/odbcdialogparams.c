@@ -496,19 +496,13 @@ int ShowOdbcParamsDialog(DataSource* params, HWND ParentWnd, BOOL isPrompt)
     if (driver_lookup_name(driver))
     {
       GtkWidget *msg_box;
-      char *msg;
-      size_t msglen;
 
       ds_get_utf8attr(driver->lib, &driver->lib8);
       ds_get_utf8attr(params->name, &params->name8);
 
-      msglen= 50 + (driver->lib8?strlen(driver->lib8):0) +
-                  (params->name8?strlen(params->name8):0);
-      msg= (char*)myodbc_malloc(msglen, MYF(0));
-      snprintf(msg, msglen, "Failure to lookup driver entry at path '%s'('%s')",
-               driver->lib8, params->name8);
-
-      msg_box= gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE, (gchar *)msg);
+      msg_box= gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE,
+                                      "Failure to lookup driver entry at path '%s'('%s')",
+                                      driver->lib8, params->name8);
 
       gtk_dialog_run (GTK_DIALOG (msg_box));
       gtk_widget_hide(msg_box);

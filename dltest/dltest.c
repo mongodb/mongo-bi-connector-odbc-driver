@@ -29,7 +29,7 @@
     #include <dlfcn.h>
 #endif
 
-char *szSyntax =
+const char szSyntax[] =
 "\n" \
 "**********************************************\n" \
 "* dltest                                     *\n" \
