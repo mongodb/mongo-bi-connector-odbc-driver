@@ -3927,10 +3927,10 @@ int get_session_variable(STMT *stmt, const char *var, char *result)
 
 
 /**
-  Sets the value of @@max_statement_time
+  Sets the value of @@max_execution_time
 
   @param[in]  stmt        stmt handler
-  @param[in]  new_value   Value to set @@max_statement_time.
+  @param[in]  new_value   Value to set @@max_execution_time.
 
   Returns new_value if operation was successful, -1 otherwise
  */
@@ -3949,11 +3949,11 @@ SQLRETURN set_query_timeout(STMT *stmt, SQLULEN new_value)
   if (new_value > 0)
   {
     unsigned long long msec_value= (unsigned long long)new_value * 1000;
-    sprintf(query, "set @@max_statement_time=%llu", msec_value);
+    sprintf(query, "set @@max_execution_time=%llu", msec_value);
   }
   else
   {
-    strcpy(query, "set @@max_statement_time=DEFAULT");
+    strcpy(query, "set @@max_execution_time=DEFAULT");
     new_value= 0;
   }
 

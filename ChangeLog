@@ -3,7 +3,7 @@
   Functionality added or changed:
   * Keywords specific to MySQL server 5.7 (WL#7992)
   * Implement SQL_ATTR_QUERY_TIMEOUT statement attribute (WL#7991)
-  * Added DEFAULTAUTH and PLUGINDIR options in connection parameters.
+  * Added DEFAULT_AUTH and PLUGIN_DIR options in connection parameters.
   * Added DISABLE_SSL_DEFAULT connection parameter to disable 
     connecting through SSL by default.
   * Added SSL_ENFORCE connection parameter to enforce SSL connection.
