@@ -3,7 +3,7 @@ Section: libs
 Priority: optional
 Maintainer: Oracle MySQL Product Engineering Team <mysql-build@oss.oracle.com>
 Standards-Version: 3.9.2
-Build-Depends: debhelper (>= 8.9.4), cmake (>= 2.8.5)
+Build-Depends: debhelper (>= 8.9.4), cmake (>= 2.8.5), libglib2.0-dev (>= 2.30), libgdk-pixbuf2.0 (>= 2.26)
 Homepage: http://dev.mysql.com/downloads/connector/odbc/
 Vcs-Bzr: nosmart+http://bzr.debian.org/bzr/users/vorlon/myodbc/trunk/
 Vcs-Browser: http://anonscm.debian.org/loggerhead/users/vorlon/myodbc/trunk/
@@ -37,9 +37,7 @@ Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends}, ${misc:Depends},
  mysql-connector-odbc (= ${binary:Version}),
- libgtk2.0-0 (>= 2.20.1),
- libgdk-pixbuf2.0-0 (>= 2.28.2),
- libglib2.0-0 (>= 2.36.3)
+ libgtk2.0-0 (>= 2.20.1)
 Description: MySQL ODBC driver setup GUI
  This package allows you use a graphical interface to specify
  This package is the setup library for the MySQL ODBC package, it
