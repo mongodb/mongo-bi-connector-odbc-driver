@@ -1,11 +1,11 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: MySQL Connector-odbc 5.3.6
+Upstream-Name: @PRODUCT@
 Upstream-Contact: MySQL Release Engineering <mysql-build@oss.oracle.com>
 Source: http://dev.mysql.com/
 Files: *
-Copyright: 2015, Oracle and/or its affiliates. All rights reserved.
+Copyright: @YEAR@, Oracle and/or its affiliates. All rights reserved.
 License:
- This is a release of MySQL, a dual-license SQL database server.
+ This is a release of @PRODUCT@, a dual-license product.
  For the avoidance of doubt, this particular copy of the software
  is released under the version 2 of the GNU General Public License.
  MySQL is brought to you by Oracle.
