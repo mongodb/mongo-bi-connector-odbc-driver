@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most 
@@ -29,6 +29,28 @@ cmake_minimum_required(VERSION 2.8.5)
 project(MySQL_Connector_ODBC_Deb_Init NONE)
 
 # ----------------------------------------------------------------------
+# Set some variables to replace
+# Use the version variables from "version.cmake"
+# ----------------------------------------------------------------------
+
+include(../../version.cmake)
+
+set(YEAR      2016)  # FIXME automate somehow
+set(PRODUCT   "MySQL Connector/ODBC ${CONNECTOR_BASE_VERSION}")
+
+if(NOT DEBIAN_REVISION)
+  set(DEBIAN_REVISION 1)
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/../../LICENSE.mysql")
+  set(LIC_FILE "LICENSE.mysql")
+  set(VERSION "${CONNECTOR_VERSION}+commercial-${DEBIAN_REVISION}")
+else()
+  set(LIC_FILE "COPYING")
+  set(VERSION "${CONNECTOR_VERSION}-${DEBIAN_REVISION}")
+endif()
+
+# ----------------------------------------------------------------------
 # Find out if Debian/Ubuntu, the codename, distribution and version
 # ----------------------------------------------------------------------
 
@@ -43,8 +65,10 @@ if(NOT lsb_result EQUAL 0)
   message(FATAL_ERROR "Can't run lsb_release")
 endif()
 
-if(NOT lsb_id STREQUAL "Debian" AND NOT lsb_id STREQUAL "Ubuntu")
-  message(FATAL_ERROR "We want Debian or Ubuntu")
+string(TOLOWER "${lsb_id}" lsb_id)
+
+if(NOT lsb_id STREQUAL "debian" AND NOT lsb_id STREQUAL "ubuntu")
+  message(FATAL_ERROR "We can only handle Debian or Ubuntu Deb packaging")
 endif()
 
 execute_process(
@@ -59,7 +83,13 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-string(TOLOWER "${lsb_id}${lsb_release}" ID_RELEASE)
+
+if(lsb_id STREQUAL "debian")
+  # For Debian we want just the major release number
+  string(REGEX REPLACE "\\..*" "" lsb_release "${lsb_release}")
+endif()
+
+set(ID_RELEASE "${lsb_id}${lsb_release}")
 
 message(STATUS "OS distribution : ${ID_RELEASE}")
 message(STATUS "OS code name    : ${CODENAME}")
@@ -70,12 +100,6 @@ message(STATUS "OS code name    : ${CODENAME}")
 
 set(DEST_DIR ${CMAKE_SOURCE_DIR}/../../debian)
 
-if(EXISTS "${CMAKE_SOURCE_DIR}/../../LICENSE.mysql")
-  set(LIC_FILE "LICENSE.mysql")
-else()
-  set(LIC_FILE "COPYING")
-endif()
-
 file(
   COPY ${CMAKE_SOURCE_DIR}/
   DESTINATION ${DEST_DIR}
@@ -85,6 +109,7 @@ file(
 
 set(in_files
   changelog
+  copyright
   rules
   mysql-connector-odbc-setup.install
   mysql-connector-odbc-test.install
