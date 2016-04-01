@@ -17,7 +17,7 @@ Architecture: any
 Multi-Arch: same
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Recommends: libodbc1 | libiodbc2
-Breaks: libiodbc2 (<< 3.52.7-3~),
+Breaks: libiodbc2 (<< 3.52.7-2~),
         odbcinst1debian2 (<< 2.2.14p2-3),
         unixodbc (<< 2.2.14p2-3)
 Description: MySQL ODBC driver
