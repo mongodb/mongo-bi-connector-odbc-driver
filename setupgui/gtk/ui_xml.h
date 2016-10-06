@@ -7,16 +7,16 @@
   conditions of the GPLv2 as it is applied to this software, see the
   FLOSS License Exception
   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-  
+
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published
   by the Free Software Foundation; version 2 of the License.
-  
+
   This program is distributed in the hope that it will be useful, but
   WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
   for more details.
-  
+
   You should have received a copy of the GNU General Public License along
   with this program; if not, write to the Free Software Foundation, Inc.,
   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
@@ -1211,10 +1211,10 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                    <property name=\"visible\">True</property>\n" \
 "                    <property name=\"can_focus\">False</property>\n" \
 "                    <property name=\"border_width\">8</property>\n" \
-"                    <property name=\"n_rows\">7</property>\n" \
+"                    <property name=\"n_rows\">9</property>\n" \
 "                    <property name=\"n_columns\">4</property>\n" \
 "                    <property name=\"column_spacing\">8</property>\n" \
-"                    <property name=\"row_spacing\">5</property>\n" \
+"                    <property name=\"row_spacing\">3</property>\n" \
 "                    <child>\n" \
 "                      <object class=\"GtkEntry\" id=\"sslkey\">\n" \
 "                        <property name=\"visible\">True</property>\n" \
@@ -1361,6 +1361,54 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"right_attach\">2</property>\n" \
 "                        <property name=\"top_attach\">5</property>\n" \
 "                        <property name=\"bottom_attach\">6</property>\n" \
+"                      </packing>\n" \
+"                    </child>\n" \
+"                    <child>\n" \
+"                      <object class=\"GtkCheckButton\" id=\"no_tls_1\">\n" \
+"                        <property name=\"label\" translatable=\"yes\">Disable TLS Version 1</property>\n" \
+"                        <property name=\"visible\">True</property>\n" \
+"                        <property name=\"can_focus\">True</property>\n" \
+"                        <property name=\"receives_default\">False</property>\n" \
+"                        <property name=\"use_action_appearance\">False</property>\n" \
+"                        <property name=\"draw_indicator\">True</property>\n" \
+"                      </object>\n" \
+"                      <packing>\n" \
+"                        <property name=\"left_attach\">1</property>\n" \
+"                        <property name=\"right_attach\">2</property>\n" \
+"                        <property name=\"top_attach\">7</property>\n" \
+"                        <property name=\"bottom_attach\">8</property>\n" \
+"                      </packing>\n" \
+"                    </child>\n" \
+"                    <child>\n" \
+"                      <object class=\"GtkCheckButton\" id=\"no_tls_1_1\">\n" \
+"                        <property name=\"label\" translatable=\"yes\">Disable TLS Version 1.1</property>\n" \
+"                        <property name=\"visible\">True</property>\n" \
+"                        <property name=\"can_focus\">True</property>\n" \
+"                        <property name=\"receives_default\">False</property>\n" \
+"                        <property name=\"use_action_appearance\">False</property>\n" \
+"                        <property name=\"draw_indicator\">True</property>\n" \
+"                      </object>\n" \
+"                      <packing>\n" \
+"                        <property name=\"left_attach\">1</property>\n" \
+"                        <property name=\"right_attach\">2</property>\n" \
+"                        <property name=\"top_attach\">8</property>\n" \
+"                        <property name=\"bottom_attach\">9</property>\n" \
+"                      </packing>\n" \
+"                    </child>\n" \
+"                    <child>\n" \
+"                      <object class=\"GtkCheckButton\" id=\"no_tls_1_2\">\n" \
+"                        <property name=\"label\" translatable=\"yes\">Disable TLS Version 1.2</property>\n" \
+"                        <property name=\"visible\">True</property>\n" \
+"                        <property name=\"can_focus\">True</property>\n" \
+"                        <property name=\"receives_default\">False</property>\n" \
+"                        <property name=\"use_action_appearance\">False</property>\n" \
+"                        <property name=\"draw_indicator\">True</property>\n" \
+"                      </object>\n" \
+"                      <packing>\n" \
+"                        <property name=\"left_attach\">1</property>\n" \
+"                        <property name=\"right_attach\">2</property>\n" \
+"                        <property name=\"top_attach\">9</property>\n" \
+"                        <property name=\"bottom_attach\">10</property>\n" \
 "                      </packing>\n" \
 "                    </child>\n" \
 "                    <child>\n" \

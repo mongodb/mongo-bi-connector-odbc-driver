@@ -237,7 +237,10 @@ BEGIN
     PUSHBUTTON      "...",IDC_SSLCAPATHCHOOSER,192,61,12,12,BS_CENTER
     PUSHBUTTON      "...",IDC_RSAKEYCHOOSER,192,111,12,12,BS_CENTER
     CONTROL         "&Verify SSL Certificate",IDC_CHECK_sslverify,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,90,97,87,10
-END
+    CONTROL         "&Disable TLS Version 1", IDC_CHECK_no_tls_1, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 90, 124, 87, 10
+    CONTROL         "Disable TLS Version 1.&1", IDC_CHECK_no_tls_1_1, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 90, 137, 87, 10
+    CONTROL         "Disable TLS Version 1.&2", IDC_CHECK_no_tls_1_2, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 90, 150, 87, 10
+    END
 
 
 IDD_TAB6 DIALOGEX 0, 0, 209, 181

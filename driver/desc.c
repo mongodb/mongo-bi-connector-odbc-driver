@@ -405,30 +405,30 @@ apply_desc_val(void *dest, SQLSMALLINT dest_type, void *src, SQLINTEGER buflen)
   case SQL_IS_INTEGER:
   case SQL_IS_LEN:
     if (dest_type == SQL_IS_SMALLINT)
-      *(SQLSMALLINT *)dest= (SQLLEN)src;
+      *(SQLSMALLINT *)dest= (SQLSMALLINT)((SQLLEN)src);
     else if (dest_type == SQL_IS_USMALLINT)
-      *(SQLUSMALLINT *)dest= (SQLLEN)src;
+      *(SQLUSMALLINT *)dest = (SQLUSMALLINT)((SQLLEN)src);
     else if (dest_type == SQL_IS_INTEGER)
-      *(SQLINTEGER *)dest= (SQLLEN)src;
+      *(SQLINTEGER *)dest = (SQLINTEGER)((SQLLEN)src);
     else if (dest_type == SQL_IS_UINTEGER)
-      *(SQLUINTEGER *)dest= (SQLLEN)src;
+      *(SQLUINTEGER *)dest = (SQLUINTEGER)((SQLLEN)src);
     else if (dest_type == SQL_IS_LEN)
-      *(SQLLEN *)dest= (SQLLEN)src;
+      *(SQLLEN *)dest = (SQLLEN)src;
     else if (dest_type == SQL_IS_ULEN)
-      *(SQLULEN *)dest= (SQLLEN)src;
+      *(SQLULEN *)dest = (SQLULEN)src;
     break;
 
   case SQL_IS_USMALLINT:
   case SQL_IS_UINTEGER:
   case SQL_IS_ULEN:
     if (dest_type == SQL_IS_SMALLINT)
-      *(SQLSMALLINT *)dest= (SQLULEN)src;
+      *(SQLSMALLINT *)dest = (SQLSMALLINT)((SQLULEN)src);
     else if (dest_type == SQL_IS_USMALLINT)
-      *(SQLUSMALLINT *)dest= (SQLULEN)src;
+      *(SQLUSMALLINT *)dest = (SQLUSMALLINT)((SQLULEN)src);
     else if (dest_type == SQL_IS_INTEGER)
-      *(SQLINTEGER *)dest= (SQLULEN)src;
+      *(SQLINTEGER *)dest = (SQLINTEGER)((SQLULEN)src);
     else if (dest_type == SQL_IS_UINTEGER)
-      *(SQLUINTEGER *)dest= (SQLULEN)src;
+      *(SQLUINTEGER *)dest = (SQLUINTEGER)((SQLULEN)src);
     else if (dest_type == SQL_IS_LEN)
       *(SQLLEN *)dest= (SQLULEN)src;
     else if (dest_type == SQL_IS_ULEN)

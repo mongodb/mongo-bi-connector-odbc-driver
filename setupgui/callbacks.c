@@ -382,6 +382,9 @@ void syncTabsData(HWND hwnd, DataSource *params)
 
   GET_BOOL_TAB(SSL_TAB,sslverify);
   GET_STRING_TAB(SSL_TAB, rsakey);
+  GET_BOOL_TAB(SSL_TAB, no_tls_1);
+  GET_BOOL_TAB(SSL_TAB, no_tls_1_1);
+  GET_BOOL_TAB(SSL_TAB, no_tls_1_2);
 
   /* 6 - Misc*/
   GET_BOOL_TAB(MISC_TAB, safe);
@@ -476,6 +479,10 @@ void syncTabs(HWND hwnd, DataSource *params)
 
     if(params->rsakey)
       SET_STRING_TAB(SSL_TAB, rsakey);
+
+    SET_BOOL_TAB(SSL_TAB, no_tls_1);
+    SET_BOOL_TAB(SSL_TAB, no_tls_1_1);
+    SET_BOOL_TAB(SSL_TAB, no_tls_1_2);
   }
 
   /* 6 - Misc*/

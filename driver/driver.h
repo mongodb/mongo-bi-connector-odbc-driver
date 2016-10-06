@@ -29,11 +29,16 @@
 
 #ifndef __DRIVER_H__
 #define __DRIVER_H__
-
+                                                                               
 #include "../MYODBC_MYSQL.h"
 #include "../MYODBC_CONF.h"
 #include "../MYODBC_ODBC.h"
 #include "installer.h"
+
+/* Disable _attribute__ on non-gcc compilers. */
+#if !defined(__attribute__) && !defined(__GNUC__)
+# define __attribute__(arg)
+#endif
 
 #ifdef APSTUDIO_READONLY_SYMBOLS
 #define WIN32	/* Hack for rc files */

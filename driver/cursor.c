@@ -1359,7 +1359,8 @@ static SQLRETURN batch_insert( STMT *stmt, SQLULEN irow, DYNAMIC_STRING *ext_que
     SQLULEN      count= 0;                  /* current row */
     SQLLEN       length;
     NET         *net= &stmt->dbc->mysql.net;
-    SQLUSMALLINT ncol, i;
+    SQLUSMALLINT ncol;
+    long i;
     SQLCHAR      *to;
     ulong        query_length= 0;           /* our original query len so we can reset pos if break_insert   */
     my_bool      break_insert= FALSE;       /* true if we are to exceed max data size for transmission
@@ -1516,7 +1517,7 @@ static SQLRETURN batch_insert( STMT *stmt, SQLULEN irow, DYNAMIC_STRING *ext_que
         SQLLEN *pcbValue= NULL;
         SQLPOINTER TargetValuePtr= NULL;
 
-        for (i= max_row; i < insert_count; ++i)
+        for (i= max_row; i < (SQLINTEGER)insert_count; ++i)
         {
           pcbValue= NULL;
           TargetValuePtr= NULL;

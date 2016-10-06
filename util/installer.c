@@ -177,6 +177,12 @@ static SQLWCHAR W_DISABLE_SSL_DEFAULT[] =
 { 'D', 'I', 'S', 'A', 'B', 'L', 'E', '_', 'S', 'S', 'L', '_', 'D', 'E', 'F', 'A', 'U', 'L', 'T', 0 };
 static SQLWCHAR W_SSL_ENFORCE[] =
 { 'S', 'S', 'L', '_', 'E', 'N', 'F', 'O', 'R', 'C', 'E', 0 };
+static SQLWCHAR W_NO_TLS_1[] =
+{ 'N', 'O', '_', 'T', 'L', 'S', '_', '1', 0 };
+static SQLWCHAR W_NO_TLS_1_1[] =
+{ 'N', 'O', '_', 'T', 'L', 'S', '_', '1', '_', '1', 0 };
+static SQLWCHAR W_NO_TLS_1_2[] =
+{ 'N', 'O', '_', 'T', 'L', 'S', '_', '1', '_', '2', 0 };
 
 /* DS_PARAM */
 /* externally used strings */
@@ -208,7 +214,8 @@ SQLWCHAR *dsnparams[]= {W_DSN, W_DRIVER, W_DESCRIPTION, W_SERVER,
                         W_CLIENT_INTERACTIVE, W_NO_I_S, W_PREFETCH, W_NO_SSPS,
                         W_CAN_HANDLE_EXP_PWD, W_ENABLE_CLEARTEXT_PLUGIN,
                         W_SAVEFILE, W_RSAKEY, W_PLUGIN_DIR, W_DEFAULT_AUTH,
-                        W_DISABLE_SSL_DEFAULT, W_SSL_ENFORCE };
+                        W_DISABLE_SSL_DEFAULT, W_SSL_ENFORCE,
+                        W_NO_TLS_1, W_NO_TLS_1_1, W_NO_TLS_1_2 };
 static const
 int dsnparamcnt= sizeof(dsnparams) / sizeof(SQLWCHAR *);
 /* DS_PARAM */
@@ -864,7 +871,12 @@ void ds_map_param(DataSource *ds, const SQLWCHAR *param,
     *booldest = &ds->disable_ssl_default;
   else if (!sqlwcharcasecmp(W_SSL_ENFORCE, param))
     *booldest = &ds->ssl_enforce;
-
+  else if (!sqlwcharcasecmp(W_NO_TLS_1, param))
+    *booldest = &ds->no_tls_1;
+  else if (!sqlwcharcasecmp(W_NO_TLS_1_1, param))
+    *booldest = &ds->no_tls_1_1;
+  else if (!sqlwcharcasecmp(W_NO_TLS_1_2, param))
+    *booldest = &ds->no_tls_1_2;
 
   /* DS_PARAM */
 }
@@ -1354,6 +1366,9 @@ int ds_add(DataSource *ds)
   if (ds_add_strprop(ds->name, W_DEFAULT_AUTH, ds->default_auth)) goto error;
   if (ds_add_intprop(ds->name, W_DISABLE_SSL_DEFAULT, ds->disable_ssl_default)) goto error;
   if (ds_add_intprop(ds->name, W_SSL_ENFORCE, ds->ssl_enforce)) goto error;
+  if (ds_add_intprop(ds->name, W_NO_TLS_1, ds->no_tls_1)) goto error;
+  if (ds_add_intprop(ds->name, W_NO_TLS_1_1, ds->no_tls_1_1)) goto error;
+  if (ds_add_intprop(ds->name, W_NO_TLS_1_2, ds->no_tls_1_2)) goto error;
   /* DS_PARAM */
 
   rc= 0;
