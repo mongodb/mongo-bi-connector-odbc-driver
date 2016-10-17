@@ -597,6 +597,7 @@ DECLARE_TEST(t_text_fetch)
   SQLCHAR    data[TEST_ODBC_TEXT_LEN+1];
 
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_text_fetch");
+  ok_sql(hstmt, "SET @@sql_mode=''");
   ok_sql(hstmt, "CREATE TABLE t_text_fetch(t1 tinytext,"
          "t2 text, t3 mediumtext, t4 longtext)");
 

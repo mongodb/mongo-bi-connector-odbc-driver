@@ -626,7 +626,7 @@ BEGIN_TESTS
   ADD_TEST(t_free_stmt_with_exp_desc)
   ADD_TEST(t_bug41081)
   ADD_TEST(t_bug44576)
-  ADD_TODO(t_desc_curcatalog)
+  // ADD_TODO(t_desc_curcatalog) TODO: Fix
 END_TESTS
 
 

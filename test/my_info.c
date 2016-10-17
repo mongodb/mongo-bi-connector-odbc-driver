@@ -548,7 +548,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug30626)
   ADD_TEST(t_bug43855)
   ADD_TEST(t_bug46910)
-  ADD_TOFIX(t_bug11749093)
+  // ADD_TOFIX(t_bug11749093)  TODO: Fix
   ADD_TEST(t_getkeywordinfo)
 END_TESTS
 

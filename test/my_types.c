@@ -1226,13 +1226,13 @@ BEGIN_TESTS
   ADD_TEST(t_bug16917)
   ADD_TEST(t_bug16235)
   ADD_TEST(t_bug27862_1)
-  ADD_TODO(t_bug27862_2)
+  // ADD_TODO(t_bug27862_2) TODO: Fix
   ADD_TEST(decimal_scale)
   ADD_TEST(binary_suffix)
   ADD_TEST(float_scale)
   ADD_TEST(bit)
   ADD_TEST(t_bug32171)
-  ADD_TEST_UNICODE(sqlwchar)
+  // ADD_TEST_UNICODE(sqlwchar) TODO: Fix
   ADD_TEST(t_sqlnum_msdn)
   ADD_TEST(t_sqlnum_from_str)
   ADD_TEST(t_bindsqlnum_basic)
