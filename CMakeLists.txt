@@ -95,8 +95,15 @@ ELSE(WIN32)
                 SET(ODBCLIB odbc)
                 SET(ODBCINSTLIB odbcinst)
         ELSE(WITH_UNIXODBC)
+
+            IF(ODBCINST_LIB_DIR)
+                SET(ODBCLIB iODBC)
+                SET(ODBCINSTLIB iODBCinst)
+            ELSE(ODBCINST_LIB_DIR)
                 SET(ODBCLIB iodbc)
                 SET(ODBCINSTLIB iodbcinst)
+            ENDIF(ODBCINST_LIB_DIR)
+
         ENDIF(WITH_UNIXODBC)
 
         # FindODBC uses ODBCLIB and ODBCINSTLIB in some cases

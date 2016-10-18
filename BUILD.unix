@@ -94,6 +94,13 @@ may specify their location by passing in these additional parameters:
  -DODBC_INCLUDES=/path/to/headers
  -DODBC_LIB_DIR=/path/to/libs
 
+Some driver managers such as iODBC might keep the ODBCINST headers and
+libraries in a separate directory. To address this possibility there
+are two more parameters:
+
+ -DODBCINST_INCLUDES=/path/to/odbcinst_headers
+ -DODBCINST_LIB_DIR=/path/to/odbcinst_library
+
 And you might need to help cmake find the MySQL headers and libraries, 
 by setting the environment variable or additional parameters 
 MYSQL_INCLUDE_DIR, MYSQL_LIB_DIR or MYSQL_DIR to the appropriate location. 
