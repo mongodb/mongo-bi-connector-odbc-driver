@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -583,20 +583,6 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                            <property name=\"top_attach\">2</property>\n" \
 "                          </packing>\n" \
 "                        </child>\n" \
-"                        <child>\n" \
-"                          <object class=\"GtkCheckButton\" id=\"ssl_enforce\">\n" \
-"                            <property name=\"label\" translatable=\"yes\">Enforce SSL</property>\n" \
-"                            <property name=\"visible\">True</property>\n" \
-"                            <property name=\"can_focus\">True</property>\n" \
-"                            <property name=\"receives_default\">False</property>\n" \
-"                            <property name=\"use_action_appearance\">False</property>\n" \
-"                            <property name=\"draw_indicator\">True</property>\n" \
-"                          </object>\n" \
-"                          <packing>\n" \
-"                            <property name=\"left_attach\">1</property>\n" \
-"                            <property name=\"top_attach\">3</property>\n" \
-"                          </packing>\n" \
-"                        </child>\n" \
 "                      </object>\n" \
 "                      <packing>\n" \
 "                        <property name=\"expand\">True</property>\n" \
@@ -626,7 +612,7 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                          </packing>\n" \
 "                        </child>\n" \
 "                        <child>\n" \
-"                          <object class=\"GtkLabel\" id=\"charsetlbl\">\n" \
+"                          <object class=\"GtkLabel\" id=\"initstmtlbl\">\n" \
 "                            <property name=\"visible\">True</property>\n" \
 "                            <property name=\"can_focus\">False</property>\n" \
 "                            <property name=\"xalign\">1</property>\n" \
@@ -1348,13 +1334,22 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                      </packing>\n" \
 "                    </child>\n" \
 "                    <child>\n" \
-"                      <object class=\"GtkCheckButton\" id=\"sslverify\">\n" \
-"                        <property name=\"label\" translatable=\"yes\">Verify SSL Certificate</property>\n" \
+"                      <object class=\"GtkComboBoxEntry\" id=\"sslmode\">\n" \
 "                        <property name=\"visible\">True</property>\n" \
 "                        <property name=\"can_focus\">True</property>\n" \
-"                        <property name=\"receives_default\">False</property>\n" \
-"                        <property name=\"use_action_appearance\">False</property>\n" \
-"                        <property name=\"draw_indicator\">True</property>\n" \
+"                        <property name=\"events\">GDK_BUTTON_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_STRUCTURE_MASK</property>\n" \
+"                        <property name=\"button_sensitivity\">on</property>\n" \
+"                        <property name=\"text_column\">0</property>\n" \
+"                        <child internal-child=\"entry\">\n" \
+"                          <object class=\"GtkEntry\" id=\"comboboxentry-sslmode-entry\">\n" \
+"                            <property name=\"can_focus\">True</property>\n" \
+"                            <property name=\"invisible_char\">•</property>\n" \
+"                            <property name=\"primary_icon_activatable\">False</property>\n" \
+"                            <property name=\"secondary_icon_activatable\">False</property>\n" \
+"                            <property name=\"primary_icon_sensitive\">True</property>\n" \
+"                            <property name=\"secondary_icon_sensitive\">True</property>\n" \
+"                          </object>\n" \
+"                        </child>\n" \
 "                      </object>\n" \
 "                      <packing>\n" \
 "                        <property name=\"left_attach\">1</property>\n" \
@@ -1442,7 +1437,19 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                      </packing>\n" \
 "                    </child>\n" \
 "                    <child>\n" \
-"                      <object class=\"GtkLabel\" id=\"label17\">\n" \
+"                      <object class=\"GtkLabel\" id=\"sslmodelabel\">\n" \
+"                        <property name=\"visible\">True</property>\n" \
+"                        <property name=\"can_focus\">False</property>\n" \
+"                        <property name=\"xalign\">1</property>\n" \
+"                        <property name=\"label\" translatable=\"yes\">SSL Mode</property>\n" \
+"                      </object>\n" \
+"                      <packing>\n" \
+"                        <property name=\"top_attach\">5</property>\n" \
+"                        <property name=\"bottom_attach\">6</property>\n" \
+"                      </packing>\n" \
+"                    </child>\n" \
+"                    <child>\n" \
+"                      <object class=\"GtkLabel\" id=\"sslcipherlabel\">\n" \
 "                        <property name=\"visible\">True</property>\n" \
 "                        <property name=\"can_focus\">False</property>\n" \
 "                        <property name=\"xalign\">1</property>\n" \

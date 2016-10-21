@@ -149,8 +149,8 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,27,113,10
     CONTROL         "Disable default SSL", IDC_CHECK_disable_ssl_default
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 125, 42, 113, 10
-    CONTROL         "Enforce SSL", IDC_CHECK_ssl_enforce
-                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 125, 57, 113, 10
+//    CONTROL         "Enforce SSL", IDC_CHECK_ssl_enforce
+//                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 125, 57, 113, 10
 
     RTEXT           "Plugin Directory:",IDC_STATIC,12,132,67,8
     EDITTEXT        IDC_EDIT_plugin_dir,90,132,97,12,ES_AUTOHSCROLL
@@ -236,7 +236,9 @@ BEGIN
     PUSHBUTTON      "...",IDC_SSLCACHOOSER,192,43,12,12,BS_CENTER
     PUSHBUTTON      "...",IDC_SSLCAPATHCHOOSER,192,61,12,12,BS_CENTER
     PUSHBUTTON      "...",IDC_RSAKEYCHOOSER,192,111,12,12,BS_CENTER
-    CONTROL         "&Verify SSL Certificate",IDC_CHECK_sslverify,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,90,97,87,10
+    RTEXT           "SSL &Mode", IDC_STATIC, 18, 97, 67, 8
+    COMBOBOX        IDC_EDIT_sslmode, 90, 95, 97, 8, CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+//    CONTROL         "&Verify SSL Certificate", IDC_CHECK_sslverify, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 290, 97, 87, 10
     CONTROL         "&Disable TLS Version 1", IDC_CHECK_no_tls_1, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 90, 124, 87, 10
     CONTROL         "Disable TLS Version 1.&1", IDC_CHECK_no_tls_1_1, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 90, 137, 87, 10
     CONTROL         "Disable TLS Version 1.&2", IDC_CHECK_no_tls_1_2, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 90, 150, 87, 10

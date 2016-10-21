@@ -183,6 +183,8 @@ static SQLWCHAR W_NO_TLS_1_1[] =
 { 'N', 'O', '_', 'T', 'L', 'S', '_', '1', '_', '1', 0 };
 static SQLWCHAR W_NO_TLS_1_2[] =
 { 'N', 'O', '_', 'T', 'L', 'S', '_', '1', '_', '2', 0 };
+static SQLWCHAR W_SSLMODE[] =
+{ 'S', 'S', 'L', 'M', 'O', 'D', 'E', 0 };
 
 /* DS_PARAM */
 /* externally used strings */
@@ -215,7 +217,8 @@ SQLWCHAR *dsnparams[]= {W_DSN, W_DRIVER, W_DESCRIPTION, W_SERVER,
                         W_CAN_HANDLE_EXP_PWD, W_ENABLE_CLEARTEXT_PLUGIN,
                         W_SAVEFILE, W_RSAKEY, W_PLUGIN_DIR, W_DEFAULT_AUTH,
                         W_DISABLE_SSL_DEFAULT, W_SSL_ENFORCE,
-                        W_NO_TLS_1, W_NO_TLS_1_1, W_NO_TLS_1_2 };
+                        W_NO_TLS_1, W_NO_TLS_1_1, W_NO_TLS_1_2,
+                        W_SSLMODE};
 static const
 int dsnparamcnt= sizeof(dsnparams) / sizeof(SQLWCHAR *);
 /* DS_PARAM */
@@ -663,6 +666,7 @@ void ds_delete(DataSource *ds)
   x_free(ds->sslca);
   x_free(ds->sslcapath);
   x_free(ds->sslcipher);
+  x_free(ds->sslmode);
   x_free(ds->rsakey);
   x_free(ds->savefile);
   x_free(ds->plugin_dir);
@@ -683,6 +687,7 @@ void ds_delete(DataSource *ds)
   x_free(ds->sslca8);
   x_free(ds->sslcapath8);
   x_free(ds->sslcipher8);
+  x_free(ds->sslmode8);
   x_free(ds->rsakey8);
   x_free(ds->savefile8);
   x_free(ds->plugin_dir8);
@@ -782,6 +787,8 @@ void ds_map_param(DataSource *ds, const SQLWCHAR *param,
     *strdest= &ds->sslcapath;
   else if (!sqlwcharcasecmp(W_SSLCIPHER, param))
     *strdest= &ds->sslcipher;
+  else if (!sqlwcharcasecmp(W_SSLMODE, param))
+    *strdest = &ds->sslmode;
   else if (!sqlwcharcasecmp(W_SAVEFILE, param))
     *strdest= &ds->savefile;
   else if (!sqlwcharcasecmp(W_RSAKEY, param))
@@ -1320,7 +1327,8 @@ int ds_add(DataSource *ds)
   if (ds_add_strprop(ds->name, W_SSLCA      , ds->sslca      )) goto error;
   if (ds_add_strprop(ds->name, W_SSLCAPATH  , ds->sslcapath  )) goto error;
   if (ds_add_strprop(ds->name, W_SSLCIPHER  , ds->sslcipher  )) goto error;
-  if (ds_add_strprop(ds->name, W_RSAKEY     , ds->rsakey     )) goto error;
+  if (ds_add_strprop(ds->name, W_SSLMODE    , ds->sslmode    )) goto error;
+  if (ds_add_strprop(ds->name, W_RSAKEY, ds->rsakey          )) goto error;
   if (ds_add_strprop(ds->name, W_SAVEFILE   , ds->savefile   )) goto error;
 
   if (ds_add_intprop(ds->name, W_SSLVERIFY  , ds->sslverify  )) goto error;

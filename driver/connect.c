@@ -332,6 +332,28 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
   }
 #endif
 
+#if MYSQL_VERSION_ID >= 50711
+  if (ds->sslmode)
+  {
+    unsigned int mode = 0;
+    ds_get_utf8attr(ds->sslmode, &ds->sslmode8);
+    if (!myodbc_strcasecmp(ODBC_SSL_MODE_DISABLED, ds->sslmode8))
+      mode = SSL_MODE_DISABLED;
+    if (!myodbc_strcasecmp(ODBC_SSL_MODE_PREFERRED, ds->sslmode8))
+      mode = SSL_MODE_PREFERRED;
+    if (!myodbc_strcasecmp(ODBC_SSL_MODE_REQUIRED, ds->sslmode8))
+      mode = SSL_MODE_REQUIRED;
+    if (!myodbc_strcasecmp(ODBC_SSL_MODE_VERIFY_CA, ds->sslmode8))
+      mode = SSL_MODE_VERIFY_CA;
+    if (!myodbc_strcasecmp(ODBC_SSL_MODE_VERIFY_IDENTITY, ds->sslmode8))
+      mode = SSL_MODE_VERIFY_IDENTITY;
+
+    // Don't do anything if there is no match with any of the available modes
+    if (mode)
+      mysql_options(mysql, MYSQL_OPT_SSL_MODE, &mode);
+  }
+#endif
+
   if (!mysql_real_connect(mysql,
                           ds_get_utf8attr(ds->server,   &ds->server8),
                           ds_get_utf8attr(ds->uid,      &ds->uid8),

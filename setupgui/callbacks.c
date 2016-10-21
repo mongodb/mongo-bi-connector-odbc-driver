@@ -336,7 +336,7 @@ void syncTabsData(HWND hwnd, DataSource *params)
   GET_BOOL_TAB(CONNECTION_TAB, can_handle_exp_pwd);
   GET_BOOL_TAB(CONNECTION_TAB, enable_cleartext_plugin);
   GET_BOOL_TAB(CONNECTION_TAB, disable_ssl_default);
-  GET_BOOL_TAB(CONNECTION_TAB, ssl_enforce);
+  // GET_BOOL_TAB(CONNECTION_TAB, ssl_enforce);
 
   GET_COMBO_TAB(CONNECTION_TAB, charset);
   GET_STRING_TAB(CONNECTION_TAB, initstmt);
@@ -379,8 +379,9 @@ void syncTabsData(HWND hwnd, DataSource *params)
   GET_STRING_TAB(SSL_TAB, sslca);
   GET_STRING_TAB(SSL_TAB, sslcapath);
   GET_STRING_TAB(SSL_TAB, sslcipher);
+  GET_COMBO_TAB(SSL_TAB, sslmode);
 
-  GET_BOOL_TAB(SSL_TAB,sslverify);
+  //GET_BOOL_TAB(SSL_TAB,sslverify);
   GET_STRING_TAB(SSL_TAB, rsakey);
   GET_BOOL_TAB(SSL_TAB, no_tls_1);
   GET_BOOL_TAB(SSL_TAB, no_tls_1_1);
@@ -412,7 +413,7 @@ void syncTabs(HWND hwnd, DataSource *params)
   SET_BOOL_TAB(CONNECTION_TAB, can_handle_exp_pwd);
   SET_BOOL_TAB(CONNECTION_TAB, enable_cleartext_plugin);
   SET_BOOL_TAB(CONNECTION_TAB, disable_ssl_default);
-  SET_BOOL_TAB(CONNECTION_TAB, ssl_enforce);
+  //SET_BOOL_TAB(CONNECTION_TAB, ssl_enforce);
 
 #ifdef _WIN32
   if ( getTabCtrlTabPages(CONNECTION_TAB-1))
@@ -475,7 +476,10 @@ void syncTabs(HWND hwnd, DataSource *params)
     if(params->sslcipher)
       SET_STRING_TAB(SSL_TAB, sslcipher);
 
-    SET_BOOL_TAB(SSL_TAB, sslverify);
+    if (params->sslmode)
+      SET_COMBO_TAB(SSL_TAB, sslmode);
+
+    //SET_BOOL_TAB(SSL_TAB, sslverify);
 
     if(params->rsakey)
       SET_STRING_TAB(SSL_TAB, rsakey);

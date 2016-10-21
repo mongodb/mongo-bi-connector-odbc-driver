@@ -132,6 +132,7 @@
 #define IDC_CHECK_no_tls_1              10058
 #define IDC_CHECK_no_tls_1_1            10059
 #define IDC_CHECK_no_tls_1_2            10060
+#define IDC_EDIT_sslmode               10061
 #define IDC_BUTTON_TEST                 11014
 #define IDC_BUTTON_HELP                 11015
 #define IDC_STATIC                      -1

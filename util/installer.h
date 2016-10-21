@@ -82,6 +82,7 @@ typedef struct {
   SQLWCHAR *sslca;
   SQLWCHAR *sslcapath;
   SQLWCHAR *sslcipher;
+  SQLWCHAR *sslmode;
   SQLWCHAR *rsakey;
   SQLWCHAR *savefile;
   SQLWCHAR *plugin_dir;
@@ -107,6 +108,7 @@ typedef struct {
   SQLCHAR *sslca8;
   SQLCHAR *sslcapath8;
   SQLCHAR *sslcipher8;
+  SQLCHAR *sslmode8;
   SQLCHAR *rsakey8;
   SQLWCHAR *savefile8;
   SQLCHAR *plugin_dir8;
@@ -236,6 +238,14 @@ extern const SQLWCHAR W_INVALID_ATTR_STR[];
 */
 #define FLAG_NO_INFORMATION_SCHEMA (1 << 30)
 
+#define ODBC_SSL_MODE_DISABLED           "DISABLED"
+#define ODBC_SSL_MODE_PREFERRED          "PREFERRED"
+#define ODBC_SSL_MODE_REQUIRED           "REQUIRED"
+#define ODBC_SSL_MODE_VERIFY_CA          "VERIFY_CA"
+#define ODBC_SSL_MODE_VERIFY_IDENTITY    "VERIFY_IDENTITY"
+
+#define LPASTE(X) L ## X
+#define LSTR(X) LPASTE(X)
 
 #ifdef __cplusplus
 }

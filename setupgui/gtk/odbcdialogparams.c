@@ -7,16 +7,16 @@
   conditions of the GPLv2 as it is applied to this software, see the
   FLOSS License Exception
   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-  
+
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published
   by the Free Software Foundation; version 2 of the License.
-  
+
   This program is distributed in the hope that it will be useful, but
   WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
   for more details.
-  
+
   You should have received a copy of the GNU General Public License along
   with this program; if not, write to the Free Software Foundation, Inc.,
   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
@@ -41,7 +41,7 @@ static int         mod= 1;
 static BOOL        flag= FALSE;
 static BOOL        BusyIndicator= FALSE;
 
-/* 
+/*
  We need flags to prevent GtkCombobox from re-initializing.
  Otherwise it might render incorrectly or miss the click event.
 */
@@ -85,7 +85,7 @@ void
 on_ok_clicked(GtkButton *button, gpointer user_data)
 {
   FillParameters((HWND)NULL, pParams);
-  
+
   if(mytestaccept((HWND)NULL, pParams))
   {
     OkPressed= 1;
@@ -109,7 +109,7 @@ on_cancel_clicked(GtkButton *button, gpointer user_data)
 void on_help_clicked(GtkButton *button, gpointer user_data)
 {
   g_spawn_command_line_async ("xdg-open http://dev.mysql.com/doc/refman/5.5/"
-                              "en/connector-odbc-configuration.html", 
+                              "en/connector-odbc-configuration.html",
                               NULL);
 }
 
@@ -134,7 +134,7 @@ on_use_socket_file_toggled(GtkButton *button, gpointer user_data)
 
 void on_check_cursor_prefetch_toggled(GtkButton *button, gpointer user_data)
 {
-  SET_SENSITIVE(cursor_prefetch_number, 
+  SET_SENSITIVE(cursor_prefetch_number,
                 getBoolFieldData("cursor_prefetch_active"));
 }
 
@@ -161,7 +161,7 @@ void on_test_clicked(GtkButton *button, gpointer user_data)
 }
 
 
-void on_database_popup (GtkComboBox *widget, gpointer user_data) 
+void on_database_popup (GtkComboBox *widget, gpointer user_data)
 {
   GtkListStore *store;
   GtkTreeIter iter;
@@ -178,7 +178,7 @@ void on_database_popup (GtkComboBox *widget, gpointer user_data)
 
   if(gtk_combo_box_get_active (widget) < 0)
     gtk_combo_box_set_active (GTK_COMBO_BOX (widget), 0);
-  
+
   FillParameters((HWND)NULL, pParams);
   dbs= mygetdatabases((HWND)NULL, pParams);
   dbtmp= dbs;
@@ -225,11 +225,11 @@ void on_tab_press (GtkComboBox *widget, GdkEvent *event, gpointer user_data)
     case GDK_KEY_Up:
       gtk_widget_grab_focus(prev_widget);
       break;
-      
+
     case GDK_KEY_Down:
       gtk_combo_box_popup(widget);
       break;
-      
+
     case GDK_KEY_ISO_Left_Tab:
       gtk_widget_grab_focus(prev_widget);
       break;
@@ -241,7 +241,7 @@ void on_tab_press (GtkComboBox *widget, GdkEvent *event, gpointer user_data)
   }
 }
 
-void on_charset_popup (GtkComboBox *widget, gpointer user_data) 
+void on_charset_popup (GtkComboBox *widget, gpointer user_data)
 {
   GtkListStore *store;
   GtkTreeIter iter;
@@ -279,7 +279,7 @@ void on_charset_popup (GtkComboBox *widget, gpointer user_data)
   gtk_combo_box_set_model(widget, GTK_TREE_MODEL(store));
   g_object_unref(store);
   list_free(css, 1);
-  
+
 }
 
 
@@ -325,7 +325,7 @@ void on_ssl_folder_button_clicked(GtkComboBox *widget, gpointer user_data)
 
 gboolean getBoolFieldData(gchar *widget_name)
 {
-  GtkToggleButton *widget= GTK_TOGGLE_BUTTON(gtk_builder_get_object (builder, 
+  GtkToggleButton *widget= GTK_TOGGLE_BUTTON(gtk_builder_get_object (builder,
                                              widget_name));
   assert(widget);
   return gtk_toggle_button_get_active(widget);
@@ -334,7 +334,7 @@ gboolean getBoolFieldData(gchar *widget_name)
 
 void setBoolFieldData(gchar *widget_name, gboolean checked)
 {
-  GtkToggleButton *widget= GTK_TOGGLE_BUTTON(gtk_builder_get_object (builder, 
+  GtkToggleButton *widget= GTK_TOGGLE_BUTTON(gtk_builder_get_object (builder,
                                              widget_name));
   if (widget)
   {
@@ -368,7 +368,7 @@ void getStrFieldData(gchar *widget_name, SQLWCHAR **param)
     /* copy the value for using in DataSource */
     utf8_as_sqlwchar(*param, (len + 1) * sizeof (SQLWCHAR), (char*)entry_text,
                        strlen((char*)entry_text));
-    }  
+    }
   }
 }
 
@@ -385,15 +385,15 @@ void setStrFieldData(gchar *widget_name, SQLWCHAR *param, SQLCHAR **param8)
 
 void setComboFieldData(gchar *widget_name, SQLWCHAR *param, SQLCHAR **param8)
 {
-  GtkComboBox *widget= GTK_COMBO_BOX(gtk_builder_get_object (builder, 
+  GtkComboBox *widget= GTK_COMBO_BOX(gtk_builder_get_object (builder,
                                                                   widget_name));
 
   GtkEntry *entry= (GtkEntry*)gtk_bin_get_child(GTK_BIN(widget));
   assert(widget);
   ds_get_utf8attr(param, param8);
-  
-/*  if(param8 && *param8)
-    gtk_entry_set_text(entry, (gchar*)(*param8));*/
+
+  if(param8 && *param8)
+    gtk_entry_set_text(entry, (gchar*)(*param8));
 }
 
 
@@ -401,7 +401,7 @@ void getComboFieldData(gchar *widget_name, SQLWCHAR **param)
 {
   int len= 0;
   GtkEntry *entry;
-  GtkComboBox *widget= GTK_COMBO_BOX(gtk_builder_get_object (builder, 
+  GtkComboBox *widget= GTK_COMBO_BOX(gtk_builder_get_object (builder,
                                                                   widget_name));
 
   assert(widget);
@@ -425,7 +425,7 @@ void getComboFieldData(gchar *widget_name, SQLWCHAR **param)
       /* copy the value for using in DataSource */
       utf8_as_sqlwchar(*param, (len + 1) * sizeof (SQLWCHAR), (char*)entry_text,
                          strlen((char*)entry_text));
-    }  
+    }
   }
 }
 
@@ -441,7 +441,7 @@ void setSensitive(gchar *widget_name, gboolean state)
 void getUnsignedFieldData(gchar *widget_name, unsigned int *param)
 {
   int len= 0;
-  GtkSpinButton *widget= GTK_SPIN_BUTTON(gtk_builder_get_object (builder, 
+  GtkSpinButton *widget= GTK_SPIN_BUTTON(gtk_builder_get_object (builder,
                                                                  widget_name));
   assert(widget);
   *param = (unsigned int) gtk_spin_button_get_value_as_int(widget);
@@ -451,7 +451,7 @@ void getUnsignedFieldData(gchar *widget_name, unsigned int *param)
 void setUnsignedFieldData(gchar *widget_name, unsigned int param)
 {
   int len= 0;
-  GtkSpinButton *widget= GTK_SPIN_BUTTON(gtk_builder_get_object (builder, 
+  GtkSpinButton *widget= GTK_SPIN_BUTTON(gtk_builder_get_object (builder,
                                                                  widget_name));
   assert(widget);
   gtk_spin_button_set_value(widget, param);
@@ -473,6 +473,7 @@ int ShowOdbcParamsDialog(DataSource* params, HWND ParentWnd, BOOL isPrompt)
   GError     *error= NULL;
   GdkPixbuf  *pixbuf;
   SQLINTEGER len= SQL_NTS;
+  int i = 0;
 
   db_popped_up= FALSE;
   cs_popped_up= FALSE;
@@ -545,11 +546,11 @@ int ShowOdbcParamsDialog(DataSource* params, HWND ParentWnd, BOOL isPrompt)
     g_error ("ERROR: %s\n", error->message);
     return 0;
   }
-  
+
   pixbuf= gdk_pixbuf_new_from_xpm_data((const char **)connector_odbc_header_xpm);
   dummy= GTK_WIDGET (gtk_builder_get_object (builder, "header"));
   g_object_set(dummy, "pixbuf", pixbuf, NULL);
-  
+
   dsnEditDialog= GTK_WIDGET (gtk_builder_get_object (builder, "odbcdialog"));
 
   details_note= GTK_WIDGET (gtk_builder_get_object (builder, "details_note"));
@@ -591,7 +592,7 @@ int ShowOdbcParamsDialog(DataSource* params, HWND ParentWnd, BOOL isPrompt)
   /* Work around the keyboard-trapping bug in GTKComboBox */
   g_signal_connect ((gpointer) dummy, "key-press-event",
                     G_CALLBACK (on_tab_press), (gpointer)1);
-  
+
   dummy= GTK_WIDGET (gtk_builder_get_object (builder, "use_tcp_ip_server"));
   g_signal_connect ((gpointer) dummy, "toggled",
                     G_CALLBACK (on_use_tcp_ip_server_toggled), NULL);
@@ -629,16 +630,49 @@ int ShowOdbcParamsDialog(DataSource* params, HWND ParentWnd, BOOL isPrompt)
   dummy= GTK_WIDGET (gtk_builder_get_object (builder, "cursor_prefetch_active"));
   g_signal_connect ((gpointer) dummy, "toggled",
                     G_CALLBACK (on_check_cursor_prefetch_toggled), NULL);
-  
+
 
   dummy= GTK_WIDGET (gtk_builder_get_object (builder, "plugindir_button"));
   entry= GTK_ENTRY (gtk_builder_get_object (builder, "plugin_dir"));
   g_signal_connect ((gpointer) dummy, "clicked",
                     G_CALLBACK (on_ssl_folder_button_clicked), entry);
-  
+
   gtk_builder_connect_signals(builder, NULL);
 
   gtk_widget_hide(hide_details);
+
+  {
+    GtkListStore *store;
+    GtkTreeIter iter;
+    GtkComboBox *ssl_mode_combo;
+
+    ssl_mode_combo = GTK_COMBO_BOX(gtk_builder_get_object(builder, "sslmode"));
+    store = gtk_list_store_new(1, G_TYPE_STRING);
+
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter, 0, "", -1);
+
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter, 0, ODBC_SSL_MODE_DISABLED, -1);
+
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter, 0, ODBC_SSL_MODE_PREFERRED, -1);
+
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter, 0, ODBC_SSL_MODE_REQUIRED, -1);
+
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter, 0, ODBC_SSL_MODE_VERIFY_CA, -1);
+
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter, 0, ODBC_SSL_MODE_VERIFY_IDENTITY, -1);
+
+
+    gtk_combo_box_set_model(ssl_mode_combo, NULL);
+    gtk_combo_box_set_model(ssl_mode_combo, GTK_TREE_MODEL(store));
+    g_object_unref(store);
+
+  }
 
   syncForm(ParentWnd, params);
   syncTabs(ParentWnd, params);

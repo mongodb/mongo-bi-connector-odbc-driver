@@ -386,7 +386,20 @@ void btnDetails_Click (HWND hwnd)
 					          TRUE);                      // stretch tab page to fit tab ctrl
 		flag = true;		
 
-		syncTabs(hwnd, pParams);
+
+    HWND ssl_tab = TabCtrl_1.hTabPages[4];
+    HWND combo = GetDlgItem(ssl_tab, IDC_EDIT_sslmode);
+
+    ComboBox_ResetContent(combo);
+
+    ComboBox_AddString(combo, L"");
+    ComboBox_AddString(combo, LSTR(ODBC_SSL_MODE_DISABLED));
+    ComboBox_AddString(combo, LSTR(ODBC_SSL_MODE_PREFERRED));
+    ComboBox_AddString(combo, LSTR(ODBC_SSL_MODE_REQUIRED));
+    ComboBox_AddString(combo, LSTR(ODBC_SSL_MODE_VERIFY_CA));
+    ComboBox_AddString(combo, LSTR(ODBC_SSL_MODE_VERIFY_IDENTITY));
+
+    syncTabs(hwnd, pParams);
 	}
 	MoveWindow( hwnd, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top + 310*mod, TRUE );
 }
