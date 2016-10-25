@@ -178,7 +178,7 @@ static SQLWCHAR W_DISABLE_SSL_DEFAULT[] =
 static SQLWCHAR W_SSL_ENFORCE[] =
 { 'S', 'S', 'L', '_', 'E', 'N', 'F', 'O', 'R', 'C', 'E', 0 };
 static SQLWCHAR W_NO_TLS_1[] =
-{ 'N', 'O', '_', 'T', 'L', 'S', '_', '1', 0 };
+{ 'N', 'O', '_', 'T', 'L', 'S', '_', '1', '_', '0', 0 };
 static SQLWCHAR W_NO_TLS_1_1[] =
 { 'N', 'O', '_', 'T', 'L', 'S', '_', '1', '_', '1', 0 };
 static SQLWCHAR W_NO_TLS_1_2[] =

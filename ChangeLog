@@ -1,3 +1,19 @@
+5.3.7
+
+  Functionality added or changed:
+  * Added new options to control TLS versions for connecting:
+    NO_TLS_1_0, NO_TLS_1_1, NO_TLS_1_2. By Default all TLS versions are enabled
+    and options allow to disable using of a particular TLS version.
+  * Added a new option SSLMODE to set the SSL mode before connection is made.
+    The option value can be set to any of the follwing: DISABLED, PREFERRED,
+    REQUIRED, VERIFY_CA, VERIFY_IDENTITY. This option will override
+    the deprecated SSLVERIFY and SSL_ENFORCE.
+    
+
+  Bugs fixed:
+ 
+----
+
 5.3.6
 
   Functionality added or changed:

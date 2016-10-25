@@ -1141,7 +1141,73 @@ DECLARE_TEST(t_bug52996)
 }
 
 
+DECLARE_TEST(t_tls_opts)
+{
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+  SQLCHAR buf[1024] = { 0 };
+  SQLLEN len = 0;
+
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
+    NULL, NULL, NULL, "NO_TLS_1_0=1;NO_TLS_1_2=1"));
+
+  /* Check the affected tows */
+  ok_sql(hstmt1, "SHOW STATUS LIKE 'Ssl_version'");
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  ok_stmt(hstmt1, SQLGetData(hstmt1, 2, SQL_C_CHAR, buf, sizeof(buf), &len));
+  printf("\nTLS SSL Version: %s\n", buf);
+  //is(len == 7);
+  //is_str(buf, "TLSv1.1", 7);
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
+    NULL, NULL, NULL, "NO_TLS_1_1=1;NO_TLS_1_2=1"));
+
+  /* Check the affected tows */
+  ok_sql(hstmt1, "SHOW STATUS LIKE 'Ssl_version'");
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  len = 0;
+  ok_stmt(hstmt1, SQLGetData(hstmt1, 2, SQL_C_CHAR, buf, sizeof(buf), &len));
+  printf("\nTLS SSL Version: %s\n", buf);
+  //is(len == 5);
+  //is_str(buf, "TLSv1", 5);
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  return OK;
+}
+
+
+DECLARE_TEST(t_ssl_mode)
+{
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+  SQLCHAR buf[1024] = { 0 };
+
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
+    NULL, NULL, NULL, "SSLMODE=DISABLED"));
+
+  /* Check the affected tows */
+  ok_sql(hstmt1, "SHOW STATUS LIKE 'Ssl_cipher'");
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  ok_stmt(hstmt1, SQLGetData(hstmt1, 2, SQL_C_CHAR, buf, sizeof(buf), NULL));
+  is(buf[0] == '\0');
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
+    NULL, NULL, NULL, "SSLMODE=REQUIRED"));
+
+  /* Check the affected tows */
+  ok_sql(hstmt1, "SHOW STATUS LIKE 'Ssl_cipher'");
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  ok_stmt(hstmt1, SQLGetData(hstmt1, 2, SQL_C_CHAR, buf, sizeof(buf), NULL));
+  is(buf[0] != '\0');
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+  return OK;
+}
+
 BEGIN_TESTS
+  ADD_TEST(t_tls_opts)
+  ADD_TEST(t_ssl_mode)
   ADD_TEST(my_basics)
   ADD_TEST(t_max_select)
   ADD_TEST(t_basic)
@@ -1171,7 +1237,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug45378)
   ADD_TEST(t_bug63844)
   ADD_TEST(t_bug52996)
-END_TESTS
+  END_TESTS
 
 
 RUN_TESTS
