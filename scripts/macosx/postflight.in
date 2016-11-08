@@ -44,8 +44,8 @@
 # application.
 # ----------------------------------------------------------------------
 
-libdir=/usr/local/lib
-bindir=/usr/local/bin
+libdir=@INSTALLDIR@/lib
+bindir=@INSTALLDIR@/bin
 
 for admdir in ~/Library/ODBC /Library/ODBC
 do
@@ -112,5 +112,5 @@ do
 # CREATE A SAMPLE DSN
 # ----------------------------------------------------------------------
   echo "Ensuring sample data source name (myodbc) exists..."
-  $bindir/myodbc-installer -a -s -c1 -n $dsn -t "Driver=MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ $driver_type Driver;SERVER=localhost;"
+  $bindir/myodbc-installer -a -s -c2 -n $dsn -t "Driver=MySQL ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ $driver_type Driver;SERVER=localhost;"
 done
