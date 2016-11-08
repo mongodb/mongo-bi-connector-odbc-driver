@@ -771,11 +771,13 @@ DECLARE_TEST(t_bug11750296)
 
 BEGIN_TESTS
 #ifndef NO_DRIVERMANAGER
+#ifndef USE_IODBC
   ADD_TEST(t_odbc2_error)
+#endif
   ADD_TEST(t_odbc3_error)
   /* Run twice to test the driver's handling of switching  */
-  ADD_TEST(t_odbc2_error)
 #ifndef USE_IODBC
+  ADD_TEST(t_odbc2_error)
   // ADD_TEST(t_odbc3_80) TODO: Fix
 #endif
 #endif
@@ -783,11 +785,13 @@ BEGIN_TESTS
   ADD_TEST(t_warning)
   ADD_TEST(t_bug3456)
   ADD_TEST(t_bug16224)
+#ifndef USE_IODBC
   ADD_TEST(bind_invalidcol)
+  ADD_TEST(t_handle_err)
+#endif
   ADD_TEST(bind_notenoughparam1)
   ADD_TEST(bind_notenoughparam2)
   ADD_TEST(getdata_need_nullind)
-  ADD_TEST(t_handle_err)
   ADD_TEST(sqlerror)
   ADD_TEST(t_bug27158)
   // ADD_TEST(t_bug13542600) TODO: Fix

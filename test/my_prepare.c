@@ -1262,7 +1262,9 @@ BEGIN_TESTS
   ADD_TEST(t_prep_catalog)
   ADD_TEST(t_sps)
   ADD_TEST(t_prepare)
+#ifndef USE_IODBC
   ADD_TEST(t_prepare1)
+#endif
   ADD_TEST(tmysql_bindcol)
   ADD_TEST(tmysql_bindparam)
   ADD_TEST(t_acc_update)

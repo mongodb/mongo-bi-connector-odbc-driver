@@ -174,7 +174,9 @@ DECLARE_TEST(t_isolation)
 
 
 BEGIN_TESTS
+#ifndef USE_IODBC
   ADD_TEST(my_transaction)
+#endif
   ADD_TEST(t_tran)
   ADD_TEST(t_isolation)
 END_TESTS

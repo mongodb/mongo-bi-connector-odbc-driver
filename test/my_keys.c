@@ -489,7 +489,9 @@ DECLARE_TEST(t_bug16920750)
 
 
 BEGIN_TESTS
+#ifndef USE_IODBC
   ADD_TEST(my_no_keys)
+#endif
   // ADD_TEST(my_foreign_keys) TODO: Fix
   ADD_TEST(t_bug16920750)
 END_TESTS

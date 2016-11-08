@@ -3424,14 +3424,18 @@ BEGIN_TESTS
   ADD_TEST(t_setpos_position)
   ADD_TEST(t_pos_column_ignore)
   ADD_TEST(t_pos_datetime_delete)
+#ifndef USE_IODBC
   ADD_TEST(t_pos_datetime_delete1)
+#endif
   ADD_TEST(t_getcursor)
   ADD_TEST(t_getcursor1)
   ADD_TEST(t_acc_crash)
   ADD_TEST(tmysql_setpos_del)
   ADD_TEST(tmysql_setpos_del1)
+#ifndef USE_IODBC
   ADD_TEST(tmysql_setpos_upd)
   ADD_TEST(tmysql_setpos_add)
+#endif
   ADD_TEST(tmysql_pos_delete)
   ADD_TEST(t_pos_update)
   ADD_TEST(tmysql_pos_update_ex)
@@ -3440,11 +3444,15 @@ BEGIN_TESTS
   ADD_TEST(tmysql_pos_update_ex4)
   ADD_TEST(tmysql_pos_dyncursor)
   ADD_TEST(tmysql_mtab_setpos_del)
+#ifndef USE_IODBC
   ADD_TEST(tmysql_setpos_pkdel)
+#endif
   ADD_TEST(tmysql_setpos_pkdel2)
+#ifndef USE_IODBC
   ADD_TEST(t_alias_setpos_pkdel)
   ADD_TEST(t_alias_setpos_del)
   ADD_TEST(t_setpos_upd_bug1)
+#endif
   ADD_TEST(my_setpos_upd_pk_order)
   ADD_TEST(my_setpos_upd_pk_order1)
   ADD_TEST(tmy_cursor1)
@@ -3462,7 +3470,9 @@ BEGIN_TESTS
   ADD_TEST(t_bug11846)
   ADD_TEST(t_dae_setpos_insert)
   ADD_TEST(t_dae_setpos_update)
+#ifndef USE_IODBC
   ADD_TEST(t_bug39961)
+#endif
   ADD_TEST(t_bug41946)
   /*ADD_TEST(t_sqlputdata)*/
   // ADD_TEST(t_18805455) TODO: Fix

@@ -1154,9 +1154,8 @@ DECLARE_TEST(t_tls_opts)
   ok_sql(hstmt1, "SHOW STATUS LIKE 'Ssl_version'");
   ok_stmt(hstmt1, SQLFetch(hstmt1));
   ok_stmt(hstmt1, SQLGetData(hstmt1, 2, SQL_C_CHAR, buf, sizeof(buf), &len));
-  printf("\nTLS SSL Version: %s\n", buf);
-  //is(len == 7);
-  //is_str(buf, "TLSv1.1", 7);
+  // is(len == 7);
+  // is_str(buf, "TLSv1.1", 7);
   free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
@@ -1167,9 +1166,8 @@ DECLARE_TEST(t_tls_opts)
   ok_stmt(hstmt1, SQLFetch(hstmt1));
   len = 0;
   ok_stmt(hstmt1, SQLGetData(hstmt1, 2, SQL_C_CHAR, buf, sizeof(buf), &len));
-  printf("\nTLS SSL Version: %s\n", buf);
-  //is(len == 5);
-  //is_str(buf, "TLSv1", 5);
+  // is(len == 5);
+  // is_str(buf, "TLSv1", 5);
   free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   return OK;
@@ -1231,7 +1229,9 @@ BEGIN_TESTS
   ADD_TEST(t_bug32727)
   ADD_TEST(t_bug28820)
   ADD_TEST(t_bug31959)
+#ifndef USE_IODBC
   ADD_TEST(t_bug41256)
+#endif
   ADD_TEST(t_bug44971)
   ADD_TEST(t_bug48603)
   ADD_TEST(t_bug45378)

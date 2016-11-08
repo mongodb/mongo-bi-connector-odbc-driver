@@ -1200,7 +1200,9 @@ BEGIN_TESTS
   ADD_TEST(t_bug56677)
   ADD_TEST(t_desccol_before_exec)
   ADD_TEST(t_bug62657)
+#ifndef USE_IODBC
   ADD_TEST(t_row_status)
+#endif
   ADD_TEST(t_prefetch)
   ADD_TOFIX(t_outparams)
   ADD_TEST(t_bug11766437)

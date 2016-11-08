@@ -1418,11 +1418,15 @@ BEGIN_TESTS
   ADD_TEST_UNICODE(sqlchar)
   ADD_TEST(sqldriverconnect)
   // ADD_TEST(sqlnativesql) TODO: Fix
+#ifndef USE_IODBC
   ADD_TEST(sqlsetcursorname)
-  ADD_TEST(sqlgetcursorname)
   ADD_TEST_UNICODE(sqlcolattribute)
+#endif
+  ADD_TEST(sqlgetcursorname)
   ADD_TEST_UNICODE(sqldescribecol)
+#ifndef USE_IODBC
   ADD_TEST(sqlgetconnectattr)
+#endif
   ADD_TEST(sqlgetdiagrec)
   // ADD_TEST(sqlgetdiagfield) TODO: Fix
   ADD_TEST_UNICODE(sqlcolumns)

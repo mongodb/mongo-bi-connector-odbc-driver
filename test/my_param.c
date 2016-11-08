@@ -1701,17 +1701,19 @@ DECLARE_TEST(t_inoutstream17842966)
 
 BEGIN_TESTS
   ADD_TEST(my_init_table)
+#ifndef USE_IODBC
   ADD_TEST(my_param_insert)
   ADD_TEST(my_param_update)
   ADD_TEST(my_param_delete)
   // ADD_TEST(tmysql_fix) TODO: Fix
-  ADD_TEST(t_param_offset)
   ADD_TEST(paramarray_by_row)
   ADD_TEST(paramarray_by_column)
   ADD_TEST(paramarray_ignore_paramset)
   ADD_TEST(paramarray_select)
-  ADD_TEST(t_bug49029)
   ADD_TEST(t_bug56804)
+#endif
+  ADD_TEST(t_param_offset)
+  ADD_TEST(t_bug49029)
   ADD_TEST(t_bug59772)
   // ADD_TEST(t_odbcoutparams) TODO: Fix
   // ADD_TEST(t_bug14501952) TODO: Fix

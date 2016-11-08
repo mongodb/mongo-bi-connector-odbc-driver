@@ -614,7 +614,13 @@ DECLARE_TEST(t_desc_curcatalog)
 }
 
 
+DECLARE_TEST(dummy_test)
+{
+  return OK;
+}
+
 BEGIN_TESTS
+#ifndef USE_IODBC
   ADD_TODO(t_desc_paramset)
   ADD_TEST(t_desc_set_error)
   ADD_TEST(t_sqlbindcol_count_reset)
@@ -626,7 +632,9 @@ BEGIN_TESTS
   ADD_TEST(t_free_stmt_with_exp_desc)
   ADD_TEST(t_bug41081)
   ADD_TEST(t_bug44576)
+#endif
   // ADD_TODO(t_desc_curcatalog) TODO: Fix
+  ADD_TEST(dummy_test)
 END_TESTS
 
 

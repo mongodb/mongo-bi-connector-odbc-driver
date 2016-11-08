@@ -781,11 +781,13 @@ BEGIN_TESTS
   // ADD_TEST(t_bug17841121) TODO: Fix
   ADD_TEST(t_bookmark_update_zero_rec)
   ADD_TEST(t_bug17085344)
+#ifndef USE_IODBC
   ADD_TEST(t_bug18165197)
+  ADD_TEST(t_bug18286118)
+#endif
   ADD_TEST(t_bug18325878)
   // ADD_TEST(t_bug18286366)  TODO: Fix
   // ADD_TEST(t_bug18286366_2)  TODO: Fix
-  ADD_TEST(t_bug18286118)
   // ADD_TEST(t_setpos_update_no_ssps) TODO: Fix
 END_TESTS
 

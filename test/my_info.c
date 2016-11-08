@@ -541,15 +541,17 @@ BEGIN_TESTS
   ADD_TEST(t_stmt_attr_status)
   ADD_TEST(t_msdev_bug)
   ADD_TEST(t_bug28657)
+#ifndef USE_IODBC
+  ADD_TEST(t_bug30626)
   ADD_TEST(t_bug14639)
+  ADD_TEST(t_getkeywordinfo)
+#endif
   ADD_TEST(t_bug31055)
   ADD_TEST(t_bug3780)
   ADD_TEST(t_bug16653)
-  ADD_TEST(t_bug30626)
   ADD_TEST(t_bug43855)
   ADD_TEST(t_bug46910)
   // ADD_TOFIX(t_bug11749093)  TODO: Fix
-  ADD_TEST(t_getkeywordinfo)
 END_TESTS
 
 
