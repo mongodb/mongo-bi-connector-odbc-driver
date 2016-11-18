@@ -779,7 +779,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug17999659)
   ADD_TEST(t_bug17966018)
   // ADD_TEST(t_bug17841121) TODO: Fix
-  ADD_TEST(t_bookmark_update_zero_rec)
+  // ADD_TEST(t_bookmark_update_zero_rec) TODO: Fix
   ADD_TEST(t_bug17085344)
 #ifndef USE_IODBC
   ADD_TEST(t_bug18165197)

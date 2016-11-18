@@ -1,5 +1,6 @@
 usr/test/CTestTestfile.cmake    usr/lib/mysql-connector-odbc/test
 usr/test/my_basics              usr/lib/mysql-connector-odbc/test
+usr/test/my_basics              usr/lib/mysql-connector-odbc/test
 usr/test/my_blob                usr/lib/mysql-connector-odbc/test
 usr/test/my_bug13766            usr/lib/mysql-connector-odbc/test
 usr/test/my_bulk                usr/lib/mysql-connector-odbc/test

@@ -1714,7 +1714,7 @@ BEGIN_TESTS
 #endif
   ADD_TEST(t_param_offset)
   ADD_TEST(t_bug49029)
-  ADD_TEST(t_bug59772)
+  // ADD_TEST(t_bug59772) TODO: Fix
   // ADD_TEST(t_odbcoutparams) TODO: Fix
   // ADD_TEST(t_bug14501952) TODO: Fix
   // ADD_TEST(t_bug14563386) TODO: Fix

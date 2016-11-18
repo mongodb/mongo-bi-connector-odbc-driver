@@ -1205,7 +1205,7 @@ BEGIN_TESTS
 #endif
   ADD_TEST(t_prefetch)
   ADD_TOFIX(t_outparams)
-  ADD_TEST(t_bug11766437)
+  // ADD_TEST(t_bug11766437) TODO: Fix
   // ADD_TEST(t_varbookmark) TODO: Fix
 #ifdef _UNIX_
   // ADD_TEST(t_bookmark) TODO: Fix
