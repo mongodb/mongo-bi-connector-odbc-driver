@@ -296,9 +296,12 @@ void ssps_close(STMT *stmt)
   {
     free_result_bind(stmt);
 
-    if (mysql_stmt_close(stmt->ssps) != '\0')
-      assert(!"Could not close stmt");
-
+    /*
+      No need to check the result of this operation.
+      It can fail because the connection to the server is lost, which
+      is still ok because the memory is freed anyway.
+    */
+    mysql_stmt_close(stmt->ssps);
     stmt->ssps= NULL;
   }
 }
