@@ -14,7 +14,6 @@ usr/test/my_dyn_cursor          usr/lib/mysql-connector-odbc/test
 usr/test/my_error               usr/lib/mysql-connector-odbc/test
 usr/test/my_info                usr/lib/mysql-connector-odbc/test
 usr/test/my_keys                usr/lib/mysql-connector-odbc/test
-usr/test/my_nodma               usr/lib/mysql-connector-odbc/test
 usr/test/my_param               usr/lib/mysql-connector-odbc/test
 usr/test/my_pooling             usr/lib/mysql-connector-odbc/test
 usr/test/my_prepare             usr/lib/mysql-connector-odbc/test

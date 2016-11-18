@@ -81,6 +81,10 @@ ENDFOREACH(T)
 # Separate testsuites for ansi and unicode driver are created - we can't use same test for both since there is no DM to convert
 # data and to map calls. Excluding OS X so far, since direct linking there is problematic
 
+set(skip_no_dm "1")
+
+IF(NOT skip_no_dm)
+
 IF(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
   FOREACH(CONNECTOR_DRIVER_TYPE_SHORT ${CONNECTOR_DRIVER_TYPES_SHORT})
@@ -123,6 +127,8 @@ IF(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   ENDFOREACH(CONNECTOR_DRIVER_TYPE_SHORT)
 
 ENDIF(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+ENDIF(NOT skip_no_dm)
 
 TARGET_LINK_LIBRARIES(my_basics ${CMAKE_THREAD_LIBS_INIT})
 
