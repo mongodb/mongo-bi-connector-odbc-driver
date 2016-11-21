@@ -116,6 +116,7 @@ DECLARE_TEST(t_bug39878)
   int         i;
   SQLINTEGER  row_count= 0;
   SQLRETURN   rc;
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
 
   ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_CURSOR_TYPE,
                                 (SQLPOINTER)SQL_CURSOR_FORWARD_ONLY, 0));
@@ -184,9 +185,9 @@ DECLARE_TEST(t_bug39878)
   is(row_count == 0 || rc == SQL_ERROR);
 
   // We re-connect to drop the table (as connection might be broken)
-  free_basic_handles(&henv, &hdbc, &hstmt);
-  alloc_basic_handles(&henv, &hdbc, &hstmt);
-  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug39878");
+  alloc_basic_handles(&henv1, &hdbc1, &hstmt1);
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_bug39878");
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
 
   return OK;
 }
