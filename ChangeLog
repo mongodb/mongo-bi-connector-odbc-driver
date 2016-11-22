@@ -1,15 +1,23 @@
 5.3.7
 
+  Security Notes:
+  * Connector/ODBC 5.3.7 Commercial upgrades the linked OpenSSL
+    library to version 1.0.2j which has been publicly reported
+    as not vulnerable to CVE-2016-6304
+    (http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2016-6304)
+    (Bug #24753385, CVE-2016-6304)
+
   Functionality added or changed:
   * Added new options to control TLS versions for connecting:
     NO_TLS_1_0, NO_TLS_1_1, NO_TLS_1_2. By Default all TLS versions are enabled
     and options allow to disable using of a particular TLS version.
+    (Bug# 23496903/81640)
   * Added a new option SSLMODE to set the SSL mode before connection is made.
     The option value can be set to any of the follwing: DISABLED, PREFERRED,
     REQUIRED, VERIFY_CA, VERIFY_IDENTITY. This option will override
     the deprecated SSLVERIFY and SSL_ENFORCE.
+    (Bug# 23497043/81641)
     
-
   Bugs fixed:
   * Assertion in ODBC Driver when calling mysql_stmt_close() on a broken
     connection (Bug# 25109356/83858)
