@@ -21,6 +21,7 @@
   Bugs fixed:
   * Assertion in ODBC Driver when calling mysql_stmt_close() on a broken
     connection (Bug# 25109356/83858)
+  * Connector ODBC does not build with newer CMake (Bug# 22746557)
  
 ----
 
