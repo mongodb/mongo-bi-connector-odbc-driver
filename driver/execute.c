@@ -7,16 +7,16 @@
   conditions of the GPLv2 as it is applied to this software, see the
   FLOSS License Exception
   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-  
+
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published
   by the Free Software Foundation; version 2 of the License.
-  
+
   This program is distributed in the hope that it will be useful, but
   WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
   for more details.
-  
+
   You should have received a copy of the GNU General Public License along
   with this program; if not, write to the Free Software Foundation, Inc.,
   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
@@ -76,9 +76,10 @@ SQLRETURN do_query(STMT *stmt,char *query, SQLULEN query_length)
      * that well to detect multiple queries.
      */
     if (stmt->dbc->ds->cursor_prefetch_number > 0
-      && !stmt->dbc->ds->allow_multiple_statements
-      && stmt->stmt_options.cursor_type == SQL_CURSOR_FORWARD_ONLY
-      && scrollable(stmt, query, query+query_length))
+        && !stmt->dbc->ds->allow_multiple_statements
+        && stmt->stmt_options.cursor_type == SQL_CURSOR_FORWARD_ONLY
+        && scrollable(stmt, query, query+query_length)
+        && !ssps_used(stmt))
     {
       /* we might want to read primary key info at this point, but then we have to
          know if we have a select from a single table...
@@ -224,7 +225,7 @@ skip_unlock_exit:
   @param[in]      row         Parameters row
   @param[in,out]  finalquery  if NULL, final query is not copied
   @param[in,out]  length      Length of the query. Pointed value is used as initial offset
-  @comment : it allocates and modifies finalquery (when finalquery!=NULL), 
+  @comment : it allocates and modifies finalquery (when finalquery!=NULL),
              so passing stmt->query->query can lead to memory leak.
 */
 
@@ -476,14 +477,14 @@ SQLRETURN check_c2sql_conversion_supported(STMT *stmt, DESCREC *aprec, DESCREC *
     /* Currently we do not support those types */
     case SQL_C_INTERVAL_YEAR:
     case SQL_C_INTERVAL_MONTH:
-		case SQL_C_INTERVAL_DAY:
-		case SQL_C_INTERVAL_HOUR:
-		case SQL_C_INTERVAL_MINUTE:
-		case SQL_C_INTERVAL_SECOND:
-		case SQL_C_INTERVAL_YEAR_TO_MONTH:
-		case SQL_C_INTERVAL_DAY_TO_HOUR:
-		case SQL_C_INTERVAL_DAY_TO_MINUTE:
-		case SQL_C_INTERVAL_DAY_TO_SECOND:
+    case SQL_C_INTERVAL_DAY:
+    case SQL_C_INTERVAL_HOUR:
+    case SQL_C_INTERVAL_MINUTE:
+    case SQL_C_INTERVAL_SECOND:
+    case SQL_C_INTERVAL_YEAR_TO_MONTH:
+    case SQL_C_INTERVAL_DAY_TO_HOUR:
+    case SQL_C_INTERVAL_DAY_TO_MINUTE:
+    case SQL_C_INTERVAL_DAY_TO_SECOND:
     case SQL_C_INTERVAL_MINUTE_TO_SECOND:
       return set_stmt_error(stmt, "07006", "Conversion is not supported by driver", 0);
   }
@@ -647,18 +648,18 @@ SQLRETURN convert_c_type2str(STMT *stmt, SQLSMALLINT ctype, DESCREC *iprec,
         if (time->fraction)
         {
           char *tmp_buf= buff + *length;
-          
+
           /* Start cleaning from the end */
           int tmp_pos= 9;
 
           sprintf(tmp_buf, ".%09d", time->fraction);
-          
+
           /*
             ODBC specification defines nanoseconds granularity for
-            the fractional part of seconds. MySQL only supports 
+            the fractional part of seconds. MySQL only supports
             microseconds for TIMESTAMP, TIME and DATETIME.
 
-            We are trying to remove the trailing zeros because this 
+            We are trying to remove the trailing zeros because this
             does not really modify the data, but often helps to substitute
             9 digits with only 6.
           */
@@ -697,7 +698,7 @@ SQLRETURN convert_c_type2str(STMT *stmt, SQLSMALLINT ctype, DESCREC *iprec,
       }
 
     case SQL_C_INTERVAL_HOUR_TO_MINUTE:
-		case SQL_C_INTERVAL_HOUR_TO_SECOND:
+    case SQL_C_INTERVAL_HOUR_TO_SECOND:
       {
         SQL_INTERVAL_STRUCT *interval= (SQL_INTERVAL_STRUCT*)*res;
 
@@ -860,7 +861,7 @@ SQLRETURN insert_param(STMT *stmt, uchar *place4param, DESC* apd,
 
     switch ( aprec->concise_type )
     {
-      
+
       case SQL_C_BINARY:
       case SQL_C_CHAR:
           convert= 1;
@@ -930,7 +931,7 @@ SQLRETURN insert_param(STMT *stmt, uchar *place4param, DESC* apd,
               (Class values other than 01, except for the class IM,
               indicate an error and are accompanied by a return code
               of SQL_ERROR)
-               
+
               Not sure if fraction should be considered as an overflow.
               In fact specs say about "time fields only"
             */
@@ -1183,7 +1184,7 @@ SQLRETURN insert_param(STMT *stmt, uchar *place4param, DESC* apd,
     else
     {
     /* Convert binary data to hex sequence */
-      if(is_no_backslashes_escape_mode(stmt->dbc) && 
+      if(is_no_backslashes_escape_mode(stmt->dbc) &&
        is_binary_sql_type(iprec->concise_type))
       {
         SQLLEN transformed_len = 0;
@@ -1193,7 +1194,7 @@ SQLRETURN insert_param(STMT *stmt, uchar *place4param, DESC* apd,
         {
           goto memerror;
         }
-      
+
         copy_binhex_result(stmt, to, length * 2 + 1, &transformed_len, 0, data, length);
         to += transformed_len;
       }
@@ -1205,7 +1206,7 @@ SQLRETURN insert_param(STMT *stmt, uchar *place4param, DESC* apd,
         {
           goto memerror;
         }
-      
+
         to+= mysql_real_escape_string(&dbc->mysql, to, data, length);
         to= add_to_buffer(net, to, "'", 1);
       }
@@ -1331,7 +1332,7 @@ SQLRETURN my_SQLExecute( STMT *pStmt )
   SQLULEN     row, length= 0;
 
   SQLUSMALLINT *param_operation_ptr= NULL, *param_status_ptr= NULL, *lastError= NULL;
-  
+
   /* need to have a flag indicating if all parameters failed */
   int all_parameters_failed= pStmt->apd->array_size > 1 ? 1 : 0;
 
@@ -1377,12 +1378,12 @@ SQLRETURN my_SQLExecute( STMT *pStmt )
 
   is_select_stmt= is_select_statement(&pStmt->query);
 
-  /* if ssps is used for select query then convert it to non ssps 
-	 single statement using UNION
+  /* if ssps is used for select query then convert it to non ssps
+   single statement using UNION
   */
   if(is_select_stmt && ssps_used(pStmt) && pStmt->apd->array_size > 1)
   {
-    ssps_close(pStmt);				
+    ssps_close(pStmt);
   }
 
   if ( pStmt->ipd->rows_processed_ptr )
@@ -1428,7 +1429,7 @@ SQLRETURN my_SQLExecute( STMT *pStmt )
       if ( param_operation_ptr
         && *param_operation_ptr == SQL_PARAM_IGNORE)
       {
-        /* http://msdn.microsoft.com/en-us/library/ms712631%28VS.85%29.aspx 
+        /* http://msdn.microsoft.com/en-us/library/ms712631%28VS.85%29.aspx
            - comments for SQL_ATTR_PARAM_STATUS_PTR */
         if (param_status_ptr)
           *param_status_ptr= SQL_PARAM_UNUSED;
@@ -1526,7 +1527,7 @@ SQLRETURN my_SQLExecute( STMT *pStmt )
     if (!is_select_stmt || row == pStmt->apd->array_size-1)
     {
       if (!connection_failure)
-      {      
+      {
         rc= do_query(pStmt, query, length);
       }
       else
@@ -1535,7 +1536,7 @@ SQLRETURN my_SQLExecute( STMT *pStmt )
         {
           x_free(query);
         }
-  
+
         /*
           If the original query was modified, we reset stmt->query so that the
           next execution re-starts with the original query.
@@ -1572,7 +1573,7 @@ SQLRETURN my_SQLExecute( STMT *pStmt )
         all_parameters_failed= 0;
       }
 
-      length= 0; 
+      length= 0;
     }
   }
 
@@ -1583,7 +1584,7 @@ SQLRETURN my_SQLExecute( STMT *pStmt )
     *lastError= SQL_PARAM_ERROR;
   }
 
-  /* Setting not processed paramsets status to SQL_PARAM_UNUSED 
+  /* Setting not processed paramsets status to SQL_PARAM_UNUSED
      this is needed if we stop paramsets processing on error.
   */
   if (param_status_ptr != NULL)
@@ -1711,7 +1712,7 @@ static SQLRETURN execute_dae(STMT *stmt)
     stmt->setpos_apd= NULL;
     break;
   }
-    
+
   stmt->dae_type= 0;
 
   return rc;
@@ -1787,7 +1788,7 @@ SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER *prbgValue)
 
     if (stmt->send_data_param > 0)
     {
-    
+
       if (mysql_stmt_bind_param(stmt->ssps, (MYSQL_BIND*)stmt->param_bind->buffer))
       {
         set_stmt_error(stmt, "HY000", mysql_stmt_error(stmt->ssps),
@@ -1827,7 +1828,7 @@ SQLRETURN SQL_API SQLParamData(SQLHSTMT hstmt, SQLPOINTER *prbgValue)
   a character, binary, or data source specific data type.
 */
 
-SQLRETURN SQL_API SQLPutData( SQLHSTMT      hstmt, 
+SQLRETURN SQL_API SQLPutData( SQLHSTMT      hstmt,
                               SQLPOINTER    rgbValue,
                               SQLLEN        cbValue )
 {

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2012, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -7,16 +7,16 @@
   conditions of the GPLv2 as it is applied to this software, see the
   FLOSS License Exception
   <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
-  
+
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published
   by the Free Software Foundation; version 2 of the License.
-  
+
   This program is distributed in the hope that it will be useful, but
   WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
   for more details.
-  
+
   You should have received a copy of the GNU General Public License along
   with this program; if not, write to the Free Software Foundation, Inc.,
   51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
@@ -59,7 +59,7 @@ DECLARE_TEST(t_bug32420)
   ok_stmt(hstmt1, SQLBindCol(hstmt1, 1, SQL_C_LONG, nData, 0, NULL));
   ok_stmt(hstmt1, SQLBindCol(hstmt1, 2, SQL_C_CHAR, szData, sizeof(szData[0]),
                             NULL));
-  ok_stmt(hstmt1, SQLExtendedFetch(hstmt1, SQL_FETCH_NEXT, 0, NULL, 
+  ok_stmt(hstmt1, SQLExtendedFetch(hstmt1, SQL_FETCH_NEXT, 0, NULL,
                                    rgfRowStatus));
 
   is_num(nData[0], 100);
@@ -223,7 +223,7 @@ DECLARE_TEST(t_bug39644)
 
   ok_sql(hstmt, "drop table if exists t_bug39644");
   ok_sql(hstmt, "create table t_bug39644(col1 INT, col2 INT,"\
-	            "col3 BIT, col4 BIT)");
+              "col3 BIT, col4 BIT)");
 
   ok_sql(hstmt, "insert into t_bug39644 VALUES (5, 0, 1, 0)");
 
@@ -327,9 +327,9 @@ DECLARE_TEST(t_bug32821)
       case 1: is_num(b, expected_a[i]); break;
       case 2: is_num(b, expected_b[i]); break;
       }
-      
+
     }
- 
+
     ++i;
   }
 
@@ -458,7 +458,7 @@ DECLARE_TEST(t_bug55024)
 
 
 /*
-Bug #56677 - SQLNumResultCols() causes the driver to return 
+Bug #56677 - SQLNumResultCols() causes the driver to return
 only first row in the resultset
 */
 DECLARE_TEST(t_bug56677)
@@ -678,7 +678,7 @@ DECLARE_TEST(t_row_status)
                                        from b_row_status\
                                        order by i desc", SQL_NTS));
 
-  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, res, 5, NULL));  
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, res, 5, NULL));
 
   for (i= 0; i<2; ++i)
   {
@@ -740,6 +740,45 @@ DECLARE_TEST(t_prefetch)
     return OK;
 }
 
+DECLARE_TEST(t_bug17386788)
+{
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+  SQLINTEGER nidata=7;
+
+  ok_sql(hstmt, "DROP table IF EXISTS b_bug17386788");
+  ok_sql(hstmt, "CREATE table b_bug17386788(i int)");
+
+  ok_sql(hstmt, "insert into b_bug17386788 values(1),(2),(3),(4),(5),(6),(7)");
+
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
+                                        NULL, NULL, NULL, "PREFETCH=5"));
+
+  ok_stmt(hstmt1,
+          SQLPrepare(hstmt1,
+                     (SQLCHAR *)"select * from b_bug17386788 where i < ? ",
+                     SQL_NTS)
+          );
+
+
+  ok_stmt(hstmt1,
+          SQLBindParameter(hstmt1,1,SQL_PARAM_INPUT, SQL_C_LONG,SQL_INTEGER,
+                           0,0,&nidata,20,NULL)
+          );
+
+  ok_stmt(hstmt1, SQLExecute(hstmt1));
+
+  is_num(6, myrowcount(hstmt1));
+
+  expect_stmt(hstmt1, SQLMoreResults(hstmt1), SQL_NO_DATA);
+
+  ok_sql(hstmt, "DROP table IF EXISTS b_bug17386788");
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  return OK;
+
+}
+
 
 DECLARE_TEST(t_outparams)
 {
@@ -784,7 +823,7 @@ DECLARE_TEST(t_outparams)
 
   ok_stmt(hstmt, SQLNumResultCols(hstmt,&ncol));
   is_num(ncol, 3);
-  
+
   ok_stmt(hstmt, SQLFetch(hstmt));
   is_num(my_fetch_int(hstmt, 1), 300);
   is_num(my_fetch_int(hstmt, 2), 100);
@@ -813,12 +852,12 @@ DECLARE_TEST(t_outparams)
 
 
 /*
-  Bug #11766437: Incorrect increment(increments in multiple of SQLLEN) of 
-  pointer to the length/indicator buffer(last parameter of SQLBindCol), 
-  which gives incorrrect result when SQL_ATTR_ROW_BIND_TYPE is set to 
-  size of data inserted which is not not multiple of 8 on 64 bit 
+  Bug #11766437: Incorrect increment(increments in multiple of SQLLEN) of
+  pointer to the length/indicator buffer(last parameter of SQLBindCol),
+  which gives incorrrect result when SQL_ATTR_ROW_BIND_TYPE is set to
+  size of data inserted which is not not multiple of 8 on 64 bit
   system where sizeof SQLLEN is 8.
-  Tests for data fetched with SQL_ATTR_ROW_BIND_TYPE size set to 
+  Tests for data fetched with SQL_ATTR_ROW_BIND_TYPE size set to
   multiple of 2, binded buffers are checked for proper data fetch.
 */
 DECLARE_TEST(t_bug11766437)
@@ -828,7 +867,7 @@ DECLARE_TEST(t_bug11766437)
   SQLCHAR tbuf[50];
   char *ptr;
   char rows[500]= {0};
-  SQLINTEGER MAX_CHAR_SIZE= 7; /*max size for character name*/ 
+  SQLINTEGER MAX_CHAR_SIZE= 7; /*max size for character name*/
 
   ok_sql(hstmt, "drop table if exists t_bug11766437");
   ok_sql(hstmt, "create table t_bug11766437 (id int not null, "
@@ -841,41 +880,41 @@ DECLARE_TEST(t_bug11766437)
                                 (SQLPOINTER)rowcnt, 0));
 
   /*
-    With same text inserted we change binding orientation 
+    With same text inserted we change binding orientation
     to verify our changes
-  */ 
+  */
   for (incr= 0; incr <= 24; incr += 2)
   {
-    size_t row_size= sizeof(SQLINTEGER) + sizeof(SQLLEN) + 
+    size_t row_size= sizeof(SQLINTEGER) + sizeof(SQLLEN) +
               sizeof(SQLLEN) + MAX_CHAR_SIZE + incr;
 
     /*
-      Set SQL_ATTR_ROW_BIND_TYPE to the size of the data inserted 
-      with multiple of 2 increment 
+      Set SQL_ATTR_ROW_BIND_TYPE to the size of the data inserted
+      with multiple of 2 increment
     */
     ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_ROW_BIND_TYPE,
                                   (SQLPOINTER)row_size, 0));
 
     /*
-      Binding all parameters with same buffer to test proper 
+      Binding all parameters with same buffer to test proper
       increment of last parameter of SQLBindCol
     */
     ptr= rows;
-    ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, 
+    ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG,
       (SQLPOINTER) ptr,
       (SQLLEN) sizeof(SQLINTEGER),
       (SQLLEN *) (ptr + sizeof(SQLINTEGER))));
 
     /*
-      Incrementing pointer position by sizeof(SQLINTEGER) i.e. size of id 
+      Incrementing pointer position by sizeof(SQLINTEGER) i.e. size of id
       and sizeof(SQLLEN) bytes required to store length of id
     */
     ptr += sizeof(SQLINTEGER) + sizeof(SQLLEN);
-    ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, 
+    ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR,
       (SQLPOINTER) ptr,
       (SQLLEN) MAX_CHAR_SIZE,
       (SQLLEN *) (ptr + MAX_CHAR_SIZE)));
-   
+
     ok_sql(hstmt, "select id,name from t_bug11766437 order by id");
 
     ok_stmt(hstmt, SQLFetch(hstmt));
@@ -918,11 +957,11 @@ DECLARE_TEST(t_bug11766437)
 
 
 /**
-  Bind column 0 with SQL_C_VARBOOKMARK data type and retrieve bookmark 
+  Bind column 0 with SQL_C_VARBOOKMARK data type and retrieve bookmark
   using FetchOrientation SQL_FETCH_BOOKMARK.
-  Set position in rowset using SQLSetPos and retrieve bookmark for that 
-  position using SQLGetData and save that particular bookmark position 
-  using SQL_ATTR_FETCH_BOOKMARK_PTR. Now fetch using using 
+  Set position in rowset using SQLSetPos and retrieve bookmark for that
+  position using SQLGetData and save that particular bookmark position
+  using SQL_ATTR_FETCH_BOOKMARK_PTR. Now fetch using using
   FetchOrientation SQL_FETCH_BOOKMARK with retrieve data from that position.
 */
 DECLARE_TEST(t_varbookmark)
@@ -968,8 +1007,8 @@ DECLARE_TEST(t_varbookmark)
   ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 11));
 
   ok_sql(hstmt, "select * from t_bookmark order by 1");
-  ok_stmt(hstmt, SQLBindCol(hstmt, 0, SQL_C_VARBOOKMARK, bData, 
-	                        sizeof(bData[0]), NULL));
+  ok_stmt(hstmt, SQLBindCol(hstmt, 0, SQL_C_VARBOOKMARK, bData,
+                          sizeof(bData[0]), NULL));
   ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, nData, 0, NULL));
   ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szData, sizeof(szData[0]),
                             NULL));
@@ -986,7 +1025,7 @@ DECLARE_TEST(t_varbookmark)
   is_str(szData[3], "string 4", 8);
 
   ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_BOOKMARK, 0));
-  
+
   is_num(nData[0], 100);
   is_str(szData[0], "string 1", 8);
   is_num(atol(bData[0]), 1);
@@ -1026,7 +1065,7 @@ DECLARE_TEST(t_varbookmark)
   ok_stmt(hstmt, SQLSetPos(hstmt, 2, SQL_POSITION, SQL_LOCK_NO_CHANGE));
   ok_stmt(hstmt, SQLGetData(hstmt, 0, SQL_C_VARBOOKMARK, abookmark, 255, &outlen));
 
-  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_FETCH_BOOKMARK_PTR, 
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_FETCH_BOOKMARK_PTR,
                          (SQLPOINTER) abookmark, 0));
 
   ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_BOOKMARK, 0));
@@ -1049,14 +1088,14 @@ DECLARE_TEST(t_varbookmark)
 
 
 /**
-  Bind column 0 with SQL_C_BOOKMARK data type and retrieve bookmark 
+  Bind column 0 with SQL_C_BOOKMARK data type and retrieve bookmark
   using FetchOrientation SQL_FETCH_BOOKMARK.
-  Set position in rowset using SQLSetPos and retrieve bookmark for that 
-  position using SQLGetData and save that particular bookmark position 
-  using SQL_ATTR_FETCH_BOOKMARK_PTR. Now fetch using using 
+  Set position in rowset using SQLSetPos and retrieve bookmark for that
+  position using SQLGetData and save that particular bookmark position
+  using SQL_ATTR_FETCH_BOOKMARK_PTR. Now fetch using using
   FetchOrientation SQL_FETCH_BOOKMARK with retrieve data from that position.
 */
-#ifdef _UNIX_ 
+#ifdef _UNIX_
 DECLARE_TEST(t_bookmark)
 {
   SQLLEN len= 0;
@@ -1093,7 +1132,7 @@ DECLARE_TEST(t_bookmark)
   ok_stmt(hstmt, SQLSetStmtOption(hstmt, SQL_ROWSET_SIZE, 4));
 
   ok_sql(hstmt, "select * from t_bookmark order by 1");
-  ok_stmt(hstmt, SQLBindCol(hstmt, 0, SQL_C_BOOKMARK, bData, 
+  ok_stmt(hstmt, SQLBindCol(hstmt, 0, SQL_C_BOOKMARK, bData,
                           sizeof(bData[0]), NULL));
   ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_LONG, nData, 0, NULL));
   ok_stmt(hstmt, SQLBindCol(hstmt, 2, SQL_C_CHAR, szData, sizeof(szData[0]),
@@ -1111,7 +1150,7 @@ DECLARE_TEST(t_bookmark)
   is_str(szData[3], "string 4", 8);
 
   ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_BOOKMARK, 0));
-  
+
   is_num(nData[0], 100);
   is_str(szData[0], "string 1", 8);
   is_num(bData[0], 1);
@@ -1128,7 +1167,7 @@ DECLARE_TEST(t_bookmark)
   ok_stmt(hstmt, SQLSetPos(hstmt, 3, SQL_POSITION, SQL_LOCK_NO_CHANGE));
   ok_stmt(hstmt, SQLGetData(hstmt, 0, SQL_C_BOOKMARK, abookmark, 255, &outlen));
 
-  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_FETCH_BOOKMARK_PTR, 
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_FETCH_BOOKMARK_PTR,
                          (SQLPOINTER) abookmark, 0));
 
   ok_stmt(hstmt, SQLFetchScroll(hstmt, SQL_FETCH_BOOKMARK, 0));
@@ -1148,10 +1187,10 @@ DECLARE_TEST(t_bookmark)
 #endif
 
 
-/* 
-  Bug #17311065: ASSERT FAILURE IN SQLDESCRIBECOL() 
+/*
+  Bug #17311065: ASSERT FAILURE IN SQLDESCRIBECOL()
                  IF THE COLUMN NUMBER GIVEN IS LARGE
-  Assert failure in case of prepared statments and SQLDESCRIBECOL() called 
+  Assert failure in case of prepared statments and SQLDESCRIBECOL() called
   with column number given larger then actual parameter marker in query.
 */
 DECLARE_TEST(t_bug17311065)
@@ -1204,6 +1243,7 @@ BEGIN_TESTS
   ADD_TEST(t_row_status)
 #endif
   ADD_TEST(t_prefetch)
+  ADD_TEST(t_bug17386788)
   ADD_TOFIX(t_outparams)
   // ADD_TEST(t_bug11766437) TODO: Fix
   // ADD_TEST(t_varbookmark) TODO: Fix
