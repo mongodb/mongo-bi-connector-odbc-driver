@@ -944,7 +944,7 @@ static SQLRETURN check_result(STMT *stmt)
         }
         else
         {
-          set_sql_select_limit(stmt->dbc, real_max_rows);
+          set_sql_select_limit(stmt, real_max_rows, TRUE);
         }
         stmt->stmt_options.max_rows= real_max_rows;
       }

@@ -36,26 +36,70 @@
 
 const SQLULEN sql_select_unlimited= (SQLULEN)-1;
 
+/**
+  Execute a SQL statement with setting sql_select_limit for each 
+  execution as SQL_ATTR_MAX_ROWS applies to all result sets on 
+  the statement and not connection.
+
+  @param[in] dbc            The database connection
+  @param[in] query          The query to execute
+  @param[in] query_length   The length of query to execute
+  @param[in] req_lock       The flag if dbc->lock thread lock should be used
+                            when executing a query
+*/
+SQLRETURN exec_stmt_query(STMT *stmt, const char *query,
+                          SQLULEN query_length, my_bool req_lock)
+{
+  SQLRETURN rc;
+  if(!SQL_SUCCEEDED(rc= set_sql_select_limit(stmt->dbc, 
+                          stmt->stmt_options.max_rows, req_lock)))
+  {
+    /* if setting sql_select_limit fails, the query will probably fail anyway too */
+    return rc;
+  }
+
+  return odbc_stmt(stmt->dbc, query, query_length, req_lock);
+}
+
+
+/**
+
 
 /**
   Execute a SQL statement.
 
-  @param[in] dbc   The database connection
-  @param[in] query The query to execute
-*/
-SQLRETURN odbc_stmt(DBC *dbc, const char *query)
+  @param[in] dbc       The database connection
+  @param[in] query     The query to execute
+  @param[in] req_lock  The flag if dbc->lock thread lock should be used
+                       when executing a query
+  */
+SQLRETURN odbc_stmt(DBC *dbc, const char *query, 
+                    SQLULEN query_length, my_bool req_lock)
 {
-    SQLRETURN result= SQL_SUCCESS;
-
+  SQLRETURN result= SQL_SUCCESS;
+ 
+  if (req_lock)
+  {
     myodbc_mutex_lock(&dbc->lock);
-    if ( check_if_server_is_alive(dbc) ||
-         mysql_real_query(&dbc->mysql,query,strlen(query)) )
-    {
-        result= set_conn_error(dbc,MYERR_S1000,mysql_error(&dbc->mysql),
-                               mysql_errno(&dbc->mysql));
-    }
+  }
+
+  if (query_length == SQL_NTS)
+  {
+    query_length= strlen(query);
+  }
+
+  if ( check_if_server_is_alive(dbc) ||
+       mysql_real_query(&dbc->mysql, query, query_length) )
+  {
+    result= set_conn_error(dbc,MYERR_S1000,mysql_error(&dbc->mysql),
+                           mysql_errno(&dbc->mysql));
+  }
+
+  if (req_lock)
+  {
     myodbc_mutex_unlock(&dbc->lock);
-    return result;
+  }
+  return result;
 }
 
 
@@ -2283,7 +2327,7 @@ my_bool reget_current_catalog(DBC *dbc)
     x_free(dbc->database);
     dbc->database= NULL;
 
-    if ( odbc_stmt(dbc, "select database()") )
+    if ( odbc_stmt(dbc, "select database()", SQL_NTS, TRUE) )
     {
         return 1;
     }
@@ -2991,30 +3035,32 @@ void *ptr_offset_adjust(void *ptr, SQLULEN *bind_offset_ptr,
 
   @param[in]  dbc         dbc handler
   @param[in]  new_value   Value to set @@sql_select_limit.
+  @param[in]  req_lock    The flag if dbc->lock thread lock should be used
+                          when executing a query
 
   Returns new_value if operation was successful, -1 otherwise
  */
-SQLRETURN set_sql_select_limit(DBC *dbc, SQLULEN new_value)
+SQLRETURN set_sql_select_limit(DBC *dbc, SQLULEN lim_value, my_bool req_lock)
 {
   char query[44];
   SQLRETURN rc;
 
   /* Both 0 and max(SQLULEN) value mean no limit and sql_select_limit to DEFAULT */
-  if (new_value == dbc->sql_select_limit
-   || new_value == sql_select_unlimited && dbc->sql_select_limit == 0)
+  if (lim_value == dbc->sql_select_limit
+   || lim_value == sql_select_unlimited && dbc->sql_select_limit == 0)
     return SQL_SUCCESS;
 
-  if (new_value > 0 && new_value < sql_select_unlimited)
-    sprintf(query, "set @@sql_select_limit=%lu", (unsigned long)new_value);
+  if (lim_value > 0 && lim_value < sql_select_unlimited)
+    sprintf(query, "set @@sql_select_limit=%lu", (unsigned long)lim_value);
   else
   {
     strcpy(query, "set @@sql_select_limit=DEFAULT");
-    new_value= 0;
+    lim_value= 0;
   }
 
-  if (SQL_SUCCEEDED(rc= odbc_stmt(dbc, query)))
+  if (SQL_SUCCEEDED(rc= odbc_stmt(dbc, query, SQL_NTS, req_lock)))
   {
-    dbc->sql_select_limit= new_value;
+    dbc->sql_select_limit= lim_value;
   }
 
   return rc;
@@ -3904,7 +3950,7 @@ int get_session_variable(STMT *stmt, const char *var, char *result)
     to= my_stpmov(to, "'");
     *to= '\0';
 
-    if (!SQL_SUCCEEDED(odbc_stmt(stmt->dbc, buff)))
+    if (!SQL_SUCCEEDED(odbc_stmt(stmt->dbc, buff, SQL_NTS, TRUE)))
     {
       return 0;
     }
@@ -3957,7 +4003,7 @@ SQLRETURN set_query_timeout(STMT *stmt, SQLULEN new_value)
     new_value= 0;
   }
 
-  if (SQL_SUCCEEDED(rc= odbc_stmt(stmt->dbc, query)))
+  if (SQL_SUCCEEDED(rc= odbc_stmt(stmt->dbc, query, SQL_NTS, TRUE)))
   {
     stmt->stmt_options.query_timeout= new_value;
   }

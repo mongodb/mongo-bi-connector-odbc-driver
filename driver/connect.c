@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -130,7 +130,7 @@ SQLRETURN myodbc_set_initial_character_set(DBC *dbc, const char *charset)
     conversion to the ANSI character set or Unicode.
   */
   if (is_minimum_version(dbc->mysql.server_version, "4.1.1")
-      && odbc_stmt(dbc, "SET character_set_results = NULL") != SQL_SUCCESS)
+      && odbc_stmt(dbc, "SET character_set_results = NULL", SQL_NTS, TRUE) != SQL_SUCCESS)
   {
     return SQL_ERROR;
   }
@@ -416,7 +416,7 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
     other problems.
   */
   if (!ds->auto_increment_null_search &&
-      odbc_stmt(dbc, "SET SQL_AUTO_IS_NULL = 0") != SQL_SUCCESS)
+      odbc_stmt(dbc, "SET SQL_AUTO_IS_NULL = 0", SQL_NTS, TRUE) != SQL_SUCCESS)
   {
     /** @todo set error reason */
     goto error;
@@ -494,7 +494,7 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
     if (trans_supported(dbc))
     {
       sprintf(buff, "SET SESSION TRANSACTION ISOLATION LEVEL %s", level);
-      if (odbc_stmt(dbc, buff) != SQL_SUCCESS)
+      if (odbc_stmt(dbc, buff, SQL_NTS, TRUE) != SQL_SUCCESS)
       {
         /** @todo set error reason */
         goto error;

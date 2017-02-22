@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2012, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -656,8 +656,8 @@ SQLRETURN scroller_prefetch(STMT * stmt)
 
   myodbc_mutex_lock(&stmt->dbc->lock);
 
-  if (mysql_real_query(&stmt->dbc->mysql, stmt->scroller.query,
-                        (unsigned long)stmt->scroller.query_len))
+  if (exec_stmt_query(stmt, stmt->scroller.query,
+                        (unsigned long)stmt->scroller.query_len, FALSE))
   {
     myodbc_mutex_unlock(&stmt->dbc->lock);
     return SQL_ERROR;

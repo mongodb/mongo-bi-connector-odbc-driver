@@ -137,7 +137,8 @@ SQLRETURN SQL_API my_SQLAllocStmt       (SQLHDBC hdbc,SQLHSTMT *phstmt);
 SQLRETURN         do_query              (STMT *stmt,char *query, SQLULEN query_length);
 SQLRETURN         insert_params         (STMT *stmt, SQLULEN row, char **finalquery,
                                         SQLULEN *length);
-SQLRETURN odbc_stmt         (DBC *dbc, const char *query);
+SQLRETURN odbc_stmt(DBC *dbc, const char *query, SQLULEN query_length,
+                    my_bool reqLock);
 void      myodbc_link_fields (STMT *stmt,MYSQL_FIELD *fields,uint field_count);
 void      fix_row_lengths   (STMT *stmt, const long* fix_rules, uint row, uint field_count);
 void      fix_result_types  (STMT *stmt);
@@ -154,7 +155,9 @@ char *    add_to_buffer (NET *net,char *to,const char *from,ulong length);
 
 void reset_getdata_position   (STMT *stmt);
 
-SQLRETURN set_sql_select_limit(DBC *dbc, SQLULEN new_value);
+SQLRETURN set_sql_select_limit(DBC *dbc, SQLULEN new_value, my_bool reqLock);
+SQLRETURN exec_stmt_query(STMT *stmt, const char *query, SQLULEN query_length,
+                           my_bool reqLock);
 
 uint32
 copy_and_convert(char *to, uint32 to_length, CHARSET_INFO *to_cs,

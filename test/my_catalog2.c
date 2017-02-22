@@ -1069,7 +1069,86 @@ DECLARE_TEST(t_bug69448)
 }
 
 
+/*
+  Bug #69554: SQL_ATTR_MAX_ROWS applies to all result sets on the statement,
+  and not connection, which is currently there as 
+  'set @@sql_select_limit' for whole session.
+*/
+DECLARE_TEST(t_bug69554)
+{
+  int num_rows= 0;
+  SQLCHAR buff[255];
+  SQLHSTMT hstmt1;
+
+  ok_con(hdbc, SQLAllocStmt(hdbc, &hstmt1));
+  ok_sql(hstmt, "DROP TABLE IF EXISTS table69554a");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS table69554b");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS table69554c");
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS proc69554a");
+  ok_sql(hstmt, "DROP PROCEDURE IF EXISTS proc69554b");
+
+  ok_sql(hstmt, "CREATE TABLE table69554a(id int, id2 int, id3 int, PRIMARY KEY(id, id2))");
+  ok_sql(hstmt, "GRANT SELECT, UPDATE, DELETE on table69554a to 'root'@'localhost'");
+  ok_sql(hstmt, "GRANT INSERT (id, id2, id3) on table69554a to 'root'@'localhost'");
+  ok_sql(hstmt, "CREATE TABLE table69554b(id int, id2 int, id3 int)");
+  ok_sql(hstmt, "CREATE TABLE table69554c(id int, id2 int, id3 int)");
+
+  ok_sql(hstmt, "CREATE PROCEDURE proc69554a(IN p1 INT, IN p2 INT) begin end;");
+  ok_sql(hstmt, "CREATE PROCEDURE proc69554b(IN p1 INT, IN p2 INT) begin end;");
+
+  ok_sql(hstmt, "INSERT INTO table69554a(id, id2) VALUES (1, 1), (2, 2), (3, 3)");
+
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_MAX_ROWS, 
+                                (SQLPOINTER)1, 0));
+
+  ok_sql(hstmt, "SELECT * FROM table69554a");
+  is_num(my_print_non_format_result(hstmt), 1);
+  ok_stmt(hstmt1, SQLPrimaryKeys(hstmt1, NULL, 0, NULL, 0, "table69554a", SQL_NTS));
+  is_num(my_print_non_format_result(hstmt1), 2);
+
+  ok_sql(hstmt, "SELECT * FROM table69554a");
+  is_num(my_print_non_format_result(hstmt), 1);
+  ok_stmt(hstmt1, SQLTables(hstmt1, NULL, 0, NULL, 0,
+                           "table69554%", SQL_NTS, NULL, 0));
+  is_num(my_print_non_format_result(hstmt1), 3);
+
+  ok_sql(hstmt, "SELECT * FROM table69554a");
+  is_num(my_print_non_format_result(hstmt), 1);
+  ok_stmt(hstmt1, SQLColumns(hstmt1, NULL, 0, NULL, 0, "table69554a", SQL_NTS, NULL, 0));
+  is_num(my_print_non_format_result(hstmt1), 3);
+
+  ok_sql(hstmt, "SELECT * FROM table69554a");
+  is_num(my_print_non_format_result(hstmt), 1);
+  ok_stmt(hstmt1, SQLColumnPrivileges(hstmt1, NULL, 0, NULL, 0, "table69554a", SQL_NTS, "%", SQL_NTS));
+  is(my_print_non_format_result(hstmt1) > 1);
+
+  ok_sql(hstmt, "SELECT * FROM table69554a");
+  is_num(my_print_non_format_result(hstmt), 1);
+  ok_stmt(hstmt1, SQLTablePrivileges(hstmt1, NULL, 0, NULL, 0, "table69554a", SQL_NTS));
+  is(my_print_non_format_result(hstmt1) > 1);
+
+  ok_sql(hstmt, "SELECT * FROM table69554a");
+  is_num(my_print_non_format_result(hstmt), 1);
+  ok_stmt(hstmt1, SQLProcedures(hstmt1, NULL, 0, NULL, 0, "proc69554%", SQL_NTS));
+  is_num(my_print_non_format_result(hstmt1), 2);
+
+  ok_sql(hstmt, "SELECT * FROM table69554a");
+  is_num(my_print_non_format_result(hstmt), 1);
+  ok_stmt(hstmt1, SQLProcedureColumns(hstmt1, NULL, 0, NULL, 0, "proc69554a", SQL_NTS, "%", SQL_NTS));
+  is_num(my_print_non_format_result(hstmt1), 2);
+
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS table69554a");
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS table69554b");
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS table69554c");
+  ok_sql(hstmt1, "DROP PROCEDURE IF EXISTS proc69554a");
+  ok_sql(hstmt1, "DROP PROCEDURE IF EXISTS proc69554b");
+
+  return OK;
+}
+
 BEGIN_TESTS
+  ADD_TEST(t_bug69554)
   ADD_TEST(t_bug37621)
   ADD_TEST(t_bug34272)
   ADD_TEST(t_bug49660)

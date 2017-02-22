@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2001, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2001, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -239,7 +239,7 @@ static my_bool check_if_usable_unique_key_exists(STMT *stmt)
   MYLOG_QUERY(stmt, buff);
 
   myodbc_mutex_lock(&stmt->dbc->lock);
-  if (mysql_query(&stmt->dbc->mysql, buff) ||
+  if (exec_stmt_query(stmt, buff, strlen(buff), FALSE) ||
       !(res= mysql_store_result(&stmt->dbc->mysql)))
   {
     set_error(stmt, MYERR_S1000, mysql_error(&stmt->dbc->mysql),
@@ -447,30 +447,6 @@ static SQLRETURN copy_rowdata(STMT *stmt, DESCREC *aprec,
 
 /*
   @type    : myodbc3 internal
-  @purpose : executes a statement query
-*/
-
-static SQLRETURN exec_stmt_query(STMT *stmt,char *query,
-                                 SQLUINTEGER len)
-{
-    DBC *dbc= stmt->dbc;
-    SQLRETURN error= SQL_SUCCESS;
-
-    MYLOG_QUERY(stmt, query);
-    myodbc_mutex_lock(&dbc->lock);
-    if ( check_if_server_is_alive(dbc) ||
-         mysql_real_query(&dbc->mysql, query, len) )
-    {
-        error= set_error(stmt,MYERR_S1000,mysql_error(&dbc->mysql),
-                         mysql_errno(&dbc->mysql));
-    }
-    myodbc_mutex_unlock(&dbc->lock);
-    return(error);
-}
-
-
-/*
-  @type    : myodbc3 internal
   @purpose : copies field data to statement
 */
 
@@ -608,7 +584,7 @@ static SQLRETURN append_all_fields(STMT *stmt, DYNAMIC_STRING *dynQuery)
   strxmov(select, "SELECT * FROM `", stmt->table_name, "` LIMIT 0", NullS);
   MYLOG_QUERY(stmt, select);
   myodbc_mutex_lock(&stmt->dbc->lock);
-  if (mysql_query(&stmt->dbc->mysql, select) ||
+  if (exec_stmt_query(stmt, select, strlen(select), FALSE) ||
       !(presultAllColumns= mysql_store_result(&stmt->dbc->mysql)))
   {
     set_error(stmt, MYERR_S1000, mysql_error(&stmt->dbc->mysql),
@@ -867,7 +843,7 @@ SQLRETURN my_pos_delete(STMT *stmt, STMT *stmtParam,
         return nReturn;
 
     /* DELETE the row(s) */
-    nReturn= exec_stmt_query(stmt, dynQuery->str, dynQuery->length);
+    nReturn= exec_stmt_query(stmt, dynQuery->str, dynQuery->length, FALSE);
     if ( nReturn == SQL_SUCCESS || nReturn == SQL_SUCCESS_WITH_INFO )
     {
         stmtParam->affected_rows= mysql_affected_rows(&stmt->dbc->mysql);
@@ -1071,7 +1047,7 @@ static SQLRETURN setpos_delete_bookmark(STMT *stmt, DYNAMIC_STRING *dynQuery)
     }
 
     /* execute our DELETE statement */
-    if ( !(nReturn= exec_stmt_query(stmt, dynQuery->str, dynQuery->length)) )
+    if ( !(nReturn= exec_stmt_query(stmt, dynQuery->str, dynQuery->length, FALSE)) )
     {
       affected_rows+= stmt->dbc->mysql.affected_rows;
     }
@@ -1145,7 +1121,7 @@ static SQLRETURN setpos_delete(STMT *stmt, SQLUSMALLINT irow,
     }
 
     /* execute our DELETE statement */
-    if ( !(nReturn= exec_stmt_query(stmt, dynQuery->str, dynQuery->length)) )
+    if ( !(nReturn= exec_stmt_query(stmt, dynQuery->str, dynQuery->length, FALSE)) )
     {
       affected_rows+= stmt->dbc->mysql.affected_rows;
     }
@@ -1234,7 +1210,7 @@ static SQLRETURN setpos_update_bookmark(STMT *stmt, DYNAMIC_STRING *dynQuery)
     if (!SQL_SUCCEEDED(nReturn))
       return nReturn;
 
-    if ( !(nReturn= exec_stmt_query(stmt, dynQuery->str, dynQuery->length)) )
+    if ( !(nReturn= exec_stmt_query(stmt, dynQuery->str, dynQuery->length, FALSE)) )
     {
       affected+= mysql_affected_rows(&stmt->dbc->mysql);
     }
@@ -1316,7 +1292,7 @@ static SQLRETURN setpos_update(STMT *stmt, SQLUSMALLINT irow,
       if (!SQL_SUCCEEDED(nReturn))
         return nReturn;
 
-      if ( !(nReturn= exec_stmt_query(stmt, dynQuery->str, dynQuery->length)) )
+      if ( !(nReturn= exec_stmt_query(stmt, dynQuery->str, dynQuery->length, FALSE)) )
       {
         affected+= mysql_affected_rows(&stmt->dbc->mysql);
       }
@@ -1494,7 +1470,7 @@ static SQLRETURN batch_insert( STMT *stmt, SQLULEN irow, DYNAMIC_STRING *ext_que
         }  /* END OF while(count < insert_count) */
 
         ext_query->str[--ext_query->length]= '\0';
-        if ( exec_stmt_query(stmt, ext_query->str, ext_query->length) !=
+        if ( exec_stmt_query(stmt, ext_query->str, ext_query->length, FALSE) !=
              SQL_SUCCESS )
             return(SQL_ERROR);
 

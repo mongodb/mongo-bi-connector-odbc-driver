@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -99,12 +99,13 @@ static MYSQL_ROW fix_fields_copy(STMT *stmt,MYSQL_ROW row)
   @type    : internal
   @purpose : returns columns from a particular table, NULL on error
 */
-static MYSQL_RES *server_list_dbkeys(DBC *dbc,
+static MYSQL_RES *server_list_dbkeys(STMT *stmt,
                                      SQLCHAR *catalog,
                                      SQLSMALLINT catalog_len,
                                      SQLCHAR *table,
                                      SQLSMALLINT table_len)
 {
+    DBC   *dbc = stmt->dbc;
     MYSQL *mysql= &dbc->mysql;
     char  buff[255], *to;
 
@@ -120,7 +121,7 @@ static MYSQL_RES *server_list_dbkeys(DBC *dbc,
     to= my_stpmov(to, "`");
 
     MYLOG_DBC_QUERY(dbc, buff);
-    if (mysql_query(mysql,buff))
+    if (exec_stmt_query(stmt, buff, strlen(buff), FALSE))
         return NULL;
     return mysql_store_result(mysql);
 }
@@ -521,12 +522,13 @@ static my_bool is_grantable(char *grant_list)
 @type    : internal
 @purpose : returns a table privileges result, NULL on error. Uses mysql db tables
 */
-static MYSQL_RES *table_privs_raw_data( DBC *       dbc,
+static MYSQL_RES *table_privs_raw_data( STMT *      stmt,
                                         SQLCHAR *   catalog,
                                         SQLSMALLINT catalog_len,
                                         SQLCHAR *   table,
                                         SQLSMALLINT table_len)
 {
+  DBC *dbc= stmt->dbc;
   MYSQL *mysql= &dbc->mysql;
   char   buff[255+2*NAME_LEN+1], *pos;
 
@@ -549,7 +551,7 @@ static MYSQL_RES *table_privs_raw_data( DBC *       dbc,
   pos= strxmov(pos, " ORDER BY Db, Table_name, Table_priv, User", NullS);
 
   MYLOG_DBC_QUERY(dbc, buff);
-  if (mysql_query(mysql,buff))
+  if (exec_stmt_query(stmt, buff, strlen(buff), FALSE))
     return NULL;
 
   return mysql_store_result(mysql);
@@ -598,7 +600,7 @@ list_table_priv_no_i_s(SQLHSTMT hstmt,
     uint     row_count;
 
     myodbc_mutex_lock(&stmt->dbc->lock);
-    stmt->result= table_privs_raw_data(stmt->dbc, catalog, catalog_len,
+    stmt->result= table_privs_raw_data(stmt, catalog, catalog_len,
       table, table_len);
 
     if (!stmt->result)
@@ -669,7 +671,7 @@ SQLColumnPrivileges
 @type    : internal
 @purpose : returns a column privileges result, NULL on error
 */
-static MYSQL_RES *column_privs_raw_data( MYSQL *    mysql,
+static MYSQL_RES *column_privs_raw_data(STMT *      stmt,
                                         SQLCHAR *   catalog,
                                         SQLSMALLINT catalog_len,
                                         SQLCHAR *   table,
@@ -677,6 +679,9 @@ static MYSQL_RES *column_privs_raw_data( MYSQL *    mysql,
                                         SQLCHAR *   column,
                                         SQLSMALLINT column_len)
 {
+  DBC   *dbc = stmt->dbc;
+  MYSQL *mysql = &dbc->mysql;
+
   char buff[255+3*NAME_LEN+1], *pos;
 
   pos= my_stpmov(buff,
@@ -703,7 +708,7 @@ static MYSQL_RES *column_privs_raw_data( MYSQL *    mysql,
     "' AND c.Table_name = t.Table_name "
     "ORDER BY c.Db, c.Table_name, c.Column_name, c.Column_priv");
 
-  if (mysql_query(mysql, buff))
+  if (exec_stmt_query(stmt, buff, strlen(buff), FALSE))
     return NULL;
 
   return mysql_store_result(mysql);
@@ -748,7 +753,7 @@ list_column_priv_no_i_s(SQLHSTMT hstmt,
   my_SQLFreeStmt(hstmt,MYSQL_RESET);
 
   myodbc_mutex_lock(&stmt->dbc->lock);
-  stmt->result= column_privs_raw_data(&stmt->dbc->mysql,
+  stmt->result= column_privs_raw_data(stmt,
     catalog, catalog_len,
     table, table_len,
     column, column_len);
@@ -864,7 +869,7 @@ MYSQL_RES *table_status_no_i_s(STMT        *stmt,
 
   assert(to - buff < sizeof(buff));
 
-  if (mysql_real_query(mysql,buff,(unsigned long)(to - buff)))
+  if (exec_stmt_query(stmt, buff, (unsigned long)(to - buff), FALSE))
   {
     return NULL;
   }
@@ -1524,7 +1529,7 @@ primary_keys_no_i_s(SQLHSTMT hstmt,
     uint      row_count;
 
     myodbc_mutex_lock(&stmt->dbc->lock);
-    if (!(stmt->result= server_list_dbkeys(stmt->dbc, catalog, catalog_len,
+    if (!(stmt->result= server_list_dbkeys(stmt, catalog, catalog_len,
                                            table, table_len)))
     {
       SQLRETURN rc= handle_connection_error(stmt);
@@ -1623,12 +1628,13 @@ const uint SQLPROCEDURECOLUMNS_FIELDS=
   @type    : internal
   @purpose : returns procedure params as resultset
 */
-static MYSQL_RES *server_list_proc_params(DBC *dbc,
+static MYSQL_RES *server_list_proc_params(STMT *stmt,
                                           SQLCHAR *catalog,
                                           SQLSMALLINT catalog_len,
                                           SQLCHAR *proc_name,
                                           SQLSMALLINT proc_name_len)
 {
+  DBC   *dbc = stmt->dbc;
   MYSQL *mysql= &dbc->mysql;
   char   buff[255+4*NAME_LEN+1], *pos;
 
@@ -1656,7 +1662,7 @@ static MYSQL_RES *server_list_proc_params(DBC *dbc,
 
   assert(pos - buff < sizeof(buff));
   MYLOG_DBC_QUERY(dbc, buff);
-  if (mysql_real_query(mysql, buff, (unsigned long)(pos - buff)))
+  if (exec_stmt_query(stmt, buff, (unsigned long)(pos - buff), FALSE))
     return NULL;
 
   return mysql_store_result(mysql);
@@ -1742,7 +1748,7 @@ procedure_columns_no_i_s(SQLHSTMT hstmt,
   /* get procedures list */
   myodbc_mutex_lock(&stmt->dbc->lock);
 
-  if (!(proc_list_res= server_list_proc_params(stmt->dbc, 
+  if (!(proc_list_res= server_list_proc_params(stmt, 
       szCatalogName, cbCatalogName, szProcName, cbProcName)))
   {
     myodbc_mutex_unlock(&stmt->dbc->lock);
@@ -1943,7 +1949,7 @@ procedure_columns_no_i_s(SQLHSTMT hstmt,
   if (cbColumnName)
   {
     myodbc_mutex_lock(&stmt->dbc->lock);
-    if (mysql_real_query(&stmt->dbc->mysql, dynQuery.str, (unsigned long)dynQuery.length) ||
+    if (exec_stmt_query(stmt, dynQuery.str, (unsigned long)dynQuery.length, FALSE) ||
         !(columns_res= mysql_store_result(&stmt->dbc->mysql)))
     {
       myodbc_mutex_unlock(&stmt->dbc->lock);
@@ -2309,7 +2315,7 @@ statistics_no_i_s(SQLHSTMT hstmt,
         goto empty_set;
 
     myodbc_mutex_lock(&dbc->lock);
-    stmt->result= server_list_dbkeys(stmt->dbc, catalog, catalog_len,
+    stmt->result= server_list_dbkeys(stmt, catalog, catalog_len,
                                      table, table_len);
     if (!stmt->result)
     {
@@ -2420,7 +2426,7 @@ tables_no_i_s(SQLHSTMT hstmt,
                                         (char *)catalog, catalog_len);
           to= my_stpmov(to, "'");
           MYLOG_QUERY(stmt, buff);
-          if (!mysql_query(&stmt->dbc->mysql, buff))
+          if (!exec_stmt_query(stmt, buff, strlen(buff), FALSE))
             stmt->result= mysql_store_result(&stmt->dbc->mysql);
         }
         myodbc_mutex_unlock(&stmt->dbc->lock);

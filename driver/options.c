@@ -275,7 +275,7 @@ MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
                                 "Transactions are not enabled", 4000);
 
         if (autocommit_on(dbc))
-          return odbc_stmt(dbc,"SET AUTOCOMMIT=0");
+          return odbc_stmt(dbc,"SET AUTOCOMMIT=0", SQL_NTS, TRUE);
       }
       else if (!is_connected(dbc))
       {
@@ -283,7 +283,7 @@ MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
         return SQL_SUCCESS;
       }
       else if (trans_supported(dbc) && !(autocommit_on(dbc)))
-        return odbc_stmt(dbc,"SET AUTOCOMMIT=1");
+        return odbc_stmt(dbc,"SET AUTOCOMMIT=1", SQL_NTS, TRUE);
       break;
 
     case SQL_ATTR_LOGIN_TIMEOUT:
@@ -395,7 +395,7 @@ MySQLSetConnectAttr(SQLHDBC hdbc, SQLINTEGER Attribute,
           SQLRETURN rc;
           sprintf(buff,"SET SESSION TRANSACTION ISOLATION LEVEL %s",
                   level);
-          if (SQL_SUCCEEDED(rc = odbc_stmt(dbc,buff)))
+          if (SQL_SUCCEEDED(rc = odbc_stmt(dbc, buff, SQL_NTS, TRUE)))
           {
             dbc->txn_isolation= (SQLINTEGER)ValuePtr;
           }
@@ -546,7 +546,7 @@ MySQLGetConnectAttr(SQLHDBC hdbc, SQLINTEGER attrib, SQLCHAR **char_attr,
         break;
       }
 
-      if (odbc_stmt(dbc, "SELECT @@tx_isolation"))
+      if (odbc_stmt(dbc, "SELECT @@tx_isolation", SQL_NTS, TRUE))
       {
         return set_handle_error(SQL_HANDLE_DBC, hdbc, MYERR_S1000,
                                 "Failed to get isolation level", 0);

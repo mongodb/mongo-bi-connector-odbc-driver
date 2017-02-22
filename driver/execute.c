@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -46,7 +46,8 @@ SQLRETURN do_query(STMT *stmt,char *query, SQLULEN query_length)
       goto skip_unlock_exit;
     }
 
-    if(!SQL_SUCCEEDED(set_sql_select_limit(stmt->dbc, stmt->stmt_options.max_rows)))
+    if(!SQL_SUCCEEDED(set_sql_select_limit(stmt->dbc,
+                      stmt->stmt_options.max_rows, TRUE)))
     {
       /* if setting sql_select_limit fails, the query will probably fail anyway too */
       goto skip_unlock_exit;

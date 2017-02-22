@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -220,7 +220,7 @@ static MYSQL_RES *table_status_i_s(STMT        *stmt,
 
   MYLOG_QUERY(stmt, buff);
 
-  if (mysql_real_query(mysql, buff, (unsigned long)(to - buff)))
+  if (exec_stmt_query(stmt, buff, (unsigned long)(to - buff), FALSE))
   {
     return NULL;
   }

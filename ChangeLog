@@ -1,3 +1,15 @@
+5.3.8
+
+  Security Notes:
+  Functionality added or changed:
+  Bugs fixed:
+  * SQL_ATTR_MAX_ROWS applies to all result sets on the statement,
+    and not connection (Bug# 17259397/69554)
+
+  Built using MySQL 5.7.
+
+----
+
 5.3.7
 
   Security Notes:
@@ -22,6 +34,8 @@
   * Assertion in ODBC Driver when calling mysql_stmt_close() on a broken
     connection (Bug# 25109356/83858)
   * Connector ODBC does not build with newer CMake (Bug# 22746557)
+
+  Built using MySQL 5.7.17.
  
 ----
 
@@ -47,6 +61,7 @@
     (Bug# 21074676/76984)
  
 ----
+
 5.3.5
 
   Security Notes:
