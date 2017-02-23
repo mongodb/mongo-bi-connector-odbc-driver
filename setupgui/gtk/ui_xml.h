@@ -1733,6 +1733,23 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"position\">7</property>\n" \
 "                      </packing>\n" \
 "                    </child>\n" \
+"                    <child>\n" \
+"                      <object class=\"GtkCheckButton\" id=\"no_date_overflow\">\n" \
+"                        <property name=\"label\" translatable=\"yes\">Disable Date Overflow error</property>\n" \
+"                        <property name=\"visible\">True</property>\n" \
+"                        <property name=\"can_focus\">True</property>\n" \
+"                        <property name=\"receives_default\">False</property>\n" \
+"                        <property name=\"tooltip_text\" translatable=\"yes\">Causes the Date Overflow error to be ignored</property>\n" \
+"                        <property name=\"use_action_appearance\">False</property>\n" \
+"                        <property name=\"use_underline\">True</property>\n" \
+"                        <property name=\"draw_indicator\">True</property>\n" \
+"                      </object>\n" \
+"                      <packing>\n" \
+"                        <property name=\"expand\">True</property>\n" \
+"                        <property name=\"fill\">True</property>\n" \
+"                        <property name=\"position\">8</property>\n" \
+"                      </packing>\n" \
+"                    </child>\n" \
 "                  </object>\n" \
 "                  <packing>\n" \
 "                    <property name=\"position\">5</property>\n" \

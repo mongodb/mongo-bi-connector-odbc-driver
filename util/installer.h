@@ -160,6 +160,8 @@ typedef struct {
   BOOL no_tls_1;
   BOOL no_tls_1_1;
   BOOL no_tls_1_2;
+
+  BOOL no_date_overflow;
 } DataSource;
 
 /* perhaps that is a good idea to have const ds object with defaults */

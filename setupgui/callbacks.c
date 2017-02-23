@@ -336,7 +336,6 @@ void syncTabsData(HWND hwnd, DataSource *params)
   GET_BOOL_TAB(CONNECTION_TAB, can_handle_exp_pwd);
   GET_BOOL_TAB(CONNECTION_TAB, enable_cleartext_plugin);
   GET_BOOL_TAB(CONNECTION_TAB, disable_ssl_default);
-  // GET_BOOL_TAB(CONNECTION_TAB, ssl_enforce);
 
   GET_COMBO_TAB(CONNECTION_TAB, charset);
   GET_STRING_TAB(CONNECTION_TAB, initstmt);
@@ -396,6 +395,7 @@ void syncTabsData(HWND hwnd, DataSource *params)
   GET_BOOL_TAB(MISC_TAB, min_date_to_zero);
   GET_BOOL_TAB(MISC_TAB, no_ssps);
   GET_BOOL_TAB(MISC_TAB, default_bigint_bind_str);
+  GET_BOOL_TAB(MISC_TAB, no_date_overflow);
 }
 
 /* 
@@ -413,7 +413,6 @@ void syncTabs(HWND hwnd, DataSource *params)
   SET_BOOL_TAB(CONNECTION_TAB, can_handle_exp_pwd);
   SET_BOOL_TAB(CONNECTION_TAB, enable_cleartext_plugin);
   SET_BOOL_TAB(CONNECTION_TAB, disable_ssl_default);
-  //SET_BOOL_TAB(CONNECTION_TAB, ssl_enforce);
 
 #ifdef _WIN32
   if ( getTabCtrlTabPages(CONNECTION_TAB-1))
@@ -498,6 +497,7 @@ void syncTabs(HWND hwnd, DataSource *params)
   SET_BOOL_TAB(MISC_TAB, min_date_to_zero);
   SET_BOOL_TAB(MISC_TAB, no_ssps);
   SET_BOOL_TAB(MISC_TAB, default_bigint_bind_str);
+  SET_BOOL_TAB(MISC_TAB, no_date_overflow);
 }
 
 void FillParameters(HWND hwnd, DataSource *params)

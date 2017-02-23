@@ -149,8 +149,6 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,27,113,10
     CONTROL         "Disable default SSL", IDC_CHECK_disable_ssl_default
                     "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 125, 42, 113, 10
-//    CONTROL         "Enforce SSL", IDC_CHECK_ssl_enforce
-//                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 125, 57, 113, 10
 
     RTEXT           "Plugin Directory:",IDC_STATIC,12,132,67,8
     EDITTEXT        IDC_EDIT_plugin_dir,90,132,97,12,ES_AUTOHSCROLL
@@ -265,6 +263,8 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,102,138,10
     CONTROL         "Bi&nd BIGINT parameters as strings",IDC_CHECK_default_bigint_bind_str,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,117,138,10
+    CONTROL         "Disable Date Overflow error", IDC_CHECK_no_date_overflow,
+                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 12, 132, 138, 10
 END
 
 #ifdef APSTUDIO_INVOKED

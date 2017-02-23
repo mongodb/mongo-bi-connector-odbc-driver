@@ -128,7 +128,7 @@
 #define IDC_EDIT_default_auth           10054
 #define IDC_CHOOSER_plugin_dir          10055
 #define IDC_CHECK_disable_ssl_default   10056
-#define IDC_CHECK_ssl_enforce           10057
+#define IDC_CHECK_no_date_overflow      10057
 #define IDC_CHECK_no_tls_1              10058
 #define IDC_CHECK_no_tls_1_1            10059
 #define IDC_CHECK_no_tls_1_2            10060

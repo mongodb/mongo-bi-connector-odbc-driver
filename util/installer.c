@@ -185,6 +185,8 @@ static SQLWCHAR W_NO_TLS_1_2[] =
 { 'N', 'O', '_', 'T', 'L', 'S', '_', '1', '_', '2', 0 };
 static SQLWCHAR W_SSLMODE[] =
 { 'S', 'S', 'L', 'M', 'O', 'D', 'E', 0 };
+static SQLWCHAR W_NO_DATE_OVERFLOW[] =
+{ 'N', 'O', '_', 'D', 'A', 'T', 'E', '_', 'O', 'V', 'E', 'R', 'F', 'L', 'O', 'W', 0 };
 
 /* DS_PARAM */
 /* externally used strings */
@@ -218,7 +220,7 @@ SQLWCHAR *dsnparams[]= {W_DSN, W_DRIVER, W_DESCRIPTION, W_SERVER,
                         W_SAVEFILE, W_RSAKEY, W_PLUGIN_DIR, W_DEFAULT_AUTH,
                         W_DISABLE_SSL_DEFAULT, W_SSL_ENFORCE,
                         W_NO_TLS_1, W_NO_TLS_1_1, W_NO_TLS_1_2,
-                        W_SSLMODE};
+                        W_SSLMODE, W_NO_DATE_OVERFLOW};
 static const
 int dsnparamcnt= sizeof(dsnparams) / sizeof(SQLWCHAR *);
 /* DS_PARAM */
@@ -884,6 +886,8 @@ void ds_map_param(DataSource *ds, const SQLWCHAR *param,
     *booldest = &ds->no_tls_1_1;
   else if (!sqlwcharcasecmp(W_NO_TLS_1_2, param))
     *booldest = &ds->no_tls_1_2;
+  else if (!sqlwcharcasecmp(W_NO_DATE_OVERFLOW, param))
+    *booldest = &ds->no_date_overflow;
 
   /* DS_PARAM */
 }
@@ -1377,6 +1381,7 @@ int ds_add(DataSource *ds)
   if (ds_add_intprop(ds->name, W_NO_TLS_1, ds->no_tls_1)) goto error;
   if (ds_add_intprop(ds->name, W_NO_TLS_1_1, ds->no_tls_1_1)) goto error;
   if (ds_add_intprop(ds->name, W_NO_TLS_1_2, ds->no_tls_1_2)) goto error;
+  if (ds_add_intprop(ds->name, W_NO_DATE_OVERFLOW, ds->no_date_overflow)) goto error;
   /* DS_PARAM */
 
   rc= 0;

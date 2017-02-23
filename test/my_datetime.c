@@ -1359,7 +1359,62 @@ DECLARE_TEST(t_17613161_bookmark)
 }
 
 
+/**
+ Bug #25386024: Error "Date Overflow"
+*/
+DECLARE_TEST(t_date_overflow)
+{
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL,
+           NULL, NULL, NULL, "NO_DATE_OVERFLOW=1"));
+
+  char *query_prep = "INSERT INTO t_date_overflow (a) VALUES (?)";
+  SQL_TIMESTAMP_STRUCT ts;
+
+  ts.day = 14;
+  ts.month = 2;
+  ts.year = 2017;
+  ts.hour = 16;
+  ts.minute = 11;
+  ts.second = 45;
+  ts.fraction = 0;
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_date_overflow");
+  ok_sql(hstmt, "CREATE TABLE t_date_overflow (a DATE)");
+
+  /* By default the INSERT should end with the error */
+  ok_stmt(hstmt, SQLPrepare(hstmt, query_prep, SQL_NTS));
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT, SQL_C_TIMESTAMP,
+                                  SQL_DATE, 0, 0, &ts, sizeof(ts), NULL));
+
+  expect_stmt(hstmt, SQLExecute(hstmt), SQL_ERROR);
+
+  /* Empty result is expected */
+  ok_sql(hstmt, "SELECT * FROM t_date_overflow");
+  is_num(my_print_non_format_result(hstmt), 0);
+
+  /* The INSERT with NO_DATE_OVERFLOW=1 should be successful */
+  ok_stmt(hstmt1, SQLPrepare(hstmt1, query_prep, SQL_NTS));
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT, SQL_C_TIMESTAMP,
+                                  SQL_DATE, 0, 0, &ts, sizeof(ts), NULL));
+
+  ok_stmt(hstmt1, SQLExecute(hstmt1));
+
+  /* One row is expected */
+  ok_sql(hstmt, "SELECT * FROM t_date_overflow");
+  is_num(my_print_non_format_result(hstmt), 1);
+
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_date_overflow");
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+
+  return OK;
+}
+
+
+
 BEGIN_TESTS
+  ADD_TEST(t_date_overflow)
   ADD_TEST(my_ts)
 #ifndef USE_IODBC
   ADD_TEST(t_tstotime)

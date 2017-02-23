@@ -2,6 +2,9 @@
 
   Security Notes:
   Functionality added or changed:
+  * Added a new connection option NO_DATE_OVERFLOW to control returning
+    of errors when the TIMESTAMP structure used for DATE column contains
+    non-zero time part (Bug# 25386024)
   Bugs fixed:
   * SQL_ATTR_MAX_ROWS applies to all result sets on the statement,
     and not connection (Bug# 17259397/69554)

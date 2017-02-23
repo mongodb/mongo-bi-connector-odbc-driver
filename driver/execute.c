@@ -934,7 +934,7 @@ SQLRETURN insert_param(STMT *stmt, uchar *place4param, DESC* apd,
               Not sure if fraction should be considered as an overflow.
               In fact specs say about "time fields only"
             */
-          if (TIME_FIELDS_NONZERO(ts))
+          if (!stmt->dbc->ds->no_date_overflow && TIME_FIELDS_NONZERO(ts))
           {
             return set_stmt_error(stmt, "22008", "Date overflow", 0);
           }
