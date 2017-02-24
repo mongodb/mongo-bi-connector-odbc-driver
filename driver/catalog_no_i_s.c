@@ -2415,40 +2415,66 @@ tables_no_i_s(SQLHSTMT hstmt,
     STMT *stmt= (STMT *)hstmt;
     my_bool all_dbs= 1, user_tables, views;
 
+    MYSQL_RES *catalog_res= NULL;
+    my_ulonglong row_count= 0;
+    MYSQL_ROW catalog_row;
+    unsigned long *lengths;    
+    unsigned long count= 0;
+    my_bool is_info_schema= 0;
+
+    /* 
+      empty (but non-NULL) schema and table returns catalog list 
+      If no_i_s then call 'show database' to list all catalogs (database).
+    */
+    if (catalog_len && ((!schema_len && schema && !table_len && table)
+        || (catalog && (!server_has_i_s(stmt->dbc) || 
+                        stmt->dbc->ds->no_information_schema))))
+    {
+      myodbc_mutex_lock(&stmt->dbc->lock);
+      {
+        char buff[32 + NAME_LEN], *to;
+        to= my_stpmov(buff, "SHOW DATABASES LIKE '");
+        to+= mysql_real_escape_string(&stmt->dbc->mysql, to,
+                                      (char *)catalog, catalog_len);
+        to= my_stpmov(to, "'");
+        MYLOG_QUERY(stmt, buff);
+        if (!mysql_query(&stmt->dbc->mysql, buff))
+          catalog_res= mysql_store_result(&stmt->dbc->mysql);
+      }
+      myodbc_mutex_unlock(&stmt->dbc->lock);
+
+      if (!catalog_res)
+      {
+        return handle_connection_error(stmt);
+      }
+
+    }
+    else
+    {
+      /* 
+        Set is_info_schema for determining mysql_table_status 
+        parameters later 
+      */
+      is_info_schema= 1;
+    }
+
     /* empty (but non-NULL) schema and table returns catalog list */
     if (catalog_len && !schema_len && schema && !table_len && table)
     {
-        myodbc_mutex_lock(&stmt->dbc->lock);
-        {
-          char buff[32 + NAME_LEN], *to;
-          to= my_stpmov(buff, "SHOW DATABASES LIKE '");
-          to+= mysql_real_escape_string(&stmt->dbc->mysql, to,
-                                        (char *)catalog, catalog_len);
-          to= my_stpmov(to, "'");
-          MYLOG_QUERY(stmt, buff);
-          if (!exec_stmt_query(stmt, buff, strlen(buff), FALSE))
-            stmt->result= mysql_store_result(&stmt->dbc->mysql);
-        }
-        myodbc_mutex_unlock(&stmt->dbc->lock);
-
-        if (!stmt->result)
-        {
-          return handle_connection_error(stmt);
-        }
-
-        stmt->order         = SQLTABLES_qualifier_order;
-        stmt->order_count   = array_elements(SQLTABLES_qualifier_order);
-        stmt->fix_fields    = fix_fields_copy;
-        stmt->array= (MYSQL_ROW) myodbc_memdup((char *)SQLTABLES_qualifier_values,
-                                           sizeof(SQLTABLES_qualifier_values),
-                                           MYF(0));
-        if (!stmt->array)
-        {
-          set_mem_error(&stmt->dbc->mysql);
-          return handle_connection_error(stmt);
-        }
-        myodbc_link_fields(stmt,SQLTABLES_fields,SQLTABLES_FIELDS);
-        return SQL_SUCCESS;
+      stmt->order         = SQLTABLES_qualifier_order;
+      stmt->order_count   = array_elements(SQLTABLES_qualifier_order);
+      stmt->fix_fields    = fix_fields_copy;
+      stmt->array= (MYSQL_ROW) myodbc_memdup((char *)SQLTABLES_qualifier_values,
+                                             sizeof(SQLTABLES_qualifier_values),
+                                             MYF(0));
+      stmt->result= catalog_res;
+      if (!stmt->array)
+      {
+        set_mem_error(&stmt->dbc->mysql);
+        return handle_connection_error(stmt);
+      }
+      myodbc_link_fields(stmt, SQLTABLES_fields, SQLTABLES_FIELDS);
+      return SQL_SUCCESS;
     }
 
     if (!catalog_len && catalog && schema_len && !table_len && table)
@@ -2497,111 +2523,165 @@ tables_no_i_s(SQLHSTMT hstmt,
     /* User Tables with type as 'TABLE' or 'VIEW' */
     if (user_tables || views)
     {
-      myodbc_mutex_lock(&stmt->dbc->lock);
-      stmt->result= table_status(stmt, catalog, catalog_len,
-                                 table, table_len, TRUE,
-                                 user_tables, views);
-
-      if (!stmt->result && mysql_errno(&stmt->dbc->mysql))
+       /*
+        If database result set (catalog_res) was produced loop  
+        through all database to fetch table list inside database
+      */
+      while (catalog_res && (catalog_row= mysql_fetch_row(catalog_res)) 
+             || is_info_schema)
       {
-        SQLRETURN rc;
-        /* unknown DB will return empty set from SQLTables */
-        switch (mysql_errno(&stmt->dbc->mysql))
+        myodbc_mutex_lock(&stmt->dbc->lock);
+
+        if (is_info_schema)
         {
-        case ER_BAD_DB_ERROR:
-          myodbc_mutex_unlock(&stmt->dbc->lock);
-          goto empty_set;
-        default:
-          rc= handle_connection_error(stmt);
-          myodbc_mutex_unlock(&stmt->dbc->lock);
-          return rc;
+          /* 
+            If i_s then all databases are fetched in single loop 
+            for SQL_ALL_CATALOGS (%) and catalog selection is handled 
+            inside mysql_table_status_i_s 
+          */
+          stmt->result= table_status(stmt, catalog, catalog_len,
+                                     table, table_len, TRUE,
+                                     user_tables, views);
         }
+        else
+        {
+          /* 
+            If no i_s then all databases, except information_schema as 
+						it contains SYSTEM VIEW table types, are fetched are sent to 
+            mysql_table_status_show to get result for SQL_ALL_CATALOGS 
+            (%) and catalog selection is handled in this function
+          */
+          if(myodbc_strcasecmp(catalog_row[0], "information_schema") == 0)
+          {
+            myodbc_mutex_unlock(&stmt->dbc->lock);
+            continue;
+          }
+
+          lengths= mysql_fetch_lengths(catalog_res);
+          stmt->result= table_status(stmt, catalog_row[0], lengths[0],
+                                     table, table_len, TRUE,
+                                     user_tables, views);
+        }
+
+        if (!stmt->result && mysql_errno(&stmt->dbc->mysql))
+        {
+          SQLRETURN rc;
+          /* unknown DB will return empty set from SQLTables */
+          switch (mysql_errno(&stmt->dbc->mysql))
+          {
+          case ER_BAD_DB_ERROR:
+            myodbc_mutex_unlock(&stmt->dbc->lock);
+            goto empty_set;
+          default:
+            rc= handle_connection_error(stmt);
+            myodbc_mutex_unlock(&stmt->dbc->lock);
+            return rc;
+          }
+        }
+        myodbc_mutex_unlock(&stmt->dbc->lock);
+
+        if (!stmt->result)
+          goto empty_set; ///////////////////////
+
+        /* assemble final result set */
+        {
+          MYSQL_ROW    data= 0, row;
+          char         *db= "";
+          row_count += stmt->result->row_count;
+
+          if (!row_count)
+          {
+            mysql_free_result(stmt->result);
+            is_info_schema= 0;
+            continue;
+          }
+
+          if (!(stmt->result_array=
+                (char **)myodbc_realloc((char *)stmt->result_array,
+                                       sizeof(char *) * 
+                                       SQLTABLES_FIELDS * row_count,
+                                       MYF(MY_ZEROFILL))))
+          {
+            set_mem_error(&stmt->dbc->mysql);
+            return handle_connection_error(stmt);
+          }
+
+          data= stmt->result_array;
+
+          if (!stmt->dbc->ds->no_catalog)
+          {
+            /* Set db to fetched database row from show database result set */
+            if (!is_info_schema && lengths[0])
+            {  
+              db= strmake_root(&stmt->result->field_alloc,
+                                catalog_row[0], lengths[0]);
+            }
+            else if (!catalog)
+            {
+              if (!reget_current_catalog(stmt->dbc))
+              {
+                const char *dbname= stmt->dbc->database ? stmt->dbc->database
+                                                        : "null";
+                db= strmake_root(&stmt->result->field_alloc,
+                                 dbname, strlen(dbname));
+              }
+              else
+              {
+                /* error was set in reget_current_catalog */
+                return SQL_ERROR;
+              }
+            }
+            else
+              db= strmake_root(&stmt->result->field_alloc,
+                               (char *)catalog, catalog_len);
+          }
+
+          while ((row= mysql_fetch_row(stmt->result)))
+          {
+            int cat_index= 3;
+            int type_index= 2;
+            int comment_index= 1;
+            my_bool view;
+
+            /* If if did not use I_S */
+            if (stmt->dbc->ds->no_information_schema
+              || !server_has_i_s(stmt->dbc))
+            {
+              type_index= comment_index= (stmt->result->field_count == 18) ? 17 : 15;
+              /* We do not have catalog in result */
+              cat_index= -1;
+            }
+
+            view= (myodbc_casecmp(row[type_index], "VIEW", 4) == 0);
+
+            if ((view && !views) || (!view && !user_tables))
+            {
+              --row_count;
+              continue;
+            }
+
+            data[0+count]= (cat_index >= 0 ?
+                    strdup_root(&stmt->result->field_alloc, row[cat_index]) :
+                    db);
+            data[1+count]= "";
+            data[2+count]= strdup_root(&stmt->result->field_alloc, row[0]);
+            data[3+count]= view ? "VIEW" : "TABLE";
+            data[4+count]= strdup_root(&stmt->result->field_alloc, row[comment_index]);
+            count+= SQLTABLES_FIELDS;
+          }
+        }
+        /* 
+          If i_s then loop only once to fetch database name,
+          as mysql_table_status_i_s handles SQL_ALL_CATALOGS (%) 
+          functionality and all databases with tables are returned 
+          in one result set and so no further loops are required.
+        */
+        is_info_schema= 0;
       }
-      myodbc_mutex_unlock(&stmt->dbc->lock);
-    }
-
-    if (!stmt->result)
-      goto empty_set;
-
-    /* assemble final result set */
-    {
-      MYSQL_ROW    data= 0, row;
-      char         *db= "";
-      my_ulonglong row_count= stmt->result->row_count;
 
       if (!row_count)
       {
-        mysql_free_result(stmt->result);
-        stmt->result= NULL;
         goto empty_set;
-      }
-
-      if (!(stmt->result_array=
-            (char **)myodbc_malloc((uint)(sizeof(char *) * SQLTABLES_FIELDS *
-                                      row_count),
-                               MYF(MY_ZEROFILL))))
-      {
-        set_mem_error(&stmt->dbc->mysql);
-        return handle_connection_error(stmt);
-      }
-
-      data= stmt->result_array;
-
-      if (!stmt->dbc->ds->no_catalog)
-      {
-        if (!catalog)
-        {
-          if (!reget_current_catalog(stmt->dbc))
-          {
-            const char *dbname= stmt->dbc->database ? stmt->dbc->database
-                                                    : "null";
-            db= strmake_root(&stmt->result->field_alloc,
-                             dbname, strlen(dbname));
-          }
-          else
-          {
-            /* error was set in reget_current_catalog */
-            return SQL_ERROR;
-          }
-        }
-        else
-          db= strmake_root(&stmt->result->field_alloc,
-                           (char *)catalog, catalog_len);
-      }
-
-      while ((row= mysql_fetch_row(stmt->result)))
-      {
-        int cat_index= 3;
-        int type_index= 2;
-        int comment_index= 1;
-        my_bool view;
-
-        /* If if did not use I_S */
-        if (stmt->dbc->ds->no_information_schema
-          || !server_has_i_s(stmt->dbc))
-        {
-          type_index= comment_index= (stmt->result->field_count == 18) ? 17 : 15;
-          /* We do not have catalog in result */
-          cat_index= -1;
-        }
-
-        view= (myodbc_casecmp(row[type_index], "VIEW", 4) == 0);
-
-        if ((view && !views) || (!view && !user_tables))
-        {
-          --row_count;
-          continue;
-        }
-
-        /*TODO solve no_i_s case for SQL_ALL_CATALOGS */
-        data[0]= (cat_index >= 0 ?
-                  strdup_root(&stmt->result->field_alloc, row[cat_index]) :
-                  db);
-        data[1]= "";
-        data[2]= strdup_root(&stmt->result->field_alloc, row[0]);
-        data[3]= view ? "VIEW" : "TABLE";
-        data[4]= strdup_root(&stmt->result->field_alloc, row[comment_index]);
-        data+= SQLTABLES_FIELDS;
       }
 
       set_row_count(stmt, row_count);

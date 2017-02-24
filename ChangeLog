@@ -8,6 +8,8 @@
   Bugs fixed:
   * SQL_ATTR_MAX_ROWS applies to all result sets on the statement,
     and not connection (Bug# 17259397/69554)
+  * SQLTABLES patch (Bug 13914518) has to be extended for NO_I_S case
+    (Bug# 14005343)
 
   Built using MySQL 5.7.
 

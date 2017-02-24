@@ -1077,7 +1077,6 @@ DECLARE_TEST(t_bug69448)
 DECLARE_TEST(t_bug69554)
 {
   int num_rows= 0;
-  SQLCHAR buff[255];
   SQLHSTMT hstmt1;
 
   ok_con(hdbc, SQLAllocStmt(hdbc, &hstmt1));
@@ -1147,7 +1146,123 @@ DECLARE_TEST(t_bug69554)
   return OK;
 }
 
+
+/**
+  Bug#14005343: SQLTABLES PATCH (BUG 13914518) HAS TO BE EXTENDED 
+  FOR NO_I_S CASE 
+  Verify database returned should not be '%' for SQL_ALL_CATALOGS input.
+  Also verify total tables in all databases in case of no information schema
+  and in case of information schema should match.
+*/
+DECLARE_TEST(t_bug_14005343)
+{
+  SQLCHAR    database[100];
+  SQLINTEGER nrows= 0;
+
+  /* Test for all catalogs (SQL_ALL_CATALOGS) with table type table and view */
+  ok_stmt(hstmt, SQLTables(hstmt, SQL_ALL_CATALOGS, 1, 0, 0, 0, 0, "TABLE,VIEW", SQL_NTS));
+  while (SQLFetch(hstmt) == SQL_SUCCESS)
+  {
+    ++nrows;
+    ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, database,
+                             sizeof(database), NULL));
+    /* the table catalog in the results must not be '%' */
+    is(database[0] != '%');
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "SELECT TABLE_NAME, TABLE_COMMENT, TABLE_TYPE, TABLE_SCHEMA "
+                " FROM (SELECT *  FROM INFORMATION_SCHEMA.TABLES )TABLES "
+  	      		  "	WHERE TABLE_TYPE='BASE TABLE' OR TABLE_TYPE='VIEW' ");
+  is_num(myrowcount(hstmt), nrows);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+
+  /* Test for all catalogs (%) with no table type */
+  nrows= 0;
+  ok_stmt(hstmt, SQLTables(hstmt, (SQLCHAR*) "%", SQL_NTS, NULL, 0, NULL, 0, NULL,0));
+  while (SQLFetch(hstmt) == SQL_SUCCESS)
+  {
+    ++nrows;
+    ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, database,
+                             sizeof(database), NULL));
+    /* the table catalog in the results must not be '%' */
+    is(database[0] != '%');
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "SELECT TABLE_NAME, TABLE_COMMENT, TABLE_TYPE, TABLE_SCHEMA "
+                " FROM (SELECT *  FROM INFORMATION_SCHEMA.TABLES ) TABLES "
+				        " WHERE TABLE_TYPE='BASE TABLE' OR TABLE_TYPE='VIEW' ");
+  is_num(myrowcount(hstmt), nrows);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* Test for no catalog (NULL) should return all tables in current database */
+  nrows= 0;
+	ok_stmt(hstmt, SQLTables(hstmt, NULL, 0, NULL, 0, NULL, 0, NULL,0));
+  while (SQLFetch(hstmt) == SQL_SUCCESS)
+  {
+    ++nrows;
+    ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, database,
+                             sizeof(database), NULL));
+    /* the table catalog in the results must not be '%' */
+    is(database[0] != '%');
+  }
+  
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "SELECT TABLE_NAME, TABLE_COMMENT, TABLE_TYPE, TABLE_SCHEMA "
+                " FROM (SELECT *  FROM INFORMATION_SCHEMA.TABLES ) TABLES "
+                " WHERE TABLE_SCHEMA = DATABASE() AND "
+ 				        " (TABLE_TYPE='BASE TABLE' OR TABLE_TYPE='VIEW')");
+  is_num(myrowcount(hstmt), nrows);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+
+  /* Test for all tables in test catalog */
+  nrows= 0;
+  ok_stmt(hstmt, SQLTables(hstmt, "test", SQL_NTS, NULL, 0, NULL, 0, NULL, 0));
+  while (SQLFetch(hstmt) == SQL_SUCCESS)
+  {
+    ++nrows;
+    ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, database,
+                             sizeof(database), NULL));
+    /* the table catalog in the results must not be '%' */
+    is(database[0] != '%');
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "SELECT TABLE_NAME, TABLE_COMMENT, TABLE_TYPE, TABLE_SCHEMA "
+                " FROM (SELECT *  FROM INFORMATION_SCHEMA.TABLES ) TABLES "
+                " WHERE TABLE_SCHEMA = 'test' AND (TABLE_TYPE='BASE TABLE' "
+                " OR TABLE_TYPE='VIEW')");
+  is_num(myrowcount(hstmt), nrows);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  /* Test for all catalogs (SQL_ALL_CATALOGS) with table type table */
+  nrows= 0;
+  ok_stmt(hstmt, SQLTables(hstmt, SQL_ALL_CATALOGS, 1, 0, 0, 0, 0, "TABLE", SQL_NTS));
+  while (SQLFetch(hstmt) == SQL_SUCCESS)
+  {
+    ++nrows;
+    ok_stmt(hstmt, SQLGetData(hstmt, 1, SQL_C_CHAR, database,
+                             sizeof(database), NULL));
+    /* the table catalog in the results must not be '%' */
+    is(database[0] != '%');
+  }
+
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+  ok_sql(hstmt, "SELECT TABLE_NAME, TABLE_COMMENT, TABLE_TYPE, TABLE_SCHEMA "
+                " FROM (SELECT *  FROM INFORMATION_SCHEMA.TABLES ) TABLES "
+                " WHERE TABLE_TYPE='BASE TABLE' ");
+  is_num(myrowcount(hstmt), nrows);
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_CLOSE));
+
+  return OK;
+}
+
+
 BEGIN_TESTS
+  ADD_TEST(t_bug_14005343)
   ADD_TEST(t_bug69554)
   ADD_TEST(t_bug37621)
   ADD_TEST(t_bug34272)

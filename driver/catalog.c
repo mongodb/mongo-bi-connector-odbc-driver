@@ -156,9 +156,9 @@ static MYSQL_RES *table_status_i_s(STMT        *stmt,
   char buff[255+4*NAME_CHAR_LEN], *to;
   my_bool clause_added= FALSE;
 
-  to= my_stpmov(buff, "SELECT TABLE_NAME, TABLE_COMMENT, TABLE_TYPE, TABLE_SCHEMA \
-                    FROM INFORMATION_SCHEMA.TABLES \
-                    WHERE ");
+  to= my_stpmov(buff, "SELECT TABLE_NAME, TABLE_COMMENT, TABLE_TYPE, TABLE_SCHEMA " \
+                      "FROM ( SELECT * FROM INFORMATION_SCHEMA.TABLES  " \
+                      "WHERE ");
 
   if (catalog_name && *catalog_name)
   {
@@ -192,6 +192,7 @@ static MYSQL_RES *table_status_i_s(STMT        *stmt,
     if (show_tables)
       to= my_stpmov(to, ") ");
   }
+  to = my_stpmov(to, ") TABLES ");
 
   /*
     As a pattern-value argument, an empty string needs to be treated
@@ -203,7 +204,7 @@ static MYSQL_RES *table_status_i_s(STMT        *stmt,
 
   if (table_name && *table_name)
   {
-    to= my_stpmov(to, "AND TABLE_NAME LIKE '");
+    to= my_stpmov(to, "WHERE TABLE_NAME LIKE '");
     if (wildcard)
     {
       to+= mysql_real_escape_string(mysql, to, (char *)table_name, table_len);
