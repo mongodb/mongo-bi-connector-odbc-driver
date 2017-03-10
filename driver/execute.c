@@ -49,6 +49,11 @@ SQLRETURN do_query(STMT *stmt,char *query, SQLULEN query_length)
     if(!SQL_SUCCEEDED(set_sql_select_limit(stmt->dbc,
                       stmt->stmt_options.max_rows, TRUE)))
     {
+      /* The error is set for DBC, copy it into STMT */
+      set_stmt_error(stmt, stmt->dbc->error.sqlstate,
+                     stmt->dbc->error.message,
+                     stmt->dbc->error.native_error);
+
       /* if setting sql_select_limit fails, the query will probably fail anyway too */
       goto skip_unlock_exit;
     }

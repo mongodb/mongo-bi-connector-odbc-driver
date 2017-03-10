@@ -10,6 +10,8 @@
     and not connection (Bug# 17259397/69554)
   * SQLTABLES patch (Bug 13914518) has to be extended for NO_I_S case
     (Bug# 14005343)
+  * Connector/ODBC does not send correct error message when 2006 error occurs
+    (Bug #25671389)
 
   Built using MySQL 5.7.
 

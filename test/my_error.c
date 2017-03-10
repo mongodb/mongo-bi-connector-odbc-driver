@@ -769,6 +769,50 @@ DECLARE_TEST(t_bug11750296)
 }
 
 
+DECLARE_TEST(t_bug25671389)
+{
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+
+  SQLINTEGER connection_id;
+  SQLCHAR buf[255];
+  SQLHSTMT hstmt2;
+
+  SQLRETURN rc = SQL_ERROR;
+  SQLCHAR sqlState[6] = { '\0' };
+  SQLCHAR eMsg[SQL_MAX_MESSAGE_LENGTH] = { '\0' };
+  SQLINTEGER nError = 0;
+  SQLSMALLINT msgLen = 0;
+
+  is(OK == alloc_basic_handles(&henv1, &hdbc1, &hstmt1));
+  /* The bug is repeatable when limit is set and two STMTs exist */
+  ok_con(hdbc1, SQLAllocHandle(SQL_HANDLE_STMT, hdbc1, &hstmt2));
+  ok_stmt(hstmt2, SQLSetStmtAttr(hstmt2, SQL_ATTR_MAX_ROWS, (SQLPOINTER)100, 0));
+
+  ok_sql(hstmt1, "SELECT connection_id()");
+  ok_stmt(hstmt1, SQLFetch(hstmt1));
+  connection_id = my_fetch_int(hstmt1, 1);
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+  /* From another connection, kill the connection created above */
+  sprintf(buf, "KILL %d", connection_id);
+  ok_stmt(hstmt, SQLExecDirect(hstmt, (SQLCHAR *)buf, SQL_NTS));
+
+  /* Now check that the connection killed returns the right SQLSTATE */
+  expect_sql(hstmt2, "SELECT connection_id()", SQL_ERROR);
+  
+  rc = SQLGetDiagRec(SQL_HANDLE_STMT, hstmt2, 1, sqlState, &nError, eMsg, sizeof(eMsg), &msgLen);
+  /* Check that the error has been properly reported */
+  is(rc == SQL_SUCCESS);
+  is(nError > 0);
+  is(strlen(sqlState) > 0);
+  is(strlen(eMsg) > 0);
+  is(msgLen > 0);
+
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+  return OK;
+}
+
+
 BEGIN_TESTS
 #ifndef NO_DRIVERMANAGER
 #ifndef USE_IODBC
@@ -785,6 +829,7 @@ BEGIN_TESTS
   ADD_TEST(t_warning)
   ADD_TEST(t_bug3456)
   ADD_TEST(t_bug16224)
+  ADD_TEST(t_bug25671389)
 #ifndef USE_IODBC
   ADD_TEST(bind_invalidcol)
   ADD_TEST(t_handle_err)
