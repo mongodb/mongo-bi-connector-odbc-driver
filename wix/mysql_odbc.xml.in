@@ -113,7 +113,7 @@
     -->
 
     <?if $(var.odbc_64bit) = 1 ?>
-    <Feature Id="ODBC" Title="MySQL Connector/ODBC $(var.odbc_ver_long) 64-bit drivers" Level="1" Description="Installs the MySQL ODBC $(var.odbc_ver_long) $(var.odbc_driver_type) 64-bit Unicode and ANSI drivers."  ConfigurableDirectory="INSTALLDIR">
+    <Feature Id="ODBC" Title="MySQL Connector/ODBC $(var.odbc_ver_long) 64-bit drivers" Level="1" Description="Installs the MySQL ODBC $(var.odbc_ver_long) 64-bit Unicode and ANSI drivers."  ConfigurableDirectory="INSTALLDIR">
     <?else ?>
     <Feature Id="ODBC" Title="MySQL Connector/ODBC $(var.odbc_ver_long) 32-bit drivers" Level="1" Description="Installs the MySQL ODBC $(var.odbc_ver_long) 32-bit Unicode and ANSI drivers."  ConfigurableDirectory="INSTALLDIR">
     <?endif ?>

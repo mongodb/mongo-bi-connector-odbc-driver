@@ -12,6 +12,8 @@
     (Bug# 14005343)
   * Connector/ODBC does not send correct error message when 2006 error occurs
     (Bug #25671389)
+  * Error in Windows Setup Wizard Custom Setup Dialog
+    (Bug# 25247807/84190)
 
   Built using MySQL 5.7.
 
