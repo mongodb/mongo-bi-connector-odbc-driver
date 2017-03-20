@@ -11,6 +11,14 @@ on MS Windows. Please read INSTALL if you have not done so already.
 
 DISTRIBUTIONS
 ---------------------------------------------------------------
+Each distribution contains the following dynamic libraries:
+
+- libmyodbc5a.dll: the ANSI version of Connector/ODBC
+- libmyodbc5w.dll: the Unicode version of Connector/ODBC
+- libmyodbc5s.dll the GUI module for creating a DSN with a dialogue
+
+Each distribution also includes a utility named myodbc-installer for 
+registering Connector/ODBC and creating DSNs. 
 
 The following distributions are available for MS Windows;
 

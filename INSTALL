@@ -21,7 +21,6 @@ Platforms
                 * Solaris 10 or newer
                 * OSX 10.5 or newer
                 * Linux (various flavors)
-                * HPUX 11.31 or newer
                 * Free BSD 7 or newer
         
         Source Distributions
@@ -39,7 +38,6 @@ ODBC Systems
         by default).
 
                 * unixODBC
-                * Apple iODBC
                 * iODBC
                 * Microsoft ODBC
 
@@ -61,7 +59,7 @@ Binary With Installer
         
         MS Windows      - msi or setup.exe
         Solaris         - pkg
-        OSX             - pkg
+        OSX             - dmg
         Linux           - rpm
 
         See INSTALL.<platform> for details on how to install
@@ -101,10 +99,10 @@ Source Without Installer
 
 Source Repository
 
-        The bazaar source repository is keept on Launchpad and can be
-        accessed using name lp:myodbc. For example:
+        The git source repository is keept on GitHub and can be
+        accessed using the following command:
         
-        $ bzr branch lp:myodbc myodbc-source-tree
+        $ git clone https://github.com/mysql/mysql-connector-odbc.git <local_dir>
 
 INSTALLING
 ---------------------------------------------------------------

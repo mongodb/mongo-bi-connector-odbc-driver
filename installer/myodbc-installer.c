@@ -1,5 +1,5 @@
 /*
-  Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -63,11 +63,21 @@ const char usage[] =
 "|    supported by Connector/ODBC, including MS Windows and             \n"
 "|    various Unix-like systems.                                        \n"
 "|                                                                      \n"
+#ifndef _WIN32
+#ifdef USE_IODBC
 "|    The program requires that unixODBC version 2.2.14 or newer        \n"
 "|    has already been installed on the system.                         \n"
 "|    UnixODBC can be downloaded from here:                             \n"
 "|    http://www.unixodbc.org/                                          \n"
 "|                                                                      \n"
+#else
+"|    The program requires that iODBC version 3.52.12 or newer          \n"
+"|    has already been installed on the system.                         \n"
+"|    iODBC can be downloaded from here:                                \n"
+"|    http://www.iodbc.org/                                             \n"
+"|                                                                      \n"
+#endif
+#endif
 "| Syntax                                                               \n"
 "|                                                                      \n"
 "|    myodbc-installer <Object> <Action> [Options]                      \n"

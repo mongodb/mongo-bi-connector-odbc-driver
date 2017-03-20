@@ -57,13 +57,13 @@ platforms.
 Source Code
 -----------
 
-You can get the source code from the bzr source repository (for
+You can get the source code from the git source repository (for
 'bleeding edge' code) or more commonly, simply download the zip
 or tarball of the source.
 
 Source:
-  bzr branch lp:myodbc
-  https://code.launchpad.net/~myodbc-developers
+  git clone https://github.com/mysql/mysql-connector-odbc.git <local_dir>
+  https://github.com/mysql/mysql-connector-odbc
 
 Downloads:
   http://dev.mysql.com/downloads/connector/odbc/
