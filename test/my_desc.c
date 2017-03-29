@@ -614,6 +614,21 @@ DECLARE_TEST(t_desc_curcatalog)
 }
 
 
+/*
+  Bug #18636600 - SQLGetData with invalid column number crashes
+*/
+DECLARE_TEST(t_bug18636600)
+{
+  char buf[255];
+  ok_stmt(hstmt, SQLSetStmtAttr(hstmt, SQL_ATTR_USE_BOOKMARKS, (SQLPOINTER)SQL_UB_VARIABLE, 0));
+  ok_sql(hstmt, "select 1");
+  ok_stmt(hstmt, SQLFetch(hstmt));
+  expect_stmt(hstmt, SQLGetData(hstmt, -1, SQL_C_VARBOOKMARK, buf, sizeof(buf), NULL),
+              SQL_ERROR);
+  return OK;
+}
+
+
 DECLARE_TEST(dummy_test)
 {
   return OK;
@@ -633,6 +648,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug41081)
   ADD_TEST(t_bug44576)
 #endif
+  ADD_TEST(t_bug18636600)
   // ADD_TODO(t_desc_curcatalog) TODO: Fix
   ADD_TEST(dummy_test)
 END_TESTS

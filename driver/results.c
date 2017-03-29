@@ -1435,7 +1435,7 @@ SQLRETURN SQL_API SQLGetData(SQLHSTMT      StatementHandle,
 
     if ((sColNum < 1 
          && stmt->stmt_options.bookmarks == (SQLUINTEGER) SQL_UB_OFF) 
-        || sColNum > stmt->ird->count )
+        || ColumnNumber > stmt->ird->count )
     {
       return set_stmt_error(stmt, "07009", "Invalid descriptor index", MYERR_07009);
     }

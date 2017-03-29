@@ -16,8 +16,10 @@
     (Bug# 25247807/84190)
   * Contents in embedded help for myodbc-installer are outdated
     (Bug# 18896110/72852)
+  * SQLGetData() with invalid column number crashes
+    (Bug# 18636600)
 
-  Built using MySQL 5.7.
+  Built using MySQL 5.7.18
 
 ----
 
