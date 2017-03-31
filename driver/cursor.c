@@ -746,7 +746,11 @@ static SQLRETURN build_set_clause(STMT *stmt, SQLULEN irow,
         field= mysql_fetch_field_direct(result,ncol);
         arrec= desc_get_rec(stmt->ard, ncol, FALSE);
         irrec= desc_get_rec(stmt->ird, ncol, FALSE);
-        assert(irrec);
+        
+        if (!irrec)
+        {
+          return SQL_ERROR; // The error info is already set inside desc_get_rec()
+        }
         assert(irrec->row.field);
 
         if (stmt->setpos_apd)

@@ -189,7 +189,7 @@ typedef enum { DESC_HDR, DESC_REC } fld_loc;
 #define SQL_IS_LEN (-10)
 
 /* check if ARD record is a bound column */
-#define ARD_IS_BOUND(d) ((d)->data_ptr || (d)->octet_length_ptr)
+#define ARD_IS_BOUND(d) (d)&&((d)->data_ptr || (d)->octet_length_ptr)
 
 /* get the dbc from a descriptor */
 #define DESC_GET_DBC(X) (((X)->alloc_type == SQL_DESC_ALLOC_USER) ? \

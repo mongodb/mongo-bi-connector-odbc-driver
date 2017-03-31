@@ -244,6 +244,11 @@ DESCREC *desc_get_rec(DESC *desc, int recnum, my_bool expand)
 
     rec= (DESCREC *)desc->bookmark.buffer;
   }
+  else if (recnum < 0)
+  {
+    set_stmt_error(desc->stmt, "07009", "Invalid descriptor index", MYERR_07009);
+    return NULL;
+  }
   else
   {
     assert(recnum >= 0);

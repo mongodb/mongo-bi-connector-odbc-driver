@@ -1071,7 +1071,10 @@ MySQLDescribeCol(SQLHSTMT hstmt, SQLUSMALLINT column,
   }
 
   irrec= desc_get_rec(stmt->ird, column - 1, FALSE);
-  assert(irrec);
+  if (!irrec)
+  {
+    return SQL_ERROR; // The error info is already set inside desc_get_rec()
+  }
 
   if (type)
     *type= irrec->concise_type;
@@ -1171,7 +1174,10 @@ MySQLColAttribute(SQLHSTMT hstmt, SQLUSMALLINT column,
   }
 
   irrec= desc_get_rec(stmt->ird, column - 1, FALSE);
-  assert(irrec);
+  if (!irrec)
+  {
+    return SQL_ERROR; // The error info is already set inside desc_get_rec()
+  }
 
   /*
      Map to descriptor fields. This approach is only valid
@@ -2622,6 +2628,10 @@ SQLRETURN SQL_API SQLFetchScroll( SQLHSTMT      StatementHandle,
       DESCREC *arrec;
       IS_BOOKMARK_VARIABLE(stmt);
       arrec= desc_get_rec(stmt->ard, -1, FALSE);
+      if (!arrec)
+      {
+        return SQL_ERROR; // The error info is already set inside desc_get_rec()
+      }
 
       FetchOffset += get_bookmark_value(arrec->concise_type, 
                        stmt->stmt_options.bookmark_ptr);

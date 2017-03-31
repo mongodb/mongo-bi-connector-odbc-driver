@@ -1853,7 +1853,10 @@ SQLRETURN SQL_API SQLPutData( SQLHSTMT      hstmt,
     aprec= desc_get_rec(stmt->setpos_apd, stmt->current_param - 1, FALSE);
   }
 
-  assert(aprec);
+  if (!aprec)
+  {
+    return SQL_ERROR; // The error info is already set inside desc_get_rec()
+  }
 
   if ( cbValue == SQL_NTS )
   {

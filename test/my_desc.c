@@ -629,6 +629,23 @@ DECLARE_TEST(t_bug18636600)
 }
 
 
+/*
+Bug #18641633 - Assert failure in SQLSetDescField() API
+*/
+DECLARE_TEST(t_bug18641633)
+{
+  char buf[255];
+  SQLHANDLE ard = NULL;
+  ok_stmt(hstmt, SQLGetStmtAttr(hstmt, SQL_ATTR_APP_ROW_DESC,
+    &ard, SQL_IS_POINTER, NULL));
+  ok_sql(hstmt, "select 1");
+  ok_stmt(hstmt, SQLBindCol(hstmt, 1, SQL_C_CHAR, buf, sizeof(buf), NULL));
+  /* Result does not matter, it should not crash */
+  SQLSetDescField(ard, 1, SQL_DESC_COUNT, (SQLPOINTER)0, SQL_IS_SMALLINT);
+  return OK;
+}
+
+
 DECLARE_TEST(dummy_test)
 {
   return OK;
@@ -648,6 +665,7 @@ BEGIN_TESTS
   ADD_TEST(t_bug41081)
   ADD_TEST(t_bug44576)
 #endif
+  ADD_TEST(t_bug18641633)
   ADD_TEST(t_bug18636600)
   // ADD_TODO(t_desc_curcatalog) TODO: Fix
   ADD_TEST(dummy_test)

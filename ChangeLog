@@ -18,6 +18,7 @@
     (Bug# 18896110/72852)
   * SQLGetData() with invalid column number crashes
     (Bug# 18636600)
+  * Assert failure in SQLSetDescField() API (Bug# 18641633)
 
   Built using MySQL 5.7.18
 
