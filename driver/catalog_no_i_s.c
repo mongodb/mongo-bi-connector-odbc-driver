@@ -107,7 +107,7 @@ static MYSQL_RES *server_list_dbkeys(STMT *stmt,
 {
     DBC   *dbc = stmt->dbc;
     MYSQL *mysql= &dbc->mysql;
-    char  buff[255], *to;
+    char  buff[255 + 4 * NAME_LEN], *to;
 
     to= my_stpmov(buff, "SHOW KEYS FROM `");
     if (catalog_len)
@@ -190,7 +190,7 @@ server_list_dbcolumns(STMT *stmt,
   DBC *dbc= stmt->dbc;
   MYSQL *mysql= &dbc->mysql;
   MYSQL_RES *result;
-  char buff[NAME_LEN], column_buff[NAME_LEN];
+  char buff[NAME_LEN * 2 + 64], column_buff[NAME_LEN * 2 + 64];
 
   /* If a catalog was specified, we have to change working catalog
      to be able to use mysql_list_fields. */
@@ -682,7 +682,7 @@ static MYSQL_RES *column_privs_raw_data(STMT *      stmt,
   DBC   *dbc = stmt->dbc;
   MYSQL *mysql = &dbc->mysql;
 
-  char buff[255+3*NAME_LEN+1], *pos;
+  char buff[400+6*NAME_LEN+1], *pos;
 
   pos= my_stpmov(buff,
     "SELECT c.Db, c.User, c.Table_name, c.Column_name,"
@@ -2432,7 +2432,7 @@ tables_no_i_s(SQLHSTMT hstmt,
     {
       myodbc_mutex_lock(&stmt->dbc->lock);
       {
-        char buff[32 + NAME_LEN], *to;
+        char buff[32 + NAME_LEN * 2], *to;
         to= my_stpmov(buff, "SHOW DATABASES LIKE '");
         to+= mysql_real_escape_string(&stmt->dbc->mysql, to,
                                       (char *)catalog, catalog_len);
@@ -2558,8 +2558,8 @@ tables_no_i_s(SQLHSTMT hstmt,
           }
 
           lengths= mysql_fetch_lengths(catalog_res);
-          stmt->result= table_status(stmt, catalog_row[0], lengths[0],
-                                     table, table_len, TRUE,
+          stmt->result= table_status(stmt, catalog_row[0], (SQLSMALLINT)lengths[0],
+                                     table, (SQLSMALLINT)table_len, TRUE,
                                      user_tables, views);
         }
 

@@ -153,7 +153,7 @@ static MYSQL_RES *table_status_i_s(STMT        *stmt,
 {
   MYSQL *mysql= &stmt->dbc->mysql;
   /** the buffer size should count possible escapes */
-  char buff[255+4*NAME_CHAR_LEN], *to;
+  char buff[300+8*NAME_CHAR_LEN], *to;
   my_bool clause_added= FALSE;
 
   to= my_stpmov(buff, "SELECT TABLE_NAME, TABLE_COMMENT, TABLE_TYPE, TABLE_SCHEMA " \
@@ -560,7 +560,7 @@ SQLRETURN list_table_priv_i_s(SQLHSTMT    hstmt,
 {
   STMT *stmt=(STMT *) hstmt;
   MYSQL *mysql= &stmt->dbc->mysql;
-  char   buff[255+4*NAME_LEN+1], *pos;
+  char   buff[300+6*NAME_LEN+1], *pos;
   SQLRETURN rc;
 
   /* Db,User,Table_name,"NULL" as Grantor,Table_priv*/
@@ -641,7 +641,7 @@ static SQLRETURN list_column_priv_i_s(HSTMT *     hstmt,
   STMT *stmt=(STMT *) hstmt;
   MYSQL *mysql= &stmt->dbc->mysql;
   /* 3 names theorethically can have all their characters escaped - thus 6*NAME_LEN  */
-  char   buff[351+6*NAME_LEN+1], *pos;
+  char   buff[400+6*NAME_LEN+1], *pos;
   SQLRETURN rc;
 
   /* Db,User,Table_name,"NULL" as Grantor,Table_priv*/
@@ -848,7 +848,7 @@ SQLRETURN foreign_keys_i_s(SQLHSTMT hstmt,
 {
   STMT *stmt=(STMT *) hstmt;
   MYSQL *mysql= &stmt->dbc->mysql;
-  char query[2048], *buff; /* This should be big enough. */
+  char query[3062], *buff; /* This should be big enough. */
   char *update_rule, *delete_rule, *ref_constraints_join;
   SQLRETURN rc;
 

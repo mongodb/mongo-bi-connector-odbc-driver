@@ -398,7 +398,7 @@ DECLARE_TEST(t_bookmark_update_zero_rec)
   SQLLEN len= 0;
   SQLUSMALLINT rowStatus[4];
   SQLUINTEGER numRowsFetched;
-  SQLINTEGER nData[4], i;
+  SQLINTEGER nData[4];
   SQLCHAR szData[4][16];
   SQLCHAR bData[4][10];
   SQLLEN nRowCount;
@@ -480,7 +480,6 @@ DECLARE_TEST(t_bug18325878)
 #undef RCNT
 #endif
 #define RCNT 8
-  SQLRETURN rc;
   char TmpBuff[1024] = {0};
   SQLUINTEGER j = 0;
   SQLUINTEGER k = 0;
@@ -587,7 +586,7 @@ DECLARE_TEST(t_bug18286366)
 DECLARE_TEST(t_bug18286366_2)
 {
   DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
-  SQLCHAR buff[8192], tmp_buff[100];
+  SQLCHAR buff[8192];
   int i, len= 0;
 
   is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL, NULL, 
@@ -769,6 +768,70 @@ DECLARE_TEST(t_setpos_update_no_ssps)
 }
 
 
+
+/*
+  Bug #18796005: Metadata functions crash when the catalog/table/column
+                 name is long
+*/
+DECLARE_TEST(t_bug18796005)
+{
+#ifdef NAME_LEN
+#undef NAME_LEN
+#endif
+#define NAME_LEN 192
+
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+  SQLHSTMT *stmt;
+  int i = 0;
+  char buff[1024] = { 0 };
+  memset(buff, 0, sizeof(buff));
+  memset(buff, '\\', NAME_LEN);
+
+  /* Connect with SSPS enabled */
+  alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1, NULL, NULL, NULL,
+                               NULL, "NO_SSPS=1");
+
+  for (i = 0; i < 2; ++i)
+  {
+    stmt = i ? hstmt1 : hstmt;
+    /* Doon't mind the result, it should not crash */
+    SQLColumnPrivileges(stmt, (SQLCHAR*)buff, SQL_NTS, (SQLCHAR*)buff, SQL_NTS,
+                        (SQLCHAR*)buff, SQL_NTS, (SQLCHAR*)buff, SQL_NTS);
+    ok_stmt(stmt, SQLFreeStmt(stmt, SQL_CLOSE));
+
+    SQLColumns(stmt, (SQLCHAR*)buff, SQL_NTS, (SQLCHAR*)buff, SQL_NTS,
+               (SQLCHAR*)buff, SQL_NTS, (SQLCHAR*)buff, SQL_NTS);
+    ok_stmt(stmt, SQLFreeStmt(stmt, SQL_CLOSE));
+
+    SQLTablePrivileges(stmt, (SQLCHAR*)buff, SQL_NTS, (SQLCHAR*)buff,
+                       SQL_NTS, (SQLCHAR*)buff, SQL_NTS);
+    ok_stmt(stmt, SQLFreeStmt(stmt, SQL_CLOSE));
+
+    SQLTables(stmt, (SQLCHAR*)buff, SQL_NTS, (SQLCHAR*)buff, SQL_NTS,
+              (SQLCHAR*)buff, SQL_NTS, (SQLCHAR*)"VIEW,TABLE,", SQL_NTS);
+    ok_stmt(stmt, SQLFreeStmt(stmt, SQL_CLOSE));
+
+    SQLProcedures(stmt, (SQLCHAR*)buff, SQL_NTS, (SQLCHAR*)buff, SQL_NTS,
+              (SQLCHAR*)buff, SQL_NTS);
+    ok_stmt(stmt, SQLFreeStmt(stmt, SQL_CLOSE));
+    SQLProcedureColumns(stmt, (SQLCHAR*)buff, SQL_NTS, (SQLCHAR*)buff, SQL_NTS,
+                        (SQLCHAR*)buff, SQL_NTS, (SQLCHAR*)buff, SQL_NTS);
+    ok_stmt(stmt, SQLFreeStmt(stmt, SQL_CLOSE));
+
+    SQLForeignKeys(stmt, (SQLCHAR*)buff, SQL_NTS, (SQLCHAR*)buff, SQL_NTS,
+                          (SQLCHAR*)buff, SQL_NTS, (SQLCHAR*)buff, SQL_NTS,
+                          (SQLCHAR*)buff, SQL_NTS, (SQLCHAR*)buff, SQL_NTS);
+    ok_stmt(stmt, SQLFreeStmt(stmt, SQL_CLOSE));
+
+    SQLPrimaryKeys(stmt, (SQLCHAR*)buff, SQL_NTS, (SQLCHAR*)buff, SQL_NTS,
+                          (SQLCHAR*)buff, SQL_NTS);
+    ok_stmt(stmt, SQLFreeStmt(stmt, SQL_CLOSE));
+  }
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+  return OK;
+}
+
+
 BEGIN_TESTS
   ADD_TEST(t_bug69950)
   ADD_TEST(t_bug70642)
@@ -789,6 +852,7 @@ BEGIN_TESTS
   // ADD_TEST(t_bug18286366)  TODO: Fix
   // ADD_TEST(t_bug18286366_2)  TODO: Fix
   // ADD_TEST(t_setpos_update_no_ssps) TODO: Fix
+  ADD_TEST(t_bug18796005)
 END_TESTS
 
 RUN_TESTS
