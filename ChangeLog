@@ -1,6 +1,11 @@
 5.3.8
 
   Security Notes:
+  * Connector/ODBC 5.3.8 Commercial upgrades the linked OpenSSL
+    library to version 1.0.2k which has been publicly reported
+    as not vulnerable to CVE-2017-3732
+    (http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-3732)
+    (Bug #25615448, CVE-2017-3732)
   Functionality added or changed:
   * Added a new connection option NO_DATE_OVERFLOW to control returning
     of errors when the TIMESTAMP structure used for DATE column contains
@@ -21,6 +26,8 @@
   * Assert failure in SQLSetDescField() API (Bug# 18641633)
   * Metadata functions crash when the catalog/table/column name is long
     (Bug #18796005)
+  * Prefetch causes syntax errors in select queries with parameters
+    (Bug# 17386788)
 
   Built using MySQL 5.7.18
 
@@ -50,8 +57,6 @@
   * Assertion in ODBC Driver when calling mysql_stmt_close() on a broken
     connection (Bug# 25109356/83858)
   * Connector ODBC does not build with newer CMake (Bug# 22746557)
-  * Prefetch causes syntax errors in select queries with parameters
-    (Bug# 17386788)
 
   Built using MySQL 5.7.17.
  
