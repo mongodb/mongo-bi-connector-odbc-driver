@@ -263,12 +263,13 @@ DECLARE_TEST(sqldriverconnect)
   ok_stmt(hstmt1, SQLExecDirectW(hstmt1, W(L"SELECT 1234"), SQL_NTS));
   ok_stmt(hstmt1, SQLFetch(hstmt1));
   is_num(my_fetch_int(hstmt1, 1), 1234);
-
-  ok_stmt(hstmt, SQLFreeStmt(hstmt1, SQL_DROP));
-
+  printMessage("\nPrepare to Free STMT");
+  ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+  printMessage("\nDONE\nPrepare to Disconnect");
   ok_con(hdbc1, SQLDisconnect(hdbc1));
+  printMessage("\nDONE\nPrepare to Free Connect");
   ok_con(hdbc1, SQLFreeConnect(hdbc1));
-
+  printMessage("\nDONE\n");
   return OK;
 }
 

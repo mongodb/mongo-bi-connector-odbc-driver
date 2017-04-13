@@ -227,13 +227,13 @@ DWORD WINAPI win32_alarm(LPVOID arg)
 #define ENABLE_ALARMS    int do_alarms= !getenv("DISABLE_TIMEOUT")
 #define RUN_TESTS_SIGNAL halarm= CreateEvent(NULL, FALSE, FALSE, NULL); \
                          if (do_alarms) \
-                           CreateThread(NULL, 0, win32_alarm, (LPVOID) 900, 0, NULL); \
+                           CreateThread(NULL, 0, win32_alarm, (LPVOID) 1200, 0, NULL); \
                          do_alarms= 0
 #define RUN_TESTS_ALARM (void) SetEvent(halarm)
 #else
 #define ENABLE_ALARMS    int do_alarms= !getenv("DISABLE_TIMEOUT")
 #define RUN_TESTS_SIGNAL (void)signal(SIGALRM, test_timeout)
-#define RUN_TESTS_ALARM  if (do_alarms) alarm(900)
+#define RUN_TESTS_ALARM  if (do_alarms) alarm(1200)
 #endif
 
 void mem_debug_init()
@@ -300,6 +300,8 @@ int main(int argc, char **argv) \
     mypwd=  (SQLCHAR *)getenv("TEST_PASSWORD"); \
   if (getenv("TEST_SOCKET")) \
     mysock= (SQLCHAR *)getenv("TEST_SOCKET"); \
+  if (getenv("TEST_SERVER")) \
+    myserver= (SQLCHAR *)getenv("TEST_SERVER"); \
   if (getenv("TEST_PORT")) \
     myport= atoi(getenv("TEST_PORT")); \
   if (getenv("TEST_ENABLE_POOLING")) \

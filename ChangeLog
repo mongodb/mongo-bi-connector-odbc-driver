@@ -21,8 +21,7 @@
     (Bug# 25247807/84190)
   * Contents in embedded help for myodbc-installer are outdated
     (Bug# 18896110/72852)
-  * SQLGetData() with invalid column number crashes
-    (Bug# 18636600)
+  * SQLGetData() with invalid column number crashes (Bug# 18636600)
   * Assert failure in SQLSetDescField() API (Bug# 18641633)
   * Metadata functions crash when the catalog/table/column name is long
     (Bug #18796005)

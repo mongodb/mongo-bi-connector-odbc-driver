@@ -343,6 +343,9 @@ macro(_mysql_config _var _regex _opt)
   _mysql_conf(_mysql_config_output ${_opt})
   string(REGEX MATCHALL "${_regex}([^ ]+)" _mysql_config_output "${_mysql_config_output}")
   string(REGEX REPLACE "^[ \t]+" "" _mysql_config_output "${_mysql_config_output}")
+  IF(CMAKE_SYSTEM_NAME MATCHES "SunOS")
+    string(REGEX REPLACE " -latomic" "" _mysql_config_output "${_mysql_config_output}")
+  ENDIF()
   string(REGEX REPLACE "${_regex}" "" _mysql_config_output "${_mysql_config_output}")
   separate_arguments(_mysql_config_output)
   set(${_var} ${_mysql_config_output})
@@ -368,6 +371,9 @@ macro(_mysql_config_replace _var _regex1 _replace _regex2 _opt)
   _mysql_conf(_mysql_config_output ${_opt})
   string(REGEX MATCHALL "${_regex2}([^ ]+)" _mysql_config_output "${_mysql_config_output}")
   string(REGEX REPLACE "^[ \t]+" "" _mysql_config_output "${_mysql_config_output}")
+  IF(CMAKE_SYSTEM_NAME MATCHES "SunOS")
+    string(REGEX REPLACE " -latomic" "" _mysql_config_output "${_mysql_config_output}")
+  ENDIF()
   string(REGEX REPLACE "${_regex2}" "" _mysql_config_output "${_mysql_config_output}")
   string(REGEX REPLACE "${_regex1}" "${_replace}" _mysql_config_output "${_mysql_config_output}")
   separate_arguments(_mysql_config_output)
@@ -578,6 +584,19 @@ elseif(MYSQL_CONFIG_EXECUTABLE)
   # This code assumes there is just one "-L...." and that
   # no space between "-L" and the path
   _mysql_config(MYSQL_LIB_DIR "(^| )-L" "--libs")
+
+  IF(CMAKE_SYSTEM_NAME MATCHES "SunOS")
+    # This is needed to make Solaris binaries using the default runtime lib path
+    _mysql_config(DEV_STUDIO_RUNTIME_DIR "(^| )-R" "--libs")
+  ENDIF()
+
+
+  # In case mysql_config returns two paths: (0) runtime and (1) libmysqlclient
+  LIST(LENGTH MYSQL_LIB_DIR n)
+  IF( ${n} GREATER 1)
+    LIST(GET MYSQL_LIB_DIR 1 MYSQL_LIB_DIR)
+  ENDIF()
+
   if(NOT MYSQL_LIB_DIR)
     message(FATAL_ERROR "Could not find the library dir from running "
                         "\"${MYSQL_CONFIG_EXECUTABLE}\"")
@@ -617,9 +636,14 @@ elseif(MYSQL_CONFIG_EXECUTABLE)
   else()
 
     _mysql_config(MYSQL_LIBRARIES "(^| )-l" "--libs")
-
+    FOREACH(__lib IN LISTS MYSQL_LIBRARIES)
+      string(REGEX MATCH "mysqlclient([^ ]*)" _matched_lib __lib)
+      IF(_matched_lib)
+        set(_search_libs ${matched_lib})
+      ENDIF()
+    ENDFOREACH()
     # First library is assumed to be the client library
-    list(GET MYSQL_LIBRARIES 0 _search_libs)
+    # list(GET MYSQL_LIBRARIES 0 _search_libs)
     find_library(MYSQL_LIB
       NAMES
         ${_search_libs}
