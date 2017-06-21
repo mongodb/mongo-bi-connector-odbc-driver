@@ -214,7 +214,21 @@ IF(WIN32)
                         SET(NEW_FLAGS "${CMAKE_${TYPE}_FLAGS${CFG}}")
 
                         # fix up static libc flags
-                        #STRING(REPLACE "/MD" "/MT" NEW_FLAGS "${NEW_FLAGS}")
+                        IF(STATIC_MSVCRT)
+                          STRING(REPLACE "/MD" "/MT" NEW_FLAGS "${NEW_FLAGS}")
+                          IF(CFG STREQUAL "_DEBUG")
+                            SET(NEW_FLAGS "${NEW_FLAGS} /MTd")
+                          ELSEIF()
+                            SET(NEW_FLAGS "${NEW_FLAGS} /MT")
+                          ENDIF()
+                        ELSEIF()
+                          STRING(REPLACE "/MT" "/MD" NEW_FLAGS "${NEW_FLAGS}")
+                          IF(CFG STREQUAL "_DEBUG")
+                            SET(NEW_FLAGS "${NEW_FLAGS} /MDd")
+                          ELSEIF()
+                            SET(NEW_FLAGS "${NEW_FLAGS} /MD")
+                          ENDIF()
+                        ENDIF()
 
                         # Add some additional help for debug builds
                         IF(CMAKE_BUILD_TYPE STREQUAL "Debug")

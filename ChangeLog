@@ -1,6 +1,19 @@
 5.3.8
 
   Security Notes:
+  Functionality added or changed:
+  * Added two new CMake build options. STATIC_MSVCRT to switch /MT and /MD
+    compiler options in Windows. WITH_NODEFAULTLIB to specify the
+    /NODEFAULTLIB linker option. (WL# 10890)
+  Bugs fixed:
+
+  Built using MySQL 5.
+
+----
+
+5.3.8
+
+  Security Notes:
   * Connector/ODBC 5.3.8 Commercial upgrades the linked OpenSSL
     library to version 1.0.2k which has been publicly reported
     as not vulnerable to CVE-2017-3732
