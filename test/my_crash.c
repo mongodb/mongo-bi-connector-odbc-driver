@@ -25,6 +25,42 @@
 #include "odbctap.h"
 #include "../VersionInfo.h"
 
+
+/*
+  18805392 SEGMENTATION FAULT IN SQLFETCH() WHEN USED WITH DYNAMIC CURSOR
+*/
+DECLARE_TEST(t_bug18805392)
+{
+  SQLBIGINT val = 0;
+  SQLLEN  StrLen = 0;
+
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+  is(OK == alloc_basic_handles_with_opt(&henv1, &hdbc1, &hstmt1,
+             NULL, NULL, NULL, NULL, "DYNAMIC_CURSOR=1;NO_SSPS=1"));
+
+  ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
+                                 (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug18805392");
+  ok_sql(hstmt, "CREATE TABLE t_bug18805392 (record bigint)");
+  ok_sql(hstmt, "INSERT INTO t_bug18805392 VALUES (1234567891234),"
+								"(51234567891234),(61234567891234),(56789453632)");
+
+  ok_stmt(hstmt1, SQLPrepare(hstmt1, (SQLCHAR *)"SELECT * FROM t_bug18805392 where record>?", SQL_NTS));
+
+  ok_stmt(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT,
+                                   SQL_C_SBIGINT, SQL_NUMERIC, 0, 0, &val, 0, NULL));
+  ok_stmt(hstmt1, SQLExecute(hstmt1));
+
+  while (SQLFetch(hstmt1) == SQL_SUCCESS)
+  {
+    StrLen = 0;
+    ok_stmt(hstmt1, SQLGetData(hstmt1, 1, SQL_C_SBIGINT, &val, 0, &StrLen));
+  }
+
+  (void) free_basic_handles(&henv1, &hdbc1, &hstmt1);
+  return OK;
+}
+
 /*
   Bug #69950 Visual Studio 2010 crashes when reading rows from any 
   table in Server Explorer
@@ -833,6 +869,7 @@ DECLARE_TEST(t_bug18796005)
 
 
 BEGIN_TESTS
+  ADD_TEST(t_bug18805392)
   ADD_TEST(t_bug69950)
   ADD_TEST(t_bug70642)
   ADD_TEST(t_bug17358838)

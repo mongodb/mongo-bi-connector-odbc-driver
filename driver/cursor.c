@@ -316,11 +316,14 @@ void set_current_cursor_data(STMT *stmt, SQLUINTEGER irow)
       MYSQL_ROWS *dcursor;
       dcursor= result->data->data;
 
-      for ( nrow= 0; nrow < row_pos; ++nrow )
+      if (dcursor)
       {
-        dcursor= dcursor->next;
+        for ( nrow= 0; nrow < row_pos; ++nrow )
+        {
+          dcursor= dcursor->next;
+        }
       }
-      
+
       result->data_cursor= dcursor;
     }
 

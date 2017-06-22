@@ -6,6 +6,8 @@
     compiler options in Windows. WITH_NODEFAULTLIB to specify the
     /NODEFAULTLIB linker option. (WL# 10890)
   Bugs fixed:
+  * Segmentation fault in SQLFetch() when used with dynamic cursor
+    (Bug# 18805392)
 
   Built using MySQL 5.
 
