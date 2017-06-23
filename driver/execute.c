@@ -264,14 +264,16 @@ SQLRETURN insert_params(STMT *stmt, SQLULEN row, char **finalquery,
     char *pos;
     MYSQL_BIND * bind;
 
-    assert(aprec && iprec);
-
     if (stmt->dummy_state != ST_DUMMY_PREPARED &&
-        !aprec->par.real_param_done)
+        (!aprec || !aprec->par.real_param_done))
     {
-      rc= set_error(stmt,MYERR_07001,NULL,0);
+      rc= set_error(stmt, MYERR_07001,
+          "The number of parameter markers is not equal "
+          "to he number of parameters provided",0);
       goto error;
     }
+
+    assert(iprec);
 
     if (ssps_used(stmt))
     {

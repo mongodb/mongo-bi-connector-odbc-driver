@@ -62,6 +62,26 @@ DECLARE_TEST(t_bug18805392)
 }
 
 /*
+  19148246 SQLExecute() after SQLFreeStmt(SQL_RESET_PARAMS) results
+           in assert failure
+*/
+DECLARE_TEST(t_bug19148246)
+{
+  SQLBIGINT val = 0;
+  SQLLEN  StrLen = 0;
+
+  ok_stmt(hstmt, SQLPrepare(hstmt, (SQLCHAR *)"SELECT ?", SQL_NTS));
+
+  ok_stmt(hstmt, SQLBindParameter(hstmt, 1, SQL_PARAM_INPUT,
+                                  SQL_C_SBIGINT, SQL_NUMERIC, 0, 0, &val, 0, NULL));
+  ok_stmt(hstmt, SQLExecute(hstmt));
+  ok_stmt(hstmt, SQLFreeStmt(hstmt, SQL_RESET_PARAMS));
+  expect_stmt(hstmt, SQLExecute(hstmt), SQL_ERROR);
+  return OK;
+}
+
+
+/*
   Bug #69950 Visual Studio 2010 crashes when reading rows from any 
   table in Server Explorer
 */
@@ -869,7 +889,8 @@ DECLARE_TEST(t_bug18796005)
 
 
 BEGIN_TESTS
-  ADD_TEST(t_bug18805392)
+  //ADD_TEST(t_bug18805392)
+  ADD_TEST(t_bug19148246)
   ADD_TEST(t_bug69950)
   ADD_TEST(t_bug70642)
   ADD_TEST(t_bug17358838)

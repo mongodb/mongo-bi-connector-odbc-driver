@@ -8,6 +8,8 @@
   Bugs fixed:
   * Segmentation fault in SQLFetch() when used with dynamic cursor
     (Bug# 18805392)
+  * SQLExecute() after SQLFreeStmt(SQL_RESET_PARAMS) results
+    in assert failure (Bug# 19148246)
 
   Built using MySQL 5.
 
