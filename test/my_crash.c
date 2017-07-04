@@ -25,6 +25,59 @@
 #include "odbctap.h"
 #include "../VersionInfo.h"
 
+/*
+  18641824 SQLFOREIGNKEYS() CRASHING WHEN SQL_MODE='ANSI_QUOTES'
+  26388694 SQLForeignKeys() returns empty result with NO_I_S=0
+  
+  This test case will run with NO_I_S=0 and NO_I_S=1 and test for
+  two bugs for each NO_I_S value
+*/
+DECLARE_TEST(t_bug18641824)
+{
+  int i = 0;
+  char *pk_tab = "tab_pk";
+  char *fk_tab = "tab_fk";
+  char *pk_cols[] = { "i1d", "i2d" };
+  char *fk_cols[] = { "fi1d", "fi2d" };
+
+  DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+  is(OK == alloc_basic_handles(&henv1, &hdbc1, &hstmt1));
+
+  ok_sql(hstmt1, "set SQL_MODE='ANSI_QUOTES'");
+  ok_sql(hstmt1, "DROP SCHEMA IF EXISTS fk_check");
+  ok_sql(hstmt1, "CREATE SCHEMA fk_check");
+  ok_sql(hstmt1, "USE fk_check");
+  ok_sql(hstmt1, "CREATE TABLE tab_pk (i1d int, unique(i1d), i2d int, unique (i2d))");
+  ok_sql(hstmt1, "CREATE TABLE tab_fk (" \
+                "fi1d int,CONSTRAINT Constraint_1 FOREIGN KEY(fi1d) REFERENCES tab_pk(i1d)," \
+                "fi2d int,CONSTRAINT Constraint_2 FOREIGN KEY(fi2d) REFERENCES tab_pk(i2d))");
+  ok_stmt(hstmt1, SQLForeignKeys(hstmt1, NULL, 0, NULL, 0, (SQLCHAR*)"tab_pk", SQL_NTS,
+                                NULL, 0, NULL, 0, (SQLCHAR*)"tab_fk", SQL_NTS));
+
+  while (SQLFetch(hstmt1) == SQL_SUCCESS)
+  {
+    char buf[1024];
+    printf("Row: %d\n", ++i);
+    ok_stmt(hstmt1, SQLGetData(hstmt1, 3, SQL_CHAR, buf, sizeof(buf), NULL));
+    printf("Primary key table: %s\n", buf);
+    is_str(pk_tab, buf, strlen(buf));
+
+    ok_stmt(hstmt1, SQLGetData(hstmt1, 4, SQL_CHAR, buf, sizeof(buf), NULL));
+    printf("Primary key column: %s\n", buf);
+    is(strcmp(pk_cols[0], buf) == 0 || strcmp(pk_cols[1], buf) == 0);
+
+    ok_stmt(hstmt1, SQLGetData(hstmt1, 7, SQL_CHAR, buf, sizeof(buf), NULL));
+    printf("Foreign key table: %s\n", buf);
+    is_str(fk_tab, buf, strlen(buf));
+
+    ok_stmt(hstmt1, SQLGetData(hstmt1, 8, SQL_CHAR, buf, sizeof(buf), NULL));
+    printf("Foreign key column: %s\n", buf);
+    is(strcmp(fk_cols[0], buf) == 0 || strcmp(fk_cols[1], buf) == 0);
+  }
+  is(i==2);
+  free_basic_handles(&henv1, &hdbc1, &hstmt1);
+  return OK;
+}
 
 /*
   18805392 SEGMENTATION FAULT IN SQLFETCH() WHEN USED WITH DYNAMIC CURSOR
@@ -40,9 +93,9 @@ DECLARE_TEST(t_bug18805392)
 
   ok_stmt(hstmt1, SQLSetStmtAttr(hstmt1, SQL_ATTR_CURSOR_TYPE,
                                  (SQLPOINTER)SQL_CURSOR_DYNAMIC, 0));
-  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug18805392");
-  ok_sql(hstmt, "CREATE TABLE t_bug18805392 (record bigint)");
-  ok_sql(hstmt, "INSERT INTO t_bug18805392 VALUES (1234567891234),"
+  ok_sql(hstmt1, "DROP TABLE IF EXISTS t_bug18805392");
+  ok_sql(hstmt1, "CREATE TABLE t_bug18805392 (record bigint)");
+  ok_sql(hstmt1, "INSERT INTO t_bug18805392 VALUES (1234567891234),"
 								"(51234567891234),(61234567891234),(56789453632)");
 
   ok_stmt(hstmt1, SQLPrepare(hstmt1, (SQLCHAR *)"SELECT * FROM t_bug18805392 where record>?", SQL_NTS));
@@ -628,7 +681,7 @@ DECLARE_TEST(t_bug18286366)
     is_str(my_fetch_str(hstmt1, buff, 12), tmp_buff, len);
   }
 
-  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug16920750b, t_bug16920750a");
+  ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug18286366b, t_bug18286366a");
   free_basic_handles(&henv1, &hdbc1, &hstmt1);
   return OK;
 }
@@ -889,7 +942,8 @@ DECLARE_TEST(t_bug18796005)
 
 
 BEGIN_TESTS
-  //ADD_TEST(t_bug18805392)
+  ADD_TEST(t_bug18641824)
+  ADD_TEST(t_bug18805392)
   ADD_TEST(t_bug19148246)
   ADD_TEST(t_bug69950)
   ADD_TEST(t_bug70642)

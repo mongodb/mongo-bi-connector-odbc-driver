@@ -907,7 +907,7 @@ SQLRETURN foreign_keys_i_s(SQLHSTMT hstmt,
                 " ON (D.TABLE_SCHEMA=A.REFERENCED_TABLE_SCHEMA AND D.TABLE_NAME=A.REFERENCED_TABLE_NAME"
                     " AND D.COLUMN_NAME=A.REFERENCED_COLUMN_NAME)",
                 ref_constraints_join,
-                " WHERE D.CONSTRAINT_NAME='PRIMARY' ",
+                " WHERE D.CONSTRAINT_NAME IS NOT NULL ",
                 NullS);
 
   if (pk_table_name && pk_table_name[0])

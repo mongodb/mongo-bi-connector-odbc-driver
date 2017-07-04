@@ -10,8 +10,12 @@
     (Bug# 18805392)
   * SQLExecute() after SQLFreeStmt(SQL_RESET_PARAMS) results
     in assert failure (Bug# 19148246)
+  * SQLForeignKeys() crashing when SQL_MODE='ANSI_QUOTES'
+    (Bug# 18641824)
+  * SQLForeignKeys() returns empty result with NO_I_S=0
+    (Bug# 26388694)
 
-  Built using MySQL 5.
+  Built using MySQL 5.7.19
 
 ----
 

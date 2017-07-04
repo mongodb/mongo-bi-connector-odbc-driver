@@ -4041,8 +4041,12 @@ const char get_identifier_quote(STMT *stmt)
       The full list of all SQL modes takes over 512 symbols, so we reserve
       some for the future
      */
-    char sql_mode[2048]= {0};
-    uint length= get_session_variable(stmt, "SQL_MODE", (char*)sql_mode);
+    char sql_mode[2048]= " ";
+    /*
+      The token finder skips the leading space and starts
+      with the first non-space value. Thus (sql_mode+1).
+    */
+    uint length= get_session_variable(stmt, "SQL_MODE", (char*)(sql_mode+1));
     
     const char *end=  sql_mode + length;
     if (find_first_token(stmt->dbc->ansi_charset_info, sql_mode, end, "ANSI_QUOTES"))
