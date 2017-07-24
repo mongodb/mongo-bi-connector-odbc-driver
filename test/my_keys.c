@@ -438,6 +438,10 @@ DECLARE_TEST(t_bug16920750)
   SQLCHAR buff[255];
   SQLLEN len;
 
+  ok_sql(hstmt, "DROP SCHEMA IF EXISTS fk_test");
+  ok_sql(hstmt, "CREATE SCHEMA fk_test");
+  ok_sql(hstmt, "USE fk_test");
+
   ok_sql(hstmt, "DROP TABLE IF EXISTS t_bug16920750c, t_bug16920750b, t_bug16920750a");
   ok_sql(hstmt, "CREATE TABLE t_bug16920750a (category INT NOT NULL, id INT NOT NULL, price DECIMAL, "
                 "PRIMARY KEY(category, id) ) ENGINE=INNODB;");
@@ -445,9 +449,9 @@ DECLARE_TEST(t_bug16920750)
   ok_sql(hstmt, "CREATE TABLE t_bug16920750c (no INT NOT NULL AUTO_INCREMENT, product_category "
                 "INT NOT NULL, product_id INT NOT NULL, customer_id INT NOT NULL, "
                 "PRIMARY KEY(no), INDEX (product_category, product_id), INDEX (customer_id), "
-                "CONSTRAINT `constraint_1` FOREIGN KEY (product_category, product_id) "
+                "CONSTRAINT `constraint__1` FOREIGN KEY (product_category, product_id) "
                 "REFERENCES t_bug16920750a(category, id) ON UPDATE CASCADE ON DELETE RESTRICT, "
-                "CONSTRAINT `constraint_2` FOREIGN KEY (customer_id) "
+                "CONSTRAINT `constraint__2` FOREIGN KEY (customer_id) "
                 "REFERENCES t_bug16920750b(id) ) ENGINE=InnoDB");
 
   ok_stmt(hstmt, SQLForeignKeys(hstmt, NULL, 0, NULL, 0, NULL, 0, NULL, 0,
@@ -458,7 +462,7 @@ DECLARE_TEST(t_bug16920750)
   is_str(my_fetch_str(hstmt, buff, 4), "category", 8);
   is_str(my_fetch_str(hstmt, buff, 7), "t_bug16920750c", 14);
   is_str(my_fetch_str(hstmt, buff, 8), "product_category", 16);
-  is_str(my_fetch_str(hstmt, buff, 12), "constraint_1", 12);
+  is_str(my_fetch_str(hstmt, buff, 12), "constraint__1", 12);
   is_str(my_fetch_str(hstmt, buff, 10), "0", 1);
   is_str(my_fetch_str(hstmt, buff, 11), "3", 1);
 
@@ -467,7 +471,7 @@ DECLARE_TEST(t_bug16920750)
   is_str(my_fetch_str(hstmt, buff, 4), "id", 2);
   is_str(my_fetch_str(hstmt, buff, 7), "t_bug16920750c", 14);
   is_str(my_fetch_str(hstmt, buff, 8), "customer_id", 11);
-  is_str(my_fetch_str(hstmt, buff, 12), "constraint_2", 12);
+  is_str(my_fetch_str(hstmt, buff, 12), "constraint__2", 12);
   is_str(my_fetch_str(hstmt, buff, 10), "3", 1);
   is_str(my_fetch_str(hstmt, buff, 11), "3", 1);
 
@@ -476,7 +480,7 @@ DECLARE_TEST(t_bug16920750)
   is_str(my_fetch_str(hstmt, buff, 4), "id", 2);
   is_str(my_fetch_str(hstmt, buff, 7), "t_bug16920750c", 14);
   is_str(my_fetch_str(hstmt, buff, 8), "product_id", 10);
-  is_str(my_fetch_str(hstmt, buff, 12), "constraint_1", 12);
+  is_str(my_fetch_str(hstmt, buff, 12), "constraint__1", 12);
   is_str(my_fetch_str(hstmt, buff, 10), "0", 1);
   is_str(my_fetch_str(hstmt, buff, 11), "3", 1);
 

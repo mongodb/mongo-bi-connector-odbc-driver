@@ -591,10 +591,11 @@ elseif(MYSQL_CONFIG_EXECUTABLE)
   ENDIF()
 
 
-  # In case mysql_config returns two paths: (0) runtime and (1) libmysqlclient
+  # In case mysql_config returns several paths: libmysqlclient is last
   LIST(LENGTH MYSQL_LIB_DIR n)
   IF( ${n} GREATER 1)
-    LIST(GET MYSQL_LIB_DIR 1 MYSQL_LIB_DIR)
+    MATH(EXPR ind "${n}-1")
+    LIST(GET MYSQL_LIB_DIR ${ind} MYSQL_LIB_DIR)
   ENDIF()
 
   if(NOT MYSQL_LIB_DIR)
