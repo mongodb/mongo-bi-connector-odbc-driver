@@ -1225,6 +1225,131 @@ DECLARE_TEST(t_bug17311065)
 }
 
 
+#define RESTORE_SERVER_LOGGING ok_sql(hstmt, "SET GLOBAL log_output=@old_log_output, general_log=@old_general_log")
+
+#define ok_stmt2(S,C) do { \
+  SQLRETURN rc2 = (C); \
+  if (rc2 != SQL_SUCCESS && rc2 != SQL_SUCCESS_WITH_INFO) \
+  { \
+    RESTORE_SERVER_LOGGING; \
+    ok_stmt(S, rc2); \
+  } \
+} while (0)
+
+#define is_num2(a, b) \
+do { \
+  long long a1= (a), a2= (b); \
+  if (a1 != a2) { \
+    RESTORE_SERVER_LOGGING; \
+    printf("# %s (%lld) != %lld in %s on line %d\n", \
+           #a, a1, a2, __FILE__, __LINE__); \
+    return FAIL; \
+  } \
+} while (0)
+
+
+DECLARE_TEST(t_prefetch_bug)
+{
+    int param_1 = 1, param_2 = 20, i = 0;
+    long con_id = 0;
+
+    const char *queries[] = {
+      "select 'Q-001', id from b_prefecth WHERE id > ? ORDER BY id",
+      "select 'Q-002', id from b_prefecth WHERE id > ? ORDER BY id LIMIT 7",
+      "select 'Q-003', id from b_prefecth WHERE id > ? ORDER BY id LIMIT 5, 3",
+      "select 'Q-004', id from b_prefecth WHERE id > ? ORDER BY id LIMIT 5, 100",
+      "select 'Q-005', id from b_prefecth WHERE id > ? ORDER BY id FOR UPDATE",
+      "select 'Q-006', id from b_prefecth WHERE id > ? ORDER BY id LOCK IN SHARE MODE",
+      "select 'Q-007', id from b_prefecth WHERE id > ? ORDER BY id LIMIT 2, 20 FOR UPDATE",
+      "select 'Q-008', id from b_prefecth WHERE id > ? ORDER BY id LIMIT 2, 20 LOCK IN SHARE MODE",
+      "select 'Q-009', id from b_prefecth WHERE id > ? ORDER BY id LIMIT 2, ? FOR UPDATE",
+    };
+
+    const char *check_for[] = {
+      "",       //"select 'Q-001' ... ORDER BY id",
+      "",       //"select 'Q-002' ... ORDER BY id LIMIT 7",
+      "",       //"select 'Q-003' ... ORDER BY id LIMIT 5, 3",
+      "",       //"select 'Q-004' ... ORDER BY id LIMIT 5, 100",
+      // "select 'Q-005' ... ORDER BY id FOR UPDATE"
+      " AND argument LIKE '%%FOR UPDATE%%'", 
+      // "select 'Q-006' ... ORDER BY id LOCK IN SHARE MODE",
+      " AND argument LIKE '%%LOCK IN SHARE MODE%%'",  
+      // "select 'Q-007' ... ORDER BY id FOR UPDATE"
+      " AND argument LIKE '%%FOR UPDATE%%'",
+      // "select 'Q-008' ... ORDER BY id LOCK IN SHARE MODE",
+      " AND argument LIKE '%%LOCK IN SHARE MODE%%'",
+      // "select 'Q-009' ... ORDER BY id FOR UPDATE"
+      " AND argument LIKE '%%FOR UPDATE%%'"
+    };
+
+    int expected_num[]     = {15, 7, 3, 10, 15, 15, 13, 13, 13};
+    int expected_queries[] = { 4, 2, 1,  3,  4,  4,  4,  4, 4 };
+    char check_query[512];
+    int query_rows = 0;
+
+    DECLARE_BASIC_HANDLES(henv1, hdbc1, hstmt1);
+
+    is(OK == alloc_basic_handles_with_opt(
+             &henv1, &hdbc1, &hstmt1, NULL,
+             NULL, NULL, NULL, "PREFETCH=5;NO_SSPS=1"));
+
+    ok_sql(hstmt, "DROP table IF EXISTS b_prefecth");
+    ok_sql(hstmt, "CREATE table b_prefecth(id int primary key)");
+
+    ok_sql(hstmt, "insert into b_prefecth values(1),(2),(3),(4)," \
+          "(5),(6),(7),(8),(9),(10),(11),(12),(13),(14),(15),(16)");
+
+    // Save the old values for 
+    ok_sql(hstmt1, "SELECT CONNECTION_ID()");
+    ok_stmt(hstmt1, SQLFetch(hstmt1));
+    ok_stmt(hstmt1, SQLGetData(hstmt1, 1, SQL_C_LONG, &con_id, 0, NULL));
+    printf("\nConnection ID: %d",con_id);
+    ok_stmt(hstmt1, SQLFreeStmt(hstmt1, SQL_CLOSE));
+
+    ok_sql(hstmt, "SET @old_log_output=@@log_output, @old_general_log=@@general_log");
+    ok_sql(hstmt, "SET GLOBAL log_output='TABLE', general_log=1");
+
+    for (i = 0; i < 9; ++i)
+    {
+      ok_stmt2(hstmt1, SQLPrepare(hstmt1, (SQLCHAR*)queries[i], SQL_NTS));
+      ok_stmt2(hstmt1, SQLBindParameter(hstmt1, 1, SQL_PARAM_INPUT,
+        SQL_C_LONG, SQL_INTEGER, 0, 0, &param_1, 0, NULL));
+
+      if (i == 8) // Bind 2nd param for LIMIT
+        ok_stmt2(hstmt1, SQLBindParameter(hstmt1, 2, SQL_PARAM_INPUT,
+        SQL_C_LONG, SQL_INTEGER, 0, 0, &param_2, 0, NULL));
+
+      ok_stmt2(hstmt1, SQLExecute(hstmt1));
+      is_num2(expected_num[i], my_print_non_format_result(hstmt1));
+      sprintf(check_query,
+                "SELECT CAST(argument as CHAR(128)) arg FROM " \
+                "mysql.general_log WHERE thread_id = %d AND " \
+                "argument LIKE '%% LIMIT %%' AND " \
+                "argument LIKE '%%Q-%03d%%' %s",
+                con_id, (i + 1), check_for[i]);
+
+      if (SQLExecDirect(hstmt, (SQLCHAR*)check_query, SQL_NTS))
+      {
+        RESTORE_SERVER_LOGGING;
+        return FAIL;
+      }
+      printf("\nLOGGED QUERIES:\n");
+      query_rows = my_print_non_format_result(hstmt);
+      if (expected_queries[i] < query_rows ||
+          (expected_queries[i] - 1) > query_rows )
+      {
+        RESTORE_SERVER_LOGGING;
+        return FAIL;
+      }
+    }
+
+    RESTORE_SERVER_LOGGING;
+    free_basic_handles(&henv1, &hdbc1, &hstmt1);
+    ok_sql(hstmt, "DROP table IF EXISTS b_prefecth");
+
+    return OK;
+}
+
 BEGIN_TESTS
   ADD_TEST(t_bug32420)
   ADD_TEST(t_bug34575)
@@ -1251,6 +1376,7 @@ BEGIN_TESTS
   // ADD_TEST(t_bookmark) TODO: Fix
 #endif
   ADD_TEST(t_bug17311065)
+  ADD_TEST(t_prefetch_bug)
 END_TESTS
 
 

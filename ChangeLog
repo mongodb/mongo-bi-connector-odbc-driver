@@ -1,3 +1,12 @@
+5.3.10
+
+  Security Notes:
+  Functionality added or changed:
+  Bugs fixed:
+  * ODBC Driver issue with SELECT for UPDATE (Bug#26646688/87457)
+
+  Built using MySQL
+
 5.3.9
 
   Security Notes:

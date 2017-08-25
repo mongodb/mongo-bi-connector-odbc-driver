@@ -3873,24 +3873,149 @@ char *add_to_buffer(NET *net,char *to,const char *from,ulong length)
     return to+length;
 }
 
+/*
+  Get the offset and row numbers from a string with LIMIT
+
+  @param[in] cs        charset
+  @param[in] query     query
+  @param[in] query_end end of query
+  @param[out] offs_out output buffer for offset
+  @param[out] rows_out output buffer for rows
+
+  @return the position where LIMIT OFFS, ROWS is ending
+*/
+char* get_limit_numbers(CHARSET_INFO* cs, char *query, char * query_end,
+                       unsigned long long *offs_out, unsigned long *rows_out)
+{
+  char digit_buf[30];
+  int index_pos = 0;
+
+  // Skip spaces after LIMIT
+  while ((query_end > query) && myodbc_isspace(cs, query, query_end))
+    ++query;
+  
+  // Collect all numbers for the offset
+  while ((query_end > query) && myodbc_isnum(cs, query, query_end))
+  {
+    digit_buf[index_pos] = *query;
+    ++index_pos;
+    ++query;
+  }
+
+  if (!index_pos)
+  {
+    // Something went wrong, the limit numbers are not found
+    return query;
+  }
+
+  digit_buf[index_pos] = '\0';
+  *offs_out = (unsigned long long)atoll(digit_buf);
+
+  // Find the row number for "LIMIT offset, row_number"
+  while ((query_end > query) && !myodbc_isnum(cs, query, query_end))
+    ++query;
+
+  if (query == query_end)
+  {
+    // It was "LIMIT row_number" without offset
+    // What we thought was offset is in fact the number of rows
+    *rows_out = (unsigned long)*offs_out;
+    *offs_out = 0;
+    return query;
+  }
+
+  index_pos = 0; // reset index to use with another number
+
+  // Collect all numbers for the row number
+  while ((query_end > query) && myodbc_isnum(cs, query, query_end))
+  {
+    digit_buf[index_pos] = *query;
+    ++index_pos;
+    ++query;
+  }
+
+  digit_buf[index_pos] = '\0';
+  *rows_out = (unsigned long)atol(digit_buf);
+  return query;
+}
+
+/*
+  Check if SELECT query requests the row locking
+
+  @param[in] cs          charset
+  @param[in] query       query
+  @param[in] query_end   query end
+  @param[in] is_share    flag to check the share mode otherwise for update
+
+  @return position of "FOR UPDATE" or "LOCK IN SHARE MODE" inside a query.
+          Otherwise returns NULL.
+*/
+const char* check_row_locking(CHARSET_INFO* cs, char * query, char * query_end, BOOL is_share_mode)
+{
+  const char *before_token= query_end;
+  const char *token= NULL;
+  int i = 0;
+  const char *for_update[2] = { "UPDATE", "FOR" };
+  const char *lock_in_share_mode[4] = { "MODE", "SHARE", "IN", "LOCK" };
+  const char **check = for_update;
+  int index_max = 2;
+
+  if (is_share_mode)
+  {
+    check = lock_in_share_mode;
+    index_max = 4;
+  }
+    
+  for (i = 0; i < index_max; ++i)
+  {
+    token = mystr_get_prev_token(cs, &before_token, query);
+    if (myodbc_casecmp(token, check[i], strlen(check[i])))
+      return NULL;
+  }
+  return token;
+}
+
 
 MY_LIMIT_CLAUSE find_position4limit(CHARSET_INFO* cs, char *query, char * query_end)
 {
   MY_LIMIT_CLAUSE result={0,0,NULL,NULL};
+  char *limit_pos = NULL;
 
   result.begin= result.end= query_end;
 
   assert(query && query_end && query_end >= query);
 
-  while(query_end > query && (!*query_end ||
-            myodbc_isspace(cs, query_end, result.end)))
+  if ((limit_pos = (char*)find_token(cs, query, query_end, "LIMIT")))
   {
-    --query_end;
+    // Found LIMIT in the query
+    result.end = get_limit_numbers(cs, limit_pos + 5, query_end,
+                                   &result.offset, &result.row_count);
+    // We will start again from the position of LIMIT to simplify the logic
+    result.begin = limit_pos;
   }
-
-  if (*query_end==';')
+  else // No LIMIT in SELECT
   {
-    result.begin= result.end= query_end;
+    const char *locking_pos = NULL;
+    
+    if ((locking_pos = check_row_locking(cs, query, query_end, FALSE)) ||
+        (locking_pos = check_row_locking(cs, query, query_end, TRUE)))
+    {
+      // FOR UPDATE or LOCK IN SHARE MODE was detected
+      result.begin= result.end = (char*)locking_pos - 1; // With a previous space
+    }
+    else
+    {
+      while(query_end > query && (!*query_end ||
+                myodbc_isspace(cs, query_end, result.end)))
+      {
+        --query_end;
+      }
+
+      if (*query_end==';')
+      {
+        result.begin= result.end= query_end;
+      }
+    }
   }
 
   return result;
@@ -3903,6 +4028,14 @@ BOOL myodbc_isspace(CHARSET_INFO* cs, const char * begin, const char *end)
   cs->cset->ctype(cs, &ctype, (const uchar*) begin, (const uchar*) end);
 
   return ctype & _MY_SPC;
+}
+
+BOOL myodbc_isnum(CHARSET_INFO* cs, const char * begin, const char *end)
+{
+  int ctype;
+  cs->cset->ctype(cs, &ctype, (const uchar*)begin, (const uchar*)end);
+
+  return ctype & _MY_NMR;
 }
 
 

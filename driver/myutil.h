@@ -356,6 +356,7 @@ char *          add_to_buffer       (NET *net,char *to,const char *from,ulong le
 MY_LIMIT_CLAUSE find_position4limit (CHARSET_INFO* cs, char *query,
                                     char * query_end);
 BOOL            myodbc_isspace      (CHARSET_INFO* cs, const char * begin, const char *end);
+BOOL            myodbc_isnum        (CHARSET_INFO* cs, const char * begin, const char *end);
 
 #define NO_OUT_PARAMETERS         0
 #define GOT_OUT_PARAMETERS        1

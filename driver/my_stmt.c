@@ -549,7 +549,6 @@ unsigned int calc_prefetch_number(unsigned int selected, SQLULEN app_fetchs,
   return result;
 }
 
-
 BOOL scroller_exists(STMT * stmt)
 {
   return stmt->scroller.offset_pos != NULL;
@@ -566,42 +565,32 @@ void scroller_create(STMT * stmt, char *query, SQLULEN query_len)
 
   stmt->scroller.total_rows= myodbc_max(stmt->stmt_options.max_rows, 0);
 
-  if (limit.row_count > 0 )
+  if (limit.begin != limit.end)
   {
-    /* If the query already contains LIMIT we probably do not have to do
-       anything. unless maybe "their" limit is much bigger number than ours
-       and its absolute value is big enough.
-       Numbers 500 and 50000 are tentative
-     */
-    if (limit.row_count / stmt->scroller.row_count < 500
-      && limit.row_count < 50000)
-    {
-      return;
-    }
-
+    // This has to be recalculated only if limit is specified
     stmt->scroller.total_rows= stmt->scroller.total_rows > 0 ?
       myodbc_min(limit.row_count, stmt->scroller.total_rows) :
       limit.row_count;
   }
 
+  if ((stmt->scroller.row_count > stmt->scroller.total_rows) &&
+      (limit.begin != limit.end))
+    // Only set row cound if LIMIT exists in the original query
+    stmt->scroller.row_count = (unsigned int)stmt->scroller.total_rows;
+
   stmt->scroller.next_offset= myodbc_max(limit.offset, 0);
 
   /*extend_buffer(&stmt->dbc->mysql.net, stmt->query_end, len2add);*/
-  stmt->scroller.query_len= query_len + len2add - (limit.end - limit.begin);
+  stmt->scroller.query_len= query_len + len2add;
   stmt->scroller.query= (char*)myodbc_malloc((size_t)stmt->scroller.query_len + 1,
                                           MYF(MY_ZEROFILL));
-
+  memset(stmt->scroller.query, ' ', (size_t)stmt->scroller.query_len);
   memcpy(stmt->scroller.query, query, limit.begin - query);
 
   /* Forgive me - now limit.begin points to beginning of limit in scroller's
      copy of the query */
   limit.begin= stmt->scroller.query + (limit.begin - query);
-
-  /* If there was no LIMIT clause in the query */
-  if (limit.row_count == 0)
-  {
-    strncpy(limit.begin, " LIMIT ", 7);
-  }
+  strncpy(limit.begin, " LIMIT ", 7);
 
   /* That is  where we will update offset */
   stmt->scroller.offset_pos= limit.begin + 7;
@@ -672,6 +661,7 @@ SQLRETURN scroller_prefetch(STMT * stmt)
 }
 
 
+
 BOOL scrollable(STMT * stmt, char * query, char * query_end)
 {
   if (!is_select_statement(&stmt->query))
@@ -689,17 +679,6 @@ BOOL scrollable(STMT * stmt, char * query, char * query_end)
                                                 &before_token,
                                                 query);
 
-    if (!myodbc_casecmp(prev,"FOR",3) && !myodbc_casecmp(last,"UPDATE",6) 
-      || !myodbc_casecmp(prev,"SHARE",5) && !myodbc_casecmp(last,"MODE",4)
-        && !myodbc_casecmp(mystr_get_prev_token(stmt->dbc->ansi_charset_info,
-                                             &before_token, query),"LOCK",4)
-        && !myodbc_casecmp(mystr_get_prev_token(stmt->dbc->ansi_charset_info,
-                                             &before_token, query),"IN",2)
-        )
-    {
-      return FALSE;
-    }
-
     /* we have to tokens - nothing to do*/
     if (prev == query)
     {
@@ -712,14 +691,6 @@ BOOL scrollable(STMT * stmt, char * query, char * query_end)
      */
     if ( myodbc_casecmp(prev,"FROM", 4)
       && !find_token(stmt->dbc->ansi_charset_info, query, before_token, "FROM"))
-    {
-      return FALSE;
-    }
-
-    /* If there there is LIMIT - most probably there is no need to scroll
-       skipping such queries so far */
-    if ( !myodbc_casecmp(prev,"LIMIT", 5)
-      || find_token(stmt->dbc->ansi_charset_info, query, before_token, "LIMIT"))
     {
       return FALSE;
     }
