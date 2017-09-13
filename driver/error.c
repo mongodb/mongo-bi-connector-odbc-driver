@@ -116,13 +116,13 @@ void myodbc_sqlstate2_init(void)
         myodbc3_errors[i].sqlstate[0]= 'S';
         myodbc3_errors[i].sqlstate[1]= '1';
     }
-    my_stpmov(myodbc3_errors[MYERR_07005].sqlstate,"24000");
-    my_stpmov(myodbc3_errors[MYERR_42000].sqlstate,"37000");
-    my_stpmov(myodbc3_errors[MYERR_42S01].sqlstate,"S0001");
-    my_stpmov(myodbc3_errors[MYERR_42S02].sqlstate,"S0002");
-    my_stpmov(myodbc3_errors[MYERR_42S12].sqlstate,"S0012");
-    my_stpmov(myodbc3_errors[MYERR_42S21].sqlstate,"S0021");
-    my_stpmov(myodbc3_errors[MYERR_42S22].sqlstate,"S0022");
+    myodbc_stpmov(myodbc3_errors[MYERR_07005].sqlstate,"24000");
+    myodbc_stpmov(myodbc3_errors[MYERR_42000].sqlstate,"37000");
+    myodbc_stpmov(myodbc3_errors[MYERR_42S01].sqlstate,"S0001");
+    myodbc_stpmov(myodbc3_errors[MYERR_42S02].sqlstate,"S0002");
+    myodbc_stpmov(myodbc3_errors[MYERR_42S12].sqlstate,"S0012");
+    myodbc_stpmov(myodbc3_errors[MYERR_42S21].sqlstate,"S0021");
+    myodbc_stpmov(myodbc3_errors[MYERR_42S22].sqlstate,"S0022");
 }
 
 
@@ -140,13 +140,13 @@ void myodbc_sqlstate3_init(void)
         myodbc3_errors[i].sqlstate[0]= 'H';
         myodbc3_errors[i].sqlstate[1]= 'Y';
     }
-    my_stpmov(myodbc3_errors[MYERR_07005].sqlstate,"07005");
-    my_stpmov(myodbc3_errors[MYERR_42000].sqlstate,"42000");
-    my_stpmov(myodbc3_errors[MYERR_42S01].sqlstate,"42S01");
-    my_stpmov(myodbc3_errors[MYERR_42S02].sqlstate,"42S02");
-    my_stpmov(myodbc3_errors[MYERR_42S12].sqlstate,"42S12");
-    my_stpmov(myodbc3_errors[MYERR_42S21].sqlstate,"42S21");
-    my_stpmov(myodbc3_errors[MYERR_42S22].sqlstate,"42S22");
+    myodbc_stpmov(myodbc3_errors[MYERR_07005].sqlstate,"07005");
+    myodbc_stpmov(myodbc3_errors[MYERR_42000].sqlstate,"42000");
+    myodbc_stpmov(myodbc3_errors[MYERR_42S01].sqlstate,"42S01");
+    myodbc_stpmov(myodbc3_errors[MYERR_42S02].sqlstate,"42S02");
+    myodbc_stpmov(myodbc3_errors[MYERR_42S12].sqlstate,"42S12");
+    myodbc_stpmov(myodbc3_errors[MYERR_42S21].sqlstate,"42S21");
+    myodbc_stpmov(myodbc3_errors[MYERR_42S22].sqlstate,"42S22");
 }
 
 
@@ -157,8 +157,8 @@ void myodbc_sqlstate3_init(void)
 
 SQLRETURN copy_stmt_error(STMT *dst,STMT *src)
 {
-    my_stpmov(dst->error.sqlstate,src->error.sqlstate);
-    my_stpmov(dst->error.message, src->error.message);
+    myodbc_stpmov(dst->error.sqlstate,src->error.sqlstate);
+    myodbc_stpmov(dst->error.message, src->error.message);
     dst->error.native_error= src->error.native_error;
     dst->error.retcode= src->error.retcode;
     return(SQL_SUCCESS);
@@ -174,7 +174,7 @@ SQLRETURN copy_stmt_error(STMT *dst,STMT *src)
 SQLRETURN set_dbc_error(DBC *dbc, char *state,
                         const char *message, uint errcode)
 {
-    my_stpmov(dbc->error.sqlstate, state);
+    myodbc_stpmov(dbc->error.sqlstate, state);
     strxmov(dbc->error.message, MYODBC_ERROR_PREFIX, message, NullS);
     dbc->error.native_error= errcode;
     return SQL_ERROR;
@@ -192,7 +192,7 @@ SQLRETURN set_stmt_error( STMT       *  stmt,
                           const char *  message,
                           uint          errcode )
 {
-    my_stpmov(stmt->error.sqlstate, state);
+    myodbc_stpmov(stmt->error.sqlstate, state);
     strxmov(stmt->error.message, stmt->dbc->st_error_prefix, message, NullS);
     stmt->error.native_error = errcode;
 
@@ -210,7 +210,7 @@ SQLRETURN set_desc_error(DESC *        desc,
                          const char *  message,
                          uint          errcode)
 {
-  my_stpmov(desc->error.sqlstate, state);
+  myodbc_stpmov(desc->error.sqlstate, state);
   strxmov(desc->error.message, desc->stmt->dbc->st_error_prefix,
           message, NullS);
   desc->error.native_error = errcode;
@@ -279,7 +279,7 @@ void translate_error(char *save_state, myodbc_errid errid, uint mysql_err)
             break;
         default: break;
     }
-    my_stpmov(save_state, state);
+    myodbc_stpmov(save_state, state);
 }
 
 
@@ -302,7 +302,7 @@ static SQLRETURN copy_error(MYERROR *error, myodbc_errid errid,
 
     sqlreturn= error->retcode= myodbc3_errors[errid].retcode;  /* RETCODE */
     error->native_error= code;                     /* NATIVE */
-    my_stpmov(error->sqlstate, myodbc3_errors[errid].sqlstate);   /* SQLSTATE */
+    myodbc_stpmov(error->sqlstate, myodbc3_errors[errid].sqlstate);   /* SQLSTATE */
     strxmov(error->message,prefix,errmsg,NullS);           /* MESSAGE */
 
     return sqlreturn;
@@ -353,8 +353,8 @@ SQLRETURN set_error(STMT *stmt, myodbc_errid errid, const char *errtext,
 void set_mem_error(MYSQL *mysql)
 {
   mysql->net.last_errno= CR_OUT_OF_MEMORY;
-  my_stpmov(mysql->net.last_error, "Memory allocation failed");
-  my_stpmov(mysql->net.sqlstate, "HY001");
+  myodbc_stpmov(mysql->net.last_error, "Memory allocation failed");
+  myodbc_stpmov(mysql->net.sqlstate, "HY001");
 }
 
 

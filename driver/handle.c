@@ -496,7 +496,7 @@ SQLRETURN SQL_API my_SQLAllocStmt(SQLHDBC hdbc,SQLHSTMT *phstmt)
   stmt->stmt_options= dbc->stmt_options;
   stmt->state= ST_UNKNOWN;
   stmt->dummy_state= ST_DUMMY_UNKNOWN;
-  my_stpmov(stmt->error.sqlstate, "00000");
+  myodbc_stpmov(stmt->error.sqlstate, "00000");
   init_parsed_query(&stmt->query);
   init_parsed_query(&stmt->orig_query);
 

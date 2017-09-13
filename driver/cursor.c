@@ -232,9 +232,9 @@ static my_bool check_if_usable_unique_key_exists(STMT *stmt)
     table= stmt->result->fields->table;
 
   /* Use SHOW KEYS FROM table to check for keys. */
-  pos= my_stpmov(buff, "SHOW KEYS FROM `");
+  pos= myodbc_stpmov(buff, "SHOW KEYS FROM `");
   pos+= mysql_real_escape_string(&stmt->dbc->mysql, pos, table, strlen(table));
-  pos= my_stpmov(pos, "`");
+  pos= myodbc_stpmov(pos, "`");
 
   MYLOG_QUERY(stmt, buff);
 
@@ -269,7 +269,7 @@ static my_bool check_if_usable_unique_key_exists(STMT *stmt)
     if (have_field_in_result(row[4], stmt->result))
     {
       /* We have a unique key field -- copy it, and increment our count. */
-      my_stpmov(stmt->cursor.pkcol[stmt->cursor.pk_count++].name, row[4]);
+      myodbc_stpmov(stmt->cursor.pkcol[stmt->cursor.pk_count++].name, row[4]);
       seq_in_index= seq;
     }
     else
@@ -1468,7 +1468,7 @@ static SQLRETURN batch_insert( STMT *stmt, SQLULEN irow, DYNAMIC_STRING *ext_que
               We have a limited capacity to shove data across the wire, but
               we handle this by sending in multiple calls to exec_stmt_query()
             */
-            if (ext_query->length + length >= (SQLULEN) stmt->dbc->net_buffer_length)
+            if (ext_query->length + length >= (SQLULEN) stmt->dbc->net_buffer_len)
             {
                 break_insert= TRUE;
                 break;

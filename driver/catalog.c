@@ -156,43 +156,43 @@ static MYSQL_RES *table_status_i_s(STMT        *stmt,
   char buff[300+8*NAME_CHAR_LEN], *to;
   my_bool clause_added= FALSE;
 
-  to= my_stpmov(buff, "SELECT TABLE_NAME, TABLE_COMMENT, TABLE_TYPE, TABLE_SCHEMA " \
+  to= myodbc_stpmov(buff, "SELECT TABLE_NAME, TABLE_COMMENT, TABLE_TYPE, TABLE_SCHEMA " \
                       "FROM ( SELECT * FROM INFORMATION_SCHEMA.TABLES  " \
                       "WHERE ");
 
   if (catalog_name && *catalog_name)
   {
-    to= my_stpmov(to, "TABLE_SCHEMA LIKE '");
+    to= myodbc_stpmov(to, "TABLE_SCHEMA LIKE '");
     to+= myodbc_escape_string(mysql, to, (ulong)(sizeof(buff) - (to - buff)),
                               (char *)catalog_name, catalog_len, 1);
-    to= my_stpmov(to, "' ");
+    to= myodbc_stpmov(to, "' ");
     clause_added= TRUE;
   }
   else
   {
-    to= my_stpmov(to, "TABLE_SCHEMA = DATABASE() ");
+    to= myodbc_stpmov(to, "TABLE_SCHEMA = DATABASE() ");
   }
 
   if (show_tables)
   {
-    to= my_stpmov(to, "AND ");
+    to= myodbc_stpmov(to, "AND ");
     if (show_views)
-      to= my_stpmov(to, "( ");
-    to= my_stpmov(to, "TABLE_TYPE='BASE TABLE' ");
+      to= myodbc_stpmov(to, "( ");
+    to= myodbc_stpmov(to, "TABLE_TYPE='BASE TABLE' ");
   }
 
   if (show_views)
   {
     if (show_tables)
-      to= my_stpmov(to, "OR ");
+      to= myodbc_stpmov(to, "OR ");
     else
-      to= my_stpmov(to, "AND ");
+      to= myodbc_stpmov(to, "AND ");
 
-    to= my_stpmov(to, "TABLE_TYPE='VIEW' ");
+    to= myodbc_stpmov(to, "TABLE_TYPE='VIEW' ");
     if (show_tables)
-      to= my_stpmov(to, ") ");
+      to= myodbc_stpmov(to, ") ");
   }
-  to = my_stpmov(to, ") TABLES ");
+  to = myodbc_stpmov(to, ") TABLES ");
 
   /*
     As a pattern-value argument, an empty string needs to be treated
@@ -204,7 +204,7 @@ static MYSQL_RES *table_status_i_s(STMT        *stmt,
 
   if (table_name && *table_name)
   {
-    to= my_stpmov(to, "WHERE TABLE_NAME LIKE '");
+    to= myodbc_stpmov(to, "WHERE TABLE_NAME LIKE '");
     if (wildcard)
     {
       to+= mysql_real_escape_string(mysql, to, (char *)table_name, table_len);
@@ -214,7 +214,7 @@ static MYSQL_RES *table_status_i_s(STMT        *stmt,
       to+= myodbc_escape_string(mysql, to, (ulong)(sizeof(buff) - (to - buff)),
                                 (char *)table_name, table_len, 0);
     }
-    to= my_stpmov(to, "'");
+    to= myodbc_stpmov(to, "'");
   }
 
   assert(to - buff < sizeof(buff));
@@ -284,22 +284,22 @@ int add_name_condition_oa_id(HSTMT hstmt, char ** pos, SQLCHAR * name,
 
     if (metadata_id)
     {
-      *pos= my_stpmov(*pos, "=");
+      *pos= myodbc_stpmov(*pos, "=");
       /* Need also code to remove trailing blanks */
     }
     else
-      *pos= my_stpmov(*pos, "= BINARY ");
+      *pos= myodbc_stpmov(*pos, "= BINARY ");
 
-    *pos= my_stpmov(*pos, "'");
+    *pos= myodbc_stpmov(*pos, "'");
     *pos+= mysql_real_escape_string(&stmt->dbc->mysql, *pos, (char *)name, name_len);
-    *pos= my_stpmov(*pos, "' ");
+    *pos= myodbc_stpmov(*pos, "' ");
   }
   else
   {
     /* According to http://msdn.microsoft.com/en-us/library/ms714579%28VS.85%29.aspx
     identifier argument cannot be NULL with one exception not actual for mysql) */
     if (!metadata_id && _default)
-      *pos= my_stpmov(*pos, _default); 
+      *pos= myodbc_stpmov(*pos, _default); 
     else
       return 1;
   }
@@ -328,22 +328,22 @@ int add_name_condition_pv_id(HSTMT hstmt, char ** pos, SQLCHAR * name,
 
     if (metadata_id)
     {
-      *pos= my_stpmov(*pos, "=");
+      *pos= myodbc_stpmov(*pos, "=");
       /* Need also code to remove trailing blanks */
     }
     else
-      *pos= my_stpmov(*pos, " LIKE BINARY ");
+      *pos= myodbc_stpmov(*pos, " LIKE BINARY ");
 
-    *pos= my_stpmov(*pos, "'");
+    *pos= myodbc_stpmov(*pos, "'");
     *pos+= mysql_real_escape_string(&stmt->dbc->mysql, *pos, (char *)name, name_len);
-    *pos= my_stpmov(*pos, "' ");
+    *pos= myodbc_stpmov(*pos, "' ");
   }
   else
   {
     /* According to http://msdn.microsoft.com/en-us/library/ms714579%28VS.85%29.aspx
        identifier argument cannot be NULL with one exception not actual for mysql) */
     if (!metadata_id && _default)
-      *pos= my_stpmov(*pos, _default); 
+      *pos= myodbc_stpmov(*pos, _default); 
     else
       return 1;
   }
@@ -564,7 +564,7 @@ SQLRETURN list_table_priv_i_s(SQLHSTMT    hstmt,
   SQLRETURN rc;
 
   /* Db,User,Table_name,"NULL" as Grantor,Table_priv*/
-  pos= my_stpmov(buff,
+  pos= myodbc_stpmov(buff,
                "SELECT TABLE_SCHEMA as TABLE_CAT, TABLE_CATALOG as TABLE_SCHEM,"
                       "TABLE_NAME, NULL as GRANTOR, GRANTEE,"
                       "PRIVILEGE_TYPE as PRIVILEGE, IS_GRANTABLE "
@@ -573,11 +573,11 @@ SQLRETURN list_table_priv_i_s(SQLHSTMT    hstmt,
 
   add_name_condition_pv_id(hstmt, &pos, table_name, table_len, " LIKE '%'" );
 
-  pos= my_stpmov(pos, " AND TABLE_SCHEMA");
+  pos= myodbc_stpmov(pos, " AND TABLE_SCHEMA");
   add_name_condition_oa_id(hstmt, &pos, catalog_name, catalog_len, "=DATABASE()");
 
   /* TABLE_CAT is always NULL in mysql I_S */
-  pos= my_stpmov(pos, " ORDER BY /*TABLE_CAT,*/ TABLE_SCHEM, TABLE_NAME, PRIVILEGE, GRANTEE");
+  pos= myodbc_stpmov(pos, " ORDER BY /*TABLE_CAT,*/ TABLE_SCHEM, TABLE_NAME, PRIVILEGE, GRANTEE");
 
   assert(pos - buff < sizeof(buff));
 
@@ -645,7 +645,7 @@ static SQLRETURN list_column_priv_i_s(HSTMT *     hstmt,
   SQLRETURN rc;
 
   /* Db,User,Table_name,"NULL" as Grantor,Table_priv*/
-  pos= my_stpmov(buff,
+  pos= myodbc_stpmov(buff,
     "SELECT TABLE_SCHEMA as TABLE_CAT, TABLE_CATALOG as TABLE_SCHEM,"
     "TABLE_NAME, COLUMN_NAME, NULL as GRANTOR, GRANTEE,"
     "PRIVILEGE_TYPE as PRIVILEGE, IS_GRANTABLE "
@@ -655,16 +655,16 @@ static SQLRETURN list_column_priv_i_s(HSTMT *     hstmt,
   if(add_name_condition_oa_id(hstmt, &pos, table_name, table_len, NULL))
     return set_stmt_error(stmt, "HY009", "Invalid use of NULL pointer(table is required parameter)", 0);
 
-  pos= my_stpmov(pos, " AND TABLE_SCHEMA");
+  pos= myodbc_stpmov(pos, " AND TABLE_SCHEMA");
   add_name_condition_oa_id(hstmt, &pos, catalog_name, catalog_len, "=DATABASE()");
 
 
-  pos= my_stpmov(pos, " AND COLUMN_NAME");
+  pos= myodbc_stpmov(pos, " AND COLUMN_NAME");
   add_name_condition_pv_id(hstmt, &pos, column_name, column_len, " LIKE '%'");
 
 
   /* TABLE_CAT is always NULL in mysql I_S */
-  pos= my_stpmov(pos, " ORDER BY /*TABLE_CAT,*/ TABLE_SCHEM, TABLE_NAME, COLUMN_NAME, PRIVILEGE");
+  pos= myodbc_stpmov(pos, " ORDER BY /*TABLE_CAT,*/ TABLE_SCHEM, TABLE_NAME, COLUMN_NAME, PRIVILEGE");
 
   assert(pos - buff < sizeof(buff));
 
@@ -912,52 +912,52 @@ SQLRETURN foreign_keys_i_s(SQLHSTMT hstmt,
 
   if (pk_table_name && pk_table_name[0])
   {
-    buff= my_stpmov(buff, "AND A.REFERENCED_TABLE_SCHEMA = ");
+    buff= myodbc_stpmov(buff, "AND A.REFERENCED_TABLE_SCHEMA = ");
     if (pk_catalog_name && pk_catalog_name[0])
     {
-      buff= my_stpmov(buff, "'");
+      buff= myodbc_stpmov(buff, "'");
       buff+= mysql_real_escape_string(mysql, buff, (char *)pk_catalog_name,
                                       pk_catalog_len);
-      buff= my_stpmov(buff, "' ");
+      buff= myodbc_stpmov(buff, "' ");
     }
     else
     {
-      buff= my_stpmov(buff, "DATABASE() ");
+      buff= myodbc_stpmov(buff, "DATABASE() ");
     }
 
-    buff= my_stpmov(buff, "AND A.REFERENCED_TABLE_NAME = '");
+    buff= myodbc_stpmov(buff, "AND A.REFERENCED_TABLE_NAME = '");
 
     buff+= mysql_real_escape_string(mysql, buff, (char *)pk_table_name,
                                     pk_table_len);
-    buff= my_stpmov(buff, "' ");
+    buff= myodbc_stpmov(buff, "' ");
 
-    my_stpmov(buff, "ORDER BY PKTABLE_CAT, PKTABLE_NAME, "
+    myodbc_stpmov(buff, "ORDER BY PKTABLE_CAT, PKTABLE_NAME, "
                  "KEY_SEQ, FKTABLE_NAME");
   }
 
   if (fk_table_name && fk_table_name[0])
   {
-    buff= my_stpmov(buff, "AND A.TABLE_SCHEMA = ");
+    buff= myodbc_stpmov(buff, "AND A.TABLE_SCHEMA = ");
 
     if (fk_catalog_name && fk_catalog_name[0])
     {
-      buff= my_stpmov(buff, "'");
+      buff= myodbc_stpmov(buff, "'");
       buff+= mysql_real_escape_string(mysql, buff, (char *)fk_catalog_name,
                                       fk_catalog_len);
-      buff= my_stpmov(buff, "' ");
+      buff= myodbc_stpmov(buff, "' ");
     }
     else
     {
-      buff= my_stpmov(buff, "DATABASE() ");
+      buff= myodbc_stpmov(buff, "DATABASE() ");
     }
 
-    buff= my_stpmov(buff, "AND A.TABLE_NAME = '");
+    buff= myodbc_stpmov(buff, "AND A.TABLE_NAME = '");
 
     buff+= mysql_real_escape_string(mysql, buff, (char *)fk_table_name,
                                     fk_table_len);
-    buff= my_stpmov(buff, "' ");
+    buff= myodbc_stpmov(buff, "' ");
 
-    buff= my_stpmov(buff, "ORDER BY FKTABLE_CAT, FKTABLE_NAME, "
+    buff= myodbc_stpmov(buff, "ORDER BY FKTABLE_CAT, FKTABLE_NAME, "
                  "KEY_SEQ, PKTABLE_NAME");
   }
 

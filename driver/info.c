@@ -587,7 +587,7 @@ MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
     MYINFO_SET_USHORT(0);
 
   case SQL_MAX_STATEMENT_LEN:
-    MYINFO_SET_ULONG(dbc->net_buffer_length);
+    MYINFO_SET_ULONG(dbc->net_buffer_len);
 
   case SQL_MAX_TABLE_NAME_LEN:
     MYINFO_SET_USHORT(NAME_LEN);

@@ -109,16 +109,16 @@ static MYSQL_RES *server_list_dbkeys(STMT *stmt,
     MYSQL *mysql= &dbc->mysql;
     char  buff[255 + 4 * NAME_LEN], *to;
 
-    to= my_stpmov(buff, "SHOW KEYS FROM `");
+    to= myodbc_stpmov(buff, "SHOW KEYS FROM `");
     if (catalog_len)
     {
       to+= myodbc_escape_string(mysql, to, (ulong)(sizeof(buff) - (to - buff)),
                                 (char *)catalog, catalog_len, 1);
-      to= my_stpmov(to, "`.`");
+      to= myodbc_stpmov(to, "`.`");
     }
     to+= myodbc_escape_string(mysql, to, (ulong)(sizeof(buff) - (to - buff)),
                               (char *)table, table_len, 1);
-    to= my_stpmov(to, "`");
+    to= myodbc_stpmov(to, "`");
 
     MYLOG_DBC_QUERY(dbc, buff);
     if (exec_stmt_query(stmt, buff, strlen(buff), FALSE))
@@ -541,12 +541,12 @@ static MYSQL_RES *table_privs_raw_data( STMT *      stmt,
   pos= strxmov(pos, "' AND Db = ", NullS);
   if (catalog_len)
   {
-    pos= my_stpmov(pos, "'");
+    pos= myodbc_stpmov(pos, "'");
     pos+= mysql_real_escape_string(mysql, pos, (char *)catalog, catalog_len);
-    pos= my_stpmov(pos, "'");
+    pos= myodbc_stpmov(pos, "'");
   }
   else
-    pos= my_stpmov(pos, "DATABASE()");
+    pos= myodbc_stpmov(pos, "DATABASE()");
 
   pos= strxmov(pos, " ORDER BY Db, Table_name, Table_priv, User", NullS);
 
@@ -684,27 +684,27 @@ static MYSQL_RES *column_privs_raw_data(STMT *      stmt,
 
   char buff[400+6*NAME_LEN+1], *pos;
 
-  pos= my_stpmov(buff,
+  pos= myodbc_stpmov(buff,
     "SELECT c.Db, c.User, c.Table_name, c.Column_name,"
     "t.Grantor, c.Column_priv, t.Table_priv "
     "FROM mysql.columns_priv AS c, mysql.tables_priv AS t "
     "WHERE c.Table_name = '");
   pos+= mysql_real_escape_string(mysql, pos, (char *)table, table_len);
 
-  pos= my_stpmov(pos, "' AND c.Db = ");
+  pos= myodbc_stpmov(pos, "' AND c.Db = ");
   if (catalog_len)
   {
-    pos= my_stpmov(pos, "'");
+    pos= myodbc_stpmov(pos, "'");
     pos+= mysql_real_escape_string(mysql, pos, (char *)catalog, catalog_len);
-    pos= my_stpmov(pos, "'");
+    pos= myodbc_stpmov(pos, "'");
   }
   else
-    pos= my_stpmov(pos, "DATABASE()");
+    pos= myodbc_stpmov(pos, "DATABASE()");
 
-  pos= my_stpmov(pos, "AND c.Column_name LIKE '");
+  pos= myodbc_stpmov(pos, "AND c.Column_name LIKE '");
   pos+= mysql_real_escape_string(mysql, pos, (char *)column, column_len);
 
-  pos= my_stpmov(pos,
+  pos= myodbc_stpmov(pos,
     "' AND c.Table_name = t.Table_name "
     "ORDER BY c.Db, c.Table_name, c.Column_name, c.Column_priv");
 
@@ -837,13 +837,13 @@ MYSQL_RES *table_status_no_i_s(STMT        *stmt,
 	/** @todo determine real size for buffer */
 	char buff[36 + 4*NAME_LEN + 1], *to;
 
-	to= my_stpmov(buff, "SHOW TABLE STATUS ");
+	to= myodbc_stpmov(buff, "SHOW TABLE STATUS ");
 	if (catalog && *catalog)
 	{
-		to= my_stpmov(to, "FROM `");
+		to= myodbc_stpmov(to, "FROM `");
 		to+= myodbc_escape_string(mysql, to, (ulong)(sizeof(buff) - (to - buff)),
 			(char *)catalog, catalog_length, 1);
-		to= my_stpmov(to, "` ");
+		to= myodbc_stpmov(to, "` ");
 	}
 
 	/*
@@ -856,13 +856,13 @@ MYSQL_RES *table_status_no_i_s(STMT        *stmt,
 
 	if (table && *table)
 	{
-		to= my_stpmov(to, "LIKE '");
+		to= myodbc_stpmov(to, "LIKE '");
 		if (wildcard)
 			to+= mysql_real_escape_string(mysql, to, (char *)table, table_length);
 		else
 			to+= myodbc_escape_string(mysql, to, (ulong)(sizeof(buff) - (to - buff)),
 			(char *)table, table_length, 0);
-		to= my_stpmov(to, "'");
+		to= myodbc_stpmov(to, "'");
 	}
 
   MYLOG_QUERY(stmt, buff);
@@ -901,12 +901,12 @@ MYSQL_RES *server_show_create_table(STMT        *stmt,
   /** @todo determine real size for buffer */
   char buff[36 + 4*NAME_LEN + 1], *to;
 
-  to= my_stpmov(buff, "SHOW CREATE TABLE ");
+  to= myodbc_stpmov(buff, "SHOW CREATE TABLE ");
   if (catalog && *catalog)
   {
-    to= my_stpmov(to, " `");
-    to= my_stpmov(to, (char *)catalog);
-    to= my_stpmov(to, "`.");
+    to= myodbc_stpmov(to, " `");
+    to= myodbc_stpmov(to, (char *)catalog);
+    to= myodbc_stpmov(to, "`.");
   }
 
   /* Empty string won't match anything. */
@@ -915,9 +915,9 @@ MYSQL_RES *server_show_create_table(STMT        *stmt,
 
   if (table && *table)
   {
-    to= my_stpmov(to, " `");
-    to= my_stpmov(to, (char *)table);
-    to= my_stpmov(to, "`");
+    to= myodbc_stpmov(to, " `");
+    to= myodbc_stpmov(to, (char *)table);
+    to= myodbc_stpmov(to, "`");
   }
 
   MYLOG_QUERY(stmt, buff);
@@ -1240,19 +1240,19 @@ SQLRETURN foreign_keys_no_i_s(SQLHSTMT hstmt,
                   buffer[bracket_end - pos - quote_char_length * 2 - 1]= '\0';
                   if (key_search == 0)
                   {
-                    my_stpmov(fkRows->FKCOLUMN_NAME, buffer);
+                    myodbc_stpmov(fkRows->FKCOLUMN_NAME, buffer);
                   }
                   else
                   {
-                    my_stpmov(fkRows->PKCOLUMN_NAME, buffer);
-                    my_stpmov(fkRows->PKTABLE_NAME, table_name);
-                    my_stpmov(fkRows->FK_NAME, constraint_name);
-                    my_stpmov(fkRows->FKTABLE_NAME, row[0]);
-                    my_stpmov(fkRows->FKTABLE_CAT, (szFkCatalogName ?
+                    myodbc_stpmov(fkRows->PKCOLUMN_NAME, buffer);
+                    myodbc_stpmov(fkRows->PKTABLE_NAME, table_name);
+                    myodbc_stpmov(fkRows->FK_NAME, constraint_name);
+                    myodbc_stpmov(fkRows->FKTABLE_NAME, row[0]);
+                    myodbc_stpmov(fkRows->FKTABLE_CAT, (szFkCatalogName ?
                             strdup_root(alloc, (char *)szFkCatalogName) :
                             strdup_root(alloc, stmt->dbc->database ?
                             stmt->dbc->database : "null")));
-                    my_stpmov(fkRows->PKTABLE_CAT, (szPkCatalogName ?
+                    myodbc_stpmov(fkRows->PKTABLE_CAT, (szPkCatalogName ?
                             strdup_root(alloc, (char *)szPkCatalogName) :
                             strdup_root(alloc, stmt->dbc->database ?
                             stmt->dbc->database : "null")));
@@ -1269,19 +1269,19 @@ SQLRETURN foreign_keys_no_i_s(SQLHSTMT hstmt,
                   buffer[comma_pos - pos - quote_char_length * 2 - 1]= '\0';
                   if (key_search == 0)
                   {    
-                    my_stpmov(fkRows->FKCOLUMN_NAME, buffer);
+                    myodbc_stpmov(fkRows->FKCOLUMN_NAME, buffer);
                   }
                   else
                   {
-                    my_stpmov(fkRows->PKCOLUMN_NAME, buffer);
-                    my_stpmov(fkRows->PKTABLE_NAME, table_name);
-                    my_stpmov(fkRows->FK_NAME, constraint_name);
-                    my_stpmov(fkRows->FKTABLE_NAME, row[0]);
-                    my_stpmov(fkRows->FKTABLE_CAT, (szFkCatalogName ?
+                    myodbc_stpmov(fkRows->PKCOLUMN_NAME, buffer);
+                    myodbc_stpmov(fkRows->PKTABLE_NAME, table_name);
+                    myodbc_stpmov(fkRows->FK_NAME, constraint_name);
+                    myodbc_stpmov(fkRows->FKTABLE_NAME, row[0]);
+                    myodbc_stpmov(fkRows->FKTABLE_CAT, (szFkCatalogName ?
                             strdup_root(alloc, (char *)szFkCatalogName) :
                             strdup_root(alloc, stmt->dbc->database ?
                             stmt->dbc->database : "null")));
-                    my_stpmov(fkRows->PKTABLE_CAT, (szPkCatalogName ?
+                    myodbc_stpmov(fkRows->PKTABLE_CAT, (szPkCatalogName ?
                             strdup_root(alloc, (char *)szPkCatalogName) :
                             strdup_root(alloc, stmt->dbc->database ?
                             stmt->dbc->database : "null")));
@@ -1638,27 +1638,27 @@ static MYSQL_RES *server_list_proc_params(STMT *stmt,
   MYSQL *mysql= &dbc->mysql;
   char   buff[255+4*NAME_LEN+1], *pos;
 
-  pos= my_stpmov(buff, "SELECT name, CONCAT(IF(length(returns)>0, CONCAT('RETURN_VALUE ', returns, if(length(param_list)>0, ',', '')),''), param_list),"
+  pos= myodbc_stpmov(buff, "SELECT name, CONCAT(IF(length(returns)>0, CONCAT('RETURN_VALUE ', returns, if(length(param_list)>0, ',', '')),''), param_list),"
                     "db, type FROM mysql.proc WHERE Db=");
 
 
   if (catalog_len)
   {
-    pos= my_stpmov(pos, "'");
+    pos= myodbc_stpmov(pos, "'");
     pos+= mysql_real_escape_string(mysql, pos, (char *)catalog, catalog_len);
-    pos= my_stpmov(pos, "'");
+    pos= myodbc_stpmov(pos, "'");
   }
   else
-    pos= my_stpmov(pos, "DATABASE()");
+    pos= myodbc_stpmov(pos, "DATABASE()");
 
   if (proc_name_len)
   {
-    pos= my_stpmov(pos, " AND name LIKE '");
+    pos= myodbc_stpmov(pos, " AND name LIKE '");
     pos+= mysql_real_escape_string(mysql, pos, (char *)proc_name, proc_name_len);
-    pos= my_stpmov(pos, "'");
+    pos= myodbc_stpmov(pos, "'");
   }
 
-  pos= my_stpmov(pos, " ORDER BY Db, name");
+  pos= myodbc_stpmov(pos, " ORDER BY Db, name");
 
   assert(pos - buff < sizeof(buff));
   MYLOG_DBC_QUERY(dbc, buff);
@@ -2433,10 +2433,10 @@ tables_no_i_s(SQLHSTMT hstmt,
       myodbc_mutex_lock(&stmt->dbc->lock);
       {
         char buff[32 + NAME_LEN * 2], *to;
-        to= my_stpmov(buff, "SHOW DATABASES LIKE '");
+        to= myodbc_stpmov(buff, "SHOW DATABASES LIKE '");
         to+= mysql_real_escape_string(&stmt->dbc->mysql, to,
                                       (char *)catalog, catalog_len);
-        to= my_stpmov(to, "'");
+        to= myodbc_stpmov(to, "'");
         MYLOG_QUERY(stmt, buff);
         if (!mysql_query(&stmt->dbc->mysql, buff))
           catalog_res= mysql_store_result(&stmt->dbc->mysql);
