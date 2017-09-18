@@ -1328,13 +1328,31 @@ DECLARE_TEST(t_prefetch_bug)
                 "argument LIKE '%%Q-%03d%%' %s",
                 con_id, (i + 1), check_for[i]);
 
-      if (SQLExecDirect(hstmt, (SQLCHAR*)check_query, SQL_NTS))
-      {
-        RESTORE_SERVER_LOGGING;
-        return FAIL;
-      }
+      ok_stmt2(hstmt, SQLExecDirect(hstmt, (SQLCHAR*)check_query, SQL_NTS));
       printf("\nLOGGED QUERIES:\n");
       query_rows = my_print_non_format_result(hstmt);
+
+      // Check if the logging actually happened
+      if (query_rows == 0)
+      {
+        int logged_rows = 0;
+        sprintf(check_query, "SELECT CAST(argument as CHAR(128)) arg FROM " \
+                "mysql.general_log WHERE thread_id = %d", con_id);
+        ok_stmt2(hstmt, SQLExecDirect(hstmt, (SQLCHAR*)check_query, SQL_NTS));
+        logged_rows = my_print_non_format_result(hstmt);
+        RESTORE_SERVER_LOGGING;
+        if (logged_rows > 0)
+        {
+          printf("\nUnexpected logged rows!");
+          return FAIL;
+        }
+        else
+        {
+          printf("\nWarning: General query log table is empty");
+          return OK;
+        }
+      }
+
       if (expected_queries[i] < query_rows ||
           (expected_queries[i] - 1) > query_rows )
       {
