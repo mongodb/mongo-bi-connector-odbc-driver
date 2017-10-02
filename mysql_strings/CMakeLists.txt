@@ -13,12 +13,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)
+SET_PROPERTY(DIRECTORY PROPERTY INCLUDE_DIRECTORIES ${CMAKE_SOURCE_DIR}/include/sys)
 
 SET(STRINGS_SOURCES bchange.c ctype-big5.c ctype-bin.c ctype-cp932.c
                 ctype-czech.c ctype-euc_kr.c ctype-eucjpms.c ctype-extra.c ctype-gb2312.c ctype-gbk.c ctype-gb18030.c
                 ctype-latin1.c ctype-mb.c ctype-simple.c ctype-sjis.c ctype-tis620.c ctype-uca.c
-                ctype-ucs2.c ctype-ujis.c ctype-utf8.c ctype-win1250ch.c ctype.c decimal.c dtoa.c int2str.c
+                ctype-ucs2.c ctype-ujis.c ctype-utf8.c ctype-win1250ch.c ctype.c dtoa.c int2str.c
                 is_prefix.c llstr.c longlong2str.c my_strtoll10.c my_vsnprintf.c
                 str2int.c str_alloc.c strcend.c strend.c strfill.c strmake.c
                 my_stpmov.c my_stpnmov.c
@@ -31,11 +31,8 @@ IF(NOT HAVE_STRNLEN)
 ENDIF()
 # Avoid dependencies on perschema data defined in mysys
 ADD_DEFINITIONS(-DDISABLE_MYSQL_THREAD_H)
-ADD_CONVENIENCE_LIBRARY(strings ${STRINGS_SOURCES})
+ADD_LIBRARY(mysql_strings ${STRINGS_SOURCES})
 
-ADD_EXECUTABLE(conf_to_src EXCLUDE_FROM_ALL conf_to_src.c)
-TARGET_LINK_LIBRARIES(conf_to_src strings)
-
-IF(MSVC)
-   INSTALL_DEBUG_TARGET(strings DESTINATION ${INSTALL_LIBDIR}/debug)
+IF(NOT WIN32)
+  SET_TARGET_PROPERTIES(mysql_strings PROPERTIES COMPILE_FLAGS ${CMAKE_SHARED_LIBRARY_C_FLAGS})
 ENDIF()

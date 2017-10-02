@@ -31,7 +31,6 @@
 /* WSAStartup needs winsock library*/
 #pragma comment(lib, "ws2_32")
 my_bool have_tcpip=0;
-static void my_win_init();
 #endif
 
 #define SCALE_SEC       100
@@ -84,10 +83,8 @@ int set_crt_report_leaks()
     @retval FALSE Success
     @retval TRUE  Error. Couldn't initialize environment
 */
-my_bool my_init()
+my_bool my_init2()
 {
-  char *str;
-
   if (my_init_done)
     return FALSE;
 
@@ -100,13 +97,6 @@ my_bool my_init()
   my_umask= 0640;                       /* Default umask for new files */
   my_umask_dir= 0750;                   /* Default umask for new directories */
 
-  /* Default creation of new files */
-  if ((str= getenv("UMASK")) != 0)
-    my_umask= (int) (atoi_octal(str) | 0640);
-  /* Default creation of new dir's */
-  if ((str= getenv("UMASK_DIR")) != 0)
-    my_umask_dir= (int) (atoi_octal(str) | 0750);
-
   instrumented_stdin.m_file= stdin;
   instrumented_stdin.m_psi= NULL;       /* not yet instrumented */
   mysql_stdin= & instrumented_stdin;
@@ -117,19 +107,7 @@ my_bool my_init()
   if (my_thread_init())
     return TRUE;
 
-  /* $HOME is needed early to parse configuration files located in ~/ */
-  if ((home_dir= getenv("HOME")) != 0)
-    home_dir= intern_filename(home_dir_buff, home_dir);
-
-  {
-    DBUG_ENTER("my_init");
-    DBUG_PROCESS((char*) (my_progname ? my_progname : "unknown"));
-#ifdef _WIN32
-    my_win_init();
-#endif
-    DBUG_PRINT("exit", ("home: '%s'", home_dir));
-    DBUG_RETURN(FALSE);
-  }
+  return FALSE;
 } /* my_init */
 
 
@@ -232,38 +210,6 @@ void my_parameter_handler(const wchar_t * expression, const wchar_t * function,
 		   expression, function, file, line));
 }
 
-
-#ifdef __MSVC_RUNTIME_CHECKS
-#include <rtcapi.h>
-
-/* Turn off runtime checks for 'handle_rtc_failure' */
-#pragma runtime_checks("", off)
-
-/*
-  handle_rtc_failure
-  Windows: run-time error checks are reported to ...
-*/
-
-int handle_rtc_failure(int err_type, const char *file, int line,
-                       const char* module, const char *format, ...)
-{
-  va_list args;
-  char   buff[2048];
-  size_t len;
-
-  len= my_snprintf(buff, sizeof(buff), "At %s:%d: ", file, line);
-
-  va_start(args, format);
-  vsnprintf(buff + len, sizeof(buff) - len, format, args);
-  va_end(args);
-
-  my_message_local(ERROR_LEVEL, buff);
-
-  return 0; /* Error is handled */
-}
-#pragma runtime_checks("", restore)
-#endif
-
 #define OFFSET_TO_EPOC ((__int64) 134774 * 24 * 60 * 60 * 1000 * 1000 * 10)
 #define MS 10000000
 
@@ -293,61 +239,6 @@ static void win_init_time()
 }
 
 
-/*
-  Open HKEY_LOCAL_MACHINE\SOFTWARE\MySQL and set any strings found
-  there as environment variables
-*/
-static void win_init_registry()
-{
-  HKEY key_handle;
-
-  if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, (LPCTSTR)"SOFTWARE\\MySQL",
-                    0, KEY_READ, &key_handle) == ERROR_SUCCESS)
-  {
-    LONG ret;
-    DWORD index= 0;
-    DWORD type;
-    char key_name[256], key_data[1024];
-    DWORD key_name_len= sizeof(key_name) - 1;
-    DWORD key_data_len= sizeof(key_data) - 1;
-
-    while ((ret= RegEnumValue(key_handle, index++,
-                              key_name, &key_name_len,
-                              NULL, &type, (LPBYTE)&key_data,
-                              &key_data_len)) != ERROR_NO_MORE_ITEMS)
-    {
-      char env_string[sizeof(key_name) + sizeof(key_data) + 2];
-
-      if (ret == ERROR_MORE_DATA)
-      {
-        /* Registry value larger than 'key_data', skip it */
-        DBUG_PRINT("error", ("Skipped registry value that was too large"));
-      }
-      else if (ret == ERROR_SUCCESS)
-      {
-        if (type == REG_SZ)
-        {
-          strxmov(env_string, key_name, "=", key_data, NullS);
-
-          /* variable for putenv must be allocated ! */
-          putenv(strdup(env_string)) ;
-        }
-      }
-      else
-      {
-        /* Unhandled error, break out of loop */
-        break;
-      }
-
-      key_name_len= sizeof(key_name) - 1;
-      key_data_len= sizeof(key_data) - 1;
-    }
-
-    RegCloseKey(key_handle);
-  }
-}
-
-
 /*------------------------------------------------------------------
   Name: CheckForTcpip| Desc: checks if tcpip has been installed on system
   According to Microsoft Developers documentation the first registry
@@ -359,82 +250,7 @@ static void win_init_registry()
 #define WINSOCK2KEY "SYSTEM\\CurrentControlSet\\Services\\Winsock2\\Parameters"
 #define WINSOCKKEY  "SYSTEM\\CurrentControlSet\\Services\\Winsock\\Parameters"
 
-static my_bool win32_have_tcpip()
-{
-  HKEY hTcpipRegKey;
-  if (RegOpenKeyEx ( HKEY_LOCAL_MACHINE, TCPIPKEY, 0, KEY_READ,
-		      &hTcpipRegKey) != ERROR_SUCCESS)
-  {
-    if (RegOpenKeyEx ( HKEY_LOCAL_MACHINE, WINSOCK2KEY, 0, KEY_READ,
-		      &hTcpipRegKey) != ERROR_SUCCESS)
-    {
-      if (RegOpenKeyEx ( HKEY_LOCAL_MACHINE, WINSOCKKEY, 0, KEY_READ,
-			 &hTcpipRegKey) != ERROR_SUCCESS)
-	if (!getenv("HAVE_TCPIP") || have_tcpip)	/* Provide a workaround */
-	  return (FALSE);
-    }
-  }
-  RegCloseKey ( hTcpipRegKey);
-  return (TRUE);
-}
 
-
-static my_bool win32_init_tcp_ip()
-{
-  if (win32_have_tcpip())
-  {
-    WORD wVersionRequested = MAKEWORD( 2, 2 );
-    WSADATA wsaData;
- 	/* Be a good citizen: maybe another lib has already initialised
- 		sockets, so dont clobber them unless necessary */
-    if (WSAStartup( wVersionRequested, &wsaData ))
-    {
-      /* Load failed, maybe because of previously loaded
-	 incompatible version; try again */
-      WSACleanup( );
-      if (!WSAStartup( wVersionRequested, &wsaData ))
-	have_tcpip=1;
-    }
-    else
-    {
-      if (wsaData.wVersion != wVersionRequested)
-      {
-	/* Version is no good, try again */
-	WSACleanup( );
-	if (!WSAStartup( wVersionRequested, &wsaData ))
-	  have_tcpip=1;
-      }
-      else
-	have_tcpip=1;
-    }
-  }
-  return(0);
-}
-
-
-static void my_win_init()
-{
-  DBUG_ENTER("my_win_init");
-
-  /* this is required to make crt functions return -1 appropriately */
-  _set_invalid_parameter_handler(my_parameter_handler);
-
-#ifdef __MSVC_RUNTIME_CHECKS
-  /*
-    Install handler to send RTC (Runtime Error Check) warnings
-    to log file
-  */
-  _RTC_SetErrorFunc(handle_rtc_failure);
-#endif
-
-  _tzset();
-
-  win_init_time();
-  win_init_registry();
-  win32_init_tcp_ip();
-
-  DBUG_VOID_RETURN;
-}
 #endif /* _WIN32 */
 
 PSI_stage_info stage_waiting_for_table_level_lock=

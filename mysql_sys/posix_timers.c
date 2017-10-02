@@ -23,7 +23,7 @@
 #include <signal.h>
 
 #if defined(HAVE_SIGEV_THREAD_ID)
-#include <sys/syscall.h>    /* SYS_gettid */
+#include <syscall.h>    /* SYS_gettid */
 
 #ifndef sigev_notify_thread_id
 #define sigev_notify_thread_id   _sigev_un._tid

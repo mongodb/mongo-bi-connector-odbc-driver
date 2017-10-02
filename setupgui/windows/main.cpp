@@ -43,7 +43,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 {
 	if ( ul_reason_for_call == DLL_PROCESS_ATTACH )
 	{
-		my_init();
+		my_init2();
 		InitCommonControls();
 		ghInstance = hModule;
 		WNDCLASSEX wcx;

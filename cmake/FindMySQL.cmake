@@ -692,6 +692,12 @@ if(MYSQLCLIENT_STATIC_LINKING AND
   list(APPEND MYSQL_LIBRARIES "rt")
 endif()
 
+# For dynamic linking use the built-in sys and strings
+if(NOT MYSQLCLIENT_STATIC_LINKING)
+   list(APPEND MYSQL_LIBRARIES "mysql_sys")
+   list(APPEND MYSQL_LIBRARIES "mysql_strings")
+endif()
+
 if(MYSQL_EXTRA_LIBRARIES)
   separate_arguments(MYSQL_EXTRA_LIBRARIES)
   list(APPEND MYSQL_LIBRARIES ${MYSQL_EXTRA_LIBRARIES})

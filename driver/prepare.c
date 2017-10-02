@@ -43,8 +43,6 @@
 #ifndef _UNIX_
 # include <dos.h>
 #endif /* !_UNIX_ */
-#include <my_list.h>
-#include <m_ctype.h>
 
 /**
   Prepare a statement for later execution.
