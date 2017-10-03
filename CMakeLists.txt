@@ -30,6 +30,21 @@ if(COMMAND cmake_policy)
 	cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
+
+#------- compatibility with older cmake versions ------
+
+#message("CMAKE_VERSION: ${CMAKE_VERSION}")
+
+if(CMAKE_VERSION VERSION_LESS "3.0")
+
+macro(add_compile_options)
+  add_definitions(${ARGV})
+endmacro()
+
+endif()
+
+#-----------------------------------------------------
+
 FIND_PACKAGE(Threads)
 
 INCLUDE(version.cmake)
@@ -271,6 +286,10 @@ ENDIF(COMPILE_RESULT)
 	ENDIF(NOT NO_THREADS)
 
 #------------ build options for windows --------------
+
+set(MAINTAINER_MODE OFF CACHE BOOL "Build sources in maintainer mode")
+mark_as_advanced(MAINTAINER_MODE)
+
 IF(WIN32)
         REMOVE_DEFINITIONS(-DUNICODE)
         ADD_DEFINITIONS(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
@@ -323,8 +342,31 @@ IF(WIN32)
 
                 ENDFOREACH(CFG)
         ENDFOREACH(TYPE)
+
+  if(NOT MAINTAINER_MODE)
+
+    # TODO: instead fix code to not generate compile warnings
+    add_compile_options(/W1 /wd4133 /wd4047 /wd4313 /wd4197)
+
+  else()
+
+    # TODO: When code is fixed so that there are no warnings on this level,
+    # increase to /W2 and so on, until /Wall is reached. When /Wall is green on
+    # Windows, proceed to fixing remaining warnings on Unix builds.
+
+    add_compile_options(/W1)
+
+  endif()
+
 ELSE(WIN32)
+
   ADD_DEFINITIONS(-D_UNIX_)
+
+  if(NOT MAINTAINER_MODE)
+    # TODO: instead fix code to not generate compile warnings
+    add_compile_options( -w )
+  endif()
+
 ENDIF(WIN32)
 #-----------------------------------------------------
 
