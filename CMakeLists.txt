@@ -2,18 +2,18 @@
 # Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the GPLv2
-# <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most 
-# MySQL Connectors. There are special exceptions to the terms and 
-# conditions of the GPLv2 as it is applied to this software, see the 
+# <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+# MySQL Connectors. There are special exceptions to the terms and
+# conditions of the GPLv2 as it is applied to this software, see the
 # FLOSS License Exception
 # <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
 #
-# This program is free software; you can redistribute it and/or modify 
-# it under the terms of the GNU General Public License as published 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published
 # by the Free Software Foundation; version 2 of the License.
 #
-# This program is distributed in the hope that it will be useful, but 
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY 
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
 # for more details.
 #
@@ -29,6 +29,21 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8.5 FATAL_ERROR)
 if(COMMAND cmake_policy)
 	cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
+
+
+#------- compatibility with older cmake versions ------
+
+#message("CMAKE_VERSION: ${CMAKE_VERSION}")
+
+if(CMAKE_VERSION VERSION_LESS "3.0")
+
+macro(add_compile_options)
+  add_definitions(${ARGV})
+endmacro()
+
+endif()
+
+#-----------------------------------------------------
 
 FIND_PACKAGE(Threads)
 
@@ -190,6 +205,10 @@ ENDIF(COMPILE_RESULT)
 	ENDIF(NOT NO_THREADS)
 
 #------------ build options for windows --------------
+
+set(MAINTAINER_MODE OFF CACHE BOOL "Build sources in maintainer mode")
+mark_as_advanced(MAINTAINER_MODE)
+
 IF(WIN32)
         REMOVE_DEFINITIONS(-DUNICODE)
         ADD_DEFINITIONS(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
@@ -242,8 +261,31 @@ IF(WIN32)
 
                 ENDFOREACH(CFG)
         ENDFOREACH(TYPE)
+
+  if(NOT MAINTAINER_MODE)
+
+    # TODO: instead fix code to not generate compile warnings
+    add_compile_options(/W1 /wd4133 /wd4047 /wd4313 /wd4197)
+
+  else()
+
+    # TODO: When code is fixed so that there are no warnings on this level,
+    # increase to /W2 and so on, until /Wall is reached. When /Wall is green on
+    # Windows, proceed to fixing remaining warnings on Unix builds.
+
+    add_compile_options(/W1)
+
+  endif()
+
 ELSE(WIN32)
+
   ADD_DEFINITIONS(-D_UNIX_)
+
+  if(NOT MAINTAINER_MODE)
+    # TODO: instead fix code to not generate compile warnings
+    add_compile_options( -w )
+  endif()
+
 ENDIF(WIN32)
 #-----------------------------------------------------
 
@@ -251,7 +293,7 @@ SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 SET(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
 
 SET(LIB_SUBDIR "lib")
-IF(RPM_BUILD AND CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64|ppc64|ppc64p7|s390x|sparc64)") 
+IF(RPM_BUILD AND CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64|ppc64|ppc64p7|s390x|sparc64)")
   SET(LIB_SUBDIR "lib64")
 ENDIF()
 
