@@ -226,10 +226,10 @@ IF(CMAKE_SYSTEM_NAME MATCHES "SunOS" AND
   ENDIF()
   SET(CC_MINOR_VERSION ${CMAKE_MATCH_1})
 
-  IF(${CC_MINOR_VERSION} EQUAL 14)
-    MESSAGE(FATAL_ERROR
-      "Please run cmake with -DCMAKE_CXX_FLAGS=-std=c++03 for ${stderr}")
-  ENDIF()
+#  IF(${CC_MINOR_VERSION} EQUAL 14)
+#    MESSAGE(FATAL_ERROR
+#      "Please run cmake with -DCMAKE_CXX_FLAGS=-std=c++03 for ${stderr}")
+#  ENDIF()
 
   IF(${CC_MINOR_VERSION} EQUAL 13)
     SET(STLPORT_SUFFIX "lib/compilers/stlport4")
