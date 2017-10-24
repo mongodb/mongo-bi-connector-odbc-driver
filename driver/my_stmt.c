@@ -72,6 +72,7 @@ my_bool free_current_result(STMT *stmt)
       free_result_bind(stmt);
       res= mysql_stmt_free_result(stmt->ssps);
     }
+    free_internal_result_buffers(stmt);
     /* We need to always free stmt->result because SSPS keep metadata there */
     mysql_free_result(stmt->result);
     stmt->result= NULL;
@@ -102,6 +103,7 @@ MYSQL_RES * stmt_get_result(STMT *stmt, BOOL force_use)
    we need to use/store each resultset of multiple resultsets */
 MYSQL_RES * get_result_metadata(STMT *stmt, BOOL force_use)
 {
+  free_internal_result_buffers(stmt);
   /* just a precaution, mysql_free_result checks for NULL anywat */
   mysql_free_result(stmt->result);
 
@@ -406,6 +408,7 @@ SQLRETURN prepare(STMT *stmt, char * query, SQLINTEGER query_length)
 
       stmt->param_count= mysql_stmt_param_count(stmt->ssps);
 
+      free_internal_result_buffers(stmt);
       /* make sure we free the result from the previous time */
       mysql_free_result(stmt->result);
 

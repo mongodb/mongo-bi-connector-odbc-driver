@@ -145,9 +145,7 @@ extern void my_end(int infoflag);
 extern void my_qsort(void *base_ptr, size_t total_elems, size_t size, qsort_cmp cmp);
 
 extern int is_prefix(const char *a, const char *b);
-
-extern char *ll2str(longlong val,char *dst,int radix, int upcase);
-extern char *longlong10_to_str(longlong val,char *dst,int radix);
+extern char *ll2str(longlong val, char *dst, int radix, int upcase);
 #define longlong2str(A,B,C) ll2str((A),(B),(C),1)
 
 extern char *strfill(char * s, size_t len, pchar fill);

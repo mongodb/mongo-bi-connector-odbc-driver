@@ -635,6 +635,7 @@ SQLRETURN SQL_API my_SQLFreeStmtExtended(SQLHSTMT hstmt,SQLUSMALLINT fOption,
       {
         /* We seiously CLOSEing statement for preparing handle object for
            new query */
+        free_internal_result_buffers(stmt);
         while (!next_result(stmt))
         {
           get_result_metadata(stmt, TRUE);

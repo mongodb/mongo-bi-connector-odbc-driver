@@ -318,6 +318,8 @@ void *ptr_offset_adjust   (void *ptr, SQLULEN *bind_offset,
                           SQLINTEGER bind_type, SQLINTEGER default_size,
                           SQLULEN row);
 
+void free_internal_result_buffers(STMT *stmt);
+
 /* Functions used when debugging */
 void query_print          (FILE *log_file,char *query);
 FILE *init_query_log      (void);
