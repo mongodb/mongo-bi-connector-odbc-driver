@@ -2045,7 +2045,7 @@ empty_set:
 exit_with_free:
 
   free_internal_result_buffers(stmt);
-  mysql_free_result(stmt->result);
+  mysql_free_result(proc_list_res);
 
 clean_exit:
 

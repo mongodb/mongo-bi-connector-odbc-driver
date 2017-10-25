@@ -74,7 +74,13 @@ my_bool free_current_result(STMT *stmt)
     }
     free_internal_result_buffers(stmt);
     /* We need to always free stmt->result because SSPS keep metadata there */
-    mysql_free_result(stmt->result);
+    if (stmt->fake_result)
+    {
+      x_free(stmt->result);
+    }
+    else
+      mysql_free_result(stmt->result);
+
     stmt->result= NULL;
   }
   return res;
