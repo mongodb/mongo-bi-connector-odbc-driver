@@ -61,6 +61,10 @@ extern "C"
 #define push_dynamic(A,B) insert_dynamic((A),(B))
 #define myodbc_snprintf my_snprintf
 
+#ifdef MYSQLCLIENT_STATIC_LINKING
+#define my_sys_init my_init
+#endif
+
   static my_bool inline myodbc_allocate_dynamic(DYNAMIC_ARRAY *array, uint max_elements)
   {
     if (max_elements >= array->max_element)

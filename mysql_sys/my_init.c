@@ -83,7 +83,7 @@ int set_crt_report_leaks()
     @retval FALSE Success
     @retval TRUE  Error. Couldn't initialize environment
 */
-my_bool my_init2()
+my_bool my_sys_init()
 {
   if (my_init_done)
     return FALSE;
