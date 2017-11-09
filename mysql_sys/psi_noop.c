@@ -479,7 +479,7 @@ start_stage_noop(PSI_stage_key key NNN,
 }
 
 static PSI_stage_progress*
-get_current_stage_progress_noop()
+get_current_stage_progress_noop(void)
 {
   return NULL;
 }
