@@ -120,7 +120,7 @@ SQLWCHAR *wchar_t_as_sqlwchar(wchar_t *from, SQLWCHAR *to, size_t len);
 char * myodbc_strlwr(char *target, size_t len);
 SQLCHAR* sqlwchar_as_utf8_simple(SQLWCHAR *s);
 char *myodbc_stpmov(char *dst, const char *src);
-
+char *myodbc_ll2str(longlong val, char *dst, int radix);
 #ifdef __cplusplus
 }
 #endif

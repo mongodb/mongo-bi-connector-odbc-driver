@@ -27,11 +27,24 @@
 
 #define DONT_DEFINE_VOID
 
+#if MYSQLCLIENT_STATIC_LINKING
+
+#include <my_global.h>
+#include <mysql.h>
+#include <my_sys.h>
+#include <my_list.h>
+#include <m_string.h>
+#include <mysqld_error.h>
+
+#else
+
 #include "include/sys/my_global.h"
 #include "include/sys/my_thread.h"
 #include <mysql.h>
 #include "include/sys_main.h"
 #include <mysqld_error.h>
+
+#endif
 
 #ifdef __cplusplus
 extern "C"

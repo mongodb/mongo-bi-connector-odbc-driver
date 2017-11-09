@@ -218,9 +218,6 @@ longlong my_strtoll10(const char *nptr, char **endptr, int *error);
 extern char *longlong10_to_str(longlong val,char *dst,int radix);
 #endif
 
-extern char *ll2str(longlong val,char *dst,int radix, int upcase);
-#define longlong2str(A,B,C) ll2str((A),(B),(C),1)
-
 #if defined(__cplusplus)
 }
 #endif

@@ -644,7 +644,7 @@ extern void my_message_stderr(uint my_err, const char *str, myf MyFlags);
 void my_message_local_stderr(enum loglevel ll,
                              const char *format, va_list args);
 extern void my_message_local(enum loglevel ll, const char *format, ...);
-extern my_bool my_init2(void);
+extern my_bool my_sys_init(void);
 extern void my_end(int infoflag);
 extern int my_redel(const char *from, const char *to, int MyFlags);
 extern int my_copystat(const char *from, const char *to, int MyFlags);

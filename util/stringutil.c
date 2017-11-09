@@ -989,3 +989,55 @@ char *myodbc_stpmov(char *dst, const char *src)
   while ((*dst++ = *src++));
   return dst - 1;
 }
+
+
+char *myodbc_ll2str(longlong val, char *dst, int radix)
+{
+  char buffer[65];
+  char _dig_vec_upper[] =
+    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  char *p;
+  long long_val;
+  char *dig_vec = _dig_vec_upper;
+  ulonglong uval = (ulonglong)val;
+
+  if (radix < 0)
+  {
+    if (radix < -36 || radix > -2) return (char*)0;
+    if (val < 0) {
+      *dst++ = '-';
+      /* Avoid integer overflow in (-val) for LLONG_MIN (BUG#31799). */
+      uval = (ulonglong)0 - uval;
+    }
+    radix = -radix;
+  }
+  else
+  {
+    if (radix > 36 || radix < 2) return (char*)0;
+  }
+  if (uval == 0)
+  {
+    *dst++ = '0';
+    *dst = '\0';
+    return dst;
+  }
+  p = &buffer[sizeof(buffer)-1];
+  *p = '\0';
+
+  while (uval > (ulonglong)LONG_MAX)
+  {
+    ulonglong quo = uval / (uint)radix;
+    uint rem = (uint)(uval - quo* (uint)radix);
+    *--p = dig_vec[rem];
+    uval = quo;
+  }
+  long_val = (long)uval;
+  while (long_val != 0)
+  {
+    long quo = long_val / radix;
+    *--p = dig_vec[(uchar)(long_val - quo*radix)];
+    long_val = quo;
+  }
+  while ((*dst++ = *p++) != 0);
+  return dst - 1;
+}

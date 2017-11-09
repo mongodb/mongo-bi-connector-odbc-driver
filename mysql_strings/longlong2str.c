@@ -41,8 +41,6 @@
 #include <my_global.h>
 #include "m_string.h"
 
-#ifndef ll2str
-
 /*
   This assumes that longlong multiplication is faster than longlong division.
 */
@@ -95,7 +93,6 @@ char *ll2str(longlong val,char *dst,int radix, int upcase)
   while ((*dst++ = *p++) != 0) ;
   return dst-1;
 }
-#endif
 
 #ifndef longlong10_to_str
 char *longlong10_to_str(longlong val,char *dst,int radix)
