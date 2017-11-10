@@ -40,14 +40,6 @@ extern "C" {
 #include <sql.h>
 #include <sqlext.h>
 
-#ifndef x_free
-# if MYSQL_VERSION_ID >= 50500
-#  define x_free(A) { void *tmp= (A); if (tmp) my_free((char *) tmp); }
-# else
-#  define x_free(A) { void *tmp= (A); if (tmp) my_free((char *) tmp,MYF(MY_WME+MY_FAE)); }
-# endif
-#endif
-
 #define myodbc_min(a, b) ((a) < (b) ? (a) : (b))
 #define myodbc_max(a, b) ((a) > (b) ? (a) : (b))
 

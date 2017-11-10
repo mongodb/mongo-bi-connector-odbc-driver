@@ -58,10 +58,26 @@ extern "C"
 # error "Connector/ODBC requires v4.1 (or later) of the MySQL client library"
 #endif
 
+
+#ifdef MYSQLCLIENT_STATIC_LINKING
+
+#define my_sys_init my_init
+#define myodbc_malloc(A,B) my_malloc(PSI_NOT_INSTRUMENTED,A,B)
+#ifndef x_free
+#define x_free(A) { void *tmp= (A); if (tmp) my_free((char *) tmp); }
+#endif
+
+#else
+
+#define myodbc_malloc(A,B) mysys_malloc(A,B)
+#ifndef x_free
+#define x_free(A) { void *tmp= (A); if (tmp) mysys_free((char *) tmp); }
+#endif
+
+#endif
+
 #define myodbc_mutex_t native_mutex_t
 #define myodbc_key_t thread_local_key_t
-#define myodbc_malloc(A,B) mysys_malloc(A,B)
-
 #define myodbc_realloc(A,B,C) my_realloc(PSI_NOT_INSTRUMENTED,A,B,C)
 #define myodbc_memdup(A,B,C) my_memdup(PSI_NOT_INSTRUMENTED,A,B,C)
 #define myodbc_strdup(A,B) my_strdup(PSI_NOT_INSTRUMENTED,A,B)
@@ -74,10 +90,6 @@ extern "C"
 #define sort_dynamic(A,cmp) my_qsort((A)->buffer, (A)->elements, (A)->size_of_element, (cmp))
 #define push_dynamic(A,B) insert_dynamic((A),(B))
 #define myodbc_snprintf my_snprintf
-
-#ifdef MYSQLCLIENT_STATIC_LINKING
-#define my_sys_init my_init
-#endif
 
   static my_bool inline myodbc_allocate_dynamic(DYNAMIC_ARRAY *array, uint max_elements)
   {
