@@ -62,6 +62,9 @@ extern struct mysql_malloc_service_st *mysql_malloc_service;
 #define my_strndup mysql_malloc_service->my_strndup
 
 #else
+extern void * mysys_malloc(size_t size, myf_t flags);
+extern void mysys_free(void *ptr);
+
 
 extern void * my_malloc(PSI_memory_key key, size_t size, myf_t flags);
 extern void * my_realloc(PSI_memory_key key, void *ptr, size_t size, myf_t flags);

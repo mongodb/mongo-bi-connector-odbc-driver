@@ -135,6 +135,17 @@ void my_free(void *ptr)
 
 #else
 
+void *mysys_malloc(size_t size, myf my_flags)
+{
+  return my_raw_malloc(size, my_flags);
+}
+
+void mysys_free(void *ptr)
+{
+  my_raw_free(ptr);
+}
+
+
 void *my_malloc(PSI_memory_key key MY_ATTRIBUTE((unused)),
                 size_t size, myf my_flags)
 {

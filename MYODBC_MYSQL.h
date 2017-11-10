@@ -60,7 +60,8 @@ extern "C"
 
 #define myodbc_mutex_t native_mutex_t
 #define myodbc_key_t thread_local_key_t
-#define myodbc_malloc(A,B) my_malloc(PSI_NOT_INSTRUMENTED,A,B)
+#define myodbc_malloc(A,B) mysys_malloc(A,B)
+
 #define myodbc_realloc(A,B,C) my_realloc(PSI_NOT_INSTRUMENTED,A,B,C)
 #define myodbc_memdup(A,B,C) my_memdup(PSI_NOT_INSTRUMENTED,A,B,C)
 #define myodbc_strdup(A,B) my_strdup(PSI_NOT_INSTRUMENTED,A,B)

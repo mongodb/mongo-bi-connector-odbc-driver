@@ -120,7 +120,7 @@ extern "C"
 #define MY_MAX_PK_PARTS 32
 
 #if MYSQL_VERSION_ID >= 50500
-# define x_free(A) { void *tmp= (A); if (tmp) my_free((char *) tmp); }
+# define x_free(A) { void *tmp= (A); if (tmp) mysys_free((char *) tmp); }
 # ifndef NEAR
 #  define NEAR 
 # endif
