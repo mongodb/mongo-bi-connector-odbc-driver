@@ -1477,7 +1477,7 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                        <property name=\"visible\">True</property>\n" \
 "                        <property name=\"can_focus\">False</property>\n" \
 "                        <property name=\"xalign\">1</property>\n" \
-"                        <property name=\"label\" translatable=\"yes\">SSL Certificate Authority</property>\n" \
+"                        <property name=\"label\" translatable=\"yes\">SSL CA File</property>\n" \
 "                      </object>\n" \
 "                      <packing>\n" \
 "                        <property name=\"top_attach\">2</property>\n" \

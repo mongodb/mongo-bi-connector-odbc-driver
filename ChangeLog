@@ -5,6 +5,8 @@
   Bugs fixed:
   * ODBC Driver issue with SELECT for UPDATE (Bug# 26646688/87457)
   * Contribution: Compilation fixes for MySQL 5.5 (Bug# 26633971/87413)
+  * Contribution: Fix truncated "SSL Certificate Authority" label
+    (Bug# 26579169/87325)
 
   Built using MySQL
 

@@ -221,7 +221,7 @@ BEGIN
     EDITTEXT        IDC_EDIT_sslkey,90,7,97,12,ES_AUTOHSCROLL | WS_GROUP
     RTEXT           "SSL &Certificate",IDC_STATIC,6,27,78,11
     EDITTEXT        IDC_EDIT_sslcert,90,25,97,12,ES_AUTOHSCROLL
-    RTEXT           "SSL Certificate &Authority",IDC_STATIC,6,45,79,8
+    RTEXT           "SSL C&A File",IDC_STATIC,6,45,79,8
     EDITTEXT        IDC_EDIT_sslca,90,43,97,12,ES_AUTOHSCROLL
     RTEXT           "SSL CA &Path",IDC_STATIC,24,63,61,8
     EDITTEXT        IDC_EDIT_sslcapath,90,61,97,12,ES_AUTOHSCROLL
