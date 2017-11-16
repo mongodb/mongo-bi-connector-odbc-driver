@@ -26,45 +26,58 @@
 #define MYODBC_MYSQL_H
 
 #define DONT_DEFINE_VOID
+
+#if MYSQLCLIENT_STATIC_LINKING
+
 #include <my_global.h>
-#include <my_sys.h>
 #include <mysql.h>
+#include <my_sys.h>
 #include <my_list.h>
 #include <m_string.h>
 #include <mysqld_error.h>
+
+#else
+
+#include "include/sys/my_global.h"
+#include "include/sys/my_thread.h"
+#include <mysql.h>
+#include "include/sys_main.h"
+#include <mysqld_error.h>
+
+#endif
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
+#define PSI_NOT_INSTRUMENTED 0
+
 #define MIN_MYSQL_VERSION 40100L
 #if MYSQL_VERSION_ID < MIN_MYSQL_VERSION
 # error "Connector/ODBC requires v4.1 (or later) of the MySQL client library"
 #endif
 
-#ifdef THREAD
-#if MYSQL_VERSION_ID < 50703
-#include <my_pthread.h>
-#define myodbc_mutex_t pthread_mutex_t
-#define myodbc_key_t pthread_key_t
-#define myodbc_malloc my_malloc
-#define myodbc_realloc my_realloc
-#define myodbc_memdup my_memdup
-#define myodbc_strdup my_strdup
-#define myodbc_init_dynamic_array my_init_dynamic_array
-#define myodbc_mutex_lock pthread_mutex_lock
-#define myodbc_mutex_unlock pthread_mutex_unlock
-#define myodbc_mutex_trylock pthread_mutex_trylock
-#define myodbc_mutex_init pthread_mutex_init
-#define myodbc_mutex_destroy pthread_mutex_destroy
-#define myodbc_allocate_dynamic allocate_dynamic
-#define myodbc_snprintf snprintf
+
+#ifdef MYSQLCLIENT_STATIC_LINKING
+
+#define my_sys_init my_init
+#define myodbc_malloc(A,B) my_malloc(PSI_NOT_INSTRUMENTED,A,B)
+#ifndef x_free
+#define x_free(A) { void *tmp= (A); if (tmp) my_free((char *) tmp); }
+#endif
+
 #else
-#include <my_thread.h>
+
+#define myodbc_malloc(A,B) mysys_malloc(A,B)
+#ifndef x_free
+#define x_free(A) { void *tmp= (A); if (tmp) mysys_free((char *) tmp); }
+#endif
+
+#endif
+
 #define myodbc_mutex_t native_mutex_t
 #define myodbc_key_t thread_local_key_t
-#define myodbc_malloc(A,B) my_malloc(PSI_NOT_INSTRUMENTED,A,B)
 #define myodbc_realloc(A,B,C) my_realloc(PSI_NOT_INSTRUMENTED,A,B,C)
 #define myodbc_memdup(A,B,C) my_memdup(PSI_NOT_INSTRUMENTED,A,B,C)
 #define myodbc_strdup(A,B) my_strdup(PSI_NOT_INSTRUMENTED,A,B)
@@ -120,24 +133,6 @@ extern "C"
       (array->elements - idx)*array->size_of_element);
   }
 
-
-#endif
-
-#else
-# ifdef myodbc_mutex_lock
-#  undef myodbc_mutex_lock
-#  undef myodbc_mutex_unlock
-#  undef myodbc_mutex_init
-#  undef myodbc_mutex_destroy
-#  undef myodbc_mutex_trylock
-# endif
-#define myodbc_mutex_lock(A)
-#define myodbc_mutex_unlock(A)
-#define myodbc_mutex_init(A,B)
-#define myodbc_mutex_destroy(A)
-/* EBUSY - 16 */
-#define myodbc_mutex_trylock(A) (16)
-#endif
 
 /* Get rid of defines from my_config.h that conflict with our myconf.h */
 #ifdef VERSION

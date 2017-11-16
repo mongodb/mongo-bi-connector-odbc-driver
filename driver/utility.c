@@ -2406,6 +2406,16 @@ int myodbc_casecmp(const char *s, const char *t, uint len)
 
 
 /*
+  @type    : myodbc internal
+  @purpose : frees the result and additional allocated buffers for STMT
+*/
+
+void free_internal_result_buffers(STMT *stmt)
+{
+  free_root(&stmt->alloc_root, MYF(0));
+}
+
+/*
   @type    : myodbc3 internal
   @purpose : logs the queries sent to server
 */

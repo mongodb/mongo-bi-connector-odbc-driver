@@ -296,7 +296,7 @@ columns_no_i_s(STMT * stmt, SQLCHAR *szCatalog, SQLSMALLINT cbCatalog,
 #endif
 
   stmt->result= res;
-  alloc= &res->field_alloc;
+  alloc= &stmt->alloc_root;
 
   if (!stmt->dbc->ds->no_catalog)
     db= strmake_root(alloc, (char *)szCatalog, cbCatalog);
@@ -623,7 +623,7 @@ list_table_priv_no_i_s(SQLHSTMT hstmt,
       return handle_connection_error(stmt);
     }
 
-    alloc= &stmt->result->field_alloc;
+    alloc= &stmt->alloc_root;
     data= stmt->result_array;
     row_count= 0;
 
@@ -775,7 +775,7 @@ list_column_priv_no_i_s(SQLHSTMT hstmt,
     set_mem_error(&stmt->dbc->mysql);
     return handle_connection_error(stmt);
   }
-  alloc= &stmt->result->field_alloc;
+  alloc= &stmt->alloc_root;
   data= stmt->result_array;
   row_count= 0;
   while ( (row= mysql_fetch_row(stmt->result)) )
@@ -1087,7 +1087,7 @@ SQLRETURN foreign_keys_no_i_s(SQLHSTMT hstmt,
 
   MEM_ROOT  *alloc;
   MYSQL_ROW row, table_row;
-  MYSQL_RES *res;
+  MYSQL_RES *local_res;
   char      **data= NULL;
   /* We need this array for the cases if key count is greater than 18 */
   char      **tempdata= NULL;
@@ -1102,27 +1102,26 @@ SQLRETURN foreign_keys_no_i_s(SQLHSTMT hstmt,
 
   /* Get the list of tables that match szCatalog and szTable */
   myodbc_mutex_lock(&stmt->dbc->lock);
-  res= table_status(stmt, szFkCatalogName, cbFkCatalogName, szFkTableName, 
+  local_res= table_status(stmt, szFkCatalogName, cbFkCatalogName, szFkTableName, 
                     cbFkTableName, FALSE, TRUE, TRUE);
-  if (!res && mysql_errno(&stmt->dbc->mysql))
+  if (!local_res && mysql_errno(&stmt->dbc->mysql))
   {
     rc= handle_connection_error(stmt);
     goto unlock_and_free;
   }
-  else if (!res)
+  else if (!local_res)
   {
     goto empty_set_unlock;
   }
+  free_internal_result_buffers(stmt);
   myodbc_mutex_unlock(&stmt->dbc->lock);
 
-  while ((table_row= mysql_fetch_row(res)))
+  while ((table_row = mysql_fetch_row(local_res)))
   {
     myodbc_mutex_lock(&stmt->dbc->lock);
-    lengths= mysql_fetch_lengths(res);
+    lengths = mysql_fetch_lengths(local_res);
     if (stmt->result)
-    {
       mysql_free_result(stmt->result);
-    }
     stmt->result= server_show_create_table(stmt,
                                            szFkCatalogName, cbFkCatalogName,
                                            (SQLCHAR *)table_row[0], 
@@ -1140,7 +1139,7 @@ SQLRETURN foreign_keys_no_i_s(SQLHSTMT hstmt,
     myodbc_mutex_unlock(&stmt->dbc->lock);
    
     /* Convert mysql fields to data that odbc wants */
-    alloc= &stmt->result->field_alloc;
+    alloc= &stmt->alloc_root;
 
     while (row= mysql_fetch_row(stmt->result))
     {
@@ -1432,7 +1431,7 @@ SQLRETURN foreign_keys_no_i_s(SQLHSTMT hstmt,
     ++index;
   }
   delete_dynamic(&records);
-  mysql_free_result(res);
+  mysql_free_result(local_res);
 
   /* Copy only the elements that contain fk names */
   stmt->result_array= (MYSQL_ROW)myodbc_memdup((char *)tempdata,
@@ -1458,7 +1457,8 @@ empty_set_unlock:
 empty_set:
   x_free((char *)tempdata);
   delete_dynamic(&records);
-  mysql_free_result(res);
+  mysql_free_result(local_res);
+  free_internal_result_buffers(stmt);
   if (stmt->result)
     mysql_free_result(stmt->result);
   
@@ -1468,18 +1468,19 @@ empty_set:
                                      SQLFORE_KEYS_FIELDS);
 unlock_and_free:
   myodbc_mutex_unlock(&stmt->dbc->lock);
-  mysql_free_result(res);
-  res= NULL;
+  mysql_free_result(local_res);
+  local_res= NULL;
 
 free_and_return:
   x_free((char *)tempdata);
   delete_dynamic(&records);
 
+  free_internal_result_buffers(stmt);
   if (stmt->result)
     mysql_free_result(stmt->result);
 
-  if (res)
-    mysql_free_result(res);
+  if (local_res)
+    mysql_free_result(local_res);
 
   return rc;
 }
@@ -2018,7 +2019,7 @@ procedure_columns_no_i_s(SQLHSTMT hstmt,
         if(!skip_result)
         {
           if(cur_field_val && cur_field_val[0])
-            tempdata[j]= strdup_root(&stmt->result->field_alloc, cur_field_val);
+            tempdata[j]= strdup_root(&stmt->alloc_root, cur_field_val);
           else
             tempdata[j]= 0;
         }
@@ -2043,6 +2044,7 @@ empty_set:
                                       SQLPROCEDURECOLUMNS_FIELDS);
 exit_with_free:
 
+  free_internal_result_buffers(stmt);
   mysql_free_result(proc_list_res);
 
 clean_exit:
@@ -2135,7 +2137,7 @@ special_columns_no_i_s(SQLHSTMT hstmt, SQLUSMALLINT fColType,
         }
 
         /* Convert mysql fields to data that odbc wants */
-        alloc= &result->field_alloc;
+        alloc= &stmt->alloc_root;
         field_count= 0;
         mysql_field_seek(result,0);
         for ( row= stmt->result_array;
@@ -2216,7 +2218,7 @@ special_columns_no_i_s(SQLHSTMT hstmt, SQLUSMALLINT fColType,
     }
 
     /* Convert MySQL fields to data that odbc wants */
-    alloc= &result->field_alloc;
+    alloc= &stmt->alloc_root;
     field_count= 0;
     mysql_field_seek(result,0);
     for ( row= stmt->result_array ;
@@ -2339,7 +2341,7 @@ statistics_no_i_s(SQLHSTMT hstmt,
     if (stmt->dbc->ds->no_catalog)
       stmt->array[0]= "";
     else
-      stmt->array[0]= strmake_root(&stmt->result->field_alloc,
+      stmt->array[0]= strmake_root(&stmt->alloc_root,
                                    (char *)catalog, catalog_len);
 
     if ( fUnique == SQL_INDEX_UNIQUE )
@@ -2421,6 +2423,7 @@ tables_no_i_s(SQLHSTMT hstmt,
     unsigned long *lengths;    
     unsigned long count= 0;
     my_bool is_info_schema= 0;
+    SQLRETURN rc = SQL_SUCCESS;
 
     /* 
       empty (but non-NULL) schema and table returns catalog list 
@@ -2479,21 +2482,23 @@ tables_no_i_s(SQLHSTMT hstmt,
 
     if (!catalog_len && catalog && schema_len && !table_len && table)
     {
-        /* Return set of allowed schemas (none) */
-        return create_fake_resultset(stmt, SQLTABLES_owner_values,
-                                     sizeof(SQLTABLES_owner_values),
-                                     1, SQLTABLES_fields, SQLTABLES_FIELDS);
+      /* Return set of allowed schemas (none) */
+        rc = create_fake_resultset(stmt, SQLTABLES_owner_values,
+                                   sizeof(SQLTABLES_owner_values),
+                                   1, SQLTABLES_fields, SQLTABLES_FIELDS);
+        goto free_and_return;
     }
 
     if (!catalog_len && catalog && !schema_len && schema &&
         !table_len && table && type && !strncmp((char *)type, "%", 2))
     {
         /* Return set of TableType qualifiers */
-        return create_fake_resultset(stmt, (MYSQL_ROW)SQLTABLES_type_values,
-                                     sizeof(SQLTABLES_type_values),
-                                     sizeof(SQLTABLES_type_values) /
-                                     sizeof(SQLTABLES_type_values[0]),
-                                     SQLTABLES_fields, SQLTABLES_FIELDS);
+        rc = create_fake_resultset(stmt, (MYSQL_ROW)SQLTABLES_type_values,
+                                   sizeof(SQLTABLES_type_values),
+                                   sizeof(SQLTABLES_type_values) /
+                                   sizeof(SQLTABLES_type_values[0]),
+                                   SQLTABLES_fields, SQLTABLES_FIELDS);
+        goto free_and_return;
     }
 
     /* any other use of catalog="" returns an empty result */
@@ -2558,6 +2563,10 @@ tables_no_i_s(SQLHSTMT hstmt,
           }
 
           lengths= mysql_fetch_lengths(catalog_res);
+
+          if (stmt->result)
+            mysql_free_result(stmt->result);
+
           stmt->result= table_status(stmt, catalog_row[0], (SQLSMALLINT)lengths[0],
                                      table, (SQLSMALLINT)table_len, TRUE,
                                      user_tables, views);
@@ -2565,7 +2574,6 @@ tables_no_i_s(SQLHSTMT hstmt,
 
         if (!stmt->result && mysql_errno(&stmt->dbc->mysql))
         {
-          SQLRETURN rc;
           /* unknown DB will return empty set from SQLTables */
           switch (mysql_errno(&stmt->dbc->mysql))
           {
@@ -2575,7 +2583,7 @@ tables_no_i_s(SQLHSTMT hstmt,
           default:
             rc= handle_connection_error(stmt);
             myodbc_mutex_unlock(&stmt->dbc->lock);
-            return rc;
+            goto free_and_return;
           }
         }
         myodbc_mutex_unlock(&stmt->dbc->lock);
@@ -2591,6 +2599,7 @@ tables_no_i_s(SQLHSTMT hstmt,
 
           if (!row_count)
           {
+            free_internal_result_buffers(stmt);
             mysql_free_result(stmt->result);
             is_info_schema= 0;
             continue;
@@ -2603,7 +2612,8 @@ tables_no_i_s(SQLHSTMT hstmt,
                                        MYF(MY_ZEROFILL))))
           {
             set_mem_error(&stmt->dbc->mysql);
-            return handle_connection_error(stmt);
+            rc = handle_connection_error(stmt);
+            goto free_and_return;
           }
 
           data= stmt->result_array;
@@ -2613,7 +2623,7 @@ tables_no_i_s(SQLHSTMT hstmt,
             /* Set db to fetched database row from show database result set */
             if (!is_info_schema && lengths[0])
             {  
-              db= strmake_root(&stmt->result->field_alloc,
+              db= strmake_root(&stmt->alloc_root,
                                 catalog_row[0], lengths[0]);
             }
             else if (!catalog)
@@ -2622,17 +2632,18 @@ tables_no_i_s(SQLHSTMT hstmt,
               {
                 const char *dbname= stmt->dbc->database ? stmt->dbc->database
                                                         : "null";
-                db= strmake_root(&stmt->result->field_alloc,
+                db= strmake_root(&stmt->alloc_root,
                                  dbname, strlen(dbname));
               }
               else
               {
                 /* error was set in reget_current_catalog */
-                return SQL_ERROR;
+                rc = SQL_ERROR;
+                goto free_and_return;
               }
             }
             else
-              db= strmake_root(&stmt->result->field_alloc,
+              db= strmake_root(&stmt->alloc_root,
                                (char *)catalog, catalog_len);
           }
 
@@ -2661,12 +2672,12 @@ tables_no_i_s(SQLHSTMT hstmt,
             }
 
             data[0+count]= (cat_index >= 0 ?
-                    strdup_root(&stmt->result->field_alloc, row[cat_index]) :
+                            strdup_root(&stmt->alloc_root, row[cat_index]) :
                     db);
             data[1+count]= "";
-            data[2+count]= strdup_root(&stmt->result->field_alloc, row[0]);
+            data[2+count]= strdup_root(&stmt->alloc_root, row[0]);
             data[3+count]= view ? "VIEW" : "TABLE";
-            data[4+count]= strdup_root(&stmt->result->field_alloc, row[comment_index]);
+            data[4+count] = strdup_root(&stmt->alloc_root, row[comment_index]);
             count+= SQLTABLES_FIELDS;
           }
         }
@@ -2687,12 +2698,22 @@ tables_no_i_s(SQLHSTMT hstmt,
       set_row_count(stmt, row_count);
     }
 
+    if (catalog_res)
+      mysql_free_result(catalog_res);
+
     myodbc_link_fields(stmt, SQLTABLES_fields, SQLTABLES_FIELDS);
     return SQL_SUCCESS;
 
 empty_set:
+  if (catalog_res)
+    mysql_free_result(catalog_res);
+
   return create_empty_fake_resultset(stmt, SQLTABLES_values,
                                      sizeof(SQLTABLES_values),
                                      SQLTABLES_fields,
                                      SQLTABLES_FIELDS);
+free_and_return:
+  if (catalog_res)
+    mysql_free_result(catalog_res);
+  return rc;
 }

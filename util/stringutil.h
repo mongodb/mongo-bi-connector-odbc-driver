@@ -40,14 +40,6 @@ extern "C" {
 #include <sql.h>
 #include <sqlext.h>
 
-#ifndef x_free
-# if MYSQL_VERSION_ID >= 50500
-#  define x_free(A) { void *tmp= (A); if (tmp) my_free((char *) tmp); }
-# else
-#  define x_free(A) { void *tmp= (A); if (tmp) my_free((char *) tmp,MYF(MY_WME+MY_FAE)); }
-# endif
-#endif
-
 #define myodbc_min(a, b) ((a) < (b) ? (a) : (b))
 #define myodbc_max(a, b) ((a) > (b) ? (a) : (b))
 
@@ -120,7 +112,7 @@ SQLWCHAR *wchar_t_as_sqlwchar(wchar_t *from, SQLWCHAR *to, size_t len);
 char * myodbc_strlwr(char *target, size_t len);
 SQLCHAR* sqlwchar_as_utf8_simple(SQLWCHAR *s);
 char *myodbc_stpmov(char *dst, const char *src);
-
+char *myodbc_ll2str(longlong val, char *dst, int radix);
 #ifdef __cplusplus
 }
 #endif

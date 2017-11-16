@@ -88,6 +88,7 @@ SQLRETURN
 create_fake_resultset(STMT *stmt, MYSQL_ROW rowval, size_t rowsize,
                       my_ulonglong rowcnt, MYSQL_FIELD *fields, uint fldcnt)
 {
+  free_internal_result_buffers(stmt);
   stmt->result= (MYSQL_RES*) myodbc_malloc(sizeof(MYSQL_RES), MYF(MY_ZEROFILL));
   stmt->result_array= (MYSQL_ROW)myodbc_memdup((char *)rowval, rowsize, MYF(0));
   if (!(stmt->result && stmt->result_array))

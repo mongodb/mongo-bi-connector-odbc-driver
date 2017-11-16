@@ -833,7 +833,7 @@ int main(int argc, char **argv)
   }
 
   /* init libmysqlclient */
-  my_init();
+  my_sys_init();
   utf8_charset_info= get_charset_by_csname("utf8", MYF(MY_CS_PRIMARY),
                                            MYF(0));
 

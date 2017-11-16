@@ -71,7 +71,7 @@ void myodbc_init(void)
 
   if (myodbc_inited++)
     return;
-  my_init();
+  my_sys_init();
   {
     struct lconv *tmp;
     init_getfunctions();

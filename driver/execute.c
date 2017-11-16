@@ -572,11 +572,11 @@ SQLRETURN convert_c_type2str(STMT *stmt, SQLSMALLINT ctype, DESCREC *iprec,
         *res= buff;
         break;
     case SQL_C_SBIGINT:
-        *length= longlong2str(*((longlong*) *res), buff, -10) - buff;
+        *length= myodbc_ll2str(*((longlong*) *res), buff, -10) - buff;
         *res= buff;
         break;
     case SQL_C_UBIGINT:
-        *length= longlong2str(*((ulonglong*) *res), buff, 10) - buff;
+        *length= myodbc_ll2str(*((ulonglong*) *res), buff, 10) - buff;
         *res= buff;
         break;
     case SQL_C_FLOAT:
