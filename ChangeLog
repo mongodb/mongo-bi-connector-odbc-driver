@@ -8,6 +8,10 @@
   * Contribution: Compilation fixes for MySQL 5.5 (Bug# 26633971/87413)
   * Contribution: Fix truncated "SSL Certificate Authority" label
     (Bug# 26579169/87325)
+  * OpenRecordset leaking memory client side on Windows ODBC Client
+    (Bug# 27155880/86473)
+  * MySQL Connector/ODBC 5.2.5 - Command Timeout does not work
+    (Bug# 26474362/69416)
 
   Built using MySQL 5.7.20
 

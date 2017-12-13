@@ -4109,6 +4109,8 @@ int get_session_variable(STMT *stmt, const char *var, char *result)
       mysql_free_result(res);
       return strlen(result);
     }
+
+    mysql_free_result(res);
   }
 
   return 0;
@@ -4129,9 +4131,9 @@ SQLRETURN set_query_timeout(STMT *stmt, SQLULEN new_value)
   SQLRETURN rc= SQL_SUCCESS;
 
   if (new_value == stmt->stmt_options.query_timeout ||
-      !is_minimum_version(stmt->dbc->mysql.server_version, "5.7.4"))
+      !is_minimum_version(stmt->dbc->mysql.server_version, "5.7.8"))
   {
-    /* Do nothing if setting same timeout or MySQL server older than 5.7.4 */
+    /* Do nothing if setting same timeout or MySQL server older than 5.7.8 */
     return SQL_SUCCESS;
   }
 
@@ -4159,11 +4161,11 @@ SQLULEN get_query_timeout(STMT *stmt)
 {
   SQLULEN query_timeout= SQL_QUERY_TIMEOUT_DEFAULT; /* 0 */
   
-  if (is_minimum_version(stmt->dbc->mysql.server_version, "5.7.4"))
+  if (is_minimum_version(stmt->dbc->mysql.server_version, "5.7.8"))
   {
     /* Be cautious with very long values even if they don't make sense */
     char query_timeout_char[32]= {0};
-    uint length= get_session_variable(stmt, "MAX_STATEMENT_TIME", 
+    uint length= get_session_variable(stmt, "MAX_EXECUTION_TIME", 
                                       (char*)query_timeout_char);
     /* Terminate the string just in case */
     query_timeout_char[length]= 0;

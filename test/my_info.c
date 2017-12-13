@@ -481,7 +481,7 @@ DECLARE_TEST(t_getkeywordinfo)
 */
 DECLARE_TEST(t_query_timeout)
 {
-  if (mysql_min_version(hdbc, "5.7.4", 5))
+  if (mysql_min_version(hdbc, "5.7.8", 5))
   {
     SQLULEN q_timeout1= 10;
     time_t t1, t2;
@@ -535,7 +535,7 @@ DECLARE_TEST(t_query_timeout)
 
 BEGIN_TESTS
   /* Query timeout should go first */
-  // ADD_TEST(t_query_timeout) TODO: Fix
+  ADD_TEST(t_query_timeout)
   ADD_TEST(sqlgetinfo)
   ADD_TEST(t_gettypeinfo)
   ADD_TEST(t_stmt_attr_status)
