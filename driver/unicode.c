@@ -243,7 +243,13 @@ SQLDriverConnectW(SQLHDBC hdbc, SQLHWND hwnd,
                   SQLWCHAR *out, SQLSMALLINT out_max, SQLSMALLINT *out_len,
                   SQLUSMALLINT completion)
 {
+  SQLSMALLINT dummy_out_len = 0;
+
   CHECK_HANDLE(hdbc);
+
+  // Make sure out_len is never NULL at least internally
+  if (!out_len)
+    out_len = &dummy_out_len;
 
   ((DBC *)hdbc)->unicode= TRUE; /* Hooray, a Unicode connection! */
 

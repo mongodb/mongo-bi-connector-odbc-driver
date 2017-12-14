@@ -12,6 +12,8 @@
     (Bug# 27155880/86473)
   * MySQL Connector/ODBC 5.2.5 - Command Timeout does not work
     (Bug# 26474362/69416)
+  * Calling MySQLDrivercConnect with a NULL pcbConnStrOut causes a crash
+    (Bug# 27101767/88371)
 
   Built using MySQL 5.7.20
 
@@ -94,6 +96,7 @@
   * Assertion in ODBC Driver when calling mysql_stmt_close() on a broken
     connection (Bug# 25109356/83858)
   * Connector ODBC does not build with newer CMake (Bug# 22746557)
+  * Installation fails in OSX El Capitan (23123503/81113)
 
   Built using MySQL 5.7.17.
  

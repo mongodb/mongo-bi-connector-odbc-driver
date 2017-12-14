@@ -526,8 +526,8 @@ DECLARE_TEST(t_query_timeout)
 
     ok_sql(hstmt, "DROP TABLE if exists t_query_timeout1");
 
-    /* Just in case there is a small delay in the network or somewhere else */
-    is(t2 - t1 < 3);
+    /* Just in case there is a delay in the network or somewhere else */
+    is(t2 - t1 < 5);
   }
   return OK;
 }
