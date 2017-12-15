@@ -15,7 +15,7 @@
 
 SET_PROPERTY(DIRECTORY PROPERTY INCLUDE_DIRECTORIES ${CMAKE_SOURCE_DIR}/include/sys)
 
-SET(SYS_SOURCES array.c charset-def.c charset.c checksum.c errors.c list.c
+SET(SYS_SOURCES array.c charset-def.c charset.c errors.c list.c
                   mf_dirname.c mf_pack.c mf_qsort.c my_access.c my_alloc.c my_div.c
                   my_error.c my_fstream.c my_getwd.c my_init.c my_lib.c my_malloc.c my_mess.c
                   my_once.c my_open.c my_read.c my_static.c my_thread.c my_thr_init.c
