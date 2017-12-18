@@ -15,7 +15,10 @@ WIX_DIR environment variable which points to your Wix installation
 directory.
 
 - WIX_RESOURCE
-Resource directory from svn+ssh://<your-uid>@bk-internal.mysql.com/connectors-svnroot/wix-installer
+Resource directory with the files needed for building MSI.
+WIX_RESOURCE has to specify the full path to the resource subdirectory
+in this source package.
+
 
 3) Copying files
 
