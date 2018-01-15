@@ -572,6 +572,7 @@ void scroller_create(STMT * stmt, char *query, SQLULEN query_len)
   MY_LIMIT_CLAUSE limit= find_position4limit(stmt->dbc->ansi_charset_info,
                                             query, query + query_len);
 
+  stmt->scroller.start_offset= limit.offset;
   stmt->scroller.total_rows= myodbc_max(stmt->stmt_options.max_rows, 0);
 
   if (limit.begin != limit.end)
@@ -631,18 +632,19 @@ unsigned long long scroller_move(STMT * stmt)
 SQLRETURN scroller_prefetch(STMT * stmt)
 {
   if (stmt->scroller.total_rows > 0
-    && stmt->scroller.next_offset >= stmt->scroller.total_rows)
+      && stmt->scroller.next_offset >= (stmt->scroller.total_rows + stmt->scroller.start_offset))
   {
     /* (stmt->scroller.next_offset - stmt->scroller.row_count) - current offset,
        0 minimum. scroller initialization makes impossible row_count to be > 
        stmt's max_rows */
      long long count= stmt->scroller.total_rows -
-      (stmt->scroller.next_offset - stmt->scroller.row_count);
+      (stmt->scroller.next_offset - stmt->scroller.row_count - stmt->scroller.start_offset);
 
     if (count > 0)
     {
       myodbc_snprintf(stmt->scroller.offset_pos + MAX64_BUFF_SIZE, MAX32_BUFF_SIZE,
-              "%*u", MAX32_BUFF_SIZE - 1, count);
+              "%*u", MAX32_BUFF_SIZE - 1, (unsigned long)count);
+      stmt->scroller.offset_pos[MAX64_BUFF_SIZE + MAX32_BUFF_SIZE - 1] = ' ';
     }
     else
     {

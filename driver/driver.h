@@ -408,6 +408,7 @@ typedef struct limit_scroller
 {
    char               *query, *offset_pos;
    unsigned int       row_count;
+   unsigned long long start_offset;
    unsigned long long next_offset, total_rows, query_len;
 
 } MY_LIMIT_SCROLLER;
