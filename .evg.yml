@@ -1,109 +1,562 @@
-# default command type
-command_type: system
-
-# run the same task in the previous revision if the current task fails
 stepback: true
+command_type: system
+buildvariants:
+- name: build_32
+  display_name: Windows_64
+  run_on:
+  - windows-64-vs2013-compile
+  tasks:
+    - name: "build_32"
+
+pre:
+  - func: "fetch source"
+
+#post:
+#- func: "upload artifacts"
+#- command: shell.cleanup
+
+tasks:
+
+- name: build_32
+  exec_timeout_secs: 14400 # 4h
+  commands: 
+     - func: "build_32"
+
+#- name: build_64
+#  exec_timeout_secs: 14400 # 4h
+#  commands: 
+#     - func: "build_64"
+
+
+- name: compile
+  exec_timeout_secs: 14400 # 4h
+  commands:
+    - func: "install dependencies"
+    - func: "build mongosql_auth"
+      vars:
+        release: true
+    - func: "create packages"
+    - func: "upload packages"
+
+- name: sign
+  depends_on:
+    - name: compile
+  commands:
+    - func: "fetch packages"
+    - func: "sign msi installer"
+    - func: "upload release packages"
+
+- name: unit_tests
+  exec_timeout_secs: 14400 # 4h
+  commands:
+    - func: "install dependencies"
+    - func: "build mongosql_auth"
+    - func: "run unit tests"
+
+- name: integration_tests_plain
+  exec_timeout_secs: 14400 # 4h
+  commands:
+    - func: "install dependencies"
+    - func: "start mongosqld"
+      vars:
+        mongodb_args: --mongo-uri=ldaptest.10gen.cc
+    - func: "build mongosql_auth"
+    - func: "run plain integration tests"
+
+- name: integration_tests_scram
+  exec_timeout_secs: 14400 # 4h
+  commands:
+    - func: "install dependencies"
+    - func: "start mongosqld"
+    - func: "start mongo-orchestration"
+    - func: "build mongosql_auth"
+    - func: "run scram integration tests"
+
+- name: integration_tests_gssapi
+  exec_timeout_secs: 14400 # 4h
+  commands:
+    - func: "install dependencies"
+    - func: "build mongosql_auth"
+    - func: "run gssapi integration tests"
 
 functions:
+  "build_32":
+    command: shell.exec
+    type: test
+    params:
+      script: |
+          ./bin/win32_odbc_build.sh
 
-  "fetch source" :
-    - command: git.get_project
-      params:
-        directory: gopath/src/github.com/10gen
+  "build mongosql_auth":
+    command: shell.exec
+    type: test
+    params:
+      script: |
+          ${PREPARE_SHELL}
+          export RELEASE='${release}'
+          ${SCRIPT_DIR}/build-mongosql-auth.sh
 
-  "setup gopath" :
+  "create packages":
+    command: shell.exec
+    type: test
+    params:
+      script: |
+          ${PREPARE_SHELL}
+          ${SCRIPT_DIR}/create-packages.sh
+
+  "export variables":
     - command: shell.exec
       params:
-        silent: false
+        silent: true
+        working_dir: mongosql-auth-c
         script: |
-            set -x
-            set -v
-            export GOPATH=gopath
-            ${gorootvars} go get github.com/spacemonkeygo/spacelog
-            mkdir -p gopath/src/github.com/10gen
-            exit 0
+          if [ "Windows_NT" = "$OS" ]; then
+              set -o igncr
+          fi
 
-  "go test" :
+          VARIANT="${variant|other}"
+
+          export PROJECT_DIR="$(pwd)"
+          export SCRIPT_DIR="$PROJECT_DIR/test/bin"
+          if [ "Windows_NT" = "$OS" ]; then
+              export PROJECT_DIR="$(cygpath -m $PROJECT_DIR)"
+              export SCRIPT_DIR="$(cygpath -m $SCRIPT_DIR)"
+          fi
+
+          CURRENT_VERSION="$(git describe --always)"
+
+          . "$SCRIPT_DIR/platforms.sh"
+
+          # create expansions from values calculated above
+          cat <<EOT > $PROJECT_DIR/expansions.yml
+          PROJECT_DIR: "$PROJECT_DIR"
+          SCRIPT_DIR: "$SCRIPT_DIR"
+          CURRENT_VERSION: "$CURRENT_VERSION"
+          PUSH_NAME: "$PUSH_NAME"
+          PUSH_ARCH: "$PUSH_ARCH"
+          PREPARE_SHELL: |
+             if [ "Windows_NT" = "$OS" ]; then
+                 set -o igncr
+                 export SHELLOPTS
+             fi
+             export VARIANT="$VARIANT"
+             export PROJECT_DIR="$PROJECT_DIR"
+          EOT
+    - command: expansions.update
+      params:
+        file: mongosql-auth-c/expansions.yml
+
+  "fetch packages":
+    - command: s3.get
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        remote_file: mongosql-auth-c/artifacts/${version_id}/${build_variant}/pkg/release-bundles.tgz
+        extract_to: mongosql-auth-c/test/artifacts/
+        bucket: mciuploads
+
+  "fetch source":
+    - command: shell.exec
+      params:
+        silent: true
+        script: |
+          rm -rf mongosql-auth-c
+    - command: git.get_project
+      params:
+        directory: mongosql-auth-c
+    - command: git.apply_patch
+      type: test
+      params:
+        directory: mongosql-auth-c
+
+  "install dependencies":
+    command: shell.exec
+    params:
+      script: |
+        ${PREPARE_SHELL}
+        ${SCRIPT_DIR}/install-build-deps.sh
+
+  "reset testing state":
+    - command: shell.exec
+      params:
+        silent: true
+        script: |
+          ${killall_mci}
+    - command: shell.exec
+      params:
+        script: |
+          ${PREPARE_SHELL}
+          ${SCRIPT_DIR}/reset-testing-state.sh
+
+  "run plain integration tests":
     - command: shell.exec
       type: test
       params:
         script: |
-            set -x
-            set -v
-            set -e
-            export GOPATH=gopath
-            ${gorootvars} go test ${args} -tags '${build_tags}' -v
+          ${PREPARE_SHELL}
+          ${SCRIPT_DIR}/run-integration-tests-plain.sh
 
-post:
-  - command: shell.exec
-    params:
-      silent: true
-      script: |
-        set -x
-        set -v
-        rm -rf gopath
-        exit 0
+  "run scram integration tests":
+    - command: shell.exec
+      type: test
+      params:
+        script: |
+          ${PREPARE_SHELL}
+          ${SCRIPT_DIR}/run-integration-tests-scram.sh
 
-tasks:
+  "run gssapi integration tests":
+    - command: shell.exec
+      type: test
+      params:
+        script: |
+          ${PREPARE_SHELL}
+          export GSSAPI_USER=${gssapi_auth_linux_user}
+          export GSSAPI_PASSWD=${gssapi_auth_linux_password}
+          export GSSAPI_KTNAME=${PROJECT_DIR}/test/artifacts/gssapi/drivers.keytab
+          echo "${gssapi_auth_linux_keytab_base64}" > /tmp/drivers.keytab.base64
+          mkdir -p $(dirname $GSSAPI_KTNAME)
+          base64 --decode /tmp/drivers.keytab.base64 > $GSSAPI_KTNAME
+          ${SCRIPT_DIR}/run-integration-tests-gssapi.sh
 
-- name: "test"
-  commands:
-  - func: "setup gopath"
-  - func: "fetch source"
-  - func: "go test"
+  "run unit tests":
+    - command: shell.exec
+      type: test
+      params:
+        script: |
+          ${PREPARE_SHELL}
+          ${SCRIPT_DIR}/run-unit-tests.sh
 
-buildvariants:
+  "sign msi installer":
+    - command: shell.exec
+      params:
+        silent: true
+        script: |
+          echo "${signing_token_bi_connector}" > ${PROJECT_DIR}/signing_auth_token
+    - command: shell.exec
+      params:
+        working_dir: mongosql-auth-c/test/artifacts
+        script: |
+          /usr/local/bin/notary-client.py \
+              --key-name "bi-connector" \
+              --auth-token-file ${PROJECT_DIR}/signing_auth_token \
+              --comment "Evergreen Automatic Signing (mongosql-auth-c) - ${version_id} - ${build_variant}" \
+              --notary-url http://notary-service.build.10gen.cc:5000 \
+              --skip-missing \
+              release.msi
 
-#######################################
-#           macOS Buildvariant        #
-#######################################
+  "start mongo-orchestration":
+    - command: shell.exec
+      params:
+        script: |
+          ${PREPARE_SHELL}
+          ${SCRIPT_DIR}/start-orchestration.sh
 
-- name: macOS-1012
-  display_name: MacOS 10.12
-  run_on:
-  - macos-1012
-  expansions:
-    gorootvars: CGO_CPPFLAGS=-I/opt/mongodbtoolchain/v2/include CGO_CFLAGS=-mmacosx-version-min=10.10 CGO_LDFLAGS=-mmacosx-version-min=10.10
-    build_tags: "openssl_pre_1.0"
-  tasks:
-  - name: test
+  "start mongosqld":
+    - command: shell.exec
+      params:
+        script: |
+          ${PREPARE_SHELL}
+          export EVG_USER=${evg_user}
+          export EVG_KEY=${evg_key}
+          export AWS_ACCESS_KEY_ID=${aws_key}
+          export AWS_SECRET_ACCESS_KEY=${aws_secret}
+          export SQLPROXY_MONGO_ARGS=${mongodb_args}
+          ${SCRIPT_DIR}/start-sqlproxy.sh
 
-#######################################
-#     RHEL Buildvariants              #
-#######################################
+  "upload artifacts":
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongosql-auth-c/test/artifacts/release.tgz
+        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.tgz
+        content_type: application/x-gzip
+        bucket: mciuploads
+        permissions: public-read
+        display_name: "mongosql-auth.tgz"
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongosql-auth-c/test/artifacts/release.zip
+        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.zip
+        content_type: application/x-gzip
+        bucket: mciuploads
+        permissions: public-read
+        display_name: "mongosql-auth.zip"
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongosql-auth-c/test/artifacts/release.msi
+        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.msi
+        content_type: application/x-msi
+        bucket: mciuploads
+        permissions: public-read
+        display_name: "mongosql-auth.msi"
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongosql-auth-c/test/artifacts/release-signed.msi
+        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.msi
+        content_type: application/x-msi
+        bucket: mciuploads
+        permissions: public-read
+        display_name: "mongosql-auth-signed.msi"
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongosql-auth-c/test/artifacts/build/mongosql_auth.so
+        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/mongosql_auth.so
+        content_type: application/octet-stream
+        bucket: mciuploads
+        permissions: public-read
+        display_name: "mongosql_auth.so"
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongosql-auth-c/test/artifacts/build/mongosql_auth.dll
+        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/mongosql_auth.dll
+        content_type: application/octet-stream
+        bucket: mciuploads
+        permissions: public-read
+        display_name: "mongosql_auth.dll"
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongosql-auth-c/test/artifacts/orchestration/server.log
+        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/orchestration-server.log
+        content_type: text/plain
+        bucket: mciuploads
+        permissions: public-read
+        display_name: "orchestration-server.log"
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongosql-auth-c/test/artifacts/log/install-build-deps.log
+        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/install-build-deps.log
+        content_type: text/plain
+        bucket: mciuploads
+        permissions: public-read
+        display_name: "install-build-deps.log"
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongosql-auth-c/test/artifacts/log/build-mongosql-auth.log
+        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/build-mongosql-auth.log
+        content_type: text/plain
+        bucket: mciuploads
+        permissions: public-read
+        display_name: "build-mongosql-auth.log"
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongosql-auth-c/test/artifacts/log/start-orchestration.log
+        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/start-orchestration.log
+        content_type: text/plain
+        bucket: mciuploads
+        permissions: public-read
+        display_name: "start-orchestration.log"
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongosql-auth-c/test/artifacts/log/start-sqlproxy.log
+        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/start-sqlproxy.log
+        content_type: text/plain
+        bucket: mciuploads
+        permissions: public-read
+        display_name: "start-sqlproxy.log"
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongosql-auth-c/test/artifacts/log/sqlproxy.log
+        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/sqlproxy.log
+        content_type: text/plain
+        bucket: mciuploads
+        permissions: public-read
+        display_name: "sqlproxy.log"
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongosql-auth-c/test/artifacts/log/run-integration-tests-plain.log
+        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/run-integration-tests-plain.log
+        content_type: text/plain
+        bucket: mciuploads
+        permissions: public-read
+        display_name: "run-integration-tests-plain.log"
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongosql-auth-c/test/artifacts/log/run-integration-tests-scram.log
+        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/run-integration-tests-scram.log
+        content_type: text/plain
+        bucket: mciuploads
+        permissions: public-read
+        display_name: "run-integration-tests-scram.log"
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongosql-auth-c/test/artifacts/log/create-release.log
+        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/create-release.log
+        content_type: text/plain
+        bucket: mciuploads
+        permissions: public-read
+        display_name: "create-release.log"
 
-- name: rhel70
-  display_name: RHEL 7.0
-  run_on:
-  - rhel70
-  expansions:
-    gorootvars: PATH="/opt/go/bin:$PATH"
-    build_tags: ""
-  tasks:
-  - name: test
+  "upload packages":
+    - command: archive.targz_pack
+      params:
+        target: mongosql-auth-c/test/artifacts/upload.tgz
+        source_dir: mongosql-auth-c/test/artifacts/
+        include:
+          - "./release.*"
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongosql-auth-c/test/artifacts/upload.tgz
+        remote_file: mongosql-auth-c/artifacts/${version_id}/${build_variant}/pkg/release-bundles.tgz
+        content_type: application/x-gzip
+        bucket: mciuploads
+        permissions: public-read
+        display_name: All Release Bundles (.tgz)
 
-#######################################
-#          Ubuntu Buildvariants       #
-#######################################
+  "upload release packages":
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongosql-auth-c/test/artifacts/release.tgz
+        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.tgz
+        content_type: application/x-gzip
+        bucket: mciuploads
+        permissions: public-read
+        display_name: mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.tgz
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongosql-auth-c/test/artifacts/release.zip
+        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.zip
+        content_type: application/x-gzip
+        bucket: mciuploads
+        permissions: public-read
+        display_name: mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.zip
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: mongosql-auth-c/test/artifacts/release-signed.msi
+        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.msi
+        content_type: application/x-msi
+        bucket: mciuploads
+        permissions: public-read
+        display_name: mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.msi
 
-- name: ubuntu1604
-  display_name: Ubuntu 16.04
-  run_on:
-  - ubuntu1604-test
-  expansions:
-    build_tags: ""
-  tasks:
-  - name: test
+axes:
 
-#######################################
-#        Windows Buildvariants        #
-#######################################
+- id: os
+  display_name: OS
+  values:
+  - id: ubuntu1404-64
+    display_name: Ubuntu 14.04
+    run_on: ubuntu1404-build
+    variables:
+      variant: ubuntu1404-64
+  - id: rhel70
+    display_name: RHEL 7.0
+    variables:
+      variant: rhel70
+    run_on: rhel70
+  - id: osx
+    display_name: OSX 10.12
+    run_on: macos-1012
+    variables:
+      variant: macos
+  - id: windows-vs2013
+    display_name: Windows 64 (VS2013)
+    run_on: windows-64-vs2013-compile
+    variables:
+      variant: windows-vs2013
+  - id: windows-32
+    display_name: Windows 32 (VS2013)
+    run_on: windows-64-vs2013-compile
+    variables:
+      variant: windows-32
 
-- name: windows-64
-  display_name: Windows 64-bit
-  run_on:
-  - windows-64-vs2013-test
-  expansions:
-    build_tags: ""
-  tasks:
-  - name: test
+- id: os-disabled
+  display_name: Disabled OSes
+  values:
+  - id: debian71
+    display_name: Debian 7.1
+    run_on: debian71-test
+    variables:
+      variant: debian71
+  - id: debian81
+    display_name: Debian 8.1 (nightly)
+    run_on: debian81-test
+    variables:
+      variant: debian81
+  - id: linux-64-amazon-ami
+    display_name: Amazon Linux (Enterprise)
+    variables:
+      variant: amazon
+    run_on: linux-64-amzn-build
+  - id: rhel62
+    display_name: RHEL 6.2
+    variables:
+      variant: rhel62
+    run_on: rhel62-test
+  - id: rhel-71-ppc64le
+    display_name: RHEL 7.1 PPC64LE
+    variables:
+      variant: rhel71-ppc
+    run_on: rhel71-power8-test
+    batchtime: 1440 # 1 day
+  - id: rhel-72-s390x
+    display_name: RHEL 7.2 s390x (nightly)
+    variables:
+      variant: rhel72-s390x
+    run_on:
+    - rhel72-zseries-build
+    - rhel72-zseries-test
+    batchtime: 1440 # 1 day
+  - id: suse11-64
+    display_name: SLES 11
+    variables:
+      variant: suse11
+    run_on: suse11-test
+  - id: suse12-64
+    display_name: SLES 12
+    variables:
+      variant: suse12
+    run_on: suse12-test
+
