@@ -1,31 +1,31 @@
 stepback: true
 command_type: system
 buildvariants:
-- name: build_32
+- name: build
   display_name: Windows_64
   run_on:
   - windows-64-vs2013-compile
   tasks:
-    - name: "build_32"
+    - name: "build32"
+    - name: "build64"
 
 pre:
   - func: "fetch source"
 
-#post:
-#- func: "upload artifacts"
-#- command: shell.cleanup
+post:
+  - func: "upload artifacts"
 
 tasks:
 
-- name: build_32
+- name: build32
   exec_timeout_secs: 14400 # 4h
   commands: 
-     - func: "build_32"
+     - func: "build32"
 
-#- name: build_64
-#  exec_timeout_secs: 14400 # 4h
-#  commands: 
-#     - func: "build_64"
+- name: build64
+  exec_timeout_secs: 14400 # 4h
+  commands: 
+     - func: "build64"
 
 
 - name: compile
@@ -80,12 +80,19 @@ tasks:
     - func: "run gssapi integration tests"
 
 functions:
-  "build_32":
+  "build32":
     command: shell.exec
     type: test
     params:
       script: |
-          ./bin/win32_odbc_build.sh
+          ./odbc/bin/win32_odbc_build.sh
+
+  "build64":
+    command: shell.exec
+    type: test
+    params:
+      script: |
+          ./odbc/bin/win64_odbc_build.sh
 
   "build mongosql_auth":
     command: shell.exec
@@ -108,7 +115,7 @@ functions:
     - command: shell.exec
       params:
         silent: true
-        working_dir: mongosql-auth-c
+        working_dir: odbc
         script: |
           if [ "Windows_NT" = "$OS" ]; then
               set -o igncr
@@ -144,15 +151,15 @@ functions:
           EOT
     - command: expansions.update
       params:
-        file: mongosql-auth-c/expansions.yml
+        file: odbc/expansions.yml
 
   "fetch packages":
     - command: s3.get
       params:
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        remote_file: mongosql-auth-c/artifacts/${version_id}/${build_variant}/pkg/release-bundles.tgz
-        extract_to: mongosql-auth-c/test/artifacts/
+        remote_file: odbc/artifacts/${version_id}/${build_variant}/pkg/release-bundles.tgz
+        extract_to: odbc/test/artifacts/
         bucket: mciuploads
 
   "fetch source":
@@ -160,14 +167,14 @@ functions:
       params:
         silent: true
         script: |
-          rm -rf mongosql-auth-c
+          rm -rf odbc
     - command: git.get_project
       params:
-        directory: mongosql-auth-c
+        directory: odbc
     - command: git.apply_patch
       type: test
       params:
-        directory: mongosql-auth-c
+        directory: odbc
 
   "install dependencies":
     command: shell.exec
@@ -234,12 +241,12 @@ functions:
           echo "${signing_token_bi_connector}" > ${PROJECT_DIR}/signing_auth_token
     - command: shell.exec
       params:
-        working_dir: mongosql-auth-c/test/artifacts
+        working_dir: odbc/test/artifacts
         script: |
           /usr/local/bin/notary-client.py \
               --key-name "bi-connector" \
               --auth-token-file ${PROJECT_DIR}/signing_auth_token \
-              --comment "Evergreen Automatic Signing (mongosql-auth-c) - ${version_id} - ${build_variant}" \
+              --comment "Evergreen Automatic Signing (odbc) - ${version_id} - ${build_variant}" \
               --notary-url http://notary-service.build.10gen.cc:5000 \
               --skip-missing \
               release.msi
@@ -269,178 +276,38 @@ functions:
         optional: true
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        local_file: mongosql-auth-c/test/artifacts/release.tgz
-        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.tgz
-        content_type: application/x-gzip
-        bucket: mciuploads
-        permissions: public-read
-        display_name: "mongosql-auth.tgz"
-    - command: s3.put
-      params:
-        optional: true
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: mongosql-auth-c/test/artifacts/release.zip
-        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.zip
-        content_type: application/x-gzip
-        bucket: mciuploads
-        permissions: public-read
-        display_name: "mongosql-auth.zip"
-    - command: s3.put
-      params:
-        optional: true
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: mongosql-auth-c/test/artifacts/release.msi
-        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.msi
+        local_file: odbc/build-win32/odbc.msi
+        remote_file: mongo-odbc-driver/artifacts/${build_variant}/${task_id}/mongo-odbc-win32.msi
         content_type: application/x-msi
         bucket: mciuploads
         permissions: public-read
-        display_name: "mongosql-auth.msi"
+        display_name: "mongo-odbc-win32.msi"
     - command: s3.put
       params:
         optional: true
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        local_file: mongosql-auth-c/test/artifacts/release-signed.msi
-        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.msi
+        local_file: odbc/build-win64/odbc.msi
+        remote_file: mongo-odbc-driver/artifacts/${build_variant}/${task_id}/mongo-odbc-win64.msi
         content_type: application/x-msi
         bucket: mciuploads
         permissions: public-read
-        display_name: "mongosql-auth-signed.msi"
-    - command: s3.put
-      params:
-        optional: true
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: mongosql-auth-c/test/artifacts/build/mongosql_auth.so
-        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/mongosql_auth.so
-        content_type: application/octet-stream
-        bucket: mciuploads
-        permissions: public-read
-        display_name: "mongosql_auth.so"
-    - command: s3.put
-      params:
-        optional: true
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: mongosql-auth-c/test/artifacts/build/mongosql_auth.dll
-        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/mongosql_auth.dll
-        content_type: application/octet-stream
-        bucket: mciuploads
-        permissions: public-read
-        display_name: "mongosql_auth.dll"
-    - command: s3.put
-      params:
-        optional: true
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: mongosql-auth-c/test/artifacts/orchestration/server.log
-        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/orchestration-server.log
-        content_type: text/plain
-        bucket: mciuploads
-        permissions: public-read
-        display_name: "orchestration-server.log"
-    - command: s3.put
-      params:
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: mongosql-auth-c/test/artifacts/log/install-build-deps.log
-        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/install-build-deps.log
-        content_type: text/plain
-        bucket: mciuploads
-        permissions: public-read
-        display_name: "install-build-deps.log"
-    - command: s3.put
-      params:
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: mongosql-auth-c/test/artifacts/log/build-mongosql-auth.log
-        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/build-mongosql-auth.log
-        content_type: text/plain
-        bucket: mciuploads
-        permissions: public-read
-        display_name: "build-mongosql-auth.log"
-    - command: s3.put
-      params:
-        optional: true
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: mongosql-auth-c/test/artifacts/log/start-orchestration.log
-        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/start-orchestration.log
-        content_type: text/plain
-        bucket: mciuploads
-        permissions: public-read
-        display_name: "start-orchestration.log"
-    - command: s3.put
-      params:
-        optional: true
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: mongosql-auth-c/test/artifacts/log/start-sqlproxy.log
-        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/start-sqlproxy.log
-        content_type: text/plain
-        bucket: mciuploads
-        permissions: public-read
-        display_name: "start-sqlproxy.log"
-    - command: s3.put
-      params:
-        optional: true
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: mongosql-auth-c/test/artifacts/log/sqlproxy.log
-        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/sqlproxy.log
-        content_type: text/plain
-        bucket: mciuploads
-        permissions: public-read
-        display_name: "sqlproxy.log"
-    - command: s3.put
-      params:
-        optional: true
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: mongosql-auth-c/test/artifacts/log/run-integration-tests-plain.log
-        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/run-integration-tests-plain.log
-        content_type: text/plain
-        bucket: mciuploads
-        permissions: public-read
-        display_name: "run-integration-tests-plain.log"
-    - command: s3.put
-      params:
-        optional: true
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: mongosql-auth-c/test/artifacts/log/run-integration-tests-scram.log
-        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/run-integration-tests-scram.log
-        content_type: text/plain
-        bucket: mciuploads
-        permissions: public-read
-        display_name: "run-integration-tests-scram.log"
-    - command: s3.put
-      params:
-        optional: true
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: mongosql-auth-c/test/artifacts/log/create-release.log
-        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/create-release.log
-        content_type: text/plain
-        bucket: mciuploads
-        permissions: public-read
-        display_name: "create-release.log"
+        display_name: "mongo-odbc-win64.msi"
+
 
   "upload packages":
     - command: archive.targz_pack
       params:
-        target: mongosql-auth-c/test/artifacts/upload.tgz
-        source_dir: mongosql-auth-c/test/artifacts/
+        target: odbc/test/artifacts/upload.tgz
+        source_dir: odbc/test/artifacts/
         include:
           - "./release.*"
     - command: s3.put
       params:
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        local_file: mongosql-auth-c/test/artifacts/upload.tgz
-        remote_file: mongosql-auth-c/artifacts/${version_id}/${build_variant}/pkg/release-bundles.tgz
+        local_file: odbc/test/artifacts/upload.tgz
+        remote_file: odbc/artifacts/${version_id}/${build_variant}/pkg/release-bundles.tgz
         content_type: application/x-gzip
         bucket: mciuploads
         permissions: public-read
@@ -452,8 +319,8 @@ functions:
         optional: true
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        local_file: mongosql-auth-c/test/artifacts/release.tgz
-        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.tgz
+        local_file: odbc/test/artifacts/release.tgz
+        remote_file: odbc/artifacts/${build_variant}/${task_id}/mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.tgz
         content_type: application/x-gzip
         bucket: mciuploads
         permissions: public-read
@@ -463,8 +330,8 @@ functions:
         optional: true
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        local_file: mongosql-auth-c/test/artifacts/release.zip
-        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.zip
+        local_file: odbc/test/artifacts/release.zip
+        remote_file: odbc/artifacts/${build_variant}/${task_id}/mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.zip
         content_type: application/x-gzip
         bucket: mciuploads
         permissions: public-read
@@ -474,8 +341,8 @@ functions:
         optional: true
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        local_file: mongosql-auth-c/test/artifacts/release-signed.msi
-        remote_file: mongosql-auth-c/artifacts/${build_variant}/${task_id}/mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.msi
+        local_file: odbc/test/artifacts/release-signed.msi
+        remote_file: odbc/artifacts/${build_variant}/${task_id}/mongosql-auth-${PUSH_NAME}-${PUSH_ARCH}-${CURRENT_VERSION}.msi
         content_type: application/x-msi
         bucket: mciuploads
         permissions: public-read

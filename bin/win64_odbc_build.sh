@@ -1,19 +1,20 @@
-#!/usr/bin/sh
+#!/bin/sh
 
-BUILD_DIR=$(dirname $0)/../build-win64
-S3_FILE=https://s3.amazonaws.com/mongo-odbc-build-scratch/mysql-5.7.21-winx64.zip
-DL_DIR=$BUILD_DIR/mysql-5.7.21-winx64/
+SCRIPT_DIR=$(dirname $(readlink -f $0))
+BUILD_DIR=$SCRIPT_DIR/../build-win64
+mkdir -p $BUILD_DIR
+S3_URL=https://s3.amazonaws.com/mongo-odbc-build-scratch/mysql-5.7.21-winx64.zip
+DL_DIR=$BUILD_DIR/mysql-5.7.21-winx64
 ZIP_FILE=mysql-64.zip
 ODBC_DIR=mysql-connector-odbc
 
 export PATH='/cygdrive/c/cmake/bin':'/cygdrive/c/Program Files (x86)/Microsoft Visual Studio 12.0/Common7/IDE':'/cygdrive/c/wixtools/bin':$PATH
 export MYSQL_DIR=$(cygpath -w $DL_DIR)
 
-mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 
 if [ ! -e $DL_DIR ]; then
-    curl $S3_FILE --output $ZIP_FILE
+    curl $S3_URL --output $ZIP_FILE
     unzip $ZIP_FILE
 fi
 
@@ -29,6 +30,7 @@ devenv.com MySQL_Connector_ODBC.sln /build Release
 
 cd ..
 
+#we use cp -R because symlinks are problematic on cygwin
 cp -R ../resources/win64_installer/* ./
 
 #copy relevant files to installer dir

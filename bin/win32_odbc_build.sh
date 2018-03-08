@@ -1,6 +1,8 @@
-#!/usr/bin/sh
+#!/bin/sh
 
-BUILD_DIR=$(dirname $0)/../build-win32
+SCRIPT_DIR=$(dirname $(readlink -f $0))
+BUILD_DIR=$SCRIPT_DIR/../build-win32
+mkdir -p $BUILD_DIR
 S3_URL=https://s3.amazonaws.com/mongo-odbc-build-scratch/mysql-5.7.21-win32.zip
 DL_DIR=$BUILD_DIR/mysql-5.7.21-win32
 ZIP_FILE=mysql-32.zip
@@ -9,7 +11,6 @@ ODBC_DIR=mysql-connector-odbc
 export PATH='/cygdrive/c/cmake/bin':'/cygdrive/c/Program Files (x86)/Microsoft Visual Studio 12.0/Common7/IDE':'/cygdrive/c/wixtools/bin':$PATH
 export MYSQL_DIR=$(cygpath -w $DL_DIR)
 
-mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 
 if [ ! -e $DL_DIR ]; then
@@ -31,6 +32,7 @@ devenv.com MySQL_Connector_ODBC.sln /build Release
 
 cd ..
 
+#we use cp -R because symlinks are problematic on cygwin
 cp -R ../resources/win32_installer/* ./
 
 #copy relevant files to installer installer dir
