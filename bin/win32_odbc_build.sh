@@ -3,7 +3,7 @@
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 BUILD_DIR=$SCRIPT_DIR/../build-win32
 mkdir -p $BUILD_DIR
-S3_URL=https://s3.amazonaws.com/mongo-odbc-build-scratch/mysql-5.7.21-win32.zip
+S3_URL=https://s3.amazonaws.com/mciuploads/mongo-odbc-driver/prereqs/mysql-5.7.21-win32.zip
 DL_DIR=$BUILD_DIR/mysql-5.7.21-win32
 ZIP_FILE=mysql-32.zip
 ODBC_DIR=mysql-connector-odbc
