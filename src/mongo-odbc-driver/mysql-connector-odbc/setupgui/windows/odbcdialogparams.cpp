@@ -853,7 +853,7 @@ int ShowOdbcParamsDialog(DataSource* params, HWND ParentWnd, BOOL isPrompt)
 	InitStaticValues();
 
 	pParams= params;
-	pCaption= L"MySQL Connector/ODBC Data Source Configuration";
+	pCaption= L"MongoDB ODBC Data Source Configuration";
   g_isPrompt= isPrompt;
 
   /*
