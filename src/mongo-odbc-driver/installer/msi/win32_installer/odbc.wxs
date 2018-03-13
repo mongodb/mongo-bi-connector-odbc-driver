@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-    <Product Id="{7EE09EC6-28EB-4FCF-B485-6630E9E5B3F1}" Language="1033" Manufacturer="MongoDB Inc" Name="MongoDB ODBC 5.3" UpgradeCode="{FF073FBB-32E2-4052-B6B2-830C5ED4A809}" Version="5.3.10">
-        <Package Comments="This installer database contains the logic and data required to install MongoDB ODBC 5.3." Compressed="yes" Description="MongoDB ODBC" InstallerVersion="200" Keywords="Installer,MSI,Database" Languages="1033" Manufacturer="MongoDB Inc" Platform="x86" />
+    <Product Id="{7EE09EC6-28EB-4FCF-B485-6630E9E5B3F1}" Language="1033" Manufacturer="MongoDB Inc" Name="MongoDB ODBC 1.0" UpgradeCode="{FF073FBB-32E2-4052-B6B2-830C5ED4A809}" Version="1.0.0">
+        <Package Comments="This installer database contains the logic and data required to install MongoDB ODBC 1.0" Compressed="yes" Description="MongoDB ODBC" InstallerVersion="200" Keywords="Installer,MSI,Database" Languages="1033" Manufacturer="MongoDB Inc" Platform="x86" />
         <Binary Id="AdminBackground" SourceFile="Files\Binary\AdminBackground" />
         <Binary Id="AdminHeader" SourceFile="Files\Binary\AdminHeader" />
         <Binary Id="SetupTypeComp" SourceFile="Files\Binary\SetupTypeComp" />
@@ -30,7 +30,7 @@
                     <RegistryValue Id="Version" Root="HKLM" Key="SOFTWARE\MongoDB Inc\[ProductName]" Name="Version" Value="[ProductVersion]" Type="string" KeyPath="yes" />
                 </Component>
                 <Directory Id="MongoDB" Name="MongoDB">
-                    <Directory Id="MongoDB_ODBC" Name="MongoDB ODBC 5.3" ShortName="6lyc3hbc">
+                    <Directory Id="MongoDB_ODBC" Name="MongoDB ODBC 1.0" ShortName="6lyc3hbc">
                         <Directory Id="INSTALLDIR">
                             <Component Id="lib" Guid="{FED572C6-4778-4C54-A713-8D67D4758043}" SharedDllRefCount="yes">
                                 <File Id="myodbca.lib" Name="myodbc5a.lib" KeyPath="yes" DiskId="1" Source="Files\File\myodbca.lib" />
@@ -45,8 +45,8 @@
                                 <File Id="lic3rd" Name="Licenses_for_Third-Party_Components.txt" ShortName="6uznz9py.txt" DiskId="1" Source="Files\File\lic3rd" />
                                 <File Id="changelog" Name="ChangeLog.txt" ShortName="e1djpf1r.txt" DiskId="1" Source="Files\File\changelog" />
                                 <File Id="license" Name="COPYING.txt" DiskId="1" Source="Files\File\license" />
-                                <ODBCDriver Id="MongoDB_ODBC_5.3a_Driver" Name="MongoDB ODBC 5.3 ANSI Driver" File="myodbc5a.dll" SetupFile="myodbc5S.dll" />
-                                <ODBCDriver Id="MongoDB_ODBC_5.3w_Driver" Name="MongoDB ODBC 5.3 Unicode Driver" File="myodbc5w.dll" SetupFile="myodbc5S.dll" />
+                                <ODBCDriver Id="MongoDB_ODBC_1.0a_Driver" Name="MongoDB ODBC 1.0 ANSI Driver" File="myodbc5a.dll" SetupFile="myodbc5S.dll" />
+                                <ODBCDriver Id="MongoDB_ODBC_1.0w_Driver" Name="MongoDB ODBC 1.0 Unicode Driver" File="myodbc5w.dll" SetupFile="myodbc5S.dll" />
                             </Component>
                             <Component Id="setup" Guid="{428232BA-9D94-4DB5-87CD-C939D1347664}" SharedDllRefCount="yes">
                                 <File Id="myodbc5S.dll" Name="myodbc5S.dll" KeyPath="yes" DiskId="1" Source="Files\File\myodbc5S.dll" />
@@ -62,7 +62,7 @@
                 </Directory>
             </Directory>
         </Directory>
-        <Feature Id="ODBC" ConfigurableDirectory="INSTALLDIR" Description="Installs the MongoDB ODBC 5.3.10 32-bit Unicode and ANSI drivers." Level="1" Title="MongoDB ODBC 5.3.10 32-bit drivers">
+        <Feature Id="ODBC" ConfigurableDirectory="INSTALLDIR" Description="Installs the MongoDB ODBC 1.0.0 32-bit Unicode and ANSI drivers." Level="1" Title="MongoDB ODBC 1.0.0 32-bit drivers">
             <ComponentRef Id="RegKeys" />
             <ComponentRef Id="lib" />
             <ComponentRef Id="driver" />
@@ -74,7 +74,7 @@
         <Property Id="SetupType" Value="Typical" />
         <Property Id="AgreeToLicense" Value="No" />
         <Property Id="_IsMaintenance" Value="Change" />
-        <Property Id="ARPCOMMENTS" Value="MongoDB ODBC 5.3 is a MongoDB database connector for ODBC." />
+        <Property Id="ARPCOMMENTS" Value="MongoDB ODBC 1.0 is a MongoDB database connector for ODBC." />
         <Property Id="ARPCONTACT" Value="http://www.mysql.com/about/contact/" />
         <Property Id="ARPPRODUCTICON" Value="MongoODBC.ico" />
         <Property Id="ARPHELPLINK" Value="http://forums.mysql.com/list.php?37" />
@@ -92,7 +92,7 @@
         <Property Id="ProgressType2" Value="installed" />
         <Property Id="ProgressType1" Value="Installing" />
         <Property Id="ProgressType0" Value="install" />
-        <Property Id="QualifiedProductName" Value="MongoDB ODBC 5.3.10(a)" />
+        <Property Id="QualifiedProductName" Value="MongoDB ODBC 1.0.0(a)" />
         <Property Id="InstallationDirectory" Value="MongoDB Connector-ODBC" />
         <Property Id="ReinstallFileVersion" Value="o" />
         <Property Id="RebootYesNo" Value="Yes" />
@@ -978,8 +978,8 @@
             </Dialog>
         </UI>
         <Upgrade Id="{FF073FBB-32E2-4052-B6B2-830C5ED4A809}">
-            <UpgradeVersion Minimum="5.3.10" Maximum="5.3.999" Property="NEWERPRODUCTFOUND" OnlyDetect="yes" />
-            <UpgradeVersion Minimum="5.0.999" Maximum="5.3.9" Property="PREVIOUSVERSIONINSTALLED" IncludeMinimum="yes" IncludeMaximum="yes" />
+            <UpgradeVersion Minimum="1.0.0" Maximum="1.0.999" Property="NEWERPRODUCTFOUND" OnlyDetect="yes" />
+            <UpgradeVersion Minimum="1.0.0" Maximum="1.0.999" Property="PREVIOUSVERSIONINSTALLED" IncludeMinimum="yes" IncludeMaximum="yes" />
         </Upgrade>
         <InstallExecuteSequence>
             <Custom Action="NewerVersionInstalled" After="FindRelatedProducts">NEWERPRODUCTFOUND</Custom>
