@@ -30,7 +30,7 @@ devenv.com MySQL_Connector_ODBC.sln /build Release
 cd $BUILD_DIR
 
 #we use cp -R because symlinks are problematic on cygwin
-cp -R ../resources/win32_installer/* ./
+cp -R $ROOT/src/mongo-odbc-driver/installer/msi/win32_installer/* ./
 
 #copy relevant files to installer installer dir
 FILE_DIR=$ODBC_DIR/lib/Release
