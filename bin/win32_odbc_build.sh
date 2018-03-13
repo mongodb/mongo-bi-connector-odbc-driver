@@ -3,10 +3,11 @@
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 ROOT=$SCRIPT_DIR/..
 BUILD_DIR=$ROOT/build-win32
-mkdir -p $BUILD_DIR
 S3_URL=https://s3.amazonaws.com/mciuploads/mongo-odbc-driver/prereqs/mysql-5.7.21-win32.zip
 DL_DIR=$BUILD_DIR/mysql-5.7.21-win32
 ZIP_FILE=mysql-32.zip
+
+mkdir -p $BUILD_DIR
 ODBC_DIR=$ROOT/src/mongo-odbc-driver/mysql-connector-odbc
 
 export PATH='/cygdrive/c/cmake/bin':'/cygdrive/c/Program Files (x86)/Microsoft Visual Studio 12.0/Common7/IDE':'/cygdrive/c/wixtools/bin':$PATH

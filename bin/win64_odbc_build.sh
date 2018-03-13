@@ -2,10 +2,10 @@
 
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 ROOT=$SCRIPT_DIR/..
+BUILD_DIR=$ROOT/build-win64
 S3_URL=https://s3.amazonaws.com/mongo-odbc-build-scratch/mysql-5.7.21-winx64.zip
 DL_DIR=$BUILD_DIR/mysql-5.7.21-winx64
 ZIP_FILE=mysql-64.zip
-BUILD_DIR=$ROOT/build-win64
 
 mkdir -p $BUILD_DIR
 ODBC_DIR=$ROOT/src/mongo-odbc-driver/mysql-connector-odbc
@@ -29,7 +29,7 @@ devenv.com MySQL_Connector_ODBC.sln /build Release
 cd $BUILD_DIR
 
 #we use cp -R because symlinks are problematic on cygwin
-cp -R $ROOT/src/mongo-odbc-driver/installer/msi/win32_installer/* ./
+cp -R $ROOT/src/mongo-odbc-driver/installer/msi/win64_installer/* ./
 
 #copy relevant files to installer dir
 FILE_DIR=$ODBC_DIR/lib/Release
