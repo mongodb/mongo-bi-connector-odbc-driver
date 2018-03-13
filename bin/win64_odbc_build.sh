@@ -8,7 +8,7 @@ ZIP_FILE=mysql-64.zip
 BUILD_DIR=$ROOT/build-win64
 
 mkdir -p $BUILD_DIR
-DBC_DIR=$ROOT/src/mongo-odbc-driver/mysql-connector-odbc
+ODBC_DIR=$ROOT/src/mongo-odbc-driver/mysql-connector-odbc
 
 export PATH='/cygdrive/c/cmake/bin':'/cygdrive/c/Program Files (x86)/Microsoft Visual Studio 12.0/Common7/IDE':'/cygdrive/c/wixtools/bin':$PATH
 export MYSQL_DIR=$(cygpath -w $DL_DIR)
