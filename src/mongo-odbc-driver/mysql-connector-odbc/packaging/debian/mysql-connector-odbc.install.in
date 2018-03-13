@@ -1,0 +1,7 @@
+usr/lib/libmyodbc5a.so
+usr/lib/libmyodbc5w.so
+usr/bin/myodbc-installer
+usr/ChangeLog            usr/share/doc/mysql-connector-odbc
+usr/@LIC_FILE@           usr/share/doc/mysql-connector-odbc
+usr/README               usr/share/doc/mysql-connector-odbc
+usr/README.debug         usr/share/doc/mysql-connector-odbc

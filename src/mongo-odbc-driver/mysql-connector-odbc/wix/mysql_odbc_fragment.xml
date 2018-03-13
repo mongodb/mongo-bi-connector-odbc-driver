@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- *****************************************************************************************
+  Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+
+  The MySQL Connector/ODBC is licensed under the terms of the GPLv2
+  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+  MySQL Connectors. There are special exceptions to the terms and
+  conditions of the GPLv2 as it is applied to this software, see the
+  FLOSS License Exception
+  <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+  
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published
+  by the Free Software Foundation; version 2 of the License.
+  
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+  or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+  for more details.
+  
+  You should have received a copy of the GNU General Public License along
+  with this program; if not, write to the Free Software Foundation, Inc.,
+  51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+ 
+    <!-- *****************************************************************************************
+      Icons
+    -->
+    <?include myodbc_version.xml ?>
+
+    <!-- *****************************************************************************************
+      Directories / Files
+    -->
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <?if $(var.odbc_64bit) = 1 ?>
+      <Directory Id="ProgramFiles64Folder">
+      <?else ?>
+      <Directory Id="ProgramFilesFolder">
+      <?endif?>
+        <Directory Id="MySQL" Name="MySQL">
+          <Directory Id="Connector_ODBC" Name="Connector ODBC $(var.odbc_ver_short)">
+            <Directory Id="INSTALLDIR" Name=".">
+
+          <?if $(var.odbc_64bit) = 1 ?>
+
+            <Component Id="lib" Guid="22F054AC-F3F1-47E6-A03E-46423C467C79" SharedDllRefCount="yes" Win64="yes">
+              <File Id="myodbca.lib" Name="myodbc5a.lib" KeyPath="yes" DiskId="1" Source="x64\myodbc5a.lib" />
+              <File Id="myodbcw.lib" Name="myodbc5w.lib" DiskId="1" Source="x64\myodbc5w.lib" />
+              <?if $(var.odbc_pdb) = 1 ?>
+                <File Id="myodbca.lib.pdb" Name="myodbc5a.pdb" DiskId="1" Source="x64\myodbc5a.pdb" />
+                <File Id="myodbcw.lib.pdb" Name="myodbc5w.pdb" DiskId="1" Source="x64\myodbc5w.pdb" />
+              <?endif?>
+            </Component>
+            <Component Id="driver" Guid="C1960400-BFC6-4E6E-AF30-4C19EF5A3F07" SharedDllRefCount="yes" Win64="yes">
+              <File Id="myodbc5a.dll" Name="myodbc5a.dll" Checksum="yes" KeyPath="yes" DiskId="1" Source="x64\myodbc5a.dll">
+                <ODBCDriver Id="MySQL_ODBC_5.3a_Driver" Name="MySQL ODBC 5.3 ANSI Driver" SetupFile="myodbc5S.dll" />
+              </File>
+              <File Id="myodbc5w.dll" Name="myodbc5w.dll" Checksum="yes" DiskId="1" Source="x64\myodbc5w.dll">
+                <ODBCDriver Id="MySQL_ODBC_5.3w_Driver" Name="MySQL ODBC 5.3 Unicode Driver" SetupFile="myodbc5S.dll" />
+              </File>
+              <File Id="readme" Name="README.txt" DiskId="1" Source="doc\README.txt"/>
+              <File Id="lic3rd" Name="Licenses_for_Third-Party_Components.txt" DiskId="1" Source="doc\Licenses_for_Third-Party_Components.txt" />
+              <File Id="changelog" Name="ChangeLog.txt" DiskId="1" Source="doc\ChangeLog.txt"/>
+              <?if $(var.license) = "commercial"?>
+                <File Id="license" Name="LICENSE.mysql.txt" DiskId="1" Source="doc\LICENSE.mysql.txt" />
+              <?else?>
+                <File Id="license" Name="COPYING.txt"       DiskId="1" Source="doc\COPYING.txt" />
+              <?endif?>
+            </Component>
+            <Component Id="setup" Guid="3A92E95A-AF9C-4A4F-A36D-E0052405C278" SharedDllRefCount="yes" Win64="yes">
+              <File Id="myodbc5S.dll" Name="myodbc5S.dll" KeyPath="yes" DiskId="1" Source="x64\myodbc5S.dll" />
+              <File Id="myodbc5S.lib" Name="myodbc5S.lib" DiskId="1" Source="x64\myodbc5S.lib"/>
+              <?if $(var.odbc_pdb) = 1 ?>
+                <File Id="myodbc5S.lib.pdb" Name="myodbc5S.pdb" DiskId="1" Source="x64\myodbc5S.pdb"/>
+              <?endif?>
+            </Component>
+            <Component Id="installer" Guid="EB5E7FB3-F6DD-4424-A54A-DD07213E67ED" SharedDllRefCount="yes" Win64="yes">
+              <File Id="installer" Name="myodbc-installer.exe" KeyPath="yes" DiskId="1" Source="x64\myodbc-installer.exe" />
+              <?if $(var.odbc_pdb) = 1 ?>
+                <File Id="installer.pdb" Name="myodbc-installer.pdb" DiskId="1" Source="x64\myodbc-installer.pdb" />
+              <?endif?>
+            </Component>
+          <?else ?>
+            <Component Id="lib" Guid="FED572C6-4778-4C54-A713-8D67D4758043" SharedDllRefCount="yes">
+              <File Id="myodbca.lib" Name="myodbc5a.lib" KeyPath="yes" DiskId="1" Source="x86\myodbc5a.lib" />
+              <File Id="myodbcw.lib" Name="myodbc5w.lib" DiskId="1" Source="x86\myodbc5w.lib" />
+              <?if $(var.odbc_pdb) = 1 ?>
+                <File Id="myodbca.lib.pdb" Name="myodbc5a.pdb" DiskId="1" Source="x86\myodbc5a.pdb" />
+                <File Id="myodbcw.lib.pdb" Name="myodbc5w.pdb" DiskId="1" Source="x86\myodbc5w.pdb" />
+              <?endif?>
+            </Component>
+            <Component Id="driver" Guid="83B6877B-3220-4C5F-A1B5-84787E9798DD" SharedDllRefCount="yes">
+              <File Id="myodbc5a.dll" Name="myodbc5a.dll" Checksum="yes" KeyPath="yes" DiskId="1" Source="x86\myodbc5a.dll">
+                <ODBCDriver Id="MySQL_ODBC_5.3a_Driver" Name="MySQL ODBC 5.3 ANSI Driver" SetupFile="myodbc5S.dll" />
+              </File>
+              <File Id="myodbc5w.dll" Name="myodbc5w.dll" Checksum="yes" DiskId="1" Source="x86\myodbc5w.dll">
+                <ODBCDriver Id="MySQL_ODBC_5.3w_Driver" Name="MySQL ODBC 5.3 Unicode Driver" SetupFile="myodbc5S.dll" />
+              </File>
+              <File Id="readme" Name="README.txt" DiskId="1" Source="doc\README.txt"/>
+              <File Id="lic3rd" Name="Licenses_for_Third-Party_Components.txt" DiskId="1" Source="doc\Licenses_for_Third-Party_Components.txt" />
+              <File Id="changelog" Name="ChangeLog.txt" DiskId="1" Source="doc\ChangeLog.txt"/>
+              <?if $(var.license) = "commercial"?>
+                <File Id="license" Name="LICENSE.mysql.txt" DiskId="1" Source="doc\LICENSE.mysql.txt" />
+              <?else?>
+                <File Id="license" Name="COPYING.txt"       DiskId="1" Source="doc\COPYING.txt" />
+              <?endif?>
+            </Component>
+            <Component Id="setup" Guid="428232BA-9D94-4DB5-87CD-C939D1347664" SharedDllRefCount="yes">
+              <File Id="myodbc5S.dll" Name="myodbc5S.dll" KeyPath="yes" DiskId="1" Source="x86\myodbc5S.dll" />
+              <File Id="myodbc5S.lib" Name="myodbc5S.lib" DiskId="1" Source="x86\myodbc5S.lib"/>
+              <?if $(var.odbc_pdb) = 1 ?>
+                <File Id="myodbc5S.lib.pdb" Name="myodbc5S.pdb" DiskId="1" Source="x86\myodbc5S.pdb"/>
+              <?endif?>
+            </Component>
+            <Component Id="installer" Guid="75754F93-A6F5-4575-A6AA-C64CA053386F" SharedDllRefCount="yes">
+              <File Id="installer" Name="myodbc-installer.exe" KeyPath="yes" DiskId="1" Source="x86\myodbc-installer.exe" />
+              <?if $(var.odbc_pdb) = 1 ?>
+                <File Id="installer.pdb" Name="myodbc-installer.pdb" DiskId="1" Source="x86\myodbc-installer.pdb" />
+              <?endif?>
+            </Component>
+          <?endif ?>
+            </Directory>  <!--INSTALLDIR-->
+          </Directory>
+      <!-- needed to make candle happy -->
+      <?if $(var.odbc_64bit) = 1 ?>
+        </Directory>
+      <?else ?>
+        </Directory>
+      <?endif ?>
+      </Directory>
+
+
+    </Directory>
+  </Fragment>
+</Wix>

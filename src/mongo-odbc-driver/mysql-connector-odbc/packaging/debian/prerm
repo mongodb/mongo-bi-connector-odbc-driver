@@ -1,0 +1,14 @@
+#!/bin/sh
+
+set -e
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+db_version 2.0
+
+db_get libmyodbc/addtoodbc || true
+if [ "$RET" = "true" ]; then
+	odbcinst -u -d -n MySQL
+fi
+
+#DEBHELPER#

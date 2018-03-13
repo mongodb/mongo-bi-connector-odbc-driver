@@ -1,0 +1,1489 @@
+5.3.10
+
+  Security Notes:
+  Functionality added or changed:
+  * Build ODBC Connector with libmysqlclient linked dynamically (WL #11105)
+  Bugs fixed:
+  * ODBC Driver issue with SELECT for UPDATE (Bug# 26646688/87457)
+  * Contribution: Compilation fixes for MySQL 5.5 (Bug# 26633971/87413)
+  * Contribution: Fix truncated "SSL Certificate Authority" label
+    (Bug# 26579169/87325)
+  * OpenRecordset leaking memory client side on Windows ODBC Client
+    (Bug# 27155880/86473)
+  * MySQL Connector/ODBC 5.2.5 - Command Timeout does not work
+    (Bug# 26474362/69416)
+  * Calling MySQLDrivercConnect with a NULL pcbConnStrOut causes a crash
+    (Bug# 27101767/88371)
+
+  Built using MySQL 5.7.20
+
+5.3.9
+
+  Security Notes:
+  Functionality added or changed:
+  * Added two new CMake build options. STATIC_MSVCRT to switch /MT and /MD
+    compiler options in Windows. WITH_NODEFAULTLIB to specify the
+    /NODEFAULTLIB linker option. (WL# 10890)
+  Bugs fixed:
+  * Segmentation fault in SQLFetch() when used with dynamic cursor
+    (Bug# 18805392)
+  * SQLExecute() after SQLFreeStmt(SQL_RESET_PARAMS) results
+    in assert failure (Bug# 19148246)
+  * SQLForeignKeys() crashing when SQL_MODE='ANSI_QUOTES'
+    (Bug# 18641824)
+  * SQLForeignKeys() returns empty result with NO_I_S=0
+    (Bug# 26388694)
+
+  Built using MySQL 5.7.19
+
+----
+
+5.3.8
+
+  Security Notes:
+  * Connector/ODBC 5.3.8 Commercial upgrades the linked OpenSSL
+    library to version 1.0.2k which has been publicly reported
+    as not vulnerable to CVE-2017-3732
+    (http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-3732)
+    (Bug #25615448, CVE-2017-3732)
+  Functionality added or changed:
+  * Added a new connection option NO_DATE_OVERFLOW to control returning
+    of errors when the TIMESTAMP structure used for DATE column contains
+    non-zero time part (Bug# 25386024)
+  Bugs fixed:
+  * SQL_ATTR_MAX_ROWS applies to all result sets on the statement,
+    and not connection (Bug# 17259397/69554)
+  * SQLTABLES patch (Bug 13914518) has to be extended for NO_I_S case
+    (Bug# 14005343)
+  * Connector/ODBC does not send correct error message when 2006 error occurs
+    (Bug #25671389)
+  * Error in Windows Setup Wizard Custom Setup Dialog
+    (Bug# 25247807/84190)
+  * Contents in embedded help for myodbc-installer are outdated
+    (Bug# 18896110/72852)
+  * SQLGetData() with invalid column number crashes (Bug# 18636600)
+  * Assert failure in SQLSetDescField() API (Bug# 18641633)
+  * Metadata functions crash when the catalog/table/column name is long
+    (Bug #18796005)
+  * Prefetch causes syntax errors in select queries with parameters
+    (Bug# 17386788)
+
+  Built using MySQL 5.7.18
+
+----
+
+5.3.7
+
+  Security Notes:
+  * Connector/ODBC 5.3.7 Commercial upgrades the linked OpenSSL
+    library to version 1.0.2j which has been publicly reported
+    as not vulnerable to CVE-2016-6304
+    (http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2016-6304)
+    (Bug #24753385, CVE-2016-6304)
+
+  Functionality added or changed:
+  * Added new options to control TLS versions for connecting:
+    NO_TLS_1_0, NO_TLS_1_1, NO_TLS_1_2. By Default all TLS versions are enabled
+    and options allow to disable using of a particular TLS version.
+    (Bug# 23496903/81640)
+  * Added a new option SSLMODE to set the SSL mode before connection is made.
+    The option value can be set to any of the follwing: DISABLED, PREFERRED,
+    REQUIRED, VERIFY_CA, VERIFY_IDENTITY. This option will override
+    the deprecated SSLVERIFY and SSL_ENFORCE.
+    (Bug# 23497043/81641)
+
+  Bugs fixed:
+  * Assertion in ODBC Driver when calling mysql_stmt_close() on a broken
+    connection (Bug# 25109356/83858)
+  * Connector ODBC does not build with newer CMake (Bug# 22746557)
+  * Installation fails in OSX El Capitan (23123503/81113)
+
+  Built using MySQL 5.7.17.
+ 
+----
+
+5.3.6
+
+  Functionality added or changed:
+  * Keywords specific to MySQL server 5.7 (WL#7992)
+  * Implement SQL_ATTR_QUERY_TIMEOUT statement attribute (WL#7991)
+  * Added DEFAULT_AUTH and PLUGIN_DIR options in connection parameters.
+  * Added DISABLE_SSL_DEFAULT connection parameter to disable
+    connecting through SSL by default.
+  * Added SSL_ENFORCE connection parameter to enforce SSL connection.
+
+  Bugs fixed:
+  * ODBC Driver not parsing comments correctly (Bug# 16613308/53891)
+  * Calling SQLGetDiagField with DIAGIDENTIFIER SQL_DIAG_ROW_COUNT always
+    returns 0 (Bug #11750296/40771)
+  * ADO hangs when using MySQL ODBC 5.3 ANSI Driver with French characters
+    (Bug# 20526062)
+  * Connector/ODBC fails to build when using libmysqlclient 5.7
+    (Bug# 20685833/76261)
+  * malloc/free mismatch in MySqlGetPrivateProvileStringW
+    (Bug# 21074676/76984)
+
+----
+
+5.3.5
+
+  Security Notes:
+  * Connector/ODBC 5.3.5 Commercial upgrades the linked OpenSSL
+    library to version 1.0.1m which has been publicly reported
+    as not vulnerable to CVE-2015-0286
+    (http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2015-0286).
+
+    Since the only change in Connector/ODBC 5.3.5 is the inclusion
+    of OpenSSL libraries publicly reported as unaffected by
+    CVE-2015-0286, and since Oracle-produced MySQL Community
+    builds use YaSSL libraries which have been reported as not
+    affected by CVE-2015-0286, Oracle will not produce builds for
+    Connector/ODBC Community for version 5.3.5. This means the
+    Community edition of Connector/ODBC will skip version 5.3.5.
+    (Bug #20747740, CVE-2015-0286)
+
+----
+
+5.3.4
+
+  Functionality added or changed:
+  * New ODBC connection option to specify the location of RSA public key
+    (WL #7911)
+
+  Bugs fixed:
+  * SSL CA Path cannot be selected in Linux GUI (Bug #18813389/72716)
+
+----
+
+5.3.3
+
+  Functionality added or changed:
+
+  Bugs fixed:
+  * Seg Fault in SQLForeignKeys() when column name contains special characters
+    (Bug #18286118)
+  * Add NULL handle checks in ODBC API functions (WL #7807)
+
+----
+
+5.3.2
+
+  Functionality added or changed:
+  * Support of ODBCINSTGetProperties in MyODBC Driver (WL #7577)
+  * Add DFLT_BIGINT_BIND_STR option to Connector/ODBC GUI (Windows and Linux)
+    (WL#7579)
+
+  Bugs fixed:
+  * Connect crash if the catalog name given to SQLSetConnectAttr is invalid
+    (Bug #17587913)
+  * Driver returns wrong length for output parameter streams
+    (Bug #17814768/70946)
+  * Assert failure in case of prepared statments and SQLDESCRIBECOL() called
+    with column number given larger then actual parameter marker in query.
+    (Bug #17311065)
+  * SQLFOREIGNKEYS WITH FLAG_NO_INFORMATION_SCHEMA OPTION RETURNS BAD RESULTS
+    (Bug #16920750)
+  * SQLFetch() crashing when execute using UnixODBC 2.3.2 (Bug #17857204)
+  * Segmentation fault in SQLSpecialColumns if table name is invalid
+    (Bug# 17854697)
+  * Invalid order of free() functions can cause crash (Bug# 17992912)
+  * Crash in ODBC Driver with CHARSET=WRONGCHARSET (Bug# 17999659)
+  * Driver and myodbc-installer crash with long option names (>100) and
+    values (>255) (Bug# 17966018)
+  * ODBCManageDataSourcesQ4 cannot run MyODBC GUI setup to edit an existing
+    DSN (Bug# 18046123)
+  * SQLGetData returning error being called after SQLParamData (Bug #17842966)
+  * Valgrind: jump or move depends on uninitialised value error from
+    myodbc-installer (Bug# 18046120)
+  * Memory leak in sqlexecute() when connection is killed from another thread
+    (Bug#17587617)
+  * Data corruption in SQLBulkOperations because of buffer overrun.
+    (Bug #17714172)
+  * Segfault in SQLBulkOperations() for SQL_UPDATE_BY_BOOKMARK when select
+    returns 0 records. (Bug# 17714358)
+  * MS Access crashed when sorting a column (Bug# 17071780/69550)
+  * Empty query giving segmentation fault in myodbc_casecmp (Bug# 17085344)
+  * Uninitialized variable free_value can set wrong error in SQLDescribeCol
+    (Bug# 17588101)
+  * ODBC 5.2.5 DMG installer fails on OSX 10.8.5 (Bug #17512040/70422)
+  * Bulk insert on time column with hour value > 99 gives error (Bug#17613161)
+  * Concurrent execution of SQLEndTran() with SQL_HANDLE_ENV results in
+    SEG FAULT (Bug #18166331)
+  * Workaround to GTK bug in GtkComboBox and GtkComboBoxEntry (WL #7637)
+  * ODBC Driver GUI in Windows has wrong order of controls selection
+    (Bug# 18240696)
+  * Wrong installation library directory on some 64bit system other than x86_64.
+    (Bug# 68848)
+  * SQLNumResultCols() with NULL parameter results in Segmentation Fault
+    (Bug# 18165197)
+  * SQLBULKOPERATIONS(SQL_FETCH_BOOKMARK) RETURNS SQL_NO_DATA ERROR
+    (Bug# 18287216)
+  * Segmentation Fault in SQLExecute() while executing test file "my_types"
+    (Bug# 18303978)
+  * Segmentation fault in SQLParamOptions() in Solaris platform (Bug# 18325878)
+  * Segmentation fault in SQLForeignKeys() when number of columns in the table
+    is more (Bug# 18286366)
+  * Valgrind memory leak in SQLForeignKeys when NO_I_S=1 (Bug# 18286007)
+  * Valgrind memory leak in when SQLPrepare used with SQLParamData/SQLPutData for
+    NO_I_S=1 (Bug#18295317)
+  * The password is getting saved when creating FileDSN using SQLDriverConnect
+    (Bug# 18310873)
+  * Passing NULL pointer to SQLSetDescField, SQLGetDiagField and SQLGetDiagRec
+    results in a crash (Bug# 18431088)
+  * Rename internal functions named as mysql_xxxx inside ODBC sources
+    (WL #7789)
+
+  Built using MySQL 5.6.17.
+
+----
+
+5.3.1(20-Nov-2013)
+
+  Functionality added or changed:
+  * Support of SQL_ATTR_RESET_CONNECTION connection attribute (WL #7274)
+
+  Bugs fixed:
+  * Memory leak using 5.2.6 ODBC Connector (Bug #17653461/70662)
+
+  * MySQL ODBC driver incorrectly quotes TableName when calling SQLPrimaryKeys
+    (Bug# 16952531/69448)
+  * Bad memory access when get out params (Bug #17640929/70642)
+  * Setting Unix Socket using ODBCManageDataSourcesQ4 sets NAMED_PIPE=1
+    (Bug# 17586452)
+  * Segmentation Fault in SQLBulkOperations() (Bug #17714290)
+  * Segmentation fault when SQLColumns table or column argument are provided
+    more then 256 and 129 respectively (Bug #17358838)
+  * Memory leak in SQLSetStmtAttr() as statement deallocation was missing
+    (Bug #17441507)
+  * Memory leak is happening in SQLProcedureColumns when returning empty results.
+    (Bug #17298721)
+  * Memory leak in SQLConnect() called after SQLSetConnectAttr() (Bug #17586844)
+
+  Built using MySQL 5.6.14.
+
+----
+
+5.3.0(19-Oct-2013)
+
+  Functionality added or changed:
+  * Support for File Data Sources. (WL #6583, Bug #11746219/24581)
+  * Bookmark support added in myodbc (WL #7039)
+  * Seg Fault in SQLForeignKeys() when column name contains special characters
+    (Bug #18286118)
+  * Add NULL handle checks in ODBC API functions (WL #7807)
+
+----
+5.2.6(25-Sep-2013)
+
+  Functionality added or changed:
+  * Added new variable in cmake config files ODBCCP32_LIB for odbccpp32.lib path,
+    and MYSQLCLIENT_LIB_NAME for linking mysqlclient statically or dynamically by
+    specifying mysqlclient library (libmysql.*, mysqlclient.*, libmysqlclient_r.*,
+    libmysqlclient.*) to be used. Mysql CPP linkage for mysql version >= 5.6.4
+    (WL #6738)
+  * Added a new test module for crash bugs (my_crash.c)
+  * Added GUI dialog for Linux
+  * Support of ODBC 3.8 standard - driver self identification, input/output
+    stream parameters (WL #6584)
+
+  Bugs fixed:
+  * With utf8 byte string for mysql server version < 5.5.3, insert fails
+    with error message "Server does not support 4-byte encoded UTF8
+    characters." (Bug #14838690)
+  * Driver use the char ';' as separator in attributes string instead
+    of the '\0' (Bug #15940689/66548)
+  * DSN connection parameters override those specified in the connection
+    string (Bug #11760574/52996)
+  * Non-compliant behavior of SQLMoreResults (Bug #16101282/67920)
+  * MSSQL linked server connected to MySQL 5.1.9 driver causes hard crash
+    (Bug #16604346/63386)
+  * MySQL ODBC drivers incorrectly returns TIME columns, where value > '99:59:59'
+    (Bug #16176981/67793)
+  * Conversion of Time field data to Timestamp type may produce incorrect result
+    (Bug #17016839/69545)
+  * Need to add a lock to access connections member in ENV structure
+    (Bug #17240611/69864)
+  * Visual Studio 2010 crashes when reading rows from any table in Server
+    Explorer (Bug #17304031/69950)
+  * Corrected MYSQL_NUM_VERSION calculation error in FindMysql.cmake.
+    MYSQL_LIB_DIR, MYSQL_INCLUDE_DIR, MYSQL_LINK_FLAGS and MYSQL_CXXFLAGS will
+    be obtained from mysql_config only when they are not provided using cmake
+    options.
+  * Memory leak in SQLPrepare with queries that use parameters
+    (Bug #17400483/70113)
+  * Valgrind error, simple loop fix (Bug #17397596/64105)
+  * Wrong pointer type can cause crash in convert_c_type2str()
+    (Bug #17421620/69733)
+  * Memory leak in SQLMoreResults() as deallocation of result_bind buffer
+    required before calling mysql_stmt_free_result() (Bug# 17441296)
+  * FileDSN is created evein if the connection credentials are wrong
+    (Bug #17508006)
+  * Error with iodbc in SQLAllocHandle with handle type SQL_HANDLE_DBC
+    as odbc_ver is unset.
+
+  Built using MySQL 5.6.14.
+
+----
+
+5.2.5(04-Apr-2013)
+
+  Functionality added or changed:
+  * MSI package installs both ANSI and Unicode drivers. (WL#6793)
+
+  Bugs fixed:
+  * query_print will cause core dump in 32-bit application
+    (Bug #16367440/68201)
+  * Microsoft Access Crashes when Bit field updates (Bug# 16287859/68243)
+  * Datetime and timestamp second fractions need removing the trailing
+    zeros (Bug# 16294197/65418)
+  * Binding string to decimal parameter always uses system locale setting
+    (Bug# 11766369/59469)
+  * Added CLEARTEXT authentication connection option ENABLE_CLEARTEXT_PLUGIN.
+   (Bug#16445091)
+  * Crash in SQLSetConnectAttr(SQL_ATTR_CURRENT_CATALOG) (Bug# 16526604/63844)
+
+  Built using MySQL 5.6.11.
+
+----
+
+5.2.4 (16-Jan-2013)
+
+  Functionality added or changed:
+  * Support of expired passwords. Added conenction string option CAN_HANDLE_EXP_PWD.
+    (WL#6786)
+  * Add new reserved words from MySQL 5.6 in SQLGetInfo (WL#6704)
+
+  Bugs fixed:
+  * While retrieving data from a field, BLOB to CHAR conversion is done only for
+    fields having BLOB_FLAG, BINARY_FLAG and binary character set(63) (Bug #11746572)
+
+  Built using MySQL 5.6.10.
+
+----
+
+5.2.3 (19-Dec-2012)
+
+  Bugs fixed:
+  * Memory leak in 5.2.2(w) ODBC driver causes Prepared_stmt_count to grow
+    (Bug# 67340/14812778)
+  * Version 5.1 exports symbols SQLInstallDriverEx and SQLInstallDriverExW
+    (Bug# 11766724/59900)
+  * Corrected calculation for length indicator descriptor field (Bug# 11766437)
+  * is_minimum_version() function does not work correctly (Bug# 15926340)
+  * Problem with BIT columns in MS Access (Bug# 15997361/67702)
+
+  Built using MySQL 5.5.27.
+
+----
+
+5.2.2 (10-Sep-2012)
+
+  Bugs fixed:
+  * Server disconnects on the execution of a query following execution of a SP
+    returning resultset(s) and OUT parameters. (Bug# 14512187)
+  * Crash while executing after binding BLOB datatype as INOUT parameter
+    (Bug# 14501952)
+  * SP having 2 BLOB OUT parameters crashes at execution (Bug# 14563386)
+  * ASSERT for INOUT parameter of BIT(N>3) type (Bug#14560916)
+  * Using ADO, driver returns wrong type and value for bit(>1) parameter
+    (Bug# 14555713)
+  * Blobs used in as INOUT parameters have inconsistent behaviour in ADO
+    (Bug# 14580316)
+  * my_isspace calls cause ODBC driver crashes (Bug# 14363601)
+  * SQLNativeSql did not null-terminate output string after copying
+    (Bug# 14559721)
+  * Incorrect length value passed to SQLSetConnectAttr could cause
+    driver crash. (Bug# 14620420)
+
+  Built using MySQL 5.5.27.
+
+----
+
+5.2.1 (09-Aug-2012)
+
+  Functionality added or changed:
+  * Driver prepares statements on server
+  * Support of INOUT and OUT parameters(WL#6116)
+  * Increased the timeout in tests from 30 to 60 seconds to avoid failures in
+    slow tests that involve catalog functions and Information_Schema queries.
+
+  Bugs fixed:
+  * Long table names crash OBDC driver. (Bug# 14085211/65200)
+  * Close proximity issue when handling OS signlals in myodbc (Bug# 14303803)
+  * "String data right truncated" error is not always correct (Bug# 14285620)
+
+  Built using MySQL 5.5.27.
+
+----
+
+5.2.0(15-Jun-2012)
+
+  Functionality added or changed:
+  * Driver available in Unicode and ANSI versions(WL#5850)
+  * Driver by default uses server side prepared statements
+  * Connection string option NO_SSPS prevents using of server side prepared
+    statements. It is configurable via GUI dialog.
+
+  Built using MySQL 5.5.25.
+
+----
+
+5.1.11(28-Apr-2012)
+
+  Functionality added or changed:
+  * MyODBC queries log is written to %TEMP%\myodbc.sql, or to C:\myodbc.sql if
+    TEMP is not defined.
+  * Added pre-fetch functionality and PREFETCH connection string option
+    implemented through LIMIT to avoid reading the entire resultset for full
+    table SELECT queries. (WL#6211)
+
+  Bugs fixed:
+  * Fractional parts of second is ignored in SQLGetData. (Bug #12767740/60646)
+  * ODBC prepared statements ignore fractional part of temporal data types.
+    (Bug #12767761/60648)
+  * Memory leak on Windows on each connection attepmt. (Bug #11766029/59059)
+  * SQLTables() function does not return the catalog correctly if the wildcard
+    or SQL_ALL_CATALOGS is used. (Bug #13914518)
+
+  Built using MySQL 5.5.18.
+
+----
+
+5.1.10(02-Feb-2012)
+
+  Functionality added or changed:
+
+  Bugs fixed:
+  * In some cases TIMESTAMP field could be described as SQL_NO_NULLS.
+    (Bug #13532987)
+  * SQLFetch has to return error if indicator pointer is NULL for NULL value.
+    (Bug #13542600)
+  * A failure on one stmt causes another stmt to fail. (Bug #13097201/#62657)
+
+  Built using MySQL 5.5.18.
+
+----
+
+5.1.9 (04-Oct-2011)
+
+  Functionality added or changed:
+  * Support of windows authentication.
+
+  Bugs fixed:
+  * SQLFetch() did not return SQL_ERROR if connection was dropped due to a
+    timeout. (Bug #39878)
+  * MS Access with VARCHAR NOT NULL columns. (Bug #31067)
+  * sqlwcharchr might read one SQLWCHAR after end of string. (Bug #61586)
+  * Column parameter binding makes SQLExecute not to return SQL_ERROR on
+    disconnect. (Bug #59772)
+  * If pre-execution failed some catalog functions called right after that
+    would return only one row. (Bug #12824839)
+  * MyODBC driver does not call mysql_thread_end() when the thread ends causing
+    error messages such as this: Error in my_thread_global_end(): 1 threads
+    didn't exit. (Bug #57727)
+  * When NO_BINARY_RESULT was set driver failed to perform the expected data
+    conversion. (Bug#11765110/58038)
+
+  Built using MySQL 5.5.16.
+
+----
+
+5.1.8 (08-Nov-2010)
+
+  Functionality added or changed:
+
+  Bugs fixed:
+  * MySQL ODBC Connector on Windows 2008 64bit. (Bug #56233)
+  * SQLNumResultCols() causes the driver to return only first row in the
+    resultset. (Bug #56677)
+  * Connector/ODBC 5.1 series requires uninstall prior to installing a new
+    version. (Bug #54314)
+  * SQLDescribeCol and SQLColAttribute cannot be called before SQLExecute.
+    (Bug #56717)
+  * Errors would not be reported in bulk upload. (Bug #56804)
+  * MSI installer does not set InstallLocation value in registry. (Bug #56978)
+  * SQLProcedureColumns doesn't work with certain data/parameters combinations.
+    (Bug #57182)
+  * SQLRowCount return wrong result row count for SQLTables and some other
+    catalog functions. (Bug #57182)
+
+
+  Built using MySQL 5.1.46sp1.
+
+----
+
+5.1.7 (24-Aug-2010)
+
+  Functionality added or changed:
+  * Options in the GUI are groupped on named tabs.
+  * Added connection option INTERACTIVE that tells driver that client is
+    ineractive and interactive_timeout has to be used. (Bug #48603)
+  * Added parameters arrays support. (Bug #48310)
+  * SQLTables uses now INFORMATION_SCHEMA. Added connection option to use old code.
+    (Bug #43644)
+  * Added GUI options for MIN_DATE_TO_ZERO and ZERO_DATE_TO_MIN connection
+    options. (Bug #30539)
+  * Function SQLProcedureColumns() implemented. (Bug #50400)
+  * Added NO_I_S connection option.
+
+  Bugs fixed:
+  * If NO_BACKSLASH_ESCAPES mode is used on a server, escaping binary data
+    can lead to server query parsing errors. (Bug #49029)
+  * Error if unsupported client character set is encountered(for wchar data).
+    (Bug #36996)
+  * Binding bit field to a numeric types doesn't work. (Bug #32821)
+  * Conversion flags are not complete. (Bug #43855)
+  * SQL_ATTR_MAX_ROWS make some SELECT statement invalid. (Bug #49726)
+  * Certain column attributes aren't correct for date columns. (Bug #44576)
+  * SQLPrepare causes Prefetch of table. (Bug #46411)
+  * If there are foreign key constraints with same name for tables with same
+    names in 2 schemas, SQLForeignKeys can return rows for both
+    schemas in query about one of those tables. (Bug #49660)
+  * SQLForeignKeys included in results rows for foreign keys pointing to unique fields
+    (Bug #51422)
+  * SQLPrimaryKeys returns mangled strings. (Bug #36441)
+  * Spaces in connection string aren't removed (Bug #45378)
+  * SQLColumns returns wrong transfer octet length. (Bug #53235)
+  * Retrieving of current catalog at the moment when connection is not ready for
+    that(broken, not all pending results processed) leads to application crash.
+    (Bug #46910)
+  * SQLForeignKeys unacceptable performance getting imported FK. (Bug #39562)
+  * SQLTablePrivileges requires SELECT privilege on mysql database. (Bug #50195)
+  * Column octet length includes terminating null byte. (Bug #54206)
+  * Wrong type returned by SQLColAttribute(SQL_DESC_PRECISION...) in 64-bit
+    systems. (Bug #55024)
+
+----
+
+5.1.6 (09-Nov-2009)
+
+  Functionality added or changed:
+  * Providing an empty string as the catalog argument to SQLTables()
+    will return an empty result set. A catalog must have a name.
+  * Remove use of "old" SQLLEN/SQLULEN types aliases. They are not
+    supported in unixODBC 2.2.13 and later 64-bit builds. Removed
+    SQLROWCOUNT, SQLROWSETSIZE, SQLTRANSID, SQLROWOFFSET.
+  * Connection parameters can be specified individually instead of
+    using OPTIONS bitflags. (See connection parameters documentation)
+  * Edit controls for INITSTMT and CHARSET DSN options are added to the native
+    Windows GUI. (Bug #40932)
+  * Length/Indicator pointer is now stored and used internally as pointer to
+    SQLLEN and not to SQLINTEGER. Using SQLINTEGER pointers as
+    StrLen_or_IndPtr parameter of SQLBindParameter/SQLBindCol may cause crash
+    on 64bit platforms.
+  * Query log is not overwritten, but appended instead. (Bug #44965)
+  * Fixed tab order in Windows datasource config dialog. (Bug #42905)
+
+  Bugs fixed:
+  * Add support for data-at-execution with positioned insert/update
+    (Bug #37649)
+  * Output string length from SQLDriverConnect() includes NULL-term
+    (Bug #38949)
+  * SQLGetInfo() returns 0 for SQL_CATALOG_USAGE info (Bug #39560)
+  * SQLDriverConnect() may truncate output string erroneously
+    (Bug #37278)
+  * SQLTables() doesn't properly handle empty strings to list catalogs
+    and tables. (Bug #39561)
+  * Calling SQLDriverConnect() with no output buffer will crash if not
+    prompting. (Bug #40316)
+  * SQLTables() doesn't return the catalog name if the table is given
+    and the catalog argument is NULL. (Bug #39957)
+  * Driver crashes when attempting to retrieve data in a character set
+    not compiled into libmysql. (Bug #39831)
+  * SQLGetTypeInfo() doesn't return any rows SQL_TIMESTAMP on an ODBC v2
+    connection. (Bug #30626)
+  * Positioned update with SQL_C_NUMERIC loses prec/scale values
+    (Bug #39961)
+  * ADO adUseServer cursor is lost after updating adLongVarWChar field
+    (Bug #26950)
+  * Calling SQLDescribeCol() with a NULL buffer and non-zero buffer
+    length causes a crash. (Bug #41942)
+  * NULL parameters don't work correctly with ADO. (Bug #41256)
+  * Unable to retrieve null DECIMAL fields in ADO. (Bug #41081)
+  * Fix positioned update using data-at-execution, bind offsets and
+    row-wise binding. (Bug #36071)
+  * SQLConfigDataSource may fail with: Cannot find driver (Bug #41796)
+  * FLAG_NO_BIGINT still returns bigint for SQLDescribeCol()
+    (Bug #17679)
+  * Random access violation exceptions (0xC0000005) in ASP scripts in the
+    SQLSetConnectAttrW. (Bug #44971)
+  * Binding SQL_C_BIT to an integer column didn't work. (Bug #39644)
+  * Inserting a new record using SQLSetPos if the table is from different than
+    current catalog. (Bug #41946)
+
+
+  Includes changes from Connector/ODBC 3.51.27.
+
+  Built using MySQL 5.1.34sp1.
+
+----
+
+5.1.5 (18-Aug-2008)
+
+  Functionality added or changed:
+  * Added FLAG_NO_BINARY_RESULT connection option to always handle
+    binary function results as character data. (Bug #29402)
+
+  Bugs fixed:
+  * Some catalog functions used fixed-sized buffers for handling
+    arguments that could be overrun, and misinterpreted some arguments
+    as patterns when they should be treated as identifiers. (Bug #36275)
+  * SQLDriverConnect() returned SQL_ERROR when the user cancelled
+    the dialog box instead of SQL_NO_DATA. (Bug #36293)
+  * System DSN lookup (using ODBC_BOTH_DSN) fails on Windows XP.
+    (Bug #36203)
+  * SQLProcedures() followed by SQLFreeStmt() crashes (Bug #36069)
+  * ADO adUseServer cursor is lost after updating adLongVarWChar field
+    (Bug #26950)
+  * SQL_TYPE_TIMESTAMP and SQL_TYPE_TIME parameters were incorrectly
+    included when parameters were expanded. (Bug #37342)
+  * DSN-less connection prompting cannot look up driver entry
+    (Bug #37254)
+
+  Includes changes from Connector/ODBC 3.51.26.
+
+  Built using MySQL 5.0.60sp1.
+
+----
+
+5.1.4 (15-Apr-2008)
+
+  Bugs fixed:
+  * SQLGetDiagRec() sometimes returned SQL_SUCCESS but no error
+    message. (Bug #33910)
+  * Driver installer (myodbc-installer.exe) fails to create a new DSN
+    (Bug #35776)
+  * Get wrong result with decimal(8,2) field type (Bug #35920)
+
+  Includes changes from Connector/ODBC 3.51.25.
+
+  Built using MySQL 5.0.56sp1.
+
+----
+
+5.1.3 (26-Mar-2008)
+
+  Functionality added or changed:
+  * Added SSLVERIFY connection option to verify server certificate. By default
+    certificate is not verified now. (Bug #34648)
+  * Database list height is autoadjusted in Windows GUI. (Bug #33918)
+  * Added new connection string option DFLT_BIGINT_BIND_STR
+
+  Bugs fixed:
+  * Recordset-based update fails if blob field is queried. (Bug #19065)
+  * Descriptor records were not cleared correctly when calling
+    SQLFreeStmt(SQL_UNBIND). (Bug #34271)
+  * The driver incorrectly reported that the SQL standard CAST() and
+    CONVERT() functions were supported. (Bug #33808)
+  * Unresolved symbols "min" and "max" in libmyodbc3.so w/gcc 4.2.
+    (Bug #34256)
+  * Notorious #DELETED problem when linking tables in Access and BIGINT PK
+    (Bug #24535)
+  * MyODBC 51/Access unable to use DBEngine.RegisterDatabase to create a DSN
+    (Bug #33825)
+  * Unable to use surrogate pairs into with unicode column. (Bug #34672)
+  * SQLGetData w/SQL_C_WCHAR gives incorrect data. (Bug #34429)
+
+  Includes changes from Connector/ODBC 3.51.24.
+
+  Built using MySQL 5.0.52.
+
+----
+
+5.1.2 (12-Feb-2008)
+
+  Functionality added or changed:
+  * SQLForeignKeys uses INFORMATION_SCHEMA when it is available on the server,
+    which allows more complete information to be returned.
+  * Disabled MYSQL_OPT_SSL_VERIFY_SERVER_CERT when using an SSL connection.
+  * Explicit descriptors are implemented. (Bug #32064)
+  * Changed SQL_ATTR_PARAMSET_SIZE to return an error until support for it
+    is implemented.
+
+  Bugs fixed:
+  * Tried to use the already-entered database when connecting to get list of
+    databases in Windows setup library. (Bug #33615)
+  * SQLForeignKeys returned an empty string for the schema columns instead of
+    a NULL. (Bug #19923)
+  * SQLGetInfo() reported characters for SQL_SPECIAL_CHARACTERS that were
+    not encoded correctly. (Bug #33130)
+  * Adding or updating a row using SQLSetPos() on a result set with aliased
+    columns would fail. (Bug #6157)
+  * Changing the DSN name when editing a DSN left behind the DSN
+    under the old name in addition to creating the new entry. Fixed for
+    native Windows GUI. (Bug #31165, fixed for Qt GUI in 3.51.23)
+  * Numeric values (such as OPTIONS or PORT) were not read correctly
+    from a connection string if they were not the last parameter. (Bug #33822)
+  * The SSLCIPHER option was saved incorrectly on Windows. (Bug #33897)
+  * The cursor position was incorrect after rows were deleted from a
+    static cursor. (Bug #33388)
+  * Dynamic cursors on statements with parameters were not supported.
+    (Bug #11846)
+  * FLAG_COLUMN_SIZE_S32 did not limit the octet length or display size
+    reported for fields, causing problems with Microsoft Visual
+    FoxPro. (Bug #30890)
+  * Retrieving SQL_C_WCHAR data with SQLGetData() could crash due to
+    incorrect handling of the buffer length. (Bug #32684)
+
+  Includes changes from Connector/ODBC 3.51.23.
+
+  Built using MySQL 5.0.52.
+
+----
+
+5.1.1 (12-Dec-2007)
+
+  Functionality added or changed:
+  * Added MSI installer for Windows 64-bit. (Bug #31510)
+  * Implemented support for SQLCancel(). (Bug #15601)
+  * Added wrappers for missing ODBC driver manager installer functions.
+    This makes it possible to use the driver with unixODBC 2.2.11, which
+    is the version shipped with Debian and Ubuntu. (Bug #32685)
+  * Disallow 'SET NAMES' in initial statement and in executed statements.
+  * Replaced the internal library which handles creation and loading
+    of DSN information. The new library, which was originally a part of
+    Connector/ODBC 5.0, supports Unicode option values.
+  * Implemented native Windows setup library.
+  * Removed monitor (myodbc3m) and dsn-editor (myodbc3c).
+  * Replaced myodbc3i (now myodbc-installer) with Connector/ODBC 5.0
+    version.
+  * Added support for SQL_NUMERIC_STRUCT (Bug #3028, #24920).
+  * Removed non-threadsafe configuration of the driver. The driver is
+    now always built against the threadsafe version of libmysql.
+
+  Bugs fixed:
+  * SQL statements were limited to 64k. (Bug #30983)
+  * Diagnostics were not correctly cleared on connection and
+    environment handles.
+  * SQLCopyDesc() did not correctly copy all records.
+  * Freeing a statement resulted in a memory leak due to descriptor
+    records not being freed. (Bug #31115)
+  * SQL_ODBC_SQL_CONFORMANCE was not handled by SQLGetInfo().
+  * NULL pointers passed to SQLGetInfo() could result in a crash.
+  * Passwords with ';' were not handled correctly. (Bug #16178)
+  * Binding of columns between calling prepare and execute caused premature
+    statement execution. (Bug #29239)
+  * ADO could not open a recordset that has a DECIMAL field (Bug #31720)
+  * SQLError() incorrectly cleared the error information, making it
+    unavailable from subsequent calls to SQLGetDiagRec().
+  * ADO was unable to open record set using dynamic cursor. (Bug #32014)
+  * SQLSetConnectAttr() did not clear previous errors, possibly confusing
+    SQLError().
+  * SQLDescribeColW returned UTF-8 column as SQL_VARCHAR instead of
+    SQL_WVARCHAR. (Bug #32161)
+  * Fixed SQL_ATTR_PARAM_BIND_OFFSET, and fixed row offsets to work
+    with updatable cursors.
+  * SQLSetPos w/SQL_DELETE advances dynamic cursor incorrectly. (Bug #29765)
+  * Recordset Update() fails in 5.1 ODBC connector when using adUseClient
+    cursor. (Bug #26985)
+  * MyODBC 5/ ADO Not possible to update a client side cursor. (Bug #27961)
+  * Intermixing of SQLGetData() using SQL_C_CHAR and SQL_C_WCHAR on the same
+    field value was incorrect. (Bug #28617)
+  * SQLNativeSql() didn't properly handle the output length pointer.
+    (Bug #10128 & Bug #31049)
+
+  Includes changes from Connector/ODBC 3.51.21 and 3.51.22.
+
+  Built using MySQL 5.0.52.
+
+----
+
+5.1.0 (8-Sep-2007)
+
+  Functionality added or changed:
+  * Added support for SQL_C_WCHAR.
+  * Added support for Unicode functions (SQLConnectW, etc).
+  * Added descriptor support (SQLGetDescField, SQLGetDescRec, etc).
+
+----
+
+3.51.27 (20-Nov-2008)
+  Bugs fixed:
+  * Cannot use SSL (Bug #29955)
+  * Enable auto reconnect doesn't work (Bug #37179)
+  * Add read and write timeouts on the connection (Bug #40407)
+
+----
+
+3.51.26 (7-Jul-2008)
+
+  Bugs fixed:
+  * Access Violation in myodbc3.dll (Bug #30770)
+  * Truncation of "SHOW CREATE TABLE" result (Bug #24131)
+  * Added a new connection option FLAG_NO_BINARY_RESULT. Fixed
+    field type charset 63 problem. (Bug #29402)
+
+----
+
+3.51.25 (11-Apr-2008)
+
+  Bugs fixed:
+  * SQL_DESC_FIXED_PREC_SCALE was possibly being reported as true, but it's
+    never supported. (Bug #35581)
+  * ADO failed to retrieve the length of LONGBLOB columns. (Bug #12805)
+
+----
+
+3.51.24 (14-Mar-2008)
+
+  Bugs fixed:
+  * ConfigDSN() returned FALSE when the dialog was cancelled by the user.
+  * Static cursor was unable to be used through ADO when dynamic cursors
+    were enabled. (Bug #27351)
+  * Driver would crash when requesting the current catalog before connecting.
+    (Bug #16653)
+  * Catalog data was truncated due to NAME_LEN only allocating a single byte
+    for characters. (Bug #32864)
+  * SSL connections could not be established properly. Added the server
+    certificate verification flag. (Bug #29955)
+  * Added deprecated SQLSetParam function. (Bug #29871)
+  * Recordset-based update fails if blob field is queried. (Bug #19065)
+  * Allows dirty reading with SQL_TXN_READ_COMMITTED isolation through ODBC
+    (Bug #31959)
+  * Don't cache results and SQLExtendedFetch work badly together.
+    (Bug #32420)
+  * SQLFetch or SQLFetchScroll returns negative data length using SQL_C_WCHAR.
+    (Bug #31220)
+  * An SQLSTATE of HY000 was returned when a stored procedure was not found,
+    instead of 42000. This caused problems with ADO's adCmdUnknown option.
+    (Bug #27158)
+  * Identifiers were quoted incorrectly by SQLColumns(). (Bug #32989)
+  * Worked around bug in iODBC installer library that made it impossible
+    to create a system DSN, particularly on Mac OS X, where the installer
+    created the /Library/ODBC/*.ini files with insufficient permissions.
+    (Bug #31495)
+  * Unresolved symbols "min" and "max" in libmyodbc3.so w/gcc 4.2.
+    (Bug #34256)
+  * Fixed some incorrect information returned by SQLGetTypeInfo().
+    (Bug #30918)
+  * Values bound using the SQL_C_CHAR value type but with numeric
+    parameter type were not correctly escaped. (Bug #34575)
+  * The driver reported that it does not support SQLProcedureColumns(),
+    which causes problems for ADO. (Bug #33298)
+
+----
+
+3.51.23 (9-Jan-2008)
+
+  Bugs fixed:
+  * Allowed connections to be enlisted in distributed transactions, even
+    though the driver doesn't support them. (Bug #32727)
+  * Cleaning up environment handles in multithread environments could result
+    in a five (or more) second delay. (Bug #32366)
+  * SQLAllocStmt() and SQLFreeStmt() did not synchronize access to the
+    list of statements associated with a connection. (Bug #32857)
+  * SQLGetInfo() returned the wrong value for SQL_DATABASE_NAME when no
+    database was selected. (Bug #3780)
+  * Changing the DSN name when editing a DSN left behind the DSN
+    under the old name in addition to creating the new entry. (Bug #31165)
+
+----
+
+3.51.22 (13-Nov-2007)
+
+  Functionality added or changed:
+  * Removed workaround for bug #10491 in the server, which has now been
+    fixed in MySQL Server 5.0.48 and 5.1.21.
+  * Added FLAG_COLUMN_SIZE_S32 to limit the reported column size to a
+    signed 32-bit integer. This option is automatically enabled for ADO
+    applications, in order to work around a bug in ADO. (Bug #13776)
+
+  Bugs fixed:
+  * SQLGetInfo() reported that UNION was not supported. (Bug #32253)
+  * The non-portable "English" locale was used for handling of decimal
+    and floating-point values instead of "C". (Bug #32294)
+  * Unsigned integer values greater than the maximum value of a signed
+    integer were handled incorrectly. (Bug #32171)
+  * The wrong result was returned by SQLGetData() when the data was an
+    empty string and a zero-sized buffer was specified. (Bug #30958)
+
+----
+
+3.51.21 (5-Oct-2007)
+
+  Bugs fixed:
+  * The wrong value was returned for SQL_DESC_LITERAL_PREFIX and
+    SQL_DESC_LITERAL_SUFFIX for date-time fields. (Bug #31009)
+  * The wrong SQLSTATE was reported when the connection to the server
+    was lost. (Bug #3456)
+  * SQLDescribeCol() incorrectly reported whether auto-increment and
+    some timestamp fields were nullable. (Bug #26108)
+  * SQLGetTypeInfo() reported the wrong column size for the SQL_TYPE_TIME
+    type. (Bug #30939)
+  * Empty selection for database and character set comboboxes in setup
+    were set to " " instead of an empty string. (Bug #30568)
+  * Fixed incorrect input requirement in the setup dialog. (Bug #30499)
+  * Added SQLSetParam function and fixed handling of buffer length in
+    SQLBindParameter. (Bug #29871)
+  * Fixed SQLSetPos that generated incorrect INSERT statement for result
+    columns without bound data buffers. (Bug #31246)
+
+----
+
+3.51.20 (7-Sep-2007)
+
+  Bugs fixed:
+  * The FLAG_NO_PROMPT option was not handled by SQLDriverConnect().
+    (Bug #30840)
+  * Removed checkbox in setup dialog for FLAG_FIELD_LENGTH ("Don't
+    Optimize Column Width"), which was removed from the driver in 3.51.18.
+  * The wrong column size was returned for binary data. (Bug #30547)
+  * The specified length of the username and authentication parameters to
+    SQLConnect() were not being honored. (Bug #30774)
+  * SQLGetData() will now always return SQL_NO_DATA_FOUND on second call
+    when no data left, even if requested size is 0. (Bug#30520)
+  * SQLSetParam() caused memory allocation errors due to driver manager's
+    mapping of deprecated functions (buffer length -1). (Bug#29871)
+  * SQLGetConnectAttr() did not reflect the connection state correctly.
+    (Bug#14639)
+
+----
+
+3.51.19 (8-Aug-2007)
+
+  Functionality added or changed:
+  * Because of Bug #10491 in the server, character string results were
+    sometimes incorrectly identified as SQL_VARBINARY. Until this server
+    bug is corrected, the driver will identify all variable-length
+    strings as SQL_VARCHAR.
+
+----
+
+3.51.18 (6-Aug-2007)
+
+  Functionality added or changed:
+  * An experimental binary package, without an installer, is available
+    for Microsoft Windows x64 Edition.
+  * Binary packages as disk images with installers are now available
+    for Mac OS X.
+  * Binary packages for Sun Solaris are available as PKG packages.
+  * Added FLAG_MULTI_STATEMENTS to allow issuing queries that contain
+    multiple statements. Also added to the setup GUI. (Bug #7445)
+  * Removed support for the TRACE and TRACEFILE DSN options. The standard
+    ODBC logging should be used.
+  * Added support for SQL_ATTR_ROW_BIND_OFFSET_PTR in normal cursors.
+    (Bug #6741)
+  * Added SSL options to the GUI setup dialog.
+
+  Bugs fixed:
+  * SQLColumns() incorrectly reported that an auto-incrementing
+    field was not nullable. (Bug #14407)
+  * SQLColumns() incorrectly reported that an auto-updating timestamp
+    field was not nullable. (Bug #14414)
+  * Lengths returned by SQLColumns(), SQLDescribeCol(), and SQLColAttribute()
+    were often incorrect. These lengths should now conform to the ODBC
+    specification. FLAG_FIELD_LENGTH no longer has any effect. The default
+    behavior was incorrect. (Bug #27862)
+  * The SQL_DATA_TYPE column in SQLColumns() results did not report the
+    correct value for date and time types.
+  * The SQL_DATETIME_SUB column in SQLColumns() was not correctly set for
+    date and time types.
+  * The value for SQL_DESC_FIXED_PREC_SCALE was not returned correctly
+    for decimal values in MySQL 5.0 and later.
+  * The wrong value from SQL_DESC_LITERAL_SUFFIX was returned for binary
+    fields.
+  * The wrong value for SQL_DESC_TYPE was returned for date and time types.
+  * The wrong value for DECIMAL_DIGITS in SQLColumns() was reported for
+    FLOAT and DOUBLE fields, as well as the wrong value for the scale
+    parameter to SQLDescribeCol(), and the SQL_DESC_SCALE attribute
+    from SQLColAttribute().
+  * MySQL BIT(n) fields were always treated as SQL_BIT data. When n > 1,
+    they are now treated as binary data.
+  * If the connection character set was set to a multibyte character set,
+    such as UTF-8, the wrong column size was reported. (Bug #19345)
+  * SQLSpecialColumns() returned all TIMESTAMP fields when queried for
+    SQL_ROWVER, not just an auto-updating TIMESTAMP field. (Bug #9927, still
+    limited by Bug #30081 in the server.)
+  * SQLConnect() and SQLDriverConnect() were rewritten to eliminate duplicate
+    code and ensure all options were supported using both connection methods.
+    SQLDriverConnect() now only requires the setup library to be present when
+    the call requires it.
+  * SQLColumns() failed when a catalog was specified due to an
+    incorrectly-generated query. (Bug #29888)
+  * SQLGetTypeInfo() returned incorrect information for date and time
+    fields, and would not return results when queried for the SQL_DATETIME
+    type. (Bug #28657)
+  * myodbc3i did not honor the 's' and 'u' modifier to the -d option for
+    installing the driver as a system or user driver. (Bug #29964)
+  * Tables from the mysql database (catalog) were listed as SYSTEM TABLES
+    by SQLTables() even when a different catalog was being queried. This
+    also introduced errors due to the fix for Bug #26934.  (Bug #28662)
+
+----
+
+3.51.17 (13-Jul-2007)
+
+  Functionality added or changed:
+  * The setup library has been split into its own RPM package, to allow
+    installing the driver itself with no GUI dependencies.
+  * Added an option (CHARSET) for specifying the default character
+    set for a connection. This must be used instead of a "SET NAMES"
+    statement. Also available from the GUI setup dialog. (Related
+    to Bug #6667 and Bug #9498.)
+  * Dis-allow NULL ptr for null indicator when calling SQLGetData()
+    if value is null. Now returns SQL_ERROR w/state 22002.
+  * Fixed calling convention ptr and wrong free in myodbc3i, and fixed
+    the null terminating (was only one, not two) when writing DSN to string.
+
+  Bugs fixed:
+  * myodbc3i did not correctly format driver info, which could cause the
+    installation to fail. (Bug #29709)
+  * Multiple result sets were not correctly flushed when a statement
+    handle was closed. (Bug #16817)
+  * SQLProcedures() did not handle NULL parameters, which could lead to
+    crashes (Bug #28316)
+  * SQLColumns() did not handle many of its parameters correctly, which
+    could lead to incorrect results. The table name argument was not handled
+    as a pattern value, and most arguments were not escaped correctly when
+    they contained non-alphanumeric characters. (Bug #8860)
+  * If there was more than one unique key on a table, the correct fields
+    were not used in handling SQLSetPos(). (Bug #10563)
+  * SQLColAttribute() returned the wrong value for SQL_DESC_BASE_COLUMN_NAME
+    and SQL_DESC_BASE_TABLE_NAME for aliased fields. (Bug #6197)
+  * Calling SQLGetDiagField with RecNumber 0,DiagIdentifier
+    NOT 0 returns SQL_ERROR (Bug #16224)
+  * Correctly return error if SQLBindCol is called with an invalid column
+  * Fixed error handling of OOM and bad connections in catalog functions.
+    This might raise errors in code paths that had not seen them in the past.
+    Gathered the logic for internal result sets into one place. (Bug #26934)
+  * Fixed bad use of memory related to setup/util/GUI. (Bug #27315)
+  * Added a new DSN "OPTION" (FLAG_ZERO_DATE_TO_MIN) to retrieve XXXX-00-00
+    dates as the minimum allowed ODBC date (XXXX-01-01). Added another
+    option (FLAG_MIN_DATE_TO_ZERO) to mirror this but for bound parameters.
+    FLAG_MIN_DATE_TO_ZERO only changes 0000-01-01 to 0000-00-00. (Bug #13766)
+  * Fixed possible crash if SQLBindCol() was not called before SQLSetPos().
+    Fixed use of MYSQL structure pertaining to updating large blobs in
+    cursors. (Bug #10562)
+
+----
+
+3.51.16 (14-Jun-2007)
+
+  Functionality added or changed:
+  * Added support for using SSL. This is not yet exposed in the setup GUI,
+    but must be enabled through configuration files or the DSN. (Bug #12918)
+
+  Bugs fixed:
+  * Statements that return multiple result sets (such as calls to stored
+    procedures) would not free all results when closed. (Bug #27544)
+  * SQL_C_TYPE_DATE, SQL_C_TYPE_TIME, and SQL_C_TYPE_TIMESTAMP were formatted
+    without seperators, which could cause them to get interpreted incorrectly
+    in some cases due to server bugs. (Bug #15773)
+  * Calls to SQLNativeSql() could cause stack corruption due to an incorrect
+    pointer cast. (Bug #28758)
+  * SQLSetPos() could update or delete the wrong rows when the original result
+    set did not contain all columns of a multi-part primary key. (Bug #28255)
+  * SQLTables() did not distinguish tables from views. (Bug #23031)
+  * The wrong function was used for freeing the artificial result sets that
+    are created by some catalog functions. (Bug #22797)
+  * Accessing the results of catalog functions could cause a crash when the
+    "Don't cache results" option was set and a forward-only cursor was
+    being used. (Bug #4657)
+  * SQL_WVARCHAR and SQL_WLONGVARCHAR parameters were not properly quoted
+    and escaped. (Bug #16235)
+  * SQLForeignKeys() did not properly escape wildcard characters in its
+    table name parameters when retrieving information. (Bug #27723)
+  * Calls to SQLSetPos() could cause the driver to incorrectly calculate the
+    length of some fields. (Bug #16917)
+
+----
+
+3.51.15 (04-May-2007)
+
+  Bugs fixed:
+  * SQLGetFunctions() reported that the driver supported SQLProcedureColumns(),
+    even though it does not. (Bug #27591)
+  * The row status array given to SQLExtendedFetch() was being stored
+    as SQL_ATTR_ROW_STATUS_PTR, which could cause it to be used when it
+    should not.
+  * SQLSetPos() would not update a row unless all columns were bound,
+    but it should only require that at least one column is bound and
+    not set to be ignored.
+  * SQLBulkOperations() and SQLSetPos() used the wrong indicator variable
+    values when batch-inserting rows. (Bug #24306)
+  * SQLGetConnectAttr() would report an incorrect isolation level if it
+    was not explicitly set using SQLSetConnectAttr(). (Bug #27589)
+  * The last argument of SQLColAttribute() and SQLColAttributes() was
+    always being treated as a pointer to an SQLINTEGER even though it is
+    sometimes a pointer to an SQLLEN.
+  * SQLForeignKeys would return keys from the wrong tables due to improper
+    handling of table names. (Bug #4518)
+  * Changed the behavior of myodbc3i utility, so it loads the driver library
+    prior to the setup library when creating a new DSN (Bug #27220)
+  * SQLProcedures returned incomplete and incorrect information. (Bug #23033)
+  * Statements that used "WHERE CURRENT OF" for positioned updates could
+    not be re-executed or used with parameters that were provided using
+    SQLPutData() and SQLParamData(). (Bug #5853)
+  * SQLTransact() did not commit or rollback all transactions in the
+    environment when no database connection was specified. (Bug #21588)
+  * Updated use of FIELD_TYPE_* to MYSQL_TYPE_*, which has been preferred
+    since the 3.23 days. (And FIELD_TYPE_* may finally disappear in 5.2.)
+
+----
+
+3.51.14 (08-Mar-2007)
+
+  Functionality added or changed:
+  * Added auto-reconnect option because automatic reconnect is now
+    disabled by default in libmysql
+  * Added auto is null option (Bug #10910)
+  * Added support for SQLMoreResults
+  * Checking SQL_ATTR_CONNECTION_DEAD now always calls mysql_ping() to
+    check for a dead connection.
+  * Remove ODBC escape syntax { and } that begin and terminate statements,
+    allowing {CALL (?)} for procedures that don't require OUT or INOUT
+    parameters
+  * Improved regression tests
+  * Added --with-separate-debug-driver ./configure option
+
+  Bugs fixed:
+  * SQL_ATTR_CONNECTION_TIMEOUT was inappropriately mapped to
+    MYSQL_OPT_CONNECT_TIMEOUT. (Bug #19823)
+  * Prepared statements using the embedded MySQL server would fail
+    due to an uninitialized variable. (Bug #16535)
+  * Fix positioned update and delete on statements derived from one
+    table with no primary key but including all columns (Bug #22796)
+  * Only initialize the ODBC version when the old-style SQLAllocEnv()
+    is called. If SQLAllocHandle() is used, the ODBC version must be
+    explicitly specified using a call to SQLSetEnvAttr()
+  * On 64-bit systems, some types would be incorrectly returned. (Bug #26024)
+  * Using DataAdapter, Connector/ODBC may continually consume memory when
+    reading the same records within a loop (Windows Server 2003 SP1/SP2 only).
+    (Bug #20459)
+  * Fix truncation of queries with leading spaces when SQL_ATTR_MAX_ROWS
+    is set to a non-zero value (Bug #6609)
+  * Fixed problem with memory allocation in Windows for BLOB and long
+    queries that need re-allocation of net->buff
+  * Using Connector/ODBC, with SQLBindCol and binding the length to the return
+    value from SQL_LEN_DATA_AT_EXEC fails with a memory allocation error.
+    (Bug #20547)
+  * Fixed Windows-specific problems with the GUI for SQL_DRIVER_PROMPT
+  * Fixed issues with numeric and decimal rounding
+  * Fixed memory leak in SQLDriverConnect()
+  * Fixed serious memory leak in SQLSpecialColumns() (up to 8KB/call)
+  * Fixed handle leak in LibMain (Bug #21385, thanks to Leandro Becker)
+  * Fixed field lengths reported by SQLDescribeCol() when using functions
+    such as COMPRESS() in SELECT queries (Bug #20208)
+  * Fixed 64-bit issues related to SQLINTEGER columns defined as int,
+    but later cast to long.
+  * TIME fields were incorrectly converted into date/time values. (Bug #25846,
+    Bug #24867, and Bug #25432)
+  * Fixed #Deleted issue in Microsoft Access by changing the default behavior
+    of MyODBC driver regarding SQL_AUTO_IS_NULL variable. Added new option to
+    the GUI and driver
+  * Fixed memory leak in SQLSpecialColumns()
+  * Corrected return size of SQLGetStmtAttr() when getting desc handles
+  * Fixed SQLGetInfo() of SQL_TXN_CAPABLE to return SQL_TC_DDL_COMMIT
+  * For SQL_C_TIME, handle conversion from the different time-related MySQL
+    types, instead of always assuming it is just a TIME. (DATETIME, TIMESTAMP,
+    and DATE were all handled incorrectly.)
+  * Fix crash when default database is not set
+  * Fix handling of lost connections (Bug #14639)
+  * File DSNs could not be saved. (Bug #12019)
+  * Nullability of auto_increment fields is incorrect. (Bug #10130)
+  * Connector/ODBC may insert the wrong parameter values when using prepared
+    statements under 64-bit Linux. (Bug #22446)
+  * The SQLDriverConnect() ODBC method did not work with recent Connector/ODBC
+    releases. (Bug #12393)
+  * Some properties returned by SQLGetInfo() were set using the wrong data
+    type, resulting in possible memory overruns. (Bug #20995)
+  * Ending a transaction using SQLEndTran() on a environment handle was
+    not supported. (Bug #21588)
+
+----
+
+3.51.13 (never officially released, changes listed with those for 3.51.14)
+
+----
+
+3.51.12 (25-Aug-2005)
+
+  Functionality added or changed:
+  * Improved README and other documentation
+  * Improved source distribution for Microsoft Windows
+  * Renamed package from 'MyODBC' to 'mysql-connector-odbc'
+  * Improved configure script
+  * Added -w option to myodbc3i to disable GUI popups
+  * Redid help screen in myodbc3i
+  * Added support for ODBCINI environment variable in SQLConnect()
+  * Added CLIENT_MULTI_RESULTS client option
+  * Added support for FIELD_TYPE_NEWDECIMAL
+  * Moved to WiX-based installer for Windows
+  * Made implied insert more intelligent (minimized the number of columns used)
+  * Improved time/timestamp handling
+
+  Bugs fixed:
+  * Fixed problem with positioned update
+  * Fixed SQLForeignKeys() to support more than 18 foreign keys
+  * Fixed handling of quoting in SQLForeignKeys()
+  * Fixed problem with SQLBulkOperations()
+  * Fixed problems with SQL_C_BIT data type
+  * Fixed problems with SQLGetTypeInfo() and date/time/timestamp
+  * Fixed problems when SOCKET was something other than 'MySQL'
+
+Binaries were made using MySQL 4.1.13 and unixODBC 2.2.11 (where applicable).
+
+----
+
+3.51.11-2 (11-Feb-2005)
+
+  Bugs fixed:
+  * Resources for last thread now freed
+  * Rolled back a fix for Crystal Reports (force v3) because it
+    caused problems for Microsoft Access (wants v2)
+  * Fixed binary RPM spec to no longer create sample DSN.
+  * Fixed myodbcinst to exit with proper exit code.
+
+----
+
+3.51.11 (28-Jan-2005)
+
+  Functionality added or changed:
+  * Enhanced SQLGetTypeInfo(), mostly for blob types
+  * Allow alternate keywords for DSN for read, silently converted upon write
+
+  Bugs fixed:
+  * Corrected SQLDriverConnect() to always prompt when SQL_DRIVER_PROMPT
+    is specified
+  * Fixed a number of problems with connecting using SQLDriverConnect
+
+----
+
+3.51.10a (15-Dec-2004)
+
+  Functionality added or changed:
+  * SQLDriverConnect() heavily reworked to support prompting
+  * Port information now saved by GUI
+
+  Bugs fixed:
+  * Fixes for working with Crystal Reports
+
+----
+
+3.51.10 (25-Oct-2004)
+
+  Functionality added or changed:
+  * Qt-based setup library added
+  * MyODBC now built against 4.1 client library
+
+  Bugs fixed:
+  * (Bug #3456)
+
+----
+
+3.51.07 (10-Oct-2003)
+
+  Functionality added or changed:
+  * MyODBC now built against 4.0 client library
+  * ./configure now uses mysql_config to get library and include options
+  * Compile as a thread-safe library by default
+  * Disable SIGPIPE if not compiling threadsafe
+  * Added test suite (run as user 'odbc' and no password)
+  * Cleaned up code to conform to MySQL coding standards
+  * Added bin-tar target to Makefile.am for building binary distribution
+  * Added make_win_src_distribution script for building Windows source archive
+  * Moved Windows-specific files into win32 directory
+
+  Bugs fixed:
+  * Fixed compiler warnings
+  * Fixed crash when SQLSetPos() is called with SQL_ADD to insert a
+    record with an empty value (pcbValue is SQL_COLUMN_IGNORE)
+  * Fixed SQLFetch() to return and update SQL_ATTR_ROWS_FETCHED_PTR
+    and SQL_ATTR_ROW_STATUS_PTR statement attribute pointers
+  * Fixed SQLFetch() to properly handle SQL_ROWSET_SIZE
+  * Fixed .NET crash when creating the MFC database project (Bug #913)
+  * Added search pattern for all catalog APIs for all input parameters
+  * Added support for SQLProcedures when connected to MySQL 5.0 server
+  * Fixed SQL_ATTR_CURRENT_CATALOG to take a correct length pointer
+  * Portability fixes
+
+----
+
+3.51.06 (27-Feb-2003)
+
+  Bugs fixed:
+  * Fixed handling long text field with 0 length data (for ADO)
+  * Fixed syntax error due to error message overflow
+  * Fixed problems when a dynamic cursor is  used for cursor-based
+    updated and deletes and there ar eno key fields and the table
+    schema is changed
+  * Fixed to refresh the initialized SQLSTATE values in the driver
+    when the ODBC version is changed and when multiple instances of
+    the driver are loaded
+  * Fixed a problem with bulk inserts are performed using SQLBulkOperations()
+    or SQLSetPos() with SQL_ADD and the wrong pcbValue is given
+
+----
+
+3.51.05 Release Candidate (27-Feb-2003)
+
+  Functionality added or changed:
+  * Return the DRIVER name when no DSN is specified
+  * Added support for new autoconf tools
+  * Added scripts for producing binary distributions and source snapshots
+
+  Bugs fixed:
+  * Fixed core dumps when driver is built with debug options and
+    the thread-safe client library is used
+  * Return a valid list of catalog names in SQLTables() (for OpenOffice.org)
+  * Fixed SQLTablePrivileges() and SQLColumnPrivileges() to return each
+    privilege type in a distinct row
+  * Fixed the time conversion format error from SQL_TIME_STRUCT (thanks
+    to Ocke Janssen from Sun)
+  * Fixed core dump on HP-UX in SQLSpecialColumns()
+  * Fixed SQLGetTypeInfo to return individual rows for auto_increment
+    status for all numeric types (requested by Gerry Sweeney)
+  * Return an error when converting from SQL_C_NUMERIC. The driver is not able
+    to handle SQL_NUMERIC_STRUCT conversion due to the lack of descriptors
+    support.  (Requested by Michael Thomas of Microsoft's ODBC team)
+  * Added missing ROWS_FETCH_PTR and PARAM_PROCESSED_PTR status updates to
+    SQLFetch() and SQLExtendedFetch()
+  * Fixed failure to set the default attributes for a new DSN when they were
+    not set through the config APIs on Microsoft Windows
+  * Cleaned up configure scripts to work on all UNIX platforms and gcc 3.x
+  * Minor fixes for non-gcc compilers
+
+----
+
+3.51.04 (30-Sep-2002)
+
+  Functionality added or changed:
+  * Support for handling large tables without caching the entire result
+    set. Now one can force the driver to use mysql_use_result() instead
+    mysql_store_result(). Note that this can be used only with
+    forward-only cursors.
+  * Added options to ./configure to control whether to use the thread-safe
+    client library
+  * Cleaned up thread-safe code (debug calls)
+  * Added checks for attempts to set pre-connection attributes (AUTOCOMMIT,
+    TXN_ISOLATION) values after the connection instead of returning error
+    when they are set before the connection
+  * Added two new options, 'Force use of forward-only cursors'
+    and 'Don't cache results', to help large-scale applications
+  * Made improvements to driver logging calls (myodbc.log and myodbc.sql)
+
+  Bugs fixed:
+  * Fixed SQLTables() to not return an data related to SYSTEM TABLES
+  * Fixed core dumps on HP-UX and AIX
+  * Portability changes for MySQL 4.0.3 and 4.1
+  * Fixed SQLForeignKeys() when the CREATE TABLE had a COMMENT syntax
+  * Fixed rs.update when server-side cursors are used
+
+----
+
+3.51.03 (29-May-2002)
+
+  Functionality added or changed:
+  * Added new DSN configuration dialog window
+  * Added support for SQLForeignKeys() for InnoDB tables
+  * Added support for new Query Log eoption, which allows the driver
+    to log all SQL queries that it processes
+  * Added code for one-time initialization when ODBC version is specified
+    as SQL_OV_ODBC2 so that subsequent calls will not check ODBC version
+  * Added MY_SQL_PRIMARY_KEY(1212) option to SQLColAttribute to make
+    rs.resync work from ADO (info from Dan Perik)
+
+  Bugs fixed:
+  * Fixed multi-step generated errors when server-side cursor is used
+    (Thanks to vrincon_dtt@hotmail.com and AdoAnywhere)
+  * Fixed time conversion using SQL_C_TIME when hour has three digits
+    (Reported by Michael Thomas)
+  * Fixed ADO/DAO empty string issue (reported by Tom DeGerlia)
+  * Fixed BLOB data reading from ADO/DAO (reported by Justin Goodwin)
+  * Made SQLSetPos() return an error when float fields are used (info
+    from Jim Dickenson)
+  * Fixed errors generated during export of tables with VARCHAR/TEXT
+    from Microsoft Access and Microsoft DTS to MySQL using MyODBC.
+  * Fixed to handle SQL_C_BINARY properly (info from Spilka)
+  * Updated SQLSTATE to return correct truncated data in warning
+    cases (info from akbar ali)
+  * Fixed type casting issues in SQLGetInfo to make OpenOffice.org
+    work (reported by Ocke Janssen)
+  * Fixed SQLFetch() when it is called after SQLFetchScroll() with
+    SQL_FETCH_FIRST (reported by Simone Tregnago)
+  * Mapped SQL_ATTR_CONNECTION_TIMEOUT option to mysql_options() with
+    MYSQL_OPT_CONNECT_TIMEOUT
+
+----
+
+3.51.02 (05-Mar-2002)
+
+  Functionality added or changed:
+  * Added support for SQLTablePrivileges() and SQLColumnPrivileges()
+
+  Bugs fixed:
+  * Fixed SQLDriverConnect() to return  correct output string. This is
+    the main fix for 'Reserved error (-7778)' from all Windows ODBC
+    applications.
+  * Fixed SQLError() to clear the error buffers on the first call when
+    the ODBC version is SQL_OV_ODBC3, so subsequent calls will return
+    SQL_NO_DATA.
+  * Fixed SQL_UPDATE and SQL_ADD from SQLSetPos().
+  * Fixed SQLSetPos() and SQLBulkOperations() to handle when the
+    application passes SQL_NTS as pcbValue
+  * Fixed SQLColumns() to return the correct Nullability
+  * Fixed SQL_ATTR_CONNECTION_DEAD. This should fix the issues from
+    SQLExpress for XBase++ and .NET connection closed issues
+  * Fixed SQLGetTypeInfo() to return correct values for SQL_DATE,
+    SQL_TYPE_DATE, SQL_TIME, SQL_TYPE_TIME, SQL_TIMESTAMP, and
+    SQL_TYPE_TIMESTAMP.
+  * Fixed tab ordering from DSN configuration dialog
+  * Added default values for new DSN creation
+  * Fixed export of tables from Microsoft Access 97 or Microsoft DTS
+    when one of the field types are TEXT or VARCHAR
+
+----
+
+3.51.01 (30-Jan-2002)
+
+  Functionality added or changed:
+  * Added support for the following functions:
+  - SQLAllocHandle()
+  - SQLFreeHandle()
+  - SQLSetEnvAttr()
+  - SQLGetEnvAttr()
+  - SQLSetConnectAttr
+  - SQLGetConnectAttr
+  - SQLSetStmtAttr
+  - SQLGetStmtAttr
+  - SQLFetchScroll
+  - SQLBulkOperations with SQL_ADD (bulk inserts)
+  - SQLGetDiagRec
+  - SQLGetDiagField
+  - SQLCloseCursor
+  - SQLEndTran
+  * SQLGetInfo() and SQLGetFunctions() were completely rewritten
+  * Completely changed error handling, and driver returns SQLSTATE
+    values based on the ODBC version
+  * Enhanced cursor handling
+  * Changed SQLGetTypeInfo() to return column headers as per ODBC 3.50
+    specification
+  * Changed all catalog functions to return column headers as per ODBC 3.50
+    specification
+  * Added support for dynamic cursor types
+  * Added a feature called 'Test Data Source' in the DSN setup catalog so
+    that DSN settings can be tested while configuring
+  * Added 'Help' button to the DSN setup dialog
+  * Added SOCKET option to the SQLConnect() interface
+  * Added support for the deprecated SQLParamOptions() function so one
+    can specify batch parameter processing with ODBC 2.x applications
+  * Added server name and version to the statement error prefix
+  * Added FILEDSN support
+
+  Bugs fixed:
+  * Fixed SQL_FETCH_RELATIVE from SQLExtendedFetch() or SQLFetchScroll() to
+    handle the following cases:
+    - BeforeStart AND FetchOffset <= 0
+    - CurrRowsetStart = 1 AND FetchOffset < 0
+    - CurrRowsetStart > 1 AND
+      CurrRowsetStart + FetchOffset < 1 AND
+      |FetchOffset| > RowsetSize
+    - CurrRowsetStart > 1 AND
+      CurrRowsetStart + FetchOffset < 1 AND
+      |FetchOffset| <= RowsetSize
+   * Fixed SQL_FETCH_RELATIVE from SQLExtendedFetch() or SQLFetchScroll()
+     to handle the case when:
+     - FetchOffset  < 0 AND
+       |FetchOffset| > LastResultRow AND
+       |FetchOffset| > RowsetSize
+   * Fixed memory leaks when linked against iODBC or unixODBC

@@ -1,0 +1,344 @@
+/////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+//
+// The MySQL Connector/ODBC is licensed under the terms of the GPLv2
+// <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
+// MySQL Connectors. There are special exceptions to the terms and
+// conditions of the GPLv2 as it is applied to this software, see the
+// FLOSS License Exception
+// <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published
+// by the Free Software Foundation; version 2 of the License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+// for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
+
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#include "..\..\VersionInfo.h"
+VS_VERSION_INFO VERSIONINFO
+  FILEVERSION MYODBC_FILEVER
+  PRODUCTVERSION MYODBC_PRODUCTVER
+  FILEFLAGSMASK 0x3L
+#ifdef _DEBUG
+ FILEFLAGS 0x29L
+#else
+ FILEFLAGS 0x28L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904e4"
+        BEGIN
+            VALUE "Comments", "provides setup library functionality\0"
+            VALUE "CompanyName", "Oracle Corporation\0"
+            VALUE "FileDescription", "MySQL ODBC 5.3 Driver Setup Library\0"
+            VALUE "FileVersion", MYODBC_STRFILEVER
+            VALUE "InternalName", "myodbc5S\0"
+            VALUE "LegalCopyright", "Copyright (c) 1995, 2013, Oracle and/or its affiliates.\0"
+            VALUE "LegalTrademarks", "MySQL, MyODBC, Connector/ODBC are trademarks of Oracle Corporation\0"
+            VALUE "OriginalFilename", "myodbc5S.dll\0"
+            VALUE "PrivateBuild", "Production\0"
+            VALUE "ProductName", "Connector/ODBC 5.3\0"
+            VALUE "ProductVersion", MYODBC_STRPRODUCTVER
+            VALUE "SpecialBuild", "GA release\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1252
+    END
+END
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG1 DIALOGEX 0, 0, 279, 425
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    GROUPBOX        "Connection Parameters",IDC_STATIC,18,53,248,148
+    RTEXT           "Data Source &Name:",IDC_STATIC,23,68,67,8
+    EDITTEXT        IDC_EDIT_name,98,64,143,14,ES_AUTOHSCROLL
+    RTEXT           "D&escription:",IDC_STATIC,23,87,67,8
+    EDITTEXT        IDC_EDIT_description,98,83,143,14,ES_AUTOHSCROLL
+    GROUPBOX        "",IDC_STATIC,31,105,59,26,NOT WS_VISIBLE
+    CONTROL         "TCP/IP &Server:",IDC_RADIO_tcp,"Button",BS_AUTORADIOBUTTON | BS_RIGHT,32,105,60,13
+    CONTROL         "Named &Pipe:",IDC_RADIO_pipe,"Button",BS_AUTORADIOBUTTON | BS_RIGHT,32,122,60,13
+    RTEXT           "Server",IDC_STATIC,97,104,0,0 // Invisible, needed for accessibility
+    EDITTEXT        IDC_EDIT_server,98,104,85,14,ES_AUTOHSCROLL
+    RTEXT           "&Port:",IDC_STATIC,187,107,19,8
+    EDITTEXT        IDC_EDIT_port,212,104,28,14,ES_AUTOHSCROLL | ES_NUMBER
+    RTEXT           "Named Pipe",IDC_STATIC,97,104,0,0 // Invisible, needed for accessibility
+    EDITTEXT        IDC_EDIT_socket,98,123,85,14,WS_DISABLED,ES_AUTOHSCROLL
+    RTEXT           "&User:",IDC_STATIC,23,143,67,8
+    EDITTEXT        IDC_EDIT_uid,98,142,85,14,ES_AUTOHSCROLL
+    RTEXT           "Pass&word:",IDC_STATIC,23,164,67,8
+    EDITTEXT        IDC_EDIT_pwd,98,161,85,14,ES_PASSWORD | ES_AUTOHSCROLL
+    RTEXT           "Data&base:",IDC_STATIC,23,182,67,8
+    COMBOBOX        IDC_EDIT_database,98,180,85,42,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Test",IDC_BUTTON_TEST,199,179,41,14
+    CONTROL         "",IDC_TAB1,"SysTabControl32",WS_TABSTOP,17,214,249,184
+    PUSHBUTTON      "&Details >>",IDC_BUTTON_DETAILS,17,405,50,14
+    DEFPUSHBUTTON   "OK",IDOK,111,405,50,15
+    PUSHBUTTON      "&Cancel",IDCANCEL,165,405,50,15
+    PUSHBUTTON      "&Help",IDC_BUTTON_HELP,217,405,49,15
+    CONTROL         130,IDC_STATIC,"Static",SS_BITMAP,0,0,279,39
+END
+
+IDD_TAB1 DIALOGEX 0, 0, 209, 231
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "&Allow big result sets",IDC_CHECK_allow_big_results,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,12,79,10
+    CONTROL         "&Use compression",IDC_CHECK_use_compressed_protocol,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,27,69,10
+    CONTROL         "&Enable automatic reconnect",IDC_CHECK_auto_reconnect,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,42,105,10
+    CONTROL         "&Don't prompt when connecting",IDC_CHECK_dont_prompt_upon_connect,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,57,113,10
+    CONTROL         "All&ow multiple statements",IDC_CHECK_allow_multiple_statements,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,72,97,10
+    CONTROL         "&Interactive Client",IDC_CHECK_clientinteractive,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,87,79,10
+    RTEXT           "&Character Set:",IDC_STATIC,12,102,67,8
+    COMBOBOX        IDC_EDIT_charset,90,102,97,8,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "I&nitial Statement:",IDC_STATIC,12,117,67,8
+    EDITTEXT        IDC_EDIT_initstmt,90,117,97,12,ES_AUTOHSCROLL
+
+// Second Column
+    CONTROL         "Can &Handle Expired Password",IDC_CHECK_can_handle_exp_pwd
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,12,113,10
+    CONTROL         "Enab&le Cleartext Authentication",IDC_CHECK_enable_cleartext_plugin
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,27,113,10
+    CONTROL         "Disable default SSL", IDC_CHECK_disable_ssl_default
+                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 125, 42, 113, 10
+
+    RTEXT           "Plugin Directory:",IDC_STATIC,12,132,67,8
+    EDITTEXT        IDC_EDIT_plugin_dir,90,132,97,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_CHOOSER_plugin_dir,192,132,12,12,BS_CENTER
+    RTEXT           "Authentication Library:",IDC_STATIC,12,147,67,8
+    EDITTEXT        IDC_EDIT_default_auth,90,147,97,12,ES_AUTOHSCROLL
+
+END
+
+IDD_TAB2 DIALOGEX 0, 0, 209, 181
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "&Treat BIGINT columns as INT columns",IDC_CHECK_change_bigint_columns_to_int,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,12,135,10
+    CONTROL         "&Always handle binary function results as character data",IDC_CHECK_handle_binary_as_char,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,27,194,10
+    CONTROL         "&Ignore schema in column specifications",IDC_CHECK_ignore_N_in_name_table,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,42,139,10
+    CONTROL         "I&nclude table name in SQLDescribeCol()",IDC_CHECK_return_table_names_for_SqlDescribeCol,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,57,141,10
+    CONTROL         "&Disable catalog support",IDC_CHECK_no_catalog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,72,91,10
+    CONTROL         "&Limit column size to signed 32-bit range",IDC_CHECK_limit_column_size,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,87,141,10
+    CONTROL         "D&on't use INFORMATION_SCHEMA for metadata",IDC_CHECK_no_information_schema,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,102,194,10
+
+END
+
+IDD_TAB3 DIALOGEX 0, 0, 209, 181
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "&Enable dynamic cursors",IDC_CHECK_dynamic_cursor,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,2,91,10
+    CONTROL         "&Disable driver-provided cursor support",IDC_CHECK_user_manager_cursor,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,17,139,10
+    CONTROL         "D&on't cache results of forward-only cursors",IDC_CHECK_dont_cache_result,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,32,154,10
+    CONTROL         "&Force use of forward-only cursors",IDC_CHECK_force_use_of_forward_only_cursors,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,47,125,10
+    CONTROL         "&Prefetch from server by",IDC_CHECK_cursor_prefetch_active,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,62,89,10
+    LTEXT           "ro&ws at a time",IDC_STATIC,130,62,48,10
+    EDITTEXT        IDC_EDIT_cursor_prefetch_number,102,62,27,10,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+
+    CONTROL         "&Return matched rows instead of affected rows",IDC_CHECK_return_matching_rows,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,80,165,10
+    CONTROL         "E&nable SQL_AUTO_IS_NULL",IDC_CHECK_auto_increment_null_search,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,95,105,10
+    CONTROL         "P&ad CHAR to full length with space",IDC_CHECK_pad_char_to_full_length,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,110,127,10
+    CONTROL         "Re&turn SQL_NULL_DATA for zero date",IDC_CHECK_zero_date_to_min,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,125,138,10
+END
+
+IDD_TAB4 DIALOGEX 0, 0, 209, 181
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "&Log queries to %TEMP%\\myodbc.sql",IDC_CHECK_save_queries,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,12,148,10
+END
+
+IDD_TAB5 DIALOGEX 0, 0, 209, 181
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    RTEXT           "SSL &Key",IDC_STATIC,18,9,67,8
+    EDITTEXT        IDC_EDIT_sslkey,90,7,97,12,ES_AUTOHSCROLL | WS_GROUP
+    RTEXT           "SSL &Certificate",IDC_STATIC,6,27,78,11
+    EDITTEXT        IDC_EDIT_sslcert,90,25,97,12,ES_AUTOHSCROLL
+    RTEXT           "SSL C&A File",IDC_STATIC,6,45,79,8
+    EDITTEXT        IDC_EDIT_sslca,90,43,97,12,ES_AUTOHSCROLL
+    RTEXT           "SSL CA &Path",IDC_STATIC,24,63,61,8
+    EDITTEXT        IDC_EDIT_sslcapath,90,61,97,12,ES_AUTOHSCROLL
+    RTEXT           "&SSL Cipher",IDC_STATIC,18,81,67,8
+    EDITTEXT        IDC_EDIT_sslcipher,90,79,97,12,ES_AUTOHSCROLL
+    RTEXT           "&RSA Public Key",IDC_STATIC,18,113,67,8
+    EDITTEXT        IDC_EDIT_rsakey,90,111,97,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_SSLKEYCHOOSER,192,7,12,12,BS_CENTER
+    PUSHBUTTON      "...",IDC_SSLCERTCHOOSER,192,25,12,12,BS_CENTER
+    PUSHBUTTON      "...",IDC_SSLCACHOOSER,192,43,12,12,BS_CENTER
+    PUSHBUTTON      "...",IDC_SSLCAPATHCHOOSER,192,61,12,12,BS_CENTER
+    PUSHBUTTON      "...",IDC_RSAKEYCHOOSER,192,111,12,12,BS_CENTER
+    RTEXT           "SSL &Mode", IDC_STATIC, 18, 97, 67, 8
+    COMBOBOX        IDC_EDIT_sslmode, 90, 95, 97, 8, CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+//    CONTROL         "&Verify SSL Certificate", IDC_CHECK_sslverify, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 290, 97, 87, 10
+    CONTROL         "&Disable TLS Version 1", IDC_CHECK_no_tls_1, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 90, 124, 87, 10
+    CONTROL         "Disable TLS Version 1.&1", IDC_CHECK_no_tls_1_1, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 90, 137, 87, 10
+    CONTROL         "Disable TLS Version 1.&2", IDC_CHECK_no_tls_1_2, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 90, 150, 87, 10
+    END
+
+
+IDD_TAB6 DIALOGEX 0, 0, 209, 181
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "&Enable safe options (see documentation)",IDC_CHECK_safe,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,12,147,10
+    CONTROL         "&Don't use setlocale()",IDC_CHECK_dont_use_set_locale,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,27,81,10
+    CONTROL         "&Ignore space after function names",IDC_CHECK_ignore_space_after_function_names,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,42,127,10
+    CONTROL         "&Read options from my.cnf",IDC_CHECK_read_options_from_mycnf,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,57,99,10
+    CONTROL         "Di&sable transaction support",IDC_CHECK_disable_transactions,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,72,103,10
+    CONTROL         "&Bind minimal date as zero date",IDC_CHECK_min_date_to_zero,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,87,138,10
+    CONTROL         "&Prepare statements on the client",IDC_CHECK_no_ssps,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,102,138,10
+    CONTROL         "Bi&nd BIGINT parameters as strings",IDC_CHECK_default_bigint_bind_str,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,117,138,10
+    CONTROL         "Disable Date Overflow error", IDC_CHECK_no_date_overflow,
+                    "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 12, 132, 138, 10
+END
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""windows.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_LOGO                BITMAP                  "connector_odbc_header.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_TAB5, DIALOG
+    BEGIN
+        VERTGUIDE, 85
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    IDC_DIALOG              "DIALOG"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED

@@ -1,0 +1,51 @@
+Source: mysql-connector-odbc
+Section: libs
+Priority: optional
+Maintainer: Oracle MySQL Product Engineering Team <mysql-build@oss.oracle.com>
+Standards-Version: 3.9.2
+Build-Depends: cmake (>= 2.8.5),
+               debhelper (>= 8.9.4),
+               libgdk-pixbuf2.0-dev (>= 2.26),
+               libglib2.0-dev (>= 2.30)
+Homepage: http://dev.mysql.com/downloads/connector/odbc/
+Vcs-Bzr: nosmart+http://bzr.debian.org/bzr/users/vorlon/myodbc/trunk/
+Vcs-Browser: http://anonscm.debian.org/loggerhead/users/vorlon/myodbc/trunk/
+
+Package: mysql-connector-odbc
+Section: libs
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Recommends: libodbc1 | libiodbc2
+Breaks: libiodbc2 (<< 3.52.7-2~),
+        odbcinst1debian2 (<< 2.2.14p2-3),
+        unixodbc (<< 2.2.14p2-3)
+Description: MySQL ODBC driver
+ This package allows you to connect to MySQL database servers using
+ ODBC, the Open Database Connectivity abstraction layer which is
+ understood by a variety of database tools that cannot talk to MySQL
+ databases directly.
+
+Package: mysql-connector-odbc-test
+Section: libs
+Architecture: any
+Multi-Arch: same
+Depends: mysql-connector-odbc (= ${binary:Version}),
+         ${misc:Depends},
+         ${shlibs:Depends}
+Description: MySQL ODBC driver test files
+ This package installs a tool "dltest" and some executables to
+ test the MySQL ODBC driver.
+
+Package: mysql-connector-odbc-setup
+Section: libs
+Architecture: any
+Multi-Arch: same
+Depends: libgtk2.0-0 (>= 2.20.1),
+         mysql-connector-odbc (= ${binary:Version}),
+         ${misc:Depends},
+         ${shlibs:Depends}
+Description: MySQL ODBC driver setup GUI
+ This package allows you use a graphical interface to specify
+ This package is the setup library for the MySQL ODBC package, it
+ handles the optional GUI dialog for configuring the driver.
