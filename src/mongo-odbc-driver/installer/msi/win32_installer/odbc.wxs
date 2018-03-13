@@ -978,7 +978,7 @@
             </Dialog>
         </UI>
         <Upgrade Id="{FF073FBB-32E2-4052-B6B2-830C5ED4A809}">
-            <UpgradeVersion Minimum="0.0.0" Maximum="0.0.999" Property="NEWERPRODUCTFOUND" OnlyDetect="yes" />
+            <UpgradeVersion Minimum="0.0.0" Maximum="1.9.999" Property="NEWERPRODUCTFOUND" OnlyDetect="yes" />
             <UpgradeVersion Minimum="0.0.0" Maximum="0.0.1" Property="PREVIOUSVERSIONINSTALLED" IncludeMinimum="yes" IncludeMaximum="yes" />
         </Upgrade>
         <InstallExecuteSequence>
