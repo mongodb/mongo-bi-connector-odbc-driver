@@ -35,8 +35,6 @@
                             <Component Id="lib" Guid="{22F054AC-F3F1-47E6-A03E-46423C467C79}" SharedDllRefCount="yes" Win64="yes">
                                 <File Id="myodbca.lib" Name="myodbc5a.lib" KeyPath="yes" DiskId="1" Source="Files\File\myodbca.lib" />
                                 <File Id="myodbcw.lib" Name="myodbc5w.lib" DiskId="1" Source="Files\File\myodbcw.lib" />
-                                <File Id="myodbca.lib.pdb" Name="myodbc5a.pdb" DiskId="1" Source="Files\File\myodbca.lib.pdb" />
-                                <File Id="myodbcw.lib.pdb" Name="myodbc5w.pdb" DiskId="1" Source="Files\File\myodbcw.lib.pdb" />
                             </Component>
                             <Component Id="driver" Guid="{C1960400-BFC6-4E6E-AF30-4C19EF5A3F07}" SharedDllRefCount="yes" Win64="yes">
                                 <File Id="myodbc5a.dll" Name="myodbc5a.dll" KeyPath="yes" Checksum="yes" DiskId="1" Source="Files\File\myodbc5a.dll" />
@@ -51,11 +49,9 @@
                             <Component Id="setup" Guid="{3A92E95A-AF9C-4A4F-A36D-E0052405C278}" SharedDllRefCount="yes" Win64="yes">
                                 <File Id="myodbc5S.dll" Name="myodbc5S.dll" KeyPath="yes" DiskId="1" Source="Files\File\myodbc5S.dll" />
                                 <File Id="myodbc5S.lib" Name="myodbc5S.lib" DiskId="1" Source="Files\File\myodbc5S.lib" />
-                                <File Id="myodbc5S.lib.pdb" Name="myodbc5S.pdb" DiskId="1" Source="Files\File\myodbc5S.lib.pdb" />
                             </Component>
                             <Component Id="installer" Guid="{EB5E7FB3-F6DD-4424-A54A-DD07213E67ED}" SharedDllRefCount="yes" Win64="yes">
                                 <File Id="installer" Name="myodbc-installer.exe" KeyPath="yes" ShortName="g1mdra3f.exe" DiskId="1" Source="Files\File\installer" />
-                                <File Id="installer.pdb" Name="myodbc-installer.pdb" ShortName="u-f43zzr.pdb" DiskId="1" Source="Files\File\installer.pdb" />
                             </Component>
                         </Directory>
                     </Directory>
