@@ -1,12 +1,14 @@
 #!/bin/sh
 
 SCRIPT_DIR=$(dirname $(readlink -f $0))
-BUILD_DIR=$SCRIPT_DIR/../build-win64
-mkdir -p $BUILD_DIR
+ROOT=$SCRIPT_DIR/..
 S3_URL=https://s3.amazonaws.com/mongo-odbc-build-scratch/mysql-5.7.21-winx64.zip
 DL_DIR=$BUILD_DIR/mysql-5.7.21-winx64
 ZIP_FILE=mysql-64.zip
-ODBC_DIR=mysql-connector-odbc
+BUILD_DIR=$ROOT/build-win64
+
+mkdir -p $BUILD_DIR
+DBC_DIR=$ROOT/src/mongo-odbc-driver/mysql-connector-odbc
 
 export PATH='/cygdrive/c/cmake/bin':'/cygdrive/c/Program Files (x86)/Microsoft Visual Studio 12.0/Common7/IDE':'/cygdrive/c/wixtools/bin':$PATH
 export MYSQL_DIR=$(cygpath -w $DL_DIR)
@@ -18,23 +20,19 @@ if [ ! -e $DL_DIR ]; then
     unzip $ZIP_FILE
 fi
 
-if [ ! -e $ODBC_DIR ]; then
-    git clone https://github.com/mysql/mysql-connector-odbc.git
-fi
-
 cd $ODBC_DIR
 
 cmake -G "Visual Studio 12 2013 Win64" -DMYSQLCLIENT_STATIC_LINKING:BOOL=TRUE
 
 devenv.com MySQL_Connector_ODBC.sln /build Release
 
-cd ..
+cd $BUILD_DIR
 
 #we use cp -R because symlinks are problematic on cygwin
-cp -R ../resources/win64_installer/* ./
+cp -R $ROOT/src/mongo-odbc-driver/installer/msi/win32_installer/* ./
 
 #copy relevant files to installer dir
-FILE_DIR=$BUILD_DIR/mysql-connector-odbc/lib/Release
+FILE_DIR=$ODBC_DIR/lib/Release
 DEST_DIR=$BUILD_DIR/Files/File
 
 cp $FILE_DIR/myodbc5a.dll $DEST_DIR/myodbc5a.dll
