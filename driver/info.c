@@ -1,5 +1,7 @@
 /*
   Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2018-Present MongoDB Inc., licensed under
+  GNU GENERAL PUBLIC LICENSE Version 2.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -49,7 +51,7 @@ do { \
   return SQL_SUCCESS; \
 } while(0)
 
-static my_bool myodbc_ov2_inited= 0;
+static my_bool mdbodbc_ov2_inited= 0;
 
 
 /**
@@ -251,15 +253,15 @@ MySQLGetInfo(SQLHDBC hdbc, SQLUSMALLINT fInfoType,
   case SQL_DRIVER_NAME:
 #ifdef MYODBC_UNICODEDRIVER
 # ifdef WIN32
-    MYINFO_SET_STR("myodbc5w.dll");
+    MYINFO_SET_STR("mdbodbc5w.dll");
 # else
-    MYINFO_SET_STR("libmyodbc5w.so");
+    MYINFO_SET_STR("libmdbodbc5w.so");
 # endif
 #else
 # ifdef WIN32
-    MYINFO_SET_STR("myodbc5a.dll");
+    MYINFO_SET_STR("mdbodbc5a.dll");
 # else
-    MYINFO_SET_STR("libmyodbc5a.so");
+    MYINFO_SET_STR("libmdbodbc5a.so");
 # endif
 #endif
   case SQL_DRIVER_ODBC_VER:
@@ -1112,7 +1114,7 @@ void init_getfunctions(void)
   my_int2str(SQL_TYPE_TIME,sql_time,-10,0);
 # if (ODBCVER < 0x0300)
   myodbc_sqlstate2_init();
-  myodbc_ov2_inited= 1;
+  mdbodbc_ov2_inited= 1;
 # endif
 }
 
@@ -1127,13 +1129,13 @@ void myodbc_ov_init(SQLINTEGER odbc_version)
     my_int2str(SQL_DATE,sql_date,-10,0);
     my_int2str(SQL_TIME,sql_time,-10,0);
     myodbc_sqlstate2_init();
-    myodbc_ov2_inited= 1;
+    mdbodbc_ov2_inited= 1;
   }
   else
   {
-    if (!myodbc_ov2_inited)
+    if (!mdbodbc_ov2_inited)
       return;
-    myodbc_ov2_inited= 0;
+    mdbodbc_ov2_inited= 0;
 
     my_int2str(SQL_TYPE_TIMESTAMP,sql_timestamp,-10,0);
     my_int2str(SQL_TYPE_DATE,sql_date,-10,0);
@@ -1146,7 +1148,7 @@ void myodbc_ov_init(SQLINTEGER odbc_version)
 /**
   List of functions supported in the driver.
 */
-SQLUSMALLINT myodbc3_functions[]=
+SQLUSMALLINT mdbodbc3_functions[]=
 {
     SQL_API_SQLALLOCCONNECT,
     SQL_API_SQLALLOCENV,
@@ -1248,18 +1250,18 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
                                   SQLUSMALLINT fFunction,
                                   SQLUSMALLINT *pfExists)
 {
-  SQLUSMALLINT index, myodbc_func_size;
+  SQLUSMALLINT index, mdbodbc_func_size;
 
-  myodbc_func_size= sizeof(myodbc3_functions) / sizeof(myodbc3_functions[0]);
+  mdbodbc_func_size= sizeof(mdbodbc3_functions) / sizeof(mdbodbc3_functions[0]);
 
   if (fFunction == SQL_API_ODBC3_ALL_FUNCTIONS)
   {
     /* Clear and set bits in the 4000 bit vector */
     memset(pfExists, 0,
            sizeof(SQLUSMALLINT) * SQL_API_ODBC3_ALL_FUNCTIONS_SIZE);
-    for (index= 0; index < myodbc_func_size; ++index)
+    for (index= 0; index < mdbodbc_func_size; ++index)
     {
-      SQLUSMALLINT id= myodbc3_functions[index];
+      SQLUSMALLINT id= mdbodbc3_functions[index];
       pfExists[id >> 4]|= (1 << (id & 0x000F));
     }
     return SQL_SUCCESS;
@@ -1269,18 +1271,18 @@ SQLRETURN SQL_API SQLGetFunctions(SQLHDBC hdbc __attribute__((unused)),
   {
     /* Clear and set elements in the SQLUSMALLINT 100 element array */
     memset(pfExists, 0, sizeof(SQLUSMALLINT) * 100);
-    for (index= 0; index < myodbc_func_size; ++index)
+    for (index= 0; index < mdbodbc_func_size; ++index)
     {
-      if (myodbc3_functions[index] < 100)
-        pfExists[myodbc3_functions[index]]= SQL_TRUE;
+      if (mdbodbc3_functions[index] < 100)
+        pfExists[mdbodbc3_functions[index]]= SQL_TRUE;
     }
     return SQL_SUCCESS;
   }
 
   *pfExists= SQL_FALSE;
-  for (index= 0; index < myodbc_func_size; ++index)
+  for (index= 0; index < mdbodbc_func_size; ++index)
   {
-    if (myodbc3_functions[index] == fFunction)
+    if (mdbodbc3_functions[index] == fFunction)
     {
       *pfExists= SQL_TRUE;
       break;

@@ -1,12 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////
-// Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
-//
-// The MySQL Connector/ODBC is licensed under the terms of the GPLv2
-// <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
-// MySQL Connectors. There are special exceptions to the terms and
-// conditions of the GPLv2 as it is applied to this software, see the
-// FLOSS License Exception
-// <http://www.mysql.com/about/legal/licensing/foss-exception.html>.
+// Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+// Copyright (c) 2018-Present MongoDB Inc., licensed under
+// GNU GENERAL PUBLIC LICENSE Version 2.
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published
@@ -63,15 +58,15 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "Comments", "provides setup library functionality\0"
-            VALUE "CompanyName", "Oracle Corporation\0"
-            VALUE "FileDescription", "MySQL ODBC 5.3 Driver Setup Library\0"
+            VALUE "CompanyName", "MongoDB Inc.\0"
+            VALUE "FileDescription", "MongoDB ODBC 1.0 Driver Setup Library\0"
             VALUE "FileVersion", MYODBC_STRFILEVER
-            VALUE "InternalName", "myodbc5S\0"
-            VALUE "LegalCopyright", "Copyright (c) 1995, 2013, Oracle and/or its affiliates.\0"
-            VALUE "LegalTrademarks", "MySQL, MyODBC, Connector/ODBC are trademarks of Oracle Corporation\0"
-            VALUE "OriginalFilename", "myodbc5S.dll\0"
+            VALUE "InternalName", "mdbodbcS\0"
+	    VALUE "LegalCopyright", "Copyright (c) 1995, 2013, Oracle and/or its affiliates, Copyright (c) 2018-Present MongoDB Inc.\0"
+            VALUE "LegalTrademarks", "MongoDB is a trademark of MongoDB Inc.\0"
+            VALUE "OriginalFilename", "mdbodbcS.dll\0"
             VALUE "PrivateBuild", "Production\0"
-            VALUE "ProductName", "Connector/ODBC 5.3\0"
+            VALUE "ProductName", "MongoDB ODBC 1.0\0"
             VALUE "ProductVersion", MYODBC_STRPRODUCTVER
             VALUE "SpecialBuild", "GA release\0"
         END
@@ -209,7 +204,7 @@ IDD_TAB4 DIALOGEX 0, 0, 209, 181
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "&Log queries to %TEMP%\\myodbc.sql",IDC_CHECK_save_queries,
+    CONTROL         "&Log queries to %TEMP%\\mdbodbc.sql",IDC_CHECK_save_queries,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,12,148,10
 END
 

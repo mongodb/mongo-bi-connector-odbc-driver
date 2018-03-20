@@ -1,5 +1,7 @@
 /*
   Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2018-Present MongoDB Inc., licensed under
+  GNU GENERAL PUBLIC LICENSE Version 2.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -853,7 +855,7 @@ int ShowOdbcParamsDialog(DataSource* params, HWND ParentWnd, BOOL isPrompt)
 	InitStaticValues();
 
 	pParams= params;
-	pCaption= L"MySQL Connector/ODBC Data Source Configuration";
+	pCaption= L"MongoDB ODBC Data Source Configuration";
   g_isPrompt= isPrompt;
 
   /*

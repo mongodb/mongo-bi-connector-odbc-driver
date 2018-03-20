@@ -1,4 +1,6 @@
 # Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018-Present MongoDB Inc., licensed under
+# GNU GENERAL PUBLIC LICENSE Version 2.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -121,7 +123,7 @@ IF(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       ENDIF(WIN32)
 
       # Not quite clear atm whether ${ODBCINSTLIB} is needed
-      TARGET_LINK_LIBRARIES(${T} myodbc5${CONNECTOR_DRIVER_TYPE_SHORT})
+      TARGET_LINK_LIBRARIES(${T} mdbodbc${CONNECTOR_DRIVER_TYPE_SHORT})
       ADD_TEST(${T} ${T})
     ENDIF (NOT ${CONNECTOR_DRIVER_TYPE_SHORT} STREQUAL "w")
 

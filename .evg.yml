@@ -1,0 +1,180 @@
+stepback: true
+command_type: system
+
+pre:
+  - func: "fetch source"
+  - func: "export variables"
+
+post:
+  - func: "upload artifacts"
+
+buildvariants:
+  - name: win64
+    display_name: Windows 64
+    expansions:
+      _platform: win64
+    run_on: windows-64-vs2013-compile
+    tasks:
+      - name: "build"
+      - name: "sign"
+        run_on: linux-64-amzn-build
+
+  - name: win32
+    display_name: Windows 32
+    expansions:
+      _platform: win32
+    run_on: windows-64-vs2013-compile
+    tasks:
+      - name: "build"
+      - name: "sign"
+        run_on: linux-64-amzn-build
+
+tasks:
+  - name: build
+    commands:
+      - func: "build mysql"
+      - func: "build odbc driver"
+      - func: "build msi installer"
+
+  - name: sign
+    depends_on:
+      - name: build
+    commands:
+      - func: "fetch packages"
+      - func: "sign msi installer"
+      - func: "upload release packages"
+
+functions:
+  "build msi installer":
+    command: shell.exec
+    type: test
+    params:
+      script: |
+          ${PREPARE_SHELL}
+          ${SCRIPT_DIR}/create-msi.sh
+
+  "build mysql":
+    command: shell.exec
+    type: test
+    params:
+      script: |
+          ${PREPARE_SHELL}
+          ${MYSQL_SCRIPT_DIR}/install-bison.sh
+          ${MYSQL_SCRIPT_DIR}/build.sh
+
+  "build odbc driver":
+    command: shell.exec
+    type: test
+    params:
+      script: |
+          ${PREPARE_SHELL}
+          ${SCRIPT_DIR}/build-mongo-odbc.sh
+
+  "export variables":
+    - command: shell.exec
+      params:
+        silent: true
+        working_dir: odbc/mongo-odbc-driver/bin
+        script: |
+          if [ "Windows_NT" = "$OS" ]; then
+              set -o igncr
+          fi
+
+          export PLATFORM='${_platform|unset}'
+          . "./platforms.sh"
+          . "./prepare-shell.sh"
+
+          export S3_ARTIFACTS_DIR='mongo-odbc-driver/artifacts/${version_id}/${build_variant}'
+          export S3_RELEASES_DIR='mongo-odbc-driver/releases/${version_id}'
+
+          export RELEASE_BASENAME="mongo-odbc-$PLATFORM_NAME-$PLATFORM_ARCH"
+          export PKG_EXTENSION='msi'
+          export RELEASE_NAME="$RELEASE_BASENAME.$PKG_EXTENSION"
+
+          # create expansions from values calculated above
+          mkdir -p $ARTIFACTS_DIR
+          cat <<EOT > $ARTIFACTS_DIR/expansions.yml
+          ARTIFACTS_DIR: "$ARTIFACTS_DIR"
+          SCRIPT_DIR: "$SCRIPT_DIR"
+          MYSQL_SCRIPT_DIR: "$MYSQL_SCRIPT_DIR"
+          PLATFORM_NAME: "$PLATFORM_NAME"
+          PLATFORM_ARCH: "$PLATFORM_ARCH"
+          S3_ARTIFACTS_DIR: "$S3_ARTIFACTS_DIR"
+          S3_RELEASES_DIR: "$S3_RELEASES_DIR"
+          RELEASE_NAME: "$RELEASE_NAME"
+          PREPARE_SHELL: |
+             if [ "Windows_NT" = "$OS" ]; then
+                 set -o igncr
+                 export SHELLOPTS
+             fi
+             export PLATFORM="$PLATFORM"
+          EOT
+
+    - command: expansions.update
+      params:
+        file: odbc/mongo-odbc-driver/artifacts/expansions.yml
+
+  "fetch packages":
+    - command: s3.get
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        remote_file: ${S3_ARTIFACTS_DIR}/mongo-odbc-unsigned.msi
+        local_file: odbc/mongo-odbc-driver/artifacts/pkg/mongo-odbc.msi
+        bucket: mciuploads
+
+  "fetch source":
+    - command: shell.exec
+      params:
+        silent: true
+        script: |
+          rm -rf odbc
+    - command: git.get_project
+      params:
+        directory: odbc
+    - command: shell.exec
+      params:
+        script: |
+          set -o errexit
+          cd odbc
+          git submodule init
+          git submodule update
+
+  "sign msi installer":
+    - command: shell.exec
+      params:
+        working_dir: odbc/mongo-odbc-driver/artifacts/pkg/
+        script: |
+          echo "${signing_token_odbc_driver}" > ./signing_auth_token
+          /usr/local/bin/notary-client.py \
+              --key-name "bi-connector" \
+              --auth-token-file ./signing_auth_token \
+              --comment "Evergreen Automatic Signing (odbc) - ${version_id} - ${build_variant}" \
+              --notary-url ${notary_client_url} \
+              --skip-missing \
+              mongo-odbc.msi
+
+  "upload artifacts":
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: odbc/mongo-odbc-driver/artifacts/pkg/mongo-odbc.msi
+        remote_file: ${S3_ARTIFACTS_DIR}/mongo-odbc-unsigned.msi
+        content_type: application/x-msi
+        bucket: mciuploads
+        permissions: public-read
+        display_name: "Unsigned Installer (.msi)"
+
+  "upload release packages":
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: odbc/mongo-odbc-driver/artifacts/pkg/mongo-odbc-signed.msi
+        remote_file: ${S3_RELEASES_DIR}/${RELEASE_NAME}
+        content_type: application/x-msi
+        bucket: mciuploads
+        permissions: public-read
+        display_name: "Signed Installer (.msi)"

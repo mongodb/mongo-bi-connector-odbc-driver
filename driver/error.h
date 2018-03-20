@@ -1,5 +1,7 @@
 /*
   Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2018-Present MongoDB Inc., licensed under
+  GNU GENERAL PUBLIC LICENSE Version 2.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -29,7 +31,7 @@
  *									   *
  * @author     : MySQL AB(monty@mysql.com, venu@mysql.com)		   *
  * @date       : 2001-Aug-15						   *
- * @product    : myodbc3						   *
+ * @product    : mdbodbc3						   *
  *									   *
 ****************************************************************************/
 
@@ -39,13 +41,13 @@
 /* Including driver version definitions */
 #include "../MYODBC_CONF.h"
 /*
-  myodbc internal error constants
+  mdbodbc internal error constants
 */
 #define ER_INVALID_CURSOR_NAME	 514
 #define ER_ALL_COLUMNS_IGNORED	 537
 
 /*
-  myodbc5 error prefix
+  mdbodbc5 error prefix
 */
 #define MYODBC_ERROR_PREFIX	 "[MySQL][ODBC "MYODBC_STRDRIVERID" Driver]"
 #define MYODBC_ERROR_CODE_START  500
@@ -145,7 +147,7 @@ typedef enum myodbc_errid
   error handler-predefined structure
   odbc2 state, odbc3 state, message and return code
 */
-typedef struct myodbc3_err_str {
+typedef struct mdbodbc3_err_str {
   char	   sqlstate[6];  /* ODBC3 STATE, if SQL_OV_ODBC2, then ODBC2 STATE */
   char	   message[SQL_MAX_MESSAGE_LENGTH+1];/* ERROR MSG */
   SQLRETURN   retcode;	    /* RETURN CODE */

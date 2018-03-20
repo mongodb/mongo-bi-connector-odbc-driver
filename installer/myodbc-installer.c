@@ -1,5 +1,7 @@
 /*
   Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2018-Present MongoDB Inc., licensed under
+  GNU GENERAL PUBLIC LICENSE Version 2.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -26,11 +28,11 @@
   @brief  This program will aid installers when installing/uninstalling
           MyODBC.
 
-          This program can register/deregister a myodbc driver and create
+          This program can register/deregister a mdbodbc driver and create
           a sample dsn. The key thing here is that it does this with 
           cross-platform code - thanks to the ODBC installer API. This is
-          most useful to those creating installers (apps using myodbc or 
-          myodbc itself).
+          most useful to those creating installers (apps using mdbodbc or 
+          mdbodbc itself).
 
           For example, this program is used in the postinstall script
           of the MyODBC for Mac OS X installer package. 
@@ -50,7 +52,7 @@
 
 const char usage[] =
 "+---                                                                   \n"
-"| myodbc-installer v" MYODBC_VERSION "                                 \n"
+"| mdbodbc-installer v" MYODBC_VERSION "                                 \n"
 "+---                                                                   \n"
 "|                                                                      \n"
 "| Description                                                          \n"
@@ -80,7 +82,7 @@ const char usage[] =
 #endif
 "| Syntax                                                               \n"
 "|                                                                      \n"
-"|    myodbc-installer <Object> <Action> [Options]                      \n"
+"|    mdbodbc-installer <Object> <Action> [Options]                      \n"
 "|                                                                      \n"
 "| Object                                                               \n"
 "|                                                                      \n"
@@ -110,40 +112,40 @@ const char usage[] =
 "| Examples                                                             \n"
 "|                                                                      \n"
 "|    List drivers                                                      \n"
-"|    shell> myodbc-installer -d -l                                     \n"
+"|    shell> mdbodbc-installer -d -l                                     \n"
 "|                                                                      \n"
 #ifndef _WIN32
 "|    Register a Unicode driver (UNIX example)                          \n"
-"|    shell> myodbc-installer -d -a -n \"MySQL ODBC "MYODBC_STRSERIES" Unicode Driver\" \\ \n"
-"|              -t \"DRIVER=/path/to/driver/libmyodbc5w.so;SETUP=/path/to/gui/myodbc5S.so\"\n"
+"|    shell> mdbodbc-installer -d -a -n \"MySQL ODBC "MYODBC_STRSERIES" Unicode Driver\" \\ \n"
+"|              -t \"DRIVER=/path/to/driver/libmdbodbcw.so;SETUP=/path/to/gui/mdbodbcS.so\"\n"
 "|                                                                      \n"
 "|      Note                                                            \n"
 "|         * The /path/to/driver is /usr/lib for 32-bit systems and     \n"
 "|           some 64-bit systems, and /usr/lib64 for most 64-bit systems\n"
 "|                                                                      \n"
-"|         * driver_name is libmyodbc5a.so for the ANSI version and     \n"
-"|           libmyodbc5w.so for the Unicode version of MySQL ODBC Driver\n"
+"|         * driver_name is libmdbodbca.so for the ANSI version and     \n"
+"|           libmdbodbcw.so for the Unicode version of MySQL ODBC Driver\n"
 "|                                                                      \n"
 "|         * The SETUP parameter is optional; it provides location of   \n"
-"|           the GUI module (libmyodbc5S.so) for DSN setup, which       \n"
+"|           the GUI module (libmdbodbcS.so) for DSN setup, which       \n"
 "|           is not supported on Solaris and Mac OSX systems            \n"
 "|                                                                      \n"
 #else
 "|    Register a Unicode driver (Windows example)                       \n"
-"|    shell> myodbc-installer -d -a -n \"MySQL ODBC "MYODBC_STRSERIES" Unicode Driver\" \\ \n"
-"|              -t \"DRIVER=myodbc5w.dll;SETUP=myodbc5S.dll\"\n"
+"|    shell> mdbodbc-installer -d -a -n \"MySQL ODBC "MYODBC_STRSERIES" Unicode Driver\" \\ \n"
+"|              -t \"DRIVER=mdbodbcw.dll;SETUP=mdbodbcS.dll\"\n"
 "|                                                                      \n"
 "|      Note                                                            \n"
-"|         * driver_name is myodbc5a.dll for the ANSI version and       \n"
-"|           myodbc5w.dll for the Unicode version of MySQL ODBC Driver  \n"
+"|         * driver_name is mdbodbca.dll for the ANSI version and       \n"
+"|           mdbodbcw.dll for the Unicode version of MySQL ODBC Driver  \n"
 "|                                                                      \n"
 #endif
 "|    Add a new system data source name for Unicode driver              \n"
-"|    shell> myodbc-installer -s -a -c2 -n \"test\" \\                  \n"
+"|    shell> mdbodbc-installer -s -a -c2 -n \"test\" \\                  \n"
 "|              -t \"DRIVER=MySQL ODBC "MYODBC_STRSERIES" Unicode Driver;SERVER=localhost;DATABASE=test;UID=myid;PWD=mypwd\"\n"
 "|                                                                      \n"
 "|    List data source name attributes for 'test'                       \n"
-"|    shell> myodbc-installer -s -l -c2 -n \"test\"                    \n"
+"|    shell> mdbodbc-installer -s -l -c2 -n \"test\"                    \n"
 "+---                                                                   \n";
 
 /* command line args */

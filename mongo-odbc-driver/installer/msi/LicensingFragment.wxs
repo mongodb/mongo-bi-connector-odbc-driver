@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <DirectoryRef Id="INSTALLLOCATION">
+      <Component Id="c_License" Guid="30eaf4aa-4fe1-4d19-96c9-69c061da6e8c">
+        <File Id="f_License"
+              Name="LICENSE.rtf"
+              Source="$(var.SourceDir)\LICENSE.rtf"
+              DiskId ="1"/>
+      </Component>
+      <Component Id="c_Thirdparty" Guid="4e08bb54-a96b-40b4-9cc0-082351b8da4b">
+        <File Id="f_Thirdparty"
+              Name="THIRD-PARTY-NOTICES.rtf"
+              Source="$(var.SourceDir)\THIRD-PARTY-NOTICES.rtf"
+              DiskId ="1"/>
+      </Component>
+      <Component Id="c_Readme" Guid="f40564ba-a569-4567-895b-f720b816638b">
+        <File Id="f_Readme"
+              Name="README.rtf"
+              Source="$(var.SourceDir)\README.rtf"
+              DiskId ="1"/>
+      </Component>
+    </DirectoryRef>
+
+    <ComponentGroup Id="cg_License">
+      <ComponentRef Id="c_Thirdparty"/>
+      <ComponentRef Id="c_Readme"/>
+      <ComponentRef Id="c_License"/>
+    </ComponentGroup>
+
+    <WixVariable Id="WixUILicenseRtf" Value="$(var.ResourceDir)\LICENSE.rtf" />
+  </Fragment>
+</Wix>

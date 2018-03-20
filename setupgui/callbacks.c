@@ -1,5 +1,7 @@
 /*
   Copyright (c) 2007, 2014, Oracle and/or its affiliates. All rights reserved.
+  Copyright (c) 2018-Present MongoDB Inc., licensed under
+  GNU GENERAL PUBLIC LICENSE Version 2.
 
   The MySQL Connector/ODBC is licensed under the terms of the GPLv2
   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -43,7 +45,7 @@ SQLWCHAR *mytest(HWND hwnd, DataSource *params)
   SQLHENV hEnv= SQL_NULL_HENV;
   SQLWCHAR *msg;
 
-  /* 
+  /*
     In case of file data source we do not want it to be created
     when clicking the Test button
   */
@@ -59,9 +61,10 @@ SQLWCHAR *mytest(HWND hwnd, DataSource *params)
     SQLWCHAR state[10];
     SQLINTEGER native;
     SQLSMALLINT len;
-    SQLWCHAR *ptr;
+    SQLWCHAR *ptr, *no_mysql, *buff;
 
     msg= (SQLWCHAR *) myodbc_malloc(512 * sizeof(SQLWCHAR), MYF(0));
+    buff= (SQLWCHAR *) myodbc_malloc(512 * sizeof(SQLWCHAR), MYF(0));
     *msg= 0;
 
     sqlwcharncpy(msg, _W(L"Connection Failed\n"), SQL_NTS);
@@ -70,12 +73,12 @@ SQLWCHAR *mytest(HWND hwnd, DataSource *params)
     ptr= msg + len;
 
     if (SQL_SUCCEEDED(SQLGetDiagRecW(SQL_HANDLE_DBC, hDbc, 1, state,
-                                     &native, ptr,
+                                     &native, buff,
                                      512 - len, &len)))
     {
-      ptr= sqlwcharncpy(ptr + len, _W(L": ["), 3);
-      ptr= sqlwcharncpy(ptr, state, 6);
-      sqlwcharncpy(ptr, _W(L" ]"), 2);
+     no_mysql= &buff[7];
+     ptr = sqlwcharncpy(ptr, _W(L"[MongoDB]"), 10);
+     ptr = sqlwcharncpy(ptr, no_mysql, SQL_NTS);
     }
   }
 

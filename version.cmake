@@ -1,5 +1,7 @@
 #
 # Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018-Present MongoDB Inc., licensed under
+# GNU GENERAL PUBLIC LICENSE Version 2.
 #
 # The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most 
@@ -21,11 +23,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
-SET(CONNECTOR_MAJOR "5")
-SET(CONNECTOR_MINOR "3")
-SET(CONNECTOR_PATCH "10")
+SET(CONNECTOR_MAJOR "1")
+SET(CONNECTOR_MINOR "0")
+SET(CONNECTOR_PATCH "0")
 SET(CONNECTOR_LEVEL "")
-SET(CONNECTOR_QUALITY "GA")
+SET(CONNECTOR_QUALITY "RC")
 
 # ----------------------------------------------------------------------
 # Set other variables that are about the version

@@ -2,6 +2,8 @@
 # vim: set expandtab:
 #
 #   Copyright (c) 2008, 2015, Oracle and/or its affiliates. All rights reserved.
+#   Copyright (c) 2018-Present MongoDB Inc., licensed under
+#   GNU GENERAL PUBLIC LICENSE Version 2.
 #
 #   The MySQL Connector/C++ is licensed under the terms of the GPLv2
 #   <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -732,13 +734,18 @@ if(MYSQL_INCLUDE_DIR AND NOT MYSQL_VERSION)
        "}\n"
   )
 
+  message("trying to build ${GETMYSQLVERSION_SOURCEFILE}")
+
   # Compile and run the created executable, store output in MYSQL_VERSION
   try_run(_run_result _compile_result
     "${CMAKE_BINARY_DIR}"
     "${GETMYSQLVERSION_SOURCEFILE}"
     CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${MYSQL_INCLUDE_DIR}"
     RUN_OUTPUT_VARIABLE MYSQL_VERSION
+    COMPILE_OUTPUT_VARIABLE DEBUG_OUTPUT
   )
+
+  message("compiler output: ${DEBUG_OUTPUT}")
 
   if(FINDMYSQL_DEBUG)
     if(NOT _compile_result)

@@ -1,0 +1,3 @@
+[submodule "mongo-odbc-driver/mysql-server"]
+	path = mongo-odbc-driver/mysql-server
+	url = git@github.com:10gen/mysql-server
