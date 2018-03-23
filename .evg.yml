@@ -16,6 +16,7 @@ buildvariants:
     run_on: windows-64-vs2015-compile
     tasks:
       - name: "build"
+      - name: "integration_tests"
       - name: "sign"
         run_on: linux-64-amzn-build
 
@@ -26,6 +27,7 @@ buildvariants:
     run_on: windows-64-vs2015-compile
     tasks:
       - name: "build"
+      - name: "integration_tests"
       - name: "sign"
         run_on: linux-64-amzn-build
 
@@ -36,9 +38,16 @@ tasks:
       - func: "build odbc driver"
       - func: "build msi installer"
 
-  - name: sign
+  - name: integration_tests
     depends_on:
       - name: build
+    commands:
+      - func: "fetch packages"
+      - func: "run integration tests"
+
+  - name: sign
+    depends_on:
+      - name: integration_tests
     commands:
       - func: "fetch packages"
       - func: "sign msi installer"
@@ -91,6 +100,16 @@ functions:
           export PKG_EXTENSION='msi'
           export RELEASE_NAME="$RELEASE_BASENAME.$PKG_EXTENSION"
 
+          export BIC_PROD_SERVER='${bic_prod_server}'
+          export BIC_PROD_PORT='${bic_prod_port}'
+          export BIC_PROD_USER='${bic_prod_user}'
+          export BIC_PROD_PASSWORD='${bic_prod_password}'
+
+          export BIC_DEV_SERVER='${bic_dev_server}'
+          export BIC_DEV_PORT='${bic_dev_port}'
+          export BIC_DEV_USER='${bic_dev_user}'
+          export BIC_DEV_PASSWORD='${bic_dev_password}'
+
           # create expansions from values calculated above
           mkdir -p $ARTIFACTS_DIR
           cat <<EOT > $ARTIFACTS_DIR/expansions.yml
@@ -108,11 +127,22 @@ functions:
                  export SHELLOPTS
              fi
              export PLATFORM="$PLATFORM"
+
+             export BIC_PROD_SERVER="$BIC_PROD_SERVER"
+             export BIC_PROD_PORT="$BIC_PROD_PORT"
+             export BIC_PROD_USER="$BIC_PROD_USER"
+             export BIC_PROD_PASSWORD="$BIC_PROD_PASSWORD"
+
+             export BIC_DEV_SERVER="$BIC_DEV_SERVER"
+             export BIC_DEV_PORT="$BIC_DEV_PORT"
+             export BIC_DEV_USER="$BIC_DEV_USER"
+             export BIC_DEV_PASSWORD="$BIC_DEV_PASSWORD"
           EOT
 
     - command: expansions.update
       params:
         file: odbc/mongo-odbc-driver/artifacts/expansions.yml
+
 
   "fetch packages":
     - command: s3.get
@@ -138,6 +168,14 @@ functions:
           set -o errexit
           cd odbc
           git submodule update --init --recursive
+
+  "run integration tests":
+    command: shell.exec
+    type: test
+    params:
+      script: |
+          ${PREPARE_SHELL}
+          ${SCRIPT_DIR}/run-integration-tests.sh
 
   "sign msi installer":
     - command: shell.exec
