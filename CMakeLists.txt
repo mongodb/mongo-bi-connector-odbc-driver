@@ -1,5 +1,6 @@
 #
 # Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018-Present MongoDB Inc., licensed under GNU GENERAL PUBLIC LICENSE Version 2
 #
 # The MySQL Connector/ODBC is licensed under the terms of the GPLv2
 # <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>, like most
@@ -187,6 +188,11 @@ ADD_DEFINITIONS(-DDBUG_OFF -DDISABLE_ALL_PSI)
 #-------------- find  mysql --------------------
 INCLUDE(${CMAKE_SOURCE_DIR}/cmake/FindMySQL.cmake)
 #-----------------------------------------------------
+
+# find the crypto & kerberos libraries that must be dynamically linked
+# to the ODBC driver in order for the baked-in mongosql_auth plugin to work.
+INCLUDE(${CMAKE_SOURCE_DIR}/cmake/FindMongoCrypto.cmake)
+INCLUDE(${CMAKE_SOURCE_DIR}/cmake/FindMongoKerberos.cmake)
 
 #-------------- unixodbc/iodbc/win -------------------
 IF(WIN32)

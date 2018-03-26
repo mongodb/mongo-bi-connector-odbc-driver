@@ -7,8 +7,12 @@
 
 # create variables for a number of useful directories
 SCRIPT_DIR=$(dirname $(readlink -f $0))
+if [ "$OS" = "Windows_NT" ]; then
+    SCRIPT_DIR="$(cygpath -m "$SCRIPT_DIR")"
+fi
 PROJECT_ROOT="$SCRIPT_DIR/../.."
 BUILD_DIR="$PROJECT_ROOT/mongo-odbc-driver/build"
+BUILD_SRC_DIR="$PROJECT_ROOT/mongo-odbc-driver/src"
 MSI_BUILD_DIR="$PROJECT_ROOT/mongo-odbc-driver/msi-build"
 ARTIFACTS_DIR="$PROJECT_ROOT/mongo-odbc-driver/artifacts"
 DRIVERS_DIR="$ARTIFACTS_DIR/drivers"
@@ -16,19 +20,7 @@ PKG_DIR="$ARTIFACTS_DIR/pkg"
 MYSQL_PROJECT_DIR="$PROJECT_ROOT/mongo-odbc-driver/mysql-server"
 MYSQL_SCRIPT_DIR="$MYSQL_PROJECT_DIR/bld/bin"
 MYSQL_DIR="$MYSQL_PROJECT_DIR/bld/artifacts/mysql-home"
-
-# fix paths for cygwin
-if [ "$OS" = "Windows_NT" ]; then
-    SCRIPT_DIR="$(cygpath -m "$SCRIPT_DIR")"
-    PROJECT_ROOT="$(cygpath -m "$PROJECT_ROOT")"
-    BUILD_DIR="$(cygpath -m "$BUILD_DIR")"
-    MSI_BUILD_DIR="$(cygpath -m "$MSI_BUILD_DIR")"
-    ARTIFACTS_DIR="$(cygpath -m "$ARTIFACTS_DIR")"
-    DRIVERS_DIR="$(cygpath -m "$DRIVERS_DIR")"
-    PKG_DIR="$(cygpath -m "$PKG_DIR")"
-    MYSQL_PROJECT_DIR="$(cygpath -m "$MYSQL_PROJECT_DIR")"
-    MYSQL_DIR="$(cygpath -m "$MYSQL_DIR")"
-fi
+MONGOSQL_AUTH_PROJECT_DIR="$MYSQL_PROJECT_DIR/bld/mongosql-auth-c"
 
 # set the CMake generator
 CMAKE_GENERATOR="Visual Studio 12 2013"

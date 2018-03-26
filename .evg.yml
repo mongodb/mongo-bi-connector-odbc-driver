@@ -137,8 +137,7 @@ functions:
         script: |
           set -o errexit
           cd odbc
-          git submodule init
-          git submodule update
+          git submodule update --init --recursive
 
   "sign msi installer":
     - command: shell.exec
