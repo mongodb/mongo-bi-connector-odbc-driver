@@ -10,6 +10,9 @@
         <ComponentGroupRef Id="base" />
 	<ComponentGroupRef Id="cg_License" />
       </Feature>
-    </FeatureGroup>    
+      <Feature Id="VCRedist" Title="Visual C++ 14.0 Runtime" AllowAdvertise="no" Display="hidden" Level="1">
+         <MergeRef Id="VCRedist"/>
+      </Feature>
+    </FeatureGroup>
   </Fragment>
 </Wix>

@@ -8,9 +8,9 @@
            UpgradeCode="$(var.UpgradeCode)">
 
 	<?if $(var.Platform)=x64 ?>
-            <Package InstallerVersion="200" Compressed="yes" Platform="x64" />
+            <Package InstallerVersion="301" Compressed="yes" Platform="x64" />
 	<?else ?>
-            <Package InstallerVersion="200" Compressed="yes" Platform="x86"  />
+            <Package InstallerVersion="301" Compressed="yes" Platform="x86"  />
 	<?endif ?>
 
         <Media Id="1" Cabinet="media1.cab" EmbedCab="yes" />

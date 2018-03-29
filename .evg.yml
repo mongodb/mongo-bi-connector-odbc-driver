@@ -13,7 +13,7 @@ buildvariants:
     display_name: Windows 64
     expansions:
       _platform: win64
-    run_on: windows-64-vs2013-compile
+    run_on: windows-64-vs2015-compile
     tasks:
       - name: "build"
       - name: "sign"
@@ -23,7 +23,7 @@ buildvariants:
     display_name: Windows 32
     expansions:
       _platform: win32
-    run_on: windows-64-vs2013-compile
+    run_on: windows-64-vs2015-compile
     tasks:
       - name: "build"
       - name: "sign"

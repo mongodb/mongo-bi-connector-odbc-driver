@@ -72,7 +72,10 @@ FOREACH(T my_basics my_blob my_bulk my_catalog1 my_catalog2 my_crash my_curext m
   ENDIF(WIN32)
 
   IF(WIN32)
-    TARGET_LINK_LIBRARIES(${T} ${ODBCLIB} ${ODBCINSTLIB})
+    # the odbc.dll that is part of Windows tries to link against legacy stdio implementations
+    # that were inlined in vs2015.  That requires using this legacy_stdio_definitions.lib
+    # library to bring those symbols back.
+    TARGET_LINK_LIBRARIES(${T} ${ODBCLIB} ${ODBCINSTLIB} legacy_stdio_definitions.lib)
   ELSE(WIN32)
     TARGET_LINK_LIBRARIES(${T} ${ODBC_LINK_FLAGS} ${ODBCINSTLIB})
   ENDIF(WIN32)

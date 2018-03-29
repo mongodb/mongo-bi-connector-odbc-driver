@@ -23,13 +23,13 @@ MYSQL_DIR="$MYSQL_PROJECT_DIR/bld/artifacts/mysql-home"
 MONGOSQL_AUTH_PROJECT_DIR="$MYSQL_PROJECT_DIR/bld/mongosql-auth-c"
 
 # set the CMake generator
-CMAKE_GENERATOR="Visual Studio 12 2013"
+CMAKE_GENERATOR="Visual Studio 14 2015"
 if [ "$PLATFORM_ARCH" = "64" ]; then
     CMAKE_GENERATOR="$CMAKE_GENERATOR Win64"
 fi
 
 # make sure binaries we use in our scripts are available in the PATH
-DEVENV_PATH='/cygdrive/c/Program Files (x86)/Microsoft Visual Studio 12.0/Common7/IDE'
+DEVENV_PATH='/cygdrive/c/Program Files (x86)/Microsoft Visual Studio 14.0/Common7/IDE'
 CMAKE_PATH='/cygdrive/c/cmake/bin'
 WIX_PATH='/cygdrive/c/wixtools/bin'
 PATH="$PATH:$DEVENV_PATH:$CMAKE_PATH:$WIX_PATH"

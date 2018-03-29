@@ -270,6 +270,10 @@ if(WIN32)
   set(_dynamic_libs   "libmysql")
   set(_static_libs    "mysqlclient")
   set(_static_lib_ext ".lib")   # Careful, can be import library for DLL
+  # the odbc.dll that is part of Windows tries to link against legacy stdio implementations
+  # that were inlined in vs2015.  That requires using this legacy_stdio_definitions.lib
+  # library to bring those symbols back.
+  set(MYSQL_EXTRA_LIBRARIES ${MYSQL_EXTRA_LIBRARIES} legacy_stdio_definitions.lib)
 elseif(MYSQLCLIENT_NO_THREADS)
   # In 5.1 and below there is a single threaded library
   set(_dynamic_libs   "mysqlclient")

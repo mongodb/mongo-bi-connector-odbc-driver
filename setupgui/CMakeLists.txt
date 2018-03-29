@@ -47,7 +47,10 @@ IF (WIN32)
                  windows/TabCtrl.h
                  windows/tooltip.cpp
                  windows/connector_odbc_header.bmp)
-  SET(PLATFORM_LIBS comctl32)
+  # the odbc.dll that is part of Windows tries to link against legacy stdio implementations
+  # that were inlined in vs2015.  That requires using this legacy_stdio_definitions.lib
+  # library to bring those symbols back.
+  SET(PLATFORM_LIBS comctl32 legacy_stdio_definitions.lib)
 ELSE (WIN32)
   SET(SETUP_SRCS ${SETUP_SRCS}
                  gtk/odbcdialogparams.c

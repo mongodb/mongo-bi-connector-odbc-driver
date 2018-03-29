@@ -4,8 +4,10 @@
     <DirectoryRef Id="BIN">
 	    <?if $(var.Platform)=x64 ?>
 	       <?define win64Flag = "yes" ?>
+	       <Merge Id="VCRedist" SourceFile="c:\Program Files (x86)\Common Files\Merge Modules\Microsoft_VC140_CRT_x64.msm" DiskId="1" Language="0"/>
 	    <?else ?>
 	       <?define win64Flag = "no" ?>
+	       <Merge Id="VCRedist" SourceFile="c:\Program Files (x86)\Common Files\Merge Modules\Microsoft_VC140_CRT_x86.msm" DiskId="1" Language="0"/>
 	    <?endif ?>
        <Component Guid="{02DA3AB6-9776-4B13-9D02-7874FE99050D}" Id="RegKeys" Win64="$(var.win64Flag)">
            <RegistryKey ForceCreateOnInstall="yes" ForceDeleteOnUninstall="yes" Id="MongoDBKey" Key="SOFTWARE\MongoDB Inc\[ProductName]" Root="HKLM" />
