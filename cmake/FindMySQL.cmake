@@ -288,6 +288,10 @@ else()
   set(_static_lib_ext ".a")
 endif()
 
+if(APPLE)
+  set(MYSQL_EXTRA_LIBRARIES ${MYSQL_EXTRA_LIBRARIES} -lc++)
+endif()
+
 if(MYSQLCLIENT_STATIC_LINKING)
   set(_link_type   "static")
   set(_search_libs ${_static_libs})

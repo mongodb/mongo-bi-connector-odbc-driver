@@ -4,6 +4,10 @@
 # shellcheck source=prepare-shell.sh
 . "$(dirname "$0")/prepare-shell.sh"
 
+if [ "$PLATFORM" = macos ]; then
+	exit 0
+fi
+
 # clear MSI_BUILD_DIR
 rm -rf "$MSI_BUILD_DIR"
 mkdir -p "$MSI_BUILD_DIR"
