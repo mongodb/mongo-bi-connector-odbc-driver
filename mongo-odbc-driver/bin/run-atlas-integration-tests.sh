@@ -24,6 +24,7 @@ if [ "Windows_NT" = "$OS" ]; then
         -NoLogo \
         -NonInteractive \
         -File "$SCRIPT_DIR/run-integration-tests.ps1" \
+        -Atlas \
         -Platform "$platform" \
         -Server "$BIC_PROD_SERVER" \
         -Port "${BIC_PROD_PORT:-27015}" \
@@ -38,6 +39,7 @@ if [ "Windows_NT" = "$OS" ]; then
         -NoLogo \
         -NonInteractive \
         -File "$SCRIPT_DIR/run-integration-tests.ps1" \
+        -Atlas \
         -Platform "$platform" \
         -Server "$BIC_DEV_SERVER" \
         -Port "${BIC_DEV_PORT:-27015}" \

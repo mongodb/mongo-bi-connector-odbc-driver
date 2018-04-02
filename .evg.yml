@@ -19,7 +19,8 @@ buildvariants:
     tasks:
       - name: "build"
       - name: "unit_tests"
-      - name: "integration_tests"
+      - name: "integration_tests_atlas"
+      - name: "integration_tests_local"
       - name: "sign"
         run_on: linux-64-amzn-build
 
@@ -31,7 +32,8 @@ buildvariants:
     tasks:
       - name: "build"
       - name: "unit_tests"
-      - name: "integration_tests"
+      - name: "integration_tests_atlas"
+      - name: "integration_tests_local"
       - name: "sign"
         run_on: linux-64-amzn-build
   - name: macos
@@ -49,16 +51,24 @@ tasks:
       - func: "build odbc driver"
       - func: "build msi installer"
 
-  - name: integration_tests
+  - name: integration_tests_atlas
     depends_on:
       - name: build
     commands:
       - func: "fetch packages"
-      - func: "run integration tests"
+      - func: "run atlas integration tests"
+
+  - name: integration_tests_local
+    depends_on:
+      - name: build
+    commands:
+      - func: "fetch packages"
+      - func: "run local integration tests"
 
   - name: sign
     depends_on:
-      - name: integration_tests
+      - name: integration_tests_atlas
+      - name: integration_tests_local
     commands:
       - func: "fetch packages"
       - func: "sign msi installer"
@@ -185,13 +195,37 @@ functions:
           cd odbc
           git submodule update --init --recursive
 
-  "run integration tests":
+  "run atlas integration tests":
     command: shell.exec
     type: test
     params:
       script: |
           ${PREPARE_SHELL}
-          ${SCRIPT_DIR}/run-integration-tests.sh
+          ${SCRIPT_DIR}/run-atlas-integration-tests.sh
+
+  "run local integration tests":
+    - command: shell.exec
+      type: test
+      params:
+        background: true
+        script: |
+            ${PREPARE_SHELL}
+            ${SCRIPT_DIR}/start-mongod.sh
+    - command: shell.exec
+      type: test
+      params:
+        script: |
+            ${PREPARE_SHELL}
+            ${SCRIPT_DIR}/start-sqlproxy.sh
+            ${SCRIPT_DIR}/run-local-integration-tests.sh
+    - command: shell.exec
+      type: test
+      params:
+        script: |
+            ${PREPARE_SHELL}
+            export TEST_SET='SSL'
+            ${SCRIPT_DIR}/start-sqlproxy.sh
+            ${SCRIPT_DIR}/run-local-integration-tests.sh
 
   "run unit tests":
     command: shell.exec
@@ -227,6 +261,28 @@ functions:
         bucket: mciuploads
         permissions: public-read
         display_name: "Unsigned Installer (.msi)"
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: odbc/mongo-odbc-driver/artifacts/mongodb/mongod.log
+        remote_file: ${S3_ARTIFACTS_DIR}/mongod.log
+        content_type: text/plain
+        bucket: mciuploads
+        permissions: public-read
+        display_name: mongod.log
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: odbc/mongo-odbc-driver/artifacts/mongosqld/mongosqld.log
+        remote_file: ${S3_ARTIFACTS_DIR}/mongosqld.log
+        content_type: text/plain
+        bucket: mciuploads
+        permissions: public-read
+        display_name: mongosqld.log
 
   "upload ANSI shared library file":
     - command: s3.put

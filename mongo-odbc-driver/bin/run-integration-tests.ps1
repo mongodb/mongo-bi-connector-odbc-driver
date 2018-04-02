@@ -11,7 +11,11 @@
    [string]$Server,
    [string]$Port,
    [string]$User,
-   [string]$Password
+   [string]$Password,
+   [switch]$Atlas,
+   [switch]$Local,
+   [switch]$LocalSSL,
+   [string]$DB = 'H1B-Visa-Applications'
  )
 
 Set-strictmode -version latest
@@ -123,19 +127,36 @@ function Test-Query {
        # name of the DSN to query
        [string]$Dsn
     )
-    $query = "select * from year2015 where _id = '572cbdd9d2fc210e7ce696ec'"
-    $ds = Query-ODBC -Dsn $Dsn -Query $query
-    if ($ds._id -ne "572cbdd9d2fc210e7ce696ec") {
-           throw "Data not as expected, got _id: $($ds._id), expected '572cbdd9d2fc210e7ce696ec'"
-    }
-    if ( $ds.agent_attorney_city -ne "MINNEAPOLIS" ) {
-           throw "Data not as expected, got agent_attorney_city: $($ds.agent_attorney_city), expected 'MINNEAPOLIS'"
-    }
-    if ( $ds.agent_attorney_state  -ne "MN" ) {
-           throw "Data not as expected, got agent_attorney_state: $($ds.agent_attorney_state), expected 'MN'"
-    }
-    if ( $ds.job_title -ne "MECHANICAL ENGINEER") {
-           throw "Data not as expected, got job_title: $($ds.job_title), expected 'MECHANICAL ENGINEER'"
+    if ($Atlas) {
+        $query = "select * from year2015 where _id = '572cbdd9d2fc210e7ce696ec'"
+        $ds = Query-ODBC -Dsn $Dsn -Query $query
+        if ($ds._id -ne "572cbdd9d2fc210e7ce696ec") {
+               throw "Data not as expected, got _id: $($ds._id), expected '572cbdd9d2fc210e7ce696ec'"
+        }
+        if ( $ds.agent_attorney_city -ne "MINNEAPOLIS" ) {
+               throw "Data not as expected, got agent_attorney_city: $($ds.agent_attorney_city), expected 'MINNEAPOLIS'"
+        }
+        if ( $ds.agent_attorney_state  -ne "MN" ) {
+               throw "Data not as expected, got agent_attorney_state: $($ds.agent_attorney_state), expected 'MN'"
+        }
+        if ( $ds.job_title -ne "MECHANICAL ENGINEER") {
+               throw "Data not as expected, got job_title: $($ds.job_title), expected 'MECHANICAL ENGINEER'"
+        }
+    } else {
+        $query = "select * from information_schema.schemata where schema_name = 'mysql'"
+        $ds = Query-ODBC -Dsn $Dsn -Query $query
+        if ($ds.CATALOG_NAME -ne 'def') {
+            throw 'got incorrect value for CATALOG_NAME'
+        }
+        if ($ds.SCHEMA_NAME -ne 'mysql') {
+            throw 'got incorrect value for SCHEMA_NAME'
+        }
+        if ($ds.DEFAULT_CHARACTER_SET_NAME -ne 'utf8') {
+            throw 'got incorrect value for DEFAULT_CHARACTER_SET_NAME'
+        }
+        if ($ds.DEFAULT_COLLATION_NAME -ne 'utf8_bin') {
+            throw 'got incorrect value for DEFAULT_COLLATION_NAME'
+        }
     }
 }
 
@@ -184,6 +205,81 @@ function Install-Mongo-Odbc {
    Start-Sleep -s 5
 }
 
+function Test-Local-Connect-Success {
+    Param(
+      [String]$TestName,
+      [String[]]$Props
+    )
+
+    echo ''
+    echo "running local connection test '$TestName'"
+
+    $properties = @("Server=$Server",
+                    "Port=$Port",
+                    "User=$User",
+                    "Password=$Password",
+                    "Database=$DB")
+
+    foreach($prop in $Props) {
+        $properties += $prop
+    }
+
+    try {
+        foreach($driver in $drivers) {
+            Test-Driver -Dsn $dsn -Driver $driver -Platform $Platform -SetPropertyValue $properties
+        }
+    } catch {
+        $err = $Error[0].ToString()
+        echo "test '$TestName' FAILED: connection was rejected"
+        echo "error: $err"
+        exit 1
+    }
+
+    echo "test '$TestName' SUCCEEDED"
+}
+
+function Test-Local-Connect-Failure {
+    Param(
+      [String]$TestName,
+      [String[]]$Props,
+      [String]$ExpectedErr
+    )
+
+    echo ''
+    echo "running local connection negative test '$TestName'"
+
+    $properties = @("Server=$Server",
+                    "Port=$Port",
+                    "User=$User",
+                    "Password=$Password",
+                    "Database=$DB")
+
+    foreach($prop in $Props) {
+        $properties += $prop
+    }
+
+    try {
+        foreach($driver in $drivers) {
+            Test-Driver -Dsn $dsn -Driver $driver -Platform $Platform -SetPropertyValue $properties
+        }
+    } catch {
+        $actualErr = $Error[0].ToString()
+        if ( $actualErr -like "*$ExpectedErr*" ) {
+            echo "test '$TestName' SUCCEEDED"
+            return
+        } else {
+            echo "test '$TestName' FAILED: error message did not contain $$ExpectedErr"
+            echo "expected string: $ExpectedErr"
+            echo "actual err message: $actualErr"
+            exit 1
+        }
+    }
+
+    echo "test '$TestName' FAILED: expected connection to be rejected, but it was accepted"
+    exit 1
+}
+
+
 function Test-Atlas-Connect-Success {
     Param(
       [String]$TestName,
@@ -197,7 +293,7 @@ function Test-Atlas-Connect-Success {
                     "Port=$Port",
                     "User=$User",
                     "Password=$Password",
-                    "Database=$db")
+                    "Database=$DB")
 
     foreach($prop in $Props) {
         $properties += $prop
@@ -231,7 +327,7 @@ function Test-Atlas-Connect-Failure {
                     "Port=$Port",
                     "User=$User",
                     "Password=$Password",
-                    "Database=$db")
+                    "Database=$DB")
 
     foreach($prop in $Props) {
         $properties += $prop
@@ -259,7 +355,6 @@ function Test-Atlas-Connect-Failure {
 }
 
 $dsn = "TestODBC"
-$db = "H1B-Visa-Applications"
 $drivers = @("MongoDB ODBC 1.0 Unicode Driver",
              "MongoDB ODBC 1.0 ANSI Driver")
 
@@ -272,6 +367,7 @@ $scriptDir = Get-Script-Directory
 $CAPath = "$scriptDir\..\resources"
 $digicertCA = "$CAPath\digicert.pem"
 $invalidCA = "$CAPath\invalid.pem"
+$localCA = "$CAPath\local_ca.pem"
 
 try {
     Install-Mongo-Odbc -Path "mongo-odbc.msi" -Platform $Platform -Drivers $drivers
@@ -283,94 +379,134 @@ try {
     exit 1
 }
 
-# test cases
+# atlas test cases
+if ($Atlas) {
+    Test-Atlas-Connect-Success `
+        -TestName 'default config' `
+        -Props @()
 
-Test-Atlas-Connect-Success `
-    -TestName 'default config' `
-    -Props @()
+    Test-Atlas-Connect-Success `
+        -TestName 'ssl_preferred' `
+        -Props @('SSLMODE=PREFERRED')
 
-Test-Atlas-Connect-Success `
-    -TestName 'ssl_preferred' `
-    -Props @('SSLMODE=PREFERRED')
+    Test-Atlas-Connect-Success `
+        -TestName 'ssl_required' `
+        -Props @('SSLMODE=REQUIRED')
 
-Test-Atlas-Connect-Success `
-    -TestName 'ssl_required' `
-    -Props @('SSLMODE=REQUIRED')
+    Test-Atlas-Connect-Success `
+        -TestName 'nonexistent plugin_dir' `
+        -Props @('PLUGIN_DIR=C:\nonexistentdir')
 
-Test-Atlas-Connect-Success `
-    -TestName 'nonexistent plugin_dir' `
-    -Props @('PLUGIN_DIR=C:\nonexistentdir')
+    Test-Atlas-Connect-Success `
+        -TestName 'explicit mongosql_auth' `
+        -Props @('DEFAULT_AUTH=mongosql_auth')
 
-Test-Atlas-Connect-Success `
-    -TestName 'explicit mongosql_auth' `
-    -Props @('DEFAULT_AUTH=mongosql_auth')
+    Test-Atlas-Connect-Success `
+        -TestName 'mongosql_auth with nonexistent plugin_dir' `
+        -Props @('DEFAULT_AUTH=mongosql_auth', 'PLUGIN_DIR=C:\nonexistentdir')
 
-Test-Atlas-Connect-Success `
-    -TestName 'mongosql_auth with nonexistent plugin_dir' `
-    -Props @('DEFAULT_AUTH=mongosql_auth', 'PLUGIN_DIR=C:\nonexistentdir')
+    Test-Atlas-Connect-Success `
+        -TestName 'mysql_native_password' `
+        -Props @('DEFAULT_AUTH=mysql_native_password', 'ENABLE_CLEARTEXT_PLUGIN=1')
 
-Test-Atlas-Connect-Success `
-    -TestName 'mysql_native_password' `
-    -Props @('DEFAULT_AUTH=mysql_native_password', 'ENABLE_CLEARTEXT_PLUGIN=1')
+    Test-Atlas-Connect-Success `
+        -TestName 'mysql_clear_password' `
+        -Props @('DEFAULT_AUTH=mysql_clear_password', 'ENABLE_CLEARTEXT_PLUGIN=1')
 
-Test-Atlas-Connect-Success `
-    -TestName 'mysql_clear_password' `
-    -Props @('DEFAULT_AUTH=mysql_clear_password', 'ENABLE_CLEARTEXT_PLUGIN=1')
+    Test-Atlas-Connect-Success `
+        -TestName 'ssl_verify_ca' `
+        -Props @('SSLMODE=VERIFY_CA', "SSLCA=$digicertCA")
 
-Test-Atlas-Connect-Success `
-    -TestName 'ssl_verify_ca' `
-    -Props @('SSLMODE=VERIFY_CA', "SSLCA=$digicertCA")
+    Test-Atlas-Connect-Success `
+        -TestName 'ssl_verify_identity' `
+        -Props @('SSLMODE=VERIFY_IDENTITY', "SSLCA=$digicertCA")
 
-Test-Atlas-Connect-Success `
-    -TestName 'ssl_verify_identity' `
-    -Props @('SSLMODE=VERIFY_IDENTITY', "SSLCA=$digicertCA")
+    Test-Atlas-Connect-Failure `
+        -TestName 'mysql_native_password' `
+        -Props @('DEFAULT_AUTH=mysql_native_password') `
+        -ExpectedErr "Authentication plugin 'mysql_clear_password' cannot be loaded: plugin not enabled"
 
-Test-Atlas-Connect-Failure `
-    -TestName 'mysql_native_password' `
-    -Props @('DEFAULT_AUTH=mysql_native_password') `
-    -ExpectedErr "Authentication plugin 'mysql_clear_password' cannot be loaded: plugin not enabled"
+    Test-Atlas-Connect-Failure `
+        -TestName 'mysql_clear_password' `
+        -Props @('DEFAULT_AUTH=mysql_clear_password') `
+        -ExpectedErr "Authentication plugin 'mysql_clear_password' cannot be loaded: plugin not enabled"
 
-Test-Atlas-Connect-Failure `
-    -TestName 'mysql_clear_password' `
-    -Props @('DEFAULT_AUTH=mysql_clear_password') `
-    -ExpectedErr "Authentication plugin 'mysql_clear_password' cannot be loaded: plugin not enabled"
+    Test-Atlas-Connect-Failure `
+        -TestName 'invalid_auth_plugin' `
+        -Props @('DEFAULT_AUTH=invalid_plugin') `
+        -ExpectedErr "Authentication plugin 'invalid_plugin' cannot be loaded: The specified module could not be found"
 
-Test-Atlas-Connect-Failure `
-    -TestName 'invalid_auth_plugin' `
-    -Props @('DEFAULT_AUTH=invalid_plugin') `
-    -ExpectedErr "Authentication plugin 'invalid_plugin' cannot be loaded: The specified module could not be found"
+    Test-Atlas-Connect-Failure `
+        -TestName 'wrong_username' `
+        -Props @('User=invalid_username') `
+        -ExpectedErr "Access denied for user 'invalid_username'"
 
-Test-Atlas-Connect-Failure `
-    -TestName 'wrong_username' `
-    -Props @('User=invalid_username') `
-    -ExpectedErr "Access denied for user 'invalid_username'"
+    Test-Atlas-Connect-Failure `
+        -TestName 'wrong_password' `
+        -Props @('Password=invalid_password') `
+        -ExpectedErr "Access denied for user '$User'"
 
-Test-Atlas-Connect-Failure `
-    -TestName 'wrong_password' `
-    -Props @('Password=invalid_password') `
-    -ExpectedErr "Access denied for user '$User'"
+    Test-Atlas-Connect-Failure `
+        -TestName 'ssl_disabled' `
+        -Props @('SSLMODE=DISABLED') `
+        -ExpectedErr 'recv handshake response error: This server is configured to only allow SSL connections'
 
-Test-Atlas-Connect-Failure `
-    -TestName 'ssl_disabled' `
-    -Props @('SSLMODE=DISABLED') `
-    -ExpectedErr 'recv handshake response error: This server is configured to only allow SSL connections'
+    Test-Atlas-Connect-Failure `
+        -TestName 'ssl_verify_ca' `
+        -Props @('SSLMODE=VERIFY_CA') `
+        -ExpectedErr 'SSL connection error: CA certificate is required if ssl-mode is VERIFY_CA or VERIFY_IDENTITY'
 
-Test-Atlas-Connect-Failure `
-    -TestName 'ssl_verify_ca' `
-    -Props @('SSLMODE=VERIFY_CA') `
-    -ExpectedErr 'SSL connection error: CA certificate is required if ssl-mode is VERIFY_CA or VERIFY_IDENTITY'
+    Test-Atlas-Connect-Failure `
+        -TestName 'ssl_verify_identity' `
+        -Props @('SSLMODE=VERIFY_IDENTITY') `
+        -ExpectedErr 'SSL connection error: CA certificate is required if ssl-mode is VERIFY_CA or VERIFY_IDENTITY'
 
-Test-Atlas-Connect-Failure `
-    -TestName 'ssl_verify_identity' `
-    -Props @('SSLMODE=VERIFY_IDENTITY') `
-    -ExpectedErr 'SSL connection error: CA certificate is required if ssl-mode is VERIFY_CA or VERIFY_IDENTITY'
+    Test-Atlas-Connect-Failure `
+        -TestName 'verify_ca_invalid_ca' `
+        -Props @('SSLMODE=VERIFY_CA', "SSLCA=$invalidCA") `
+        -ExpectedErr 'SSL connection error: ASN: bad other signature confirmation'
 
-Test-Atlas-Connect-Failure `
-    -TestName 'verify_ca_invalid_ca' `
-    -Props @('SSLMODE=VERIFYk_CA', "SSLCA=$invalidCA") `
-    -ExpectedErr 'SSL connection error: ASN: bad other signature confirmation'
+    Test-Atlas-Connect-Failure `
+        -TestName 'verify_identity_invalid_ca' `
+        -Props @('SSLMODE=VERIFY_CA', "SSLCA=$invalidCA") `
+        -ExpectedErr 'SSL connection error: ASN: bad other signature confirmation'
+}
 
-Test-Atlas-Connect-Failure `
-    -TestName 'verify_identity_invalid_ca' `
-    -Props @('SSLMODE=VERIFY_CA', "SSLCA=$invalidCA") `
-    -ExpectedErr 'SSL connection error: ASN: bad other signature confirmation'
+# local test cases
+if ($Local) {
+    Test-Local-Connect-Success `
+        -TestName 'default config' `
+        -Props @()
+
+    Test-Local-Connect-Success `
+        -TestName 'explicit_mongosql_auth' `
+        -Props @('DEFAULT_AUTH=mongosql_auth')
+
+    Test-Local-Connect-Success `
+        -TestName 'mysql_clear_password' `
+        -Props @('DEFAULT_AUTH=mysql_clear_password', 'ENABLE_CLEARTEXT_PLUGIN=1')
+}
+
+# local SSL test cases
+if ($LocalSSL) {
+    Test-Local-Connect-Success `
+        -TestName 'default' `
+        -Props @()
+
+    Test-Local-Connect-Success `
+        -TestName 'ssl_required' `
+        -Props @('SSLMODE=required')
+
+    Test-Local-Connect-Success `
+        -TestName 'valid_ca' `
+        -Props @('SSLMODE=VERIFY_CA', "SSLCA=$localCA")
+
+    Test-Local-Connect-Success `
+        -TestName 'valid_ca_localhost_identity' `
+        -Props @('SSLMODE=VERIFY_CA', "SSLCA=$localCA")
+
+    Test-Local-Connect-Failure `
+        -TestName 'invalid_ca' `
+        -Props @('SSLMODE=VERIFY_CA', "SSLCA=$digicertCA") `
+        -ExpectedErr 'SSL connection error: ASN: bad other signature confirmation'
+}
