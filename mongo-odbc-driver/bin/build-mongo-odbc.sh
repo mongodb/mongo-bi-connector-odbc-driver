@@ -1,6 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2018-Present MongoDB Inc., licensed under
-# GNU GENERAL PUBLIC LICENSE Version 2.
+# Copyright (c) 2018-Present MongoDB Inc.
 
 # shellcheck source=prepare-shell.sh
 . "$(dirname "$0")/prepare-shell.sh"

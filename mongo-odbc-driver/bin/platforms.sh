@@ -1,5 +1,5 @@
-# Copyright (c) 2018-Present MongoDB Inc., licensed under
-# GNU GENERAL PUBLIC LICENSE Version 2.
+#!/bin/bash
+# Copyright (c) 2018-Present MongoDB Inc.
 if [ "$PLATFORM" = "" ]; then
     PLATFORM=win64
     echo "WARNING: no value provided for \$PLATFORM: using default of '$PLATFORM'"

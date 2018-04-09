@@ -1,5 +1,4 @@
-# Copyright (c) 2018-Present MongoDB Inc., licensed under
-# GNU GENERAL PUBLIC LICENSE Version 2.
+# Copyright (c) 2018-Present MongoDB Inc.
 <#
 .SYNOPSIS
     Builds an MSI for the MongoDB ODBC driver.

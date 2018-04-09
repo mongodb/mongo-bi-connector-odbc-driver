@@ -1,3 +1,5 @@
+#!/bin/bash
+# Copyright (c) 2018-Present MongoDB Inc.
 # This file should be sourced by all scripts in mongo-odbc-driver/bin
 
 # we start by sourcing platforms.sh. this will set environment variables that

@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2018-Present MongoDB Inc. -->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Fragment>
     <FeatureGroup Id="fg_All">
@@ -9,9 +10,6 @@
                ConfigurableDirectory="INSTALLLOCATION">
         <ComponentGroupRef Id="base" />
 	<ComponentGroupRef Id="cg_License" />
-      </Feature>
-      <Feature Id="VCRedist" Title="Visual C++ 14.0 Runtime" AllowAdvertise="no" Display="hidden" Level="1">
-         <MergeRef Id="VCRedist"/>
       </Feature>
     </FeatureGroup>
   </Fragment>
