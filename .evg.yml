@@ -16,6 +16,7 @@ buildvariants:
     run_on: windows-64-vs2015-compile
     tasks:
       - name: "build"
+      - name: "unit_tests"
       - name: "integration_tests"
       - name: "sign"
         run_on: linux-64-amzn-build
@@ -27,6 +28,7 @@ buildvariants:
     run_on: windows-64-vs2015-compile
     tasks:
       - name: "build"
+      - name: "unit_tests"
       - name: "integration_tests"
       - name: "sign"
         run_on: linux-64-amzn-build
@@ -52,6 +54,11 @@ tasks:
       - func: "fetch packages"
       - func: "sign msi installer"
       - func: "upload release packages"
+
+  - name: unit_tests
+    commands:
+      - func: "build mysql"
+      - func: "run unit tests"
 
 functions:
   "build msi installer":
@@ -176,6 +183,14 @@ functions:
       script: |
           ${PREPARE_SHELL}
           ${SCRIPT_DIR}/run-integration-tests.sh
+
+  "run unit tests":
+    command: shell.exec
+    type: test
+    params:
+      script: |
+          ${PREPARE_SHELL}
+          ${MYSQL_SCRIPT_DIR}/run-unit-tests.sh
 
   "sign msi installer":
     - command: shell.exec
