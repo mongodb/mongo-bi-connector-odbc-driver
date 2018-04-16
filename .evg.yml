@@ -7,8 +7,7 @@ pre:
 
 post:
   - func: "upload msi"
-  - func: "upload ANSI shared library file"
-  - func: "upload Unicode shared library file"
+  - func: "upload shared library files"
 
 buildvariants:
   - name: win64
@@ -43,6 +42,9 @@ buildvariants:
     run_on: macos-1012
     tasks:
       - name: "build"
+      - name: "unit_tests"
+      - name: "integration_tests_atlas"
+      - name: "integration_tests_local"
 
 tasks:
   - name: build
@@ -55,14 +57,16 @@ tasks:
     depends_on:
       - name: build
     commands:
-      - func: "fetch packages"
+      - func: "fetch msi"
+      - func: "fetch shared library files"
       - func: "run atlas integration tests"
 
   - name: integration_tests_local
     depends_on:
       - name: build
     commands:
-      - func: "fetch packages"
+      - func: "fetch msi"
+      - func: "fetch shared library files"
       - func: "run local integration tests"
 
   - name: sign
@@ -70,7 +74,7 @@ tasks:
       - name: integration_tests_atlas
       - name: integration_tests_local
     commands:
-      - func: "fetch packages"
+      - func: "fetch msi"
       - func: "sign msi installer"
       - func: "upload release packages"
 
@@ -170,13 +174,36 @@ functions:
         file: odbc/mongo-odbc-driver/artifacts/expansions.yml
 
 
-  "fetch packages":
+  "fetch msi":
     - command: s3.get
       params:
+        build_variants:
+            - win32
+            - win64
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         remote_file: ${S3_ARTIFACTS_DIR}/mongo-odbc-unsigned.msi
         local_file: odbc/mongo-odbc-driver/artifacts/pkg/mongo-odbc.msi
+        bucket: mciuploads
+
+  "fetch shared library files":
+    - command: s3.get
+      params:
+        build_variants:
+            - macos
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        remote_file: ${S3_ARTIFACTS_DIR}/libmdbodbca.so
+        local_file: odbc/mongo-odbc-driver/artifacts/drivers/libmdbodbca.so
+        bucket: mciuploads
+    - command: s3.get
+      params:
+        build_variants:
+            - macos
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        remote_file: ${S3_ARTIFACTS_DIR}/libmdbodbcw.so
+        local_file: odbc/mongo-odbc-driver/artifacts/drivers/libmdbodbcw.so
         bucket: mciuploads
 
   "fetch source":
@@ -252,7 +279,9 @@ functions:
   "upload msi":
     - command: s3.put
       params:
-        optional: true
+        build_variants:
+            - win32
+            - win64
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         local_file: odbc/mongo-odbc-driver/artifacts/pkg/mongo-odbc.msi
@@ -284,10 +313,11 @@ functions:
         permissions: public-read
         display_name: mongosqld.log
 
-  "upload ANSI shared library file":
+  "upload shared library files":
     - command: s3.put
       params:
-        optional: true
+        build_variants:
+            - macos
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         local_file: odbc/mongo-odbc-driver/artifacts/drivers/libmdbodbca.so
@@ -296,11 +326,10 @@ functions:
         bucket: mciuploads
         permissions: public-read
         display_name: "ANSI Driver (.so)"
-
-  "upload Unicode shared library file":
     - command: s3.put
       params:
-        optional: true
+        build_variants:
+            - macos
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         local_file: odbc/mongo-odbc-driver/artifacts/drivers/libmdbodbcw.so
@@ -313,6 +342,9 @@ functions:
   "upload release packages":
     - command: s3.put
       params:
+        build_variants:
+            - win32
+            - win64
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         local_file: odbc/mongo-odbc-driver/artifacts/pkg/mongo-odbc-signed.msi

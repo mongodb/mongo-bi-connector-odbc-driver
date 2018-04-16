@@ -5,7 +5,7 @@
 . "$(dirname "$0")/prepare-shell.sh"
 
 if [ "$PLATFORM" = macos ]; then
-	exit 0
+    exit 0
 fi
 
 # clear MSI_BUILD_DIR
@@ -27,11 +27,11 @@ else
 fi
 
 powershell.exe \
-	    -NoProfile \
-	    -NoLogo \
-	    -NonInteractive \
-	    -File ./build-msi.ps1 \
-	    -Arch "$arch"
+        -NoProfile \
+        -NoLogo \
+        -NonInteractive \
+        -File ./build-msi.ps1 \
+        -Arch "$arch"
 
 # clear PKG_DIR
 rm -rf "$PKG_DIR"

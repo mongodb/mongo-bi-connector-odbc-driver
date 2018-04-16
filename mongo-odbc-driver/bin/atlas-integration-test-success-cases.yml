@@ -1,0 +1,45 @@
+# currently, we generate tsv files from this yml, but the yml is easier to read and could be
+# useful in the future
+- test_name: default_config
+  props: []
+
+- test_name: ssl_preferred
+  props:
+      - SSLMODE=PREFERRED
+
+- test_name: ssl_required
+  props: 
+      - SSLMODE=REQUIRED
+
+- test_name: nonexistent_plugin_dir
+  props: 
+      - PLUGIN_DIR=/nonexistentdir
+
+- test_name: explicit_mongosql_auth
+  props: 
+      - DEFAULT_AUTH=mongosql_auth
+
+- test_name: mongosql_auth_with_nonexistent_plugin_dir
+  props: 
+      - DEFAULT_AUTH=mongosql_auth
+      - PLUGIN_DIR=/nonexistentdir
+
+- test_name: mysql_native_password
+  props: 
+      - DEFAULT_AUTH=mysql_native_password
+      - ENABLE_CLEARTEXT_PLUGIN=1
+
+- test_name: mysql_clear_password
+  props: 
+      - DEFAULT_AUTH=mysql_clear_password
+      - ENABLE_CLEARTEXT_PLUGIN=1
+
+- test_name: gssl_verify_ca
+  props: 
+      - SSLMODE=VERIFY_CA
+      - SSLCA=$digicertCA
+
+- test_name: gssl_verify_identity
+  props: 
+      - SSLMODE=VERIFY_IDENTITY
+      - SSLCA=$digicertCA

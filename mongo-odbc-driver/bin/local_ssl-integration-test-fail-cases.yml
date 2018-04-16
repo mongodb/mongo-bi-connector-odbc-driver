@@ -1,0 +1,7 @@
+# currently, we generate tsv files from this yml, but the yml is easier to read and could be
+# useful in the future
+- test_name: invalid_ca
+  props:
+      - SSLMODE=VERIFY_CA
+      - SSLCA=$digicertCA
+  expected_err: "SSL connection error: ASN: bad other signature confirmation"

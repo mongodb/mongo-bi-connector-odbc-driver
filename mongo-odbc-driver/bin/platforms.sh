@@ -9,6 +9,9 @@ case "$PLATFORM" in
 macos)
     PLATFORM_ARCH='64'
     PLATFORM_NAME='macos'
+    MONGODB_URI='http://downloads.10gen.com/osx/mongodb-osx-x86_64-enterprise-latest.tgz'
+    SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/latest/mongodb-bi-osx-x86_64-latest.tgz'
+    EXTRACT='tar xf'
     CMAKE_GENERATOR="Unix Makefiles"
     CMAKE_PATH='/Applications/Cmake.app/Contents/bin'
     ;;
@@ -16,8 +19,7 @@ win64)
     # We must use 64-bit powershell to test 64-bit odbc
     POWERSHELL='C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe' # 64-bit powershell
     MONGODB_URI='http://downloads.10gen.com/win32/mongodb-win32-x86_64-enterprise-windows-64-latest.zip'
-    SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/mongodb-bi-win32-x86_64-v2.4.1.msi'
-    SQLPROXY_URI='https://s3.amazonaws.com/mciuploads/sqlproxy/binaries/win32/mongodb-bi-win32-x86_64-v2.4.0-beta1-88-g8707123-patch-5ac52ae8c9ec44093ea8c89f.msi'
+    SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/latest/mongodb-bi-win32-x86_64-latest.msi'
     EXTRACT='unzip'
     PLATFORM_ARCH='64'
     PLATFORM_NAME='windows'
@@ -31,8 +33,7 @@ win32)
     # We must use 32-bit powershell to test 32-bit odbc
     POWERSHELL='C:/Windows/SysWOW64/WindowsPowerShell/v1.0/powershell.exe' # 32-bit powershell
     MONGODB_URI='http://downloads.10gen.com/win32/mongodb-win32-x86_64-enterprise-windows-64-latest.zip'
-    SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/mongodb-bi-win32-x86_64-v2.4.1.msi'
-    SQLPROXY_URI='https://s3.amazonaws.com/mciuploads/sqlproxy/binaries/win32/mongodb-bi-win32-x86_64-v2.4.0-beta1-88-g8707123-patch-5ac52ae8c9ec44093ea8c89f.msi'
+    SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/latest/mongodb-bi-win32-x86_64-latest.msi'
     EXTRACT='unzip'
     PLATFORM_ARCH='32'
     PLATFORM_NAME='windows'

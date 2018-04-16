@@ -1,0 +1,53 @@
+# currently, we generate tsv files from this yml, but the yml is easier to read and could be
+# useful in the future
+- test_name: mysql_native_password
+  props:
+      - DEFAULT_AUTH=mysql_native_password
+  expected_err: "Authentication plugin 'mysql_clear_password' cannot be loaded: plugin not enabled"
+
+- test_name: mysql_clear_password
+  props:
+      - DEFAULT_AUTH=mysql_clear_password
+  expected_err: "Authentication plugin 'mysql_clear_password' cannot be loaded: plugin not enabled"
+
+- test_name: invalid_auth_plugin
+  props:
+      - DEFAULT_AUTH=invalid_plugin
+  expected_err: "Authentication plugin 'invalid_plugin' cannot be loaded: The specified module could not be found"
+
+- test_name: wrong_username
+  props:
+      - User=invalid_username
+  expected_err: "Access denied for user 'invalid_username'"
+
+- test_name: wrong_password
+  props:
+      - Password=invalid_password
+  expected_err: "Access denied for user '$User'"
+
+- test_name: ssl_disabled
+  props:
+      - SSLMODE=DISABLED
+  expected_err: "recv handshake response error: This server is configured to only allow SSL connections"
+
+- test_name: ssl_verify_ca
+  props:
+      - SSLMODE=VERIFY_CA
+  expected_err: "SSL connection error: CA certificate is required if ssl-mode is VERIFY_CA or VERIFY_IDENTITY"
+
+- test_name: ssl_verify_identity
+  props:
+      - SSLMODE=VERIFY_IDENTITY
+  expected_err: "SSL connection error: CA certificate is required if ssl-mode is VERIFY_CA or VERIFY_IDENTITY"
+
+- test_name: verify_ca_invalid_ca
+  props:
+      - SSLMODE=VERIFYk_CA
+      - SSLCA=$invalidCA
+  expected_err: "SSL connection error: ASN: bad other signature confirmation"
+
+- test_name: verify_identity_invalid_ca
+  props:
+      - SSLMODE=VERIFY_CA
+      - SSLCA=$invalidCA
+  expected_err: "SSL connection error: ASN: bad other signature confirmation"

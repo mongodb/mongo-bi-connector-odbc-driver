@@ -1,0 +1,13 @@
+# currently, we generate tsv files from this yml, but the yml is easier to read and could be
+# useful in the future
+- test_name: default_config
+  props: []
+
+- test_name: explicit_mongosql_auth
+  props:
+      - DEFAULT_AUTH=mongosql_auth
+
+- test_name: mysql_clear_password
+  props: 
+      - DEFAULT_AUTH=mysql_clear_password
+      - ENABLE_CLEARTEXT_PLUGIN=1
