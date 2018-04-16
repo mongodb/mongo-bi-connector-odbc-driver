@@ -6,8 +6,14 @@
 test_set=''
 if [ "$TEST_SET" = 'SSL' ]; then
     test_set='LocalSSL'
+    success_file_prefix="$SCRIPT_DIR/local_ssl-integration-test-success-cases"
+    "$SCRIPT_DIR"/gen_tsv.py "$success_file_prefix".yml > "$success_file_prefix".tsv
+    fail_file_prefix="$SCRIPT_DIR/local_ssl-integration-test-fail-cases"
+    "$SCRIPT_DIR"/gen_tsv.py "$fail_file_prefix".yml > "$fail_file_prefix".tsv
 elif [ "$TEST_SET" = '' ]; then
     test_set='Local'
+    success_file_prefix="$SCRIPT_DIR/local-integration-test-success-cases"
+    "$SCRIPT_DIR"/gen_tsv.py "$success_file_prefix".yml > "$success_file_prefix".tsv
 fi
 
 if [ "Windows_NT" = "$OS" ]; then
@@ -25,7 +31,7 @@ if [ "Windows_NT" = "$OS" ]; then
         -NoProfile \
         -NoLogo \
         -NonInteractive \
-        -File "$SCRIPT_DIR/run-integration-tests.ps1" \
+        -File "$SCRIPT_DIR/run-windows-integration-tests.ps1" \
         -"$test_set" \
         -Platform "$platform" \
         -Server '127.0.0.1' \
@@ -35,7 +41,20 @@ if [ "Windows_NT" = "$OS" ]; then
         -DB 'information_schema'
     echo 'integration tests passed'
 
+elif [ "macos" = "$PLATFORM" ]; then
+    if ! hash iodbctestw &> /dev/null; then
+        echo 'building iODBC'
+        "$SCRIPT_DIR"/build-iodbc.sh
+    fi
+    echo 'running local connection tests...'
+
+    "$SCRIPT_DIR"/run-macos-integration-tests.sh \
+        "local" \
+        "127.0.0.1" \
+        "3307" \
+        "user_not_used" \
+        "password_not_used"
 else
-    echo 'integration tests not yet implemented for non-windows platforms'
+    echo 'integration tests not yet implemented for linux platforms'
     exit 1
 fi

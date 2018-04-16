@@ -211,9 +211,7 @@ function Test-Local-Connect-Success {
       [String[]]$Props
     )
 
-    echo ''
-    echo "running local connection test '$TestName'"
-
+    echo "...running local connection test '$TestName'"
     $properties = @("Server=$Server",
                     "Port=$Port",
                     "User=$User",
@@ -230,12 +228,12 @@ function Test-Local-Connect-Success {
         }
     } catch {
         $err = $Error[0].ToString()
-        echo "test '$TestName' FAILED: connection was rejected"
+        echo "...test '$TestName' FAILED: connection was rejected"
         echo "error: $err"
         exit 1
     }
 
-    echo "test '$TestName' SUCCEEDED"
+    echo "...test '$TestName' SUCCEEDED"
 }
 
 function Test-Local-Connect-Failure {
@@ -245,9 +243,7 @@ function Test-Local-Connect-Failure {
       [String]$ExpectedErr
     )
 
-    echo ''
-    echo "running local connection negative test '$TestName'"
-
+    echo "...running local negative connection test '$TestName'"
     $properties = @("Server=$Server",
                     "Port=$Port",
                     "User=$User",
@@ -265,12 +261,12 @@ function Test-Local-Connect-Failure {
     } catch {
         $actualErr = $Error[0].ToString()
         if ( $actualErr -like "*$ExpectedErr*" ) {
-            echo "test '$TestName' SUCCEEDED"
+            echo "...test '$TestName' SUCCEEDED"
             return
         } else {
-            echo "test '$TestName' FAILED: error message did not contain $$ExpectedErr"
-            echo "expected string: $ExpectedErr"
-            echo "actual err message: $actualErr"
+            echo "...test '$TestName' FAILED: error message did not contain $$ExpectedErr"
+            echo "......expected string: $ExpectedErr"
+            echo "......actual err message: $actualErr"
             exit 1
         }
     }
@@ -286,9 +282,6 @@ function Test-Atlas-Connect-Success {
       [String[]]$Props
     )
 
-    echo ''
-    echo "running atlas connection test '$TestName'"
-
     $properties = @("Server=$Server",
                     "Port=$Port",
                     "User=$User",
@@ -299,18 +292,19 @@ function Test-Atlas-Connect-Success {
         $properties += $prop
     }
 
+    echo "...running atlas connection test '$TestName'"
     try {
         foreach($driver in $drivers) {
             Test-Driver -Dsn $dsn -Driver $driver -Platform $Platform -SetPropertyValue $properties
         }
     } catch {
         $err = $Error[0].ToString()
-        echo "test '$TestName' FAILED: connection was rejected"
-        echo "error: $err"
+        echo "......test '$TestName' FAILED: connection was rejected"
+        echo ".........error: $err"
         exit 1
     }
 
-    echo "test '$TestName' SUCCEEDED"
+    echo "......test '$TestName' SUCCEEDED"
 }
 
 function Test-Atlas-Connect-Failure {
@@ -320,9 +314,6 @@ function Test-Atlas-Connect-Failure {
       [String]$ExpectedErr
     )
 
-    echo ''
-    echo "running atlas connection negative test '$TestName'"
-
     $properties = @("Server=$Server",
                     "Port=$Port",
                     "User=$User",
@@ -333,6 +324,7 @@ function Test-Atlas-Connect-Failure {
         $properties += $prop
     }
 
+    echo "...running atlas negative connection test '$TestName'"
     try {
         foreach($driver in $drivers) {
             Test-Driver -Dsn $dsn -Driver $driver -Platform $Platform -SetPropertyValue $properties
@@ -340,18 +332,67 @@ function Test-Atlas-Connect-Failure {
     } catch {
         $actualErr = $Error[0].ToString()
         if ( $actualErr -like "*$ExpectedErr*" ) {
-            echo "test '$TestName' SUCCEEDED"
+            echo "......test '$TestName' SUCCEEDED"
             return
         } else {
-            echo "test '$TestName' FAILED: error message did not contain $$ExpectedErr"
-            echo "expected string: $ExpectedErr"
-            echo "actual err message: $actualErr"
+            echo "......test '$TestName' FAILED: error message did not contain $$ExpectedErr"
+            echo ".........expected string: $ExpectedErr"
+            echo ".........actual err message: $actualErr"
             exit 1
         }
     }
 
-    echo "test '$TestName' FAILED: expected connection to be rejected, but it was accepted"
+    echo "...test '$TestName' FAILED: expected connection to be rejected, but it was accepted"
     exit 1
+}
+
+# Test all the success and fail cases from success and fail tsv files.
+function Run-Test-Cases {
+    Param(
+      [String]$TestType,
+      [String]$SuccessTestsTsv,
+      [String]$FailTestsTsv,
+      [ScriptBlock]$TestSuccess,
+      [ScriptBlock]$TestFail
+    )
+    # test cases
+    if ($SuccessTestsTsv -ne "") {
+        echo $TestType" tests that should successfully connect..."
+        $tsv = Get-Content $SuccessTestsTsv
+        foreach($line in $tsv)
+        {
+            # clean out empty strings because we might have multiple tabs between items
+            $line_sp = $line.Split("`t") | ? { $_ -ne "" }
+            $name, $props = $line_sp
+            if ($props) {
+                # expand any variables in the tsv file using the current environment
+                $props = $props | % { $ExecutionContext.InvokeCommand.ExpandString($_) }
+            }
+            $TestSuccess.Invoke($name, $props)
+        }
+    }
+
+
+    if ($FailTestsTsv -ne "") {
+        echo $TestType" tests that should fail to connect..."
+        $tsv = Get-Content $FailTestsTsv
+        foreach($line in $tsv)
+        {
+            # clean out empty strings because we might have multiple tabs between items
+            $line_sp = $line.Split("`t") | ? { $_ -ne "" }
+
+            $name, $rest = $line_sp
+            $expectedErr = $rest[-1]
+            $props = $rest[0..($rest.length-2)]
+
+            if ($props) {
+                # expand any variables in the tsv file using the current environment
+                $props = $props | % { $ExecutionContext.InvokeCommand.ExpandString($_) }
+            }
+            $expectedErr = $ExecutionContext.InvokeCommand.ExpandString($expectedErr)
+            $TestFail.Invoke($name, $props, $expectedErr)
+        }
+    }
 }
 
 $dsn = "TestODBC"
@@ -379,134 +420,30 @@ try {
     exit 1
 }
 
-# atlas test cases
-if ($Atlas) {
-    Test-Atlas-Connect-Success `
-        -TestName 'default config' `
-        -Props @()
-
-    Test-Atlas-Connect-Success `
-        -TestName 'ssl_preferred' `
-        -Props @('SSLMODE=PREFERRED')
-
-    Test-Atlas-Connect-Success `
-        -TestName 'ssl_required' `
-        -Props @('SSLMODE=REQUIRED')
-
-    Test-Atlas-Connect-Success `
-        -TestName 'nonexistent plugin_dir' `
-        -Props @('PLUGIN_DIR=C:\nonexistentdir')
-
-    Test-Atlas-Connect-Success `
-        -TestName 'explicit mongosql_auth' `
-        -Props @('DEFAULT_AUTH=mongosql_auth')
-
-    Test-Atlas-Connect-Success `
-        -TestName 'mongosql_auth with nonexistent plugin_dir' `
-        -Props @('DEFAULT_AUTH=mongosql_auth', 'PLUGIN_DIR=C:\nonexistentdir')
-
-    Test-Atlas-Connect-Success `
-        -TestName 'mysql_native_password' `
-        -Props @('DEFAULT_AUTH=mysql_native_password', 'ENABLE_CLEARTEXT_PLUGIN=1')
-
-    Test-Atlas-Connect-Success `
-        -TestName 'mysql_clear_password' `
-        -Props @('DEFAULT_AUTH=mysql_clear_password', 'ENABLE_CLEARTEXT_PLUGIN=1')
-
-    Test-Atlas-Connect-Success `
-        -TestName 'ssl_verify_ca' `
-        -Props @('SSLMODE=VERIFY_CA', "SSLCA=$digicertCA")
-
-    Test-Atlas-Connect-Success `
-        -TestName 'ssl_verify_identity' `
-        -Props @('SSLMODE=VERIFY_IDENTITY', "SSLCA=$digicertCA")
-
-    Test-Atlas-Connect-Failure `
-        -TestName 'mysql_native_password' `
-        -Props @('DEFAULT_AUTH=mysql_native_password') `
-        -ExpectedErr "Authentication plugin 'mysql_clear_password' cannot be loaded: plugin not enabled"
-
-    Test-Atlas-Connect-Failure `
-        -TestName 'mysql_clear_password' `
-        -Props @('DEFAULT_AUTH=mysql_clear_password') `
-        -ExpectedErr "Authentication plugin 'mysql_clear_password' cannot be loaded: plugin not enabled"
-
-    Test-Atlas-Connect-Failure `
-        -TestName 'invalid_auth_plugin' `
-        -Props @('DEFAULT_AUTH=invalid_plugin') `
-        -ExpectedErr "Authentication plugin 'invalid_plugin' cannot be loaded: The specified module could not be found"
-
-    Test-Atlas-Connect-Failure `
-        -TestName 'wrong_username' `
-        -Props @('User=invalid_username') `
-        -ExpectedErr "Access denied for user 'invalid_username'"
-
-    Test-Atlas-Connect-Failure `
-        -TestName 'wrong_password' `
-        -Props @('Password=invalid_password') `
-        -ExpectedErr "Access denied for user '$User'"
-
-    Test-Atlas-Connect-Failure `
-        -TestName 'ssl_disabled' `
-        -Props @('SSLMODE=DISABLED') `
-        -ExpectedErr 'recv handshake response error: This server is configured to only allow SSL connections'
-
-    Test-Atlas-Connect-Failure `
-        -TestName 'ssl_verify_ca' `
-        -Props @('SSLMODE=VERIFY_CA') `
-        -ExpectedErr 'SSL connection error: CA certificate is required if ssl-mode is VERIFY_CA or VERIFY_IDENTITY'
-
-    Test-Atlas-Connect-Failure `
-        -TestName 'ssl_verify_identity' `
-        -Props @('SSLMODE=VERIFY_IDENTITY') `
-        -ExpectedErr 'SSL connection error: CA certificate is required if ssl-mode is VERIFY_CA or VERIFY_IDENTITY'
-
-    Test-Atlas-Connect-Failure `
-        -TestName 'verify_ca_invalid_ca' `
-        -Props @('SSLMODE=VERIFY_CA', "SSLCA=$invalidCA") `
-        -ExpectedErr 'SSL connection error: ASN: bad other signature confirmation'
-
-    Test-Atlas-Connect-Failure `
-        -TestName 'verify_identity_invalid_ca' `
-        -Props @('SSLMODE=VERIFY_CA', "SSLCA=$invalidCA") `
-        -ExpectedErr 'SSL connection error: ASN: bad other signature confirmation'
-}
 
 # local test cases
 if ($Local) {
-    Test-Local-Connect-Success `
-        -TestName 'default config' `
-        -Props @()
-
-    Test-Local-Connect-Success `
-        -TestName 'explicit_mongosql_auth' `
-        -Props @('DEFAULT_AUTH=mongosql_auth')
-
-    Test-Local-Connect-Success `
-        -TestName 'mysql_clear_password' `
-        -Props @('DEFAULT_AUTH=mysql_clear_password', 'ENABLE_CLEARTEXT_PLUGIN=1')
+    Run-Test-Cases -TestType "Local" `
+               -SuccessTestsTsv $PSScriptRoot\local-integration-test-success-cases.tsv `
+               -FailTestsTsv "" `
+               -TestSuccess ${function:Test-Local-Connect-Success} `
+               -TestFail ${function:Test-Local-Connect-Failure}
 }
 
 # local SSL test cases
 if ($LocalSSL) {
-    Test-Local-Connect-Success `
-        -TestName 'default' `
-        -Props @()
+    Run-Test-Cases -TestType "LocalSSL" `
+               -SuccessTestsTsv $PSScriptRoot\local_ssl-integration-test-success-cases.tsv `
+               -FailTestsTsv $PSScriptRoot\local_ssl-integration-test-fail-cases.tsv `
+               -TestSuccess ${function:Test-Local-Connect-Success} `
+               -TestFail ${function:Test-Local-Connect-Failure}
+}
 
-    Test-Local-Connect-Success `
-        -TestName 'ssl_required' `
-        -Props @('SSLMODE=required')
-
-    Test-Local-Connect-Success `
-        -TestName 'valid_ca' `
-        -Props @('SSLMODE=VERIFY_CA', "SSLCA=$localCA")
-
-    Test-Local-Connect-Success `
-        -TestName 'valid_ca_localhost_identity' `
-        -Props @('SSLMODE=VERIFY_CA', "SSLCA=$localCA")
-
-    Test-Local-Connect-Failure `
-        -TestName 'invalid_ca' `
-        -Props @('SSLMODE=VERIFY_CA', "SSLCA=$digicertCA") `
-        -ExpectedErr 'SSL connection error: ASN: bad other signature confirmation'
+# Atlas test cases
+if ($Atlas) {
+    Run-Test-Cases -TestType "Atlas" `
+               -SuccessTestsTsv $PSScriptRoot\atlas-integration-test-success-cases.tsv `
+               -FailTestsTsv $PSScriptRoot\atlas-integration-test-fail-cases.tsv `
+               -TestSuccess ${function:Test-Atlas-Connect-Success} `
+               -TestFail ${function:Test-Atlas-Connect-Failure}
 }

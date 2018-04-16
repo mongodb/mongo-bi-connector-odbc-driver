@@ -1,0 +1,13 @@
+# currently, we generate tsv files from this yml, but the yml is easier to read and could be
+# useful in the future
+- test_name: default_config
+  props: []
+
+- test_name: ssl_required
+  props:
+      - SSLMODE=REQUIRED
+
+- test_name: valid_ca
+  props:
+      - SSLMODE=VERIFY_CA
+      - SSLCA=$localCA
