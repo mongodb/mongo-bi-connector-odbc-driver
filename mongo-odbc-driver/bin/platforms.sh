@@ -12,6 +12,7 @@ macos)
     MONGODB_URI='http://downloads.10gen.com/osx/mongodb-osx-x86_64-enterprise-latest.tgz'
     SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/latest/mongodb-bi-osx-x86_64-latest.tgz'
     EXTRACT='tar xf'
+    CMAKE_ARGS="-DOSX_UNIVERSAL=ON -DCMAKE_OSX_ARCHITECTURES='i386;x86_64'"
     CMAKE_GENERATOR="Unix Makefiles"
     CMAKE_PATH='/Applications/Cmake.app/Contents/bin'
     ;;
