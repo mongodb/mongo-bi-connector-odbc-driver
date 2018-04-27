@@ -14,7 +14,7 @@ Param(
 $ErrorActionPreference = 'Stop'
 
 $VersionLabel = "1.0.0"
-$ProjectName = "MongoDB ODBC"
+$ProjectName = "ODBC"
 $sourceDir = pwd
 $resourceDir = pwd
 $binDir = pwd
