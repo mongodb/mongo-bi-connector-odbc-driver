@@ -1,6 +1,6 @@
 #!/bin/bash
 # Copyright (c) 2018-Present MongoDB Inc.
-# This file should be sourced by all scripts in mongo-odbc-driver/bin
+# This file should be sourced by all scripts in mongodb-odbc-driver/bin
 
 # we start by sourcing platforms.sh. this will set environment variables that
 # differ depending on which platform we are building on
@@ -12,16 +12,18 @@ SCRIPT_DIR=$(cd $(dirname $0) && pwd -P)
 if [ "$OS" = "Windows_NT" ]; then
     SCRIPT_DIR="$(cygpath -m "$SCRIPT_DIR")"
 fi
+export MDBODBC_VER="$(cat "$SCRIPT_DIR"/VERSION.txt)"
 PROJECT_ROOT="$SCRIPT_DIR/../.."
-BUILD_DIR="$PROJECT_ROOT/mongo-odbc-driver/build"
-BUILD_SRC_DIR="$PROJECT_ROOT/mongo-odbc-driver/src"
-MSI_BUILD_DIR="$PROJECT_ROOT/mongo-odbc-driver/msi-build"
-ARTIFACTS_DIR="$PROJECT_ROOT/mongo-odbc-driver/artifacts"
+BUILD_DIR="$PROJECT_ROOT/mongodb-odbc-driver/build"
+BUILD_SRC_DIR="$PROJECT_ROOT/mongodb-odbc-driver/src"
+MSI_BUILD_DIR="$PROJECT_ROOT/mongodb-odbc-driver/msi-build"
+DMG_BUILD_DIR="$PROJECT_ROOT/mongodb-odbc-driver/dmg-build"
+ARTIFACTS_DIR="$PROJECT_ROOT/mongodb-odbc-driver/artifacts"
 DRIVERS_DIR="$ARTIFACTS_DIR/drivers"
 PKG_DIR="$ARTIFACTS_DIR/pkg"
 SQLPROXY_DIR="$ARTIFACTS_DIR/mongosqld"
 MONGODB_DIR="$ARTIFACTS_DIR/mongodb"
-MYSQL_PROJECT_DIR="$PROJECT_ROOT/mongo-odbc-driver/mysql-server"
+MYSQL_PROJECT_DIR="$PROJECT_ROOT/mongodb-odbc-driver/mysql-server"
 MYSQL_SCRIPT_DIR="$MYSQL_PROJECT_DIR/bld/bin"
 MYSQL_DIR="$MYSQL_PROJECT_DIR/bld/artifacts/mysql-home"
 MONGOSQL_AUTH_PROJECT_DIR="$MYSQL_PROJECT_DIR/bld/mongosql-auth-c"

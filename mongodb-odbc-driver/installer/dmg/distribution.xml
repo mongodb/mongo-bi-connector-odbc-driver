@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="1">
+    <title>MongoDB ODBC Driver __VERSION__</title>
+    <background file="background.png" mime-type="image/png" scaling="tofit" />
+    <welcome file="WELCOME.rtf" mim-type="application/rtf" />
+    <license file="LICENSE.rtf" mim-type="application/rtf" />
+    <pkg-ref id="MongoDBODBC"/>
+    <options customize="never" require-scripts="false"/>
+    <choices-outline>
+        <line choice="default">
+            <line choice="MongoDBODBC"/>
+        </line>
+    </choices-outline>
+    <choice id="default"/>
+    <choice id="MongoDBODBC" visible="false">
+        <pkg-ref id="MongoDBODBC"/>
+    </choice>
+    <pkg-ref id="MongoDBODBC" version="0" onConclusion="none">mongodb-odbc-component.pkg</pkg-ref>
+</installer-gui-script>

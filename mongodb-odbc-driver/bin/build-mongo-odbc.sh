@@ -22,7 +22,7 @@ mkdir -p "$BUILD_SRC_DIR"
 # copy odbc source into BUILD_SRC_DIR
 echo "copying odbc source to $BUILD_SRC_DIR"
 for x in "$PROJECT_ROOT"/*; do
-    if [ ! "$(basename "$x")" = mongo-odbc-driver ]; then 
+    if [ ! "$(basename "$x")" = mongodb-odbc-driver ]; then 
         echo "...copying $x to $BUILD_SRC_DIR"
     cp -r "$x" "$BUILD_SRC_DIR"/
     fi

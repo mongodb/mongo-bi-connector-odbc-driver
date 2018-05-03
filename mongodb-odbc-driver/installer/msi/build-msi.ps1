@@ -8,13 +8,13 @@
     The architecture, x86 or x64.
 #>
 Param(
-  [string]$Arch
+  [string]$Arch,
+  [string]$VersionLabel
 )
 
 $ErrorActionPreference = 'Stop'
 
-$VersionLabel = "1.0.0"
-$ProjectName = "ODBC"
+$ProjectName = "MongoDB ODBC"
 $sourceDir = pwd
 $resourceDir = pwd
 $binDir = pwd

@@ -1,0 +1,51 @@
+#!/usr/bin/python
+import ConfigParser
+import errno
+import os
+
+ODBC_PATH       = '/Library/ODBC'
+INI             = '%s/odbcinst.ini'%ODBC_PATH
+INSTALL_PATH    = '/Library/MongoDB/ODBC'
+DRIVERS_SECTION = 'ODBC Drivers'
+MDB_UNICODE     = 'MongoDB ANSI ODBC'
+MDB_ANSI        = 'MongoDB Unicode ODBC'
+DRIVERS         = {
+                     MDB_UNICODE: '%s/libmdbodbcw.so'%INSTALL_PATH,
+                     MDB_ANSI:    '%s/libmdbodbca.so'%INSTALL_PATH
+                  }
+
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
+
+def install_driver(config, driver):
+    if not config.has_option(DRIVERS_SECTION, driver):
+        config.set(DRIVERS_SECTION, driver, None)
+    if config.get(DRIVERS_SECTION, driver) != "Installed":
+        config.set(DRIVERS_SECTION, driver, "Installed")
+        if not config.has_section(driver):
+            config.add_section(driver)
+        config.set(driver, 'Driver', DRIVERS[driver])
+
+def main():
+    if not os.path.exists(ODBC_PATH):
+        mkdir_p('/Library/ODBC')
+    if not os.path.exists(INI):
+        with open(INI, 'w') as ini_writer:
+            print >> ini_writer, '[ODBC Drivers]'
+    config = ConfigParser.ConfigParser()
+    config.optionxform = str
+    with open(INI) as ini_reader:
+        config.readfp(ini_reader)
+    for driver in DRIVERS:
+        install_driver(config, driver)
+    with open(INI, 'w') as ini_writer:
+        config.write(ini_writer)
+
+if __name__ == '__main__':
+    main()

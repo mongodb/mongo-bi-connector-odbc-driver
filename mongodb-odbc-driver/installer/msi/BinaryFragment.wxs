@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) 2018-Present MongoDB Inc. -->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <DirectoryRef Id="BIN">
+	    <?if $(var.Platform)=x64 ?>
+	       <?define win64Flag = "yes" ?>
+	    <?else ?>
+	       <?define win64Flag = "no" ?>
+	    <?endif ?>
+       <Component Guid="{02DA3AB6-9776-4B13-9D02-7874FE99050D}" Id="RegKeys" Win64="$(var.win64Flag)">
+           <RegistryKey ForceCreateOnInstall="yes" ForceDeleteOnUninstall="yes" Id="MongoDBKey" Key="SOFTWARE\MongoDB\[ProductName]" Root="HKLM" />
+           <RegistryValue Id="Version" Key="SOFTWARE\MongoDB\[ProductName]"  Name="Version" Root="HKLM" Type="string" Value="[ProductVersion]" />
+       </Component>
+       <Component Guid="{C01C3018-0325-458D-925D-73E70FE680D3}" Id="liba" SharedDllRefCount="yes" Win64="$(var.win64Flag)">
+            <File DiskId="1" Id="mdbodbca.lib"  Name="mdbodbca.lib" Source="mdbodbca.lib" />
+       </Component>
+       <Component Guid="{C1B967E5-B56D-432C-9F93-38F2CDB1E91B}" Id="libw" SharedDllRefCount="yes" Win64="$(var.win64Flag)">
+            <File DiskId="1" Id="mdbodbcw.lib" Name="mdbodbcw.lib" Source="mdbodbcw.lib" />
+       </Component>
+       <Component Guid="{20040826-9A0C-4783-9364-A1A74FFE6EB2}" Id="drivera" SharedDllRefCount="yes" Win64="$(var.win64Flag)">
+            <File Checksum="yes" DiskId="1" Id="mdbodbca.dll"  Name="mdbodbca.dll" Source="mdbodbca.dll" KeyPath="yes" />
+            <ODBCDriver File="mdbodbca.dll" Id="MongoDB_ODBC_1.0a_Driver" Name="MongoDB ODBC 1.0 ANSI Driver" SetupFile="mdbodbcS.dll" />
+       </Component>
+       <Component Guid="{66D2AAC0-B5D9-40DB-9797-3A52014DC526}" Id="driverw" SharedDllRefCount="yes" Win64="$(var.win64Flag)">
+            <File Checksum="yes" DiskId="1" Id="mdbodbcw.dll" Name="mdbodbcw.dll" Source="mdbodbcw.dll" KeyPath="yes" />
+            <ODBCDriver File="mdbodbcw.dll" Id="MongoDB_ODBC_1.0w_Driver" Name="MongoDB ODBC 1.0 Unicode Driver" SetupFile="mdbodbcS.dll" />
+       </Component>
+       <Component Guid="{628199F9-7996-4D6C-8319-EDAF12120263}" Id="setuplib" SharedDllRefCount="yes" Win64="$(var.win64Flag)">
+            <File DiskId="1" Id="mdbodbcS.lib" Name="mdbodbcS.lib" Source="mdbodbcS.lib" />
+       </Component>
+       <Component Guid="{D266919B-48EC-4133-AB7A-F3B3051E3CE7}" Id="setupdll" SharedDllRefCount="yes" Win64="$(var.win64Flag)">
+            <File DiskId="1" Id="mdbodbcS.dll"  Name="mdbodbcS.dll" Source="mdbodbcS.dll" />
+       </Component>
+       <Component Guid="{F14D7C7F-1B4C-4218-A5DF-2D278451DD37}" Id="installer" SharedDllRefCount="yes" Win64="$(var.win64Flag)">
+            <File DiskId="1" Id="installer"  Name="mdbodbc-installer.exe" ShortName="g1mdra3f.exe" Source="installer.exe" />
+       </Component>
+      </DirectoryRef>
+      <ComponentGroup Id="base">
+          <ComponentRef Id="RegKeys" />
+          <ComponentRef Id="liba" />
+          <ComponentRef Id="libw" />
+          <ComponentRef Id="drivera" />
+          <ComponentRef Id="driverw" />
+          <ComponentRef Id="setupdll" />
+          <ComponentRef Id="setuplib" />
+          <ComponentRef Id="installer" />
+       </ComponentGroup>
+  </Fragment>
+</Wix>

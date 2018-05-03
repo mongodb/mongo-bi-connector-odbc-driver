@@ -192,7 +192,7 @@ function Test-Driver {
     Remove-System-OdbcDsn -Name "$Dsn" -Platform "$Platform"
 }
 
-# Install-Mongo-Odbc installs the mongo-odbc-driver.
+# Install-Mongo-Odbc installs the mongodb-odbc-driver.
 function Install-Mongo-Odbc {
    Param(
    # location of the msi
@@ -411,7 +411,7 @@ $invalidCA = "$CAPath\invalid.pem"
 $localCA = "$CAPath\local_ca.pem"
 
 try {
-    Install-Mongo-Odbc -Path "mongo-odbc.msi" -Platform $Platform -Drivers $drivers
+    Install-Mongo-Odbc -Path "mongodb-odbc.msi" -Platform $Platform -Drivers $drivers
 } catch {
     $err = $Error[0].ToString()
     echo "Failed to install MongoDB ODBC driver"
