@@ -6,6 +6,7 @@ rm dmg-contents/*.pkg || true
 ROOT=/Library/MongoDB/ODBC
 mkdir -p components/"$ROOT"
 mv ./*.so components/"$ROOT"/
+cp ./resources/LICENSE.rtf components/"$ROOT"/
 
 # build component pkg
 pkgbuild --root=components/ --scripts=scripts/ --identifier='MongoDB ODBC' 'mongodb-odbc-component.pkg'
