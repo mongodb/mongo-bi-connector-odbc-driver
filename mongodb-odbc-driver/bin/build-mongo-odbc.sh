@@ -55,7 +55,7 @@ fi
 echo 'building'
 # build the ODBC driver
 if [ "$PLATFORM_NAME" = "windows" ]; then
-    devenv.com MySQL_Connector_ODBC.sln /build Release
+    devenv.com MySQL_Connector_ODBC.sln /build Release || true
 else
     make mdbodbca mdbodbcw
 fi

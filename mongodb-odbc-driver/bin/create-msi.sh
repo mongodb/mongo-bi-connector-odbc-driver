@@ -28,10 +28,11 @@ else
        arch="x86"
 fi
 
-powershell.exe \
+"$POWERSHELL" \
         -NoProfile \
         -NoLogo \
         -NonInteractive \
+		-ExecutionPolicy ByPass \
         -File ./build-msi.ps1 \
         -Arch "$arch" \
         -VersionLabel "$MDBODBC_VER"
