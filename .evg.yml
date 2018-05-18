@@ -20,7 +20,7 @@ buildvariants:
       - name: "unit_tests"
       - name: "integration_tests_atlas"
       - name: "integration_tests_local"
-      - name: "sign"
+      - name: "sign_msi"
         run_on: linux-64-amzn-build
 
   - name: win32
@@ -33,7 +33,7 @@ buildvariants:
       - name: "unit_tests"
       - name: "integration_tests_atlas"
       - name: "integration_tests_local"
-      - name: "sign"
+      - name: "sign_msi"
         run_on: linux-64-amzn-build
   - name: macos
     display_name: OSX 10.12
@@ -45,16 +45,18 @@ buildvariants:
       - name: "unit_tests"
       - name: "integration_tests_atlas"
       - name: "integration_tests_local"
+      - name: "sign_dmg"
+        run_on: osx-1010-compass
 
 tasks:
-  - name: build
+  - name: "build"
     commands:
       - func: "build mysql"
       - func: "build odbc driver"
       - func: "build msi installer"
       - func: "build dmg installer"
 
-  - name: integration_tests_atlas
+  - name: "integration_tests_atlas"
     depends_on:
       - name: build
     commands:
@@ -62,7 +64,7 @@ tasks:
       - func: "fetch shared library files"
       - func: "run atlas integration tests"
 
-  - name: integration_tests_local
+  - name: "integration_tests_local"
     depends_on:
       - name: build
     commands:
@@ -70,14 +72,23 @@ tasks:
       - func: "fetch shared library files"
       - func: "run local integration tests"
 
-  - name: sign
+  - name: "sign_dmg"
+    depends_on:
+      - name: integration_tests_atlas
+      - name: integration_tests_local
+    commands:
+      - func: "fetch dmg"
+      - func: "sign dmg installer"
+      - func: "upload macos release packages"
+
+  - name: "sign_msi"
     depends_on:
       - name: integration_tests_atlas
       - name: integration_tests_local
     commands:
       - func: "fetch msi"
       - func: "sign msi installer"
-      - func: "upload release packages"
+      - func: "upload windows release packages"
 
   - name: unit_tests
     commands:
@@ -85,6 +96,16 @@ tasks:
       - func: "run unit tests"
 
 functions:
+  "build dmg installer":
+    command: shell.exec
+    type: test
+    params:
+      build_variants:
+          - macos
+      script: |
+          ${PREPARE_SHELL}
+          ${SCRIPT_DIR}/create-dmg.sh
+
   "build msi installer":
     command: shell.exec
     type: test
@@ -95,16 +116,6 @@ functions:
       script: |
           ${PREPARE_SHELL}
           ${SCRIPT_DIR}/create-msi.sh
-
-  "build dmg installer":
-    command: shell.exec
-    type: test
-    params:
-      build_variants:
-          - macos
-      script: |
-          ${PREPARE_SHELL}
-          ${SCRIPT_DIR}/create-dmg.sh
 
   "build mysql":
     command: shell.exec
@@ -131,6 +142,9 @@ functions:
         script: |
           if [ "Windows_NT" = "$OS" ]; then
               set -o igncr
+              export PKG_EXTENSION='msi'
+          else
+              export PKG_EXTENSION='dmg'
           fi
 
           export PLATFORM='${_platform|unset}'
@@ -141,7 +155,6 @@ functions:
           export S3_RELEASES_DIR='mongo-odbc-driver/releases/${version_id}'
 
           export RELEASE_BASENAME="mongo-odbc-$PLATFORM_NAME-$PLATFORM_ARCH"
-          export PKG_EXTENSION='msi'
           export RELEASE_NAME="$RELEASE_BASENAME.$PKG_EXTENSION"
 
           export BIC_PROD_SERVER='${bic_prod_server}'
@@ -187,13 +200,23 @@ functions:
       params:
         file: odbc/mongodb-odbc-driver/artifacts/expansions.yml
 
+  "fetch dmg":
+    - command: s3.get
+      params:
+        build_variants:
+          - macos
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        remote_file: ${S3_ARTIFACTS_DIR}/mongodb-odbc-unsigned.dmg
+        local_file: odbc/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc.dmg
+        bucket: mciuploads
 
   "fetch msi":
     - command: s3.get
       params:
         build_variants:
-            - win32
-            - win64
+          - win32
+          - win64
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         remote_file: ${S3_ARTIFACTS_DIR}/mongodb-odbc-unsigned.msi
@@ -275,6 +298,14 @@ functions:
       script: |
           ${PREPARE_SHELL}
           ${MYSQL_SCRIPT_DIR}/run-unit-tests.sh
+
+  "sign dmg installer":
+      - command: shell.exec
+        params:
+            working_dir: odbc/mongodb-odbc-driver/artifacts/pkg/
+            script: |
+                ${PREPARE_SHELL}
+                ssh -v -p 2222 localhost "${SCRIPT_DIR}/sign-dmg-contents.sh '${developer_id}'"
 
   "sign msi installer":
     - command: shell.exec
@@ -365,7 +396,7 @@ functions:
         permissions: public-read
         display_name: "Unicode Driver (.so)"
 
-  "upload release packages":
+  "upload windows release packages":
     - command: s3.put
       params:
         build_variants:
@@ -379,3 +410,17 @@ functions:
         bucket: mciuploads
         permissions: public-read
         display_name: "Signed Installer (.msi)"
+
+  "upload macos release packages":
+    - command: s3.put
+      params:
+        build_variants:
+            - macos
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: odbc/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc-signed.dmg
+        remote_file: ${S3_RELEASES_DIR}/${RELEASE_NAME}
+        content_type: application/x-apple-diskimage
+        bucket: mciuploads
+        permissions: public-read
+        display_name: "Signed Installer (.dmg)"
