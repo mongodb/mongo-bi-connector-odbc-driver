@@ -16,7 +16,10 @@ sed -i '.bak' "s|__VERSION__|$MDBODBC_VER|g" distribution.xml
 
 PRODUCT="$PREFIX".pkg
 # build product pkg (which can install multiple component pkgs, but we only have one)
-productbuild --distribution distribution.xml  --resources ./resources --package-path ./mongodb-odbc-component.pkg "$PRODUCT"
+productbuild --distribution distribution.xml \
+	--resources ./resources \
+	--package-path . \
+	"$PRODUCT"
 
 mkdir -p dmg-contents
 
