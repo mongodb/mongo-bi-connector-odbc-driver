@@ -17,7 +17,7 @@ macos)
     ;;
 win64)
     # We must use 64-bit powershell to test 64-bit odbc
-    POWERSHELL='C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe' # 64-bit powershell
+    POWERSHELL='C:/Windows/Sysnative/WindowsPowerShell/v1.0/powershell.exe' # 64-bit powershell
     MONGODB_URI='http://downloads.10gen.com/win32/mongodb-win32-x86_64-enterprise-windows-64-latest.zip'
     SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/latest/mongodb-bi-win32-x86_64-latest.msi'
     EXTRACT='unzip'
