@@ -142,9 +142,6 @@ functions:
         script: |
           if [ "Windows_NT" = "$OS" ]; then
               set -o igncr
-              export PKG_EXTENSION='msi'
-          else
-              export PKG_EXTENSION='dmg'
           fi
 
           export PLATFORM='${_platform|unset}'
@@ -155,7 +152,6 @@ functions:
           export S3_RELEASES_DIR='mongo-odbc-driver/releases/${version_id}'
 
           export RELEASE_BASENAME="mongo-odbc-$PLATFORM_NAME-$PLATFORM_ARCH"
-          export RELEASE_NAME="$RELEASE_BASENAME.$PKG_EXTENSION"
 
           export BIC_PROD_SERVER='${bic_prod_server}'
           export BIC_PROD_PORT='${bic_prod_port}'
@@ -177,7 +173,7 @@ functions:
           PLATFORM_ARCH: "$PLATFORM_ARCH"
           S3_ARTIFACTS_DIR: "$S3_ARTIFACTS_DIR"
           S3_RELEASES_DIR: "$S3_RELEASES_DIR"
-          RELEASE_NAME: "$RELEASE_NAME"
+          RELEASE_BASENAME: "$RELEASE_BASENAME"
           PREPARE_SHELL: |
              if [ "Windows_NT" = "$OS" ]; then
                  set -o igncr
@@ -405,7 +401,7 @@ functions:
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         local_file: odbc/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc-signed.msi
-        remote_file: ${S3_RELEASES_DIR}/${RELEASE_NAME}
+        remote_file: ${S3_RELEASES_DIR}/${RELEASE_BASENAME}.msi
         content_type: application/x-msi
         bucket: mciuploads
         permissions: public-read
@@ -419,7 +415,7 @@ functions:
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         local_file: odbc/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc-signed.dmg
-        remote_file: ${S3_RELEASES_DIR}/${RELEASE_NAME}
+        remote_file: ${S3_RELEASES_DIR}/${RELEASE_BASENAME}.dmg
         content_type: application/x-apple-diskimage
         bucket: mciuploads
         permissions: public-read
