@@ -118,13 +118,20 @@ functions:
           ${SCRIPT_DIR}/create-msi.sh
 
   "build libmongosql":
-    command: shell.exec
-    type: test
-    params:
-      script: |
-          ${PREPARE_SHELL}
-          ${MYSQL_SCRIPT_DIR}/install-bison.sh
-          ${MYSQL_SCRIPT_DIR}/build.sh
+    - command: shell.exec
+      type: setup
+      params:
+        working_dir: mongo-odbc-driver
+        script: |
+            git submodule update --init --recursive
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: ..
+        script: |
+            ${PREPARE_SHELL}
+            ${MYSQL_SCRIPT_DIR}/install-bison.sh
+            ${MYSQL_SCRIPT_DIR}/build.sh
 
   "build odbc driver":
     command: shell.exec
@@ -248,12 +255,6 @@ functions:
     - command: git.get_project
       params:
         directory: mongo-odbc-driver
-    - command: shell.exec
-      params:
-        script: |
-          set -o errexit
-          cd mongo-odbc-driver
-          git submodule update --init --recursive
 
   "run atlas integration tests":
     command: shell.exec
