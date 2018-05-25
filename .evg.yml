@@ -51,7 +51,7 @@ buildvariants:
 tasks:
   - name: "build"
     commands:
-      - func: "build mysql"
+      - func: "build libmongosql"
       - func: "build odbc driver"
       - func: "build msi installer"
       - func: "build dmg installer"
@@ -92,7 +92,7 @@ tasks:
 
   - name: unit_tests
     commands:
-      - func: "build mysql"
+      - func: "build libmongosql"
       - func: "run unit tests"
 
 functions:
@@ -117,7 +117,7 @@ functions:
           ${PREPARE_SHELL}
           ${SCRIPT_DIR}/create-msi.sh
 
-  "build mysql":
+  "build libmongosql":
     command: shell.exec
     type: test
     params:
@@ -138,7 +138,7 @@ functions:
     - command: shell.exec
       params:
         silent: true
-        working_dir: odbc/mongodb-odbc-driver/bin
+        working_dir: mongo-odbc-driver/mongodb-odbc-driver/bin
         script: |
           if [ "Windows_NT" = "$OS" ]; then
               set -o igncr
@@ -194,7 +194,7 @@ functions:
 
     - command: expansions.update
       params:
-        file: odbc/mongodb-odbc-driver/artifacts/expansions.yml
+        file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/expansions.yml
 
   "fetch dmg":
     - command: s3.get
@@ -204,7 +204,7 @@ functions:
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         remote_file: ${S3_ARTIFACTS_DIR}/mongodb-odbc-unsigned.dmg
-        local_file: odbc/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc.dmg
+        local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc.dmg
         bucket: mciuploads
 
   "fetch msi":
@@ -216,7 +216,7 @@ functions:
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         remote_file: ${S3_ARTIFACTS_DIR}/mongodb-odbc-unsigned.msi
-        local_file: odbc/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc.msi
+        local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc.msi
         bucket: mciuploads
 
   "fetch shared library files":
@@ -227,7 +227,7 @@ functions:
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         remote_file: ${S3_ARTIFACTS_DIR}/libmdbodbca.so
-        local_file: odbc/mongodb-odbc-driver/artifacts/drivers/libmdbodbca.so
+        local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/drivers/libmdbodbca.so
         bucket: mciuploads
     - command: s3.get
       params:
@@ -236,7 +236,7 @@ functions:
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         remote_file: ${S3_ARTIFACTS_DIR}/libmdbodbcw.so
-        local_file: odbc/mongodb-odbc-driver/artifacts/drivers/libmdbodbcw.so
+        local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/drivers/libmdbodbcw.so
         bucket: mciuploads
 
   "fetch source":
@@ -244,15 +244,15 @@ functions:
       params:
         silent: true
         script: |
-          rm -rf odbc
+          rm -rf mongo-odbc-driver
     - command: git.get_project
       params:
-        directory: odbc
+        directory: mongo-odbc-driver
     - command: shell.exec
       params:
         script: |
           set -o errexit
-          cd odbc
+          cd mongo-odbc-driver
           git submodule update --init --recursive
 
   "run atlas integration tests":
@@ -298,7 +298,7 @@ functions:
   "sign dmg installer":
       - command: shell.exec
         params:
-            working_dir: odbc/mongodb-odbc-driver/artifacts/pkg/
+            working_dir: mongo-odbc-driver/mongodb-odbc-driver/artifacts/pkg/
             script: |
                 ${PREPARE_SHELL}
                 ssh -v -p 2222 localhost "${SCRIPT_DIR}/sign-dmg-contents.sh '${developer_id}'"
@@ -306,7 +306,7 @@ functions:
   "sign msi installer":
     - command: shell.exec
       params:
-        working_dir: odbc/mongodb-odbc-driver/artifacts/pkg/
+        working_dir: mongo-odbc-driver/mongodb-odbc-driver/artifacts/pkg/
         script: |
           echo "${signing_token_odbc_driver}" > ./signing_auth_token
           /usr/local/bin/notary-client.py \
@@ -325,7 +325,7 @@ functions:
             - win64
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        local_file: odbc/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc.msi
+        local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc.msi
         remote_file: ${S3_ARTIFACTS_DIR}/mongodb-odbc-unsigned.msi
         content_type: application/x-msi
         bucket: mciuploads
@@ -337,7 +337,7 @@ functions:
             - macos
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        local_file: odbc/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc.dmg
+        local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc.dmg
         remote_file: ${S3_ARTIFACTS_DIR}/mongodb-odbc-unsigned.dmg
         content_type: application/x-apple-diskimage
         bucket: mciuploads
@@ -348,7 +348,7 @@ functions:
         optional: true
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        local_file: odbc/mongodb-odbc-driver/artifacts/mongodb/mongod.log
+        local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/mongodb/mongod.log
         remote_file: ${S3_ARTIFACTS_DIR}/mongod.log
         content_type: text/plain
         bucket: mciuploads
@@ -359,7 +359,7 @@ functions:
         optional: true
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        local_file: odbc/mongodb-odbc-driver/artifacts/mongosqld/mongosqld.log
+        local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/mongosqld/mongosqld.log
         remote_file: ${S3_ARTIFACTS_DIR}/mongosqld.log
         content_type: text/plain
         bucket: mciuploads
@@ -373,7 +373,7 @@ functions:
             - macos
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        local_file: odbc/mongodb-odbc-driver/artifacts/drivers/libmdbodbca.so
+        local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/drivers/libmdbodbca.so
         remote_file: ${S3_ARTIFACTS_DIR}/libmdbodbca.so
         content_type: application/x-sharedlib
         bucket: mciuploads
@@ -385,7 +385,7 @@ functions:
             - macos
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        local_file: odbc/mongodb-odbc-driver/artifacts/drivers/libmdbodbcw.so
+        local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/drivers/libmdbodbcw.so
         remote_file: ${S3_ARTIFACTS_DIR}/libmdbodbcw.so
         content_type: application/x-sharedlib
         bucket: mciuploads
@@ -400,7 +400,7 @@ functions:
             - win64
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        local_file: odbc/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc-signed.msi
+        local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc-signed.msi
         remote_file: ${S3_RELEASES_DIR}/${RELEASE_BASENAME}.msi
         content_type: application/x-msi
         bucket: mciuploads
@@ -414,7 +414,7 @@ functions:
             - macos
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        local_file: odbc/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc-signed.dmg
+        local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc-signed.dmg
         remote_file: ${S3_RELEASES_DIR}/${RELEASE_BASENAME}.dmg
         content_type: application/x-apple-diskimage
         bucket: mciuploads
