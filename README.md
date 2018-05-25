@@ -1,11 +1,16 @@
-MongoDB ODBC 1.0
+# MongoDB ODBC Driver #
 
-This is a release of MongoDB ODBC (formerly MySQL Connector/ODBC,
-Oracle's dual-license ODBC Driver for MySQL). For the avoidance
-of doubt, this particular copy of the software is released
-under the version 2 of the GNU General Public License. 
-MongoDB ODBC is brought to you by MongoDB Inc via a fork of MySQL MongoDB ODBC
-which is owned and maintained by Oracle Corproration.
+This is a release of MongoDB ODBC driver, the driver that
+enables ODBC applications to communicate with [MongoDB's
+Connector for Business Intelligence](https://www.mongodb.com/download-center#bi-connector).
+
+For the avoidance of doubt, this particular copy of the software is released
+under the version 2 of the GNU General Public License and is a fork of the
+MySQL Connector/ODBC (formerly MyODBC) version 5.7.21.
+
+The original README file provided with the upstream repository can be found below.
+
+# #
 
 Copyright (c) 1995, 2018, Oracle and/or its affiliates. All rights reserved.
 Copyright (c) 2018 MongoDB Inc.
