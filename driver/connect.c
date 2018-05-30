@@ -255,17 +255,17 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
 #if MYSQL_VERSION_ID >= 50710
   {
     char tls_options[128] = { 0 };
-    if (!ds->no_tls_1)
+    if (ds->tls_1)
     {
       strcat(tls_options, "TLSv1");
     }
     if (!ds->no_tls_1_1)
     {
-      strcat(tls_options, ds->no_tls_1 ? "TLSv1.1" : ",TLSv1.1");
+      strcat(tls_options, !ds->tls_1 ? "TLSv1.1" : ",TLSv1.1");
     }
     if (!ds->no_tls_1_2)
     {
-      strcat(tls_options, ds->no_tls_1 && ds->no_tls_1_1 ? "TLSv1.2" : ",TLSv1.2");
+      strcat(tls_options, !ds->tls_1 && ds->no_tls_1_1 ? "TLSv1.2" : ",TLSv1.2");
     }
     if (tls_options[0])
       mysql_options(mysql, MYSQL_OPT_TLS_VERSION, tls_options);

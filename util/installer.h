@@ -157,7 +157,7 @@ typedef struct {
   BOOL disable_ssl_default;
   BOOL ssl_enforce;
 
-  BOOL no_tls_1;
+  BOOL tls_1;
   BOOL no_tls_1_1;
   BOOL no_tls_1_2;
 
