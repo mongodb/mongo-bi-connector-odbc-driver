@@ -1360,7 +1360,7 @@ static char *ui_xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" \
 "                    </child>\n" \
 "                    <child>\n" \
 "                      <object class=\"GtkCheckButton\" id=\"tls_1\">\n" \
-"                        <property name=\"label\" translatable=\"yes\">Enable TLS Version 1</property>\n" \
+"                        <property name=\"label\" translatable=\"yes\">Enable TLS Version 1.0</property>\n" \
 "                        <property name=\"visible\">True</property>\n" \
 "                        <property name=\"can_focus\">True</property>\n" \
 "                        <property name=\"receives_default\">False</property>\n" \

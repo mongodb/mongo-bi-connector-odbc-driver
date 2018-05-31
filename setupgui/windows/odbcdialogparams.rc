@@ -228,7 +228,7 @@ BEGIN
     EDITTEXT        IDC_EDIT_rsakey,              90,97,97,12,ES_AUTOHSCROLL
     PUSHBUTTON      "...",IDC_RSAKEYCHOOSER,     192,97,12,12,BS_CENTER
 //    CONTROL         "&Verify SSL Certificate", IDC_CHECK_sslverify, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 290, 97, 87, 10
-    CONTROL         "&Enable TLS Version 1", IDC_CHECK_tls_1, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 90, 110, 87, 10
+    CONTROL         "&Enable TLS Version 1.0", IDC_CHECK_tls_1, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, 90, 110, 87, 10
     END
 
 
