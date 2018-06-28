@@ -11,11 +11,16 @@ mkdir -p "$DMG_SIGN_DIR"
 cd "$DMG_SIGN_DIR"
 cp -R "$PROJECT_ROOT/mongodb-odbc-driver/installer/dmg/dmg-contents" ./
 
-hdiutil detach /Volumnes/mongodb-odbc || true
+for mount in /Volumes/mongodb-odbc*; do
+	hdiutil detach "$mount" || true
+done
 hdiutil attach "$PKG_DIR"/mongodb-odbc.dmg
 
 PKG="mongodb-connector-odbc-$MDBODBC_VER-macos-x86-64.pkg"
 cp /Volumes/mongodb-odbc/"$PKG" ./
+
+hdiutil detach /Volumes/mongodb-odbc
+
 # The developer ID will be passed as an argument to this script.
 productsign --sign "$1" "$PKG" ./dmg-contents/"$PKG"
 
