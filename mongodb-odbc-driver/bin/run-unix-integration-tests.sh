@@ -3,8 +3,11 @@
 #shellcheck source=./prepare-shell.sh
 . $(dirname "$0")/prepare-shell.sh
 
-CASE="$1"
-shift
+TEST_BIN="$1"
+# iodbctestw expects DSN= before the DSN name, iusql expects nothing
+BIN_ARG_PREFIX="$2"
+CASE="$3"
+shift 3
 BIC_SERVER="$1";
 BIC_PORT="$2";
 BIC_USER="$3";
@@ -19,7 +22,6 @@ CA_PATH="$SCRIPT_DIR/../resources"
 digicertCA="$CA_PATH/digicert.pem"
 invalidCA="$CA_PATH/invalid.pem"
 localCA="$CA_PATH/local_ca.pem"
-
 
 default_args=("Server=$BIC_SERVER" "Port=$BIC_PORT" "User=$BIC_USER" "Password=$BIC_PASSWORD")
 
@@ -64,7 +66,7 @@ function test_connect_success {
     echo "...running $CASE connection test '$testname'"
     for driver in libmdbodbcw.so libmdbodbca.so; do
         add_odbc_dsn "$dsn" "$driver" "Database=$db" "$@"
-        out="$(echo "$query" | iodbctestw "DSN=$dsn")"
+        out="$(echo "$query" | "$TEST_BIN" "$BIN_ARG_PREFIX""$dsn")"
         # idodbctest has poorly formatted output, just check to make
         # sure that the attorney city of AUSTIN is present for this _id.
         if [ "$CASE" = "atlas" ] && [[ $out = *"MINNEAPOLIS"* ]]; then
@@ -101,7 +103,7 @@ function test_connect_failure {
     echo "...running $CASE negative connection test '$testname'"
     for driver in libmdbodbca.so libmdbodbcw.so; do
         add_odbc_dsn "$dsn" "$driver" "Database=$db" "$@"
-        out="$(echo "$query" | iodbctestw "DSN=$dsn" 2> /dev/null)"
+        out="$(echo "$query" | "$TEST_BIN" "$BIN_ARG_PREFIX""$dsn" 2> /dev/null)"
     done
     if [[ $out = *"result set 1 returned 1 rows"* ]]; then
             echo "......test '$testname' FAILED: expected connection to be rejected, but it was accepted"
@@ -145,4 +147,3 @@ if [ "$CASE" = "local" ]; then
         done < "$SCRIPT_DIR/local-integration-test-success-cases".tsv
     fi
 fi
-

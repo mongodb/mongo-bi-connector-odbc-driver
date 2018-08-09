@@ -1,11 +1,40 @@
 #!/bin/bash
 # Copyright (c) 2018-Present MongoDB Inc.
+echo $0
+
 if [ "$PLATFORM" = "" ]; then
-    PLATFORM=win64
+    PLATFORM=ubuntu1604-64
     echo "WARNING: no value provided for \$PLATFORM: using default of '$PLATFORM'"
 fi
 
 case "$PLATFORM" in
+ubuntu1404-64)
+    PLATFORM_ARCH='64'
+    PLATFORM_NAME='linux'
+    MONGODB_URI='http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-ubuntu1404-latest.tgz'
+    SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/latest/mongodb-bi-linux-x86_64-ubuntu-1404-latest.tgz'
+    EXTRACT='tar xf'
+    CMAKE_GENERATOR="Unix Makefiles"
+    CMAKE_PATH='/opt/cmake/bin'
+    ;;
+ubuntu1604-64)
+    PLATFORM_ARCH='64'
+    PLATFORM_NAME='linux'
+    MONGODB_URI='http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-ubuntu1604-latest.tgz'
+    SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/latest/mongodb-bi-linux-x86_64-ubuntu-1604-latest.tgz'
+    EXTRACT='tar xf'
+    CMAKE_GENERATOR="Unix Makefiles"
+    CMAKE_PATH='/opt/cmake/bin'
+    ;;
+rhel70)
+    PLATFORM_ARCH='64'
+    PLATFORM_NAME='linux'
+    MONGODB_URI='http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-rhel70-latest.tgz'
+    SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/latest/mongodb-bi-linux-x86_64-rhel70-latest.tgz'
+    EXTRACT='tar xf'
+    CMAKE_GENERATOR="Unix Makefiles"
+    CMAKE_PATH='/opt/cmake/bin'
+    ;;
 macos)
     PLATFORM_ARCH='64'
     PLATFORM_NAME='macos'
@@ -45,7 +74,7 @@ win32)
     ;;
 *)
     echo "ERROR: invalid value for \$PLATFORM: '$PLATFORM'"
-    echo "Allowed values: 'win64', 'win32', 'macos'"
+    echo "Allowed values: 'ubuntu1604-64', 'rhel70', 'win64', 'win32', 'macos'"
     exit 1
     ;;
 esac

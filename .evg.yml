@@ -10,6 +10,40 @@ post:
   - func: "upload shared library files"
 
 buildvariants:
+
+  - name: ubuntu1404-64
+    display_name: Ubuntu 14.04
+    expansions:
+      _platform: ubuntu1404-64
+    run_on: ubuntu1404-build
+    tasks:
+      - name: "build"
+      - name: "unit_tests"
+      - name: "integration_tests_atlas"
+      - name: "integration_tests_local"
+        run_on: ubuntu1404-build
+  - name: ubuntu1604-64
+    display_name: Ubuntu 16.04
+    expansions:
+      _platform: ubuntu1604-64
+    run_on: ubuntu1604-build
+    tasks:
+      - name: "build"
+      - name: "unit_tests"
+      - name: "integration_tests_atlas"
+      - name: "integration_tests_local"
+        run_on: ubuntu1604-build
+  - name: rhel70
+    display_name: RHEL 7.0
+    expansions:
+      _platform: rhel70
+    run_on: rhel70
+    tasks:
+      - name: "build"
+      - name: "unit_tests"
+      - name: "integration_tests_atlas"
+      - name: "integration_tests_local"
+        run_on: rhel70
   - name: win64
     display_name: Windows 64
     expansions:
@@ -22,7 +56,6 @@ buildvariants:
       - name: "integration_tests_local"
       - name: "sign_msi"
         run_on: linux-64-amzn-build
-
   - name: win32
     display_name: Windows 32
     expansions:
@@ -231,6 +264,9 @@ functions:
       params:
         build_variants:
             - macos
+            - ubuntu1404-64
+            - ubuntu1604-64
+            - rhel70
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         remote_file: ${S3_ARTIFACTS_DIR}/libmdbodbca.so
@@ -240,6 +276,9 @@ functions:
       params:
         build_variants:
             - macos
+            - ubuntu1404-64
+            - ubuntu1604-64
+            - rhel70
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         remote_file: ${S3_ARTIFACTS_DIR}/libmdbodbcw.so
@@ -366,12 +405,26 @@ functions:
         bucket: mciuploads
         permissions: public-read
         display_name: mongosqld.log
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_files_include_filter:
+            - mongo-odbc-driver/mongodb-odbc-driver/artifacts/log/*.log*
+        remote_file: ${S3_ARTIFACTS_DIR}/
+        content_type: text/plain
+        bucket: mciuploads
+        permissions: public-read
+        display_name: "Log File - "
 
   "upload shared library files":
     - command: s3.put
       params:
         build_variants:
             - macos
+            - ubuntu1404-64
+            - ubuntu1604-64
+            - rhel70
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/drivers/libmdbodbca.so
@@ -384,6 +437,9 @@ functions:
       params:
         build_variants:
             - macos
+            - ubuntu1404-64
+            - ubuntu1604-64
+            - rhel70
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/drivers/libmdbodbcw.so
