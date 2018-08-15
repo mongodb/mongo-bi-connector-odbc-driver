@@ -77,4 +77,3 @@
 ) > $LOG_FILE 2>&1
 
 print_exit_msg
-

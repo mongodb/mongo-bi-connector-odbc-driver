@@ -33,7 +33,7 @@
           -NoProfile \
           -NoLogo \
           -NonInteractive \
-  		-ExecutionPolicy ByPass \
+          -ExecutionPolicy ByPass \
           -File ./build-msi.ps1 \
           -Arch "$arch" \
           -VersionLabel "$MDBODBC_VER"

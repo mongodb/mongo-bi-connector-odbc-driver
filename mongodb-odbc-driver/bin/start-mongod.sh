@@ -3,8 +3,6 @@
 . "$(dirname $0)/platforms.sh"
 . "$(dirname $0)/prepare-shell.sh"
 
-
-
 (
     set -o errexit
 
@@ -58,9 +56,7 @@
       rm -rf mtools
       git clone git@github.com:rueckstiess/mtools
       cd mtools
-      # We should avoid checking out the master branch because it is a dev branch
-      # that has occasionally had bugs committed. This commit has worked well for us.
-      git checkout e544bbced1a070d7024931e7c1736ced7d9bcdd6
+      git checkout bd116d10bc01e4394269ea9be08d548a674711da
       echo 'installing mtools...'
       pip install .[mlaunch]
       pip freeze
@@ -77,6 +73,9 @@
     echo "mlaunch init args: $mlaunch_init_args"
 
     mlaunch init $mlaunch_init_args
+    echo "sleeping for a bit"
+    sleep 30
+    echo "done sleeping"
     mlaunch list $mlaunch_args
 
     echo "done starting mongodb"

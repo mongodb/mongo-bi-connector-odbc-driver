@@ -388,7 +388,7 @@ functions:
         optional: true
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/mongodb/mongod.log
+        local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/mlaunch/data/mongod.log
         remote_file: ${S3_ARTIFACTS_DIR}/mongod.log
         content_type: text/plain
         bucket: mciuploads

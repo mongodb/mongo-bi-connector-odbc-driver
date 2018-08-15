@@ -28,9 +28,7 @@ PROJECT_DIR="$(dirname "$(dirname $SCRIPT_DIR)")"
 # if on cygwin, convert paths as needed
 if [ "Windows_NT" = "$OS" ]; then
     ARTIFACTS_DIR="$(cygpath -m $ARTIFACTS_DIR)"
-    GOPATH="$(cygpath -m $GOPATH)"
     LOG_FILE="$(cygpath -m $LOG_FILE)"
-    MONGODB_BINARIES="$(cygpath -m $MONGODB_BINARIES)"
     PROJECT_DIR="$(cygpath -m $PROJECT_DIR)"
     SCRIPT_DIR="$(cygpath -m $SCRIPT_DIR)"
 fi

@@ -255,7 +255,7 @@ set_mongodb_binaries ()
    SQLPROXY_TEST_CACHE_DIR=$PWD
    cache="$SQLPROXY_TEST_CACHE_DIR/mongodb-downloads"
    local_versioned_path="$cache/cached-mongodb-$mongodb_version"
-   
+
    # If we are on evergreen, delete the cache
    if [ "$VARIANT" != "" ]; then
 	   echo "Deleting mongodb download cache ($cache)"
