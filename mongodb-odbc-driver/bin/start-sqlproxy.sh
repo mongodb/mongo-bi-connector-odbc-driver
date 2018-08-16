@@ -27,10 +27,15 @@
         echo 'downloaded sqlproxy'
         echo
 
+        echo 'uninstalling sqlproxy...'
+        echo
+        msiexec /x sqlproxy /qn /log $ARTIFACTS_DIR/log/mongosql-uninstall.log || true
+        echo 'uninstalled sqlproxy'
+        echo
+
         echo 'installing sqlproxy...'
         echo
-        msiexec /i sqlproxy /qn /log mongosql-install.log
-        sleep 3
+        msiexec /i sqlproxy /qn /log $ARTIFACTS_DIR/log/mongosql-install.log
         echo 'installed sqlproxy'
         echo
 
