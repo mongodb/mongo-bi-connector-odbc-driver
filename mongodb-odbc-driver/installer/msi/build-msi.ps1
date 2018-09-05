@@ -31,7 +31,7 @@ $version = $matches[1]
 # rev the minor version (1.0 -> 1.1). That way, we
 # will allow multiple minor versions to be installed
 # side-by-side.
-if ([double]$version -gt 1.0) {
+if ([double]$version -gt 1.1) {
     throw "You must change the upgrade code for a minor revision.
 Once that is done, change the version number above to
 account for the next revision that will require being
@@ -39,9 +39,9 @@ upgradeable. Make sure to change both x64 and x86 upgradeCode"
 }
 
 if ($Arch -eq "x64") {
-    $upgradeCode = "36ff9c14-c22c-4b8a-a998-eefb68e176ec"
+    $upgradeCode = "11f63272-b2a0-4b84-a280-e90c415c0bfa"
 } else {
-    $upgradeCode = "635a11fe-328a-4f94-ba31-a9116fbfda36"
+    $upgradeCode = "b3e15e1b-b36b-4f5e-bf2a-e85d2e00d3c1"
 }
 
 

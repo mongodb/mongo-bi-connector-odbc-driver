@@ -58,14 +58,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "provides setup library functionality\0"
             VALUE "CompanyName", "MongoDB Inc.\0"
-            VALUE "FileDescription", "MongoDB ODBC 1.0 Driver Setup Library\0"
+            VALUE "FileDescription", "MongoDB ODBC 1.1.0 Driver Setup Library\0"
             VALUE "FileVersion", MYODBC_STRFILEVER
             VALUE "InternalName", "mdbodbcS\0"
 	    VALUE "LegalCopyright", "Copyright (c) 1995, 2013, Oracle and/or its affiliates, Copyright (c) 2018-Present MongoDB Inc.\0"
             VALUE "LegalTrademarks", "MongoDB is a trademark of MongoDB Inc.\0"
             VALUE "OriginalFilename", "mdbodbcS.dll\0"
             VALUE "PrivateBuild", "Production\0"
-            VALUE "ProductName", "MongoDB ODBC 1.0\0"
+            VALUE "ProductName", "MongoDB ODBC 1.1.0\0"
             VALUE "ProductVersion", MYODBC_STRPRODUCTVER
             VALUE "SpecialBuild", "GA release\0"
         END

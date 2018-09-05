@@ -20,11 +20,11 @@
        </Component>
        <Component Guid="{20040826-9A0C-4783-9364-A1A74FFE6EB2}" Id="drivera" SharedDllRefCount="yes" Win64="$(var.win64Flag)">
             <File Checksum="yes" DiskId="1" Id="mdbodbca.dll"  Name="mdbodbca.dll" Source="mdbodbca.dll" KeyPath="yes" />
-            <ODBCDriver File="mdbodbca.dll" Id="MongoDB_ODBC_1.0a_Driver" Name="MongoDB ODBC 1.0 ANSI Driver" SetupFile="mdbodbcS.dll" />
+            <ODBCDriver File="mdbodbca.dll" Id="MongoDB_ODBC_1.0a_Driver" Name="MongoDB ODBC 1.1.0 ANSI Driver" SetupFile="mdbodbcS.dll" />
        </Component>
        <Component Guid="{66D2AAC0-B5D9-40DB-9797-3A52014DC526}" Id="driverw" SharedDllRefCount="yes" Win64="$(var.win64Flag)">
             <File Checksum="yes" DiskId="1" Id="mdbodbcw.dll" Name="mdbodbcw.dll" Source="mdbodbcw.dll" KeyPath="yes" />
-            <ODBCDriver File="mdbodbcw.dll" Id="MongoDB_ODBC_1.0w_Driver" Name="MongoDB ODBC 1.0 Unicode Driver" SetupFile="mdbodbcS.dll" />
+            <ODBCDriver File="mdbodbcw.dll" Id="MongoDB_ODBC_1.0w_Driver" Name="MongoDB ODBC 1.1.0 Unicode Driver" SetupFile="mdbodbcS.dll" />
        </Component>
        <Component Guid="{628199F9-7996-4D6C-8319-EDAF12120263}" Id="setuplib" SharedDllRefCount="yes" Win64="$(var.win64Flag)">
             <File DiskId="1" Id="mdbodbcS.lib" Name="mdbodbcS.lib" Source="mdbodbcS.lib" />

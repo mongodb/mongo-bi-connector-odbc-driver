@@ -23,10 +23,10 @@
 # 51 Franklin St, Fifth Floor, Boston, MA 02110-1301  USA
 
 SET(CONNECTOR_MAJOR "1")
-SET(CONNECTOR_MINOR "0")
+SET(CONNECTOR_MINOR "1")
 SET(CONNECTOR_PATCH "0")
 SET(CONNECTOR_LEVEL "")
-SET(CONNECTOR_QUALITY "RC")
+SET(CONNECTOR_QUALITY "GA")
 
 # ----------------------------------------------------------------------
 # Set other variables that are about the version
