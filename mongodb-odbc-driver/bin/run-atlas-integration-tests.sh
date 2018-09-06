@@ -33,7 +33,8 @@
             -Server "$BIC_PROD_SERVER" \
             -Port "${BIC_PROD_PORT:-27015}" \
             -User "$BIC_PROD_USER" \
-            -Password "$BIC_PROD_PASSWORD"
+            -Password "$BIC_PROD_PASSWORD" \
+            -Version $(< VERSION.txt)
 
         echo 'running atlas dev connection tests...'
 
@@ -48,7 +49,8 @@
             -Server "$BIC_DEV_SERVER" \
             -Port "${BIC_DEV_PORT:-27015}" \
             -User "$BIC_DEV_USER" \
-            -Password "$BIC_DEV_PASSWORD"
+            -Password "$BIC_DEV_PASSWORD" \
+            -Version $(< VERSION.txt)
 
         echo 'integration tests passed'
 

@@ -15,6 +15,7 @@
    [switch]$Atlas,
    [switch]$Local,
    [switch]$LocalSSL,
+   [string]$Version,
    [string]$DB = 'H1B-Visa-Applications'
  )
 
@@ -396,8 +397,8 @@ function Run-Test-Cases {
 }
 
 $dsn = "TestODBC"
-$drivers = @("MongoDB ODBC 1.0 Unicode Driver",
-             "MongoDB ODBC 1.0 ANSI Driver")
+$drivers = @("MongoDB ODBC $Version Unicode Driver",
+             "MongoDB ODBC $Version ANSI Driver")
 
 function Get-Script-Directory {
     $scriptInvocation = (Get-Variable MyInvocation -Scope 1).Value
