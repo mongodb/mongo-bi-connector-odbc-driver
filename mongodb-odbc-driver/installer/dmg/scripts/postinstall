@@ -7,8 +7,8 @@ ODBC_PATH       = '/Library/ODBC'
 INI             = '%s/odbcinst.ini'%ODBC_PATH
 INSTALL_PATH    = '/Library/MongoDB/ODBC'
 DRIVERS_SECTION = 'ODBC Drivers'
-MDB_UNICODE     = 'MongoDB ANSI ODBC'
-MDB_ANSI        = 'MongoDB Unicode ODBC'
+MDB_UNICODE     = 'MongoDB Unicode ODBC'
+MDB_ANSI        = 'MongoDB ANSI ODBC'
 DRIVERS         = {
                      MDB_UNICODE: '%s/libmdbodbcw.so'%INSTALL_PATH,
                      MDB_ANSI:    '%s/libmdbodbca.so'%INSTALL_PATH
@@ -28,9 +28,9 @@ def install_driver(config, driver):
         config.set(DRIVERS_SECTION, driver, None)
     if config.get(DRIVERS_SECTION, driver) != "Installed":
         config.set(DRIVERS_SECTION, driver, "Installed")
-        if not config.has_section(driver):
-            config.add_section(driver)
-        config.set(driver, 'Driver', DRIVERS[driver])
+    if not config.has_section(driver):
+        config.add_section(driver)
+    config.set(driver, 'Driver', DRIVERS[driver])
 
 def main():
     if not os.path.exists(ODBC_PATH):
