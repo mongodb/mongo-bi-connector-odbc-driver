@@ -3,7 +3,7 @@
 rm ./*.dmg
 rm dmg-contents/*.pkg || true
 
-ROOT=/Library/MongoDB/ODBC
+ROOT=/Library/MongoDB/ODBC/$MDBODBC_VER
 mkdir -p components/"$ROOT"
 mv ./*.so components/"$ROOT"/
 cp ./resources/*.rtf components/"$ROOT"/

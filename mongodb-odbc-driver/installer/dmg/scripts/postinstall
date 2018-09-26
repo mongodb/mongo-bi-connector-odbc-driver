@@ -3,12 +3,35 @@ import ConfigParser
 import errno
 import os
 
+# Find the latest version directory. We do this because there
+# is no good way to pass the current version to the post install
+# script, and we don't want to have to update this script every
+# release.
+def get_latest(path):
+    vers = []
+    for d in os.listdir(path):
+        if not os.path.isdir(os.path.join(path, d)):
+            continue
+        ver_parts = d.split('.')
+        # All valid versions must contain 3 numeric parts.
+        if len(ver_parts) != 3:
+            continue
+        try:
+            ver_parts = map(int, ver_parts)
+        except:
+            continue
+        vers.append(ver_parts)
+    vers.sort()
+    return ".".join(map(str, vers[-1])) if len(vers) != 0 else ""
+
 ODBC_PATH       = '/Library/ODBC'
 INI             = '%s/odbcinst.ini'%ODBC_PATH
-INSTALL_PATH    = '/Library/MongoDB/ODBC'
+INSTALL_ROOT    = '/Library/MongoDB/ODBC/'
+LATEST          = get_latest(INSTALL_ROOT)
+INSTALL_PATH    = INSTALL_ROOT + LATEST
 DRIVERS_SECTION = 'ODBC Drivers'
-MDB_UNICODE     = 'MongoDB Unicode ODBC'
-MDB_ANSI        = 'MongoDB ANSI ODBC'
+MDB_UNICODE     = 'MongoDB Unicode ODBC %s'%LATEST
+MDB_ANSI        = 'MongoDB ANSI ODBC %s'%LATEST
 DRIVERS         = {
                      MDB_UNICODE: '%s/libmdbodbcw.so'%INSTALL_PATH,
                      MDB_ANSI:    '%s/libmdbodbca.so'%INSTALL_PATH
