@@ -1,7 +1,12 @@
 #!/usr/bin/python
-import ConfigParser
 import errno
 import os
+import sys
+
+if sys.version_info.major == 2:
+    import ConfigParser as configparser
+else:
+    import configparser
 
 # Find the latest version directory. We do this because there
 # is no good way to pass the current version to the post install
@@ -48,7 +53,7 @@ def mkdir_p(path):
 
 def install_driver(config, driver):
     if not config.has_option(DRIVERS_SECTION, driver):
-        config.set(DRIVERS_SECTION, driver, None)
+        config.set(DRIVERS_SECTION, driver, '')
     if config.get(DRIVERS_SECTION, driver) != "Installed":
         config.set(DRIVERS_SECTION, driver, "Installed")
     if not config.has_section(driver):
@@ -61,10 +66,13 @@ def main():
     if not os.path.exists(INI):
         with open(INI, 'w') as ini_writer:
             print >> ini_writer, '[ODBC Drivers]'
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.optionxform = str
     with open(INI) as ini_reader:
-        config.readfp(ini_reader)
+        if sys.version_info.major == 3:
+            config.read_file(ini_reader)
+        else:
+            config.readfp(ini_reader)
     for driver in DRIVERS:
         install_driver(config, driver)
     with open(INI, 'w') as ini_writer:
