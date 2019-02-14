@@ -34,7 +34,7 @@
             -Port "${BIC_PROD_PORT:-27015}" \
             -User "$BIC_PROD_USER" \
             -Password "$BIC_PROD_PASSWORD" \
-            -Version $(< VERSION.txt)
+            -Version $(< "$SCRIPT_DIR/VERSION.txt")
 
         echo 'running atlas dev connection tests...'
 

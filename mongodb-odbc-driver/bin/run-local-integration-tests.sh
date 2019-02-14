@@ -39,7 +39,7 @@
             -Port '3307' \
             -User 'user_not_used' \
             -Password 'password_not_used' \
-            -Version $(< VERSION.txt) \
+            -Version $(< "$SCRIPT_DIR/VERSION.txt") \
             -DB 'information_schema'
 
         echo 'integration tests passed'
