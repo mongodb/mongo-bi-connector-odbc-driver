@@ -14,7 +14,7 @@ BIC_PORT="$2";
 BIC_USER="$3";
 BIC_PASSWORD="$4";
 
-db=H1B-Visa-Applications
+db=test
 if [ "$CASE" = "local" ]; then
 db=information_schema
 fi
@@ -56,9 +56,7 @@ EOS
 
 function test_connect_success {
     testname=$1; shift
-    query="select agent_attorney_city\
-          from year2015\
-          where _id = '572cbdd9d2fc210e7ce696ec'"
+    query="select message from greeting where _id = '5c64a48d1c9d44000046008d'"
     if [ "$CASE" = "local" ]; then
         query="select CATALOG_NAME from\
             information_schema.schemata\
@@ -70,9 +68,7 @@ function test_connect_success {
 	set +o errexit
         out="$(echo "$query" | "$TEST_BIN" "$BIN_ARG_PREFIX""$dsn")"
 	set -o errexit
-        # idodbctest has poorly formatted output, just check to make
-        # sure that the attorney city of AUSTIN is present for this _id.
-        if [ "$CASE" = "atlas" ] && [[ $out = *"MINNEAPOLIS"* ]]; then
+        if [ "$CASE" = "atlas" ] && [[ $out = *"Hello, world!"* ]]; then
             continue
         elif [ "$CASE" = "local" ] && [[ $out = *"def"* ]]; then
             continue
@@ -95,9 +91,7 @@ function test_connect_failure {
     # Thus, checking for specific errors
     # like on Windows is not possible. This is only a problem with iodbctest,
     # but we do not have another means to test this.
-    query="select _id\
-          from year2015\
-          where _id = '572cbdd9d2fc210e7ce696ec'"
+    query="select message from greeting where _id = '5c64a48d1c9d44000046008d'"
     if [ "$CASE" = "local" ]; then
         query="select CATALOG_NAME from\
             information_schema.schemata\

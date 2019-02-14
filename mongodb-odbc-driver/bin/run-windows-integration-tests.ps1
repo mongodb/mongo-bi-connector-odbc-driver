@@ -16,7 +16,7 @@
    [switch]$Local,
    [switch]$LocalSSL,
    [string]$Version,
-   [string]$DB = 'H1B-Visa-Applications'
+   [string]$DB = 'test'
  )
 
 Set-strictmode -version latest
@@ -129,19 +129,13 @@ function Test-Query {
        [string]$Dsn
     )
     if ($Atlas) {
-        $query = "select * from year2015 where _id = '572cbdd9d2fc210e7ce696ec'"
+        $query = "select * from greeting where _id = '5c64a48d1c9d44000046008d'"
         $ds = Query-ODBC -Dsn $Dsn -Query $query
-        if ($ds._id -ne "572cbdd9d2fc210e7ce696ec") {
-               throw "Data not as expected, got _id: $($ds._id), expected '572cbdd9d2fc210e7ce696ec'"
+        if ($ds._id -ne "5c64a48d1c9d44000046008d") {
+               throw "Data not as expected, got _id: $($ds._id), expected '5c64a48d1c9d44000046008d'"
         }
-        if ( $ds.agent_attorney_city -ne "MINNEAPOLIS" ) {
-               throw "Data not as expected, got agent_attorney_city: $($ds.agent_attorney_city), expected 'MINNEAPOLIS'"
-        }
-        if ( $ds.agent_attorney_state  -ne "MN" ) {
-               throw "Data not as expected, got agent_attorney_state: $($ds.agent_attorney_state), expected 'MN'"
-        }
-        if ( $ds.job_title -ne "MECHANICAL ENGINEER") {
-               throw "Data not as expected, got job_title: $($ds.job_title), expected 'MECHANICAL ENGINEER'"
+        if ( $ds.message -ne "Hello, world!" ) {
+               throw "Data not as expected, got message: $($ds.message), expected 'Hello, world!'"
         }
     } else {
         $query = "select * from information_schema.schemata where schema_name = 'mysql'"

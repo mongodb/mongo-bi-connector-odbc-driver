@@ -17,7 +17,7 @@
             platform="32-bit"
         fi
 
-        echo 'running atlas prod connection tests...'
+        echo 'running atlas connection tests...'
 
         # 32-bit powershell is configured to disallow scripts by default.
         # This invocation allows us to temporarily bypass that restriction.
@@ -36,30 +36,12 @@
             -Password "$BIC_PROD_PASSWORD" \
             -Version $(< "$SCRIPT_DIR/VERSION.txt")
 
-        echo 'running atlas dev connection tests...'
-
-        "$POWERSHELL" \
-            -ExecutionPolicy ByPass \
-            -NoProfile \
-            -NoLogo \
-            -NonInteractive \
-            -File "$SCRIPT_DIR/run-windows-integration-tests.ps1" \
-            -Atlas \
-            -Platform "$platform" \
-            -Server "$BIC_DEV_SERVER" \
-            -Port "${BIC_DEV_PORT:-27015}" \
-            -User "$BIC_DEV_USER" \
-            -Password "$BIC_DEV_PASSWORD" \
-            -Version $(< VERSION.txt)
-
-        echo 'integration tests passed'
-
     elif [ "macos" = "$PLATFORM" ]; then
         if ! hash iodbctestw &> /dev/null; then
             echo 'building iODBC'
             "$SCRIPT_DIR"/build-iodbc.sh
         fi
-        echo 'running atlas prod connection tests...'
+        echo 'running atlas connection tests...'
 
         "$SCRIPT_DIR"/run-unix-integration-tests.sh \
             "iodbctestw" \
@@ -69,24 +51,13 @@
             "$BIC_PROD_PORT" \
             "$BIC_PROD_USER" \
             "$BIC_PROD_PASSWORD"
-
-        echo 'running atlas dev connection tests...'
-
-        "$SCRIPT_DIR"/run-unix-integration-tests.sh \
-            "iodbctestw" \
-            "DSN=" \
-            "atlas" \
-            "$BIC_DEV_SERVER" \
-            "$BIC_DEV_PORT" \
-            "$BIC_DEV_USER" \
-            "$BIC_DEV_PASSWORD"
     else
         iusql_bin="$BUILD_DIR"/install/bin/iusql
         if [ ! -f "$iusql_bin" ]; then
             echo 'building unixODBC'
             "$SCRIPT_DIR"/build-unixodbc.sh
         fi
-        echo 'running atlas prod connection tests...'
+        echo 'running atlas connection tests...'
 
         "$SCRIPT_DIR"/run-unix-integration-tests.sh \
             "$iusql_bin" \
@@ -96,17 +67,6 @@
             "$BIC_PROD_PORT" \
             "$BIC_PROD_USER" \
             "$BIC_PROD_PASSWORD"
-
-        echo 'running atlas dev connection tests...'
-
-        "$SCRIPT_DIR"/run-unix-integration-tests.sh \
-            "$iusql_bin" \
-            "" \
-            "atlas" \
-            "$BIC_DEV_SERVER" \
-            "$BIC_DEV_PORT" \
-            "$BIC_DEV_USER" \
-            "$BIC_DEV_PASSWORD"
     fi
 ) > $LOG_FILE 2>&1
 
