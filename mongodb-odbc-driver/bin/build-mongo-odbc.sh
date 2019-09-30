@@ -38,7 +38,12 @@
     if [ "$PLATFORM" = macos ]; then
         iODBC_dir=iODBC-3.52.12
         echo "downloading iODBC"
-        curl -O "http://noexpire.s3.amazonaws.com/sqlproxy/binary/linux/$iODBC_dir.tar.gz"
+        curl -O "http://noexpire.s3.amazonaws.com/sqlproxy/binary/linux/$iODBC_dir.tar.gz" \
+             --silent \
+             --fail \
+             --max-time 60 \
+             --retry 5 \
+             --retry-delay 0
         tar xf "$iODBC_dir.tar.gz"
         UNIX_LIB="-DODBC_INCLUDES=$BUILD_DIR/$iODBC_dir/include -DODBC_LIB_DIR=/usr/lib"
     fi
