@@ -6,7 +6,12 @@
 	mkdir -p "$BUILD_DIR"
 	cd "$BUILD_DIR"
 	echo "downloading iODBC"
-	curl -O "http://noexpire.s3.amazonaws.com/sqlproxy/binary/linux/$IODBC_VERSION.tar.gz"
+	curl -O "http://noexpire.s3.amazonaws.com/sqlproxy/binary/linux/$IODBC_VERSION.tar.gz" \
+       --silent \
+       --fail \
+       --max-time 60 \
+       --retry 5 \
+       --retry-delay 0
 	tar xf "$IODBC_VERSION.tar.gz"
 	cd "$IODBC_BUILD_DIR"
 	# we need to modify the Makefile

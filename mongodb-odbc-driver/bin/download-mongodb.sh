@@ -269,7 +269,13 @@ set_mongodb_binaries ()
    if [ ! -e $local_versioned_path ]; then
        echo "Downloading mongodb binaries"
        cd $cache
-       curl $MONGODB_DOWNLOAD_URL --silent --max-time 120 --fail --output mongodb-binaries.tgz
+       curl $MONGODB_DOWNLOAD_URL \
+            --output mongodb-binaries.tgz \
+            --silent \
+            --fail \
+            --max-time 60 \
+            --retry 5 \
+            --retry-delay 0
        $EXTRACT mongodb-binaries.tgz
        rm mongodb-binaries.tgz
        mv mongodb* $local_versioned_path
