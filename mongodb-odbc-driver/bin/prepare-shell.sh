@@ -7,6 +7,8 @@
 # shellcheck source=platforms.sh
 . "$(dirname "$0")/platforms.sh"
 
+set -o verbose
+
 # create variables for a number of useful directories
 SCRIPT_DIR=$(cd $(dirname $0) && pwd -P)
 if [ "$OS" = "Windows_NT" ]; then
@@ -63,7 +65,6 @@ export MYSQL_DIR
 # Each script should run with errexit set and should start in the project root.
 # In general, scripts should reference directories via the provided environment
 # variables instead of making assumptions about the working directory.
-set -o errexit
 cd "$PROJECT_ROOT"
 
 # define the function that prints the exit message at the end of each script

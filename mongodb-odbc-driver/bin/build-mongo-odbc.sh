@@ -5,6 +5,7 @@
 . "$(dirname "$0")/prepare-shell.sh"
 
 (
+	set -o errexit
     # clear the BUILD_DIR
     echo "clear $BUILD_DIR"
     rm -rf "$BUILD_DIR"
@@ -77,6 +78,8 @@
     if [ "$PLATFORM_NAME" = "windows" ]; then
         cp "$BUILD_DIR"/lib/Release/mdbodbc{a,S,w}.{dll,lib} "$DRIVERS_DIR"
         cp "$BUILD_DIR"/bin/Release/myodbc-installer.exe "$DRIVERS_DIR"/installer.exe
+		#also copy openssl
+		cp "$OPENSSL_PATH"/*.dll "$DRIVERS_DIR"
     else
         cp "$BUILD_DIR"/lib/libmdbodbc{a,w}.so "$DRIVERS_DIR"
     fi
