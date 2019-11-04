@@ -42,7 +42,7 @@
 
 - test_name: verify_ca_invalid_ca
   props:
-      - SSLMODE=VERIFYk_CA
+      - SSLMODE=VERIFY_CA
       - SSLCA=$invalidCA
   expected_err: "SSL connection error: ASN: bad other signature confirmation"
 
