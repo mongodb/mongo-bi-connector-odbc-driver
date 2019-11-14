@@ -57,6 +57,7 @@ win64)
     DEVENV_PATH='/cygdrive/c/Program Files (x86)/Microsoft Visual Studio 14.0/Common7/IDE'
     CMAKE_PATH='/cygdrive/c/cmake/bin'
     WIX_PATH='/cygdrive/c/wixtools/bin'
+	OPENSSL_PATH='cygdrive/c/openssl/bin'
     ;;
 win32)
     # We must use 32-bit powershell to test 32-bit odbc
@@ -71,6 +72,7 @@ win32)
     DEVENV_PATH='/cygdrive/c/Program Files (x86)/Microsoft Visual Studio 14.0/Common7/IDE'
     CMAKE_PATH='/cygdrive/c/cmake/bin'
     WIX_PATH='/cygdrive/c/wixtools/bin'
+	OPENSSL_PATH='cygdrive/c/openssl32/openssl-1_0_2k/bin/'
     ;;
 *)
     echo "ERROR: invalid value for \$PLATFORM: '$PLATFORM'"
