@@ -1,0 +1,3 @@
+on macos we have to be careful with the exact location of openssl. Right now we assume 1.0.2r. If
+this changes on the hosts, we will need to update the paths in all three of the git modules used in
+this project.

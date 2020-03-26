@@ -5,7 +5,7 @@
 . "$(dirname "$0")/prepare-shell.sh"
 
 (
-	set -o errexit
+    set -o errexit
     # clear the BUILD_DIR
     echo "clear $BUILD_DIR"
     rm -rf "$BUILD_DIR"
@@ -78,10 +78,21 @@
     if [ "$PLATFORM_NAME" = "windows" ]; then
         cp "$BUILD_DIR"/lib/Release/mdbodbc{a,S,w}.{dll,lib} "$DRIVERS_DIR"
         cp "$BUILD_DIR"/bin/Release/myodbc-installer.exe "$DRIVERS_DIR"/installer.exe
-		#also copy openssl
-		cp "$OPENSSL_PATH"/*.dll "$DRIVERS_DIR"
+        #also copy openssl
+        cp "$OPENSSL_PATH"/*.dll "$DRIVERS_DIR"
     else
         cp "$BUILD_DIR"/lib/libmdbodbc{a,w}.so "$DRIVERS_DIR"
+        # if this is mac, we need to update the openssl library rpaths
+        # This is the important thing, this allows it to link against openssl in the same directory as
+        # the driver library ('@loader_path' refers to the location of the driver library, the current
+        # directory for the loader is where the library is called from, so using ./libssl.1.0.0.dylib would not
+        # work).
+        if [ "$PLATFORM_NAME" = "macos" ]; then
+            install_name_tool -change /usr/local/opt/openssl/lib/libssl.1.0.0.dylib "@loader_path/libssl.1.0.0.dylib" "$DRIVERS_DIR"/libmdbodbca.so
+            install_name_tool -change /usr/local/opt/openssl/lib/libssl.1.0.0.dylib "@loader_path/libssl.1.0.0.dylib" "$DRIVERS_DIR"/libmdbodbcw.so
+            install_name_tool -change /usr/local/opt/openssl/lib/libcrypto.1.0.0.dylib "@loader_path/libcrypto.1.0.0.dylib" "$DRIVERS_DIR"/libmdbodbca.so
+            install_name_tool -change /usr/local/opt/openssl/lib/libcrypto.1.0.0.dylib "@loader_path/libcrypto.1.0.0.dylib" "$DRIVERS_DIR"/libmdbodbcw.so
+        fi
     fi
 ) > $LOG_FILE 2>&1
 

@@ -5,6 +5,9 @@
 # we start by sourcing platforms.sh. this will set environment variables that
 # differ depending on which platform we are building on
 # shellcheck source=platforms.sh
+# on macos we have to be careful with the exact location of openssl. Right now we assume 1.0.2r. If
+# this changes on the hosts, we will need to update the paths in all three of the git modules used in
+# this project. Change the path in platforms.sh if the macos build starts to fail.
 . "$(dirname "$0")/platforms.sh"
 
 set -o verbose

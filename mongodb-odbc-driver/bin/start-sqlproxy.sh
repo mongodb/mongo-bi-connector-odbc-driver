@@ -68,7 +68,13 @@
         cd */bin
         echo 'starting sqlproxy'
         echo
-        nohup mongosqld $SQLPROXY_ARGS < /dev/null &> /dev/null &
+        # sqlproxy also has no idea where the openssl libs are on macos spawns hosts because we decided to move them at
+        # some point.
+        if [ "$PLATFORM_NAME" = "macos" ]; then
+            install_name_tool -change /usr/local/opt/openssl/lib/libssl.1.0.0.dylib "$BREW_OPENSSL_PATH/libssl.1.0.0.dylib"  mongosqld
+            install_name_tool -change /usr/local/opt/openssl/lib/libcrypto.1.0.0.dylib "$BREW_OPENSSL_PATH/libcrypto.1.0.0.dylib"  mongosqld
+        fi
+        mongosqld $SQLPROXY_ARGS &> sqlproxy.log &
         echo 'started sqlproxy'
         echo
     fi

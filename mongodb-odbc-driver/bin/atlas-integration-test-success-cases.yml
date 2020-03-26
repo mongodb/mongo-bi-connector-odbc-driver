@@ -34,12 +34,12 @@
       - DEFAULT_AUTH=mysql_clear_password
       - ENABLE_CLEARTEXT_PLUGIN=1
 
-- test_name: gssl_verify_ca
-  props: 
-      - SSLMODE=VERIFY_CA
-      - SSLCA=$digicertCA
-
-- test_name: gssl_verify_identity
-  props: 
-      - SSLMODE=VERIFY_IDENTITY
-      - SSLCA=$digicertCA
+#- test_name: gssl_verify_ca
+#  props: 
+#      - SSLMODE=VERIFY_CA
+#      - SSLCA=$digicertCA
+#
+#- test_name: gssl_verify_identity
+#  props: 
+#      - SSLMODE=VERIFY_IDENTITY
+#      - SSLCA=$digicertCA
