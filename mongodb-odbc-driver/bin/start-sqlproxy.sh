@@ -6,7 +6,7 @@
 (
     SQLPROXY_ARGS="-vv --logPath $SQLPROXY_DIR/mongosqld.log"
     if [ "$TEST_SET" = 'SSL' ]; then
-        SQLPROXY_ARGS="$SQLPROXY_ARGS --sslMode requireSSL --minimumTLSVersion=TLS1_2 --sslPEMKeyFile $PROJECT_ROOT/mongodb-odbc-driver/resources/server.pem"
+        SQLPROXY_ARGS="$SQLPROXY_ARGS --sslMode requireSSL --minimumTLSVersion=TLS1_1 --sslPEMKeyFile $PROJECT_ROOT/mongodb-odbc-driver/resources/server.pem"
     fi
 
     if [ "$PLATFORM_NAME" = "windows" ]; then

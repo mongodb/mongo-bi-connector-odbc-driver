@@ -257,18 +257,24 @@ SQLRETURN myodbc_do_connect(DBC *dbc, DataSource *ds)
     char tls_options[128] = { 0 };
     if (ds->tls_1)
     {
+	  printf("have tls_1\n");
       strcat(tls_options, "TLSv1");
     }
     if (!ds->no_tls_1_1)
     {
+	  printf("have tls_1_1\n");
       strcat(tls_options, !ds->tls_1 ? "TLSv1.1" : ",TLSv1.1");
     }
     if (!ds->no_tls_1_2)
     {
+	  printf("have tls_1_2\n");
       strcat(tls_options, !ds->tls_1 && ds->no_tls_1_1 ? "TLSv1.2" : ",TLSv1.2");
     }
-    if (tls_options[0])
+    if (tls_options[0]) {
+	  printf("tls options[0]\n");
       mysql_options(mysql, MYSQL_OPT_TLS_VERSION, tls_options);
+	}
+  	 printf("TLS OPTS: %s\n", tls_options);
   }
 #endif
 
