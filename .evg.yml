@@ -74,6 +74,7 @@ buildvariants:
       _platform: macos
     run_on: macos-1012
     tasks:
+      - name: "check"
       - name: "build"
       - name: "unit_tests"
       - name: "integration_tests_atlas"
@@ -89,6 +90,9 @@ tasks:
       - func: "build msi installer"
       - func: "build dmg installer"
 
+  - name: "check"
+    commands:
+      - func: "check"
   - name: "integration_tests_atlas"
     depends_on:
       - name: build
@@ -129,6 +133,15 @@ tasks:
       - func: "run unit tests"
 
 functions:
+  "check":  
+    command: shell.exec
+    type: test
+    params:
+      build_variants:
+        - macos
+      script: |
+        ls -R /usr/local
+
   "build dmg installer":
     command: shell.exec
     type: test
