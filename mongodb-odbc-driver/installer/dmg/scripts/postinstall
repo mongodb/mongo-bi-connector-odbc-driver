@@ -41,6 +41,7 @@ DRIVERS         = {
                      MDB_UNICODE: '%s/libmdbodbcw.so'%INSTALL_PATH,
                      MDB_ANSI:    '%s/libmdbodbca.so'%INSTALL_PATH
                   }
+OPEN_SSL        = '/usr/local/opt/openssl'
 
 def mkdir_p(path):
     try:
@@ -60,6 +61,10 @@ def install_driver(config, driver):
         config.add_section(driver)
     config.set(driver, 'Driver', DRIVERS[driver])
 
+def link_ssl():
+    if not os.path.exists(OPEN_SSL):
+        os.symlink(os.path.join(INSTALL_ROOT, "openssl", OPEN_SSL))
+
 def main():
     if not os.path.exists(ODBC_PATH):
         mkdir_p('/Library/ODBC')
@@ -77,6 +82,7 @@ def main():
         install_driver(config, driver)
     with open(INI, 'w') as ini_writer:
         config.write(ini_writer)
+    link_ssl()
 
 if __name__ == '__main__':
     main()
