@@ -63,7 +63,7 @@ def install_driver(config, driver):
 
 def link_ssl():
     if not os.path.exists(OPEN_SSL):
-        os.symlink(os.path.join(INSTALL_ROOT, "openssl", OPEN_SSL))
+        os.symlink(os.path.join(INSTALL_ROOT, LATEST, 'openssl'), OPEN_SSL)
 
 def main():
     if not os.path.exists(ODBC_PATH):
