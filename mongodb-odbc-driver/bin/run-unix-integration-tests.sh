@@ -5,7 +5,7 @@
 
 
 TEST_BIN="$1"
-# iodbctestw expects DSN= before the DSN name, iusql expects nothing
+# iodbctest expects DSN= before the DSN name, iusql expects nothing
 BIN_ARG_PREFIX="$2"
 CASE="$3"
 shift 3
