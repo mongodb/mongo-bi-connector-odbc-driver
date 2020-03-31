@@ -66,7 +66,11 @@ function test_connect_success {
     for driver in libmdbodbcw.so libmdbodbca.so; do
         add_odbc_dsn "$dsn" "$driver" "Database=$db" "$@"
 	set +o errexit
-        out="$(echo "$query" | "$TEST_BIN" "$BIN_ARG_PREFIX""$dsn")"
+	echo "QUERY $query"
+	echo "TEST_BIN $TEST_BIN"
+	echo "BIN_ARG_PREFIX $BIN_ARG_PREFIX"
+	echo "dsn $DSN"
+    out="$(echo "$query" | "$TEST_BIN" "$BIN_ARG_PREFIX""$dsn")"
 	set -o errexit
         if [ "$CASE" = "atlas" ] && [[ $out = *"Hello, world!"* ]]; then
             continue
