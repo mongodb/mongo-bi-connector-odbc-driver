@@ -6,7 +6,7 @@ rm dmg-contents/*.pkg || true
 ROOT=/Library/MongoDB/ODBC/$MDBODBC_VER
 mkdir -p components/"$ROOT"
 mv ./*.so components/"$ROOT"/
-mv ./*.dylib components/"$ROOT"/
+mv ./openssl components/"$ROOT"/
 cp ./resources/*.rtf components/"$ROOT"/
 
 # build component pkg
