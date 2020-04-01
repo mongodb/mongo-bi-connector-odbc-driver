@@ -63,13 +63,14 @@ function test_connect_success {
             where schema_name = 'mysql' limit 1"
     fi
     echo "...running $CASE connection test '$testname'"
-    for driver in libmdbodbca.so; do
+    for driver in libmdbodbcw.so libmdbodbca.so; do
         add_odbc_dsn "$dsn" "$driver" "Database=$db" "$@"
 	set +o errexit
 	echo "QUERY $query"
 	echo "TEST_BIN $TEST_BIN"
 	echo "BIN_ARG_PREFIX $BIN_ARG_PREFIX"
-	echo "dsn $DSN"
+	echo "dsn $dsn"
+	cat "____ $ODBCINI"
     out="$(echo "$query" | "$TEST_BIN" "$BIN_ARG_PREFIX""$dsn")"
 	echo "OUT $out"
 	set -o errexit
