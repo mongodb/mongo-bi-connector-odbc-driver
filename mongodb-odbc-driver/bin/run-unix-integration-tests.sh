@@ -63,7 +63,7 @@ function test_connect_success {
             where schema_name = 'mysql' limit 1"
     fi
     echo "...running $CASE connection test '$testname'"
-    for driver in libmdbodbcw.so libmdbodbca.so; do
+    for driver in libmdbodbca.so; do
         add_odbc_dsn "$dsn" "$driver" "Database=$db" "$@"
 	set +o errexit
 	echo "QUERY $query"
@@ -71,6 +71,7 @@ function test_connect_success {
 	echo "BIN_ARG_PREFIX $BIN_ARG_PREFIX"
 	echo "dsn $DSN"
     out="$(echo "$query" | "$TEST_BIN" "$BIN_ARG_PREFIX""$dsn")"
+	echo "OUT $out"
 	set -o errexit
         if [ "$CASE" = "atlas" ] && [[ $out = *"Hello, world!"* ]]; then
             continue
