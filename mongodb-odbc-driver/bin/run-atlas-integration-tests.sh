@@ -37,14 +37,14 @@
             -Version $(< "$SCRIPT_DIR/VERSION.txt")
 
     elif [ "macos" = "$PLATFORM" ]; then
-        if ! hash iodbctest &> /dev/null; then
+        if ! hash iodbctestw &> /dev/null; then
             echo 'building iODBC'
             "$SCRIPT_DIR"/build-iodbc.sh
         fi
         echo 'running atlas connection tests...'
 
         "$SCRIPT_DIR"/run-unix-integration-tests.sh \
-            "iodbctest" \
+            "iodbctestw" \
             "DSN=" \
             "atlas" \
             "$BIC_PROD_SERVER" \

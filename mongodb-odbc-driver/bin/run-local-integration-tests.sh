@@ -45,14 +45,14 @@
         echo 'integration tests passed'
 
     elif [ "macos" = "$PLATFORM" ]; then
-        if ! hash iodbctest &> /dev/null; then
+        if ! hash iodbctestw &> /dev/null; then
             echo 'building iODBC'
             "$SCRIPT_DIR"/build-iodbc.sh
         fi
         echo 'running local connection tests...'
 
         "$SCRIPT_DIR"/run-unix-integration-tests.sh \
-            "iodbctest" \
+            "iodbctestw" \
             "DSN=" \
             "local" \
             "127.0.0.1" \
