@@ -29,7 +29,6 @@ echo "BD $BUILD_DIR"
     export LANG=C
     find . -type f -print0 | xargs -0 -n1 sed -i '.bak' "s|/Library/Frameworks|$BUILD_DIR/Library/Frameworks|g;s|i386,||g"
     echo "building iODBC"
-    cat GNUMakefile
     make -f GNUMakefile -j 4 all install || true
 ) > $LOG_FILE 2>&1
 
