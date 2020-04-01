@@ -77,7 +77,7 @@ function test_connect_success {
         elif [ "$CASE" = "local" ] && [[ $out = *"def"* ]]; then
             continue
         else
-            echo "......test '$testname' FAILED: connection was rejected"
+            echo "......test '$testname' FAILED: connection was rejected, output was $out"
             exit 1
         fi
     done
