@@ -70,7 +70,9 @@ function test_connect_success {
 	echo "TEST_BIN $TEST_BIN"
 	echo "BIN_ARG_PREFIX $BIN_ARG_PREFIX"
 	echo "dsn $dsn"
-	cat "____ $ODBCINI"
+	echo "_____"
+	cat "$ODBCINI"
+	echo "_____"
     out="$(echo "$query" | "$TEST_BIN" "$BIN_ARG_PREFIX""$dsn")"
 	echo "OUT $out"
 	set -o errexit
