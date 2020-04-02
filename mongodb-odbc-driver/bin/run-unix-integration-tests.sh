@@ -5,7 +5,7 @@
 
 
 TEST_BIN="$1"
-# iodbctest expects DSN= before the DSN name, iusql expects nothing
+# iodbctestw expects DSN= before the DSN name, iusql expects nothing
 BIN_ARG_PREFIX="$2"
 CASE="$3"
 shift 3
@@ -66,22 +66,14 @@ function test_connect_success {
     for driver in libmdbodbcw.so libmdbodbca.so; do
         add_odbc_dsn "$dsn" "$driver" "Database=$db" "$@"
 	set +o errexit
-	echo "QUERY $query"
-	echo "TEST_BIN $TEST_BIN"
-	echo "BIN_ARG_PREFIX $BIN_ARG_PREFIX"
-	echo "dsn $dsn"
-	echo "_____"
-	cat "$ODBCINI"
-	echo "_____"
-    out="$(echo "$query" | "$TEST_BIN" "$BIN_ARG_PREFIX""$dsn")"
-	echo "OUT $out"
+        out="$(echo "$query" | "$TEST_BIN" "$BIN_ARG_PREFIX""$dsn")"
 	set -o errexit
         if [ "$CASE" = "atlas" ] && [[ $out = *"Hello, world!"* ]]; then
             continue
         elif [ "$CASE" = "local" ] && [[ $out = *"def"* ]]; then
             continue
         else
-            echo "......test '$testname' FAILED: connection was rejected, output was $out"
+            echo "......test '$testname' FAILED: connection was rejected"
             exit 1
         fi
     done
