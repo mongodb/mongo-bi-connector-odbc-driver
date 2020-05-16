@@ -3,6 +3,11 @@
 #shellcheck source=./prepare-shell.sh
 . $(dirname "$0")/prepare-shell.sh
 
+# if we are on macos, make sure we copy the openssl libraries to the same directory as the driver
+# files.
+if [ "$PLATFORM_NAME" = "macos" ]; then
+    cp /usr/local/opt/openssl/lib/lib{ssl,crypto}.1.0.0.dylib "$DRIVERS_DIR"/
+fi
 
 TEST_BIN="$1"
 # iodbctestw expects DSN= before the DSN name, iusql expects nothing
