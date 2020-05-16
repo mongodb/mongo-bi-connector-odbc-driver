@@ -6,7 +6,7 @@
 # if we are on macos, make sure we copy the openssl libraries to the same directory as the driver
 # files.
 if [ "$PLATFORM_NAME" = "macos" ]; then
-    cp /usr/local/opt/openssl/lib/lib{ssl,crypto}.1.0.0.dylib "$DRIVERS_DIR"/
+    cp /usr/local/Cellar/openssl/1.0.2r/lib/lib{ssl,crypto}.1.0.0.dylib  "$DRIVERS_DIR"/
 fi
 
 TEST_BIN="$1"
