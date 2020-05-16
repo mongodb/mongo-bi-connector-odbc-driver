@@ -23,9 +23,8 @@
 	# copy driver libraries to appropriate location
 	cp "$DRIVERS_DIR"/*.so ./
 	# copy openssl to appropriate location
-	mkdir -p ./openssl/lib
-	cp "/usr/local/Cellar/openssl/1.0.2r/lib/libcrypto.1.0.0.dylib" ./openssl/lib/
-	cp "/usr/local/Cellar/openssl/1.0.2r/lib/libssl.1.0.0.dylib" ./openssl/lib/
+	cp "/usr/local/Cellar/openssl/1.0.2r/lib/libcrypto.1.0.0.dylib" ./
+	cp "/usr/local/Cellar/openssl/1.0.2r/lib/libssl.1.0.0.dylib" ./
 
 	sh ./build-dmg.sh
 
