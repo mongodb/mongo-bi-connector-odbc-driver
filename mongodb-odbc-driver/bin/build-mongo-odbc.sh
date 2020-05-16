@@ -86,8 +86,8 @@
         if [ "$PLATFORM_NAME" = "macos" ]; then
             install_name_tool -change /usr/local/opt/openssl/lib/libssl.1.0.0.dylib ./libssl.1.0.0.dylib "$DRIVERS_DIR"/libmdbodbca.so
             install_name_tool -change /usr/local/opt/openssl/lib/libssl.1.0.0.dylib ./libssl.1.0.0.dylib "$DRIVERS_DIR"/libmdbodbcw.so
-            install_name_tool -change /usr/local/opt/opencrypto/lib/libcrypto.1.0.0.dylib ./libcrypto.1.0.0.dylib "$DRIVERS_DIR"/libmdbodbca.so
-            install_name_tool -change /usr/local/opt/opencrypto/lib/libcrypto.1.0.0.dylib ./libcrypto.1.0.0.dylib "$DRIVERS_DIR"/libmdbodbcw.so
+            install_name_tool -change /usr/local/opt/openssl/lib/libcrypto.1.0.0.dylib ./libcrypto.1.0.0.dylib "$DRIVERS_DIR"/libmdbodbca.so
+            install_name_tool -change /usr/local/opt/openssl/lib/libcrypto.1.0.0.dylib ./libcrypto.1.0.0.dylib "$DRIVERS_DIR"/libmdbodbcw.so
         fi
     fi
 ) > $LOG_FILE 2>&1
