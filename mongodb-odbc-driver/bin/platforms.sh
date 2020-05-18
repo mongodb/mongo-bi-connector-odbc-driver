@@ -42,12 +42,6 @@ macos)
 	# this is the location of openssl on our macos spawn hosts. If there is a failure
 	# to build on macos, it's likely that this path needs to be updated.
 	BREW_OPENSSL_PATH="/usr/local/Cellar/openssl/1.0.2r/lib"
-	if [ !-e "$BREW_OPENSSL_PATH" ]; then
-	    BREW_OPENSSL_PATH="/usr/local/Cellar/openssl/1.0.2q/lib"
-	fi
-	if [ !-e "$BREW_OPENSSL_PATH" ]; then
-        exit "Could not find BREW_OPENSSL_PATH, found paths: $(ls /usr/local/Cellar/openssl)"
-	fi
     PLATFORM_ARCH='64'
     PLATFORM_NAME='macos'
     MONGODB_URI='http://downloads.10gen.com/osx/mongodb-osx-x86_64-enterprise-latest.tgz'

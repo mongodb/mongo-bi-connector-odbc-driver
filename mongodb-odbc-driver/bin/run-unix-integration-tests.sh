@@ -6,8 +6,8 @@
 # if we are on macos, make sure we copy the openssl libraries to the same directory as the driver
 # files.
 if [ "$PLATFORM_NAME" = "macos" ]; then
-	ls -R 
-    cp "$BREW_OPENSSL_PATH/lib{ssl,crypto}.1.0.0.dylib"  "$DRIVERS_DIR"/ || exit "could not find openssl, found paths: $(ls /usr/local/Cellar/openssl/)"
+    cp "$BREW_OPENSSL_PATH/libssl.1.0.0.dylib"  "$DRIVERS_DIR"/ || exit "could not find libssl, found paths: $(ls /usr/local/Cellar/openssl/)"
+    cp "$BREW_OPENSSL_PATH/libcrypto.1.0.0.dylib"  "$DRIVERS_DIR"/ || exit "could not find libcrypto, found paths: $(ls /usr/local/Cellar/openssl/)"
 fi
 
 TEST_BIN="$1"

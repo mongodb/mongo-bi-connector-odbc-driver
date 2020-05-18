@@ -23,7 +23,8 @@
     # copy driver libraries to appropriate location
     cp "$DRIVERS_DIR"/*.so ./
     # copy the openssl libs to appropriate location
-    cp "$BREW_OPENSSL_PATH/lib{ssl,crypto}.1.0.0.dylib"  ./
+    cp "$BREW_OPENSSL_PATH/libssl.1.0.0.dylib"  ./
+    cp "$BREW_OPENSSL_PATH/libcrypto.1.0.0.dylib"  ./
 
     sh ./build-dmg.sh
 
