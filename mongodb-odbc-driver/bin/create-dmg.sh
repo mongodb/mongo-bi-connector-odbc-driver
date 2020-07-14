@@ -26,6 +26,8 @@
     cp "$BREW_OPENSSL_PATH/libssl.1.0.0.dylib"  ./
     cp "$BREW_OPENSSL_PATH/libcrypto.1.0.0.dylib"  ./
 
+    install_name_tool -change "$BREW_OPENSSL_PATH/libcrypto.1.0.0.dylib" "@loader_path/libcrypto.1.0.0.dylib" ./libssl.1.0.0.dylib
+
     sh ./build-dmg.sh
 
     # clear PKG_DIR
