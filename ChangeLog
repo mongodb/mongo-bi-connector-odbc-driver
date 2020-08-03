@@ -1,3 +1,6 @@
+MongoDB ODBC 1.4.2
+  * Fix issue with libssl transitive dependencies on Macos
+
 MongoDB ODBC 1.4.1
   * Fix submodule issue that prevented macOS TLS 1.2 support from working
 
