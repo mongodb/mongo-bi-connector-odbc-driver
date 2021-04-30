@@ -58,9 +58,9 @@ win64)
     EXTRACT='unzip'
     PLATFORM_ARCH='64'
     PLATFORM_NAME='windows'
-    CMAKE_GENERATOR="Visual Studio 14 2015 Win64"
+    CMAKE_GENERATOR="Visual Studio 16 2019 Win64"
     # make sure binaries we use in our scripts are available in the PATH
-    DEVENV_PATH='/cygdrive/c/Program Files (x86)/Microsoft Visual Studio 14.0/Common7/IDE'
+    DEVENV_PATH='/cygdrive/c/Program Files (x86)/Microsoft Visual Studio/2019/Professoinal/Common7/IDE'
     CMAKE_PATH='/cygdrive/c/cmake/bin'
     WIX_PATH='/cygdrive/c/wixtools/bin'
 	OPENSSL_PATH='/cygdrive/c/openssl/bin'
@@ -73,9 +73,9 @@ win32)
     EXTRACT='unzip'
     PLATFORM_ARCH='32'
     PLATFORM_NAME='windows'
-    CMAKE_GENERATOR="Visual Studio 14 2015"
+    CMAKE_GENERATOR="Visual Studio 16 2019"
     # make sure binaries we use in our scripts are available in the PATH
-    DEVENV_PATH='/cygdrive/c/Program Files (x86)/Microsoft Visual Studio 14.0/Common7/IDE'
+    DEVENV_PATH='/cygdrive/c/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE'
     CMAKE_PATH='/cygdrive/c/cmake/bin'
     WIX_PATH='/cygdrive/c/wixtools/bin'
 	OPENSSL_PATH='/cygdrive/c/openssl32/openssl-1_0_2k/bin'
