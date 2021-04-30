@@ -48,7 +48,7 @@ buildvariants:
     display_name: Windows 64
     expansions:
       _platform: win64
-    run_on: windows-vsCurrent-large
+    run_on: windows-64-vs2019-large
     tasks:
       - name: "build"
       - name: "unit_tests"
@@ -60,7 +60,7 @@ buildvariants:
     display_name: Windows 32
     expansions:
       _platform: win32
-    run_on: windows-vsCurrent-large
+    run_on: windows-64-vs2019-large
     tasks:
       - name: "build"
       - name: "unit_tests"
