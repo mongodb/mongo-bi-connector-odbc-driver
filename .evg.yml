@@ -79,7 +79,7 @@ buildvariants:
       - name: "integration_tests_atlas"
       - name: "integration_tests_local"
       - name: "sign_dmg"
-        run_on: osx-1010-compass
+        run_on: macos-1014-codesign
 
 tasks:
   - name: "build"
