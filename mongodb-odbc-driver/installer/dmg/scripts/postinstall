@@ -20,9 +20,10 @@ MDB_ANSI_DRIVERS="$INSTALL_PATH/libmdbodbca.so"
 
 # Create the ODBC directory if it doesn't exist already
 if [[ ! -e $ODBC_PATH ]]; then
+    echo "Creating $ODBC_PATH directory"
     mkdir -p $ODBC_PATH
 elif [[ ! -d $ODBC_PATH ]]; then
-     echo "$ODBC_PATH already exists but is not a directory" 1>&2
+     echo "$ODBC_PATH already exists but is not a directory"
      exit 1   
 fi
 
@@ -41,11 +42,6 @@ if [[ ! -e $INI ]]; then
     echo "[$MDB_ANSI]" >> $INI
     echo "Driver = $MDB_ANSI_DRIVERS" >> $INI
     CREATED_NEW_INI_FILE=1
-elif [[ ! -d $ODBC_SIMPLE ]]; then
-    echo "$ODBC_SIMPLE exists, but is a directory"
-    exit 1
-else
-    echo "$ODBC_SIMPLE exists"   
 fi
 
 #If there was an existing odbcinst file, update the odbcinst.ini
