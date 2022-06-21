@@ -1,82 +1,158 @@
-#!/usr/bin/python
-import errno
-import os
-import sys
+#!/usr/bin/env bash
 
-if sys.version_info.major == 2:
-    import ConfigParser as configparser
-else:
-    import configparser
+# Variables the installer application automatically passes along
+# $0 : Returns the path to the script
+# $1 : Returns the path to the package
+# $2 : Returns the target location (for example: /Applications)
+# $3 : Returns the target volume (for example: /Volumes/Macintosh HD)
 
-# Find the latest version directory. We do this because there
-# is no good way to pass the current version to the post install
-# script, and we don't want to have to update this script every
-# release.
-def get_latest(path):
-    vers = []
-    for d in os.listdir(path):
-        if not os.path.isdir(os.path.join(path, d)):
-            continue
-        ver_parts = d.split('.')
-        # All valid versions must contain 3 numeric parts.
-        if len(ver_parts) != 3:
-            continue
-        try:
-            ver_parts = map(int, ver_parts)
-        except:
-            continue
-        vers.append(ver_parts)
-    vers.sort()
-    return ".".join(map(str, vers[-1])) if len(vers) != 0 else ""
+ODBC_PATH="$3/Library/ODBC"
+INI="$ODBC_PATH/odbcinst.ini"
+INSTALL_ROOT="/Library/MongoDB/ODBC/"
+# Get the latest installed version
+LATEST_VERSION=$(ls $INSTALL_ROOT/| grep -E "[0-9]\.[0-9]\.[0-9]" | sort | cut -d '/' -f2 | tail -n 1)
+INSTALL_PATH=$INSTALL_ROOT$LATEST_VERSION
+DRIVERS_SECTION="ODBC Drivers"
+MDB_UNICODE="MongoDB Unicode ODBC $LATEST_VERSION"
+MDB_ANSI="MongoDB ANSI ODBC $LATEST_VERSION"
+MDB_UNICODE_DRIVERS="$INSTALL_PATH/libmdbodbcw.so"
+MDB_ANSI_DRIVERS="$INSTALL_PATH/libmdbodbca.so"
 
-ODBC_PATH       = '/Library/ODBC'
-INI             = '%s/odbcinst.ini'%ODBC_PATH
-INSTALL_ROOT    = '/Library/MongoDB/ODBC/'
-LATEST          = get_latest(INSTALL_ROOT)
-INSTALL_PATH    = INSTALL_ROOT + LATEST
-DRIVERS_SECTION = 'ODBC Drivers'
-MDB_UNICODE     = 'MongoDB Unicode ODBC %s'%LATEST
-MDB_ANSI        = 'MongoDB ANSI ODBC %s'%LATEST
-DRIVERS         = {
-                     MDB_UNICODE: '%s/libmdbodbcw.so'%INSTALL_PATH,
-                     MDB_ANSI:    '%s/libmdbodbca.so'%INSTALL_PATH
-                  }
+# Create the ODBC directory if it doesn't exist already
+if [[ ! -e $ODBC_PATH ]]; then
+    mkdir -p $ODBC_PATH
+elif [[ ! -d $ODBC_PATH ]]; then
+     echo "$ODBC_PATH already exists but is not a directory" 1>&2
+     exit 1   
+fi
 
-def mkdir_p(path):
-    try:
-        os.makedirs(path)
-    except OSError as exc:
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            raise
+#Update the odbcinst.ini with the latest driver path and mark it as installed
+if [[ ! -e $INI ]]; then
+    echo "$INI does not exists, creating"
 
-def install_driver(config, driver):
-    if not config.has_option(DRIVERS_SECTION, driver):
-        config.set(DRIVERS_SECTION, driver, '')
-    if config.get(DRIVERS_SECTION, driver) != "Installed":
-        config.set(DRIVERS_SECTION, driver, "Installed")
-    if not config.has_section(driver):
-        config.add_section(driver)
-    config.set(driver, 'Driver', DRIVERS[driver])
+    touch $INI
+    echo "[ODBC Drivers]" >> $INI
+    echo "$MDB_UNICODE = Installed" >> $INI
+    echo "$MDB_ANSI = Installed" >> $INI
+    echo "" >> $INI
+    echo "[$MDB_UNICODE]" >> $INI
+    echo "Driver = $MDB_UNICODE_DRIVERS" >> $INI
+    echo "" >> $INI
+    echo "[$MDB_ANSI]" >> $INI
+    echo "Driver = $MDB_ANSI_DRIVERS" >> $INI
+    CREATED_NEW_INI_FILE=1
+elif [[ ! -d $ODBC_SIMPLE ]]; then
+    echo "$ODBC_SIMPLE exists, but is a directory"
+    exit 1
+else
+    echo "$ODBC_SIMPLE exists"   
+fi
 
-def main():
-    if not os.path.exists(ODBC_PATH):
-        mkdir_p('/Library/ODBC')
-    if not os.path.exists(INI):
-        with open(INI, 'w') as ini_writer:
-            print >> ini_writer, '[ODBC Drivers]'
-    config = configparser.ConfigParser()
-    config.optionxform = str
-    with open(INI) as ini_reader:
-        if sys.version_info.major == 3:
-            config.read_file(ini_reader)
-        else:
-            config.readfp(ini_reader)
-    for driver in DRIVERS:
-        install_driver(config, driver)
-    with open(INI, 'w') as ini_writer:
-        config.write(ini_writer)
+#If there was an existing odbcinst file, update the odbcinst.ini
+# with the latest driver path
+if [[ $CREATED_NEW_INI_FILE == 0 ]]; then
+    BACK_INI="$INI.back"
+    echo "Back up file $BACK_INI"
+    IN_ODBC_DRIVERS_SECTION=0
+    IN_MDB_UNICODE_DRIVER_SECTION=0
+    IN_MDB_ANSI_DRIVER_SECTION=0
+    MDB_UNICODE_DRIVER_INSTALLED=0
+    MDB_ANSI_DRIVER_INSTALLED=0
+    MDB_UNICODE_DRIVER_CONFIGURED=0
+    MDB_ANSI_DRIVER_CONFIGURED=0
 
-if __name__ == '__main__':
-    main()
+    # Make a copy of the existing ini file
+    cp $INI $BACK_INI
+    if [[ -e $BACK_INI ]]; then
+        # Clear the INI file
+        > $INI
+
+        # Read the backup odbcinst.ini.back file and recreate the new updated odbcinst.ini one
+        while IFS= read -r line
+        do
+            echo "line = $line"
+            if [[ "$line" =~ ^\[.*\]$ ]]; then
+                # Found a section
+                if grep -iqF "[ODBC Drivers]" <<< "$line"; then
+                    # Found the [ODBC Drivers] section 
+                    # where all drivers are listed
+                    IN_ODBC_DRIVERS_SECTION=1
+                elif grep -iqF "[$MDB_UNICODE]" <<< "$line"; then
+                    # Found the [MongoDB Unicode ODBC {version}] section
+                    IN_MDB_UNICODE_DRIVER_SECTION=1
+                    IN_MDB_ANSI_DRIVER_SECTION=0
+                    IN_ODBC_DRIVERS_SECTION=0
+                    echo "IN_MDB_UNICODE_DRIVER_SECTION=1"
+                elif grep -iqF "[$MDB_ANSI]" <<< "$line"; then
+                    # Found the [MongoDB ANSI ODBC {version}] section
+                    IN_MDB_ANSI_DRIVER_SECTION=1
+                    IN_MDB_UNICODE_DRIVER_SECTION=0
+                    IN_ODBC_DRIVERS_SECTION=0
+                    echo "IN_MDB_ANSI_DRIVER_SECTION=1"
+                else
+                    # Found a new section right after [ODBC Drivers]
+                    # Need to add the drivers lines in [ODBC Drivers] section
+                    if [ $IN_ODBC_DRIVERS_SECTION == 1 ]; then
+                        if [ $MDB_UNICODE_DRIVER_INSTALLED == 0 ]; then
+                            echo "$MDB_UNICODE = Installed" >> $INI
+                        elif [ $MDB_ANSI_DRIVER_INSTALLED == 0 ]; then
+                            echo "$MDB_ANSI = Installed" >> $INI
+                        fi
+                    fi
+                    IN_ODBC_DRIVERS_SECTION=0
+                    IN_MDB_ANSI_DRIVER_SECTION=0
+                    IN_MDB_UNICODE_DRIVER_SECTION=0
+                fi
+                 # Add an empty line before this next section
+                if [ $IN_ODBC_DRIVERS_SECTION == 0 ]; then
+                    echo "" >> $INI
+                fi
+                echo "$line" >> $INI
+            # Skip empty lines
+            elif [[ ! -z "${line// }" ]]; then
+                if [ $IN_ODBC_DRIVERS_SECTION == 1 ]  && grep -iqF "$MDB_UNICODE" <<< "$line" ; then
+                    # Found the latest unicode MongoDB driver already configured
+                    # Make sure to mark it "Installed"
+                    echo "$MDB_UNICODE = Installed" >> $INI
+                    MDB_UNICODE_DRIVER_INSTALLED=1
+                elif [ $IN_ODBC_DRIVERS_SECTION == 1 ] && grep -iqF "$MDB_ANSI" <<< "$line" ; then
+                    # Found the latest ANSI MongoDB driver already configured
+                    # Make sure to mark it "Installed"
+                    echo "$MDB_ANSI = Installed" >> $INI
+                    MDB_ANSI_DRIVER_INSTALLED=1
+                elif [ $IN_MDB_UNICODE_DRIVER_SECTION == 1 ] && grep -iqF "Driver" <<< "$line" ; then
+                    echo "IN_MDB_UNICODE_DRIVER_SECTION : $IN_MDB_UNICODE_DRIVER_SECTION"
+                    # Make sure the driver install path is correct
+                    echo "Driver = $MDB_UNICODE_DRIVERS" >> $INI
+                    MDB_UNICODE_DRIVER_CONFIGURED=1
+                elif [ $IN_MDB_ANSI_DRIVER_SECTION == 1 ] && grep -iqF "Driver" <<< "$line" ; then
+                    # Make sure the driver install path is correct
+                    echo "Driver = $MDB_ANSI_DRIVERS" >> $INI
+                    MDB_ANSI_DRIVER_CONFIGURED=1
+                else
+                    echo "$line" >> $INI
+                fi        
+            fi
+        done < "$BACK_INI"
+
+        # Configure the driver if needed by adding their respective sections at the end of the odbcinst.ini file
+        echo "MDB_UNICODE_DRIVER_CONFIGURED : $MDB_UNICODE_DRIVER_CONFIGURED"
+        echo "MDB_ANSI_DRIVER_CONFIGURED : $MDB_ANSI_DRIVER_CONFIGURED"
+        if [ $MDB_UNICODE_DRIVER_CONFIGURED == 0 ]; then
+            echo "" >> $INI
+            echo "[$MDB_UNICODE]" >> $INI
+            echo "Driver = $MDB_UNICODE_DRIVERS" >> $INI
+        elif [ $MDB_ANSI_DRIVER_CONFIGURED == 0 ]; then
+            echo "" >> $INI
+            echo "[$MDB_ANSI]" >> $INI
+            echo "Driver = $MDB_ANSI_DRIVERS" >> $INI
+        fi
+        
+    else
+        echo "An error occured while making a backup of the existing odbcinst.ini file"
+        exit 1
+    fi
+fi
+
+# Done, everything went well
+exit 0
