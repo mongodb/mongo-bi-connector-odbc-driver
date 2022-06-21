@@ -6,6 +6,14 @@
 # $2 : Returns the target location (for example: /Applications)
 # $3 : Returns the target volume (for example: /Volumes/Macintosh HD)
 
+err(){
+    echo "Err: $@" >&2;
+}
+
+info(){
+     echo "Info: $@" >&2;
+}
+
 ODBC_PATH="$3/Library/ODBC"
 INI="$ODBC_PATH/odbcinst.ini"
 INSTALL_ROOT="/Library/MongoDB/ODBC/"
@@ -20,16 +28,16 @@ MDB_ANSI_DRIVERS="$INSTALL_PATH/libmdbodbca.so"
 
 # Create the ODBC directory if it doesn't exist already
 if [[ ! -e $ODBC_PATH ]]; then
-    echo "Creating $ODBC_PATH directory"
+    info "Creating $ODBC_PATH directory"
     mkdir -p $ODBC_PATH
 elif [[ ! -d $ODBC_PATH ]]; then
-     echo "$ODBC_PATH already exists but is not a directory"
+     err "$ODBC_PATH already exists but is not a directory"
      exit 1   
 fi
 
 #Update the odbcinst.ini with the latest driver path and mark it as installed
 if [[ ! -e $INI ]]; then
-    echo "$INI does not exists, creating"
+    info "$INI does not exists, creating"
 
     touch $INI
     echo "[ODBC Drivers]" >> $INI
@@ -48,7 +56,7 @@ fi
 # with the latest driver path
 if [[ $CREATED_NEW_INI_FILE == 0 ]]; then
     BACK_INI="$INI.back"
-    echo "Back up file $BACK_INI"
+    info "Back up file $BACK_INI"
     IN_ODBC_DRIVERS_SECTION=0
     IN_MDB_UNICODE_DRIVER_SECTION=0
     IN_MDB_ANSI_DRIVER_SECTION=0
@@ -66,7 +74,6 @@ if [[ $CREATED_NEW_INI_FILE == 0 ]]; then
         # Read the backup odbcinst.ini.back file and recreate the new updated odbcinst.ini one
         while IFS= read -r line
         do
-            echo "line = $line"
             if [[ "$line" =~ ^\[.*\]$ ]]; then
                 # Found a section
                 if grep -iqF "[ODBC Drivers]" <<< "$line"; then
@@ -132,8 +139,6 @@ if [[ $CREATED_NEW_INI_FILE == 0 ]]; then
         done < "$BACK_INI"
 
         # Configure the driver if needed by adding their respective sections at the end of the odbcinst.ini file
-        echo "MDB_UNICODE_DRIVER_CONFIGURED : $MDB_UNICODE_DRIVER_CONFIGURED"
-        echo "MDB_ANSI_DRIVER_CONFIGURED : $MDB_ANSI_DRIVER_CONFIGURED"
         if [ $MDB_UNICODE_DRIVER_CONFIGURED == 0 ]; then
             echo "" >> $INI
             echo "[$MDB_UNICODE]" >> $INI
@@ -143,12 +148,12 @@ if [[ $CREATED_NEW_INI_FILE == 0 ]]; then
             echo "[$MDB_ANSI]" >> $INI
             echo "Driver = $MDB_ANSI_DRIVERS" >> $INI
         fi
-        
     else
-        echo "An error occured while making a backup of the existing odbcinst.ini file"
+        err "An error occured while making a backup of the existing odbcinst.ini file"
         exit 1
     fi
 fi
 
 # Done, everything went well
+info "postinstall script was successful"
 exit 0
