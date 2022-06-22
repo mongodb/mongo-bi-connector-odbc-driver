@@ -152,7 +152,8 @@ if [[ $CREATED_NEW_INI_FILE == 0 ]]; then
             echo "" >> $INI
             echo "[$MDB_UNICODE]" >> $INI
             echo "Driver = $MDB_UNICODE_DRIVERS" >> $INI
-        elif [ $MDB_ANSI_DRIVER_CONFIGURED == 0 ]; then
+        fi
+        if [ $MDB_ANSI_DRIVER_CONFIGURED == 0 ]; then
             echo "" >> $INI
             echo "[$MDB_ANSI]" >> $INI
             echo "Driver = $MDB_ANSI_DRIVERS" >> $INI
