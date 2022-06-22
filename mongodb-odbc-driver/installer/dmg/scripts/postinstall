@@ -33,6 +33,7 @@ MDB_UNICODE="MongoDB Unicode ODBC $LATEST_VERSION"
 MDB_ANSI="MongoDB ANSI ODBC $LATEST_VERSION"
 MDB_UNICODE_DRIVERS="$INSTALL_PATH/libmdbodbcw.so"
 MDB_ANSI_DRIVERS="$INSTALL_PATH/libmdbodbca.so"
+CREATED_NEW_INI_FILE=0
 
 # Create the ODBC directory if it doesn't exist already
 if [[ ! -e $ODBC_PATH ]]; then
@@ -57,7 +58,7 @@ if [[ ! -e $INI ]]; then
     echo "" >> $INI
     echo "[$MDB_ANSI]" >> $INI
     echo "Driver = $MDB_ANSI_DRIVERS" >> $INI
-    CREATED_NEW_INI_FILE=1
+    $CREATED_NEW_INI_FILE=1
 fi
 
 #If there was an existing odbcinst file, update the odbcinst.ini
