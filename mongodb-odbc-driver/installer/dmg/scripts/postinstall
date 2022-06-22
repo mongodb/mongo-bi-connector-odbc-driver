@@ -107,7 +107,8 @@ if [[ $CREATED_NEW_INI_FILE == 0 ]]; then
                     if [ $IN_ODBC_DRIVERS_SECTION == 1 ]; then
                         if [ $MDB_UNICODE_DRIVER_INSTALLED == 0 ]; then
                             echo "$MDB_UNICODE = Installed" >> $INI
-                        elif [ $MDB_ANSI_DRIVER_INSTALLED == 0 ]; then
+                        fi
+                        if [ $MDB_ANSI_DRIVER_INSTALLED == 0 ]; then
                             echo "$MDB_ANSI = Installed" >> $INI
                         fi
                     fi
