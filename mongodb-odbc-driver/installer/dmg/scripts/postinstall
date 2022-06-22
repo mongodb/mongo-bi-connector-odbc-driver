@@ -6,12 +6,20 @@
 # $2 : Returns the target location (for example: /Applications)
 # $3 : Returns the target volume (for example: /Volumes/Macintosh HD)
 
+LOGS_PATH="/tmp/postinstall.log"
+
 err(){
-    echo "Err: $@" >&2;
+    if [[ ! -e $LOGS_PATH ]]; then
+        touch $LOGS_PATH
+    fi
+    echo "Err: $@" >> /tmp/postinstall.log ;
 }
 
 info(){
-     echo "Info: $@" >&2;
+    if [[ ! -e $LOGS_PATH ]]; then
+        touch $LOGS_PATH
+    fi
+     echo "Info: $@" >> /tmp/postinstall.log ;
 }
 
 ODBC_PATH="$3/Library/ODBC"
