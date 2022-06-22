@@ -6,21 +6,28 @@
 # $2 : Returns the target location (for example: /Applications)
 # $3 : Returns the target volume (for example: /Volumes/Macintosh HD)
 
-LOGS_PATH="/tmp/postinstall.log"
+LOGS_PATH="/tmp/postinstall_MongoDB_ODBC.log"
 
 err(){
-    if [[ ! -e $LOGS_PATH ]]; then
-        touch $LOGS_PATH
-    fi
-    echo "Err: $@" >> /tmp/postinstall.log ;
+    
+    echo "Err: $@" >> $LOGS_PATH
 }
 
 info(){
     if [[ ! -e $LOGS_PATH ]]; then
         touch $LOGS_PATH
     fi
-     echo "Info: $@" >> /tmp/postinstall.log ;
+     echo "Info: $@" >> $LOGS_PATH
 }
+
+# Setup the log file
+if [[ ! -e $LOGS_PATH ]]; then
+    # Create a new log file
+    touch $LOGS_PATH
+else
+    # Clean up the existing file
+    > $LOGS_PATH 
+fi
 
 ODBC_PATH="$3/Library/ODBC"
 INI="$ODBC_PATH/odbcinst.ini"
@@ -47,7 +54,6 @@ fi
 #Update the odbcinst.ini with the latest driver path and mark it as installed
 if [[ ! -e $INI ]]; then
     info "$INI does not exists, creating"
-
     touch $INI
     echo "[ODBC Drivers]" >> $INI
     echo "$MDB_UNICODE = Installed" >> $INI
