@@ -77,9 +77,9 @@ fi
 if [[ $CREATED_NEW_INI_FILE == 0 ]]; then
     BACK_INI="$INI.back"
     info "Back up file $BACK_INI"
-    IN_ODBC_DRIVERS_SECTION=0
-    IN_MDB_UNICODE_DRIVER_SECTION=0
-    IN_MDB_ANSI_DRIVER_SECTION=0
+    ODBC_DRIVERS_SECTION_EXISTS=0
+    CURRENT_SECTION=""
+    PREVIOUS_SECTION=""
     MDB_UNICODE_DRIVER_INSTALLED=0
     MDB_ANSI_DRIVER_INSTALLED=0
     MDB_UNICODE_DRIVER_CONFIGURED=0
@@ -95,38 +95,34 @@ if [[ $CREATED_NEW_INI_FILE == 0 ]]; then
         while IFS= read -r line
         do
             if [[ "$line" =~ ^\[.*\]$ ]]; then
+                PREVIOUS_SECTION=$CURRENT_SECTION
                 # Found a section
                 if grep -iqF "[ODBC Drivers]" <<< "$line"; then
                     # Found the [ODBC Drivers] section 
                     # where all drivers are listed
-                    IN_ODBC_DRIVERS_SECTION=1
+                    ODBC_DRIVERS_SECTION_EXISTS=1
+                    CURRENT_SECTION="ODBC"
                 elif grep -iqF "[$MDB_UNICODE]" <<< "$line"; then
                     # Found the [MongoDB Unicode ODBC {version}] section
-                    IN_MDB_UNICODE_DRIVER_SECTION=1
-                    IN_MDB_ANSI_DRIVER_SECTION=0
-                    IN_ODBC_DRIVERS_SECTION=0
-                    echo "IN_MDB_UNICODE_DRIVER_SECTION=1"
+                    CURRENT_SECTION="UNICODE"
                 elif grep -iqF "[$MDB_ANSI]" <<< "$line"; then
                     # Found the [MongoDB ANSI ODBC {version}] section
-                    IN_MDB_ANSI_DRIVER_SECTION=1
-                    IN_MDB_UNICODE_DRIVER_SECTION=0
-                    IN_ODBC_DRIVERS_SECTION=0
-                    echo "IN_MDB_ANSI_DRIVER_SECTION=1"
+                    CURRENT_SECTION="ANSI"
                 else
-                    # Found a new section right after [ODBC Drivers]
-                    # Need to add the drivers lines in [ODBC Drivers] section
-                    if [ $IN_ODBC_DRIVERS_SECTION == 1 ]; then
-                        if [ $MDB_UNICODE_DRIVER_INSTALLED == 0 ]; then
-                            echo "$MDB_UNICODE = Installed" >> $INI
-                        fi
-                        if [ $MDB_ANSI_DRIVER_INSTALLED == 0 ]; then
-                            echo "$MDB_ANSI = Installed" >> $INI
-                        fi
-                    fi
-                    IN_ODBC_DRIVERS_SECTION=0
-                    IN_MDB_ANSI_DRIVER_SECTION=0
-                    IN_MDB_UNICODE_DRIVER_SECTION=0
+                    CURRENT_SECTION="OTHER"
                 fi
+
+                # Found a new section right after [ODBC Drivers]
+                # Need to add the drivers lines in [ODBC Drivers] section
+                if [ $PREVIOUS_SECTION == "ODBC" ]; then
+                    if [ $MDB_UNICODE_DRIVER_INSTALLED == 0 ]; then
+                        echo "$MDB_UNICODE = Installed" >> $INI
+                    fi
+                    if [ $MDB_ANSI_DRIVER_INSTALLED == 0 ]; then
+                        echo "$MDB_ANSI = Installed" >> $INI
+                    fi
+                fi
+
                  # Add an empty line before this next section
                 if [ $IN_ODBC_DRIVERS_SECTION == 0 ]; then
                     echo "" >> $INI
@@ -134,22 +130,21 @@ if [[ $CREATED_NEW_INI_FILE == 0 ]]; then
                 echo "$line" >> $INI
             # Skip empty lines
             elif [[ ! -z "${line// }" ]]; then
-                if [ $IN_ODBC_DRIVERS_SECTION == 1 ]  && grep -iqF "$MDB_UNICODE" <<< "$line" ; then
+                if [ $CURRENT_SECTION="ODBC" ]  && grep -iqF "$MDB_UNICODE" <<< "$line" ; then
                     # Found the latest unicode MongoDB driver already configured
                     # Make sure to mark it "Installed"
                     echo "$MDB_UNICODE = Installed" >> $INI
                     MDB_UNICODE_DRIVER_INSTALLED=1
-                elif [ $IN_ODBC_DRIVERS_SECTION == 1 ] && grep -iqF "$MDB_ANSI" <<< "$line" ; then
+                elif [ $CURRENT_SECTION="ODBC" ] && grep -iqF "$MDB_ANSI" <<< "$line" ; then
                     # Found the latest ANSI MongoDB driver already configured
                     # Make sure to mark it "Installed"
                     echo "$MDB_ANSI = Installed" >> $INI
                     MDB_ANSI_DRIVER_INSTALLED=1
-                elif [ $IN_MDB_UNICODE_DRIVER_SECTION == 1 ] && grep -iqF "Driver" <<< "$line" ; then
-                    echo "IN_MDB_UNICODE_DRIVER_SECTION : $IN_MDB_UNICODE_DRIVER_SECTION"
+                elif [ $CURRENT_SECTION="UNICODE" ] && grep -iqF "Driver" <<< "$line" ; then
                     # Make sure the driver install path is correct
                     echo "Driver = $MDB_UNICODE_DRIVERS" >> $INI
                     MDB_UNICODE_DRIVER_CONFIGURED=1
-                elif [ $IN_MDB_ANSI_DRIVER_SECTION == 1 ] && grep -iqF "Driver" <<< "$line" ; then
+                elif [ $CURRENT_SECTION="MDB_ANSI" ] && grep -iqF "Driver" <<< "$line" ; then
                     # Make sure the driver install path is correct
                     echo "Driver = $MDB_ANSI_DRIVERS" >> $INI
                     MDB_ANSI_DRIVER_CONFIGURED=1
@@ -169,6 +164,11 @@ if [[ $CREATED_NEW_INI_FILE == 0 ]]; then
             echo "" >> $INI
             echo "[$MDB_ANSI]" >> $INI
             echo "Driver = $MDB_ANSI_DRIVERS" >> $INI
+        fi
+
+        # No [ODBC Drivers] section existed in the file, adding one at the beginning of the file
+        if [ $ODBC_DRIVERS_SECTION_EXISTS == 0 ]; then
+            sed -i -e "1s/^/\[ODBC Drivers\]\\n$MDB_UNICODE = Installed\\n$MDB_ANSI = Installed\\n\\n/g" $INI
         fi
     else
         err "An error occured while making a backup of the existing odbcinst.ini file"
