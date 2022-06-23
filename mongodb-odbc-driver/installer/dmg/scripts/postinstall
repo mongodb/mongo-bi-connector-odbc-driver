@@ -78,8 +78,8 @@ if [[ $CREATED_NEW_INI_FILE == 0 ]]; then
     BACK_INI="$INI.back"
     info "Back up file $BACK_INI"
     ODBC_DRIVERS_SECTION_EXISTS=0
-    CURRENT_SECTION=""
-    PREVIOUS_SECTION=""
+    CURRENT_SECTION="NONE"
+    PREVIOUS_SECTION="NONE"
     MDB_UNICODE_DRIVER_INSTALLED=0
     MDB_ANSI_DRIVER_INSTALLED=0
     MDB_UNICODE_DRIVER_CONFIGURED=0
@@ -122,29 +122,23 @@ if [[ $CREATED_NEW_INI_FILE == 0 ]]; then
                         echo "$MDB_ANSI = Installed" >> $INI
                     fi
                 fi
-
-                 # Add an empty line before this next section
-                if [ $IN_ODBC_DRIVERS_SECTION == 0 ]; then
-                    echo "" >> $INI
-                fi
                 echo "$line" >> $INI
-            # Skip empty lines
-            elif [[ ! -z "${line// }" ]]; then
-                if [ $CURRENT_SECTION="ODBC" ]  && grep -iqF "$MDB_UNICODE" <<< "$line" ; then
+            else
+                if [ $CURRENT_SECTION == "ODBC" ]  && grep -iqF "$MDB_UNICODE" <<< "$line" ; then
                     # Found the latest unicode MongoDB driver already configured
                     # Make sure to mark it "Installed"
                     echo "$MDB_UNICODE = Installed" >> $INI
                     MDB_UNICODE_DRIVER_INSTALLED=1
-                elif [ $CURRENT_SECTION="ODBC" ] && grep -iqF "$MDB_ANSI" <<< "$line" ; then
+                elif [ $CURRENT_SECTION == "ODBC" ] && grep -iqF "$MDB_ANSI" <<< "$line" ; then
                     # Found the latest ANSI MongoDB driver already configured
                     # Make sure to mark it "Installed"
                     echo "$MDB_ANSI = Installed" >> $INI
                     MDB_ANSI_DRIVER_INSTALLED=1
-                elif [ $CURRENT_SECTION="UNICODE" ] && grep -iqF "Driver" <<< "$line" ; then
+                elif [ $CURRENT_SECTION == "UNICODE" ] && grep -iqF "Driver" <<< "$line" ; then
                     # Make sure the driver install path is correct
                     echo "Driver = $MDB_UNICODE_DRIVERS" >> $INI
                     MDB_UNICODE_DRIVER_CONFIGURED=1
-                elif [ $CURRENT_SECTION="MDB_ANSI" ] && grep -iqF "Driver" <<< "$line" ; then
+                elif [ $CURRENT_SECTION == "ANSI" ] && grep -iqF "Driver" <<< "$line" ; then
                     # Make sure the driver install path is correct
                     echo "Driver = $MDB_ANSI_DRIVERS" >> $INI
                     MDB_ANSI_DRIVER_CONFIGURED=1
