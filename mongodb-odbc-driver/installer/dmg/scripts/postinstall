@@ -6,27 +6,27 @@
 # $2 : Returns the target location (for example: /Applications)
 # $3 : Returns the target volume (for example: /Volumes/Macintosh HD)
 
-LOGS_PATH="/tmp/postinstall_MongoDB_ODBC.log"
+LOG_FILE="/tmp/postinstall_MongoDB_ODBC.log"
 
 err(){
     
-    echo "Err: $@" >> $LOGS_PATH
+    echo "Err: $@" >> $LOG_FILE
 }
 
 info(){
-    if [[ ! -e $LOGS_PATH ]]; then
-        touch $LOGS_PATH
+    if [[ ! -e $LOG_FILE ]]; then
+        touch $LOG_FILE
     fi
-     echo "Info: $@" >> $LOGS_PATH
+     echo "Info: $@" >> $LOG_FILE
 }
 
 # Setup the log file
-if [[ ! -e $LOGS_PATH ]]; then
+if [[ ! -e $LOG_FILE ]]; then
     # Create a new log file
-    touch $LOGS_PATH
+    touch $LOG_FILE
 else
     # Clean up the existing file
-    > $LOGS_PATH 
+    > $LOG_FILE 
 fi
 
 ODBC_PATH="$3/Library/ODBC"
