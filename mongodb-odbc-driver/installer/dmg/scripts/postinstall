@@ -11,14 +11,14 @@ LOG_FILE="/tmp/postinstall_MongoDB_ODBC.log"
 
 err(){
     
-    echo "Err: $@" >> $LOG_FILE
+    echo "Err: $@" | tee -a $LOG_FILE
 }
 
 info(){
     if [[ ! -e $LOG_FILE ]]; then
         touch $LOG_FILE
     fi
-     echo "Info: $@" >> $LOG_FILE
+     echo "Info: $@" | tee -a $LOG_FILE
 }
 
 # Setup the log file
