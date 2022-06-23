@@ -6,6 +6,7 @@
 # $2 : Returns the target location (for example: /Applications)
 # $3 : Returns the target volume (for example: /Volumes/Macintosh HD)
 
+TARGET_VOLUME=$3
 LOG_FILE="/tmp/postinstall_MongoDB_ODBC.log"
 
 err(){
@@ -29,8 +30,12 @@ else
     > $LOG_FILE 
 fi
 
-ODBC_PATH="$3/Library/ODBC"
+ODBC_PATH="/Library/ODBC"
+if [[ ! -z $TARGET_VOLUME ]]; then
+    ODBC_PATH="$TARGET_VOLUME/Library/ODBC"
+fi
 INI="$ODBC_PATH/odbcinst.ini"
+info "Drivers configuration will be added to $INI"
 INSTALL_ROOT="/Library/MongoDB/ODBC/"
 # Get the latest installed version
 LATEST_VERSION=$(ls $INSTALL_ROOT/| grep -E "[0-9]\.[0-9]\.[0-9]" | sort | cut -d '/' -f2 | tail -n 1)
