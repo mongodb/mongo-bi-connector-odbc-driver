@@ -6,14 +6,19 @@
 # $2 : Returns the target location (for example: /Applications)
 # $3 : Returns the target volume (for example: /Volumes/Macintosh HD)
 
+#############
+### Setup ###
+#############
 TARGET_VOLUME=$3
 LOG_FILE="/tmp/postinstall_MongoDB_ODBC.log"
 
+# Log an error
 err(){
     
     echo "Err: $@" | tee -a $LOG_FILE
 }
 
+# Log an general info
 info(){
     if [[ ! -e $LOG_FILE ]]; then
         touch $LOG_FILE
@@ -46,7 +51,26 @@ MDB_ANSI="MongoDB ANSI ODBC $LATEST_VERSION"
 MDB_UNICODE_DRIVERS="$INSTALL_PATH/libmdbodbcw.so"
 MDB_ANSI_DRIVERS="$INSTALL_PATH/libmdbodbca.so"
 CREATED_NEW_INI_FILE=0
+MDB_UNICODE_DRIVER_INSTALLED=0
+MDB_ANSI_DRIVER_INSTALLED=0
+MDB_UNICODE_DRIVER_CONFIGURED=0
+MDB_ANSI_DRIVER_CONFIGURED=0
 
+# Flag the driver as installed if not already done
+flagDriversAsInstalled(){
+        if [ $MDB_UNICODE_DRIVER_INSTALLED == 0 ]; then
+            echo "$MDB_UNICODE = Installed" >> $INI
+            MDB_UNICODE_DRIVER_INSTALLED=1
+        fi
+        if [ $MDB_ANSI_DRIVER_INSTALLED == 0 ]; then
+            echo "$MDB_ANSI = Installed" >> $INI
+            MDB_ANSI_DRIVER_INSTALLED=1
+        fi
+}
+
+#############################################################
+### Configure the newly installed drivers in odbcinst.ini ###
+#############################################################
 # Create the ODBC directory if it doesn't exist already
 if [[ ! -e $ODBC_PATH ]]; then
     info "Creating $ODBC_PATH directory"
@@ -80,10 +104,6 @@ if [[ $CREATED_NEW_INI_FILE == 0 ]]; then
     ODBC_DRIVERS_SECTION_EXISTS=0
     CURRENT_SECTION="NONE"
     PREVIOUS_SECTION="NONE"
-    MDB_UNICODE_DRIVER_INSTALLED=0
-    MDB_ANSI_DRIVER_INSTALLED=0
-    MDB_UNICODE_DRIVER_CONFIGURED=0
-    MDB_ANSI_DRIVER_CONFIGURED=0
 
     # Make a copy of the existing ini file
     cp $INI $BACK_INI
@@ -115,12 +135,8 @@ if [[ $CREATED_NEW_INI_FILE == 0 ]]; then
                 # Found a new section right after [ODBC Drivers]
                 # Need to add the drivers lines in [ODBC Drivers] section
                 if [ $PREVIOUS_SECTION == "ODBC" ]; then
-                    if [ $MDB_UNICODE_DRIVER_INSTALLED == 0 ]; then
-                        echo "$MDB_UNICODE = Installed" >> $INI
-                    fi
-                    if [ $MDB_ANSI_DRIVER_INSTALLED == 0 ]; then
-                        echo "$MDB_ANSI = Installed" >> $INI
-                    fi
+                    flagDriversAsInstalled
+                    echo "" >> $INI
                 fi
                 echo "$line" >> $INI
             else
@@ -147,6 +163,10 @@ if [[ $CREATED_NEW_INI_FILE == 0 ]]; then
                 fi        
             fi
         done < "$BACK_INI"
+
+        # Reached the end of the file, if [ODBC Drivers] was the last section, 
+        # then add the lines for each MongoDB drivers
+        flagDriversAsInstalled
 
         # Configure the driver if needed by adding their respective sections at the end of the odbcinst.ini file
         if [ $MDB_UNICODE_DRIVER_CONFIGURED == 0 ]; then
