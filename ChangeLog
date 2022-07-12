@@ -1,3 +1,7 @@
+MongoDB ODBC 1.4.3
+  * Move ODBC driver off macos-1010-compass for signing
+  * Update ODBC Driver to support macOS 12
+
 MongoDB ODBC 1.4.2
   * Fix issue with libssl transitive dependencies on Macos
 
