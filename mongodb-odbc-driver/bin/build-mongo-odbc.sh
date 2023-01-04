@@ -4,7 +4,7 @@
 # shellcheck source=prepare-shell.sh
 . "$(dirname "$0")/prepare-shell.sh"
 
-(
+#(
     set -o errexit
     # clear the BUILD_DIR
     echo "clear $BUILD_DIR"
@@ -63,7 +63,13 @@
     CMAKE_ARGS="$CMAKE_ARGS $CMAKE_ICU_ARGS"
 
     # run CMake in the BUILD_DIR
-    cmake "$BUILD_SRC_DIR" -G "$CMAKE_GENERATOR" -DMYSQLCLIENT_STATIC_LINKING:BOOL=TRUE -DCMAKE_MODULE_PATH="$CMAKE_MODULE_PATH" $UNIX_LIB $CMAKE_ARGS
+    cmake="cmake "$BUILD_SRC_DIR" -G "$CMAKE_GENERATOR" -DMYSQLCLIENT_STATIC_LINKING:BOOL=TRUE -DCMAKE_MODULE_PATH="$CMAKE_MODULE_PATH" $UNIX_LIB $CMAKE_ARGS"
+
+    echo "============================================================="
+    echo $cmake
+    echo "============================================================="
+
+    $cmake
 
     echo 'building'
     # build the ODBC driver
@@ -94,6 +100,6 @@
             install_name_tool -change /usr/local/opt/openssl/lib/libcrypto.1.0.0.dylib "@loader_path/libcrypto.1.0.0.dylib" "$DRIVERS_DIR"/libmdbodbcw.so
         fi
     fi
-) > $LOG_FILE 2>&1
+#) > $LOG_FILE 2>&1
 
-print_exit_msg
+#print_exit_msg
