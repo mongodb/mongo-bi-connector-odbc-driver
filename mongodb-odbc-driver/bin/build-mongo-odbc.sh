@@ -63,13 +63,7 @@
     CMAKE_ARGS="$CMAKE_ARGS $CMAKE_ICU_ARGS"
 
     # run CMake in the BUILD_DIR
-    cmake="cmake "$BUILD_SRC_DIR" -G "$CMAKE_GENERATOR" -DMYSQLCLIENT_STATIC_LINKING:BOOL=TRUE -DCMAKE_MODULE_PATH="$CMAKE_MODULE_PATH" $UNIX_LIB $CMAKE_ARGS"
-
-    echo "============================================================="
-    echo $cmake
-    echo "============================================================="
-
-    $cmake
+    cmake "$BUILD_SRC_DIR" -G "$CMAKE_GENERATOR" -DMYSQLCLIENT_STATIC_LINKING:BOOL=TRUE -DCMAKE_MODULE_PATH="$CMAKE_MODULE_PATH" $UNIX_LIB $CMAKE_ARGS
 
     echo 'building'
     # build the ODBC driver
