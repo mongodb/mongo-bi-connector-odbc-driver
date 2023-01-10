@@ -4,7 +4,7 @@
 # shellcheck source=prepare-shell.sh
 . "$(dirname "$0")/prepare-shell.sh"
 
-(
+#(
     if [ "$PLATFORM_NAME" != macos ]; then
         exit 0
     fi
@@ -23,7 +23,7 @@
     # copy driver libraries to appropriate location
     cp "$DRIVERS_DIR"/*.so ./
 
-    OPENSSL_PATH="$BUILD_DIR/1.0.2n"
+    OPENSSL_PATH="$BUILD_DIR/1.0.2n/lib"
     echo "DMG OPENSSL_PATH: $OPENSSL_PATH"
 
     # copy the openssl libs to appropriate location
@@ -40,7 +40,7 @@
 
     # copy the dmg to PKG_DIR
     cp ./*.dmg "$PKG_DIR"/
-) > $LOG_FILE 2>&1
+#) > $LOG_FILE 2>&1
 
-print_exit_msg
+#print_exit_msg
 
