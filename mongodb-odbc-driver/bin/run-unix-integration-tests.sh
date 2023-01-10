@@ -8,9 +8,12 @@
 if [ "$PLATFORM_NAME" = "macos" ]; then
     curl -O https://mongo-bic-odbc-driver-resources.s3.amazonaws.com/macos/openssl-1.0.2n.zip
     unzip openssl-1.0.2n.zip
-    OPENSSL_PATH="./1.0.2n"
-    cp "$OPENSSL_PATH/libssl.1.0.0.dylib"  "$DRIVERS_DIR"/ || exit "could not find libssl, found paths: $(ls /usr/local/Cellar/openssl/)"
-    cp "$OPENSSL_PATH/libcrypto.1.0.0.dylib"  "$DRIVERS_DIR"/ || exit "could not find libcrypto, found paths: $(ls /usr/local/Cellar/openssl/)"
+    OPENSSL_PATH="./1.0.2n/lib"
+    chmod 777 "$OPENSSL_PATH/libssl.1.0.0.dylib"
+    chmod 777 "$OPENSSL_PATH/libcrypto.1.0.0.dylib"
+    install_name_tool -change "/usr/local/Cellar/openssl/1.0.2n/lib/libcrypto.1.0.0.dylib" "@loader_path/libcrypto.1.0.0.dylib" "$OPENSSL_PATH/libssl.1.0.0.dylib"
+    cp "$OPENSSL_PATH/libssl.1.0.0.dylib"  "$DRIVERS_DIR"/ || exit "could not find libssl"
+    cp "$OPENSSL_PATH/libcrypto.1.0.0.dylib"  "$DRIVERS_DIR"/ || exit "could not find libcrypto"
 fi
 
 TEST_BIN="$1"
