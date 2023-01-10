@@ -17,6 +17,9 @@
 	mv GNUMakefile old_gnumakefile
 	echo 'PROJBUILD := /usr/bin/xcodebuild -configuration Deployment' > GNUMakefile
 	# shellcheck disable=SC2016
+    echo 'YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY'
+	echo 'IODBC_TARGET := $(shell sw_vers -productVersion | cut -d . -f 1-2)'
+    echo 'YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY'
 	echo 'IODBC_TARGET := $(shell sw_vers -productVersion | cut -d . -f 1-2)' >> GNUMakefile
 	cat old_gnumakefile >> GNUMakefile
 	rm old_gnumakefile
@@ -27,5 +30,6 @@
 	echo "building iODBC"
 	make -f GNUMakefile -j 4 all install || true
     cat GNUMakefile
+    find ../.. | grep -i iodbc
 
 print_exit_msg
