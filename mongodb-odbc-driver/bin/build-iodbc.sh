@@ -2,7 +2,6 @@
 #shellcheck source=./prepare-shell.sh
 . "$(dirname "$0")/prepare-shell.sh"
 
-(
 	mkdir -p "$BUILD_DIR"
 	cd "$BUILD_DIR"
 	echo "downloading iODBC"
@@ -27,9 +26,6 @@
 	find . -type f -print0 | xargs -0 -n1 sed -i '.bak' "s|/Library/Frameworks|$BUILD_DIR/Library/Frameworks|g"
 	echo "building iODBC"
 	make -f GNUMakefile -j 4 all install || true
-    echo "==========================="
-    ls -R $IODBC_BUILD_DIR
-    echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%"
-) > $LOG_FILE 2>&1
+    cat GNUMakefile
 
 print_exit_msg
