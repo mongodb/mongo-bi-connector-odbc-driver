@@ -27,6 +27,9 @@
 	find . -type f -print0 | xargs -0 -n1 sed -i '.bak' "s|/Library/Frameworks|$BUILD_DIR/Library/Frameworks|g"
 	echo "building iODBC"
 	make -f GNUMakefile -j 4 all install || true
+    echo "==========================="
+    ls -R $IODBC_BUILD_DIR
+    echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%"
 ) > $LOG_FILE 2>&1
 
 print_exit_msg
