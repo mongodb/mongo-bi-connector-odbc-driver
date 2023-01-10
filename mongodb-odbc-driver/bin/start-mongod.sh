@@ -44,7 +44,7 @@
     elif [ -f "$venv"/Scripts/activate ]; then
       echo 'using existing virtualenv'
       . "$venv"/Scripts/activate
-    elif virtualenv --no-site-packages "$venv" || python -m virtualenv --no-site-packages "$venv"; then
+    elif virtualenv "$venv" || python -m virtualenv "$venv"; then
       echo 'creating new virtualenv'
       if [ -f "$venv"/bin/activate ]; then
         . "$venv"/bin/activate
