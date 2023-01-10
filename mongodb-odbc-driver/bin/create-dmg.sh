@@ -4,7 +4,7 @@
 # shellcheck source=prepare-shell.sh
 . "$(dirname "$0")/prepare-shell.sh"
 
-#(
+(
     if [ "$PLATFORM_NAME" != macos ]; then
         exit 0
     fi
@@ -31,6 +31,7 @@
     cp "$OPENSSL_PATH/libcrypto.1.0.0.dylib"  ./
 
     chmod 777 libssl.1.0.0.dylib
+    chmod 777 libcrypto.1.0.0.dylib
     install_name_tool -change "/usr/local/Cellar/openssl/1.0.2n/lib/libcrypto.1.0.0.dylib" "@loader_path/libcrypto.1.0.0.dylib" ./libssl.1.0.0.dylib
 
     sh ./build-dmg.sh
@@ -41,7 +42,7 @@
 
     # copy the dmg to PKG_DIR
     cp ./*.dmg "$PKG_DIR"/
-#) > $LOG_FILE 2>&1
+) > $LOG_FILE 2>&1
 
-#print_exit_msg
+print_exit_msg
 
