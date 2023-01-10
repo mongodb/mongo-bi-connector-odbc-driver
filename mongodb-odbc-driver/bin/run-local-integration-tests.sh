@@ -52,7 +52,7 @@
         echo 'running local connection tests...'
 
         "$SCRIPT_DIR"/run-unix-integration-tests.sh \
-            "iodbctestw" \
+            "$SCRIPT_DIR/iodbctestw" \
             "DSN=" \
             "local" \
             "127.0.0.1" \
