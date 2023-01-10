@@ -17,6 +17,7 @@ if [ "$PLATFORM_NAME" = "macos" ]; then
 fi
 
 TEST_BIN="$1"
+echo "^^^^^^^^^^^^^^^^^^^^^ $TEST_BIN __________________________"
 # iodbctestw expects DSN= before the DSN name, iusql expects nothing
 BIN_ARG_PREFIX="$2"
 CASE="$3"
