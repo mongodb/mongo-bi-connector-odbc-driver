@@ -3,7 +3,7 @@
 # shellcheck source=prepare-shell.sh
 . "$(dirname "$0")/prepare-shell.sh"
 
-(
+#(
     success_file_prefix="$SCRIPT_DIR/atlas-integration-test-success-cases"
     "$SCRIPT_DIR"/gen_tsv.py "$success_file_prefix".yml > "$success_file_prefix".tsv
     fail_file_prefix="$SCRIPT_DIR/atlas-integration-test-fail-cases"
@@ -44,7 +44,7 @@
         echo 'running atlas connection tests...'
 
         "$SCRIPT_DIR"/run-unix-integration-tests.sh \
-            "iodbctestw" \
+            "$IODBC_BUILD_DIR/iodbctestw" \
             "DSN=" \
             "atlas" \
             "$BIC_PROD_SERVER" \
@@ -68,6 +68,6 @@
             "$BIC_PROD_USER" \
             "$BIC_PROD_PASSWORD"
     fi
-) > $LOG_FILE 2>&1
+#) > $LOG_FILE 2>&1
 
-print_exit_msg
+#print_exit_msg
