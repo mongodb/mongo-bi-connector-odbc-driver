@@ -11,6 +11,15 @@
     rm -rf "$BUILD_DIR"
     mkdir -p "$BUILD_DIR"
 
+    if [ "$PLATFORM" = macos ]; then
+        cd "$BUILD_DIR"
+        # unfortunately, we unzip this in two places (libmongosql and here)
+        curl -O https://mongo-bic-odbc-driver-resources.s3.amazonaws.com/macos/openssl-1.0.2n.zip
+        unzip openssl-1.0.2n.zip
+        OPENSSL_PATH="$BUILD_DIR/1.0.2n"
+        CMAKE_ARGS="$CMAKE_ARGS -DWITH_SSL=$SSL_DIR -DCMAKE_VERBOSE_MAKEFILE=ON"
+    fi
+
     # clear DRIVERS_DIR
     echo "clear $DRIVERS_DIR"
     rm -rf "$DRIVERS_DIR"
@@ -61,6 +70,8 @@
     ENABLE_ICU='ON'
     CMAKE_ICU_ARGS="-DENABLE_ICU=$ENABLE_ICU -DICU_ROOT=$ICU_BUILD_DIR -DICU_INCLUDE_DIR=$ICU_SRC_DIR/common"
     CMAKE_ARGS="$CMAKE_ARGS $CMAKE_ICU_ARGS"
+
+    echo "$CMAKE_ARGS"
 
     # run CMake in the BUILD_DIR
     cmake "$BUILD_SRC_DIR" -G "$CMAKE_GENERATOR" -DMYSQLCLIENT_STATIC_LINKING:BOOL=TRUE -DCMAKE_MODULE_PATH="$CMAKE_MODULE_PATH" $UNIX_LIB $CMAKE_ARGS
