@@ -16,7 +16,7 @@
         # unfortunately, we unzip this in two places (libmongosql and here)
         curl -O https://mongo-bic-odbc-driver-resources.s3.amazonaws.com/macos/openssl-1.0.2n.zip
         unzip openssl-1.0.2n.zip
-        export OPENSSL_PATH="$BUILD_DIR/1.0.2n"
+        OPENSSL_PATH="$BUILD_DIR/1.0.2n"
         CMAKE_ARGS="$CMAKE_ARGS -DWITH_SSL=$OPENSSL_PATH -DCMAKE_VERBOSE_MAKEFILE=ON"
     fi
 
