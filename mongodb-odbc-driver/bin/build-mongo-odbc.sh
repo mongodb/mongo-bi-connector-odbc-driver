@@ -17,7 +17,7 @@
         curl -O https://mongo-bic-odbc-driver-resources.s3.amazonaws.com/macos/openssl-1.0.2n.zip
         unzip openssl-1.0.2n.zip
         OPENSSL_PATH="$BUILD_DIR/1.0.2n"
-        CMAKE_ARGS="$CMAKE_ARGS -DWITH_SSL=$SSL_DIR -DCMAKE_VERBOSE_MAKEFILE=ON"
+        CMAKE_ARGS="$CMAKE_ARGS -DWITH_SSL=$OPENSSL_PATH -DCMAKE_VERBOSE_MAKEFILE=ON"
     fi
 
     # clear DRIVERS_DIR
