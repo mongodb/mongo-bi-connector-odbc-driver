@@ -73,13 +73,16 @@
         if [ "$PLATFORM_NAME" = "macos" ]; then
             curl -O https://mongo-bic-odbc-driver-resources.s3.amazonaws.com/macos/openssl-1.0.2n.zip
             unzip openssl-1.0.2n.zip
+            chmod 777 ./1.0.2n/lib/*
             mv ./1.0.2n/lib/* ./
             install_name_tool -change /usr/local/opt/openssl/lib/libssl.1.0.0.dylib "@loader_path/libssl.1.0.0.dylib"  mongosqld
             install_name_tool -change /usr/local/opt/openssl/lib/libcrypto.1.0.0.dylib "@loader_path/libcrypto.1.0.0.dylib"  mongosqld
+            # we also need to patch up libssl, which I should have just done before uploading to s3, but I
+            # did not.
+            otool -L libssl.1.0.0.dylib
             install_name_tool -change /usr/local/Cellar/openssl/1.0.2n/lib/libcrypto.1.0.0.dylib "@loader_path/libcrypto.1.0.0.dylib" libssl.1.0.0.dylib
-            echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
-            ls -R
-            otool -L mongosqld
+            echo '============>'
+            otool -L libssl.1.0.0.dylib
         fi
         mongosqld $SQLPROXY_ARGS & #&> sqlproxy.log &
         echo 'started sqlproxy'
