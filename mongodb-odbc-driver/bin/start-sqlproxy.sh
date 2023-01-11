@@ -73,14 +73,15 @@
         if [ "$PLATFORM_NAME" = "macos" ]; then
             curl -O https://mongo-bic-odbc-driver-resources.s3.amazonaws.com/macos/openssl-1.0.2n.zip
             unzip openssl-1.0.2n.zip
-            mv ./1.0.2n/* ./
+            mv ./1.0.2n/lib/* ./
             install_name_tool -change /usr/local/opt/openssl/lib/libssl.1.0.0.dylib "@loader_path/libssl.1.0.0.dylib"  mongosqld
             install_name_tool -change /usr/local/opt/openssl/lib/libcrypto.1.0.0.dylib "@loader_path/libcrypto.1.0.0.dylib"  mongosqld
+            install_name_tool -change /usr/local/Cellar/openssl/1.0.2n/lib/libcrypto.1.0.0.dylib "@loader_path/libcrypto.1.0.0.dylib" libssl.1.0.0.dylib
             echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
-            ls
+            ls -R
             otool -L mongosqld
         fi
-        mongosqld $SQLPROXY_ARGS &> sqlproxy.log &
+        mongosqld $SQLPROXY_ARGS & #&> sqlproxy.log &
         echo 'started sqlproxy'
         echo
     fi
