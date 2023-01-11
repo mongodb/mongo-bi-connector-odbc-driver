@@ -4,6 +4,7 @@
 . "$(dirname "$0")/prepare-shell.sh"
 
 (
+    ps aux
     test_set=''
     if [ "$TEST_SET" = 'SSL' ]; then
         test_set='LocalSSL'
