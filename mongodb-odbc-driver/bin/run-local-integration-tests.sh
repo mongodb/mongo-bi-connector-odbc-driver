@@ -46,13 +46,7 @@
 
     elif [ "macos" = "$PLATFORM" ]; then
         if ! hash iodbctestw &> /dev/null; then
-            echo 'downloading iodbctestw'
-            mkdir -p "$BUILD_DIR"
-            cd "$BUILD_DIR"
-            curl -O https://mongo-bic-odbc-driver-resources.s3.amazonaws.com/macos/iodbctest.zip
-            unzip iodbctest.zip
-            chmod 777 iodbctest/*
-            cd -
+            "$SCRIPT_DIR/download-iodbctest.sh"
         fi
         echo 'running local connection tests...'
 

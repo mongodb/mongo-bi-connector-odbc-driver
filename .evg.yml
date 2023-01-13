@@ -20,7 +20,6 @@ buildvariants:
       - name: "build"
       - name: "unit_tests"
       - name: "integration_tests_atlas"
-      - name: "integration_tests_local"
         run_on: ubuntu1404-build
   - name: ubuntu1604-64
     display_name: Ubuntu 16.04
@@ -31,7 +30,6 @@ buildvariants:
       - name: "build"
       - name: "unit_tests"
       - name: "integration_tests_atlas"
-      - name: "integration_tests_local"
         run_on: ubuntu1604-build
   - name: rhel70
     display_name: RHEL 7.0
