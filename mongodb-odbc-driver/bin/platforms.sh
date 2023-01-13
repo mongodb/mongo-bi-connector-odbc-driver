@@ -39,8 +39,6 @@ rhel70)
     CMAKE_PATH='/opt/cmake/bin'
     ;;
 macos)
-	# this is the location of openssl on our macos spawn hosts. If there is a failure
-	# to build on macos, it's likely that this path needs to be updated.
     PLATFORM_ARCH='64'
     PLATFORM_NAME='macos'
     MONGODB_URI='http://downloads.10gen.com/osx/mongodb-osx-x86_64-enterprise-latest.tgz'
