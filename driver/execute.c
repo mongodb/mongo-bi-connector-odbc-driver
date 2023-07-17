@@ -28,6 +28,7 @@
 */
 
 #include "driver.h"
+#include "myutil.h"
 #include <locale.h>
 
 
@@ -63,6 +64,7 @@ SQLRETURN do_query(STMT *stmt,char *query, SQLULEN query_length)
       query_length= strlen(query);
     }
 
+    MYLOG_QUERY(stmt, "using do_query");
     MYLOG_QUERY(stmt, query);
     myodbc_mutex_lock(&stmt->dbc->lock);
 

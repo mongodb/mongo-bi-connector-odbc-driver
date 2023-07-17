@@ -220,13 +220,16 @@ static MYSQL_RES *table_status_i_s(STMT        *stmt,
 
   assert(to - buff < sizeof(buff));
 
+  MYLOG_QUERY(stmt, "using table_status_i_s");
   MYLOG_QUERY(stmt, buff);
 
   if (exec_stmt_query(stmt, buff, (unsigned long)(to - buff), FALSE))
   {
+    MYLOG_QUERY(stmt, "returning NULL");
     return NULL;
   }
 
+  MYLOG_QUERY(stmt, "mysql_store_result?");
   return mysql_store_result(mysql);
 }
 

@@ -1000,21 +1000,28 @@ SQLRETURN SQL_API SQLNumResultCols(SQLHSTMT  hstmt, SQLSMALLINT *pccol)
   SQLRETURN error;
   STMT *stmt= (STMT *) hstmt;
 
+
+  MYLOG_QUERY(stmt, "SQLNumResultCols entry");
   CHECK_HANDLE(hstmt);
+  MYLOG_QUERY(stmt, "check handle success");
   CHECK_DATA_OUTPUT(hstmt, pccol);
+  MYLOG_QUERY(stmt, "check data success");
 
   if (!ssps_used(stmt))
   {
+    MYLOG_QUERY(stmt, "!ssps");
     if (stmt->param_count > 0 && stmt->dummy_state == ST_DUMMY_UNKNOWN &&
       (stmt->state != ST_PRE_EXECUTED || stmt->state != ST_EXECUTED))
     {
       if ( do_dummy_parambind(hstmt) != SQL_SUCCESS )
       {
+        MYLOG_QUERY(stmt, "dummy parambind fail");
         return SQL_ERROR;
       }
     }
     if ((error= check_result(stmt)) != SQL_SUCCESS)
     {
+      MYLOG_QUERY(stmt, "check_result fail");
       return error;
     }
   }

@@ -29,12 +29,60 @@
 
 #include "driver.h"
 #include "errmsg.h"
+#include "myutil.h"
 #include <ctype.h>
 
 
 #define DATETIME_DIGITS 14
 
 const SQLULEN sql_select_unlimited= (SQLULEN)-1;
+
+/**
+  Execute a SQL statement.
+
+  @param[in] dbc       The database connection
+  @param[in] query     The query to execute
+  @param[in] req_lock  The flag if dbc->lock thread lock should be used
+                       when executing a query
+  */
+SQLRETURN odbc_stmt2(STMT *stmt, const char *query, 
+                    SQLULEN query_length, my_bool req_lock)
+{
+  SQLRETURN result= SQL_SUCCESS;
+  DBC *dbc = stmt->dbc;
+  if (req_lock)
+  {
+    myodbc_mutex_lock(&dbc->lock);
+  }
+
+  if (query_length == SQL_NTS)
+  {
+    query_length= strlen(query);
+  }
+
+  char *foo = malloc(15);
+  sprintf(foo, "%d\n", query_length);
+  MYLOG_QUERY(stmt, foo);
+  free(foo);
+
+  MYLOG_QUERY(stmt, query);
+  if ( check_if_server_is_alive(dbc) ||
+       mysql_real_query(&dbc->mysql, query, query_length) )
+  {
+    MYLOG_QUERY(stmt, "setting conn error");
+    result= set_conn_error(dbc,MYERR_S1000,mysql_error(&dbc->mysql),
+                           mysql_errno(&dbc->mysql));
+  }
+  MYLOG_QUERY(stmt, "force executed");
+   stmt->state = ST_EXECUTED;
+
+  if (req_lock)
+  {
+    myodbc_mutex_unlock(&dbc->lock);
+  }
+  return result;
+}
+
 
 /**
   Execute a SQL statement with setting sql_select_limit for each 
@@ -58,12 +106,9 @@ SQLRETURN exec_stmt_query(STMT *stmt, const char *query,
     return rc;
   }
 
-  return odbc_stmt(stmt->dbc, query, query_length, req_lock);
+  MYLOG_QUERY(stmt, "pre-odbc_stmt in exec_stmt_query");
+  return odbc_stmt2(stmt, query, query_length, req_lock);
 }
-
-
-/**
-
 
 /**
   Execute a SQL statement.
@@ -77,7 +122,6 @@ SQLRETURN odbc_stmt(DBC *dbc, const char *query,
                     SQLULEN query_length, my_bool req_lock)
 {
   SQLRETURN result= SQL_SUCCESS;
- 
   if (req_lock)
   {
     myodbc_mutex_lock(&dbc->lock);
