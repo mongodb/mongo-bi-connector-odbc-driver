@@ -31,6 +31,7 @@
 #include "errmsg.h"
 #include "myutil.h"
 #include <ctype.h>
+#include <stdio.h>
 
 
 #define DATETIME_DIGITS 14
@@ -73,8 +74,10 @@ SQLRETURN odbc_stmt2(STMT *stmt, const char *query,
     result= set_conn_error(dbc,MYERR_S1000,mysql_error(&dbc->mysql),
                            mysql_errno(&dbc->mysql));
   }
-  MYLOG_QUERY(stmt, "force executed");
-   stmt->state = ST_EXECUTED;
+  char str[80];
+  sprintf(str, "RESULT = %d\n", result);
+  MYLOG_QUERY(stmt, str);
+  // stmt->state = ST_EXECUTED;
 
   if (req_lock)
   {
@@ -95,7 +98,8 @@ SQLRETURN odbc_stmt2(STMT *stmt, const char *query,
   @param[in] req_lock       The flag if dbc->lock thread lock should be used
                             when executing a query
 */
-SQLRETURN exec_stmt_query(STMT *stmt, const char *query,
+SQLRETURN
+exec_stmt_query(STMT *stmt, const char *query,
                           SQLULEN query_length, my_bool req_lock)
 {
   SQLRETURN rc;
