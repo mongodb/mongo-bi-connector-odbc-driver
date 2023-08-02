@@ -50,14 +50,21 @@ function Add-System-OdbcDsn {
        throw "DSN already exists"
    }
 
+   echo "Create DSN path ''$dsnPath'"
    md $dsnPath | Out-Null
 
    # add properties to DSN
+   echo "Add properties to DSN"
    $driverReg = Get-ItemProperty "$ODBCRoot\ODBCINST.INI\$Driver"
+   echo "Driver registry = '$driverReg'"
    $driverName = $driverReg.Driver
+   echo "Driver name = '$driverName'"
+
+   echo "Set-ItemProperty -Name Driver -Value '$driverName'"
    Set-ItemProperty -Path $dsnPath -Name "Driver" -Value "$driverName" | Out-Null
    foreach($x in $SetPropertyValue) {
        $x_sp = $x.Split("=")
+       echo "Set-ItemProperty -Name '$x_sp[0]'-Value '$x_sp[1]'"
        Set-ItemProperty -Path $dsnPath -Name $x_sp[0] -Value $x_sp[1] | Out-Null
    }
 
@@ -356,6 +363,7 @@ function Run-Test-Cases {
         $tsv = Get-Content $SuccessTestsTsv
         foreach($line in $tsv)
         {
+            echo $line
             # clean out empty strings because we might have multiple tabs between items
             $line_sp = $line.Split("`t") | ? { $_ -ne "" }
             $name, $props = $line_sp
@@ -363,6 +371,7 @@ function Run-Test-Cases {
                 # expand any variables in the tsv file using the current environment
                 $props = $props | % { $ExecutionContext.InvokeCommand.ExpandString($_) }
             }
+            echo "Invoking TestSuccess with'$name' '$props'"
             $TestSuccess.Invoke($name, $props)
         }
     }
