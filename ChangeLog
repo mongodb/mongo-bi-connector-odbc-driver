@@ -1,3 +1,7 @@
+MongoDB ODBC 1.4.4
+  * Fix table name lengths over 128 characters causing invalid cursor in PowerBI (Bug# 01141507)
+  * Build the ODBC Driver with macOS 10.14
+
 MongoDB ODBC 1.4.3
   * Move ODBC driver off macos-1010-compass for signing
   * Update ODBC Driver to support macOS 12
