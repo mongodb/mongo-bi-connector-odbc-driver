@@ -25,23 +25,27 @@
 
     echo "done downloading mongodb"
 
-    echo "Has python3 ?: $(python3 --version 2>&1)"
+    if [ -e python3 ]; then
+        echo "Has python3 ?: $(python3 --version 2>&1)"
 
-    PYTHON_VERSION=$($PYTHON_EXEC --version 2>&1)
-    echo "Current python version: $PYTHON_VERSION"
-    PYTHON_MAJOR_VERSION="$(echo $PYTHON_VERSION | cut -d ' ' -f 2 | cut -d '.' -f 1)"
-    echo "Current python major version: $PYTHON_MAJOR_VERSION"
-    PYTHON_MINOR_VERSION="$(echo $PYTHON_VERSION | cut -d ' ' -f 2 | cut -d '.' -f 2)"
-    echo "Current python minor version: $PYTHON_MINOR_VERSION"
-
-    # We need to use Python2 or Python 3.7+, the earlier version of mtools with Python 3 are buggy
-    if [[ "$PYTHON_MAJOR_VERSION" -lt "3" ]] || [[ "$PYTHON_MAJOR_VERSION" -eq "3" && "$PYTHON_MINOR_VERSION" -lt "7" ]] ; then
-      # The last Python2 compatible version of mlaunch
-      CHECKOUT_VERSION="e544bbced1a070d7024931e7c1736ced7d9bcdd6"
-      # Make sure that we use Python2 if `python` points to Python 3.7+
-      if [ -x "$(command -v python2)" ]; then
-        PYTHON_EXEC="python2"
-      fi
+        PYTHON_VERSION=$($PYTHON_EXEC --version 2>&1)
+        echo "Current python version: $PYTHON_VERSION"
+        PYTHON_MAJOR_VERSION="$(echo $PYTHON_VERSION | cut -d ' ' -f 2 | cut -d '.' -f 1)"
+        echo "Current python major version: $PYTHON_MAJOR_VERSION"
+        PYTHON_MINOR_VERSION="$(echo $PYTHON_VERSION | cut -d ' ' -f 2 | cut -d '.' -f 2)"
+        echo "Current python minor version: $PYTHON_MINOR_VERSION"
+        # We need to use Python2 or Python 3.7+, the earlier version of mtools with Python 3 are buggy
+        if [[ "$PYTHON_MAJOR_VERSION" -lt "3" ]] || [[ "$PYTHON_MAJOR_VERSION" -eq "3" && "$PYTHON_MINOR_VERSION" -lt "7" ]] ; then
+            # The last Python2 compatible version of mlaunch
+            CHECKOUT_VERSION="e544bbced1a070d7024931e7c1736ced7d9bcdd6"
+            # Make sure that we use Python2 if `python` points to Python 3.7+
+            if [ -x "$(command -v python2)" ]; then
+                PYTHON_EXEC="python2"
+            fi
+        fi
+    else
+        # we don't have python3, which also means this is an old distro that doesn't have python2
+        PYTHON_EXEC="python"
     fi
 
     echo "Used python version: $($PYTHON_EXEC --version 2>&1)"
