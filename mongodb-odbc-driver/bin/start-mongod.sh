@@ -44,7 +44,7 @@
     elif [ -f "$venv"/Scripts/activate ]; then
       echo 'using existing virtualenv'
       . "$venv"/Scripts/activate
-    elif virtualenv "$venv" || python -m virtualenv "$venv"; then
+    elif virtualenv "$venv" || python2 -m virtualenv "$venv"; then
       echo 'creating new virtualenv'
       if [ -f "$venv"/bin/activate ]; then
         . "$venv"/bin/activate
@@ -72,11 +72,11 @@
     mlaunch_init_args="$mlaunch_args --single"
     echo "mlaunch init args: $mlaunch_init_args"
 
-    mlaunch init $mlaunch_init_args
+    python2 mlaunch init $mlaunch_init_args
     echo "sleeping for a bit"
     sleep 30
     echo "done sleeping"
-    mlaunch list $mlaunch_args
+    python2 mlaunch list $mlaunch_args
 
     echo "done starting mongodb"
 
