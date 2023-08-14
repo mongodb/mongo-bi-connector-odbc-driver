@@ -25,7 +25,8 @@
 
     echo "done downloading mongodb"
 
-    if [ -e python3 ]; then
+    PYTHON_EXEC=python
+    if command -v python3 &> /dev/null; then
         echo "Has python3 ?: $(python3 --version 2>&1)"
 
         PYTHON_VERSION=$($PYTHON_EXEC --version 2>&1)
@@ -43,9 +44,6 @@
                 PYTHON_EXEC="python2"
             fi
         fi
-    else
-        # we don't have python3, which also means this is an old distro that doesn't have python2
-        PYTHON_EXEC="python"
     fi
 
     echo "Used python version: $($PYTHON_EXEC --version 2>&1)"
