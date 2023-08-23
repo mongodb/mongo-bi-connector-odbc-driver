@@ -1,3 +1,7 @@
+MongoDB ODBC 1.4.5
+  * Fix stack overflow crash. The driver now allocates a smaller buffer to prevent
+   application running out of memory. (Bug# 01141507)
+
 MongoDB ODBC 1.4.4
   * Fix table name lengths over 128 characters causing invalid cursor in PowerBI (Bug# 01141507)
   * Build the ODBC Driver with macOS 10.14
