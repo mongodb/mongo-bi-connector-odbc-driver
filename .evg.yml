@@ -53,7 +53,7 @@ buildvariants:
       - name: "integration_tests_atlas"
       - name: "integration_tests_local"
       - name: "sign_msi"
-        run_on: linux-64-amzn-build
+        run_on: ubuntu2204-large
   - name: win32
     display_name: Windows 32
     expansions:
@@ -65,7 +65,7 @@ buildvariants:
       - name: "integration_tests_atlas"
       - name: "integration_tests_local"
       - name: "sign_msi"
-        run_on: linux-64-amzn-build
+        run_on: ubuntu2204-large
   - name: macos
     display_name: OSX 10.14
     expansions:
@@ -342,17 +342,23 @@ functions:
 
   "sign msi installer":
     - command: shell.exec
+      type: system
+      params:
+        silent: true
+        script: |
+          docker login --username ${sql_engines_artifactory_username} --password ${sql_engines_artifactory_auth_token} ${release_tools_container_registry}
+    - command: shell.exec
+      type: system
       params:
         working_dir: mongo-odbc-driver/mongodb-odbc-driver/artifacts/pkg/
         script: |
-          echo "${signing_token_odbc_driver}" > ./signing_auth_token
-          /usr/local/bin/notary-client.py \
-              --key-name "bi-connector" \
-              --auth-token-file ./signing_auth_token \
-              --comment "Evergreen Automatic Signing (odbc) - ${version_id} - ${build_variant}" \
-              --notary-url ${notary_client_url} \
-              --skip-missing \
-              mongodb-odbc.msi
+          docker run \
+            -e GRS_CONFIG_USER1_USERNAME=${bic_odbc_garasign_username} \
+            -e GRS_CONFIG_USER1_PASSWORD=${bic_odbc_garasign_password} \
+            --rm \
+            -v $(pwd):$(pwd) -w $(pwd) \
+            ${garasign_jsign_image} \
+            /bin/bash -c "jsign -a mongo-authenticode-2021 --replace --tsaurl http://timestamp.digicert.com -d SHA-256 mongodb-odbc.msi"
 
   "upload artifacts":
     - command: s3.put
@@ -454,7 +460,7 @@ functions:
             - win64
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc-signed.msi
+        local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc.msi
         remote_file: ${S3_RELEASES_DIR}/${RELEASE_BASENAME}.msi
         content_type: application/x-msi
         bucket: mciuploads
