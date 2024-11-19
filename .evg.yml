@@ -67,10 +67,10 @@ buildvariants:
       - name: "sign_msi"
         run_on: ubuntu2204-large
   - name: macos
-    display_name: OSX 10.14
+    display_name: OSX 11
     expansions:
       _platform: macos
-    run_on: macos-1014
+    run_on: macos-1100
     tasks:
       - name: "build"
       - name: "unit_tests"
