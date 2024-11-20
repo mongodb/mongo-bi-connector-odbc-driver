@@ -77,7 +77,6 @@ buildvariants:
       - name: "integration_tests_atlas"
       - name: "integration_tests_local"
       - name: "sign_dmg"
-        run_on: macos-1014-codesign
 
 tasks:
   - name: "build"
@@ -335,10 +334,11 @@ functions:
   "sign dmg installer":
       - command: shell.exec
         params:
-            working_dir: mongo-odbc-driver/mongodb-odbc-driver/artifacts/pkg/
-            script: |
-                ${PREPARE_SHELL}
-                ssh -v -p 2222 localhost "${SCRIPT_DIR}/sign-dmg-contents.sh '${developer_id}'"
+          env:
+            MACOS_NOTARY_KEY: "${mac_notary_service_key_id}"
+            MACOS_NOTARY_SECRET: "${mac_notary_service_secret}"
+          script: |
+            "${SCRIPT_DIR}/sign-dmg-contents.sh"
 
   "sign msi installer":
     - command: shell.exec
