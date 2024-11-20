@@ -1,33 +1,43 @@
 #!/bin/bash
-# Copyright (c) 2018-Present MongoDB Inc.
+set -o xtrace
+set -o errexit
+set -o verbose
 
-# shellcheck source=prepare-shell.sh
-. "$(dirname "$0")/prepare-shell.sh"
+for mount in /Volumes/mongodb-odbc*; do
+	hdiutil detach "$mount" || true
+done
 
-(
-	DMG_SIGN_DIR="$PROJECT_ROOT/mongodb-odbc-driver/dmg-sign"
-	rm -Rf "$DMG_SIGN_DIR"
-	mkdir -p "$DMG_SIGN_DIR"
+dmg_file="mongo-odbc-driver/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc.dmg"
 
-	cd "$DMG_SIGN_DIR"
-	cp -R "$PROJECT_ROOT/mongodb-odbc-driver/installer/dmg/dmg-contents" ./
+hdiutil attach $dmg_file
 
-	for mount in /Volumes/mongodb-odbc*; do
-		hdiutil detach "$mount" || true
-	done
-	hdiutil attach "$PKG_DIR"/mongodb-odbc.dmg
+curl -LO https://macos-notary-1628249594.s3.amazonaws.com/releases/client/v3.9.0/darwin_amd64.zip
+unzip darwin_amd64.zip
+chmod 0755 ./darwin_amd64/macnotary
 
-	PKG="mongodb-connector-odbc-$MDBODBC_VER-macos-x86-64.pkg"
-	cp /Volumes/mongodb-odbc/"$PKG" ./
+./darwin_amd64/macnotary -v
 
-	hdiutil detach /Volumes/mongodb-odbc
+MDBODBC_VER=$(cat "mongo-odbc-driver/mongodb-odbc-driver/bin/VERSION.txt")
 
-	# The developer ID will be passed as an argument to this script.
-	productsign --sign "$1" "$PKG" ./dmg-contents/"$PKG"
+pkg_name="mongodb-connector-odbc-$MDBODBC_VER-macos-x86-64.pkg"
+pkg_path="/Volumes/mongodb-odbc/$pkg_name"
+zip_file="mongodb-odbc.zip"
 
-	hdiutil create -fs HFS+ -srcfolder dmg-contents -volname mongodb-odbc mongodb-odbc-signed.dmg
+zip -j $zip_file $pkg_path
 
-	cp ./*.dmg "$PKG_DIR"/
-) > $LOG_FILE 2>&1
+mkdir ./dmg-contents
 
-print_exit_msg
+./darwin_amd64/macnotary \
+	--file "$zip_file" \
+  --task-comment "Signing the ODBC Driver DMG" \
+  --mode sign \
+  --url https://dev.macos-notary.build.10gen.cc/api \
+  --key-id $MACOS_NOTARY_KEY \
+  --secret $MACOS_NOTARY_SECRET \
+  --bundleId com.mongodb.odbc \
+  --artifact-type "pkg" \
+  --out-path "./dmg-contents/$pkg_name"
+
+hdiutil detach /Volumes/mongodb-odbc
+
+hdiutil create -fs HFS+ -srcfolder dmg-contents -volname mongodb-odbc mongo-odbc-driver/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc-signed.dmg
