@@ -362,7 +362,7 @@ functions:
             --rm \
             -v $(pwd):$(pwd) -w $(pwd) \
             ${garasign_jsign_image} \
-            /bin/bash -c "jsign -a mongo-authenticode-2021 --replace --tsaurl http://timestamp.digicert.com -d SHA-256 mongodb-odbc.msi"
+            /bin/bash -c "jsign -a ${authenticode_key_name} --replace --tsaurl http://timestamp.digicert.com -d SHA-256 mongodb-odbc.msi"
 
   "upload artifacts":
     - command: s3.put
