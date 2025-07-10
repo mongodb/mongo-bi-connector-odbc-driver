@@ -17,6 +17,8 @@
 	./configure --prefix="$BUILD_DIR"/install --enable-static --disable-shared --with-pic
 	make
 	make install
+
+  echo "$(odbcinst -j)"
 ) > $LOG_FILE 2>&1
 
 print_exit_msg

@@ -47,6 +47,15 @@ rhel80)
     CMAKE_GENERATOR="Unix Makefiles"
     CMAKE_PATH='/opt/cmake/bin'
     ;;
+rhel93)
+    PLATFORM_ARCH='64'
+    PLATFORM_NAME='linux'
+    MONGODB_URI='https://downloads.mongodb.com/linux/mongodb-linux-x86_64-enterprise-rhel93-8.0.10.tgz'
+    SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/mongodb-bi-linux-x86_64-rhel93-v2.14.23.tgz'
+    EXTRACT='tar xf'
+    CMAKE_GENERATOR="Unix Makefiles"
+    CMAKE_PATH='/opt/cmake/bin'
+    ;;
 macos)
     PLATFORM_ARCH='64'
     PLATFORM_NAME='macos'
@@ -64,12 +73,14 @@ win64)
     EXTRACT='unzip'
     PLATFORM_ARCH='64'
     PLATFORM_NAME='windows'
-    CMAKE_GENERATOR="Visual Studio 14 2015 Win64"
+    #CMAKE_GENERATOR="Visual Studio 14 2015 Win64"
+    CMAKE_GENERATOR="Visual Studio 16 2019"
     # make sure binaries we use in our scripts are available in the PATH
-    DEVENV_PATH='/cygdrive/c/Program Files (x86)/Microsoft Visual Studio 14.0/Common7/IDE'
+    #DEVENV_PATH='/cygdrive/c/Program Files (x86)/Microsoft Visual Studio 14.0/Common7/IDE'
+    DEVENV_PATH='/cygdrive/c/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE'
     CMAKE_PATH='/cygdrive/c/cmake/bin'
     WIX_PATH='/cygdrive/c/wixtools/bin'
-	OPENSSL_PATH='/cygdrive/c/openssl/bin'
+	  OPENSSL_PATH='/cygdrive/c/openssl/bin'
     ;;
 win32)
     # We must use 32-bit powershell to test 32-bit odbc
@@ -84,7 +95,7 @@ win32)
     DEVENV_PATH='/cygdrive/c/Program Files (x86)/Microsoft Visual Studio 14.0/Common7/IDE'
     CMAKE_PATH='/cygdrive/c/cmake/bin'
     WIX_PATH='/cygdrive/c/wixtools/bin'
-	OPENSSL_PATH='/cygdrive/c/openssl32/openssl-1_0_2k/bin'
+	  OPENSSL_PATH='/cygdrive/c/openssl32/openssl-1_0_2k/bin'
     ;;
 *)
     echo "ERROR: invalid value for \$PLATFORM: '$PLATFORM'"
