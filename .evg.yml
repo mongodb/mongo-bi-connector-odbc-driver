@@ -19,7 +19,7 @@ buildvariants:
     tasks:
       - name: "build"
       - name: "unit_tests"
-      - name: "integration_tests_atlas"
+      - name: "integration_tests_local"
         run_on: ubuntu1404-build
   - name: ubuntu1604-64
     display_name: Ubuntu 16.04
@@ -29,28 +29,36 @@ buildvariants:
     tasks:
       - name: "build"
       - name: "unit_tests"
-      - name: "integration_tests_atlas"
+      - name: "integration_tests_local"
         run_on: ubuntu1604-build
-  - name: rhel70
-    display_name: RHEL 7.0
+  - name: rhel80
+    display_name: RHEL 8.0
     expansions:
-      _platform: rhel70
-    run_on: rhel70
+      _platform: rhel80
+    run_on: rhel80-small
     tasks:
       - name: "build"
       - name: "unit_tests"
-      - name: "integration_tests_atlas"
       - name: "integration_tests_local"
-        run_on: rhel70
+        run_on: rhel80-small
+  - name: rhel93
+    display_name: RHEL 9.3
+    expansions:
+      _platform: rhel93
+    run_on: rhel93-small
+    tasks:
+      - name: "build"
+      - name: "unit_tests"
+      - name: "integration_tests_local"
   - name: win64
     display_name: Windows 64
     expansions:
       _platform: win64
-    run_on: windows-64-vs2015-compile
+    #run_on: windows-64-vs2015-compile
+    run_on: windows-64-vs2019-large
     tasks:
       - name: "build"
       - name: "unit_tests"
-      - name: "integration_tests_atlas"
       - name: "integration_tests_local"
       - name: "sign_msi"
         run_on: ubuntu2204-large
@@ -62,7 +70,6 @@ buildvariants:
     tasks:
       - name: "build"
       - name: "unit_tests"
-      - name: "integration_tests_atlas"
       - name: "integration_tests_local"
       - name: "sign_msi"
         run_on: ubuntu2204-large
@@ -74,7 +81,6 @@ buildvariants:
     tasks:
       - name: "build"
       - name: "unit_tests"
-      - name: "integration_tests_atlas"
       - name: "integration_tests_local"
       - name: "sign_dmg"
 
@@ -86,14 +92,6 @@ tasks:
       - func: "build msi installer"
       - func: "build dmg installer"
 
-  - name: "integration_tests_atlas"
-    depends_on:
-      - name: build
-    commands:
-      - func: "fetch msi"
-      - func: "fetch shared library files"
-      - func: "run atlas integration tests"
-
   - name: "integration_tests_local"
     depends_on:
       - name: build
@@ -104,7 +102,6 @@ tasks:
 
   - name: "sign_dmg"
     depends_on:
-      - name: integration_tests_atlas
       - name: integration_tests_local
     commands:
       - func: "fetch dmg"
@@ -113,7 +110,6 @@ tasks:
 
   - name: "sign_msi"
     depends_on:
-      - name: integration_tests_atlas
       - name: integration_tests_local
     commands:
       - func: "fetch msi"
@@ -211,6 +207,7 @@ functions:
           S3_ARTIFACTS_DIR: "$S3_ARTIFACTS_DIR"
           S3_RELEASES_DIR: "$S3_RELEASES_DIR"
           RELEASE_BASENAME: "$RELEASE_BASENAME"
+          MONGOSQL_AUTH_PROJECT_DIR: "$MONGOSQL_AUTH_PROJECT_DIR"
           PREPARE_SHELL: |
              if [ "Windows_NT" = "$OS" ]; then
                  set -o igncr
@@ -264,6 +261,7 @@ functions:
             - ubuntu1404-64
             - ubuntu1604-64
             - rhel70
+            - rhel80
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         remote_file: ${S3_ARTIFACTS_DIR}/libmdbodbca.so
@@ -276,6 +274,7 @@ functions:
             - ubuntu1404-64
             - ubuntu1604-64
             - rhel70
+            - rhel80
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         remote_file: ${S3_ARTIFACTS_DIR}/libmdbodbcw.so
@@ -291,14 +290,6 @@ functions:
     - command: git.get_project
       params:
         directory: mongo-odbc-driver
-
-  "run atlas integration tests":
-    command: shell.exec
-    type: test
-    params:
-      script: |
-          ${PREPARE_SHELL}
-          ${SCRIPT_DIR}/run-atlas-integration-tests.sh
 
   "run local integration tests":
     - command: shell.exec
@@ -432,6 +423,7 @@ functions:
             - ubuntu1404-64
             - ubuntu1604-64
             - rhel70
+            - rhel80
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/drivers/libmdbodbca.so
@@ -447,6 +439,7 @@ functions:
             - ubuntu1404-64
             - ubuntu1604-64
             - rhel70
+            - rhel80
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/drivers/libmdbodbcw.so

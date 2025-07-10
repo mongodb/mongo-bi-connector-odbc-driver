@@ -72,12 +72,15 @@
     CMAKE_ARGS="$CMAKE_ARGS $CMAKE_ICU_ARGS -DDEBUG_OUTPUT='C:\\mysql_debug.log'"
 
     # run CMake in the BUILD_DIR
+    echo "Running cmake \"$BUILD_SRC_DIR\" -G \"$CMAKE_GENERATOR\" -DMYSQLCLIENT_STATIC_LINKING:BOOL=TRUE -DCMAKE_MODULE_PATH="$CMAKE_MODULE_PATH" $UNIX_LIB $CMAKE_ARGS"
     cmake "$BUILD_SRC_DIR" -G "$CMAKE_GENERATOR" -DMYSQLCLIENT_STATIC_LINKING:BOOL=TRUE -DCMAKE_MODULE_PATH="$CMAKE_MODULE_PATH" $UNIX_LIB $CMAKE_ARGS
 
-    echo 'building'
+    echo 'building...'
     # build the ODBC driver
     if [ "$PLATFORM_NAME" = "windows" ]; then
-        devenv.com MySQL_Connector_ODBC.sln /build Release || true
+        BUILD='devenv.com MySQL_Connector_ODBC.sln /build Release || true'
+        eval $BUILD
+        #BUILD='devenv.com MySQL.sln /Build Release /Project mysqlclient'
     else
         make mdbodbca mdbodbcw
     fi
