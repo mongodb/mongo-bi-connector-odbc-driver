@@ -81,7 +81,7 @@ win64)
     CMAKE_PATH='/cygdrive/c/cmake/bin'
     WIX_PATH='/cygdrive/c/wixtools/bin'
     #OPENSSL_PATH='/cygdrive/c/openssl/bin'
-    OPENSSL_PATH='/cygdrive/c/ProgramData/chocolatey/lib/openssl'
+    OPENSSL_PATH='/cygdrive/c/Program\ Files/OpenSSL-Win64/bin'
     ;;
 win32)
     # We must use 32-bit powershell to test 32-bit odbc

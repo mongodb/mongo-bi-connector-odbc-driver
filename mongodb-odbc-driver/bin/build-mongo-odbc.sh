@@ -109,6 +109,6 @@
             install_name_tool -change /usr/local/opt/openssl/lib/libcrypto.1.0.0.dylib "@loader_path/libcrypto.1.0.0.dylib" "$DRIVERS_DIR"/libmdbodbcw.so
         fi
     fi
-) > $LOG_FILE 2>&1
+) #> $LOG_FILE 2>&1
 
 print_exit_msg

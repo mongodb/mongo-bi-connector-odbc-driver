@@ -272,7 +272,12 @@ if(WIN32)
   # the odbc.dll that is part of Windows tries to link against legacy stdio implementations
   # that were inlined in vs2015.  That requires using this legacy_stdio_definitions.lib
   # library to bring those symbols back.
-  set(MYSQL_EXTRA_LIBRARIES ${MYSQL_EXTRA_LIBRARIES} legacy_stdio_definitions.lib C:/cygwin/home/Administrator/mbic-updated/mongodb-odbc-driver/libmongosql/bld/artifacts/mysql-home/lib/mongosql_auth.lib )
+  set(MYSQL_EXTRA_LIBRARIES ${MYSQL_EXTRA_LIBRARIES} legacy_stdio_definitions.lib
+          "C:/cygwin/home/Administrator/mbic-updated/mongodb-odbc-driver/libmongosql/bld/artifacts/mysql-home/lib/mongosql_auth.lib"
+          "C:/cygwin/home/Administrator/mbic-updated/mongodb-odbc-driver/libmongosql/bld/artifacts/mysql-home/lib/libssl.lib"
+          "C:/cygwin/home/Administrator/mbic-updated/mongodb-odbc-driver/libmongosql/bld/artifacts/mysql-home/lib/libcrypto.lib"
+      )
+  find_package(OpenSSL REQUIRED)
 elseif(MYSQLCLIENT_NO_THREADS)
   # In 5.1 and below there is a single threaded library
   set(_dynamic_libs   "mysqlclient")
