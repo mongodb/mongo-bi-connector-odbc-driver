@@ -19,6 +19,10 @@
         OPENSSL_PATH="$BUILD_DIR/1.0.2n"
         CMAKE_ARGS="$CMAKE_ARGS -DWITH_SSL=$OPENSSL_PATH -DCMAKE_VERBOSE_MAKEFILE=ON"
     fi
+    if [ "$PLATFORM_NAME" = "windows" ]; then	
+        CMAKE_ARGS="$CMAKE_ARGS -DWITH_SSL=$OPENSSL_PATH -DCMAKE_VERBOSE_MAKEFILE=ON"
+	echo "!!!!!!!!!!!!!!!!!!!!! $CMAKE_ARGS"
+    fi
 
     # clear DRIVERS_DIR
     echo "clear $DRIVERS_DIR"
@@ -62,7 +66,6 @@
         "$SCRIPT_DIR"/build-unixodbc.sh
         UNIX_LIB="-DODBC_INCLUDES=$BUILD_DIR/install/include -DODBC_LIB_DIR=$BUILD_DIR/install/lib -DWITH_UNIXODBC=1"
     fi
-
     # Set locations for ICU
     ICU_DIR="$MYSQL_PROJECT_DIR/bld/artifacts/icu"
     ICU_SRC_DIR="$ICU_DIR/icu/source"
