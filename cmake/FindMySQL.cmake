@@ -272,10 +272,7 @@ if(WIN32)
   # the odbc.dll that is part of Windows tries to link against legacy stdio implementations
   # that were inlined in vs2015.  That requires using this legacy_stdio_definitions.lib
   # library to bring those symbols back.
-  # libssl.lib and libcrypto.lib came from /cygdrive/c/Program\ Files/OpenSSL-Win64/lib/VC/x64/MD/
-  # but cmake seems to be incredibly stupid wrt paths that have spaces in them
   set(MYSQL_EXTRA_LIBRARIES ${MYSQL_EXTRA_LIBRARIES} legacy_stdio_definitions.lib)
-  find_package(OpenSSL REQUIRED)
 elseif(MYSQLCLIENT_NO_THREADS)
   # In 5.1 and below there is a single threaded library
   set(_dynamic_libs   "mysqlclient")
