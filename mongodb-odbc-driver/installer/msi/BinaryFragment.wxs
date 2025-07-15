@@ -18,11 +18,11 @@
        <Component Guid="{C1B967E5-B56D-432C-9F93-38F2CDB1E91B}" Id="libw" SharedDllRefCount="yes" Win64="$(var.win64Flag)">
             <File DiskId="1" Id="mdbodbcw.lib" Name="mdbodbcw.lib" Source="mdbodbcw.lib" />
        </Component>
-       <Component Guid="{31B5C201-AA0F-4BF2-BBE4-72A69DC74E9D}" Id="ssleay" SharedDllRefCount="yes" Win64="$(var.win64Flag)">
-            <File DiskId="1" Id="ssleay32.dll"  Name="ssleay32.dll" Source="ssleay32.dll" />
+       <Component Guid="{31B5C201-AA0F-4BF2-BBE4-72A69DC74E9D}" Id="libcrypto" SharedDllRefCount="yes" Win64="$(var.win64Flag)">
+            <File DiskId="1" Id="libcrypto-3-x64.dll"  Name="libcrypto-3-x64.dll" Source="libcrypto-3-x64.dll" />
        </Component>
-       <Component Guid="{64E00C58-C418-465D-8F67-D07058E79448}" Id="libeay" SharedDllRefCount="yes" Win64="$(var.win64Flag)">
-            <File DiskId="1" Id="libeay32.dll"  Name="libeay32.dll" Source="libeay32.dll" />
+       <Component Guid="{64E00C58-C418-465D-8F67-D07058E79448}" Id="libssl" SharedDllRefCount="yes" Win64="$(var.win64Flag)">
+            <File DiskId="1" Id="libssl-3-x64.dll"  Name="libssl-3-x64.dll" Source="libssl-3-x64.dll" />
        </Component>
        <Component Guid="{628199F9-7996-4D6C-8319-EDAF12120263}" Id="setuplib" SharedDllRefCount="yes" Win64="$(var.win64Flag)">
             <File DiskId="1" Id="mdbodbcS.lib" Name="mdbodbcS.lib" Source="mdbodbcS.lib" />
@@ -46,8 +46,8 @@
           <ComponentRef Id="RegKeys" />
           <ComponentRef Id="liba" />
           <ComponentRef Id="libw" />
-          <ComponentRef Id="ssleay" />
-          <ComponentRef Id="libeay" />
+          <ComponentRef Id="libssl" />
+          <ComponentRef Id="libcrypto" />
           <ComponentRef Id="drivera" />
           <ComponentRef Id="driverw" />
           <ComponentRef Id="setupdll" />

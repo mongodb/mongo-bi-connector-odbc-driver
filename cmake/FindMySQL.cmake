@@ -274,11 +274,7 @@ if(WIN32)
   # library to bring those symbols back.
   # libssl.lib and libcrypto.lib came from /cygdrive/c/Program\ Files/OpenSSL-Win64/lib/VC/x64/MD/
   # but cmake seems to be incredibly stupid wrt paths that have spaces in them
-  set(MYSQL_EXTRA_LIBRARIES ${MYSQL_EXTRA_LIBRARIES} legacy_stdio_definitions.lib
-          "C:/cygwin/home/Administrator/mbic-updated/mongodb-odbc-driver/libmongosql/bld/artifacts/mysql-home/lib/mongosql_auth.lib"
-          "C:/cygwin/home/Administrator/mbic-updated/mongodb-odbc-driver/libmongosql/bld/artifacts/mysql-home/lib/libssl.lib"
-          "C:/cygwin/home/Administrator/mbic-updated/mongodb-odbc-driver/libmongosql/bld/artifacts/mysql-home/lib/libcrypto.lib"
-      )
+  set(MYSQL_EXTRA_LIBRARIES ${MYSQL_EXTRA_LIBRARIES} legacy_stdio_definitions.lib)
   find_package(OpenSSL REQUIRED)
 elseif(MYSQLCLIENT_NO_THREADS)
   # In 5.1 and below there is a single threaded library

@@ -20,8 +20,11 @@
         CMAKE_ARGS="$CMAKE_ARGS -DWITH_SSL=$OPENSSL_PATH -DCMAKE_VERBOSE_MAKEFILE=ON"
     fi
     if [ "$PLATFORM_NAME" = "windows" ]; then	
-        CMAKE_ARGS="$CMAKE_ARGS -DWITH_SSL=$OPENSSL_PATH -DCMAKE_VERBOSE_MAKEFILE=ON"
-	echo "!!!!!!!!!!!!!!!!!!!!! $CMAKE_ARGS"
+	DIR=$(cygpath -aw "$(dirname $0)/..")
+	echo "-----copy libcrypto and libssl locally because cmake cannot handle spaces in paths"
+	cp "/cygdrive/c/Program Files/OpenSSL-Win64/lib/VC/x64/MD/libcrypto.lib" "$DIR"/libmongosql/bld/artifacts/mysql-home/lib/
+	cp "/cygdrive/c/Program Files/OpenSSL-Win64/lib/VC/x64/MD/libssl.lib" "$DIR"/libmongosql/bld/artifacts/mysql-home/lib/
+	export MYSQL_EXTRA_LIBRARIES="$DIR/libmongosql/bld/build/archive_output_directory/Release/mongosql_auth.lib;$DIR/libmongosql/bld/artifacts/mysql-home/lib/libssl.lib;$DIR/libmongosql/bld/artifacts/mysql-home/lib/libcrypto.lib"
     fi
 
     # clear DRIVERS_DIR
