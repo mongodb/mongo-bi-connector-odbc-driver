@@ -424,6 +424,7 @@ functions:
             - ubuntu1604-64
             - rhel70
             - rhel80
+            - rhel93
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/drivers/libmdbodbca.so
@@ -440,6 +441,7 @@ functions:
             - ubuntu1604-64
             - rhel70
             - rhel80
+            - rhel93
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/drivers/libmdbodbcw.so
