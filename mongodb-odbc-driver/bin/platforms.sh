@@ -29,6 +29,38 @@ ubuntu1604-64)
     CMAKE_GENERATOR="Unix Makefiles"
     CMAKE_PATH='/opt/cmake/bin'
     ;;
+ubuntu2004-64)
+    PLATFORM_ARCH='64'
+    PLATFORM_NAME='linux'
+    CMAKE_GENERATOR='Unix Makefiles'
+    CMAKE_PATH='/opt/cmake/bin'
+    ICU_PLATFORM='Linux'
+    VARIANT='ubuntu2004-64'
+    ;;
+ubuntu2204-64)
+    PLATFORM_ARCH='64'
+    PLATFORM_NAME='linux'
+    CMAKE_GENERATOR='Unix Makefiles'
+    CMAKE_PATH='/opt/cmake/bin'
+    ICU_PLATFORM='Linux'
+    VARIANT='ubuntu2204-64'
+    ;;
+ubuntu2004-arm64)
+    PLATFORM_ARCH='arm64'
+    PLATFORM_NAME='linux'
+    CMAKE_GENERATOR='Unix Makefiles'
+    CMAKE_PATH='/opt/cmake/bin'
+    ICU_PLATFORM='Linux'
+    VARIANT='ubuntu2004-arm64'
+    ;;
+ubuntu2204-arm64)
+    PLATFORM_ARCH='arm64'
+    PLATFORM_NAME='linux'
+    CMAKE_GENERATOR='Unix Makefiles'
+    CMAKE_PATH='/opt/cmake/bin'
+    ICU_PLATFORM='Linux'
+    VARIANT='ubuntu2204-arm64'
+    ;;
 rhel70)
     PLATFORM_ARCH='64'
     PLATFORM_NAME='linux'
@@ -64,6 +96,17 @@ macos)
     EXTRACT='tar xf'
     CMAKE_GENERATOR="Unix Makefiles"
     CMAKE_PATH='/Applications/Cmake.app/Contents/bin'
+    OPENSSL_PATH='/usr/local/opt/openssl@3'
+    ;;
+macos-arm64)
+    PLATFORM_ARCH='arm64'
+    PLATFORM_NAME='macos'
+    MONGODB_URI='http://downloads.10gen.com/osx/mongodb-osx-x86_64-enterprise-latest.tgz'
+    SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/latest/mongodb-bi-osx-x86_64-latest.tgz'
+    EXTRACT='tar xf'
+    CMAKE_GENERATOR="Unix Makefiles"
+    CMAKE_PATH='/Applications/Cmake.app/Contents/bin'
+    OPENSSL_PATH='/opt/homebrew/opt/openssl@3'
     ;;
 win64)
     # We must use 64-bit powershell to test 64-bit odbc
@@ -77,10 +120,11 @@ win64)
     CMAKE_GENERATOR="Visual Studio 16 2019"
     # make sure binaries we use in our scripts are available in the PATH
     #DEVENV_PATH='/cygdrive/c/Program Files (x86)/Microsoft Visual Studio 14.0/Common7/IDE'
-    DEVENV_PATH='/cygdrive/c/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE'
+    #DEVENV_PATH='/cygdrive/c/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE'
+    DEVENV_PATH="$(vswhere.exe -latest -prerelease -products Microsoft.VisualStudio.Product.Professional -property productPath | cygpath -u -f - | sed 's/\/[^/]*$//')"
     CMAKE_PATH='/cygdrive/c/cmake/bin'
     WIX_PATH='/cygdrive/c/wixtools/bin'
-	  OPENSSL_PATH='/cygdrive/c/openssl/bin'
+    OPENSSL_PATH='/cygdrive/c/Program Files/OpenSSL-Win64'
     ;;
 win32)
     # We must use 32-bit powershell to test 32-bit odbc
