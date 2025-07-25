@@ -23,16 +23,16 @@
     # copy driver libraries to appropriate location
     cp "$DRIVERS_DIR"/*.so ./
 
-    OPENSSL_PATH="$BUILD_DIR/1.0.2n/lib"
-    echo "DMG OPENSSL_PATH: $OPENSSL_PATH"
+    #OPENSSL_PATH="$BUILD_DIR/1.0.2n/lib"
+    echo "DMG OPENSSL_PATH: $OPENSSL_PATH/lib"
 
     # copy the openssl libs to appropriate location
-    cp "$OPENSSL_PATH/libssl.1.0.0.dylib"  ./
-    cp "$OPENSSL_PATH/libcrypto.1.0.0.dylib"  ./
+    cp "$OPENSSL_PATH/libssl.dylib"  ./
+    cp "$OPENSSL_PATH/libcrypto.dylib"  ./
 
-    chmod 777 libssl.1.0.0.dylib
-    chmod 777 libcrypto.1.0.0.dylib
-    install_name_tool -change "/usr/local/Cellar/openssl/1.0.2n/lib/libcrypto.1.0.0.dylib" "@loader_path/libcrypto.1.0.0.dylib" ./libssl.1.0.0.dylib
+    chmod 777 libssl.dylib
+    chmod 777 libcrypto.dylib
+    install_name_tool -change "$OPENSSL_PATH/libcrypto.dylib" "@loader_path/libcrypto.dylib" ./libssl.dylib
 
     sh ./build-dmg.sh
 

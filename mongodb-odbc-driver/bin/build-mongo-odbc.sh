@@ -10,15 +10,34 @@
     echo "clear $BUILD_DIR"
     rm -rf "$BUILD_DIR"
     mkdir -p "$BUILD_DIR"
-
-    if [ "$PLATFORM" = macos ]; then
-        cd "$BUILD_DIR"
-        # unfortunately, we unzip this in two places (libmongosql and here)
-        curl -O https://mongo-bic-odbc-driver-resources.s3.amazonaws.com/macos/openssl-1.0.2n.zip
-        unzip openssl-1.0.2n.zip
-        OPENSSL_PATH="$BUILD_DIR/1.0.2n"
-        CMAKE_ARGS="$CMAKE_ARGS -DWITH_SSL=$OPENSSL_PATH -DCMAKE_VERBOSE_MAKEFILE=ON"
+    MONGOSQL_AUTH_LIB_NAME="mongosql_auth"
+    if [ "$PLATFORM_NAME" = "macos" ]; then
+      MONGOSQL_AUTH_LIB_NAME=lib$MONGOSQL_AUTH_LIB_NAME.a
+      export MYSQL_EXTRA_LIBRARIES="$MYSQL_PROJECT_DIR/bld/build/archive_output_directory/$MONGOSQL_AUTH_LIB_NAME"
+    elif [ "$PLATFORM_NAME" = "windows" ]; then
+      MONGOSQL_AUTH_LIB_NAME=$MONGOSQL_AUTH_LIB_NAME.lib
+      export MYSQL_EXTRA_LIBRARIES="$MYSQL_PROJECT_DIR/bld/build/archive_output_directory/Release/$MONGOSQL_AUTH_LIB_NAME"
+      echo "-----Copy libcrypto and libssl locally because cmake cannot handle spaces in paths"
+      mkdir "$PROJECT_DIR/openssl"
+      cp "$OPENSSL_PATH/lib/VC/x64/MD/libcrypto.lib" "$PROJECT_DIR/openssl/"
+      cp "$OPENSSL_PATH/lib/VC/x64/MD/libssl.lib" "$PROJECT_DIR/openssl/"
+      export MYSQL_EXTRA_LIBRARIES="$MYSQL_EXTRA_LIBRARIES;$PROJECT_DIR/openssl/libcrypto.lib;$PROJECT_DIR/openssl/libssl.lib"
     fi
+
+    #if [ "$PLATFORM" = macos ]; then
+    #    cd "$BUILD_DIR"
+    #    # unfortunately, we unzip this in two places (libmongosql and here)
+    #    curl -O https://mongo-bic-odbc-driver-resources.s3.amazonaws.com/macos/openssl-1.0.2n.zip
+    #    unzip openssl-1.0.2n.zip
+    #    OPENSSL_PATH="$BUILD_DIR/1.0.2n"
+    #    CMAKE_ARGS="$CMAKE_ARGS -DWITH_SSL=$OPENSSL_PATH -DCMAKE_VERBOSE_MAKEFILE=ON"
+    #fi
+
+    CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_VERBOSE_MAKEFILE=ON"
+    if [ "$PLATFORM_NAME" = "macos" ]; then
+      CMAKE_ARGS="$CMAKE_ARGS -DWITH_SSL=$OPENSSL_PATH"
+    fi
+
 
     # clear DRIVERS_DIR
     echo "clear $DRIVERS_DIR"
@@ -45,10 +64,11 @@
 
     cd "$BUILD_DIR"
     # on OS X we use iODBC
-    if [ "$PLATFORM" = macos ]; then
-        iODBC_dir=iODBC-3.52.12
-        echo "downloading iODBC"
-        curl -O "http://noexpire.s3.amazonaws.com/sqlproxy/binary/linux/$iODBC_dir.tar.gz" \
+    if [ "$PLATFORM_NAME" = "macos" ]; then
+        iODBC_dir=libiodbc-3.52.16
+        echo "downloading iODBC https://github.com/openlink/iODBC/releases/download/v3.52.16/$iODBC_dir.tar.gz"
+
+        curl -LO "https://github.com/openlink/iODBC/releases/download/v3.52.16/$iODBC_dir.tar.gz" \
              --silent \
              --fail \
              --max-time 60 \
