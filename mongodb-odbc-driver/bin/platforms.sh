@@ -5,6 +5,8 @@
 # this project.
 echo $0
 
+SQLPROXY_VERSION="2.14.24"
+
 if [ "$PLATFORM" = "" ]; then
     PLATFORM=macos
     echo "WARNING: no value provided for \$PLATFORM: using default of '$PLATFORM'"
@@ -24,7 +26,7 @@ ubuntu1604-64)
     PLATFORM_ARCH='64'
     PLATFORM_NAME='linux'
     MONGODB_URI='http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-ubuntu1604-latest.tgz'
-    SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/latest/mongodb-bi-linux-x86_64-ubuntu-1604-latest.tgz'
+    SQLPROXY_URI="https://downloads.mongodb.org/mongodb-bi/v2/mongodb-bi-linux-x86_64-ubuntu1604-v$SQLPROXY_VERSION.tgz"
     EXTRACT='tar xf'
     CMAKE_GENERATOR="Unix Makefiles"
     CMAKE_PATH='/opt/cmake/bin'
@@ -32,6 +34,8 @@ ubuntu1604-64)
 ubuntu2004-64)
     PLATFORM_ARCH='64'
     PLATFORM_NAME='linux'
+    MONGODB_URI='http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-ubuntu2004-latest.tgz'
+    SQLPROXY_URI="https://downloads.mongodb.org/mongodb-bi/v2/mongodb-bi-linux-x86_64-ubuntu2004-v$SQLPROXY_VERSION.tgz"
     CMAKE_GENERATOR='Unix Makefiles'
     CMAKE_PATH='/opt/cmake/bin'
     ICU_PLATFORM='Linux'
@@ -40,6 +44,8 @@ ubuntu2004-64)
 ubuntu2204-64)
     PLATFORM_ARCH='64'
     PLATFORM_NAME='linux'
+    MONGODB_URI='http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-ubuntu2204-latest.tgz'
+    SQLPROXY_URI="https://downloads.mongodb.org/mongodb-bi/v2/mongodb-bi-linux-x86_64-ubuntu2204-v$SQLPROXY_VERSION.tgz"
     CMAKE_GENERATOR='Unix Makefiles'
     CMAKE_PATH='/opt/cmake/bin'
     ICU_PLATFORM='Linux'
@@ -48,6 +54,8 @@ ubuntu2204-64)
 ubuntu2004-arm64)
     PLATFORM_ARCH='arm64'
     PLATFORM_NAME='linux'
+    MONGODB_URI='http://downloads.10gen.com/linux/mongodb-linux-arm64-enterprise-ubuntu2004-latest.tgz'
+    SQLPROXY_URI="https://downloads.mongodb.org/mongodb-bi/v2/mongodb-bi-linux-arm64-ubuntu2004-v$SQLPROXY_VERSION.tgz"
     CMAKE_GENERATOR='Unix Makefiles'
     CMAKE_PATH='/opt/cmake/bin'
     ICU_PLATFORM='Linux'
@@ -56,6 +64,8 @@ ubuntu2004-arm64)
 ubuntu2204-arm64)
     PLATFORM_ARCH='arm64'
     PLATFORM_NAME='linux'
+    MONGODB_URI='http://downloads.10gen.com/linux/mongodb-linux-arm64-enterprise-ubuntu2204-latest.tgz'
+    SQLPROXY_URI="https://downloads.mongodb.org/mongodb-bi/v2/mongodb-bi-linux-arm64-ubuntu2204-v$SQLPROXY_VERSION.tgz"
     CMAKE_GENERATOR='Unix Makefiles'
     CMAKE_PATH='/opt/cmake/bin'
     ICU_PLATFORM='Linux'
@@ -65,7 +75,7 @@ rhel70)
     PLATFORM_ARCH='64'
     PLATFORM_NAME='linux'
     MONGODB_URI='http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-rhel70-latest.tgz'
-    SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/latest/mongodb-bi-linux-x86_64-rhel70-latest.tgz'
+    SQLPROXY_URI="https://downloads.mongodb.org/mongodb-bi/v2/mongodb-bi-linux-x86_64-rhel70-v$SQLPROXY_VERSION.tgz"
     EXTRACT='tar xf'
     CMAKE_GENERATOR="Unix Makefiles"
     CMAKE_PATH='/opt/cmake/bin'
@@ -74,7 +84,7 @@ rhel80)
     PLATFORM_ARCH='64'
     PLATFORM_NAME='linux'
     MONGODB_URI='http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-rhel80-latest.tgz'
-    SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/latest/mongodb-bi-linux-x86_64-rhel80-latest.tgz'
+    SQLPROXY_URI="https://downloads.mongodb.org/mongodb-bi/v2/mongodb-bi-linux-x86_64-rhel80-v$SQLPROXY_VERSION.tgz"
     EXTRACT='tar xf'
     CMAKE_GENERATOR="Unix Makefiles"
     CMAKE_PATH='/opt/cmake/bin'
@@ -83,7 +93,7 @@ rhel93)
     PLATFORM_ARCH='64'
     PLATFORM_NAME='linux'
     MONGODB_URI='https://downloads.mongodb.com/linux/mongodb-linux-x86_64-enterprise-rhel93-8.0.10.tgz'
-    SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/mongodb-bi-linux-x86_64-rhel93-v2.14.23.tgz'
+    SQLPROXY_URI="https://downloads.mongodb.org/mongodb-bi/v2/mongodb-bi-linux-x86_64-rhel93-v$SQLPROXY_VERSION.tgz"
     EXTRACT='tar xf'
     CMAKE_GENERATOR="Unix Makefiles"
     CMAKE_PATH='/opt/cmake/bin'
@@ -92,7 +102,7 @@ macos)
     PLATFORM_ARCH='64'
     PLATFORM_NAME='macos'
     MONGODB_URI='http://downloads.10gen.com/osx/mongodb-osx-x86_64-enterprise-latest.tgz'
-    SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/latest/mongodb-bi-osx-x86_64-latest.tgz'
+    SQLPROXY_URI="https://downloads.mongodb.org/mongodb-bi/v2/mongodb-bi-macos-x86_64-macos14-v$SQLPROXY_VERSION.zip"
     EXTRACT='tar xf'
     CMAKE_GENERATOR="Unix Makefiles"
     CMAKE_PATH='/Applications/Cmake.app/Contents/bin'
@@ -102,7 +112,7 @@ macos-arm64)
     PLATFORM_ARCH='arm64'
     PLATFORM_NAME='macos'
     MONGODB_URI='http://downloads.10gen.com/osx/mongodb-osx-x86_64-enterprise-latest.tgz'
-    SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/latest/mongodb-bi-osx-x86_64-latest.tgz'
+    SQLPROXY_URI="https://downloads.mongodb.org/mongodb-bi/v2/mongodb-bi-macos-arm64-macos14-v$SQLPROXY_VERSION.zip"
     EXTRACT='tar xf'
     CMAKE_GENERATOR="Unix Makefiles"
     CMAKE_PATH='/Applications/Cmake.app/Contents/bin'
@@ -112,7 +122,7 @@ win64)
     # We must use 64-bit powershell to test 64-bit odbc
     POWERSHELL='C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe' # 64-bit powershell
     MONGODB_URI='http://downloads.10gen.com/win32/mongodb-win32-x86_64-enterprise-windows-64-latest.zip'
-    SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/latest/mongodb-bi-win32-x86_64-latest.msi'
+    SQLPROXY_URI="https://downloads.mongodb.org/mongodb-bi/v2/mongodb-bi-win32-x86_64-v$SQLPROXY_VERSION.msi"
     EXTRACT='unzip'
     PLATFORM_ARCH='64'
     PLATFORM_NAME='windows'

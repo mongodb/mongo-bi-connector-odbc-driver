@@ -95,19 +95,7 @@ buildvariants:
     display_name: Windows 64
     expansions:
       _platform: win64
-    #run_on: windows-64-vs2015-compile
     run_on: windows-64-vs2019-large
-    tasks:
-      - name: "build"
-      - name: "unit_tests"
-      - name: "integration_tests_local"
-      - name: "sign_msi"
-        run_on: ubuntu2204-large
-  - name: win32
-    display_name: Windows 32
-    expansions:
-      _platform: win32
-    run_on: windows-64-vs2015-compile
     tasks:
       - name: "build"
       - name: "unit_tests"
@@ -309,10 +297,16 @@ functions:
       params:
         build_variants:
             - macos
+            - macos-arm64
             - ubuntu1404-64
             - ubuntu1604-64
+            - ubuntu2004-64
+            - ubuntu2004-arm64
+            - ubuntu2204-64
+            - ubuntu2204-arm64
             - rhel70
             - rhel80
+            - rhel93
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         remote_file: ${S3_ARTIFACTS_DIR}/libmdbodbca.so
@@ -322,10 +316,16 @@ functions:
       params:
         build_variants:
             - macos
+            - macos-arm64
             - ubuntu1404-64
             - ubuntu1604-64
+            - ubuntu2004-64
+            - ubuntu2004-arm64
+            - ubuntu2204-64
+            - ubuntu2204-arm64
             - rhel70
             - rhel80
+            - rhel93
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         remote_file: ${S3_ARTIFACTS_DIR}/libmdbodbcw.so
@@ -424,6 +424,7 @@ functions:
       params:
         build_variants:
             - macos
+            - macos-arm64
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc.dmg
@@ -471,10 +472,16 @@ functions:
       params:
         build_variants:
             - macos
+            - macos-arm64
             - ubuntu1404-64
             - ubuntu1604-64
+            - ubuntu2004-64
+            - ubuntu2004-arm64
+            - ubuntu2204-64
+            - ubuntu2204-arm64
             - rhel70
             - rhel80
+            - rhel93
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/drivers/libmdbodbca.so
@@ -487,10 +494,16 @@ functions:
       params:
         build_variants:
             - macos
+            - macos-arm64
             - ubuntu1404-64
             - ubuntu1604-64
+            - ubuntu2004-64
+            - ubuntu2004-arm64
+            - ubuntu2204-64
+            - ubuntu2204-arm64
             - rhel70
             - rhel80
+            - rhel93
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/drivers/libmdbodbcw.so
@@ -520,6 +533,7 @@ functions:
       params:
         build_variants:
             - macos
+            - macos-arm64
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
         local_file: mongo-odbc-driver/mongodb-odbc-driver/artifacts/pkg/mongodb-odbc-signed.dmg
