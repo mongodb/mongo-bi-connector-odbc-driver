@@ -355,7 +355,15 @@ functions:
         script: |
             ${PREPARE_SHELL}
             ${SCRIPT_DIR}/start-sqlproxy.sh
-            ${SCRIPT_DIR}/run-local-integration-tests.sh
+            ldd mongo-odbc-driver/mongodb-odbc-driver/artifacts/drivers/libmdbodbcw.so
+            chmod a+x ${SCRIPT_DIR}/test_driver_loading.py
+            python3 ${SCRIPT_DIR}/test_driver_loading.py
+    - command: shell.exec
+      type: test
+      params:
+        script: |
+          ${PREPARE_SHELL}
+          ${SCRIPT_DIR}/run-local-integration-tests.sh
     - command: shell.exec
       type: test
       params:

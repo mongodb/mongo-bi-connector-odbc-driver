@@ -22,6 +22,9 @@
       cp "$OPENSSL_PATH/lib/VC/x64/MD/libcrypto.lib" "$PROJECT_DIR/openssl/"
       cp "$OPENSSL_PATH/lib/VC/x64/MD/libssl.lib" "$PROJECT_DIR/openssl/"
       export MYSQL_EXTRA_LIBRARIES="$MYSQL_EXTRA_LIBRARIES;$PROJECT_DIR/openssl/libcrypto.lib;$PROJECT_DIR/openssl/libssl.lib"
+    elif [ "$PLATFORM_NAME" = "linux" ]; then
+      MONGOSQL_AUTH_LIB_NAME=lib$MONGOSQL_AUTH_LIB_NAME.a
+      export MYSQL_EXTRA_LIBRARIES="$MYSQL_PROJECT_DIR/bld/build/archive_output_directory/$MONGOSQL_AUTH_LIB_NAME"
     fi
 
     #if [ "$PLATFORM" = macos ]; then
