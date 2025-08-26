@@ -14,11 +14,11 @@
        --retry-delay 0
 	tar xf "$unixODBC_dir.tar.gz"
 	cd "$unixODBC_dir"
-	./configure --prefix="$BUILD_DIR"/install --enable-static --disable-shared --with-pic
+  ./configure --prefix="$BUILD_DIR"/install --enable-static --disable-shared --with-pic --enable-ltdl-install --with-included-ltdl
 	make
 	make install
 
-  echo "$(odbcinst -j)"
+  echo "$(./exe/odbcinst -j)"
 ) > $LOG_FILE 2>&1
 
 print_exit_msg
