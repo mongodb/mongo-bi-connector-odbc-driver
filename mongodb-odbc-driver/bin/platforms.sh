@@ -36,6 +36,7 @@ ubuntu2004-64)
     PLATFORM_NAME='linux'
     MONGODB_URI='http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-ubuntu2004-latest.tgz'
     SQLPROXY_URI="https://downloads.mongodb.org/mongodb-bi/v2/mongodb-bi-linux-x86_64-ubuntu2004-v$SQLPROXY_VERSION.tgz"
+    EXTRACT='tar xf'
     CMAKE_GENERATOR='Unix Makefiles'
     CMAKE_PATH='/opt/cmake/bin'
     ICU_PLATFORM='Linux'
@@ -46,6 +47,7 @@ ubuntu2204-64)
     PLATFORM_NAME='linux'
     MONGODB_URI='http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-ubuntu2204-latest.tgz'
     SQLPROXY_URI="https://downloads.mongodb.org/mongodb-bi/v2/mongodb-bi-linux-x86_64-ubuntu2204-v$SQLPROXY_VERSION.tgz"
+    EXTRACT='tar xf'
     CMAKE_GENERATOR='Unix Makefiles'
     CMAKE_PATH='/opt/cmake/bin'
     ICU_PLATFORM='Linux'
@@ -56,6 +58,7 @@ ubuntu2004-arm64)
     PLATFORM_NAME='linux'
     MONGODB_URI='http://downloads.10gen.com/linux/mongodb-linux-arm64-enterprise-ubuntu2004-latest.tgz'
     SQLPROXY_URI="https://downloads.mongodb.org/mongodb-bi/v2/mongodb-bi-linux-arm64-ubuntu2004-v$SQLPROXY_VERSION.tgz"
+    EXTRACT='tar xf'
     CMAKE_GENERATOR='Unix Makefiles'
     CMAKE_PATH='/opt/cmake/bin'
     ICU_PLATFORM='Linux'
@@ -66,6 +69,7 @@ ubuntu2204-arm64)
     PLATFORM_NAME='linux'
     MONGODB_URI='http://downloads.10gen.com/linux/mongodb-linux-arm64-enterprise-ubuntu2204-latest.tgz'
     SQLPROXY_URI="https://downloads.mongodb.org/mongodb-bi/v2/mongodb-bi-linux-arm64-ubuntu2204-v$SQLPROXY_VERSION.tgz"
+    EXTRACT='tar xf'
     CMAKE_GENERATOR='Unix Makefiles'
     CMAKE_PATH='/opt/cmake/bin'
     ICU_PLATFORM='Linux'
