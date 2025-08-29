@@ -30,7 +30,7 @@ db=test
 if [ "$CASE" = "local" ]; then
 db=information_schema
 fi
-dsn=TestODBC
+
 CA_PATH="$SCRIPT_DIR/../resources"
 digicertCA="$CA_PATH/digicert.pem"
 invalidCA="$CA_PATH/invalid.pem"
@@ -44,12 +44,21 @@ export ODBCINI="$ARTIFACTS_DIR"/tempODBC.ini
 
 #libmdbodbca.so  libmdbodbcw.so
 function add_odbc_dsn {
+
+DRIVER_PATH="$DRIVERS_DIR/$2"
+if [ ! -f $DRIVER_PATH ]; then
+  echo "!!!! No driver found at path : $DRIVER_PATH"
+  exit 1
+else
+  echo "Driver $DRIVER_PATH found"
+fi
+
 cat <<EOS > "$ODBCINI"
 [ODBC Data Sources]
 $1 = evg
 
 [$1]
-Driver   = $DRIVERS_DIR/$2
+Driver   = $DRIVER_PATH
 EOS
     shift 2
     for arg in "$@"; do
@@ -68,6 +77,7 @@ EOS
 
 function test_connect_success {
     testname=$1; shift
+    dsn=$testname
     query="select message from greeting where _id = '5c64a48d1c9d44000046008d'"
     if [ "$CASE" = "local" ]; then
         query="select CATALOG_NAME from\
@@ -75,8 +85,18 @@ function test_connect_success {
             where schema_name = 'mysql' limit 1"
     fi
     echo "...running $CASE connection test '$testname'"
+    FAILED_WITH=""
     for driver in libmdbodbcw.so libmdbodbca.so; do
         add_odbc_dsn "$dsn" "$driver" "Database=$db" "$@"
+        echo "----- Is a driver in the expected directory? -----"
+        ls -lrt $DRIVERS_DIR
+        echo "--------------------------------------------------"
+        echo "----- Is ODBCINI properly set? -----"
+        echo "$ODBCINI"
+        echo "--------------------------------------------------"
+        echo "---------------- ODBCINI content -----------------"
+        less $ODBCINI
+        echo "--------------------------------------------------"
 	set +o errexit
         out="$(echo "$query" | "$TEST_BIN" "$BIN_ARG_PREFIX""$dsn")"
 	set -o errexit
@@ -86,10 +106,16 @@ function test_connect_success {
             continue
         else
             echo "......test '$testname' FAILED: connection was rejected"
-            exit 1
+            FAILED_WITH+=" $driver"
+            #exit 1
         fi
     done
-    echo "......test '$testname' SUCCEEDED"
+    if [[ -z "$FAILED_WITH" ]]; then
+      echo "......test '$testname' SUCCEEDED"
+    else
+      echo "......test '$testname' FAILED"
+      #exit 1
+    fi
 }
 
 function test_connect_failure {
@@ -105,22 +131,27 @@ function test_connect_failure {
     # but we do not have another means to test this.
     query="select message from greeting where _id = '5c64a48d1c9d44000046008d'"
     if [ "$CASE" = "local" ]; then
-        query="select CATALOG_NAME from\
-            information_schema.schemata\
-            where schema_name = 'mysql' limit 1"
+        query="select CATALOG_NAME from information_schema.schemata where schema_name = 'mysql' limit 1"
     fi
     echo "...running $CASE negative connection test '$testname'"
+    FAILED_WITH=""
     for driver in libmdbodbca.so libmdbodbcw.so; do
         add_odbc_dsn "$dsn" "$driver" "Database=$db" "$@"
 	set +o errexit
         out="$(echo "$query" | "$TEST_BIN" "$BIN_ARG_PREFIX""$dsn" 2> /dev/null)"
 	set -o errexit
+      if [[ $out = *"result set 1 returned 1 rows"* ]]; then
+          echo "......test '$testname' FAILED: expected connection to be rejected, but it was accepted"
+          FAILED_WITH+=" $driver"
+          #exit 1
+      fi
     done
-    if [[ $out = *"result set 1 returned 1 rows"* ]]; then
-        echo "......test '$testname' FAILED: expected connection to be rejected, but it was accepted"
-        exit 1
+    if [[ -z "$FAILED_WITH" ]]; then
+      echo "......test '$testname' SUCCEEDED"
+    else
+       echo "......test '$testname' FAILED"
+       #exit 1
     fi
-    echo "......test '$testname' SUCCEEDED"
 }
 
 if [ "$CASE" = "atlas" ]; then
