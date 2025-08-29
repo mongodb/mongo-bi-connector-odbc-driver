@@ -37,9 +37,11 @@
       venv="$PROJECT_DIR/../../../../venv"
     fi
 
-    PYTHON_EXEC=python
-    if command -v python3; then
-        PYTHON_EXEC=python2
+    PYTHON_EXEC=python3
+    if command -v python3 >/dev/null 2>&1; then
+        PYTHON_EXEC=python3
+    elif command -v python >/dev/null 2>&1; then
+        PYTHON_EXEC=python
     fi
 
     # Setup or use the existing virtualenv for mtools
@@ -49,7 +51,7 @@
     elif [ -f "$venv"/Scripts/activate ]; then
       echo 'using existing virtualenv'
       . "$venv"/Scripts/activate
-    elif virtualenv "$venv" || "$PYTHON_EXEC" -m virtualenv "$venv"; then
+    elif "$PYTHON_EXEC" -m venv "$venv" || virtualenv "$venv" || "$PYTHON_EXEC" -m virtualenv "$venv"; then
       echo 'creating new virtualenv'
       if [ -f "$venv"/bin/activate ]; then
         . "$venv"/bin/activate
