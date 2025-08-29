@@ -4,17 +4,58 @@
 . "$(dirname "$0")/prepare-shell.sh"
 
 (
-    test_set=''
+    venv='venv'
+    if [ "$VARIANT" = 'centos6-perf' ]; then
+      venv="$PROJECT_DIR/../../../../venv"
+    fi
+
+    PYTHON_EXEC=python3
+    if command -v python3 >/dev/null 2>&1; then
+        PYTHON_EXEC=python3
+    elif command -v python >/dev/null 2>&1; then
+        PYTHON_EXEC=python
+    fi
+
+    # Setup or use the existing virtualenv for mtools
+    if [ -f "$venv"/bin/activate ]; then
+      echo 'using existing virtualenv'
+      . "$venv"/bin/activate
+    elif [ -f "$venv"/Scripts/activate ]; then
+      echo 'using existing virtualenv'
+      . "$venv"/Scripts/activate
+    elif "$PYTHON_EXEC" -m venv "$venv" || virtualenv "$venv" || "$PYTHON_EXEC" -m virtualenv "$venv"; then
+      echo 'creating new virtualenv'
+      if [ -f "$venv"/bin/activate ]; then
+        . "$venv"/bin/activate
+      elif [ -f "$venv"/Scripts/activate ]; then
+        . "$venv"/Scripts/activate
+      fi
+    fi
+
+    echo 'installing yaml...'
+    pip install PyYAML
+
+    test_set_type=''
     if [ "$TEST_SET" = 'SSL' ]; then
-        test_set='LocalSSL'
+        test_set_type='LocalSSL'
         success_file_prefix="$SCRIPT_DIR/local_ssl-integration-test-success-cases"
         "$SCRIPT_DIR"/gen_tsv.py "$success_file_prefix".yml > "$success_file_prefix".tsv
+        echo "--------------- $success_file_prefix.tsv for LocalSSL-------------"
+        less "$success_file_prefix".tsv
+        echo "------------------------------------------------------"
         fail_file_prefix="$SCRIPT_DIR/local_ssl-integration-test-fail-cases"
         "$SCRIPT_DIR"/gen_tsv.py "$fail_file_prefix".yml > "$fail_file_prefix".tsv
+        echo "--------------- $success_file_prefix.tsv for LocalSSL-------------"
+        less "$fail_file_prefix".tsv
+        echo "------------------------------------------------------"
     elif [ "$TEST_SET" = '' ]; then
-        test_set='Local'
+        test_set_type='Local'
         success_file_prefix="$SCRIPT_DIR/local-integration-test-success-cases"
         "$SCRIPT_DIR"/gen_tsv.py "$success_file_prefix".yml > "$success_file_prefix".tsv
+        less "$success_file_prefix".tsv
+        echo "--------------- $success_file_prefix.tsv -for Local------------"
+        less "$success_file_prefix".tsv
+        echo "------------------------------------------------------"
     fi
 
     if [ "Windows_NT" = "$OS" ]; then
@@ -33,7 +74,7 @@
             -NoLogo \
             -NonInteractive \
             -File "$SCRIPT_DIR/run-windows-integration-tests.ps1" \
-            -"$test_set" \
+            -"$test_set_type" \
             -Platform "$platform" \
             -Server '127.0.0.1' \
             -Port '3307' \
