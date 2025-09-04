@@ -1,4 +1,5 @@
 [submodule "mongodb-odbc-driver/libmongosql"]
 	path = mongodb-odbc-driver/libmongosql
-	url = https://github.com/nbagnard/libmongosql
-	branch = upgrade-mysql-5.7-latest-upgrade-platforms
+	url = https://github.com/mongodb/libmongosql.git
+	branch = master
+
