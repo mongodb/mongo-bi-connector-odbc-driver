@@ -130,11 +130,7 @@ win64)
     EXTRACT='unzip'
     PLATFORM_ARCH='64'
     PLATFORM_NAME='windows'
-    #CMAKE_GENERATOR="Visual Studio 14 2015 Win64"
-    CMAKE_GENERATOR="Visual Studio 16 2019"
-    # make sure binaries we use in our scripts are available in the PATH
-    #DEVENV_PATH='/cygdrive/c/Program Files (x86)/Microsoft Visual Studio 14.0/Common7/IDE'
-    #DEVENV_PATH='/cygdrive/c/Program Files (x86)/Microsoft Visual Studio/2019/Professional/Common7/IDE'
+    CMAKE_GENERATOR="Visual Studio $(vswhere.exe -latest -prerelease -products Microsoft.VisualStudio.Product.Professional -property installationVersion |  tr -d '\r' | cut -d'.' -f1) $(vswhere.exe -latest -prerelease -products Microsoft.VisualStudio.Product.Professional -property productLineVersion |  tr -d '\r')"
     DEVENV_PATH="$(vswhere.exe -latest -prerelease -products Microsoft.VisualStudio.Product.Professional -property productPath | cygpath -u -f - | sed 's/\/[^/]*$//')"
     CMAKE_PATH='/cygdrive/c/cmake/bin'
     WIX_PATH='/cygdrive/c/wixtools/bin'

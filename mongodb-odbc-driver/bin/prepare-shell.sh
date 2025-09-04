@@ -10,8 +10,6 @@
 # this project. Change the path in platforms.sh if the macos build starts to fail.
 . "$(dirname "$0")/platforms.sh"
 
-set -o verbose
-
 # create variables for a number of useful directories
 SCRIPT_DIR=$(cd $(dirname $0) && pwd -P)
 if [ "$OS" = "Windows_NT" ]; then
@@ -41,8 +39,6 @@ fi
 echo "setting up repo for testing..."
 mkdir -p $ARTIFACTS_DIR/{bin,build,log}
 echo "done setting up repo for testing"
-
-
 
 CMAKE_MODULE_PATH="$BUILD_SRC_DIR/cmake"
 DRIVERS_DIR="$ARTIFACTS_DIR/drivers"
