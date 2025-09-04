@@ -1,3 +1,4 @@
 [submodule "mongodb-odbc-driver/libmongosql"]
 	path = mongodb-odbc-driver/libmongosql
-        url = https://github.com/mongodb/libmongosql
+	url = https://github.com/mongodb/libmongosql.git
+	branch = master
