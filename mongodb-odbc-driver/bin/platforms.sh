@@ -38,6 +38,15 @@ rhel70)
     CMAKE_GENERATOR="Unix Makefiles"
     CMAKE_PATH='/opt/cmake/bin'
     ;;
+rhel80)
+    PLATFORM_ARCH='64'
+    PLATFORM_NAME='linux'
+    MONGODB_URI='http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-rhel80-latest.tgz'
+    SQLPROXY_URI='https://info-mongodb-com.s3.amazonaws.com/mongodb-bi/v2/latest/mongodb-bi-linux-x86_64-rhel80-latest.tgz'
+    EXTRACT='tar xf'
+    CMAKE_GENERATOR="Unix Makefiles"
+    CMAKE_PATH='/opt/cmake/bin'
+    ;;
 macos)
     PLATFORM_ARCH='64'
     PLATFORM_NAME='macos'
@@ -79,7 +88,7 @@ win32)
     ;;
 *)
     echo "ERROR: invalid value for \$PLATFORM: '$PLATFORM'"
-    echo "Allowed values: 'ubuntu1604-64', 'rhel70', 'win64', 'win32', 'macos'"
+    echo "Allowed values: 'ubuntu1604-64', 'rhel70','rhel80', 'win64', 'win32', 'macos'"
     exit 1
     ;;
 esac
