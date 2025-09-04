@@ -42,6 +42,8 @@ echo "setting up repo for testing..."
 mkdir -p $ARTIFACTS_DIR/{bin,build,log}
 echo "done setting up repo for testing"
 
+
+
 CMAKE_MODULE_PATH="$BUILD_SRC_DIR/cmake"
 DRIVERS_DIR="$ARTIFACTS_DIR/drivers"
 IODBC_VERSION=iODBC-3.52.12

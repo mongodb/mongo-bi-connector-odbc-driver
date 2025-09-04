@@ -59,7 +59,7 @@
 
       echo 'cloning mtools...'
       rm -rf mtools
-      git clone git@github.com:rueckstiess/mtools
+      git clone https://github.com/rueckstiess/mtools.git
       cd mtools
       git checkout bd116d10bc01e4394269ea9be08d548a674711da
       echo 'installing mtools...'
