@@ -204,6 +204,9 @@ get_mongodb_download_url_for ()
       linux-ubuntu-22.04-aarch64)
           MONGODB_LATEST="https://downloads.mongodb.com/linux/mongodb-linux-aarch64-enterprise-ubuntu2204-latest.tgz"
       ;;
+      linux-ubuntu-22.04-aarch64)
+          MONGODB_LATEST="https://downloads.mongodb.com/linux/mongodb-linux-x86_64-enterprise-ubuntu2204-latest.tgz"
+      ;;
       windows32*)
          EXTRACT="/cygdrive/c/Progra~2/7-Zip/7z.exe x"
          MONGODB_LATEST="https://fastdl.mongodb.org/win32/mongodb-win32-i386-latest.zip"
