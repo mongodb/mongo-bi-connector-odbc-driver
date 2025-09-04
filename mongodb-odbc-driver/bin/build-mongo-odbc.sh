@@ -27,15 +27,6 @@
       export MYSQL_EXTRA_LIBRARIES="$MYSQL_PROJECT_DIR/bld/build/archive_output_directory/$MONGOSQL_AUTH_LIB_NAME"
     fi
 
-    #if [ "$PLATFORM" = macos ]; then
-    #    cd "$BUILD_DIR"
-    #    # unfortunately, we unzip this in two places (libmongosql and here)
-    #    curl -O https://mongo-bic-odbc-driver-resources.s3.amazonaws.com/macos/openssl-1.0.2n.zip
-    #    unzip openssl-1.0.2n.zip
-    #    OPENSSL_PATH="$BUILD_DIR/1.0.2n"
-    #    CMAKE_ARGS="$CMAKE_ARGS -DWITH_SSL=$OPENSSL_PATH -DCMAKE_VERBOSE_MAKEFILE=ON"
-    #fi
-
     CMAKE_ARGS="$CMAKE_ARGS -DCMAKE_VERBOSE_MAKEFILE=ON"
     if [ "$PLATFORM_NAME" = "macos" ]; then
       CMAKE_ARGS="$CMAKE_ARGS -DWITH_SSL=$OPENSSL_PATH"
