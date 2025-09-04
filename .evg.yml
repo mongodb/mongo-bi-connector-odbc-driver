@@ -33,18 +33,6 @@ buildvariants:
       - name: "unit_tests"
       - name: "integration_tests_local"
         run_on: ubuntu1604-build
-  - name: ubuntu2004-64
-    display_name: Ubuntu 20.04
-    disable: true
-    expansions:
-      _platform: ubuntu2004-64
-    run_on: ubuntu2004-small
-    tasks:
-      - name: "build"
-      - name: "unit_tests"
-      - name: "integration_tests_local"
-      - name: "integration_tests_local_with_ssl"
-        run_on: ubuntu2004-small
   - name: ubuntu2204-64
     display_name: Ubuntu 22.04
     expansions:
@@ -56,18 +44,6 @@ buildvariants:
       - name: "integration_tests_local"
       - name: "integration_tests_local_with_ssl"
         run_on: ubuntu2204-small
-  - name: ubuntu2004-arm64
-    display_name: Ubuntu 20.04 Arm
-    disable: true
-    expansions:
-      _platform: ubuntu2004-arm64
-    run_on: ubuntu2004-arm64-small
-    tasks:
-      - name: "build"
-      - name: "unit_tests"
-      - name: "integration_tests_local"
-      - name: "integration_tests_local_with_ssl"
-        run_on: ubuntu2004-arm64-small
   - name: ubuntu2204-arm64
     display_name: Ubuntu 22.04 Arm
     disable: true
@@ -79,18 +55,6 @@ buildvariants:
       - name: "unit_tests"
       - name: "integration_tests_local"
         run_on: ubuntu2204-arm64-small
-  - name: rhel80
-    display_name: RHEL 8.0
-    disable: true
-    expansions:
-      _platform: rhel80
-    run_on: rhel80-small
-    tasks:
-      - name: "build"
-      - name: "unit_tests"
-      - name: "integration_tests_local"
-      - name: "integration_tests_local_with_ssl"
-        run_on: rhel80-small
   - name: rhel93
     display_name: RHEL 9.3
     expansions:
@@ -322,12 +286,9 @@ functions:
             - macos-arm64
             - ubuntu1404-64
             - ubuntu1604-64
-            - ubuntu2004-64
-            - ubuntu2004-arm64
             - ubuntu2204-64
             - ubuntu2204-arm64
             - rhel70
-            - rhel80
             - rhel93
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
@@ -341,12 +302,9 @@ functions:
             - macos-arm64
             - ubuntu1404-64
             - ubuntu1604-64
-            - ubuntu2004-64
-            - ubuntu2004-arm64
             - ubuntu2204-64
             - ubuntu2204-arm64
             - rhel70
-            - rhel80
             - rhel93
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
@@ -496,12 +454,9 @@ functions:
             - macos-arm64
             - ubuntu1404-64
             - ubuntu1604-64
-            - ubuntu2004-64
-            - ubuntu2004-arm64
             - ubuntu2204-64
             - ubuntu2204-arm64
             - rhel70
-            - rhel80
             - rhel93
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
@@ -518,12 +473,9 @@ functions:
             - macos-arm64
             - ubuntu1404-64
             - ubuntu1604-64
-            - ubuntu2004-64
-            - ubuntu2004-arm64
             - ubuntu2204-64
             - ubuntu2204-arm64
             - rhel70
-            - rhel80
             - rhel93
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
