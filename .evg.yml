@@ -13,6 +13,7 @@ buildvariants:
 
   - name: ubuntu1404-64
     display_name: Ubuntu 14.04
+    disable: true
     expansions:
       _platform: ubuntu1404-64
     run_on: ubuntu1404-build
@@ -23,6 +24,7 @@ buildvariants:
         run_on: ubuntu1404-build
   - name: ubuntu1604-64
     display_name: Ubuntu 16.04
+    disable: true
     expansions:
       _platform: ubuntu1604-64
     run_on: ubuntu1604-build
@@ -33,6 +35,7 @@ buildvariants:
         run_on: ubuntu1604-build
   - name: ubuntu2004-64
     display_name: Ubuntu 20.04
+    disable: true
     expansions:
       _platform: ubuntu2004-64
     run_on: ubuntu2004-small
@@ -55,6 +58,7 @@ buildvariants:
         run_on: ubuntu2204-small
   - name: ubuntu2004-arm64
     display_name: Ubuntu 20.04 Arm
+    disable: true
     expansions:
       _platform: ubuntu2004-arm64
     run_on: ubuntu2004-arm64-small
@@ -66,6 +70,7 @@ buildvariants:
         run_on: ubuntu2004-arm64-small
   - name: ubuntu2204-arm64
     display_name: Ubuntu 22.04 Arm
+    disable: true
     expansions:
       _platform: ubuntu2204-arm64
     run_on: ubuntu2204-arm64-small
@@ -76,6 +81,7 @@ buildvariants:
         run_on: ubuntu2204-arm64-small
   - name: rhel80
     display_name: RHEL 8.0
+    disable: true
     expansions:
       _platform: rhel80
     run_on: rhel80-small
@@ -110,9 +116,10 @@ buildvariants:
         run_on: ubuntu2204-large
   - name: macos
     display_name: macOS x64/OpenSSL 3.x
+    disable: true
     expansions:
       _platform: macos
-    run_on: macos-11
+    run_on: macos-14
     tasks:
       - name: "build"
       - name: "unit_tests"
@@ -120,9 +127,10 @@ buildvariants:
       - name: "sign_dmg"
   - name: macos-arm64
     display_name: macOS Arm/OpenSSL 3.x
+    disable: true
     expansions:
       _platform: macos-arm64
-    run_on: macos-11-arm64
+    run_on: macos-14-arm64
     tasks:
       - name: "build"
       - name: "unit_tests"
