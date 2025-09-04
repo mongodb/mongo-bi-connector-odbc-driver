@@ -23,7 +23,6 @@
     # copy driver libraries to appropriate location
     cp "$DRIVERS_DIR"/*.so ./
 
-    #OPENSSL_PATH="$BUILD_DIR/1.0.2n/lib"
     echo "DMG OPENSSL_PATH: $OPENSSL_PATH/lib"
 
     # copy the openssl libs to appropriate location
