@@ -1,3 +1,9 @@
+MongoDB ODBC 1.4.6-beta
+  * Built using MySQL 5.7.44
+  * Add OpenSSL 3 support
+  * Build the ODBC Driver with RHEL 9.3 and Ubuntu 22.04
+  * The Windows ODBC Driver now comes with OpenSSL 3
+
 MongoDB ODBC 1.4.5
   * Fix stack overflow crash. The driver now allocates a smaller buffer to prevent
    application running out of memory. (Bug# 01141507)

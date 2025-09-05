@@ -39,9 +39,9 @@ upgradeable. Make sure to change both x64 and x86 upgradeCode"
 }
 
 if ($Arch -eq "x64") {
-    $upgradeCode = "47fe630c-7655-44ec-a550-08e1ed6f177b"
+    $upgradeCode = "3ef4d7bf-da9c-450e-94f2-4e73a00f80a3"
 } else {
-    $upgradeCode = "9d6b76bb-1462-46f5-b12a-c39f3e8f0c9a"
+    $upgradeCode = "fd49951a-d83f-41a5-b0bf-cbb5f913f607"
 }
 
 

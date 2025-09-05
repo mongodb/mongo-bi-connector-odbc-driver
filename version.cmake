@@ -24,9 +24,9 @@
 
 SET(CONNECTOR_MAJOR "1")
 SET(CONNECTOR_MINOR "4")
-SET(CONNECTOR_PATCH "5")
-SET(CONNECTOR_LEVEL "")
-SET(CONNECTOR_QUALITY "GA")
+SET(CONNECTOR_PATCH "6")
+SET(CONNECTOR_LEVEL "beta")
+SET(CONNECTOR_QUALITY "beta")
 
 # ----------------------------------------------------------------------
 # Set other variables that are about the version
