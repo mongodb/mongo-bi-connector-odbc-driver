@@ -4,9 +4,17 @@
 . "$(dirname "$0")/prepare-shell.sh"
 
 (
-    SQLPROXY_ARGS="-vv --logPath $SQLPROXY_DIR/mongosqld.log"
+    echo "-------- TEST_SET is $TEST_SET"
+    echo " ------ ENV -----------"
+    env
+    echo " ----------------------"
+    SQLPROXY_ARGS="-vvv --logPath $SQLPROXY_DIR/mongosqld.log"
     if [ "$TEST_SET" = 'SSL' ]; then
         SQLPROXY_ARGS="$SQLPROXY_ARGS --sslMode requireSSL --minimumTLSVersion=TLS1_2 --sslPEMKeyFile $PROJECT_ROOT/mongodb-odbc-driver/resources/server.pem"
+    elif [ "$TEST_SET" = 'GSSAPI' ]; then
+        export KRB5_KTNAME=$PROJECT_DIR/mongodb-odbc-driver/resources/gssapi/mongosqlsvc.keytab
+        klist -k $KRB5_KTNAME
+        SQLPROXY_ARGS="$SQLPROXY_ARGS --mongo-authenticationMechanism GSSAPI --auth --mongo-username drivers@LDAPTEST.10GEN.CC --mongo-password powerbook17 --gssapiHostname localhost --gssapiServiceName mongosql2 --mongo-uri mongodb://ldaptest.10gen.cc:27017 --sampleNamespaces kerberos.test  --addr 127.0.0.1 --schemaMappingMode majority"
     fi
 
     if [ "$PLATFORM_NAME" = "windows" ]; then
@@ -18,7 +26,7 @@
         echo 'stopped and deleted existing sqlproxy service'
         echo
 
-        echo 'downloading sqlproxy...'
+        echo 'downloading sqlproxy $SQLPROXY_URI...'
         echo
         rm -rf "$SQLPROXY_DIR"
         mkdir -p "$SQLPROXY_DIR"
@@ -53,7 +61,7 @@
         echo 'killing existing sqlproxy service...'
         echo
         killall mongosqld || true
-        echo 'downloading sqlproxy...'
+        echo 'downloading sqlproxy $SQLPROXY_URI...'
         echo
         rm -rf "$SQLPROXY_DIR"
         mkdir -p "$SQLPROXY_DIR"
@@ -81,9 +89,12 @@
             # did not.
             install_name_tool -change /usr/local/Cellar/openssl/1.0.2n/lib/libcrypto.1.0.0.dylib "@loader_path/libcrypto.1.0.0.dylib" libssl.1.0.0.dylib
         fi
+        echo "printing mongosqld args..."
+        echo "$SQLPROXY_ARGS"
+        echo "starting mongosqld..."
         mongosqld $SQLPROXY_ARGS &> sqlproxy.log &
         echo 'started sqlproxy'
-        echo
+
     fi
 
     echo 'sleeping so that mongosqld can generate schema...'
@@ -91,6 +102,7 @@
     sleep 5
     echo 'done sleeping'
     echo
+
 ) > $LOG_FILE 2>&1
 
 print_exit_msg
