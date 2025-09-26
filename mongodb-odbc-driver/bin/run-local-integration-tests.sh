@@ -107,14 +107,25 @@
         fi
         echo 'running local connection tests...'
 
-        "$SCRIPT_DIR"/run-unix-integration-tests.sh \
-            "$iusql_bin" \
-            "" \
-            "local" \
-            "127.0.0.1" \
-            "3307" \
-            "user_not_used" \
-            "password_not_used"
+        if [ "$TEST_SET" = 'GSSAPI' ]; then
+          "$SCRIPT_DIR"/run-unix-gssapi-integration-tests.sh \
+              "$iusql_bin" \
+              "" \
+              "gssapi" \
+              "127.0.0.1" \
+              "3307"
+        else
+          "$SCRIPT_DIR"/run-unix-integration-tests.sh \
+              "$iusql_bin" \
+              "" \
+              "x" \
+              "127.0.0.1" \
+              "3307" \
+              "user_not_used" \
+              "password_not_used"
+        fi
+
+
     fi
 ) > $LOG_FILE 2>&1
 

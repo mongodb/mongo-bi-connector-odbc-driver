@@ -43,7 +43,7 @@ buildvariants:
       - name: "unit_tests"
       - name: "integration_tests_local"
       - name: "integration_tests_local_with_ssl"
-        run_on: ubuntu2204-small
+      - name: "integration_tests_local_with_gssapi"
   - name: ubuntu2204-arm64
     display_name: Ubuntu 22.04 Arm
     disable: true
@@ -124,6 +124,13 @@ tasks:
       - func: "fetch msi"
       - func: "fetch shared library files"
       - func: "run local integration tests with SSL"
+
+  - name: "integration_tests_local_with_gssapi"
+    depends_on:
+      - name: build
+    commands:
+      - func: "fetch shared library files"
+      - func: "run local integration tests with GSSAPI auth"
 
   - name: "sign_dmg"
     depends_on:
@@ -226,6 +233,7 @@ functions:
           cat <<EOT > $ARTIFACTS_DIR/expansions.yml
           ARTIFACTS_DIR: "$ARTIFACTS_DIR"
           SCRIPT_DIR: "$SCRIPT_DIR"
+          PROJECT_DIR: "$PROJECT_DIR"
           MYSQL_SCRIPT_DIR: "$MYSQL_SCRIPT_DIR"
           PLATFORM_NAME: "$PLATFORM_NAME"
           PLATFORM_ARCH: "$PLATFORM_ARCH"
@@ -238,7 +246,8 @@ functions:
                  set -o igncr
                  export SHELLOPTS
              fi
-             export PLATFORM="$PLATFORM"            
+             export PLATFORM="$PLATFORM"
+             export PROJECT_DIR="$PROJECT_DIR"
 
              export BIC_PROD_SERVER="$BIC_PROD_SERVER"
              export BIC_PROD_PORT="$BIC_PROD_PORT"
@@ -338,9 +347,26 @@ functions:
       params:
         script: |
           ${PREPARE_SHELL}
-          echo "${task_name}"
           export TEST_SET='SSL'
           ${SCRIPT_DIR}/start-mongod.sh
+          ${SCRIPT_DIR}/start-sqlproxy.sh
+          ${SCRIPT_DIR}/run-local-integration-tests.sh
+
+  "run local integration tests with GSSAPI auth":
+    - command: shell.exec
+      type: test
+      params:
+        silent: true
+        env:
+          GSSAPI_USER: "${GSSAPI_USER}"
+          GSSAPI_PASSWD: "${GSSAPI_PASSWD}"
+          GSSAPI_SERVICENAME: "mongosql2"
+        working_dir: mongo-odbc-driver/mongodb-odbc-driver
+        script: |
+          ${PREPARE_SHELL}
+          export TEST_SET='GSSAPI'
+          export GSSAPI_USER="$GSSAPI_USER"
+          export GSSAPI_PASSWD="$GSSAPI_PASSWD"
           ${SCRIPT_DIR}/start-sqlproxy.sh
           ${SCRIPT_DIR}/run-local-integration-tests.sh
 
