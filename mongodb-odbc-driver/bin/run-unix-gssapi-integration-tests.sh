@@ -1,11 +1,4 @@
 #!/bin/bash
-#           "$iusql_bin" \
-#            "" \
-#            "local" \
-#            "127.0.0.1" \
-#            "3307" \
-#            "user_not_used" \
-#            "password_not_used"
 
 . "$(dirname $0)/prepare-shell.sh"
 
@@ -103,15 +96,12 @@ test_connect() {
 
     if [ "$GSSAPI_USER" = '' ]; then
         echo 'GSSAPI_USER environment variable not set'
-        GSSAPI_USER="drivers"
-        #exit 1
+        exit 1
     fi
     if [ "$GSSAPI_PASSWD" = '' ]; then
         echo 'GSSAPI_PASSWD environment variable not set'
-        GSSAPI_PASSWD="powerbook17"
-        #exit 1
+        exit 1
     fi
-
 
     GSSAPI_KTNAME="$PROJECT_DIR"/mongodb-odbc-driver/resources/gssapi/drivers.keytab
     if [ ! -f "$GSSAPI_KTNAME" ]; then
@@ -119,23 +109,8 @@ test_connect() {
         exit 1
     fi
 
-    #if [ "KRB5_KTNAME" = '' ]; then
-    #    echo 'KRB5_KTNAME environment variable not set'
-    #    echo "PROJECT_DIR = $PROJECT_DIR"
-    #   export KRB5_KTNAME="$PROJECT_DIR"/mongodb-odbc-driver/resources/gssapi/mongosqlsvc.keytab
-    #    echo "$KRB5_KTNAME"
-        #exit 1
-    #fi
-    #if [ ! -f "$KRB5_KTNAME" ]; then
-    #    echo "could not find file specified in KRB5_KTNAME $KRB5_KTNAME"
-    #    exit 1
-    #fi
-
     export KRB5_TRACE="${ARTIFACTS_DIR}/log/krb5.log"
     echo "KRB5_TRACE = $KRB5_TRACE"
-
-    #export KRB5_CONFIG="${PROJECT_ROOT}/mongodb-odbc-driver/resources/gssapi/krb5.conf"
-    #echo "KRB5_CONFIG = $KRB5_CONFIG"
 
     principal="$GSSAPI_USER@LDAPTEST.10GEN.CC"
     password=""
@@ -154,20 +129,6 @@ test_connect() {
     dsn="GSSAPI_UsernamePassword"
     test_connect "User=$principal?mechanism=GSSAPI&serviceName=$GSSAPI_SERVICENAME&source=\$external" "Password=$password"
 
-    # Test providing a client keytab with an environment variable.
-    # This test does not work on MacOS Heimdal Kerberos.
-    # case $VARIANT in
-    # ubuntu*|rhel*)
-        # kdestroy
-        # export KRB5_CLIENT_KTNAME=$GSSAPI_KTNAME
-        # password=""
-        # echo "running test with keytab environment variable"
-        # test_connect
-        # ;;
-    # *)
-        # echo "Skipping keytab test because variant is '$VARIANT'"
-        # ;;
-    # esac
 ) 2>&1 | tee $LOG_FILE
 
 print_exit_msg
