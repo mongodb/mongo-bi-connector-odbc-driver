@@ -14,7 +14,7 @@
     elif [ "$TEST_SET" = 'GSSAPI' ]; then
         export KRB5_KTNAME=$PROJECT_DIR/mongodb-odbc-driver/resources/gssapi/mongosqlsvc.keytab
         klist -k $KRB5_KTNAME
-        SQLPROXY_ARGS="$SQLPROXY_ARGS --mongo-authenticationMechanism GSSAPI --auth --mongo-username drivers@LDAPTEST.10GEN.CC --mongo-password powerbook17 --gssapiHostname localhost --gssapiServiceName mongosql2 --mongo-uri mongodb://ldaptest.10gen.cc:27017 --sampleNamespaces kerberos.test  --addr 127.0.0.1 --schemaMappingMode majority"
+        SQLPROXY_ARGS="$SQLPROXY_ARGS --mongo-authenticationMechanism GSSAPI --auth --mongo-username $GSSAPI_USER@LDAPTEST.10GEN.CC --mongo-password $GSSAPI_PASSWD --gssapiHostname localhost --gssapiServiceName $GSSAPI_SERVICENAME --mongo-uri mongodb://ldaptest.10gen.cc:27017 --sampleNamespaces kerberos.test  --addr 127.0.0.1 --schemaMappingMode majority"
     fi
 
     if [ "$PLATFORM_NAME" = "windows" ]; then
