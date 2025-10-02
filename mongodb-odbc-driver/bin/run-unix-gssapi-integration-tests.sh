@@ -60,7 +60,7 @@ test_connect() {
         echo "ODBCINI = $ODBCINI"
         echo "--------------------------------------------------"
         echo "---------------- ODBCINI content -----------------"
-        less $ODBCINI
+        cat $ODBCINI
         echo "--------------------------------------------------"
 
         set +o errexit
