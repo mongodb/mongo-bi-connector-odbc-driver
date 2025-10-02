@@ -69,14 +69,14 @@ BEGIN
         BEGIN
             VALUE "Comments", "provides core driver functionality\0"
             VALUE "CompanyName", "MongoDB Inc\0"
-	    VALUE "FileDescription", "MongoDB ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@.@CONNECTOR_PATCH@-@CONNECTOR_LEVEL@ @DRIVER_TYPE@ Driver\0"
+	    VALUE "FileDescription", "MongoDB ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@ @DRIVER_TYPE@ Driver\0"
             VALUE "FileVersion", MYODBC_STRFILEVER
             VALUE "InternalName", "mdbodbc@CONNECTOR_DRIVER_TYPE_SHORT@\0"
 	    VALUE "LegalCopyright", "Copyright (c) 1995, 2013, Oracle and/or its affiliates, Copyright (c) 2018-Present MongoDB Inc.\0"
 	    VALUE "LegalTrademarks", "MongoDB is a trademark of MongoDB Inc.\0"
             VALUE "OriginalFilename", "mdbodbc@CONNECTOR_DRIVER_TYPE_SHORT@.dll\0"
             VALUE "PrivateBuild", "Production\0"
-	          VALUE "ProductName", "ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@.@CONNECTOR_PATCH@-@CONNECTOR_LEVEL@\0"
+	          VALUE "ProductName", "ODBC @CONNECTOR_MAJOR@.@CONNECTOR_MINOR@\0"
             VALUE "ProductVersion", MYODBC_STRPRODUCTVER
 	          VALUE "SpecialBuild", "@CONNECTOR_QUALITY@ release\0"
         END

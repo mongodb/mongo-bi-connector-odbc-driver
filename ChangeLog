@@ -1,7 +1,7 @@
-MongoDB ODBC 1.4.6-beta
+MongoDB ODBC 1.4.6
   * Built using MySQL 5.7.44
   * Add OpenSSL 3 support
-  * Build the ODBC Driver with RHEL 9.3 and Ubuntu 22.04
+  * Build the ODBC Driver for RHEL 9.3 and Ubuntu 22.04
   * The Windows ODBC Driver now comes with OpenSSL 3
 
 MongoDB ODBC 1.4.5
