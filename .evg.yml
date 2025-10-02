@@ -356,7 +356,6 @@ functions:
     - command: shell.exec
       type: test
       params:
-        silent: true
         env:
           GSSAPI_USER: "${GSSAPI_USER}"
           GSSAPI_PASSWD: "${GSSAPI_PASSWD}"
