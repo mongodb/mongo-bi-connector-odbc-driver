@@ -3,6 +3,13 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Fragment>
     <DirectoryRef Id="BIN">
+        <Component Id="cmp_BinPermissions" Guid="bc6c8ba6-46bc-4175-b877-1ffcc07b4fd7">
+           <CreateFolder>
+                <!-- Sddl generated from `cacls ""C:\Program Files\MongoDB\ODBC\1.4\" /S` -->
+                <!-- This will set the same permissions if installed in a custom directory or in the default directory -->
+                <PermissionEx Sddl="D:AI(A;ID;FA;;;S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464)(A;CIIOID;GA;;;S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464)(A;ID;FA;;;SY)(A;OICIIOID;GA;;;SY)(A;ID;FA;;;BA)(A;OICIIOID;GA;;;BA)(A;ID;0x1200a9;;;BU)(A;OICIIOID;GXGR;;;BU)(A;OICIIOID;GA;;;CO)(A;ID;0x1200a9;;;AC)(A;OICIIOID;GXGR;;;AC)(A;ID;0x1200a9;;;S-1-15-2-2)(A;OICIIOID;GXGR;;;S-1-15-2-2)"/>
+            </CreateFolder>
+        </Component>
 	    <?if $(var.Platform)=x64 ?>
 	       <?define win64Flag = "yes" ?>
 	    <?else ?>
@@ -53,6 +60,7 @@
           <ComponentRef Id="setupdll" />
           <ComponentRef Id="setuplib" />
           <ComponentRef Id="installer" />
+          <ComponentRef Id="cmp_BinPermissions" />
        </ComponentGroup>
   </Fragment>
 </Wix>
