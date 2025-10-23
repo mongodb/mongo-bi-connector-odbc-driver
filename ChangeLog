@@ -1,3 +1,6 @@
+MongoDB ODBC 1.4.7
+  * Fixes a local privilege escalation vulnerability (CVE-2025-12100) in the Windows installer by correcting permissions for custom installation paths.
+
 MongoDB ODBC 1.4.6
   * Built using MySQL 5.7.44
   * Add OpenSSL 3 support
