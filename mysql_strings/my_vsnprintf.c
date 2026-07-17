@@ -226,17 +226,33 @@ static char *process_bin_arg(char *to, char *end, size_t width, char *par)
 static char *process_dbl_arg(char *to, char *end, size_t width,
                              double par, char arg_type)
 {
+  /*
+    Format into a local buffer guaranteed large enough for any my_fcvt()
+    output, then copy only what fits into the caller's remaining space.
+    my_fcvt() itself is not length-bounded: for '%f' it writes
+    integer_digits + '.' + precision bytes, and 'width' below is only the
+    *precision*, not the total length. Formatting directly into 'to' with a
+    precision clamp therefore overflows the destination for large-magnitude
+    values (e.g. ~1e308 needs ~340 bytes). See SECBUG-2210.
+  */
+  char buff[FLOATING_POINT_BUFFER + NOT_FIXED_DEC];
+  size_t length, avail= (size_t)(end - to);
+
   if (width == SIZE_T_MAX)
     width= FLT_DIG; /* width not set, use default */
   else if (width >= NOT_FIXED_DEC)
     width= NOT_FIXED_DEC - 1; /* max.precision for my_fcvt() */
-  width= MY_MIN(width, (size_t)(end-to) - 1);
-  
+
   if (arg_type == 'f')
-    to+= my_fcvt(par, (int)width , to, NULL);
+    length= my_fcvt(par, (int)width , buff, NULL);
   else
-    to+= my_gcvt(par, MY_GCVT_ARG_DOUBLE, (int) width , to, NULL);
-  return to;
+    length= my_gcvt(par, MY_GCVT_ARG_DOUBLE, (int) width , buff, NULL);
+
+  /* Truncate to the caller's remaining space instead of overflowing it. */
+  if (length > avail)
+    length= avail;
+  memcpy(to, buff, length);
+  return to + length;
 }
 
 

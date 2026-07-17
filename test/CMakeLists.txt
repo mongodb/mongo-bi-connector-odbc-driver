@@ -137,6 +137,15 @@ ENDIF(NOT skip_no_dm)
 
 TARGET_LINK_LIBRARIES(my_basics ${CMAKE_THREAD_LIBS_INIT})
 
+# SECBUG-2210 regression: a self-contained unit test for the "%f" 50-byte
+# buffer overflow. Unlike the ODBC tests above it uses neither a driver
+# manager nor a database connection; it links the mysql_strings library and
+# calls my_snprintf() directly, so it is wired separately from the FOREACH.
+ADD_EXECUTABLE(my_dtoa_overflow my_dtoa_overflow.c)
+TARGET_LINK_LIBRARIES(my_dtoa_overflow mysql_strings)
+INSTALL(TARGETS my_dtoa_overflow DESTINATION test COMPONENT tests)
+ADD_TEST(my_dtoa_overflow my_dtoa_overflow)
+
 INSTALL(FILES
 	${CMAKE_CURRENT_BINARY_DIR}/CTestTestfile.cmake
 	${CMAKE_CURRENT_BINARY_DIR}/odbc.ini
