@@ -30,6 +30,10 @@
 #include "driver.h"
 #include "errmsg.h"
 
+/* Out params for BIT fields are fetched as a decimal string, then converted
+   in-place to binary. Buffer must fit the largest decimal string (an 8-byte
+   number + NUL) as well as the binary form. */
+#define SSPS_BIT_OUTPARAM_BUFFER_SIZE 30
 
 /* {{{ my_l_to_a() -I- */
 static char * my_l_to_a(char * buf, size_t buf_size, long long a)
@@ -68,9 +72,15 @@ void ssps_init(STMT *stmt)
 /* }}} */
 
 
-char * numeric2binary(char * dst, long long src, unsigned int byte_count)
+char * numeric2binary(char * dst, size_t dst_size, long long src, unsigned int byte_count)
 {
   char byte;
+
+  assert(byte_count <= dst_size);
+  if (byte_count > dst_size)
+  {
+    byte_count= (unsigned int)dst_size;
+  }
 
   while (byte_count)
   {
@@ -152,7 +162,7 @@ BOOL ssps_get_out_params(STMT *stmt)
             numeric= strtoull(values[counter], NULL, 10);
 
             *stmt->result_bind[counter].length= (field->length+7)/8;
-            numeric2binary(values[counter], numeric,
+            numeric2binary(values[counter], SSPS_BIT_OUTPARAM_BUFFER_SIZE, numeric,
                           *stmt->result_bind[counter].length);
 
           }
@@ -440,7 +450,7 @@ allocate_buffer_for_field(const MYSQL_FIELD * const field, BOOL outparams)
            number representing those bits. Allocating buffer to accommodate
            largest string possible - 8 byte number + NULL terminator.
            We will need to terminate the string to convert it to a number */
-        result.size= 30;
+        result.size= SSPS_BIT_OUTPARAM_BUFFER_SIZE;
       }
       else
       {
