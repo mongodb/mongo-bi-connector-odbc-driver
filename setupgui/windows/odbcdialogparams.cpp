@@ -450,7 +450,7 @@ void chooseFile( HWND parent, int hostCtlId )
 
 	wchar_t			szFile[MAX_PATH];    // buffer for file name
 
-	Edit_GetText( hostControl, szFile, sizeof(szFile) );
+	Edit_GetText( hostControl, szFile, _countof(szFile) );
 	// Initialize OPENFILENAME
 	ZeroMemory(&dialog, sizeof(dialog));
 
@@ -458,7 +458,7 @@ void chooseFile( HWND parent, int hostCtlId )
 	dialog.lpstrFile			= szFile;
 
 	dialog.lpstrTitle			= L"Select File";
-	dialog.nMaxFile				= sizeof(szFile);
+	dialog.nMaxFile				= _countof(szFile);
 	dialog.lpstrFileTitle		= NULL;
 	dialog.nMaxFileTitle		= 0;
 	dialog.lpstrInitialDir		= NULL;
@@ -481,7 +481,7 @@ void choosePath( HWND parent, int hostCtlId )
 	BROWSEINFOW		dialog;
 	wchar_t			path[MAX_PATH];    // buffer for file name
 
-	Edit_GetText( hostControl, path, sizeof(path) );
+	Edit_GetText( hostControl, path, _countof(path) );
 
 	ZeroMemory(&dialog,sizeof(dialog));
 
