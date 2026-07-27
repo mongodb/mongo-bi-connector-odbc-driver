@@ -509,10 +509,68 @@ void free_connection_stmts(DBC *dbc);
                                                           var2rec= lrc;\
                                                  } while(0)
 
-#define GET_NAME_LEN(S, N, L) L = (L == SQL_NTS ? (N ? (SQLSMALLINT)strlen((char *)N) : 0) : L); \
-  if (L > NAME_LEN) \
-    return set_stmt_error(S, "HY090", \
-           "One or more parameters exceed the maximum allowed name length", 0);
+/*
+  Normalize and range-check a catalog function name/pattern length argument.
+
+  S  The STMT * the diagnostic record is posted to when the length is
+     rejected. Must be non-NULL. The internal MySQL*() catalog functions that
+     use this macro do not validate the handle themselves; their public
+     SQL*()/SQL*W() wrappers in ansi.c and unicode.c run CHECK_HANDLE() first.
+  N  The name or pattern-value argument itself, a SQLCHAR * such as
+     catalog_name, schema_name, table_name or column_name. May be NULL.
+     Read only when L is SQL_NTS.
+  L  A SQLSMALLINT *lvalue* holding the length of N in bytes, e.g.
+     catalog_len. Updated in place: on success it always holds the actual
+     measured byte length, so callers may rely on it afterwards even when
+     they passed SQL_NTS.
+
+  Expands to a single statement that returns SQL_ERROR from the *enclosing*
+  function if L is unusable, so it can only be used in a function returning
+  SQLRETURN.
+
+  The only values accepted for L are SQL_NTS, which measures N with strlen(),
+  and a non-negative byte count. Every other negative value - including
+  SQL_NULL_DATA - is rejected: these are name and pattern-value arguments, not
+  data buffers, so there is no meaningful "null data" input for them.
+
+  The length is carried in a size_t and compared UNSIGNED against NAME_LEN
+  *before* it is narrowed to SQLSMALLINT. Both details matter:
+
+    - The previous version compared the SQLSMALLINT itself, so a negative
+      length was not > NAME_LEN and passed the gate. It then reached
+      mysql_real_escape_string(), whose length parameter is an unsigned long,
+      where -32536 becomes ~2^64 and the escaped output overruns the fixed
+      stack buffers in catalog.c / catalog_no_i_s.c.
+    - Such a negative length is easy to produce. driver/unicode.c converts
+      wide names to the connection charset and truncates the unbounded
+      converted byte count with (SQLSMALLINT)len, so ~11k multi-byte
+      characters wrap negative. The old SQL_NTS branch here did the same to
+      itself via (SQLSMALLINT)strlen(N) for names of 32768 bytes or more.
+
+  So: measure wide, check unsigned, narrow last. Do not reorder.
+
+  N is dereferenced only in the SQL_NTS branch. When an explicit length is
+  supplied L is left alone even if N is NULL, because callers such as
+  tables_no_i_s() (driver/catalog_no_i_s.c) deliberately combine length
+  truthiness with pointer non-NULLness to distinguish a NULL argument from a
+  non-NULL, zero-length one.
+*/
+#define GET_NAME_LEN(S, N, L) \
+  do { \
+    size_t name_len_= 0; \
+    if ((L) == SQL_NTS) \
+      name_len_= (N) ? strlen((const char *)(N)) : (size_t)0; \
+    else if ((L) < 0) \
+      return set_stmt_error((S), "HY090", \
+                            "Invalid string or buffer length", 0); \
+    else \
+      name_len_= (size_t)(L); \
+    if (name_len_ > (size_t)NAME_LEN) \
+      return set_stmt_error((S), "HY090", \
+             "One or more parameters exceed the maximum allowed name length", \
+             0); \
+    (L)= (SQLSMALLINT)name_len_; \
+  } while (0)
 
 #define CHECK_HANDLE(h) if (h == NULL) return SQL_INVALID_HANDLE
 
