@@ -333,7 +333,8 @@ enum enum_field_types map_sql2mysql_type(SQLSMALLINT sql_type);
 char *      proc_param_tokenize   (char *str, int *params_num);
 SQLCHAR *   proc_get_param_type   (SQLCHAR *proc, int len, SQLSMALLINT *ptype);
 SQLCHAR*    proc_get_param_name   (SQLCHAR *proc, int len, SQLCHAR *cname);
-SQLCHAR*    proc_get_param_dbtype (SQLCHAR *proc, int len, SQLCHAR *ptype);
+SQLCHAR*    proc_get_param_dbtype (SQLCHAR *proc, int len, SQLCHAR *ptype,
+                                   size_t ptype_size);
 SQLUINTEGER proc_get_param_size   (SQLCHAR *ptype, int len, int sql_type_index,
                                   SQLSMALLINT *dec);
 SQLLEN      proc_get_param_octet_len  (STMT *stmt, int sql_type_index,
