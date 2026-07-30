@@ -220,7 +220,25 @@ static char *process_bin_arg(char *to, char *end, size_t width, char *par)
 
 
 /**
-  Prints double or float argument
+  Prints a double argument using the 'f' or 'g' format.
+
+  Writes into [to, end), where 'end' is the byte reserved for the caller's
+  terminating '\0'. Output is truncated, never overflowed, and is not
+  NUL-terminated here.
+
+  @param to        write cursor
+  @param end       last writable position + 1; also the caller's '\0' slot
+  @param width     precision for 'f', max field width for 'g'; SIZE_T_MAX
+                   means "unspecified" and selects FLT_DIG
+  @param par     the number to print
+  @param arg_type  'f' or 'g'
+
+  @note For 'f', width is a precision and so does not bound the output length
+        (my_fcvt(1e300, 6, ...) emits ~308 bytes). The value is therefore
+        rendered into a worst-case scratch buffer and copied out under the
+        space that is actually available.
+
+  @retval position just past the last character written, always <= end
 */
 
 static char *process_dbl_arg(char *to, char *end, size_t width,
@@ -230,12 +248,34 @@ static char *process_dbl_arg(char *to, char *end, size_t width,
     width= FLT_DIG; /* width not set, use default */
   else if (width >= NOT_FIXED_DEC)
     width= NOT_FIXED_DEC - 1; /* max.precision for my_fcvt() */
-  width= MY_MIN(width, (size_t)(end-to) - 1);
-  
+
+  /* No bytes left to write. */
+  if (to >= end)
+    return to;
+
   if (arg_type == 'f')
-    to+= my_fcvt(par, (int)width , to, NULL);
+  {
+    /* 'width' is a precision, not a length, so it cannot bound my_fcvt().
+     * Create a a scratch buffer of the maximum length a float can have.
+     *
+     * Refer to my_fcvt for more information.
+     */
+    char dbl_buffer[FLOATING_POINT_BUFFER];
+
+    size_t precision = width;
+
+    size_t bytes_to_copy = my_fcvt(par, (int) precision, dbl_buffer, NULL);
+    size_t space_available= (size_t) (end - 1 - to);
+
+    bytes_to_copy= MY_MIN(bytes_to_copy, space_available);
+    memcpy(to, dbl_buffer, bytes_to_copy);
+    to+= bytes_to_copy;
+  }
   else
+  {
+    width= MY_MIN(width, (size_t) (end - to) - 1);
     to+= my_gcvt(par, MY_GCVT_ARG_DOUBLE, (int) width , to, NULL);
+  }
   return to;
 }
 
