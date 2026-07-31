@@ -510,6 +510,8 @@ void free_connection_stmts(DBC *dbc);
                                                  } while(0)
 
 #define GET_NAME_LEN(S, N, L) L = (L == SQL_NTS ? (N ? (SQLSMALLINT)strlen((char *)N) : 0) : L); \
+  if (L < 0) \
+    return set_stmt_error(S, "HY090", "Invalid string or buffer length", 0); \
   if (L > NAME_LEN) \
     return set_stmt_error(S, "HY090", \
            "One or more parameters exceed the maximum allowed name length", 0);
