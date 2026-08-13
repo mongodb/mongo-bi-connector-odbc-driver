@@ -333,7 +333,8 @@ enum enum_field_types map_sql2mysql_type(SQLSMALLINT sql_type);
 char *      proc_param_tokenize   (char *str, int *params_num);
 SQLCHAR *   proc_get_param_type   (SQLCHAR *proc, int len, SQLSMALLINT *ptype);
 SQLCHAR*    proc_get_param_name   (SQLCHAR *proc, int len, SQLCHAR *cname);
-SQLCHAR*    proc_get_param_dbtype (SQLCHAR *proc, int len, SQLCHAR *ptype);
+SQLCHAR*    proc_get_param_dbtype (SQLCHAR *proc, int len, SQLCHAR *ptype,
+                                   size_t ptype_size);
 SQLUINTEGER proc_get_param_size   (SQLCHAR *ptype, int len, int sql_type_index,
                                   SQLSMALLINT *dec);
 SQLLEN      proc_get_param_octet_len  (STMT *stmt, int sql_type_index,
@@ -510,6 +511,8 @@ void free_connection_stmts(DBC *dbc);
                                                  } while(0)
 
 #define GET_NAME_LEN(S, N, L) L = (L == SQL_NTS ? (N ? (SQLSMALLINT)strlen((char *)N) : 0) : L); \
+  if (L < 0) \
+    return set_stmt_error(S, "HY090", "Invalid string or buffer length", 0); \
   if (L > NAME_LEN) \
     return set_stmt_error(S, "HY090", \
            "One or more parameters exceed the maximum allowed name length", 0);

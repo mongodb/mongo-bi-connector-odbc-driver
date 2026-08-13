@@ -1817,7 +1817,8 @@ procedure_columns_no_i_s(SQLHSTMT hstmt,
 
       token= proc_get_param_type(token, (int)strlen(token), &ptype);
       token= proc_get_param_name(token, (int)strlen(token), param_name);
-      token= proc_get_param_dbtype(token, (int)strlen(token), param_dbtype);
+      token= proc_get_param_dbtype(token, (int)strlen(token), param_dbtype,
+                                   sizeof(param_dbtype));
 
       /* param_dbtype is lowercased in the proc_get_param_dbtype */
       if (strstr(param_dbtype, "unsigned"))

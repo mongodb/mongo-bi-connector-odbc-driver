@@ -220,25 +220,25 @@ static char *process_bin_arg(char *to, char *end, size_t width, char *par)
 
 
 /**
-  Prints double or float argument
+  Prints a double argument using the 'f' or 'g' format.
 
-  Writes at most (end - to) bytes and never touches *end, which the caller
-  reserves for the terminating '\0'.  Returns the new output cursor.
+  Writes into [to, end), where 'end' is the byte reserved for the caller's
+  terminating '\0'. Output is truncated, never overflowed, and is not
+  NUL-terminated here.
 
-  @note  The two conversions bound their output very differently:
+  @param to        write cursor
+  @param end       last writable position + 1; also the caller's '\0' slot
+  @param width     precision for 'f', max field width for 'g'; SIZE_T_MAX
+                   means "unspecified" and selects FLT_DIG
+  @param par     the number to print
+  @param arg_type  'f' or 'g'
 
-         my_gcvt() takes 'width' as a *field width* and honours it -- it will
-         re-render the value with fewer significant digits rather than exceed
-         it (see the 'dend' handling in my_gcvt(), dtoa.c).
+  @note For 'f', width is a precision and so does not bound the output length
+        (my_fcvt(1e300, 6, ...) emits ~308 bytes). The value is therefore
+        rendered into a worst-case scratch buffer and copied out under the
+        space that is actually available.
 
-         my_fcvt() takes 'width' as a *precision*, i.e. the number of digits
-         after the decimal point, and has no destination-size parameter at
-         all.  It always emits the full integer part, which for a double near
-         1e308 is ~309 digits.  Clamping the precision therefore does nothing
-         to bound its total output.
-
-         That asymmetry is why the two branches below are bounded differently,
-         and why a single shared clamp on 'width' would be wrong.
+  @retval position just past the last character written, always <= end
 */
 
 static char *process_dbl_arg(char *to, char *end, size_t width,
@@ -249,55 +249,30 @@ static char *process_dbl_arg(char *to, char *end, size_t width,
   else if (width >= NOT_FIXED_DEC)
     width= NOT_FIXED_DEC - 1; /* max.precision for my_fcvt() */
 
-  /*
-    Bail out before the pointer arithmetic below.  Both branches derive the
-    remaining space from (end - to); when to == end the '%g' branch's
-    (end - to) - 1 underflows to SIZE_T_MAX, silently disabling its clamp at
-    exactly the moment there is no room left.  my_vsnprintf_ex() can reach
-    this state, as it only breaks on to == end between conversions.
-  */
+  /* No bytes left to write. */
   if (to >= end)
     return to;
 
   if (arg_type == 'f')
   {
-    /*
-      my_fcvt() cannot be told how much room it has, so we must not let it
-      write into 'to' directly.  Convert into a scratch buffer big enough for
-      any result, then copy back only what fits -- the same truncate-on-copy
-      approach process_str_arg() and process_bin_arg() already use.
+    /* 'width' is a precision, not a length, so it cannot bound my_fcvt().
+     * Create a a scratch buffer of the maximum length a float can have.
+     *
+     * Refer to my_fcvt for more information.
+     */
+    char dbl_buffer[FLOATING_POINT_BUFFER];
 
-      FLOATING_POINT_BUFFER (342) is large enough *only* because of the
-      NOT_FIXED_DEC clamp above, which caps the precision at 30:
+    size_t precision = width;
 
-          1 sign + 309 integer digits + 1 '.' + 30 fraction digits + 1 NUL
+    size_t bytes_to_copy = my_fcvt(par, (int) precision, dbl_buffer, NULL);
+    size_t space_available= (size_t) (end - 1 - to);
 
-      If that clamp is ever relaxed this buffer must grow to match.  The clamp
-      is load-bearing for memory safety, not just cosmetic.
-    */
-    char fbuf[FLOATING_POINT_BUFFER];
-    size_t len= my_fcvt(par, (int) width, fbuf, NULL);
-    /*
-      'end' is the last writable byte and is reserved for the '\0' that
-      my_vsnprintf_ex() appends, so the room available here is (end - to), not
-      (end - to) - 1.  my_fcvt() NUL-terminates fbuf; we copy the digits only
-      and leave termination to the caller.
-    */
-    size_t space= (size_t) (end - to);
-
-    if (len > space)
-      len= space;
-    memcpy(to, fbuf, len);
-    to+= len;
+    bytes_to_copy= MY_MIN(bytes_to_copy, space_available);
+    memcpy(to, dbl_buffer, bytes_to_copy);
+    to+= bytes_to_copy;
   }
   else
   {
-    /*
-      my_gcvt() bounds itself to 'width' + 1 bytes, so it is safe to convert
-      straight into 'to' once width is clamped to the space available.  Doing
-      it this way rather than truncating a scratch buffer preserves its
-      ability to pick the best representation that fits the remaining room.
-    */
     width= MY_MIN(width, (size_t) (end - to) - 1);
     to+= my_gcvt(par, MY_GCVT_ARG_DOUBLE, (int) width , to, NULL);
   }

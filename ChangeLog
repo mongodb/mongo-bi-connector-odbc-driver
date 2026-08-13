@@ -1,3 +1,10 @@
+MongoDB ODBC 1.4.9
+  * Added logic to clamp large floats when converting to String. (CVE-2026-18888)
+  * Added logic to clamp name-length in catalog functions. (CVE-2026-19001)
+  * Added logic to clamp parameter size for client app integrations. (CVE-2026-19002)
+  * Added logic to clamp DSN path field sizes. (CVE-2026-19003)
+  * Added logic to clamp buffers. (CVE-2026-19004)
+
 MongoDB ODBC 1.4.8
   * Added logic to the authentication plugin to guard against potential out-of-bounds reads.
   * Upgrades zlib version to 1.3.2.

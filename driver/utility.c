@@ -3194,18 +3194,37 @@ SQLCHAR* proc_get_param_name(SQLCHAR *proc, int len, SQLCHAR *cname)
   @param[in]  proc        procedure parameter string
   @param[in]  len         param string length
   @param[out] cname       pointer where to write the param type name
+  @param[in]  ptype_size  size of the ptype buffer in bytes, including room
+                          for the terminating NUL
 
   Returns position in the param string after parameter type name
 */
-SQLCHAR* proc_get_param_dbtype(SQLCHAR *proc, int len, SQLCHAR *ptype)
+SQLCHAR* proc_get_param_dbtype(SQLCHAR *proc, int len, SQLCHAR *ptype,
+                               size_t ptype_size)
 {
   char *trim_str, *start_pos= ptype;
+  /* Reserve one byte for the terminating NUL. */
+  size_t remaining_buffer_size= (ptype_size != 0) ? ptype_size - 1 : 0;
+
+  if (ptype_size == 0)
+    return proc;
 
   while (isspace(*proc) && (len--))
     ++proc;
 
-  while (*proc && (len--) )
+  while (*proc && (len--) && remaining_buffer_size > 0)
+  {
     *(ptype++)= *(proc++);
+    --remaining_buffer_size;
+  }
+
+  /*
+    Terminate unconditionally, on every path. `ptype` points just past the last
+    byte copied, at most index `ptype_size - 1`, because the loop above reserved
+    a byte for the NUL. A server-supplied type longer than the buffer is
+    truncated here instead of overflowing it.
+  */
+  *ptype= 0;
 
   /* remove the character set definition */
   if (trim_str= strstr( myodbc_strlwr(start_pos, 0),
@@ -3214,13 +3233,17 @@ SQLCHAR* proc_get_param_dbtype(SQLCHAR *proc, int len, SQLCHAR *ptype)
     ptype= trim_str;
     (*ptype)= 0;
   }
-  
-  /* trim spaces from the end */
-  ptype-=1;
-  while (isspace(*(ptype)))
+
+  /*
+    Trim spaces from the end. Each step moves the terminator back one byte, so
+    the buffer stays a valid C string on every iteration. The `ptype >
+    start_pos` guard keeps an all-whitespace or empty type from walking the
+    pointer below the start of the caller's buffer.
+  */
+  while (ptype > start_pos && isspace(*(ptype - 1)))
   {
-    *ptype= 0;
     --ptype;
+    *ptype= 0;
   }
 
   return proc;

@@ -387,12 +387,18 @@ functions:
             "${SCRIPT_DIR}/sign-dmg-contents.sh"
 
   "sign msi installer":
+    - command: ec2.assume_role
+      display_name: Assume DevProd Platforms ECR readonly IAM role
+      params:
+        role_arn: ${devprod_platforms_ecr_readonly_role_arn}
     - command: shell.exec
       type: system
       params:
         silent: true
+        include_expansions_in_env: [AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN]
         script: |
-          docker login --username ${sql_engines_artifactory_username} --password ${sql_engines_artifactory_auth_token} ${release_tools_container_registry}
+          set -o errexit
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 901841024863.dkr.ecr.us-east-1.amazonaws.com
     - command: shell.exec
       type: system
       params:
