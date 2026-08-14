@@ -3972,7 +3972,8 @@ char* get_limit_numbers(CHARSET_INFO* cs, char *query, char * query_end,
     ++query;
   
   // Collect all numbers for the offset
-  while ((query_end > query) && myodbc_isnum(cs, query, query_end))
+  while (index_pos < (int)sizeof(digit_buf) - 1 &&
+         (query_end > query) && myodbc_isnum(cs, query, query_end))
   {
     digit_buf[index_pos] = *query;
     ++index_pos;
@@ -4004,7 +4005,8 @@ char* get_limit_numbers(CHARSET_INFO* cs, char *query, char * query_end,
   index_pos = 0; // reset index to use with another number
 
   // Collect all numbers for the row number
-  while ((query_end > query) && myodbc_isnum(cs, query, query_end))
+  while (index_pos < (int)sizeof(digit_buf) - 1 &&
+         (query_end > query) && myodbc_isnum(cs, query, query_end))
   {
     digit_buf[index_pos] = *query;
     ++index_pos;
