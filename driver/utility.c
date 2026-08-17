@@ -3971,12 +3971,15 @@ char* get_limit_numbers(CHARSET_INFO* cs, char *query, char * query_end,
   while ((query_end > query) && myodbc_isspace(cs, query, query_end))
     ++query;
   
-  // Collect all numbers for the offset
-  while (index_pos < (int)sizeof(digit_buf) - 1 &&
-         (query_end > query) && myodbc_isnum(cs, query, query_end))
+  // Collect all numbers for the offset. Keep consuming digits even after
+  // digit_buf is full so `query` always ends up past the entire digit run.
+  while ((query_end > query) && myodbc_isnum(cs, query, query_end))
   {
-    digit_buf[index_pos] = *query;
-    ++index_pos;
+    if (index_pos < (int)sizeof(digit_buf) - 1)
+    {
+      digit_buf[index_pos] = *query;
+      ++index_pos;
+    }
     ++query;
   }
 
@@ -4004,12 +4007,15 @@ char* get_limit_numbers(CHARSET_INFO* cs, char *query, char * query_end,
 
   index_pos = 0; // reset index to use with another number
 
-  // Collect all numbers for the row number
-  while (index_pos < (int)sizeof(digit_buf) - 1 &&
-         (query_end > query) && myodbc_isnum(cs, query, query_end))
+  // Collect all numbers for the row number. Keep consuming digits even after
+  // digit_buf is full so `query` always ends up past the entire digit run.
+  while ((query_end > query) && myodbc_isnum(cs, query, query_end))
   {
-    digit_buf[index_pos] = *query;
-    ++index_pos;
+    if (index_pos < (int)sizeof(digit_buf) - 1)
+    {
+      digit_buf[index_pos] = *query;
+      ++index_pos;
+    }
     ++query;
   }
 
