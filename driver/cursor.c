@@ -163,8 +163,17 @@ char *check_if_positioned_cursor_exists(STMT *pStmt, STMT **pStmtCursor)
     /* Did we run out of statements without finding a viable cursor? */
     if (!list_element)
     {
+
       char buff[200];
-      strxmov(buff,"Cursor '", cursorName,
+      /* Truncate cursor name before copying so strxmov() can never write past buff.
+       * Longest cursor name that still leaves room in buff for the fixed text above plus both closing NULs. */
+      char truncated_cursor_name[sizeof(buff)
+                           - (sizeof("Cursor '") - 1)
+                           - (sizeof("' does not exist or does not have a result set.") - 1)];
+
+      /* Copy cursorName into truncated_name */
+      strmake(truncated_cursor_name, cursorName, sizeof(truncated_cursor_name) - 1);
+      strxmov(buff,"Cursor '", truncated_cursor_name,
               "' does not exist or does not have a result set.", NullS);
       set_stmt_error(pStmt, "34000", buff, ER_INVALID_CURSOR_NAME);
     }
