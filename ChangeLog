@@ -1,3 +1,7 @@
+MongoDB ODBC 1.4.10
+  * Added bounds check to get_limit method. (CVE-2026-81533)
+  * Added logic to truncate cursor name to fit buffer. (CVE-2026-81532)
+
 MongoDB ODBC 1.4.9
   * Added logic to clamp large floats when converting to String. (CVE-2026-18888)
   * Added logic to clamp name-length in catalog functions. (CVE-2026-19001)
